@@ -6,9 +6,7 @@
 <title>CLIMBOUND</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 html,body{
   margin:0;
@@ -19,14 +17,8 @@ html,body{
   font-family:Arial,sans-serif;
 }
 
-#game{
-  position:fixed;
-  inset:0;
-}
-
-canvas{
-  display:block;
-}
+#game{position:fixed;inset:0}
+canvas{display:block}
 
 #hud{
   position:fixed;
@@ -56,6 +48,12 @@ canvas{
 #statusText{
   color:#55ff70;
   font-weight:bold;
+}
+
+#height{
+  margin-top:7px;
+  font-size:13px;
+  color:#fff;
 }
 
 #help{
@@ -130,11 +128,16 @@ canvas{
     HAMMER:
     <span id="statusText">FREE</span>
   </div>
+
+  <div id="height">
+    HEIGHT: <span id="heightText">0</span>m
+  </div>
 </div>
 
 <div id="help">
   Move mouse = hammer &nbsp; | &nbsp;
-  <b>CLICK GREEN GRIPS</b>
+  <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp;
+  Release = let go
 </div>
 
 <div id="start">
@@ -142,8 +145,8 @@ canvas{
     <h1>CLIMBOUND</h1>
 
     <p>
-      Climb the mountain using your hammer.<br>
-      Green markers are climbing grips.
+      Grab the green grips with your hammer.<br>
+      Pull the hammer away to climb.
     </p>
 
     <button id="startButton">
@@ -172,6 +175,15 @@ let hammer;
 let running=false;
 let grabbed=null;
 
+let velocityX=0;
+let velocityY=0;
+
+let lastTime=performance.now();
+
+const gravity=-14;
+const pullStrength=7;
+const maxSpeed=14;
+
 const grips=[];
 
 const mouse={
@@ -191,7 +203,6 @@ function init(){
   scene.background=
     new THREE.Color(0x071018);
 
-
   scene.fog=
     new THREE.Fog(
       0x071018,
@@ -199,8 +210,6 @@ function init(){
       120
     );
 
-
-  /* CAMERA */
 
   camera=
     new THREE.PerspectiveCamera(
@@ -217,8 +226,6 @@ function init(){
     28
   );
 
-
-  /* RENDERER */
 
   renderer=
     new THREE.WebGLRenderer({
@@ -245,8 +252,6 @@ function init(){
       renderer.domElement
     );
 
-
-  /* LIGHTING */
 
   const ambient=
     new THREE.HemisphereLight(
@@ -275,22 +280,13 @@ function init(){
   scene.add(sun);
 
 
-  /* WORLD */
-
   createSky();
-
   createMountain();
-
   createRocks();
-
   createHero();
-
   createHammer();
-
   createGrips();
 
-
-  /* INPUT */
 
   window.addEventListener(
     "mousemove",
@@ -351,37 +347,25 @@ function createSky(){
 
 
 /* =====================================================
-   MOUNTAIN / ROCK CLIFF
+   MOUNTAIN
 ===================================================== */
 
 function createMountain(){
 
-  /*
-    Main cliff body.
-    NOT a cone.
-  */
-
-  const cliffGeometry=
-    new THREE.BoxGeometry(
-      22,
-      70,
-      7
-    );
-
-
-  const cliffMaterial=
-    new THREE.MeshStandardMaterial({
-      color:0x39434a,
-      roughness:1
-    });
-
-
   const cliff=
     new THREE.Mesh(
-      cliffGeometry,
-      cliffMaterial
-    );
 
+      new THREE.BoxGeometry(
+        22,
+        70,
+        7
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:0x39434a,
+        roughness:1
+      })
+    );
 
   cliff.position.set(
     0,
@@ -389,17 +373,12 @@ function createMountain(){
     -7
   );
 
-
   cliff.rotation.y=-0.04;
 
   cliff.receiveShadow=true;
 
   scene.add(cliff);
 
-
-  /*
-    Irregular rock faces.
-  */
 
   const rockMaterial=
     new THREE.MeshStandardMaterial({
@@ -490,11 +469,7 @@ function createRocks(){
     });
 
 
-  for(
-    let i=0;
-    i<45;
-    i++
-  ){
+  for(let i=0;i<45;i++){
 
     const rock=
       new THREE.Mesh(
@@ -509,9 +484,7 @@ function createRocks(){
 
 
     const side=
-      Math.random()>.5
-      ?1
-      :-1;
+      Math.random()>.5 ? 1 : -1;
 
 
     rock.position.set(
@@ -536,9 +509,7 @@ function createRocks(){
 
     rock.scale.set(
       s,
-      s*
-      (0.6+
-      Math.random()),
+      s*(.6+Math.random()),
       s
     );
 
@@ -561,13 +532,8 @@ function createRocks(){
 
 function createHero(){
 
-  hero=
-    new THREE.Group();
+  hero=new THREE.Group();
 
-
-  /*
-    POT
-  */
 
   const pot=
     new THREE.Mesh(
@@ -585,15 +551,10 @@ function createHero(){
       })
     );
 
-
   pot.castShadow=true;
 
   hero.add(pot);
 
-
-  /*
-    POT RIM
-  */
 
   const rim=
     new THREE.Mesh(
@@ -610,19 +571,13 @@ function createHero(){
       })
     );
 
-
   rim.rotation.x=
     Math.PI/2;
-
 
   rim.position.y=.68;
 
   hero.add(rim);
 
-
-  /*
-    HEAD
-  */
 
   const head=
     new THREE.Mesh(
@@ -639,17 +594,12 @@ function createHero(){
       })
     );
 
-
   head.position.y=1.35;
 
   head.castShadow=true;
 
   hero.add(head);
 
-
-  /*
-    HELMET
-  */
 
   const helmet=
     new THREE.Mesh(
@@ -670,17 +620,12 @@ function createHero(){
       })
     );
 
-
   helmet.position.y=1.62;
 
   helmet.castShadow=true;
 
   hero.add(helmet);
 
-
-  /*
-    EYES
-  */
 
   const eyeMaterial=
     new THREE.MeshBasicMaterial({
@@ -698,29 +643,21 @@ function createHero(){
       eyeMaterial
     );
 
-
   eye1.position.set(
     -.2,
     1.35,
     -.63
   );
 
-
   hero.add(eye1);
 
 
-  const eye2=
-    eye1.clone();
-
+  const eye2=eye1.clone();
 
   eye2.position.x=.2;
 
   hero.add(eye2);
 
-
-  /*
-    NOSE
-  */
 
   const nose=
     new THREE.Mesh(
@@ -736,29 +673,20 @@ function createHero(){
       })
     );
 
-
   nose.position.set(
     0,
     1.25,
     -.68
   );
 
-
   hero.add(nose);
 
-
-  /*
-    HERO POSITION
-    Clearly in front
-    of mountain.
-  */
 
   hero.position.set(
     0,
     2,
     3.5
   );
-
 
   scene.add(hero);
 }
@@ -770,8 +698,7 @@ function createHero(){
 
 function createHammer(){
 
-  hammer=
-    new THREE.Group();
+  hammer=new THREE.Group();
 
 
   const handle=
@@ -789,10 +716,8 @@ function createHammer(){
       })
     );
 
-
   handle.rotation.z=
     Math.PI/2;
-
 
   hammer.add(handle);
 
@@ -813,15 +738,10 @@ function createHammer(){
       })
     );
 
-
   head.position.x=1.8;
 
   hammer.add(head);
 
-
-  /*
-    Bright yellow hammer tip
-  */
 
   const tip=
     new THREE.Mesh(
@@ -837,11 +757,9 @@ function createHammer(){
       })
     );
 
-
   tip.position.x=2.4;
 
   hammer.add(tip);
-
 
   hammer.userData.tip=tip;
 
@@ -851,7 +769,6 @@ function createHammer(){
     3,
     4
   );
-
 
   scene.add(hammer);
 }
@@ -864,7 +781,6 @@ function createHammer(){
 function createGrips(){
 
   const positions=[
-
     [-4,4],
     [2,6],
     [-2,9],
@@ -885,7 +801,6 @@ function createGrips(){
     [4,54],
     [0,57],
     [-3,60]
-
   ];
 
 
@@ -895,10 +810,6 @@ function createGrips(){
       const group=
         new THREE.Group();
 
-
-      /*
-        GLOW
-      */
 
       const glow=
         new THREE.Mesh(
@@ -916,13 +827,8 @@ function createGrips(){
           })
         );
 
-
       group.add(glow);
 
-
-      /*
-        RING
-      */
 
       const ring=
         new THREE.Mesh(
@@ -939,13 +845,8 @@ function createGrips(){
           })
         );
 
-
       group.add(ring);
 
-
-      /*
-        CENTER
-      */
 
       const center=
         new THREE.Mesh(
@@ -961,15 +862,8 @@ function createGrips(){
           })
         );
 
-
       group.add(center);
 
-
-      /*
-        IMPORTANT:
-        Put grips in front
-        of the cliff.
-      */
 
       group.position.set(
         x,
@@ -989,7 +883,6 @@ function createGrips(){
         y,
         index
       });
-
     }
   );
 }
@@ -1006,7 +899,6 @@ function mouseMove(event){
     window.innerWidth*
     2-1;
 
-
   mouse.y=
     -(event.clientY/
     window.innerHeight)*
@@ -1015,33 +907,32 @@ function mouseMove(event){
 
 
 /* =====================================================
-   HAMMER MOVEMENT
+   HAMMER
 ===================================================== */
 
 function updateHammer(){
 
   const targetX=
     hero.position.x+
-    mouse.x*6;
-
+    mouse.x*7;
 
   const targetY=
     hero.position.y+
-    mouse.y*5;
+    mouse.y*6;
 
 
   hammer.position.x+=
     (
       targetX-
       hammer.position.x
-    )*.18;
+    )*.22;
 
 
   hammer.position.y+=
     (
       targetY-
       hammer.position.y
-    )*.18;
+    )*.22;
 
 
   hammer.position.z=4;
@@ -1049,21 +940,20 @@ function updateHammer(){
 
   hammer.rotation.z=
     -Math.atan2(
-      mouse.y*5,
-      mouse.x*6
+      mouse.y*6,
+      mouse.x*7
     );
 }
 
 
 /* =====================================================
-   GRIP DETECTION
+   FIND GRIP
 ===================================================== */
 
 function nearestGrip(){
 
   const tip=
     new THREE.Vector3();
-
 
   hammer.userData.tip
     .getWorldPosition(tip);
@@ -1105,7 +995,7 @@ function nearestGrip(){
 
 
 /* =====================================================
-   CLICK
+   GRAB
 ===================================================== */
 
 function mouseDown(event){
@@ -1114,47 +1004,37 @@ function mouseDown(event){
 
   if(event.button!==0)return;
 
-
   const result=
     nearestGrip();
 
 
   if(
     result.grip &&
-    result.distance<2.5
+    result.distance<2.7
   ){
 
     grabbed=result.grip;
 
-
-    document.getElementById(
-      "statusText"
-    ).textContent=
-      "GRIP LOCKED";
+    velocityX=0;
+    velocityY=0;
 
 
-    document.getElementById(
-      "statusText"
-    ).style.color=
-      "#55ff70";
+    setStatus(
+      "GRIP LOCKED",
+      "#55ff70"
+    );
 
 
     grabbed.group
       .scale
-      .setScalar(1.5);
+      .setScalar(1.55);
 
   }else{
 
-    document.getElementById(
-      "statusText"
-    ).textContent=
-      "MISSED";
-
-
-    document.getElementById(
-      "statusText"
-    ).style.color=
-      "#ff4444";
+    setStatus(
+      "MISSED",
+      "#ff4444"
+    );
   }
 }
 
@@ -1170,6 +1050,15 @@ function mouseUp(){
     grabbed.group
       .scale
       .setScalar(1);
+
+    /*
+      Small release impulse.
+      This makes the hero feel
+      like he actually lets go.
+    */
+
+    velocityX += mouse.x*2;
+    velocityY += 2;
   }
 
 
@@ -1178,45 +1067,188 @@ function mouseUp(){
 
   if(running){
 
-    document.getElementById(
-      "statusText"
-    ).textContent=
-      "FREE";
-
-
-    document.getElementById(
-      "statusText"
-    ).style.color=
-      "#55ff70";
+    setStatus(
+      "FREE",
+      "#55ff70"
+    );
   }
 }
 
 
 /* =====================================================
-   SIMPLE CLIMB
+   CLIMB PHYSICS
 ===================================================== */
 
-function climb(){
+function updatePhysics(dt){
 
-  if(!grabbed)return;
+  /*
+    GRAVITY
+  */
 
-
-  const dx=
-    grabbed.x-
-    hero.position.x;
-
-
-  const dy=
-    grabbed.y-
-    hero.position.y;
+  velocityY += gravity*dt;
 
 
-  hero.position.x+=
-    dx*.025;
+  /*
+    HAMMER GRABBED
+  */
+
+  if(grabbed){
+
+    const dx=
+      grabbed.x-
+      hero.position.x;
+
+    const dy=
+      grabbed.y-
+      hero.position.y;
 
 
-  hero.position.y+=
-    dy*.035;
+    /*
+      Pull toward anchor.
+      This is acceleration,
+      not teleportation.
+    */
+
+    velocityX +=
+      dx*
+      pullStrength*
+      dt;
+
+    velocityY +=
+      dy*
+      pullStrength*
+      dt;
+
+
+    /*
+      Stronger pull if
+      hammer is dragged away.
+    */
+
+    const pull=
+      Math.sqrt(
+        mouse.x*mouse.x+
+        mouse.y*mouse.y
+      );
+
+
+    velocityY +=
+      pull*
+      5*
+      dt;
+  }
+
+
+  /*
+    LIMIT SPEED
+  */
+
+  velocityX=
+    THREE.MathUtils.clamp(
+      velocityX,
+      -maxSpeed,
+      maxSpeed
+    );
+
+  velocityY=
+    THREE.MathUtils.clamp(
+      velocityY,
+      -maxSpeed,
+      maxSpeed
+    );
+
+
+  /*
+    APPLY VELOCITY
+  */
+
+  hero.position.x +=
+    velocityX*dt;
+
+  hero.position.y +=
+    velocityY*dt;
+
+
+  /*
+    AIR DRAG
+  */
+
+  velocityX*=.985;
+  velocityY*=.995;
+
+
+  /*
+    KEEP HERO NEAR CLIMBING AREA
+  */
+
+  hero.position.x=
+    THREE.MathUtils.clamp(
+      hero.position.x,
+      -9,
+      9
+    );
+
+
+  /*
+    FALL RESET
+  */
+
+  if(hero.position.y<-5){
+
+    resetPlayer();
+  }
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function resetPlayer(){
+
+  hero.position.set(
+    0,
+    2,
+    3.5
+  );
+
+  velocityX=0;
+  velocityY=0;
+
+  grabbed=null;
+
+  grips.forEach(
+    grip=>{
+      grip.group
+        .scale
+        .setScalar(1);
+    }
+  );
+
+
+  setStatus(
+    "FREE",
+    "#55ff70"
+  );
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function setStatus(
+  text,
+  color
+){
+
+  const status=
+    document.getElementById(
+      "statusText"
+    );
+
+  status.textContent=text;
+  status.style.color=color;
 }
 
 
@@ -1234,6 +1266,13 @@ function updateCamera(){
     (
       targetY-
       camera.position.y
+    )*.08;
+
+
+  camera.position.x+=
+    (
+      hero.position.x-
+      camera.position.x
     )*.05;
 
 
@@ -1269,12 +1308,32 @@ function animateGrips(time){
         .scale
         .setScalar(pulse);
 
-
       grip.glow
         .scale
         .setScalar(pulse);
     }
   );
+}
+
+
+/* =====================================================
+   HEIGHT
+===================================================== */
+
+function updateHeight(){
+
+  const height=
+    Math.max(
+      0,
+      Math.floor(
+        hero.position.y
+      )
+    );
+
+
+  document.getElementById(
+    "heightText"
+  ).textContent=height;
 }
 
 
@@ -1288,8 +1347,10 @@ function startGame(){
     "start"
   ).style.display="none";
 
-
   running=true;
+
+  lastTime=
+    performance.now();
 }
 
 
@@ -1303,9 +1364,7 @@ function resize(){
     window.innerWidth/
     window.innerHeight;
 
-
   camera.updateProjectionMatrix();
-
 
   renderer.setSize(
     window.innerWidth,
@@ -1315,7 +1374,7 @@ function resize(){
 
 
 /* =====================================================
-   LOOP
+   GAME LOOP
 ===================================================== */
 
 function animate(time=0){
@@ -1325,13 +1384,39 @@ function animate(time=0){
   );
 
 
+  const now=
+    performance.now();
+
+
+  let dt=
+    (now-lastTime)/
+    1000;
+
+
+  lastTime=now;
+
+
+  /*
+    Prevent huge physics jump
+    when browser tab pauses.
+  */
+
+  dt=
+    Math.min(
+      dt,
+      .033
+    );
+
+
   if(running){
 
     updateHammer();
 
-    climb();
+    updatePhysics(dt);
 
     updateCamera();
+
+    updateHeight();
   }
 
 
