@@ -847,7 +847,7 @@ function update(dt) {
   /* PLAYER */
 
   player.style.left =
-    `${route.offsetLeft + x - 38}px`;
+    `${(window.innerWidth - route.clientWidth) / 2 + x - 38}px`;
 
   player.style.top =
     `${y - 55}px`;
