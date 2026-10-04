@@ -3,893 +3,1154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLIMBOUND — Genesis Summit</title>
+<title>CLIMBOUND — V0.1</title>
 
 <style>
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html, body {
+  margin: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #07111d;
+  background: #080b10;
   font-family: Arial, Helvetica, sans-serif;
   color: white;
 }
 
-#game {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 20%, #294d70 0%, #102238 38%, #050b13 100%);
+canvas {
+  display: block;
 }
 
-/* CAMERA WORLD */
-#camera {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-#world {
-  position: absolute;
-  width: 100%;
-  height: 9000px;
-  left: 0;
-  top: 0;
-  transition: transform 0.04s linear;
-}
-
-/* MOUNTAIN */
-#mountain {
-  position: absolute;
-  width: min(760px, 86vw);
-  height: 9000px;
-  left: 50%;
-  transform: translateX(-50%);
-  background:
-    linear-gradient(
-      90deg,
-      #172839 0%,
-      #263e53 28%,
-      #344f66 50%,
-      #243b50 72%,
-      #142534 100%
-    );
-  clip-path: polygon(
-    17% 100%,
-    8% 85%,
-    15% 73%,
-    6% 61%,
-    17% 49%,
-    9% 37%,
-    20% 25%,
-    12% 14%,
-    25% 0%,
-    75% 0%,
-    88% 14%,
-    80% 25%,
-    91% 37%,
-    83% 49%,
-    94% 61%,
-    85% 73%,
-    92% 85%,
-    83% 100%
-  );
-  box-shadow: 0 0 80px rgba(0,0,0,.6);
-}
-
-/* SNOW */
-#snow {
-  position: absolute;
-  width: min(760px, 86vw);
-  height: 9000px;
-  left: 50%;
-  transform: translateX(-50%);
-  background:
-    linear-gradient(
-      110deg,
-      transparent 0 18%,
-      rgba(255,255,255,.16) 18% 24%,
-      transparent 24% 45%,
-      rgba(255,255,255,.10) 45% 51%,
-      transparent 51% 72%,
-      rgba(255,255,255,.13) 72% 78%,
-      transparent 78%
-    );
-  clip-path: polygon(
-    25% 0,
-    75% 0,
-    67% 8%,
-    58% 15%,
-    67% 23%,
-    55% 31%,
-    63% 40%,
-    50% 48%,
-    59% 58%,
-    46% 67%,
-    56% 76%,
-    43% 85%,
-    52% 94%,
-    45% 100%,
-    55% 100%,
-    0 100%,
-    10% 85%,
-    6% 70%,
-    16% 55%,
-    8% 40%,
-    18% 25%,
-    12% 12%
-  );
-  opacity: .5;
-}
-
-/* ROUTE */
-#route {
-  position: absolute;
-  width: min(620px, 72vw);
-  height: 9000px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/* GRIPS */
-.grip {
-  position: absolute;
-  width: 28px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(#e7c878, #8f6b27);
-  box-shadow:
-    0 0 8px rgba(255,205,80,.35),
-    inset 0 2px 2px rgba(255,255,255,.3);
-  transform: rotate(-15deg);
-}
-
-.grip::after {
-  content: "";
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  left: 9px;
-  top: 5px;
-  border-radius: 50%;
-  background: #263b4c;
-}
-
-/* SUMMIT */
-#summit {
-  position: absolute;
-  width: min(620px, 72vw);
-  height: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 20px;
-  border: 3px solid rgba(255,216,90,.9);
-  background: linear-gradient(
-    rgba(255,215,70,.22),
-    rgba(255,215,70,.04)
-  );
-  box-shadow: 0 0 45px rgba(255,215,70,.2);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 25px;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 8px;
-  color: #ffe98a;
-}
-
-/* PLAYER */
-#player {
-  position: absolute;
-  width: 76px;
-  height: 105px;
-  z-index: 20;
-  pointer-events: none;
-}
-
-/* POT */
-#pot {
-  position: absolute;
-  width: 58px;
-  height: 48px;
-  left: 8px;
-  top: 43px;
-  background: linear-gradient(145deg, #d5d9dd, #727a82 60%, #424950);
-  border-radius: 8px 8px 24px 24px;
-  border: 3px solid #252b30;
-  box-shadow:
-    inset 0 5px 5px rgba(255,255,255,.25),
-    0 5px 10px rgba(0,0,0,.5);
-}
-
-#pot::before {
-  content: "";
-  position: absolute;
-  width: 63px;
-  height: 13px;
-  left: -5px;
-  top: -6px;
-  border-radius: 50%;
-  background: #8d969e;
-  border: 3px solid #252b30;
-}
-
-#pot::after {
-  content: "";
-  position: absolute;
-  width: 25px;
-  height: 12px;
-  left: 13px;
-  bottom: 7px;
-  border-radius: 50%;
-  background: rgba(0,0,0,.18);
-}
-
-/* HEAD */
-#head {
-  position: absolute;
-  width: 34px;
-  height: 34px;
-  left: 20px;
-  top: 14px;
-  border-radius: 50%;
-  background: #e9b88e;
-  border: 3px solid #573b2c;
-  z-index: 3;
-}
-
-#head::before {
-  content: "";
-  position: absolute;
-  width: 38px;
-  height: 13px;
-  left: -5px;
-  top: -5px;
-  border-radius: 50% 50% 20% 20%;
-  background: #30343a;
-}
-
-/* BODY */
-#body {
-  position: absolute;
-  width: 24px;
-  height: 27px;
-  left: 25px;
-  top: 42px;
-  border-radius: 8px;
-  background: #c46b32;
-  border: 2px solid #613719;
-  z-index: 2;
-}
-
-/* HAMMER */
-#hammer {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  left: 25px;
-  top: 18px;
-  transform-origin: 10px 80px;
-  transform: rotate(-48deg);
-  z-index: 10;
-}
-
-#hammerHandle {
-  position: absolute;
-  width: 9px;
-  height: 76px;
-  left: 9px;
-  top: 18px;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #6f4528, #d29a57, #65401f);
-  box-shadow: 2px 3px 4px rgba(0,0,0,.4);
-}
-
-#hammerHead {
-  position: absolute;
-  width: 38px;
-  height: 22px;
-  left: -5px;
-  top: 2px;
-  border-radius: 5px;
-  background: linear-gradient(#9ca5ac, #4c555d);
-  border: 3px solid #252a2e;
-}
-
-/* UI */
 #hud {
   position: fixed;
-  z-index: 100;
+  top: 18px;
   left: 18px;
-  right: 18px;
-  top: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  z-index: 10;
   pointer-events: none;
-}
-
-.panel {
-  padding: 11px 14px;
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 12px;
-  background: rgba(5,12,20,.72);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 8px 30px rgba(0,0,0,.2);
-}
-
-.title {
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: #9fb7cc;
-}
-
-.value {
-  font-size: 21px;
-  font-weight: 900;
-  margin-top: 3px;
-}
-
-#heightValue {
-  color: #ffd95c;
-}
-
-#staminaBar {
-  width: 150px;
-  height: 8px;
-  margin-top: 7px;
-  background: #182432;
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-#staminaFill {
-  width: 100%;
-  height: 100%;
-  background: #6de29a;
-  transition: width .1s linear;
-}
-
-#instructions {
-  position: fixed;
-  z-index: 100;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  color: #aabed0;
-  font-size: 13px;
-  background: rgba(4,10,17,.72);
-  padding: 10px 15px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.1);
-}
-
-#startScreen,
-#gameOver {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(3,8,14,.86);
-  backdrop-filter: blur(8px);
-}
-
-.modal {
-  width: min(440px, 90vw);
-  text-align: center;
-  padding: 35px 25px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(13,25,39,.94);
-  box-shadow: 0 30px 100px rgba(0,0,0,.5);
 }
 
 .logo {
-  font-size: 42px;
-  font-weight: 1000;
-  letter-spacing: 8px;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 4px;
 }
 
-.subtitle {
-  margin-top: 10px;
-  color: #9eb3c7;
+.version {
+  margin-top: 3px;
+  font-size: 11px;
+  opacity: .55;
+  letter-spacing: 2px;
+}
+
+#status {
+  margin-top: 16px;
+  padding: 9px 13px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+#help {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 10px 16px;
+  background: rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+  opacity: .8;
+}
+
+#start {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, rgba(30,50,70,.55), rgba(3,6,10,.96));
+}
+
+.panel {
+  width: min(430px, calc(100% - 32px));
+  padding: 32px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(7,10,15,.88);
+  backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow: 0 20px 80px rgba(0,0,0,.5);
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: 38px;
+  letter-spacing: 7px;
+}
+
+.panel .sub {
+  margin-top: 8px;
+  opacity: .55;
+  font-size: 11px;
   letter-spacing: 3px;
 }
 
-button {
-  margin-top: 25px;
-  padding: 15px 28px;
-  border: 0;
-  border-radius: 12px;
-  background: #e6b93d;
-  color: #101820;
-  font-weight: 900;
-  letter-spacing: 2px;
-  cursor: pointer;
+.panel p {
+  margin: 24px 0;
+  line-height: 1.7;
+  color: #cbd2da;
   font-size: 14px;
 }
 
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 13px 25px;
+  background: white;
+  color: #080b10;
+  font-weight: 900;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
 button:hover {
-  background: #ffd75d;
+  transform: translateY(-1px);
 }
 
 .hidden {
   display: none !important;
-}
-
-/* MOBILE */
-#mobileControls {
-  position: fixed;
-  z-index: 150;
-  left: 15px;
-  right: 15px;
-  bottom: 65px;
-  display: none;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.mobileGroup {
-  display: flex;
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.mobileBtn {
-  width: 58px;
-  height: 58px;
-  padding: 0;
-  margin: 0;
-  border-radius: 50%;
-  background: rgba(10,20,30,.78);
-  color: white;
-  border: 1px solid rgba(255,255,255,.2);
-  font-size: 22px;
-}
-
-@media (max-width: 700px) {
-  #mobileControls {
-    display: flex;
-  }
-
-  #instructions {
-    display: none;
-  }
-
-  .logo {
-    font-size: 32px;
-  }
 }
 </style>
 </head>
 
 <body>
 
-<div id="game">
-
-  <div id="camera">
-    <div id="world">
-
-      <div id="mountain"></div>
-      <div id="snow"></div>
-
-      <div id="summit">
-        SUMMIT
-      </div>
-
-      <div id="route"></div>
-
-      <div id="player">
-        <div id="head"></div>
-        <div id="body"></div>
-        <div id="pot"></div>
-
-        <div id="hammer">
-          <div id="hammerHead"></div>
-          <div id="hammerHandle"></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div id="hud">
-
-    <div class="panel">
-      <div class="title">CLIMBOUND</div>
-      <div class="value">GENESIS SUMMIT</div>
-    </div>
-
-    <div class="panel">
-      <div class="title">HEIGHT</div>
-      <div class="value">
-        <span id="heightValue">0</span>m
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="title">STAMINA</div>
-      <div id="staminaBar">
-        <div id="staminaFill"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <div id="instructions">
-    A / D or ← / → Move &nbsp; • &nbsp;
-    W / ↑ Climb &nbsp; • &nbsp;
-    Shift = Boost
-  </div>
-
-  <div id="mobileControls">
-    <div class="mobileGroup">
-      <button class="mobileBtn" id="leftBtn">←</button>
-      <button class="mobileBtn" id="rightBtn">→</button>
-    </div>
-
-    <div class="mobileGroup">
-      <button class="mobileBtn" id="upBtn">↑</button>
-    </div>
-  </div>
-
-  <div id="startScreen">
-    <div class="modal">
-      <div class="logo">CLIMBOUND</div>
-      <div class="subtitle">GENESIS SUMMIT</div>
-      <p style="margin-top:20px;color:#a8b8c8;line-height:1.6;">
-        The mountain is waiting.<br>
-        Climb higher. Reach the summit.
-      </p>
-      <button id="startBtn">BEGIN EXPEDITION</button>
-    </div>
-  </div>
-
-  <div id="gameOver" class="hidden">
-    <div class="modal">
-      <div class="logo" style="font-size:30px;">EXPEDITION ENDED</div>
-      <div class="subtitle">
-        HEIGHT: <span id="finalHeight">0</span>m
-      </div>
-      <button id="restartBtn">TRY AGAIN</button>
-    </div>
-  </div>
-
+<div id="hud">
+  <div class="logo">CLIMBOUND</div>
+  <div class="version">V0.1 // PHYSICS PROTOTYPE</div>
+  <div id="status">HAMMER: FREE</div>
 </div>
 
-<script>
-const world = document.getElementById("world");
-const route = document.getElementById("route");
-const player = document.getElementById("player");
-const hammer = document.getElementById("hammer");
+<div id="help">
+  MOVE MOUSE • HOLD LEFT CLICK TO GRAB • DRAG HAMMER TO PULL
+</div>
 
-const heightValue = document.getElementById("heightValue");
-const staminaFill = document.getElementById("staminaFill");
+<div id="start">
+  <div class="panel">
+    <h1>CLIMBOUND</h1>
+    <div class="sub">THE MOUNTAIN DOES NOT FORGIVE</div>
 
-const startScreen = document.getElementById("startScreen");
-const gameOver = document.getElementById("gameOver");
-const finalHeight = document.getElementById("finalHeight");
+    <p>
+      Your character is controlled by physics.<br>
+      Use the hammer to catch the green grips.<br>
+      Pull yourself upward instead of simply walking.
+    </p>
 
-const SUMMIT = 8500;
-const WORLD_HEIGHT = 9000;
+    <button id="startBtn">START CLIMBING</button>
+  </div>
+</div>
 
-let running = false;
-let lastTime = 0;
+<script type="module">
 
-let x = 0;
-let y = WORLD_HEIGHT - 180;
+import * as THREE from "https://esm.sh/three@0.180.0";
+import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
 
-let velocityY = 0;
-let cameraY = 0;
+/* =========================================================
+   BASIC SETUP
+========================================================= */
 
-let stamina = 100;
-let height = 0;
+const scene = new THREE.Scene();
 
-let keys = {
-  left: false,
-  right: false,
-  up: false,
-  down: false,
-  boost: false
-};
+scene.background = new THREE.Color(0x070b11);
 
-let grips = [];
+scene.fog = new THREE.FogExp2(
+  0x070b11,
+  0.018
+);
 
-/* BUILD HANDHOLDS */
-function buildGrips() {
-  route.innerHTML = "";
-  grips = [];
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  500
+);
 
-  let currentY = WORLD_HEIGHT - 220;
+camera.position.set(
+  0,
+  4,
+  16
+);
 
-  while (currentY > 170) {
+const renderer = new THREE.WebGLRenderer({
+  antialias: true
+});
 
-    const center = route.clientWidth / 2;
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
 
-    const spread =
-      Math.sin(currentY * 0.018) * 150 +
-      Math.sin(currentY * 0.047) * 70;
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
 
-    const gx = center + spread;
+renderer.shadowMap.enabled = true;
 
-    const grip = document.createElement("div");
+document.body.appendChild(renderer.domElement);
 
-    grip.className = "grip";
+/* =========================================================
+   LIGHTING
+========================================================= */
 
-    grip.style.left = `${gx}px`;
-    grip.style.top = `${currentY}px`;
+const ambient = new THREE.HemisphereLight(
+  0x9fb7d0,
+  0x111111,
+  2.2
+);
 
-    route.appendChild(grip);
+scene.add(ambient);
 
-    grips.push({
-      x: gx,
-      y: currentY,
-      element: grip
+const sun = new THREE.DirectionalLight(
+  0xffffff,
+  3
+);
+
+sun.position.set(
+  -10,
+  20,
+  12
+);
+
+sun.castShadow = true;
+
+scene.add(sun);
+
+/* =========================================================
+   PHYSICS WORLD
+========================================================= */
+
+const world = new CANNON.World({
+  gravity: new CANNON.Vec3(
+    0,
+    -12,
+    0
+  )
+});
+
+world.broadphase = new CANNON.SAPBroadphase(world);
+
+world.allowSleep = false;
+
+/* =========================================================
+   MATERIALS
+========================================================= */
+
+const playerMaterial = new CANNON.Material("player");
+
+const rockMaterial = new CANNON.Material("rock");
+
+const playerRockContact =
+  new CANNON.ContactMaterial(
+    playerMaterial,
+    rockMaterial,
+    {
+      friction: 0.75,
+      restitution: 0.05
+    }
+  );
+
+world.addContactMaterial(
+  playerRockContact
+);
+
+/* =========================================================
+   MOUNTAIN
+========================================================= */
+
+function createRock(
+  x,
+  y,
+  z,
+  sx,
+  sy,
+  sz,
+  color = 0x303943
+) {
+
+  const geometry =
+    new THREE.DodecahedronGeometry(
+      1,
+      1
+    );
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color,
+      roughness: 1
     });
 
-    currentY -= 145 + Math.random() * 85;
-  }
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  mesh.position.set(
+    x,
+    y,
+    z
+  );
+
+  mesh.scale.set(
+    sx,
+    sy,
+    sz
+  );
+
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  scene.add(mesh);
+
+  const shape =
+    new CANNON.Box(
+      new CANNON.Vec3(
+        sx * .78,
+        sy * .78,
+        sz * .78
+      )
+    );
+
+  const body =
+    new CANNON.Body({
+      mass: 0,
+      material: rockMaterial,
+      shape
+    });
+
+  body.position.set(
+    x,
+    y,
+    z
+  );
+
+  world.addBody(body);
+
+  return {
+    mesh,
+    body
+  };
 }
 
-/* KEYBOARD */
-window.addEventListener("keydown", e => {
+/* mountain wall */
 
-  if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
-    keys.left = true;
-  }
+createRock(
+  -6,
+  1,
+  0,
+  5,
+  8,
+  3
+);
 
-  if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
-    keys.right = true;
+createRock(
+  6,
+  6,
+  0,
+  5,
+  12,
+  3
+);
+
+createRock(
+  0,
+  -5,
+  0,
+  12,
+  2,
+  3
+);
+
+/* scattered climbing rocks */
+
+const rocks = [
+  [-3, 1, -1, 2.2, 1.5, 1.7],
+  [2.5, 3, -1, 2, 1.3, 1.5],
+  [-2, 5.5, -1, 2.4, 1.4, 1.7],
+  [2.8, 8, -1, 2.2, 1.4, 1.5],
+  [-1.5, 10.5, -1, 2.5, 1.3, 1.6],
+  [2.5, 13, -1, 2.3, 1.5, 1.7],
+  [-2.5, 16, -1, 2.2, 1.5, 1.6],
+  [1.5, 19, -1, 2.5, 1.4, 1.6],
+  [-2, 22, -1, 2.2, 1.5, 1.6]
+];
+
+for (const r of rocks) {
+  createRock(...r);
+}
+
+/* =========================================================
+   PLAYER
+========================================================= */
+
+const playerGroup =
+  new THREE.Group();
+
+scene.add(playerGroup);
+
+/* pot */
+
+const potGeometry =
+  new THREE.CylinderGeometry(
+    .65,
+    .8,
+    1.15,
+    24
+  );
+
+const potMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xb86b35,
+    roughness: .75,
+    metalness: .05
+  });
+
+const potMesh =
+  new THREE.Mesh(
+    potGeometry,
+    potMaterial
+  );
+
+potMesh.castShadow = true;
+
+playerGroup.add(potMesh);
+
+/* head */
+
+const headGeometry =
+  new THREE.SphereGeometry(
+    .46,
+    20,
+    20
+  );
+
+const headMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xf0b27a
+  });
+
+const head =
+  new THREE.Mesh(
+    headGeometry,
+    headMaterial
+  );
+
+head.position.y = .78;
+
+head.castShadow = true;
+
+playerGroup.add(head);
+
+/* body */
+
+const bodyGeometry =
+  new THREE.BoxGeometry(
+    .65,
+    .55,
+    .5
+  );
+
+const bodyMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x202832
+  });
+
+const bodyMesh =
+  new THREE.Mesh(
+    bodyGeometry,
+    bodyMaterial
+  );
+
+bodyMesh.position.y = .15;
+
+bodyMesh.castShadow = true;
+
+playerGroup.add(bodyMesh);
+
+/* physics player */
+
+const playerBody =
+  new CANNON.Body({
+    mass: 1.8,
+    material: playerMaterial,
+    linearDamping: .08,
+    angularDamping: .7
+  });
+
+const playerShape =
+  new CANNON.Sphere(.68);
+
+playerBody.addShape(
+  playerShape
+);
+
+playerBody.position.set(
+  0,
+  1.2,
+  2
+);
+
+world.addBody(
+  playerBody
+);
+
+/* =========================================================
+   HAMMER
+========================================================= */
+
+const hammer =
+  new THREE.Group();
+
+scene.add(hammer);
+
+/* handle */
+
+const handleGeometry =
+  new THREE.CylinderGeometry(
+    .075,
+    .075,
+    2.5,
+    12
+  );
+
+const handleMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x8b5a32
+  });
+
+const handle =
+  new THREE.Mesh(
+    handleGeometry,
+    handleMaterial
+  );
+
+handle.position.y = -1.25;
+
+handle.castShadow = true;
+
+hammer.add(handle);
+
+/* head */
+
+const hammerHeadGeometry =
+  new THREE.BoxGeometry(
+    .9,
+    .25,
+    .25
+  );
+
+const hammerHeadMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0x8f969e,
+    metalness: .8,
+    roughness: .3
+  });
+
+const hammerHead =
+  new THREE.Mesh(
+    hammerHeadGeometry,
+    hammerHeadMaterial
+  );
+
+hammerHead.castShadow = true;
+
+hammer.add(hammerHead);
+
+hammer.position.set(
+  1,
+  2,
+  1
+);
+
+/* hammer tip */
+
+const tip =
+  new THREE.Object3D();
+
+tip.position.set(
+  0,
+  -2.45,
+  0
+);
+
+hammer.add(tip);
+
+/* =========================================================
+   GRIPS
+========================================================= */
+
+const grips = [];
+
+const gripPositions = [
+  [-2.8, 1.8, 0],
+  [2.7, 3.6, 0],
+  [-2.1, 5.9, 0],
+  [2.4, 8.5, 0],
+  [-1.7, 10.9, 0],
+  [2.2, 13.4, 0],
+  [-2.2, 16.5, 0],
+  [1.8, 19.6, 0],
+  [-1.5, 22.6, 0]
+];
+
+for (
+  let i = 0;
+  i < gripPositions.length;
+  i++
+) {
+
+  const p =
+    gripPositions[i];
+
+  const geometry =
+    new THREE.SphereGeometry(
+      .18,
+      16,
+      16
+    );
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x42ff9b,
+      emissive: 0x0d7f49,
+      emissiveIntensity: 1.5
+    });
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+  mesh.position.set(
+    p[0],
+    p[1],
+    p[2]
+  );
+
+  mesh.castShadow = true;
+
+  scene.add(mesh);
+
+  grips.push({
+    mesh,
+    position:
+      new THREE.Vector3(
+        p[0],
+        p[1],
+        p[2]
+      ),
+    grabbed: false
+  });
+}
+
+/* =========================================================
+   MOUSE
+========================================================= */
+
+const mouse =
+  new THREE.Vector2();
+
+const raycaster =
+  new THREE.Raycaster();
+
+let mouseDown = false;
+
+let grabbedGrip = null;
+
+let lastHammerPosition =
+  new THREE.Vector3();
+
+function updateMouse(
+  event
+) {
+
+  mouse.x =
+    (event.clientX /
+      window.innerWidth) * 2 - 1;
+
+  mouse.y =
+    -(event.clientY /
+      window.innerHeight) * 2 + 1;
+}
+
+window.addEventListener(
+  "pointermove",
+  updateMouse
+);
+
+window.addEventListener(
+  "pointerdown",
+  event => {
+
+    if (
+      event.button !== 0
+    ) return;
+
+    mouseDown = true;
+
+    findGrip();
+
+    lastHammerPosition.copy(
+      hammer.position
+    );
   }
+);
+
+window.addEventListener(
+  "pointerup",
+  () => {
+
+    mouseDown = false;
+
+    if (grabbedGrip) {
+
+      grabbedGrip.grabbed =
+        false;
+
+      grabbedGrip.mesh.scale.setScalar(1);
+
+      grabbedGrip = null;
+
+      document.getElementById(
+        "status"
+      ).textContent =
+        "HAMMER: FREE";
+    }
+  }
+);
+
+/* =========================================================
+   HAMMER AIM
+========================================================= */
+
+const aimPlane =
+  new THREE.Plane(
+    new THREE.Vector3(
+      0,
+      0,
+      1
+    ),
+    0
+  );
+
+const aimPoint =
+  new THREE.Vector3();
+
+function updateHammer() {
+
+  raycaster.setFromCamera(
+    mouse,
+    camera
+  );
+
+  raycaster.ray.intersectPlane(
+    aimPlane,
+    aimPoint
+  );
+
+  const playerPosition =
+    new THREE.Vector3(
+      playerBody.position.x,
+      playerBody.position.y,
+      0
+    );
+
+  const direction =
+    aimPoint
+      .clone()
+      .sub(playerPosition);
+
+  direction.z = 0;
 
   if (
-    e.key === "ArrowUp" ||
-    e.key.toLowerCase() === "w" ||
-    e.key === " "
-  ) {
-    keys.up = true;
-  }
+    direction.lengthSq() < .001
+  ) return;
 
-  if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
-    keys.down = true;
-  }
+  direction.normalize();
 
-  if (e.key === "Shift") {
-    keys.boost = true;
-  }
-});
+  const hammerDistance =
+    2.5;
 
-window.addEventListener("keyup", e => {
+  const target =
+    playerPosition
+      .clone()
+      .add(
+        direction.multiplyScalar(
+          hammerDistance
+        )
+      );
 
-  if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
-    keys.left = false;
-  }
+  hammer.position.lerp(
+    target,
+    .35
+  );
 
-  if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
-    keys.right = false;
-  }
+  hammer.lookAt(
+    aimPoint.x,
+    aimPoint.y,
+    0
+  );
 
-  if (
-    e.key === "ArrowUp" ||
-    e.key.toLowerCase() === "w" ||
-    e.key === " "
-  ) {
-    keys.up = false;
-  }
-
-  if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
-    keys.down = false;
-  }
-
-  if (e.key === "Shift") {
-    keys.boost = false;
-  }
-});
-
-/* MOBILE BUTTONS */
-function holdButton(id, key) {
-
-  const btn = document.getElementById(id);
-
-  btn.addEventListener("pointerdown", e => {
-    e.preventDefault();
-    keys[key] = true;
-  });
-
-  btn.addEventListener("pointerup", e => {
-    e.preventDefault();
-    keys[key] = false;
-  });
-
-  btn.addEventListener("pointercancel", () => {
-    keys[key] = false;
-  });
-
-  btn.addEventListener("pointerleave", () => {
-    keys[key] = false;
-  });
+  hammer.rotateX(
+    Math.PI / 2
+  );
 }
 
-holdButton("leftBtn", "left");
-holdButton("rightBtn", "right");
-holdButton("upBtn", "up");
+/* =========================================================
+   GRIP DETECTION
+========================================================= */
 
-/* START */
-function startGame() {
+function getTipWorldPosition() {
 
-  buildGrips();
+  const worldTip =
+    new THREE.Vector3();
 
-  const width = route.clientWidth;
+  tip.getWorldPosition(
+    worldTip
+  );
 
-  x = width / 2;
-  y = WORLD_HEIGHT - 180;
-
-  velocityY = 0;
-  cameraY = 0;
-
-  stamina = 100;
-  height = 0;
-
-  running = true;
-
-  startScreen.classList.add("hidden");
-  gameOver.classList.add("hidden");
-
-  lastTime = performance.now();
-
-  requestAnimationFrame(loop);
+  return worldTip;
 }
 
-/* UPDATE */
-function update(dt) {
+function findGrip() {
 
-  const horizontalSpeed = keys.boost ? 430 : 280;
+  const tipPosition =
+    getTipWorldPosition();
 
-  if (keys.left) {
-    x -= horizontalSpeed * dt;
-    hammer.style.transform = "rotate(-72deg)";
+  let nearest = null;
+
+  let nearestDistance =
+    Infinity;
+
+  for (
+    const grip of grips
+  ) {
+
+    const distance =
+      tipPosition.distanceTo(
+        grip.position
+      );
+
+    if (
+      distance < .65 &&
+      distance < nearestDistance
+    ) {
+
+      nearest =
+        grip;
+
+      nearestDistance =
+        distance;
+    }
   }
 
-  if (keys.right) {
-    x += horizontalSpeed * dt;
-    hammer.style.transform = "rotate(-25deg)";
-  }
+  if (nearest) {
 
-  if (!keys.left && !keys.right) {
-    hammer.style.transform = "rotate(-48deg)";
-  }
+    grabbedGrip = nearest;
 
-  /* CLIMB */
-  if (keys.up && stamina > 0) {
+    nearest.grabbed =
+      true;
 
-    velocityY = keys.boost ? -330 : -210;
+    nearest.mesh.scale.setScalar(
+      1.7
+    );
 
-    stamina -= (keys.boost ? 20 : 12) * dt;
-
-  } else if (keys.down) {
-
-    velocityY = 170;
+    document.getElementById(
+      "status"
+    ).textContent =
+      "HAMMER: GRABBED";
 
   } else {
 
-    /* slow falling */
-    velocityY += 220 * dt;
-  }
-
-  y += velocityY * dt;
-
-  /* BOUNDS */
-
-  const width = route.clientWidth;
-
-  x = Math.max(30, Math.min(width - 30, x));
-
-  y = Math.max(80, Math.min(WORLD_HEIGHT - 100, y));
-
-  /* STAMINA */
-
-  if (!keys.up) {
-    stamina += 18 * dt;
-  }
-
-  stamina = Math.max(0, Math.min(100, stamina));
-
-  staminaFill.style.width = `${stamina}%`;
-
-  /* HEIGHT */
-
-  height = Math.max(
-    0,
-    Math.floor(
-      ((WORLD_HEIGHT - y) /
-      (WORLD_HEIGHT - SUMMIT)) * SUMMIT
-    )
-  );
-
-  height = Math.min(SUMMIT, height);
-
-  heightValue.textContent = height;
-
-  /* CAMERA FOLLOW */
-
-  const screenHeight = window.innerHeight;
-
-  const desiredCamera =
-    y - screenHeight * 0.58;
-
-  cameraY +=
-    (desiredCamera - cameraY) *
-    Math.min(1, dt * 7);
-
-  cameraY = Math.max(
-    0,
-    Math.min(
-      WORLD_HEIGHT - screenHeight,
-      cameraY
-    )
-  );
-
-  world.style.transform =
-    `translate3d(0, ${-cameraY}px, 0)`;
-
-  /* PLAYER */
-
-  player.style.left =
-    `${(window.innerWidth - route.clientWidth) / 2 + x - 38}px`;
-
-  player.style.top =
-    `${y - 55}px`;
-
-  /* SUMMIT */
-
-  if (y <= SUMMIT) {
-    finishGame();
+    document.getElementById(
+      "status"
+    ).textContent =
+      "HAMMER: MISSED";
   }
 }
 
-/* LOOP */
-function loop(now) {
+/* =========================================================
+   CLIMB FORCE
+========================================================= */
 
-  if (!running) return;
+const previousPlayer =
+  new THREE.Vector3();
+
+function applyClimbForce() {
+
+  if (
+    !mouseDown ||
+    !grabbedGrip
+  ) return;
+
+  const tipPosition =
+    getTipWorldPosition();
+
+  /*
+    Pull the player toward the opposite
+    direction of hammer movement.
+
+    This is the foundation of the
+    Getting Over It style mechanic.
+  */
+
+  const hammerMovement =
+    hammer.position
+      .clone()
+      .sub(lastHammerPosition);
+
+  if (
+    hammerMovement.lengthSq() >
+    0.000001
+  ) {
+
+    const impulse =
+      hammerMovement
+        .clone()
+        .multiplyScalar(-7.5);
+
+    playerBody.applyImpulse(
+      new CANNON.Vec3(
+        impulse.x,
+        impulse.y,
+        0
+      ),
+      playerBody.position
+    );
+  }
+
+  /* spring toward actual grip */
+
+  const anchor =
+    grabbedGrip.position;
+
+  const playerPos =
+    playerBody.position;
+
+  const dx =
+    anchor.x - playerPos.x;
+
+  const dy =
+    anchor.y - playerPos.y;
+
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
+
+  if (
+    distance > 2
+  ) {
+
+    const strength =
+      Math.min(
+        distance * 3,
+        12
+      );
+
+    playerBody.applyForce(
+      new CANNON.Vec3(
+        dx * strength,
+        dy * strength,
+        0
+      ),
+      playerBody.position
+    );
+  }
+
+  lastHammerPosition.copy(
+    hammer.position
+  );
+}
+
+/* =========================================================
+   PLAYER VISUAL SYNC
+========================================================= */
+
+function syncPlayer() {
+
+  playerGroup.position.set(
+    playerBody.position.x,
+    playerBody.position.y,
+    playerBody.position.z
+  );
+
+  playerGroup.quaternion.set(
+    playerBody.quaternion.x,
+    playerBody.quaternion.y,
+    playerBody.quaternion.z,
+    playerBody.quaternion.w
+  );
+}
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+const cameraTarget =
+  new THREE.Vector3();
+
+function updateCamera() {
+
+  cameraTarget.set(
+    playerBody.position.x,
+    playerBody.position.y + 1.5,
+    15
+  );
+
+  camera.position.lerp(
+    cameraTarget,
+    .06
+  );
+
+  camera.lookAt(
+    playerBody.position.x,
+    playerBody.position.y + 1,
+    0
+  );
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+let running = false;
+
+document.getElementById(
+  "startBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    document.getElementById(
+      "start"
+    ).classList.add("hidden");
+
+    running = true;
+  }
+);
+
+/* =========================================================
+   LOOP
+========================================================= */
+
+const clock =
+  new THREE.Clock();
+
+function animate() {
+
+  requestAnimationFrame(
+    animate
+  );
 
   const dt =
-    Math.min(0.033, (now - lastTime) / 1000);
+    Math.min(
+      clock.getDelta(),
+      .033
+    );
 
-  lastTime = now;
+  if (running) {
 
-  update(dt);
+    updateHammer();
 
-  requestAnimationFrame(loop);
+    applyClimbForce();
+
+    world.step(
+      1 / 60,
+      dt,
+      3
+    );
+
+    syncPlayer();
+
+    updateCamera();
+
+    /* keep player from drifting into deep Z */
+
+    playerBody.position.z =
+      THREE.MathUtils.lerp(
+        playerBody.position.z,
+        2,
+        .08
+      );
+
+    /* reset if player falls */
+
+    if (
+      playerBody.position.y < -12
+    ) {
+
+      playerBody.position.set(
+        0,
+        1.2,
+        2
+      );
+
+      playerBody.velocity.set(
+        0,
+        0,
+        0
+      );
+
+      playerBody.angularVelocity.set(
+        0,
+        0,
+        0
+      );
+    }
+  }
+
+  renderer.render(
+    scene,
+    camera
+  );
 }
 
-/* FINISH */
-function finishGame() {
+animate();
 
-  running = false;
+/* =========================================================
+   RESIZE
+========================================================= */
 
-  finalHeight.textContent = height;
+window.addEventListener(
+  "resize",
+  () => {
 
-  gameOver.classList.remove("hidden");
-}
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
 
-/* BUTTONS */
-document.getElementById("startBtn")
-  .addEventListener("click", startGame);
+    camera.updateProjectionMatrix();
 
-document.getElementById("restartBtn")
-  .addEventListener("click", startGame);
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+  }
+);
+
 </script>
 
 </body>
