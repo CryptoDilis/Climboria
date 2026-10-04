@@ -2,303 +2,475 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Climboria — Genesis Summit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLIMBOUND — Genesis Summit</title>
 
 <style>
-*{box-sizing:border-box}
-html,body{
-  margin:0;width:100%;height:100%;overflow:hidden;
-  background:#07121e;color:#fff;
-  font-family:Arial,sans-serif;
-}
-#game{
-  position:relative;width:100vw;height:100vh;
-  overflow:hidden;
-  background:linear-gradient(#071b32 0%,#174b6b 55%,#9bc3d0 100%);
-}
-#world{
-  position:absolute;
-  width:100%;
-  height:100%;
-  left:0;
-  top:0;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* SKY */
-.sun{
-  position:absolute;
-  width:90px;height:90px;border-radius:50%;
-  background:#fff1a8;
-  right:10%;top:9%;
-  box-shadow:0 0 60px #ffe98a;
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #07111d;
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
 }
 
-/* MOUNTAIN WALL */
-#mountain{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  top:0;
-  width:min(760px,88vw);
-  height:9000px;
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   background:
-    linear-gradient(105deg,rgba(255,255,255,.08),transparent 30%),
-    linear-gradient(75deg,rgba(0,0,0,.18),transparent 45%),
-    #334d59;
-  clip-path:polygon(
-    13% 0,87% 0,
-    96% 4%,91% 10%,96% 16%,90% 23%,
-    95% 30%,88% 38%,94% 45%,87% 52%,
-    94% 60%,88% 68%,94% 76%,87% 84%,
-    94% 92%,88% 100%,
-    12% 100%,6% 92%,13% 84%,6% 76%,
-    12% 68%,6% 60%,13% 52%,6% 45%,
-    12% 38%,5% 30%,11% 23%,4% 16%,
-    10% 10%,4% 4%
+    radial-gradient(circle at 50% 20%, #294d70 0%, #102238 38%, #050b13 100%);
+}
+
+/* CAMERA WORLD */
+#camera {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#world {
+  position: absolute;
+  width: 100%;
+  height: 9000px;
+  left: 0;
+  top: 0;
+  transition: transform 0.04s linear;
+}
+
+/* MOUNTAIN */
+#mountain {
+  position: absolute;
+  width: min(760px, 86vw);
+  height: 9000px;
+  left: 50%;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(
+      90deg,
+      #172839 0%,
+      #263e53 28%,
+      #344f66 50%,
+      #243b50 72%,
+      #142534 100%
+    );
+  clip-path: polygon(
+    17% 100%,
+    8% 85%,
+    15% 73%,
+    6% 61%,
+    17% 49%,
+    9% 37%,
+    20% 25%,
+    12% 14%,
+    25% 0%,
+    75% 0%,
+    88% 14%,
+    80% 25%,
+    91% 37%,
+    83% 49%,
+    94% 61%,
+    85% 73%,
+    92% 85%,
+    83% 100%
   );
+  box-shadow: 0 0 80px rgba(0,0,0,.6);
 }
 
-/* SNOW CAP */
-#snow{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  top:0;
-  width:min(760px,88vw);
-  height:900px;
-  background:#edf7fa;
-  clip-path:polygon(
-    15% 0,85% 0,88% 12%,78% 20%,84% 31%,
-    70% 42%,76% 53%,62% 62%,69% 74%,
-    54% 84%,58% 100%,42% 100%,46% 84%,
-    31% 74%,38% 62%,24% 53%,30% 42%,
-    16% 31%,22% 20%,12% 12%
+/* SNOW */
+#snow {
+  position: absolute;
+  width: min(760px, 86vw);
+  height: 9000px;
+  left: 50%;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(
+      110deg,
+      transparent 0 18%,
+      rgba(255,255,255,.16) 18% 24%,
+      transparent 24% 45%,
+      rgba(255,255,255,.10) 45% 51%,
+      transparent 51% 72%,
+      rgba(255,255,255,.13) 72% 78%,
+      transparent 78%
+    );
+  clip-path: polygon(
+    25% 0,
+    75% 0,
+    67% 8%,
+    58% 15%,
+    67% 23%,
+    55% 31%,
+    63% 40%,
+    50% 48%,
+    59% 58%,
+    46% 67%,
+    56% 76%,
+    43% 85%,
+    52% 94%,
+    45% 100%,
+    55% 100%,
+    0 100%,
+    10% 85%,
+    6% 70%,
+    16% 55%,
+    8% 40%,
+    18% 25%,
+    12% 12%
   );
-  opacity:.9;
+  opacity: .5;
 }
 
-/* CLIMBING AREA */
-#route{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  width:min(620px,72vw);
-  height:9000px;
+/* ROUTE */
+#route {
+  position: absolute;
+  width: min(620px, 72vw);
+  height: 9000px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-/* HANDHOLD */
-.hold{
-  position:absolute;
-  width:30px;height:22px;
-  border-radius:45% 55% 40% 60%;
-  background:#a86d42;
-  border:3px solid #4e3424;
-  box-shadow:0 5px 0 rgba(0,0,0,.22);
-}
-.hold.small{
-  width:23px;height:17px;
-}
-.hold.ice{
-  background:#75cde2;
-  border-color:#326b7b;
+/* GRIPS */
+.grip {
+  position: absolute;
+  width: 28px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(#e7c878, #8f6b27);
+  box-shadow:
+    0 0 8px rgba(255,205,80,.35),
+    inset 0 2px 2px rgba(255,255,255,.3);
+  transform: rotate(-15deg);
 }
 
-/* CHECKPOINT */
-.flag{
-  position:absolute;
-  width:6px;height:65px;
-  background:#241d18;
-}
-.flag:after{
-  content:"";
-  position:absolute;
-  left:5px;top:0;
-  border-top:18px solid #ffcf45;
-  border-right:28px solid transparent;
+.grip::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  left: 9px;
+  top: 5px;
+  border-radius: 50%;
+  background: #263b4c;
 }
 
-/* RESOURCE */
-.crystal{
-  position:absolute;
-  width:20px;height:28px;
-  background:#5de7ff;
-  clip-path:polygon(50% 0,100% 35%,78% 100%,22% 100%,0 35%);
-  filter:drop-shadow(0 0 10px #52ddff);
+/* SUMMIT */
+#summit {
+  position: absolute;
+  width: min(620px, 72vw);
+  height: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 20px;
+  border: 3px solid rgba(255,216,90,.9);
+  background: linear-gradient(
+    rgba(255,215,70,.22),
+    rgba(255,215,70,.04)
+  );
+  box-shadow: 0 0 45px rgba(255,215,70,.2);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 25px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #ffe98a;
 }
 
 /* PLAYER */
-#player{
-  position:absolute;
-  width:42px;height:62px;
-  z-index:50;
-  transition:transform .06s linear;
-}
-.body{
-  position:absolute;
-  left:9px;top:22px;
-  width:25px;height:30px;
-  background:#e35d3f;
-  border:3px solid #53271d;
-  border-radius:8px;
-}
-.head{
-  position:absolute;
-  left:9px;top:0;
-  width:24px;height:24px;
-  background:#e9b78c;
-  border:3px solid #42281c;
-  border-radius:50%;
-}
-.helmet{
-  position:absolute;
-  left:5px;top:-3px;
-  width:32px;height:13px;
-  background:#f0c83e;
-  border:3px solid #6b5415;
-  border-radius:15px 15px 5px 5px;
-}
-.arm{
-  position:absolute;
-  width:25px;height:8px;
-  background:#e9b78c;
-  border:2px solid #42281c;
-  border-radius:8px;
-  top:27px;
-}
-.arm.l{left:-10px;transform:rotate(-30deg)}
-.arm.r{right:-10px;transform:rotate(30deg)}
-.leg{
-  position:absolute;
-  width:9px;height:20px;
-  background:#172433;
-  top:50px;border-radius:7px;
-}
-.leg.l{left:9px}
-.leg.r{right:9px}
-
-/* HUD */
-#hud{
-  position:fixed;
-  z-index:100;
-  left:16px;right:16px;top:16px;
-  display:flex;
-  justify-content:space-between;
-  pointer-events:none;
-}
-.panel{
-  background:rgba(5,12,20,.82);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:14px;
-  padding:12px 15px;
-  backdrop-filter:blur(8px);
-}
-.logo{
-  font-weight:900;
-  letter-spacing:3px;
-}
-.sub{
-  font-size:11px;
-  opacity:.65;
-  margin-top:4px;
-}
-.bar{
-  width:170px;height:10px;
-  background:#17222d;
-  border-radius:10px;
-  overflow:hidden;
-  margin-top:4px;
-}
-#stamina{
-  height:100%;
-  width:100%;
-  background:#63e6be;
-}
-#progress{
-  height:100%;
-  width:0%;
-  background:#f0c85b;
+#player {
+  position: absolute;
+  width: 76px;
+  height: 105px;
+  z-index: 20;
+  pointer-events: none;
 }
 
-/* CENTER MESSAGE */
-#notice{
-  position:fixed;
-  z-index:120;
-  left:50%;top:25%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.72);
-  padding:12px 22px;
-  border-radius:30px;
-  opacity:0;
-  transition:.3s;
+/* POT */
+#pot {
+  position: absolute;
+  width: 58px;
+  height: 48px;
+  left: 8px;
+  top: 43px;
+  background: linear-gradient(145deg, #d5d9dd, #727a82 60%, #424950);
+  border-radius: 8px 8px 24px 24px;
+  border: 3px solid #252b30;
+  box-shadow:
+    inset 0 5px 5px rgba(255,255,255,.25),
+    0 5px 10px rgba(0,0,0,.5);
 }
 
-/* START */
-.overlay{
-  position:fixed;
-  inset:0;
-  z-index:200;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(2,7,13,.72);
-  backdrop-filter:blur(6px);
+#pot::before {
+  content: "";
+  position: absolute;
+  width: 63px;
+  height: 13px;
+  left: -5px;
+  top: -6px;
+  border-radius: 50%;
+  background: #8d969e;
+  border: 3px solid #252b30;
 }
-.card{
-  width:min(470px,90vw);
-  padding:38px;
-  text-align:center;
-  border-radius:24px;
-  background:rgba(7,17,29,.95);
-  border:1px solid rgba(255,255,255,.15);
+
+#pot::after {
+  content: "";
+  position: absolute;
+  width: 25px;
+  height: 12px;
+  left: 13px;
+  bottom: 7px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.18);
 }
-h1{
-  font-size:44px;
-  letter-spacing:5px;
-  margin:0 0 5px;
+
+/* HEAD */
+#head {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  left: 20px;
+  top: 14px;
+  border-radius: 50%;
+  background: #e9b88e;
+  border: 3px solid #573b2c;
+  z-index: 3;
 }
-.gold{color:#f0c85b}
-button{
-  margin-top:20px;
-  padding:15px 30px;
-  border:0;
-  border-radius:12px;
-  background:#f0c85b;
-  color:#17120b;
-  font-weight:900;
-  font-size:16px;
-  cursor:pointer;
+
+#head::before {
+  content: "";
+  position: absolute;
+  width: 38px;
+  height: 13px;
+  left: -5px;
+  top: -5px;
+  border-radius: 50% 50% 20% 20%;
+  background: #30343a;
 }
-.controls{
-  margin-top:20px;
-  line-height:1.8;
-  color:#b8c6d2;
-  font-size:13px;
+
+/* BODY */
+#body {
+  position: absolute;
+  width: 24px;
+  height: 27px;
+  left: 25px;
+  top: 42px;
+  border-radius: 8px;
+  background: #c46b32;
+  border: 2px solid #613719;
+  z-index: 2;
 }
-.hidden{display:none}
+
+/* HAMMER */
+#hammer {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  left: 25px;
+  top: 18px;
+  transform-origin: 10px 80px;
+  transform: rotate(-48deg);
+  z-index: 10;
+}
+
+#hammerHandle {
+  position: absolute;
+  width: 9px;
+  height: 76px;
+  left: 9px;
+  top: 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #6f4528, #d29a57, #65401f);
+  box-shadow: 2px 3px 4px rgba(0,0,0,.4);
+}
+
+#hammerHead {
+  position: absolute;
+  width: 38px;
+  height: 22px;
+  left: -5px;
+  top: 2px;
+  border-radius: 5px;
+  background: linear-gradient(#9ca5ac, #4c555d);
+  border: 3px solid #252a2e;
+}
+
+/* UI */
+#hud {
+  position: fixed;
+  z-index: 100;
+  left: 18px;
+  right: 18px;
+  top: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.panel {
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  background: rgba(5,12,20,.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+}
+
+.title {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #9fb7cc;
+}
+
+.value {
+  font-size: 21px;
+  font-weight: 900;
+  margin-top: 3px;
+}
+
+#heightValue {
+  color: #ffd95c;
+}
+
+#staminaBar {
+  width: 150px;
+  height: 8px;
+  margin-top: 7px;
+  background: #182432;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+#staminaFill {
+  width: 100%;
+  height: 100%;
+  background: #6de29a;
+  transition: width .1s linear;
+}
+
+#instructions {
+  position: fixed;
+  z-index: 100;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: #aabed0;
+  font-size: 13px;
+  background: rgba(4,10,17,.72);
+  padding: 10px 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+#startScreen,
+#gameOver {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(3,8,14,.86);
+  backdrop-filter: blur(8px);
+}
+
+.modal {
+  width: min(440px, 90vw);
+  text-align: center;
+  padding: 35px 25px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(13,25,39,.94);
+  box-shadow: 0 30px 100px rgba(0,0,0,.5);
+}
+
+.logo {
+  font-size: 42px;
+  font-weight: 1000;
+  letter-spacing: 8px;
+}
+
+.subtitle {
+  margin-top: 10px;
+  color: #9eb3c7;
+  letter-spacing: 3px;
+}
+
+button {
+  margin-top: 25px;
+  padding: 15px 28px;
+  border: 0;
+  border-radius: 12px;
+  background: #e6b93d;
+  color: #101820;
+  font-weight: 900;
+  letter-spacing: 2px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #ffd75d;
+}
+
+.hidden {
+  display: none !important;
+}
 
 /* MOBILE */
-#touch{
-  display:none;
-  position:fixed;
-  bottom:20px;
-  left:20px;right:20px;
-  z-index:150;
-  justify-content:space-between;
+#mobileControls {
+  position: fixed;
+  z-index: 150;
+  left: 15px;
+  right: 15px;
+  bottom: 65px;
+  display: none;
+  justify-content: space-between;
+  pointer-events: none;
 }
-.touchBtn{
-  width:70px;height:60px;
-  border-radius:16px;
-  background:rgba(0,0,0,.55);
-  color:white;
-  border:1px solid #ffffff33;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:25px;
+
+.mobileGroup {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
 }
-@media(max-width:700px){
-  #touch{display:flex}
+
+.mobileBtn {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  background: rgba(10,20,30,.78);
+  color: white;
+  border: 1px solid rgba(255,255,255,.2);
+  font-size: 22px;
+}
+
+@media (max-width: 700px) {
+  #mobileControls {
+    display: flex;
+  }
+
+  #instructions {
+    display: none;
+  }
+
+  .logo {
+    font-size: 32px;
+  }
 }
 </style>
 </head>
@@ -307,562 +479,417 @@ button{
 
 <div id="game">
 
-<div class="sun"></div>
+  <div id="camera">
+    <div id="world">
 
-<div id="world">
-  <div id="mountain"></div>
-  <div id="snow"></div>
-  <div id="route"></div>
+      <div id="mountain"></div>
+      <div id="snow"></div>
 
-  <div id="player">
-    <div class="helmet"></div>
-    <div class="head"></div>
-    <div class="body"></div>
-    <div class="arm l"></div>
-    <div class="arm r"></div>
-    <div class="leg l"></div>
-    <div class="leg r"></div>
+      <div id="summit">
+        SUMMIT
+      </div>
+
+      <div id="route"></div>
+
+      <div id="player">
+        <div id="head"></div>
+        <div id="body"></div>
+        <div id="pot"></div>
+
+        <div id="hammer">
+          <div id="hammerHead"></div>
+          <div id="hammerHandle"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<div id="hud">
+  <div id="hud">
 
-  <div class="panel">
-    <div class="logo">🏔️ CLIMBORIA</div>
-    <div class="sub">GENESIS SUMMIT • EXPEDITION 01</div>
-  </div>
+    <div class="panel">
+      <div class="title">CLIMBOUND</div>
+      <div class="value">GENESIS SUMMIT</div>
+    </div>
 
-  <div class="panel">
-
-    <div>
-      STAMINA
-      <div class="bar">
-        <div id="stamina"></div>
+    <div class="panel">
+      <div class="title">HEIGHT</div>
+      <div class="value">
+        <span id="heightValue">0</span>m
       </div>
     </div>
 
-    <div style="margin-top:8px">
-      SUMMIT
-      <div class="bar">
-        <div id="progress"></div>
+    <div class="panel">
+      <div class="title">STAMINA</div>
+      <div id="staminaBar">
+        <div id="staminaFill"></div>
       </div>
     </div>
 
-    <div class="sub">
-      HEIGHT: <span id="height">0</span>m
-      &nbsp; • &nbsp;
-      CRYSTALS: <span id="crystals">0</span>
+  </div>
+
+  <div id="instructions">
+    A / D or ← / → Move &nbsp; • &nbsp;
+    W / ↑ Climb &nbsp; • &nbsp;
+    Shift = Boost
+  </div>
+
+  <div id="mobileControls">
+    <div class="mobileGroup">
+      <button class="mobileBtn" id="leftBtn">←</button>
+      <button class="mobileBtn" id="rightBtn">→</button>
     </div>
 
-  </div>
-</div>
-
-<div id="notice"></div>
-
-<div id="start" class="overlay">
-  <div class="card">
-    <h1>CLIMBORIA</h1>
-    <div class="gold">GENESIS SUMMIT</div>
-
-    <p>
-      The mountain is the game.
-    </p>
-
-    <p>
-      Climb from the base all the way to the summit.
-    </p>
-
-    <button onclick="startGame()">BEGIN EXPEDITION</button>
-
-    <div class="controls">
-      <b>A / D</b> or <b>← / →</b> — move<br>
-      <b>W / S</b> or <b>↑ / ↓</b> — climb / descend<br>
-      <b>SHIFT</b> — powerful climb<br>
-      Grab handholds and crystals.<br>
-      Reach the golden summit flag.
+    <div class="mobileGroup">
+      <button class="mobileBtn" id="upBtn">↑</button>
     </div>
   </div>
-</div>
 
-<div id="touch">
-  <div class="touchBtn" id="leftBtn">←</div>
-  <div class="touchBtn" id="upBtn">↑</div>
-  <div class="touchBtn" id="downBtn">↓</div>
-  <div class="touchBtn" id="rightBtn">→</div>
-</div>
+  <div id="startScreen">
+    <div class="modal">
+      <div class="logo">CLIMBOUND</div>
+      <div class="subtitle">GENESIS SUMMIT</div>
+      <p style="margin-top:20px;color:#a8b8c8;line-height:1.6;">
+        The mountain is waiting.<br>
+        Climb higher. Reach the summit.
+      </p>
+      <button id="startBtn">BEGIN EXPEDITION</button>
+    </div>
+  </div>
+
+  <div id="gameOver" class="hidden">
+    <div class="modal">
+      <div class="logo" style="font-size:30px;">EXPEDITION ENDED</div>
+      <div class="subtitle">
+        HEIGHT: <span id="finalHeight">0</span>m
+      </div>
+      <button id="restartBtn">TRY AGAIN</button>
+    </div>
+  </div>
 
 </div>
 
 <script>
+const world = document.getElementById("world");
+const route = document.getElementById("route");
+const player = document.getElementById("player");
+const hammer = document.getElementById("hammer");
 
-const route=document.getElementById("route");
-const player=document.getElementById("player");
-const world=document.getElementById("world");
+const heightValue = document.getElementById("heightValue");
+const staminaFill = document.getElementById("staminaFill");
 
-const staminaBar=document.getElementById("stamina");
-const progressBar=document.getElementById("progress");
-const heightText=document.getElementById("height");
-const crystalText=document.getElementById("crystals");
+const startScreen = document.getElementById("startScreen");
+const gameOver = document.getElementById("gameOver");
+const finalHeight = document.getElementById("finalHeight");
 
-const start=document.getElementById("start");
-const notice=document.getElementById("notice");
+const SUMMIT = 8500;
+const WORLD_HEIGHT = 9000;
 
-const WORLD_HEIGHT=9000;
-const SUMMIT_HEIGHT=8500;
+let running = false;
+let lastTime = 0;
 
-let running=false;
-let x=0;
-let y=0;
+let x = 0;
+let y = WORLD_HEIGHT - 180;
 
-let camera=0;
-let stamina=100;
-let crystals=0;
+let velocityY = 0;
+let cameraY = 0;
 
-let velocityX=0;
-let velocityY=0;
+let stamina = 100;
+let height = 0;
 
-let holds=[];
-let crystalObjects=[];
+let keys = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  boost: false
+};
 
-let keys={};
-let last=0;
+let grips = [];
 
-function rand(a,b){
-  return Math.random()*(b-a)+a;
-}
+/* BUILD HANDHOLDS */
+function buildGrips() {
+  route.innerHTML = "";
+  grips = [];
 
-/* BUILD THE MOUNTAIN */
+  let currentY = WORLD_HEIGHT - 220;
 
-function buildRoute(){
+  while (currentY > 170) {
 
-  route.innerHTML="";
-  holds=[];
-  crystalObjects=[];
+    const center = route.clientWidth / 2;
 
-  const width=route.getBoundingClientRect().width;
+    const spread =
+      Math.sin(currentY * 0.018) * 150 +
+      Math.sin(currentY * 0.047) * 70;
 
-  /*
-    Instead of platforms, we create handholds.
-    They form a continuous zig-zag climbing route.
-  */
+    const gx = center + spread;
 
-  let lastX=width/2;
-  let y=120;
+    const grip = document.createElement("div");
 
-  while(y<SUMMIT_HEIGHT){
+    grip.className = "grip";
 
-    lastX += rand(-110,110);
+    grip.style.left = `${gx}px`;
+    grip.style.top = `${currentY}px`;
 
-    lastX=Math.max(50,Math.min(width-50,lastX));
+    route.appendChild(grip);
 
-    const hold=document.createElement("div");
-
-    hold.className=
-      Math.random()<.18 ? "hold ice" : "hold";
-
-    hold.style.left=lastX+"px";
-    hold.style.top=y+"px";
-
-    route.appendChild(hold);
-
-    holds.push({
-      x:lastX,
-      y:y,
-      el:hold
+    grips.push({
+      x: gx,
+      y: currentY,
+      element: grip
     });
 
-    /* second handhold nearby */
-
-    if(Math.random()<.72){
-
-      const side=lastX<width/2 ? 1 : -1;
-
-      const x2=Math.max(
-        35,
-        Math.min(
-          width-35,
-          lastX+side*rand(45,90)
-        )
-      );
-
-      const h2=document.createElement("div");
-
-      h2.className=
-        Math.random()<.15 ? "hold ice small" : "hold small";
-
-      h2.style.left=x2+"px";
-      h2.style.top=(y+rand(35,60))+"px";
-
-      route.appendChild(h2);
-
-      holds.push({
-        x:x2,
-        y:y+rand(35,60),
-        el:h2
-      });
-    }
-
-    /* crystal */
-
-    if(Math.random()<.18){
-
-      const c=document.createElement("div");
-
-      c.className="crystal";
-
-      c.style.left=
-        Math.max(25,Math.min(width-25,lastX+rand(-35,35)))+"px";
-
-      c.style.top=(y+rand(-20,20))+"px";
-
-      route.appendChild(c);
-
-      crystalObjects.push({
-        x:parseFloat(c.style.left),
-        y:parseFloat(c.style.top),
-        el:c,
-        collected:false
-      });
-    }
-
-    y+=rand(75,115);
+    currentY -= 145 + Math.random() * 85;
   }
-
-  /* SUMMIT */
-
-  const summit=document.createElement("div");
-
-  summit.style.position="absolute";
-  summit.style.left=(width/2-70)+"px";
-  summit.style.top=(SUMMIT_HEIGHT-50)+"px";
-  summit.style.width="140px";
-  summit.style.height="100px";
-  summit.style.borderRadius="50%";
-  summit.style.background="#f0c85b";
-  summit.style.boxShadow="0 0 60px #f0c85b";
-  summit.style.display="flex";
-  summit.style.alignItems="center";
-  summit.style.justifyContent="center";
-  summit.style.color="#201708";
-  summit.style.fontWeight="900";
-  summit.textContent="SUMMIT";
-
-  route.appendChild(summit);
 }
 
+/* KEYBOARD */
+window.addEventListener("keydown", e => {
+
+  if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+    keys.left = true;
+  }
+
+  if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+    keys.right = true;
+  }
+
+  if (
+    e.key === "ArrowUp" ||
+    e.key.toLowerCase() === "w" ||
+    e.key === " "
+  ) {
+    keys.up = true;
+  }
+
+  if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
+    keys.down = true;
+  }
+
+  if (e.key === "Shift") {
+    keys.boost = true;
+  }
+});
+
+window.addEventListener("keyup", e => {
+
+  if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+    keys.left = false;
+  }
+
+  if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+    keys.right = false;
+  }
+
+  if (
+    e.key === "ArrowUp" ||
+    e.key.toLowerCase() === "w" ||
+    e.key === " "
+  ) {
+    keys.up = false;
+  }
+
+  if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
+    keys.down = false;
+  }
+
+  if (e.key === "Shift") {
+    keys.boost = false;
+  }
+});
+
+/* MOBILE BUTTONS */
+function holdButton(id, key) {
+
+  const btn = document.getElementById(id);
+
+  btn.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    keys[key] = true;
+  });
+
+  btn.addEventListener("pointerup", e => {
+    e.preventDefault();
+    keys[key] = false;
+  });
+
+  btn.addEventListener("pointercancel", () => {
+    keys[key] = false;
+  });
+
+  btn.addEventListener("pointerleave", () => {
+    keys[key] = false;
+  });
+}
+
+holdButton("leftBtn", "left");
+holdButton("rightBtn", "right");
+holdButton("upBtn", "up");
+
 /* START */
+function startGame() {
 
-function startGame(){
+  buildGrips();
 
-  start.classList.add("hidden");
+  const width = route.clientWidth;
 
-  buildRoute();
+  x = width / 2;
+  y = WORLD_HEIGHT - 180;
 
-  const rect=route.getBoundingClientRect();
+  velocityY = 0;
+  cameraY = 0;
 
-  x=rect.width/2;
-  y=route.getBoundingClientRect().height-180;
+  stamina = 100;
+  height = 0;
 
-  camera=0;
+  running = true;
 
-  stamina=100;
-  crystals=0;
+  startScreen.classList.add("hidden");
+  gameOver.classList.add("hidden");
 
-  velocityX=0;
-  velocityY=0;
-
-  running=true;
-
-  last=performance.now();
-
-  showNotice("🏔️ BEGIN THE ASCENT");
+  lastTime = performance.now();
 
   requestAnimationFrame(loop);
 }
 
-/* INPUT */
+/* UPDATE */
+function update(dt) {
 
-window.addEventListener("keydown",e=>{
+  const horizontalSpeed = keys.boost ? 430 : 280;
 
-  keys[e.key.toLowerCase()]=true;
-
-  if(
-    e.key==="ArrowUp" ||
-    e.key==="ArrowDown" ||
-    e.key==="ArrowLeft" ||
-    e.key==="ArrowRight" ||
-    e.code==="Space"
-  ){
-    e.preventDefault();
+  if (keys.left) {
+    x -= horizontalSpeed * dt;
+    hammer.style.transform = "rotate(-72deg)";
   }
 
-});
-
-window.addEventListener("keyup",e=>{
-  keys[e.key.toLowerCase()]=false;
-});
-
-/* MOBILE */
-
-function bindTouch(id,key){
-
-  const b=document.getElementById(id);
-
-  b.addEventListener("touchstart",e=>{
-    e.preventDefault();
-    keys[key]=true;
-  });
-
-  b.addEventListener("touchend",e=>{
-    e.preventDefault();
-    keys[key]=false;
-  });
-}
-
-bindTouch("leftBtn","arrowleft");
-bindTouch("rightBtn","arrowright");
-bindTouch("upBtn","arrowup");
-bindTouch("downBtn","arrowdown");
-
-/* NOTICE */
-
-function showNotice(t){
-
-  notice.textContent=t;
-  notice.style.opacity=1;
-
-  setTimeout(()=>{
-    notice.style.opacity=0;
-  },1500);
-}
-
-/* GAME UPDATE */
-
-function update(dt){
-
-  /*
-    Horizontal movement.
-    The player can move across the mountain wall.
-  */
-
-  const horizontalSpeed=
-    keys["shift"] ? 330 : 220;
-
-  if(keys["a"]||keys["arrowleft"]){
-    velocityX=-horizontalSpeed;
-  }
-  else if(keys["d"]||keys["arrowright"]){
-    velocityX=horizontalSpeed;
-  }
-  else{
-    velocityX*=0.82;
+  if (keys.right) {
+    x += horizontalSpeed * dt;
+    hammer.style.transform = "rotate(-25deg)";
   }
 
-  x+=velocityX*dt;
-
-  const routeWidth=route.getBoundingClientRect().width;
-
-  x=Math.max(20,Math.min(routeWidth-20,x));
-
-  /*
-    CLIMBING
-
-    Unlike the previous version:
-    pressing UP actually moves the character upward
-    continuously instead of jumping.
-  */
-
-  let climbing=false;
-
-  if(keys["w"]||keys["arrowup"]||keys[" "]){
-    if(stamina>0){
-      velocityY=-145;
-      climbing=true;
-    }
+  if (!keys.left && !keys.right) {
+    hammer.style.transform = "rotate(-48deg)";
   }
 
-  if(keys["shift"] && climbing){
-    velocityY=-235;
-    stamina-=24*dt;
-  }
-  else if(climbing){
-    stamina-=13*dt;
-  }
+  /* CLIMB */
+  if (keys.up && stamina > 0) {
 
-  /*
-    DOWN lets player retreat.
-  */
+    velocityY = keys.boost ? -330 : -210;
 
-  if(keys["s"]||keys["arrowdown"]){
-    velocityY=110;
-  }
+    stamina -= (keys.boost ? 20 : 12) * dt;
 
-  /*
-    If not climbing, slowly slide downward.
-    This creates pressure to keep finding handholds.
-  */
+  } else if (keys.down) {
 
-  if(!climbing && !(keys["s"]||keys["arrowdown"])){
-    velocityY=35;
+    velocityY = 170;
+
+  } else {
+
+    /* slow falling */
+    velocityY += 220 * dt;
   }
 
-  y+=velocityY*dt;
+  y += velocityY * dt;
 
-  /*
-    Bounds.
-  */
+  /* BOUNDS */
 
-  y=Math.max(40,Math.min(route.getBoundingClientRect().height-80,y));
+  const width = route.clientWidth;
 
-  /*
-    Stamina regeneration when resting.
-  */
+  x = Math.max(30, Math.min(width - 30, x));
 
-  if(!climbing){
-    stamina+=18*dt;
+  y = Math.max(80, Math.min(WORLD_HEIGHT - 100, y));
+
+  /* STAMINA */
+
+  if (!keys.up) {
+    stamina += 18 * dt;
   }
 
-  stamina=Math.max(0,Math.min(100,stamina));
+  stamina = Math.max(0, Math.min(100, stamina));
 
-  /*
-    Collect crystals.
-  */
+  staminaFill.style.width = `${stamina}%`;
 
-  for(const c of crystalObjects){
+  /* HEIGHT */
 
-    if(c.collected)continue;
+  height = Math.max(
+    0,
+    Math.floor(
+      ((WORLD_HEIGHT - y) /
+      (WORLD_HEIGHT - SUMMIT)) * SUMMIT
+    )
+  );
 
-    const dx=x-c.x;
-    const dy=y-c.y;
+  height = Math.min(SUMMIT, height);
 
-    if(Math.sqrt(dx*dx+dy*dy)<45){
+  heightValue.textContent = height;
 
-      c.collected=true;
-      c.el.remove();
+  /* CAMERA FOLLOW */
 
-      crystals++;
+  const screenHeight = window.innerHeight;
 
-      crystalText.textContent=crystals;
+  const desiredCamera =
+    y - screenHeight * 0.58;
 
-      showNotice("+1 SUMMIT CRYSTAL");
-    }
-  }
+  cameraY +=
+    (desiredCamera - cameraY) *
+    Math.min(1, dt * 7);
 
-  /*
-    Height.
+  cameraY = Math.max(
+    0,
+    Math.min(
+      WORLD_HEIGHT - screenHeight,
+      cameraY
+    )
+  );
 
-    Bottom = 0
-    Top = SUMMIT_HEIGHT
-  */
+  world.style.transform =
+    `translate3d(0, ${-cameraY}px, 0)`;
 
-  const routeHeight=route.getBoundingClientRect().height;
+  /* PLAYER */
 
-  const height=
-    Math.max(
-      0,
-      Math.floor(
-        ((routeHeight-y)/(routeHeight-SUMMIT_HEIGHT+100))*8500
-      )
-    );
+  player.style.left =
+    `${route.offsetLeft + x - 38}px`;
 
-  heightText.textContent=height;
+  player.style.top =
+    `${y - 55}px`;
 
-  const progress=
-    Math.max(
-      0,
-      Math.min(100,height/SUMMIT_HEIGHT*100)
-    );
+  /* SUMMIT */
 
-  progressBar.style.width=progress+"%";
-  staminaBar.style.width=stamina+"%";
-
-  /*
-    Camera follows player continuously.
-  */
-
-  const target=
-    Math.max(
-      0,
-      Math.min(
-        routeHeight-window.innerHeight,
-        y-window.innerHeight*.55
-      )
-    );
-
-  camera+=(target-camera)*Math.min(1,dt*7);
-
-  world.style.transform=
-    `translateY(${-camera}px)`;
-
-  /*
-    Player position.
-
-    Route is centered, so offset x accordingly.
-  */
-
-  const routeRect=route.getBoundingClientRect();
-
-  player.style.left=
-    (routeRect.left+x-21)+"px";
-
-  player.style.top=
-    (y-camera-31)+"px";
-
-  /*
-    Summit reached.
-  */
-
-  if(y<=SUMMIT_HEIGHT){
-
-    running=false;
-
-    showNotice("🏔️ GENESIS SUMMIT REACHED!");
-
-    setTimeout(()=>{
-
-      alert(
-        "GENESIS SUMMIT CONQUERED!\n\n"+
-        "Height: 8500m\n"+
-        "Crystals: "+crystals
-      );
-
-      location.reload();
-
-    },800);
-  }
-
-  /*
-    Exhaustion.
-  */
-
-  if(stamina<=0){
-
-    stamina=0;
-
-    /*
-      Don't kill the player immediately.
-      Give them a short recovery period.
-    */
-
-    velocityY=65;
+  if (y <= SUMMIT) {
+    finishGame();
   }
 }
 
 /* LOOP */
+function loop(now) {
 
-function loop(t){
+  if (!running) return;
 
-  if(!running)return;
+  const dt =
+    Math.min(0.033, (now - lastTime) / 1000);
 
-  const dt=Math.min(.033,(t-last)/1000);
-
-  last=t;
+  lastTime = now;
 
   update(dt);
 
   requestAnimationFrame(loop);
 }
 
+/* FINISH */
+function finishGame() {
+
+  running = false;
+
+  finalHeight.textContent = height;
+
+  gameOver.classList.remove("hidden");
+}
+
+/* BUTTONS */
+document.getElementById("startBtn")
+  .addEventListener("click", startGame);
+
+document.getElementById("restartBtn")
+  .addEventListener("click", startGame);
 </script>
 
 </body>
