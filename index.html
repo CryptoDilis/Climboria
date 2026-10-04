@@ -49,13 +49,17 @@
       margin-top: 10px;
       padding: 9px 13px;
       display: inline-block;
+      background: rgba(0, 0, 0, .65);
       border-radius: 7px;
-      background: rgba(0,0,0,.65);
-      border: 1px solid rgba(255,255,255,.2);
       font-size: 12px;
     }
 
-    #instructions {
+    #statusText {
+      color: #55ff70;
+      font-weight: bold;
+    }
+
+    #help {
       position: fixed;
       z-index: 10;
       bottom: 20px;
@@ -63,45 +67,46 @@
       transform: translateX(-50%);
       padding: 12px 18px;
       color: white;
-      background: rgba(0,0,0,.7);
+      background: rgba(0, 0, 0, .7);
       border-radius: 9px;
       text-align: center;
       font-size: 13px;
       pointer-events: none;
+      white-space: nowrap;
     }
 
-    #instructions b {
-      color: #52ff6a;
+    #help b {
+      color: #55ff70;
     }
 
     #start {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      z-index: 50;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(2,5,8,.94);
+      background: #05070a;
     }
 
     #panel {
       width: min(90%, 500px);
       padding: 40px;
-      color: white;
       text-align: center;
-      border-radius: 18px;
+      color: white;
       background: #0b1014;
-      border: 1px solid rgba(82,255,106,.35);
+      border: 1px solid rgba(85, 255, 112, .4);
+      border-radius: 18px;
     }
 
     #panel h1 {
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       font-size: 44px;
       letter-spacing: 6px;
     }
 
     #panel p {
-      color: #aeb8bc;
+      color: #aab3b7;
       line-height: 1.6;
       margin-bottom: 25px;
     }
@@ -110,11 +115,15 @@
       padding: 15px 30px;
       border: 0;
       border-radius: 9px;
-      background: #52ff6a;
+      background: #55ff70;
       color: #031006;
       font-weight: 900;
       letter-spacing: 2px;
       cursor: pointer;
+    }
+
+    #startButton:hover {
+      transform: scale(1.03);
     }
   </style>
 </head>
@@ -125,26 +134,32 @@
 
 <div id="hud">
   <div id="title">CLIMBOUND</div>
-  <div id="status">HAMMER: <span id="statusText">FREE</span></div>
+
+  <div id="status">
+    HAMMER:
+    <span id="statusText">FREE</span>
+  </div>
 </div>
 
-<div id="instructions">
+<div id="help">
   Move the mouse to control the <b>HAMMER</b>.<br>
-  Put the hammer on a <b>GREEN GRIP</b> and hold LEFT CLICK.
+  <b>GREEN CIRCLES = HANDHOLDS</b>
 </div>
 
 <div id="start">
   <div id="panel">
+
     <h1>CLIMBOUND</h1>
 
     <p>
       Physics climbing prototype.<br>
-      Grab the green handholds and pull yourself upward.
+      Grab the green handholds and climb the mountain.
     </p>
 
     <button id="startButton">
       START CLIMBING
     </button>
+
   </div>
 </div>
 
@@ -152,7 +167,6 @@
 <script type="module">
 
 import * as THREE from "https://esm.sh/three@0.180.0";
-import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
 
 
 /* =========================================================
@@ -162,16 +176,12 @@ import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
 let scene;
 let camera;
 let renderer;
-let world;
 
 let hero;
-let heroBody;
-
 let hammer;
-let hammerTip;
 
 let running = false;
-let grabbedGrip = null;
+let grabbed = null;
 
 const grips = [];
 
@@ -180,11 +190,9 @@ const mouse = {
   y: 0
 };
 
-const clock = new THREE.Clock();
-
 
 /* =========================================================
-   INITIALIZE
+   INIT
 ========================================================= */
 
 function init() {
@@ -200,7 +208,7 @@ function init() {
     new THREE.Fog(
       0x05080c,
       20,
-      90
+      100
     );
 
 
@@ -209,7 +217,8 @@ function init() {
   camera =
     new THREE.PerspectiveCamera(
       55,
-      window.innerWidth / window.innerHeight,
+      window.innerWidth /
+      window.innerHeight,
       0.1,
       200
     );
@@ -217,7 +226,7 @@ function init() {
   camera.position.set(
     0,
     7,
-    25
+    24
   );
 
 
@@ -229,7 +238,10 @@ function init() {
     });
 
   renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+    Math.min(
+      window.devicePixelRatio,
+      2
+    )
   );
 
   renderer.setSize(
@@ -241,7 +253,9 @@ function init() {
 
   document
     .getElementById("game")
-    .appendChild(renderer.domElement);
+    .appendChild(
+      renderer.domElement
+    );
 
 
   /* LIGHTING */
@@ -249,41 +263,31 @@ function init() {
   const ambient =
     new THREE.HemisphereLight(
       0xffffff,
-      0x11151a,
+      0x111111,
       2.5
     );
 
   scene.add(ambient);
 
 
-  const light =
+  const sun =
     new THREE.DirectionalLight(
       0xffffff,
       3
     );
 
-  light.position.set(
+  sun.position.set(
     -10,
     20,
     20
   );
 
-  light.castShadow = true;
+  sun.castShadow = true;
 
-  scene.add(light);
+  scene.add(sun);
 
 
-  /* PHYSICS */
-
-  world =
-    new CANNON.World();
-
-  world.gravity.set(
-    0,
-    -12,
-    0
-  );
-
+  /* WORLD */
 
   createMountain();
 
@@ -293,10 +297,8 @@ function init() {
 
   createGrips();
 
-  createGround();
 
-
-  /* EVENTS */
+  /* INPUT */
 
   window.addEventListener(
     "mousemove",
@@ -337,29 +339,23 @@ function init() {
 
 function createMountain() {
 
-  const geometry =
-    new THREE.ConeGeometry(
-      25,
-      75,
-      8,
-      8
-    );
-
-  const material =
-    new THREE.MeshStandardMaterial({
-      color: 0x252d33,
-      roughness: 1
-    });
-
   const mountain =
     new THREE.Mesh(
-      geometry,
-      material
+      new THREE.ConeGeometry(
+        25,
+        70,
+        8,
+        8
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x273038,
+        roughness: 1
+      })
     );
 
   mountain.position.set(
     0,
-    35,
+    34,
     -7
   );
 
@@ -367,14 +363,14 @@ function createMountain() {
     0.8;
 
   mountain.rotation.y =
-    0.3;
+    0.25;
 
   mountain.receiveShadow = true;
 
   scene.add(mountain);
 
 
-  /* Rocks */
+  /* ROCKS */
 
   for (
     let i = 0;
@@ -384,22 +380,27 @@ function createMountain() {
 
     const rock =
       new THREE.Mesh(
-        new THREE.DodecahedronGeometry(1),
+        new THREE.DodecahedronGeometry(
+          1,
+          0
+        ),
         new THREE.MeshStandardMaterial({
-          color: 0x161d22,
+          color: 0x161e23,
           roughness: 1
         })
       );
 
     const side =
-      Math.random() > .5
+      Math.random() > 0.5
         ? 1
         : -1;
 
     rock.position.set(
       side *
-        (4 + Math.random() * 9),
+      (4 + Math.random() * 10),
+
       Math.random() * 60,
+
       0
     );
 
@@ -428,34 +429,6 @@ function createMountain() {
 
 function createHero() {
 
-  /*
-     PHYSICS BODY
-  */
-
-  heroBody =
-    new CANNON.Body({
-      mass: 5,
-      shape:
-        new CANNON.Sphere(1),
-      linearDamping: 0.15,
-      angularDamping: 0.5
-    });
-
-  heroBody.position.set(
-    0,
-    1.2,
-    3
-  );
-
-  world.addBody(
-    heroBody
-  );
-
-
-  /*
-     VISUAL HERO
-  */
-
   hero =
     new THREE.Group();
 
@@ -465,14 +438,14 @@ function createHero() {
   const pot =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
-        0.85,
-        1.1,
-        1.35,
+        0.9,
+        1.15,
+        1.4,
         24
       ),
       new THREE.MeshStandardMaterial({
-        color: 0xc8793d,
-        roughness: .75
+        color: 0xc8783c,
+        roughness: 0.75
       })
     );
 
@@ -486,18 +459,18 @@ function createHero() {
   const head =
     new THREE.Mesh(
       new THREE.SphereGeometry(
-        0.58,
+        0.6,
         24,
         24
       ),
       new THREE.MeshStandardMaterial({
-        color: 0xdba17c,
-        roughness: .8
+        color: 0xdca27d,
+        roughness: 0.8
       })
     );
 
   head.position.y =
-    1.0;
+    1.05;
 
   head.castShadow = true;
 
@@ -509,7 +482,7 @@ function createHero() {
   const hat =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
-        0.65,
+        0.68,
         0.5,
         0.25,
         20
@@ -520,32 +493,35 @@ function createHero() {
     );
 
   hat.position.y =
-    1.48;
+    1.5;
 
   hat.castShadow = true;
 
   hero.add(hat);
 
 
-  /*
-     LITTLE EYES
-  */
+  /* EYES */
 
   const eyeMaterial =
     new THREE.MeshBasicMaterial({
       color: 0x111111
     });
 
+
   const eye1 =
     new THREE.Mesh(
-      new THREE.SphereGeometry(.055, 8, 8),
+      new THREE.SphereGeometry(
+        0.06,
+        8,
+        8
+      ),
       eyeMaterial
     );
 
   eye1.position.set(
-    -.18,
+    -0.18,
     1.05,
-    -.54
+    -0.56
   );
 
   hero.add(eye1);
@@ -555,10 +531,18 @@ function createHero() {
     eye1.clone();
 
   eye2.position.x =
-    .18;
+    0.18;
 
   hero.add(eye2);
 
+
+  /* HERO POSITION */
+
+  hero.position.set(
+    0,
+    1.5,
+    2
+  );
 
   scene.add(hero);
 }
@@ -579,13 +563,13 @@ function createHammer() {
   const handle =
     new THREE.Mesh(
       new THREE.CylinderGeometry(
-        .09,
-        .09,
-        3.4,
+        0.09,
+        0.09,
+        3.5,
         12
       ),
       new THREE.MeshStandardMaterial({
-        color: 0x6b3b1f
+        color: 0x704020
       })
     );
 
@@ -600,14 +584,14 @@ function createHammer() {
   const head =
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        .5,
-        .5,
-        1.25
+        0.5,
+        0.5,
+        1.3
       ),
       new THREE.MeshStandardMaterial({
-        color: 0xc7d0d4,
-        metalness: .8,
-        roughness: .2
+        color: 0xc8d0d5,
+        metalness: 0.8,
+        roughness: 0.2
       })
     );
 
@@ -619,10 +603,10 @@ function createHammer() {
 
   /* TIP */
 
-  hammerTip =
+  const tip =
     new THREE.Mesh(
       new THREE.SphereGeometry(
-        .18,
+        0.2,
         16,
         16
       ),
@@ -631,11 +615,19 @@ function createHammer() {
       })
     );
 
-  hammerTip.position.x =
+  tip.position.x =
     2.2;
 
-  hammer.add(
-    hammerTip
+  hammer.add(tip);
+
+  hammer.userData.tip =
+    tip;
+
+
+  hammer.position.set(
+    3,
+    2,
+    3
   );
 
   scene.add(hammer);
@@ -648,7 +640,7 @@ function createHammer() {
 
 function createGrips() {
 
-  const locations = [
+  const positions = [
 
     [-4, 4],
     [2, 6],
@@ -672,28 +664,26 @@ function createGrips() {
   ];
 
 
-  locations.forEach(
+  positions.forEach(
     ([x, y], index) => {
 
       const group =
         new THREE.Group();
 
 
-      /*
-        OUTER GLOW
-      */
+      /* BIG GREEN GLOW */
 
       const glow =
         new THREE.Mesh(
           new THREE.SphereGeometry(
-            1.25,
+            1.2,
             20,
             20
           ),
           new THREE.MeshBasicMaterial({
             color: 0x00ff44,
             transparent: true,
-            opacity: .15,
+            opacity: 0.16,
             depthWrite: false
           })
         );
@@ -701,15 +691,13 @@ function createGrips() {
       group.add(glow);
 
 
-      /*
-        BIG GREEN RING
-      */
+      /* GREEN RING */
 
       const ring =
         new THREE.Mesh(
           new THREE.TorusGeometry(
-            .75,
-            .16,
+            0.75,
+            0.16,
             16,
             32
           ),
@@ -724,60 +712,61 @@ function createGrips() {
       group.add(ring);
 
 
-      /*
-        CENTER
-      */
+      /* GREEN CENTER */
 
       const center =
         new THREE.Mesh(
           new THREE.SphereGeometry(
-            .32,
+            0.32,
             16,
             16
           ),
           new THREE.MeshBasicMaterial({
-            color: 0x8cff9a
+            color: 0x9affaa
           })
         );
 
       group.add(center);
 
 
-      /*
-        CROSS
-      */
+      /* WHITE CROSS */
 
       const crossMaterial =
         new THREE.MeshBasicMaterial({
           color: 0xffffff
         });
 
+
       const horizontal =
         new THREE.Mesh(
           new THREE.BoxGeometry(
             1.8,
-            .08,
-            .08
+            0.08,
+            0.08
           ),
           crossMaterial
         );
 
+
       const vertical =
         new THREE.Mesh(
           new THREE.BoxGeometry(
-            .08,
+            0.08,
             1.8,
-            .08
+            0.08
           ),
           crossMaterial
         );
+
 
       group.add(horizontal);
       group.add(vertical);
 
 
       /*
-        POSITION
+        IMPORTANT:
+        Grips are placed in front
+        of the mountain.
       */
 
       group.position.set(
@@ -791,13 +780,13 @@ function createGrips() {
 
 
       grips.push({
-        group,
-        ring,
-        glow,
-        x,
-        y,
+        group: group,
+        ring: ring,
+        glow: glow,
+        x: x,
+        y: y,
         z: 2,
-        index
+        index: index
       });
 
     }
@@ -806,59 +795,7 @@ function createGrips() {
 
 
 /* =========================================================
-   GROUND
-========================================================= */
-
-function createGround() {
-
-  const body =
-    new CANNON.Body({
-      mass: 0,
-      shape:
-        new CANNON.Box(
-          new CANNON.Vec3(
-            20,
-            1,
-            5
-          )
-        )
-    });
-
-  body.position.set(
-    0,
-    -1.5,
-    0
-  );
-
-  world.addBody(body);
-
-
-  const ground =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        40,
-        2,
-        10
-      ),
-      new THREE.MeshStandardMaterial({
-        color: 0x12181c
-      })
-    );
-
-  ground.position.set(
-    0,
-    -1.5,
-    0
-  );
-
-  ground.receiveShadow = true;
-
-  scene.add(ground);
-}
-
-
-/* =========================================================
-   MOUSE
+   MOUSE MOVEMENT
 ========================================================= */
 
 function mouseMove(event) {
@@ -869,6 +806,7 @@ function mouseMove(event) {
     2 -
     1;
 
+
   mouse.y =
     -(event.clientY /
       window.innerHeight) *
@@ -877,100 +815,102 @@ function mouseMove(event) {
 }
 
 
+/* =========================================================
+   HAMMER MOVEMENT
+========================================================= */
+
 function updateHammer() {
 
-  if (!heroBody)
-    return;
-
-
-  /*
-     Hammer follows mouse
-     around hero.
-  */
-
   const targetX =
-    heroBody.position.x +
+    hero.position.x +
     mouse.x * 6;
 
+
   const targetY =
-    heroBody.position.y +
+    hero.position.y +
     mouse.y * 5;
 
 
   hammer.position.x +=
-    (targetX -
-      hammer.position.x) *
-    .25;
+    (
+      targetX -
+      hammer.position.x
+    ) * 0.22;
+
 
   hammer.position.y +=
-    (targetY -
-      hammer.position.y) *
-    .25;
+    (
+      targetY -
+      hammer.position.y
+    ) * 0.22;
+
 
   hammer.position.z =
     3;
 
 
-  const dx =
-    mouse.x * 6;
-
-  const dy =
-    mouse.y * 5;
-
   hammer.rotation.z =
     -Math.atan2(
-      dy,
-      dx
+      mouse.y * 5,
+      mouse.x * 6
     );
 }
 
 
 /* =========================================================
-   FIND GRIP
+   FIND NEAREST GRIP
 ========================================================= */
 
-function getNearestGrip() {
+function nearestGrip() {
 
   const tip =
     new THREE.Vector3();
 
-  hammerTip.getWorldPosition(
-    tip
-  );
+
+  hammer.userData.tip
+    .getWorldPosition(tip);
 
 
-  let nearest = null;
-  let distance = Infinity;
+  let best = null;
+  let bestDistance = Infinity;
 
 
   grips.forEach(
     grip => {
 
-      const gp =
+      const position =
         new THREE.Vector3(
           grip.x,
           grip.y,
           grip.z
         );
 
-      const d =
-        tip.distanceTo(gp);
+
+      const distance =
+        tip.distanceTo(
+          position
+        );
+
 
       if (
-        d < distance
+        distance <
+        bestDistance
       ) {
 
-        distance = d;
-        nearest = grip;
+        bestDistance =
+          distance;
 
+        best =
+          grip;
       }
+
     }
   );
 
 
   return {
-    grip: nearest,
-    distance
+    grip: best,
+    distance: bestDistance
   };
 }
 
@@ -984,62 +924,64 @@ function mouseDown(event) {
   if (!running)
     return;
 
+
   if (event.button !== 0)
     return;
 
 
   const result =
-    getNearestGrip();
+    nearestGrip();
 
 
   if (
     result.grip &&
-    result.distance < 2.3
+    result.distance < 2.4
   ) {
 
-    grabbedGrip =
+    grabbed =
       result.grip;
 
 
-    heroBody.velocity.set(
-      0,
-      0,
-      0
-    );
-
-
     document
-      .getElementById("statusText")
+      .getElementById(
+        "statusText"
+      )
       .textContent =
       "GRIP LOCKED";
 
+
     document
-      .getElementById("statusText")
+      .getElementById(
+        "statusText"
+      )
       .style.color =
-      "#52ff6a";
+      "#ffffff";
 
 
-    grabbedGrip.ring.scale.setScalar(
-      1.35
-    );
+    grabbed.ring
+      .scale
+      .setScalar(1.5);
 
-    grabbedGrip.glow.scale.setScalar(
-      1.5
-    );
 
-    hammerTip.material.color.set(
-      0xffffff
-    );
+    grabbed.glow
+      .scale
+      .setScalar(1.5);
+
 
   } else {
 
     document
-      .getElementById("statusText")
+      .getElementById(
+        "statusText"
+      )
       .textContent =
       "MISSED";
 
+
     document
-      .getElementById("statusText")
+      .getElementById(
+        "statusText"
+      )
       .style.color =
       "#ff5555";
   }
@@ -1052,93 +994,65 @@ function mouseDown(event) {
 
 function mouseUp() {
 
-  grabbedGrip = null;
+  if (grabbed) {
 
-  hammerTip.material.color.set(
-    0xffff00
-  );
+    grabbed.ring
+      .scale
+      .setScalar(1);
+
+
+    grabbed.glow
+      .scale
+      .setScalar(1);
+  }
+
+
+  grabbed = null;
+
 
   document
-    .getElementById("statusText")
+    .getElementById(
+      "statusText"
+    )
     .textContent =
     "FREE";
 
+
   document
-    .getElementById("statusText")
+    .getElementById(
+      "statusText"
+    )
     .style.color =
-    "#52ff6a";
+    "#55ff70";
 }
 
 
 /* =========================================================
-   CLIMB FORCE
+   SIMPLE CLIMB
 ========================================================= */
 
 function climb() {
 
-  if (
-    !grabbedGrip ||
-    !heroBody
-  )
+  if (!grabbed)
     return;
 
 
   const dx =
-    grabbedGrip.x -
-    heroBody.position.x;
+    grabbed.x -
+    hero.position.x;
+
 
   const dy =
-    grabbedGrip.y -
-    heroBody.position.y;
+    grabbed.y -
+    hero.position.y;
 
 
-  /*
-     Pull toward grip.
-  */
-
-  heroBody.applyForce(
-    new CANNON.Vec3(
-      dx * 65,
-      dy * 65,
-      0
-    ),
-    heroBody.position
-  );
+  hero.position.x +=
+    dx * 0.025;
 
 
-  /*
-     Small upward assistance.
-  */
-
-  heroBody.applyForce(
-    new CANNON.Vec3(
-      0,
-      8,
-      0
-    ),
-    heroBody.position
-  );
-}
-
-
-/* =========================================================
-   SYNC HERO
-========================================================= */
-
-function syncHero() {
-
-  hero.position.set(
-    heroBody.position.x,
-    heroBody.position.y,
-    heroBody.position.z
-  );
-
-  hero.quaternion.set(
-    heroBody.quaternion.x,
-    heroBody.quaternion.y,
-    heroBody.quaternion.z,
-    heroBody.quaternion.w
-  );
+  hero.position.y +=
+    dy * 0.035;
 }
 
 
@@ -1149,18 +1063,18 @@ function syncHero() {
 function updateCamera() {
 
   const targetY =
-    heroBody.position.y + 5;
+    hero.position.y + 5;
 
 
   camera.position.y +=
     (
       targetY -
       camera.position.y
-    ) * .06;
+    ) * 0.05;
 
 
   camera.lookAt(
-    heroBody.position.x,
+    hero.position.x,
     camera.position.y,
     0
   );
@@ -1176,34 +1090,40 @@ function animateGrips(time) {
   grips.forEach(
     (grip, index) => {
 
+      if (
+        grip === grabbed
+      )
+        return;
+
+
       const pulse =
         1 +
         Math.sin(
-          time * .004 +
+          time * 0.004 +
           index
-        ) *
-        .12;
+        ) * 0.12;
 
 
-      if (
-        grip !== grabbedGrip
-      ) {
-
-        grip.ring.scale.setScalar(
+      grip.ring
+        .scale
+        .setScalar(
           pulse
         );
 
-        grip.glow.scale.setScalar(
+
+      grip.glow
+        .scale
+        .setScalar(
           pulse
         );
-      }
+
     }
   );
 }
 
 
 /* =========================================================
-   START
+   START GAME
 ========================================================= */
 
 function startGame() {
@@ -1213,19 +1133,8 @@ function startGame() {
     .style.display =
     "none";
 
+
   running = true;
-
-  heroBody.position.set(
-    0,
-    1.2,
-    3
-  );
-
-  heroBody.velocity.set(
-    0,
-    0,
-    0
-  );
 }
 
 
@@ -1239,7 +1148,9 @@ function resize() {
     window.innerWidth /
     window.innerHeight;
 
+
   camera.updateProjectionMatrix();
+
 
   renderer.setSize(
     window.innerWidth,
@@ -1249,7 +1160,7 @@ function resize() {
 
 
 /* =========================================================
-   LOOP
+   GAME LOOP
 ========================================================= */
 
 function animate(time = 0) {
@@ -1259,84 +1170,13 @@ function animate(time = 0) {
   );
 
 
-  const dt =
-    Math.min(
-      clock.getDelta(),
-      .033
-    );
-
-
   if (running) {
 
     updateHammer();
 
     climb();
 
-
-    world.step(
-      1 / 60,
-      dt,
-      3
-    );
-
-
-    syncHero();
-
     updateCamera();
-
-
-    /*
-       Reset if fallen.
-    */
-
-    if (
-      heroBody.position.y <
-      -7
-    ) {
-
-      heroBody.position.set(
-        0,
-        1.2,
-        3
-      );
-
-      heroBody.velocity.set(
-        0,
-        0,
-        0
-      );
-
-      grabbedGrip = null;
-    }
-
-
-    /*
-       Highlight nearest grip.
-    */
-
-    const result =
-      getNearestGrip();
-
-
-    grips.forEach(
-      grip => {
-
-        if (
-          grip === result.grip &&
-          result.distance < 2.5
-        ) {
-
-          grip.ring.scale.setScalar(
-            1.3
-          );
-
-          grip.glow.scale.setScalar(
-            1.4
-          );
-
-        }
-      }
-    );
   }
 
 
@@ -1351,7 +1191,7 @@ function animate(time = 0) {
 
 
 /* =========================================================
-   START ENGINE
+   START
 ========================================================= */
 
 init();
