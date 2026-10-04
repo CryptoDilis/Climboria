@@ -1,131 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CLIMBOUND</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CLIMBOUND TEST</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<style>
+*{box-sizing:border-box}
 
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #05070a;
-      font-family: Arial, sans-serif;
-    }
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#05070a;
+  font-family:Arial,sans-serif;
+}
 
-    #game {
-      position: fixed;
-      inset: 0;
-    }
+#game{
+  position:fixed;
+  inset:0;
+}
 
-    canvas {
-      display: block;
-    }
+#hud{
+  position:fixed;
+  top:20px;
+  left:20px;
+  z-index:20;
+  color:white;
+  pointer-events:none;
+}
 
-    #hud {
-      position: fixed;
-      z-index: 10;
-      top: 18px;
-      left: 18px;
-      color: white;
-      pointer-events: none;
-      text-shadow: 0 2px 5px black;
-    }
+#title{
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:5px;
+}
 
-    #title {
-      font-size: 25px;
-      font-weight: 900;
-      letter-spacing: 4px;
-    }
+#status{
+  margin-top:10px;
+  display:inline-block;
+  padding:10px 14px;
+  background:rgba(0,0,0,.75);
+  border-radius:8px;
+  font-size:13px;
+}
 
-    #status {
-      margin-top: 10px;
-      padding: 9px 13px;
-      display: inline-block;
-      background: rgba(0, 0, 0, .65);
-      border-radius: 7px;
-      font-size: 12px;
-    }
+#statusText{
+  color:#55ff70;
+  font-weight:bold;
+}
 
-    #statusText {
-      color: #55ff70;
-      font-weight: bold;
-    }
+#help{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:20;
+  color:white;
+  background:rgba(0,0,0,.8);
+  padding:12px 18px;
+  border-radius:8px;
+  text-align:center;
+}
 
-    #help {
-      position: fixed;
-      z-index: 10;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 18px;
-      color: white;
-      background: rgba(0, 0, 0, .7);
-      border-radius: 9px;
-      text-align: center;
-      font-size: 13px;
-      pointer-events: none;
-      white-space: nowrap;
-    }
+#error{
+  display:none;
+  position:fixed;
+  left:20px;
+  right:20px;
+  bottom:80px;
+  z-index:100;
+  padding:18px;
+  background:#5b1111;
+  border:2px solid #ff4444;
+  color:white;
+  border-radius:10px;
+  font-family:monospace;
+  white-space:pre-wrap;
+}
 
-    #help b {
-      color: #55ff70;
-    }
+#start{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#05070a;
+}
 
-    #start {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #05070a;
-    }
+#panel{
+  width:min(90%,500px);
+  padding:40px;
+  text-align:center;
+  color:white;
+  background:#0d1217;
+  border:1px solid #55ff70;
+  border-radius:18px;
+}
 
-    #panel {
-      width: min(90%, 500px);
-      padding: 40px;
-      text-align: center;
-      color: white;
-      background: #0b1014;
-      border: 1px solid rgba(85, 255, 112, .4);
-      border-radius: 18px;
-    }
+#panel h1{
+  margin:0 0 15px;
+  font-size:44px;
+  letter-spacing:6px;
+}
 
-    #panel h1 {
-      margin: 0 0 10px;
-      font-size: 44px;
-      letter-spacing: 6px;
-    }
+#panel p{
+  color:#aaa;
+  line-height:1.6;
+}
 
-    #panel p {
-      color: #aab3b7;
-      line-height: 1.6;
-      margin-bottom: 25px;
-    }
-
-    #startButton {
-      padding: 15px 30px;
-      border: 0;
-      border-radius: 9px;
-      background: #55ff70;
-      color: #031006;
-      font-weight: 900;
-      letter-spacing: 2px;
-      cursor: pointer;
-    }
-
-    #startButton:hover {
-      transform: scale(1.03);
-    }
-  </style>
+#startButton{
+  margin-top:15px;
+  padding:15px 30px;
+  border:0;
+  border-radius:8px;
+  background:#55ff70;
+  color:#031006;
+  font-weight:900;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
@@ -136,42 +132,46 @@
   <div id="title">CLIMBOUND</div>
 
   <div id="status">
-    HAMMER:
-    <span id="statusText">FREE</span>
+    SYSTEM:
+    <span id="statusText">LOADING...</span>
   </div>
 </div>
 
 <div id="help">
-  Move the mouse to control the <b>HAMMER</b>.<br>
-  <b>GREEN CIRCLES = HANDHOLDS</b>
+  🪣 HERO &nbsp;&nbsp; 🔨 HAMMER &nbsp;&nbsp;
+  <b>🟢 GREEN = GRIP</b>
 </div>
+
+<div id="error"></div>
 
 <div id="start">
   <div id="panel">
-
     <h1>CLIMBOUND</h1>
 
     <p>
-      Physics climbing prototype.<br>
-      Grab the green handholds and climb the mountain.
+      3D climbing prototype.<br>
+      This is the visual foundation test.
     </p>
 
     <button id="startButton">
       START CLIMBING
     </button>
-
   </div>
 </div>
 
-
 <script type="module">
 
-import * as THREE from "https://esm.sh/three@0.180.0";
+/* =====================================================
+   THREE.JS
+===================================================== */
+
+import * as THREE from
+"https://esm.sh/three@0.180.0";
 
 
-/* =========================================================
+/* =====================================================
    VARIABLES
-========================================================= */
+===================================================== */
 
 let scene;
 let camera;
@@ -180,599 +180,505 @@ let renderer;
 let hero;
 let hammer;
 
-let running = false;
-let grabbed = null;
+let running=false;
 
-const grips = [];
+const grips=[];
 
-const mouse = {
-  x: 0,
-  y: 0
+const mouse={
+  x:0,
+  y:0
 };
 
 
-/* =========================================================
-   INIT
-========================================================= */
+/* =====================================================
+   ERROR DISPLAY
+===================================================== */
 
-function init() {
+function showError(message){
 
-  /* SCENE */
+  const box=
+    document.getElementById("error");
 
-  scene = new THREE.Scene();
+  box.style.display="block";
 
-  scene.background =
-    new THREE.Color(0x05080c);
+  box.textContent=
+    "CLIMBOUND ERROR\n\n"+message;
 
-  scene.fog =
-    new THREE.Fog(
-      0x05080c,
-      20,
-      100
-    );
+  document.getElementById("statusText")
+    .textContent="ERROR";
 
-
-  /* CAMERA */
-
-  camera =
-    new THREE.PerspectiveCamera(
-      55,
-      window.innerWidth /
-      window.innerHeight,
-      0.1,
-      200
-    );
-
-  camera.position.set(
-    0,
-    7,
-    24
-  );
-
-
-  /* RENDERER */
-
-  renderer =
-    new THREE.WebGLRenderer({
-      antialias: true
-    });
-
-  renderer.setPixelRatio(
-    Math.min(
-      window.devicePixelRatio,
-      2
-    )
-  );
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-
-  renderer.shadowMap.enabled = true;
-
-  document
-    .getElementById("game")
-    .appendChild(
-      renderer.domElement
-    );
-
-
-  /* LIGHTING */
-
-  const ambient =
-    new THREE.HemisphereLight(
-      0xffffff,
-      0x111111,
-      2.5
-    );
-
-  scene.add(ambient);
-
-
-  const sun =
-    new THREE.DirectionalLight(
-      0xffffff,
-      3
-    );
-
-  sun.position.set(
-    -10,
-    20,
-    20
-  );
-
-  sun.castShadow = true;
-
-  scene.add(sun);
-
-
-  /* WORLD */
-
-  createMountain();
-
-  createHero();
-
-  createHammer();
-
-  createGrips();
-
-
-  /* INPUT */
-
-  window.addEventListener(
-    "mousemove",
-    mouseMove
-  );
-
-  window.addEventListener(
-    "mousedown",
-    mouseDown
-  );
-
-  window.addEventListener(
-    "mouseup",
-    mouseUp
-  );
-
-  window.addEventListener(
-    "resize",
-    resize
-  );
-
-
-  document
-    .getElementById("startButton")
-    .addEventListener(
-      "click",
-      startGame
-    );
-
-
-  animate();
+  document.getElementById("statusText")
+    .style.color="#ff4444";
 }
 
 
-/* =========================================================
-   MOUNTAIN
-========================================================= */
+/* =====================================================
+   INIT
+===================================================== */
 
-function createMountain() {
+function init(){
 
-  const mountain =
-    new THREE.Mesh(
-      new THREE.ConeGeometry(
-        25,
-        70,
-        8,
-        8
-      ),
-      new THREE.MeshStandardMaterial({
-        color: 0x273038,
-        roughness: 1
-      })
-    );
+  try{
 
-  mountain.position.set(
-    0,
-    34,
-    -7
-  );
-
-  mountain.scale.z =
-    0.8;
-
-  mountain.rotation.y =
-    0.25;
-
-  mountain.receiveShadow = true;
-
-  scene.add(mountain);
+    document.getElementById("statusText")
+      .textContent="THREE.JS LOADED";
 
 
-  /* ROCKS */
+    /* SCENE */
 
-  for (
-    let i = 0;
-    i < 30;
-    i++
-  ) {
+    scene=new THREE.Scene();
 
-    const rock =
-      new THREE.Mesh(
-        new THREE.DodecahedronGeometry(
-          1,
-          0
-        ),
-        new THREE.MeshStandardMaterial({
-          color: 0x161e23,
-          roughness: 1
-        })
+    scene.background=
+      new THREE.Color(0x071018);
+
+
+    /* CAMERA */
+
+    camera=
+      new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth/
+        window.innerHeight,
+        0.1,
+        200
       );
 
-    const side =
-      Math.random() > 0.5
-        ? 1
-        : -1;
-
-    rock.position.set(
-      side *
-      (4 + Math.random() * 10),
-
-      Math.random() * 60,
-
-      0
+    camera.position.set(
+      0,
+      7,
+      25
     );
 
-    rock.scale.set(
-      1 + Math.random() * 3,
-      1 + Math.random() * 3,
-      1 + Math.random() * 2
+
+    /* RENDERER */
+
+    renderer=
+      new THREE.WebGLRenderer({
+        antialias:true
+      });
+
+    renderer.setPixelRatio(
+      Math.min(
+        window.devicePixelRatio,
+        2
+      )
     );
 
-    rock.rotation.set(
-      Math.random(),
-      Math.random(),
-      Math.random()
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
     );
 
-    rock.receiveShadow = true;
+    document
+      .getElementById("game")
+      .appendChild(
+        renderer.domElement
+      );
 
-    scene.add(rock);
+
+    /* LIGHT */
+
+    const ambient=
+      new THREE.AmbientLight(
+        0xffffff,
+        2
+      );
+
+    scene.add(ambient);
+
+
+    const light=
+      new THREE.DirectionalLight(
+        0xffffff,
+        3
+      );
+
+    light.position.set(
+      5,
+      15,
+      20
+    );
+
+    scene.add(light);
+
+
+    /* CREATE WORLD */
+
+    createMountain();
+
+    createHero();
+
+    createHammer();
+
+    createGrips();
+
+
+    /* INPUT */
+
+    window.addEventListener(
+      "mousemove",
+      mouseMove
+    );
+
+    window.addEventListener(
+      "mousedown",
+      mouseDown
+    );
+
+    window.addEventListener(
+      "mouseup",
+      mouseUp
+    );
+
+    window.addEventListener(
+      "resize",
+      resize
+    );
+
+
+    document
+      .getElementById("startButton")
+      .addEventListener(
+        "click",
+        startGame
+      );
+
+
+    document.getElementById("statusText")
+      .textContent="READY";
+
+
+    animate();
+
+  }catch(error){
+
+    showError(
+      error.stack ||
+      error.message ||
+      String(error)
+    );
   }
 }
 
 
-/* =========================================================
+/* =====================================================
+   MOUNTAIN
+===================================================== */
+
+function createMountain(){
+
+  const mountain=
+    new THREE.Mesh(
+
+      new THREE.ConeGeometry(
+        18,
+        65,
+        8
+      ),
+
+      new THREE.MeshStandardMaterial({
+        color:0x303b43,
+        roughness:1
+      })
+    );
+
+
+  mountain.position.set(
+    0,
+    31,
+    -8
+  );
+
+
+  mountain.scale.z=0.7;
+
+
+  scene.add(mountain);
+}
+
+
+/* =====================================================
    HERO
-========================================================= */
+===================================================== */
 
-function createHero() {
+function createHero(){
 
-  hero =
+  hero=
     new THREE.Group();
 
 
   /* POT */
 
-  const pot =
+  const pot=
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
-        0.9,
-        1.15,
-        1.4,
+        1,
+        1.25,
+        1.5,
         24
       ),
+
       new THREE.MeshStandardMaterial({
-        color: 0xc8783c,
-        roughness: 0.75
+        color:0xd4773d
       })
     );
 
-  pot.castShadow = true;
 
   hero.add(pot);
 
 
   /* HEAD */
 
-  const head =
+  const head=
     new THREE.Mesh(
+
       new THREE.SphereGeometry(
-        0.6,
+        0.65,
         24,
         24
       ),
+
       new THREE.MeshStandardMaterial({
-        color: 0xdca27d,
-        roughness: 0.8
+        color:0xe0a17a
       })
     );
 
-  head.position.y =
-    1.05;
 
-  head.castShadow = true;
+  head.position.y=1.1;
 
   hero.add(head);
 
 
   /* HAT */
 
-  const hat =
+  const hat=
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
-        0.68,
-        0.5,
-        0.25,
+        0.75,
+        0.55,
+        0.3,
         20
       ),
+
       new THREE.MeshStandardMaterial({
-        color: 0x20252a
+        color:0x222831
       })
     );
 
-  hat.position.y =
-    1.5;
 
-  hat.castShadow = true;
+  hat.position.y=1.65;
 
   hero.add(hat);
-
-
-  /* EYES */
-
-  const eyeMaterial =
-    new THREE.MeshBasicMaterial({
-      color: 0x111111
-    });
-
-
-  const eye1 =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.06,
-        8,
-        8
-      ),
-      eyeMaterial
-    );
-
-  eye1.position.set(
-    -0.18,
-    1.05,
-    -0.56
-  );
-
-  hero.add(eye1);
-
-
-  const eye2 =
-    eye1.clone();
-
-  eye2.position.x =
-    0.18;
-
-  hero.add(eye2);
 
 
   /* HERO POSITION */
 
   hero.position.set(
     0,
-    1.5,
-    2
+    2,
+    3
   );
+
 
   scene.add(hero);
 }
 
 
-/* =========================================================
+/* =====================================================
    HAMMER
-========================================================= */
+===================================================== */
 
-function createHammer() {
+function createHammer(){
 
-  hammer =
+  hammer=
     new THREE.Group();
 
 
-  /* HANDLE */
-
-  const handle =
+  const handle=
     new THREE.Mesh(
+
       new THREE.CylinderGeometry(
         0.09,
         0.09,
         3.5,
         12
       ),
+
       new THREE.MeshStandardMaterial({
-        color: 0x704020
+        color:0x8b542d
       })
     );
 
-  handle.rotation.z =
-    Math.PI / 2;
+
+  handle.rotation.z=
+    Math.PI/2;
+
 
   hammer.add(handle);
 
 
-  /* HEAD */
-
-  const head =
+  const head=
     new THREE.Mesh(
+
       new THREE.BoxGeometry(
         0.5,
         0.5,
-        1.3
+        1.4
       ),
+
       new THREE.MeshStandardMaterial({
-        color: 0xc8d0d5,
-        metalness: 0.8,
-        roughness: 0.2
+        color:0xcfd6da,
+        metalness:.8,
+        roughness:.2
       })
     );
 
-  head.position.x =
-    1.65;
+
+  head.position.x=1.7;
 
   hammer.add(head);
 
 
-  /* TIP */
+  /* BRIGHT TIP */
 
-  const tip =
+  const tip=
     new THREE.Mesh(
+
       new THREE.SphereGeometry(
-        0.2,
+        0.28,
         16,
         16
       ),
+
       new THREE.MeshBasicMaterial({
-        color: 0xffff00
+        color:0xffff00
       })
     );
 
-  tip.position.x =
-    2.2;
+
+  tip.position.x=2.3;
 
   hammer.add(tip);
 
-  hammer.userData.tip =
-    tip;
+
+  hammer.userData.tip=tip;
 
 
   hammer.position.set(
     3,
-    2,
-    3
+    3,
+    4
   );
+
 
   scene.add(hammer);
 }
 
 
-/* =========================================================
-   GREEN GRIPS
-========================================================= */
+/* =====================================================
+   GRIPS
+===================================================== */
 
-function createGrips() {
+function createGrips(){
 
-  const positions = [
-
-    [-4, 4],
-    [2, 6],
-    [-2, 8],
-    [4, 10],
-    [0, 12],
-    [-4, 15],
-    [2, 18],
-    [5, 21],
-    [0, 24],
-    [-4, 27],
-    [2, 30],
-    [-2, 33],
-    [4, 36],
-    [0, 39],
-    [-4, 42],
-    [2, 45],
-    [-2, 48],
-    [4, 51],
-    [0, 54]
+  const positions=[
+    [-5,4],
+    [4,6],
+    [-3,9],
+    [5,12],
+    [0,15],
+    [-5,18],
+    [3,21],
+    [-2,24],
+    [5,27],
+    [0,30],
+    [-4,33],
+    [3,36],
+    [-2,39],
+    [4,42],
+    [0,45],
+    [-4,48],
+    [3,51],
+    [0,54]
   ];
 
 
   positions.forEach(
-    ([x, y], index) => {
+    ([x,y])=>{
 
-      const group =
+      const group=
         new THREE.Group();
 
 
-      /* BIG GREEN GLOW */
+      /* HUGE GREEN GLOW */
 
-      const glow =
+      const glow=
         new THREE.Mesh(
+
           new THREE.SphereGeometry(
-            1.2,
-            20,
-            20
+            1.3,
+            16,
+            16
           ),
+
           new THREE.MeshBasicMaterial({
-            color: 0x00ff44,
-            transparent: true,
-            opacity: 0.16,
-            depthWrite: false
+            color:0x00ff44,
+            transparent:true,
+            opacity:.22
           })
         );
+
 
       group.add(glow);
 
 
-      /* GREEN RING */
+      /* RING */
 
-      const ring =
+      const ring=
         new THREE.Mesh(
+
           new THREE.TorusGeometry(
-            0.75,
-            0.16,
+            .8,
+            .18,
             16,
             32
           ),
+
           new THREE.MeshBasicMaterial({
-            color: 0x00ff44
+            color:0x00ff44
           })
         );
 
-      ring.rotation.x =
-        Math.PI / 2;
 
       group.add(ring);
 
 
-      /* GREEN CENTER */
+      /* CENTER */
 
-      const center =
+      const center=
         new THREE.Mesh(
+
           new THREE.SphereGeometry(
-            0.32,
+            .35,
             16,
             16
           ),
+
           new THREE.MeshBasicMaterial({
-            color: 0x9affaa
+            color:0xffffff
           })
         );
+
 
       group.add(center);
 
 
-      /* WHITE CROSS */
-
-      const crossMaterial =
-        new THREE.MeshBasicMaterial({
-          color: 0xffffff
-        });
-
-
-      const horizontal =
-        new THREE.Mesh(
-          new THREE.BoxGeometry(
-            1.8,
-            0.08,
-            0.08
-          ),
-          crossMaterial
-        );
-
-
-      const vertical =
-        new THREE.Mesh(
-          new THREE.BoxGeometry(
-            0.08,
-            1.8,
-            0.08
-          ),
-          crossMaterial
-        );
-
-
-      group.add(horizontal);
-      group.add(vertical);
-
-
-      /*
-        IMPORTANT:
-        Grips are placed in front
-        of the mountain.
-      */
-
       group.position.set(
         x,
         y,
-        2
+        3
       );
 
 
@@ -780,90 +686,76 @@ function createGrips() {
 
 
       grips.push({
-        group: group,
-        ring: ring,
-        glow: glow,
-        x: x,
-        y: y,
-        z: 2,
-        index: index
+        group,
+        x,
+        y
       });
-
     }
   );
 }
 
 
-/* =========================================================
-   MOUSE MOVEMENT
-========================================================= */
+/* =====================================================
+   MOUSE
+===================================================== */
 
-function mouseMove(event) {
+function mouseMove(event){
 
-  mouse.x =
-    event.clientX /
-    window.innerWidth *
-    2 -
-    1;
+  mouse.x=
+    event.clientX/
+    window.innerWidth*
+    2-1;
 
 
-  mouse.y =
-    -(event.clientY /
-      window.innerHeight) *
-    2 +
-    1;
+  mouse.y=
+    -(event.clientY/
+    window.innerHeight)*
+    2+1;
 }
 
 
-/* =========================================================
-   HAMMER MOVEMENT
-========================================================= */
+/* =====================================================
+   HAMMER UPDATE
+===================================================== */
 
-function updateHammer() {
+function updateHammer(){
 
-  const targetX =
-    hero.position.x +
-    mouse.x * 6;
-
-
-  const targetY =
-    hero.position.y +
-    mouse.y * 5;
+  const targetX=
+    hero.position.x+
+    mouse.x*6;
 
 
-  hammer.position.x +=
-    (
-      targetX -
-      hammer.position.x
-    ) * 0.22;
+  const targetY=
+    hero.position.y+
+    mouse.y*5;
 
 
-  hammer.position.y +=
-    (
-      targetY -
-      hammer.position.y
-    ) * 0.22;
+  hammer.position.x+=
+    (targetX-
+     hammer.position.x)*.2;
 
 
-  hammer.position.z =
-    3;
+  hammer.position.y+=
+    (targetY-
+     hammer.position.y)*.2;
 
 
-  hammer.rotation.z =
-    -Math.atan2(
-      mouse.y * 5,
-      mouse.x * 6
-    );
+  hammer.position.z=4;
 }
 
 
-/* =========================================================
-   FIND NEAREST GRIP
-========================================================= */
+/* =====================================================
+   GRAB TEST
+===================================================== */
 
-function nearestGrip() {
+function mouseDown(event){
 
-  const tip =
+  if(!running)return;
+
+  if(event.button!==0)return;
+
+
+  const tip=
     new THREE.Vector3();
 
 
@@ -871,281 +763,123 @@ function nearestGrip() {
     .getWorldPosition(tip);
 
 
-  let best = null;
-  let bestDistance = Infinity;
+  let nearest=null;
+
+  let distance=Infinity;
 
 
   grips.forEach(
-    grip => {
+    grip=>{
 
-      const position =
+      const p=
         new THREE.Vector3(
           grip.x,
           grip.y,
-          grip.z
+          3
         );
 
 
-      const distance =
-        tip.distanceTo(
-          position
-        );
+      const d=
+        tip.distanceTo(p);
 
 
-      if (
-        distance <
-        bestDistance
-      ) {
+      if(d<distance){
 
-        bestDistance =
-          distance;
+        distance=d;
 
-        best =
-          grip;
+        nearest=grip;
       }
-
     }
   );
 
 
-  return {
-    grip: best,
-    distance: bestDistance
-  };
-}
+  if(nearest && distance<3){
 
-
-/* =========================================================
-   MOUSE DOWN
-========================================================= */
-
-function mouseDown(event) {
-
-  if (!running)
-    return;
-
-
-  if (event.button !== 0)
-    return;
-
-
-  const result =
-    nearestGrip();
-
-
-  if (
-    result.grip &&
-    result.distance < 2.4
-  ) {
-
-    grabbed =
-      result.grip;
-
-
-    document
-      .getElementById(
-        "statusText"
-      )
-      .textContent =
+    document.getElementById(
+      "statusText"
+    ).textContent=
       "GRIP LOCKED";
 
-
-    document
-      .getElementById(
-        "statusText"
-      )
-      .style.color =
-      "#ffffff";
+    document.getElementById(
+      "statusText"
+    ).style.color=
+      "#55ff70";
 
 
-    grabbed.ring
-      .scale
-      .setScalar(1.5);
+    nearest.group.scale.setScalar(1.5);
 
+  }else{
 
-    grabbed.glow
-      .scale
-      .setScalar(1.5);
-
-
-  } else {
-
-    document
-      .getElementById(
-        "statusText"
-      )
-      .textContent =
+    document.getElementById(
+      "statusText"
+    ).textContent=
       "MISSED";
 
-
-    document
-      .getElementById(
-        "statusText"
-      )
-      .style.color =
-      "#ff5555";
+    document.getElementById(
+      "statusText"
+    ).style.color=
+      "#ff4444";
   }
 }
 
 
-/* =========================================================
+/* =====================================================
    MOUSE UP
-========================================================= */
+===================================================== */
 
-function mouseUp() {
-
-  if (grabbed) {
-
-    grabbed.ring
-      .scale
-      .setScalar(1);
-
-
-    grabbed.glow
-      .scale
-      .setScalar(1);
-  }
-
-
-  grabbed = null;
-
-
-  document
-    .getElementById(
-      "statusText"
-    )
-    .textContent =
-    "FREE";
-
-
-  document
-    .getElementById(
-      "statusText"
-    )
-    .style.color =
-    "#55ff70";
-}
-
-
-/* =========================================================
-   SIMPLE CLIMB
-========================================================= */
-
-function climb() {
-
-  if (!grabbed)
-    return;
-
-
-  const dx =
-    grabbed.x -
-    hero.position.x;
-
-
-  const dy =
-    grabbed.y -
-    hero.position.y;
-
-
-  hero.position.x +=
-    dx * 0.025;
-
-
-  hero.position.y +=
-    dy * 0.035;
-}
-
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
-function updateCamera() {
-
-  const targetY =
-    hero.position.y + 5;
-
-
-  camera.position.y +=
-    (
-      targetY -
-      camera.position.y
-    ) * 0.05;
-
-
-  camera.lookAt(
-    hero.position.x,
-    camera.position.y,
-    0
-  );
-}
-
-
-/* =========================================================
-   GRIP ANIMATION
-========================================================= */
-
-function animateGrips(time) {
+function mouseUp(){
 
   grips.forEach(
-    (grip, index) => {
-
-      if (
-        grip === grabbed
-      )
-        return;
-
-
-      const pulse =
-        1 +
-        Math.sin(
-          time * 0.004 +
-          index
-        ) * 0.12;
-
-
-      grip.ring
-        .scale
-        .setScalar(
-          pulse
-        );
-
-
-      grip.glow
-        .scale
-        .setScalar(
-          pulse
-        );
-
+    grip=>{
+      grip.group.scale.setScalar(1);
     }
   );
+
+
+  if(running){
+
+    document.getElementById(
+      "statusText"
+    ).textContent=
+      "READY";
+
+    document.getElementById(
+      "statusText"
+    ).style.color=
+      "#55ff70";
+  }
 }
 
 
-/* =========================================================
-   START GAME
-========================================================= */
+/* =====================================================
+   START
+===================================================== */
 
-function startGame() {
+function startGame(){
 
-  document
-    .getElementById("start")
-    .style.display =
-    "none";
+  document.getElementById(
+    "start"
+  ).style.display="none";
 
 
-  running = true;
+  running=true;
+
+
+  document.getElementById(
+    "statusText"
+  ).textContent=
+    "READY";
 }
 
 
-/* =========================================================
+/* =====================================================
    RESIZE
-========================================================= */
+===================================================== */
 
-function resize() {
+function resize(){
 
-  camera.aspect =
-    window.innerWidth /
+  camera.aspect=
+    window.innerWidth/
     window.innerHeight;
 
 
@@ -1159,28 +893,22 @@ function resize() {
 }
 
 
-/* =========================================================
-   GAME LOOP
-========================================================= */
+/* =====================================================
+   LOOP
+===================================================== */
 
-function animate(time = 0) {
+function animate(){
 
   requestAnimationFrame(
     animate
   );
 
 
-  if (running) {
+  if(running){
 
     updateHammer();
 
-    climb();
-
-    updateCamera();
   }
-
-
-  animateGrips(time);
 
 
   renderer.render(
@@ -1190,9 +918,9 @@ function animate(time = 0) {
 }
 
 
-/* =========================================================
+/* =====================================================
    START
-========================================================= */
+===================================================== */
 
 init();
 
