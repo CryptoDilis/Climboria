@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLIMBOUND — Physics Prototype</title>
+<title>CLIMBOUND — V0.1</title>
 
 <style>
 *{box-sizing:border-box}
@@ -14,7 +14,7 @@ html,body{
   height:100%;
   overflow:hidden;
   background:#05080d;
-  font-family:Arial,sans-serif;
+  font-family:Arial,Helvetica,sans-serif;
   color:white;
 }
 
@@ -144,11 +144,8 @@ button{
 
 <script type="module">
 
-import * as THREE
-from "https://esm.sh/three@0.180.0";
-
-import * as CANNON
-from "https://esm.sh/cannon-es@0.20.0";
+import * as THREE from "https://esm.sh/three@0.180.0";
+import * as CANNON from "https://esm.sh/cannon-es@0.20.0";
 
 
 /* =====================================================
@@ -265,10 +262,6 @@ world.broadphase =
 world.allowSleep = false;
 
 
-/* =====================================================
-   PLAYER
-===================================================== */
-
 const playerMaterial =
   new CANNON.Material(
     "player"
@@ -292,7 +285,7 @@ world.addContactMaterial(
 
 
 /* =====================================================
-   PLAYER VISUAL
+   PLAYER
 ===================================================== */
 
 const player =
@@ -366,7 +359,7 @@ body.castShadow = true;
 player.add(body);
 
 
-/* PHYSICS BODY */
+/* PLAYER PHYSICS */
 
 const playerBody =
   new CANNON.Body({
@@ -392,7 +385,7 @@ world.addBody(
 
 
 /* =====================================================
-   MOUNTAIN ROCKS
+   MOUNTAIN
 ===================================================== */
 
 function rock(
@@ -555,7 +548,7 @@ for(
     gripPositions[i];
 
 
-  /* outer glow */
+  /* GRIP GLOW */
 
   const glow =
     new THREE.Mesh(
@@ -580,7 +573,7 @@ for(
   scene.add(glow);
 
 
-  /* actual grip */
+  /* ACTUAL GRIP */
 
   const mesh =
     new THREE.Mesh(
@@ -730,25 +723,20 @@ const mouseWorld =
   new THREE.Vector3();
 
 
-function mouseMove(
-  event
-){
-
-  mouse.x =
-    event.clientX /
-    window.innerWidth *
-    2 - 1;
-
-  mouse.y =
-    -(event.clientY /
-      window.innerHeight) *
-    2 + 1;
-}
-
-
 window.addEventListener(
   "pointermove",
-  mouseMove
+  event => {
+
+    mouse.x =
+      event.clientX /
+      window.innerWidth *
+      2 - 1;
+
+    mouse.y =
+      -(event.clientY /
+        window.innerHeight) *
+      2 + 1;
+  }
 );
 
 
@@ -799,7 +787,7 @@ window.addEventListener(
 
 
 /* =====================================================
-   HAMMER MOVEMENT
+   HAMMER AIM
 ===================================================== */
 
 function updateHammer(){
@@ -814,12 +802,14 @@ function updateHammer(){
     mouseWorld
   );
 
+
   const playerPos =
     new THREE.Vector3(
       playerBody.position.x,
       playerBody.position.y,
       1
     );
+
 
   const direction =
     mouseWorld
@@ -828,24 +818,29 @@ function updateHammer(){
 
   direction.z = 0;
 
+
   if(
     direction.lengthSq() <
     .001
   ) return;
 
+
   direction.normalize();
 
+
   const target =
-    playerPos.clone().add(
-      direction.multiplyScalar(
-        3
-      )
-    );
+    playerPos
+      .clone()
+      .add(
+        direction.multiplyScalar(3)
+      );
+
 
   hammer.position.lerp(
     target,
     .35
   );
+
 
   hammer.lookAt(
     mouseWorld.x,
@@ -860,7 +855,7 @@ function updateHammer(){
 
 
 /* =====================================================
-   GRIP DETECTION
+   HAMMER TIP
 ===================================================== */
 
 function getHammerTip(){
@@ -875,6 +870,10 @@ function getHammerTip(){
   return p;
 }
 
+
+/* =====================================================
+   GRAB GRIP
+===================================================== */
 
 function tryGrab(){
 
@@ -897,8 +896,9 @@ function tryGrab(){
         grip.position
       );
 
+
     if(
-      d < 1.2 &&
+      d < 1.5 &&
       d < distance
     ){
 
@@ -928,9 +928,9 @@ function tryGrab(){
     );
 
     closest.glow.scale.set(
-      1.5,
-      1.5,
-      1.5
+      1.6,
+      1.6,
+      1.6
     );
 
     setStatus(
@@ -990,10 +990,9 @@ function climb(){
   }
 
 
-  /* anchor pull */
-
   const anchor =
     grabbedGrip.position;
+
 
   const dx =
     anchor.x -
@@ -1020,6 +1019,7 @@ function climb(){
         distance * 4,
         18
       );
+
 
     playerBody.applyForce(
       new CANNON.Vec3(
@@ -1054,33 +1054,7 @@ function setStatus(
 
 
 /* =====================================================
-   CAMERA
-===================================================== */
-
-function updateCamera(){
-
-  const target =
-    new THREE.Vector3(
-      playerBody.position.x,
-      playerBody.position.y + 1.5,
-      18
-    );
-
-  camera.position.lerp(
-    target,
-    .06
-  );
-
-  camera.lookAt(
-    playerBody.position.x,
-    playerBody.position.y + 1,
-    0
-  );
-}
-
-
-/* =====================================================
-   PLAYER SYNC
+   PLAYER VISUAL
 ===================================================== */
 
 function updatePlayer(){
@@ -1101,11 +1075,40 @@ function updatePlayer(){
 
 
 /* =====================================================
+   CAMERA
+===================================================== */
+
+function updateCamera(){
+
+  const target =
+    new THREE.Vector3(
+      playerBody.position.x,
+      playerBody.position.y + 1.5,
+      18
+    );
+
+
+  camera.position.lerp(
+    target,
+    .06
+  );
+
+
+  camera.lookAt(
+    playerBody.position.x,
+    playerBody.position.y + 1,
+    0
+  );
+}
+
+
+/* =====================================================
    START
 ===================================================== */
 
 let running =
   false;
+
 
 document.getElementById(
   "startBtn"
