@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climboria — Genesis Summit</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #07111f;
+      color: white;
+      overflow: hidden;
+    }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        linear-gradient(to bottom, #102d4d 0%, #1b5270 45%, #0b1725 100%);
+    }
+
+    .mountain {
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      height: 0;
+      border-left: 45vw solid transparent;
+      border-right: 45vw solid transparent;
+      border-bottom: 75vh solid #182b3d;
+      left: 5vw;
+    }
+
+    .mountain2 {
+      position: absolute;
+      bottom: -5vh;
+      width: 0;
+      height: 0;
+      border-left: 35vw solid transparent;
+      border-right: 35vw solid transparent;
+      border-bottom: 55vh solid #25435a;
+      right: -10vw;
+    }
+
+    #hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+      font-weight: bold;
+    }
+
+    .panel {
+      background: rgba(5, 12, 22, 0.75);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 12px 18px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    #player {
+      position: absolute;
+      width: 42px;
+      height: 52px;
+      background: #e9eef5;
+      border-radius: 18px 18px 10px 10px;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+
+    #player::before {
+      content: "";
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      background: #f2c6a0;
+      border-radius: 50%;
+      top: -18px;
+      left: 9px;
+    }
+
+    .rock {
+      position: absolute;
+      width: 55px;
+      height: 32px;
+      background: #596b78;
+      border-radius: 50% 50% 35% 35%;
+      z-index: 4;
+    }
+
+    .coin {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: #ffd84d;
+      border-radius: 50%;
+      border: 3px solid #fff0a0;
+      box-shadow: 0 0 18px rgba(255,216,77,.7);
+      z-index: 4;
+    }
+
+    #startScreen,
+    #gameOver {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(3,8,15,.82);
+      z-index: 20;
+      text-align: center;
+    }
+
+    #gameOver {
+      display: none;
+    }
+
+    h1 {
+      font-size: clamp(42px, 8vw, 90px);
+      letter-spacing: 5px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #9ec8e6;
+      margin-bottom: 30px;
+      font-size: 18px;
+    }
+
+    button {
+      border: none;
+      padding: 15px 35px;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #07111f;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      transform: scale(1.04);
+    }
+
+    #instructions {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(5,12,22,.65);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #bcd2e5;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div class="mountain"></div>
+  <div class="mountain2"></div>
+
+  <div id="hud">
+    <div class="panel">🏔️ GENESIS SUMMIT</div>
+    <div class="panel">🪙 <span id="coins">0</span> &nbsp; SCORE: <span id="score">0</span></div>
+  </div>
+
+  <div id="player"></div>
+
+  <div id="instructions">
+    ← → or A / D to move
+  </div>
+
+  <div id="startScreen">
+    <h1>CLIMBORIA</h1>
+    <div class="subtitle">GENESIS SUMMIT</div>
+    <button onclick="startGame()">START CLIMB</button>
+  </div>
+
+  <div id="gameOver">
+    <h1>CLIMB ENDED</h1>
+    <div class="subtitle">Your expedition has stopped.</div>
+    <div class="panel" style="margin-bottom:20px;">
+      Score: <span id="finalScore">0</span>
+      <br>
+      Coins: <span id="finalCoins">0</span>
+    </div>
+    <button onclick="location.reload()">CLIMB AGAIN</button>
+  </div>
+
+</div>
+
+<script>
+  const game = document.getElementById("game");
+  const player = document.getElementById("player");
+
+  let running = false;
+  let score = 0;
+  let coins = 0;
+  let playerX = window.innerWidth / 2;
+  let speed = 3;
+  let objects = [];
+
+  const keys = {};
+
+  document.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+  });
+
+  document.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+  });
+
+  function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    running = true;
+    gameLoop();
+    spawnLoop();
+  }
+
+  function spawnLoop() {
+    if (!running) return;
+
+    spawnObject();
+
+    setTimeout(spawnLoop, Math.max(450, 1000 - score * 2));
+  }
+
+  function spawnObject() {
+    const obj = document.createElement("div");
+
+    const isCoin = Math.random() > 0.35;
+
+    obj.className = isCoin ? "coin" : "rock";
+
+    obj.style.left =
+      Math.random() * (window.innerWidth - 70) + "px";
+
+    obj.style.top = "-60px";
+
+    game.appendChild(obj);
+
+    objects.push({
+      el: obj,
+      y: -60,
+      type: isCoin ? "coin" : "rock"
+    });
+  }
+
+  function gameLoop() {
+    if (!running) return;
+
+    if (keys["arrowleft"] || keys["a"]) {
+      playerX -= 6;
+    }
+
+    if (keys["arrowright"] || keys["d"]) {
+      playerX += 6;
+    }
+
+    playerX = Math.max(10, Math.min(window.innerWidth - 52, playerX));
+
+    player.style.left = playerX + "px";
+
+    objects.forEach((obj, index) => {
+
+      obj.y += speed;
+      obj.el.style.top = obj.y + "px";
+
+      const a = player.getBoundingClientRect();
+      const b = obj.el.getBoundingClientRect();
+
+      if (
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top
+      ) {
+
+        if (obj.type === "coin") {
+
+          coins++;
+          score += 10;
+
+          document.getElementById("coins").textContent = coins;
+          document.getElementById("score").textContent = score;
+
+          obj.el.remove();
+          objects.splice(index, 1);
+
+        } else {
+
+          endGame();
+
+        }
+      }
+
+      if (obj.y > window.innerHeight + 100) {
+        obj.el.remove();
+        objects.splice(index, 1);
+      }
+
+    });
+
+    score++;
+
+    document.getElementById("score").textContent = score;
+
+    if (score % 500 === 0) {
+      speed += 0.5;
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  function endGame() {
+    running = false;
+
+    document.getElementById("finalScore").textContent = score;
+    document.getElementById("finalCoins").textContent = coins;
+
+    document.getElementById("gameOver").style.display = "flex";
+  }
+</script>
+
+</body>
+</html>
