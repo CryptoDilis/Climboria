@@ -3,33 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>CLIMBOUND</title>
+<title>CLIMBORIA</title>
+
 <style>
 *{box-sizing:border-box}
+
 html,body{
   margin:0;
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#071018;
-  font-family:Arial,sans-serif;
+  background:#05090d;
+  font-family:Arial,Helvetica,sans-serif;
 }
-#game{position:fixed;inset:0}
-canvas{display:block}
+
+body{
+  color:white;
+}
+
+#game{
+  position:fixed;
+  inset:0;
+  z-index:1;
+}
+
+canvas{
+  display:block;
+}
+
+/* =========================
+   CRYPTO TICKER
+========================= */
+
+#ticker{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:42px;
+  z-index:100;
+  background:rgba(3,7,11,.96);
+  border-bottom:1px solid rgba(85,255,112,.18);
+  overflow:hidden;
+  white-space:nowrap;
+  backdrop-filter:blur(12px);
+}
+
+#tickerTrack{
+  display:inline-flex;
+  align-items:center;
+  height:100%;
+  gap:38px;
+  padding-left:100%;
+  animation:tickerMove 35s linear infinite;
+}
+
+.tickerItem{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.coin{
+  color:#fff;
+  letter-spacing:.8px;
+}
+
+.price{
+  color:#dce6ea;
+}
+
+.change.up{
+  color:#55ff70;
+}
+
+.change.down{
+  color:#ff5964;
+}
+
+@keyframes tickerMove{
+  from{
+    transform:translateX(0);
+  }
+  to{
+    transform:translateX(-100%);
+  }
+}
+
+/* =========================
+   GAME HUD
+========================= */
+
 #hud{
   position:fixed;
   z-index:20;
-  top:18px;
+  top:65px;
   left:18px;
   color:white;
   text-shadow:0 2px 5px #000;
   pointer-events:none;
+  display:none;
 }
+
 #title{
   font-size:27px;
   font-weight:900;
   letter-spacing:5px;
 }
+
 #status{
   margin-top:9px;
   display:inline-block;
@@ -38,15 +121,18 @@ canvas{display:block}
   border-radius:7px;
   font-size:12px;
 }
+
 #statusText{
   color:#55ff70;
   font-weight:bold;
 }
+
 #height{
   margin-top:7px;
   font-size:13px;
   color:#fff;
 }
+
 #help{
   position:fixed;
   z-index:20;
@@ -60,86 +146,836 @@ canvas{display:block}
   text-align:center;
   font-size:13px;
   pointer-events:none;
+  display:none;
 }
-#start{
+
+/* =========================
+   LANDING
+========================= */
+
+#landing{
   position:fixed;
-  inset:0;
-  z-index:50;
+  inset:42px 0 0 0;
+  z-index:80;
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#05080c;
+  overflow:auto;
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(0,255,68,.08),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #05090d,
+      #09131a 50%,
+      #05090d
+    );
 }
-#panel{
-  width:min(90%,500px);
-  padding:40px;
+
+.landingGlow{
+  position:absolute;
+  width:500px;
+  height:500px;
+  border-radius:50%;
+  background:rgba(0,255,68,.035);
+  filter:blur(70px);
+  pointer-events:none;
+}
+
+.landingContent{
+  position:relative;
+  width:min(1050px,92%);
   text-align:center;
-  color:white;
-  background:#0c1318;
-  border:1px solid rgba(85,255,112,.5);
-  border-radius:18px;
-  box-shadow:0 20px 70px rgba(0,0,0,.6);
+  padding:55px 20px 40px;
 }
-#panel h1{
-  margin:0 0 12px;
-  font-size:44px;
-  letter-spacing:6px;
+
+.brandSmall{
+  color:#55ff70;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:5px;
+  margin-bottom:18px;
 }
-#panel p{
-  color:#aab4ba;
+
+.logoText{
+  margin:0;
+  font-size:clamp(48px,9vw,100px);
+  line-height:.9;
+  font-weight:1000;
+  letter-spacing:8px;
+  color:#fff;
+  text-shadow:
+    0 0 15px rgba(85,255,112,.12),
+    0 5px 30px rgba(0,0,0,.8);
+}
+
+.logoText span{
+  color:#55ff70;
+}
+
+.tagline{
+  margin:22px auto 42px;
+  max-width:600px;
+  color:#9baab2;
+  font-size:16px;
   line-height:1.6;
 }
-#startButton{
-  margin-top:15px;
-  padding:15px 30px;
-  border:0;
-  border-radius:9px;
-  background:#55ff70;
-  color:#031006;
+
+.choiceGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+  max-width:850px;
+  margin:auto;
+}
+
+.choice{
+  position:relative;
+  min-height:230px;
+  padding:34px 28px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.07),
+      rgba(255,255,255,.025)
+    );
+  box-shadow:0 25px 70px rgba(0,0,0,.35);
+  cursor:pointer;
+  transition:.25s ease;
+  overflow:hidden;
+}
+
+.choice:hover{
+  transform:translateY(-7px);
+  border-color:rgba(85,255,112,.6);
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.5),
+    0 0 35px rgba(85,255,112,.08);
+}
+
+.choiceIcon{
+  font-size:42px;
+  margin-bottom:16px;
+}
+
+.choice h2{
+  margin:0;
+  font-size:25px;
+  letter-spacing:2px;
+}
+
+.choice p{
+  color:#91a0a8;
+  line-height:1.5;
+  font-size:13px;
+  max-width:330px;
+  margin:13px auto 23px;
+}
+
+.choiceButton{
+  display:inline-block;
+  padding:12px 22px;
+  border-radius:8px;
+  font-size:11px;
   font-weight:900;
   letter-spacing:2px;
+  background:#55ff70;
+  color:#031006;
+}
+
+.choice.launch{
+  border-color:rgba(92,176,255,.15);
+}
+
+.choice.launch:hover{
+  border-color:rgba(92,176,255,.6);
+}
+
+.choice.launch .choiceButton{
+  background:#75bfff;
+  color:#03101a;
+}
+
+.bottomNote{
+  margin-top:35px;
+  color:#526069;
+  font-size:11px;
+  letter-spacing:1px;
+}
+
+/* =========================
+   GAME NAV
+========================= */
+
+#gameNav{
+  position:fixed;
+  top:57px;
+  right:18px;
+  z-index:40;
+  display:none;
+}
+
+.navButton{
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.65);
+  color:white;
+  border-radius:8px;
+  padding:10px 15px;
+  font-size:11px;
+  font-weight:bold;
   cursor:pointer;
+  backdrop-filter:blur(8px);
+}
+
+.navButton:hover{
+  border-color:#55ff70;
+  color:#55ff70;
+}
+
+/* =========================
+   LAUNCHPAD
+========================= */
+
+#launchpad{
+  position:fixed;
+  inset:42px 0 0 0;
+  z-index:70;
+  display:none;
+  overflow:auto;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(80,170,255,.09),
+      transparent 38%
+    ),
+    #05090d;
+}
+
+.launchWrap{
+  width:min(1150px,92%);
+  margin:auto;
+  padding:55px 0 80px;
+}
+
+.launchHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:45px;
+}
+
+.launchTitle small{
+  color:#75bfff;
+  font-size:11px;
+  letter-spacing:4px;
+  font-weight:900;
+}
+
+.launchTitle h1{
+  margin:10px 0 8px;
+  font-size:46px;
+  letter-spacing:3px;
+}
+
+.launchTitle p{
+  color:#8d9aa2;
+  margin:0;
+}
+
+.launchBack{
+  border:1px solid rgba(255,255,255,.15);
+  background:#0d151b;
+  color:white;
+  padding:12px 18px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.launchBack:hover{
+  border-color:#75bfff;
+  color:#75bfff;
+}
+
+.launchCards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+
+.launchCard{
+  min-height:220px;
+  padding:27px;
+  border-radius:17px;
+  background:#0a1117;
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.launchCard .num{
+  color:#75bfff;
+  font-weight:900;
+  font-size:11px;
+  letter-spacing:2px;
+}
+
+.launchCard h3{
+  font-size:20px;
+  margin:17px 0 10px;
+}
+
+.launchCard p{
+  color:#77858e;
+  line-height:1.6;
+  font-size:13px;
+}
+
+.launchStatus{
+  margin-top:18px;
+  display:inline-block;
+  padding:7px 10px;
+  border-radius:5px;
+  background:rgba(117,191,255,.08);
+  color:#75bfff;
+  font-size:10px;
+  font-weight:bold;
+  letter-spacing:1px;
+}
+
+.ecosystem{
+  margin-top:25px;
+  padding:25px;
+  border:1px solid rgba(85,255,112,.1);
+  border-radius:17px;
+  background:rgba(85,255,112,.025);
+}
+
+.ecosystem h2{
+  margin:0 0 8px;
+}
+
+.ecosystem p{
+  color:#78868e;
+  font-size:13px;
+  line-height:1.6;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+  .choiceGrid{
+    grid-template-columns:1fr;
+  }
+
+  .choice{
+    min-height:190px;
+  }
+
+  .landingContent{
+    padding-top:35px;
+  }
+
+  .tagline{
+    margin-bottom:28px;
+  }
+
+  .launchHeader{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .launchTitle h1{
+    font-size:36px;
+  }
+
+  .launchCards{
+    grid-template-columns:1fr;
+  }
+
+  #help{
+    width:90%;
+    font-size:11px;
+    bottom:10px;
+  }
+
+  #hud{
+    top:58px;
+  }
 }
 </style>
 </head>
+
 <body>
+
+<!-- =========================
+     LIVE CRYPTO TICKER
+========================= -->
+
+<div id="ticker">
+  <div id="tickerTrack">
+
+    <div class="tickerItem">
+      <span class="coin">BTC</span>
+      <span class="price" id="btcPrice">Loading...</span>
+      <span class="change" id="btcChange">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">ETH</span>
+      <span class="price" id="ethPrice">Loading...</span>
+      <span class="change" id="ethChange">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">SOL</span>
+      <span class="price" id="solPrice">Loading...</span>
+      <span class="change" id="solChange">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">BNB</span>
+      <span class="price" id="bnbPrice">Loading...</span>
+      <span class="change" id="bnbChange">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">XRP</span>
+      <span class="price" id="xrpPrice">Loading...</span>
+      <span class="change" id="xrpChange">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">BTC</span>
+      <span class="price" id="btcPrice2">Loading...</span>
+      <span class="change" id="btcChange2">--</span>
+    </div>
+
+    <div class="tickerItem">
+      <span class="coin">ETH</span>
+      <span class="price" id="ethPrice2">Loading...</span>
+      <span class="change" id="ethChange2">--</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- =========================
+     THREE.JS GAME
+========================= -->
 
 <div id="game"></div>
 
+<!-- =========================
+     GAME HUD
+========================= -->
+
 <div id="hud">
-  <div id="title">CLIMBOUND</div>
+
+  <div id="title">
+    CLIMBORIA
+  </div>
+
   <div id="status">
     HAMMER:
-    <span id="statusText">FREE</span>
+    <span id="statusText">
+      FREE
+    </span>
   </div>
+
   <div id="height">
-    HEIGHT: <span id="heightText">0</span>m
+    HEIGHT:
+    <span id="heightText">
+      0
+    </span>m
   </div>
+
 </div>
 
 <div id="help">
   Move cursor = hammer tip &nbsp; | &nbsp;
-  <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp;
-  Move around grip = swing &nbsp; | &nbsp; Release = let go
+  <b>CLICK + HOLD GREEN GRIP</b>
+  &nbsp; | &nbsp;
+  Move around grip = swing
+  &nbsp; | &nbsp;
+  Release = let go
 </div>
 
-<div id="start">
-  <div id="panel">
-    <h1>CLIMBOUND</h1>
-    <p>
-      Grab the green grips with your hammer.<br>
-      Pull the hammer away to climb.
+<!-- =========================
+     GAME NAV
+========================= -->
+
+<div id="gameNav">
+  <button class="navButton" id="menuButton">
+    ← MAIN MENU
+  </button>
+</div>
+
+<!-- =========================
+     LANDING PAGE
+========================= -->
+
+<div id="landing">
+
+  <div class="landingGlow"></div>
+
+  <div class="landingContent">
+
+    <div class="brandSmall">
+      THE CLIMBORIA ECOSYSTEM
+    </div>
+
+    <h1 class="logoText">
+      CLIMB<span>ORIA</span>
+    </h1>
+
+    <p class="tagline">
+      Climb higher. Play harder. Build your way into the Climboria
+      ecosystem.
     </p>
-    <button id="startButton">
-      START CLIMBING
-    </button>
+
+    <div class="choiceGrid">
+
+      <div class="choice" id="gameChoice">
+
+        <div class="choiceIcon">
+          🧗
+        </div>
+
+        <h2>
+          CLIMBORIA GAME
+        </h2>
+
+        <p>
+          Grab your hammer, catch the grips and climb as high as
+          you can without falling.
+        </p>
+
+        <span class="choiceButton">
+          START CLIMBING
+        </span>
+
+      </div>
+
+      <div class="choice launch" id="launchChoice">
+
+        <div class="choiceIcon">
+          🚀
+        </div>
+
+        <h2>
+          CLIMBORIA LAUNCHPAD
+        </h2>
+
+        <p>
+          Explore the future Climboria ecosystem, upcoming projects
+          and community-powered launches.
+        </p>
+
+        <span class="choiceButton">
+          ENTER LAUNCHPAD
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="bottomNote">
+      CLIMBORIA • PLAY • BUILD • CLIMB
+    </div>
+
   </div>
+</div>
+
+<!-- =========================
+     LAUNCHPAD
+========================= -->
+
+<div id="launchpad">
+
+  <div class="launchWrap">
+
+    <div class="launchHeader">
+
+      <div class="launchTitle">
+
+        <small>
+          CLIMBORIA ECOSYSTEM
+        </small>
+
+        <h1>
+          LAUNCHPAD
+        </h1>
+
+        <p>
+          Discover projects climbing toward the next level.
+        </p>
+
+      </div>
+
+      <button class="launchBack" id="launchBack">
+        ← BACK TO CLIMBORIA
+      </button>
+
+    </div>
+
+    <div class="launchCards">
+
+      <div class="launchCard">
+
+        <div class="num">
+          01 / UPCOMING
+        </div>
+
+        <h3>
+          New Projects
+        </h3>
+
+        <p>
+          A home for new projects entering the Climboria ecosystem.
+        </p>
+
+        <span class="launchStatus">
+          COMING SOON
+        </span>
+
+      </div>
+
+      <div class="launchCard">
+
+        <div class="num">
+          02 / COMMUNITY
+        </div>
+
+        <h3>
+          Community Launches
+        </h3>
+
+        <p>
+          Community-driven launches designed to give builders a
+          place to start climbing.
+        </p>
+
+        <span class="launchStatus">
+          BUILDING
+        </span>
+
+      </div>
+
+      <div class="launchCard">
+
+        <div class="num">
+          03 / ECOSYSTEM
+        </div>
+
+        <h3>
+          Climboria DEX
+        </h3>
+
+        <p>
+          The future trading layer of the Climboria ecosystem.
+          More details will be revealed as development continues.
+        </p>
+
+        <span class="launchStatus">
+          IN DEVELOPMENT
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="ecosystem">
+
+      <h2>
+        The climb doesn't end with the game.
+      </h2>
+
+      <p>
+        Climboria is being built as a game-first ecosystem.
+        The game comes first, then the ecosystem grows around the
+        players, builders and community.
+      </p>
+
+    </div>
+
+  </div>
+
 </div>
 
 <script type="module">
 
 import * as THREE from
 "https://esm.sh/three@0.180.0";
+
+/* =========================================================
+   LIVE CRYPTO PRICE
+========================================================= */
+
+async function updateCryptoPrices(){
+
+  try{
+
+    const response=await fetch(
+      "https://api.binance.com/api/v3/ticker/24hr?symbols=%5B%22BTCUSDT%22,%22ETHUSDT%22,%22SOLUSDT%22,%22BNBUSDT%22,%22XRPUSDT%22%5D"
+    );
+
+    const data=await response.json();
+
+    const map={};
+
+    data.forEach(item=>{
+      map[item.symbol]=item;
+    });
+
+    updateCoin(
+      "BTCUSDT",
+      map.BTCUSDT
+    );
+
+    updateCoin(
+      "ETHUSDT",
+      map.ETHUSDT
+    );
+
+    updateCoin(
+      "SOLUSDT",
+      map.SOLUSDT
+    );
+
+    updateCoin(
+      "BNBUSDT",
+      map.BNBUSDT
+    );
+
+    updateCoin(
+      "XRPUSDT",
+      map.XRPUSDT
+    );
+
+  }catch(error){
+
+    console.log(
+      "Crypto price update failed:",
+      error
+    );
+
+  }
+}
+
+function updateCoin(symbol,data){
+
+  if(!data)return;
+
+  const short=symbol.replace(
+    "USDT",
+    ""
+  ).toLowerCase();
+
+  const price=
+    Number(
+      data.lastPrice
+    );
+
+  const change=
+    Number(
+      data.priceChangePercent
+    );
+
+  const priceText=
+    "$"+
+    price.toLocaleString(
+      "en-US",
+      {
+        minimumFractionDigits:
+          price<1 ? 4 : 2,
+        maximumFractionDigits:
+          price<1 ? 4 : 2
+      }
+    );
+
+  const changeText=
+    (change>=0?"+":"")+
+    change.toFixed(2)+
+    "%";
+
+  const price1=
+    document.getElementById(
+      short+"Price"
+    );
+
+  const change1=
+    document.getElementById(
+      short+"Change"
+    );
+
+  if(price1){
+    price1.textContent=
+      priceText;
+  }
+
+  if(change1){
+
+    change1.textContent=
+      changeText;
+
+    change1.className=
+      "change "+
+      (
+        change>=0
+        ?"up"
+        :"down"
+      );
+  }
+
+  const price2=
+    document.getElementById(
+      short+"Price2"
+    );
+
+  const change2=
+    document.getElementById(
+      short+"Change2"
+    );
+
+  if(price2){
+    price2.textContent=
+      priceText;
+  }
+
+  if(change2){
+
+    change2.textContent=
+      changeText;
+
+    change2.className=
+      "change "+
+      (
+        change>=0
+        ?"up"
+        :"down"
+      );
+  }
+}
+
+updateCryptoPrices();
+
+setInterval(
+  updateCryptoPrices,
+  15000
+);
+
+
+/* =========================================================
+   GAME
+========================================================= */
 
 let scene;
 let camera;
@@ -168,24 +1004,174 @@ const mouse={
   y:0
 };
 
-const cursorWorld=new THREE.Vector3();
+const cursorWorld=
+  new THREE.Vector3();
 
-const raycaster=new THREE.Raycaster();
+const raycaster=
+  new THREE.Raycaster();
 
-const cursorPlane=new THREE.Plane(
-  new THREE.Vector3(0,0,1),
-  -4
-);
+const cursorPlane=
+  new THREE.Plane(
+    new THREE.Vector3(0,0,1),
+    -4
+  );
 
-let anchorWorld=new THREE.Vector3();
+let anchorWorld=
+  new THREE.Vector3();
+
 let ropeLength=0;
+
+
+/* =========================================================
+   UI
+========================================================= */
+
+const landing=
+  document.getElementById(
+    "landing"
+  );
+
+const launchpad=
+  document.getElementById(
+    "launchpad"
+  );
+
+const hud=
+  document.getElementById(
+    "hud"
+  );
+
+const help=
+  document.getElementById(
+    "help"
+  );
+
+const gameNav=
+  document.getElementById(
+    "gameNav"
+  );
+
+
+function showGame(){
+
+  landing.style.display="none";
+
+  launchpad.style.display="none";
+
+  hud.style.display="block";
+
+  help.style.display="block";
+
+  gameNav.style.display="block";
+
+  running=true;
+
+  updateCursorWorld();
+
+  lastTime=
+    performance.now();
+}
+
+
+function showMenu(){
+
+  running=false;
+
+  grabbed=null;
+
+  landing.style.display=
+    "flex";
+
+  launchpad.style.display=
+    "none";
+
+  hud.style.display=
+    "none";
+
+  help.style.display=
+    "none";
+
+  gameNav.style.display=
+    "none";
+}
+
+
+function showLaunchpad(){
+
+  running=false;
+
+  grabbed=null;
+
+  landing.style.display=
+    "none";
+
+  launchpad.style.display=
+    "block";
+
+  hud.style.display=
+    "none";
+
+  help.style.display=
+    "none";
+
+  gameNav.style.display=
+    "none";
+}
+
+
+document
+  .getElementById(
+    "gameChoice"
+  )
+  .addEventListener(
+    "click",
+    showGame
+  );
+
+
+document
+  .getElementById(
+    "launchChoice"
+  )
+  .addEventListener(
+    "click",
+    showLaunchpad
+  );
+
+
+document
+  .getElementById(
+    "launchBack"
+  )
+  .addEventListener(
+    "click",
+    showMenu
+  );
+
+
+document
+  .getElementById(
+    "menuButton"
+  )
+  .addEventListener(
+    "click",
+    showMenu
+  );
+
+
+/* =========================================================
+   INIT
+========================================================= */
 
 function init(){
 
-  scene=new THREE.Scene();
+  scene=
+    new THREE.Scene();
 
   scene.background=
-    new THREE.Color(0x071018);
+    new THREE.Color(
+      0x071018
+    );
 
   scene.fog=
     new THREE.Fog(
@@ -226,13 +1212,15 @@ function init(){
     window.innerHeight
   );
 
-  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.enabled=
+    true;
 
   document
     .getElementById("game")
     .appendChild(
       renderer.domElement
     );
+
 
   const ambient=
     new THREE.HemisphereLight(
@@ -241,7 +1229,10 @@ function init(){
       2.2
     );
 
-  scene.add(ambient);
+  scene.add(
+    ambient
+  );
+
 
   const sun=
     new THREE.DirectionalLight(
@@ -257,7 +1248,10 @@ function init(){
 
   sun.castShadow=true;
 
-  scene.add(sun);
+  scene.add(
+    sun
+  );
+
 
   createSky();
   createMountain();
@@ -266,6 +1260,7 @@ function init(){
   createHero();
   createHammer();
   createGrips();
+
 
   window.addEventListener(
     "mousemove",
@@ -287,15 +1282,14 @@ function init(){
     resize
   );
 
-  document
-    .getElementById("startButton")
-    .addEventListener(
-      "click",
-      startGame
-    );
 
   animate();
 }
+
+
+/* =========================================================
+   SKY
+========================================================= */
 
 function createSky(){
 
@@ -312,8 +1306,15 @@ function createSky(){
       })
     );
 
-  scene.add(sky);
+  scene.add(
+    sky
+  );
 }
+
+
+/* =========================================================
+   MOUNTAIN
+========================================================= */
 
 function createMountain(){
 
@@ -336,17 +1337,23 @@ function createMountain(){
     -7
   );
 
-  cliff.rotation.y=-0.04;
+  cliff.rotation.y=
+    -0.04;
 
-  cliff.receiveShadow=true;
+  cliff.receiveShadow=
+    true;
 
-  scene.add(cliff);
+  scene.add(
+    cliff
+  );
+
 
   const rockMaterial=
     new THREE.MeshStandardMaterial({
       color:0x4a555b,
       roughness:1
     });
+
 
   const ledges=[
     [-8,5,1.5,2],
@@ -363,6 +1370,7 @@ function createMountain(){
     [7,57,2.5,2]
   ];
 
+
   ledges.forEach(
     data=>{
 
@@ -373,6 +1381,7 @@ function createMountain(){
         sy
       ]=data;
 
+
       const rock=
         new THREE.Mesh(
           new THREE.DodecahedronGeometry(
@@ -382,11 +1391,13 @@ function createMountain(){
           rockMaterial
         );
 
+
       rock.position.set(
         x,
         y,
         -3.5
       );
+
 
       rock.scale.set(
         sx,
@@ -394,19 +1405,30 @@ function createMountain(){
         1.4
       );
 
+
       rock.rotation.set(
         Math.random(),
         Math.random(),
         Math.random()
       );
 
+
       rock.castShadow=true;
+
       rock.receiveShadow=true;
 
-      scene.add(rock);
+      scene.add(
+        rock
+      );
+
     }
   );
 }
+
+
+/* =========================================================
+   GROUND
+========================================================= */
 
 function createGround(){
 
@@ -423,16 +1445,26 @@ function createGround(){
       })
     );
 
+
   ground.position.set(
     0,
     -0.5,
     0
   );
 
-  ground.receiveShadow=true;
 
-  scene.add(ground);
+  ground.receiveShadow=
+    true;
+
+  scene.add(
+    ground
+  );
 }
+
+
+/* =========================================================
+   ROCKS
+========================================================= */
 
 function createRocks(){
 
@@ -442,7 +1474,12 @@ function createRocks(){
       roughness:1
     });
 
-  for(let i=0;i<45;i++){
+
+  for(
+    let i=0;
+    i<45;
+    i++
+  ){
 
     const rock=
       new THREE.Mesh(
@@ -453,8 +1490,12 @@ function createRocks(){
         material
       );
 
+
     const side=
-      Math.random()>.5 ? 1 : -1;
+      Math.random()>.5
+      ?1
+      :-1;
+
 
     rock.position.set(
       side*
@@ -467,15 +1508,21 @@ function createRocks(){
       Math.random()*3
     );
 
+
     const s=
       .5+
       Math.random()*2.5;
 
+
     rock.scale.set(
       s,
-      s*(.6+Math.random()),
+      s*(
+        .6+
+        Math.random()
+      ),
       s
     );
+
 
     rock.rotation.set(
       Math.random()*3,
@@ -483,13 +1530,23 @@ function createRocks(){
       Math.random()*3
     );
 
-    scene.add(rock);
+
+    scene.add(
+      rock
+    );
   }
 }
 
+
+/* =========================================================
+   HERO
+========================================================= */
+
 function createHero(){
 
-  hero=new THREE.Group();
+  hero=
+    new THREE.Group();
+
 
   const pot=
     new THREE.Mesh(
@@ -505,9 +1562,13 @@ function createHero(){
       })
     );
 
+
   pot.castShadow=true;
 
-  hero.add(pot);
+  hero.add(
+    pot
+  );
+
 
   const rim=
     new THREE.Mesh(
@@ -522,12 +1583,17 @@ function createHero(){
       })
     );
 
+
   rim.rotation.x=
     Math.PI/2;
 
-  rim.position.y=.68;
+  rim.position.y=
+    .68;
 
-  hero.add(rim);
+  hero.add(
+    rim
+  );
+
 
   const head=
     new THREE.Mesh(
@@ -542,11 +1608,16 @@ function createHero(){
       })
     );
 
-  head.position.y=1.35;
+
+  head.position.y=
+    1.35;
 
   head.castShadow=true;
 
-  hero.add(head);
+  hero.add(
+    head
+  );
+
 
   const helmet=
     new THREE.Mesh(
@@ -565,16 +1636,22 @@ function createHero(){
       })
     );
 
-  helmet.position.y=1.62;
+
+  helmet.position.y=
+    1.62;
 
   helmet.castShadow=true;
 
-  hero.add(helmet);
+  hero.add(
+    helmet
+  );
+
 
   const eyeMaterial=
     new THREE.MeshBasicMaterial({
       color:0x111111
     });
+
 
   const eye1=
     new THREE.Mesh(
@@ -586,19 +1663,28 @@ function createHero(){
       eyeMaterial
     );
 
+
   eye1.position.set(
     -.2,
     1.35,
     -.63
   );
 
-  hero.add(eye1);
+  hero.add(
+    eye1
+  );
 
-  const eye2=eye1.clone();
 
-  eye2.position.x=.2;
+  const eye2=
+    eye1.clone();
 
-  hero.add(eye2);
+  eye2.position.x=
+    .2;
+
+  hero.add(
+    eye2
+  );
+
 
   const nose=
     new THREE.Mesh(
@@ -612,13 +1698,17 @@ function createHero(){
       })
     );
 
+
   nose.position.set(
     0,
     1.25,
     -.68
   );
 
-  hero.add(nose);
+  hero.add(
+    nose
+  );
+
 
   hero.position.set(
     0,
@@ -626,12 +1716,22 @@ function createHero(){
     3.5
   );
 
-  scene.add(hero);
+
+  scene.add(
+    hero
+  );
 }
+
+
+/* =========================================================
+   HAMMER
+========================================================= */
 
 function createHammer(){
 
-  hammer=new THREE.Group();
+  hammer=
+    new THREE.Group();
+
 
   const handle=
     new THREE.Mesh(
@@ -646,11 +1746,17 @@ function createHammer(){
       })
     );
 
-  handle.rotation.z=Math.PI/2;
 
-  handle.position.x=-1.9;
+  handle.rotation.z=
+    Math.PI/2;
 
-  hammer.add(handle);
+  handle.position.x=
+    -1.9;
+
+  hammer.add(
+    handle
+  );
+
 
   const head=
     new THREE.Mesh(
@@ -666,9 +1772,14 @@ function createHammer(){
       })
     );
 
-  head.position.x=-.65;
 
-  hammer.add(head);
+  head.position.x=
+    -.65;
+
+  hammer.add(
+    head
+  );
+
 
   const tip=
     new THREE.Mesh(
@@ -682,15 +1793,22 @@ function createHammer(){
       })
     );
 
+
   tip.position.set(
     0,
     0,
     0
   );
 
-  hammer.add(tip);
 
-  hammer.userData.tip=tip;
+  hammer.add(
+    tip
+  );
+
+
+  hammer.userData.tip=
+    tip;
+
 
   hammer.position.set(
     3,
@@ -698,8 +1816,16 @@ function createHammer(){
     4
   );
 
-  scene.add(hammer);
+
+  scene.add(
+    hammer
+  );
 }
+
+
+/* =========================================================
+   GRIPS
+========================================================= */
 
 function createGrips(){
 
@@ -726,11 +1852,13 @@ function createGrips(){
     [-3,60]
   ];
 
+
   positions.forEach(
     ([x,y],index)=>{
 
       const group=
         new THREE.Group();
+
 
       const glow=
         new THREE.Mesh(
@@ -746,7 +1874,11 @@ function createGrips(){
           })
         );
 
-      group.add(glow);
+
+      group.add(
+        glow
+      );
+
 
       const ring=
         new THREE.Mesh(
@@ -761,7 +1893,11 @@ function createGrips(){
           })
         );
 
-      group.add(ring);
+
+      group.add(
+        ring
+      );
+
 
       const center=
         new THREE.Mesh(
@@ -775,7 +1911,11 @@ function createGrips(){
           })
         );
 
-      group.add(center);
+
+      group.add(
+        center
+      );
+
 
       group.position.set(
         x,
@@ -783,7 +1923,11 @@ function createGrips(){
         3.1
       );
 
-      scene.add(group);
+
+      scene.add(
+        group
+      );
+
 
       grips.push({
         group,
@@ -793,9 +1937,15 @@ function createGrips(){
         y,
         index
       });
+
     }
   );
 }
+
+
+/* =========================================================
+   MOUSE
+========================================================= */
 
 function mouseMove(event){
 
@@ -804,13 +1954,16 @@ function mouseMove(event){
     window.innerWidth*
     2-1;
 
+
   mouse.y=
     -(event.clientY/
     window.innerHeight)*
     2+1;
 
+
   updateCursorWorld();
 }
+
 
 function updateCursorWorld(){
 
@@ -822,13 +1975,16 @@ function updateCursorWorld(){
     camera
   );
 
+
   const hit=
     raycaster.ray.intersectPlane(
       cursorPlane,
       cursorWorld
     );
 
+
   if(!hit)return;
+
 
   cursorWorld.x=
     THREE.MathUtils.clamp(
@@ -836,6 +1992,7 @@ function updateCursorWorld(){
       -10,
       10
     );
+
 
   cursorWorld.y=
     THREE.MathUtils.clamp(
@@ -845,9 +2002,15 @@ function updateCursorWorld(){
     );
 }
 
+
+/* =========================================================
+   HAMMER UPDATE
+========================================================= */
+
 function updateHammer(){
 
   updateCursorWorld();
+
 
   if(grabbed){
 
@@ -855,13 +2018,16 @@ function updateHammer(){
       anchorWorld
     );
 
+
     const dx=
       cursorWorld.x-
       anchorWorld.x;
 
+
     const dy=
       cursorWorld.y-
       anchorWorld.y;
+
 
     if(
       Math.abs(dx)+
@@ -874,6 +2040,7 @@ function updateHammer(){
           dx
         );
     }
+
 
   }else{
 
@@ -881,13 +2048,16 @@ function updateHammer(){
       cursorWorld
     );
 
+
     const dx=
       cursorWorld.x-
       hero.position.x;
 
+
     const dy=
       cursorWorld.y-
       hero.position.y;
+
 
     if(
       Math.abs(dx)+
@@ -900,15 +2070,26 @@ function updateHammer(){
           dx
         );
     }
+
   }
 
-  hammer.position.z=4;
+
+  hammer.position.z=
+    4;
 }
+
+
+/* =========================================================
+   NEAREST GRIP
+========================================================= */
 
 function nearestGrip(){
 
   let best=null;
-  let bestDistance=Infinity;
+
+  let bestDistance=
+    Infinity;
+
 
   grips.forEach(
     grip=>{
@@ -917,9 +2098,11 @@ function nearestGrip(){
         cursorWorld.x-
         grip.x;
 
+
       const dy=
         cursorWorld.y-
         grip.y;
+
 
       const d=
         Math.sqrt(
@@ -927,13 +2110,20 @@ function nearestGrip(){
           dy*dy
         );
 
-      if(d<bestDistance){
+
+      if(
+        d<
+        bestDistance
+      ){
 
         bestDistance=d;
+
         best=grip;
       }
+
     }
   );
+
 
   return{
     grip:best,
@@ -941,21 +2131,30 @@ function nearestGrip(){
   };
 }
 
+
+/* =========================================================
+   MOUSE DOWN
+========================================================= */
+
 function mouseDown(event){
 
   if(!running)return;
 
   if(event.button!==0)return;
 
+
   const result=
     nearestGrip();
+
 
   if(
     result.grip &&
     result.distance<1.15
   ){
 
-    grabbed=result.grip;
+    grabbed=
+      result.grip;
+
 
     anchorWorld.set(
       grabbed.x,
@@ -963,13 +2162,16 @@ function mouseDown(event){
       4
     );
 
+
     const dx=
       hero.position.x-
       anchorWorld.x;
 
+
     const dy=
       hero.position.y-
       anchorWorld.y;
+
 
     ropeLength=
       Math.max(
@@ -980,17 +2182,23 @@ function mouseDown(event){
         )
       );
 
+
     velocityX=0;
     velocityY=0;
+
 
     setStatus(
       "GRIP LOCKED",
       "#55ff70"
     );
 
+
     grabbed.group
       .scale
-      .setScalar(1.55);
+      .setScalar(
+        1.55
+      );
+
 
   }else{
 
@@ -998,8 +2206,14 @@ function mouseDown(event){
       "MOVE CLOSER",
       "#ffcc33"
     );
+
   }
 }
+
+
+/* =========================================================
+   MOUSE UP
+========================================================= */
 
 function mouseUp(){
 
@@ -1007,13 +2221,19 @@ function mouseUp(){
 
     grabbed.group
       .scale
-      .setScalar(1);
+      .setScalar(
+        1
+      );
+
 
     velocityX*=1.15;
+
     velocityY*=1.15;
   }
 
+
   grabbed=null;
+
 
   if(running){
 
@@ -1024,10 +2244,16 @@ function mouseUp(){
   }
 }
 
+
+/* =========================================================
+   PHYSICS
+========================================================= */
+
 function updatePhysics(dt){
 
   velocityY +=
     gravity*dt;
+
 
   if(grabbed){
 
@@ -1035,9 +2261,11 @@ function updatePhysics(dt){
       hero.position.x-
       anchorWorld.x;
 
+
     const relY=
       hero.position.y-
       anchorWorld.y;
+
 
     const distance=
       Math.sqrt(
@@ -1045,21 +2273,26 @@ function updatePhysics(dt){
         relY*relY
       );
 
+
     if(distance>.001){
 
       const tangentX=
         -relY/distance;
 
+
       const tangentY=
         relX/distance;
+
 
       const mouseX=
         cursorWorld.x-
         anchorWorld.x;
 
+
       const mouseY=
         cursorWorld.y-
         anchorWorld.y;
+
 
       const mouseLen=
         Math.sqrt(
@@ -1067,23 +2300,28 @@ function updatePhysics(dt){
           mouseY*mouseY
         );
 
+
       if(mouseLen>.001){
 
         const nx=
           mouseX/mouseLen;
 
+
         const ny=
           mouseY/mouseLen;
+
 
         const tangential=
           nx*tangentX+
           ny*tangentY;
+
 
         velocityX +=
           tangentX*
           tangential*
           swingStrength*
           dt;
+
 
         velocityY +=
           tangentY*
@@ -1092,53 +2330,71 @@ function updatePhysics(dt){
           dt;
       }
 
-      if(distance>ropeLength){
+
+      if(
+        distance>
+        ropeLength
+      ){
 
         const correction=
           distance-
           ropeLength;
 
+
         const nx=
           relX/distance;
+
 
         const ny=
           relY/distance;
 
+
         hero.position.x -=
           nx*correction;
+
 
         hero.position.y -=
           ny*correction;
 
+
         const outward=
           velocityX*nx+
           velocityY*ny;
+
 
         if(outward>0){
 
           velocityX -=
             nx*outward;
 
+
           velocityY -=
             ny*outward;
         }
+
       }
+
 
       const spring=
         (ropeLength-distance)*
         anchorPull;
+
 
       velocityX +=
         (relX/distance)*
         spring*
         dt;
 
+
       velocityY +=
         (relY/distance)*
         spring*
         dt;
+
     }
+
   }
+
 
   const speed=
     Math.sqrt(
@@ -1146,20 +2402,29 @@ function updatePhysics(dt){
       velocityY*velocityY
     );
 
-  if(speed>maxSpeed){
+
+  if(
+    speed>
+    maxSpeed
+  ){
 
     const scale=
       maxSpeed/speed;
 
+
     velocityX*=scale;
+
     velocityY*=scale;
   }
+
 
   hero.position.x +=
     velocityX*dt;
 
+
   hero.position.y +=
     velocityY*dt;
+
 
   velocityX*=
     Math.pow(
@@ -1167,11 +2432,13 @@ function updatePhysics(dt){
       dt*60
     );
 
+
   velocityY*=
     Math.pow(
       airDrag,
       dt*60
     );
+
 
   hero.position.x=
     THREE.MathUtils.clamp(
@@ -1180,28 +2447,49 @@ function updatePhysics(dt){
       9
     );
 
-  const groundY=0.78;
 
-  if(hero.position.y<groundY){
+  const groundY=
+    0.78;
 
-    hero.position.y=groundY;
 
-    if(velocityY<0){
+  if(
+    hero.position.y<
+    groundY
+  ){
+
+    hero.position.y=
+      groundY;
+
+
+    if(
+      velocityY<0
+    ){
 
       velocityY=0;
     }
+
 
     if(!grabbed){
 
       velocityX*=0.88;
     }
+
   }
 
-  if(hero.position.y<-10){
+
+  if(
+    hero.position.y<
+    -10
+  ){
 
     resetPlayer();
   }
 }
+
+
+/* =========================================================
+   RESET
+========================================================= */
 
 function resetPlayer(){
 
@@ -1211,25 +2499,37 @@ function resetPlayer(){
     3.5
   );
 
+
   velocityX=0;
+
   velocityY=0;
 
   grabbed=null;
+
 
   grips.forEach(
     grip=>{
 
       grip.group
         .scale
-        .setScalar(1);
+        .setScalar(
+          1
+        );
+
     }
   );
+
 
   setStatus(
     "FREE",
     "#55ff70"
   );
 }
+
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 function setStatus(
   text,
@@ -1241,15 +2541,26 @@ function setStatus(
       "statusText"
     );
 
-  status.textContent=text;
 
-  status.style.color=color;
+  status.textContent=
+    text;
+
+
+  status.style.color=
+    color;
 }
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
 
 function updateCamera(){
 
   const targetY=
-    hero.position.y+5;
+    hero.position.y+
+    5;
+
 
   camera.position.y+=
     (
@@ -1257,11 +2568,13 @@ function updateCamera(){
       camera.position.y
     )*.08;
 
+
   camera.position.x+=
     (
       hero.position.x-
       camera.position.x
     )*.05;
+
 
   camera.lookAt(
     hero.position.x,
@@ -1270,12 +2583,21 @@ function updateCamera(){
   );
 }
 
+
+/* =========================================================
+   GRIP ANIMATION
+========================================================= */
+
 function animateGrips(time){
 
   grips.forEach(
     grip=>{
 
-      if(grip===grabbed)return;
+      if(
+        grip===
+        grabbed
+      )return;
+
 
       const pulse=
         1+
@@ -1284,16 +2606,28 @@ function animateGrips(time){
           grip.index
         )*.12;
 
+
       grip.ring
         .scale
-        .setScalar(pulse);
+        .setScalar(
+          pulse
+        );
+
 
       grip.glow
         .scale
-        .setScalar(pulse);
+        .setScalar(
+          pulse
+        );
+
     }
   );
 }
+
+
+/* =========================================================
+   HEIGHT
+========================================================= */
 
 function updateHeight(){
 
@@ -1305,24 +2639,17 @@ function updateHeight(){
       )
     );
 
+
   document.getElementById(
     "heightText"
-  ).textContent=height;
+  ).textContent=
+    height;
 }
 
-function startGame(){
 
-  document.getElementById(
-    "start"
-  ).style.display="none";
-
-  running=true;
-
-  updateCursorWorld();
-
-  lastTime=
-    performance.now();
-}
+/* =========================================================
+   RESIZE
+========================================================= */
 
 function resize(){
 
@@ -1330,7 +2657,9 @@ function resize(){
     window.innerWidth/
     window.innerHeight;
 
+
   camera.updateProjectionMatrix();
+
 
   renderer.setSize(
     window.innerWidth,
@@ -1338,26 +2667,37 @@ function resize(){
   );
 }
 
+
+/* =========================================================
+   ANIMATE
+========================================================= */
+
 function animate(time=0){
 
   requestAnimationFrame(
     animate
   );
 
+
   const now=
     performance.now();
+
 
   let dt=
     (now-lastTime)/
     1000;
 
-  lastTime=now;
+
+  lastTime=
+    now;
+
 
   dt=
     Math.min(
       dt,
       .033
     );
+
 
   if(running){
 
@@ -1370,7 +2710,11 @@ function animate(time=0){
     updateHeight();
   }
 
-  animateGrips(time);
+
+  animateGrips(
+    time
+  );
+
 
   renderer.render(
     scene,
@@ -1378,8 +2722,10 @@ function animate(time=0){
   );
 }
 
+
 init();
 
 </script>
+
 </body>
 </html>
