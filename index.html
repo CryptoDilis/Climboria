@@ -169,7 +169,6 @@ button:hover{background:#55ff7022}
 
 /* =========================
    CRYPTO TICKER
-   MAIN UI ONLY
 ========================= */
 
 #cryptoTicker{
@@ -526,7 +525,6 @@ button:hover{background:#55ff7022}
 
 <!-- =========================
      CRYPTO LIVE PRICE
-     MAIN UI ONLY
 ========================= -->
 
 <div id="cryptoTicker">
@@ -696,20 +694,15 @@ let cryptoTimer=null;
 
 
 /*
-   CURRENT DISPLAY PRICE
-   FROM NEAR INTENTS
+   BINANCE PUBLIC MARKET DATA
+
+   One endpoint gives us:
+   - current price
+   - 24h price change %
 */
 
-const NEAR_INTENTS_TOKENS=
- "https://api-mng-console.chaindefuser.com/api/tokens";
-
-
-/*
-   REAL 24H MARKET ACTION
-*/
-
-const BINANCE_24H_TICKER=
- "https://api.binance.com/api/v3/ticker/24hr";
+const BINANCE_MARKET_API=
+ "https://data-api.binance.vision/api/v3/ticker/24hr";
 
 
 const MAJOR_SYMBOLS=[
@@ -1070,11 +1063,7 @@ function createMountain(){
 
  /* =========================
     PEAK ROCKS
- =========================
-
-    Center rock intentionally removed
-    so the hero remains visible.
- */
+ ========================= */
 
  [
   [-3.8,62.5,.9,2.2],
@@ -2426,20 +2415,12 @@ function beginSummitSequence(){
  velocityY=0;
 
 
- /*
-   HARD SNAP HERO TO EXACT CENTER
- */
-
  hero.position.set(
   SUMMIT_HERO_X,
   SUMMIT_HERO_Y,
   SUMMIT_HERO_Z
  );
 
-
- /*
-   HARD CENTER CAMERA
- */
 
  camera.position.set(
   SUMMIT_CENTER_X,
@@ -2457,10 +2438,6 @@ function beginSummitSequence(){
 
  updateHeight();
 
-
- /*
-   EXPLOSION
- */
 
  setTimeout(()=>{
 
@@ -2493,10 +2470,6 @@ function beginSummitSequence(){
 
  },350);
 
-
- /*
-   VICTORY
- */
 
  victoryTimer=
   setTimeout(()=>{
@@ -2662,10 +2635,6 @@ function showGame(){
   "block";
 
 
- /*
-   HIDE CRYPTO DURING GAME
- */
-
  $("cryptoTicker").style.display=
   "none";
 
@@ -2734,10 +2703,6 @@ function showMenu(){
   "none";
 
 
- /*
-   SHOW CRYPTO ONLY ON MAIN LANDING
- */
-
  $("cryptoTicker").style.display=
   "flex";
 
@@ -2794,10 +2759,6 @@ function showLaunchpad(){
  $("touchHint").style.display=
   "none";
 
-
- /*
-   HIDE CRYPTO IN LAUNCHPAD
- */
 
  $("cryptoTicker").style.display=
   "none";
@@ -3044,11 +3005,6 @@ function updateEffects(dt){
 
 function createSummitBurst(){
 
- /*
-   USE ACTUAL HERO POSITION
-   FOR PERFECT ALIGNMENT
- */
-
  const explosionX=
   hero.position.x;
 
@@ -3059,10 +3015,6 @@ function createSummitBurst(){
  const explosionZ=
   hero.position.z;
 
-
- /* =========================
-    MAIN PARTICLES
- ========================= */
 
  for(let i=0;i<150;i++){
 
@@ -3122,10 +3074,6 @@ function createSummitBurst(){
  }
 
 
- /* =========================
-    SPARKS
- ========================= */
-
  for(let i=0;i<55;i++){
 
   const p=
@@ -3172,10 +3120,6 @@ function createSummitBurst(){
   summitSparks.push(p);
  }
 
-
- /* =========================
-    SHOCKWAVES
- ========================= */
 
  for(let i=0;i<2;i++){
 
@@ -3458,6 +3402,10 @@ function animateSummit(time){
 
 function formatCryptoPrice(price){
 
+ if(!Number.isFinite(price))
+  return "--";
+
+
  if(price>=1000){
 
   return "$"+
@@ -3469,7 +3417,10 @@ function formatCryptoPrice(price){
     }
    );
 
- }else if(price>=1){
+ }
+
+
+ if(price>=1){
 
   return "$"+
    price.toLocaleString(
@@ -3480,7 +3431,10 @@ function formatCryptoPrice(price){
     }
    );
 
- }else{
+ }
+
+
+ if(price>=0.01){
 
   return "$"+
    price.toLocaleString(
@@ -3490,40 +3444,84 @@ function formatCryptoPrice(price){
      maximumFractionDigits:4
     }
    );
+
  }
+
+
+ return "$"+
+  price.toLocaleString(
+   "en-US",
+   {
+    minimumFractionDigits:6,
+    maximumFractionDigits:6
+   }
+  );
 }
 
 
 /* =====================================================
-   UPDATE MARKET ACTION
+   UPDATE ONE CRYPTO CARD
 ===================================================== */
 
-function updateMarketAction(
+function updateCryptoCard(
  symbol,
  market
 ){
+
+ if(!market)
+  return;
+
+
+ const price=
+  Number(
+   market.lastPrice
+  );
+
+
+ const change=
+  Number(
+   market.priceChangePercent
+  );
+
+
+ const priceEl=
+  $(symbol.toLowerCase()+"Price");
 
  const changeEl=
   $(symbol.toLowerCase()+"Change");
 
 
- if(!changeEl)return;
+ if(
+  !priceEl||
+  !changeEl
+ )
+  return;
 
+
+ /*
+   PRICE
+ */
 
  if(
-  market &&
-  Number.isFinite(
-   Number(
-    market.priceChangePercent
-   )
-  )
+  Number.isFinite(price) &&
+  price>0
  ){
 
-  const change=
-   Number(
-    market.priceChangePercent
+  priceEl.textContent=
+   formatCryptoPrice(
+    price
    );
 
+ }
+
+
+ /*
+   24H CHANGE
+ */
+
+ if(
+  Number.isFinite(change)
+ ){
 
   const sign=
    change>=0?
@@ -3550,80 +3548,56 @@ function updateMarketAction(
    "down"
   );
 
-
- }else{
-
-  /*
-    Keep the action field visible.
-    Do not create fake movement.
-  */
-
-  changeEl.textContent=
-   "--";
-
-
-  changeEl.classList.remove(
-   "cryptoLoading",
-   "up",
-   "down"
-  );
-
-
-  changeEl.classList.add(
-   "cryptoLoading"
-  );
  }
+
 }
 
 
 /* =====================================================
-   UPDATE CRYPTO PRICE
+   LOAD LIVE CRYPTO DATA
 ===================================================== */
 
-function updateCryptoPrice(
- symbol,
- data
-){
-
- if(!data)return;
-
-
- const price=
-  Number(data.price);
-
-
- if(
-  !Number.isFinite(price)||
-  price<=0
- )
-  return;
-
-
- const priceEl=
-  $(symbol.toLowerCase()+"Price");
-
-
- if(!priceEl)return;
-
-
- priceEl.textContent=
-  formatCryptoPrice(price);
-}
-
-
-/* =====================================================
-   LOAD NEAR PRICES
-===================================================== */
-
-async function loadNearPrices(){
+async function loadCryptoMarket(){
 
  try{
 
+  /*
+    Request all 5 coins at once.
+
+    This returns an array containing:
+    BTC
+    ETH
+    SOL
+    BNB
+    XRP
+
+    Each object includes:
+    lastPrice
+    priceChangePercent
+  */
+
+  const symbols=
+   JSON.stringify(
+    MAJOR_SYMBOLS.map(
+     symbol=>
+      BINANCE_SYMBOLS[symbol]
+    )
+   );
+
+
+  const url=
+   BINANCE_MARKET_API+
+   "?symbols="+
+   encodeURIComponent(
+    symbols
+   )+
+   "&type=FULL&_="+
+   Date.now();
+
+
   const response=
    await fetch(
-    NEAR_INTENTS_TOKENS+
-    "?_="+
-    Date.now(),
+    url,
     {
      method:"GET",
      cache:"no-store"
@@ -3634,7 +3608,7 @@ async function loadNearPrices(){
   if(!response.ok){
 
    throw new Error(
-    "NEAR API "+
+    "Binance market API "+
     response.status
    );
   }
@@ -3644,162 +3618,74 @@ async function loadNearPrices(){
    await response.json();
 
 
-  const tokens=
-   Array.isArray(data)
-    ?
-    data
-    :
-    Array.isArray(data.tokens)
-     ?
-     data.tokens
-     :
-     [];
+  /*
+    Make sure the response is an array.
+  */
 
-
-  if(!tokens.length){
+  if(!Array.isArray(data)){
 
    throw new Error(
-    "No tokens returned"
+    "Unexpected Binance response"
    );
   }
 
 
+  /*
+    Update every coin separately.
+  */
+
   MAJOR_SYMBOLS.forEach(
    symbol=>{
 
-    const token=
-     tokens.find(
-      t=>
+    const binanceSymbol=
+     BINANCE_SYMBOLS[symbol];
+
+
+    const market=
+     data.find(
+      item=>
        String(
-        t.symbol||""
+        item.symbol||""
        ).toUpperCase()===
-       symbol
-       &&
-       Number.isFinite(
-        Number(t.price)
-       )
-       &&
-       Number(t.price)>0
+       binanceSymbol
      );
 
 
-    if(token){
+    if(market){
 
-     updateCryptoPrice(
+     updateCryptoCard(
       symbol,
-      token
+      market
      );
+
     }
 
-   });
+   }
+  );
+
+
+  console.log(
+   "CLIMBORIA crypto prices updated",
+   data
+  );
 
 
  }catch(error){
 
   console.warn(
-   "NEAR price feed failed:",
+   "CLIMBORIA crypto feed failed:",
    error
   );
+
+
+  /*
+    Do not replace existing
+    live values with fake data.
+
+    Keep whatever valid values
+    were already displayed.
+  */
  }
-}
-
-
-/* =====================================================
-   LOAD 24H MARKET ACTION
-===================================================== */
-
-async function loadMarketActions(){
-
- /*
-   Every coin is independent.
-   One failure cannot kill the other coins.
- */
-
- await Promise.all(
-
-  MAJOR_SYMBOLS.map(
-   async symbol=>{
-
-    try{
-
-     const response=
-      await fetch(
-       BINANCE_24H_TICKER+
-       "?symbol="+
-       BINANCE_SYMBOLS[symbol]+
-       "&_="+
-       Date.now(),
-       {
-        method:"GET",
-        cache:"no-store"
-       }
-      );
-
-
-     if(!response.ok){
-
-      throw new Error(
-       symbol+
-       " market "+
-       response.status
-      );
-     }
-
-
-     const market=
-      await response.json();
-
-
-     updateMarketAction(
-      symbol,
-      market
-     );
-
-
-    }catch(error){
-
-     console.warn(
-      symbol+
-      " market action failed:",
-      error
-     );
-
-
-     updateMarketAction(
-      symbol,
-      null
-     );
-    }
-
-   }
-  )
-
- );
-}
-
-
-/* =====================================================
-   UPDATE ALL CRYPTO DATA
-===================================================== */
-
-async function updateCryptoPrices(){
-
- /*
-   NEAR price and market action are
-   completely independent.
-
-   NEAR can fail while Binance still
-   updates the percentage.
- */
-
- await Promise.allSettled([
-
-  loadNearPrices(),
-
-  loadMarketActions()
-
- ]);
-
 }
 
 
@@ -3810,27 +3696,28 @@ async function updateCryptoPrices(){
 function startCryptoTicker(){
 
  /*
-   Immediate first load.
+   First load immediately.
  */
 
- updateCryptoPrices();
-
-
- if(cryptoTimer){
-
-  clearInterval(
-   cryptoTimer
-  );
- }
+ loadCryptoMarket();
 
 
  /*
    Refresh every 10 seconds.
  */
 
+ if(cryptoTimer){
+
+  clearInterval(
+   cryptoTimer
+  );
+
+ }
+
+
  cryptoTimer=
   setInterval(
-   updateCryptoPrices,
+   loadCryptoMarket,
    10000
   );
 }
