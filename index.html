@@ -617,6 +617,10 @@ button:active{
  border-radius:7px;
  box-shadow:0 5px 25px #0005;
  text-align:center;
+ transition:
+  border-color .25s ease,
+  transform .25s ease,
+  box-shadow .25s ease;
 }
 
 .cryptoTop{
@@ -645,6 +649,79 @@ button:active{
  color:#c8d0d4;
  font-weight:bold;
  text-align:center;
+ transition:
+  color .25s ease,
+  transform .25s ease;
+}
+
+.cryptoCard.priceUp{
+ border-color:#55ff7060;
+ box-shadow:
+  0 0 16px #55ff7020,
+  0 5px 25px #0005;
+ transform:translateY(-1px);
+}
+
+.cryptoCard.priceDown{
+ border-color:#ff667760;
+ box-shadow:
+  0 0 16px #ff667720,
+  0 5px 25px #0005;
+ transform:translateY(-1px);
+}
+
+.cryptoCard.priceFlashUp .cryptoPrice{
+ color:#55ff70;
+ transform:scale(1.06);
+}
+
+.cryptoCard.priceFlashDown .cryptoPrice{
+ color:#ff6677;
+ transform:scale(1.06);
+}
+
+.cryptoLive{
+ display:inline-flex;
+ align-items:center;
+ gap:4px;
+ color:#55ff70;
+ font-size:7px;
+ font-weight:900;
+ letter-spacing:1px;
+ margin-bottom:3px;
+}
+
+.cryptoLiveDot{
+ width:5px;
+ height:5px;
+ border-radius:50%;
+ background:#55ff70;
+ box-shadow:0 0 7px #55ff70;
+ animation:livePulse 1.4s infinite;
+}
+
+.cryptoUpdated{
+ color:#67757d;
+ font-size:6px;
+ letter-spacing:.5px;
+ margin-top:3px;
+}
+
+@keyframes livePulse{
+ 0%,100%{
+  opacity:1;
+  transform:scale(1);
+ }
+ 50%{
+  opacity:.35;
+  transform:scale(.7);
+ }
+}
+
+.cryptoLoading{
+ color:#67757d;
+ font-size:8px;
+ letter-spacing:1px;
 }
 
 .up{
@@ -655,10 +732,11 @@ button:active{
  color:#ff6677;
 }
 
-.cryptoLoading{
- color:#67757d;
- font-size:8px;
- letter-spacing:1px;
+.cryptoError{
+ color:#ffcc33;
+ font-size:6px;
+ letter-spacing:.5px;
+ margin-top:3px;
 }
 
 /* =========================
@@ -940,10 +1018,6 @@ button:active{
   font-size:7px;
  }
 
- .stat{
-  font-size:9px;
- }
-
  #bar{
   width:120px;
  }
@@ -986,6 +1060,21 @@ button:active{
 
  .cryptoSymbol{
   font-size:8px;
+ }
+
+ .cryptoLive{
+  font-size:5px;
+  gap:3px;
+  margin-bottom:2px;
+ }
+
+ .cryptoLiveDot{
+  width:4px;
+  height:4px;
+ }
+
+ .cryptoUpdated{
+  font-size:5px;
  }
 
  .winTitle{
@@ -1053,6 +1142,14 @@ button:active{
 
  .cryptoChange{
   font-size:6px;
+ }
+
+ .cryptoLive{
+  font-size:4.5px;
+ }
+
+ .cryptoUpdated{
+  font-size:4.5px;
  }
 
  .pointsPanel{
@@ -1173,8 +1270,7 @@ button:active{
      id="landingReferralText">
      0 referrals
     </div>
-    <div
-     class="progressStatus">
+    <div class="progressStatus">
      +50 POINTS
     </div>
    </div>
@@ -1182,12 +1278,10 @@ button:active{
    <div class="progressCard">
     <div class="progressIcon">🎁</div>
     <div class="progressTitle">AIRDROP</div>
-    <div
-     class="progressText">
+    <div class="progressText">
      Future rewards
     </div>
-    <div
-     class="progressStatus">
+    <div class="progressStatus">
      TRACKING
     </div>
    </div>
@@ -1332,9 +1426,7 @@ button:active{
     🏆 CLIMBORIA LEADERBOARD
    </div>
 
-   <div
-    id="leaderboardRows">
-   </div>
+   <div id="leaderboardRows"></div>
 
    <div
     class="dashSmall"
@@ -1542,44 +1634,158 @@ button:active{
 
  <div class="cryptoRow">
 
-  <div class="cryptoCard">
+  <div class="cryptoCard" id="btcCard">
+
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    LIVE
+   </div>
+
    <div class="cryptoTop">
     <span class="cryptoSymbol">BTC</span>
-    <span id="btcChange" class="cryptoChange cryptoLoading">--</span>
+    <span
+     id="btcChange"
+     class="cryptoChange cryptoLoading">
+     --
+    </span>
    </div>
-   <div id="btcPrice" class="cryptoPrice">Loading...</div>
+
+   <div
+    id="btcPrice"
+    class="cryptoPrice">
+    Loading...
+   </div>
+
+   <div
+    id="btcUpdated"
+    class="cryptoUpdated">
+    Connecting...
+   </div>
+
   </div>
 
-  <div class="cryptoCard">
+
+  <div class="cryptoCard" id="ethCard">
+
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    LIVE
+   </div>
+
    <div class="cryptoTop">
     <span class="cryptoSymbol">ETH</span>
-    <span id="ethChange" class="cryptoChange cryptoLoading">--</span>
+    <span
+     id="ethChange"
+     class="cryptoChange cryptoLoading">
+     --
+    </span>
    </div>
-   <div id="ethPrice" class="cryptoPrice">Loading...</div>
+
+   <div
+    id="ethPrice"
+    class="cryptoPrice">
+    Loading...
+   </div>
+
+   <div
+    id="ethUpdated"
+    class="cryptoUpdated">
+    Connecting...
+   </div>
+
   </div>
 
-  <div class="cryptoCard">
+
+  <div class="cryptoCard" id="solCard">
+
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    LIVE
+   </div>
+
    <div class="cryptoTop">
     <span class="cryptoSymbol">SOL</span>
-    <span id="solChange" class="cryptoChange cryptoLoading">--</span>
+    <span
+     id="solChange"
+     class="cryptoChange cryptoLoading">
+     --
+    </span>
    </div>
-   <div id="solPrice" class="cryptoPrice">Loading...</div>
+
+   <div
+    id="solPrice"
+    class="cryptoPrice">
+    Loading...
+   </div>
+
+   <div
+    id="solUpdated"
+    class="cryptoUpdated">
+    Connecting...
+   </div>
+
   </div>
 
-  <div class="cryptoCard">
+
+  <div class="cryptoCard" id="bnbCard">
+
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    LIVE
+   </div>
+
    <div class="cryptoTop">
     <span class="cryptoSymbol">BNB</span>
-    <span id="bnbChange" class="cryptoChange cryptoLoading">--</span>
+    <span
+     id="bnbChange"
+     class="cryptoChange cryptoLoading">
+     --
+    </span>
    </div>
-   <div id="bnbPrice" class="cryptoPrice">Loading...</div>
+
+   <div
+    id="bnbPrice"
+    class="cryptoPrice">
+    Loading...
+   </div>
+
+   <div
+    id="bnbUpdated"
+    class="cryptoUpdated">
+    Connecting...
+   </div>
+
   </div>
 
-  <div class="cryptoCard">
+
+  <div class="cryptoCard" id="xrpCard">
+
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    LIVE
+   </div>
+
    <div class="cryptoTop">
     <span class="cryptoSymbol">XRP</span>
-    <span id="xrpChange" class="cryptoChange cryptoLoading">--</span>
+    <span
+     id="xrpChange"
+     class="cryptoChange cryptoLoading">
+     --
+    </span>
    </div>
-   <div id="xrpPrice" class="cryptoPrice">Loading...</div>
+
+   <div
+    id="xrpPrice"
+    class="cryptoPrice">
+    Loading...
+   </div>
+
+   <div
+    id="xrpUpdated"
+    class="cryptoUpdated">
+    Connecting...
+   </div>
+
   </div>
 
  </div>
@@ -1759,6 +1965,7 @@ let summitSequence=false;
 ===================================================== */
 
 let cryptoTimer=null;
+let cryptoRequestInProgress=false;
 
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
@@ -1912,10 +2119,6 @@ function updateDailyStreak(){
   );
  }
 
-
- /*
-  * DAILY REWARD ONLY ON A NEW DAY
-  */
 
  addClimbPoints(
   DAILY_REWARD
@@ -2281,15 +2484,6 @@ function loadReferralData(){
  }
 
 
- /*
-  * Detect incoming referral code.
-  *
-  * This records that the current browser
-  * arrived through a referral, but true
-  * multi-user referral counting requires
-  * a backend later.
-  */
-
  try{
 
   const params=
@@ -2370,12 +2564,6 @@ function updateReferralUI(){
 
 function simulateReferralForDemo(){
 
- /*
-  * Local demo only.
-  * This lets the UI be tested without
-  * pretending it is a real global referral.
-  */
-
  totalReferrals++;
 
  addClimbPoints(
@@ -2440,12 +2628,6 @@ async function copyReferral(){
 
  }catch(error){}
 
-
- /*
-  * Fallback for browsers where clipboard
-  * is unavailable.
-  */
-
  window.prompt(
   "Copy your Climboria referral link:",
   text
@@ -2474,7 +2656,6 @@ async function shareReferral(){
   }
 
  }catch(error){}
-
 
  await copyReferral();
 }
@@ -2935,7 +3116,8 @@ function init(){
  updateHelpText();
 
 
- $("cryptoTicker").style.display="flex";
+ $("cryptoTicker").style.display=
+  "flex";
 
  startCryptoTicker();
 }
@@ -4433,10 +4615,6 @@ function beginSummitSequence(){
  updateHeight();
 
 
- /*
-  * AWARD SUMMIT REWARD ONCE
-  */
-
  registerSummit();
 
 
@@ -4659,10 +4837,6 @@ function showGame(){
 
  resetPlayer();
 
-
- /*
-  * NEW CLIMB ATTEMPT
-  */
 
  registerAttempt();
 
@@ -5509,6 +5683,55 @@ function formatCryptoPrice(price){
 
 
 /* =====================================================
+   CRYPTO PRICE FLASH
+===================================================== */
+
+function flashCryptoCard(
+ symbol,
+ direction
+){
+
+ const card=
+  $(symbol.toLowerCase()+"Card");
+
+ if(!card)return;
+
+ card.classList.remove(
+  "priceUp",
+  "priceDown",
+  "priceFlashUp",
+  "priceFlashDown"
+ );
+
+ void card.offsetWidth;
+
+ if(direction==="up"){
+
+  card.classList.add(
+   "priceUp",
+   "priceFlashUp"
+  );
+
+ }else if(direction==="down"){
+
+  card.classList.add(
+   "priceDown",
+   "priceFlashDown"
+  );
+ }
+
+ setTimeout(()=>{
+
+  card.classList.remove(
+   "priceFlashUp",
+   "priceFlashDown"
+  );
+
+ },700);
+}
+
+
+/* =====================================================
    UPDATE CRYPTO PRICE
 ===================================================== */
 
@@ -5532,12 +5755,40 @@ function updateCryptoPrice(
  }
 
 
+ const previous=
+  Number(
+   priceEl.dataset.price||0
+  );
+
+
  priceEl.textContent=
   formatCryptoPrice(price);
 
  priceEl.classList.remove(
   "cryptoLoading"
  );
+
+ priceEl.dataset.price=
+  String(price);
+
+
+ if(previous>0){
+
+  if(price>previous){
+
+   flashCryptoCard(
+    symbol,
+    "up"
+   );
+
+  }else if(price<previous){
+
+   flashCryptoCard(
+    symbol,
+    "down"
+   );
+  }
+ }
 }
 
 
@@ -5604,10 +5855,107 @@ function updateCryptoChange(
 
 
 /* =====================================================
+   CRYPTO UPDATED TIME
+===================================================== */
+
+function updateCryptoTimestamp(){
+
+ const now=
+  new Date();
+
+ const time=
+  now.toLocaleTimeString(
+   "en-US",
+   {
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:false
+   }
+  );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(symbol.toLowerCase()+"Updated");
+
+   if(el){
+
+    el.textContent=
+     "Updated "+
+     time;
+   }
+  }
+);
+}
+
+
+function showCryptoError(){
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(symbol.toLowerCase()+"Updated");
+
+   if(!el)return;
+
+   /*
+    * Keep previous valid price.
+    * Only show a small warning below it.
+    */
+
+   el.textContent=
+    "Waiting for live update";
+
+   el.classList.add(
+    "cryptoError"
+   );
+  }
+);
+
+
+ setTimeout(()=>{
+
+  CRYPTO_IDS.forEach(
+   id=>{
+
+    const symbol=
+     CRYPTO_SYMBOLS[id];
+
+    const el=
+     $(symbol.toLowerCase()+"Updated");
+
+    if(el)
+     el.classList.remove(
+      "cryptoError"
+     );
+   }
+  );
+
+ },4000);
+}
+
+
+/* =====================================================
    LOAD COINGECKO LIVE DATA
 ===================================================== */
 
 async function loadCryptoMarket(){
+
+ if(cryptoRequestInProgress)
+  return;
+
+ cryptoRequestInProgress=true;
+
 
  try{
 
@@ -5625,6 +5973,7 @@ async function loadCryptoMarket(){
   const controller=
    new AbortController();
 
+
   const timeout=
    setTimeout(
     ()=>{
@@ -5634,18 +5983,28 @@ async function loadCryptoMarket(){
    );
 
 
-  const response=
-   await fetch(
-    url,
-    {
-     method:"GET",
-     cache:"no-store",
-     signal:controller.signal
-    }
-   );
+  let response;
 
 
-  clearTimeout(timeout);
+  try{
+
+   response=
+    await fetch(
+     url,
+     {
+      method:"GET",
+      cache:"no-store",
+      signal:controller.signal,
+      headers:{
+       "Accept":"application/json"
+      }
+     }
+    );
+
+  }finally{
+
+   clearTimeout(timeout);
+  }
 
 
   if(!response.ok){
@@ -5660,6 +6019,9 @@ async function loadCryptoMarket(){
 
   const data=
    await response.json();
+
+
+  let validCoins=0;
 
 
   CRYPTO_IDS.forEach(
@@ -5686,6 +6048,7 @@ async function loadCryptoMarket(){
       coin.usd
      );
 
+     validCoins++;
     }
 
 
@@ -5704,10 +6067,21 @@ async function loadCryptoMarket(){
   );
 
 
-  console.log(
-   "CLIMBORIA LIVE CRYPTO:",
-   data
-  );
+  if(validCoins>0){
+
+   updateCryptoTimestamp();
+
+   console.log(
+    "CLIMBORIA LIVE CRYPTO UPDATE:",
+    data
+   );
+
+  }else{
+
+   throw new Error(
+    "No valid crypto data"
+   );
+  }
 
 
  }catch(error){
@@ -5716,32 +6090,46 @@ async function loadCryptoMarket(){
    "CLIMBORIA CoinGecko feed failed:",
    error
   );
+
+  showCryptoError();
+
+ }finally{
+
+  cryptoRequestInProgress=false;
  }
 }
 
 
 /* =====================================================
    START CRYPTO TICKER
+   10 SECOND LIVE REFRESH
 ===================================================== */
 
 function startCryptoTicker(){
 
+ /*
+  * Load immediately when the website opens.
+  */
+
  loadCryptoMarket();
 
+
+ /*
+  * Refresh live prices every 10 seconds.
+  */
 
  if(cryptoTimer){
 
   clearInterval(
    cryptoTimer
   );
-
  }
 
 
  cryptoTimer=
   setInterval(
    loadCryptoMarket,
-   30000
+   10000
   );
 }
 
