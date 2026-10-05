@@ -217,6 +217,7 @@ button:hover{background:#55ff7022}
 .cryptoChange{
  font-size:8px;
  font-weight:bold;
+ white-space:nowrap;
 }
 
 .cryptoPrice{
@@ -340,7 +341,13 @@ button:hover{background:#55ff7022}
  }
 
  .cryptoPrice{font-size:9px}
- .cryptoChange{font-size:7px}
+
+ .cryptoChange{
+  font-size:7px;
+  min-width:28px;
+  text-align:right;
+ }
+
  .cryptoSymbol{font-size:8px}
 }
 </style>
@@ -655,29 +662,13 @@ const maxSpeed=16;
 
 const SUMMIT_HEIGHT=64;
 
-/*
-   Exact center of the summit platform.
-*/
 const SUMMIT_CENTER_X=0;
 const SUMMIT_CENTER_Y=62;
 
-/*
-   HERO POSITION
-
-   Summit platform top is approximately 61.7.
-   Hero group starts at its local bottom = 0.
-   Therefore 61.75 places the hero directly
-   on the summit surface.
-*/
 const SUMMIT_HERO_X=0;
 const SUMMIT_HERO_Y=61.75;
 const SUMMIT_HERO_Z=3.5;
 
-
-/*
-   Explosion uses the SAME coordinates
-   as the hero so they can never separate.
-*/
 const SUMMIT_EXPLOSION_X=0;
 const SUMMIT_EXPLOSION_Y=62.45;
 const SUMMIT_EXPLOSION_Z=3.5;
@@ -705,21 +696,18 @@ let cryptoTimer=null;
 
 
 /*
-   Current displayed price comes from NEAR Intents.
+   CURRENT DISPLAY PRICE
+   FROM NEAR INTENTS
 */
+
 const NEAR_INTENTS_TOKENS=
  "https://api-mng-console.chaindefuser.com/api/tokens";
 
 
 /*
-   Binance is used only for actual 24H
-   market movement.
-
-   This prevents the change percentage
-   from staying at 0.00% simply because
-   the NEAR token metadata feed has not
-   changed between two polls.
+   REAL 24H MARKET ACTION
 */
+
 const BINANCE_24H_TICKER=
  "https://api.binance.com/api/v3/ticker/24hr";
 
@@ -903,8 +891,6 @@ function init(){
  );
 
 
- /* BUTTONS */
-
  $("startButton").addEventListener(
   "click",
   showGame
@@ -935,9 +921,9 @@ function init(){
 
 
  /*
-   CRYPTO TICKER:
-   MAIN LANDING UI ONLY.
+   TICKER VISIBLE ONLY ON LANDING
  */
+
  $("cryptoTicker").style.display="flex";
 
  startCryptoTicker();
@@ -1084,12 +1070,11 @@ function createMountain(){
 
  /* =========================
     PEAK ROCKS
+ =========================
 
-    IMPORTANT:
-    The old center rock was removed.
-    It could visually cover the hero
-    when he reached the summit center.
- ========================= */
+    Center rock intentionally removed
+    so the hero remains visible.
+ */
 
  [
   [-3.8,62.5,.9,2.2],
@@ -1442,10 +1427,10 @@ function createHero(){
   );
 
  nose.position.set(
-  0,
-  1.32,
-  .68
- );
+   0,
+   1.32,
+   .68
+  );
 
  hero.add(nose);
 
@@ -2442,18 +2427,7 @@ function beginSummitSequence(){
 
 
  /*
-   ==================================================
-   HARD SNAP TO SUMMIT CENTER
-   ==================================================
-
-   We do NOT use lerp anymore.
-
-   The hero is immediately placed at the
-   exact summit center.
-
-   This guarantees that the explosion and
-   victory sequence cannot happen while the
-   hero is still somewhere else.
+   HARD SNAP HERO TO EXACT CENTER
  */
 
  hero.position.set(
@@ -2464,9 +2438,7 @@ function beginSummitSequence(){
 
 
  /*
-   ==================================================
-   CAMERA CENTER
-   ==================================================
+   HARD CENTER CAMERA
  */
 
  camera.position.set(
@@ -2487,9 +2459,7 @@ function beginSummitSequence(){
 
 
  /*
-   Small delay so the player can actually
-   see the hero standing in the center before
-   the explosion starts.
+   EXPLOSION
  */
 
  setTimeout(()=>{
@@ -2497,10 +2467,6 @@ function beginSummitSequence(){
   if(!summitSequence)
    return;
 
-  /*
-    Make absolutely sure hero is still
-    at the exact center before explosion.
-  */
 
   hero.position.set(
    SUMMIT_HERO_X,
@@ -2525,12 +2491,11 @@ function beginSummitSequence(){
 
   createSummitBurst();
 
-
  },350);
 
 
  /*
-   Victory screen after explosion.
+   VICTORY
  */
 
  victoryTimer=
@@ -2698,7 +2663,7 @@ function showGame(){
 
 
  /*
-   CRYPTO TICKER HIDDEN DURING GAME.
+   HIDE CRYPTO DURING GAME
  */
 
  $("cryptoTicker").style.display=
@@ -2770,7 +2735,7 @@ function showMenu(){
 
 
  /*
-   CRYPTO TICKER VISIBLE ONLY ON MAIN UI.
+   SHOW CRYPTO ONLY ON MAIN LANDING
  */
 
  $("cryptoTicker").style.display=
@@ -2831,7 +2796,7 @@ function showLaunchpad(){
 
 
  /*
-   CRYPTO TICKER HIDDEN IN LAUNCHPAD.
+   HIDE CRYPTO IN LAUNCHPAD
  */
 
  $("cryptoTicker").style.display=
@@ -2940,7 +2905,8 @@ function updateTouchReticle(time){
    )*.12;
 
 
-  touchReticle.scale
+  touchReticle
+   .scale
    .setScalar(pulse);
 
  }else{
@@ -3028,12 +2994,6 @@ function updateEffects(dt){
    summitBurst[i];
 
 
-  /*
-    Summit explosion particles have
-    userData.summit=true.
-    They are handled by updateSummitBurst().
-  */
-
   if(
    p.userData &&
    p.userData.summit
@@ -3085,23 +3045,19 @@ function updateEffects(dt){
 function createSummitBurst(){
 
  /*
-   IMPORTANT:
-
-   Use the exact same fixed center coordinates
-   as the hero's final summit position.
-
-   This makes the explosion appear directly
-   around the hero.
+   USE ACTUAL HERO POSITION
+   FOR PERFECT ALIGNMENT
  */
 
  const explosionX=
-  SUMMIT_EXPLOSION_X;
+  hero.position.x;
 
  const explosionY=
-  SUMMIT_EXPLOSION_Y;
+  hero.position.y+
+  .7;
 
  const explosionZ=
-  SUMMIT_EXPLOSION_Z;
+  hero.position.z;
 
 
  /* =========================
@@ -3299,10 +3255,6 @@ function updateSummitBurst(dt){
   const v=
    p.userData;
 
-
-  /*
-    Grip burst is handled separately.
-  */
 
   if(!v.summit)
    continue;
@@ -3543,227 +3495,27 @@ function formatCryptoPrice(price){
 
 
 /* =====================================================
-   NEAR INTENTS + 24H MARKET ACTION
+   UPDATE MARKET ACTION
 ===================================================== */
 
-async function updateCryptoPrices(){
-
- try{
-
-  /*
-    Cache-buster for NEAR.
-    This prevents the browser from serving
-    an old cached token response.
-  */
-
-  const nearRequest=
-   fetch(
-    NEAR_INTENTS_TOKENS+
-    "?_="+
-    Date.now(),
-    {
-     method:"GET",
-     cache:"no-store"
-    }
-   );
-
-
-  /*
-    Get real 24H market movement separately.
-  */
-
-  const marketRequests=
-   MAJOR_SYMBOLS.map(
-    symbol=>{
-
-     return fetch(
-      BINANCE_24H_TICKER+
-      "?symbol="+
-      BINANCE_SYMBOLS[symbol],
-      {
-       method:"GET",
-       cache:"no-store"
-      }
-     )
-     .then(
-      response=>
-       response.ok?
-       response.json():
-       null
-     )
-     .catch(
-      ()=>null
-     );
-    }
-   );
-
-
-  const results=
-   await Promise.all([
-    nearRequest,
-    ...marketRequests
-   ]);
-
-
-  const nearResponse=
-   results[0];
-
-
-  if(!nearResponse.ok)
-   throw new Error(
-    "NEAR Intents token API error: "+
-    nearResponse.status
-   );
-
-
-  const data=
-   await nearResponse.json();
-
-
-  const tokens=
-   Array.isArray(data)
-    ?data
-    :Array.isArray(data.tokens)
-     ?data.tokens
-     :[];
-
-
-  if(!tokens.length)
-   throw new Error(
-    "No NEAR Intents tokens returned"
-   );
-
-
-  /*
-    Create market data map.
-  */
-
-  const marketMap={};
-
-
-  MAJOR_SYMBOLS.forEach(
-   (symbol,index)=>{
-
-    marketMap[symbol]=
-     results[index+1]||
-     null;
-   }
-  );
-
-
-  /*
-    Update all five coins.
-  */
-
-  MAJOR_SYMBOLS.forEach(
-   symbol=>{
-
-    const matches=
-     tokens.filter(
-      token=>
-       String(
-        token.symbol||""
-       ).toUpperCase()===
-       symbol
-     );
-
-
-    if(!matches.length)
-     return;
-
-
-    /*
-      Prefer a valid positive NEAR price.
-    */
-
-    const token=
-     matches.find(
-      t=>
-       Number.isFinite(
-        Number(t.price)
-       )&&
-       Number(t.price)>0
-     );
-
-
-    if(!token)
-     return;
-
-
-    const market=
-     marketMap[symbol];
-
-
-    updateCryptoCard(
-     symbol.toLowerCase(),
-     token,
-     market
-    );
-   }
-  );
-
-
- }catch(error){
-
-  console.warn(
-   "Crypto price update failed:",
-   error
-  );
- }
-}
-
-
-/* =====================================================
-   CRYPTO CARD
-===================================================== */
-
-function updateCryptoCard(
+function updateMarketAction(
  symbol,
- data,
  market
 ){
 
- if(!data)return;
-
-
- const price=
-  Number(data.price);
-
-
- if(
-  !Number.isFinite(price)||
-  price<=0
- )
-  return;
-
-
- const priceEl=
-  $(symbol+"Price");
-
  const changeEl=
-  $(symbol+"Change");
+  $(symbol.toLowerCase()+"Change");
 
 
- if(!priceEl||!changeEl)
-  return;
+ if(!changeEl)return;
 
-
- /*
-   PRICE = NEAR INTENTS
- */
-
- priceEl.textContent=
-  formatCryptoPrice(price);
-
-
- /*
-   ACTION = ACTUAL 24H MARKET CHANGE
- */
 
  if(
   market &&
   Number.isFinite(
-   Number(market.priceChangePercent)
+   Number(
+    market.priceChangePercent
+   )
   )
  ){
 
@@ -3798,16 +3550,16 @@ function updateCryptoCard(
    "down"
   );
 
+
  }else{
 
   /*
-    If the market action endpoint is
-    temporarily unavailable, show LIVE
-    instead of fake movement.
+    Keep the action field visible.
+    Do not create fake movement.
   */
 
   changeEl.textContent=
-   "LIVE";
+   "--";
 
 
   changeEl.classList.remove(
@@ -3816,10 +3568,238 @@ function updateCryptoCard(
    "down"
   );
 
+
   changeEl.classList.add(
-   "up"
+   "cryptoLoading"
   );
  }
+}
+
+
+/* =====================================================
+   UPDATE CRYPTO PRICE
+===================================================== */
+
+function updateCryptoPrice(
+ symbol,
+ data
+){
+
+ if(!data)return;
+
+
+ const price=
+  Number(data.price);
+
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
+  return;
+
+
+ const priceEl=
+  $(symbol.toLowerCase()+"Price");
+
+
+ if(!priceEl)return;
+
+
+ priceEl.textContent=
+  formatCryptoPrice(price);
+}
+
+
+/* =====================================================
+   LOAD NEAR PRICES
+===================================================== */
+
+async function loadNearPrices(){
+
+ try{
+
+  const response=
+   await fetch(
+    NEAR_INTENTS_TOKENS+
+    "?_="+
+    Date.now(),
+    {
+     method:"GET",
+     cache:"no-store"
+    }
+   );
+
+
+  if(!response.ok){
+
+   throw new Error(
+    "NEAR API "+
+    response.status
+   );
+  }
+
+
+  const data=
+   await response.json();
+
+
+  const tokens=
+   Array.isArray(data)
+    ?
+    data
+    :
+    Array.isArray(data.tokens)
+     ?
+     data.tokens
+     :
+     [];
+
+
+  if(!tokens.length){
+
+   throw new Error(
+    "No tokens returned"
+   );
+  }
+
+
+  MAJOR_SYMBOLS.forEach(
+   symbol=>{
+
+    const token=
+     tokens.find(
+      t=>
+       String(
+        t.symbol||""
+       ).toUpperCase()===
+       symbol
+       &&
+       Number.isFinite(
+        Number(t.price)
+       )
+       &&
+       Number(t.price)>0
+     );
+
+
+    if(token){
+
+     updateCryptoPrice(
+      symbol,
+      token
+     );
+    }
+
+   });
+
+
+ }catch(error){
+
+  console.warn(
+   "NEAR price feed failed:",
+   error
+  );
+ }
+}
+
+
+/* =====================================================
+   LOAD 24H MARKET ACTION
+===================================================== */
+
+async function loadMarketActions(){
+
+ /*
+   Every coin is independent.
+   One failure cannot kill the other coins.
+ */
+
+ await Promise.all(
+
+  MAJOR_SYMBOLS.map(
+   async symbol=>{
+
+    try{
+
+     const response=
+      await fetch(
+       BINANCE_24H_TICKER+
+       "?symbol="+
+       BINANCE_SYMBOLS[symbol]+
+       "&_="+
+       Date.now(),
+       {
+        method:"GET",
+        cache:"no-store"
+       }
+      );
+
+
+     if(!response.ok){
+
+      throw new Error(
+       symbol+
+       " market "+
+       response.status
+      );
+     }
+
+
+     const market=
+      await response.json();
+
+
+     updateMarketAction(
+      symbol,
+      market
+     );
+
+
+    }catch(error){
+
+     console.warn(
+      symbol+
+      " market action failed:",
+      error
+     );
+
+
+     updateMarketAction(
+      symbol,
+      null
+     );
+    }
+
+   }
+  )
+
+ );
+}
+
+
+/* =====================================================
+   UPDATE ALL CRYPTO DATA
+===================================================== */
+
+async function updateCryptoPrices(){
+
+ /*
+   NEAR price and market action are
+   completely independent.
+
+   NEAR can fail while Binance still
+   updates the percentage.
+ */
+
+ await Promise.allSettled([
+
+  loadNearPrices(),
+
+  loadMarketActions()
+
+ ]);
+
 }
 
 
@@ -3829,13 +3809,19 @@ function updateCryptoCard(
 
 function startCryptoTicker(){
 
+ /*
+   Immediate first load.
+ */
+
  updateCryptoPrices();
 
 
- if(cryptoTimer)
+ if(cryptoTimer){
+
   clearInterval(
    cryptoTimer
   );
+ }
 
 
  /*
@@ -3953,11 +3939,6 @@ function animate(time=0){
   checkSummit();
  }
 
-
- /*
-   Summit sequence is controlled separately
-   by beginSummitSequence().
- */
 
  updateEffects(dt);
 
