@@ -169,6 +169,7 @@ button:hover{background:#55ff7022}
 
 /* =========================
    CRYPTO TICKER
+   MAIN UI ONLY
 ========================= */
 
 #cryptoTicker{
@@ -518,6 +519,7 @@ button:hover{background:#55ff7022}
 
 <!-- =========================
      CRYPTO LIVE PRICE
+     MAIN UI ONLY
 ========================= -->
 
 <div id="cryptoTicker">
@@ -656,6 +658,20 @@ const SUMMIT_HEIGHT=64;
 const SUMMIT_CENTER_X=0;
 const SUMMIT_CENTER_Y=62;
 
+/*
+  Exact position where the hero will stand
+  at the center of Jarrell's Peak.
+
+  The hero group itself is about 1.5 units tall,
+  so this places the hero visibly on the summit
+  instead of simply moving the camera there.
+*/
+const SUMMIT_HERO_Y=62.45;
+
+const SUMMIT_EXPLOSION_X=0;
+const SUMMIT_EXPLOSION_Y=62.45;
+const SUMMIT_EXPLOSION_Z=3;
+
 const summitParticles=[];
 const summitBurst=[];
 const summitSparks=[];
@@ -675,6 +691,12 @@ let summitSequence=false;
 ===================================================== */
 
 let cryptoTimer=null;
+
+/*
+  Stores the previous live price so the main UI
+  can show actual live movement between updates.
+*/
+const previousCryptoPrices={};
 
 
 /* =====================================================
@@ -867,6 +889,12 @@ function init(){
 
 
  updateHelpText();
+
+ /*
+   CRYPTO IS VISIBLE ON THE MAIN UI
+   ONLY.
+ */
+ $("cryptoTicker").style.display="flex";
 
  startCryptoTicker();
 }
@@ -2232,40 +2260,6 @@ function updateCamera(){
 
 
 /* =====================================================
-   SUMMIT CAMERA SEQUENCE
-===================================================== */
-
-function updateSummitCamera(){
-
- if(!summitSequence)return;
-
- const targetX=
-  SUMMIT_CENTER_X;
-
- const targetY=
-  SUMMIT_CENTER_Y+5;
-
- camera.position.x+=
-  (
-   targetX-
-   camera.position.x
-  )*.08;
-
- camera.position.y+=
-  (
-   targetY-
-   camera.position.y
-  )*.08;
-
- camera.lookAt(
-  SUMMIT_CENTER_X,
-  SUMMIT_CENTER_Y,
-  0
- );
-}
-
-
-/* =====================================================
    HEIGHT
 ===================================================== */
 
@@ -2383,16 +2377,26 @@ function beginSummitSequence(){
 
 
  /*
-   Smooth camera movement.
-   This is the ONLY camera controller
-   during the summit sequence.
+   HERO START POSITION
  */
 
- const startX=
+ const heroStartX=
+  hero.position.x;
+
+ const heroStartY=
+  hero.position.y;
+
+
+ /*
+   CAMERA START POSITION
+ */
+
+ const cameraStartX=
   camera.position.x;
 
- const startY=
+ const cameraStartY=
   camera.position.y;
+
 
  const start=
   performance.now();
@@ -2401,7 +2405,12 @@ function beginSummitSequence(){
   1000;
 
 
- function cameraFinish(now){
+ /*
+   During this animation BOTH the hero
+   and camera move to the exact center.
+ */
+
+ function summitFinish(now){
 
   const elapsed=
    now-start;
@@ -2420,17 +2429,39 @@ function beginSummitSequence(){
    );
 
 
-  camera.position.x=
+  /*
+    MOVE HERO TO CENTER
+  */
+
+  hero.position.x=
    THREE.MathUtils.lerp(
-    startX,
+    heroStartX,
     SUMMIT_CENTER_X,
     eased
    );
 
+  hero.position.y=
+   THREE.MathUtils.lerp(
+    heroStartY,
+    SUMMIT_HERO_Y,
+    eased
+   );
+
+
+  /*
+    MOVE CAMERA TO CENTER
+  */
+
+  camera.position.x=
+   THREE.MathUtils.lerp(
+    cameraStartX,
+    SUMMIT_CENTER_X,
+    eased
+   );
 
   camera.position.y=
    THREE.MathUtils.lerp(
-    startY,
+    cameraStartY,
     SUMMIT_CENTER_Y+5,
     eased
    );
@@ -2446,17 +2477,42 @@ function beginSummitSequence(){
   if(t<1){
 
    requestAnimationFrame(
-    cameraFinish
+    summitFinish
    );
 
   }else{
+
+   /*
+     FORCE EXACT HERO POSITION
+   */
+
+   hero.position.x=
+    SUMMIT_CENTER_X;
+
+   hero.position.y=
+    SUMMIT_HERO_Y;
+
+   hero.position.z=
+    3.5;
+
+
+   /*
+     STOP HERO COMPLETELY
+   */
+
+   velocityX=0;
+   velocityY=0;
+
+
+   /*
+     FORCE EXACT CAMERA POSITION
+   */
 
    camera.position.x=
     SUMMIT_CENTER_X;
 
    camera.position.y=
     SUMMIT_CENTER_Y+5;
-
 
    camera.lookAt(
     SUMMIT_CENTER_X,
@@ -2466,8 +2522,8 @@ function beginSummitSequence(){
 
 
    /*
-     EXPLOSION AT THE CENTER
-     OF JARRELL'S PEAK.
+     EXPLOSION NOW HAPPENS
+     AT THE HERO'S CENTER.
    */
 
    createSummitBurst();
@@ -2495,7 +2551,7 @@ function beginSummitSequence(){
 
 
  requestAnimationFrame(
-  cameraFinish
+  summitFinish
  );
 }
 
@@ -2642,8 +2698,14 @@ function showGame(){
  $("nav").style.display=
   "block";
 
+
+ /*
+   PRICE ACTION IS HIDDEN
+   DURING THE GAME.
+ */
+
  $("cryptoTicker").style.display=
-  "block";
+  "none";
 
 
  gameWon=false;
@@ -2709,8 +2771,14 @@ function showMenu(){
  $("touchHint").style.display=
   "none";
 
+
+ /*
+   PRICE ACTION ONLY EXISTS
+   ON MAIN UI.
+ */
+
  $("cryptoTicker").style.display=
-  "none";
+  "flex";
 
 
  clearBursts();
@@ -2764,6 +2832,12 @@ function showLaunchpad(){
 
  $("touchHint").style.display=
   "none";
+
+
+ /*
+   PRICE ACTION HIDDEN
+   IN LAUNCHPAD.
+ */
 
  $("cryptoTicker").style.display=
   "none";
@@ -3013,14 +3087,19 @@ function updateEffects(dt){
 
 function createSummitBurst(){
 
+ /*
+   EXPLOSION IS LOCKED TO THE SAME
+   CENTER POSITION AS THE HERO.
+ */
+
  const explosionX=
-  SUMMIT_CENTER_X;
+  SUMMIT_EXPLOSION_X;
 
  const explosionY=
-  SUMMIT_CENTER_Y;
+  SUMMIT_EXPLOSION_Y;
 
  const explosionZ=
-  2;
+  SUMMIT_EXPLOSION_Z;
 
 
  /* MAIN PARTICLES */
@@ -3417,18 +3496,6 @@ function animateSummit(time){
    NEAR INTENTS LIVE PRICE
 ===================================================== */
 
-/*
-  NEAR Intents exposes a token list containing:
-  symbol
-  price
-  price_updated_at
-  defuse_asset_id
-  blockchain
-  decimals
-
-  We use that endpoint directly instead of CoinGecko.
-*/
-
 const NEAR_INTENTS_TOKENS=
  "https://api-mng-console.chaindefuser.com/api/tokens";
 
@@ -3532,13 +3599,16 @@ async function updateCryptoPrices(){
   );
 
   /*
-    Keep the last successful prices
-    visible instead of replacing them
-    with an error message.
+    Keep last successful values
+    on screen.
   */
  }
 }
 
+
+/* =====================================================
+   CRYPTO CARD
+===================================================== */
 
 function updateCryptoCard(symbol,data){
 
@@ -3560,6 +3630,10 @@ function updateCryptoCard(symbol,data){
   $(symbol+"Change");
 
 
+ if(!priceEl||!changeEl)
+  return;
+
+
  let formatted;
 
 
@@ -3570,6 +3644,7 @@ function updateCryptoCard(symbol,data){
    price.toLocaleString(
     "en-US",
     {
+     minimumFractionDigits:0,
      maximumFractionDigits:0
     }
    );
@@ -3605,29 +3680,87 @@ function updateCryptoCard(symbol,data){
 
 
  /*
-   The NEAR Intents token endpoint
-   gives current token price, but its
-   documented token response does not
-   guarantee a 24h percentage field.
+   LIVE PRICE ACTION
 
-   Therefore don't fake a 24h change.
+   NEAR Intents token pricing gives us
+   the current price. It does not provide
+   a guaranteed 24h percentage field in
+   the token response.
+
+   Therefore this UI calculates the
+   movement between successful live
+   updates. This is real movement from
+   the NEAR price feed and is NOT labeled
+   as a fake 24h percentage.
  */
 
- changeEl.textContent=
-  "LIVE";
+ const previous=
+  previousCryptoPrices[symbol];
 
 
- changeEl.classList.remove(
-  "cryptoLoading",
-  "up",
-  "down"
- );
+ if(
+  Number.isFinite(previous)&&
+  previous>0
+ ){
 
- changeEl.classList.add(
-  "up"
- );
+  const change=
+   (
+    (price-previous)/
+    previous
+   )*
+   100;
+
+
+  const sign=
+   change>=0?
+   "+":
+   "";
+
+
+  changeEl.textContent=
+   sign+
+   change.toFixed(2)+"%";
+
+
+  changeEl.classList.remove(
+   "cryptoLoading",
+   "up",
+   "down"
+  );
+
+
+  changeEl.classList.add(
+   change>=0?
+   "up":
+   "down"
+  );
+
+ }else{
+
+  changeEl.textContent=
+   "LIVE";
+
+
+  changeEl.classList.remove(
+   "cryptoLoading",
+   "up",
+   "down"
+  );
+
+  changeEl.classList.add(
+   "up"
+  );
+ }
+
+
+ previousCryptoPrices[symbol]=
+  price;
 }
 
+
+/* =====================================================
+   START CRYPTO TICKER
+===================================================== */
 
 function startCryptoTicker(){
 
@@ -3757,13 +3890,10 @@ function animate(time=0){
 
 
  /*
-   IMPORTANT:
-   During summitSequence the
-   camera is controlled only by
+   During summitSequence:
+   hero + camera are controlled by
    beginSummitSequence().
-   This prevents two camera
-   systems fighting each other.
-   */
+ */
 
  updateEffects(dt);
 
@@ -3790,7 +3920,6 @@ function animate(time=0){
 
 /* =====================================================
    GLOBAL BUTTON FUNCTIONS
-   Kept for compatibility.
 ===================================================== */
 
 window.showGame=
