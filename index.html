@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>CLIMBORIA</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
 
 html,body{
   margin:0;
@@ -15,6 +18,7 @@ html,body{
   overflow:hidden;
   background:#05090d;
   font-family:Arial,Helvetica,sans-serif;
+  touch-action:none;
 }
 
 body{
@@ -25,10 +29,14 @@ body{
   position:fixed;
   inset:0;
   z-index:1;
+  touch-action:none;
 }
 
 canvas{
   display:block;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
 }
 
 /* =========================
@@ -174,6 +182,7 @@ canvas{
   font-size:13px;
   pointer-events:none;
   display:none;
+  white-space:nowrap;
 }
 
 /* =========================
@@ -283,6 +292,7 @@ canvas{
   font-weight:900;
   letter-spacing:2px;
   cursor:pointer;
+  min-height:44px;
 }
 
 .restartButton:hover{
@@ -302,6 +312,7 @@ canvas{
   align-items:center;
   justify-content:center;
   overflow:auto;
+  touch-action:auto;
   background:
     radial-gradient(
       circle at 50% 30%,
@@ -412,6 +423,7 @@ canvas{
   cursor:pointer;
   transition:.25s ease;
   overflow:hidden;
+  touch-action:auto;
 }
 
 .choice:hover{
@@ -494,6 +506,7 @@ canvas{
   font-weight:bold;
   cursor:pointer;
   backdrop-filter:blur(8px);
+  min-height:44px;
 }
 
 .navButton:hover{
@@ -511,6 +524,7 @@ canvas{
   z-index:70;
   display:none;
   overflow:auto;
+  touch-action:auto;
   background:
     radial-gradient(
       circle at 50% 0%,
@@ -560,6 +574,7 @@ canvas{
   border-radius:8px;
   cursor:pointer;
   font-weight:bold;
+  min-height:44px;
 }
 
 .launchBack:hover{
@@ -649,6 +664,7 @@ canvas{
 
   .tagline{
     margin-bottom:12px;
+    font-size:14px;
   }
 
   .jarrellNote{
@@ -670,26 +686,60 @@ canvas{
   }
 
   #help{
-    width:90%;
+    width:94%;
+    white-space:normal;
     font-size:11px;
     bottom:10px;
+    padding:10px 12px;
   }
 
   #hud{
-    top:58px;
+    top:54px;
+    left:12px;
   }
 
   #title{
-    font-size:22px;
+    font-size:21px;
+    letter-spacing:4px;
+  }
+
+  #status{
+    margin-top:6px;
+    padding:8px 10px;
+    font-size:11px;
+  }
+
+  #height{
+    font-size:12px;
   }
 
   #progress,
   .progressBar{
-    width:150px;
+    width:145px;
+  }
+
+  #gameNav{
+    top:52px;
+    right:10px;
+  }
+
+  .navButton{
+    padding:8px 11px;
+    font-size:10px;
   }
 
   .victoryBox{
+    width:92%;
     padding:42px 20px;
+  }
+
+  .victorySmall{
+    font-size:9px;
+    letter-spacing:3px;
+  }
+
+  .victoryMessage{
+    font-size:13px;
   }
 }
 </style>
@@ -1222,6 +1272,13 @@ let victoryTimer=null;
 
 
 /* =========================================================
+   MOBILE TOUCH STATE
+========================================================= */
+
+let touchActive=false;
+
+
+/* =========================================================
    CREATE GRIP BURST
 ========================================================= */
 
@@ -1453,11 +1510,6 @@ function createSummitBurst(){
   clearSummitBurst();
 
 
-  /*
-     MAIN EXPLOSION
-     Much larger and brighter than before.
-  */
-
   for(
     let i=0;
     i<150;
@@ -1510,10 +1562,6 @@ function createSummitBurst(){
       Math.PI*2;
 
 
-    /*
-       Strong radial explosion.
-    */
-
     const speed=
       3.5+
       Math.random()*9;
@@ -1557,10 +1605,6 @@ function createSummitBurst(){
 
   }
 
-
-  /*
-     EXTRA STAR-LIKE SPARKS
-  */
 
   for(
     let i=0;
@@ -1647,10 +1691,6 @@ function createSummitBurst(){
 
   createSummitShockwave();
 
-
-  /*
-     Flash the summit light.
-  */
 
   if(summitLight){
 
@@ -1795,10 +1835,6 @@ function updateSummitBurst(dt){
   }
 
 
-  /*
-     EXTRA SPARKS
-  */
-
   for(
     let i=summitSparks.length-1;
     i>=0;
@@ -1872,10 +1908,6 @@ function updateSummitBurst(dt){
   }
 
 
-  /*
-     SHOCKWAVE
-  */
-
   for(
     let i=summitShockwaves.length-1;
     i>=0;
@@ -1939,10 +1971,6 @@ function updateSummitBurst(dt){
 
   }
 
-
-  /*
-     Return summit light to normal.
-  */
 
   if(summitLight){
 
@@ -2286,6 +2314,8 @@ function showGame(){
 
   lastTime=
     performance.now();
+
+  updateHelpText();
 }
 
 
@@ -2296,6 +2326,8 @@ function showMenu(){
   running=false;
 
   grabbed=null;
+
+  touchActive=false;
 
   gameWon=false;
 
@@ -2331,6 +2363,8 @@ function showLaunchpad(){
 
   grabbed=null;
 
+  touchActive=false;
+
   clearEffects();
 
   clearSummitBurst();
@@ -2363,6 +2397,8 @@ function showVictory(){
 
   grabbed=null;
 
+  touchActive=false;
+
 
   setStatus(
     "SUMMIT REACHED",
@@ -2373,22 +2409,12 @@ function showVictory(){
   cancelVictoryTimer();
 
 
-  /*
-     Hide victory screen first.
-     Let the explosion play clearly.
-  */
-
   victory.style.display=
     "none";
 
 
   createSummitBurst();
 
-
-  /*
-     After 1.2 seconds,
-     show the victory screen.
-  */
 
   victoryTimer=
     setTimeout(
@@ -2418,6 +2444,8 @@ function restartGame(){
 
   gameWon=false;
 
+  touchActive=false;
+
   clearEffects();
 
   clearSummitBurst();
@@ -2430,8 +2458,14 @@ function restartGame(){
 
   lastTime=
     performance.now();
+
+  updateHelpText();
 }
 
+
+/* =========================================================
+   UI BUTTONS
+========================================================= */
 
 document
   .getElementById(
@@ -2481,6 +2515,41 @@ document
     "click",
     restartGame
   );
+
+
+/* =========================================================
+   HELP TEXT
+========================================================= */
+
+function updateHelpText(){
+
+  const mobile=
+    window.matchMedia(
+      "(pointer:coarse)"
+    ).matches ||
+    "ontouchstart" in window;
+
+  if(mobile){
+
+    help.innerHTML=
+      "<b>TOUCH + HOLD GREEN GRIP</b>" +
+      " &nbsp; | &nbsp; " +
+      "DRAG TO SWING" +
+      " &nbsp; | &nbsp; " +
+      "RELEASE TO LET GO";
+
+  }else{
+
+    help.innerHTML=
+      "Move cursor = hammer tip" +
+      " &nbsp; | &nbsp; " +
+      "<b>CLICK + HOLD GREEN GRIP</b>" +
+      " &nbsp; | &nbsp; " +
+      "Move around grip = swing" +
+      " &nbsp; | &nbsp; " +
+      "Release = let go";
+  }
+}
 
 
 /* =========================================================
@@ -2539,6 +2608,12 @@ function init(){
   renderer.shadowMap.enabled=
     true;
 
+  renderer.domElement.style.touchAction=
+    "none";
+
+  renderer.domElement.style.userSelect=
+    "none";
+
   document
     .getElementById("game")
     .appendChild(
@@ -2588,6 +2663,10 @@ function init(){
   createSummitParticles();
 
 
+  /* =========================
+     DESKTOP
+  ========================= */
+
   window.addEventListener(
     "mousemove",
     mouseMove
@@ -2603,11 +2682,51 @@ function init(){
     mouseUp
   );
 
+
+  /* =========================
+     MOBILE TOUCH
+  ========================= */
+
+  window.addEventListener(
+    "touchstart",
+    touchStart,
+    {
+      passive:false
+    }
+  );
+
+  window.addEventListener(
+    "touchmove",
+    touchMove,
+    {
+      passive:false
+    }
+  );
+
+  window.addEventListener(
+    "touchend",
+    touchEnd,
+    {
+      passive:false
+    }
+  );
+
+  window.addEventListener(
+    "touchcancel",
+    touchEnd,
+    {
+      passive:false
+    }
+  );
+
+
   window.addEventListener(
     "resize",
     resize
   );
 
+
+  updateHelpText();
 
   animate();
 }
@@ -3699,19 +3818,22 @@ function createGrips(){
 
 
 /* =========================================================
-   MOUSE
+   MOUSE POSITION
 ========================================================= */
 
-function mouseMove(event){
+function setPointerPosition(
+  clientX,
+  clientY
+){
 
   mouse.x=
-    event.clientX/
+    clientX/
     window.innerWidth*
     2-1;
 
 
   mouse.y=
-    -(event.clientY/
+    -(clientY/
     window.innerHeight)*
     2+1;
 
@@ -3720,7 +3842,29 @@ function mouseMove(event){
 }
 
 
+/* =========================================================
+   DESKTOP MOUSE MOVE
+========================================================= */
+
+function mouseMove(event){
+
+  if(touchActive)return;
+
+  setPointerPosition(
+    event.clientX,
+    event.clientY
+  );
+}
+
+
+/* =========================================================
+   UPDATE CURSOR WORLD
+========================================================= */
+
 function updateCursorWorld(){
+
+  if(!camera)return;
+
 
   raycaster.setFromCamera(
     new THREE.Vector2(
@@ -3888,14 +4032,13 @@ function nearestGrip(){
 
 
 /* =========================================================
-   MOUSE DOWN
+   START GRAB
+   Shared by mouse + touch
 ========================================================= */
 
-function mouseDown(event){
+function startGrab(){
 
   if(!running)return;
-
-  if(event.button!==0)return;
 
 
   const result=
@@ -3972,10 +4115,11 @@ function mouseDown(event){
 
 
 /* =========================================================
-   MOUSE UP
+   RELEASE GRAB
+   Shared by mouse + touch
 ========================================================= */
 
-function mouseUp(){
+function releaseGrab(){
 
   if(grabbed){
 
@@ -4002,6 +4146,119 @@ function mouseUp(){
       "#55ff70"
     );
   }
+}
+
+
+/* =========================================================
+   MOUSE DOWN
+========================================================= */
+
+function mouseDown(event){
+
+  if(touchActive)return;
+
+  if(!running)return;
+
+  if(event.button!==0)return;
+
+  startGrab();
+}
+
+
+/* =========================================================
+   MOUSE UP
+========================================================= */
+
+function mouseUp(){
+
+  if(touchActive)return;
+
+  releaseGrab();
+}
+
+
+/* =========================================================
+   MOBILE TOUCH START
+========================================================= */
+
+function touchStart(event){
+
+  if(!running)return;
+
+  if(
+    !event.touches ||
+    event.touches.length===0
+  ){
+    return;
+  }
+
+
+  event.preventDefault();
+
+
+  touchActive=true;
+
+
+  const touch=
+    event.touches[0];
+
+
+  setPointerPosition(
+    touch.clientX,
+    touch.clientY
+  );
+
+
+  startGrab();
+}
+
+
+/* =========================================================
+   MOBILE TOUCH MOVE
+========================================================= */
+
+function touchMove(event){
+
+  if(!touchActive)return;
+
+  if(
+    !event.touches ||
+    event.touches.length===0
+  ){
+    return;
+  }
+
+
+  event.preventDefault();
+
+
+  const touch=
+    event.touches[0];
+
+
+  setPointerPosition(
+    touch.clientX,
+    touch.clientY
+  );
+}
+
+
+/* =========================================================
+   MOBILE TOUCH END
+========================================================= */
+
+function touchEnd(event){
+
+  if(!touchActive)return;
+
+
+  event.preventDefault();
+
+
+  touchActive=false;
+
+
+  releaseGrab();
 }
 
 
@@ -4266,6 +4523,8 @@ function resetPlayer(){
 
   grabbed=null;
 
+  touchActive=false;
+
 
   grips.forEach(
     grip=>{
@@ -4493,6 +4752,8 @@ function resize(){
     window.innerWidth,
     window.innerHeight
   );
+
+  updateHelpText();
 }
 
 
