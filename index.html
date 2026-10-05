@@ -55,15 +55,22 @@ canvas{
 }
 
 .panel{
- width:min(900px,94%);
- max-width:900px;
- padding:30px 20px;
+ width:min(950px,94%);
+ max-width:950px;
+ padding:24px 20px;
  margin:0 auto;
  display:flex;
  flex-direction:column;
  align-items:center;
  justify-content:center;
  text-align:center;
+ max-height:100%;
+ overflow-y:auto;
+ scrollbar-width:none;
+}
+
+.panel::-webkit-scrollbar{
+ display:none;
 }
 
 .logo{
@@ -80,14 +87,14 @@ canvas{
  color:#9baab2;
  letter-spacing:3px;
  font-size:12px;
- margin:15px 0 28px;
+ margin:15px 0 24px;
  text-align:center;
 }
 
 .note{
  color:#67757d;
  font-size:11px;
- margin-top:20px;
+ margin-top:18px;
  text-align:center;
 }
 
@@ -107,19 +114,23 @@ button:hover{
  background:#55ff7022;
 }
 
+button:active{
+ transform:scale(.98);
+}
+
 .cards{
  width:100%;
  display:flex;
  gap:14px;
  justify-content:center;
- align-items:center;
+ align-items:stretch;
  flex-wrap:wrap;
- margin-top:28px;
+ margin-top:24px;
 }
 
 .card{
  width:190px;
- padding:22px;
+ padding:20px;
  border:1px solid #ffffff12;
  background:#ffffff05;
  border-radius:10px;
@@ -142,8 +153,8 @@ button:hover{
 ========================= */
 
 .pointsPanel{
- width:min(650px,94%);
- margin-top:25px;
+ width:min(700px,94%);
+ margin-top:20px;
  display:flex;
  justify-content:center;
  align-items:stretch;
@@ -180,6 +191,289 @@ button:hover{
  color:#c8d0d4;
  font-size:8px;
  margin-top:3px;
+}
+
+/* =========================
+   COMMUNITY PROGRESS
+========================= */
+
+.progressPanel{
+ width:min(700px,94%);
+ margin-top:12px;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+}
+
+.progressCard{
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:9px;
+ padding:11px 8px;
+ text-align:center;
+}
+
+.progressIcon{
+ font-size:16px;
+ margin-bottom:4px;
+}
+
+.progressTitle{
+ color:#fff;
+ font-size:8px;
+ font-weight:900;
+ letter-spacing:1px;
+}
+
+.progressText{
+ color:#718087;
+ font-size:7px;
+ margin-top:4px;
+ line-height:1.4;
+}
+
+.progressStatus{
+ color:#55ff70;
+ font-size:7px;
+ font-weight:bold;
+ margin-top:5px;
+ letter-spacing:1px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard{
+ width:min(760px,96%);
+ margin-top:18px;
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:9px;
+}
+
+.dashCard{
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+ padding:13px;
+ text-align:left;
+}
+
+.dashHeader{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+ margin-bottom:9px;
+}
+
+.dashTitle{
+ color:#fff;
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:1.5px;
+}
+
+.dashBadge{
+ color:#55ff70;
+ border:1px solid #55ff7030;
+ background:#55ff7009;
+ border-radius:20px;
+ padding:3px 7px;
+ font-size:7px;
+ font-weight:bold;
+ letter-spacing:1px;
+ white-space:nowrap;
+}
+
+.dashValue{
+ color:#55ff70;
+ font-size:21px;
+ font-weight:900;
+}
+
+.dashSmall{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:4px;
+}
+
+.refCode{
+ color:#fff;
+ background:#0007;
+ border:1px solid #ffffff12;
+ border-radius:6px;
+ padding:7px 8px;
+ margin-top:8px;
+ font-size:11px;
+ font-weight:900;
+ letter-spacing:2px;
+ text-align:center;
+}
+
+.refActions{
+ display:flex;
+ gap:6px;
+ margin-top:7px;
+}
+
+.smallButton{
+ flex:1;
+ padding:8px 8px;
+ min-height:38px;
+ font-size:7px;
+ letter-spacing:1px;
+}
+
+.streakBar{
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+ margin-top:8px;
+}
+
+.streakFill{
+ height:100%;
+ width:0%;
+ background:#55ff70;
+ box-shadow:0 0 8px #55ff70;
+ transition:width .3s ease;
+}
+
+/* =========================
+   LEADERBOARD
+========================= */
+
+.leaderboard{
+ width:min(760px,96%);
+ margin-top:18px;
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+ padding:13px;
+}
+
+.sectionTitle{
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:2px;
+ color:#fff;
+ margin-bottom:10px;
+}
+
+.leaderRow{
+ display:grid;
+ grid-template-columns:38px 1fr 90px 70px;
+ gap:7px;
+ align-items:center;
+ padding:7px 5px;
+ border-bottom:1px solid #ffffff08;
+ font-size:8px;
+}
+
+.leaderRow:last-child{
+ border-bottom:0;
+}
+
+.leaderRank{
+ color:#718087;
+ font-weight:bold;
+ text-align:center;
+}
+
+.leaderName{
+ color:#dce2e5;
+ text-align:left;
+ font-weight:bold;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+}
+
+.leaderPoints{
+ color:#55ff70;
+ text-align:right;
+ font-weight:bold;
+}
+
+.leaderTime{
+ color:#718087;
+ text-align:right;
+ font-size:7px;
+}
+
+.leaderYou{
+ background:#55ff7009;
+ border-radius:5px;
+}
+
+/* =========================
+   AIRDROP
+========================= */
+
+.airdrop{
+ width:min(760px,96%);
+ margin-top:12px;
+ border:1px solid #55ff7020;
+ background:#55ff7006;
+ border-radius:10px;
+ padding:13px;
+ text-align:left;
+}
+
+.airdropHeader{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+}
+
+.airdropTitle{
+ color:#55ff70;
+ font-size:10px;
+ font-weight:900;
+ letter-spacing:2px;
+}
+
+.airdropSoon{
+ color:#ffcc33;
+ font-size:7px;
+ letter-spacing:1px;
+ font-weight:bold;
+}
+
+.airdropText{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:6px;
+}
+
+.airdropProgress{
+ margin-top:10px;
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+}
+
+.airdropProgressFill{
+ height:100%;
+ width:0%;
+ background:#55ff70;
+ box-shadow:0 0 8px #55ff70;
+}
+
+.airdropStats{
+ display:flex;
+ justify-content:space-between;
+ gap:10px;
+ margin-top:7px;
+ color:#9baab2;
+ font-size:7px;
 }
 
 /* =========================
@@ -435,11 +729,15 @@ button:hover{
 }
 
 .peak{
- font-size:18px;
+ font-size:20px;
+ font-weight:900;
  letter-spacing:5px;
  margin:18px 0;
  color:#fff;
  text-align:center;
+ text-shadow:
+  0 0 8px #ffffff66,
+  0 0 20px #55ff7040;
 }
 
 .winSub{
@@ -489,12 +787,12 @@ button:hover{
  #landing,
  #launchpad,
  #victory{
-  padding:20px 0;
+  padding:12px 0;
  }
 
  .panel{
   width:94%;
-  padding:20px 10px;
+  padding:16px 8px;
  }
 
  .logo{
@@ -506,17 +804,17 @@ button:hover{
   font-size:9px;
   letter-spacing:2px;
   line-height:1.6;
-  margin:14px 0 24px;
+  margin:12px 0 20px;
  }
 
  .cards{
   gap:8px;
-  margin-top:24px;
+  margin-top:20px;
  }
 
  .card{
   width:min(170px,44vw);
-  padding:17px 10px;
+  padding:16px 10px;
  }
 
  .card b{
@@ -532,7 +830,7 @@ button:hover{
  }
 
  .pointsPanel{
-  margin-top:20px;
+  margin-top:17px;
   gap:6px;
  }
 
@@ -553,11 +851,93 @@ button:hover{
   font-size:7px;
  }
 
- #help{
+ .progressPanel{
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  margin-top:8px;
+ }
+
+ .progressCard{
+  padding:8px 4px;
+ }
+
+ .progressIcon{
+  font-size:13px;
+ }
+
+ .progressTitle{
+  font-size:7px;
+ }
+
+ .progressText{
+  font-size:6px;
+ }
+
+ .progressStatus{
+  font-size:6px;
+ }
+
+ .dashboard{
+  gap:6px;
+  margin-top:10px;
+ }
+
+ .dashCard{
+  padding:10px;
+ }
+
+ .dashTitle{
+  font-size:7px;
+ }
+
+ .dashValue{
+  font-size:17px;
+ }
+
+ .dashSmall{
+  font-size:7px;
+ }
+
+ .refCode{
+  font-size:9px;
+ }
+
+ .smallButton{
+  font-size:6px;
+  padding:7px 4px;
+ }
+
+ .leaderboard{
+  margin-top:10px;
+  padding:9px;
+ }
+
+ .leaderRow{
+  grid-template-columns:28px 1fr 62px;
+  gap:4px;
+  padding:6px 3px;
+ }
+
+ .leaderTime{
+  display:none;
+ }
+
+ .leaderName,
+ .leaderPoints{
+  font-size:7px;
+ }
+
+ .airdrop{
+  margin-top:8px;
+  padding:10px;
+ }
+
+ .airdropTitle{
   font-size:8px;
-  white-space:normal;
-  width:90%;
-  bottom:14px;
+ }
+
+ .airdropText{
+  font-size:7px;
  }
 
  .stat{
@@ -614,8 +994,9 @@ button:hover{
  }
 
  .peak{
-  font-size:15px;
+  font-size:16px;
   letter-spacing:3px;
+  margin:15px 0;
  }
 
  .winSub{
@@ -643,7 +1024,7 @@ button:hover{
  .card{
   width:31%;
   min-width:0;
-  padding:14px 6px;
+  padding:13px 6px;
  }
 
  .card b{
@@ -684,6 +1065,10 @@ button:hover{
 
  .pointsValue{
   font-size:14px;
+ }
+
+ .dashboard{
+  grid-template-columns:1fr 1fr;
  }
 
 }
@@ -762,6 +1147,53 @@ button:hover{
 
   </div>
 
+  <!-- DAILY / REFERRAL / AIRDROP -->
+  <div class="progressPanel">
+
+   <div class="progressCard">
+    <div class="progressIcon">🔥</div>
+    <div class="progressTitle">DAILY STREAK</div>
+    <div
+     class="progressText"
+     id="landingStreakText">
+     0 day streak
+    </div>
+    <div
+     class="progressStatus"
+     id="landingStreakStatus">
+     START TODAY
+    </div>
+   </div>
+
+   <div class="progressCard">
+    <div class="progressIcon">🔗</div>
+    <div class="progressTitle">REFERRALS</div>
+    <div
+     class="progressText"
+     id="landingReferralText">
+     0 referrals
+    </div>
+    <div
+     class="progressStatus">
+     +50 POINTS
+    </div>
+   </div>
+
+   <div class="progressCard">
+    <div class="progressIcon">🎁</div>
+    <div class="progressTitle">AIRDROP</div>
+    <div
+     class="progressText">
+     Future rewards
+    </div>
+    <div
+     class="progressStatus">
+     TRACKING
+    </div>
+   </div>
+
+  </div>
+
   <div class="cards">
 
    <div class="card">
@@ -790,7 +1222,7 @@ button:hover{
 
 
 <!-- =========================
-     LAUNCHPAD
+     LAUNCHPAD / COMMUNITY
 ========================= -->
 
 <div id="launchpad">
@@ -803,6 +1235,161 @@ button:hover{
   <div class="sub">
    THE CLIMBORIA ECOSYSTEM
   </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+
+   <div class="dashCard">
+
+    <div class="dashHeader">
+     <div class="dashTitle">
+      DAILY STREAK
+     </div>
+
+     <div class="dashBadge">
+      +5 DAILY
+     </div>
+    </div>
+
+    <div
+     class="dashValue"
+     id="dashStreak">
+     0 DAYS
+    </div>
+
+    <div
+     class="dashSmall"
+     id="dashStreakText">
+     Visit daily to build your streak.
+    </div>
+
+    <div class="streakBar">
+     <div
+      class="streakFill"
+      id="streakFill">
+     </div>
+    </div>
+
+   </div>
+
+
+   <div class="dashCard">
+
+    <div class="dashHeader">
+     <div class="dashTitle">
+      REFERRAL SYSTEM
+     </div>
+
+     <div class="dashBadge">
+      +50 EACH
+     </div>
+    </div>
+
+    <div
+     class="dashValue"
+     id="dashReferrals">
+     0
+    </div>
+
+    <div class="dashSmall">
+     Your referral code
+    </div>
+
+    <div
+     class="refCode"
+     id="refCode">
+     CLIMB-0000
+    </div>
+
+    <div class="refActions">
+
+     <button
+      class="smallButton"
+      id="copyReferralButton"
+      type="button">
+      COPY CODE
+     </button>
+
+     <button
+      class="smallButton"
+      id="shareReferralButton"
+      type="button">
+      SHARE LINK
+     </button>
+
+    </div>
+
+   </div>
+
+  </div>
+
+
+  <!-- LEADERBOARD -->
+
+  <div class="leaderboard">
+
+   <div class="sectionTitle">
+    🏆 CLIMBORIA LEADERBOARD
+   </div>
+
+   <div
+    id="leaderboardRows">
+   </div>
+
+   <div
+    class="dashSmall"
+    style="text-align:center;margin-top:8px">
+    Global leaderboard will be connected to the backend later.
+   </div>
+
+  </div>
+
+
+  <!-- AIRDROP TRACKER -->
+
+  <div class="airdrop">
+
+   <div class="airdropHeader">
+
+    <div class="airdropTitle">
+     🎁 FUTURE AIRDROP TRACKER
+    </div>
+
+    <div class="airdropSoon">
+     COMING SOON
+    </div>
+
+   </div>
+
+   <div class="airdropText">
+    Your Climboria activity is being tracked locally.
+    Future seasons may use these activities for community rewards
+    and airdrop eligibility.
+   </div>
+
+   <div class="airdropProgress">
+    <div
+     class="airdropProgressFill"
+     id="airdropProgress">
+    </div>
+   </div>
+
+   <div class="airdropStats">
+
+    <span>
+     Activity score:
+     <b id="airdropScore">0%</b>
+    </span>
+
+    <span>
+     Tracked actions:
+     <b id="airdropActions">0</b>
+    </span>
+
+   </div>
+
+  </div>
+
 
   <div class="cards">
 
@@ -1080,15 +1667,48 @@ const SUMMITS_KEY=
 const ATTEMPTS_KEY=
  "climboria_attempts";
 
+const STREAK_KEY=
+ "climboria_daily_streak";
+
+const LAST_VISIT_KEY=
+ "climboria_last_visit";
+
+const REFERRAL_CODE_KEY=
+ "climboria_referral_code";
+
+const REFERRALS_KEY=
+ "climboria_referrals";
+
+const AIRDROP_ACTIONS_KEY=
+ "climboria_airdrop_actions";
+
+const AIRDROP_SCORE_KEY=
+ "climboria_airdrop_score";
+
 const CLIMB_REWARD=
  100;
 
 const ATTEMPT_REWARD=
  10;
 
+const DAILY_REWARD=
+ 5;
+
+const REFERRAL_REWARD=
+ 50;
+
 let climbPoints=0;
 let totalSummits=0;
 let totalAttempts=0;
+
+let dailyStreak=0;
+let lastVisit="";
+
+let referralCode="";
+let totalReferrals=0;
+
+let airdropActions=0;
+let airdropScore=0;
 
 
 /* =====================================================
@@ -1166,6 +1786,215 @@ const CRYPTO_SYMBOLS={
 
 function $(id){
  return document.getElementById(id);
+}
+
+
+/* =====================================================
+   DATE HELPERS
+===================================================== */
+
+function getDateKey(date=new Date()){
+
+ return [
+  date.getFullYear(),
+  String(date.getMonth()+1).padStart(2,"0"),
+  String(date.getDate()).padStart(2,"0")
+ ].join("-");
+}
+
+
+function dateDifferenceInDays(
+ olderKey,
+ newerKey
+){
+
+ if(!olderKey||!newerKey)
+  return Infinity;
+
+ const a=
+  new Date(
+   olderKey+"T00:00:00"
+  );
+
+ const b=
+  new Date(
+   newerKey+"T00:00:00"
+  );
+
+ const diff=
+  b.getTime()-
+  a.getTime();
+
+ return Math.round(
+  diff/
+  86400000
+ );
+}
+
+
+/* =====================================================
+   DAILY STREAK
+===================================================== */
+
+function updateDailyStreak(){
+
+ const today=
+  getDateKey();
+
+ let previous="";
+
+ try{
+
+  previous=
+   localStorage.getItem(
+    LAST_VISIT_KEY
+   )||"";
+
+  dailyStreak=
+   Number(
+    localStorage.getItem(
+     STREAK_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  dailyStreak=0;
+ }
+
+
+ if(previous===today){
+
+  updateStreakUI();
+
+  return;
+ }
+
+
+ const difference=
+  dateDifferenceInDays(
+   previous,
+   today
+  );
+
+
+ if(difference===1){
+
+  dailyStreak=
+   Math.max(
+    0,
+    dailyStreak
+   )+1;
+
+ }else{
+
+  dailyStreak=1;
+ }
+
+
+ try{
+
+  localStorage.setItem(
+   STREAK_KEY,
+   String(dailyStreak)
+  );
+
+  localStorage.setItem(
+   LAST_VISIT_KEY,
+   today
+  );
+
+ }catch(error){
+
+  console.warn(
+   "CLIMBORIA streak storage unavailable:",
+   error
+  );
+ }
+
+
+ /*
+  * DAILY REWARD ONLY ON A NEW DAY
+  */
+
+ addClimbPoints(
+  DAILY_REWARD
+ );
+
+ registerAirdropAction(
+  5
+ );
+
+ updateStreakUI();
+}
+
+
+function updateStreakUI(){
+
+ const streakText=
+  dailyStreak+
+  (
+   dailyStreak===1?
+   " day streak":
+   " day streaks"
+  );
+
+ if($("landingStreakText"))
+  $("landingStreakText").textContent=
+   streakText;
+
+ if($("landingStreakStatus"))
+  $("landingStreakStatus").textContent=
+   dailyStreak>0?
+   "ACTIVE":
+   "START TODAY";
+
+
+ if($("dashStreak"))
+  $("dashStreak").textContent=
+   dailyStreak+
+   (
+    dailyStreak===1?
+    " DAY":
+    " DAYS"
+   );
+
+
+ if($("dashStreakText")){
+
+  if(dailyStreak>=7){
+
+   $("dashStreakText").textContent=
+    "7+ day streak reached. Keep climbing!";
+
+  }else{
+
+   const remaining=
+    Math.max(
+     0,
+     7-dailyStreak
+    );
+
+   $("dashStreakText").textContent=
+    remaining+
+    " more day"+
+    (remaining===1?"":"s")+
+    " to reach 7 days.";
+  }
+ }
+
+
+ if($("streakFill")){
+
+  const percentage=
+   Math.min(
+    100,
+    (dailyStreak/7)*100
+   );
+
+  $("streakFill").style.width=
+   percentage+"%";
+ }
 }
 
 
@@ -1301,6 +2130,10 @@ function registerAttempt(){
   ATTEMPT_REWARD
  );
 
+ registerAirdropAction(
+  10
+ );
+
  saveClimbData();
 
  updatePointsUI();
@@ -1313,6 +2146,10 @@ function registerSummit(){
 
  addClimbPoints(
   CLIMB_REWARD
+ );
+
+ registerAirdropAction(
+  30
  );
 
  saveClimbData();
@@ -1356,11 +2193,547 @@ function updatePointsUI(){
  if($("victoryPoints"))
   $("victoryPoints").textContent=
    formatted;
+
+
+ if($("landingReferralText"))
+  $("landingReferralText").textContent=
+   totalReferrals+
+   (
+    totalReferrals===1?
+    " referral":
+    " referrals"
+   );
+
+
+ if($("dashReferrals"))
+  $("dashReferrals").textContent=
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
+
+
+ updateAirdropUI();
 }
 
 
 /* =====================================================
-   START
+   REFERRAL SYSTEM
+===================================================== */
+
+function generateReferralCode(){
+
+ const chars=
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+ let code="";
+
+ for(let i=0;i<6;i++){
+
+  code+=
+   chars[
+    Math.floor(
+     Math.random()*
+     chars.length
+    )
+   ];
+ }
+
+ return "CLIMB-"+code;
+}
+
+
+function loadReferralData(){
+
+ try{
+
+  referralCode=
+   localStorage.getItem(
+    REFERRAL_CODE_KEY
+   )||"";
+
+  totalReferrals=
+   Number(
+    localStorage.getItem(
+     REFERRALS_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  referralCode="";
+  totalReferrals=0;
+ }
+
+
+ if(!referralCode){
+
+  referralCode=
+   generateReferralCode();
+
+  try{
+
+   localStorage.setItem(
+    REFERRAL_CODE_KEY,
+    referralCode
+   );
+
+  }catch(error){}
+ }
+
+
+ /*
+  * Detect incoming referral code.
+  *
+  * This records that the current browser
+  * arrived through a referral, but true
+  * multi-user referral counting requires
+  * a backend later.
+  */
+
+ try{
+
+  const params=
+   new URLSearchParams(
+    window.location.search
+   );
+
+  const incoming=
+   params.get("ref");
+
+  if(
+   incoming &&
+   incoming.toUpperCase()!==
+   referralCode.toUpperCase()
+  ){
+
+   const usedKey=
+    "climboria_ref_used";
+
+   const alreadyUsed=
+    localStorage.getItem(
+     usedKey
+    );
+
+   if(!alreadyUsed){
+
+    localStorage.setItem(
+     usedKey,
+     incoming
+    );
+
+    registerAirdropAction(
+     20
+    );
+
+    addClimbPoints(
+     20
+    );
+   }
+  }
+
+ }catch(error){
+
+  console.warn(
+   "Referral URL unavailable:",
+   error
+  );
+ }
+
+
+ updateReferralUI();
+}
+
+
+function updateReferralUI(){
+
+ if($("refCode"))
+  $("refCode").textContent=
+   referralCode||
+   "CLIMB-0000";
+
+ if($("dashReferrals"))
+  $("dashReferrals").textContent=
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
+
+ if($("landingReferralText"))
+  $("landingReferralText").textContent=
+   totalReferrals+
+   (
+    totalReferrals===1?
+    " referral":
+    " referrals"
+   );
+}
+
+
+function simulateReferralForDemo(){
+
+ /*
+  * Local demo only.
+  * This lets the UI be tested without
+  * pretending it is a real global referral.
+  */
+
+ totalReferrals++;
+
+ addClimbPoints(
+  REFERRAL_REWARD
+ );
+
+ registerAirdropAction(
+  15
+ );
+
+ try{
+
+  localStorage.setItem(
+   REFERRALS_KEY,
+   String(totalReferrals)
+  );
+
+ }catch(error){}
+
+ updateReferralUI();
+ updatePointsUI();
+}
+
+
+function buildReferralLink(){
+
+ const base=
+  window.location.origin+
+  window.location.pathname;
+
+ return base+
+  "?ref="+
+  encodeURIComponent(
+   referralCode
+  );
+}
+
+
+async function copyReferral(){
+
+ const text=
+  buildReferralLink();
+
+ try{
+
+  if(
+   navigator.clipboard &&
+   navigator.clipboard.writeText
+  ){
+
+   await navigator.clipboard.writeText(
+    text
+   );
+
+   setStatus(
+    "REFERRAL LINK COPIED",
+    "#55ff70"
+   );
+
+   return;
+  }
+
+ }catch(error){}
+
+
+ /*
+  * Fallback for browsers where clipboard
+  * is unavailable.
+  */
+
+ window.prompt(
+  "Copy your Climboria referral link:",
+  text
+ );
+}
+
+
+async function shareReferral(){
+
+ const text=
+  "Join me on Climboria and climb to the summit! "+
+  buildReferralLink();
+
+ try{
+
+  if(
+   navigator.share
+  ){
+
+   await navigator.share({
+    title:"CLIMBORIA",
+    text
+   });
+
+   return;
+  }
+
+ }catch(error){}
+
+
+ await copyReferral();
+}
+
+
+/* =====================================================
+   AIRDROP TRACKER
+===================================================== */
+
+function loadAirdropData(){
+
+ try{
+
+  airdropActions=
+   Number(
+    localStorage.getItem(
+     AIRDROP_ACTIONS_KEY
+    )
+   )||0;
+
+  airdropScore=
+   Number(
+    localStorage.getItem(
+     AIRDROP_SCORE_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  airdropActions=0;
+  airdropScore=0;
+ }
+
+
+ airdropActions=
+  Math.max(
+   0,
+   Math.floor(
+    airdropActions
+   )
+  );
+
+ airdropScore=
+  Math.max(
+   0,
+   Math.min(
+    100,
+    Math.floor(
+     airdropScore
+    )
+   )
+  );
+
+
+ updateAirdropUI();
+}
+
+
+function saveAirdropData(){
+
+ try{
+
+  localStorage.setItem(
+   AIRDROP_ACTIONS_KEY,
+   String(airdropActions)
+  );
+
+  localStorage.setItem(
+   AIRDROP_SCORE_KEY,
+   String(airdropScore)
+  );
+
+ }catch(error){}
+}
+
+
+function registerAirdropAction(
+ points
+){
+
+ points=
+  Math.max(
+   0,
+   Math.floor(
+    Number(points)||0
+   )
+  );
+
+ if(points<=0)return;
+
+ airdropActions++;
+
+ airdropScore=
+  Math.min(
+   100,
+   airdropScore+
+   points
+  );
+
+ saveAirdropData();
+
+ updateAirdropUI();
+}
+
+
+function updateAirdropUI(){
+
+ const score=
+  Math.max(
+   0,
+   Math.min(
+    100,
+    Math.floor(
+     airdropScore
+    )
+   )
+  );
+
+
+ if($("airdropProgress"))
+  $("airdropProgress").style.width=
+   score+"%";
+
+
+ if($("airdropScore"))
+  $("airdropScore").textContent=
+   score+"%";
+
+
+ if($("airdropActions"))
+  $("airdropActions").textContent=
+   airdropActions.toLocaleString(
+    "en-US"
+   );
+}
+
+
+/* =====================================================
+   LEADERBOARD
+===================================================== */
+
+const DEMO_LEADERBOARD=[
+ {
+  name:"SummitHunter",
+  points:12840,
+  time:"02:18"
+ },
+ {
+  name:"ClimbMaster",
+  points:11320,
+  time:"02:31"
+ },
+ {
+  name:"PotClimber",
+  points:9870,
+  time:"02:46"
+ },
+ {
+  name:"Genesis",
+  points:8640,
+  time:"03:04"
+ },
+ {
+  name:"Satoshi",
+  points:7310,
+  time:"03:22"
+ }
+];
+
+
+function getLeaderboardData(){
+
+ const player={
+  name:"YOU",
+  points:climbPoints,
+  time:"LOCAL"
+ };
+
+ const rows=
+  [...DEMO_LEADERBOARD,player]
+   .sort(
+    (a,b)=>
+     b.points-a.points
+   );
+
+ return rows.slice(
+  0,
+  6
+ );
+}
+
+
+function renderLeaderboard(){
+
+ const container=
+  $("leaderboardRows");
+
+ if(!container)return;
+
+ container.innerHTML="";
+
+ const rows=
+  getLeaderboardData();
+
+ rows.forEach(
+  (row,index)=>{
+
+   const div=
+    document.createElement(
+     "div"
+    );
+
+   div.className=
+    "leaderRow"+
+    (
+     row.name==="YOU"?
+     " leaderYou":
+     ""
+    );
+
+   div.innerHTML=
+    `
+     <div class="leaderRank">
+      #${index+1}
+     </div>
+
+     <div class="leaderName">
+      ${escapeHTML(row.name)}
+     </div>
+
+     <div class="leaderPoints">
+      ${Number(row.points).toLocaleString("en-US")}
+     </div>
+
+     <div class="leaderTime">
+      ${escapeHTML(row.time)}
+     </div>
+    `;
+
+   container.appendChild(
+    div
+   );
+  }
+}
+
+
+function escapeHTML(value){
+
+ return String(value)
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
+
+
+/* =====================================================
+   INIT
 ===================================================== */
 
 init();
@@ -1374,6 +2747,14 @@ animate();
 function init(){
 
  loadClimbData();
+
+ loadAirdropData();
+
+ loadReferralData();
+
+ updateDailyStreak();
+
+ renderLeaderboard();
 
 
  scene=new THREE.Scene();
@@ -1537,6 +2918,17 @@ function init(){
  $("menuButton").addEventListener(
   "click",
   showMenu
+ );
+
+
+ $("copyReferralButton").addEventListener(
+  "click",
+  copyReferral
+ );
+
+ $("shareReferralButton").addEventListener(
+  "click",
+  shareReferral
  );
 
 
@@ -3095,6 +4487,8 @@ function beginSummitSequence(){
 
    updatePointsUI();
 
+   renderLeaderboard();
+
    $("victory").style.display=
     "flex";
 
@@ -3283,6 +4677,8 @@ function showGame(){
  updateHelpText();
 
  updatePointsUI();
+
+ renderLeaderboard();
 }
 
 
@@ -3345,6 +4741,12 @@ function showMenu(){
  resetPlayer();
 
  updatePointsUI();
+
+ updateStreakUI();
+
+ updateReferralUI();
+
+ renderLeaderboard();
 }
 
 
@@ -3402,6 +4804,14 @@ function showLaunchpad(){
 
 
  clearBursts();
+
+ updateStreakUI();
+
+ updateReferralUI();
+
+ updateAirdropUI();
+
+ renderLeaderboard();
 }
 
 
