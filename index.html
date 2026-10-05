@@ -1728,10 +1728,43 @@ function createMountain(){
 
 
   summitPlatform.receiveShadow=true;
+
   summitPlatform.castShadow=true;
 
   scene.add(
     summitPlatform
+  );
+
+
+  /* SUMMIT EDGE RING */
+
+  const summitEdge=
+    new THREE.Mesh(
+      new THREE.TorusGeometry(
+        5.15,
+        .12,
+        12,
+        48
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70
+      })
+    );
+
+
+  summitEdge.rotation.x=
+    Math.PI/2;
+
+
+  summitEdge.position.set(
+    0,
+    61.75,
+    -1
+  );
+
+
+  scene.add(
+    summitEdge
   );
 
 
@@ -1877,6 +1910,7 @@ function createMountain(){
     );
 
   signCanvas.width=1024;
+
   signCanvas.height=256;
 
 
@@ -2041,6 +2075,8 @@ function createMountain(){
   );
 
 
+  flagPole.castShadow=true;
+
   scene.add(
     flagPole
   );
@@ -2072,6 +2108,60 @@ function createMountain(){
 
   scene.add(
     flag
+  );
+
+
+  /* =====================================================
+     SUMMIT BEACON
+  ===================================================== */
+
+  const beacon=
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        .28,
+        16,
+        16
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70
+      })
+    );
+
+
+  beacon.position.set(
+    0,
+    63.2,
+    1.5
+  );
+
+
+  scene.add(
+    beacon
+  );
+
+
+  const beaconGlow=
+    new THREE.Mesh(
+      new THREE.SphereGeometry(
+        1.2,
+        20,
+        20
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70,
+        transparent:true,
+        opacity:.08
+      })
+    );
+
+
+  beaconGlow.position.copy(
+    beacon.position
+  );
+
+
+  scene.add(
+    beaconGlow
   );
 
 
