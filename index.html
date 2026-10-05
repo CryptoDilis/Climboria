@@ -1511,163 +1511,122 @@ button:active{transform:scale(.98)}
 
 
 <script>
-/*
- * =====================================================
- * EARLY UI BINDING
- *
- * IMPORTANT:
- * These listeners are installed BEFORE the Three.js
- * module is initialized.
- *
- * This prevents a Three.js/WebGL initialization error
- * from making START CLIMB appear completely dead.
- * =====================================================
- */
+/* =====================================================
+   EARLY UI BINDING
+===================================================== */
 
 (function(){
 
- const startButton=
-  document.getElementById("startButton");
+ const startButton=document.getElementById("startButton");
 
  if(startButton){
 
-  startButton.addEventListener(
-   "click",
-   function(){
+  startButton.addEventListener("click",function(){
 
-    if(
-     typeof window.showGame==="function"
-    ){
+   if(typeof window.showGame==="function"){
 
-     window.showGame();
+    window.showGame();
 
-    }else{
+   }else{
 
-     window.climboriaStartRequested=true;
+    window.climboriaStartRequested=true;
 
-     const status=
-      document.getElementById("status");
+    const status=document.getElementById("status");
 
-     if(status){
+    if(status){
 
-      status.textContent=
-       "LOADING GAME...";
+     status.textContent="LOADING GAME...";
+     status.style.color="#ffcc33";
 
-      status.style.color=
-       "#ffcc33";
-     }
     }
-
    }
-  );
+
+  });
+
  }
 
 
- const backButton=
-  document.getElementById("backButton");
+ const backButton=document.getElementById("backButton");
 
  if(backButton){
 
-  backButton.addEventListener(
-   "click",
-   function(){
+  backButton.addEventListener("click",function(){
 
-    if(typeof window.showMenu==="function")
-     window.showMenu();
+   if(typeof window.showMenu==="function")
+    window.showMenu();
 
-   }
-  );
+  });
+
  }
 
 
- const climbAgainButton=
-  document.getElementById("climbAgainButton");
+ const climbAgainButton=document.getElementById("climbAgainButton");
 
  if(climbAgainButton){
 
-  climbAgainButton.addEventListener(
-   "click",
-   function(){
+  climbAgainButton.addEventListener("click",function(){
 
-    if(typeof window.restartGame==="function")
-     window.restartGame();
+   if(typeof window.restartGame==="function")
+    window.restartGame();
 
-   }
-  );
+  });
+
  }
 
 
- const menuButtonVictory=
-  document.getElementById(
-   "menuButtonVictory"
-  );
+ const menuButtonVictory=document.getElementById("menuButtonVictory");
 
  if(menuButtonVictory){
 
-  menuButtonVictory.addEventListener(
-   "click",
-   function(){
+  menuButtonVictory.addEventListener("click",function(){
 
-    if(typeof window.showMenu==="function")
-     window.showMenu();
+   if(typeof window.showMenu==="function")
+    window.showMenu();
 
-   }
-  );
+  });
+
  }
 
 
- const menuButton=
-  document.getElementById("menuButton");
+ const menuButton=document.getElementById("menuButton");
 
  if(menuButton){
 
-  menuButton.addEventListener(
-   "click",
-   function(){
+  menuButton.addEventListener("click",function(){
 
-    if(typeof window.showMenu==="function")
-     window.showMenu();
+   if(typeof window.showMenu==="function")
+    window.showMenu();
 
-   }
-  );
+  });
+
  }
 
 
- const copyButton=
-  document.getElementById(
-   "copyReferralButton"
-  );
+ const copyButton=document.getElementById("copyReferralButton");
 
  if(copyButton){
 
-  copyButton.addEventListener(
-   "click",
-   function(){
+  copyButton.addEventListener("click",function(){
 
-    if(typeof window.copyReferral==="function")
-     window.copyReferral();
+   if(typeof window.copyReferral==="function")
+    window.copyReferral();
 
-   }
-  );
+  });
+
  }
 
 
- const shareButton=
-  document.getElementById(
-   "shareReferralButton"
-  );
+ const shareButton=document.getElementById("shareReferralButton");
 
  if(shareButton){
 
-  shareButton.addEventListener(
-   "click",
-   function(){
+  shareButton.addEventListener("click",function(){
 
-    if(typeof window.shareReferral==="function")
-     window.shareReferral();
+   if(typeof window.shareReferral==="function")
+    window.shareReferral();
 
-   }
-  );
+  });
+
  }
 
 })();
@@ -1676,20 +1635,17 @@ button:active{transform:scale(.98)}
 
 <script type="module">
 
-/*
- * =====================================================
- * CLIMBORIA GAME
- * =====================================================
- */
+/* =====================================================
+   THREE.JS
+===================================================== */
 
 let THREE;
 
 try{
 
- THREE=
-  await import(
-   "https://esm.sh/three@0.180.0"
-  );
+ THREE=await import(
+  "https://esm.sh/three@0.180.0"
+ );
 
 }catch(error){
 
@@ -1698,30 +1654,25 @@ try{
   error
  );
 
- const status=
-  document.getElementById("status");
+ const status=document.getElementById("status");
 
  if(status){
 
-  status.textContent=
-   "GAME ENGINE LOAD ERROR";
+  status.textContent="GAME ENGINE LOAD ERROR";
+  status.style.color="#ff6677";
 
-  status.style.color=
-   "#ff6677";
  }
 
- const startButton=
-  document.getElementById("startButton");
+ const startButton=document.getElementById("startButton");
 
  if(startButton){
 
-  startButton.textContent=
-   "RELOAD GAME";
+  startButton.textContent="RELOAD GAME";
 
-  startButton.onclick=
-   function(){
-    location.reload();
-   };
+  startButton.onclick=function(){
+   location.reload();
+  };
+
  }
 
  throw error;
@@ -1753,14 +1704,12 @@ const mouse={
  y:0
 };
 
-const raycaster=
- new THREE.Raycaster();
+const raycaster=new THREE.Raycaster();
 
-const cursorPlane=
- new THREE.Plane(
-  new THREE.Vector3(0,0,1),
-  -4
- );
+const cursorPlane=new THREE.Plane(
+ new THREE.Vector3(0,0,1),
+ -4
+);
 
 let velocityX=0;
 let velocityY=0;
@@ -1861,13 +1810,6 @@ let cryptoRequestInProgress=false;
 
 const CRYPTO_REFRESH_SECONDS=10;
 
-
-/*
- * Binance public market-data endpoint.
- *
- * data-api.binance.vision is specifically documented
- * by Binance for public NONE-security market endpoints.
- */
 const BINANCE_API=
  "https://data-api.binance.vision/api/v3/ticker/24hr";
 
@@ -1886,9 +1828,6 @@ const BINANCE_TO_SYMBOL={
  BNBUSDT:"BNB",
  XRPUSDT:"XRP"
 };
-
-
-/* CoinGecko fallback */
 
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
@@ -1909,8 +1848,7 @@ const CRYPTO_SYMBOLS={
  ripple:"XRP"
 };
 
-let cryptoSecondsLeft=
- CRYPTO_REFRESH_SECONDS;
+let cryptoSecondsLeft=CRYPTO_REFRESH_SECONDS;
 
 
 /* =====================================================
@@ -1936,30 +1874,24 @@ function getDateKey(date=new Date()){
 }
 
 
-function dateDifferenceInDays(
- olderKey,
- newerKey
-){
+function dateDifferenceInDays(olderKey,newerKey){
 
  if(!olderKey||!newerKey)
   return Infinity;
 
- const a=
-  new Date(
-   olderKey+"T00:00:00"
-  );
+ const a=new Date(
+  olderKey+"T00:00:00"
+ );
 
- const b=
-  new Date(
-   newerKey+"T00:00:00"
-  );
+ const b=new Date(
+  newerKey+"T00:00:00"
+ );
 
  return Math.round(
   (
    b.getTime()-
    a.getTime()
-  )/
-  86400000
+  )/86400000
  );
 }
 
@@ -1977,49 +1909,43 @@ function updateDailyStreak(){
  try{
 
   previous=
-   localStorage.getItem(
-    LAST_VISIT_KEY
-   )||"";
+   localStorage.getItem(LAST_VISIT_KEY)||"";
 
   dailyStreak=
    Number(
-    localStorage.getItem(
-     STREAK_KEY
-    )
+    localStorage.getItem(STREAK_KEY)
    )||0;
 
  }catch(error){
 
   dailyStreak=0;
+
  }
 
 
  if(previous===today){
 
   updateStreakUI();
-
   return;
+
  }
 
 
- const difference=
-  dateDifferenceInDays(
-   previous,
-   today
-  );
+ const difference=dateDifferenceInDays(
+  previous,
+  today
+ );
 
 
  if(difference===1){
 
   dailyStreak=
-   Math.max(
-    0,
-    dailyStreak
-   )+1;
+   Math.max(0,dailyStreak)+1;
 
  }else{
 
   dailyStreak=1;
+
  }
 
 
@@ -2038,13 +1964,8 @@ function updateDailyStreak(){
  }catch(error){}
 
 
- addClimbPoints(
-  DAILY_REWARD
- );
-
- registerAirdropAction(
-  5
- );
+ addClimbPoints(DAILY_REWARD);
+ registerAirdropAction(5);
 
  updateStreakUI();
 }
@@ -2061,14 +1982,11 @@ function updateStreakUI(){
   );
 
  if($("landingStreakText"))
-  $("landingStreakText").textContent=
-   streakText;
+  $("landingStreakText").textContent=streakText;
 
  if($("landingStreakStatus"))
   $("landingStreakStatus").textContent=
-   dailyStreak>0?
-   "ACTIVE":
-   "START TODAY";
+   dailyStreak>0?"ACTIVE":"START TODAY";
 
 
  if($("dashStreak"))
@@ -2091,16 +2009,14 @@ function updateStreakUI(){
   }else{
 
    const remaining=
-    Math.max(
-     0,
-     7-dailyStreak
-    );
+    Math.max(0,7-dailyStreak);
 
    $("dashStreakText").textContent=
     remaining+
     " more day"+
     (remaining===1?"":"s")+
     " to reach 7 days.";
+
   }
  }
 
@@ -2112,6 +2028,7 @@ function updateStreakUI(){
     100,
     (dailyStreak/7)*100
    )+"%";
+
  }
 }
 
@@ -2126,23 +2043,17 @@ function loadClimbData(){
 
   const savedPoints=
    Number(
-    localStorage.getItem(
-     POINTS_KEY
-    )
+    localStorage.getItem(POINTS_KEY)
    );
 
   const savedSummits=
    Number(
-    localStorage.getItem(
-     SUMMITS_KEY
-    )
+    localStorage.getItem(SUMMITS_KEY)
    );
 
   const savedAttempts=
    Number(
-    localStorage.getItem(
-     ATTEMPTS_KEY
-    )
+    localStorage.getItem(ATTEMPTS_KEY)
    );
 
 
@@ -2166,6 +2077,7 @@ function loadClimbData(){
   climbPoints=0;
   totalSummits=0;
   totalAttempts=0;
+
  }
 
 
@@ -2211,7 +2123,6 @@ function addClimbPoints(amount){
  climbPoints+=amount;
 
  saveClimbData();
-
  updatePointsUI();
 }
 
@@ -2229,7 +2140,6 @@ function registerAttempt(){
  );
 
  saveClimbData();
-
  updatePointsUI();
 }
 
@@ -2247,7 +2157,6 @@ function registerSummit(){
  );
 
  saveClimbData();
-
  updatePointsUI();
 }
 
@@ -2255,14 +2164,11 @@ function registerSummit(){
 function updatePointsUI(){
 
  const formatted=
-  climbPoints.toLocaleString(
-   "en-US"
-  );
+  climbPoints.toLocaleString("en-US");
 
 
  if($("landingPoints"))
-  $("landingPoints").textContent=
-   formatted;
+  $("landingPoints").textContent=formatted;
 
  if($("landingSummits"))
   $("landingSummits").textContent=
@@ -2273,12 +2179,10 @@ function updatePointsUI(){
    totalAttempts.toLocaleString("en-US");
 
  if($("hudPointsValue"))
-  $("hudPointsValue").textContent=
-   formatted;
+  $("hudPointsValue").textContent=formatted;
 
  if($("victoryPoints"))
-  $("victoryPoints").textContent=
-   formatted;
+  $("victoryPoints").textContent=formatted;
 
  if($("landingReferralText"))
   $("landingReferralText").textContent=
@@ -2316,6 +2220,7 @@ function generateReferralCode(){
      Math.random()*chars.length
     )
    ];
+
  }
 
  return "CLIMB-"+code;
@@ -2342,6 +2247,7 @@ function loadReferralData(){
 
   referralCode="";
   totalReferrals=0;
+
  }
 
 
@@ -2358,6 +2264,7 @@ function loadReferralData(){
    );
 
   }catch(error){}
+
  }
 
 
@@ -2381,9 +2288,7 @@ function loadReferralData(){
     "climboria_ref_used";
 
    const alreadyUsed=
-    localStorage.getItem(
-     usedKey
-    );
+    localStorage.getItem(usedKey);
 
    if(!alreadyUsed){
 
@@ -2394,6 +2299,7 @@ function loadReferralData(){
 
     registerAirdropAction(20);
     addClimbPoints(20);
+
    }
   }
 
@@ -2455,9 +2361,11 @@ async function copyReferral(){
    );
 
    return;
+
   }
 
  }catch(error){}
+
 
  window.prompt(
   "Copy your Climboria referral link:",
@@ -2482,6 +2390,7 @@ async function shareReferral(){
    });
 
    return;
+
   }
 
  }catch(error){}
@@ -2516,6 +2425,7 @@ function loadAirdropData(){
 
   airdropActions=0;
   airdropScore=0;
+
  }
 
 
@@ -2577,7 +2487,6 @@ function registerAirdropAction(points){
   );
 
  saveAirdropData();
-
  updateAirdropUI();
 }
 
@@ -2661,8 +2570,7 @@ function getLeaderboardData(){
 
 function renderLeaderboard(){
 
- const container=
-  $("leaderboardRows");
+ const container=$("leaderboardRows");
 
  if(!container)return;
 
@@ -2690,7 +2598,9 @@ function renderLeaderboard(){
    `;
 
    container.appendChild(div);
+
   }
+ );
 }
 
 
@@ -2720,16 +2630,15 @@ try{
   error
  );
 
- const status=
-  $("status");
+ const status=$("status");
 
  if(status){
 
   status.textContent=
    "GAME INITIALIZATION ERROR";
 
-  status.style.color=
-   "#ff6677";
+  status.style.color="#ff6677";
+
  }
 
 }
@@ -2776,13 +2685,6 @@ function init(){
  );
 
 
- /*
-  * WebGL renderer.
-  *
-  * This is the part most likely to throw if the
-  * browser/GPU refuses WebGL, so it is protected by
-  * the try/catch around init().
-  */
  renderer=
   new THREE.WebGLRenderer({
    antialias:true,
@@ -2899,10 +2801,6 @@ function init(){
  startCryptoTicker();
 
 
- /*
-  * If the user somehow clicked START while the
-  * module was still loading, start now.
-  */
  if(window.climboriaStartRequested){
 
   window.climboriaStartRequested=false;
@@ -2913,6 +2811,7 @@ function init(){
    },
    0
   );
+
  }
 
 
@@ -3017,6 +2916,7 @@ function createMountain(){
   );
 
   scene.add(mesh);
+
  });
 
 
@@ -3074,6 +2974,7 @@ function createMountain(){
    v[3]/v[2];
 
   scene.add(r);
+
  });
 
 
@@ -3097,9 +2998,7 @@ function createMountain(){
   -1
  );
 
- scene.add(
-  summitGlowMesh
- );
+ scene.add(summitGlowMesh);
 
 
  summitBeacon=
@@ -3121,9 +3020,7 @@ function createMountain(){
   -1
  );
 
- scene.add(
-  summitBeacon
- );
+ scene.add(summitBeacon);
 
 
  summitLight=
@@ -3139,9 +3036,7 @@ function createMountain(){
   4
  );
 
- scene.add(
-  summitLight
- );
+ scene.add(summitLight);
 
 
  const flagPole=
@@ -3364,6 +3259,7 @@ function createHero(){
   );
 
   hero.add(eye);
+
  });
 
 
@@ -3620,9 +3516,7 @@ function createTouchReticle(){
 
  touchReticle.visible=false;
 
- scene.add(
-  touchReticle
- );
+ scene.add(touchReticle);
 }
 
 
@@ -3703,8 +3597,11 @@ function updateCursorWorld(){
    hit
   )
  ){
+
   cursorWorld.copy(hit);
+
  }
+
 
  cursorWorld.x=
   THREE.MathUtils.clamp(
@@ -3857,6 +3754,7 @@ function startGrab(){
    "MOVE CLOSER",
    "#ffcc33"
   );
+
  }
 }
 
@@ -3881,6 +3779,7 @@ function releaseGrab(){
    "FREE",
    "#55ff70"
   );
+
  }
 }
 
@@ -3899,16 +3798,14 @@ function touchStart(e){
 
  touchActive=true;
 
- const t=
-  e.touches[0];
+ const t=e.touches[0];
 
  setPointerPosition(
   t.clientX,
   t.clientY
  );
 
- $("touchHint").style.display=
-  "block";
+ $("touchHint").style.display="block";
 
  startGrab();
 }
@@ -3922,8 +3819,7 @@ function touchMove(e){
 
  e.preventDefault();
 
- const t=
-  e.touches[0];
+ const t=e.touches[0];
 
  setPointerPosition(
   t.clientX,
@@ -3940,8 +3836,7 @@ function touchEnd(e){
 
  touchActive=false;
 
- $("touchHint").style.display=
-  "none";
+ $("touchHint").style.display="none";
 
  releaseGrab();
 }
@@ -4024,6 +3919,7 @@ function updatePhysics(dt){
      tangential*
      swingStrength*
      dt;
+
    }
 
 
@@ -4058,7 +3954,9 @@ function updatePhysics(dt){
 
      velocityY-=
       ny*outward;
+
     }
+
    }
 
 
@@ -4076,6 +3974,7 @@ function updatePhysics(dt){
     (relY/distance)*
     spring*
     dt;
+
   }
  }
 
@@ -4093,6 +3992,7 @@ function updatePhysics(dt){
 
   velocityX*=s;
   velocityY*=s;
+
  }
 
 
@@ -4136,6 +4036,7 @@ function updatePhysics(dt){
 
   if(!grabbed)
    velocityX*=.88;
+
  }
 
 
@@ -4196,6 +4097,7 @@ function updateHammer(){
     dy,
     dx
    );
+
  }
 
 
@@ -4298,10 +4200,17 @@ function setStatus(text,color){
 function checkSummit(){
 
  if(gameWon)return;
+
  if(summitSequence)return;
 
- if(hero.position.y>=60.8)
+ if(
+  hero&&
+  hero.position.y>=60.8
+ ){
+
   beginSummitSequence();
+
+ }
 }
 
 
@@ -4326,12 +4235,15 @@ function beginSummitSequence(){
  if(touchReticle)
   touchReticle.visible=false;
 
+
  grips.forEach(g=>{
   g.group.scale.setScalar(1);
  });
 
+
  velocityX=0;
  velocityY=0;
+
 
  hero.position.set(
   SUMMIT_HERO_X,
@@ -4339,11 +4251,13 @@ function beginSummitSequence(){
   SUMMIT_HERO_Z
  );
 
+
  camera.position.set(
   SUMMIT_CENTER_X,
   SUMMIT_CENTER_Y+5,
   18
  );
+
 
  camera.lookAt(
   SUMMIT_CENTER_X,
@@ -4351,9 +4265,11 @@ function beginSummitSequence(){
   0
  );
 
+
  updateHeight();
 
  registerSummit();
+
 
  setTimeout(()=>{
 
@@ -4363,6 +4279,8 @@ function beginSummitSequence(){
 
  },350);
 
+
+ cancelVictoryTimer();
 
  victoryTimer=
   setTimeout(()=>{
@@ -4385,7 +4303,9 @@ function beginSummitSequence(){
 
 
 function showVictory(){
+
  beginSummitSequence();
+
 }
 
 
@@ -4461,6 +4381,7 @@ function clearBursts(){
 
   if(p.material)
    p.material.dispose();
+
  });
 
 
@@ -4477,10 +4398,1403 @@ function clearBursts(){
 
   if(p.material)
    p.material.dispose();
+
  });
 
 
  summitShockwaves.length=0;
+}
+
+
+/* =====================================================
+   GRIP BURST
+===================================================== */
+
+function createGripBurst(x,y){
+
+ for(let i=0;i<10;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .06,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   x,
+   y,
+   3.5
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const s=
+   1+
+   Math.random()*2;
+
+
+  p.userData.vx=
+   Math.cos(a)*s;
+
+  p.userData.vy=
+   Math.sin(a)*s;
+
+  p.userData.life=1;
+
+  scene.add(p);
+
+  summitBurst.push(p);
+
+ }
+}
+
+
+/* =====================================================
+   EFFECTS
+===================================================== */
+
+function updateEffects(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=summitBurst[i];
+
+  if(
+   p.userData&&
+   p.userData.summit
+  )
+   continue;
+
+
+  p.position.x+=
+   p.userData.vx*dt;
+
+  p.position.y+=
+   p.userData.vy*dt;
+
+  p.userData.vy-=
+   5*dt;
+
+  p.userData.life-=
+   dt*2;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    p.userData.life
+   );
+
+
+  if(p.userData.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitBurst.splice(i,1);
+
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT EXPLOSION
+===================================================== */
+
+function createSummitBurst(){
+
+ if(!hero)return;
+
+ const explosionX=hero.position.x;
+ const explosionY=hero.position.y+.7;
+ const explosionZ=hero.position.z;
+
+
+ for(let i=0;i<150;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .04+Math.random()*.09,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:
+      i%3===0?
+      0xffcc33:
+      0x55ff70,
+     transparent:true,
+     opacity:1
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const up=
+   .5+
+   Math.random()*1.5;
+
+  const speed=
+   3+
+   Math.random()*9;
+
+
+  p.userData={
+   vx:Math.cos(a)*speed,
+   vy:up+Math.random()*8,
+   vz:(Math.random()-.5)*speed,
+   life:1+Math.random()*.8,
+   summit:true
+  };
+
+
+  scene.add(p);
+  summitBurst.push(p);
+
+ }
+
+
+ for(let i=0;i<55;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .025,
+     5,
+     5
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0xffffff,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const speed=
+   8+
+   Math.random()*12;
+
+
+  p.userData={
+   vx:Math.cos(a)*speed,
+   vy:Math.random()*10+4,
+   vz:(Math.random()-.5)*speed,
+   life:.5+Math.random()*.7
+  };
+
+
+  scene.add(p);
+  summitSparks.push(p);
+
+ }
+
+
+ for(let i=0;i<2;i++){
+
+  const shock=
+   new THREE.Mesh(
+    new THREE.TorusGeometry(
+     .4,
+     .05,
+     8,
+     48
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.9
+    })
+   );
+
+
+  shock.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+  shock.rotation.x=
+   Math.PI/2;
+
+  shock.userData={
+   life:1,
+   speed:5+i*2
+  };
+
+  scene.add(shock);
+
+  summitShockwaves.push(shock);
+
+ }
+
+
+ if(summitLight){
+
+  summitLight.intensity=18;
+
+  setTimeout(()=>{
+
+   if(summitLight)
+    summitLight.intensity=5;
+
+  },500);
+
+ }
+}
+
+
+/* =====================================================
+   UPDATE SUMMIT EXPLOSION
+===================================================== */
+
+function updateSummitBurst(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=summitBurst[i];
+  const v=p.userData;
+
+  if(!v.summit)
+   continue;
+
+
+  p.position.x+=v.vx*dt;
+  p.position.y+=v.vy*dt;
+  p.position.z+=v.vz*dt;
+
+  v.vy-=8*dt;
+  v.life-=dt;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitBurst.splice(i,1);
+
+  }
+ }
+
+
+ for(
+  let i=summitSparks.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=summitSparks[i];
+  const v=p.userData;
+
+  p.position.x+=v.vx*dt;
+  p.position.y+=v.vy*dt;
+  p.position.z+=v.vz*dt;
+
+  v.vy-=10*dt;
+  v.life-=dt;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitSparks.splice(i,1);
+
+  }
+ }
+
+
+ for(
+  let i=summitShockwaves.length-1;
+  i>=0;
+  i--
+ ){
+
+  const s=summitShockwaves[i];
+  const v=s.userData;
+
+  const scale=
+   1+
+   (1-v.life)*12;
+
+  s.scale.setScalar(scale);
+
+  s.material.opacity=v.life;
+
+  v.life-=dt*1.4;
+
+
+  if(v.life<=0){
+
+   scene.remove(s);
+
+   s.geometry.dispose();
+   s.material.dispose();
+
+   summitShockwaves.splice(i,1);
+
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT PARTICLES
+===================================================== */
+
+function updateSummitParticles(time,dt){
+
+ summitParticles.forEach(p=>{
+
+  p.position.y+=
+   p.userData.speed*
+   dt;
+
+  p.position.x+=
+   Math.sin(
+    time*.001+
+    p.userData.phase
+   )*.002;
+
+  if(p.position.y>68)
+   p.position.y=61;
+
+ });
+}
+
+
+/* =====================================================
+   SUMMIT ANIMATION
+===================================================== */
+
+function animateSummit(time){
+
+ if(summitGlowMesh){
+
+  const s=
+   1+
+   Math.sin(time*.003)*.15;
+
+  summitGlowMesh
+   .scale
+   .setScalar(s);
+
+ }
+
+
+ if(summitBeacon){
+
+  summitBeacon.scale.y=
+   1+
+   Math.sin(time*.004)*.15;
+
+ }
+}
+
+
+/* =====================================================
+   CRYPTO PRICE FORMAT
+===================================================== */
+
+function formatCryptoPrice(price){
+
+ price=Number(price);
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
+  return "—";
+
+
+ if(price>=1000){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:0,
+     maximumFractionDigits:0
+    }
+   );
+
+ }
+
+
+ if(price>=1){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:2,
+     maximumFractionDigits:2
+    }
+   );
+
+ }
+
+
+ if(price>=.01){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:3,
+     maximumFractionDigits:3
+    }
+   );
+
+ }
+
+
+ return "$"+
+  price.toLocaleString(
+   "en-US",
+   {
+    minimumFractionDigits:4,
+    maximumFractionDigits:8
+   }
+  );
+}
+
+
+/* =====================================================
+   CRYPTO STATUS
+===================================================== */
+
+function setCryptoStatus(text,type="live"){
+
+ const el=$("cryptoStatus");
+
+ if(!el)return;
+
+ el.textContent=text;
+
+ el.classList.remove(
+  "offline",
+  "syncing"
+ );
+
+ if(type==="offline")
+  el.classList.add("offline");
+
+ if(type==="syncing")
+  el.classList.add("syncing");
+}
+
+
+function setCryptoLiveLabels(text){
+
+ CRYPTO_IDS.forEach(id=>{
+
+  const symbol=
+   CRYPTO_SYMBOLS[id];
+
+  const el=
+   $(symbol.toLowerCase()+"LiveText");
+
+  if(el)
+   el.textContent=text;
+
+ });
+}
+
+
+/* =====================================================
+   CRYPTO FLASH
+===================================================== */
+
+function flashCryptoCard(symbol,direction){
+
+ const card=
+  $(symbol.toLowerCase()+"Card");
+
+ if(!card)return;
+
+ card.classList.remove(
+  "priceUp",
+  "priceDown",
+  "priceFlashUp",
+  "priceFlashDown",
+  "priceSync"
+ );
+
+ void card.offsetWidth;
+
+
+ if(direction==="up"){
+
+  card.classList.add(
+   "priceUp",
+   "priceFlashUp"
+  );
+
+ }else if(direction==="down"){
+
+  card.classList.add(
+   "priceDown",
+   "priceFlashDown"
+  );
+
+ }else{
+
+  card.classList.add(
+   "priceSync"
+  );
+
+ }
+
+
+ setTimeout(()=>{
+
+  card.classList.remove(
+   "priceFlashUp",
+   "priceFlashDown",
+   "priceSync"
+  );
+
+ },700);
+}
+
+
+/* =====================================================
+   UPDATE CRYPTO PRICE
+===================================================== */
+
+function updateCryptoPrice(symbol,price){
+
+ const priceEl=
+  $(symbol.toLowerCase()+"Price");
+
+ if(!priceEl)return false;
+
+ price=Number(price);
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
+  return false;
+
+
+ const previous=
+  Number(
+   priceEl.dataset.price||0
+  );
+
+
+ priceEl.textContent=
+  formatCryptoPrice(price);
+
+ priceEl.classList.remove(
+  "cryptoLoading"
+ );
+
+ priceEl.dataset.price=
+  String(price);
+
+
+ if(previous>0){
+
+  if(price>previous){
+
+   flashCryptoCard(symbol,"up");
+
+  }else if(price<previous){
+
+   flashCryptoCard(symbol,"down");
+
+  }else{
+
+   flashCryptoCard(symbol,"sync");
+
+  }
+
+ }else{
+
+  flashCryptoCard(symbol,"sync");
+
+ }
+
+ return true;
+}
+
+
+/* =====================================================
+   UPDATE CHANGE
+===================================================== */
+
+function updateCryptoChange(symbol,change){
+
+ const changeEl=
+  $(symbol.toLowerCase()+"Change");
+
+ if(!changeEl)return;
+
+ change=Number(change);
+
+ if(!Number.isFinite(change)){
+
+  changeEl.textContent="--";
+
+  changeEl.classList.remove(
+   "cryptoLoading",
+   "up",
+   "down"
+  );
+
+  changeEl.classList.add(
+   "cryptoLoading"
+  );
+
+  return;
+ }
+
+
+ const sign=
+  change>=0?"+":"";
+
+ changeEl.textContent=
+  sign+
+  change.toFixed(2)+
+  "%";
+
+
+ changeEl.classList.remove(
+  "cryptoLoading",
+  "up",
+  "down"
+ );
+
+ changeEl.classList.add(
+  change>=0?"up":"down"
+ );
+}
+
+
+/* =====================================================
+   TIMESTAMP
+===================================================== */
+
+function updateCryptoTimestamp(){
+
+ const now=new Date();
+
+ const time=
+  now.toLocaleTimeString(
+   "en-US",
+   {
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:false
+   }
+  );
+
+
+ CRYPTO_IDS.forEach(id=>{
+
+  const symbol=
+   CRYPTO_SYMBOLS[id];
+
+  const el=
+   $(symbol.toLowerCase()+"Updated");
+
+  if(el)
+   el.textContent=
+    "Updated "+time;
+
+ });
+}
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+function updateCryptoCountdown(){
+
+ cryptoSecondsLeft=
+  Math.max(
+   0,
+   Math.floor(cryptoSecondsLeft)
+  );
+
+
+ CRYPTO_IDS.forEach(id=>{
+
+  const symbol=
+   CRYPTO_SYMBOLS[id];
+
+  const el=
+   $(symbol.toLowerCase()+"Countdown");
+
+  if(el){
+
+   el.textContent=
+    "Refresh in "+
+    cryptoSecondsLeft+
+    "s";
+
+  }
+
+ });
+
+
+ if(cryptoSecondsLeft<=0){
+
+  setCryptoStatus(
+   "SYNCING LIVE MARKET",
+   "syncing"
+  );
+
+ }
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+function showCryptoError(source="LIVE FEEDS"){
+
+ setCryptoStatus(
+  source+
+  " TEMPORARILY UNAVAILABLE",
+  "offline"
+ );
+
+ setCryptoLiveLabels("WAIT");
+
+
+ CRYPTO_IDS.forEach(id=>{
+
+  const symbol=
+   CRYPTO_SYMBOLS[id];
+
+  const el=
+   $(symbol.toLowerCase()+"Updated");
+
+  if(!el)return;
+
+  el.textContent=
+   "Retrying automatically";
+
+  el.classList.add(
+   "cryptoError"
+  );
+
+ });
+}
+
+
+/* =====================================================
+   SUCCESS
+===================================================== */
+
+function showCryptoSuccess(source){
+
+ setCryptoStatus(
+  "LIVE • "+
+  source+
+  " • 10s REFRESH",
+  "live"
+ );
+
+ setCryptoLiveLabels("LIVE");
+
+
+ CRYPTO_IDS.forEach(id=>{
+
+  const symbol=
+   CRYPTO_SYMBOLS[id];
+
+  const el=
+   $(symbol.toLowerCase()+"Updated");
+
+  if(el)
+   el.classList.remove(
+    "cryptoError"
+   );
+
+ });
+
+
+ cryptoSecondsLeft=
+  CRYPTO_REFRESH_SECONDS;
+
+ updateCryptoCountdown();
+}
+
+
+/* =====================================================
+   BINANCE URL
+===================================================== */
+
+function buildBinanceURL(){
+
+ const encoded=
+  encodeURIComponent(
+   JSON.stringify(
+    BINANCE_SYMBOLS
+   )
+  );
+
+ return BINANCE_API+
+  "?symbols="+
+  encoded+
+  "&type=FULL"+
+  "&_="+
+  Date.now();
+}
+
+
+/* =====================================================
+   LOAD BINANCE
+===================================================== */
+
+async function loadBinanceMarket(){
+
+ const controller=
+  new AbortController();
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   4500
+  );
+
+
+ try{
+
+  const response=
+   await fetch(
+    buildBinanceURL(),
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":"application/json"
+     }
+    }
+   );
+
+
+  if(!response.ok){
+
+   throw new Error(
+    "Binance HTTP "+
+    response.status
+   );
+
+  }
+
+
+  const data=
+   await response.json();
+
+
+  if(!Array.isArray(data)){
+
+   throw new Error(
+    "Unexpected Binance response"
+   );
+
+  }
+
+
+  let validCoins=0;
+
+
+  data.forEach(coin=>{
+
+   if(!coin)return;
+
+   const symbol=
+    BINANCE_TO_SYMBOL[
+     coin.symbol
+    ];
+
+   if(!symbol)return;
+
+
+   const price=
+    Number(
+     coin.lastPrice
+    );
+
+   const change=
+    Number(
+     coin.priceChangePercent
+    );
+
+
+   if(
+    updateCryptoPrice(
+     symbol,
+     price
+    )
+   ){
+
+    validCoins++;
+
+   }
+
+
+   if(
+    Number.isFinite(change)
+   ){
+
+    updateCryptoChange(
+     symbol,
+     change
+    );
+
+   }
+
+  });
+
+
+  if(
+   validCoins<
+   BINANCE_SYMBOLS.length
+  ){
+
+   throw new Error(
+    "Incomplete Binance data: "+
+    validCoins+
+    "/"+
+    BINANCE_SYMBOLS.length
+   );
+
+  }
+
+
+  return true;
+
+ }finally{
+
+  clearTimeout(timeout);
+
+ }
+}
+
+
+/* =====================================================
+   COINGECKO FALLBACK
+===================================================== */
+
+async function loadCoinGeckoMarket(){
+
+ const url=
+  COINGECKO_API+
+  "?ids="+
+  CRYPTO_IDS.join(",")+
+  "&vs_currencies=usd"+
+  "&include_24hr_change=true"+
+  "&precision=full"+
+  "&_="+
+  Date.now();
+
+
+ const controller=
+  new AbortController();
+
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   5000
+  );
+
+
+ try{
+
+  const response=
+   await fetch(
+    url,
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":"application/json"
+     }
+    }
+   );
+
+
+  if(!response.ok){
+
+   throw new Error(
+    "CoinGecko HTTP "+
+    response.status
+   );
+
+  }
+
+
+  const data=
+   await response.json();
+
+
+  let validCoins=0;
+
+
+  CRYPTO_IDS.forEach(id=>{
+
+   const coin=data[id];
+
+   if(!coin)return;
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+
+   if(
+    coin.usd!==undefined&&
+    updateCryptoPrice(
+     symbol,
+     coin.usd
+    )
+   ){
+
+    validCoins++;
+
+   }
+
+
+   if(
+    coin.usd_24h_change!==undefined
+   ){
+
+    updateCryptoChange(
+     symbol,
+     coin.usd_24h_change
+    );
+
+   }
+
+  });
+
+
+  if(
+   validCoins<
+   CRYPTO_IDS.length
+  ){
+
+   throw new Error(
+    "Incomplete CoinGecko data"
+   );
+
+  }
+
+
+  return true;
+
+ }finally{
+
+  clearTimeout(timeout);
+
+ }
+}
+
+
+/* =====================================================
+   LOAD LIVE MARKET
+===================================================== */
+
+async function loadCryptoMarket(){
+
+ if(cryptoRequestInProgress)
+  return;
+
+
+ cryptoRequestInProgress=true;
+
+
+ setCryptoStatus(
+  "SYNCING LIVE MARKET",
+  "syncing"
+ );
+
+ setCryptoLiveLabels("SYNC");
+
+
+ try{
+
+  try{
+
+   const binanceOK=
+    await loadBinanceMarket();
+
+   if(binanceOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "BINANCE"
+    );
+
+    console.log(
+     "CLIMBORIA: BINANCE LIVE"
+    );
+
+    return;
+
+   }
+
+  }catch(error){
+
+   console.warn(
+    "CLIMBORIA Binance failed:",
+    error
+   );
+
+  }
+
+
+  try{
+
+   const geckoOK=
+    await loadCoinGeckoMarket();
+
+   if(geckoOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "COINGECKO"
+    );
+
+    console.log(
+     "CLIMBORIA: COINGECKO LIVE"
+    );
+
+    return;
+
+   }
+
+  }catch(error){
+
+   console.warn(
+    "CLIMBORIA CoinGecko failed:",
+    error
+   );
+
+  }
+
+
+  showCryptoError(
+   "LIVE FEEDS"
+  );
+
+
+ }finally{
+
+  cryptoRequestInProgress=false;
+
+  cryptoSecondsLeft=
+   CRYPTO_REFRESH_SECONDS;
+
+  updateCryptoCountdown();
+
+ }
+}
+
+
+/* =====================================================
+   START CRYPTO TICKER
+===================================================== */
+
+function startCryptoTicker(){
+
+ if(cryptoTimer){
+
+  clearInterval(
+   cryptoTimer
+  );
+
+  cryptoTimer=null;
+
+ }
+
+
+ if(cryptoCountdownTimer){
+
+  clearInterval(
+   cryptoCountdownTimer
+  );
+
+  cryptoCountdownTimer=null;
+
+ }
+
+
+ $("cryptoTicker").style.display="flex";
+
+
+ cryptoSecondsLeft=
+  CRYPTO_REFRESH_SECONDS;
+
+ updateCryptoCountdown();
+
+
+ loadCryptoMarket();
+
+
+ cryptoTimer=
+  setInterval(
+   loadCryptoMarket,
+   CRYPTO_REFRESH_SECONDS*1000
+  );
+
+
+ cryptoCountdownTimer=
+  setInterval(
+   ()=>{
+
+    if(
+     cryptoSecondsLeft>0
+    ){
+
+     cryptoSecondsLeft--;
+
+    }
+
+    updateCryptoCountdown();
+
+   },
+   1000
+  );
+}
+
+
+/* =====================================================
+   HELP
+===================================================== */
+
+function updateHelpText(){
+
+ const mobile=
+  matchMedia(
+   "(pointer:coarse)"
+  ).matches||
+  "ontouchstart" in window;
+
+
+ $("help").innerHTML=
+  mobile
+  ?
+  "<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
+  :
+  "Move cursor = hammer tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
+}
+
+
+/* =====================================================
+   CANCEL VICTORY
+===================================================== */
+
+function cancelVictoryTimer(){
+
+ if(victoryTimer){
+
+  clearTimeout(
+   victoryTimer
+  );
+
+  victoryTimer=null;
+
+ }
+}
+
+
+/* =====================================================
+   RESIZE
+===================================================== */
+
+function resize(){
+
+ if(!camera||!renderer)return;
+
+ camera.aspect=
+  innerWidth/
+  innerHeight;
+
+ camera.updateProjectionMatrix();
+
+ renderer.setSize(
+  innerWidth,
+  innerHeight
+ );
 }
 
 
@@ -4516,7 +5830,6 @@ function showGame(){
 
  gameWon=false;
  summitSequence=false;
- running=true;
 
  clearBursts();
 
@@ -4619,7 +5932,9 @@ function showLaunchpad(){
 ===================================================== */
 
 function restartGame(){
+
  showGame();
+
 }
 
 
@@ -4642,6 +5957,7 @@ function animateGrips(time){
 
   g.ring.scale.setScalar(pulse);
   g.glow.scale.setScalar(pulse);
+
  });
 }
 
@@ -4654,6 +5970,7 @@ function updateTouchReticle(time){
 
  if(!touchReticle)return;
 
+
  if(
   !running||
   !touchActive||
@@ -4663,7 +5980,9 @@ function updateTouchReticle(time){
   touchReticle.visible=false;
 
   return;
+
  }
+
 
  touchReticle.visible=true;
 
@@ -4673,8 +5992,10 @@ function updateTouchReticle(time){
   4.15
  );
 
+
  const result=
   nearestGrip();
+
 
  if(
   result.grip&&
@@ -4685,6 +6006,7 @@ function updateTouchReticle(time){
    .set(0x55ff70);
 
   touchReticleMaterial.opacity=.95;
+
 
   const pulse=
    1+
@@ -4700,1377 +6022,8 @@ function updateTouchReticle(time){
   touchReticleMaterial.opacity=.8;
 
   touchReticle.scale.setScalar(1);
+
  }
-}
-
-
-/* =====================================================
-   GRIP BURST
-===================================================== */
-
-function createGripBurst(x,y){
-
- for(let i=0;i<10;i++){
-
-  const p=
-   new THREE.Mesh(
-    new THREE.SphereGeometry(
-     .06,
-     6,
-     6
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0x55ff70,
-     transparent:true
-    })
-   );
-
-
-  p.position.set(
-   x,
-   y,
-   3.5
-  );
-
-
-  const a=
-   Math.random()*
-   Math.PI*2;
-
-  const s=
-   1+
-   Math.random()*2;
-
-
-  p.userData.vx=
-   Math.cos(a)*s;
-
-  p.userData.vy=
-   Math.sin(a)*s;
-
-  p.userData.life=1;
-
-  scene.add(p);
-
-  summitBurst.push(p);
- }
-}
-
-
-/* =====================================================
-   EFFECTS
-===================================================== */
-
-function updateEffects(dt){
-
- for(
-  let i=summitBurst.length-1;
-  i>=0;
-  i--
- ){
-
-  const p=summitBurst[i];
-
-  if(
-   p.userData&&
-   p.userData.summit
-  )
-   continue;
-
-  p.position.x+=
-   p.userData.vx*dt;
-
-  p.position.y+=
-   p.userData.vy*dt;
-
-  p.userData.vy-=
-   5*dt;
-
-  p.userData.life-=
-   dt*2;
-
-  p.material.opacity=
-   Math.max(
-    0,
-    p.userData.life
-   );
-
-  if(p.userData.life<=0){
-
-   scene.remove(p);
-
-   p.geometry.dispose();
-   p.material.dispose();
-
-   summitBurst.splice(i,1);
-  }
- }
-}
-
-
-/* =====================================================
-   SUMMIT EXPLOSION
-===================================================== */
-
-function createSummitBurst(){
-
- const explosionX=hero.position.x;
- const explosionY=hero.position.y+.7;
- const explosionZ=hero.position.z;
-
-
- for(let i=0;i<150;i++){
-
-  const p=
-   new THREE.Mesh(
-    new THREE.SphereGeometry(
-     .04+Math.random()*.09,
-     6,
-     6
-    ),
-    new THREE.MeshBasicMaterial({
-     color:i%3===0?0xffcc33:0x55ff70,
-     transparent:true,
-     opacity:1
-    })
-   );
-
-
-  p.position.set(
-   explosionX,
-   explosionY,
-   explosionZ
-  );
-
-
-  const a=
-   Math.random()*
-   Math.PI*2;
-
-  const up=
-   .5+
-   Math.random()*1.5;
-
-  const speed=
-   3+
-   Math.random()*9;
-
-
-  p.userData={
-   vx:Math.cos(a)*speed,
-   vy:up+Math.random()*8,
-   vz:(Math.random()-.5)*speed,
-   life:1+Math.random()*.8,
-   summit:true
-  };
-
-
-  scene.add(p);
-  summitBurst.push(p);
- }
-
-
- for(let i=0;i<55;i++){
-
-  const p=
-   new THREE.Mesh(
-    new THREE.SphereGeometry(
-     .025,
-     5,
-     5
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0xffffff,
-     transparent:true
-    })
-   );
-
-
-  p.position.set(
-   explosionX,
-   explosionY,
-   explosionZ
-  );
-
-
-  const a=
-   Math.random()*
-   Math.PI*2;
-
-  const speed=
-   8+
-   Math.random()*12;
-
-
-  p.userData={
-   vx:Math.cos(a)*speed,
-   vy:Math.random()*10+4,
-   vz:(Math.random()-.5)*speed,
-   life:.5+Math.random()*.7
-  };
-
-
-  scene.add(p);
-  summitSparks.push(p);
- }
-
-
- for(let i=0;i<2;i++){
-
-  const shock=
-   new THREE.Mesh(
-    new THREE.TorusGeometry(
-     .4,
-     .05,
-     8,
-     48
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0x55ff70,
-     transparent:true,
-     opacity:.9
-    })
-   );
-
-
-  shock.position.set(
-   explosionX,
-   explosionY,
-   explosionZ
-  );
-
-  shock.rotation.x=
-   Math.PI/2;
-
-  shock.userData={
-   life:1,
-   speed:5+i*2
-  };
-
-  scene.add(shock);
-
-  summitShockwaves.push(shock);
- }
-
-
- if(summitLight){
-
-  summitLight.intensity=18;
-
-  setTimeout(()=>{
-
-   if(summitLight)
-    summitLight.intensity=5;
-
-  },500);
- }
-}
-
-
-/* =====================================================
-   UPDATE SUMMIT EXPLOSION
-===================================================== */
-
-function updateSummitBurst(dt){
-
- for(
-  let i=summitBurst.length-1;
-  i>=0;
-  i--
- ){
-
-  const p=summitBurst[i];
-  const v=p.userData;
-
-  if(!v.summit)
-   continue;
-
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
-
-  v.vy-=8*dt;
-  v.life-=dt;
-
-  p.material.opacity=
-   Math.max(
-    0,
-    v.life
-   );
-
-  if(v.life<=0){
-
-   scene.remove(p);
-
-   p.geometry.dispose();
-   p.material.dispose();
-
-   summitBurst.splice(i,1);
-  }
- }
-
-
- for(
-  let i=summitSparks.length-1;
-  i>=0;
-  i--
- ){
-
-  const p=summitSparks[i];
-  const v=p.userData;
-
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
-
-  v.vy-=10*dt;
-  v.life-=dt;
-
-  p.material.opacity=
-   Math.max(
-    0,
-    v.life
-   );
-
-  if(v.life<=0){
-
-   scene.remove(p);
-
-   p.geometry.dispose();
-   p.material.dispose();
-
-   summitSparks.splice(i,1);
-  }
- }
-
-
- for(
-  let i=summitShockwaves.length-1;
-  i>=0;
-  i--
- ){
-
-  const s=summitShockwaves[i];
-  const v=s.userData;
-
-  const scale=
-   1+
-   (1-v.life)*12;
-
-  s.scale.setScalar(scale);
-
-  s.material.opacity=v.life;
-
-  v.life-=dt*1.4;
-
-  if(v.life<=0){
-
-   scene.remove(s);
-
-   s.geometry.dispose();
-   s.material.dispose();
-
-   summitShockwaves.splice(i,1);
-  }
- }
-}
-
-
-/* =====================================================
-   SUMMIT PARTICLES
-===================================================== */
-
-function updateSummitParticles(time,dt){
-
- summitParticles.forEach(p=>{
-
-  p.position.y+=
-   p.userData.speed*
-   dt;
-
-  p.position.x+=
-   Math.sin(
-    time*.001+
-    p.userData.phase
-   )*.002;
-
-  if(p.position.y>68)
-   p.position.y=61;
- });
-}
-
-
-/* =====================================================
-   SUMMIT ANIMATION
-===================================================== */
-
-function animateSummit(time){
-
- if(summitGlowMesh){
-
-  const s=
-   1+
-   Math.sin(time*.003)*.15;
-
-  summitGlowMesh
-   .scale
-   .setScalar(s);
- }
-
-
- if(summitBeacon){
-
-  summitBeacon.scale.y=
-   1+
-   Math.sin(time*.004)*.15;
- }
-}
-
-
-/* =====================================================
-   CRYPTO PRICE FORMAT
-===================================================== */
-
-function formatCryptoPrice(price){
-
- price=Number(price);
-
- if(
-  !Number.isFinite(price)||
-  price<=0
- )
-  return "—";
-
-
- if(price>=1000){
-
-  return "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:0,
-     maximumFractionDigits:0
-    }
-   );
- }
-
-
- if(price>=1){
-
-  return "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:2,
-     maximumFractionDigits:2
-    }
-   );
- }
-
-
- if(price>=.01){
-
-  return "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:3,
-     maximumFractionDigits:3
-    }
-   );
- }
-
-
- return "$"+
-  price.toLocaleString(
-   "en-US",
-   {
-    minimumFractionDigits:4,
-    maximumFractionDigits:8
-   }
-  );
-}
-
-
-/* =====================================================
-   CRYPTO STATUS
-===================================================== */
-
-function setCryptoStatus(
- text,
- type="live"
-){
-
- const el=$("cryptoStatus");
-
- if(!el)return;
-
- el.textContent=text;
-
- el.classList.remove(
-  "offline",
-  "syncing"
- );
-
- if(type==="offline")
-  el.classList.add("offline");
-
- if(type==="syncing")
-  el.classList.add("syncing");
-}
-
-
-function setCryptoLiveLabels(text){
-
- CRYPTO_IDS.forEach(id=>{
-
-  const symbol=
-   CRYPTO_SYMBOLS[id];
-
-  const el=
-   $(symbol.toLowerCase()+"LiveText");
-
-  if(el)
-   el.textContent=text;
- });
-}
-
-
-/* =====================================================
-   CRYPTO FLASH
-===================================================== */
-
-function flashCryptoCard(
- symbol,
- direction
-){
-
- const card=
-  $(symbol.toLowerCase()+"Card");
-
- if(!card)return;
-
- card.classList.remove(
-  "priceUp",
-  "priceDown",
-  "priceFlashUp",
-  "priceFlashDown",
-  "priceSync"
- );
-
- void card.offsetWidth;
-
- if(direction==="up"){
-
-  card.classList.add(
-   "priceUp",
-   "priceFlashUp"
-  );
-
- }else if(direction==="down"){
-
-  card.classList.add(
-   "priceDown",
-   "priceFlashDown"
-  );
-
- }else{
-
-  card.classList.add(
-   "priceSync"
-  );
- }
-
- setTimeout(()=>{
-
-  card.classList.remove(
-   "priceFlashUp",
-   "priceFlashDown",
-   "priceSync"
-  );
-
- },700);
-}
-
-
-/* =====================================================
-   UPDATE CRYPTO PRICE
-===================================================== */
-
-function updateCryptoPrice(
- symbol,
- price
-){
-
- const priceEl=
-  $(symbol.toLowerCase()+"Price");
-
- if(!priceEl)return false;
-
- price=Number(price);
-
- if(
-  !Number.isFinite(price)||
-  price<=0
- )
-  return false;
-
-
- const previous=
-  Number(
-   priceEl.dataset.price||0
-  );
-
-
- priceEl.textContent=
-  formatCryptoPrice(price);
-
- priceEl.classList.remove(
-  "cryptoLoading"
- );
-
- priceEl.dataset.price=
-  String(price);
-
-
- if(previous>0){
-
-  if(price>previous){
-
-   flashCryptoCard(symbol,"up");
-
-  }else if(price<previous){
-
-   flashCryptoCard(symbol,"down");
-
-  }else{
-
-   flashCryptoCard(symbol,"sync");
-  }
-
- }else{
-
-  flashCryptoCard(symbol,"sync");
- }
-
- return true;
-}
-
-
-/* =====================================================
-   UPDATE CHANGE
-===================================================== */
-
-function updateCryptoChange(
- symbol,
- change
-){
-
- const changeEl=
-  $(symbol.toLowerCase()+"Change");
-
- if(!changeEl)return;
-
- change=Number(change);
-
- if(!Number.isFinite(change)){
-
-  changeEl.textContent="--";
-
-  changeEl.classList.remove(
-   "cryptoLoading",
-   "up",
-   "down"
-  );
-
-  changeEl.classList.add(
-   "cryptoLoading"
-  );
-
-  return;
- }
-
-
- const sign=
-  change>=0?"+":"";
-
- changeEl.textContent=
-  sign+
-  change.toFixed(2)+
-  "%";
-
-
- changeEl.classList.remove(
-  "cryptoLoading",
-  "up",
-  "down"
- );
-
- changeEl.classList.add(
-  change>=0?"up":"down"
- );
-}
-
-
-/* =====================================================
-   TIMESTAMP
-===================================================== */
-
-function updateCryptoTimestamp(){
-
- const now=new Date();
-
- const time=
-  now.toLocaleTimeString(
-   "en-US",
-   {
-    hour:"2-digit",
-    minute:"2-digit",
-    second:"2-digit",
-    hour12:false
-   }
-  );
-
-
- CRYPTO_IDS.forEach(id=>{
-
-  const symbol=
-   CRYPTO_SYMBOLS[id];
-
-  const el=
-   $(symbol.toLowerCase()+"Updated");
-
-  if(el)
-   el.textContent=
-    "Updated "+time;
- });
-}
-
-
-/* =====================================================
-   COUNTDOWN
-===================================================== */
-
-function updateCryptoCountdown(){
-
- cryptoSecondsLeft=
-  Math.max(
-   0,
-   Math.floor(cryptoSecondsLeft)
-  );
-
-
- CRYPTO_IDS.forEach(id=>{
-
-  const symbol=
-   CRYPTO_SYMBOLS[id];
-
-  const el=
-   $(symbol.toLowerCase()+"Countdown");
-
-  if(el){
-
-   el.textContent=
-    "Refresh in "+
-    cryptoSecondsLeft+
-    "s";
-  }
- });
-
-
- if(cryptoSecondsLeft<=0){
-
-  setCryptoStatus(
-   "SYNCING LIVE MARKET",
-   "syncing"
-  );
- }
-}
-
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-function showCryptoError(
- source="LIVE FEEDS"
-){
-
- setCryptoStatus(
-  source+
-  " TEMPORARILY UNAVAILABLE",
-  "offline"
- );
-
- setCryptoLiveLabels("WAIT");
-
- CRYPTO_IDS.forEach(id=>{
-
-  const symbol=
-   CRYPTO_SYMBOLS[id];
-
-  const el=
-   $(symbol.toLowerCase()+"Updated");
-
-  if(!el)return;
-
-  el.textContent=
-   "Retrying automatically";
-
-  el.classList.add(
-   "cryptoError"
-  );
- });
-}
-
-
-/* =====================================================
-   SUCCESS
-===================================================== */
-
-function showCryptoSuccess(source){
-
- setCryptoStatus(
-  "LIVE • "+
-  source+
-  " • 10s REFRESH",
-  "live"
- );
-
- setCryptoLiveLabels("LIVE");
-
- CRYPTO_IDS.forEach(id=>{
-
-  const symbol=
-   CRYPTO_SYMBOLS[id];
-
-  const el=
-   $(symbol.toLowerCase()+"Updated");
-
-  if(el)
-   el.classList.remove(
-    "cryptoError"
-   );
- });
-
-
- cryptoSecondsLeft=
-  CRYPTO_REFRESH_SECONDS;
-
- updateCryptoCountdown();
-}
-
-
-/* =====================================================
-   BINANCE URL
-===================================================== */
-
-function buildBinanceURL(){
-
- const encoded=
-  encodeURIComponent(
-   JSON.stringify(
-    BINANCE_SYMBOLS
-   )
-  );
-
- return BINANCE_API+
-  "?symbols="+
-  encoded+
-  "&type=FULL"+
-  "&_="+
-  Date.now();
-}
-
-
-/* =====================================================
-   LOAD BINANCE
-===================================================== */
-
-async function loadBinanceMarket(){
-
- const controller=
-  new AbortController();
-
- const timeout=
-  setTimeout(
-   ()=>{
-    controller.abort();
-   },
-   4500
-  );
-
-
- try{
-
-  const response=
-   await fetch(
-    buildBinanceURL(),
-    {
-     method:"GET",
-     cache:"no-store",
-     signal:controller.signal,
-     headers:{
-      "Accept":"application/json"
-     }
-    }
-   );
-
-
-  if(!response.ok){
-
-   throw new Error(
-    "Binance HTTP "+
-    response.status
-   );
-  }
-
-
-  const data=
-   await response.json();
-
-
-  if(!Array.isArray(data)){
-
-   throw new Error(
-    "Unexpected Binance response"
-   );
-  }
-
-
-  let validCoins=0;
-
-
-  data.forEach(coin=>{
-
-   if(!coin)return;
-
-   const symbol=
-    BINANCE_TO_SYMBOL[
-     coin.symbol
-    ];
-
-   if(!symbol)return;
-
-
-   const price=
-    Number(
-     coin.lastPrice
-    );
-
-   const change=
-    Number(
-     coin.priceChangePercent
-    );
-
-
-   if(
-    updateCryptoPrice(
-     symbol,
-     price
-    )
-   ){
-
-    validCoins++;
-   }
-
-
-   if(
-    Number.isFinite(change)
-   ){
-
-    updateCryptoChange(
-     symbol,
-     change
-    );
-   }
-  });
-
-
-  /*
-   * We require all five coins from Binance.
-   * If one is missing, CoinGecko gets a chance.
-   */
-  if(
-   validCoins<
-   BINANCE_SYMBOLS.length
-  ){
-
-   throw new Error(
-    "Incomplete Binance data: "+
-    validCoins+
-    "/"+
-    BINANCE_SYMBOLS.length
-   );
-  }
-
-
-  return true;
-
- }finally{
-
-  clearTimeout(timeout);
- }
-}
-
-
-/* =====================================================
-   COINGECKO FALLBACK
-===================================================== */
-
-async function loadCoinGeckoMarket(){
-
- const url=
-  COINGECKO_API+
-  "?ids="+
-  CRYPTO_IDS.join(",")+
-  "&vs_currencies=usd"+
-  "&include_24hr_change=true"+
-  "&precision=full"+
-  "&_="+
-  Date.now();
-
-
- const controller=
-  new AbortController();
-
-
- const timeout=
-  setTimeout(
-   ()=>{
-    controller.abort();
-   },
-   5000
-  );
-
-
- try{
-
-  const response=
-   await fetch(
-    url,
-    {
-     method:"GET",
-     cache:"no-store",
-     signal:controller.signal,
-     headers:{
-      "Accept":"application/json"
-     }
-    }
-   );
-
-
-  if(!response.ok){
-
-   throw new Error(
-    "CoinGecko HTTP "+
-    response.status
-   );
-  }
-
-
-  const data=
-   await response.json();
-
-
-  let validCoins=0;
-
-
-  CRYPTO_IDS.forEach(id=>{
-
-   const coin=data[id];
-
-   if(!coin)return;
-
-   const symbol=
-    CRYPTO_SYMBOLS[id];
-
-
-   if(
-    coin.usd!==undefined&&
-    updateCryptoPrice(
-     symbol,
-     coin.usd
-    )
-   ){
-
-    validCoins++;
-   }
-
-
-   if(
-    coin.usd_24h_change!==undefined
-   ){
-
-    updateCryptoChange(
-     symbol,
-     coin.usd_24h_change
-    );
-   }
-
-  });
-
-
-  if(
-   validCoins<
-   CRYPTO_IDS.length
-  ){
-
-   throw new Error(
-    "Incomplete CoinGecko data"
-   );
-  }
-
-
-  return true;
-
- }finally{
-
-  clearTimeout(timeout);
- }
-}
-
-
-/* =====================================================
-   LOAD LIVE MARKET
-===================================================== */
-
-async function loadCryptoMarket(){
-
- if(cryptoRequestInProgress)
-  return;
-
-
- cryptoRequestInProgress=true;
-
-
- setCryptoStatus(
-  "SYNCING LIVE MARKET",
-  "syncing"
- );
-
- setCryptoLiveLabels("SYNC");
-
-
- try{
-
-  /*
-   * Binance first.
-   */
-
-  try{
-
-   const binanceOK=
-    await loadBinanceMarket();
-
-   if(binanceOK){
-
-    updateCryptoTimestamp();
-
-    showCryptoSuccess(
-     "BINANCE"
-    );
-
-    console.log(
-     "CLIMBORIA: BINANCE LIVE"
-    );
-
-    return;
-   }
-
-  }catch(error){
-
-   console.warn(
-    "CLIMBORIA Binance failed:",
-    error
-   );
-  }
-
-
-  /*
-   * CoinGecko fallback.
-   */
-
-  try{
-
-   const geckoOK=
-    await loadCoinGeckoMarket();
-
-   if(geckoOK){
-
-    updateCryptoTimestamp();
-
-    showCryptoSuccess(
-     "COINGECKO"
-    );
-
-    console.log(
-     "CLIMBORIA: COINGECKO LIVE"
-    );
-
-    return;
-   }
-
-  }catch(error){
-
-   console.warn(
-    "CLIMBORIA CoinGecko failed:",
-    error
-   );
-  }
-
-
-  /*
-   * Both feeds failed.
-   * Do NOT display LIVE.
-   */
-
-  showCryptoError(
-   "LIVE FEEDS"
-  );
-
- }finally{
-
-  cryptoRequestInProgress=false;
-
-  cryptoSecondsLeft=
-   CRYPTO_REFRESH_SECONDS;
-
-  updateCryptoCountdown();
- }
-}
-
-
-/* =====================================================
-   START CRYPTO TICKER
-===================================================== */
-
-function startCryptoTicker(){
-
- if(cryptoTimer){
-
-  clearInterval(
-   cryptoTimer
-  );
-
-  cryptoTimer=null;
- }
-
-
- if(cryptoCountdownTimer){
-
-  clearInterval(
-   cryptoCountdownTimer
-  );
-
-  cryptoCountdownTimer=null;
- }
-
-
- $("cryptoTicker").style.display="flex";
-
-
- cryptoSecondsLeft=
-  CRYPTO_REFRESH_SECONDS;
-
- updateCryptoCountdown();
-
-
- /*
-  * First request immediately.
-  */
- loadCryptoMarket();
-
-
- /*
-  * Refresh every 10 seconds.
-  */
- cryptoTimer=
-  setInterval(
-   loadCryptoMarket,
-   CRYPTO_REFRESH_SECONDS*1000
-  );
-
-
- /*
-  * Countdown.
-  */
- cryptoCountdownTimer=
-  setInterval(
-   ()=>{
-
-    if(
-     cryptoSecondsLeft>0
-    ){
-
-     cryptoSecondsLeft--;
-    }
-
-    updateCryptoCountdown();
-
-   },
-   1000
-  );
-}
-
-
-/* =====================================================
-   HELP
-===================================================== */
-
-function updateHelpText(){
-
- const mobile=
-  matchMedia(
-   "(pointer:coarse)"
-  ).matches||
-  "ontouchstart" in window;
-
-
- $("help").innerHTML=
-  mobile
-  ?
-  "<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
-  :
-  "Move cursor = hammer tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
-}
-
-
-/* =====================================================
-   CANCEL VICTORY
-===================================================== */
-
-function cancelVictoryTimer(){
-
- if(victoryTimer){
-
-  clearTimeout(
-   victoryTimer
-  );
-
-  victoryTimer=null;
- }
-}
-
-
-/* =====================================================
-   RESIZE
-===================================================== */
-
-function resize(){
-
- if(!camera||!renderer)return;
-
- camera.aspect=
-  innerWidth/
-  innerHeight;
-
- camera.updateProjectionMatrix();
-
- renderer.setSize(
-  innerWidth,
-  innerHeight
- );
 }
 
 
@@ -6115,6 +6068,7 @@ function animate(time=0){
   updateHeight();
 
   checkSummit();
+
  }
 
 
@@ -6140,6 +6094,7 @@ function animate(time=0){
    scene,
    camera
   );
+
  }
 }
 
@@ -6167,11 +6122,10 @@ window.shareReferral=
  shareReferral;
 
 
-/*
- * If the early START handler stored a click while
- * Three.js was loading, start as soon as initialization
- * completes.
- */
+/* =====================================================
+   START REQUEST SAFETY
+===================================================== */
+
 if(window.climboriaStartRequested){
 
  window.climboriaStartRequested=false;
@@ -6182,6 +6136,7 @@ if(window.climboriaStartRequested){
   },
   0
  );
+
 }
 
 </script>
