@@ -725,10 +725,6 @@ canvas{
   </div>
 </div>
 
-<!-- =========================
-     THREE.JS GAME
-========================= -->
-
 <div id="game"></div>
 
 <!-- =========================
@@ -1029,6 +1025,7 @@ canvas{
 import * as THREE from
 "https://esm.sh/three@0.180.0";
 
+
 /* =========================================================
    LIVE CRYPTO PRICE
 ========================================================= */
@@ -1049,30 +1046,11 @@ async function updateCryptoPrices(){
       map[item.symbol]=item;
     });
 
-    updateCoin(
-      "BTCUSDT",
-      map.BTCUSDT
-    );
-
-    updateCoin(
-      "ETHUSDT",
-      map.ETHUSDT
-    );
-
-    updateCoin(
-      "SOLUSDT",
-      map.SOLUSDT
-    );
-
-    updateCoin(
-      "BNBUSDT",
-      map.BNBUSDT
-    );
-
-    updateCoin(
-      "XRPUSDT",
-      map.XRPUSDT
-    );
+    updateCoin("BTCUSDT",map.BTCUSDT);
+    updateCoin("ETHUSDT",map.ETHUSDT);
+    updateCoin("SOLUSDT",map.SOLUSDT);
+    updateCoin("BNBUSDT",map.BNBUSDT);
+    updateCoin("XRPUSDT",map.XRPUSDT);
 
   }catch(error){
 
@@ -1084,14 +1062,16 @@ async function updateCryptoPrices(){
   }
 }
 
+
 function updateCoin(symbol,data){
 
   if(!data)return;
 
-  const short=symbol.replace(
-    "USDT",
-    ""
-  ).toLowerCase();
+  const short=
+    symbol.replace(
+      "USDT",
+      ""
+    ).toLowerCase();
 
   const price=
     Number(
@@ -1179,7 +1159,9 @@ function updateCoin(symbol,data){
   }
 }
 
+
 updateCryptoPrices();
+
 
 setInterval(
   updateCryptoPrices,
@@ -1212,7 +1194,7 @@ const airDrag=0.992;
 const swingStrength=26;
 const anchorPull=18;
 
-const SUMMIT_HEIGHT=60;
+const SUMMIT_HEIGHT=61;
 
 const grips=[];
 
@@ -1706,59 +1688,414 @@ function createMountain(){
     }
   );
 
-  /* =========================
+
+  /* =====================================================
+     JARRELL'S PEAK
+     FINAL SUMMIT
+  ===================================================== */
+
+  const summitMaterial=
+    new THREE.MeshStandardMaterial({
+      color:0x263238,
+      roughness:.75,
+      metalness:.05
+    });
+
+
+  /* SUMMIT PLATFORM */
+
+  const summitPlatform=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        5.5,
+        7,
+        1.2,
+        7
+      ),
+      summitMaterial
+    );
+
+
+  summitPlatform.position.set(
+    0,
+    61.1,
+    -1
+  );
+
+
+  summitPlatform.rotation.y=
+    Math.PI/7;
+
+
+  summitPlatform.receiveShadow=true;
+  summitPlatform.castShadow=true;
+
+  scene.add(
+    summitPlatform
+  );
+
+
+  /* PEAK ROCKS */
+
+  const peakRockMaterial=
+    new THREE.MeshStandardMaterial({
+      color:0x465158,
+      roughness:1
+    });
+
+
+  const peakRocks=[
+    [-3.8,62.5,.9,2.2],
+    [3.5,62.2,1.1,2.5],
+    [-1.8,63.3,.75,1.8],
+    [1.8,63.5,.9,2.4],
+    [0,64.2,1.1,2.8]
+  ];
+
+
+  peakRocks.forEach(
+    data=>{
+
+      const [
+        x,
+        y,
+        sx,
+        sy
+      ]=data;
+
+
+      const rock=
+        new THREE.Mesh(
+          new THREE.DodecahedronGeometry(
+            1,
+            1
+          ),
+          peakRockMaterial
+        );
+
+
+      rock.position.set(
+        x,
+        y,
+        -2.8
+      );
+
+
+      rock.scale.set(
+        sx,
+        sy,
+        1.3
+      );
+
+
+      rock.rotation.set(
+        Math.random(),
+        Math.random(),
+        Math.random()
+      );
+
+
+      rock.castShadow=true;
+
+      rock.receiveShadow=true;
+
+      scene.add(
+        rock
+      );
+
+    }
+  );
+
+
+  /* SUMMIT GLOW */
+
+  const summitGlow=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        5.2,
+        5.2,
+        .08,
+        48
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70,
+        transparent:true,
+        opacity:.12
+      })
+    );
+
+
+  summitGlow.position.set(
+    0,
+    61.75,
+    -1
+  );
+
+
+  scene.add(
+    summitGlow
+  );
+
+
+  /* =====================================================
      JARRELL'S PEAK SIGN
-  ========================= */
+  ===================================================== */
 
   const signGroup=
     new THREE.Group();
 
+
   const signMaterial=
     new THREE.MeshStandardMaterial({
-      color:0x151d22,
-      roughness:.7
+      color:0x10171b,
+      roughness:.65,
+      metalness:.25
     });
+
 
   const sign=
     new THREE.Mesh(
       new THREE.BoxGeometry(
-        5.2,
-        1.25,
-        .25
+        6.8,
+        1.55,
+        .3
       ),
       signMaterial
     );
+
 
   signGroup.add(
     sign
   );
 
+
+  /* SIGN TEXT */
+
+  const signCanvas=
+    document.createElement(
+      "canvas"
+    );
+
+  signCanvas.width=1024;
+  signCanvas.height=256;
+
+
+  const ctx=
+    signCanvas.getContext(
+      "2d"
+    );
+
+
+  ctx.clearRect(
+    0,
+    0,
+    signCanvas.width,
+    signCanvas.height
+  );
+
+
+  ctx.fillStyle=
+    "#55ff70";
+
+
+  ctx.font=
+    "900 92px Arial";
+
+
+  ctx.textAlign=
+    "center";
+
+
+  ctx.textBaseline=
+    "middle";
+
+
+  ctx.shadowColor=
+    "#55ff70";
+
+
+  ctx.shadowBlur=
+    22;
+
+
+  ctx.fillText(
+    "JARRELL'S PEAK",
+    512,
+    128
+  );
+
+
+  const signTexture=
+    new THREE.CanvasTexture(
+      signCanvas
+    );
+
+
+  signTexture.needsUpdate=true;
+
+
+  const textMaterial=
+    new THREE.MeshBasicMaterial({
+      map:signTexture,
+      transparent:true
+    });
+
+
+  const textPlane=
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        6.25,
+        1.15
+      ),
+      textMaterial
+    );
+
+
+  textPlane.position.set(
+    0,
+    0,
+    .17
+  );
+
+
+  signGroup.add(
+    textPlane
+  );
+
+
+  /* SIGN POSTS */
+
   const post=
     new THREE.Mesh(
       new THREE.CylinderGeometry(
-        .12,
-        .12,
-        2.5,
-        10
+        .14,
+        .18,
+        3.8,
+        12
       ),
       signMaterial
     );
 
-  post.position.y=
-    -1.75;
+
+  post.position.set(
+    -2.25,
+    -2.45,
+    0
+  );
+
 
   signGroup.add(
     post
   );
 
-  signGroup.position.set(
-    -3,
-    63,
-    2
+
+  const post2=
+    post.clone();
+
+
+  post2.position.x=
+    2.25;
+
+
+  signGroup.add(
+    post2
   );
+
+
+  signGroup.position.set(
+    0,
+    66,
+    1
+  );
+
 
   scene.add(
     signGroup
+  );
+
+
+  /* =====================================================
+     SUMMIT FLAG
+  ===================================================== */
+
+  const flagPole=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .06,
+        .06,
+        5,
+        10
+      ),
+      new THREE.MeshStandardMaterial({
+        color:0x9ba5aa,
+        metalness:.7,
+        roughness:.3
+      })
+    );
+
+
+  flagPole.position.set(
+    4.1,
+    64.2,
+    0
+  );
+
+
+  scene.add(
+    flagPole
+  );
+
+
+  const flag=
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        2.2,
+        1.25
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70,
+        side:THREE.DoubleSide
+      })
+    );
+
+
+  flag.position.set(
+    5.1,
+    65.55,
+    0
+  );
+
+
+  flag.rotation.y=
+    Math.PI/2;
+
+
+  scene.add(
+    flag
+  );
+
+
+  /* =====================================================
+     SUMMIT LIGHT
+  ===================================================== */
+
+  const summitLight=
+    new THREE.PointLight(
+      0x55ff70,
+      5,
+      18
+    );
+
+
+  summitLight.position.set(
+    0,
+    64,
+    4
+  );
+
+
+  scene.add(
+    summitLight
   );
 }
 
