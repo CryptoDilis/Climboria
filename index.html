@@ -337,10 +337,6 @@ canvas{
   line-height:1.6;
 }
 
-/* =========================
-   JARRELL MESSAGE
-========================= */
-
 .jarrellNote{
   margin:0 auto 38px;
   display:flex;
@@ -673,10 +669,6 @@ canvas{
 
 <body>
 
-<!-- =========================
-     LIVE CRYPTO TICKER
-========================= -->
-
 <div id="ticker">
   <div id="tickerTrack">
 
@@ -727,10 +719,6 @@ canvas{
 
 <div id="game"></div>
 
-<!-- =========================
-     GAME HUD
-========================= -->
-
 <div id="hud">
 
   <div id="title">
@@ -777,19 +765,11 @@ canvas{
   Release = let go
 </div>
 
-<!-- =========================
-     GAME NAV
-========================= -->
-
 <div id="gameNav">
   <button class="navButton" id="menuButton">
     ← MAIN MENU
   </button>
 </div>
-
-<!-- =========================
-     VICTORY
-========================= -->
 
 <div id="victory">
 
@@ -821,10 +801,6 @@ canvas{
   </div>
 
 </div>
-
-<!-- =========================
-     LANDING PAGE
-========================= -->
 
 <div id="landing">
 
@@ -903,10 +879,6 @@ canvas{
 
   </div>
 </div>
-
-<!-- =========================
-     LAUNCHPAD
-========================= -->
 
 <div id="launchpad">
 
@@ -1162,7 +1134,6 @@ function updateCoin(symbol,data){
 
 updateCryptoPrices();
 
-
 setInterval(
   updateCryptoPrices,
   15000
@@ -1197,6 +1168,170 @@ const anchorPull=18;
 const SUMMIT_HEIGHT=61;
 
 const grips=[];
+
+
+/* =========================================================
+   CLIMB EFFECTS
+========================================================= */
+
+const effects=[];
+
+
+/* Create a small burst when a grip is grabbed */
+
+function createGripBurst(x,y){
+
+  for(
+    let i=0;
+    i<14;
+    i++
+  ){
+
+    const particle=
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          .055,
+          8,
+          8
+        ),
+        new THREE.MeshBasicMaterial({
+          color:0x55ff70,
+          transparent:true,
+          opacity:1
+        })
+      );
+
+
+    particle.position.set(
+      x,
+      y,
+      4
+    );
+
+
+    particle.userData={
+      vx:
+        (Math.random()-.5)*
+        5,
+
+      vy:
+        (Math.random()-.15)*
+        5,
+
+      life:.45,
+
+      maxLife:.45
+    };
+
+
+    scene.add(
+      particle
+    );
+
+
+    effects.push(
+      particle
+    );
+
+  }
+}
+
+
+/* Update particles */
+
+function updateEffects(dt){
+
+  for(
+    let i=effects.length-1;
+    i>=0;
+    i--
+  ){
+
+    const particle=
+      effects[i];
+
+
+    const data=
+      particle.userData;
+
+
+    data.life-=dt;
+
+
+    particle.position.x+=
+      data.vx*dt;
+
+
+    particle.position.y+=
+      data.vy*dt;
+
+
+    data.vy-=
+      8*dt;
+
+
+    particle.scale.multiplyScalar(
+      .96
+    );
+
+
+    particle.material.opacity=
+      Math.max(
+        0,
+        data.life/
+        data.maxLife
+      );
+
+
+    if(
+      data.life<=0
+    ){
+
+      scene.remove(
+        particle
+      );
+
+
+      particle.geometry.dispose();
+
+      particle.material.dispose();
+
+      effects.splice(
+        i,
+        1
+      );
+    }
+
+  }
+}
+
+
+/* Clear all effects */
+
+function clearEffects(){
+
+  effects.forEach(
+    particle=>{
+
+      scene.remove(
+        particle
+      );
+
+      particle.geometry.dispose();
+
+      particle.material.dispose();
+
+    }
+  );
+
+
+  effects.length=0;
+}
+
+
+/* =========================================================
+   MOUSE
+========================================================= */
 
 const mouse={
   x:0,
@@ -1274,6 +1409,8 @@ function showGame(){
 
   running=true;
 
+  clearEffects();
+
   resetPlayer();
 
   updateCursorWorld();
@@ -1290,6 +1427,8 @@ function showMenu(){
   grabbed=null;
 
   gameWon=false;
+
+  clearEffects();
 
   victory.style.display=
     "none";
@@ -1316,6 +1455,8 @@ function showLaunchpad(){
   running=false;
 
   grabbed=null;
+
+  clearEffects();
 
   victory.style.display=
     "none";
@@ -1361,6 +1502,8 @@ function restartGame(){
     "none";
 
   gameWon=false;
+
+  clearEffects();
 
   resetPlayer();
 
@@ -1691,7 +1834,6 @@ function createMountain(){
 
   /* =====================================================
      JARRELL'S PEAK
-     FINAL SUMMIT
   ===================================================== */
 
   const summitMaterial=
@@ -1701,8 +1843,6 @@ function createMountain(){
       metalness:.05
     });
 
-
-  /* SUMMIT PLATFORM */
 
   const summitPlatform=
     new THREE.Mesh(
@@ -1728,47 +1868,12 @@ function createMountain(){
 
 
   summitPlatform.receiveShadow=true;
-
   summitPlatform.castShadow=true;
 
   scene.add(
     summitPlatform
   );
 
-
-  /* SUMMIT EDGE RING */
-
-  const summitEdge=
-    new THREE.Mesh(
-      new THREE.TorusGeometry(
-        5.15,
-        .12,
-        12,
-        48
-      ),
-      new THREE.MeshBasicMaterial({
-        color:0x55ff70
-      })
-    );
-
-
-  summitEdge.rotation.x=
-    Math.PI/2;
-
-
-  summitEdge.position.set(
-    0,
-    61.75,
-    -1
-  );
-
-
-  scene.add(
-    summitEdge
-  );
-
-
-  /* PEAK ROCKS */
 
   const peakRockMaterial=
     new THREE.MeshStandardMaterial({
@@ -1840,8 +1945,6 @@ function createMountain(){
   );
 
 
-  /* SUMMIT GLOW */
-
   const summitGlow=
     new THREE.Mesh(
       new THREE.CylinderGeometry(
@@ -1871,7 +1974,7 @@ function createMountain(){
 
 
   /* =====================================================
-     JARRELL'S PEAK SIGN
+     SIGN
   ===================================================== */
 
   const signGroup=
@@ -1902,15 +2005,12 @@ function createMountain(){
   );
 
 
-  /* SIGN TEXT */
-
   const signCanvas=
     document.createElement(
       "canvas"
     );
 
   signCanvas.width=1024;
-
   signCanvas.height=256;
 
 
@@ -1931,26 +2031,20 @@ function createMountain(){
   ctx.fillStyle=
     "#55ff70";
 
-
   ctx.font=
     "900 92px Arial";
-
 
   ctx.textAlign=
     "center";
 
-
   ctx.textBaseline=
     "middle";
-
 
   ctx.shadowColor=
     "#55ff70";
 
-
   ctx.shadowBlur=
     22;
-
 
   ctx.fillText(
     "JARRELL'S PEAK",
@@ -1997,8 +2091,6 @@ function createMountain(){
   );
 
 
-  /* SIGN POSTS */
-
   const post=
     new THREE.Mesh(
       new THREE.CylinderGeometry(
@@ -2026,10 +2118,8 @@ function createMountain(){
   const post2=
     post.clone();
 
-
   post2.position.x=
     2.25;
-
 
   signGroup.add(
     post2
@@ -2049,7 +2139,7 @@ function createMountain(){
 
 
   /* =====================================================
-     SUMMIT FLAG
+     FLAG
   ===================================================== */
 
   const flagPole=
@@ -2074,8 +2164,6 @@ function createMountain(){
     0
   );
 
-
-  flagPole.castShadow=true;
 
   scene.add(
     flagPole
@@ -2110,64 +2198,6 @@ function createMountain(){
     flag
   );
 
-
-  /* =====================================================
-     SUMMIT BEACON
-  ===================================================== */
-
-  const beacon=
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        .28,
-        16,
-        16
-      ),
-      new THREE.MeshBasicMaterial({
-        color:0x55ff70
-      })
-    );
-
-
-  beacon.position.set(
-    0,
-    63.2,
-    1.5
-  );
-
-
-  scene.add(
-    beacon
-  );
-
-
-  const beaconGlow=
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        1.2,
-        20,
-        20
-      ),
-      new THREE.MeshBasicMaterial({
-        color:0x55ff70,
-        transparent:true,
-        opacity:.08
-      })
-    );
-
-
-  beaconGlow.position.copy(
-    beacon.position
-  );
-
-
-  scene.add(
-    beaconGlow
-  );
-
-
-  /* =====================================================
-     SUMMIT LIGHT
-  ===================================================== */
 
   const summitLight=
     new THREE.PointLight(
@@ -2964,6 +2994,14 @@ function mouseDown(event){
       );
 
 
+    /* NEW:
+       grip impact effect */
+
+    createGripBurst(
+      grabbed.x,
+      grabbed.y
+    );
+
   }else{
 
     setStatus(
@@ -3284,6 +3322,9 @@ function resetPlayer(){
   );
 
 
+  clearEffects();
+
+
   setStatus(
     "FREE",
     "#55ff70"
@@ -3379,7 +3420,28 @@ function animateGrips(time){
       if(
         grip===
         grabbed
-      )return;
+      ){
+
+        grip.ring
+          .scale
+          .setScalar(
+            1.15+
+            Math.sin(
+              time*.015
+            )*.12
+          );
+
+        grip.glow
+          .scale
+          .setScalar(
+            1.15+
+            Math.sin(
+              time*.015
+            )*.12
+          );
+
+        return;
+      }
 
 
       const pulse=
@@ -3517,6 +3579,9 @@ function animate(time=0){
 
     checkSummit();
   }
+
+
+  updateEffects(dt);
 
 
   animateGrips(
