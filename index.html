@@ -18,22 +18,14 @@ html,body{
  color:#fff;
 }
 
-body{
- touch-action:none;
-}
-
-canvas{
- display:block;
- touch-action:none;
-}
+body{touch-action:none}
+canvas{display:block;touch-action:none}
 
 /* =========================
    LANDING / SCREENS
 ========================= */
 
-#landing,
-#launchpad,
-#victory{
+#landing,#launchpad,#victory{
  position:fixed;
  inset:0;
  z-index:20;
@@ -42,17 +34,10 @@ canvas{
  justify-content:center;
  text-align:center;
  background:
- radial-gradient(
-  circle at 50% 35%,
-  #15232b,
-  #05090d 65%
- );
+ radial-gradient(circle at 50% 35%,#15232b,#05090d 65%);
 }
 
-#launchpad,
-#victory{
- display:none;
-}
+#launchpad,#victory{display:none}
 
 .panel{
  width:min(900px,92%);
@@ -91,9 +76,7 @@ button{
  cursor:pointer;
 }
 
-button:hover{
- background:#55ff7022;
-}
+button:hover{background:#55ff7022}
 
 .cards{
  display:flex;
@@ -156,9 +139,7 @@ button:hover{
  line-height:1.8;
 }
 
-.stat b{
- color:#fff;
-}
+.stat b{color:#fff}
 
 #bar{
  width:170px;
@@ -244,13 +225,8 @@ button:hover{
  font-weight:bold;
 }
 
-.up{
- color:#55ff70;
-}
-
-.down{
- color:#ff6677;
-}
+.up{color:#55ff70}
+.down{color:#ff6677}
 
 .cryptoLoading{
  color:#67757d;
@@ -315,8 +291,7 @@ button:hover{
  font-weight:900;
  color:#55ff70;
  letter-spacing:3px;
- text-shadow:
-  0 0 25px #55ff7070;
+ text-shadow:0 0 25px #55ff7070;
 }
 
 .peak{
@@ -346,22 +321,16 @@ button:hover{
   bottom:14px;
  }
 
- .stat{
-  font-size:9px;
- }
+ .stat{font-size:9px}
 
- #bar{
-  width:120px;
- }
+ #bar{width:120px}
 
  #cryptoTicker{
   top:82px;
   width:96%;
  }
 
- .cryptoRow{
-  gap:4px;
- }
+ .cryptoRow{gap:4px}
 
  .cryptoCard{
   min-width:0;
@@ -369,17 +338,9 @@ button:hover{
   padding:6px 5px;
  }
 
- .cryptoPrice{
-  font-size:9px;
- }
-
- .cryptoChange{
-  font-size:7px;
- }
-
- .cryptoSymbol{
-  font-size:8px;
- }
+ .cryptoPrice{font-size:9px}
+ .cryptoChange{font-size:7px}
+ .cryptoSymbol{font-size:8px}
 }
 </style>
 </head>
@@ -391,18 +352,15 @@ button:hover{
 ========================= -->
 
 <div id="landing">
-
  <div class="panel">
 
-  <div class="logo">
-   CLIMBORIA
-  </div>
+  <div class="logo">CLIMBORIA</div>
 
   <div class="sub">
    CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY
   </div>
 
-  <button onclick="showGame()">
+  <button id="startButton" type="button">
    START CLIMB
   </button>
 
@@ -430,7 +388,6 @@ button:hover{
   </div>
 
  </div>
-
 </div>
 
 
@@ -439,13 +396,9 @@ button:hover{
 ========================= -->
 
 <div id="launchpad">
-
  <div class="panel">
 
-  <div
-   class="logo"
-   style="font-size:48px"
-  >
+  <div class="logo" style="font-size:48px">
    CLIMBORIA
   </div>
 
@@ -474,12 +427,11 @@ button:hover{
 
   <br>
 
-  <button onclick="showMenu()">
+  <button id="backButton" type="button">
    BACK
   </button>
 
  </div>
-
 </div>
 
 
@@ -488,7 +440,6 @@ button:hover{
 ========================= -->
 
 <div id="victory">
-
  <div class="panel">
 
   <div class="winTitle">
@@ -505,18 +456,17 @@ button:hover{
    Every climb has a reason. ❤️
   </div>
 
-  <button onclick="restartGame()">
+  <button id="climbAgainButton" type="button">
    CLIMB AGAIN
   </button>
 
   <br><br>
 
-  <button onclick="showMenu()">
+  <button id="menuButtonVictory" type="button">
    MENU
   </button>
 
  </div>
-
 </div>
 
 
@@ -543,23 +493,17 @@ button:hover{
   <div class="stat">
 
    HAMMER:
-   <b id="hammerState">
-    READY
-   </b>
+   <b id="hammerState">READY</b>
 
    <br>
 
    HEIGHT:
-   <b id="height">
-    0
-   </b>
+   <b id="height">0</b>
 
    <br>
 
    SUMMIT:
-   <b id="pct">
-    0%
-   </b>
+   <b id="pct">0%</b>
 
    <div id="bar">
     <div id="progress"></div>
@@ -632,7 +576,7 @@ button:hover{
 </div>
 
 <div class="nav" id="nav">
- <button onclick="showMenu()">
+ <button id="menuButton" type="button">
   MENU
  </button>
 </div>
@@ -669,12 +613,14 @@ const mouse={
  y:0
 };
 
-const raycaster=new THREE.Raycaster();
+const raycaster=
+ new THREE.Raycaster();
 
-const cursorPlane=new THREE.Plane(
- new THREE.Vector3(0,0,1),
- -4
-);
+const cursorPlane=
+ new THREE.Plane(
+  new THREE.Vector3(0,0,1),
+  -4
+ );
 
 let velocityX=0;
 let velocityY=0;
@@ -729,6 +675,15 @@ let summitSequence=false;
 ===================================================== */
 
 let cryptoTimer=null;
+
+
+/* =====================================================
+   DOM HELPER
+===================================================== */
+
+function $(id){
+ return document.getElementById(id);
+}
 
 
 /* =====================================================
@@ -827,21 +782,13 @@ function init(){
 
 
  createSky();
-
  createMountain();
-
  createGround();
-
  createRocks();
-
  createHero();
-
  createHammer();
-
  createGrips();
-
  createTouchReticle();
-
  createSummitParticles();
 
 
@@ -888,6 +835,34 @@ function init(){
   "touchcancel",
   touchEnd,
   {passive:false}
+ );
+
+
+ /* BUTTONS */
+
+ $("startButton").addEventListener(
+  "click",
+  showGame
+ );
+
+ $("backButton").addEventListener(
+  "click",
+  showMenu
+ );
+
+ $("climbAgainButton").addEventListener(
+  "click",
+  restartGame
+ );
+
+ $("menuButtonVictory").addEventListener(
+  "click",
+  showMenu
+ );
+
+ $("menuButton").addEventListener(
+  "click",
+  showMenu
  );
 
 
@@ -975,7 +950,7 @@ function createMountain(){
 
  ledges.forEach(v=>{
 
-  const [
+  const[
    x,
    y,
    w,
@@ -1765,9 +1740,7 @@ function nearestGrip(){
  let best=null;
  let dist=Infinity;
 
- for(
-  const g of grips
- ){
+ for(const g of grips){
 
   const dx=
    cursorWorld.x-g.x;
@@ -2264,26 +2237,25 @@ function updateCamera(){
 
 function updateSummitCamera(){
 
+ if(!summitSequence)return;
+
  const targetX=
   SUMMIT_CENTER_X;
 
  const targetY=
   SUMMIT_CENTER_Y+5;
 
-
  camera.position.x+=
   (
    targetX-
    camera.position.x
-  )*.065;
-
+  )*.08;
 
  camera.position.y+=
   (
    targetY-
    camera.position.y
-  )*.065;
-
+  )*.08;
 
  camera.lookAt(
   SUMMIT_CENTER_X,
@@ -2340,10 +2312,7 @@ function updateHeight(){
    STATUS
 ===================================================== */
 
-function setStatus(
- text,
- color
-){
+function setStatus(text,color){
 
  $("status").textContent=
   text;
@@ -2362,16 +2331,6 @@ function checkSummit(){
  if(gameWon)return;
 
  if(summitSequence)return;
-
-
- /*
-   The summit is only triggered
-   when the hero actually reaches
-   the summit platform area.
-
-   X is allowed to be left/right.
-   Camera will center afterward.
- */
 
  if(
   hero.position.y>=60.8
@@ -2403,6 +2362,7 @@ function beginSummitSequence(){
  $("touchHint").style.display=
   "none";
 
+
  setStatus(
   "SUMMIT REACHED",
   "#55ff70"
@@ -2418,26 +2378,27 @@ function beginSummitSequence(){
  });
 
 
- /*
-   STOP PLAYER MOTION.
-   We don't teleport the hero.
-   The hero remains where he finished.
- */
-
  velocityX=0;
  velocityY=0;
 
 
  /*
-   Camera centers on the
-   actual summit first.
+   Smooth camera movement.
+   This is the ONLY camera controller
+   during the summit sequence.
  */
+
+ const startX=
+  camera.position.x;
+
+ const startY=
+  camera.position.y;
 
  const start=
   performance.now();
 
  const duration=
-  900;
+  1000;
 
 
  function cameraFinish(now){
@@ -2452,10 +2413,6 @@ function beginSummitSequence(){
    );
 
 
-  /*
-    Smooth easing.
-  */
-
   const eased=
    1-Math.pow(
     1-t,
@@ -2463,25 +2420,18 @@ function beginSummitSequence(){
    );
 
 
-  const targetX=
-   SUMMIT_CENTER_X;
-
-  const targetY=
-   SUMMIT_CENTER_Y+5;
-
-
   camera.position.x=
    THREE.MathUtils.lerp(
-    camera.position.x,
-    targetX,
+    startX,
+    SUMMIT_CENTER_X,
     eased
    );
 
 
   camera.position.y=
    THREE.MathUtils.lerp(
-    camera.position.y,
-    targetY,
+    startY,
+    SUMMIT_CENTER_Y+5,
     eased
    );
 
@@ -2501,28 +2451,23 @@ function beginSummitSequence(){
 
   }else{
 
-   /*
-     Force exact center.
-   */
-
    camera.position.x=
-    0;
+    SUMMIT_CENTER_X;
 
    camera.position.y=
     SUMMIT_CENTER_Y+5;
 
 
    camera.lookAt(
-    0,
+    SUMMIT_CENTER_X,
     SUMMIT_CENTER_Y,
     0
    );
 
 
    /*
-     Explosion ONLY NOW,
-     after camera reaches
-     summit center.
+     EXPLOSION AT THE CENTER
+     OF JARRELL'S PEAK.
    */
 
    createSummitBurst();
@@ -2530,6 +2475,8 @@ function beginSummitSequence(){
 
    victoryTimer=
     setTimeout(()=>{
+
+     victoryTimer=null;
 
      if(
       summitSequence
@@ -2586,6 +2533,7 @@ function resetPlayer(){
 
  gameWon=false;
 
+
  $("touchHint").style.display=
   "none";
 
@@ -2602,15 +2550,12 @@ function resetPlayer(){
  );
 
 
- /*
-   RESET CAMERA TO START.
- */
-
  camera.position.set(
   0,
   7,
   18
  );
+
 
  camera.lookAt(
   0,
@@ -2630,7 +2575,7 @@ function resetPlayer(){
 
 
 /* =====================================================
-   MENU
+   CLEAR BURSTS
 ===================================================== */
 
 function clearBursts(){
@@ -2639,19 +2584,31 @@ function clearBursts(){
   ...summitBurst,
   ...summitSparks
  ].forEach(p=>{
+
   scene.remove(p);
+
+  if(p.geometry)
+   p.geometry.dispose();
+
+  if(p.material)
+   p.material.dispose();
  });
 
 
  summitBurst.length=0;
-
  summitSparks.length=0;
 
 
- summitShockwaves.forEach(
-  p=>
-   scene.remove(p)
- );
+ summitShockwaves.forEach(p=>{
+
+  scene.remove(p);
+
+  if(p.geometry)
+   p.geometry.dispose();
+
+  if(p.material)
+   p.material.dispose();
+ });
 
 
  summitShockwaves.length=0;
@@ -2699,6 +2656,8 @@ function showGame(){
  clearBursts();
 
  resetPlayer();
+
+ running=true;
 
  updateCursorWorld();
 
@@ -2933,10 +2892,7 @@ function updateTouchReticle(time){
    GRIP BURST
 ===================================================== */
 
-function createGripBurst(
- x,
- y
-){
+function createGripBurst(x,y){
 
  for(let i=0;i<10;i++){
 
@@ -3002,6 +2958,19 @@ function updateEffects(dt){
   const p=
    summitBurst[i];
 
+  /*
+    Only process small grip bursts here.
+    Summit particles have their own updater.
+  */
+
+  if(
+   !p.userData||
+   p.userData.vz!==undefined
+  ){
+   continue;
+  }
+
+
   p.position.x+=
    p.userData.vx*dt;
 
@@ -3043,12 +3012,6 @@ function updateEffects(dt){
 ===================================================== */
 
 function createSummitBurst(){
-
- /*
-   IMPORTANT:
-   Explosion is always created
-   at the center of Jarrell's Peak.
- */
 
  const explosionX=
   SUMMIT_CENTER_X;
@@ -3109,7 +3072,8 @@ function createSummitBurst(){
       Math.random()*8,
    vz:(Math.random()-.5)*speed,
    life:1+
-        Math.random()*.8
+        Math.random()*.8,
+   summit:true
   };
 
 
@@ -3249,6 +3213,14 @@ function updateSummitBurst(dt){
    p.userData;
 
 
+  /*
+    Grip burst is handled separately.
+  */
+
+  if(!v.summit)
+   continue;
+
+
   p.position.x+=
    v.vx*dt;
 
@@ -3385,10 +3357,7 @@ function updateSummitBurst(dt){
    SUMMIT PARTICLES
 ===================================================== */
 
-function updateSummitParticles(
- time,
- dt
-){
+function updateSummitParticles(time,dt){
 
  summitParticles.forEach(p=>{
 
@@ -3445,29 +3414,52 @@ function animateSummit(time){
 
 
 /* =====================================================
-   CRYPTO LIVE PRICE
+   NEAR INTENTS LIVE PRICE
 ===================================================== */
+
+/*
+  NEAR Intents exposes a token list containing:
+  symbol
+  price
+  price_updated_at
+  defuse_asset_id
+  blockchain
+  decimals
+
+  We use that endpoint directly instead of CoinGecko.
+*/
+
+const NEAR_INTENTS_TOKENS=
+ "https://api-mng-console.chaindefuser.com/api/tokens";
+
+
+const MAJOR_SYMBOLS=[
+ "BTC",
+ "ETH",
+ "SOL",
+ "BNB",
+ "XRP"
+];
+
 
 async function updateCryptoPrices(){
 
  try{
 
-  const url=
-   "https://api.coingecko.com/api/v3/simple/price"+
-   "?ids=bitcoin,ethereum,solana,binancecoin,ripple"+
-   "&vs_currencies=usd"+
-   "&include_24hr_change=true";
-
-
   const response=
-   await fetch(url,{
-    cache:"no-store"
-   });
+   await fetch(
+    NEAR_INTENTS_TOKENS,
+    {
+     method:"GET",
+     cache:"no-store"
+    }
+   );
 
 
   if(!response.ok)
    throw new Error(
-    "Crypto API error"
+    "NEAR Intents token API error: "+
+    response.status
    );
 
 
@@ -3475,58 +3467,97 @@ async function updateCryptoPrices(){
    await response.json();
 
 
-  updateCryptoCard(
-   "btc",
-   data.bitcoin
-  );
+  const tokens=
+   Array.isArray(data)
+    ?data
+    :Array.isArray(data.tokens)
+     ?data.tokens
+     :[];
 
-  updateCryptoCard(
-   "eth",
-   data.ethereum
-  );
 
-  updateCryptoCard(
-   "sol",
-   data.solana
-  );
+  if(!tokens.length)
+   throw new Error(
+    "No NEAR Intents tokens returned"
+   );
 
-  updateCryptoCard(
-   "bnb",
-   data.binancecoin
-  );
 
-  updateCryptoCard(
-   "xrp",
-   data.ripple
+  MAJOR_SYMBOLS.forEach(
+   symbol=>{
+
+    const matches=
+     tokens.filter(
+      token=>
+       String(
+        token.symbol||""
+       ).toUpperCase()===
+       symbol
+     );
+
+
+    if(!matches.length)
+     return;
+
+
+    /*
+      Prefer an entry with a valid
+      positive USD price.
+    */
+
+    const token=
+     matches.find(
+      t=>
+       Number.isFinite(
+        Number(t.price)
+       )&&
+       Number(t.price)>0
+     );
+
+
+    if(!token)return;
+
+
+    updateCryptoCard(
+     symbol.toLowerCase(),
+     token
+    );
+   }
   );
 
 
  }catch(error){
 
   console.warn(
-   "Crypto price update failed:",
+   "NEAR Intents price update failed:",
    error
   );
+
+  /*
+    Keep the last successful prices
+    visible instead of replacing them
+    with an error message.
+  */
  }
 }
 
 
-function updateCryptoCard(
- symbol,
- data
-){
+function updateCryptoCard(symbol,data){
 
  if(!data)return;
 
 
  const price=
-  Number(data.usd);
+  Number(data.price);
 
 
- const change=
-  Number(
-   data.usd_24h_change
-  );
+ if(!Number.isFinite(price)||price<=0)
+  return;
+
+
+ const priceEl=
+  $(symbol+"Price");
+
+ const changeEl=
+  $(symbol+"Change");
 
 
  let formatted;
@@ -3569,27 +3600,21 @@ function updateCryptoCard(
  }
 
 
- const priceEl=
-  $(symbol+"Price");
-
- const changeEl=
-  $(symbol+"Change");
-
-
  priceEl.textContent=
   formatted;
 
 
- const sign=
-  change>=0?
-   "+":
-   "";
+ /*
+   The NEAR Intents token endpoint
+   gives current token price, but its
+   documented token response does not
+   guarantee a 24h percentage field.
 
+   Therefore don't fake a 24h change.
+ */
 
  changeEl.textContent=
-  sign+
-  change.toFixed(2)+
-  "%";
+  "LIVE";
 
 
  changeEl.classList.remove(
@@ -3598,11 +3623,8 @@ function updateCryptoCard(
   "down"
  );
 
-
  changeEl.classList.add(
-  change>=0?
-   "up":
-   "down"
+  "up"
  );
 }
 
@@ -3619,13 +3641,13 @@ function startCryptoTicker(){
 
 
  /*
-   Refresh every 30 seconds.
+   Refresh every 20 seconds.
  */
 
  cryptoTimer=
   setInterval(
    updateCryptoPrices,
-   30000
+   20000
   );
 }
 
@@ -3735,16 +3757,13 @@ function animate(time=0){
 
 
  /*
-   During summit sequence,
-   camera continues moving toward
-   Jarrell's Peak.
- */
-
- if(summitSequence){
-
-  updateSummitCamera();
- }
-
+   IMPORTANT:
+   During summitSequence the
+   camera is controlled only by
+   beginSummitSequence().
+   This prevents two camera
+   systems fighting each other.
+   */
 
  updateEffects(dt);
 
@@ -3770,7 +3789,8 @@ function animate(time=0){
 
 
 /* =====================================================
-   INLINE HTML BUTTON FIX
+   GLOBAL BUTTON FUNCTIONS
+   Kept for compatibility.
 ===================================================== */
 
 window.showGame=
