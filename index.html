@@ -655,22 +655,33 @@ const maxSpeed=16;
 
 const SUMMIT_HEIGHT=64;
 
+/*
+   Exact center of the summit platform.
+*/
 const SUMMIT_CENTER_X=0;
 const SUMMIT_CENTER_Y=62;
 
 /*
-  Exact position where the hero will stand
-  at the center of Jarrell's Peak.
+   HERO POSITION
 
-  The hero group itself is about 1.5 units tall,
-  so this places the hero visibly on the summit
-  instead of simply moving the camera there.
+   Summit platform top is approximately 61.7.
+   Hero group starts at its local bottom = 0.
+   Therefore 61.75 places the hero directly
+   on the summit surface.
 */
-const SUMMIT_HERO_Y=62.45;
+const SUMMIT_HERO_X=0;
+const SUMMIT_HERO_Y=61.75;
+const SUMMIT_HERO_Z=3.5;
 
+
+/*
+   Explosion uses the SAME coordinates
+   as the hero so they can never separate.
+*/
 const SUMMIT_EXPLOSION_X=0;
 const SUMMIT_EXPLOSION_Y=62.45;
-const SUMMIT_EXPLOSION_Z=3;
+const SUMMIT_EXPLOSION_Z=3.5;
+
 
 const summitParticles=[];
 const summitBurst=[];
@@ -692,11 +703,43 @@ let summitSequence=false;
 
 let cryptoTimer=null;
 
+
 /*
-  Stores the previous live price so the main UI
-  can show actual live movement between updates.
+   Current displayed price comes from NEAR Intents.
 */
-const previousCryptoPrices={};
+const NEAR_INTENTS_TOKENS=
+ "https://api-mng-console.chaindefuser.com/api/tokens";
+
+
+/*
+   Binance is used only for actual 24H
+   market movement.
+
+   This prevents the change percentage
+   from staying at 0.00% simply because
+   the NEAR token metadata feed has not
+   changed between two polls.
+*/
+const BINANCE_24H_TICKER=
+ "https://api.binance.com/api/v3/ticker/24hr";
+
+
+const MAJOR_SYMBOLS=[
+ "BTC",
+ "ETH",
+ "SOL",
+ "BNB",
+ "XRP"
+];
+
+
+const BINANCE_SYMBOLS={
+ BTC:"BTCUSDT",
+ ETH:"ETHUSDT",
+ SOL:"SOLUSDT",
+ BNB:"BNBUSDT",
+ XRP:"XRPUSDT"
+};
 
 
 /* =====================================================
@@ -890,9 +933,10 @@ function init(){
 
  updateHelpText();
 
+
  /*
-   CRYPTO IS VISIBLE ON THE MAIN UI
-   ONLY.
+   CRYPTO TICKER:
+   MAIN LANDING UI ONLY.
  */
  $("cryptoTicker").style.display="flex";
 
@@ -1008,7 +1052,9 @@ function createMountain(){
  });
 
 
- /* SUMMIT PLATFORM */
+ /* =========================
+    SUMMIT PLATFORM
+ ========================= */
 
  const summit=
   new THREE.Mesh(
@@ -1036,14 +1082,20 @@ function createMountain(){
  scene.add(summit);
 
 
- /* PEAK ROCKS */
+ /* =========================
+    PEAK ROCKS
+
+    IMPORTANT:
+    The old center rock was removed.
+    It could visually cover the hero
+    when he reached the summit center.
+ ========================= */
 
  [
   [-3.8,62.5,.9,2.2],
   [3.5,62.2,1.1,2.5],
   [-1.8,63.3,.75,1.8],
-  [1.8,63.5,.9,2.4],
-  [0,64.2,1.1,2.8]
+  [1.8,63.5,.9,2.4]
 
  ].forEach(v=>{
 
@@ -1071,7 +1123,9 @@ function createMountain(){
  });
 
 
- /* SUMMIT GLOW */
+ /* =========================
+    SUMMIT GLOW
+ ========================= */
 
  summitGlowMesh=
   new THREE.Mesh(
@@ -1098,7 +1152,9 @@ function createMountain(){
  );
 
 
- /* BEACON */
+ /* =========================
+    BEACON
+ ========================= */
 
  summitBeacon=
   new THREE.Mesh(
@@ -1124,7 +1180,9 @@ function createMountain(){
  );
 
 
- /* SUMMIT LIGHT */
+ /* =========================
+    SUMMIT LIGHT
+ ========================= */
 
  summitLight=
   new THREE.PointLight(
@@ -1144,7 +1202,9 @@ function createMountain(){
  );
 
 
- /* FLAG */
+ /* =========================
+    FLAG
+ ========================= */
 
  const flagPole=
   new THREE.Mesh(
@@ -2353,7 +2413,12 @@ function beginSummitSequence(){
 
  touchActive=false;
 
+
  $("touchHint").style.display=
+  "none";
+
+
+ $("cryptoTicker").style.display=
   "none";
 
 
@@ -2377,94 +2442,78 @@ function beginSummitSequence(){
 
 
  /*
-   HERO START POSITION
+   ==================================================
+   HARD SNAP TO SUMMIT CENTER
+   ==================================================
+
+   We do NOT use lerp anymore.
+
+   The hero is immediately placed at the
+   exact summit center.
+
+   This guarantees that the explosion and
+   victory sequence cannot happen while the
+   hero is still somewhere else.
  */
 
- const heroStartX=
-  hero.position.x;
-
- const heroStartY=
-  hero.position.y;
+ hero.position.set(
+  SUMMIT_HERO_X,
+  SUMMIT_HERO_Y,
+  SUMMIT_HERO_Z
+ );
 
 
  /*
-   CAMERA START POSITION
+   ==================================================
+   CAMERA CENTER
+   ==================================================
  */
 
- const cameraStartX=
-  camera.position.x;
+ camera.position.set(
+  SUMMIT_CENTER_X,
+  SUMMIT_CENTER_Y+5,
+  18
+ );
 
- const cameraStartY=
-  camera.position.y;
+
+ camera.lookAt(
+  SUMMIT_CENTER_X,
+  SUMMIT_CENTER_Y,
+  0
+ );
 
 
- const start=
-  performance.now();
-
- const duration=
-  1000;
+ updateHeight();
 
 
  /*
-   During this animation BOTH the hero
-   and camera move to the exact center.
+   Small delay so the player can actually
+   see the hero standing in the center before
+   the explosion starts.
  */
 
- function summitFinish(now){
+ setTimeout(()=>{
 
-  const elapsed=
-   now-start;
-
-  const t=
-   Math.min(
-    1,
-    elapsed/duration
-   );
-
-
-  const eased=
-   1-Math.pow(
-    1-t,
-    3
-   );
-
+  if(!summitSequence)
+   return;
 
   /*
-    MOVE HERO TO CENTER
+    Make absolutely sure hero is still
+    at the exact center before explosion.
   */
 
-  hero.position.x=
-   THREE.MathUtils.lerp(
-    heroStartX,
-    SUMMIT_CENTER_X,
-    eased
-   );
-
-  hero.position.y=
-   THREE.MathUtils.lerp(
-    heroStartY,
-    SUMMIT_HERO_Y,
-    eased
-   );
+  hero.position.set(
+   SUMMIT_HERO_X,
+   SUMMIT_HERO_Y,
+   SUMMIT_HERO_Z
+  );
 
 
-  /*
-    MOVE CAMERA TO CENTER
-  */
-
-  camera.position.x=
-   THREE.MathUtils.lerp(
-    cameraStartX,
-    SUMMIT_CENTER_X,
-    eased
-   );
-
-  camera.position.y=
-   THREE.MathUtils.lerp(
-    cameraStartY,
-    SUMMIT_CENTER_Y+5,
-    eased
-   );
+  camera.position.set(
+   SUMMIT_CENTER_X,
+   SUMMIT_CENTER_Y+5,
+   18
+  );
 
 
   camera.lookAt(
@@ -2474,85 +2523,33 @@ function beginSummitSequence(){
   );
 
 
-  if(t<1){
-
-   requestAnimationFrame(
-    summitFinish
-   );
-
-  }else{
-
-   /*
-     FORCE EXACT HERO POSITION
-   */
-
-   hero.position.x=
-    SUMMIT_CENTER_X;
-
-   hero.position.y=
-    SUMMIT_HERO_Y;
-
-   hero.position.z=
-    3.5;
+  createSummitBurst();
 
 
-   /*
-     STOP HERO COMPLETELY
-   */
-
-   velocityX=0;
-   velocityY=0;
+ },350);
 
 
-   /*
-     FORCE EXACT CAMERA POSITION
-   */
+ /*
+   Victory screen after explosion.
+ */
 
-   camera.position.x=
-    SUMMIT_CENTER_X;
+ victoryTimer=
+  setTimeout(()=>{
 
-   camera.position.y=
-    SUMMIT_CENTER_Y+5;
+   victoryTimer=null;
 
-   camera.lookAt(
-    SUMMIT_CENTER_X,
-    SUMMIT_CENTER_Y,
-    0
-   );
+   if(!summitSequence)
+    return;
 
+   gameWon=true;
 
-   /*
-     EXPLOSION NOW HAPPENS
-     AT THE HERO'S CENTER.
-   */
+   $("cryptoTicker").style.display=
+    "none";
 
-   createSummitBurst();
+   $("victory").style.display=
+    "flex";
 
-
-   victoryTimer=
-    setTimeout(()=>{
-
-     victoryTimer=null;
-
-     if(
-      summitSequence
-     ){
-
-      gameWon=true;
-
-      $("victory")
-       .style.display=
-       "flex";
-     }
-
-    },1100);
-  }
- }
-
-
- requestAnimationFrame(
-  summitFinish
- );
+  },1500);
 }
 
 
@@ -2679,6 +2676,7 @@ function showGame(){
 
  cancelVictoryTimer();
 
+
  $("landing").style.display=
   "none";
 
@@ -2700,8 +2698,7 @@ function showGame(){
 
 
  /*
-   PRICE ACTION IS HIDDEN
-   DURING THE GAME.
+   CRYPTO TICKER HIDDEN DURING GAME.
  */
 
  $("cryptoTicker").style.display=
@@ -2773,8 +2770,7 @@ function showMenu(){
 
 
  /*
-   PRICE ACTION ONLY EXISTS
-   ON MAIN UI.
+   CRYPTO TICKER VISIBLE ONLY ON MAIN UI.
  */
 
  $("cryptoTicker").style.display=
@@ -2835,8 +2831,7 @@ function showLaunchpad(){
 
 
  /*
-   PRICE ACTION HIDDEN
-   IN LAUNCHPAD.
+   CRYPTO TICKER HIDDEN IN LAUNCHPAD.
  */
 
  $("cryptoTicker").style.display=
@@ -3032,14 +3027,16 @@ function updateEffects(dt){
   const p=
    summitBurst[i];
 
+
   /*
-    Only process small grip bursts here.
-    Summit particles have their own updater.
+    Summit explosion particles have
+    userData.summit=true.
+    They are handled by updateSummitBurst().
   */
 
   if(
-   !p.userData||
-   p.userData.vz!==undefined
+   p.userData &&
+   p.userData.summit
   ){
    continue;
   }
@@ -3088,8 +3085,13 @@ function updateEffects(dt){
 function createSummitBurst(){
 
  /*
-   EXPLOSION IS LOCKED TO THE SAME
-   CENTER POSITION AS THE HERO.
+   IMPORTANT:
+
+   Use the exact same fixed center coordinates
+   as the hero's final summit position.
+
+   This makes the explosion appear directly
+   around the hero.
  */
 
  const explosionX=
@@ -3102,7 +3104,9 @@ function createSummitBurst(){
   SUMMIT_EXPLOSION_Z;
 
 
- /* MAIN PARTICLES */
+ /* =========================
+    MAIN PARTICLES
+ ========================= */
 
  for(let i=0;i<150;i++){
 
@@ -3162,7 +3166,9 @@ function createSummitBurst(){
  }
 
 
- /* SPARKS */
+ /* =========================
+    SPARKS
+ ========================= */
 
  for(let i=0;i<55;i++){
 
@@ -3211,7 +3217,9 @@ function createSummitBurst(){
  }
 
 
- /* SHOCKWAVES */
+ /* =========================
+    SHOCKWAVES
+ ========================= */
 
  for(let i=0;i<2;i++){
 
@@ -3493,29 +3501,66 @@ function animateSummit(time){
 
 
 /* =====================================================
-   NEAR INTENTS LIVE PRICE
+   CRYPTO PRICE HELPERS
 ===================================================== */
 
-const NEAR_INTENTS_TOKENS=
- "https://api-mng-console.chaindefuser.com/api/tokens";
+function formatCryptoPrice(price){
+
+ if(price>=1000){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:0,
+     maximumFractionDigits:0
+    }
+   );
+
+ }else if(price>=1){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:2,
+     maximumFractionDigits:2
+    }
+   );
+
+ }else{
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:4,
+     maximumFractionDigits:4
+    }
+   );
+ }
+}
 
 
-const MAJOR_SYMBOLS=[
- "BTC",
- "ETH",
- "SOL",
- "BNB",
- "XRP"
-];
-
+/* =====================================================
+   NEAR INTENTS + 24H MARKET ACTION
+===================================================== */
 
 async function updateCryptoPrices(){
 
  try{
 
-  const response=
-   await fetch(
-    NEAR_INTENTS_TOKENS,
+  /*
+    Cache-buster for NEAR.
+    This prevents the browser from serving
+    an old cached token response.
+  */
+
+  const nearRequest=
+   fetch(
+    NEAR_INTENTS_TOKENS+
+    "?_="+
+    Date.now(),
     {
      method:"GET",
      cache:"no-store"
@@ -3523,15 +3568,56 @@ async function updateCryptoPrices(){
    );
 
 
-  if(!response.ok)
+  /*
+    Get real 24H market movement separately.
+  */
+
+  const marketRequests=
+   MAJOR_SYMBOLS.map(
+    symbol=>{
+
+     return fetch(
+      BINANCE_24H_TICKER+
+      "?symbol="+
+      BINANCE_SYMBOLS[symbol],
+      {
+       method:"GET",
+       cache:"no-store"
+      }
+     )
+     .then(
+      response=>
+       response.ok?
+       response.json():
+       null
+     )
+     .catch(
+      ()=>null
+     );
+    }
+   );
+
+
+  const results=
+   await Promise.all([
+    nearRequest,
+    ...marketRequests
+   ]);
+
+
+  const nearResponse=
+   results[0];
+
+
+  if(!nearResponse.ok)
    throw new Error(
     "NEAR Intents token API error: "+
-    response.status
+    nearResponse.status
    );
 
 
   const data=
-   await response.json();
+   await nearResponse.json();
 
 
   const tokens=
@@ -3547,6 +3633,27 @@ async function updateCryptoPrices(){
     "No NEAR Intents tokens returned"
    );
 
+
+  /*
+    Create market data map.
+  */
+
+  const marketMap={};
+
+
+  MAJOR_SYMBOLS.forEach(
+   (symbol,index)=>{
+
+    marketMap[symbol]=
+     results[index+1]||
+     null;
+   }
+  );
+
+
+  /*
+    Update all five coins.
+  */
 
   MAJOR_SYMBOLS.forEach(
    symbol=>{
@@ -3566,8 +3673,7 @@ async function updateCryptoPrices(){
 
 
     /*
-      Prefer an entry with a valid
-      positive USD price.
+      Prefer a valid positive NEAR price.
     */
 
     const token=
@@ -3580,12 +3686,18 @@ async function updateCryptoPrices(){
      );
 
 
-    if(!token)return;
+    if(!token)
+     return;
+
+
+    const market=
+     marketMap[symbol];
 
 
     updateCryptoCard(
      symbol.toLowerCase(),
-     token
+     token,
+     market
     );
    }
   );
@@ -3594,14 +3706,9 @@ async function updateCryptoPrices(){
  }catch(error){
 
   console.warn(
-   "NEAR Intents price update failed:",
+   "Crypto price update failed:",
    error
   );
-
-  /*
-    Keep last successful values
-    on screen.
-  */
  }
 }
 
@@ -3610,7 +3717,11 @@ async function updateCryptoPrices(){
    CRYPTO CARD
 ===================================================== */
 
-function updateCryptoCard(symbol,data){
+function updateCryptoCard(
+ symbol,
+ data,
+ market
+){
 
  if(!data)return;
 
@@ -3619,7 +3730,10 @@ function updateCryptoCard(symbol,data){
   Number(data.price);
 
 
- if(!Number.isFinite(price)||price<=0)
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
   return;
 
 
@@ -3634,81 +3748,29 @@ function updateCryptoCard(symbol,data){
   return;
 
 
- let formatted;
-
-
- if(price>=1000){
-
-  formatted=
-   "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:0,
-     maximumFractionDigits:0
-    }
-   );
-
- }else if(price>=1){
-
-  formatted=
-   "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:2,
-     maximumFractionDigits:2
-    }
-   );
-
- }else{
-
-  formatted=
-   "$"+
-   price.toLocaleString(
-    "en-US",
-    {
-     minimumFractionDigits:4,
-     maximumFractionDigits:4
-    }
-   );
- }
-
+ /*
+   PRICE = NEAR INTENTS
+ */
 
  priceEl.textContent=
-  formatted;
+  formatCryptoPrice(price);
 
 
  /*
-   LIVE PRICE ACTION
-
-   NEAR Intents token pricing gives us
-   the current price. It does not provide
-   a guaranteed 24h percentage field in
-   the token response.
-
-   Therefore this UI calculates the
-   movement between successful live
-   updates. This is real movement from
-   the NEAR price feed and is NOT labeled
-   as a fake 24h percentage.
+   ACTION = ACTUAL 24H MARKET CHANGE
  */
 
- const previous=
-  previousCryptoPrices[symbol];
-
-
  if(
-  Number.isFinite(previous)&&
-  previous>0
+  market &&
+  Number.isFinite(
+   Number(market.priceChangePercent)
+  )
  ){
 
   const change=
-   (
-    (price-previous)/
-    previous
-   )*
-   100;
+   Number(
+    market.priceChangePercent
+   );
 
 
   const sign=
@@ -3719,7 +3781,8 @@ function updateCryptoCard(symbol,data){
 
   changeEl.textContent=
    sign+
-   change.toFixed(2)+"%";
+   change.toFixed(2)+
+   "%";
 
 
   changeEl.classList.remove(
@@ -3737,6 +3800,12 @@ function updateCryptoCard(symbol,data){
 
  }else{
 
+  /*
+    If the market action endpoint is
+    temporarily unavailable, show LIVE
+    instead of fake movement.
+  */
+
   changeEl.textContent=
    "LIVE";
 
@@ -3751,10 +3820,6 @@ function updateCryptoCard(symbol,data){
    "up"
   );
  }
-
-
- previousCryptoPrices[symbol]=
-  price;
 }
 
 
@@ -3774,13 +3839,13 @@ function startCryptoTicker(){
 
 
  /*
-   Refresh every 20 seconds.
+   Refresh every 10 seconds.
  */
 
  cryptoTimer=
   setInterval(
    updateCryptoPrices,
-   20000
+   10000
   );
 }
 
@@ -3890,9 +3955,8 @@ function animate(time=0){
 
 
  /*
-   During summitSequence:
-   hero + camera are controlled by
-   beginSummitSequence().
+   Summit sequence is controlled separately
+   by beginSummitSequence().
  */
 
  updateEffects(dt);
