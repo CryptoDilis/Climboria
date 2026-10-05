@@ -18,14 +18,22 @@ html,body{
  color:#fff;
 }
 
-body{touch-action:none}
-canvas{display:block;touch-action:none}
+body{
+ touch-action:none;
+}
+
+canvas{
+ display:block;
+ touch-action:none;
+}
 
 /* =========================
    LANDING / SCREENS
 ========================= */
 
-#landing,#launchpad,#victory{
+#landing,
+#launchpad,
+#victory{
  position:fixed;
  inset:0;
  z-index:20;
@@ -34,14 +42,28 @@ canvas{display:block;touch-action:none}
  justify-content:center;
  text-align:center;
  background:
- radial-gradient(circle at 50% 35%,#15232b,#05090d 65%);
+ radial-gradient(
+  circle at 50% 45%,
+  #15232b 0%,
+  #05090d 68%
+ );
 }
 
-#launchpad,#victory{display:none}
+#launchpad,
+#victory{
+ display:none;
+}
 
 .panel{
- width:min(900px,92%);
- padding:30px;
+ width:min(900px,94%);
+ max-width:900px;
+ padding:30px 20px;
+ margin:0 auto;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
 }
 
 .logo{
@@ -50,6 +72,8 @@ canvas{display:block;touch-action:none}
  letter-spacing:7px;
  color:#55ff70;
  text-shadow:0 0 30px #55ff7066;
+ line-height:1;
+ text-align:center;
 }
 
 .sub{
@@ -57,12 +81,14 @@ canvas{display:block;touch-action:none}
  letter-spacing:3px;
  font-size:12px;
  margin:15px 0 28px;
+ text-align:center;
 }
 
 .note{
  color:#67757d;
  font-size:11px;
  margin-top:20px;
+ text-align:center;
 }
 
 button{
@@ -74,14 +100,19 @@ button{
  font-weight:bold;
  letter-spacing:2px;
  cursor:pointer;
+ min-height:44px;
 }
 
-button:hover{background:#55ff7022}
+button:hover{
+ background:#55ff7022;
+}
 
 .cards{
+ width:100%;
  display:flex;
  gap:14px;
  justify-content:center;
+ align-items:center;
  flex-wrap:wrap;
  margin-top:28px;
 }
@@ -92,6 +123,7 @@ button:hover{background:#55ff7022}
  border:1px solid #ffffff12;
  background:#ffffff05;
  border-radius:10px;
+ text-align:center;
 }
 
 .card b{
@@ -121,8 +153,10 @@ button:hover{background:#55ff7022}
 
 .top{
  display:flex;
- justify-content:space-between;
+ justify-content:center;
  align-items:flex-start;
+ position:relative;
+ min-height:70px;
 }
 
 .brand{
@@ -130,16 +164,29 @@ button:hover{background:#55ff7022}
  font-weight:900;
  letter-spacing:3px;
  color:#55ff70;
+ text-align:center;
+}
+
+#hud > .top > div:first-child{
+ position:absolute;
+ left:0;
+ top:0;
+ text-align:left;
 }
 
 .stat{
+ position:absolute;
+ right:0;
+ top:0;
  text-align:right;
  font-size:11px;
  color:#9baab2;
  line-height:1.8;
 }
 
-.stat b{color:#fff}
+.stat b{
+ color:#fff;
+}
 
 #bar{
  width:170px;
@@ -165,6 +212,7 @@ button:hover{background:#55ff7022}
  font-size:11px;
  font-weight:bold;
  letter-spacing:2px;
+ white-space:nowrap;
 }
 
 /* =========================
@@ -178,15 +226,18 @@ button:hover{background:#55ff7022}
  transform:translateX(-50%);
  z-index:30;
  display:none;
- width:min(720px,calc(100% - 160px));
+ width:min(900px,96%);
  pointer-events:none;
 }
 
 .cryptoRow{
+ width:100%;
  display:flex;
  justify-content:center;
+ align-items:center;
  gap:7px;
  flex-wrap:nowrap;
+ margin:0 auto;
 }
 
 .cryptoCard{
@@ -197,11 +248,12 @@ button:hover{background:#55ff7022}
  backdrop-filter:blur(8px);
  border-radius:7px;
  box-shadow:0 5px 25px #0005;
+ text-align:center;
 }
 
 .cryptoTop{
  display:flex;
- justify-content:space-between;
+ justify-content:center;
  align-items:center;
  gap:8px;
 }
@@ -224,10 +276,16 @@ button:hover{background:#55ff7022}
  font-size:10px;
  color:#c8d0d4;
  font-weight:bold;
+ text-align:center;
 }
 
-.up{color:#55ff70}
-.down{color:#ff6677}
+.up{
+ color:#55ff70;
+}
+
+.down{
+ color:#ff6677;
+}
 
 .cryptoLoading{
  color:#67757d;
@@ -250,6 +308,8 @@ button:hover{background:#55ff7022}
  letter-spacing:1px;
  text-align:center;
  white-space:nowrap;
+ width:max-content;
+ max-width:94%;
 }
 
 #touchHint{
@@ -268,12 +328,15 @@ button:hover{background:#55ff7022}
  font-weight:bold;
  letter-spacing:1px;
  pointer-events:none;
+ text-align:center;
+ white-space:nowrap;
 }
 
 .nav{
  position:fixed;
- right:18px;
+ left:50%;
  bottom:18px;
+ transform:translateX(-50%);
  z-index:12;
  display:none;
 }
@@ -293,6 +356,8 @@ button:hover{background:#55ff7022}
  color:#55ff70;
  letter-spacing:3px;
  text-shadow:0 0 25px #55ff7070;
+ text-align:center;
+ line-height:1.1;
 }
 
 .peak{
@@ -300,6 +365,7 @@ button:hover{background:#55ff7022}
  letter-spacing:5px;
  margin:18px 0;
  color:#fff;
+ text-align:center;
 }
 
 .winSub{
@@ -307,6 +373,7 @@ button:hover{background:#55ff7022}
  font-size:11px;
  letter-spacing:2px;
  margin-bottom:28px;
+ text-align:center;
 }
 
 /* =========================
@@ -315,6 +382,51 @@ button:hover{background:#55ff7022}
 
 @media(max-width:700px){
 
+ #landing,
+ #launchpad,
+ #victory{
+  padding:20px 0;
+ }
+
+ .panel{
+  width:94%;
+  padding:20px 10px;
+ }
+
+ .logo{
+  font-size:clamp(38px,12vw,64px);
+  letter-spacing:4px;
+ }
+
+ .sub{
+  font-size:9px;
+  letter-spacing:2px;
+  line-height:1.6;
+  margin:14px 0 24px;
+ }
+
+ .cards{
+  gap:8px;
+  margin-top:24px;
+ }
+
+ .card{
+  width:min(170px,44vw);
+  padding:17px 10px;
+ }
+
+ .card b{
+  font-size:11px;
+ }
+
+ .card span{
+  font-size:9px;
+ }
+
+ .note{
+  font-size:9px;
+ }
+
  #help{
   font-size:8px;
   white-space:normal;
@@ -322,32 +434,120 @@ button:hover{background:#55ff7022}
   bottom:14px;
  }
 
- .stat{font-size:9px}
+ .stat{
+  font-size:9px;
+ }
 
- #bar{width:120px}
+ #bar{
+  width:120px;
+ }
+
+ #status{
+  top:65px;
+  font-size:9px;
+ }
 
  #cryptoTicker{
   top:82px;
   width:96%;
  }
 
- .cryptoRow{gap:4px}
+ .cryptoRow{
+  gap:4px;
+  justify-content:center;
+ }
 
  .cryptoCard{
   min-width:0;
-  flex:1;
-  padding:6px 5px;
+  width:20%;
+  flex:1 1 20%;
+  padding:6px 4px;
  }
 
- .cryptoPrice{font-size:9px}
+ .cryptoPrice{
+  font-size:8px;
+ }
 
  .cryptoChange{
   font-size:7px;
-  min-width:28px;
-  text-align:right;
+  min-width:0;
+  text-align:center;
  }
 
- .cryptoSymbol{font-size:8px}
+ .cryptoSymbol{
+  font-size:8px;
+ }
+
+ .winTitle{
+  font-size:clamp(30px,9vw,50px);
+  letter-spacing:2px;
+ }
+
+ .peak{
+  font-size:15px;
+  letter-spacing:3px;
+ }
+
+ .winSub{
+  font-size:9px;
+ }
+
+ #touchHint{
+  font-size:8px;
+  max-width:90%;
+  white-space:normal;
+ }
+
+}
+
+/* =========================
+   VERY SMALL MOBILE
+========================= */
+
+@media(max-width:420px){
+
+ .panel{
+  width:96%;
+ }
+
+ .cards{
+  gap:6px;
+ }
+
+ .card{
+  width:31%;
+  min-width:0;
+  padding:14px 6px;
+ }
+
+ .card b{
+  font-size:9px;
+ }
+
+ .card span{
+  font-size:7px;
+ }
+
+ #cryptoTicker{
+  top:80px;
+ }
+
+ .cryptoCard{
+  padding:5px 2px;
+ }
+
+ .cryptoSymbol{
+  font-size:7px;
+ }
+
+ .cryptoPrice{
+  font-size:7px;
+ }
+
+ .cryptoChange{
+  font-size:6px;
+ }
+
 }
 </style>
 </head>
@@ -696,7 +896,6 @@ let cryptoTimer=null;
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
 
-
 const CRYPTO_IDS=[
  "bitcoin",
  "ethereum",
@@ -704,7 +903,6 @@ const CRYPTO_IDS=[
  "binancecoin",
  "ripple"
 ];
-
 
 const CRYPTO_SYMBOLS={
  bitcoin:"BTC",
@@ -905,11 +1103,6 @@ function init(){
  updateHelpText();
 
 
- /*
-   CRYPTO TICKER
-   VISIBLE ON LANDING ONLY
- */
-
  $("cryptoTicker").style.display="flex";
 
  startCryptoTicker();
@@ -1024,10 +1217,6 @@ function createMountain(){
  });
 
 
- /* =========================
-    SUMMIT PLATFORM
- ========================= */
-
  const summit=
   new THREE.Mesh(
    new THREE.CylinderGeometry(
@@ -1053,10 +1242,6 @@ function createMountain(){
 
  scene.add(summit);
 
-
- /* =========================
-    PEAK ROCKS
- ========================= */
 
  [
   [-3.8,62.5,.9,2.2],
@@ -1090,10 +1275,6 @@ function createMountain(){
  });
 
 
- /* =========================
-    SUMMIT GLOW
- ========================= */
-
  summitGlowMesh=
   new THREE.Mesh(
    new THREE.SphereGeometry(
@@ -1119,10 +1300,6 @@ function createMountain(){
  );
 
 
- /* =========================
-    BEACON
- ========================= */
-
  summitBeacon=
   new THREE.Mesh(
    new THREE.CylinderGeometry(
@@ -1147,10 +1324,6 @@ function createMountain(){
  );
 
 
- /* =========================
-    SUMMIT LIGHT
- ========================= */
-
  summitLight=
   new THREE.PointLight(
    0x55ff70,
@@ -1168,10 +1341,6 @@ function createMountain(){
   summitLight
  );
 
-
- /* =========================
-    FLAG
- ========================= */
 
  const flagPole=
   new THREE.Mesh(
@@ -3567,10 +3736,21 @@ async function loadCryptoMarket(){
    CRYPTO_IDS.join(",")+
    "&vs_currencies=usd"+
    "&include_24hr_change=true"+
-   "&include_last_updated_at=true"+
    "&precision=full"+
    "&_="+
    Date.now();
+
+
+  const controller=
+   new AbortController();
+
+  const timeout=
+   setTimeout(
+    ()=>{
+     controller.abort();
+    },
+    10000
+   );
 
 
   const response=
@@ -3578,9 +3758,13 @@ async function loadCryptoMarket(){
     url,
     {
      method:"GET",
-     cache:"no-store"
+     cache:"no-store",
+     signal:controller.signal
     }
    );
+
+
+  clearTimeout(timeout);
 
 
   if(!response.ok){
