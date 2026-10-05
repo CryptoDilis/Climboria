@@ -138,6 +138,51 @@ button:hover{
 }
 
 /* =========================
+   CLIMB POINTS
+========================= */
+
+.pointsPanel{
+ width:min(650px,94%);
+ margin-top:25px;
+ display:flex;
+ justify-content:center;
+ align-items:stretch;
+ gap:8px;
+ flex-wrap:wrap;
+}
+
+.pointsBox{
+ min-width:145px;
+ flex:1;
+ padding:12px 15px;
+ border:1px solid #55ff7025;
+ background:#55ff7008;
+ border-radius:9px;
+ text-align:center;
+}
+
+.pointsLabel{
+ color:#718087;
+ font-size:8px;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+.pointsValue{
+ color:#55ff70;
+ font-size:20px;
+ font-weight:900;
+ margin-top:4px;
+ letter-spacing:1px;
+}
+
+.pointsSmall{
+ color:#c8d0d4;
+ font-size:8px;
+ margin-top:3px;
+}
+
+/* =========================
    HUD
 ========================= */
 
@@ -213,6 +258,35 @@ button:hover{
  font-weight:bold;
  letter-spacing:2px;
  white-space:nowrap;
+}
+
+/* =========================
+   HUD POINTS
+========================= */
+
+#hudPoints{
+ position:fixed;
+ top:90px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:10;
+ display:none;
+ text-align:center;
+ pointer-events:none;
+}
+
+.hudPointsLabel{
+ font-size:7px;
+ color:#718087;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+#hudPointsValue{
+ font-size:15px;
+ color:#55ff70;
+ font-weight:900;
+ margin-top:2px;
 }
 
 /* =========================
@@ -376,6 +450,36 @@ button:hover{
  text-align:center;
 }
 
+.winPoints{
+ margin-bottom:28px;
+ padding:15px 30px;
+ border:1px solid #55ff7030;
+ background:#55ff7009;
+ border-radius:10px;
+ text-align:center;
+}
+
+.winPointsLabel{
+ color:#718087;
+ font-size:8px;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+.winPointsValue{
+ color:#55ff70;
+ font-size:25px;
+ font-weight:900;
+ margin-top:5px;
+}
+
+.winReward{
+ color:#55ff70;
+ font-size:10px;
+ letter-spacing:1px;
+ margin-top:5px;
+}
+
 /* =========================
    MOBILE
 ========================= */
@@ -427,6 +531,28 @@ button:hover{
   font-size:9px;
  }
 
+ .pointsPanel{
+  margin-top:20px;
+  gap:6px;
+ }
+
+ .pointsBox{
+  min-width:105px;
+  padding:10px 8px;
+ }
+
+ .pointsLabel{
+  font-size:7px;
+ }
+
+ .pointsValue{
+  font-size:16px;
+ }
+
+ .pointsSmall{
+  font-size:7px;
+ }
+
  #help{
   font-size:8px;
   white-space:normal;
@@ -445,6 +571,10 @@ button:hover{
  #status{
   top:65px;
   font-size:9px;
+ }
+
+ #hudPoints{
+  top:78px;
  }
 
  #cryptoTicker{
@@ -500,10 +630,6 @@ button:hover{
 
 }
 
-/* =========================
-   VERY SMALL MOBILE
-========================= */
-
 @media(max-width:420px){
 
  .panel{
@@ -548,6 +674,18 @@ button:hover{
   font-size:6px;
  }
 
+ .pointsPanel{
+  gap:4px;
+ }
+
+ .pointsBox{
+  padding:9px 5px;
+ }
+
+ .pointsValue{
+  font-size:14px;
+ }
+
 }
 </style>
 </head>
@@ -570,6 +708,59 @@ button:hover{
   <button id="startButton" type="button">
    START CLIMB
   </button>
+
+  <!-- CLIMB POINTS -->
+  <div class="pointsPanel">
+
+   <div class="pointsBox">
+    <div class="pointsLabel">
+     CLIMB POINTS
+    </div>
+
+    <div
+     class="pointsValue"
+     id="landingPoints">
+     0
+    </div>
+
+    <div class="pointsSmall">
+     YOUR PROGRESS
+    </div>
+   </div>
+
+   <div class="pointsBox">
+    <div class="pointsLabel">
+     SUMMITS
+    </div>
+
+    <div
+     class="pointsValue"
+     id="landingSummits">
+     0
+    </div>
+
+    <div class="pointsSmall">
+     COMPLETED
+    </div>
+   </div>
+
+   <div class="pointsBox">
+    <div class="pointsLabel">
+     ATTEMPTS
+    </div>
+
+    <div
+     class="pointsValue"
+     id="landingAttempts">
+     0
+    </div>
+
+    <div class="pointsSmall">
+     TOTAL CLIMBS
+    </div>
+   </div>
+
+  </div>
 
   <div class="cards">
 
@@ -663,6 +854,24 @@ button:hover{
    Every climb has a reason. ❤️
   </div>
 
+  <div class="winPoints">
+
+   <div class="winPointsLabel">
+    CLIMB POINTS
+   </div>
+
+   <div
+    class="winPointsValue"
+    id="victoryPoints">
+    0
+   </div>
+
+   <div class="winReward">
+    +100 SUMMIT REWARD
+   </div>
+
+  </div>
+
   <button id="climbAgainButton" type="button">
    CLIMB AGAIN
   </button>
@@ -718,6 +927,21 @@ button:hover{
 
   </div>
 
+ </div>
+
+</div>
+
+
+<!-- HUD CLIMB POINTS -->
+
+<div id="hudPoints">
+
+ <div class="hudPointsLabel">
+  CLIMB POINTS
+ </div>
+
+ <div id="hudPointsValue">
+  0
  </div>
 
 </div>
@@ -844,6 +1068,30 @@ let touchReticleMaterial=null;
 
 
 /* =====================================================
+   CLIMB POINTS
+===================================================== */
+
+const POINTS_KEY=
+ "climboria_climb_points";
+
+const SUMMITS_KEY=
+ "climboria_summits";
+
+const ATTEMPTS_KEY=
+ "climboria_attempts";
+
+const CLIMB_REWARD=
+ 100;
+
+const ATTEMPT_REWARD=
+ 10;
+
+let climbPoints=0;
+let totalSummits=0;
+let totalAttempts=0;
+
+
+/* =====================================================
    PHYSICS
 ===================================================== */
 
@@ -888,7 +1136,6 @@ let summitSequence=false;
 
 /* =====================================================
    CRYPTO
-   COINGECKO
 ===================================================== */
 
 let cryptoTimer=null;
@@ -923,6 +1170,196 @@ function $(id){
 
 
 /* =====================================================
+   CLIMB POINTS STORAGE
+===================================================== */
+
+function loadClimbData(){
+
+ try{
+
+  const savedPoints=
+   Number(
+    localStorage.getItem(
+     POINTS_KEY
+    )
+   );
+
+  const savedSummits=
+   Number(
+    localStorage.getItem(
+     SUMMITS_KEY
+    )
+   );
+
+  const savedAttempts=
+   Number(
+    localStorage.getItem(
+     ATTEMPTS_KEY
+    )
+   );
+
+
+  climbPoints=
+   Number.isFinite(savedPoints) &&
+   savedPoints>=0
+   ?
+   Math.floor(savedPoints)
+   :
+   0;
+
+
+  totalSummits=
+   Number.isFinite(savedSummits) &&
+   savedSummits>=0
+   ?
+   Math.floor(savedSummits)
+   :
+   0;
+
+
+  totalAttempts=
+   Number.isFinite(savedAttempts) &&
+   savedAttempts>=0
+   ?
+   Math.floor(savedAttempts)
+   :
+   0;
+
+ }catch(error){
+
+  console.warn(
+   "CLIMBORIA local storage unavailable:",
+   error
+  );
+
+  climbPoints=0;
+  totalSummits=0;
+  totalAttempts=0;
+ }
+
+
+ updatePointsUI();
+}
+
+
+function saveClimbData(){
+
+ try{
+
+  localStorage.setItem(
+   POINTS_KEY,
+   String(climbPoints)
+  );
+
+  localStorage.setItem(
+   SUMMITS_KEY,
+   String(totalSummits)
+  );
+
+  localStorage.setItem(
+   ATTEMPTS_KEY,
+   String(totalAttempts)
+  );
+
+ }catch(error){
+
+  console.warn(
+   "CLIMBORIA could not save points:",
+   error
+  );
+ }
+}
+
+
+function addClimbPoints(amount){
+
+ amount=
+  Math.max(
+   0,
+   Math.floor(
+    Number(amount)||0
+   )
+  );
+
+
+ if(amount<=0)return;
+
+
+ climbPoints+=amount;
+
+ saveClimbData();
+
+ updatePointsUI();
+}
+
+
+function registerAttempt(){
+
+ totalAttempts++;
+
+ addClimbPoints(
+  ATTEMPT_REWARD
+ );
+
+ saveClimbData();
+
+ updatePointsUI();
+}
+
+
+function registerSummit(){
+
+ totalSummits++;
+
+ addClimbPoints(
+  CLIMB_REWARD
+ );
+
+ saveClimbData();
+
+ updatePointsUI();
+}
+
+
+function updatePointsUI(){
+
+ const formatted=
+  climbPoints.toLocaleString(
+   "en-US"
+  );
+
+
+ if($("landingPoints"))
+  $("landingPoints").textContent=
+   formatted;
+
+
+ if($("landingSummits"))
+  $("landingSummits").textContent=
+   totalSummits.toLocaleString(
+    "en-US"
+   );
+
+
+ if($("landingAttempts"))
+  $("landingAttempts").textContent=
+   totalAttempts.toLocaleString(
+    "en-US"
+   );
+
+
+ if($("hudPointsValue"))
+  $("hudPointsValue").textContent=
+   formatted;
+
+
+ if($("victoryPoints"))
+  $("victoryPoints").textContent=
+   formatted;
+}
+
+
+/* =====================================================
    START
 ===================================================== */
 
@@ -935,6 +1372,9 @@ animate();
 ===================================================== */
 
 function init(){
+
+ loadClimbData();
+
 
  scene=new THREE.Scene();
 
@@ -2601,6 +3041,13 @@ function beginSummitSequence(){
  updateHeight();
 
 
+ /*
+  * AWARD SUMMIT REWARD ONCE
+  */
+
+ registerSummit();
+
+
  setTimeout(()=>{
 
   if(!summitSequence)
@@ -2645,6 +3092,8 @@ function beginSummitSequence(){
 
    $("cryptoTicker").style.display=
     "none";
+
+   updatePointsUI();
 
    $("victory").style.display=
     "flex";
@@ -2724,6 +3173,7 @@ function resetPlayer(){
 
 
  updateHeight();
+ updatePointsUI();
 }
 
 
@@ -2790,6 +3240,9 @@ function showGame(){
  $("hud").style.display=
   "block";
 
+ $("hudPoints").style.display=
+  "block";
+
  $("help").style.display=
   "block";
 
@@ -2812,6 +3265,14 @@ function showGame(){
 
  resetPlayer();
 
+
+ /*
+  * NEW CLIMB ATTEMPT
+  */
+
+ registerAttempt();
+
+
  running=true;
 
  updateCursorWorld();
@@ -2820,6 +3281,8 @@ function showGame(){
   performance.now();
 
  updateHelpText();
+
+ updatePointsUI();
 }
 
 
@@ -2855,6 +3318,9 @@ function showMenu(){
  $("hud").style.display=
   "none";
 
+ $("hudPoints").style.display=
+  "none";
+
  $("help").style.display=
   "none";
 
@@ -2877,6 +3343,8 @@ function showMenu(){
 
 
  resetPlayer();
+
+ updatePointsUI();
 }
 
 
@@ -2910,6 +3378,9 @@ function showLaunchpad(){
 
 
  $("hud").style.display=
+  "none";
+
+ $("hudPoints").style.display=
   "none";
 
  $("help").style.display=
