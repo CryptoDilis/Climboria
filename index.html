@@ -135,9 +135,9 @@ canvas{display:block}
 </div>
 
 <div id="help">
-  Move mouse = hammer &nbsp; | &nbsp;
+  Move cursor = hammer tip &nbsp; | &nbsp;
   <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp;
-  Release = let go
+  Move around grip = swing &nbsp; | &nbsp; Release = let go
 </div>
 
 <div id="start">
@@ -180,9 +180,11 @@ let velocityY=0;
 
 let lastTime=performance.now();
 
-const gravity=-14;
-const pullStrength=7;
-const maxSpeed=14;
+const gravity=-18;
+const maxSpeed=18;
+const airDrag=0.992;
+const swingStrength=26;
+const anchorPull=18;
 
 const grips=[];
 
@@ -190,6 +192,16 @@ const mouse={
   x:0,
   y:0
 };
+
+const cursorWorld=new THREE.Vector3();
+const raycaster=new THREE.Raycaster();
+const cursorPlane=new THREE.Plane(
+  new THREE.Vector3(0,0,1),
+  -4
+);
+
+let anchorWorld=new THREE.Vector3();
+let ropeLength=0;
 
 
 /* =====================================================
@@ -700,37 +712,38 @@ function createHammer(){
 
   hammer=new THREE.Group();
 
+  /*
+    IMPORTANT:
+    The hammer group's ORIGIN is now the actual yellow tip.
+    That means group.position can be set directly to the
+    cursor's world position with no offset.
+  */
 
   const handle=
     new THREE.Mesh(
-
       new THREE.CylinderGeometry(
         .09,
         .09,
         3.8,
         14
       ),
-
       new THREE.MeshStandardMaterial({
         color:0x80502d
       })
     );
 
-  handle.rotation.z=
-    Math.PI/2;
-
+  handle.rotation.z=Math.PI/2;
+  handle.position.x=-1.9;
   hammer.add(handle);
 
 
   const head=
     new THREE.Mesh(
-
       new THREE.BoxGeometry(
         .55,
         .55,
         1.5
       ),
-
       new THREE.MeshStandardMaterial({
         color:0xd4d9dc,
         metalness:.85,
@@ -738,31 +751,26 @@ function createHammer(){
       })
     );
 
-  head.position.x=1.8;
-
+  head.position.x=-.65;
   hammer.add(head);
 
 
   const tip=
     new THREE.Mesh(
-
       new THREE.SphereGeometry(
         .25,
         18,
         18
       ),
-
       new THREE.MeshBasicMaterial({
         color:0xffff00
       })
     );
 
-  tip.position.x=2.4;
-
+  tip.position.set(0,0,0);
   hammer.add(tip);
 
   hammer.userData.tip=tip;
-
 
   hammer.position.set(
     3,
@@ -903,6 +911,43 @@ function mouseMove(event){
     -(event.clientY/
     window.innerHeight)*
     2+1;
+
+  updateCursorWorld();
+}
+
+
+function updateCursorWorld(){
+
+  raycaster.setFromCamera(
+    new THREE.Vector2(mouse.x,mouse.y),
+    camera
+  );
+
+  const hit=
+    raycaster.ray.intersectPlane(
+      cursorPlane,
+      cursorWorld
+    );
+
+  if(!hit)return;
+
+  /*
+    Keep the hammer in the playable vertical area.
+  */
+
+  cursorWorld.x=
+    THREE.MathUtils.clamp(
+      cursorWorld.x,
+      -10,
+      10
+    );
+
+  cursorWorld.y=
+    THREE.MathUtils.clamp(
+      cursorWorld.y,
+      -2,
+      70
+    );
 }
 
 
@@ -912,37 +957,51 @@ function mouseMove(event){
 
 function updateHammer(){
 
-  const targetX=
-    hero.position.x+
-    mouse.x*7;
+  updateCursorWorld();
 
-  const targetY=
-    hero.position.y+
-    mouse.y*6;
+  /*
+    FREE:
+    The yellow tip follows the exact world-space cursor.
 
+    GRABBED:
+    The hammer tip stays physically locked to the grip.
+    The cursor still controls the direction of the hammer.
+  */
 
-  hammer.position.x+=
-    (
-      targetX-
-      hammer.position.x
-    )*.22;
+  if(grabbed){
 
+    hammer.position.copy(anchorWorld);
 
-  hammer.position.y+=
-    (
-      targetY-
-      hammer.position.y
-    )*.22;
+    const dx=
+      cursorWorld.x-anchorWorld.x;
 
+    const dy=
+      cursorWorld.y-anchorWorld.y;
+
+    if(Math.abs(dx)+Math.abs(dy)>.001){
+
+      hammer.rotation.z=
+        -Math.atan2(dy,dx);
+    }
+
+  }else{
+
+    hammer.position.copy(cursorWorld);
+
+    const dx=
+      cursorWorld.x-hero.position.x;
+
+    const dy=
+      cursorWorld.y-hero.position.y;
+
+    if(Math.abs(dx)+Math.abs(dy)>.001){
+
+      hammer.rotation.z=
+        -Math.atan2(dy,dx);
+    }
+  }
 
   hammer.position.z=4;
-
-
-  hammer.rotation.z=
-    -Math.atan2(
-      mouse.y*6,
-      mouse.x*7
-    );
 }
 
 
@@ -952,13 +1011,6 @@ function updateHammer(){
 
 function nearestGrip(){
 
-  const tip=
-    new THREE.Vector3();
-
-  hammer.userData.tip
-    .getWorldPosition(tip);
-
-
   let best=null;
   let bestDistance=Infinity;
 
@@ -966,16 +1018,17 @@ function nearestGrip(){
   grips.forEach(
     grip=>{
 
-      const p=
-        new THREE.Vector3(
-          grip.x,
-          grip.y,
-          3.1
-        );
+      const dx=
+        cursorWorld.x-grip.x;
 
+      const dy=
+        cursorWorld.y-grip.y;
 
       const d=
-        tip.distanceTo(p);
+        Math.sqrt(
+          dx*dx+
+          dy*dy
+        );
 
 
       if(d<bestDistance){
@@ -1004,16 +1057,52 @@ function mouseDown(event){
 
   if(event.button!==0)return;
 
+
   const result=
     nearestGrip();
 
 
+  /*
+    The cursor itself must be close to the grip.
+    The hammer tip is already exactly underneath
+    the cursor, so there is no visual mismatch.
+  */
+
   if(
     result.grip &&
-    result.distance<2.7
+    result.distance<1.15
   ){
 
     grabbed=result.grip;
+
+    anchorWorld.set(
+      grabbed.x,
+      grabbed.y,
+      4
+    );
+
+
+    /*
+      Remember the player's current distance
+      from the anchor. This creates a real
+      pivot/rope constraint.
+    */
+
+    const dx=
+      hero.position.x-anchorWorld.x;
+
+    const dy=
+      hero.position.y-anchorWorld.y;
+
+    ropeLength=
+      Math.max(
+        2.0,
+        Math.sqrt(
+          dx*dx+
+          dy*dy
+        )
+      );
+
 
     velocityX=0;
     velocityY=0;
@@ -1032,8 +1121,8 @@ function mouseDown(event){
   }else{
 
     setStatus(
-      "MISSED",
-      "#ff4444"
+      "MOVE CLOSER",
+      "#ffcc33"
     );
   }
 }
@@ -1051,14 +1140,13 @@ function mouseUp(){
       .scale
       .setScalar(1);
 
+
     /*
-      Small release impulse.
-      This makes the hero feel
-      like he actually lets go.
+      Keep momentum when the player lets go.
     */
 
-    velocityX += mouse.x*2;
-    velocityY += 2;
+    velocityX*=1.15;
+    velocityY*=1.15;
   }
 
 
@@ -1082,80 +1170,189 @@ function mouseUp(){
 function updatePhysics(dt){
 
   /*
-    GRAVITY
+    NORMAL GRAVITY
   */
 
   velocityY += gravity*dt;
 
 
-  /*
-    HAMMER GRABBED
-  */
-
   if(grabbed){
 
-    const dx=
-      grabbed.x-
-      hero.position.x;
-
-    const dy=
-      grabbed.y-
-      hero.position.y;
-
-
     /*
-      Pull toward anchor.
-      This is acceleration,
-      not teleportation.
+      The grip is a FIXED PIVOT.
+
+      The cursor does NOT teleport the hero.
+      Instead, it controls which side of the
+      pivot the player is trying to swing toward.
     */
 
-    velocityX +=
-      dx*
-      pullStrength*
-      dt;
+    const relX=
+      hero.position.x-anchorWorld.x;
 
-    velocityY +=
-      dy*
-      pullStrength*
-      dt;
+    const relY=
+      hero.position.y-anchorWorld.y;
 
 
-    /*
-      Stronger pull if
-      hammer is dragged away.
-    */
-
-    const pull=
+    const distance=
       Math.sqrt(
-        mouse.x*mouse.x+
-        mouse.y*mouse.y
+        relX*relX+
+        relY*relY
       );
 
 
-    velocityY +=
-      pull*
-      5*
-      dt;
+    if(distance>.001){
+
+      /*
+        Tangent vector around the anchor.
+        This is what produces the swing instead
+        of the old "jump toward grip" behavior.
+      */
+
+      const tangentX=
+        -relY/distance;
+
+      const tangentY=
+        relX/distance;
+
+
+      /*
+        Mouse direction relative to anchor.
+      */
+
+      const mouseX=
+        cursorWorld.x-anchorWorld.x;
+
+      const mouseY=
+        cursorWorld.y-anchorWorld.y;
+
+
+      const mouseLen=
+        Math.sqrt(
+          mouseX*mouseX+
+          mouseY*mouseY
+        );
+
+
+      if(mouseLen>.001){
+
+        const nx=mouseX/mouseLen;
+        const ny=mouseY/mouseLen;
+
+
+        /*
+          Tangential mouse influence.
+        */
+
+        const tangential=
+          nx*tangentX+
+          ny*tangentY;
+
+
+        velocityX +=
+          tangentX*
+          tangential*
+          swingStrength*
+          dt;
+
+        velocityY +=
+          tangentY*
+          tangential*
+          swingStrength*
+          dt;
+      }
+
+
+      /*
+        Rope constraint.
+
+        If the player tries to move farther
+        than the distance at which the hammer
+        was grabbed, push him back onto the
+        pivot circle.
+      */
+
+      if(distance>ropeLength){
+
+        const correction=
+          distance-ropeLength;
+
+        const nx=
+          relX/distance;
+
+        const ny=
+          relY/distance;
+
+
+        hero.position.x -=
+          nx*correction;
+
+        hero.position.y -=
+          ny*correction;
+
+
+        /*
+          Remove outward velocity so the
+          player stays attached to the grip.
+        */
+
+        const outward=
+          velocityX*nx+
+          velocityY*ny;
+
+
+        if(outward>0){
+
+          velocityX -=
+            nx*outward;
+
+          velocityY -=
+            ny*outward;
+        }
+      }
+
+
+      /*
+        A small inward spring prevents the
+        player from drifting completely away
+        from the anchor when swinging.
+      */
+
+      const spring=
+        (ropeLength-distance)*
+        anchorPull;
+
+      velocityX +=
+        (relX/distance)*
+        spring*
+        dt;
+
+      velocityY +=
+        (relY/distance)*
+        spring*
+        dt;
+    }
   }
 
 
   /*
-    LIMIT SPEED
+    SPEED LIMIT
   */
 
-  velocityX=
-    THREE.MathUtils.clamp(
-      velocityX,
-      -maxSpeed,
-      maxSpeed
+  const speed=
+    Math.sqrt(
+      velocityX*velocityX+
+      velocityY*velocityY
     );
 
-  velocityY=
-    THREE.MathUtils.clamp(
-      velocityY,
-      -maxSpeed,
-      maxSpeed
-    );
+
+  if(speed>maxSpeed){
+
+    const scale=
+      maxSpeed/speed;
+
+    velocityX*=scale;
+    velocityY*=scale;
+  }
 
 
   /*
@@ -1173,12 +1370,19 @@ function updatePhysics(dt){
     AIR DRAG
   */
 
-  velocityX*=.985;
-  velocityY*=.995;
+  velocityX*=Math.pow(
+    airDrag,
+    dt*60
+  );
+
+  velocityY*=Math.pow(
+    airDrag,
+    dt*60
+  );
 
 
   /*
-    KEEP HERO NEAR CLIMBING AREA
+    SIDE LIMIT
   */
 
   hero.position.x=
@@ -1348,6 +1552,8 @@ function startGame(){
   ).style.display="none";
 
   running=true;
+
+  updateCursorWorld();
 
   lastTime=
     performance.now();
