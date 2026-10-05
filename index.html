@@ -4,153 +4,711 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>CLIMBORIA</title>
+
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05090d;font-family:Arial,Helvetica,sans-serif;color:#fff}
-body{touch-action:none}
-canvas{display:block;touch-action:none}
 
-#landing,#launchpad,#victory{
- position:fixed;inset:0;z-index:20;display:flex;align-items:center;
- justify-content:center;text-align:center;background:radial-gradient(circle at 50% 35%,#15232b,#05090d 65%);
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:#05090d;
+ font-family:Arial,Helvetica,sans-serif;
+ color:#fff;
 }
-.panel{width:min(900px,92%);padding:30px}
-.logo{font-size:clamp(42px,9vw,92px);font-weight:900;letter-spacing:7px;color:#55ff70;text-shadow:0 0 30px #55ff7066}
-.sub{color:#9baab2;letter-spacing:3px;font-size:12px;margin:15px 0 28px}
-.note{color:#67757d;font-size:11px;margin-top:20px}
+
+body{
+ touch-action:none;
+}
+
+canvas{
+ display:block;
+ touch-action:none;
+}
+
+/* =========================
+   LANDING / SCREENS
+========================= */
+
+#landing,
+#launchpad,
+#victory{
+ position:fixed;
+ inset:0;
+ z-index:20;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ background:
+ radial-gradient(
+  circle at 50% 35%,
+  #15232b,
+  #05090d 65%
+ );
+}
+
+#launchpad,
+#victory{
+ display:none;
+}
+
+.panel{
+ width:min(900px,92%);
+ padding:30px;
+}
+
+.logo{
+ font-size:clamp(42px,9vw,92px);
+ font-weight:900;
+ letter-spacing:7px;
+ color:#55ff70;
+ text-shadow:0 0 30px #55ff7066;
+}
+
+.sub{
+ color:#9baab2;
+ letter-spacing:3px;
+ font-size:12px;
+ margin:15px 0 28px;
+}
+
+.note{
+ color:#67757d;
+ font-size:11px;
+ margin-top:20px;
+}
+
 button{
- border:1px solid #55ff70;background:#55ff7012;color:#55ff70;padding:14px 25px;
- border-radius:8px;font-weight:bold;letter-spacing:2px;cursor:pointer
+ border:1px solid #55ff70;
+ background:#55ff7012;
+ color:#55ff70;
+ padding:14px 25px;
+ border-radius:8px;
+ font-weight:bold;
+ letter-spacing:2px;
+ cursor:pointer;
 }
-button:hover{background:#55ff7022}
-.cards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px}
-.card{width:190px;padding:22px;border:1px solid #ffffff12;background:#ffffff05;border-radius:10px}
-.card b{display:block;color:#55ff70;margin-bottom:8px}
-.card span{font-size:10px;color:#718087}
 
-#landing{display:flex}
-#launchpad,#victory{display:none}
-#hud{position:fixed;top:18px;left:18px;right:18px;z-index:10;display:none;pointer-events:none}
-.top{display:flex;justify-content:space-between;align-items:flex-start}
-.brand{font-size:18px;font-weight:900;letter-spacing:3px;color:#55ff70}
-.stat{text-align:right;font-size:11px;color:#9baab2;line-height:1.8}
-.stat b{color:#fff}
-#bar{width:170px;height:5px;background:#182126;border-radius:5px;overflow:hidden;margin-top:5px}
-#progress{height:100%;width:0;background:#55ff70;box-shadow:0 0 10px #55ff70}
-#status{position:fixed;top:70px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:bold;letter-spacing:2px}
+button:hover{
+ background:#55ff7022;
+}
+
+.cards{
+ display:flex;
+ gap:14px;
+ justify-content:center;
+ flex-wrap:wrap;
+ margin-top:28px;
+}
+
+.card{
+ width:190px;
+ padding:22px;
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+}
+
+.card b{
+ display:block;
+ color:#55ff70;
+ margin-bottom:8px;
+}
+
+.card span{
+ font-size:10px;
+ color:#718087;
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud{
+ position:fixed;
+ top:18px;
+ left:18px;
+ right:18px;
+ z-index:10;
+ display:none;
+ pointer-events:none;
+}
+
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+}
+
+.brand{
+ font-size:18px;
+ font-weight:900;
+ letter-spacing:3px;
+ color:#55ff70;
+}
+
+.stat{
+ text-align:right;
+ font-size:11px;
+ color:#9baab2;
+ line-height:1.8;
+}
+
+.stat b{
+ color:#fff;
+}
+
+#bar{
+ width:170px;
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+ margin-top:5px;
+}
+
+#progress{
+ height:100%;
+ width:0;
+ background:#55ff70;
+ box-shadow:0 0 10px #55ff70;
+}
+
+#status{
+ position:fixed;
+ top:70px;
+ left:50%;
+ transform:translateX(-50%);
+ font-size:11px;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+
+/* =========================
+   CRYPTO TICKER
+========================= */
+
+#cryptoTicker{
+ position:fixed;
+ top:18px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:15;
+ display:none;
+ width:min(720px,calc(100% - 160px));
+ pointer-events:none;
+}
+
+.cryptoRow{
+ display:flex;
+ justify-content:center;
+ gap:7px;
+ flex-wrap:nowrap;
+}
+
+.cryptoCard{
+ min-width:110px;
+ padding:7px 10px;
+ border:1px solid #ffffff12;
+ background:rgba(5,9,13,.82);
+ backdrop-filter:blur(8px);
+ border-radius:7px;
+ box-shadow:0 5px 25px #0005;
+}
+
+.cryptoTop{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+}
+
+.cryptoSymbol{
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:1px;
+ color:#fff;
+}
+
+.cryptoChange{
+ font-size:8px;
+ font-weight:bold;
+}
+
+.cryptoPrice{
+ margin-top:3px;
+ font-size:10px;
+ color:#c8d0d4;
+ font-weight:bold;
+}
+
+.up{
+ color:#55ff70;
+}
+
+.down{
+ color:#ff6677;
+}
+
+.cryptoLoading{
+ color:#67757d;
+ font-size:8px;
+ letter-spacing:1px;
+}
+
+/* =========================
+   HELP
+========================= */
+
 #help{
- position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:10;
- font-size:9px;color:#77858c;letter-spacing:1px;text-align:center;white-space:nowrap
+ position:fixed;
+ bottom:18px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:10;
+ font-size:9px;
+ color:#77858c;
+ letter-spacing:1px;
+ text-align:center;
+ white-space:nowrap;
 }
-#touchHint{
- position:fixed;left:50%;bottom:58px;transform:translateX(-50%);z-index:25;
- display:none;padding:8px 13px;border:1px solid #55ff7040;border-radius:20px;
- background:#000b;color:#9baab2;font-size:9px;font-weight:bold;letter-spacing:1px;
- pointer-events:none
-}
-.nav{position:fixed;right:18px;bottom:18px;z-index:12;display:none}
-.nav button{padding:8px 12px;font-size:9px}
 
-.winTitle{font-size:clamp(30px,7vw,65px);font-weight:900;color:#55ff70;letter-spacing:3px}
-.peak{font-size:18px;letter-spacing:5px;margin:18px 0;color:#fff}
-.winSub{color:#829098;font-size:11px;letter-spacing:2px;margin-bottom:28px}
+#touchHint{
+ position:fixed;
+ left:50%;
+ bottom:58px;
+ transform:translateX(-50%);
+ z-index:25;
+ display:none;
+ padding:8px 13px;
+ border:1px solid #55ff7040;
+ border-radius:20px;
+ background:#000b;
+ color:#9baab2;
+ font-size:9px;
+ font-weight:bold;
+ letter-spacing:1px;
+ pointer-events:none;
+}
+
+.nav{
+ position:fixed;
+ right:18px;
+ bottom:18px;
+ z-index:12;
+ display:none;
+}
+
+.nav button{
+ padding:8px 12px;
+ font-size:9px;
+}
+
+/* =========================
+   VICTORY
+========================= */
+
+.winTitle{
+ font-size:clamp(30px,7vw,65px);
+ font-weight:900;
+ color:#55ff70;
+ letter-spacing:3px;
+ text-shadow:
+  0 0 25px #55ff7070;
+}
+
+.peak{
+ font-size:18px;
+ letter-spacing:5px;
+ margin:18px 0;
+ color:#fff;
+}
+
+.winSub{
+ color:#829098;
+ font-size:11px;
+ letter-spacing:2px;
+ margin-bottom:28px;
+}
+
+/* =========================
+   MOBILE
+========================= */
 
 @media(max-width:700px){
- #help{font-size:8px;white-space:normal;width:90%;bottom:14px}
- .stat{font-size:9px}
- #bar{width:120px}
+
+ #help{
+  font-size:8px;
+  white-space:normal;
+  width:90%;
+  bottom:14px;
+ }
+
+ .stat{
+  font-size:9px;
+ }
+
+ #bar{
+  width:120px;
+ }
+
+ #cryptoTicker{
+  top:82px;
+  width:96%;
+ }
+
+ .cryptoRow{
+  gap:4px;
+ }
+
+ .cryptoCard{
+  min-width:0;
+  flex:1;
+  padding:6px 5px;
+ }
+
+ .cryptoPrice{
+  font-size:9px;
+ }
+
+ .cryptoChange{
+  font-size:7px;
+ }
+
+ .cryptoSymbol{
+  font-size:8px;
+ }
 }
 </style>
 </head>
+
 <body>
 
+<!-- =========================
+     LANDING
+========================= -->
+
 <div id="landing">
+
  <div class="panel">
-  <div class="logo">CLIMBORIA</div>
-  <div class="sub">CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY</div>
-  <button onclick="showGame()">START CLIMB</button>
-  <div class="cards">
-   <div class="card"><b>GAME</b><span>Climb. Swing. Survive.</span></div>
-   <div class="card"><b>LAUNCHPAD</b><span>Community projects coming soon.</span></div>
-   <div class="card"><b>DEX</b><span>Climboria DEX — in development.</span></div>
+
+  <div class="logo">
+   CLIMBORIA
   </div>
-  <div class="note">Built for the climb. For Jarrell Escalante ❤️</div>
+
+  <div class="sub">
+   CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY
+  </div>
+
+  <button onclick="showGame()">
+   START CLIMB
+  </button>
+
+  <div class="cards">
+
+   <div class="card">
+    <b>GAME</b>
+    <span>Climb. Swing. Survive.</span>
+   </div>
+
+   <div class="card">
+    <b>LAUNCHPAD</b>
+    <span>Community projects coming soon.</span>
+   </div>
+
+   <div class="card">
+    <b>DEX</b>
+    <span>Climboria DEX — in development.</span>
+   </div>
+
+  </div>
+
+  <div class="note">
+   Built for the climb. For Jarrell Escalante ❤️
+  </div>
+
  </div>
+
 </div>
+
+
+<!-- =========================
+     LAUNCHPAD
+========================= -->
 
 <div id="launchpad">
+
  <div class="panel">
-  <div class="logo" style="font-size:48px">CLIMBORIA</div>
-  <div class="sub">THE CLIMBORIA ECOSYSTEM</div>
-  <div class="cards">
-   <div class="card"><b>NEW PROJECTS</b><span>COMING SOON</span></div>
-   <div class="card"><b>COMMUNITY</b><span>BUILDING</span></div>
-   <div class="card"><b>CLIMBORIA DEX</b><span>IN DEVELOPMENT</span></div>
+
+  <div
+   class="logo"
+   style="font-size:48px"
+  >
+   CLIMBORIA
   </div>
-  <br><button onclick="showMenu()">BACK</button>
+
+  <div class="sub">
+   THE CLIMBORIA ECOSYSTEM
+  </div>
+
+  <div class="cards">
+
+   <div class="card">
+    <b>NEW PROJECTS</b>
+    <span>COMING SOON</span>
+   </div>
+
+   <div class="card">
+    <b>COMMUNITY</b>
+    <span>BUILDING</span>
+   </div>
+
+   <div class="card">
+    <b>CLIMBORIA DEX</b>
+    <span>IN DEVELOPMENT</span>
+   </div>
+
+  </div>
+
+  <br>
+
+  <button onclick="showMenu()">
+   BACK
+  </button>
+
  </div>
+
 </div>
+
+
+<!-- =========================
+     VICTORY
+========================= -->
 
 <div id="victory">
+
  <div class="panel">
-  <div class="winTitle">SUMMIT REACHED</div>
-  <div class="peak">JARRELL'S PEAK</div>
-  <div class="winSub">YOU MADE IT.<br><br>Every climb has a reason. ❤️</div>
-  <button onclick="restartGame()">CLIMB AGAIN</button>
-  <br><br><button onclick="showMenu()">MENU</button>
+
+  <div class="winTitle">
+   SUMMIT REACHED
+  </div>
+
+  <div class="peak">
+   JARRELL'S PEAK
+  </div>
+
+  <div class="winSub">
+   YOU MADE IT.
+   <br><br>
+   Every climb has a reason. ❤️
+  </div>
+
+  <button onclick="restartGame()">
+   CLIMB AGAIN
+  </button>
+
+  <br><br>
+
+  <button onclick="showMenu()">
+   MENU
+  </button>
+
  </div>
+
 </div>
+
+
+<!-- =========================
+     HUD
+========================= -->
 
 <div id="hud">
+
  <div class="top">
+
   <div>
-   <div class="brand">CLIMBORIA</div>
-   <div id="status">FREE</div>
+
+   <div class="brand">
+    CLIMBORIA
+   </div>
+
+   <div id="status">
+    FREE
+   </div>
+
   </div>
+
   <div class="stat">
-   HAMMER: <b id="hammerState">READY</b><br>
-   HEIGHT: <b id="height">0</b><br>
-   SUMMIT: <b id="pct">0%</b>
-   <div id="bar"><div id="progress"></div></div>
+
+   HAMMER:
+   <b id="hammerState">
+    READY
+   </b>
+
+   <br>
+
+   HEIGHT:
+   <b id="height">
+    0
+   </b>
+
+   <br>
+
+   SUMMIT:
+   <b id="pct">
+    0%
+   </b>
+
+   <div id="bar">
+    <div id="progress"></div>
+   </div>
+
   </div>
+
  </div>
+
 </div>
 
+
+<!-- =========================
+     CRYPTO LIVE PRICE
+========================= -->
+
+<div id="cryptoTicker">
+
+ <div class="cryptoRow">
+
+  <div class="cryptoCard">
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">BTC</span>
+    <span id="btcChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="btcPrice" class="cryptoPrice">Loading...</div>
+  </div>
+
+  <div class="cryptoCard">
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">ETH</span>
+    <span id="ethChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="ethPrice" class="cryptoPrice">Loading...</div>
+  </div>
+
+  <div class="cryptoCard">
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">SOL</span>
+    <span id="solChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="solPrice" class="cryptoPrice">Loading...</div>
+  </div>
+
+  <div class="cryptoCard">
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">BNB</span>
+    <span id="bnbChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="bnbPrice" class="cryptoPrice">Loading...</div>
+  </div>
+
+  <div class="cryptoCard">
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">XRP</span>
+    <span id="xrpChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="xrpPrice" class="cryptoPrice">Loading...</div>
+  </div>
+
+ </div>
+
+</div>
+
+
 <div id="help"></div>
-<div id="touchHint">MOVE FINGER • HOLD GREEN GRIP • DRAG TO SWING</div>
-<div class="nav" id="nav"><button onclick="showMenu()">MENU</button></div>
+
+<div id="touchHint">
+ MOVE FINGER • HOLD GREEN GRIP • DRAG TO SWING
+</div>
+
+<div class="nav" id="nav">
+ <button onclick="showMenu()">
+  MENU
+ </button>
+</div>
+
 
 <script type="module">
+
 import * as THREE from
 "https://esm.sh/three@0.180.0";
 
-let scene,camera,renderer;
-let hero,hammer;
+
+/* =====================================================
+   CORE VARIABLES
+===================================================== */
+
+let scene;
+let camera;
+let renderer;
+
+let hero;
+let hammer;
+
 let grips=[];
+
 let grabbed=null;
+
 let anchorWorld=new THREE.Vector3();
 let cursorWorld=new THREE.Vector3();
+
 let lastTime=performance.now();
 
-const mouse={x:0,y:0};
+const mouse={
+ x:0,
+ y:0
+};
+
 const raycaster=new THREE.Raycaster();
+
 const cursorPlane=new THREE.Plane(
- new THREE.Vector3(0,0,1),-4
+ new THREE.Vector3(0,0,1),
+ -4
 );
 
-let velocityX=0,velocityY=0;
+let velocityX=0;
+let velocityY=0;
+
 let ropeLength=0;
-let running=false,gameWon=false,touchActive=false;
+
+let running=false;
+let gameWon=false;
+
+let touchActive=false;
 
 let touchReticle=null;
 let touchReticleMaterial=null;
+
+
+/* =====================================================
+   PHYSICS
+===================================================== */
 
 const gravity=-18;
 const swingStrength=38;
 const anchorPull=8;
 const airDrag=.985;
 const maxSpeed=16;
+
+
+/* =====================================================
+   SUMMIT
+===================================================== */
+
 const SUMMIT_HEIGHT=64;
+
+const SUMMIT_CENTER_X=0;
+const SUMMIT_CENTER_Y=62;
 
 const summitParticles=[];
 const summitBurst=[];
@@ -160,199 +718,522 @@ const summitShockwaves=[];
 let summitGlowMesh=null;
 let summitLight=null;
 let summitBeacon=null;
+
 let victoryTimer=null;
 
-const $=id=>document.getElementById(id);
+let summitSequence=false;
+
+
+/* =====================================================
+   CRYPTO
+===================================================== */
+
+let cryptoTimer=null;
+
+
+/* =====================================================
+   START
+===================================================== */
 
 init();
 animate();
 
+
+/* =====================================================
+   INIT
+===================================================== */
+
 function init(){
 
  scene=new THREE.Scene();
- scene.background=new THREE.Color(0x05090d);
- scene.fog=new THREE.Fog(0x05090d,35,100);
 
- camera=new THREE.PerspectiveCamera(
-  55,innerWidth/innerHeight,.1,150
+ scene.background=
+  new THREE.Color(0x05090d);
+
+ scene.fog=
+  new THREE.Fog(
+   0x05090d,
+   35,
+   100
+  );
+
+
+ camera=
+  new THREE.PerspectiveCamera(
+   55,
+   innerWidth/innerHeight,
+   .1,
+   150
+  );
+
+ camera.position.set(
+  0,
+  7,
+  18
  );
- camera.position.set(0,7,18);
 
- renderer=new THREE.WebGLRenderer({
-  antialias:true,
-  powerPreference:"high-performance"
- });
- renderer.setPixelRatio(Math.min(devicePixelRatio,2));
- renderer.setSize(innerWidth,innerHeight);
- renderer.outputColorSpace=THREE.SRGBColorSpace;
- renderer.domElement.style.touchAction="none";
- document.body.appendChild(renderer.domElement);
 
- const amb=new THREE.AmbientLight(0xffffff,.55);
+ renderer=
+  new THREE.WebGLRenderer({
+   antialias:true,
+   powerPreference:"high-performance"
+  });
+
+ renderer.setPixelRatio(
+  Math.min(
+   devicePixelRatio,
+   2
+  )
+ );
+
+ renderer.setSize(
+  innerWidth,
+  innerHeight
+ );
+
+ renderer.outputColorSpace=
+  THREE.SRGBColorSpace;
+
+ renderer.domElement.style.touchAction=
+  "none";
+
+ document.body.appendChild(
+  renderer.domElement
+ );
+
+
+ const amb=
+  new THREE.AmbientLight(
+   0xffffff,
+   .55
+  );
+
  scene.add(amb);
 
- const sun=new THREE.DirectionalLight(0xffffff,1.1);
- sun.position.set(-5,20,15);
+
+ const sun=
+  new THREE.DirectionalLight(
+   0xffffff,
+   1.1
+  );
+
+ sun.position.set(
+  -5,
+  20,
+  15
+ );
+
  scene.add(sun);
 
+
  createSky();
+
  createMountain();
+
  createGround();
+
  createRocks();
+
  createHero();
+
  createHammer();
+
  createGrips();
+
  createTouchReticle();
+
  createSummitParticles();
 
- window.addEventListener("resize",resize);
- window.addEventListener("mousemove",mouseMove);
- window.addEventListener("mousedown",mouseDown);
- window.addEventListener("mouseup",mouseUp);
 
- window.addEventListener("touchstart",touchStart,{passive:false});
- window.addEventListener("touchmove",touchMove,{passive:false});
- window.addEventListener("touchend",touchEnd,{passive:false});
- window.addEventListener("touchcancel",touchEnd,{passive:false});
+ window.addEventListener(
+  "resize",
+  resize
+ );
+
+ window.addEventListener(
+  "mousemove",
+  mouseMove
+ );
+
+ window.addEventListener(
+  "mousedown",
+  mouseDown
+ );
+
+ window.addEventListener(
+  "mouseup",
+  mouseUp
+ );
+
+
+ window.addEventListener(
+  "touchstart",
+  touchStart,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchmove",
+  touchMove,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchend",
+  touchEnd,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchcancel",
+  touchEnd,
+  {passive:false}
+ );
+
 
  updateHelpText();
+
+ startCryptoTicker();
 }
+
+
+/* =====================================================
+   SKY
+===================================================== */
 
 function createSky(){
 
- const g=new THREE.SphereGeometry(80,24,16);
- const m=new THREE.MeshBasicMaterial({
-  color:0x071018,
-  side:THREE.BackSide
- });
- scene.add(new THREE.Mesh(g,m));
+ const g=
+  new THREE.SphereGeometry(
+   80,
+   24,
+   16
+  );
+
+ const m=
+  new THREE.MeshBasicMaterial({
+   color:0x071018,
+   side:THREE.BackSide
+  });
+
+ scene.add(
+  new THREE.Mesh(g,m)
+ );
 }
+
+
+/* =====================================================
+   MOUNTAIN
+===================================================== */
 
 function createMountain(){
 
- const cliff=new THREE.Mesh(
-  new THREE.BoxGeometry(22,70,7),
-  new THREE.MeshStandardMaterial({
-   color:0x555b5d,
-   roughness:1
-  })
- );
- cliff.position.set(0,34,-7);
- cliff.rotation.y=-.04;
- scene.add(cliff);
-
- const ledges=[
-  [-8,5,1.5,2],[7,8,2,1.5],[-6,12,2.5,2],
-  [6,16,2,2],[-8,21,2.5,1.5],[7,25,2.5,2],
-  [-6,30,2,2],[8,35,3,2],[-7,40,2,2],
-  [6,45,3,2],[-5,51,2.5,2],[7,57,2.5,2]
- ];
-
- ledges.forEach(v=>{
-  const [x,y,w,h]=v;
-  const mesh=new THREE.Mesh(
-   new THREE.BoxGeometry(w,h,5),
+ const cliff=
+  new THREE.Mesh(
+   new THREE.BoxGeometry(
+    22,
+    70,
+    7
+   ),
    new THREE.MeshStandardMaterial({
-    color:0x666d6f,
+    color:0x555b5d,
     roughness:1
    })
   );
-  mesh.position.set(x,y,-2.8);
+
+ cliff.position.set(
+  0,
+  34,
+  -7
+ );
+
+ cliff.rotation.y=-.04;
+
+ scene.add(cliff);
+
+
+ const ledges=[
+
+  [-8,5,1.5,2],
+  [7,8,2,1.5],
+  [-6,12,2.5,2],
+
+  [6,16,2,2],
+  [-8,21,2.5,1.5],
+  [7,25,2.5,2],
+
+  [-6,30,2,2],
+  [8,35,3,2],
+  [-7,40,2,2],
+
+  [6,45,3,2],
+  [-5,51,2.5,2],
+  [7,57,2.5,2]
+
+ ];
+
+
+ ledges.forEach(v=>{
+
+  const [
+   x,
+   y,
+   w,
+   h
+  ]=v;
+
+  const mesh=
+   new THREE.Mesh(
+    new THREE.BoxGeometry(
+     w,
+     h,
+     5
+    ),
+    new THREE.MeshStandardMaterial({
+     color:0x666d6f,
+     roughness:1
+    })
+   );
+
+  mesh.position.set(
+   x,
+   y,
+   -2.8
+  );
+
   scene.add(mesh);
  });
 
- const summit=new THREE.Mesh(
-  new THREE.CylinderGeometry(5.5,7,1.2,7),
-  new THREE.MeshStandardMaterial({
-   color:0x737a7c,
-   roughness:1
-  })
+
+ /* SUMMIT PLATFORM */
+
+ const summit=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    5.5,
+    7,
+    1.2,
+    7
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x737a7c,
+    roughness:1
+   })
+  );
+
+ summit.position.set(
+  0,
+  61.1,
+  -1
  );
- summit.position.set(0,61.1,-1);
- summit.rotation.y=Math.PI/7;
+
+ summit.rotation.y=
+  Math.PI/7;
+
  scene.add(summit);
 
+
+ /* PEAK ROCKS */
+
  [
-  [-3.8,62.5,.9,2.2],[3.5,62.2,1.1,2.5],
-  [-1.8,63.3,.75,1.8],[1.8,63.5,.9,2.4],
+  [-3.8,62.5,.9,2.2],
+  [3.5,62.2,1.1,2.5],
+  [-1.8,63.3,.75,1.8],
+  [1.8,63.5,.9,2.4],
   [0,64.2,1.1,2.8]
+
  ].forEach(v=>{
-  const r=new THREE.Mesh(
-   new THREE.DodecahedronGeometry(v[2],0),
-   new THREE.MeshStandardMaterial({color:0x555b5d})
+
+  const r=
+   new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+     v[2],
+     0
+    ),
+    new THREE.MeshStandardMaterial({
+     color:0x555b5d
+    })
+   );
+
+  r.position.set(
+   v[0],
+   v[1],
+   -1
   );
-  r.position.set(v[0],v[1],-1);
-  r.scale.y=v[3]/v[2];
+
+  r.scale.y=
+   v[3]/v[2];
+
   scene.add(r);
  });
 
- summitGlowMesh=new THREE.Mesh(
-  new THREE.SphereGeometry(2.2,16,12),
-  new THREE.MeshBasicMaterial({
-   color:0x55ff70,
-   transparent:true,
-   opacity:.08
-  })
- );
- summitGlowMesh.position.set(0,61.75,-1);
- scene.add(summitGlowMesh);
 
- summitBeacon=new THREE.Mesh(
-  new THREE.CylinderGeometry(.08,.08,5,8),
-  new THREE.MeshBasicMaterial({color:0x55ff70})
- );
- summitBeacon.position.set(0,61.82,-1);
- scene.add(summitBeacon);
+ /* SUMMIT GLOW */
 
- summitLight=new THREE.PointLight(0x55ff70,5,18);
- summitLight.position.set(0,64,4);
- scene.add(summitLight);
+ summitGlowMesh=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    2.2,
+    16,
+    12
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70,
+    transparent:true,
+    opacity:.08
+   })
+  );
 
- const flagPole=new THREE.Mesh(
-  new THREE.CylinderGeometry(.035,.035,4,8),
-  new THREE.MeshBasicMaterial({color:0xbfc7ca})
+ summitGlowMesh.position.set(
+  0,
+  61.75,
+  -1
  );
- flagPole.position.set(1.6,64,-.5);
+
+ scene.add(
+  summitGlowMesh
+ );
+
+
+ /* BEACON */
+
+ summitBeacon=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    .08,
+    .08,
+    5,
+    8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70
+   })
+  );
+
+ summitBeacon.position.set(
+  0,
+  61.82,
+  -1
+ );
+
+ scene.add(
+  summitBeacon
+ );
+
+
+ /* SUMMIT LIGHT */
+
+ summitLight=
+  new THREE.PointLight(
+   0x55ff70,
+   5,
+   18
+  );
+
+ summitLight.position.set(
+  0,
+  64,
+  4
+ );
+
+ scene.add(
+  summitLight
+ );
+
+
+ /* FLAG */
+
+ const flagPole=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    .035,
+    .035,
+    4,
+    8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0xbfc7ca
+   })
+  );
+
+ flagPole.position.set(
+  1.6,
+  64,
+  -.5
+ );
+
  scene.add(flagPole);
 
- const flag=new THREE.Mesh(
-  new THREE.PlaneGeometry(1.5,.8),
-  new THREE.MeshBasicMaterial({
-   color:0x55ff70,
-   side:THREE.DoubleSide
-  })
+
+ const flag=
+  new THREE.Mesh(
+   new THREE.PlaneGeometry(
+    1.5,
+    .8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70,
+    side:THREE.DoubleSide
+   })
+  );
+
+ flag.position.set(
+  2.25,
+  65.3,
+  -.5
  );
- flag.position.set(2.25,65.3,-.5);
+
  scene.add(flag);
 }
 
+
+/* =====================================================
+   GROUND
+===================================================== */
+
 function createGround(){
 
- const ground=new THREE.Mesh(
-  new THREE.BoxGeometry(40,1,30),
-  new THREE.MeshStandardMaterial({
-   color:0x202b31,
-   roughness:1
-  })
- );
+ const ground=
+  new THREE.Mesh(
+   new THREE.BoxGeometry(
+    40,
+    1,
+    30
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x202b31,
+    roughness:1
+   })
+  );
+
  ground.position.y=-.5;
+
  scene.add(ground);
 }
+
+
+/* =====================================================
+   ROCKS
+===================================================== */
 
 function createRocks(){
 
  for(let i=0;i<45;i++){
 
-  const side=i%2?1:-1;
-  const r=new THREE.Mesh(
-   new THREE.DodecahedronGeometry(
-    .35+Math.random()*.7,0
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x394348,
-    roughness:1
-   })
-  );
+  const side=
+   i%2?1:-1;
+
+  const r=
+   new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+     .35+Math.random()*.7,
+     0
+    ),
+    new THREE.MeshStandardMaterial({
+     color:0x394348,
+     roughness:1
+    })
+   );
 
   r.position.set(
    side*(12+Math.random()*7),
@@ -370,172 +1251,410 @@ function createRocks(){
  }
 }
 
+
+/* =====================================================
+   HERO
+===================================================== */
+
 function createHero(){
 
- hero=new THREE.Group();
+ hero=
+  new THREE.Group();
 
- const pot=new THREE.Mesh(
-  new THREE.CylinderGeometry(1,1.35,1.5,28),
-  new THREE.MeshStandardMaterial({color:0xd17a3e})
- );
+
+ const pot=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    1,
+    1.35,
+    1.5,
+    28
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0xd17a3e
+   })
+  );
+
  pot.position.y=.75;
+
  hero.add(pot);
 
- const rim=new THREE.Mesh(
-  new THREE.TorusGeometry(1.03,.12,12,28),
-  new THREE.MeshStandardMaterial({color:0x8e4b28})
- );
- rim.rotation.x=Math.PI/2;
- rim.position.y=1.43;
+
+ const rim=
+  new THREE.Mesh(
+   new THREE.TorusGeometry(
+    1.03,
+    .12,
+    12,
+    28
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x8e4b28
+   })
+  );
+
+ rim.rotation.x=
+  Math.PI/2;
+
+ rim.position.y=
+  1.43;
+
  hero.add(rim);
 
- const head=new THREE.Mesh(
-  new THREE.SphereGeometry(.68,20,16),
-  new THREE.MeshStandardMaterial({color:0xe0a078})
- );
- head.position.y=1.35;
+
+ const head=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    .68,
+    20,
+    16
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0xe0a078
+   })
+  );
+
+ head.position.y=
+  1.35;
+
  hero.add(head);
 
- const helmet=new THREE.Mesh(
-  new THREE.SphereGeometry(.72,20,12,0,Math.PI*2,0,Math.PI*.55),
-  new THREE.MeshStandardMaterial({color:0x1a2227})
- );
- helmet.position.y=1.62;
+
+ const helmet=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    .72,
+    20,
+    12,
+    0,
+    Math.PI*2,
+    0,
+    Math.PI*.55
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x1a2227
+   })
+  );
+
+ helmet.position.y=
+  1.62;
+
  hero.add(helmet);
 
+
  [-.22,.22].forEach(x=>{
-  const eye=new THREE.Mesh(
-   new THREE.SphereGeometry(.07,8,8),
-   new THREE.MeshBasicMaterial({color:0x111111})
+
+  const eye=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .07,
+     8,
+     8
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x111111
+    })
+   );
+
+  eye.position.set(
+   x,
+   1.42,
+   .63
   );
-  eye.position.set(x,1.42,.63);
+
   hero.add(eye);
  });
 
- const nose=new THREE.Mesh(
-  new THREE.SphereGeometry(.07,8,8),
-  new THREE.MeshStandardMaterial({color:0xc47a5d})
+
+ const nose=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    .07,
+    8,
+    8
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0xc47a5d
+   })
+  );
+
+ nose.position.set(
+  0,
+  1.32,
+  .68
  );
- nose.position.set(0,1.32,.68);
+
  hero.add(nose);
 
- hero.position.set(0,.82,3.5);
+
+ hero.position.set(
+  0,
+  .82,
+  3.5
+ );
+
  scene.add(hero);
 }
 
+
+/* =====================================================
+   HAMMER
+===================================================== */
+
 function createHammer(){
 
- hammer=new THREE.Group();
+ hammer=
+  new THREE.Group();
 
- const handle=new THREE.Mesh(
-  new THREE.CylinderGeometry(.09,.09,3.8,14),
-  new THREE.MeshStandardMaterial({color:0x8d5b36})
- );
- handle.rotation.z=Math.PI/2;
- handle.position.x=-1.9;
+
+ const handle=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    .09,
+    .09,
+    3.8,
+    14
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x8d5b36
+   })
+  );
+
+ handle.rotation.z=
+  Math.PI/2;
+
+ handle.position.x=
+  -1.9;
+
  hammer.add(handle);
 
- const head=new THREE.Mesh(
-  new THREE.BoxGeometry(.55,.55,1.5),
-  new THREE.MeshStandardMaterial({color:0x737a7e,metalness:.4})
- );
- head.position.x=-.65;
+
+ const head=
+  new THREE.Mesh(
+   new THREE.BoxGeometry(
+    .55,
+    .55,
+    1.5
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x737a7e,
+    metalness:.4
+   })
+  );
+
+ head.position.x=
+  -.65;
+
  hammer.add(head);
 
- const tip=new THREE.Mesh(
-  new THREE.SphereGeometry(.25,16,12),
-  new THREE.MeshStandardMaterial({
-   color:0xffcc33,
-   emissive:0x664400
-  })
- );
- hammer.add(tip);
- hammer.userData.tip=tip;
 
- hammer.position.set(3,3,4);
+ const tip=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    .25,
+    16,
+    12
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0xffcc33,
+    emissive:0x664400
+   })
+  );
+
+ hammer.add(tip);
+
+ hammer.userData.tip=
+  tip;
+
+ hammer.position.set(
+  3,
+  3,
+  4
+ );
+
  scene.add(hammer);
 }
+
+
+/* =====================================================
+   GRIPS
+===================================================== */
 
 function createGrips(){
 
  const positions=[
-  [-4,4],[2,6],[-2,9],[4,12],[0,15],
-  [-4,18],[2,21],[5,24],[0,27],[-4,30],
-  [2,33],[-2,36],[4,39],[0,42],[-4,45],
-  [2,48],[-2,51],[4,54],[0,57],[-3,60]
+
+  [-4,4],
+  [2,6],
+  [-2,9],
+  [4,12],
+  [0,15],
+
+  [-4,18],
+  [2,21],
+  [5,24],
+  [0,27],
+  [-4,30],
+
+  [2,33],
+  [-2,36],
+  [4,39],
+  [0,42],
+  [-4,45],
+
+  [2,48],
+  [-2,51],
+  [4,54],
+  [0,57],
+  [-3,60]
+
  ];
 
- positions.forEach((p,index)=>{
 
-  const group=new THREE.Group();
+ positions.forEach(
+  (p,index)=>{
 
-  const glow=new THREE.Mesh(
-   new THREE.SphereGeometry(1.2,12,8),
-   new THREE.MeshBasicMaterial({
-    color:0x55ff70,
-    transparent:true,
-    opacity:.08,
-    depthWrite:false
-   })
-  );
+   const group=
+    new THREE.Group();
 
-  const ring=new THREE.Mesh(
-   new THREE.TorusGeometry(.72,.17,12,28),
-   new THREE.MeshStandardMaterial({
-    color:0x55ff70,
-    emissive:0x113d19
-   })
-  );
 
-  const center=new THREE.Mesh(
-   new THREE.SphereGeometry(.3,12,8),
-   new THREE.MeshBasicMaterial({color:0xffffff})
-  );
+   const glow=
+    new THREE.Mesh(
+     new THREE.SphereGeometry(
+      1.2,
+      12,
+      8
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0x55ff70,
+      transparent:true,
+      opacity:.08,
+      depthWrite:false
+     })
+    );
 
-  group.add(glow,ring,center);
-  group.position.set(p[0],p[1],3.1);
-  scene.add(group);
 
-  grips.push({
-   group,ring,glow,
-   x:p[0],y:p[1],index
-  });
- });
+   const ring=
+    new THREE.Mesh(
+     new THREE.TorusGeometry(
+      .72,
+      .17,
+      12,
+      28
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x55ff70,
+      emissive:0x113d19
+     })
+    );
+
+
+   const center=
+    new THREE.Mesh(
+     new THREE.SphereGeometry(
+      .3,
+      12,
+      8
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0xffffff
+     })
+    );
+
+
+   group.add(
+    glow,
+    ring,
+    center
+   );
+
+   group.position.set(
+    p[0],
+    p[1],
+    3.1
+   );
+
+   scene.add(group);
+
+
+   grips.push({
+    group,
+    ring,
+    glow,
+    x:p[0],
+    y:p[1],
+    index
+   });
+
+  }
+ );
 }
+
+
+/* =====================================================
+   TOUCH RETICLE
+===================================================== */
 
 function createTouchReticle(){
 
- touchReticleMaterial=new THREE.MeshBasicMaterial({
-  color:0xffcc33,
-  transparent:true,
-  opacity:.9,
-  depthWrite:false
- });
+ touchReticleMaterial=
+  new THREE.MeshBasicMaterial({
+   color:0xffcc33,
+   transparent:true,
+   opacity:.9,
+   depthWrite:false
+  });
 
- touchReticle=new THREE.Mesh(
-  new THREE.TorusGeometry(.42,.055,10,32),
-  touchReticleMaterial
+
+ touchReticle=
+  new THREE.Mesh(
+   new THREE.TorusGeometry(
+    .42,
+    .055,
+    10,
+    32
+   ),
+   touchReticleMaterial
+  );
+
+
+ touchReticle.position.z=
+  4.15;
+
+ touchReticle.rotation.x=
+  Math.PI/2;
+
+ touchReticle.visible=
+  false;
+
+ scene.add(
+  touchReticle
  );
-
- touchReticle.position.z=4.15;
- touchReticle.rotation.x=Math.PI/2;
- touchReticle.visible=false;
-
- scene.add(touchReticle);
 }
+
+
+/* =====================================================
+   SUMMIT PARTICLES
+===================================================== */
 
 function createSummitParticles(){
 
  for(let i=0;i<70;i++){
 
-  const p=new THREE.Mesh(
-   new THREE.SphereGeometry(.025+Math.random()*.045,6,6),
-   new THREE.MeshBasicMaterial({
-    color:0x55ff70,
-    transparent:true,
-    opacity:.35
-   })
-  );
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .025+Math.random()*.045,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.35
+    })
+   );
+
 
   p.position.set(
    (Math.random()-.5)*8,
@@ -543,85 +1662,155 @@ function createSummitParticles(){
    Math.random()*2
   );
 
+
   p.userData={
    speed:.2+Math.random()*.5,
    phase:Math.random()*6
   };
 
+
   scene.add(p);
+
   summitParticles.push(p);
  }
 }
+
+
+/* =====================================================
+   POINTER
+===================================================== */
+
+function setPointerPosition(x,y){
+
+ mouse.x=
+  x/innerWidth*2-1;
+
+ mouse.y=
+  -(y/innerHeight)*2+1;
+
+ updateCursorWorld();
+}
+
+
+function updateCursorWorld(){
+
+ raycaster.setFromCamera(
+  mouse,
+  camera
+ );
+
+ const hit=
+  new THREE.Vector3();
+
+ if(
+  raycaster.ray.intersectPlane(
+   cursorPlane,
+   hit
+  )
+ ){
+  cursorWorld.copy(hit);
+ }
+
+ cursorWorld.x=
+  THREE.MathUtils.clamp(
+   cursorWorld.x,
+   -10,
+   10
+  );
+
+ cursorWorld.y=
+  THREE.MathUtils.clamp(
+   cursorWorld.y,
+   -2,
+   70
+  );
+}
+
+
+function mouseMove(e){
+
+ if(touchActive)return;
+
+ setPointerPosition(
+  e.clientX,
+  e.clientY
+ );
+}
+
+
+function mouseDown(e){
+
+ if(!running)return;
+
+ if(e.button!==0)return;
+
+ startGrab();
+}
+
+
+function mouseUp(){
+
+ if(!running)return;
+
+ releaseGrab();
+}
+
+
+/* =====================================================
+   GRAB
+===================================================== */
 
 function nearestGrip(){
 
  let best=null;
  let dist=Infinity;
 
- for(const g of grips){
+ for(
+  const g of grips
+ ){
 
-  const dx=cursorWorld.x-g.x;
-  const dy=cursorWorld.y-g.y;
-  const d=Math.sqrt(dx*dx+dy*dy);
+  const dx=
+   cursorWorld.x-g.x;
+
+  const dy=
+   cursorWorld.y-g.y;
+
+  const d=
+   Math.sqrt(
+    dx*dx+
+    dy*dy
+   );
 
   if(d<dist){
+
    dist=d;
    best=g;
   }
  }
 
- return {grip:best,distance:dist};
+ return{
+  grip:best,
+  distance:dist
+ };
 }
 
-function setPointerPosition(x,y){
-
- mouse.x=x/innerWidth*2-1;
- mouse.y=-(y/innerHeight)*2+1;
- updateCursorWorld();
-}
-
-function updateCursorWorld(){
-
- raycaster.setFromCamera(mouse,camera);
-
- const hit=new THREE.Vector3();
-
- if(raycaster.ray.intersectPlane(cursorPlane,hit)){
-  cursorWorld.copy(hit);
- }
-
- cursorWorld.x=THREE.MathUtils.clamp(cursorWorld.x,-10,10);
- cursorWorld.y=THREE.MathUtils.clamp(cursorWorld.y,-2,70);
-}
-
-function mouseMove(e){
-
- if(touchActive)return;
- setPointerPosition(e.clientX,e.clientY);
-}
-
-function mouseDown(e){
-
- if(!running)return;
- if(e.button!==0)return;
- startGrab();
-}
-
-function mouseUp(){
-
- if(!running)return;
- releaseGrab();
-}
 
 function startGrab(){
 
  if(!running)return;
 
- const result=nearestGrip();
+ const result=
+  nearestGrip();
 
- if(result.grip&&result.distance<1.15){
 
-  grabbed=result.grip;
+ if(
+  result.grip &&
+  result.distance<1.15
+ ){
+
+  grabbed=
+   result.grip;
+
 
   anchorWorld.set(
    grabbed.x,
@@ -629,70 +1818,126 @@ function startGrab(){
    4
   );
 
-  const dx=hero.position.x-anchorWorld.x;
-  const dy=hero.position.y-anchorWorld.y;
 
-  ropeLength=Math.max(
-   2,
-   Math.sqrt(dx*dx+dy*dy)
-  );
+  const dx=
+   hero.position.x-
+   anchorWorld.x;
+
+  const dy=
+   hero.position.y-
+   anchorWorld.y;
+
+
+  ropeLength=
+   Math.max(
+    2,
+    Math.sqrt(
+     dx*dx+
+     dy*dy
+    )
+   );
+
 
   velocityX=0;
   velocityY=0;
 
-  setStatus("GRIP LOCKED","#55ff70");
 
-  grabbed.group.scale.setScalar(1.55);
-  createGripBurst(grabbed.x,grabbed.y);
+  setStatus(
+   "GRIP LOCKED",
+   "#55ff70"
+  );
+
+
+  grabbed.group
+   .scale
+   .setScalar(1.55);
+
+
+  createGripBurst(
+   grabbed.x,
+   grabbed.y
+  );
 
  }else{
 
-  setStatus("MOVE CLOSER","#ffcc33");
+  setStatus(
+   "MOVE CLOSER",
+   "#ffcc33"
+  );
  }
 }
+
 
 function releaseGrab(){
 
  if(grabbed){
 
-  grabbed.group.scale.setScalar(1);
+  grabbed.group
+   .scale
+   .setScalar(1);
+
   velocityX*=1.15;
   velocityY*=1.15;
  }
 
  grabbed=null;
 
- if(running)
-  setStatus("FREE","#55ff70");
+ if(running){
+
+  setStatus(
+   "FREE",
+   "#55ff70"
+  );
+ }
 }
+
+
+/* =====================================================
+   TOUCH
+===================================================== */
 
 function touchStart(e){
 
  if(!running)return;
+
  if(!e.touches?.length)return;
 
  e.preventDefault();
 
  touchActive=true;
 
- const t=e.touches[0];
- setPointerPosition(t.clientX,t.clientY);
+ const t=
+  e.touches[0];
 
- $("touchHint").style.display="block";
+ setPointerPosition(
+  t.clientX,
+  t.clientY
+ );
+
+ $("touchHint").style.display=
+  "block";
 
  startGrab();
 }
 
+
 function touchMove(e){
 
  if(!touchActive)return;
+
  if(!e.touches?.length)return;
 
  e.preventDefault();
 
- const t=e.touches[0];
- setPointerPosition(t.clientX,t.clientY);
+ const t=
+  e.touches[0];
+
+ setPointerPosition(
+  t.clientX,
+  t.clientY
+ );
 }
+
 
 function touchEnd(e){
 
@@ -701,137 +1946,309 @@ function touchEnd(e){
  e.preventDefault();
 
  touchActive=false;
- $("touchHint").style.display="none";
+
+ $("touchHint").style.display=
+  "none";
 
  releaseGrab();
 }
 
+
+/* =====================================================
+   PHYSICS
+===================================================== */
+
 function updatePhysics(dt){
 
- velocityY+=gravity*dt;
+ velocityY+=
+  gravity*dt;
+
 
  if(grabbed){
 
-  const relX=hero.position.x-anchorWorld.x;
-  const relY=hero.position.y-anchorWorld.y;
-  const distance=Math.sqrt(relX*relX+relY*relY);
+  const relX=
+   hero.position.x-
+   anchorWorld.x;
+
+  const relY=
+   hero.position.y-
+   anchorWorld.y;
+
+  const distance=
+   Math.sqrt(
+    relX*relX+
+    relY*relY
+   );
+
 
   if(distance>.001){
 
-   const tangentX=-relY/distance;
-   const tangentY=relX/distance;
+   const tangentX=
+    -relY/distance;
 
-   const mouseX=cursorWorld.x-anchorWorld.x;
-   const mouseY=cursorWorld.y-anchorWorld.y;
-   const mouseLen=Math.sqrt(mouseX*mouseX+mouseY*mouseY);
+   const tangentY=
+    relX/distance;
+
+
+   const mouseX=
+    cursorWorld.x-
+    anchorWorld.x;
+
+   const mouseY=
+    cursorWorld.y-
+    anchorWorld.y;
+
+
+   const mouseLen=
+    Math.sqrt(
+     mouseX*mouseX+
+     mouseY*mouseY
+    );
+
 
    if(mouseLen>.001){
 
-    const nx=mouseX/mouseLen;
-    const ny=mouseY/mouseLen;
+    const nx=
+     mouseX/mouseLen;
+
+    const ny=
+     mouseY/mouseLen;
+
 
     const tangential=
-     nx*tangentX+ny*tangentY;
+     nx*tangentX+
+     ny*tangentY;
+
 
     velocityX+=
-     tangentX*tangential*swingStrength*dt;
+     tangentX*
+     tangential*
+     swingStrength*
+     dt;
 
     velocityY+=
-     tangentY*tangential*swingStrength*dt;
+     tangentY*
+     tangential*
+     swingStrength*
+     dt;
    }
 
-   if(distance>ropeLength){
 
-    const correction=distance-ropeLength;
-    const nx=relX/distance;
-    const ny=relY/distance;
+   if(
+    distance>
+    ropeLength
+   ){
 
-    hero.position.x-=nx*correction;
-    hero.position.y-=ny*correction;
+    const correction=
+     distance-
+     ropeLength;
 
-    const outward=velocityX*nx+velocityY*ny;
+    const nx=
+     relX/distance;
+
+    const ny=
+     relY/distance;
+
+
+    hero.position.x-=
+     nx*correction;
+
+    hero.position.y-=
+     ny*correction;
+
+
+    const outward=
+     velocityX*nx+
+     velocityY*ny;
+
 
     if(outward>0){
-     velocityX-=nx*outward;
-     velocityY-=ny*outward;
+
+     velocityX-=
+      nx*outward;
+
+     velocityY-=
+      ny*outward;
     }
    }
 
-   const spring=(ropeLength-distance)*anchorPull;
 
-   velocityX+=(relX/distance)*spring*dt;
-   velocityY+=(relY/distance)*spring*dt;
+   const spring=
+    (ropeLength-distance)*
+    anchorPull;
+
+
+   velocityX+=
+    (relX/distance)*
+    spring*
+    dt;
+
+   velocityY+=
+    (relY/distance)*
+    spring*
+    dt;
   }
  }
 
- const speed=Math.sqrt(
-  velocityX*velocityX+
-  velocityY*velocityY
- );
+
+ const speed=
+  Math.sqrt(
+   velocityX*velocityX+
+   velocityY*velocityY
+  );
+
 
  if(speed>maxSpeed){
 
-  const s=maxSpeed/speed;
+  const s=
+   maxSpeed/speed;
+
   velocityX*=s;
   velocityY*=s;
  }
 
- hero.position.x+=velocityX*dt;
- hero.position.y+=velocityY*dt;
 
- velocityX*=Math.pow(airDrag,dt*60);
- velocityY*=Math.pow(airDrag,dt*60);
+ hero.position.x+=
+  velocityX*dt;
 
- hero.position.x=THREE.MathUtils.clamp(
-  hero.position.x,-9,9
- );
+ hero.position.y+=
+  velocityY*dt;
+
+
+ velocityX*=
+  Math.pow(
+   airDrag,
+   dt*60
+  );
+
+ velocityY*=
+  Math.pow(
+   airDrag,
+   dt*60
+  );
+
+
+ hero.position.x=
+  THREE.MathUtils.clamp(
+   hero.position.x,
+   -9,
+   9
+  );
+
 
  const groundY=.78;
 
- if(hero.position.y<groundY){
 
-  hero.position.y=groundY;
+ if(
+  hero.position.y<
+  groundY
+ ){
 
-  if(velocityY<0)velocityY=0;
-  if(!grabbed)velocityX*=.88;
+  hero.position.y=
+   groundY;
+
+  if(velocityY<0)
+   velocityY=0;
+
+  if(!grabbed)
+   velocityX*=.88;
  }
 
- if(hero.position.y<-10)
+
+ if(
+  hero.position.y<
+  -10
+ ){
   resetPlayer();
+ }
 }
+
+
+/* =====================================================
+   HAMMER
+===================================================== */
 
 function updateHammer(){
 
  if(!hammer)return;
 
+
  if(grabbed){
 
-  hammer.position.copy(anchorWorld);
+  hammer.position.copy(
+   anchorWorld
+  );
 
-  const dx=cursorWorld.x-anchorWorld.x;
-  const dy=cursorWorld.y-anchorWorld.y;
 
-  hammer.rotation.z=Math.atan2(dy,dx);
+  const dx=
+   cursorWorld.x-
+   anchorWorld.x;
+
+  const dy=
+   cursorWorld.y-
+   anchorWorld.y;
+
+
+  hammer.rotation.z=
+   Math.atan2(
+    dy,
+    dx
+   );
 
  }else{
 
-  hammer.position.copy(cursorWorld);
+  hammer.position.copy(
+   cursorWorld
+  );
 
-  const dx=cursorWorld.x-hero.position.x;
-  const dy=cursorWorld.y-hero.position.y;
 
-  hammer.rotation.z=Math.atan2(dy,dx);
+  const dx=
+   cursorWorld.x-
+   hero.position.x;
+
+  const dy=
+   cursorWorld.y-
+   hero.position.y;
+
+
+  hammer.rotation.z=
+   Math.atan2(
+    dy,
+    dx
+   );
  }
+
 
  hammer.position.z=4;
 }
 
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
 function updateCamera(){
 
- const targetY=hero.position.y+5;
+ if(summitSequence)return;
 
- camera.position.y+=(targetY-camera.position.y)*.08;
- camera.position.x+=(hero.position.x-camera.position.x)*.05;
+
+ const targetY=
+  hero.position.y+5;
+
+
+ camera.position.y+=
+  (
+   targetY-
+   camera.position.y
+  )*.08;
+
+
+ camera.position.x+=
+  (
+   hero.position.x-
+   camera.position.x
+  )*.05;
+
 
  camera.lookAt(
   hero.position.x,
@@ -840,455 +2257,1429 @@ function updateCamera(){
  );
 }
 
+
+/* =====================================================
+   SUMMIT CAMERA SEQUENCE
+===================================================== */
+
+function updateSummitCamera(){
+
+ const targetX=
+  SUMMIT_CENTER_X;
+
+ const targetY=
+  SUMMIT_CENTER_Y+5;
+
+
+ camera.position.x+=
+  (
+   targetX-
+   camera.position.x
+  )*.065;
+
+
+ camera.position.y+=
+  (
+   targetY-
+   camera.position.y
+  )*.065;
+
+
+ camera.lookAt(
+  SUMMIT_CENTER_X,
+  SUMMIT_CENTER_Y,
+  0
+ );
+}
+
+
+/* =====================================================
+   HEIGHT
+===================================================== */
+
 function updateHeight(){
 
- const h=Math.max(
-  0,
-  Math.floor(hero.position.y)
- );
-
- const p=Math.min(
-  100,
-  Math.max(0,hero.position.y/SUMMIT_HEIGHT*100)
- );
-
- $("height").textContent=h;
- $("pct").textContent=Math.floor(p)+"%";
- $("progress").style.width=p+"%";
- $("hammerState").textContent=
-  grabbed?"GRABBED":"READY";
-}
-
-function setStatus(text,color){
-
- $("status").textContent=text;
- $("status").style.color=color;
-}
-
-function updateHelpText(){
-
- const mobile=
-  matchMedia("(pointer:coarse)").matches||
-  "ontouchstart" in window;
-
- $("help").innerHTML=mobile
-  ?"<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
-  :"Move cursor = hammer tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
-}
-
-function animateGrips(time){
-
- grips.forEach(g=>{
-
-  const pulse=
-   1+Math.sin(time*.004+g.index)*.12;
-
-  g.ring.scale.setScalar(pulse);
-  g.glow.scale.setScalar(pulse);
- });
-}
-
-function createGripBurst(x,y){
-
- for(let i=0;i<10;i++){
-
-  const p=new THREE.Mesh(
-   new THREE.SphereGeometry(.06,6,6),
-   new THREE.MeshBasicMaterial({
-    color:0x55ff70,
-    transparent:true
-   })
-  );
-
-  p.position.set(x,y,3.5);
-
-  const a=Math.random()*Math.PI*2;
-  const s=1+Math.random()*2;
-
-  p.userData.vx=Math.cos(a)*s;
-  p.userData.vy=Math.sin(a)*s;
-  p.userData.life=1;
-
-  scene.add(p);
-  summitBurst.push(p);
- }
-}
-
-function updateEffects(dt){
-
- for(let i=summitBurst.length-1;i>=0;i--){
-
-  const p=summitBurst[i];
-
-  p.position.x+=p.userData.vx*dt;
-  p.position.y+=p.userData.vy*dt;
-  p.userData.vy-=5*dt;
-  p.userData.life-=dt*2;
-
-  p.material.opacity=Math.max(
-   0,p.userData.life
-  );
-
-  if(p.userData.life<=0){
-
-   scene.remove(p);
-   p.geometry.dispose();
-   p.material.dispose();
-   summitBurst.splice(i,1);
-  }
- }
-}
-
-function createSummitBurst(){
-
- for(let i=0;i<150;i++){
-
-  const p=new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .04+Math.random()*.09,6,6
-   ),
-   new THREE.MeshBasicMaterial({
-    color:i%3===0?0xffcc33:0x55ff70,
-    transparent:true,
-    opacity:1
-   })
-  );
-
-  p.position.set(
+ const h=
+  Math.max(
    0,
-   62,
-   2
+   Math.floor(
+    hero.position.y
+   )
   );
 
-  const a=Math.random()*Math.PI*2;
-  const up=.5+Math.random()*1.5;
-  const speed=3+Math.random()*9;
 
-  p.userData={
-   vx:Math.cos(a)*speed,
-   vy:up+Math.random()*8,
-   vz:(Math.random()-.5)*speed,
-   life:1+Math.random()*.8
-  };
-
-  scene.add(p);
-  summitBurst.push(p);
- }
-
- for(let i=0;i<55;i++){
-
-  const p=new THREE.Mesh(
-   new THREE.SphereGeometry(.025,5,5),
-   new THREE.MeshBasicMaterial({
-    color:0xffffff,
-    transparent:true
-   })
+ const p=
+  Math.min(
+   100,
+   Math.max(
+    0,
+    hero.position.y/
+    SUMMIT_HEIGHT*
+    100
+   )
   );
 
-  p.position.set(0,62,2);
 
-  const a=Math.random()*Math.PI*2;
-  const speed=8+Math.random()*12;
+ $("height").textContent=
+  h;
 
-  p.userData={
-   vx:Math.cos(a)*speed,
-   vy:Math.random()*10+4,
-   vz:(Math.random()-.5)*speed,
-   life:.5+Math.random()*.7
-  };
+ $("pct").textContent=
+  Math.floor(p)+"%";
 
-  scene.add(p);
-  summitSparks.push(p);
- }
+ $("progress").style.width=
+  p+"%";
 
- for(let i=0;i<2;i++){
-
-  const shock=new THREE.Mesh(
-   new THREE.TorusGeometry(.4,.05,8,48),
-   new THREE.MeshBasicMaterial({
-    color:0x55ff70,
-    transparent:true,
-    opacity:.9
-   })
-  );
-
-  shock.position.set(0,62,2);
-  shock.rotation.x=Math.PI/2;
-
-  shock.userData={
-   life:1,
-   speed:5+i*2
-  };
-
-  scene.add(shock);
-  summitShockwaves.push(shock);
- }
-
- if(summitLight){
-  summitLight.intensity=18;
-  setTimeout(()=>{
-   if(summitLight)summitLight.intensity=5;
-  },500);
- }
+ $("hammerState").textContent=
+  grabbed?
+   "GRABBED":
+   "READY";
 }
 
-function updateSummitBurst(dt){
 
- for(let i=summitBurst.length-1;i>=0;i--){
+/* =====================================================
+   STATUS
+===================================================== */
 
-  const p=summitBurst[i];
-  const v=p.userData;
+function setStatus(
+ text,
+ color
+){
 
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
-  v.vy-=8*dt;
-  v.life-=dt;
+ $("status").textContent=
+  text;
 
-  p.material.opacity=Math.max(0,v.life);
-
-  if(v.life<=0){
-
-   scene.remove(p);
-   p.geometry.dispose();
-   p.material.dispose();
-   summitBurst.splice(i,1);
-  }
- }
-
- for(let i=summitSparks.length-1;i>=0;i--){
-
-  const p=summitSparks[i];
-  const v=p.userData;
-
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
-  v.vy-=10*dt;
-  v.life-=dt;
-
-  p.material.opacity=Math.max(0,v.life);
-
-  if(v.life<=0){
-
-   scene.remove(p);
-   p.geometry.dispose();
-   p.material.dispose();
-   summitSparks.splice(i,1);
-  }
- }
-
- for(let i=summitShockwaves.length-1;i>=0;i--){
-
-  const s=summitShockwaves[i];
-  const v=s.userData;
-
-  const scale=1+(1-v.life)*12;
-  s.scale.setScalar(scale);
-  s.material.opacity=v.life;
-  v.life-=dt*1.4;
-
-  if(v.life<=0){
-
-   scene.remove(s);
-   s.geometry.dispose();
-   s.material.dispose();
-   summitShockwaves.splice(i,1);
-  }
- }
+ $("status").style.color=
+  color;
 }
 
-function updateSummitParticles(time,dt){
 
- summitParticles.forEach(p=>{
-
-  p.position.y+=p.userData.speed*dt;
-
-  p.position.x+=
-   Math.sin(time*.001+p.userData.phase)*.002;
-
-  if(p.position.y>68)
-   p.position.y=61;
- });
-}
-
-function animateSummit(time){
-
- if(summitGlowMesh){
-
-  const s=
-   1+Math.sin(time*.003)*.15;
-
-  summitGlowMesh.scale.setScalar(s);
- }
-
- if(summitBeacon)
-  summitBeacon.scale.y=
-   1+Math.sin(time*.004)*.15;
-}
+/* =====================================================
+   SUMMIT DETECTION
+===================================================== */
 
 function checkSummit(){
 
+ if(gameWon)return;
+
+ if(summitSequence)return;
+
+
+ /*
+   The summit is only triggered
+   when the hero actually reaches
+   the summit platform area.
+
+   X is allowed to be left/right.
+   Camera will center afterward.
+ */
+
  if(
-  !gameWon&&
-  hero.position.y>=60.5
+  hero.position.y>=60.8
  ){
 
-  showVictory();
+  beginSummitSequence();
  }
 }
+
+
+/* =====================================================
+   BEGIN SUMMIT
+===================================================== */
+
+function beginSummitSequence(){
+
+ if(summitSequence)return;
+
+ summitSequence=true;
+
+ running=false;
+
+ gameWon=false;
+
+ grabbed=null;
+
+ touchActive=false;
+
+ $("touchHint").style.display=
+  "none";
+
+ setStatus(
+  "SUMMIT REACHED",
+  "#55ff70"
+ );
+
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+
+ grips.forEach(g=>{
+  g.group.scale.setScalar(1);
+ });
+
+
+ /*
+   STOP PLAYER MOTION.
+   We don't teleport the hero.
+   The hero remains where he finished.
+ */
+
+ velocityX=0;
+ velocityY=0;
+
+
+ /*
+   Camera centers on the
+   actual summit first.
+ */
+
+ const start=
+  performance.now();
+
+ const duration=
+  900;
+
+
+ function cameraFinish(now){
+
+  const elapsed=
+   now-start;
+
+  const t=
+   Math.min(
+    1,
+    elapsed/duration
+   );
+
+
+  /*
+    Smooth easing.
+  */
+
+  const eased=
+   1-Math.pow(
+    1-t,
+    3
+   );
+
+
+  const targetX=
+   SUMMIT_CENTER_X;
+
+  const targetY=
+   SUMMIT_CENTER_Y+5;
+
+
+  camera.position.x=
+   THREE.MathUtils.lerp(
+    camera.position.x,
+    targetX,
+    eased
+   );
+
+
+  camera.position.y=
+   THREE.MathUtils.lerp(
+    camera.position.y,
+    targetY,
+    eased
+   );
+
+
+  camera.lookAt(
+   SUMMIT_CENTER_X,
+   SUMMIT_CENTER_Y,
+   0
+  );
+
+
+  if(t<1){
+
+   requestAnimationFrame(
+    cameraFinish
+   );
+
+  }else{
+
+   /*
+     Force exact center.
+   */
+
+   camera.position.x=
+    0;
+
+   camera.position.y=
+    SUMMIT_CENTER_Y+5;
+
+
+   camera.lookAt(
+    0,
+    SUMMIT_CENTER_Y,
+    0
+   );
+
+
+   /*
+     Explosion ONLY NOW,
+     after camera reaches
+     summit center.
+   */
+
+   createSummitBurst();
+
+
+   victoryTimer=
+    setTimeout(()=>{
+
+     if(
+      summitSequence
+     ){
+
+      gameWon=true;
+
+      $("victory")
+       .style.display=
+       "flex";
+     }
+
+    },1100);
+  }
+ }
+
+
+ requestAnimationFrame(
+  cameraFinish
+ );
+}
+
+
+/* =====================================================
+   VICTORY
+===================================================== */
 
 function showVictory(){
 
- gameWon=true;
- running=false;
- grabbed=null;
- touchActive=false;
-
- $("touchHint").style.display="none";
- setStatus("SUMMIT REACHED","#55ff70");
-
- cancelVictoryTimer();
-
- $("victory").style.display="none";
-
- createSummitBurst();
-
- victoryTimer=setTimeout(()=>{
-
-  victoryTimer=null;
-
-  if(gameWon)
-   $("victory").style.display="flex";
-
- },1200);
+ beginSummitSequence();
 }
 
-function cancelVictoryTimer(){
 
- if(victoryTimer){
-
-  clearTimeout(victoryTimer);
-  victoryTimer=null;
- }
-}
+/* =====================================================
+   RESET
+===================================================== */
 
 function resetPlayer(){
 
- hero.position.set(0,.82,3.5);
+ hero.position.set(
+  0,
+  .82,
+  3.5
+ );
 
  velocityX=0;
  velocityY=0;
 
  grabbed=null;
+
  touchActive=false;
 
- $("touchHint").style.display="none";
+ summitSequence=false;
+
+ gameWon=false;
+
+ $("touchHint").style.display=
+  "none";
+
 
  if(touchReticle)
   touchReticle.visible=false;
 
- grips.forEach(g=>
-  g.group.scale.setScalar(1)
+
+ grips.forEach(
+  g=>
+   g.group
+    .scale
+    .setScalar(1)
  );
 
- setStatus("FREE","#55ff70");
+
+ /*
+   RESET CAMERA TO START.
+ */
+
+ camera.position.set(
+  0,
+  7,
+  18
+ );
+
+ camera.lookAt(
+  0,
+  7,
+  0
+ );
+
+
+ setStatus(
+  "FREE",
+  "#55ff70"
+ );
+
+
  updateHeight();
 }
 
+
+/* =====================================================
+   MENU
+===================================================== */
+
 function clearBursts(){
 
- [...summitBurst,...summitSparks].forEach(p=>{
+ [
+  ...summitBurst,
+  ...summitSparks
+ ].forEach(p=>{
   scene.remove(p);
  });
 
+
  summitBurst.length=0;
+
  summitSparks.length=0;
 
- summitShockwaves.forEach(p=>
-  scene.remove(p)
+
+ summitShockwaves.forEach(
+  p=>
+   scene.remove(p)
  );
+
 
  summitShockwaves.length=0;
 }
+
+
+/* =====================================================
+   SHOW GAME
+===================================================== */
 
 function showGame(){
 
  cancelVictoryTimer();
 
- $("landing").style.display="none";
- $("launchpad").style.display="none";
- $("victory").style.display="none";
+ $("landing").style.display=
+  "none";
 
- $("hud").style.display="block";
- $("help").style.display="block";
- $("nav").style.display="block";
+ $("launchpad").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+
+ $("hud").style.display=
+  "block";
+
+ $("help").style.display=
+  "block";
+
+ $("nav").style.display=
+  "block";
+
+ $("cryptoTicker").style.display=
+  "block";
+
 
  gameWon=false;
+
+ summitSequence=false;
+
  running=true;
 
+
  clearBursts();
+
  resetPlayer();
 
  updateCursorWorld();
 
- lastTime=performance.now();
+ lastTime=
+  performance.now();
+
  updateHelpText();
 }
+
+
+/* =====================================================
+   MENU
+===================================================== */
 
 function showMenu(){
 
  cancelVictoryTimer();
 
  running=false;
+
  grabbed=null;
+
  touchActive=false;
+
  gameWon=false;
 
- $("landing").style.display="flex";
- $("launchpad").style.display="none";
- $("victory").style.display="none";
+ summitSequence=false;
 
- $("hud").style.display="none";
- $("help").style.display="none";
- $("nav").style.display="none";
- $("touchHint").style.display="none";
+
+ $("landing").style.display=
+  "flex";
+
+ $("launchpad").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+
+ $("hud").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
+
 
  clearBursts();
 
+
  if(touchReticle)
   touchReticle.visible=false;
+
+
+ resetPlayer();
 }
+
+
+/* =====================================================
+   LAUNCHPAD
+===================================================== */
 
 function showLaunchpad(){
 
  cancelVictoryTimer();
 
  running=false;
+
  grabbed=null;
+
  touchActive=false;
+
  gameWon=false;
 
- $("landing").style.display="none";
- $("launchpad").style.display="flex";
- $("victory").style.display="none";
+ summitSequence=false;
 
- $("hud").style.display="none";
- $("help").style.display="none";
- $("nav").style.display="none";
- $("touchHint").style.display="none";
+
+ $("landing").style.display=
+  "none";
+
+ $("launchpad").style.display=
+  "flex";
+
+ $("victory").style.display=
+  "none";
+
+
+ $("hud").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
+
 
  if(touchReticle)
   touchReticle.visible=false;
+
+
+ clearBursts();
 }
 
+
+/* =====================================================
+   RESTART
+===================================================== */
+
 function restartGame(){
+
  showGame();
 }
 
+
+/* =====================================================
+   GRIP ANIMATION
+===================================================== */
+
+function animateGrips(time){
+
+ grips.forEach(g=>{
+
+  if(g===grabbed)return;
+
+  const pulse=
+   1+
+   Math.sin(
+    time*.004+
+    g.index
+   )*.12;
+
+  g.ring
+   .scale
+   .setScalar(pulse);
+
+  g.glow
+   .scale
+   .setScalar(pulse);
+ });
+}
+
+
+/* =====================================================
+   TOUCH RETICLE
+===================================================== */
+
+function updateTouchReticle(time){
+
+ if(!touchReticle)return;
+
+
+ if(
+  !running||
+  !touchActive||
+  summitSequence
+ ){
+
+  touchReticle.visible=
+   false;
+
+  return;
+ }
+
+
+ touchReticle.visible=
+  true;
+
+
+ touchReticle.position.set(
+  cursorWorld.x,
+  cursorWorld.y,
+  4.15
+ );
+
+
+ const result=
+  nearestGrip();
+
+
+ if(
+  result.grip &&
+  result.distance<1.15
+ ){
+
+  touchReticleMaterial.color
+   .set(0x55ff70);
+
+  touchReticleMaterial.opacity=
+   .95;
+
+
+  const pulse=
+   1+
+   Math.sin(
+    time*.018
+   )*.12;
+
+
+  touchReticle.scale
+   .setScalar(pulse);
+
+ }else{
+
+  touchReticleMaterial.color
+   .set(0xffcc33);
+
+  touchReticleMaterial.opacity=
+   .8;
+
+  touchReticle.scale
+   .setScalar(1);
+ }
+}
+
+
+/* =====================================================
+   GRIP BURST
+===================================================== */
+
+function createGripBurst(
+ x,
+ y
+){
+
+ for(let i=0;i<10;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .06,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   x,
+   y,
+   3.5
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const s=
+   1+
+   Math.random()*2;
+
+
+  p.userData.vx=
+   Math.cos(a)*s;
+
+  p.userData.vy=
+   Math.sin(a)*s;
+
+  p.userData.life=
+   1;
+
+
+  scene.add(p);
+
+  summitBurst.push(p);
+ }
+}
+
+
+/* =====================================================
+   EFFECTS
+===================================================== */
+
+function updateEffects(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitBurst[i];
+
+  p.position.x+=
+   p.userData.vx*dt;
+
+  p.position.y+=
+   p.userData.vy*dt;
+
+  p.userData.vy-=
+   5*dt;
+
+  p.userData.life-=
+   dt*2;
+
+
+  p.material.opacity=
+   Math.max(
+    0,
+    p.userData.life
+   );
+
+
+  if(
+   p.userData.life<=0
+  ){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+
+   p.material.dispose();
+
+   summitBurst.splice(i,1);
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT EXPLOSION
+===================================================== */
+
+function createSummitBurst(){
+
+ /*
+   IMPORTANT:
+   Explosion is always created
+   at the center of Jarrell's Peak.
+ */
+
+ const explosionX=
+  SUMMIT_CENTER_X;
+
+ const explosionY=
+  SUMMIT_CENTER_Y;
+
+ const explosionZ=
+  2;
+
+
+ /* MAIN PARTICLES */
+
+ for(let i=0;i<150;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .04+
+     Math.random()*.09,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:
+      i%3===0?
+      0xffcc33:
+      0x55ff70,
+     transparent:true,
+     opacity:1
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const up=
+   .5+
+   Math.random()*1.5;
+
+  const speed=
+   3+
+   Math.random()*9;
+
+
+  p.userData={
+   vx:Math.cos(a)*speed,
+   vy:up+
+      Math.random()*8,
+   vz:(Math.random()-.5)*speed,
+   life:1+
+        Math.random()*.8
+  };
+
+
+  scene.add(p);
+
+  summitBurst.push(p);
+ }
+
+
+ /* SPARKS */
+
+ for(let i=0;i<55;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .025,
+     5,
+     5
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0xffffff,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const speed=
+   8+
+   Math.random()*12;
+
+
+  p.userData={
+   vx:Math.cos(a)*speed,
+   vy:Math.random()*10+4,
+   vz:(Math.random()-.5)*speed,
+   life:.5+
+        Math.random()*.7
+  };
+
+
+  scene.add(p);
+
+  summitSparks.push(p);
+ }
+
+
+ /* SHOCKWAVES */
+
+ for(let i=0;i<2;i++){
+
+  const shock=
+   new THREE.Mesh(
+    new THREE.TorusGeometry(
+     .4,
+     .05,
+     8,
+     48
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.9
+    })
+   );
+
+
+  shock.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  shock.rotation.x=
+   Math.PI/2;
+
+
+  shock.userData={
+   life:1,
+   speed:5+i*2
+  };
+
+
+  scene.add(shock);
+
+  summitShockwaves.push(
+   shock
+  );
+ }
+
+
+ if(summitLight){
+
+  summitLight.intensity=
+   18;
+
+
+  setTimeout(()=>{
+
+   if(summitLight)
+    summitLight.intensity=
+     5;
+
+  },500);
+ }
+}
+
+
+/* =====================================================
+   UPDATE SUMMIT EXPLOSION
+===================================================== */
+
+function updateSummitBurst(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitBurst[i];
+
+  const v=
+   p.userData;
+
+
+  p.position.x+=
+   v.vx*dt;
+
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+
+  v.vy-=
+   8*dt;
+
+  v.life-=
+   dt;
+
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+
+   p.material.dispose();
+
+   summitBurst.splice(i,1);
+  }
+ }
+
+
+ for(
+  let i=summitSparks.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitSparks[i];
+
+  const v=
+   p.userData;
+
+
+  p.position.x+=
+   v.vx*dt;
+
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+
+  v.vy-=
+   10*dt;
+
+  v.life-=
+   dt;
+
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+
+   p.material.dispose();
+
+   summitSparks.splice(i,1);
+  }
+ }
+
+
+ for(
+  let i=summitShockwaves.length-1;
+  i>=0;
+  i--
+ ){
+
+  const s=
+   summitShockwaves[i];
+
+  const v=
+   s.userData;
+
+
+  const scale=
+   1+
+   (1-v.life)*12;
+
+
+  s.scale.setScalar(
+   scale
+  );
+
+
+  s.material.opacity=
+   v.life;
+
+
+  v.life-=
+   dt*1.4;
+
+
+  if(v.life<=0){
+
+   scene.remove(s);
+
+   s.geometry.dispose();
+
+   s.material.dispose();
+
+   summitShockwaves.splice(i,1);
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT PARTICLES
+===================================================== */
+
+function updateSummitParticles(
+ time,
+ dt
+){
+
+ summitParticles.forEach(p=>{
+
+  p.position.y+=
+   p.userData.speed*
+   dt;
+
+
+  p.position.x+=
+   Math.sin(
+    time*.001+
+    p.userData.phase
+   )*.002;
+
+
+  if(
+   p.position.y>68
+  ){
+   p.position.y=61;
+  }
+ });
+}
+
+
+/* =====================================================
+   SUMMIT ANIMATION
+===================================================== */
+
+function animateSummit(time){
+
+ if(summitGlowMesh){
+
+  const s=
+   1+
+   Math.sin(
+    time*.003
+   )*.15;
+
+  summitGlowMesh
+   .scale
+   .setScalar(s);
+ }
+
+
+ if(summitBeacon){
+
+  summitBeacon.scale.y=
+   1+
+   Math.sin(
+    time*.004
+   )*.15;
+ }
+}
+
+
+/* =====================================================
+   CRYPTO LIVE PRICE
+===================================================== */
+
+async function updateCryptoPrices(){
+
+ try{
+
+  const url=
+   "https://api.coingecko.com/api/v3/simple/price"+
+   "?ids=bitcoin,ethereum,solana,binancecoin,ripple"+
+   "&vs_currencies=usd"+
+   "&include_24hr_change=true";
+
+
+  const response=
+   await fetch(url,{
+    cache:"no-store"
+   });
+
+
+  if(!response.ok)
+   throw new Error(
+    "Crypto API error"
+   );
+
+
+  const data=
+   await response.json();
+
+
+  updateCryptoCard(
+   "btc",
+   data.bitcoin
+  );
+
+  updateCryptoCard(
+   "eth",
+   data.ethereum
+  );
+
+  updateCryptoCard(
+   "sol",
+   data.solana
+  );
+
+  updateCryptoCard(
+   "bnb",
+   data.binancecoin
+  );
+
+  updateCryptoCard(
+   "xrp",
+   data.ripple
+  );
+
+
+ }catch(error){
+
+  console.warn(
+   "Crypto price update failed:",
+   error
+  );
+ }
+}
+
+
+function updateCryptoCard(
+ symbol,
+ data
+){
+
+ if(!data)return;
+
+
+ const price=
+  Number(data.usd);
+
+
+ const change=
+  Number(
+   data.usd_24h_change
+  );
+
+
+ let formatted;
+
+
+ if(price>=1000){
+
+  formatted=
+   "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     maximumFractionDigits:0
+    }
+   );
+
+ }else if(price>=1){
+
+  formatted=
+   "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:2,
+     maximumFractionDigits:2
+    }
+   );
+
+ }else{
+
+  formatted=
+   "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:4,
+     maximumFractionDigits:4
+    }
+   );
+ }
+
+
+ const priceEl=
+  $(symbol+"Price");
+
+ const changeEl=
+  $(symbol+"Change");
+
+
+ priceEl.textContent=
+  formatted;
+
+
+ const sign=
+  change>=0?
+   "+":
+   "";
+
+
+ changeEl.textContent=
+  sign+
+  change.toFixed(2)+
+  "%";
+
+
+ changeEl.classList.remove(
+  "cryptoLoading",
+  "up",
+  "down"
+ );
+
+
+ changeEl.classList.add(
+  change>=0?
+   "up":
+   "down"
+ );
+}
+
+
+function startCryptoTicker(){
+
+ updateCryptoPrices();
+
+
+ if(cryptoTimer)
+  clearInterval(
+   cryptoTimer
+  );
+
+
+ /*
+   Refresh every 30 seconds.
+ */
+
+ cryptoTimer=
+  setInterval(
+   updateCryptoPrices,
+   30000
+  );
+}
+
+
+/* =====================================================
+   HELP
+===================================================== */
+
+function updateHelpText(){
+
+ const mobile=
+  matchMedia(
+   "(pointer:coarse)"
+  ).matches||
+  "ontouchstart"
+  in window;
+
+
+ $("help").innerHTML=
+  mobile
+  ?
+  "<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
+  :
+  "Move cursor = hammer tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
+}
+
+
+/* =====================================================
+   CANCEL VICTORY
+===================================================== */
+
+function cancelVictoryTimer(){
+
+ if(victoryTimer){
+
+  clearTimeout(
+   victoryTimer
+  );
+
+  victoryTimer=null;
+ }
+}
+
+
+/* =====================================================
+   RESIZE
+===================================================== */
+
 function resize(){
 
- camera.aspect=innerWidth/innerHeight;
+ camera.aspect=
+  innerWidth/
+  innerHeight;
+
  camera.updateProjectionMatrix();
 
  renderer.setSize(
@@ -1297,85 +3688,104 @@ function resize(){
  );
 }
 
-function updateTouchReticle(time){
 
- if(!touchReticle)return;
-
- if(!running||!touchActive){
-
-  touchReticle.visible=false;
-  return;
- }
-
- touchReticle.visible=true;
-
- touchReticle.position.set(
-  cursorWorld.x,
-  cursorWorld.y,
-  4.15
- );
-
- const result=nearestGrip();
-
- if(result.grip&&result.distance<1.15){
-
-  touchReticleMaterial.color.set(0x55ff70);
-  touchReticleMaterial.opacity=.95;
-
-  const pulse=
-   1+Math.sin(time*.018)*.12;
-
-  touchReticle.scale.setScalar(pulse);
-
- }else{
-
-  touchReticleMaterial.color.set(0xffcc33);
-  touchReticleMaterial.opacity=.8;
-  touchReticle.scale.setScalar(1);
- }
-}
+/* =====================================================
+   ANIMATION LOOP
+===================================================== */
 
 function animate(time=0){
 
- requestAnimationFrame(animate);
+ requestAnimationFrame(
+  animate
+ );
 
- const now=performance.now();
 
- let dt=(now-lastTime)/1000;
- lastTime=now;
- dt=Math.min(dt,.033);
+ const now=
+  performance.now();
+
+
+ let dt=
+  (now-lastTime)/
+  1000;
+
+
+ lastTime=
+  now;
+
+
+ dt=
+  Math.min(
+   dt,
+   .033
+  );
+
 
  if(running){
 
   updateHammer();
+
   updatePhysics(dt);
+
   updateCamera();
+
   updateHeight();
+
   checkSummit();
  }
 
+
+ /*
+   During summit sequence,
+   camera continues moving toward
+   Jarrell's Peak.
+ */
+
+ if(summitSequence){
+
+  updateSummitCamera();
+ }
+
+
  updateEffects(dt);
+
  updateSummitBurst(dt);
- updateSummitParticles(time,dt);
+
+ updateSummitParticles(
+  time,
+  dt
+ );
+
  animateSummit(time);
+
  animateGrips(time);
+
  updateTouchReticle(time);
 
- renderer.render(scene,camera);
+
+ renderer.render(
+  scene,
+  camera
+ );
 }
 
 
-/* =========================================
-   FIX:
-   MODULE FUNCTIONS MUST BE EXPOSED TO
-   INLINE HTML onclick BUTTONS
-========================================= */
+/* =====================================================
+   INLINE HTML BUTTON FIX
+===================================================== */
 
-window.showGame=showGame;
-window.showMenu=showMenu;
-window.showLaunchpad=showLaunchpad;
-window.restartGame=restartGame;
+window.showGame=
+ showGame;
+
+window.showMenu=
+ showMenu;
+
+window.showLaunchpad=
+ showLaunchpad;
+
+window.restartGame=
+ restartGame;
 
 </script>
+
 </body>
 </html>
