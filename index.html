@@ -133,6 +133,33 @@ canvas{
   color:#fff;
 }
 
+#progress{
+  margin-top:7px;
+  width:190px;
+}
+
+#progressText{
+  font-size:11px;
+  color:#9baab2;
+  margin-bottom:5px;
+}
+
+.progressBar{
+  width:190px;
+  height:5px;
+  background:rgba(255,255,255,.12);
+  border-radius:10px;
+  overflow:hidden;
+}
+
+#progressFill{
+  width:0%;
+  height:100%;
+  background:#55ff70;
+  box-shadow:0 0 10px rgba(85,255,112,.6);
+  transition:width:.12s linear;
+}
+
 #help{
   position:fixed;
   z-index:20;
@@ -147,6 +174,92 @@ canvas{
   font-size:13px;
   pointer-events:none;
   display:none;
+}
+
+/* =========================
+   VICTORY
+========================= */
+
+#victory{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(85,255,112,.14),
+      transparent 38%
+    ),
+    rgba(2,6,9,.88);
+  backdrop-filter:blur(8px);
+}
+
+.victoryBox{
+  width:min(650px,90%);
+  padding:55px 30px;
+  border:1px solid rgba(85,255,112,.35);
+  border-radius:24px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.08),
+      rgba(255,255,255,.025)
+    );
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.65),
+    0 0 50px rgba(85,255,112,.08);
+}
+
+.victorySmall{
+  color:#55ff70;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:5px;
+  margin-bottom:15px;
+}
+
+.victoryBox h1{
+  margin:0;
+  font-size:clamp(40px,8vw,76px);
+  line-height:.95;
+  letter-spacing:4px;
+  font-weight:1000;
+}
+
+.victoryPeak{
+  margin-top:18px;
+  color:#55ff70;
+  font-size:clamp(25px,5vw,44px);
+  font-weight:1000;
+  letter-spacing:4px;
+  text-shadow:0 0 20px rgba(85,255,112,.25);
+}
+
+.victoryMessage{
+  margin:22px auto 30px;
+  color:#9baab2;
+  font-size:14px;
+}
+
+.restartButton{
+  border:0;
+  padding:14px 25px;
+  border-radius:9px;
+  background:#55ff70;
+  color:#031006;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:2px;
+  cursor:pointer;
+}
+
+.restartButton:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 25px rgba(85,255,112,.25);
 }
 
 /* =========================
@@ -541,6 +654,19 @@ canvas{
   #hud{
     top:58px;
   }
+
+  #title{
+    font-size:22px;
+  }
+
+  #progress,
+  .progressBar{
+    width:150px;
+  }
+
+  .victoryBox{
+    padding:42px 20px;
+  }
 }
 </style>
 </head>
@@ -629,6 +755,21 @@ canvas{
     </span>m
   </div>
 
+  <div id="progress">
+
+    <div id="progressText">
+      SUMMIT:
+      <span id="progressPercent">
+        0
+      </span>%
+    </div>
+
+    <div class="progressBar">
+      <div id="progressFill"></div>
+    </div>
+
+  </div>
+
 </div>
 
 <div id="help">
@@ -648,6 +789,41 @@ canvas{
   <button class="navButton" id="menuButton">
     ← MAIN MENU
   </button>
+</div>
+
+<!-- =========================
+     VICTORY
+========================= -->
+
+<div id="victory">
+
+  <div class="victoryBox">
+
+    <div class="victorySmall">
+      CLIMBORIA SUMMIT REACHED
+    </div>
+
+    <h1>
+      YOU MADE IT.
+    </h1>
+
+    <div class="victoryPeak">
+      JARRELL’S PEAK
+    </div>
+
+    <div class="victoryMessage">
+      Every climb has a reason. ❤️
+    </div>
+
+    <button
+      class="restartButton"
+      id="restartButton"
+    >
+      CLIMB AGAIN
+    </button>
+
+  </div>
+
 </div>
 
 <!-- =========================
@@ -673,7 +849,6 @@ canvas{
       ecosystem.
     </p>
 
-    <!-- JARRELL -->
     <div class="jarrellNote">
       <span>Built for the climb. For</span>
       <strong>Jarrell Escalante</strong>
@@ -1024,6 +1199,7 @@ let hammer;
 
 let running=false;
 let grabbed=null;
+let gameWon=false;
 
 let velocityX=0;
 let velocityY=0;
@@ -1035,6 +1211,8 @@ const maxSpeed=18;
 const airDrag=0.992;
 const swingStrength=26;
 const anchorPull=18;
+
+const SUMMIT_HEIGHT=60;
 
 const grips=[];
 
@@ -1090,6 +1268,11 @@ const gameNav=
     "gameNav"
   );
 
+const victory=
+  document.getElementById(
+    "victory"
+  );
+
 
 function showGame(){
 
@@ -1097,13 +1280,19 @@ function showGame(){
 
   launchpad.style.display="none";
 
+  victory.style.display="none";
+
   hud.style.display="block";
 
   help.style.display="block";
 
   gameNav.style.display="block";
 
+  gameWon=false;
+
   running=true;
+
+  resetPlayer();
 
   updateCursorWorld();
 
@@ -1117,6 +1306,11 @@ function showMenu(){
   running=false;
 
   grabbed=null;
+
+  gameWon=false;
+
+  victory.style.display=
+    "none";
 
   landing.style.display=
     "flex";
@@ -1141,6 +1335,9 @@ function showLaunchpad(){
 
   grabbed=null;
 
+  victory.style.display=
+    "none";
+
   landing.style.display=
     "none";
 
@@ -1155,6 +1352,42 @@ function showLaunchpad(){
 
   gameNav.style.display=
     "none";
+}
+
+
+function showVictory(){
+
+  gameWon=true;
+
+  running=false;
+
+  grabbed=null;
+
+  setStatus(
+    "SUMMIT REACHED",
+    "#55ff70"
+  );
+
+  victory.style.display=
+    "flex";
+}
+
+
+function restartGame(){
+
+  victory.style.display=
+    "none";
+
+  gameWon=false;
+
+  resetPlayer();
+
+  running=true;
+
+  updateCursorWorld();
+
+  lastTime=
+    performance.now();
 }
 
 
@@ -1195,6 +1428,16 @@ document
   .addEventListener(
     "click",
     showMenu
+  );
+
+
+document
+  .getElementById(
+    "restartButton"
+  )
+  .addEventListener(
+    "click",
+    restartGame
   );
 
 
@@ -1461,6 +1704,61 @@ function createMountain(){
       );
 
     }
+  );
+
+  /* =========================
+     JARRELL'S PEAK SIGN
+  ========================= */
+
+  const signGroup=
+    new THREE.Group();
+
+  const signMaterial=
+    new THREE.MeshStandardMaterial({
+      color:0x151d22,
+      roughness:.7
+    });
+
+  const sign=
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        5.2,
+        1.25,
+        .25
+      ),
+      signMaterial
+    );
+
+  signGroup.add(
+    sign
+  );
+
+  const post=
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .12,
+        .12,
+        2.5,
+        10
+      ),
+      signMaterial
+    );
+
+  post.position.y=
+    -1.75;
+
+  signGroup.add(
+    post
+  );
+
+  signGroup.position.set(
+    -3,
+    63,
+    2
+  );
+
+  scene.add(
+    signGroup
   );
 }
 
@@ -2563,6 +2861,25 @@ function resetPlayer(){
     "FREE",
     "#55ff70"
   );
+
+  updateHeight();
+}
+
+
+/* =========================================================
+   SUMMIT CHECK
+========================================================= */
+
+function checkSummit(){
+
+  if(
+    !gameWon &&
+    hero.position.y>=
+    SUMMIT_HEIGHT-.5
+  ){
+
+    showVictory();
+  }
 }
 
 
@@ -2665,7 +2982,7 @@ function animateGrips(time){
 
 
 /* =========================================================
-   HEIGHT
+   HEIGHT + PROGRESS
 ========================================================= */
 
 function updateHeight(){
@@ -2683,6 +3000,29 @@ function updateHeight(){
     "heightText"
   ).textContent=
     height;
+
+
+  const progress=
+    THREE.MathUtils.clamp(
+      (
+        hero.position.y/
+        SUMMIT_HEIGHT
+      )*100,
+      0,
+      100
+    );
+
+
+  document.getElementById(
+    "progressPercent"
+  ).textContent=
+    Math.floor(progress);
+
+
+  document.getElementById(
+    "progressFill"
+  ).style.width=
+    progress+"%";
 }
 
 
@@ -2747,6 +3087,8 @@ function animate(time=0){
     updateCamera();
 
     updateHeight();
+
+    checkSummit();
   }
 
 
