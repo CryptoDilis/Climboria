@@ -1208,17 +1208,11 @@ button:active{transform:scale(.98)}
 
     <div class="refActions">
 
-     <button
-      class="smallButton"
-      id="copyReferralButton"
-      type="button">
+     <button class="smallButton" id="copyReferralButton" type="button">
       COPY CODE
      </button>
 
-     <button
-      class="smallButton"
-      id="shareReferralButton"
-      type="button">
+     <button class="smallButton" id="shareReferralButton" type="button">
       SHARE LINK
      </button>
 
@@ -1236,9 +1230,7 @@ button:active{transform:scale(.98)}
 
    <div id="leaderboardRows"></div>
 
-   <div
-    class="dashSmall"
-    style="text-align:center;margin-top:8px">
+   <div class="dashSmall" style="text-align:center;margin-top:8px">
     Global leaderboard will be connected to the backend later.
    </div>
 
@@ -1265,10 +1257,7 @@ button:active{transform:scale(.98)}
    </div>
 
    <div class="airdropProgress">
-    <div
-     class="airdropProgressFill"
-     id="airdropProgress">
-    </div>
+    <div class="airdropProgressFill" id="airdropProgress"></div>
    </div>
 
    <div class="airdropStats">
@@ -1338,9 +1327,7 @@ button:active{transform:scale(.98)}
     CLIMB POINTS
    </div>
 
-   <div
-    class="winPointsValue"
-    id="victoryPoints">
+   <div class="winPointsValue" id="victoryPoints">
     0
    </div>
 
@@ -1509,12 +1496,7 @@ button:active{transform:scale(.98)}
  </button>
 </div>
 
-
 <script>
-/* =====================================================
-   EARLY UI BINDING
-===================================================== */
-
 (function(){
 
  const startButton=document.getElementById("startButton");
@@ -1540,98 +1522,65 @@ button:active{transform:scale(.98)}
 
     }
    }
-
   });
-
  }
-
 
  const backButton=document.getElementById("backButton");
 
  if(backButton){
-
   backButton.addEventListener("click",function(){
-
    if(typeof window.showMenu==="function")
     window.showMenu();
-
   });
-
  }
-
 
  const climbAgainButton=document.getElementById("climbAgainButton");
 
  if(climbAgainButton){
-
   climbAgainButton.addEventListener("click",function(){
-
    if(typeof window.restartGame==="function")
     window.restartGame();
-
   });
-
  }
-
 
  const menuButtonVictory=document.getElementById("menuButtonVictory");
 
  if(menuButtonVictory){
-
   menuButtonVictory.addEventListener("click",function(){
-
    if(typeof window.showMenu==="function")
     window.showMenu();
-
   });
-
  }
-
 
  const menuButton=document.getElementById("menuButton");
 
  if(menuButton){
-
   menuButton.addEventListener("click",function(){
-
    if(typeof window.showMenu==="function")
     window.showMenu();
-
   });
-
  }
-
 
  const copyButton=document.getElementById("copyReferralButton");
 
  if(copyButton){
-
   copyButton.addEventListener("click",function(){
-
    if(typeof window.copyReferral==="function")
     window.copyReferral();
-
   });
-
  }
-
 
  const shareButton=document.getElementById("shareReferralButton");
 
  if(shareButton){
-
   shareButton.addEventListener("click",function(){
-
    if(typeof window.shareReferral==="function")
     window.shareReferral();
-
   });
-
  }
 
 })();
 </script>
-
 
 <script type="module">
 
@@ -1657,22 +1606,17 @@ try{
  const status=document.getElementById("status");
 
  if(status){
-
   status.textContent="GAME ENGINE LOAD ERROR";
   status.style.color="#ff6677";
-
  }
 
  const startButton=document.getElementById("startButton");
 
  if(startButton){
-
   startButton.textContent="RELOAD GAME";
-
   startButton.onclick=function(){
    location.reload();
   };
-
  }
 
  throw error;
@@ -1680,7 +1624,7 @@ try{
 
 
 /* =====================================================
-   CORE VARIABLES
+   CORE
 ===================================================== */
 
 let scene;
@@ -1689,6 +1633,9 @@ let renderer;
 
 let hero;
 let hammer;
+
+let hammerRope;
+let hammerRopeMaterial;
 
 let grips=[];
 
@@ -1724,9 +1671,11 @@ let touchActive=false;
 let touchReticle=null;
 let touchReticleMaterial=null;
 
+let cameraShake=0;
+
 
 /* =====================================================
-   CLIMB POINTS
+   POINTS
 ===================================================== */
 
 const POINTS_KEY="climboria_climb_points";
@@ -1762,11 +1711,11 @@ let airdropScore=0;
    PHYSICS
 ===================================================== */
 
-const gravity=-18;
-const swingStrength=38;
-const anchorPull=8;
-const airDrag=.985;
-const maxSpeed=16;
+const gravity=-17;
+const swingStrength=43;
+const anchorPull=10;
+const airDrag=.988;
+const maxSpeed=18;
 
 
 /* =====================================================
@@ -1782,10 +1731,6 @@ const SUMMIT_HERO_X=0;
 const SUMMIT_HERO_Y=61.75;
 const SUMMIT_HERO_Z=3.5;
 
-const SUMMIT_EXPLOSION_X=0;
-const SUMMIT_EXPLOSION_Y=62.45;
-const SUMMIT_EXPLOSION_Z=3.5;
-
 const summitParticles=[];
 const summitBurst=[];
 const summitSparks=[];
@@ -1796,12 +1741,11 @@ let summitLight=null;
 let summitBeacon=null;
 
 let victoryTimer=null;
-
 let summitSequence=false;
 
 
 /* =====================================================
-   CRYPTO MARKET
+   CRYPTO
 ===================================================== */
 
 let cryptoTimer=null;
@@ -1852,7 +1796,7 @@ let cryptoSecondsLeft=CRYPTO_REFRESH_SECONDS;
 
 
 /* =====================================================
-   DOM HELPER
+   DOM
 ===================================================== */
 
 function $(id){
@@ -1861,7 +1805,7 @@ function $(id){
 
 
 /* =====================================================
-   DATE HELPERS
+   DATE
 ===================================================== */
 
 function getDateKey(date=new Date()){
@@ -1888,16 +1832,13 @@ function dateDifferenceInDays(olderKey,newerKey){
  );
 
  return Math.round(
-  (
-   b.getTime()-
-   a.getTime()
-  )/86400000
+  (b.getTime()-a.getTime())/86400000
  );
 }
 
 
 /* =====================================================
-   DAILY STREAK
+   STREAK
 ===================================================== */
 
 function updateDailyStreak(){
@@ -1922,7 +1863,6 @@ function updateDailyStreak(){
 
  }
 
-
  if(previous===today){
 
   updateStreakUI();
@@ -1930,12 +1870,11 @@ function updateDailyStreak(){
 
  }
 
-
- const difference=dateDifferenceInDays(
-  previous,
-  today
- );
-
+ const difference=
+  dateDifferenceInDays(
+   previous,
+   today
+  );
 
  if(difference===1){
 
@@ -1947,7 +1886,6 @@ function updateDailyStreak(){
   dailyStreak=1;
 
  }
-
 
  try{
 
@@ -1962,7 +1900,6 @@ function updateDailyStreak(){
   );
 
  }catch(error){}
-
 
  addClimbPoints(DAILY_REWARD);
  registerAirdropAction(5);
@@ -1988,7 +1925,6 @@ function updateStreakUI(){
   $("landingStreakStatus").textContent=
    dailyStreak>0?"ACTIVE":"START TODAY";
 
-
  if($("dashStreak"))
   $("dashStreak").textContent=
    dailyStreak+
@@ -1997,7 +1933,6 @@ function updateStreakUI(){
     " DAY":
     " DAYS"
    );
-
 
  if($("dashStreakText")){
 
@@ -2020,7 +1955,6 @@ function updateStreakUI(){
   }
  }
 
-
  if($("streakFill")){
 
   $("streakFill").style.width=
@@ -2034,7 +1968,7 @@ function updateStreakUI(){
 
 
 /* =====================================================
-   CLIMB POINTS STORAGE
+   POINT STORAGE
 ===================================================== */
 
 function loadClimbData(){
@@ -2042,35 +1976,25 @@ function loadClimbData(){
  try{
 
   const savedPoints=
-   Number(
-    localStorage.getItem(POINTS_KEY)
-   );
+   Number(localStorage.getItem(POINTS_KEY));
 
   const savedSummits=
-   Number(
-    localStorage.getItem(SUMMITS_KEY)
-   );
+   Number(localStorage.getItem(SUMMITS_KEY));
 
   const savedAttempts=
-   Number(
-    localStorage.getItem(ATTEMPTS_KEY)
-   );
-
+   Number(localStorage.getItem(ATTEMPTS_KEY));
 
   climbPoints=
    Number.isFinite(savedPoints)&&savedPoints>=0
-   ?Math.floor(savedPoints)
-   :0;
+   ?Math.floor(savedPoints):0;
 
   totalSummits=
    Number.isFinite(savedSummits)&&savedSummits>=0
-   ?Math.floor(savedSummits)
-   :0;
+   ?Math.floor(savedSummits):0;
 
   totalAttempts=
    Number.isFinite(savedAttempts)&&savedAttempts>=0
-   ?Math.floor(savedAttempts)
-   :0;
+   ?Math.floor(savedAttempts):0;
 
  }catch(error){
 
@@ -2079,7 +2003,6 @@ function loadClimbData(){
   totalAttempts=0;
 
  }
-
 
  updatePointsUI();
 }
@@ -2113,9 +2036,7 @@ function addClimbPoints(amount){
  amount=
   Math.max(
    0,
-   Math.floor(
-    Number(amount)||0
-   )
+   Math.floor(Number(amount)||0)
   );
 
  if(amount<=0)return;
@@ -2131,13 +2052,9 @@ function registerAttempt(){
 
  totalAttempts++;
 
- addClimbPoints(
-  ATTEMPT_REWARD
- );
+ addClimbPoints(ATTEMPT_REWARD);
 
- registerAirdropAction(
-  10
- );
+ registerAirdropAction(10);
 
  saveClimbData();
  updatePointsUI();
@@ -2148,13 +2065,9 @@ function registerSummit(){
 
  totalSummits++;
 
- addClimbPoints(
-  CLIMB_REWARD
- );
+ addClimbPoints(CLIMB_REWARD);
 
- registerAirdropAction(
-  30
- );
+ registerAirdropAction(30);
 
  saveClimbData();
  updatePointsUI();
@@ -2165,7 +2078,6 @@ function updatePointsUI(){
 
  const formatted=
   climbPoints.toLocaleString("en-US");
-
 
  if($("landingPoints"))
   $("landingPoints").textContent=formatted;
@@ -2214,12 +2126,11 @@ function generateReferralCode(){
 
  for(let i=0;i<6;i++){
 
-  code+=
-   chars[
-    Math.floor(
-     Math.random()*chars.length
-    )
-   ];
+  code+=chars[
+   Math.floor(
+    Math.random()*chars.length
+   )
+  ];
 
  }
 
@@ -2250,11 +2161,9 @@ function loadReferralData(){
 
  }
 
-
  if(!referralCode){
 
-  referralCode=
-   generateReferralCode();
+  referralCode=generateReferralCode();
 
   try{
 
@@ -2267,7 +2176,6 @@ function loadReferralData(){
 
  }
 
-
  try{
 
   const params=
@@ -2275,8 +2183,7 @@ function loadReferralData(){
     window.location.search
    );
 
-  const incoming=
-   params.get("ref");
+  const incoming=params.get("ref");
 
   if(
    incoming&&
@@ -2304,7 +2211,6 @@ function loadReferralData(){
   }
 
  }catch(error){}
-
 
  updateReferralUI();
 }
@@ -2361,11 +2267,9 @@ async function copyReferral(){
    );
 
    return;
-
   }
 
  }catch(error){}
-
 
  window.prompt(
   "Copy your Climboria referral link:",
@@ -2428,7 +2332,6 @@ function loadAirdropData(){
 
  }
 
-
  airdropActions=
   Math.max(
    0,
@@ -2471,9 +2374,7 @@ function registerAirdropAction(points){
  points=
   Math.max(
    0,
-   Math.floor(
-    Number(points)||0
-   )
+   Math.floor(Number(points)||0)
   );
 
  if(points<=0)return;
@@ -2521,31 +2422,11 @@ function updateAirdropUI(){
 ===================================================== */
 
 const DEMO_LEADERBOARD=[
- {
-  name:"SummitHunter",
-  points:12840,
-  time:"02:18"
- },
- {
-  name:"ClimbMaster",
-  points:11320,
-  time:"02:31"
- },
- {
-  name:"PotClimber",
-  points:9870,
-  time:"02:46"
- },
- {
-  name:"Genesis",
-  points:8640,
-  time:"03:04"
- },
- {
-  name:"Satoshi",
-  points:7310,
-  time:"03:22"
- }
+ {name:"SummitHunter",points:12840,time:"02:18"},
+ {name:"ClimbMaster",points:11320,time:"02:31"},
+ {name:"PotClimber",points:9870,time:"02:46"},
+ {name:"Genesis",points:8640,time:"03:04"},
+ {name:"Satoshi",points:7310,time:"03:22"}
 ];
 
 
@@ -2586,8 +2467,7 @@ function renderLeaderboard(){
     "leaderRow"+
     (
      row.name==="YOU"?
-     " leaderYou":
-     ""
+     " leaderYou":""
     );
 
    div.innerHTML=`
@@ -2598,7 +2478,6 @@ function renderLeaderboard(){
    `;
 
    container.appendChild(div);
-
   }
  );
 }
@@ -2638,15 +2517,9 @@ try{
    "GAME INITIALIZATION ERROR";
 
   status.style.color="#ff6677";
-
  }
-
 }
 
-
-/* =====================================================
-   INIT
-===================================================== */
 
 function init(){
 
@@ -2655,7 +2528,6 @@ function init(){
  loadReferralData();
  updateDailyStreak();
  renderLeaderboard();
-
 
  scene=new THREE.Scene();
 
@@ -2666,9 +2538,8 @@ function init(){
   new THREE.Fog(
    0x05090d,
    35,
-   100
+   105
   );
-
 
  camera=
   new THREE.PerspectiveCamera(
@@ -2683,7 +2554,6 @@ function init(){
   7,
   18
  );
-
 
  renderer=
   new THREE.WebGLRenderer({
@@ -2713,7 +2583,6 @@ function init(){
   renderer.domElement
  );
 
-
  const amb=
   new THREE.AmbientLight(
    0xffffff,
@@ -2722,52 +2591,35 @@ function init(){
 
  scene.add(amb);
 
-
  const sun=
   new THREE.DirectionalLight(
    0xffffff,
-   1.1
+   1.15
   );
 
  sun.position.set(
   -5,
-  20,
-  15
+  25,
+  18
  );
 
  scene.add(sun);
-
 
  createSky();
  createMountain();
  createGround();
  createRocks();
+ createMountainDetails();
  createHero();
  createHammer();
  createGrips();
  createTouchReticle();
  createSummitParticles();
 
-
- window.addEventListener(
-  "resize",
-  resize
- );
-
- window.addEventListener(
-  "mousemove",
-  mouseMove
- );
-
- window.addEventListener(
-  "mousedown",
-  mouseDown
- );
-
- window.addEventListener(
-  "mouseup",
-  mouseUp
- );
+ window.addEventListener("resize",resize);
+ window.addEventListener("mousemove",mouseMove);
+ window.addEventListener("mousedown",mouseDown);
+ window.addEventListener("mouseup",mouseUp);
 
  window.addEventListener(
   "touchstart",
@@ -2793,31 +2645,23 @@ function init(){
   {passive:false}
  );
 
-
  updateHelpText();
 
  $("cryptoTicker").style.display="flex";
 
  startCryptoTicker();
 
-
  if(window.climboriaStartRequested){
 
   window.climboriaStartRequested=false;
 
   setTimeout(
-   ()=>{
-    showGame();
-   },
+   ()=>showGame(),
    0
   );
-
  }
 
-
- requestAnimationFrame(
-  animate
- );
+ requestAnimationFrame(animate);
 }
 
 
@@ -2860,15 +2704,15 @@ function createMountain(){
     7
    ),
    new THREE.MeshStandardMaterial({
-    color:0x555b5d,
+    color:0x4d5558,
     roughness:1
    })
   );
 
  cliff.position.set(
-  0,
-  34,
-  -7
+   0,
+   34,
+   -7
  );
 
  cliff.rotation.y=-.04;
@@ -2891,7 +2735,6 @@ function createMountain(){
   [7,57,2.5,2]
  ];
 
-
  ledges.forEach(v=>{
 
   const[x,y,w,h]=v;
@@ -2904,7 +2747,7 @@ function createMountain(){
      5
     ),
     new THREE.MeshStandardMaterial({
-     color:0x666d6f,
+     color:0x626a6d,
      roughness:1
     })
    );
@@ -2916,7 +2759,6 @@ function createMountain(){
   );
 
   scene.add(mesh);
-
  });
 
 
@@ -2940,8 +2782,7 @@ function createMountain(){
   -1
  );
 
- summit.rotation.y=
-  Math.PI/7;
+ summit.rotation.y=Math.PI/7;
 
  scene.add(summit);
 
@@ -2974,7 +2815,6 @@ function createMountain(){
    v[3]/v[2];
 
   scene.add(r);
-
  });
 
 
@@ -3084,6 +2924,106 @@ function createMountain(){
 
 
 /* =====================================================
+   MOUNTAIN DETAILS
+===================================================== */
+
+function createMountainDetails(){
+
+ const rockMaterial=
+  new THREE.MeshStandardMaterial({
+   color:0x343d41,
+   roughness:1
+  });
+
+ for(let i=0;i<32;i++){
+
+  const y=
+   2+
+   Math.random()*58;
+
+  const side=
+   i%2===0?-1:1;
+
+  const x=
+   side*
+   (5+
+   Math.random()*4.5);
+
+  const rock=
+   new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+     .25+
+     Math.random()*.5,
+     0
+    ),
+    rockMaterial
+   );
+
+  rock.position.set(
+   x,
+   y,
+   -2.8+
+   Math.random()*1.5
+  );
+
+  rock.rotation.set(
+   Math.random()*3,
+   Math.random()*3,
+   Math.random()*3
+  );
+
+  rock.scale.y=
+   .7+
+   Math.random()*1.8;
+
+  scene.add(rock);
+ }
+
+
+ const ledgeMarks=[
+  [-8,5],
+  [7,8],
+  [-6,12],
+  [6,16],
+  [-8,21],
+  [7,25],
+  [-6,30],
+  [8,35],
+  [-7,40],
+  [6,45],
+  [-5,51],
+  [7,57]
+ ];
+
+ ledgeMarks.forEach((p,index)=>{
+
+  const line=
+   new THREE.Mesh(
+    new THREE.BoxGeometry(
+     1.2+
+     (index%3)*.5,
+     .035,
+     .035
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x7c8689,
+     transparent:true,
+     opacity:.28
+    })
+   );
+
+  line.position.set(
+   p[0],
+   p[1]+.95,
+   -5.32
+  );
+
+  scene.add(line);
+ });
+}
+
+
+/* =====================================================
    GROUND
 ===================================================== */
 
@@ -3105,6 +3045,42 @@ function createGround(){
  ground.position.y=-.5;
 
  scene.add(ground);
+
+
+ const groundMarks=
+  new THREE.Group();
+
+ for(let i=0;i<25;i++){
+
+  const mark=
+   new THREE.Mesh(
+    new THREE.BoxGeometry(
+     .4+
+     Math.random()*.8,
+     .03,
+     .15
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x354249,
+     transparent:true,
+     opacity:.6
+    })
+   );
+
+  mark.position.set(
+   (Math.random()-.5)*25,
+   .02,
+   5+
+   Math.random()*10
+  );
+
+  mark.rotation.y=
+   Math.random()*Math.PI;
+
+  groundMarks.add(mark);
+ }
+
+ scene.add(groundMarks);
 }
 
 
@@ -3157,7 +3133,6 @@ function createHero(){
  hero=
   new THREE.Group();
 
-
  const pot=
   new THREE.Mesh(
    new THREE.CylinderGeometry(
@@ -3167,7 +3142,8 @@ function createHero(){
     28
    ),
    new THREE.MeshStandardMaterial({
-    color:0xd17a3e
+    color:0xd17a3e,
+    roughness:.8
    })
   );
 
@@ -3189,11 +3165,8 @@ function createHero(){
    })
   );
 
- rim.rotation.x=
-  Math.PI/2;
-
- rim.position.y=
-  1.43;
+ rim.rotation.x=Math.PI/2;
+ rim.position.y=1.43;
 
  hero.add(rim);
 
@@ -3210,8 +3183,7 @@ function createHero(){
    })
   );
 
- head.position.y=
-  1.35;
+ head.position.y=1.35;
 
  hero.add(head);
 
@@ -3228,12 +3200,12 @@ function createHero(){
     Math.PI*.55
    ),
    new THREE.MeshStandardMaterial({
-    color:0x1a2227
+    color:0x1a2227,
+    roughness:.7
    })
   );
 
- helmet.position.y=
-  1.62;
+ helmet.position.y=1.62;
 
  hero.add(helmet);
 
@@ -3259,7 +3231,6 @@ function createHero(){
   );
 
   hero.add(eye);
-
  });
 
 
@@ -3295,14 +3266,13 @@ function createHero(){
 
 
 /* =====================================================
-   HAMMER
+   HAMMER + ROPE
 ===================================================== */
 
 function createHammer(){
 
  hammer=
   new THREE.Group();
-
 
  const handle=
   new THREE.Mesh(
@@ -3317,11 +3287,8 @@ function createHammer(){
    })
   );
 
- handle.rotation.z=
-  Math.PI/2;
-
- handle.position.x=
-  -1.9;
+ handle.rotation.z=Math.PI/2;
+ handle.position.x=-1.9;
 
  hammer.add(handle);
 
@@ -3339,8 +3306,7 @@ function createHammer(){
    })
   );
 
- head.position.x=
-  -.65;
+ head.position.x=-.65;
 
  hammer.add(head);
 
@@ -3362,6 +3328,7 @@ function createHammer(){
 
  hammer.userData.tip=tip;
 
+
  hammer.position.set(
   3,
   3,
@@ -3369,6 +3336,30 @@ function createHammer(){
  );
 
  scene.add(hammer);
+
+
+ hammerRopeMaterial=
+  new THREE.LineBasicMaterial({
+   color:0xffcc33,
+   transparent:true,
+   opacity:.65
+  });
+
+ const ropeGeometry=
+  new THREE.BufferGeometry().setFromPoints([
+   new THREE.Vector3(),
+   new THREE.Vector3()
+  ]);
+
+ hammerRope=
+  new THREE.Line(
+   ropeGeometry,
+   hammerRopeMaterial
+  );
+
+ hammerRope.visible=false;
+
+ scene.add(hammerRope);
 }
 
 
@@ -3435,7 +3426,8 @@ function createGrips(){
      ),
      new THREE.MeshStandardMaterial({
       color:0x55ff70,
-      emissive:0x113d19
+      emissive:0x113d19,
+      emissiveIntensity:.8
      })
     );
 
@@ -3459,6 +3451,7 @@ function createGrips(){
     center
    );
 
+
    group.position.set(
     p[0],
     p[1],
@@ -3476,14 +3469,13 @@ function createGrips(){
     y:p[1],
     index
    });
-
   }
  );
 }
 
 
 /* =====================================================
-   TOUCH RETICLE
+   RETICLE
 ===================================================== */
 
 function createTouchReticle(){
@@ -3496,7 +3488,6 @@ function createTouchReticle(){
    depthWrite:false
   });
 
-
  touchReticle=
   new THREE.Mesh(
    new THREE.TorusGeometry(
@@ -3508,11 +3499,9 @@ function createTouchReticle(){
    touchReticleMaterial
   );
 
-
  touchReticle.position.z=4.15;
 
- touchReticle.rotation.x=
-  Math.PI/2;
+ touchReticle.rotation.x=Math.PI/2;
 
  touchReticle.visible=false;
 
@@ -3542,19 +3531,16 @@ function createSummitParticles(){
     })
    );
 
-
   p.position.set(
    (Math.random()-.5)*8,
    61+Math.random()*5,
    Math.random()*2
   );
 
-
   p.userData={
    speed:.2+Math.random()*.5,
    phase:Math.random()*6
   };
-
 
   scene.add(p);
 
@@ -3599,9 +3585,7 @@ function updateCursorWorld(){
  ){
 
   cursorWorld.copy(hit);
-
  }
-
 
  cursorWorld.x=
   THREE.MathUtils.clamp(
@@ -3692,15 +3676,12 @@ function startGrab(){
  const result=
   nearestGrip();
 
-
  if(
   result.grip&&
-  result.distance<1.15
+  result.distance<1.2
  ){
 
-  grabbed=
-   result.grip;
-
+  grabbed=result.grip;
 
   anchorWorld.set(
    grabbed.x,
@@ -3708,15 +3689,11 @@ function startGrab(){
    4
   );
 
-
   const dx=
-   hero.position.x-
-   anchorWorld.x;
+   hero.position.x-anchorWorld.x;
 
   const dy=
-   hero.position.y-
-   anchorWorld.y;
-
+   hero.position.y-anchorWorld.y;
 
   ropeLength=
    Math.max(
@@ -3728,8 +3705,8 @@ function startGrab(){
    );
 
 
-  velocityX=0;
-  velocityY=0;
+  velocityX*=.35;
+  velocityY*=.35;
 
 
   setStatus(
@@ -3748,13 +3725,14 @@ function startGrab(){
    grabbed.y
   );
 
+  cameraShake=.12;
+
  }else{
 
   setStatus(
    "MOVE CLOSER",
    "#ffcc33"
   );
-
  }
 }
 
@@ -3767,8 +3745,10 @@ function releaseGrab(){
    .scale
    .setScalar(1);
 
-  velocityX*=1.15;
-  velocityY*=1.15;
+  velocityX*=1.2;
+  velocityY*=1.2;
+
+  cameraShake=.08;
  }
 
  grabbed=null;
@@ -3779,7 +3759,6 @@ function releaseGrab(){
    "FREE",
    "#55ff70"
   );
-
  }
 }
 
@@ -3848,19 +3827,16 @@ function touchEnd(e){
 
 function updatePhysics(dt){
 
- velocityY+=
-  gravity*dt;
+ velocityY+=gravity*dt;
 
 
  if(grabbed){
 
   const relX=
-   hero.position.x-
-   anchorWorld.x;
+   hero.position.x-anchorWorld.x;
 
   const relY=
-   hero.position.y-
-   anchorWorld.y;
+   hero.position.y-anchorWorld.y;
 
   const distance=
    Math.sqrt(
@@ -3879,13 +3855,10 @@ function updatePhysics(dt){
 
 
    const mouseX=
-    cursorWorld.x-
-    anchorWorld.x;
+    cursorWorld.x-anchorWorld.x;
 
    const mouseY=
-    cursorWorld.y-
-    anchorWorld.y;
-
+    cursorWorld.y-anchorWorld.y;
 
    const mouseLen=
     Math.sqrt(
@@ -3919,7 +3892,6 @@ function updatePhysics(dt){
      tangential*
      swingStrength*
      dt;
-
    }
 
 
@@ -3954,7 +3926,6 @@ function updatePhysics(dt){
 
      velocityY-=
       ny*outward;
-
     }
 
    }
@@ -3974,7 +3945,6 @@ function updatePhysics(dt){
     (relY/distance)*
     spring*
     dt;
-
   }
  }
 
@@ -3992,7 +3962,6 @@ function updatePhysics(dt){
 
   velocityX*=s;
   velocityY*=s;
-
  }
 
 
@@ -4003,17 +3972,14 @@ function updatePhysics(dt){
   velocityY*dt;
 
 
- velocityX*=
+ const damping=
   Math.pow(
    airDrag,
    dt*60
   );
 
- velocityY*=
-  Math.pow(
-   airDrag,
-   dt*60
-  );
+ velocityX*=damping;
+ velocityY*=damping;
 
 
  hero.position.x=
@@ -4024,7 +3990,7 @@ function updatePhysics(dt){
   );
 
 
- const groundY=.78;
+ const groundY=.82;
 
 
  if(hero.position.y<groundY){
@@ -4034,9 +4000,7 @@ function updatePhysics(dt){
   if(velocityY<0)
    velocityY=0;
 
-  if(!grabbed)
-   velocityX*=.88;
-
+  velocityX*=.86;
  }
 
 
@@ -4053,22 +4017,17 @@ function updateHammer(){
 
  if(!hammer)return;
 
-
  if(grabbed){
 
   hammer.position.copy(
    anchorWorld
   );
 
-
   const dx=
-   cursorWorld.x-
-   anchorWorld.x;
+   cursorWorld.x-anchorWorld.x;
 
   const dy=
-   cursorWorld.y-
-   anchorWorld.y;
-
+   cursorWorld.y-anchorWorld.y;
 
   hammer.rotation.z=
    Math.atan2(
@@ -4082,26 +4041,54 @@ function updateHammer(){
    cursorWorld
   );
 
-
   const dx=
-   cursorWorld.x-
-   hero.position.x;
+   cursorWorld.x-hero.position.x;
 
   const dy=
-   cursorWorld.y-
-   hero.position.y;
-
+   cursorWorld.y-hero.position.y;
 
   hammer.rotation.z=
    Math.atan2(
     dy,
     dx
    );
-
  }
 
-
  hammer.position.z=4;
+
+
+ if(hammerRope){
+
+  if(grabbed){
+
+   hammerRope.visible=true;
+
+   const points=[
+    new THREE.Vector3(
+     hero.position.x,
+     hero.position.y+1,
+     3.8
+    ),
+    new THREE.Vector3(
+     anchorWorld.x,
+     anchorWorld.y,
+     3.8
+    )
+   ];
+
+   hammerRope.geometry.setFromPoints(points);
+
+   hammerRopeMaterial.color.set(
+    0x55ff70
+   );
+
+   hammerRopeMaterial.opacity=.7;
+
+  }else{
+
+   hammerRope.visible=false;
+  }
+ }
 }
 
 
@@ -4113,23 +4100,39 @@ function updateCamera(){
 
  if(summitSequence)return;
 
-
  const targetY=
   hero.position.y+5;
-
 
  camera.position.y+=
   (
    targetY-
    camera.position.y
-  )*.08;
+  )*.09;
 
 
  camera.position.x+=
   (
    hero.position.x-
    camera.position.x
-  )*.05;
+  )*.055;
+
+
+ if(cameraShake>0){
+
+  camera.position.x+=
+   (Math.random()-.5)*
+   cameraShake;
+
+  camera.position.y+=
+   (Math.random()-.5)*
+   cameraShake;
+
+  cameraShake=
+   Math.max(
+    0,
+    cameraShake-.008
+   );
+ }
 
 
  camera.lookAt(
@@ -4154,7 +4157,6 @@ function updateHeight(){
    Math.floor(hero.position.y)
   );
 
-
  const p=
   Math.min(
    100,
@@ -4165,7 +4167,6 @@ function updateHeight(){
     100
    )
   );
-
 
  $("height").textContent=h;
 
@@ -4209,7 +4210,6 @@ function checkSummit(){
  ){
 
   beginSummitSequence();
-
  }
 }
 
@@ -4235,6 +4235,8 @@ function beginSummitSequence(){
  if(touchReticle)
   touchReticle.visible=false;
 
+ if(hammerRope)
+  hammerRope.visible=false;
 
  grips.forEach(g=>{
   g.group.scale.setScalar(1);
@@ -4305,7 +4307,6 @@ function beginSummitSequence(){
 function showVictory(){
 
  beginSummitSequence();
-
 }
 
 
@@ -4330,17 +4331,20 @@ function resetPlayer(){
  touchActive=false;
  summitSequence=false;
  gameWon=false;
+ cameraShake=0;
 
  $("touchHint").style.display="none";
 
  if(touchReticle)
   touchReticle.visible=false;
 
+ if(hammerRope)
+  hammerRope.visible=false;
+
  grips.forEach(
   g=>
    g.group.scale.setScalar(1)
  );
-
 
  camera.position.set(
   0,
@@ -4381,9 +4385,7 @@ function clearBursts(){
 
   if(p.material)
    p.material.dispose();
-
  });
-
 
  summitBurst.length=0;
  summitSparks.length=0;
@@ -4398,9 +4400,7 @@ function clearBursts(){
 
   if(p.material)
    p.material.dispose();
-
  });
-
 
  summitShockwaves.length=0;
 }
@@ -4412,17 +4412,20 @@ function clearBursts(){
 
 function createGripBurst(x,y){
 
- for(let i=0;i<10;i++){
+ for(let i=0;i<12;i++){
 
   const p=
    new THREE.Mesh(
     new THREE.SphereGeometry(
-     .06,
+     .045+Math.random()*.06,
      6,
      6
     ),
     new THREE.MeshBasicMaterial({
-     color:0x55ff70,
+     color:
+      i%3===0?
+      0xffcc33:
+      0x55ff70,
      transparent:true
     })
    );
@@ -4440,8 +4443,8 @@ function createGripBurst(x,y){
    Math.PI*2;
 
   const s=
-   1+
-   Math.random()*2;
+   1.5+
+   Math.random()*2.5;
 
 
   p.userData.vx=
@@ -4455,7 +4458,6 @@ function createGripBurst(x,y){
   scene.add(p);
 
   summitBurst.push(p);
-
  }
 }
 
@@ -4487,11 +4489,9 @@ function updateEffects(dt){
   p.position.y+=
    p.userData.vy*dt;
 
-  p.userData.vy-=
-   5*dt;
+  p.userData.vy-=5*dt;
 
-  p.userData.life-=
-   dt*2;
+  p.userData.life-=dt*2;
 
   p.material.opacity=
    Math.max(
@@ -4508,7 +4508,6 @@ function updateEffects(dt){
    p.material.dispose();
 
    summitBurst.splice(i,1);
-
   }
  }
 }
@@ -4558,10 +4557,6 @@ function createSummitBurst(){
    Math.random()*
    Math.PI*2;
 
-  const up=
-   .5+
-   Math.random()*1.5;
-
   const speed=
    3+
    Math.random()*9;
@@ -4569,7 +4564,7 @@ function createSummitBurst(){
 
   p.userData={
    vx:Math.cos(a)*speed,
-   vy:up+Math.random()*8,
+   vy:.5+Math.random()*9,
    vz:(Math.random()-.5)*speed,
    life:1+Math.random()*.8,
    summit:true
@@ -4578,7 +4573,6 @@ function createSummitBurst(){
 
   scene.add(p);
   summitBurst.push(p);
-
  }
 
 
@@ -4624,7 +4618,6 @@ function createSummitBurst(){
 
   scene.add(p);
   summitSparks.push(p);
-
  }
 
 
@@ -4652,8 +4645,7 @@ function createSummitBurst(){
    explosionZ
   );
 
-  shock.rotation.x=
-   Math.PI/2;
+  shock.rotation.x=Math.PI/2;
 
   shock.userData={
    life:1,
@@ -4663,7 +4655,6 @@ function createSummitBurst(){
   scene.add(shock);
 
   summitShockwaves.push(shock);
-
  }
 
 
@@ -4677,13 +4668,12 @@ function createSummitBurst(){
     summitLight.intensity=5;
 
   },500);
-
  }
 }
 
 
 /* =====================================================
-   UPDATE SUMMIT EXPLOSION
+   SUMMIT UPDATE
 ===================================================== */
 
 function updateSummitBurst(dt){
@@ -4699,7 +4689,6 @@ function updateSummitBurst(dt){
 
   if(!v.summit)
    continue;
-
 
   p.position.x+=v.vx*dt;
   p.position.y+=v.vy*dt;
@@ -4723,7 +4712,6 @@ function updateSummitBurst(dt){
    p.material.dispose();
 
    summitBurst.splice(i,1);
-
   }
  }
 
@@ -4759,7 +4747,6 @@ function updateSummitBurst(dt){
    p.material.dispose();
 
    summitSparks.splice(i,1);
-
   }
  }
 
@@ -4792,7 +4779,6 @@ function updateSummitBurst(dt){
    s.material.dispose();
 
    summitShockwaves.splice(i,1);
-
   }
  }
 }
@@ -4807,8 +4793,7 @@ function updateSummitParticles(time,dt){
  summitParticles.forEach(p=>{
 
   p.position.y+=
-   p.userData.speed*
-   dt;
+   p.userData.speed*dt;
 
   p.position.x+=
    Math.sin(
@@ -4818,7 +4803,6 @@ function updateSummitParticles(time,dt){
 
   if(p.position.y>68)
    p.position.y=61;
-
  });
 }
 
@@ -4838,7 +4822,6 @@ function animateSummit(time){
   summitGlowMesh
    .scale
    .setScalar(s);
-
  }
 
 
@@ -4847,13 +4830,12 @@ function animateSummit(time){
   summitBeacon.scale.y=
    1+
    Math.sin(time*.004)*.15;
-
  }
 }
 
 
 /* =====================================================
-   CRYPTO PRICE FORMAT
+   CRYPTO FORMAT
 ===================================================== */
 
 function formatCryptoPrice(price){
@@ -4877,7 +4859,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:0
     }
    );
-
  }
 
 
@@ -4891,7 +4872,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:2
     }
    );
-
  }
 
 
@@ -4905,7 +4885,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:3
     }
    );
-
  }
 
 
@@ -4957,7 +4936,6 @@ function setCryptoLiveLabels(text){
 
   if(el)
    el.textContent=text;
-
  });
 }
 
@@ -5003,7 +4981,6 @@ function flashCryptoCard(symbol,direction){
   card.classList.add(
    "priceSync"
   );
-
  }
 
 
@@ -5020,7 +4997,7 @@ function flashCryptoCard(symbol,direction){
 
 
 /* =====================================================
-   UPDATE CRYPTO PRICE
+   UPDATE CRYPTO
 ===================================================== */
 
 function updateCryptoPrice(symbol,price){
@@ -5069,22 +5046,16 @@ function updateCryptoPrice(symbol,price){
   }else{
 
    flashCryptoCard(symbol,"sync");
-
   }
 
  }else{
 
   flashCryptoCard(symbol,"sync");
-
  }
 
  return true;
 }
 
-
-/* =====================================================
-   UPDATE CHANGE
-===================================================== */
 
 function updateCryptoChange(symbol,change){
 
@@ -5165,7 +5136,6 @@ function updateCryptoTimestamp(){
   if(el)
    el.textContent=
     "Updated "+time;
-
  });
 }
 
@@ -5197,9 +5167,7 @@ function updateCryptoCountdown(){
     "Refresh in "+
     cryptoSecondsLeft+
     "s";
-
   }
-
  });
 
 
@@ -5209,13 +5177,12 @@ function updateCryptoCountdown(){
    "SYNCING LIVE MARKET",
    "syncing"
   );
-
  }
 }
 
 
 /* =====================================================
-   ERROR
+   CRYPTO ERROR
 ===================================================== */
 
 function showCryptoError(source="LIVE FEEDS"){
@@ -5245,13 +5212,12 @@ function showCryptoError(source="LIVE FEEDS"){
   el.classList.add(
    "cryptoError"
   );
-
  });
 }
 
 
 /* =====================================================
-   SUCCESS
+   CRYPTO SUCCESS
 ===================================================== */
 
 function showCryptoSuccess(source){
@@ -5278,7 +5244,6 @@ function showCryptoSuccess(source){
    el.classList.remove(
     "cryptoError"
    );
-
  });
 
 
@@ -5290,7 +5255,7 @@ function showCryptoSuccess(source){
 
 
 /* =====================================================
-   BINANCE URL
+   BINANCE
 ===================================================== */
 
 function buildBinanceURL(){
@@ -5310,10 +5275,6 @@ function buildBinanceURL(){
   Date.now();
 }
 
-
-/* =====================================================
-   LOAD BINANCE
-===================================================== */
 
 async function loadBinanceMarket(){
 
@@ -5345,27 +5306,21 @@ async function loadBinanceMarket(){
    );
 
 
-  if(!response.ok){
-
+  if(!response.ok)
    throw new Error(
     "Binance HTTP "+
     response.status
    );
-
-  }
 
 
   const data=
    await response.json();
 
 
-  if(!Array.isArray(data)){
-
+  if(!Array.isArray(data))
    throw new Error(
     "Unexpected Binance response"
    );
-
-  }
 
 
   let validCoins=0;
@@ -5384,14 +5339,10 @@ async function loadBinanceMarket(){
 
 
    const price=
-    Number(
-     coin.lastPrice
-    );
+    Number(coin.lastPrice);
 
    const change=
-    Number(
-     coin.priceChangePercent
-    );
+    Number(coin.priceChangePercent);
 
 
    if(
@@ -5402,21 +5353,16 @@ async function loadBinanceMarket(){
    ){
 
     validCoins++;
-
    }
 
 
-   if(
-    Number.isFinite(change)
-   ){
+   if(Number.isFinite(change)){
 
     updateCryptoChange(
      symbol,
      change
     );
-
    }
-
   });
 
 
@@ -5426,12 +5372,8 @@ async function loadBinanceMarket(){
   ){
 
    throw new Error(
-    "Incomplete Binance data: "+
-    validCoins+
-    "/"+
-    BINANCE_SYMBOLS.length
+    "Incomplete Binance data"
    );
-
   }
 
 
@@ -5440,13 +5382,12 @@ async function loadBinanceMarket(){
  }finally{
 
   clearTimeout(timeout);
-
  }
 }
 
 
 /* =====================================================
-   COINGECKO FALLBACK
+   COINGECKO
 ===================================================== */
 
 async function loadCoinGeckoMarket(){
@@ -5491,14 +5432,11 @@ async function loadCoinGeckoMarket(){
    );
 
 
-  if(!response.ok){
-
+  if(!response.ok)
    throw new Error(
     "CoinGecko HTTP "+
     response.status
    );
-
-  }
 
 
   const data=
@@ -5527,7 +5465,6 @@ async function loadCoinGeckoMarket(){
    ){
 
     validCoins++;
-
    }
 
 
@@ -5539,9 +5476,7 @@ async function loadCoinGeckoMarket(){
      symbol,
      coin.usd_24h_change
     );
-
    }
-
   });
 
 
@@ -5553,7 +5488,6 @@ async function loadCoinGeckoMarket(){
    throw new Error(
     "Incomplete CoinGecko data"
    );
-
   }
 
 
@@ -5562,20 +5496,18 @@ async function loadCoinGeckoMarket(){
  }finally{
 
   clearTimeout(timeout);
-
  }
 }
 
 
 /* =====================================================
-   LOAD LIVE MARKET
+   LOAD MARKET
 ===================================================== */
 
 async function loadCryptoMarket(){
 
  if(cryptoRequestInProgress)
   return;
-
 
  cryptoRequestInProgress=true;
 
@@ -5603,12 +5535,7 @@ async function loadCryptoMarket(){
      "BINANCE"
     );
 
-    console.log(
-     "CLIMBORIA: BINANCE LIVE"
-    );
-
     return;
-
    }
 
   }catch(error){
@@ -5617,7 +5544,6 @@ async function loadCryptoMarket(){
     "CLIMBORIA Binance failed:",
     error
    );
-
   }
 
 
@@ -5634,12 +5560,7 @@ async function loadCryptoMarket(){
      "COINGECKO"
     );
 
-    console.log(
-     "CLIMBORIA: COINGECKO LIVE"
-    );
-
     return;
-
    }
 
   }catch(error){
@@ -5648,14 +5569,12 @@ async function loadCryptoMarket(){
     "CLIMBORIA CoinGecko failed:",
     error
    );
-
   }
 
 
   showCryptoError(
    "LIVE FEEDS"
   );
-
 
  }finally{
 
@@ -5665,13 +5584,12 @@ async function loadCryptoMarket(){
    CRYPTO_REFRESH_SECONDS;
 
   updateCryptoCountdown();
-
  }
 }
 
 
 /* =====================================================
-   START CRYPTO TICKER
+   START TICKER
 ===================================================== */
 
 function startCryptoTicker(){
@@ -5683,9 +5601,7 @@ function startCryptoTicker(){
   );
 
   cryptoTimer=null;
-
  }
-
 
  if(cryptoCountdownTimer){
 
@@ -5694,18 +5610,15 @@ function startCryptoTicker(){
   );
 
   cryptoCountdownTimer=null;
-
  }
 
 
  $("cryptoTicker").style.display="flex";
 
-
  cryptoSecondsLeft=
   CRYPTO_REFRESH_SECONDS;
 
  updateCryptoCountdown();
-
 
  loadCryptoMarket();
 
@@ -5726,7 +5639,6 @@ function startCryptoTicker(){
     ){
 
      cryptoSecondsLeft--;
-
     }
 
     updateCryptoCountdown();
@@ -5760,7 +5672,7 @@ function updateHelpText(){
 
 
 /* =====================================================
-   CANCEL VICTORY
+   VICTORY TIMER
 ===================================================== */
 
 function cancelVictoryTimer(){
@@ -5772,7 +5684,6 @@ function cancelVictoryTimer(){
   );
 
   victoryTimer=null;
-
  }
 }
 
@@ -5786,8 +5697,7 @@ function resize(){
  if(!camera||!renderer)return;
 
  camera.aspect=
-  innerWidth/
-  innerHeight;
+  innerWidth/innerHeight;
 
  camera.updateProjectionMatrix();
 
@@ -5880,6 +5790,9 @@ function showMenu(){
  if(touchReticle)
   touchReticle.visible=false;
 
+ if(hammerRope)
+  hammerRope.visible=false;
+
  resetPlayer();
 
  updatePointsUI();
@@ -5918,6 +5831,9 @@ function showLaunchpad(){
  if(touchReticle)
   touchReticle.visible=false;
 
+ if(hammerRope)
+  hammerRope.visible=false;
+
  clearBursts();
 
  updateStreakUI();
@@ -5934,7 +5850,6 @@ function showLaunchpad(){
 function restartGame(){
 
  showGame();
-
 }
 
 
@@ -5946,7 +5861,11 @@ function animateGrips(time){
 
  grips.forEach(g=>{
 
-  if(g===grabbed)return;
+  if(g===grabbed){
+
+   g.ring.rotation.z+=.025;
+   return;
+  }
 
   const pulse=
    1+
@@ -5958,12 +5877,34 @@ function animateGrips(time){
   g.ring.scale.setScalar(pulse);
   g.glow.scale.setScalar(pulse);
 
+  const distanceFromPlayer=
+   Math.sqrt(
+    Math.pow(
+     hero.position.x-g.x,
+     2
+    )+
+    Math.pow(
+     hero.position.y-g.y,
+     2
+    )
+   );
+
+  if(
+   distanceFromPlayer<4
+  ){
+
+   g.glow.material.opacity=.16;
+
+  }else{
+
+   g.glow.material.opacity=.08;
+  }
  });
 }
 
 
 /* =====================================================
-   TOUCH RETICLE
+   RETICLE
 ===================================================== */
 
 function updateTouchReticle(time){
@@ -5980,7 +5921,6 @@ function updateTouchReticle(time){
   touchReticle.visible=false;
 
   return;
-
  }
 
 
@@ -5999,7 +5939,7 @@ function updateTouchReticle(time){
 
  if(
   result.grip&&
-  result.distance<1.15
+  result.distance<1.2
  ){
 
   touchReticleMaterial.color
@@ -6022,8 +5962,59 @@ function updateTouchReticle(time){
   touchReticleMaterial.opacity=.8;
 
   touchReticle.scale.setScalar(1);
-
  }
+}
+
+
+/* =====================================================
+   HERO ANIMATION
+===================================================== */
+
+function animateHero(time){
+
+ if(!hero)return;
+
+ if(!running)return;
+
+ const speed=
+  Math.sqrt(
+   velocityX*velocityX+
+   velocityY*velocityY
+  );
+
+ if(speed>.2){
+
+  const lean=
+   THREE.MathUtils.clamp(
+    velocityX*.025,
+    -.28,
+    .28
+   );
+
+  hero.rotation.z=
+   THREE.MathUtils.lerp(
+    hero.rotation.z,
+    lean,
+    .08
+   );
+
+ }else{
+
+  hero.rotation.z=
+   THREE.MathUtils.lerp(
+    hero.rotation.z,
+    0,
+    .08
+   );
+ }
+
+
+ const bob=
+  Math.sin(time*.012)*
+  .025;
+
+ hero.position.z=
+  3.5+bob;
 }
 
 
@@ -6033,9 +6024,7 @@ function updateTouchReticle(time){
 
 function animate(time=0){
 
- requestAnimationFrame(
-  animate
- );
+ requestAnimationFrame(animate);
 
 
  const now=
@@ -6043,9 +6032,7 @@ function animate(time=0){
 
 
  let dt=
-  (now-lastTime)/
-  1000;
-
+  (now-lastTime)/1000;
 
  lastTime=now;
 
@@ -6069,6 +6056,7 @@ function animate(time=0){
 
   checkSummit();
 
+  animateHero(time);
  }
 
 
@@ -6094,13 +6082,12 @@ function animate(time=0){
    scene,
    camera
   );
-
  }
 }
 
 
 /* =====================================================
-   GLOBAL FUNCTIONS
+   GLOBAL
 ===================================================== */
 
 window.showGame=
@@ -6123,7 +6110,7 @@ window.shareReferral=
 
 
 /* =====================================================
-   START REQUEST SAFETY
+   START SAFETY
 ===================================================== */
 
 if(window.climboriaStartRequested){
@@ -6136,7 +6123,6 @@ if(window.climboriaStartRequested){
   },
   0
  );
-
 }
 
 </script>
