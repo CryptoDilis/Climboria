@@ -688,38 +688,40 @@ let summitSequence=false;
 
 /* =====================================================
    CRYPTO
+   COINGECKO ONLY
 ===================================================== */
 
 let cryptoTimer=null;
 
 
 /*
-   BINANCE PUBLIC MARKET DATA
+   CoinGecko simple price API.
 
-   One endpoint gives us:
-   - current price
-   - 24h price change %
+   This gives us:
+   - current USD price
+   - 24 hour percentage change
+   - last updated timestamp
 */
 
-const BINANCE_MARKET_API=
- "https://data-api.binance.vision/api/v3/ticker/24hr";
+const COINGECKO_API=
+ "https://api.coingecko.com/api/v3/simple/price";
 
 
-const MAJOR_SYMBOLS=[
- "BTC",
- "ETH",
- "SOL",
- "BNB",
- "XRP"
+const CRYPTO_IDS=[
+ "bitcoin",
+ "ethereum",
+ "solana",
+ "binancecoin",
+ "ripple"
 ];
 
 
-const BINANCE_SYMBOLS={
- BTC:"BTCUSDT",
- ETH:"ETHUSDT",
- SOL:"SOLUSDT",
- BNB:"BNBUSDT",
- XRP:"XRPUSDT"
+const CRYPTO_SYMBOLS={
+ bitcoin:"BTC",
+ ethereum:"ETH",
+ solana:"SOL",
+ binancecoin:"BNB",
+ ripple:"XRP"
 };
 
 
@@ -1812,8 +1814,8 @@ function nearestGrip(){
 
   const d=
    Math.sqrt(
-    dx*dx+
-    dy*dy
+     dx*dx+
+     dy*dy
    );
 
   if(d<dist){
@@ -3397,13 +3399,19 @@ function animateSummit(time){
 
 
 /* =====================================================
-   CRYPTO PRICE HELPERS
+   CRYPTO PRICE FORMAT
 ===================================================== */
 
 function formatCryptoPrice(price){
 
- if(!Number.isFinite(price))
-  return "--";
+ price=Number(price);
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ ){
+  return "—";
+ }
 
 
  if(price>=1000){
@@ -3440,8 +3448,8 @@ function formatCryptoPrice(price){
    price.toLocaleString(
     "en-US",
     {
-     minimumFractionDigits:4,
-     maximumFractionDigits:4
+     minimumFractionDigits:3,
+     maximumFractionDigits:3
     }
    );
 
@@ -3452,88 +3460,66 @@ function formatCryptoPrice(price){
   price.toLocaleString(
    "en-US",
    {
-    minimumFractionDigits:6,
-    maximumFractionDigits:6
+    minimumFractionDigits:4,
+    maximumFractionDigits:8
    }
   );
 }
 
 
 /* =====================================================
-   UPDATE ONE CRYPTO CARD
+   UPDATE CRYPTO PRICE
 ===================================================== */
 
-function updateCryptoCard(
+function updateCryptoPrice(
  symbol,
- market
+ price
 ){
-
- if(!market)
-  return;
-
-
- const price=
-  Number(
-   market.lastPrice
-  );
-
-
- const change=
-  Number(
-   market.priceChangePercent
-  );
-
 
  const priceEl=
   $(symbol.toLowerCase()+"Price");
 
- const changeEl=
-  $(symbol.toLowerCase()+"Change");
+ if(!priceEl)return;
 
-
- if(
-  !priceEl||
-  !changeEl
- )
-  return;
-
-
- /*
-   PRICE
- */
+ price=Number(price);
 
  if(
-  Number.isFinite(price) &&
-  price>0
+  !Number.isFinite(price)||
+  price<=0
  ){
-
-  priceEl.textContent=
-   formatCryptoPrice(
-    price
-   );
-
+  return;
  }
 
 
- /*
-   24H CHANGE
- */
+ priceEl.textContent=
+  formatCryptoPrice(price);
 
- if(
-  Number.isFinite(change)
- ){
+ priceEl.classList.remove(
+  "cryptoLoading"
+ );
+}
 
-  const sign=
-   change>=0?
-   "+":
-   "";
 
+/* =====================================================
+   UPDATE 24H PRICE ACTION
+===================================================== */
+
+function updateCryptoChange(
+ symbol,
+ change
+){
+
+ const changeEl=
+  $(symbol.toLowerCase()+"Change");
+
+ if(!changeEl)return;
+
+ change=Number(change);
+
+ if(!Number.isFinite(change)){
 
   changeEl.textContent=
-   sign+
-   change.toFixed(2)+
-   "%";
-
+   "--";
 
   changeEl.classList.remove(
    "cryptoLoading",
@@ -3541,20 +3527,43 @@ function updateCryptoCard(
    "down"
   );
 
-
   changeEl.classList.add(
-   change>=0?
-   "up":
-   "down"
+   "cryptoLoading"
   );
 
+  return;
  }
 
+
+ const sign=
+  change>=0?
+  "+":
+  "";
+
+
+ changeEl.textContent=
+  sign+
+  change.toFixed(2)+
+  "%";
+
+
+ changeEl.classList.remove(
+  "cryptoLoading",
+  "up",
+  "down"
+ );
+
+
+ changeEl.classList.add(
+  change>=0?
+  "up":
+  "down"
+ );
 }
 
 
 /* =====================================================
-   LOAD LIVE CRYPTO DATA
+   LOAD COINGECKO LIVE DATA
 ===================================================== */
 
 async function loadCryptoMarket(){
@@ -3564,34 +3573,27 @@ async function loadCryptoMarket(){
   /*
     Request all 5 coins at once.
 
-    This returns an array containing:
-    BTC
-    ETH
-    SOL
-    BNB
-    XRP
+    CoinGecko returns:
 
-    Each object includes:
-    lastPrice
-    priceChangePercent
+    bitcoin:
+      usd
+      usd_24h_change
+
+    ethereum:
+      usd
+      usd_24h_change
+
+    etc.
   */
 
-  const symbols=
-   JSON.stringify(
-    MAJOR_SYMBOLS.map(
-     symbol=>
-      BINANCE_SYMBOLS[symbol]
-    )
-   );
-
-
   const url=
-   BINANCE_MARKET_API+
-   "?symbols="+
-   encodeURIComponent(
-    symbols
-   )+
-   "&type=FULL&_="+
+   COINGECKO_API+
+   "?ids="+
+   CRYPTO_IDS.join(",")+
+   "&vs_currencies=usd"+
+   "&include_24hr_change=true"+
+   "&include_last_updated_at=true"+
+   "&_="+
    Date.now();
 
 
@@ -3608,9 +3610,10 @@ async function loadCryptoMarket(){
   if(!response.ok){
 
    throw new Error(
-    "Binance market API "+
+    "CoinGecko API "+
     response.status
    );
+
   }
 
 
@@ -3619,43 +3622,51 @@ async function loadCryptoMarket(){
 
 
   /*
-    Make sure the response is an array.
+    Update every coin.
   */
 
-  if(!Array.isArray(data)){
+  CRYPTO_IDS.forEach(
+   id=>{
 
-   throw new Error(
-    "Unexpected Binance response"
-   );
-  }
+    const coin=
+     data[id];
 
-
-  /*
-    Update every coin separately.
-  */
-
-  MAJOR_SYMBOLS.forEach(
-   symbol=>{
-
-    const binanceSymbol=
-     BINANCE_SYMBOLS[symbol];
+    if(!coin)return;
 
 
-    const market=
-     data.find(
-      item=>
-       String(
-        item.symbol||""
-       ).toUpperCase()===
-       binanceSymbol
+    const symbol=
+     CRYPTO_SYMBOLS[id];
+
+    if(!symbol)return;
+
+
+    /*
+      REAL CURRENT PRICE
+    */
+
+    if(
+     coin.usd!==undefined
+    ){
+
+     updateCryptoPrice(
+      symbol,
+      coin.usd
      );
 
+    }
 
-    if(market){
 
-     updateCryptoCard(
+    /*
+      REAL 24H PRICE ACTION
+    */
+
+    if(
+     coin.usd_24h_change!==undefined
+    ){
+
+     updateCryptoChange(
       symbol,
-      market
+      coin.usd_24h_change
      );
 
     }
@@ -3665,7 +3676,7 @@ async function loadCryptoMarket(){
 
 
   console.log(
-   "CLIMBORIA crypto prices updated",
+   "CLIMBORIA LIVE CRYPTO:",
    data
   );
 
@@ -3673,17 +3684,16 @@ async function loadCryptoMarket(){
  }catch(error){
 
   console.warn(
-   "CLIMBORIA crypto feed failed:",
+   "CLIMBORIA CoinGecko feed failed:",
    error
   );
 
 
   /*
-    Do not replace existing
-    live values with fake data.
-
-    Keep whatever valid values
-    were already displayed.
+    IMPORTANT:
+    Do not insert fake prices.
+    Existing valid prices remain
+    on screen if API temporarily fails.
   */
  }
 }
@@ -3696,14 +3706,14 @@ async function loadCryptoMarket(){
 function startCryptoTicker(){
 
  /*
-   First load immediately.
+   Load immediately.
  */
 
  loadCryptoMarket();
 
 
  /*
-   Refresh every 10 seconds.
+   Refresh every 30 seconds.
  */
 
  if(cryptoTimer){
@@ -3718,7 +3728,7 @@ function startCryptoTicker(){
  cryptoTimer=
   setInterval(
    loadCryptoMarket,
-   10000
+   30000
   );
 }
 
