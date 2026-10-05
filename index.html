@@ -612,7 +612,7 @@ button:active{
  min-width:110px;
  padding:7px 10px;
  border:1px solid #ffffff12;
- background:rgba(5,9,13,.82);
+ background:rgba(5,9,13,.88);
  backdrop-filter:blur(8px);
  border-radius:7px;
  box-shadow:0 5px 25px #0005;
@@ -680,15 +680,28 @@ button:active{
  transform:scale(1.06);
 }
 
+.cryptoCard.priceSync{
+ border-color:#ffffff35;
+ box-shadow:
+  0 0 12px #ffffff10,
+  0 5px 25px #0005;
+}
+
+.cryptoCard.priceSync .cryptoPrice{
+ transform:scale(1.025);
+}
+
 .cryptoLive{
  display:inline-flex;
  align-items:center;
+ justify-content:center;
  gap:4px;
  color:#55ff70;
  font-size:7px;
  font-weight:900;
  letter-spacing:1px;
  margin-bottom:3px;
+ transition:color .25s ease;
 }
 
 .cryptoLiveDot{
@@ -705,6 +718,36 @@ button:active{
  font-size:6px;
  letter-spacing:.5px;
  margin-top:3px;
+ min-height:8px;
+}
+
+.cryptoCountdown{
+ color:#718087;
+ font-size:5.5px;
+ letter-spacing:.5px;
+ margin-top:2px;
+ min-height:7px;
+}
+
+.cryptoStatus{
+ position:absolute;
+ left:50%;
+ top:-12px;
+ transform:translateX(-50%);
+ color:#55ff70;
+ font-size:6px;
+ font-weight:bold;
+ letter-spacing:1.5px;
+ white-space:nowrap;
+ opacity:.85;
+}
+
+.cryptoStatus.offline{
+ color:#ffcc33;
+}
+
+.cryptoStatus.syncing{
+ color:#c8d0d4;
 }
 
 @keyframes livePulse{
@@ -734,9 +777,22 @@ button:active{
 
 .cryptoError{
  color:#ffcc33;
- font-size:6px;
- letter-spacing:.5px;
- margin-top:3px;
+}
+
+.cryptoSyncFlash{
+ animation:cryptoSyncFlash .45s ease;
+}
+
+@keyframes cryptoSyncFlash{
+ 0%{
+  opacity:.65;
+ }
+ 50%{
+  opacity:1;
+ }
+ 100%{
+  opacity:.65;
+ }
 }
 
 /* =========================
@@ -1077,6 +1133,15 @@ button:active{
   font-size:5px;
  }
 
+ .cryptoCountdown{
+  font-size:4.5px;
+ }
+
+ .cryptoStatus{
+  top:-10px;
+  font-size:5px;
+ }
+
  .winTitle{
   font-size:clamp(30px,9vw,50px);
   letter-spacing:2px;
@@ -1152,6 +1217,14 @@ button:active{
   font-size:4.5px;
  }
 
+ .cryptoCountdown{
+  font-size:4px;
+ }
+
+ .cryptoStatus{
+  font-size:4.5px;
+ }
+
  .pointsPanel{
   gap:4px;
  }
@@ -1191,7 +1264,6 @@ button:active{
    START CLIMB
   </button>
 
-  <!-- CLIMB POINTS -->
   <div class="pointsPanel">
 
    <div class="pointsBox">
@@ -1199,9 +1271,7 @@ button:active{
      CLIMB POINTS
     </div>
 
-    <div
-     class="pointsValue"
-     id="landingPoints">
+    <div class="pointsValue" id="landingPoints">
      0
     </div>
 
@@ -1215,9 +1285,7 @@ button:active{
      SUMMITS
     </div>
 
-    <div
-     class="pointsValue"
-     id="landingSummits">
+    <div class="pointsValue" id="landingSummits">
      0
     </div>
 
@@ -1231,9 +1299,7 @@ button:active{
      ATTEMPTS
     </div>
 
-    <div
-     class="pointsValue"
-     id="landingAttempts">
+    <div class="pointsValue" id="landingAttempts">
      0
     </div>
 
@@ -1244,20 +1310,15 @@ button:active{
 
   </div>
 
-  <!-- DAILY / REFERRAL / AIRDROP -->
   <div class="progressPanel">
 
    <div class="progressCard">
     <div class="progressIcon">🔥</div>
     <div class="progressTitle">DAILY STREAK</div>
-    <div
-     class="progressText"
-     id="landingStreakText">
+    <div class="progressText" id="landingStreakText">
      0 day streak
     </div>
-    <div
-     class="progressStatus"
-     id="landingStreakStatus">
+    <div class="progressStatus" id="landingStreakStatus">
      START TODAY
     </div>
    </div>
@@ -1265,9 +1326,7 @@ button:active{
    <div class="progressCard">
     <div class="progressIcon">🔗</div>
     <div class="progressTitle">REFERRALS</div>
-    <div
-     class="progressText"
-     id="landingReferralText">
+    <div class="progressText" id="landingReferralText">
      0 referrals
     </div>
     <div class="progressStatus">
@@ -1316,7 +1375,7 @@ button:active{
 
 
 <!-- =========================
-     LAUNCHPAD / COMMUNITY
+     LAUNCHPAD
 ========================= -->
 
 <div id="launchpad">
@@ -1330,7 +1389,6 @@ button:active{
    THE CLIMBORIA ECOSYSTEM
   </div>
 
-  <!-- DASHBOARD -->
   <div class="dashboard">
 
    <div class="dashCard">
@@ -1345,27 +1403,19 @@ button:active{
      </div>
     </div>
 
-    <div
-     class="dashValue"
-     id="dashStreak">
+    <div class="dashValue" id="dashStreak">
      0 DAYS
     </div>
 
-    <div
-     class="dashSmall"
-     id="dashStreakText">
+    <div class="dashSmall" id="dashStreakText">
      Visit daily to build your streak.
     </div>
 
     <div class="streakBar">
-     <div
-      class="streakFill"
-      id="streakFill">
-     </div>
+     <div class="streakFill" id="streakFill"></div>
     </div>
 
    </div>
-
 
    <div class="dashCard">
 
@@ -1379,9 +1429,7 @@ button:active{
      </div>
     </div>
 
-    <div
-     class="dashValue"
-     id="dashReferrals">
+    <div class="dashValue" id="dashReferrals">
      0
     </div>
 
@@ -1389,9 +1437,7 @@ button:active{
      Your referral code
     </div>
 
-    <div
-     class="refCode"
-     id="refCode">
+    <div class="refCode" id="refCode">
      CLIMB-0000
     </div>
 
@@ -1417,9 +1463,6 @@ button:active{
 
   </div>
 
-
-  <!-- LEADERBOARD -->
-
   <div class="leaderboard">
 
    <div class="sectionTitle">
@@ -1435,9 +1478,6 @@ button:active{
    </div>
 
   </div>
-
-
-  <!-- AIRDROP TRACKER -->
 
   <div class="airdrop">
 
@@ -1481,7 +1521,6 @@ button:active{
    </div>
 
   </div>
-
 
   <div class="cards">
 
@@ -1611,7 +1650,7 @@ button:active{
 </div>
 
 
-<!-- HUD CLIMB POINTS -->
+<!-- HUD POINTS -->
 
 <div id="hudPoints">
 
@@ -1632,34 +1671,36 @@ button:active{
 
 <div id="cryptoTicker">
 
+ <div class="cryptoStatus" id="cryptoStatus">
+  CONNECTING LIVE MARKET
+ </div>
+
  <div class="cryptoRow">
 
   <div class="cryptoCard" id="btcCard">
 
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    LIVE
+    <span id="btcLiveText">LIVE</span>
    </div>
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">BTC</span>
-    <span
-     id="btcChange"
-     class="cryptoChange cryptoLoading">
+    <span id="btcChange" class="cryptoChange cryptoLoading">
      --
     </span>
    </div>
 
-   <div
-    id="btcPrice"
-    class="cryptoPrice">
+   <div id="btcPrice" class="cryptoPrice">
     Loading...
    </div>
 
-   <div
-    id="btcUpdated"
-    class="cryptoUpdated">
+   <div id="btcUpdated" class="cryptoUpdated">
     Connecting...
+   </div>
+
+   <div id="btcCountdown" class="cryptoCountdown">
+    --
    </div>
 
   </div>
@@ -1669,28 +1710,26 @@ button:active{
 
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    LIVE
+    <span id="ethLiveText">LIVE</span>
    </div>
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">ETH</span>
-    <span
-     id="ethChange"
-     class="cryptoChange cryptoLoading">
+    <span id="ethChange" class="cryptoChange cryptoLoading">
      --
     </span>
    </div>
 
-   <div
-    id="ethPrice"
-    class="cryptoPrice">
+   <div id="ethPrice" class="cryptoPrice">
     Loading...
    </div>
 
-   <div
-    id="ethUpdated"
-    class="cryptoUpdated">
+   <div id="ethUpdated" class="cryptoUpdated">
     Connecting...
+   </div>
+
+   <div id="ethCountdown" class="cryptoCountdown">
+    --
    </div>
 
   </div>
@@ -1700,28 +1739,26 @@ button:active{
 
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    LIVE
+    <span id="solLiveText">LIVE</span>
    </div>
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">SOL</span>
-    <span
-     id="solChange"
-     class="cryptoChange cryptoLoading">
+    <span id="solChange" class="cryptoChange cryptoLoading">
      --
     </span>
    </div>
 
-   <div
-    id="solPrice"
-    class="cryptoPrice">
+   <div id="solPrice" class="cryptoPrice">
     Loading...
    </div>
 
-   <div
-    id="solUpdated"
-    class="cryptoUpdated">
+   <div id="solUpdated" class="cryptoUpdated">
     Connecting...
+   </div>
+
+   <div id="solCountdown" class="cryptoCountdown">
+    --
    </div>
 
   </div>
@@ -1731,28 +1768,26 @@ button:active{
 
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    LIVE
+    <span id="bnbLiveText">LIVE</span>
    </div>
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">BNB</span>
-    <span
-     id="bnbChange"
-     class="cryptoChange cryptoLoading">
+    <span id="bnbChange" class="cryptoChange cryptoLoading">
      --
     </span>
    </div>
 
-   <div
-    id="bnbPrice"
-    class="cryptoPrice">
+   <div id="bnbPrice" class="cryptoPrice">
     Loading...
    </div>
 
-   <div
-    id="bnbUpdated"
-    class="cryptoUpdated">
+   <div id="bnbUpdated" class="cryptoUpdated">
     Connecting...
+   </div>
+
+   <div id="bnbCountdown" class="cryptoCountdown">
+    --
    </div>
 
   </div>
@@ -1762,28 +1797,26 @@ button:active{
 
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    LIVE
+    <span id="xrpLiveText">LIVE</span>
    </div>
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">XRP</span>
-    <span
-     id="xrpChange"
-     class="cryptoChange cryptoLoading">
+    <span id="xrpChange" class="cryptoChange cryptoLoading">
      --
     </span>
    </div>
 
-   <div
-    id="xrpPrice"
-    class="cryptoPrice">
+   <div id="xrpPrice" class="cryptoPrice">
     Loading...
    </div>
 
-   <div
-    id="xrpUpdated"
-    class="cryptoUpdated">
+   <div id="xrpUpdated" class="cryptoUpdated">
     Connecting...
+   </div>
+
+   <div id="xrpCountdown" class="cryptoCountdown">
+    --
    </div>
 
   </div>
@@ -1945,7 +1978,6 @@ const SUMMIT_EXPLOSION_X=0;
 const SUMMIT_EXPLOSION_Y=62.45;
 const SUMMIT_EXPLOSION_Z=3.5;
 
-
 const summitParticles=[];
 const summitBurst=[];
 const summitSparks=[];
@@ -1961,11 +1993,36 @@ let summitSequence=false;
 
 
 /* =====================================================
-   CRYPTO
+   CRYPTO MARKET
 ===================================================== */
 
 let cryptoTimer=null;
+let cryptoCountdownTimer=null;
 let cryptoRequestInProgress=false;
+
+const CRYPTO_REFRESH_SECONDS=10;
+
+const BINANCE_API=
+ "https://api.binance.com/api/v3/ticker/24hr";
+
+const BINANCE_SYMBOLS=[
+ "BTCUSDT",
+ "ETHUSDT",
+ "SOLUSDT",
+ "BNBUSDT",
+ "XRPUSDT"
+];
+
+const BINANCE_TO_SYMBOL={
+ BTCUSDT:"BTC",
+ ETHUSDT:"ETH",
+ SOLUSDT:"SOL",
+ BNBUSDT:"BNB",
+ XRPUSDT:"XRP"
+};
+
+
+/* CoinGecko remains as fallback */
 
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
@@ -1985,6 +2042,9 @@ const CRYPTO_SYMBOLS={
  binancecoin:"BNB",
  ripple:"XRP"
 };
+
+let cryptoSecondsLeft=
+ CRYPTO_REFRESH_SECONDS;
 
 
 /* =====================================================
@@ -5683,6 +5743,61 @@ function formatCryptoPrice(price){
 
 
 /* =====================================================
+   CRYPTO STATUS
+===================================================== */
+
+function setCryptoStatus(
+ text,
+ type="live"
+){
+
+ const el=
+  $("cryptoStatus");
+
+ if(!el)return;
+
+ el.textContent=
+  text;
+
+ el.classList.remove(
+  "offline",
+  "syncing"
+ );
+
+ if(type==="offline")
+  el.classList.add("offline");
+
+ if(type==="syncing")
+  el.classList.add("syncing");
+}
+
+
+/* =====================================================
+   CRYPTO LIVE LABEL
+===================================================== */
+
+function setCryptoLiveLabels(
+ text
+){
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(symbol.toLowerCase()+"LiveText");
+
+   if(el)
+    el.textContent=
+     text;
+  }
+ );
+}
+
+
+/* =====================================================
    CRYPTO PRICE FLASH
 ===================================================== */
 
@@ -5700,7 +5815,8 @@ function flashCryptoCard(
   "priceUp",
   "priceDown",
   "priceFlashUp",
-  "priceFlashDown"
+  "priceFlashDown",
+  "priceSync"
  );
 
  void card.offsetWidth;
@@ -5718,13 +5834,20 @@ function flashCryptoCard(
    "priceDown",
    "priceFlashDown"
   );
+
+ }else{
+
+  card.classList.add(
+   "priceSync"
+  );
  }
 
  setTimeout(()=>{
 
   card.classList.remove(
    "priceFlashUp",
-   "priceFlashDown"
+   "priceFlashDown",
+   "priceSync"
   );
 
  },700);
@@ -5751,7 +5874,7 @@ function updateCryptoPrice(
   !Number.isFinite(price)||
   price<=0
  ){
-  return;
+  return false;
  }
 
 
@@ -5787,8 +5910,28 @@ function updateCryptoPrice(
     symbol,
     "down"
    );
+
+  }else{
+
+   /*
+    * Price was successfully refreshed
+    * even if it did not move.
+    */
+   flashCryptoCard(
+    symbol,
+    "sync"
+   );
   }
+
+ }else{
+
+  flashCryptoCard(
+   symbol,
+   "sync"
+  );
  }
+
+ return true;
 }
 
 
@@ -5895,7 +6038,71 @@ function updateCryptoTimestamp(){
 }
 
 
-function showCryptoError(){
+/* =====================================================
+   CRYPTO COUNTDOWN
+===================================================== */
+
+function updateCryptoCountdown(){
+
+ cryptoSecondsLeft=
+  Math.max(
+   0,
+   Math.floor(
+    cryptoSecondsLeft
+   )
+  );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(symbol.toLowerCase()+"Countdown");
+
+   if(el){
+
+    el.textContent=
+     "Refresh in "+
+     cryptoSecondsLeft+
+     "s";
+   }
+  }
+);
+
+
+ if(
+  cryptoSecondsLeft<=0
+ ){
+
+  setCryptoStatus(
+   "SYNCING LIVE MARKET",
+   "syncing"
+  );
+ }
+}
+
+
+/* =====================================================
+   CRYPTO ERROR
+===================================================== */
+
+function showCryptoError(
+ source="LIVE FEED"
+){
+
+ setCryptoStatus(
+  source+
+  " TEMPORARILY UNAVAILABLE",
+  "offline"
+ );
+
+ setCryptoLiveLabels(
+  "WAIT"
+ );
+
 
  CRYPTO_IDS.forEach(
   id=>{
@@ -5909,8 +6116,7 @@ function showCryptoError(){
    if(!el)return;
 
    /*
-    * Keep previous valid price.
-    * Only show a small warning below it.
+    * Do not erase the last valid price.
     */
 
    el.textContent=
@@ -5920,91 +6126,254 @@ function showCryptoError(){
     "cryptoError"
    );
   }
-);
-
-
- setTimeout(()=>{
-
-  CRYPTO_IDS.forEach(
-   id=>{
-
-    const symbol=
-     CRYPTO_SYMBOLS[id];
-
-    const el=
-     $(symbol.toLowerCase()+"Updated");
-
-    if(el)
-     el.classList.remove(
-      "cryptoError"
-     );
-   }
-  );
-
- },4000);
+ );
 }
 
 
 /* =====================================================
-   LOAD COINGECKO LIVE DATA
+   CRYPTO SUCCESS
 ===================================================== */
 
-async function loadCryptoMarket(){
+function showCryptoSuccess(
+ source
+){
 
- if(cryptoRequestInProgress)
-  return;
+ setCryptoStatus(
+  "LIVE • "+
+  source+
+  " • 10s REFRESH",
+  "live"
+ );
 
- cryptoRequestInProgress=true;
+ setCryptoLiveLabels(
+  "LIVE"
+ );
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(symbol.toLowerCase()+"Updated");
+
+   if(el)
+    el.classList.remove(
+     "cryptoError"
+    );
+  }
+ );
+
+
+ cryptoSecondsLeft=
+  CRYPTO_REFRESH_SECONDS;
+
+ updateCryptoCountdown();
+}
+
+
+/* =====================================================
+   BINANCE URL
+===================================================== */
+
+function buildBinanceURL(){
+
+ const encoded=
+  encodeURIComponent(
+   JSON.stringify(
+    BINANCE_SYMBOLS
+   )
+  );
+
+ return BINANCE_API+
+  "?symbols="+
+  encoded+
+  "&type=MINI_TICKER"+
+  "&_="+
+  Date.now();
+}
+
+
+/* =====================================================
+   LOAD BINANCE
+===================================================== */
+
+async function loadBinanceMarket(){
+
+ const controller=
+  new AbortController();
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   8000
+  );
 
 
  try{
 
-  const url=
-   COINGECKO_API+
-   "?ids="+
-   CRYPTO_IDS.join(",")+
-   "&vs_currencies=usd"+
-   "&include_24hr_change=true"+
-   "&precision=full"+
-   "&_="+
-   Date.now();
-
-
-  const controller=
-   new AbortController();
-
-
-  const timeout=
-   setTimeout(
-    ()=>{
-     controller.abort();
-    },
-    10000
+  const response=
+   await fetch(
+    buildBinanceURL(),
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":"application/json"
+     }
+    }
    );
 
 
-  let response;
+  if(!response.ok){
+
+   throw new Error(
+    "Binance API "+
+    response.status
+   );
+  }
 
 
-  try{
+  const data=
+   await response.json();
 
-   response=
-    await fetch(
-     url,
-     {
-      method:"GET",
-      cache:"no-store",
-      signal:controller.signal,
-      headers:{
-       "Accept":"application/json"
-      }
-     }
+
+  if(!Array.isArray(data)){
+
+   throw new Error(
+    "Unexpected Binance response"
+   );
+  }
+
+
+  let validCoins=0;
+
+
+  data.forEach(
+   coin=>{
+
+    if(!coin)return;
+
+    const symbol=
+     BINANCE_TO_SYMBOL[
+      coin.symbol
+     ];
+
+    if(!symbol)return;
+
+
+    /*
+     * MINI_TICKER returns:
+     * close price = c
+     */
+
+    const price=
+     Number(
+      coin.lastPrice||
+      coin.c
     );
 
-  }finally{
 
-   clearTimeout(timeout);
+    const change=
+     Number(
+      coin.priceChangePercent||
+      coin.P
+    );
+
+
+    if(
+     updateCryptoPrice(
+      symbol,
+      price
+     )
+    ){
+
+     validCoins++;
+    }
+
+
+    if(
+     Number.isFinite(change)
+    ){
+
+     updateCryptoChange(
+      symbol,
+      change
+     );
+    }
+
+   }
+  );
+
+
+  if(
+   validCoins<
+   CRYPTO_IDS.length
+  ){
+
+   throw new Error(
+    "Incomplete Binance data"
+   );
   }
+
+
+  return true;
+
+ }finally{
+
+  clearTimeout(timeout);
+ }
+}
+
+
+/* =====================================================
+   LOAD COINGECKO FALLBACK
+===================================================== */
+
+async function loadCoinGeckoMarket(){
+
+ const url=
+  COINGECKO_API+
+  "?ids="+
+  CRYPTO_IDS.join(",")+
+  "&vs_currencies=usd"+
+  "&include_24hr_change=true"+
+  "&precision=full"+
+  "&_="+
+  Date.now();
+
+
+ const controller=
+  new AbortController();
+
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   8000
+  );
+
+
+ try{
+
+  const response=
+   await fetch(
+    url,
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":"application/json"
+     }
+    }
+   );
 
 
   if(!response.ok){
@@ -6013,7 +6382,6 @@ async function loadCryptoMarket(){
     "CoinGecko API "+
     response.status
    );
-
   }
 
 
@@ -6043,12 +6411,15 @@ async function loadCryptoMarket(){
      coin.usd!==undefined
     ){
 
-     updateCryptoPrice(
-      symbol,
-      coin.usd
-     );
+     if(
+      updateCryptoPrice(
+       symbol,
+       coin.usd
+      )
+     ){
 
-     validCoins++;
+      validCoins++;
+     }
     }
 
 
@@ -6067,55 +6438,150 @@ async function loadCryptoMarket(){
   );
 
 
-  if(validCoins>0){
-
-   updateCryptoTimestamp();
-
-   console.log(
-    "CLIMBORIA LIVE CRYPTO UPDATE:",
-    data
-   );
-
-  }else{
+  if(
+   validCoins<
+   CRYPTO_IDS.length
+  ){
 
    throw new Error(
-    "No valid crypto data"
+    "Incomplete CoinGecko data"
    );
   }
 
 
- }catch(error){
+  return true;
 
-  console.warn(
-   "CLIMBORIA CoinGecko feed failed:",
-   error
+ }finally{
+
+  clearTimeout(timeout);
+ }
+}
+
+
+/* =====================================================
+   LOAD LIVE MARKET
+===================================================== */
+
+async function loadCryptoMarket(){
+
+ if(cryptoRequestInProgress)
+  return;
+
+ cryptoRequestInProgress=true;
+
+
+ setCryptoStatus(
+  "SYNCING LIVE MARKET",
+  "syncing"
+ );
+
+ setCryptoLiveLabels(
+  "SYNC"
+ );
+
+
+ try{
+
+  /*
+   * FIRST:
+   * Binance live market.
+   */
+
+  try{
+
+   const binanceOK=
+    await loadBinanceMarket();
+
+   if(binanceOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "BINANCE"
+    );
+
+    console.log(
+     "CLIMBORIA LIVE CRYPTO:",
+     "BINANCE"
+    );
+
+    return;
+   }
+
+  }catch(binanceError){
+
+   console.warn(
+    "CLIMBORIA Binance feed failed:",
+    binanceError
+   );
+  }
+
+
+  /*
+   * FALLBACK:
+   * CoinGecko.
+   */
+
+  try{
+
+   const geckoOK=
+    await loadCoinGeckoMarket();
+
+   if(geckoOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "COINGECKO"
+    );
+
+    console.log(
+     "CLIMBORIA LIVE CRYPTO:",
+     "COINGECKO"
+    );
+
+    return;
+   }
+
+  }catch(geckoError){
+
+   console.warn(
+    "CLIMBORIA CoinGecko feed failed:",
+    geckoError
+   );
+  }
+
+
+  /*
+   * Both failed.
+   * Keep previous prices.
+   */
+
+  showCryptoError(
+   "LIVE FEEDS"
   );
 
-  showCryptoError();
 
  }finally{
 
   cryptoRequestInProgress=false;
+
+  cryptoSecondsLeft=
+   CRYPTO_REFRESH_SECONDS;
+
+  updateCryptoCountdown();
  }
 }
 
 
 /* =====================================================
    START CRYPTO TICKER
-   10 SECOND LIVE REFRESH
 ===================================================== */
 
 function startCryptoTicker(){
 
  /*
-  * Load immediately when the website opens.
-  */
-
- loadCryptoMarket();
-
-
- /*
-  * Refresh live prices every 10 seconds.
+  * Make sure an old timer cannot survive.
   */
 
  if(cryptoTimer){
@@ -6123,13 +6589,66 @@ function startCryptoTicker(){
   clearInterval(
    cryptoTimer
   );
+
+  cryptoTimer=null;
  }
 
 
+ if(cryptoCountdownTimer){
+
+  clearInterval(
+   cryptoCountdownTimer
+  );
+
+  cryptoCountdownTimer=null;
+ }
+
+
+ /*
+  * Initial live request.
+  */
+
+ cryptoSecondsLeft=
+  1;
+
+ updateCryptoCountdown();
+
+ loadCryptoMarket();
+
+
+ /*
+  * Exact 10-second market refresh.
+  */
+
  cryptoTimer=
   setInterval(
-   loadCryptoMarket,
-   10000
+   ()=>{
+    loadCryptoMarket();
+   },
+   CRYPTO_REFRESH_SECONDS*1000
+  );
+
+
+ /*
+  * Visible countdown.
+  */
+
+ cryptoCountdownTimer=
+  setInterval(
+   ()=>{
+
+    if(
+     cryptoSecondsLeft>0
+    ){
+
+     cryptoSecondsLeft--;
+    }
+
+
+    updateCryptoCountdown();
+
+   },
+   1000
   );
 }
 
