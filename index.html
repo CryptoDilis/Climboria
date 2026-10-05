@@ -1211,10 +1211,14 @@ const effects=[];
 
 const summitParticles=[];
 const summitBurst=[];
+const summitSparks=[];
+const summitShockwaves=[];
 
 let summitGlowMesh=null;
 let summitLight=null;
 let summitBeacon=null;
+
+let victoryTimer=null;
 
 
 /* =========================================================
@@ -1387,51 +1391,106 @@ function createSummitParticles(){
 
 
 /* =========================================================
+   CREATE SUMMIT SHOCKWAVE
+========================================================= */
+
+function createSummitShockwave(){
+
+  const ring=
+    new THREE.Mesh(
+      new THREE.TorusGeometry(
+        1,
+        .09,
+        10,
+        64
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x55ff70,
+        transparent:true,
+        opacity:1,
+        depthWrite:false
+      })
+    );
+
+
+  ring.position.set(
+    hero.position.x,
+    hero.position.y+.25,
+    3.7
+  );
+
+
+  ring.rotation.x=
+    Math.PI/2;
+
+
+  ring.scale.setScalar(.2);
+
+
+  ring.userData={
+    life:1.1,
+    maxLife:1.1
+  };
+
+
+  scene.add(
+    ring
+  );
+
+
+  summitShockwaves.push(
+    ring
+  );
+}
+
+
+/* =========================================================
    CREATE SUMMIT BURST
 ========================================================= */
 
 function createSummitBurst(){
 
-  summitBurst.forEach(
-    particle=>{
-
-      scene.remove(
-        particle
-      );
-
-      particle.geometry.dispose();
-      particle.material.dispose();
-
-    }
-  );
+  clearSummitBurst();
 
 
-  summitBurst.length=0;
-
+  /*
+     MAIN EXPLOSION
+     Much larger and brighter than before.
+  */
 
   for(
     let i=0;
-    i<65;
+    i<150;
     i++
   ){
+
+    const green=
+      Math.random()>.22;
+
+
+    const size=
+      .055+
+      Math.random()*.11;
+
 
     const particle=
       new THREE.Mesh(
         new THREE.SphereGeometry(
-          .045+
-          Math.random()*.075,
-          7,
-          7
+          size,
+          8,
+          8
         ),
         new THREE.MeshBasicMaterial({
           color:
-            Math.random()>.25
+            green
             ?0x55ff70
             :0xffffff,
 
           transparent:true,
 
-          opacity:1
+          opacity:1,
+
+          depthWrite:false
         })
       );
 
@@ -1439,8 +1498,10 @@ function createSummitBurst(){
     particle.position.set(
       hero.position.x,
       hero.position.y+
-      1.5,
-      2.8
+      .9+
+      Math.random()*.8,
+      3.5+
+      (Math.random()-.5)*.7
     );
 
 
@@ -1449,9 +1510,13 @@ function createSummitBurst(){
       Math.PI*2;
 
 
+    /*
+       Strong radial explosion.
+    */
+
     const speed=
-      2+
-      Math.random()*6;
+      3.5+
+      Math.random()*9;
 
 
     particle.userData={
@@ -1460,20 +1525,24 @@ function createSummitBurst(){
         speed,
 
       vy:
-        2+
-        Math.random()*7,
+        3+
+        Math.random()*10,
 
       vz:
         (Math.random()-.5)*
-        2,
+        4,
 
       life:
-        1.8+
-        Math.random()*.9,
+        1.4+
+        Math.random()*1.5,
 
       maxLife:
-        1.8+
-        Math.random()*.9
+        1.4+
+        Math.random()*1.5,
+
+      gravity:
+        5+
+        Math.random()*3
     };
 
 
@@ -1486,6 +1555,107 @@ function createSummitBurst(){
       particle
     );
 
+  }
+
+
+  /*
+     EXTRA STAR-LIKE SPARKS
+  */
+
+  for(
+    let i=0;
+    i<55;
+    i++
+  ){
+
+    const spark=
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          .025+
+          Math.random()*.055,
+          6,
+          6
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            Math.random()>.3
+            ?0xffffff
+            :0x55ff70,
+
+          transparent:true,
+
+          opacity:1,
+
+          depthWrite:false
+        })
+      );
+
+
+    spark.position.set(
+      hero.position.x,
+      hero.position.y+
+      1.1,
+      4
+    );
+
+
+    const angle=
+      Math.random()*
+      Math.PI*2;
+
+
+    const speed=
+      7+
+      Math.random()*12;
+
+
+    spark.userData={
+      vx:
+        Math.cos(angle)*
+        speed,
+
+      vy:
+        Math.sin(angle)*
+        speed+
+        4,
+
+      vz:
+        (Math.random()-.5)*
+        5,
+
+      life:
+        .7+
+        Math.random()*.8,
+
+      maxLife:
+        .7+
+        Math.random()*.8
+    };
+
+
+    scene.add(
+      spark
+    );
+
+
+    summitSparks.push(
+      spark
+    );
+
+  }
+
+
+  createSummitShockwave();
+
+
+  /*
+     Flash the summit light.
+  */
+
+  if(summitLight){
+
+    summitLight.intensity=
+      15;
   }
 }
 
@@ -1582,10 +1752,10 @@ function updateSummitBurst(dt){
 
 
     data.vy-=
-      6*dt;
+      data.gravity*dt;
 
 
-    particle.material.opacity=
+    const fade=
       Math.max(
         0,
         data.life/
@@ -1593,8 +1763,13 @@ function updateSummitBurst(dt){
       );
 
 
-    particle.scale.multiplyScalar(
-      .985
+    particle.material.opacity=
+      fade;
+
+
+    particle.scale.setScalar(
+      .75+
+      fade*.7
     );
 
 
@@ -1617,6 +1792,166 @@ function updateSummitBurst(dt){
 
     }
 
+  }
+
+
+  /*
+     EXTRA SPARKS
+  */
+
+  for(
+    let i=summitSparks.length-1;
+    i>=0;
+    i--
+  ){
+
+    const spark=
+      summitSparks[i];
+
+    const data=
+      spark.userData;
+
+
+    data.life-=dt;
+
+
+    spark.position.x+=
+      data.vx*dt;
+
+
+    spark.position.y+=
+      data.vy*dt;
+
+
+    spark.position.z+=
+      data.vz*dt;
+
+
+    data.vx*=.985;
+    data.vy*=.985;
+    data.vz*=.985;
+
+
+    const fade=
+      Math.max(
+        0,
+        data.life/
+        data.maxLife
+      );
+
+
+    spark.material.opacity=
+      fade;
+
+
+    spark.scale.setScalar(
+      .7+
+      fade*1.5
+    );
+
+
+    if(
+      data.life<=0
+    ){
+
+      scene.remove(
+        spark
+      );
+
+      spark.geometry.dispose();
+
+      spark.material.dispose();
+
+      summitSparks.splice(
+        i,
+        1
+      );
+
+    }
+
+  }
+
+
+  /*
+     SHOCKWAVE
+  */
+
+  for(
+    let i=summitShockwaves.length-1;
+    i>=0;
+    i--
+  ){
+
+    const ring=
+      summitShockwaves[i];
+
+    const data=
+      ring.userData;
+
+
+    data.life-=dt;
+
+
+    const progress=
+      1-
+      Math.max(
+        0,
+        data.life/
+        data.maxLife
+      );
+
+
+    const scale=
+      .2+
+      progress*5.2;
+
+
+    ring.scale.setScalar(
+      scale
+    );
+
+
+    ring.material.opacity=
+      Math.max(
+        0,
+        1-progress
+      );
+
+
+    if(
+      data.life<=0
+    ){
+
+      scene.remove(
+        ring
+      );
+
+      ring.geometry.dispose();
+
+      ring.material.dispose();
+
+      summitShockwaves.splice(
+        i,
+        1
+      );
+
+    }
+
+  }
+
+
+  /*
+     Return summit light to normal.
+  */
+
+  if(summitLight){
+
+    summitLight.intensity=
+      Math.max(
+        4.2,
+        summitLight.intensity-
+        18*dt
+      );
   }
 }
 
@@ -1667,12 +2002,16 @@ function animateSummit(time){
 
   if(summitLight){
 
-    summitLight.intensity=
-      4.2+
-      Math.sin(
-        time*.003
-      )*
-      1.3;
+    if(!gameWon){
+
+      summitLight.intensity=
+        4.2+
+        Math.sin(
+          time*.003
+        )*
+        1.3;
+
+    }
 
   }
 }
@@ -1796,6 +2135,49 @@ function clearSummitBurst(){
 
 
   summitBurst.length=0;
+
+
+  summitSparks.forEach(
+    spark=>{
+
+      scene.remove(
+        spark
+      );
+
+      spark.geometry.dispose();
+
+      spark.material.dispose();
+
+    }
+  );
+
+
+  summitSparks.length=0;
+
+
+  summitShockwaves.forEach(
+    ring=>{
+
+      scene.remove(
+        ring
+      );
+
+      ring.geometry.dispose();
+
+      ring.material.dispose();
+
+    }
+  );
+
+
+  summitShockwaves.length=0;
+
+
+  if(summitLight){
+
+    summitLight.intensity=
+      5;
+  }
 }
 
 
@@ -1861,7 +2243,22 @@ const victory=
   );
 
 
+function cancelVictoryTimer(){
+
+  if(victoryTimer){
+
+    clearTimeout(
+      victoryTimer
+    );
+
+    victoryTimer=null;
+  }
+}
+
+
 function showGame(){
+
+  cancelVictoryTimer();
 
   landing.style.display="none";
 
@@ -1894,6 +2291,8 @@ function showGame(){
 
 function showMenu(){
 
+  cancelVictoryTimer();
+
   running=false;
 
   grabbed=null;
@@ -1925,6 +2324,8 @@ function showMenu(){
 
 
 function showLaunchpad(){
+
+  cancelVictoryTimer();
 
   running=false;
 
@@ -1969,15 +2370,48 @@ function showVictory(){
   );
 
 
+  cancelVictoryTimer();
+
+
+  /*
+     Hide victory screen first.
+     Let the explosion play clearly.
+  */
+
+  victory.style.display=
+    "none";
+
+
   createSummitBurst();
 
 
-  victory.style.display=
-    "flex";
+  /*
+     After 1.2 seconds,
+     show the victory screen.
+  */
+
+  victoryTimer=
+    setTimeout(
+      ()=>{
+
+        victoryTimer=null;
+
+        if(gameWon){
+
+          victory.style.display=
+            "flex";
+
+        }
+
+      },
+      1200
+    );
 }
 
 
 function restartGame(){
+
+  cancelVictoryTimer();
 
   victory.style.display=
     "none";
