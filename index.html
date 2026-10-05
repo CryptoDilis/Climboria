@@ -29,7 +29,7 @@ canvas{
    LANDING / SCREENS
 ========================= */
 
-#landing,#launchpad,#victory{
+#landing,#launchpad,#levelSelect,#victory{
  position:fixed;
  inset:0;
  z-index:20;
@@ -41,7 +41,7 @@ canvas{
  radial-gradient(circle at 50% 45%,#15232b 0%,#05090d 68%);
 }
 
-#launchpad,#victory{display:none}
+#launchpad,#levelSelect,#victory{display:none}
 
 .panel{
  width:min(950px,94%);
@@ -128,6 +128,121 @@ button:active{transform:scale(.98)}
 .card span{
  font-size:10px;
  color:#718087;
+}
+
+/* =========================
+   LEVEL SELECT
+========================= */
+
+.levelTitle{
+ font-size:clamp(28px,7vw,58px);
+ font-weight:900;
+ letter-spacing:4px;
+ color:#55ff70;
+ text-shadow:0 0 25px #55ff7045;
+}
+
+.levelSub{
+ color:#718087;
+ font-size:9px;
+ letter-spacing:2px;
+ margin-top:8px;
+}
+
+.levelGrid{
+ width:min(780px,96%);
+ margin-top:22px;
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
+.levelCard{
+ position:relative;
+ min-height:150px;
+ border:1px solid #ffffff15;
+ background:#ffffff05;
+ border-radius:12px;
+ padding:17px;
+ text-align:left;
+ cursor:pointer;
+ transition:
+  border-color .2s ease,
+  background .2s ease,
+  transform .2s ease;
+}
+
+.levelCard:hover{
+ border-color:#55ff7045;
+ background:#55ff7009;
+ transform:translateY(-2px);
+}
+
+.levelCard.locked{
+ cursor:not-allowed;
+ opacity:.48;
+}
+
+.levelCard.locked:hover{
+ border-color:#ffffff15;
+ background:#ffffff05;
+ transform:none;
+}
+
+.levelNumber{
+ color:#718087;
+ font-size:8px;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+
+.levelName{
+ color:#fff;
+ font-size:18px;
+ font-weight:900;
+ margin-top:7px;
+ letter-spacing:1px;
+}
+
+.levelDescription{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:7px;
+ max-width:300px;
+}
+
+.levelStatus{
+ display:inline-block;
+ margin-top:13px;
+ padding:5px 8px;
+ border-radius:20px;
+ border:1px solid #55ff7030;
+ color:#55ff70;
+ background:#55ff7009;
+ font-size:7px;
+ font-weight:900;
+ letter-spacing:1px;
+}
+
+.levelCard.locked .levelStatus{
+ color:#718087;
+ border-color:#ffffff15;
+ background:#ffffff05;
+}
+
+.levelReward{
+ position:absolute;
+ right:14px;
+ top:14px;
+ color:#ffcc33;
+ font-size:7px;
+ font-weight:bold;
+ letter-spacing:1px;
+}
+
+.levelBack{
+ margin-top:18px;
 }
 
 /* =========================
@@ -842,13 +957,21 @@ button:active{transform:scale(.98)}
  margin-top:5px;
 }
 
+.unlockMessage{
+ color:#ffcc33;
+ font-size:9px;
+ letter-spacing:1px;
+ font-weight:bold;
+ margin-top:8px;
+}
+
 /* =========================
    MOBILE
 ========================= */
 
 @media(max-width:700px){
 
- #landing,#launchpad,#victory{
+ #landing,#launchpad,#levelSelect,#victory{
   padding:12px 0;
  }
 
@@ -947,6 +1070,22 @@ button:active{transform:scale(.98)}
 
  .airdropTitle{font-size:8px}
  .airdropText{font-size:7px}
+
+ .levelGrid{
+  grid-template-columns:1fr;
+  width:94%;
+  gap:8px;
+  margin-top:17px;
+ }
+
+ .levelCard{
+  min-height:125px;
+  padding:14px;
+ }
+
+ .levelName{
+  font-size:16px;
+ }
 
  #bar{width:120px}
  #status{top:65px;font-size:9px}
@@ -1057,6 +1196,10 @@ button:active{transform:scale(.98)}
 
 <body>
 
+<!-- =========================
+     LANDING
+========================= -->
+
 <div id="landing">
  <div class="panel">
 
@@ -1154,6 +1297,191 @@ button:active{transform:scale(.98)}
 
  </div>
 </div>
+
+
+<!-- =========================
+     LEVEL SELECT
+========================= -->
+
+<div id="levelSelect">
+ <div class="panel">
+
+  <div class="levelTitle">
+   CHOOSE YOUR CLIMB
+  </div>
+
+  <div class="levelSub">
+   COMPLETE LEVELS TO UNLOCK THE NEXT SUMMIT
+  </div>
+
+  <div class="levelGrid">
+
+   <div
+    class="levelCard"
+    id="level1Card"
+    data-level="1"
+   >
+
+    <div class="levelNumber">
+     LEVEL 01
+    </div>
+
+    <div class="levelName">
+     GENESIS WALLET
+    </div>
+
+    <div class="levelDescription">
+     Your first climb. Learn the ropes,
+     master the hammer, and reach the first summit.
+    </div>
+
+    <div class="levelStatus">
+     UNLOCKED
+    </div>
+
+    <div class="levelReward">
+     +100 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level2Card"
+    data-level="2"
+   >
+
+    <div class="levelNumber">
+     LEVEL 02
+    </div>
+
+    <div class="levelName">
+     SATOSHI'S ASCENT
+    </div>
+
+    <div class="levelDescription">
+     A harder route awaits.
+     Complete Genesis Wallet to unlock this mountain.
+    </div>
+
+    <div class="levelStatus" id="level2Status">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +150 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level3Card"
+    data-level="3"
+   >
+
+    <div class="levelNumber">
+     LEVEL 03
+    </div>
+
+    <div class="levelName">
+     BITCOIN BLOCK
+    </div>
+
+    <div class="levelDescription">
+     A deeper climb with more dangerous routes
+     and better future rewards.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +200 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level4Card"
+    data-level="4"
+   >
+
+    <div class="levelNumber">
+     LEVEL 04
+    </div>
+
+    <div class="levelName">
+     ETHEREUM TOWER
+    </div>
+
+    <div class="levelDescription">
+     Advanced climbing territory.
+     This level is coming later.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +250 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level5Card"
+    data-level="5"
+   >
+
+    <div class="levelNumber">
+     LEVEL 05
+    </div>
+
+    <div class="levelName">
+     BASE SUMMIT
+    </div>
+
+    <div class="levelDescription">
+     The final planned prototype destination.
+     More content coming soon.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +300 CP
+    </div>
+
+   </div>
+
+  </div>
+
+  <button
+   id="levelBackButton"
+   class="levelBack"
+   type="button"
+  >
+   BACK
+  </button>
+
+ </div>
+</div>
+
+
+<!-- =========================
+     LAUNCHPAD
+========================= -->
 
 <div id="launchpad">
  <div class="panel">
@@ -1304,6 +1632,11 @@ button:active{transform:scale(.98)}
  </div>
 </div>
 
+
+<!-- =========================
+     VICTORY
+========================= -->
+
 <div id="victory">
  <div class="panel">
 
@@ -1311,8 +1644,8 @@ button:active{transform:scale(.98)}
    SUMMIT REACHED
   </div>
 
-  <div class="peak">
-   JARRELL'S PEAK
+  <div class="peak" id="victoryPeak">
+   GENESIS WALLET
   </div>
 
   <div class="winSub">
@@ -1335,10 +1668,23 @@ button:active{transform:scale(.98)}
     +100 SUMMIT REWARD
    </div>
 
+   <div
+    class="unlockMessage"
+    id="unlockMessage"
+   >
+    NEXT LEVEL UNLOCKED
+   </div>
+
   </div>
 
   <button id="climbAgainButton" type="button">
    CLIMB AGAIN
+  </button>
+
+  <br><br>
+
+  <button id="levelSelectVictoryButton" type="button">
+   LEVEL SELECT
   </button>
 
   <br><br>
@@ -1349,6 +1695,11 @@ button:active{transform:scale(.98)}
 
  </div>
 </div>
+
+
+<!-- =========================
+     HUD
+========================= -->
 
 <div id="hud">
 
@@ -1367,6 +1718,12 @@ button:active{transform:scale(.98)}
   </div>
 
   <div class="stat">
+
+   <span id="hudLevelName">
+    LEVEL 01 • GENESIS WALLET
+   </span>
+
+   <br>
 
    HAMMER:
    <b id="hammerState">READY</b>
@@ -1391,6 +1748,7 @@ button:active{transform:scale(.98)}
 
 </div>
 
+
 <div id="hudPoints">
 
  <div class="hudPointsLabel">
@@ -1402,6 +1760,11 @@ button:active{transform:scale(.98)}
  </div>
 
 </div>
+
+
+<!-- =========================
+     CRYPTO TICKER
+========================= -->
 
 <div id="cryptoTicker">
 
@@ -1484,6 +1847,7 @@ button:active{transform:scale(.98)}
  </div>
 </div>
 
+
 <div id="help"></div>
 
 <div id="touchHint">
@@ -1496,91 +1860,278 @@ button:active{transform:scale(.98)}
  </button>
 </div>
 
+
+<!-- =========================
+     EARLY BUTTON BINDINGS
+========================= -->
+
 <script>
 (function(){
 
- const startButton=document.getElementById("startButton");
+ const startButton=
+  document.getElementById("startButton");
 
  if(startButton){
 
-  startButton.addEventListener("click",function(){
+  startButton.addEventListener(
+   "click",
+   function(){
 
-   if(typeof window.showGame==="function"){
+    if(typeof window.showLevelSelect==="function"){
 
-    window.showGame();
+     window.showLevelSelect();
 
-   }else{
+    }else{
 
-    window.climboriaStartRequested=true;
+     window.climboriaStartRequested=true;
 
-    const status=document.getElementById("status");
+     const status=
+      document.getElementById("status");
 
-    if(status){
+     if(status){
 
-     status.textContent="LOADING GAME...";
-     status.style.color="#ffcc33";
+      status.textContent=
+       "LOADING GAME...";
 
+      status.style.color=
+       "#ffcc33";
+     }
     }
+
    }
-  });
+  );
  }
 
- const backButton=document.getElementById("backButton");
+
+ const levelBackButton=
+  document.getElementById("levelBackButton");
+
+ if(levelBackButton){
+
+  levelBackButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const level1Card=
+  document.getElementById("level1Card");
+
+ if(level1Card){
+
+  level1Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(1);
+
+   }
+  );
+ }
+
+
+ const level2Card=
+  document.getElementById("level2Card");
+
+ if(level2Card){
+
+  level2Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(2);
+
+   }
+  );
+ }
+
+
+ const level3Card=
+  document.getElementById("level3Card");
+
+ if(level3Card){
+
+  level3Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(3);
+
+   }
+  );
+ }
+
+
+ const level4Card=
+  document.getElementById("level4Card");
+
+ if(level4Card){
+
+  level4Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(4);
+
+   }
+  );
+ }
+
+
+ const level5Card=
+  document.getElementById("level5Card");
+
+ if(level5Card){
+
+  level5Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(5);
+
+   }
+  );
+ }
+
+
+ const backButton=
+  document.getElementById("backButton");
 
  if(backButton){
-  backButton.addEventListener("click",function(){
-   if(typeof window.showMenu==="function")
-    window.showMenu();
-  });
+
+  backButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
  }
 
- const climbAgainButton=document.getElementById("climbAgainButton");
+
+ const climbAgainButton=
+  document.getElementById("climbAgainButton");
 
  if(climbAgainButton){
-  climbAgainButton.addEventListener("click",function(){
-   if(typeof window.restartGame==="function")
-    window.restartGame();
-  });
+
+  climbAgainButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.restartGame==="function")
+     window.restartGame();
+
+   }
+  );
  }
 
- const menuButtonVictory=document.getElementById("menuButtonVictory");
+
+ const levelSelectVictoryButton=
+  document.getElementById(
+   "levelSelectVictoryButton"
+  );
+
+ if(levelSelectVictoryButton){
+
+  levelSelectVictoryButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showLevelSelect==="function")
+     window.showLevelSelect();
+
+   }
+  );
+ }
+
+
+ const menuButtonVictory=
+  document.getElementById("menuButtonVictory");
 
  if(menuButtonVictory){
-  menuButtonVictory.addEventListener("click",function(){
-   if(typeof window.showMenu==="function")
-    window.showMenu();
-  });
+
+  menuButtonVictory.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
  }
 
- const menuButton=document.getElementById("menuButton");
+
+ const menuButton=
+  document.getElementById("menuButton");
 
  if(menuButton){
-  menuButton.addEventListener("click",function(){
-   if(typeof window.showMenu==="function")
-    window.showMenu();
-  });
+
+  menuButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
  }
 
- const copyButton=document.getElementById("copyReferralButton");
+
+ const copyButton=
+  document.getElementById(
+   "copyReferralButton"
+  );
 
  if(copyButton){
-  copyButton.addEventListener("click",function(){
-   if(typeof window.copyReferral==="function")
-    window.copyReferral();
-  });
+
+  copyButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.copyReferral==="function")
+     window.copyReferral();
+
+   }
+  );
  }
 
- const shareButton=document.getElementById("shareReferralButton");
+
+ const shareButton=
+  document.getElementById(
+   "shareReferralButton"
+  );
 
  if(shareButton){
-  shareButton.addEventListener("click",function(){
-   if(typeof window.shareReferral==="function")
-    window.shareReferral();
-  });
+
+  shareButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.shareReferral==="function")
+     window.shareReferral();
+
+   }
+  );
  }
 
 })();
 </script>
+
 
 <script type="module">
 
@@ -1603,20 +2154,30 @@ try{
   error
  );
 
- const status=document.getElementById("status");
+ const status=
+  document.getElementById("status");
 
  if(status){
-  status.textContent="GAME ENGINE LOAD ERROR";
-  status.style.color="#ff6677";
+
+  status.textContent=
+   "GAME ENGINE LOAD ERROR";
+
+  status.style.color=
+   "#ff6677";
  }
 
- const startButton=document.getElementById("startButton");
+ const startButton=
+  document.getElementById("startButton");
 
  if(startButton){
-  startButton.textContent="RELOAD GAME";
-  startButton.onclick=function(){
-   location.reload();
-  };
+
+  startButton.textContent=
+   "RELOAD GAME";
+
+  startButton.onclick=
+   function(){
+    location.reload();
+   };
  }
 
  throw error;
@@ -1641,22 +2202,28 @@ let grips=[];
 
 let grabbed=null;
 
-let anchorWorld=new THREE.Vector3();
-let cursorWorld=new THREE.Vector3();
+let anchorWorld=
+ new THREE.Vector3();
 
-let lastTime=performance.now();
+let cursorWorld=
+ new THREE.Vector3();
+
+let lastTime=
+ performance.now();
 
 const mouse={
  x:0,
  y:0
 };
 
-const raycaster=new THREE.Raycaster();
+const raycaster=
+ new THREE.Raycaster();
 
-const cursorPlane=new THREE.Plane(
- new THREE.Vector3(0,0,1),
- -4
-);
+const cursorPlane=
+ new THREE.Plane(
+  new THREE.Vector3(0,0,1),
+  -4
+ );
 
 let velocityX=0;
 let velocityY=0;
@@ -1675,18 +2242,273 @@ let cameraShake=0;
 
 
 /* =====================================================
+   LEVEL SYSTEM
+===================================================== */
+
+const LEVEL_KEY=
+ "climboria_unlocked_level";
+
+let unlockedLevel=1;
+let currentLevel=1;
+
+const LEVELS={
+ 1:{
+  name:"GENESIS WALLET",
+  reward:100,
+  playable:true
+ },
+ 2:{
+  name:"SATOSHI'S ASCENT",
+  reward:150,
+  playable:false
+ },
+ 3:{
+  name:"BITCOIN BLOCK",
+  reward:200,
+  playable:false
+ },
+ 4:{
+  name:"ETHEREUM TOWER",
+  reward:250,
+  playable:false
+ },
+ 5:{
+  name:"BASE SUMMIT",
+  reward:300,
+  playable:false
+ }
+};
+
+
+function loadLevelData(){
+
+ try{
+
+  const saved=
+   Number(
+    localStorage.getItem(
+     LEVEL_KEY
+    )
+   );
+
+  unlockedLevel=
+   Number.isFinite(saved)&&
+   saved>=1
+   ?
+   Math.min(
+    5,
+    Math.floor(saved)
+   )
+   :
+   1;
+
+ }catch(error){
+
+  unlockedLevel=1;
+
+ }
+
+ updateLevelUI();
+}
+
+
+function saveLevelData(){
+
+ try{
+
+  localStorage.setItem(
+   LEVEL_KEY,
+   String(unlockedLevel)
+  );
+
+ }catch(error){}
+}
+
+
+function unlockNextLevel(){
+
+ if(currentLevel>=5)
+  return;
+
+ if(unlockedLevel<
+    currentLevel+1){
+
+  unlockedLevel=
+   currentLevel+1;
+
+  saveLevelData();
+
+ }
+
+ updateLevelUI();
+}
+
+
+function updateLevelUI(){
+
+ for(let i=1;i<=5;i++){
+
+  const card=
+   $("level"+i+"Card");
+
+  if(!card)continue;
+
+  const status=
+   card.querySelector(
+    ".levelStatus"
+   );
+
+  if(i<=unlockedLevel){
+
+   card.classList.remove("locked");
+
+   if(status)
+    status.textContent=
+     i===1?
+     "UNLOCKED":
+     "UNLOCKED";
+
+  }else{
+
+   card.classList.add("locked");
+
+   if(status)
+    status.textContent=
+     "🔒 LOCKED";
+  }
+ }
+
+ const hudLevel=
+  $("hudLevelName");
+
+ if(hudLevel){
+
+  const level=
+   LEVELS[currentLevel];
+
+  hudLevel.textContent=
+   "LEVEL 0"+
+   currentLevel+
+   " • "+
+   level.name;
+ }
+
+}
+
+
+function showLevelSelect(){
+
+ running=false;
+ grabbed=null;
+ touchActive=false;
+ gameWon=false;
+ summitSequence=false;
+
+ cancelVictoryTimer();
+
+ $("landing").style.display="none";
+ $("launchpad").style.display="none";
+ $("levelSelect").style.display="flex";
+ $("victory").style.display="none";
+
+ $("hud").style.display="none";
+ $("hudPoints").style.display="none";
+ $("help").style.display="none";
+ $("nav").style.display="none";
+ $("touchHint").style.display="none";
+
+ $("cryptoTicker").style.display="none";
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ clearBursts();
+
+ updateLevelUI();
+ updatePointsUI();
+}
+
+
+function startLevel(level){
+
+ level=
+  Math.floor(
+   Number(level)||0
+  );
+
+ if(!LEVELS[level])
+  return;
+
+ if(level>unlockedLevel){
+
+  setStatus(
+   "LEVEL LOCKED",
+   "#ffcc33"
+  );
+
+  return;
+ }
+
+
+ /*
+  Level 2-5 are intentionally not
+  playable yet. This lets us build
+  the level structure without touching
+  the working Level 1 physics.
+ */
+
+ if(!LEVELS[level].playable){
+
+  alert(
+   LEVELS[level].name+
+   " is coming soon. Complete the current content first."
+  );
+
+  return;
+ }
+
+
+ currentLevel=level;
+
+ $("levelSelect").style.display="none";
+
+ showGame();
+}
+
+
+/* =====================================================
    POINTS
 ===================================================== */
 
-const POINTS_KEY="climboria_climb_points";
-const SUMMITS_KEY="climboria_summits";
-const ATTEMPTS_KEY="climboria_attempts";
-const STREAK_KEY="climboria_daily_streak";
-const LAST_VISIT_KEY="climboria_last_visit";
-const REFERRAL_CODE_KEY="climboria_referral_code";
-const REFERRALS_KEY="climboria_referrals";
-const AIRDROP_ACTIONS_KEY="climboria_airdrop_actions";
-const AIRDROP_SCORE_KEY="climboria_airdrop_score";
+const POINTS_KEY=
+ "climboria_climb_points";
+
+const SUMMITS_KEY=
+ "climboria_summits";
+
+const ATTEMPTS_KEY=
+ "climboria_attempts";
+
+const STREAK_KEY=
+ "climboria_daily_streak";
+
+const LAST_VISIT_KEY=
+ "climboria_last_visit";
+
+const REFERRAL_CODE_KEY=
+ "climboria_referral_code";
+
+const REFERRALS_KEY=
+ "climboria_referrals";
+
+const AIRDROP_ACTIONS_KEY=
+ "climboria_airdrop_actions";
+
+const AIRDROP_SCORE_KEY=
+ "climboria_airdrop_score";
 
 const CLIMB_REWARD=100;
 const ATTEMPT_REWARD=10;
@@ -1792,7 +2614,8 @@ const CRYPTO_SYMBOLS={
  ripple:"XRP"
 };
 
-let cryptoSecondsLeft=CRYPTO_REFRESH_SECONDS;
+let cryptoSecondsLeft=
+ CRYPTO_REFRESH_SECONDS;
 
 
 /* =====================================================
@@ -1818,21 +2641,27 @@ function getDateKey(date=new Date()){
 }
 
 
-function dateDifferenceInDays(olderKey,newerKey){
+function dateDifferenceInDays(
+ olderKey,
+ newerKey
+){
 
  if(!olderKey||!newerKey)
   return Infinity;
 
- const a=new Date(
-  olderKey+"T00:00:00"
- );
+ const a=
+  new Date(
+   olderKey+"T00:00:00"
+  );
 
- const b=new Date(
-  newerKey+"T00:00:00"
- );
+ const b=
+  new Date(
+   newerKey+"T00:00:00"
+  );
 
  return Math.round(
-  (b.getTime()-a.getTime())/86400000
+  (b.getTime()-a.getTime())/
+  86400000
  );
 }
 
@@ -1850,11 +2679,15 @@ function updateDailyStreak(){
  try{
 
   previous=
-   localStorage.getItem(LAST_VISIT_KEY)||"";
+   localStorage.getItem(
+    LAST_VISIT_KEY
+   )||"";
 
   dailyStreak=
    Number(
-    localStorage.getItem(STREAK_KEY)
+    localStorage.getItem(
+     STREAK_KEY
+    )
    )||0;
 
  }catch(error){
@@ -1867,7 +2700,6 @@ function updateDailyStreak(){
 
   updateStreakUI();
   return;
-
  }
 
  const difference=
@@ -1879,7 +2711,10 @@ function updateDailyStreak(){
  if(difference===1){
 
   dailyStreak=
-   Math.max(0,dailyStreak)+1;
+   Math.max(
+    0,
+    dailyStreak
+   )+1;
 
  }else{
 
@@ -1901,7 +2736,10 @@ function updateDailyStreak(){
 
  }catch(error){}
 
- addClimbPoints(DAILY_REWARD);
+ addClimbPoints(
+  DAILY_REWARD
+ );
+
  registerAirdropAction(5);
 
  updateStreakUI();
@@ -1919,11 +2757,14 @@ function updateStreakUI(){
   );
 
  if($("landingStreakText"))
-  $("landingStreakText").textContent=streakText;
+  $("landingStreakText").textContent=
+   streakText;
 
  if($("landingStreakStatus"))
   $("landingStreakStatus").textContent=
-   dailyStreak>0?"ACTIVE":"START TODAY";
+   dailyStreak>0?
+   "ACTIVE":
+   "START TODAY";
 
  if($("dashStreak"))
   $("dashStreak").textContent=
@@ -1944,12 +2785,19 @@ function updateStreakUI(){
   }else{
 
    const remaining=
-    Math.max(0,7-dailyStreak);
+    Math.max(
+     0,
+     7-dailyStreak
+    );
 
    $("dashStreakText").textContent=
     remaining+
     " more day"+
-    (remaining===1?"":"s")+
+    (
+     remaining===1?
+     "":
+     "s"
+    )+
     " to reach 7 days.";
 
   }
@@ -1960,7 +2808,7 @@ function updateStreakUI(){
   $("streakFill").style.width=
    Math.min(
     100,
-    (dailyStreak/7)*100
+    dailyStreak/7*100
    )+"%";
 
  }
@@ -1976,25 +2824,49 @@ function loadClimbData(){
  try{
 
   const savedPoints=
-   Number(localStorage.getItem(POINTS_KEY));
+   Number(
+    localStorage.getItem(
+     POINTS_KEY
+    )
+   );
 
   const savedSummits=
-   Number(localStorage.getItem(SUMMITS_KEY));
+   Number(
+    localStorage.getItem(
+     SUMMITS_KEY
+    )
+   );
 
   const savedAttempts=
-   Number(localStorage.getItem(ATTEMPTS_KEY));
+   Number(
+    localStorage.getItem(
+     ATTEMPTS_KEY
+    )
+   );
 
   climbPoints=
-   Number.isFinite(savedPoints)&&savedPoints>=0
-   ?Math.floor(savedPoints):0;
+   Number.isFinite(savedPoints)&&
+   savedPoints>=0
+   ?
+   Math.floor(savedPoints)
+   :
+   0;
 
   totalSummits=
-   Number.isFinite(savedSummits)&&savedSummits>=0
-   ?Math.floor(savedSummits):0;
+   Number.isFinite(savedSummits)&&
+   savedSummits>=0
+   ?
+   Math.floor(savedSummits)
+   :
+   0;
 
   totalAttempts=
-   Number.isFinite(savedAttempts)&&savedAttempts>=0
-   ?Math.floor(savedAttempts):0;
+   Number.isFinite(savedAttempts)&&
+   savedAttempts>=0
+   ?
+   Math.floor(savedAttempts)
+   :
+   0;
 
  }catch(error){
 
@@ -2036,7 +2908,9 @@ function addClimbPoints(amount){
  amount=
   Math.max(
    0,
-   Math.floor(Number(amount)||0)
+   Math.floor(
+    Number(amount)||0
+   )
   );
 
  if(amount<=0)return;
@@ -2052,7 +2926,9 @@ function registerAttempt(){
 
  totalAttempts++;
 
- addClimbPoints(ATTEMPT_REWARD);
+ addClimbPoints(
+  ATTEMPT_REWARD
+ );
 
  registerAirdropAction(10);
 
@@ -2065,7 +2941,9 @@ function registerSummit(){
 
  totalSummits++;
 
- addClimbPoints(CLIMB_REWARD);
+ addClimbPoints(
+  CLIMB_REWARD
+ );
 
  registerAirdropAction(30);
 
@@ -2077,24 +2955,33 @@ function registerSummit(){
 function updatePointsUI(){
 
  const formatted=
-  climbPoints.toLocaleString("en-US");
+  climbPoints.toLocaleString(
+   "en-US"
+  );
 
  if($("landingPoints"))
-  $("landingPoints").textContent=formatted;
+  $("landingPoints").textContent=
+   formatted;
 
  if($("landingSummits"))
   $("landingSummits").textContent=
-   totalSummits.toLocaleString("en-US");
+   totalSummits.toLocaleString(
+    "en-US"
+   );
 
  if($("landingAttempts"))
   $("landingAttempts").textContent=
-   totalAttempts.toLocaleString("en-US");
+   totalAttempts.toLocaleString(
+    "en-US"
+   );
 
  if($("hudPointsValue"))
-  $("hudPointsValue").textContent=formatted;
+  $("hudPointsValue").textContent=
+   formatted;
 
  if($("victoryPoints"))
-  $("victoryPoints").textContent=formatted;
+  $("victoryPoints").textContent=
+   formatted;
 
  if($("landingReferralText"))
   $("landingReferralText").textContent=
@@ -2107,7 +2994,9 @@ function updatePointsUI(){
 
  if($("dashReferrals"))
   $("dashReferrals").textContent=
-   totalReferrals.toLocaleString("en-US");
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
 
  updateAirdropUI();
 }
@@ -2163,7 +3052,8 @@ function loadReferralData(){
 
  if(!referralCode){
 
-  referralCode=generateReferralCode();
+  referralCode=
+   generateReferralCode();
 
   try{
 
@@ -2183,7 +3073,8 @@ function loadReferralData(){
     window.location.search
    );
 
-  const incoming=params.get("ref");
+  const incoming=
+   params.get("ref");
 
   if(
    incoming&&
@@ -2195,7 +3086,9 @@ function loadReferralData(){
     "climboria_ref_used";
 
    const alreadyUsed=
-    localStorage.getItem(usedKey);
+    localStorage.getItem(
+     usedKey
+    );
 
    if(!alreadyUsed){
 
@@ -2220,11 +3113,14 @@ function updateReferralUI(){
 
  if($("refCode"))
   $("refCode").textContent=
-   referralCode||"CLIMB-0000";
+   referralCode||
+   "CLIMB-0000";
 
  if($("dashReferrals"))
   $("dashReferrals").textContent=
-   totalReferrals.toLocaleString("en-US");
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
 
  if($("landingReferralText"))
   $("landingReferralText").textContent=
@@ -2243,14 +3139,17 @@ function buildReferralLink(){
   window.location.origin+
   window.location.pathname+
   "?ref="+
-  encodeURIComponent(referralCode)
+  encodeURIComponent(
+   referralCode
+  )
  );
 }
 
 
 async function copyReferral(){
 
- const text=buildReferralLink();
+ const text=
+  buildReferralLink();
 
  try{
 
@@ -2259,7 +3158,9 @@ async function copyReferral(){
    navigator.clipboard.writeText
   ){
 
-   await navigator.clipboard.writeText(text);
+   await navigator.clipboard.writeText(
+    text
+   );
 
    setStatus(
     "REFERRAL LINK COPIED",
@@ -2294,7 +3195,6 @@ async function shareReferral(){
    });
 
    return;
-
   }
 
  }catch(error){}
@@ -2335,7 +3235,9 @@ function loadAirdropData(){
  airdropActions=
   Math.max(
    0,
-   Math.floor(airdropActions)
+   Math.floor(
+    airdropActions
+   )
   );
 
  airdropScore=
@@ -2343,7 +3245,9 @@ function loadAirdropData(){
    0,
    Math.min(
     100,
-    Math.floor(airdropScore)
+    Math.floor(
+     airdropScore
+    )
    )
   );
 
@@ -2374,7 +3278,9 @@ function registerAirdropAction(points){
  points=
   Math.max(
    0,
-   Math.floor(Number(points)||0)
+   Math.floor(
+    Number(points)||0
+   )
   );
 
  if(points<=0)return;
@@ -2399,7 +3305,9 @@ function updateAirdropUI(){
    0,
    Math.min(
     100,
-    Math.floor(airdropScore)
+    Math.floor(
+     airdropScore
+    )
    )
   );
 
@@ -2413,7 +3321,9 @@ function updateAirdropUI(){
 
  if($("airdropActions"))
   $("airdropActions").textContent=
-   airdropActions.toLocaleString("en-US");
+   airdropActions.toLocaleString(
+    "en-US"
+   );
 }
 
 
@@ -2422,11 +3332,31 @@ function updateAirdropUI(){
 ===================================================== */
 
 const DEMO_LEADERBOARD=[
- {name:"SummitHunter",points:12840,time:"02:18"},
- {name:"ClimbMaster",points:11320,time:"02:31"},
- {name:"PotClimber",points:9870,time:"02:46"},
- {name:"Genesis",points:8640,time:"03:04"},
- {name:"Satoshi",points:7310,time:"03:22"}
+ {
+  name:"SummitHunter",
+  points:12840,
+  time:"02:18"
+ },
+ {
+  name:"ClimbMaster",
+  points:11320,
+  time:"02:31"
+ },
+ {
+  name:"PotClimber",
+  points:9870,
+  time:"02:46"
+ },
+ {
+  name:"Genesis",
+  points:8640,
+  time:"03:04"
+ },
+ {
+  name:"Satoshi",
+  points:7310,
+  time:"03:22"
+ }
 ];
 
 
@@ -2443,7 +3373,8 @@ function getLeaderboardData(){
   player
  ]
  .sort(
-  (a,b)=>b.points-a.points
+  (a,b)=>
+   b.points-a.points
  )
  .slice(0,6);
 }
@@ -2451,7 +3382,8 @@ function getLeaderboardData(){
 
 function renderLeaderboard(){
 
- const container=$("leaderboardRows");
+ const container=
+  $("leaderboardRows");
 
  if(!container)return;
 
@@ -2461,13 +3393,16 @@ function renderLeaderboard(){
   (row,index)=>{
 
    const div=
-    document.createElement("div");
+    document.createElement(
+     "div"
+    );
 
    div.className=
     "leaderRow"+
     (
      row.name==="YOU"?
-     " leaderYou":""
+     " leaderYou":
+     ""
     );
 
    div.innerHTML=`
@@ -2478,6 +3413,7 @@ function renderLeaderboard(){
    `;
 
    container.appendChild(div);
+
   }
  );
 }
@@ -2486,11 +3422,26 @@ function renderLeaderboard(){
 function escapeHTML(value){
 
  return String(value)
-  .replaceAll("&","&amp;")
-  .replaceAll("<","&lt;")
-  .replaceAll(">","&gt;")
-  .replaceAll('"',"&quot;")
-  .replaceAll("'","&#039;");
+  .replaceAll(
+   "&",
+   "&amp;"
+  )
+  .replaceAll(
+   "<",
+   "&lt;"
+  )
+  .replaceAll(
+   ">",
+   "&gt;"
+  )
+  .replaceAll(
+   '"',
+   "&quot;"
+  )
+  .replaceAll(
+   "'",
+   "&#039;"
+  );
 }
 
 
@@ -2509,14 +3460,16 @@ try{
   error
  );
 
- const status=$("status");
+ const status=
+  $("status");
 
  if(status){
 
   status.textContent=
    "GAME INITIALIZATION ERROR";
 
-  status.style.color="#ff6677";
+  status.style.color=
+   "#ff6677";
  }
 }
 
@@ -2527,12 +3480,16 @@ function init(){
  loadAirdropData();
  loadReferralData();
  updateDailyStreak();
+ loadLevelData();
  renderLeaderboard();
 
- scene=new THREE.Scene();
+ scene=
+  new THREE.Scene();
 
  scene.background=
-  new THREE.Color(0x05090d);
+  new THREE.Color(
+   0x05090d
+  );
 
  scene.fog=
   new THREE.Fog(
@@ -2558,7 +3515,8 @@ function init(){
  renderer=
   new THREE.WebGLRenderer({
    antialias:true,
-   powerPreference:"high-performance"
+   powerPreference:
+    "high-performance"
   });
 
  renderer.setPixelRatio(
@@ -2616,10 +3574,25 @@ function init(){
  createTouchReticle();
  createSummitParticles();
 
- window.addEventListener("resize",resize);
- window.addEventListener("mousemove",mouseMove);
- window.addEventListener("mousedown",mouseDown);
- window.addEventListener("mouseup",mouseUp);
+ window.addEventListener(
+  "resize",
+  resize
+ );
+
+ window.addEventListener(
+  "mousemove",
+  mouseMove
+ );
+
+ window.addEventListener(
+  "mousedown",
+  mouseDown
+ );
+
+ window.addEventListener(
+  "mouseup",
+  mouseUp
+ );
 
  window.addEventListener(
   "touchstart",
@@ -2647,21 +3620,26 @@ function init(){
 
  updateHelpText();
 
- $("cryptoTicker").style.display="flex";
+ $("cryptoTicker").style.display=
+  "flex";
 
  startCryptoTicker();
 
- if(window.climboriaStartRequested){
+ if(
+  window.climboriaStartRequested
+ ){
 
   window.climboriaStartRequested=false;
 
   setTimeout(
-   ()=>showGame(),
+   ()=>showLevelSelect(),
    0
   );
  }
 
- requestAnimationFrame(animate);
+ requestAnimationFrame(
+  animate
+ );
 }
 
 
@@ -2735,31 +3713,39 @@ function createMountain(){
   [7,57,2.5,2]
  ];
 
- ledges.forEach(v=>{
+ ledges.forEach(
+  v=>{
 
-  const[x,y,w,h]=v;
+   const[
+    x,
+    y,
+    w,
+    h
+   ]=v;
 
-  const mesh=
-   new THREE.Mesh(
-    new THREE.BoxGeometry(
-     w,
-     h,
-     5
-    ),
-    new THREE.MeshStandardMaterial({
-     color:0x626a6d,
-     roughness:1
-    })
+   const mesh=
+    new THREE.Mesh(
+     new THREE.BoxGeometry(
+      w,
+      h,
+      5
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x626a6d,
+      roughness:1
+     })
+    );
+
+   mesh.position.set(
+    x,
+    y,
+    -2.8
    );
 
-  mesh.position.set(
-   x,
-   y,
-   -2.8
-  );
+   scene.add(mesh);
 
-  scene.add(mesh);
- });
+  }
+ );
 
 
  const summit=
@@ -2782,7 +3768,8 @@ function createMountain(){
   -1
  );
 
- summit.rotation.y=Math.PI/7;
+ summit.rotation.y=
+  Math.PI/7;
 
  scene.add(summit);
 
@@ -2792,30 +3779,33 @@ function createMountain(){
   [3.5,62.2,1.1,2.5],
   [-1.8,63.3,.75,1.8],
   [1.8,63.5,.9,2.4]
- ].forEach(v=>{
+ ].forEach(
+  v=>{
 
-  const r=
-   new THREE.Mesh(
-    new THREE.DodecahedronGeometry(
-     v[2],
-     0
-    ),
-    new THREE.MeshStandardMaterial({
-     color:0x555b5d
-    })
+   const r=
+    new THREE.Mesh(
+     new THREE.DodecahedronGeometry(
+      v[2],
+      0
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x555b5d
+     })
+    );
+
+   r.position.set(
+    v[0],
+    v[1],
+    -1
    );
 
-  r.position.set(
-   v[0],
-   v[1],
-   -1
-  );
+   r.scale.y=
+    v[3]/v[2];
 
-  r.scale.y=
-   v[3]/v[2];
+   scene.add(r);
 
-  scene.add(r);
- });
+  }
+ );
 
 
  summitGlowMesh=
@@ -2838,7 +3828,9 @@ function createMountain(){
   -1
  );
 
- scene.add(summitGlowMesh);
+ scene.add(
+  summitGlowMesh
+ );
 
 
  summitBeacon=
@@ -2860,7 +3852,9 @@ function createMountain(){
   -1
  );
 
- scene.add(summitBeacon);
+ scene.add(
+  summitBeacon
+ );
 
 
  summitLight=
@@ -2876,7 +3870,9 @@ function createMountain(){
   4
  );
 
- scene.add(summitLight);
+ scene.add(
+  summitLight
+ );
 
 
  const flagPole=
@@ -2898,7 +3894,9 @@ function createMountain(){
   -.5
  );
 
- scene.add(flagPole);
+ scene.add(
+  flagPole
+ );
 
 
  const flag=
@@ -2946,8 +3944,10 @@ function createMountainDetails(){
 
   const x=
    side*
-   (5+
-   Math.random()*4.5);
+   (
+    5+
+    Math.random()*4.5
+   );
 
   const rock=
    new THREE.Mesh(
@@ -2995,31 +3995,34 @@ function createMountainDetails(){
   [7,57]
  ];
 
- ledgeMarks.forEach((p,index)=>{
+ ledgeMarks.forEach(
+  (p,index)=>{
 
-  const line=
-   new THREE.Mesh(
-    new THREE.BoxGeometry(
-     1.2+
-     (index%3)*.5,
-     .035,
-     .035
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0x7c8689,
-     transparent:true,
-     opacity:.28
-    })
+   const line=
+    new THREE.Mesh(
+     new THREE.BoxGeometry(
+      1.2+
+      (index%3)*.5,
+      .035,
+      .035
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0x7c8689,
+      transparent:true,
+      opacity:.28
+     })
+    );
+
+   line.position.set(
+    p[0],
+    p[1]+.95,
+    -5.32
    );
 
-  line.position.set(
-   p[0],
-   p[1]+.95,
-   -5.32
-  );
+   scene.add(line);
 
-  scene.add(line);
- });
+  }
+ );
 }
 
 
@@ -3093,12 +4096,15 @@ function createRocks(){
  for(let i=0;i<45;i++){
 
   const side=
-   i%2?1:-1;
+   i%2?
+   1:
+   -1;
 
   const r=
    new THREE.Mesh(
     new THREE.DodecahedronGeometry(
-     .35+Math.random()*.7,
+     .35+
+     Math.random()*.7,
      0
     ),
     new THREE.MeshStandardMaterial({
@@ -3108,9 +4114,14 @@ function createRocks(){
    );
 
   r.position.set(
-   side*(12+Math.random()*7),
+   side*
+   (
+    12+
+    Math.random()*7
+   ),
    Math.random()*70,
-   -2+Math.random()*3
+   -2+
+   Math.random()*3
   );
 
   r.rotation.set(
@@ -3165,8 +4176,11 @@ function createHero(){
    })
   );
 
- rim.rotation.x=Math.PI/2;
- rim.position.y=1.43;
+ rim.rotation.x=
+  Math.PI/2;
+
+ rim.position.y=
+  1.43;
 
  hero.add(rim);
 
@@ -3183,7 +4197,8 @@ function createHero(){
    })
   );
 
- head.position.y=1.35;
+ head.position.y=
+  1.35;
 
  hero.add(head);
 
@@ -3205,33 +4220,37 @@ function createHero(){
    })
   );
 
- helmet.position.y=1.62;
+ helmet.position.y=
+  1.62;
 
  hero.add(helmet);
 
 
- [-.22,.22].forEach(x=>{
+ [-.22,.22].forEach(
+  x=>{
 
-  const eye=
-   new THREE.Mesh(
-    new THREE.SphereGeometry(
-     .07,
-     8,
-     8
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0x111111
-    })
+   const eye=
+    new THREE.Mesh(
+     new THREE.SphereGeometry(
+      .07,
+      8,
+      8
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0x111111
+     })
+    );
+
+   eye.position.set(
+    x,
+    1.42,
+    .63
    );
 
-  eye.position.set(
-   x,
-   1.42,
-   .63
-  );
+   hero.add(eye);
 
-  hero.add(eye);
- });
+  }
+ );
 
 
  const nose=
@@ -3247,10 +4266,10 @@ function createHero(){
   );
 
  nose.position.set(
-   0,
-   1.32,
-   .68
-  );
+  0,
+  1.32,
+  .68
+ );
 
  hero.add(nose);
 
@@ -3287,8 +4306,11 @@ function createHammer(){
    })
   );
 
- handle.rotation.z=Math.PI/2;
- handle.position.x=-1.9;
+ handle.rotation.z=
+  Math.PI/2;
+
+ handle.position.x=
+  -1.9;
 
  hammer.add(handle);
 
@@ -3306,7 +4328,8 @@ function createHammer(){
    })
   );
 
- head.position.x=-.65;
+ head.position.x=
+  -.65;
 
  hammer.add(head);
 
@@ -3326,7 +4349,8 @@ function createHammer(){
 
  hammer.add(tip);
 
- hammer.userData.tip=tip;
+ hammer.userData.tip=
+  tip;
 
 
  hammer.position.set(
@@ -3346,10 +4370,11 @@ function createHammer(){
   });
 
  const ropeGeometry=
-  new THREE.BufferGeometry().setFromPoints([
-   new THREE.Vector3(),
-   new THREE.Vector3()
-  ]);
+  new THREE.BufferGeometry()
+   .setFromPoints([
+    new THREE.Vector3(),
+    new THREE.Vector3()
+   ]);
 
  hammerRope=
   new THREE.Line(
@@ -3469,6 +4494,7 @@ function createGrips(){
     y:p[1],
     index
    });
+
   }
  );
 }
@@ -3499,13 +4525,17 @@ function createTouchReticle(){
    touchReticleMaterial
   );
 
- touchReticle.position.z=4.15;
+ touchReticle.position.z=
+  4.15;
 
- touchReticle.rotation.x=Math.PI/2;
+ touchReticle.rotation.x=
+  Math.PI/2;
 
  touchReticle.visible=false;
 
- scene.add(touchReticle);
+ scene.add(
+  touchReticle
+ );
 }
 
 
@@ -3520,7 +4550,8 @@ function createSummitParticles(){
   const p=
    new THREE.Mesh(
     new THREE.SphereGeometry(
-     .025+Math.random()*.045,
+     .025+
+     Math.random()*.045,
      6,
      6
     ),
@@ -3533,13 +4564,16 @@ function createSummitParticles(){
 
   p.position.set(
    (Math.random()-.5)*8,
-   61+Math.random()*5,
+   61+
+   Math.random()*5,
    Math.random()*2
   );
 
   p.userData={
-   speed:.2+Math.random()*.5,
-   phase:Math.random()*6
+   speed:.2+
+    Math.random()*.5,
+   phase:
+    Math.random()*6
   };
 
   scene.add(p);
@@ -3553,7 +4587,10 @@ function createSummitParticles(){
    POINTER
 ===================================================== */
 
-function setPointerPosition(x,y){
+function setPointerPosition(
+ x,
+ y
+){
 
  mouse.x=
   x/innerWidth*2-1;
@@ -3585,6 +4622,7 @@ function updateCursorWorld(){
  ){
 
   cursorWorld.copy(hit);
+
  }
 
  cursorWorld.x=
@@ -3659,6 +4697,7 @@ function nearestGrip(){
 
    dist=d;
    best=g;
+
   }
  }
 
@@ -3681,7 +4720,8 @@ function startGrab(){
   result.distance<1.2
  ){
 
-  grabbed=result.grip;
+  grabbed=
+   result.grip;
 
   anchorWorld.set(
    grabbed.x,
@@ -3690,10 +4730,12 @@ function startGrab(){
   );
 
   const dx=
-   hero.position.x-anchorWorld.x;
+   hero.position.x-
+   anchorWorld.x;
 
   const dy=
-   hero.position.y-anchorWorld.y;
+   hero.position.y-
+   anchorWorld.y;
 
   ropeLength=
    Math.max(
@@ -3717,7 +4759,9 @@ function startGrab(){
 
   grabbed.group
    .scale
-   .setScalar(1.55);
+   .setScalar(
+    1.55
+   );
 
 
   createGripBurst(
@@ -3784,7 +4828,8 @@ function touchStart(e){
   t.clientY
  );
 
- $("touchHint").style.display="block";
+ $("touchHint").style.display=
+  "block";
 
  startGrab();
 }
@@ -3815,7 +4860,8 @@ function touchEnd(e){
 
  touchActive=false;
 
- $("touchHint").style.display="none";
+ $("touchHint").style.display=
+  "none";
 
  releaseGrab();
 }
@@ -3827,16 +4873,19 @@ function touchEnd(e){
 
 function updatePhysics(dt){
 
- velocityY+=gravity*dt;
+ velocityY+=
+  gravity*dt;
 
 
  if(grabbed){
 
   const relX=
-   hero.position.x-anchorWorld.x;
+   hero.position.x-
+   anchorWorld.x;
 
   const relY=
-   hero.position.y-anchorWorld.y;
+   hero.position.y-
+   anchorWorld.y;
 
   const distance=
    Math.sqrt(
@@ -3855,10 +4904,12 @@ function updatePhysics(dt){
 
 
    const mouseX=
-    cursorWorld.x-anchorWorld.x;
+    cursorWorld.x-
+    anchorWorld.x;
 
    const mouseY=
-    cursorWorld.y-anchorWorld.y;
+    cursorWorld.y-
+    anchorWorld.y;
 
    const mouseLen=
     Math.sqrt(
@@ -3932,7 +4983,10 @@ function updatePhysics(dt){
 
 
    const spring=
-    (ropeLength-distance)*
+    (
+     ropeLength-
+     distance
+    )*
     anchorPull;
 
 
@@ -3958,7 +5012,8 @@ function updatePhysics(dt){
 
  if(speed>maxSpeed){
 
-  const s=maxSpeed/speed;
+  const s=
+   maxSpeed/speed;
 
   velocityX*=s;
   velocityY*=s;
@@ -3995,7 +5050,8 @@ function updatePhysics(dt){
 
  if(hero.position.y<groundY){
 
-  hero.position.y=groundY;
+  hero.position.y=
+   groundY;
 
   if(velocityY<0)
    velocityY=0;
@@ -4024,10 +5080,12 @@ function updateHammer(){
   );
 
   const dx=
-   cursorWorld.x-anchorWorld.x;
+   cursorWorld.x-
+   anchorWorld.x;
 
   const dy=
-   cursorWorld.y-anchorWorld.y;
+   cursorWorld.y-
+   anchorWorld.y;
 
   hammer.rotation.z=
    Math.atan2(
@@ -4042,10 +5100,12 @@ function updateHammer(){
   );
 
   const dx=
-   cursorWorld.x-hero.position.x;
+   cursorWorld.x-
+   hero.position.x;
 
   const dy=
-   cursorWorld.y-hero.position.y;
+   cursorWorld.y-
+   hero.position.y;
 
   hammer.rotation.z=
    Math.atan2(
@@ -4076,7 +5136,10 @@ function updateHammer(){
     )
    ];
 
-   hammerRope.geometry.setFromPoints(points);
+   hammerRope.geometry
+    .setFromPoints(
+     points
+    );
 
    hammerRopeMaterial.color.set(
     0x55ff70
@@ -4154,7 +5217,9 @@ function updateHeight(){
  const h=
   Math.max(
    0,
-   Math.floor(hero.position.y)
+   Math.floor(
+    hero.position.y
+   )
   );
 
  const p=
@@ -4177,7 +5242,9 @@ function updateHeight(){
   p+"%";
 
  $("hammerState").textContent=
-  grabbed?"GRABBED":"READY";
+  grabbed?
+  "GRABBED":
+  "READY";
 }
 
 
@@ -4185,12 +5252,18 @@ function updateHeight(){
    STATUS
 ===================================================== */
 
-function setStatus(text,color){
+function setStatus(
+ text,
+ color
+){
 
  if(!$("status"))return;
 
- $("status").textContent=text;
- $("status").style.color=color;
+ $("status").textContent=
+  text;
+
+ $("status").style.color=
+  color;
 }
 
 
@@ -4224,8 +5297,11 @@ function beginSummitSequence(){
  grabbed=null;
  touchActive=false;
 
- $("touchHint").style.display="none";
- $("cryptoTicker").style.display="none";
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
 
  setStatus(
   "SUMMIT REACHED",
@@ -4238,9 +5314,11 @@ function beginSummitSequence(){
  if(hammerRope)
   hammerRope.visible=false;
 
- grips.forEach(g=>{
-  g.group.scale.setScalar(1);
- });
+ grips.forEach(
+  g=>{
+   g.group.scale.setScalar(1);
+  }
+ );
 
 
  velocityX=0;
@@ -4272,35 +5350,85 @@ function beginSummitSequence(){
 
  registerSummit();
 
+ unlockNextLevel();
 
- setTimeout(()=>{
 
-  if(!summitSequence)return;
+ setTimeout(
+  ()=>{
 
-  createSummitBurst();
+   if(!summitSequence)return;
 
- },350);
+   createSummitBurst();
+
+  },
+  350
+ );
 
 
  cancelVictoryTimer();
 
  victoryTimer=
-  setTimeout(()=>{
+  setTimeout(
+   ()=>{
 
-   victoryTimer=null;
+    victoryTimer=null;
 
-   if(!summitSequence)return;
+    if(!summitSequence)return;
 
-   gameWon=true;
+    gameWon=true;
 
-   $("cryptoTicker").style.display="none";
+    $("cryptoTicker").style.display=
+     "none";
 
-   updatePointsUI();
-   renderLeaderboard();
+    updatePointsUI();
+    renderLeaderboard();
+    updateLevelUI();
 
-   $("victory").style.display="flex";
+    const peak=
+     $("victoryPeak");
 
-  },1500);
+    const unlock=
+     $("unlockMessage");
+
+    if(peak){
+
+     peak.textContent=
+      LEVELS[currentLevel].name;
+
+    }
+
+    if(unlock){
+
+     if(
+      currentLevel<5&&
+      unlockedLevel>
+      currentLevel
+     ){
+
+      unlock.textContent=
+       "LEVEL 0"+
+       unlockedLevel+
+       " UNLOCKED";
+
+     }else if(currentLevel>=5){
+
+      unlock.textContent=
+       "ALL CURRENT LEVELS COMPLETED";
+
+     }else{
+
+      unlock.textContent=
+       "KEEP CLIMBING";
+
+     }
+    }
+
+    $("victory").style.display=
+     "flex";
+
+   },
+   1500
+  );
 }
 
 
@@ -4333,7 +5461,8 @@ function resetPlayer(){
  gameWon=false;
  cameraShake=0;
 
- $("touchHint").style.display="none";
+ $("touchHint").style.display=
+  "none";
 
  if(touchReticle)
   touchReticle.visible=false;
@@ -4376,31 +5505,37 @@ function clearBursts(){
  [
   ...summitBurst,
   ...summitSparks
- ].forEach(p=>{
+ ].forEach(
+  p=>{
 
-  scene.remove(p);
+   scene.remove(p);
 
-  if(p.geometry)
-   p.geometry.dispose();
+   if(p.geometry)
+    p.geometry.dispose();
 
-  if(p.material)
-   p.material.dispose();
- });
+   if(p.material)
+    p.material.dispose();
+
+  }
+ );
 
  summitBurst.length=0;
  summitSparks.length=0;
 
 
- summitShockwaves.forEach(p=>{
+ summitShockwaves.forEach(
+  p=>{
 
-  scene.remove(p);
+   scene.remove(p);
 
-  if(p.geometry)
-   p.geometry.dispose();
+   if(p.geometry)
+    p.geometry.dispose();
 
-  if(p.material)
-   p.material.dispose();
- });
+   if(p.material)
+    p.material.dispose();
+
+  }
+ );
 
  summitShockwaves.length=0;
 }
@@ -4410,14 +5545,18 @@ function clearBursts(){
    GRIP BURST
 ===================================================== */
 
-function createGripBurst(x,y){
+function createGripBurst(
+ x,
+ y
+){
 
  for(let i=0;i<12;i++){
 
   const p=
    new THREE.Mesh(
     new THREE.SphereGeometry(
-     .045+Math.random()*.06,
+     .045+
+     Math.random()*.06,
      6,
      6
     ),
@@ -4474,7 +5613,8 @@ function updateEffects(dt){
   i--
  ){
 
-  const p=summitBurst[i];
+  const p=
+   summitBurst[i];
 
   if(
    p.userData&&
@@ -4489,9 +5629,11 @@ function updateEffects(dt){
   p.position.y+=
    p.userData.vy*dt;
 
-  p.userData.vy-=5*dt;
+  p.userData.vy-=
+   5*dt;
 
-  p.userData.life-=dt*2;
+  p.userData.life-=
+   dt*2;
 
   p.material.opacity=
    Math.max(
@@ -4500,14 +5642,19 @@ function updateEffects(dt){
    );
 
 
-  if(p.userData.life<=0){
+  if(
+   p.userData.life<=0
+  ){
 
    scene.remove(p);
 
    p.geometry.dispose();
    p.material.dispose();
 
-   summitBurst.splice(i,1);
+   summitBurst.splice(
+    i,
+    1
+   );
   }
  }
 }
@@ -4521,9 +5668,14 @@ function createSummitBurst(){
 
  if(!hero)return;
 
- const explosionX=hero.position.x;
- const explosionY=hero.position.y+.7;
- const explosionZ=hero.position.z;
+ const explosionX=
+  hero.position.x;
+
+ const explosionY=
+  hero.position.y+.7;
+
+ const explosionZ=
+  hero.position.z;
 
 
  for(let i=0;i<150;i++){
@@ -4531,7 +5683,8 @@ function createSummitBurst(){
   const p=
    new THREE.Mesh(
     new THREE.SphereGeometry(
-     .04+Math.random()*.09,
+     .04+
+     Math.random()*.09,
      6,
      6
     ),
@@ -4563,15 +5716,22 @@ function createSummitBurst(){
 
 
   p.userData={
-   vx:Math.cos(a)*speed,
-   vy:.5+Math.random()*9,
-   vz:(Math.random()-.5)*speed,
-   life:1+Math.random()*.8,
+   vx:
+    Math.cos(a)*speed,
+   vy:
+    .5+
+    Math.random()*9,
+   vz:
+    (Math.random()-.5)*speed,
+   life:
+    1+
+    Math.random()*.8,
    summit:true
   };
 
 
   scene.add(p);
+
   summitBurst.push(p);
  }
 
@@ -4609,14 +5769,20 @@ function createSummitBurst(){
 
 
   p.userData={
-   vx:Math.cos(a)*speed,
-   vy:Math.random()*10+4,
-   vz:(Math.random()-.5)*speed,
-   life:.5+Math.random()*.7
+   vx:
+    Math.cos(a)*speed,
+   vy:
+    Math.random()*10+4,
+   vz:
+    (Math.random()-.5)*speed,
+   life:
+    .5+
+    Math.random()*.7
   };
 
 
   scene.add(p);
+
   summitSparks.push(p);
  }
 
@@ -4645,7 +5811,8 @@ function createSummitBurst(){
    explosionZ
   );
 
-  shock.rotation.x=Math.PI/2;
+  shock.rotation.x=
+   Math.PI/2;
 
   shock.userData={
    life:1,
@@ -4654,7 +5821,9 @@ function createSummitBurst(){
 
   scene.add(shock);
 
-  summitShockwaves.push(shock);
+  summitShockwaves.push(
+   shock
+  );
  }
 
 
@@ -4662,12 +5831,15 @@ function createSummitBurst(){
 
   summitLight.intensity=18;
 
-  setTimeout(()=>{
+  setTimeout(
+   ()=>{
 
-   if(summitLight)
-    summitLight.intensity=5;
+    if(summitLight)
+     summitLight.intensity=5;
 
-  },500);
+   },
+   500
+  );
  }
 }
 
@@ -4684,18 +5856,29 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const p=summitBurst[i];
-  const v=p.userData;
+  const p=
+   summitBurst[i];
+
+  const v=
+   p.userData;
 
   if(!v.summit)
    continue;
 
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
+  p.position.x+=
+   v.vx*dt;
 
-  v.vy-=8*dt;
-  v.life-=dt;
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+  v.vy-=
+   8*dt;
+
+  v.life-=
+   dt;
 
   p.material.opacity=
    Math.max(
@@ -4711,7 +5894,10 @@ function updateSummitBurst(dt){
    p.geometry.dispose();
    p.material.dispose();
 
-   summitBurst.splice(i,1);
+   summitBurst.splice(
+    i,
+    1
+   );
   }
  }
 
@@ -4722,15 +5908,26 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const p=summitSparks[i];
-  const v=p.userData;
+  const p=
+   summitSparks[i];
 
-  p.position.x+=v.vx*dt;
-  p.position.y+=v.vy*dt;
-  p.position.z+=v.vz*dt;
+  const v=
+   p.userData;
 
-  v.vy-=10*dt;
-  v.life-=dt;
+  p.position.x+=
+   v.vx*dt;
+
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+  v.vy-=
+   10*dt;
+
+  v.life-=
+   dt;
 
   p.material.opacity=
    Math.max(
@@ -4746,7 +5943,10 @@ function updateSummitBurst(dt){
    p.geometry.dispose();
    p.material.dispose();
 
-   summitSparks.splice(i,1);
+   summitSparks.splice(
+    i,
+    1
+   );
   }
  }
 
@@ -4757,18 +5957,25 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const s=summitShockwaves[i];
-  const v=s.userData;
+  const s=
+   summitShockwaves[i];
+
+  const v=
+   s.userData;
 
   const scale=
    1+
    (1-v.life)*12;
 
-  s.scale.setScalar(scale);
+  s.scale.setScalar(
+   scale
+  );
 
-  s.material.opacity=v.life;
+  s.material.opacity=
+   v.life;
 
-  v.life-=dt*1.4;
+  v.life-=
+   dt*1.4;
 
 
   if(v.life<=0){
@@ -4778,7 +5985,10 @@ function updateSummitBurst(dt){
    s.geometry.dispose();
    s.material.dispose();
 
-   summitShockwaves.splice(i,1);
+   summitShockwaves.splice(
+    i,
+    1
+   );
   }
  }
 }
@@ -4788,22 +5998,28 @@ function updateSummitBurst(dt){
    SUMMIT PARTICLES
 ===================================================== */
 
-function updateSummitParticles(time,dt){
+function updateSummitParticles(
+ time,
+ dt
+){
 
- summitParticles.forEach(p=>{
+ summitParticles.forEach(
+  p=>{
 
-  p.position.y+=
-   p.userData.speed*dt;
+   p.position.y+=
+    p.userData.speed*dt;
 
-  p.position.x+=
-   Math.sin(
-    time*.001+
-    p.userData.phase
-   )*.002;
+   p.position.x+=
+    Math.sin(
+     time*.001+
+     p.userData.phase
+    )*.002;
 
-  if(p.position.y>68)
-   p.position.y=61;
- });
+   if(p.position.y>68)
+    p.position.y=61;
+
+  }
+ );
 }
 
 
@@ -4817,7 +6033,9 @@ function animateSummit(time){
 
   const s=
    1+
-   Math.sin(time*.003)*.15;
+   Math.sin(
+    time*.003
+   )*.15;
 
   summitGlowMesh
    .scale
@@ -4829,7 +6047,9 @@ function animateSummit(time){
 
   summitBeacon.scale.y=
    1+
-   Math.sin(time*.004)*.15;
+   Math.sin(
+    time*.004
+   )*.15;
  }
 }
 
@@ -4838,7 +6058,9 @@ function animateSummit(time){
    CRYPTO FORMAT
 ===================================================== */
 
-function formatCryptoPrice(price){
+function formatCryptoPrice(
+ price
+){
 
  price=Number(price);
 
@@ -4903,9 +6125,13 @@ function formatCryptoPrice(price){
    CRYPTO STATUS
 ===================================================== */
 
-function setCryptoStatus(text,type="live"){
+function setCryptoStatus(
+ text,
+ type="live"
+){
 
- const el=$("cryptoStatus");
+ const el=
+  $("cryptoStatus");
 
  if(!el)return;
 
@@ -4917,26 +6143,38 @@ function setCryptoStatus(text,type="live"){
  );
 
  if(type==="offline")
-  el.classList.add("offline");
+  el.classList.add(
+   "offline"
+  );
 
  if(type==="syncing")
-  el.classList.add("syncing");
+  el.classList.add(
+   "syncing"
+  );
 }
 
 
-function setCryptoLiveLabels(text){
+function setCryptoLiveLabels(
+ text
+){
 
- CRYPTO_IDS.forEach(id=>{
+ CRYPTO_IDS.forEach(
+  id=>{
 
-  const symbol=
-   CRYPTO_SYMBOLS[id];
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-  const el=
-   $(symbol.toLowerCase()+"LiveText");
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "LiveText"
+    );
 
-  if(el)
-   el.textContent=text;
- });
+   if(el)
+    el.textContent=text;
+
+  }
+ );
 }
 
 
@@ -4944,10 +6182,16 @@ function setCryptoLiveLabels(text){
    CRYPTO FLASH
 ===================================================== */
 
-function flashCryptoCard(symbol,direction){
+function flashCryptoCard(
+ symbol,
+ direction
+){
 
  const card=
-  $(symbol.toLowerCase()+"Card");
+  $(
+   symbol.toLowerCase()+
+   "Card"
+  );
 
  if(!card)return;
 
@@ -4969,7 +6213,9 @@ function flashCryptoCard(symbol,direction){
    "priceFlashUp"
   );
 
- }else if(direction==="down"){
+ }else if(
+  direction==="down"
+ ){
 
   card.classList.add(
    "priceDown",
@@ -4984,15 +6230,18 @@ function flashCryptoCard(symbol,direction){
  }
 
 
- setTimeout(()=>{
+ setTimeout(
+  ()=>{
 
-  card.classList.remove(
-   "priceFlashUp",
-   "priceFlashDown",
-   "priceSync"
-  );
+   card.classList.remove(
+    "priceFlashUp",
+    "priceFlashDown",
+    "priceSync"
+   );
 
- },700);
+  },
+  700
+ );
 }
 
 
@@ -5000,10 +6249,16 @@ function flashCryptoCard(symbol,direction){
    UPDATE CRYPTO
 ===================================================== */
 
-function updateCryptoPrice(symbol,price){
+function updateCryptoPrice(
+ symbol,
+ price
+){
 
  const priceEl=
-  $(symbol.toLowerCase()+"Price");
+  $(
+   symbol.toLowerCase()+
+   "Price"
+  );
 
  if(!priceEl)return false;
 
@@ -5023,7 +6278,9 @@ function updateCryptoPrice(symbol,price){
 
 
  priceEl.textContent=
-  formatCryptoPrice(price);
+  formatCryptoPrice(
+   price
+  );
 
  priceEl.classList.remove(
   "cryptoLoading"
@@ -5037,30 +6294,50 @@ function updateCryptoPrice(symbol,price){
 
   if(price>previous){
 
-   flashCryptoCard(symbol,"up");
+   flashCryptoCard(
+    symbol,
+    "up"
+   );
 
-  }else if(price<previous){
+  }else if(
+   price<previous
+  ){
 
-   flashCryptoCard(symbol,"down");
+   flashCryptoCard(
+    symbol,
+    "down"
+   );
 
   }else{
 
-   flashCryptoCard(symbol,"sync");
+   flashCryptoCard(
+    symbol,
+    "sync"
+   );
   }
 
  }else{
 
-  flashCryptoCard(symbol,"sync");
+  flashCryptoCard(
+   symbol,
+   "sync"
+  );
  }
 
  return true;
 }
 
 
-function updateCryptoChange(symbol,change){
+function updateCryptoChange(
+ symbol,
+ change
+){
 
  const changeEl=
-  $(symbol.toLowerCase()+"Change");
+  $(
+   symbol.toLowerCase()+
+   "Change"
+  );
 
  if(!changeEl)return;
 
@@ -5085,7 +6362,9 @@ function updateCryptoChange(symbol,change){
 
 
  const sign=
-  change>=0?"+":"";
+  change>=0?
+  "+":
+  "";
 
  changeEl.textContent=
   sign+
@@ -5100,7 +6379,9 @@ function updateCryptoChange(symbol,change){
  );
 
  changeEl.classList.add(
-  change>=0?"up":"down"
+  change>=0?
+  "up":
+  "down"
  );
 }
 
@@ -5111,7 +6392,8 @@ function updateCryptoChange(symbol,change){
 
 function updateCryptoTimestamp(){
 
- const now=new Date();
+ const now=
+  new Date();
 
  const time=
   now.toLocaleTimeString(
@@ -5125,18 +6407,25 @@ function updateCryptoTimestamp(){
   );
 
 
- CRYPTO_IDS.forEach(id=>{
+ CRYPTO_IDS.forEach(
+  id=>{
 
-  const symbol=
-   CRYPTO_SYMBOLS[id];
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-  const el=
-   $(symbol.toLowerCase()+"Updated");
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
 
-  if(el)
-   el.textContent=
-    "Updated "+time;
- });
+   if(el)
+    el.textContent=
+     "Updated "+
+     time;
+
+  }
+ );
 }
 
 
@@ -5149,29 +6438,40 @@ function updateCryptoCountdown(){
  cryptoSecondsLeft=
   Math.max(
    0,
-   Math.floor(cryptoSecondsLeft)
+   Math.floor(
+    cryptoSecondsLeft
+   )
   );
 
 
- CRYPTO_IDS.forEach(id=>{
+ CRYPTO_IDS.forEach(
+  id=>{
 
-  const symbol=
-   CRYPTO_SYMBOLS[id];
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-  const el=
-   $(symbol.toLowerCase()+"Countdown");
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Countdown"
+    );
 
-  if(el){
+   if(el){
 
-   el.textContent=
-    "Refresh in "+
-    cryptoSecondsLeft+
-    "s";
+    el.textContent=
+     "Refresh in "+
+     cryptoSecondsLeft+
+     "s";
+
+   }
+
   }
- });
+ );
 
 
- if(cryptoSecondsLeft<=0){
+ if(
+  cryptoSecondsLeft<=0
+ ){
 
   setCryptoStatus(
    "SYNCING LIVE MARKET",
@@ -5185,7 +6485,9 @@ function updateCryptoCountdown(){
    CRYPTO ERROR
 ===================================================== */
 
-function showCryptoError(source="LIVE FEEDS"){
+function showCryptoError(
+ source="LIVE FEEDS"
+){
 
  setCryptoStatus(
   source+
@@ -5193,26 +6495,34 @@ function showCryptoError(source="LIVE FEEDS"){
   "offline"
  );
 
- setCryptoLiveLabels("WAIT");
+ setCryptoLiveLabels(
+  "WAIT"
+ );
 
 
- CRYPTO_IDS.forEach(id=>{
+ CRYPTO_IDS.forEach(
+  id=>{
 
-  const symbol=
-   CRYPTO_SYMBOLS[id];
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-  const el=
-   $(symbol.toLowerCase()+"Updated");
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
 
-  if(!el)return;
+   if(!el)return;
 
-  el.textContent=
-   "Retrying automatically";
+   el.textContent=
+    "Retrying automatically";
 
-  el.classList.add(
-   "cryptoError"
-  );
- });
+   el.classList.add(
+    "cryptoError"
+   );
+
+  }
+ );
 }
 
 
@@ -5220,7 +6530,9 @@ function showCryptoError(source="LIVE FEEDS"){
    CRYPTO SUCCESS
 ===================================================== */
 
-function showCryptoSuccess(source){
+function showCryptoSuccess(
+ source
+){
 
  setCryptoStatus(
   "LIVE • "+
@@ -5229,22 +6541,30 @@ function showCryptoSuccess(source){
   "live"
  );
 
- setCryptoLiveLabels("LIVE");
+ setCryptoLiveLabels(
+  "LIVE"
+ );
 
 
- CRYPTO_IDS.forEach(id=>{
+ CRYPTO_IDS.forEach(
+  id=>{
 
-  const symbol=
-   CRYPTO_SYMBOLS[id];
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-  const el=
-   $(symbol.toLowerCase()+"Updated");
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
 
-  if(el)
-   el.classList.remove(
-    "cryptoError"
-   );
- });
+   if(el)
+    el.classList.remove(
+     "cryptoError"
+    );
+
+  }
+ );
 
 
  cryptoSecondsLeft=
@@ -5300,7 +6620,8 @@ async function loadBinanceMarket(){
      cache:"no-store",
      signal:controller.signal,
      headers:{
-      "Accept":"application/json"
+      "Accept":
+       "application/json"
      }
     }
    );
@@ -5326,44 +6647,55 @@ async function loadBinanceMarket(){
   let validCoins=0;
 
 
-  data.forEach(coin=>{
+  data.forEach(
+   coin=>{
 
-   if(!coin)return;
+    if(!coin)return;
 
-   const symbol=
-    BINANCE_TO_SYMBOL[
-     coin.symbol
-    ];
+    const symbol=
+     BINANCE_TO_SYMBOL[
+      coin.symbol
+     ];
 
-   if(!symbol)return;
-
-
-   const price=
-    Number(coin.lastPrice);
-
-   const change=
-    Number(coin.priceChangePercent);
+    if(!symbol)return;
 
 
-   if(
-    updateCryptoPrice(
-     symbol,
-     price
-    )
-   ){
+    const price=
+     Number(
+      coin.lastPrice
+     );
 
-    validCoins++;
+    const change=
+     Number(
+      coin.priceChangePercent
+     );
+
+
+    if(
+     updateCryptoPrice(
+      symbol,
+      price
+     )
+    ){
+
+     validCoins++;
+
+    }
+
+
+    if(
+     Number.isFinite(change)
+    ){
+
+     updateCryptoChange(
+      symbol,
+      change
+     );
+
+    }
+
    }
-
-
-   if(Number.isFinite(change)){
-
-    updateCryptoChange(
-     symbol,
-     change
-    );
-   }
-  });
+  );
 
 
   if(
@@ -5374,6 +6706,7 @@ async function loadBinanceMarket(){
    throw new Error(
     "Incomplete Binance data"
    );
+
   }
 
 
@@ -5381,7 +6714,9 @@ async function loadBinanceMarket(){
 
  }finally{
 
-  clearTimeout(timeout);
+  clearTimeout(
+   timeout
+  );
  }
 }
 
@@ -5426,7 +6761,8 @@ async function loadCoinGeckoMarket(){
      cache:"no-store",
      signal:controller.signal,
      headers:{
-      "Accept":"application/json"
+      "Accept":
+       "application/json"
      }
     }
    );
@@ -5446,38 +6782,43 @@ async function loadCoinGeckoMarket(){
   let validCoins=0;
 
 
-  CRYPTO_IDS.forEach(id=>{
+  CRYPTO_IDS.forEach(
+   id=>{
 
-   const coin=data[id];
+    const coin=data[id];
 
-   if(!coin)return;
+    if(!coin)return;
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+    const symbol=
+     CRYPTO_SYMBOLS[id];
 
 
-   if(
-    coin.usd!==undefined&&
-    updateCryptoPrice(
-     symbol,
-     coin.usd
-    )
-   ){
+    if(
+     coin.usd!==undefined&&
+     updateCryptoPrice(
+      symbol,
+      coin.usd
+     )
+    ){
 
-    validCoins++;
+     validCoins++;
+
+    }
+
+
+    if(
+     coin.usd_24h_change!==undefined
+    ){
+
+     updateCryptoChange(
+      symbol,
+      coin.usd_24h_change
+     );
+
+    }
+
    }
-
-
-   if(
-    coin.usd_24h_change!==undefined
-   ){
-
-    updateCryptoChange(
-     symbol,
-     coin.usd_24h_change
-    );
-   }
-  });
+  );
 
 
   if(
@@ -5488,6 +6829,7 @@ async function loadCoinGeckoMarket(){
    throw new Error(
     "Incomplete CoinGecko data"
    );
+
   }
 
 
@@ -5495,7 +6837,9 @@ async function loadCoinGeckoMarket(){
 
  }finally{
 
-  clearTimeout(timeout);
+  clearTimeout(
+   timeout
+  );
  }
 }
 
@@ -5517,7 +6861,9 @@ async function loadCryptoMarket(){
   "syncing"
  );
 
- setCryptoLiveLabels("SYNC");
+ setCryptoLiveLabels(
+  "SYNC"
+ );
 
 
  try{
@@ -5613,7 +6959,8 @@ function startCryptoTicker(){
  }
 
 
- $("cryptoTicker").style.display="flex";
+ $("cryptoTicker").style.display=
+  "flex";
 
  cryptoSecondsLeft=
   CRYPTO_REFRESH_SECONDS;
@@ -5639,6 +6986,7 @@ function startCryptoTicker(){
     ){
 
      cryptoSecondsLeft--;
+
     }
 
     updateCryptoCountdown();
@@ -5714,7 +7062,12 @@ function resize(){
 
 function showGame(){
 
- if(!scene||!camera||!renderer||!hero){
+ if(
+  !scene||
+  !camera||
+  !renderer||
+  !hero
+ ){
 
   setStatus(
    "GAME STILL LOADING",
@@ -5727,16 +7080,32 @@ function showGame(){
 
  cancelVictoryTimer();
 
- $("landing").style.display="none";
- $("launchpad").style.display="none";
- $("victory").style.display="none";
+ $("landing").style.display=
+  "none";
 
- $("hud").style.display="block";
- $("hudPoints").style.display="block";
- $("help").style.display="block";
- $("nav").style.display="block";
+ $("launchpad").style.display=
+  "none";
 
- $("cryptoTicker").style.display="none";
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "block";
+
+ $("hudPoints").style.display=
+  "block";
+
+ $("help").style.display=
+  "block";
+
+ $("nav").style.display=
+  "block";
+
+ $("cryptoTicker").style.display=
+  "none";
 
  gameWon=false;
  summitSequence=false;
@@ -5751,11 +7120,13 @@ function showGame(){
 
  updateCursorWorld();
 
- lastTime=performance.now();
+ lastTime=
+  performance.now();
 
  updateHelpText();
  updatePointsUI();
  renderLeaderboard();
+ updateLevelUI();
 }
 
 
@@ -5773,17 +7144,35 @@ function showMenu(){
  gameWon=false;
  summitSequence=false;
 
- $("landing").style.display="flex";
- $("launchpad").style.display="none";
- $("victory").style.display="none";
+ $("landing").style.display=
+  "flex";
 
- $("hud").style.display="none";
- $("hudPoints").style.display="none";
- $("help").style.display="none";
- $("nav").style.display="none";
- $("touchHint").style.display="none";
+ $("launchpad").style.display=
+  "none";
 
- $("cryptoTicker").style.display="flex";
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "none";
+
+ $("hudPoints").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "flex";
 
  clearBursts();
 
@@ -5798,6 +7187,7 @@ function showMenu(){
  updatePointsUI();
  updateStreakUI();
  updateReferralUI();
+ updateLevelUI();
  renderLeaderboard();
 }
 
@@ -5816,17 +7206,35 @@ function showLaunchpad(){
  gameWon=false;
  summitSequence=false;
 
- $("landing").style.display="none";
- $("launchpad").style.display="flex";
- $("victory").style.display="none";
+ $("landing").style.display=
+  "none";
 
- $("hud").style.display="none";
- $("hudPoints").style.display="none";
- $("help").style.display="none";
- $("nav").style.display="none";
- $("touchHint").style.display="none";
+ $("launchpad").style.display=
+  "flex";
 
- $("cryptoTicker").style.display="none";
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "none";
+
+ $("hudPoints").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
 
  if(touchReticle)
   touchReticle.visible=false;
@@ -5859,47 +7267,59 @@ function restartGame(){
 
 function animateGrips(time){
 
- grips.forEach(g=>{
+ grips.forEach(
+  g=>{
 
-  if(g===grabbed){
+   if(g===grabbed){
 
-   g.ring.rotation.z+=.025;
-   return;
-  }
+    g.ring.rotation.z+=
+     .025;
 
-  const pulse=
-   1+
-   Math.sin(
-    time*.004+
-    g.index
-   )*.12;
+    return;
+   }
 
-  g.ring.scale.setScalar(pulse);
-  g.glow.scale.setScalar(pulse);
+   const pulse=
+    1+
+    Math.sin(
+     time*.004+
+     g.index
+    )*.12;
 
-  const distanceFromPlayer=
-   Math.sqrt(
-    Math.pow(
-     hero.position.x-g.x,
-     2
-    )+
-    Math.pow(
-     hero.position.y-g.y,
-     2
-    )
+   g.ring.scale.setScalar(
+    pulse
    );
 
-  if(
-   distanceFromPlayer<4
-  ){
+   g.glow.scale.setScalar(
+    pulse
+   );
 
-   g.glow.material.opacity=.16;
+   const distanceFromPlayer=
+    Math.sqrt(
+     Math.pow(
+      hero.position.x-g.x,
+      2
+     )+
+     Math.pow(
+      hero.position.y-g.y,
+      2
+     )
+    );
 
-  }else{
+   if(
+    distanceFromPlayer<4
+   ){
 
-   g.glow.material.opacity=.08;
+    g.glow.material.opacity=
+     .16;
+
+   }else{
+
+    g.glow.material.opacity=
+     .08;
+   }
+
   }
- });
+ );
 }
 
 
@@ -5907,7 +7327,9 @@ function animateGrips(time){
    RETICLE
 ===================================================== */
 
-function updateTouchReticle(time){
+function updateTouchReticle(
+ time
+){
 
  if(!touchReticle)return;
 
@@ -5943,25 +7365,37 @@ function updateTouchReticle(time){
  ){
 
   touchReticleMaterial.color
-   .set(0x55ff70);
+   .set(
+    0x55ff70
+   );
 
-  touchReticleMaterial.opacity=.95;
+  touchReticleMaterial.opacity=
+   .95;
 
 
   const pulse=
    1+
-   Math.sin(time*.018)*.12;
+   Math.sin(
+    time*.018
+   )*.12;
 
-  touchReticle.scale.setScalar(pulse);
+  touchReticle.scale
+   .setScalar(
+    pulse
+   );
 
  }else{
 
   touchReticleMaterial.color
-   .set(0xffcc33);
+   .set(
+    0xffcc33
+   );
 
-  touchReticleMaterial.opacity=.8;
+  touchReticleMaterial.opacity=
+   .8;
 
-  touchReticle.scale.setScalar(1);
+  touchReticle.scale
+   .setScalar(1);
  }
 }
 
@@ -5970,7 +7404,9 @@ function updateTouchReticle(time){
    HERO ANIMATION
 ===================================================== */
 
-function animateHero(time){
+function animateHero(
+ time
+){
 
  if(!hero)return;
 
@@ -6010,8 +7446,9 @@ function animateHero(time){
 
 
  const bob=
-  Math.sin(time*.012)*
-  .025;
+  Math.sin(
+   time*.012
+  )*.025;
 
  hero.position.z=
   3.5+bob;
@@ -6024,7 +7461,9 @@ function animateHero(time){
 
 function animate(time=0){
 
- requestAnimationFrame(animate);
+ requestAnimationFrame(
+  animate
+ );
 
 
  const now=
@@ -6076,7 +7515,11 @@ function animate(time=0){
  updateTouchReticle(time);
 
 
- if(renderer&&scene&&camera){
+ if(
+  renderer&&
+  scene&&
+  camera
+ ){
 
   renderer.render(
    scene,
@@ -6099,6 +7542,12 @@ window.showMenu=
 window.showLaunchpad=
  showLaunchpad;
 
+window.showLevelSelect=
+ showLevelSelect;
+
+window.startLevel=
+ startLevel;
+
 window.restartGame=
  restartGame;
 
@@ -6113,13 +7562,15 @@ window.shareReferral=
    START SAFETY
 ===================================================== */
 
-if(window.climboriaStartRequested){
+if(
+ window.climboriaStartRequested
+){
 
  window.climboriaStartRequested=false;
 
  setTimeout(
   ()=>{
-   showGame();
+   showLevelSelect();
   },
   0
  );
