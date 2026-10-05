@@ -217,11 +217,38 @@ canvas{
 }
 
 .tagline{
-  margin:22px auto 42px;
+  margin:22px auto 18px;
   max-width:600px;
   color:#9baab2;
   font-size:16px;
   line-height:1.6;
+}
+
+/* =========================
+   JARRELL MESSAGE
+========================= */
+
+.jarrellNote{
+  margin:0 auto 38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  color:#8d9ba3;
+  font-size:12px;
+  letter-spacing:1.5px;
+}
+
+.jarrellNote strong{
+  color:#55ff70;
+  font-weight:900;
+}
+
+.jarrellHeart{
+  font-size:14px;
+  filter:drop-shadow(
+    0 0 6px rgba(255,80,100,.35)
+  );
 }
 
 .choiceGrid{
@@ -484,7 +511,12 @@ canvas{
   }
 
   .tagline{
+    margin-bottom:12px;
+  }
+
+  .jarrellNote{
     margin-bottom:28px;
+    font-size:11px;
   }
 
   .launchHeader{
@@ -640,6 +672,13 @@ canvas{
       Climb higher. Play harder. Build your way into the Climboria
       ecosystem.
     </p>
+
+    <!-- JARRELL -->
+    <div class="jarrellNote">
+      <span>Built for the climb. For</span>
+      <strong>Jarrell Escalante</strong>
+      <span class="jarrellHeart">❤️</span>
+    </div>
 
     <div class="choiceGrid">
 
