@@ -18,9 +18,7 @@ html,body{
  color:#fff;
 }
 
-body{
- touch-action:none;
-}
+body{touch-action:none}
 
 canvas{
  display:block;
@@ -31,9 +29,7 @@ canvas{
    LANDING / SCREENS
 ========================= */
 
-#landing,
-#launchpad,
-#victory{
+#landing,#launchpad,#victory{
  position:fixed;
  inset:0;
  z-index:20;
@@ -42,17 +38,10 @@ canvas{
  justify-content:center;
  text-align:center;
  background:
- radial-gradient(
-  circle at 50% 45%,
-  #15232b 0%,
-  #05090d 68%
- );
+ radial-gradient(circle at 50% 45%,#15232b 0%,#05090d 68%);
 }
 
-#launchpad,
-#victory{
- display:none;
-}
+#launchpad,#victory{display:none}
 
 .panel{
  width:min(950px,94%);
@@ -69,9 +58,7 @@ canvas{
  scrollbar-width:none;
 }
 
-.panel::-webkit-scrollbar{
- display:none;
-}
+.panel::-webkit-scrollbar{display:none}
 
 .logo{
  font-size:clamp(42px,9vw,92px);
@@ -110,13 +97,8 @@ button{
  min-height:44px;
 }
 
-button:hover{
- background:#55ff7022;
-}
-
-button:active{
- transform:scale(.98);
-}
+button:hover{background:#55ff7022}
+button:active{transform:scale(.98)}
 
 .cards{
  width:100%;
@@ -374,9 +356,7 @@ button:active{
  font-size:8px;
 }
 
-.leaderRow:last-child{
- border-bottom:0;
-}
+.leaderRow:last-child{border-bottom:0}
 
 .leaderRank{
  color:#718087;
@@ -506,7 +486,7 @@ button:active{
  text-align:center;
 }
 
-#hud > .top > div:first-child{
+#hud>.top>div:first-child{
  position:absolute;
  left:0;
  top:0;
@@ -523,9 +503,7 @@ button:active{
  line-height:1.8;
 }
 
-.stat b{
- color:#fff;
-}
+.stat b{color:#fff}
 
 #bar{
  width:170px;
@@ -593,14 +571,7 @@ button:active{
  left:50%;
  transform:translateX(-50%);
  z-index:50;
-
- /*
-  * IMPORTANT:
-  * Visible by default.
-  * JavaScript will hide it only during the actual game.
-  */
  display:flex;
-
  width:min(900px,96%);
  pointer-events:none;
 }
@@ -624,10 +595,7 @@ button:active{
  border-radius:7px;
  box-shadow:0 5px 25px #0005;
  text-align:center;
- transition:
-  border-color .25s ease,
-  transform .25s ease,
-  box-shadow .25s ease;
+ transition:border-color .25s ease,transform .25s ease,box-shadow .25s ease;
 }
 
 .cryptoTop{
@@ -656,24 +624,18 @@ button:active{
  color:#c8d0d4;
  font-weight:bold;
  text-align:center;
- transition:
-  color .25s ease,
-  transform .25s ease;
+ transition:color .25s ease,transform .25s ease;
 }
 
 .cryptoCard.priceUp{
  border-color:#55ff7060;
- box-shadow:
-  0 0 16px #55ff7020,
-  0 5px 25px #0005;
+ box-shadow:0 0 16px #55ff7020,0 5px 25px #0005;
  transform:translateY(-1px);
 }
 
 .cryptoCard.priceDown{
  border-color:#ff667760;
- box-shadow:
-  0 0 16px #ff667720,
-  0 5px 25px #0005;
+ box-shadow:0 0 16px #ff667720,0 5px 25px #0005;
  transform:translateY(-1px);
 }
 
@@ -689,9 +651,7 @@ button:active{
 
 .cryptoCard.priceSync{
  border-color:#ffffff35;
- box-shadow:
-  0 0 12px #ffffff10,
-  0 5px 25px #0005;
+ box-shadow:0 0 12px #ffffff10,0 5px 25px #0005;
 }
 
 .cryptoCard.priceSync .cryptoPrice{
@@ -749,23 +709,12 @@ button:active{
  opacity:.9;
 }
 
-.cryptoStatus.offline{
- color:#ffcc33;
-}
-
-.cryptoStatus.syncing{
- color:#c8d0d4;
-}
+.cryptoStatus.offline{color:#ffcc33}
+.cryptoStatus.syncing{color:#c8d0d4}
 
 @keyframes livePulse{
- 0%,100%{
-  opacity:1;
-  transform:scale(1);
- }
- 50%{
-  opacity:.35;
-  transform:scale(.7);
- }
+ 0%,100%{opacity:1;transform:scale(1)}
+ 50%{opacity:.35;transform:scale(.7)}
 }
 
 .cryptoLoading{
@@ -774,29 +723,9 @@ button:active{
  letter-spacing:1px;
 }
 
-.up{
- color:#55ff70;
-}
-
-.down{
- color:#ff6677;
-}
-
-.cryptoError{
- color:#ffcc33;
-}
-
-@keyframes cryptoSyncFlash{
- 0%{
-  opacity:.65;
- }
- 50%{
-  opacity:1;
- }
- 100%{
-  opacity:.65;
- }
-}
+.up{color:#55ff70}
+.down{color:#ff6677}
+.cryptoError{color:#ffcc33}
 
 /* =========================
    HELP
@@ -872,9 +801,7 @@ button:active{
  margin:18px 0;
  color:#fff;
  text-align:center;
- text-shadow:
-  0 0 8px #ffffff66,
-  0 0 20px #55ff7040;
+ text-shadow:0 0 8px #ffffff66,0 0 20px #55ff7040;
 }
 
 .winSub{
@@ -921,9 +848,7 @@ button:active{
 
 @media(max-width:700px){
 
- #landing,
- #launchpad,
- #victory{
+ #landing,#launchpad,#victory{
   padding:12px 0;
  }
 
@@ -954,17 +879,9 @@ button:active{
   padding:16px 10px;
  }
 
- .card b{
-  font-size:11px;
- }
-
- .card span{
-  font-size:9px;
- }
-
- .note{
-  font-size:9px;
- }
+ .card b{font-size:11px}
+ .card span{font-size:9px}
+ .note{font-size:9px}
 
  .pointsPanel{
   margin-top:17px;
@@ -976,17 +893,9 @@ button:active{
   padding:10px 8px;
  }
 
- .pointsLabel{
-  font-size:7px;
- }
-
- .pointsValue{
-  font-size:16px;
- }
-
- .pointsSmall{
-  font-size:7px;
- }
+ .pointsLabel{font-size:7px}
+ .pointsValue{font-size:16px}
+ .pointsSmall{font-size:7px}
 
  .progressPanel{
   grid-template-columns:repeat(3,1fr);
@@ -994,50 +903,22 @@ button:active{
   margin-top:8px;
  }
 
- .progressCard{
-  padding:8px 4px;
- }
-
- .progressIcon{
-  font-size:13px;
- }
-
- .progressTitle{
-  font-size:7px;
- }
-
- .progressText{
-  font-size:6px;
- }
-
- .progressStatus{
-  font-size:6px;
- }
+ .progressCard{padding:8px 4px}
+ .progressIcon{font-size:13px}
+ .progressTitle{font-size:7px}
+ .progressText{font-size:6px}
+ .progressStatus{font-size:6px}
 
  .dashboard{
   gap:6px;
   margin-top:10px;
  }
 
- .dashCard{
-  padding:10px;
- }
-
- .dashTitle{
-  font-size:7px;
- }
-
- .dashValue{
-  font-size:17px;
- }
-
- .dashSmall{
-  font-size:7px;
- }
-
- .refCode{
-  font-size:9px;
- }
+ .dashCard{padding:10px}
+ .dashTitle{font-size:7px}
+ .dashValue{font-size:17px}
+ .dashSmall{font-size:7px}
+ .refCode{font-size:9px}
 
  .smallButton{
   font-size:6px;
@@ -1055,40 +936,21 @@ button:active{
   padding:6px 3px;
  }
 
- .leaderTime{
-  display:none;
- }
+ .leaderTime{display:none}
 
- .leaderName,
- .leaderPoints{
-  font-size:7px;
- }
+ .leaderName,.leaderPoints{font-size:7px}
 
  .airdrop{
   margin-top:8px;
   padding:10px;
  }
 
- .airdropTitle{
-  font-size:8px;
- }
+ .airdropTitle{font-size:8px}
+ .airdropText{font-size:7px}
 
- .airdropText{
-  font-size:7px;
- }
-
- #bar{
-  width:120px;
- }
-
- #status{
-  top:65px;
-  font-size:9px;
- }
-
- #hudPoints{
-  top:78px;
- }
+ #bar{width:120px}
+ #status{top:65px;font-size:9px}
+ #hudPoints{top:78px}
 
  #cryptoTicker{
   top:82px;
@@ -1107,19 +969,14 @@ button:active{
   padding:6px 4px;
  }
 
- .cryptoPrice{
-  font-size:8px;
- }
-
+ .cryptoPrice{font-size:8px}
  .cryptoChange{
   font-size:7px;
   min-width:0;
   text-align:center;
  }
 
- .cryptoSymbol{
-  font-size:8px;
- }
+ .cryptoSymbol{font-size:8px}
 
  .cryptoLive{
   font-size:5px;
@@ -1132,13 +989,8 @@ button:active{
   height:4px;
  }
 
- .cryptoUpdated{
-  font-size:5px;
- }
-
- .cryptoCountdown{
-  font-size:4.5px;
- }
+ .cryptoUpdated{font-size:5px}
+ .cryptoCountdown{font-size:4.5px}
 
  .cryptoStatus{
   top:-10px;
@@ -1156,27 +1008,20 @@ button:active{
   margin:15px 0;
  }
 
- .winSub{
-  font-size:9px;
- }
+ .winSub{font-size:9px}
 
  #touchHint{
   font-size:8px;
   max-width:90%;
   white-space:normal;
  }
-
 }
 
 @media(max-width:420px){
 
- .panel{
-  width:96%;
- }
+ .panel{width:96%}
 
- .cards{
-  gap:6px;
- }
+ .cards{gap:6px}
 
  .card{
   width:31%;
@@ -1184,75 +1029,33 @@ button:active{
   padding:13px 6px;
  }
 
- .card b{
-  font-size:9px;
- }
+ .card b{font-size:9px}
+ .card span{font-size:7px}
 
- .card span{
-  font-size:7px;
- }
+ #cryptoTicker{top:80px}
 
- #cryptoTicker{
-  top:80px;
- }
+ .cryptoCard{padding:5px 2px}
+ .cryptoSymbol{font-size:7px}
+ .cryptoPrice{font-size:7px}
+ .cryptoChange{font-size:6px}
+ .cryptoLive{font-size:4.5px}
+ .cryptoUpdated{font-size:4.5px}
+ .cryptoCountdown{font-size:4px}
+ .cryptoStatus{font-size:4.5px}
 
- .cryptoCard{
-  padding:5px 2px;
- }
+ .pointsPanel{gap:4px}
 
- .cryptoSymbol{
-  font-size:7px;
- }
-
- .cryptoPrice{
-  font-size:7px;
- }
-
- .cryptoChange{
-  font-size:6px;
- }
-
- .cryptoLive{
-  font-size:4.5px;
- }
-
- .cryptoUpdated{
-  font-size:4.5px;
- }
-
- .cryptoCountdown{
-  font-size:4px;
- }
-
- .cryptoStatus{
-  font-size:4.5px;
- }
-
- .pointsPanel{
-  gap:4px;
- }
-
- .pointsBox{
-  padding:9px 5px;
- }
-
- .pointsValue{
-  font-size:14px;
- }
+ .pointsBox{padding:9px 5px}
+ .pointsValue{font-size:14px}
 
  .dashboard{
   grid-template-columns:1fr 1fr;
  }
-
 }
 </style>
 </head>
 
 <body>
-
-<!-- =========================
-     LANDING
-========================= -->
 
 <div id="landing">
  <div class="panel">
@@ -1352,11 +1155,6 @@ button:active{
  </div>
 </div>
 
-
-<!-- =========================
-     LAUNCHPAD
-========================= -->
-
 <div id="launchpad">
  <div class="panel">
 
@@ -1374,10 +1172,7 @@ button:active{
 
     <div class="dashHeader">
      <div class="dashTitle">DAILY STREAK</div>
-
-     <div class="dashBadge">
-      +5 DAILY
-     </div>
+     <div class="dashBadge">+5 DAILY</div>
     </div>
 
     <div class="dashValue" id="dashStreak">
@@ -1397,18 +1192,11 @@ button:active{
    <div class="dashCard">
 
     <div class="dashHeader">
-     <div class="dashTitle">
-      REFERRAL SYSTEM
-     </div>
-
-     <div class="dashBadge">
-      +50 EACH
-     </div>
+     <div class="dashTitle">REFERRAL SYSTEM</div>
+     <div class="dashBadge">+50 EACH</div>
     </div>
 
-    <div class="dashValue" id="dashReferrals">
-     0
-    </div>
+    <div class="dashValue" id="dashReferrals">0</div>
 
     <div class="dashSmall">
      Your referral code
@@ -1527,11 +1315,6 @@ button:active{
  </div>
 </div>
 
-
-<!-- =========================
-     VICTORY
-========================= -->
-
 <div id="victory">
  <div class="panel">
 
@@ -1580,11 +1363,6 @@ button:active{
  </div>
 </div>
 
-
-<!-- =========================
-     HUD
-========================= -->
-
 <div id="hud">
 
  <div class="top">
@@ -1626,9 +1404,6 @@ button:active{
 
 </div>
 
-
-<!-- HUD POINTS -->
-
 <div id="hudPoints">
 
  <div class="hudPointsLabel">
@@ -1641,11 +1416,6 @@ button:active{
 
 </div>
 
-
-<!-- =========================
-     CRYPTO LIVE PRICE
-========================= -->
-
 <div id="cryptoTicker">
 
  <div class="cryptoStatus" id="cryptoStatus">
@@ -1655,143 +1425,77 @@ button:active{
  <div class="cryptoRow">
 
   <div class="cryptoCard" id="btcCard">
-
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    <span id="btcLiveText">LIVE</span>
+    <span id="btcLiveText">WAIT</span>
    </div>
-
    <div class="cryptoTop">
     <span class="cryptoSymbol">BTC</span>
     <span id="btcChange" class="cryptoChange cryptoLoading">--</span>
    </div>
-
-   <div id="btcPrice" class="cryptoPrice">
-    Loading...
-   </div>
-
-   <div id="btcUpdated" class="cryptoUpdated">
-    Connecting...
-   </div>
-
-   <div id="btcCountdown" class="cryptoCountdown">
-    Refresh in 10s
-   </div>
-
+   <div id="btcPrice" class="cryptoPrice">Loading...</div>
+   <div id="btcUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="btcCountdown" class="cryptoCountdown">Refresh in 10s</div>
   </div>
 
-
   <div class="cryptoCard" id="ethCard">
-
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    <span id="ethLiveText">LIVE</span>
+    <span id="ethLiveText">WAIT</span>
    </div>
-
    <div class="cryptoTop">
     <span class="cryptoSymbol">ETH</span>
     <span id="ethChange" class="cryptoChange cryptoLoading">--</span>
    </div>
-
-   <div id="ethPrice" class="cryptoPrice">
-    Loading...
-   </div>
-
-   <div id="ethUpdated" class="cryptoUpdated">
-    Connecting...
-   </div>
-
-   <div id="ethCountdown" class="cryptoCountdown">
-    Refresh in 10s
-   </div>
-
+   <div id="ethPrice" class="cryptoPrice">Loading...</div>
+   <div id="ethUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="ethCountdown" class="cryptoCountdown">Refresh in 10s</div>
   </div>
 
-
   <div class="cryptoCard" id="solCard">
-
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    <span id="solLiveText">LIVE</span>
+    <span id="solLiveText">WAIT</span>
    </div>
-
    <div class="cryptoTop">
     <span class="cryptoSymbol">SOL</span>
     <span id="solChange" class="cryptoChange cryptoLoading">--</span>
    </div>
-
-   <div id="solPrice" class="cryptoPrice">
-    Loading...
-   </div>
-
-   <div id="solUpdated" class="cryptoUpdated">
-    Connecting...
-   </div>
-
-   <div id="solCountdown" class="cryptoCountdown">
-    Refresh in 10s
-   </div>
-
+   <div id="solPrice" class="cryptoPrice">Loading...</div>
+   <div id="solUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="solCountdown" class="cryptoCountdown">Refresh in 10s</div>
   </div>
 
-
   <div class="cryptoCard" id="bnbCard">
-
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    <span id="bnbLiveText">LIVE</span>
+    <span id="bnbLiveText">WAIT</span>
    </div>
-
    <div class="cryptoTop">
     <span class="cryptoSymbol">BNB</span>
     <span id="bnbChange" class="cryptoChange cryptoLoading">--</span>
    </div>
-
-   <div id="bnbPrice" class="cryptoPrice">
-    Loading...
-   </div>
-
-   <div id="bnbUpdated" class="cryptoUpdated">
-    Connecting...
-   </div>
-
-   <div id="bnbCountdown" class="cryptoCountdown">
-    Refresh in 10s
-   </div>
-
+   <div id="bnbPrice" class="cryptoPrice">Loading...</div>
+   <div id="bnbUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="bnbCountdown" class="cryptoCountdown">Refresh in 10s</div>
   </div>
 
-
   <div class="cryptoCard" id="xrpCard">
-
    <div class="cryptoLive">
     <span class="cryptoLiveDot"></span>
-    <span id="xrpLiveText">LIVE</span>
+    <span id="xrpLiveText">WAIT</span>
    </div>
-
    <div class="cryptoTop">
     <span class="cryptoSymbol">XRP</span>
     <span id="xrpChange" class="cryptoChange cryptoLoading">--</span>
    </div>
-
-   <div id="xrpPrice" class="cryptoPrice">
-    Loading...
-   </div>
-
-   <div id="xrpUpdated" class="cryptoUpdated">
-    Connecting...
-   </div>
-
-   <div id="xrpCountdown" class="cryptoCountdown">
-    Refresh in 10s
-   </div>
-
+   <div id="xrpPrice" class="cryptoPrice">Loading...</div>
+   <div id="xrpUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="xrpCountdown" class="cryptoCountdown">Refresh in 10s</div>
   </div>
 
  </div>
-
 </div>
-
 
 <div id="help"></div>
 
@@ -1806,10 +1510,222 @@ button:active{
 </div>
 
 
+<script>
+/*
+ * =====================================================
+ * EARLY UI BINDING
+ *
+ * IMPORTANT:
+ * These listeners are installed BEFORE the Three.js
+ * module is initialized.
+ *
+ * This prevents a Three.js/WebGL initialization error
+ * from making START CLIMB appear completely dead.
+ * =====================================================
+ */
+
+(function(){
+
+ const startButton=
+  document.getElementById("startButton");
+
+ if(startButton){
+
+  startButton.addEventListener(
+   "click",
+   function(){
+
+    if(
+     typeof window.showGame==="function"
+    ){
+
+     window.showGame();
+
+    }else{
+
+     window.climboriaStartRequested=true;
+
+     const status=
+      document.getElementById("status");
+
+     if(status){
+
+      status.textContent=
+       "LOADING GAME...";
+
+      status.style.color=
+       "#ffcc33";
+     }
+    }
+
+   }
+  );
+ }
+
+
+ const backButton=
+  document.getElementById("backButton");
+
+ if(backButton){
+
+  backButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const climbAgainButton=
+  document.getElementById("climbAgainButton");
+
+ if(climbAgainButton){
+
+  climbAgainButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.restartGame==="function")
+     window.restartGame();
+
+   }
+  );
+ }
+
+
+ const menuButtonVictory=
+  document.getElementById(
+   "menuButtonVictory"
+  );
+
+ if(menuButtonVictory){
+
+  menuButtonVictory.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const menuButton=
+  document.getElementById("menuButton");
+
+ if(menuButton){
+
+  menuButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const copyButton=
+  document.getElementById(
+   "copyReferralButton"
+  );
+
+ if(copyButton){
+
+  copyButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.copyReferral==="function")
+     window.copyReferral();
+
+   }
+  );
+ }
+
+
+ const shareButton=
+  document.getElementById(
+   "shareReferralButton"
+  );
+
+ if(shareButton){
+
+  shareButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.shareReferral==="function")
+     window.shareReferral();
+
+   }
+  );
+ }
+
+})();
+</script>
+
+
 <script type="module">
 
-import * as THREE from
-"https://esm.sh/three@0.180.0";
+/*
+ * =====================================================
+ * CLIMBORIA GAME
+ * =====================================================
+ */
+
+let THREE;
+
+try{
+
+ THREE=
+  await import(
+   "https://esm.sh/three@0.180.0"
+  );
+
+}catch(error){
+
+ console.error(
+  "CLIMBORIA: Three.js failed to load.",
+  error
+ );
+
+ const status=
+  document.getElementById("status");
+
+ if(status){
+
+  status.textContent=
+   "GAME ENGINE LOAD ERROR";
+
+  status.style.color=
+   "#ff6677";
+ }
+
+ const startButton=
+  document.getElementById("startButton");
+
+ if(startButton){
+
+  startButton.textContent=
+   "RELOAD GAME";
+
+  startButton.onclick=
+   function(){
+    location.reload();
+   };
+ }
+
+ throw error;
+}
 
 
 /* =====================================================
@@ -1947,12 +1863,13 @@ const CRYPTO_REFRESH_SECONDS=10;
 
 
 /*
- * FIX:
- * Use the normal Binance 24hr ticker endpoint.
- * Removed the incompatible MINI_TICKER parameter.
+ * Binance public market-data endpoint.
+ *
+ * data-api.binance.vision is specifically documented
+ * by Binance for public NONE-security market endpoints.
  */
 const BINANCE_API=
- "https://api.binance.com/api/v3/ticker/24hr";
+ "https://data-api.binance.vision/api/v3/ticker/24hr";
 
 const BINANCE_SYMBOLS=[
  "BTCUSDT",
@@ -2037,12 +1954,11 @@ function dateDifferenceInDays(
    newerKey+"T00:00:00"
   );
 
- const diff=
-  b.getTime()-
-  a.getTime();
-
  return Math.round(
-  diff/
+  (
+   b.getTime()-
+   a.getTime()
+  )/
   86400000
  );
 }
@@ -2119,13 +2035,7 @@ function updateDailyStreak(){
    today
   );
 
- }catch(error){
-
-  console.warn(
-   "CLIMBORIA streak storage unavailable:",
-   error
-  );
- }
+ }catch(error){}
 
 
  addClimbPoints(
@@ -2197,14 +2107,11 @@ function updateStreakUI(){
 
  if($("streakFill")){
 
-  const percentage=
+  $("streakFill").style.width=
    Math.min(
     100,
     (dailyStreak/7)*100
-   );
-
-  $("streakFill").style.width=
-   percentage+"%";
+   )+"%";
  }
 }
 
@@ -2240,30 +2147,19 @@ function loadClimbData(){
 
 
   climbPoints=
-   Number.isFinite(savedPoints) &&
-   savedPoints>=0
-   ?
-   Math.floor(savedPoints)
-   :
-   0;
-
+   Number.isFinite(savedPoints)&&savedPoints>=0
+   ?Math.floor(savedPoints)
+   :0;
 
   totalSummits=
-   Number.isFinite(savedSummits) &&
-   savedSummits>=0
-   ?
-   Math.floor(savedSummits)
-   :
-   0;
-
+   Number.isFinite(savedSummits)&&savedSummits>=0
+   ?Math.floor(savedSummits)
+   :0;
 
   totalAttempts=
-   Number.isFinite(savedAttempts) &&
-   savedAttempts>=0
-   ?
-   Math.floor(savedAttempts)
-   :
-   0;
+   Number.isFinite(savedAttempts)&&savedAttempts>=0
+   ?Math.floor(savedAttempts)
+   :0;
 
  }catch(error){
 
@@ -2310,9 +2206,7 @@ function addClimbPoints(amount){
    )
   );
 
-
  if(amount<=0)return;
-
 
  climbPoints+=amount;
 
@@ -2370,30 +2264,21 @@ function updatePointsUI(){
   $("landingPoints").textContent=
    formatted;
 
-
  if($("landingSummits"))
   $("landingSummits").textContent=
-   totalSummits.toLocaleString(
-    "en-US"
-   );
-
+   totalSummits.toLocaleString("en-US");
 
  if($("landingAttempts"))
   $("landingAttempts").textContent=
-   totalAttempts.toLocaleString(
-    "en-US"
-   );
-
+   totalAttempts.toLocaleString("en-US");
 
  if($("hudPointsValue"))
   $("hudPointsValue").textContent=
    formatted;
 
-
  if($("victoryPoints"))
   $("victoryPoints").textContent=
    formatted;
-
 
  if($("landingReferralText"))
   $("landingReferralText").textContent=
@@ -2404,20 +2289,16 @@ function updatePointsUI(){
     " referrals"
    );
 
-
  if($("dashReferrals"))
   $("dashReferrals").textContent=
-   totalReferrals.toLocaleString(
-    "en-US"
-   );
-
+   totalReferrals.toLocaleString("en-US");
 
  updateAirdropUI();
 }
 
 
 /* =====================================================
-   REFERRAL SYSTEM
+   REFERRAL
 ===================================================== */
 
 function generateReferralCode(){
@@ -2432,8 +2313,7 @@ function generateReferralCode(){
   code+=
    chars[
     Math.floor(
-     Math.random()*
-     chars.length
+     Math.random()*chars.length
     )
    ];
  }
@@ -2492,7 +2372,7 @@ function loadReferralData(){
    params.get("ref");
 
   if(
-   incoming &&
+   incoming&&
    incoming.toUpperCase()!==
    referralCode.toUpperCase()
   ){
@@ -2528,14 +2408,11 @@ function updateReferralUI(){
 
  if($("refCode"))
   $("refCode").textContent=
-   referralCode||
-   "CLIMB-0000";
+   referralCode||"CLIMB-0000";
 
  if($("dashReferrals"))
   $("dashReferrals").textContent=
-   totalReferrals.toLocaleString(
-    "en-US"
-   );
+   totalReferrals.toLocaleString("en-US");
 
  if($("landingReferralText"))
   $("landingReferralText").textContent=
@@ -2550,33 +2427,27 @@ function updateReferralUI(){
 
 function buildReferralLink(){
 
- const base=
+ return (
   window.location.origin+
-  window.location.pathname;
-
- return base+
+  window.location.pathname+
   "?ref="+
-  encodeURIComponent(
-   referralCode
-  );
+  encodeURIComponent(referralCode)
+ );
 }
 
 
 async function copyReferral(){
 
- const text=
-  buildReferralLink();
+ const text=buildReferralLink();
 
  try{
 
   if(
-   navigator.clipboard &&
+   navigator.clipboard&&
    navigator.clipboard.writeText
   ){
 
-   await navigator.clipboard.writeText(
-    text
-   );
+   await navigator.clipboard.writeText(text);
 
    setStatus(
     "REFERRAL LINK COPIED",
@@ -2651,9 +2522,7 @@ function loadAirdropData(){
  airdropActions=
   Math.max(
    0,
-   Math.floor(
-    airdropActions
-   )
+   Math.floor(airdropActions)
   );
 
  airdropScore=
@@ -2661,12 +2530,9 @@ function loadAirdropData(){
    0,
    Math.min(
     100,
-    Math.floor(
-     airdropScore
-    )
+    Math.floor(airdropScore)
    )
   );
-
 
  updateAirdropUI();
 }
@@ -2723,28 +2589,21 @@ function updateAirdropUI(){
    0,
    Math.min(
     100,
-    Math.floor(
-     airdropScore
-    )
+    Math.floor(airdropScore)
    )
   );
-
 
  if($("airdropProgress"))
   $("airdropProgress").style.width=
    score+"%";
 
-
  if($("airdropScore"))
   $("airdropScore").textContent=
    score+"%";
 
-
  if($("airdropActions"))
   $("airdropActions").textContent=
-   airdropActions.toLocaleString(
-    "en-US"
-   );
+   airdropActions.toLocaleString("en-US");
 }
 
 
@@ -2792,13 +2651,11 @@ function getLeaderboardData(){
  return [
   ...DEMO_LEADERBOARD,
   player
- ].sort(
-  (a,b)=>
-   b.points-a.points
- ).slice(
-  0,
-  6
- );
+ ]
+ .sort(
+  (a,b)=>b.points-a.points
+ )
+ .slice(0,6);
 }
 
 
@@ -2815,9 +2672,7 @@ function renderLeaderboard(){
   (row,index)=>{
 
    const div=
-    document.createElement(
-     "div"
-    );
+    document.createElement("div");
 
    div.className=
     "leaderRow"+
@@ -2827,24 +2682,12 @@ function renderLeaderboard(){
      ""
     );
 
-   div.innerHTML=
-    `
-     <div class="leaderRank">
-      #${index+1}
-     </div>
-
-     <div class="leaderName">
-      ${escapeHTML(row.name)}
-     </div>
-
-     <div class="leaderPoints">
-      ${Number(row.points).toLocaleString("en-US")}
-     </div>
-
-     <div class="leaderTime">
-      ${escapeHTML(row.time)}
-     </div>
-    `;
+   div.innerHTML=`
+    <div class="leaderRank">#${index+1}</div>
+    <div class="leaderName">${escapeHTML(row.name)}</div>
+    <div class="leaderPoints">${Number(row.points).toLocaleString("en-US")}</div>
+    <div class="leaderTime">${escapeHTML(row.time)}</div>
+   `;
 
    container.appendChild(div);
   }
@@ -2866,9 +2709,35 @@ function escapeHTML(value){
    INIT
 ===================================================== */
 
-init();
-animate();
+try{
 
+ init();
+
+}catch(error){
+
+ console.error(
+  "CLIMBORIA INIT ERROR:",
+  error
+ );
+
+ const status=
+  $("status");
+
+ if(status){
+
+  status.textContent=
+   "GAME INITIALIZATION ERROR";
+
+  status.style.color=
+   "#ff6677";
+ }
+
+}
+
+
+/* =====================================================
+   INIT
+===================================================== */
 
 function init(){
 
@@ -2907,6 +2776,13 @@ function init(){
  );
 
 
+ /*
+  * WebGL renderer.
+  *
+  * This is the part most likely to throw if the
+  * browser/GPU refuses WebGL, so it is protected by
+  * the try/catch around init().
+  */
  renderer=
   new THREE.WebGLRenderer({
    antialias:true,
@@ -3016,53 +2892,33 @@ function init(){
  );
 
 
- $("startButton").addEventListener(
-  "click",
-  showGame
- );
-
- $("backButton").addEventListener(
-  "click",
-  showMenu
- );
-
- $("climbAgainButton").addEventListener(
-  "click",
-  restartGame
- );
-
- $("menuButtonVictory").addEventListener(
-  "click",
-  showMenu
- );
-
- $("menuButton").addEventListener(
-  "click",
-  showMenu
- );
-
- $("copyReferralButton").addEventListener(
-  "click",
-  copyReferral
- );
-
- $("shareReferralButton").addEventListener(
-  "click",
-  shareReferral
- );
-
-
  updateHelpText();
+
+ $("cryptoTicker").style.display="flex";
+
+ startCryptoTicker();
 
 
  /*
-  * IMPORTANT:
-  * Explicitly show ticker when page loads.
+  * If the user somehow clicked START while the
+  * module was still loading, start now.
   */
- $("cryptoTicker").style.display="flex";
+ if(window.climboriaStartRequested){
+
+  window.climboriaStartRequested=false;
+
+  setTimeout(
+   ()=>{
+    showGame();
+   },
+   0
+  );
+ }
 
 
- startCryptoTicker();
+ requestAnimationFrame(
+  animate
+ );
 }
 
 
@@ -3122,7 +2978,6 @@ function createMountain(){
 
 
  const ledges=[
-
   [-8,5,1.5,2],
   [7,8,2,1.5],
   [-6,12,2.5,2],
@@ -3135,7 +2990,6 @@ function createMountain(){
   [6,45,3,2],
   [-5,51,2.5,2],
   [7,57,2.5,2]
-
  ];
 
 
@@ -3197,7 +3051,6 @@ function createMountain(){
   [3.5,62.2,1.1,2.5],
   [-1.8,63.3,.75,1.8],
   [1.8,63.5,.9,2.4]
-
  ].forEach(v=>{
 
   const r=
@@ -3630,7 +3483,6 @@ function createHammer(){
 function createGrips(){
 
  const positions=[
-
   [-4,4],
   [2,6],
   [-2,9],
@@ -3651,7 +3503,6 @@ function createGrips(){
   [4,54],
   [0,57],
   [-3,60]
-
  ];
 
 
@@ -3946,7 +3797,7 @@ function startGrab(){
 
 
  if(
-  result.grip &&
+  result.grip&&
   result.distance<1.15
  ){
 
@@ -4176,14 +4027,10 @@ function updatePhysics(dt){
    }
 
 
-   if(
-    distance>
-    ropeLength
-   ){
+   if(distance>ropeLength){
 
     const correction=
-     distance-
-     ropeLength;
+     distance-ropeLength;
 
     const nx=
      relX/distance;
@@ -4242,8 +4089,7 @@ function updatePhysics(dt){
 
  if(speed>maxSpeed){
 
-  const s=
-   maxSpeed/speed;
+  const s=maxSpeed/speed;
 
   velocityX*=s;
   velocityY*=s;
@@ -4281,13 +4127,9 @@ function updatePhysics(dt){
  const groundY=.78;
 
 
- if(
-  hero.position.y<
-  groundY
- ){
+ if(hero.position.y<groundY){
 
-  hero.position.y=
-   groundY;
+  hero.position.y=groundY;
 
   if(velocityY<0)
    velocityY=0;
@@ -4297,12 +4139,8 @@ function updatePhysics(dt){
  }
 
 
- if(
-  hero.position.y<
-  -10
- ){
+ if(hero.position.y<-10)
   resetPlayer();
- }
 }
 
 
@@ -4406,12 +4244,12 @@ function updateCamera(){
 
 function updateHeight(){
 
+ if(!hero)return;
+
  const h=
   Math.max(
    0,
-   Math.floor(
-    hero.position.y
-   )
+   Math.floor(hero.position.y)
   );
 
 
@@ -4436,9 +4274,7 @@ function updateHeight(){
   p+"%";
 
  $("hammerState").textContent=
-  grabbed?
-   "GRABBED":
-   "READY";
+  grabbed?"GRABBED":"READY";
 }
 
 
@@ -4462,15 +4298,10 @@ function setStatus(text,color){
 function checkSummit(){
 
  if(gameWon)return;
-
  if(summitSequence)return;
 
- if(
-  hero.position.y>=60.8
- ){
-
+ if(hero.position.y>=60.8)
   beginSummitSequence();
- }
 }
 
 
@@ -4479,17 +4310,12 @@ function beginSummitSequence(){
  if(summitSequence)return;
 
  summitSequence=true;
-
  running=false;
-
  gameWon=false;
-
  grabbed=null;
-
  touchActive=false;
 
  $("touchHint").style.display="none";
-
  $("cryptoTicker").style.display="none";
 
  setStatus(
@@ -4559,7 +4385,6 @@ function beginSummitSequence(){
 
 
 function showVictory(){
-
  beginSummitSequence();
 }
 
@@ -4569,6 +4394,8 @@ function showVictory(){
 ===================================================== */
 
 function resetPlayer(){
+
+ if(!hero||!camera)return;
 
  hero.position.set(
   0,
@@ -4580,11 +4407,8 @@ function resetPlayer(){
  velocityY=0;
 
  grabbed=null;
-
  touchActive=false;
-
  summitSequence=false;
-
  gameWon=false;
 
  $("touchHint").style.display="none";
@@ -4594,9 +4418,7 @@ function resetPlayer(){
 
  grips.forEach(
   g=>
-   g.group
-    .scale
-    .setScalar(1)
+   g.group.scale.setScalar(1)
  );
 
 
@@ -4667,6 +4489,17 @@ function clearBursts(){
 ===================================================== */
 
 function showGame(){
+
+ if(!scene||!camera||!renderer||!hero){
+
+  setStatus(
+   "GAME STILL LOADING",
+   "#ffcc33"
+  );
+
+  return;
+ }
+
 
  cancelVictoryTimer();
 
@@ -4786,7 +4619,6 @@ function showLaunchpad(){
 ===================================================== */
 
 function restartGame(){
-
  showGame();
 }
 
@@ -4808,13 +4640,8 @@ function animateGrips(time){
     g.index
    )*.12;
 
-  g.ring
-   .scale
-   .setScalar(pulse);
-
-  g.glow
-   .scale
-   .setScalar(pulse);
+  g.ring.scale.setScalar(pulse);
+  g.glow.scale.setScalar(pulse);
  });
 }
 
@@ -4850,7 +4677,7 @@ function updateTouchReticle(time){
   nearestGrip();
 
  if(
-  result.grip &&
+  result.grip&&
   result.distance<1.15
  ){
 
@@ -4861,13 +4688,9 @@ function updateTouchReticle(time){
 
   const pulse=
    1+
-   Math.sin(
-    time*.018
-   )*.12;
+   Math.sin(time*.018)*.12;
 
-  touchReticle
-   .scale
-   .setScalar(pulse);
+  touchReticle.scale.setScalar(pulse);
 
  }else{
 
@@ -4949,11 +4772,10 @@ function updateEffects(dt){
   const p=summitBurst[i];
 
   if(
-   p.userData &&
+   p.userData&&
    p.userData.summit
-  ){
+  )
    continue;
-  }
 
   p.position.x+=
    p.userData.vx*dt;
@@ -4973,9 +4795,7 @@ function updateEffects(dt){
     p.userData.life
    );
 
-  if(
-   p.userData.life<=0
-  ){
+  if(p.userData.life<=0){
 
    scene.remove(p);
 
@@ -5004,16 +4824,12 @@ function createSummitBurst(){
   const p=
    new THREE.Mesh(
     new THREE.SphereGeometry(
-     .04+
-     Math.random()*.09,
+     .04+Math.random()*.09,
      6,
      6
     ),
     new THREE.MeshBasicMaterial({
-     color:
-      i%3===0?
-      0xffcc33:
-      0x55ff70,
+     color:i%3===0?0xffcc33:0x55ff70,
      transparent:true,
      opacity:1
     })
@@ -5050,7 +4866,6 @@ function createSummitBurst(){
 
 
   scene.add(p);
-
   summitBurst.push(p);
  }
 
@@ -5096,7 +4911,6 @@ function createSummitBurst(){
 
 
   scene.add(p);
-
   summitSparks.push(p);
  }
 
@@ -5280,11 +5094,8 @@ function updateSummitParticles(time,dt){
     p.userData.phase
    )*.002;
 
-  if(
-   p.position.y>68
-  ){
+  if(p.position.y>68)
    p.position.y=61;
-  }
  });
 }
 
@@ -5299,9 +5110,7 @@ function animateSummit(time){
 
   const s=
    1+
-   Math.sin(
-    time*.003
-   )*.15;
+   Math.sin(time*.003)*.15;
 
   summitGlowMesh
    .scale
@@ -5313,9 +5122,7 @@ function animateSummit(time){
 
   summitBeacon.scale.y=
    1+
-   Math.sin(
-    time*.004
-   )*.15;
+   Math.sin(time*.004)*.15;
  }
 }
 
@@ -5331,9 +5138,8 @@ function formatCryptoPrice(price){
  if(
   !Number.isFinite(price)||
   price<=0
- ){
+ )
   return "—";
- }
 
 
  if(price>=1000){
@@ -5362,7 +5168,7 @@ function formatCryptoPrice(price){
  }
 
 
- if(price>=0.01){
+ if(price>=.01){
 
   return "$"+
    price.toLocaleString(
@@ -5506,9 +5312,8 @@ function updateCryptoPrice(
  if(
   !Number.isFinite(price)||
   price<=0
- ){
+ )
   return false;
- }
 
 
  const previous=
@@ -5532,32 +5337,20 @@ function updateCryptoPrice(
 
   if(price>previous){
 
-   flashCryptoCard(
-    symbol,
-    "up"
-   );
+   flashCryptoCard(symbol,"up");
 
   }else if(price<previous){
 
-   flashCryptoCard(
-    symbol,
-    "down"
-   );
+   flashCryptoCard(symbol,"down");
 
   }else{
 
-   flashCryptoCard(
-    symbol,
-    "sync"
-   );
+   flashCryptoCard(symbol,"sync");
   }
 
  }else{
 
-  flashCryptoCard(
-   symbol,
-   "sync"
-  );
+  flashCryptoCard(symbol,"sync");
  }
 
  return true;
@@ -5599,9 +5392,7 @@ function updateCryptoChange(
 
 
  const sign=
-  change>=0?
-  "+":
-  "";
+  change>=0?"+":"";
 
  changeEl.textContent=
   sign+
@@ -5616,9 +5407,7 @@ function updateCryptoChange(
  );
 
  changeEl.classList.add(
-  change>=0?
-  "up":
-  "down"
+  change>=0?"up":"down"
  );
 }
 
@@ -5651,12 +5440,9 @@ function updateCryptoTimestamp(){
   const el=
    $(symbol.toLowerCase()+"Updated");
 
-  if(el){
-
+  if(el)
    el.textContent=
-    "Updated "+
-    time;
-  }
+    "Updated "+time;
  });
 }
 
@@ -5670,9 +5456,7 @@ function updateCryptoCountdown(){
  cryptoSecondsLeft=
   Math.max(
    0,
-   Math.floor(
-    cryptoSecondsLeft
-   )
+   Math.floor(cryptoSecondsLeft)
   );
 
 
@@ -5694,9 +5478,7 @@ function updateCryptoCountdown(){
  });
 
 
- if(
-  cryptoSecondsLeft<=0
- ){
+ if(cryptoSecondsLeft<=0){
 
   setCryptoStatus(
    "SYNCING LIVE MARKET",
@@ -5792,13 +5574,10 @@ function buildBinanceURL(){
    )
   );
 
- /*
-  * FIXED:
-  * No MINI_TICKER.
-  */
  return BINANCE_API+
   "?symbols="+
   encoded+
+  "&type=FULL"+
   "&_="+
   Date.now();
 }
@@ -5818,24 +5597,15 @@ async function loadBinanceMarket(){
    ()=>{
     controller.abort();
    },
-   8000
+   4500
   );
 
 
  try{
 
-  const url=
-   buildBinanceURL();
-
-  console.log(
-   "CLIMBORIA: requesting Binance:",
-   url
-  );
-
-
   const response=
    await fetch(
-    url,
+    buildBinanceURL(),
     {
      method:"GET",
      cache:"no-store",
@@ -5871,76 +5641,66 @@ async function loadBinanceMarket(){
   let validCoins=0;
 
 
-  data.forEach(
-   coin=>{
+  data.forEach(coin=>{
 
-    if(!coin)return;
+   if(!coin)return;
 
+   const symbol=
+    BINANCE_TO_SYMBOL[
+     coin.symbol
+    ];
 
-    const symbol=
-     BINANCE_TO_SYMBOL[
-      coin.symbol
-     ];
-
-    if(!symbol)return;
+   if(!symbol)return;
 
 
-    /*
-     * Standard 24hr ticker fields:
-     *
-     * lastPrice
-     * priceChangePercent
-     */
+   const price=
+    Number(
+     coin.lastPrice
+    );
 
-    const price=
-     Number(
-      coin.lastPrice
-     );
-
-    const change=
-     Number(
-      coin.priceChangePercent
-     );
+   const change=
+    Number(
+     coin.priceChangePercent
+    );
 
 
-    if(
-     updateCryptoPrice(
-      symbol,
-      price
-     )
-    ){
+   if(
+    updateCryptoPrice(
+     symbol,
+     price
+    )
+   ){
 
-     validCoins++;
-    }
-
-
-    if(
-     Number.isFinite(change)
-    ){
-
-     updateCryptoChange(
-      symbol,
-      change
-     );
-    }
-
+    validCoins++;
    }
-  );
 
 
-  console.log(
-   "CLIMBORIA: Binance valid coins:",
-   validCoins
-  );
+   if(
+    Number.isFinite(change)
+   ){
+
+    updateCryptoChange(
+     symbol,
+     change
+    );
+   }
+  });
 
 
+  /*
+   * We require all five coins from Binance.
+   * If one is missing, CoinGecko gets a chance.
+   */
   if(
    validCoins<
    BINANCE_SYMBOLS.length
   ){
 
    throw new Error(
-    "Incomplete Binance data"
+    "Incomplete Binance data: "+
+    validCoins+
+    "/"+
+    BINANCE_SYMBOLS.length
    );
   }
 
@@ -5980,16 +5740,11 @@ async function loadCoinGeckoMarket(){
    ()=>{
     controller.abort();
    },
-   8000
+   5000
   );
 
 
  try{
-
-  console.log(
-   "CLIMBORIA: trying CoinGecko fallback"
-  );
-
 
   const response=
    await fetch(
@@ -6030,22 +5785,16 @@ async function loadCoinGeckoMarket(){
    const symbol=
     CRYPTO_SYMBOLS[id];
 
-   if(!symbol)return;
-
 
    if(
-    coin.usd!==undefined
+    coin.usd!==undefined&&
+    updateCryptoPrice(
+     symbol,
+     coin.usd
+    )
    ){
 
-    if(
-     updateCryptoPrice(
-      symbol,
-      coin.usd
-     )
-    ){
-
-     validCoins++;
-    }
+    validCoins++;
    }
 
 
@@ -6088,14 +5837,8 @@ async function loadCoinGeckoMarket(){
 
 async function loadCryptoMarket(){
 
- if(cryptoRequestInProgress){
-
-  console.log(
-   "CLIMBORIA: previous crypto request still running"
-  );
-
+ if(cryptoRequestInProgress)
   return;
- }
 
 
  cryptoRequestInProgress=true;
@@ -6112,8 +5855,7 @@ async function loadCryptoMarket(){
  try{
 
   /*
-   * FIRST:
-   * Binance
+   * Binance first.
    */
 
   try{
@@ -6130,7 +5872,7 @@ async function loadCryptoMarket(){
     );
 
     console.log(
-     "CLIMBORIA LIVE CRYPTO: BINANCE OK"
+     "CLIMBORIA: BINANCE LIVE"
     );
 
     return;
@@ -6146,8 +5888,7 @@ async function loadCryptoMarket(){
 
 
   /*
-   * SECOND:
-   * CoinGecko
+   * CoinGecko fallback.
    */
 
   try{
@@ -6164,7 +5905,7 @@ async function loadCryptoMarket(){
     );
 
     console.log(
-     "CLIMBORIA LIVE CRYPTO: COINGECKO OK"
+     "CLIMBORIA: COINGECKO LIVE"
     );
 
     return;
@@ -6180,7 +5921,8 @@ async function loadCryptoMarket(){
 
 
   /*
-   * BOTH FAILED
+   * Both feeds failed.
+   * Do NOT display LIVE.
    */
 
   showCryptoError(
@@ -6225,39 +5967,33 @@ function startCryptoTicker(){
  }
 
 
- /*
-  * IMPORTANT:
-  * Always make ticker visible initially.
-  */
  $("cryptoTicker").style.display="flex";
 
 
  cryptoSecondsLeft=
-  10;
+  CRYPTO_REFRESH_SECONDS;
 
  updateCryptoCountdown();
 
 
  /*
-  * Load immediately.
+  * First request immediately.
   */
  loadCryptoMarket();
 
 
  /*
-  * Exact 10-second refresh.
+  * Refresh every 10 seconds.
   */
  cryptoTimer=
   setInterval(
-   ()=>{
-    loadCryptoMarket();
-   },
-   10000
+   loadCryptoMarket,
+   CRYPTO_REFRESH_SECONDS*1000
   );
 
 
  /*
-  * Countdown every second.
+  * Countdown.
   */
  cryptoCountdownTimer=
   setInterval(
@@ -6275,11 +6011,6 @@ function startCryptoTicker(){
    },
    1000
   );
-
-
- console.log(
-  "CLIMBORIA: Crypto ticker started. Refresh = 10 seconds."
- );
 }
 
 
@@ -6293,8 +6024,7 @@ function updateHelpText(){
   matchMedia(
    "(pointer:coarse)"
   ).matches||
-  "ontouchstart"
-  in window;
+  "ontouchstart" in window;
 
 
  $("help").innerHTML=
@@ -6364,8 +6094,7 @@ function animate(time=0){
   1000;
 
 
- lastTime=
-  now;
+ lastTime=now;
 
 
  dt=
@@ -6419,10 +6148,41 @@ function animate(time=0){
    GLOBAL FUNCTIONS
 ===================================================== */
 
-window.showGame=showGame;
-window.showMenu=showMenu;
-window.showLaunchpad=showLaunchpad;
-window.restartGame=restartGame;
+window.showGame=
+ showGame;
+
+window.showMenu=
+ showMenu;
+
+window.showLaunchpad=
+ showLaunchpad;
+
+window.restartGame=
+ restartGame;
+
+window.copyReferral=
+ copyReferral;
+
+window.shareReferral=
+ shareReferral;
+
+
+/*
+ * If the early START handler stored a click while
+ * Three.js was loading, start as soon as initialization
+ * completes.
+ */
+if(window.climboriaStartRequested){
+
+ window.climboriaStartRequested=false;
+
+ setTimeout(
+  ()=>{
+   showGame();
+  },
+  0
+ );
+}
 
 </script>
 
