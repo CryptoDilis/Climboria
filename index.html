@@ -592,8 +592,15 @@ button:active{
  top:18px;
  left:50%;
  transform:translateX(-50%);
- z-index:30;
- display:none;
+ z-index:50;
+
+ /*
+  * IMPORTANT:
+  * Visible by default.
+  * JavaScript will hide it only during the actual game.
+  */
+ display:flex;
+
  width:min(900px,96%);
  pointer-events:none;
 }
@@ -612,7 +619,7 @@ button:active{
  min-width:110px;
  padding:7px 10px;
  border:1px solid #ffffff12;
- background:rgba(5,9,13,.88);
+ background:rgba(5,9,13,.92);
  backdrop-filter:blur(8px);
  border-radius:7px;
  box-shadow:0 5px 25px #0005;
@@ -739,7 +746,7 @@ button:active{
  font-weight:bold;
  letter-spacing:1.5px;
  white-space:nowrap;
- opacity:.85;
+ opacity:.9;
 }
 
 .cryptoStatus.offline{
@@ -777,10 +784,6 @@ button:active{
 
 .cryptoError{
  color:#ffcc33;
-}
-
-.cryptoSyncFlash{
- animation:cryptoSyncFlash .45s ease;
 }
 
 @keyframes cryptoSyncFlash{
@@ -1267,45 +1270,21 @@ button:active{
   <div class="pointsPanel">
 
    <div class="pointsBox">
-    <div class="pointsLabel">
-     CLIMB POINTS
-    </div>
-
-    <div class="pointsValue" id="landingPoints">
-     0
-    </div>
-
-    <div class="pointsSmall">
-     YOUR PROGRESS
-    </div>
+    <div class="pointsLabel">CLIMB POINTS</div>
+    <div class="pointsValue" id="landingPoints">0</div>
+    <div class="pointsSmall">YOUR PROGRESS</div>
    </div>
 
    <div class="pointsBox">
-    <div class="pointsLabel">
-     SUMMITS
-    </div>
-
-    <div class="pointsValue" id="landingSummits">
-     0
-    </div>
-
-    <div class="pointsSmall">
-     COMPLETED
-    </div>
+    <div class="pointsLabel">SUMMITS</div>
+    <div class="pointsValue" id="landingSummits">0</div>
+    <div class="pointsSmall">COMPLETED</div>
    </div>
 
    <div class="pointsBox">
-    <div class="pointsLabel">
-     ATTEMPTS
-    </div>
-
-    <div class="pointsValue" id="landingAttempts">
-     0
-    </div>
-
-    <div class="pointsSmall">
-     TOTAL CLIMBS
-    </div>
+    <div class="pointsLabel">ATTEMPTS</div>
+    <div class="pointsValue" id="landingAttempts">0</div>
+    <div class="pointsSmall">TOTAL CLIMBS</div>
    </div>
 
   </div>
@@ -1394,9 +1373,7 @@ button:active{
    <div class="dashCard">
 
     <div class="dashHeader">
-     <div class="dashTitle">
-      DAILY STREAK
-     </div>
+     <div class="dashTitle">DAILY STREAK</div>
 
      <div class="dashBadge">
       +5 DAILY
@@ -1686,9 +1663,7 @@ button:active{
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">BTC</span>
-    <span id="btcChange" class="cryptoChange cryptoLoading">
-     --
-    </span>
+    <span id="btcChange" class="cryptoChange cryptoLoading">--</span>
    </div>
 
    <div id="btcPrice" class="cryptoPrice">
@@ -1700,7 +1675,7 @@ button:active{
    </div>
 
    <div id="btcCountdown" class="cryptoCountdown">
-    --
+    Refresh in 10s
    </div>
 
   </div>
@@ -1715,9 +1690,7 @@ button:active{
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">ETH</span>
-    <span id="ethChange" class="cryptoChange cryptoLoading">
-     --
-    </span>
+    <span id="ethChange" class="cryptoChange cryptoLoading">--</span>
    </div>
 
    <div id="ethPrice" class="cryptoPrice">
@@ -1729,7 +1702,7 @@ button:active{
    </div>
 
    <div id="ethCountdown" class="cryptoCountdown">
-    --
+    Refresh in 10s
    </div>
 
   </div>
@@ -1744,9 +1717,7 @@ button:active{
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">SOL</span>
-    <span id="solChange" class="cryptoChange cryptoLoading">
-     --
-    </span>
+    <span id="solChange" class="cryptoChange cryptoLoading">--</span>
    </div>
 
    <div id="solPrice" class="cryptoPrice">
@@ -1758,7 +1729,7 @@ button:active{
    </div>
 
    <div id="solCountdown" class="cryptoCountdown">
-    --
+    Refresh in 10s
    </div>
 
   </div>
@@ -1773,9 +1744,7 @@ button:active{
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">BNB</span>
-    <span id="bnbChange" class="cryptoChange cryptoLoading">
-     --
-    </span>
+    <span id="bnbChange" class="cryptoChange cryptoLoading">--</span>
    </div>
 
    <div id="bnbPrice" class="cryptoPrice">
@@ -1787,7 +1756,7 @@ button:active{
    </div>
 
    <div id="bnbCountdown" class="cryptoCountdown">
-    --
+    Refresh in 10s
    </div>
 
   </div>
@@ -1802,9 +1771,7 @@ button:active{
 
    <div class="cryptoTop">
     <span class="cryptoSymbol">XRP</span>
-    <span id="xrpChange" class="cryptoChange cryptoLoading">
-     --
-    </span>
+    <span id="xrpChange" class="cryptoChange cryptoLoading">--</span>
    </div>
 
    <div id="xrpPrice" class="cryptoPrice">
@@ -1816,7 +1783,7 @@ button:active{
    </div>
 
    <div id="xrpCountdown" class="cryptoCountdown">
-    --
+    Refresh in 10s
    </div>
 
   </div>
@@ -1897,44 +1864,20 @@ let touchReticleMaterial=null;
    CLIMB POINTS
 ===================================================== */
 
-const POINTS_KEY=
- "climboria_climb_points";
+const POINTS_KEY="climboria_climb_points";
+const SUMMITS_KEY="climboria_summits";
+const ATTEMPTS_KEY="climboria_attempts";
+const STREAK_KEY="climboria_daily_streak";
+const LAST_VISIT_KEY="climboria_last_visit";
+const REFERRAL_CODE_KEY="climboria_referral_code";
+const REFERRALS_KEY="climboria_referrals";
+const AIRDROP_ACTIONS_KEY="climboria_airdrop_actions";
+const AIRDROP_SCORE_KEY="climboria_airdrop_score";
 
-const SUMMITS_KEY=
- "climboria_summits";
-
-const ATTEMPTS_KEY=
- "climboria_attempts";
-
-const STREAK_KEY=
- "climboria_daily_streak";
-
-const LAST_VISIT_KEY=
- "climboria_last_visit";
-
-const REFERRAL_CODE_KEY=
- "climboria_referral_code";
-
-const REFERRALS_KEY=
- "climboria_referrals";
-
-const AIRDROP_ACTIONS_KEY=
- "climboria_airdrop_actions";
-
-const AIRDROP_SCORE_KEY=
- "climboria_airdrop_score";
-
-const CLIMB_REWARD=
- 100;
-
-const ATTEMPT_REWARD=
- 10;
-
-const DAILY_REWARD=
- 5;
-
-const REFERRAL_REWARD=
- 50;
+const CLIMB_REWARD=100;
+const ATTEMPT_REWARD=10;
+const DAILY_REWARD=5;
+const REFERRAL_REWARD=50;
 
 let climbPoints=0;
 let totalSummits=0;
@@ -2002,6 +1945,12 @@ let cryptoRequestInProgress=false;
 
 const CRYPTO_REFRESH_SECONDS=10;
 
+
+/*
+ * FIX:
+ * Use the normal Binance 24hr ticker endpoint.
+ * Removed the incompatible MINI_TICKER parameter.
+ */
 const BINANCE_API=
  "https://api.binance.com/api/v3/ticker/24hr";
 
@@ -2022,7 +1971,7 @@ const BINANCE_TO_SYMBOL={
 };
 
 
-/* CoinGecko remains as fallback */
+/* CoinGecko fallback */
 
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
@@ -2105,8 +2054,7 @@ function dateDifferenceInDays(
 
 function updateDailyStreak(){
 
- const today=
-  getDateKey();
+ const today=getDateKey();
 
  let previous="";
 
@@ -2319,11 +2267,6 @@ function loadClimbData(){
 
  }catch(error){
 
-  console.warn(
-   "CLIMBORIA local storage unavailable:",
-   error
-  );
-
   climbPoints=0;
   totalSummits=0;
   totalAttempts=0;
@@ -2353,13 +2296,7 @@ function saveClimbData(){
    String(totalAttempts)
   );
 
- }catch(error){
-
-  console.warn(
-   "CLIMBORIA could not save points:",
-   error
-  );
- }
+ }catch(error){}
 }
 
 
@@ -2575,23 +2512,12 @@ function loadReferralData(){
      incoming
     );
 
-    registerAirdropAction(
-     20
-    );
-
-    addClimbPoints(
-     20
-    );
+    registerAirdropAction(20);
+    addClimbPoints(20);
    }
   }
 
- }catch(error){
-
-  console.warn(
-   "Referral URL unavailable:",
-   error
-  );
- }
+ }catch(error){}
 
 
  updateReferralUI();
@@ -2619,32 +2545,6 @@ function updateReferralUI(){
     " referral":
     " referrals"
    );
-}
-
-
-function simulateReferralForDemo(){
-
- totalReferrals++;
-
- addClimbPoints(
-  REFERRAL_REWARD
- );
-
- registerAirdropAction(
-  15
- );
-
- try{
-
-  localStorage.setItem(
-   REFERRALS_KEY,
-   String(totalReferrals)
-  );
-
- }catch(error){}
-
- updateReferralUI();
- updatePointsUI();
 }
 
 
@@ -2703,9 +2603,7 @@ async function shareReferral(){
 
  try{
 
-  if(
-   navigator.share
-  ){
+  if(navigator.share){
 
    await navigator.share({
     title:"CLIMBORIA",
@@ -2722,7 +2620,7 @@ async function shareReferral(){
 
 
 /* =====================================================
-   AIRDROP TRACKER
+   AIRDROP
 ===================================================== */
 
 function loadAirdropData(){
@@ -2792,9 +2690,7 @@ function saveAirdropData(){
 }
 
 
-function registerAirdropAction(
- points
-){
+function registerAirdropAction(points){
 
  points=
   Math.max(
@@ -2811,8 +2707,7 @@ function registerAirdropAction(
  airdropScore=
   Math.min(
    100,
-   airdropScore+
-   points
+   airdropScore+points
   );
 
  saveAirdropData();
@@ -2894,14 +2789,13 @@ function getLeaderboardData(){
   time:"LOCAL"
  };
 
- const rows=
-  [...DEMO_LEADERBOARD,player]
-   .sort(
-    (a,b)=>
-     b.points-a.points
-   );
-
- return rows.slice(
+ return [
+  ...DEMO_LEADERBOARD,
+  player
+ ].sort(
+  (a,b)=>
+   b.points-a.points
+ ).slice(
   0,
   6
  );
@@ -2917,10 +2811,7 @@ function renderLeaderboard(){
 
  container.innerHTML="";
 
- const rows=
-  getLeaderboardData();
-
- rows.forEach(
+ getLeaderboardData().forEach(
   (row,index)=>{
 
    const div=
@@ -2955,9 +2846,7 @@ function renderLeaderboard(){
      </div>
     `;
 
-   container.appendChild(
-    div
-   );
+   container.appendChild(div);
   }
 }
 
@@ -2981,20 +2870,12 @@ init();
 animate();
 
 
-/* =====================================================
-   INIT
-===================================================== */
-
 function init(){
 
  loadClimbData();
-
  loadAirdropData();
-
  loadReferralData();
-
  updateDailyStreak();
-
  renderLeaderboard();
 
 
@@ -3110,7 +2991,6 @@ function init(){
   mouseUp
  );
 
-
  window.addEventListener(
   "touchstart",
   touchStart,
@@ -3161,7 +3041,6 @@ function init(){
   showMenu
  );
 
-
  $("copyReferralButton").addEventListener(
   "click",
   copyReferral
@@ -3176,8 +3055,12 @@ function init(){
  updateHelpText();
 
 
- $("cryptoTicker").style.display=
-  "flex";
+ /*
+  * IMPORTANT:
+  * Explicitly show ticker when page loads.
+  */
+ $("cryptoTicker").style.display="flex";
+
 
  startCryptoTicker();
 }
@@ -3243,15 +3126,12 @@ function createMountain(){
   [-8,5,1.5,2],
   [7,8,2,1.5],
   [-6,12,2.5,2],
-
   [6,16,2,2],
   [-8,21,2.5,1.5],
   [7,25,2.5,2],
-
   [-6,30,2,2],
   [8,35,3,2],
   [-7,40,2,2],
-
   [6,45,3,2],
   [-5,51,2.5,2],
   [7,57,2.5,2]
@@ -3261,12 +3141,7 @@ function createMountain(){
 
  ledges.forEach(v=>{
 
-  const[
-   x,
-   y,
-   w,
-   h
-  ]=v;
+  const[x,y,w,h]=v;
 
   const mesh=
    new THREE.Mesh(
@@ -3736,8 +3611,7 @@ function createHammer(){
 
  hammer.add(tip);
 
- hammer.userData.tip=
-  tip;
+ hammer.userData.tip=tip;
 
  hammer.position.set(
   3,
@@ -3762,19 +3636,16 @@ function createGrips(){
   [-2,9],
   [4,12],
   [0,15],
-
   [-4,18],
   [2,21],
   [5,24],
   [0,27],
   [-4,30],
-
   [2,33],
   [-2,36],
   [4,39],
   [0,42],
   [-4,45],
-
   [2,48],
   [-2,51],
   [4,54],
@@ -3891,14 +3762,12 @@ function createTouchReticle(){
   );
 
 
- touchReticle.position.z=
-  4.15;
+ touchReticle.position.z=4.15;
 
  touchReticle.rotation.x=
   Math.PI/2;
 
- touchReticle.visible=
-  false;
+ touchReticle.visible=false;
 
  scene.add(
   touchReticle
@@ -3966,6 +3835,8 @@ function setPointerPosition(x,y){
 
 
 function updateCursorWorld(){
+
+ if(!camera)return;
 
  raycaster.setFromCamera(
   mouse,
@@ -4048,9 +3919,9 @@ function nearestGrip(){
 
   const d=
    Math.sqrt(
-     dx*dx+
-     dy*dy
-    );
+    dx*dx+
+    dy*dy
+   );
 
   if(d<dist){
 
@@ -4247,9 +4118,9 @@ function updatePhysics(dt){
 
   const distance=
    Math.sqrt(
-     relX*relX+
-     relY*relY
-    );
+    relX*relX+
+    relY*relY
+   );
 
 
   if(distance>.001){
@@ -4556,8 +4427,7 @@ function updateHeight(){
   );
 
 
- $("height").textContent=
-  h;
+ $("height").textContent=h;
 
  $("pct").textContent=
   Math.floor(p)+"%";
@@ -4578,16 +4448,15 @@ function updateHeight(){
 
 function setStatus(text,color){
 
- $("status").textContent=
-  text;
+ if(!$("status"))return;
 
- $("status").style.color=
-  color;
+ $("status").textContent=text;
+ $("status").style.color=color;
 }
 
 
 /* =====================================================
-   SUMMIT DETECTION
+   SUMMIT
 ===================================================== */
 
 function checkSummit(){
@@ -4605,10 +4474,6 @@ function checkSummit(){
 }
 
 
-/* =====================================================
-   BEGIN SUMMIT
-===================================================== */
-
 function beginSummitSequence(){
 
  if(summitSequence)return;
@@ -4623,33 +4488,24 @@ function beginSummitSequence(){
 
  touchActive=false;
 
+ $("touchHint").style.display="none";
 
- $("touchHint").style.display=
-  "none";
-
-
- $("cryptoTicker").style.display=
-  "none";
-
+ $("cryptoTicker").style.display="none";
 
  setStatus(
   "SUMMIT REACHED",
   "#55ff70"
  );
 
-
  if(touchReticle)
   touchReticle.visible=false;
-
 
  grips.forEach(g=>{
   g.group.scale.setScalar(1);
  });
 
-
  velocityX=0;
  velocityY=0;
-
 
  hero.position.set(
   SUMMIT_HERO_X,
@@ -4657,13 +4513,11 @@ function beginSummitSequence(){
   SUMMIT_HERO_Z
  );
 
-
  camera.position.set(
   SUMMIT_CENTER_X,
   SUMMIT_CENTER_Y+5,
   18
  );
-
 
  camera.lookAt(
   SUMMIT_CENTER_X,
@@ -4671,39 +4525,13 @@ function beginSummitSequence(){
   0
  );
 
-
  updateHeight();
-
 
  registerSummit();
 
-
  setTimeout(()=>{
 
-  if(!summitSequence)
-   return;
-
-
-  hero.position.set(
-   SUMMIT_HERO_X,
-   SUMMIT_HERO_Y,
-   SUMMIT_HERO_Z
-  );
-
-
-  camera.position.set(
-   SUMMIT_CENTER_X,
-   SUMMIT_CENTER_Y+5,
-   18
-  );
-
-
-  camera.lookAt(
-   SUMMIT_CENTER_X,
-   SUMMIT_CENTER_Y,
-   0
-  );
-
+  if(!summitSequence)return;
 
   createSummitBurst();
 
@@ -4715,28 +4543,20 @@ function beginSummitSequence(){
 
    victoryTimer=null;
 
-   if(!summitSequence)
-    return;
+   if(!summitSequence)return;
 
    gameWon=true;
 
-   $("cryptoTicker").style.display=
-    "none";
+   $("cryptoTicker").style.display="none";
 
    updatePointsUI();
-
    renderLeaderboard();
 
-   $("victory").style.display=
-    "flex";
+   $("victory").style.display="flex";
 
   },1500);
 }
 
-
-/* =====================================================
-   VICTORY
-===================================================== */
 
 function showVictory(){
 
@@ -4767,14 +4587,10 @@ function resetPlayer(){
 
  gameWon=false;
 
-
- $("touchHint").style.display=
-  "none";
-
+ $("touchHint").style.display="none";
 
  if(touchReticle)
   touchReticle.visible=false;
-
 
  grips.forEach(
   g=>
@@ -4790,27 +4606,23 @@ function resetPlayer(){
   18
  );
 
-
  camera.lookAt(
   0,
   7,
   0
  );
 
-
  setStatus(
   "FREE",
   "#55ff70"
  );
 
-
  updateHeight();
- updatePointsUI();
 }
 
 
 /* =====================================================
-   CLEAR BURSTS
+   BURSTS
 ===================================================== */
 
 function clearBursts(){
@@ -4858,60 +4670,35 @@ function showGame(){
 
  cancelVictoryTimer();
 
+ $("landing").style.display="none";
+ $("launchpad").style.display="none";
+ $("victory").style.display="none";
 
- $("landing").style.display=
-  "none";
+ $("hud").style.display="block";
+ $("hudPoints").style.display="block";
+ $("help").style.display="block";
+ $("nav").style.display="block";
 
- $("launchpad").style.display=
-  "none";
-
- $("victory").style.display=
-  "none";
-
-
- $("hud").style.display=
-  "block";
-
- $("hudPoints").style.display=
-  "block";
-
- $("help").style.display=
-  "block";
-
- $("nav").style.display=
-  "block";
-
-
- $("cryptoTicker").style.display=
-  "none";
-
+ $("cryptoTicker").style.display="none";
 
  gameWon=false;
-
  summitSequence=false;
-
  running=true;
-
 
  clearBursts();
 
  resetPlayer();
 
-
  registerAttempt();
-
 
  running=true;
 
  updateCursorWorld();
 
- lastTime=
-  performance.now();
+ lastTime=performance.now();
 
  updateHelpText();
-
  updatePointsUI();
-
  renderLeaderboard();
 }
 
@@ -4925,61 +4712,33 @@ function showMenu(){
  cancelVictoryTimer();
 
  running=false;
-
  grabbed=null;
-
  touchActive=false;
-
  gameWon=false;
-
  summitSequence=false;
 
+ $("landing").style.display="flex";
+ $("launchpad").style.display="none";
+ $("victory").style.display="none";
 
- $("landing").style.display=
-  "flex";
+ $("hud").style.display="none";
+ $("hudPoints").style.display="none";
+ $("help").style.display="none";
+ $("nav").style.display="none";
+ $("touchHint").style.display="none";
 
- $("launchpad").style.display=
-  "none";
-
- $("victory").style.display=
-  "none";
-
-
- $("hud").style.display=
-  "none";
-
- $("hudPoints").style.display=
-  "none";
-
- $("help").style.display=
-  "none";
-
- $("nav").style.display=
-  "none";
-
- $("touchHint").style.display=
-  "none";
-
-
- $("cryptoTicker").style.display=
-  "flex";
-
+ $("cryptoTicker").style.display="flex";
 
  clearBursts();
-
 
  if(touchReticle)
   touchReticle.visible=false;
 
-
  resetPlayer();
 
  updatePointsUI();
-
  updateStreakUI();
-
  updateReferralUI();
-
  renderLeaderboard();
 }
 
@@ -4993,58 +4752,31 @@ function showLaunchpad(){
  cancelVictoryTimer();
 
  running=false;
-
  grabbed=null;
-
  touchActive=false;
-
  gameWon=false;
-
  summitSequence=false;
 
+ $("landing").style.display="none";
+ $("launchpad").style.display="flex";
+ $("victory").style.display="none";
 
- $("landing").style.display=
-  "none";
+ $("hud").style.display="none";
+ $("hudPoints").style.display="none";
+ $("help").style.display="none";
+ $("nav").style.display="none";
+ $("touchHint").style.display="none";
 
- $("launchpad").style.display=
-  "flex";
-
- $("victory").style.display=
-  "none";
-
-
- $("hud").style.display=
-  "none";
-
- $("hudPoints").style.display=
-  "none";
-
- $("help").style.display=
-  "none";
-
- $("nav").style.display=
-  "none";
-
- $("touchHint").style.display=
-  "none";
-
-
- $("cryptoTicker").style.display=
-  "none";
-
+ $("cryptoTicker").style.display="none";
 
  if(touchReticle)
   touchReticle.visible=false;
 
-
  clearBursts();
 
  updateStreakUI();
-
  updateReferralUI();
-
  updateAirdropUI();
-
  renderLeaderboard();
 }
 
@@ -5095,23 +4827,18 @@ function updateTouchReticle(time){
 
  if(!touchReticle)return;
 
-
  if(
   !running||
   !touchActive||
   summitSequence
  ){
 
-  touchReticle.visible=
-   false;
+  touchReticle.visible=false;
 
   return;
  }
 
-
- touchReticle.visible=
-  true;
-
+ touchReticle.visible=true;
 
  touchReticle.position.set(
   cursorWorld.x,
@@ -5119,10 +4846,8 @@ function updateTouchReticle(time){
   4.15
  );
 
-
  const result=
   nearestGrip();
-
 
  if(
   result.grip &&
@@ -5132,16 +4857,13 @@ function updateTouchReticle(time){
   touchReticleMaterial.color
    .set(0x55ff70);
 
-  touchReticleMaterial.opacity=
-   .95;
-
+  touchReticleMaterial.opacity=.95;
 
   const pulse=
    1+
    Math.sin(
     time*.018
    )*.12;
-
 
   touchReticle
    .scale
@@ -5152,11 +4874,9 @@ function updateTouchReticle(time){
   touchReticleMaterial.color
    .set(0xffcc33);
 
-  touchReticleMaterial.opacity=
-   .8;
+  touchReticleMaterial.opacity=.8;
 
-  touchReticle.scale
-   .setScalar(1);
+  touchReticle.scale.setScalar(1);
  }
 }
 
@@ -5205,9 +4925,7 @@ function createGripBurst(x,y){
   p.userData.vy=
    Math.sin(a)*s;
 
-  p.userData.life=
-   1;
-
+  p.userData.life=1;
 
   scene.add(p);
 
@@ -5228,9 +4946,7 @@ function updateEffects(dt){
   i--
  ){
 
-  const p=
-   summitBurst[i];
-
+  const p=summitBurst[i];
 
   if(
    p.userData &&
@@ -5238,7 +4954,6 @@ function updateEffects(dt){
   ){
    continue;
   }
-
 
   p.position.x+=
    p.userData.vx*dt;
@@ -5252,13 +4967,11 @@ function updateEffects(dt){
   p.userData.life-=
    dt*2;
 
-
   p.material.opacity=
    Math.max(
     0,
     p.userData.life
    );
-
 
   if(
    p.userData.life<=0
@@ -5267,7 +4980,6 @@ function updateEffects(dt){
    scene.remove(p);
 
    p.geometry.dispose();
-
    p.material.dispose();
 
    summitBurst.splice(i,1);
@@ -5282,15 +4994,9 @@ function updateEffects(dt){
 
 function createSummitBurst(){
 
- const explosionX=
-  hero.position.x;
-
- const explosionY=
-  hero.position.y+
-  .7;
-
- const explosionZ=
-  hero.position.z;
+ const explosionX=hero.position.x;
+ const explosionY=hero.position.y+.7;
+ const explosionZ=hero.position.z;
 
 
  for(let i=0;i<150;i++){
@@ -5336,11 +5042,9 @@ function createSummitBurst(){
 
   p.userData={
    vx:Math.cos(a)*speed,
-   vy:up+
-      Math.random()*8,
+   vy:up+Math.random()*8,
    vz:(Math.random()-.5)*speed,
-   life:1+
-        Math.random()*.8,
+   life:1+Math.random()*.8,
    summit:true
   };
 
@@ -5387,8 +5091,7 @@ function createSummitBurst(){
    vx:Math.cos(a)*speed,
    vy:Math.random()*10+4,
    vz:(Math.random()-.5)*speed,
-   life:.5+
-        Math.random()*.7
+   life:.5+Math.random()*.7
   };
 
 
@@ -5422,36 +5125,28 @@ function createSummitBurst(){
    explosionZ
   );
 
-
   shock.rotation.x=
    Math.PI/2;
-
 
   shock.userData={
    life:1,
    speed:5+i*2
   };
 
-
   scene.add(shock);
 
-  summitShockwaves.push(
-   shock
-  );
+  summitShockwaves.push(shock);
  }
 
 
  if(summitLight){
 
-  summitLight.intensity=
-   18;
-
+  summitLight.intensity=18;
 
   setTimeout(()=>{
 
    if(summitLight)
-    summitLight.intensity=
-     5;
+    summitLight.intensity=5;
 
   },500);
  }
@@ -5470,33 +5165,18 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const p=
-   summitBurst[i];
-
-  const v=
-   p.userData;
-
+  const p=summitBurst[i];
+  const v=p.userData;
 
   if(!v.summit)
    continue;
 
+  p.position.x+=v.vx*dt;
+  p.position.y+=v.vy*dt;
+  p.position.z+=v.vz*dt;
 
-  p.position.x+=
-   v.vx*dt;
-
-  p.position.y+=
-   v.vy*dt;
-
-  p.position.z+=
-   v.vz*dt;
-
-
-  v.vy-=
-   8*dt;
-
-  v.life-=
-   dt;
-
+  v.vy-=8*dt;
+  v.life-=dt;
 
   p.material.opacity=
    Math.max(
@@ -5504,13 +5184,11 @@ function updateSummitBurst(dt){
     v.life
    );
 
-
   if(v.life<=0){
 
    scene.remove(p);
 
    p.geometry.dispose();
-
    p.material.dispose();
 
    summitBurst.splice(i,1);
@@ -5524,29 +5202,15 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const p=
-   summitSparks[i];
+  const p=summitSparks[i];
+  const v=p.userData;
 
-  const v=
-   p.userData;
+  p.position.x+=v.vx*dt;
+  p.position.y+=v.vy*dt;
+  p.position.z+=v.vz*dt;
 
-
-  p.position.x+=
-   v.vx*dt;
-
-  p.position.y+=
-   v.vy*dt;
-
-  p.position.z+=
-   v.vz*dt;
-
-
-  v.vy-=
-   10*dt;
-
-  v.life-=
-   dt;
-
+  v.vy-=10*dt;
+  v.life-=dt;
 
   p.material.opacity=
    Math.max(
@@ -5554,13 +5218,11 @@ function updateSummitBurst(dt){
     v.life
    );
 
-
   if(v.life<=0){
 
    scene.remove(p);
 
    p.geometry.dispose();
-
    p.material.dispose();
 
    summitSparks.splice(i,1);
@@ -5574,37 +5236,24 @@ function updateSummitBurst(dt){
   i--
  ){
 
-  const s=
-   summitShockwaves[i];
-
-  const v=
-   s.userData;
-
+  const s=summitShockwaves[i];
+  const v=s.userData;
 
   const scale=
    1+
    (1-v.life)*12;
 
+  s.scale.setScalar(scale);
 
-  s.scale.setScalar(
-   scale
-  );
+  s.material.opacity=v.life;
 
-
-  s.material.opacity=
-   v.life;
-
-
-  v.life-=
-   dt*1.4;
-
+  v.life-=dt*1.4;
 
   if(v.life<=0){
 
    scene.remove(s);
 
    s.geometry.dispose();
-
    s.material.dispose();
 
    summitShockwaves.splice(i,1);
@@ -5625,13 +5274,11 @@ function updateSummitParticles(time,dt){
    p.userData.speed*
    dt;
 
-
   p.position.x+=
    Math.sin(
     time*.001+
     p.userData.phase
    )*.002;
-
 
   if(
    p.position.y>68
@@ -5699,7 +5346,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:0
     }
    );
-
  }
 
 
@@ -5713,7 +5359,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:2
     }
    );
-
  }
 
 
@@ -5727,7 +5372,6 @@ function formatCryptoPrice(price){
      maximumFractionDigits:3
     }
    );
-
  }
 
 
@@ -5751,13 +5395,11 @@ function setCryptoStatus(
  type="live"
 ){
 
- const el=
-  $("cryptoStatus");
+ const el=$("cryptoStatus");
 
  if(!el)return;
 
- el.textContent=
-  text;
+ el.textContent=text;
 
  el.classList.remove(
   "offline",
@@ -5772,33 +5414,24 @@ function setCryptoStatus(
 }
 
 
-/* =====================================================
-   CRYPTO LIVE LABEL
-===================================================== */
+function setCryptoLiveLabels(text){
 
-function setCryptoLiveLabels(
- text
-){
+ CRYPTO_IDS.forEach(id=>{
 
- CRYPTO_IDS.forEach(
-  id=>{
+  const symbol=
+   CRYPTO_SYMBOLS[id];
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+  const el=
+   $(symbol.toLowerCase()+"LiveText");
 
-   const el=
-    $(symbol.toLowerCase()+"LiveText");
-
-   if(el)
-    el.textContent=
-     text;
-  }
- );
+  if(el)
+   el.textContent=text;
+ });
 }
 
 
 /* =====================================================
-   CRYPTO PRICE FLASH
+   CRYPTO FLASH
 ===================================================== */
 
 function flashCryptoCard(
@@ -5866,7 +5499,7 @@ function updateCryptoPrice(
  const priceEl=
   $(symbol.toLowerCase()+"Price");
 
- if(!priceEl)return;
+ if(!priceEl)return false;
 
  price=Number(price);
 
@@ -5913,10 +5546,6 @@ function updateCryptoPrice(
 
   }else{
 
-   /*
-    * Price was successfully refreshed
-    * even if it did not move.
-    */
    flashCryptoCard(
     symbol,
     "sync"
@@ -5936,7 +5565,7 @@ function updateCryptoPrice(
 
 
 /* =====================================================
-   UPDATE 24H PRICE ACTION
+   UPDATE CHANGE
 ===================================================== */
 
 function updateCryptoChange(
@@ -5953,8 +5582,7 @@ function updateCryptoChange(
 
  if(!Number.isFinite(change)){
 
-  changeEl.textContent=
-   "--";
+  changeEl.textContent="--";
 
   changeEl.classList.remove(
    "cryptoLoading",
@@ -5975,7 +5603,6 @@ function updateCryptoChange(
   "+":
   "";
 
-
  changeEl.textContent=
   sign+
   change.toFixed(2)+
@@ -5988,7 +5615,6 @@ function updateCryptoChange(
   "down"
  );
 
-
  changeEl.classList.add(
   change>=0?
   "up":
@@ -5998,13 +5624,12 @@ function updateCryptoChange(
 
 
 /* =====================================================
-   CRYPTO UPDATED TIME
+   TIMESTAMP
 ===================================================== */
 
 function updateCryptoTimestamp(){
 
- const now=
-  new Date();
+ const now=new Date();
 
  const time=
   now.toLocaleTimeString(
@@ -6018,28 +5643,26 @@ function updateCryptoTimestamp(){
   );
 
 
- CRYPTO_IDS.forEach(
-  id=>{
+ CRYPTO_IDS.forEach(id=>{
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+  const symbol=
+   CRYPTO_SYMBOLS[id];
 
-   const el=
-    $(symbol.toLowerCase()+"Updated");
+  const el=
+   $(symbol.toLowerCase()+"Updated");
 
-   if(el){
+  if(el){
 
-    el.textContent=
-     "Updated "+
-     time;
-   }
+   el.textContent=
+    "Updated "+
+    time;
   }
-);
+ });
 }
 
 
 /* =====================================================
-   CRYPTO COUNTDOWN
+   COUNTDOWN
 ===================================================== */
 
 function updateCryptoCountdown(){
@@ -6053,24 +5676,22 @@ function updateCryptoCountdown(){
   );
 
 
- CRYPTO_IDS.forEach(
-  id=>{
+ CRYPTO_IDS.forEach(id=>{
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+  const symbol=
+   CRYPTO_SYMBOLS[id];
 
-   const el=
-    $(symbol.toLowerCase()+"Countdown");
+  const el=
+   $(symbol.toLowerCase()+"Countdown");
 
-   if(el){
+  if(el){
 
-    el.textContent=
-     "Refresh in "+
-     cryptoSecondsLeft+
-     "s";
-   }
+   el.textContent=
+    "Refresh in "+
+    cryptoSecondsLeft+
+    "s";
   }
-);
+ });
 
 
  if(
@@ -6086,11 +5707,11 @@ function updateCryptoCountdown(){
 
 
 /* =====================================================
-   CRYPTO ERROR
+   ERROR
 ===================================================== */
 
 function showCryptoError(
- source="LIVE FEED"
+ source="LIVE FEEDS"
 ){
 
  setCryptoStatus(
@@ -6099,44 +5720,33 @@ function showCryptoError(
   "offline"
  );
 
- setCryptoLiveLabels(
-  "WAIT"
- );
+ setCryptoLiveLabels("WAIT");
 
+ CRYPTO_IDS.forEach(id=>{
 
- CRYPTO_IDS.forEach(
-  id=>{
+  const symbol=
+   CRYPTO_SYMBOLS[id];
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+  const el=
+   $(symbol.toLowerCase()+"Updated");
 
-   const el=
-    $(symbol.toLowerCase()+"Updated");
+  if(!el)return;
 
-   if(!el)return;
+  el.textContent=
+   "Retrying automatically";
 
-   /*
-    * Do not erase the last valid price.
-    */
-
-   el.textContent=
-    "Waiting for live update";
-
-   el.classList.add(
-    "cryptoError"
-   );
-  }
- );
+  el.classList.add(
+   "cryptoError"
+  );
+ });
 }
 
 
 /* =====================================================
-   CRYPTO SUCCESS
+   SUCCESS
 ===================================================== */
 
-function showCryptoSuccess(
- source
-){
+function showCryptoSuccess(source){
 
  setCryptoStatus(
   "LIVE • "+
@@ -6145,25 +5755,21 @@ function showCryptoSuccess(
   "live"
  );
 
- setCryptoLiveLabels(
-  "LIVE"
- );
+ setCryptoLiveLabels("LIVE");
 
- CRYPTO_IDS.forEach(
-  id=>{
+ CRYPTO_IDS.forEach(id=>{
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+  const symbol=
+   CRYPTO_SYMBOLS[id];
 
-   const el=
-    $(symbol.toLowerCase()+"Updated");
+  const el=
+   $(symbol.toLowerCase()+"Updated");
 
-   if(el)
-    el.classList.remove(
-     "cryptoError"
-    );
-  }
- );
+  if(el)
+   el.classList.remove(
+    "cryptoError"
+   );
+ });
 
 
  cryptoSecondsLeft=
@@ -6186,10 +5792,13 @@ function buildBinanceURL(){
    )
   );
 
+ /*
+  * FIXED:
+  * No MINI_TICKER.
+  */
  return BINANCE_API+
   "?symbols="+
   encoded+
-  "&type=MINI_TICKER"+
   "&_="+
   Date.now();
 }
@@ -6215,9 +5824,18 @@ async function loadBinanceMarket(){
 
  try{
 
+  const url=
+   buildBinanceURL();
+
+  console.log(
+   "CLIMBORIA: requesting Binance:",
+   url
+  );
+
+
   const response=
    await fetch(
-    buildBinanceURL(),
+    url,
     {
      method:"GET",
      cache:"no-store",
@@ -6232,7 +5850,7 @@ async function loadBinanceMarket(){
   if(!response.ok){
 
    throw new Error(
-    "Binance API "+
+    "Binance HTTP "+
     response.status
    );
   }
@@ -6258,6 +5876,7 @@ async function loadBinanceMarket(){
 
     if(!coin)return;
 
+
     const symbol=
      BINANCE_TO_SYMBOL[
       coin.symbol
@@ -6267,22 +5886,21 @@ async function loadBinanceMarket(){
 
 
     /*
-     * MINI_TICKER returns:
-     * close price = c
+     * Standard 24hr ticker fields:
+     *
+     * lastPrice
+     * priceChangePercent
      */
 
     const price=
      Number(
-      coin.lastPrice||
-      coin.c
-    );
-
+      coin.lastPrice
+     );
 
     const change=
      Number(
-      coin.priceChangePercent||
-      coin.P
-    );
+      coin.priceChangePercent
+     );
 
 
     if(
@@ -6310,9 +5928,15 @@ async function loadBinanceMarket(){
   );
 
 
+  console.log(
+   "CLIMBORIA: Binance valid coins:",
+   validCoins
+  );
+
+
   if(
    validCoins<
-   CRYPTO_IDS.length
+   BINANCE_SYMBOLS.length
   ){
 
    throw new Error(
@@ -6331,7 +5955,7 @@ async function loadBinanceMarket(){
 
 
 /* =====================================================
-   LOAD COINGECKO FALLBACK
+   COINGECKO FALLBACK
 ===================================================== */
 
 async function loadCoinGeckoMarket(){
@@ -6362,6 +5986,11 @@ async function loadCoinGeckoMarket(){
 
  try{
 
+  console.log(
+   "CLIMBORIA: trying CoinGecko fallback"
+  );
+
+
   const response=
    await fetch(
     url,
@@ -6379,7 +6008,7 @@ async function loadCoinGeckoMarket(){
   if(!response.ok){
 
    throw new Error(
-    "CoinGecko API "+
+    "CoinGecko HTTP "+
     response.status
    );
   }
@@ -6392,50 +6021,45 @@ async function loadCoinGeckoMarket(){
   let validCoins=0;
 
 
-  CRYPTO_IDS.forEach(
-   id=>{
+  CRYPTO_IDS.forEach(id=>{
 
-    const coin=
-     data[id];
+   const coin=data[id];
 
-    if(!coin)return;
+   if(!coin)return;
 
+   const symbol=
+    CRYPTO_SYMBOLS[id];
 
-    const symbol=
-     CRYPTO_SYMBOLS[id];
-
-    if(!symbol)return;
+   if(!symbol)return;
 
 
-    if(
-     coin.usd!==undefined
-    ){
-
-     if(
-      updateCryptoPrice(
-       symbol,
-       coin.usd
-      )
-     ){
-
-      validCoins++;
-     }
-    }
-
+   if(
+    coin.usd!==undefined
+   ){
 
     if(
-     coin.usd_24h_change!==undefined
-    ){
-
-     updateCryptoChange(
+     updateCryptoPrice(
       symbol,
-      coin.usd_24h_change
-     );
+      coin.usd
+     )
+    ){
 
+     validCoins++;
     }
-
    }
-  );
+
+
+   if(
+    coin.usd_24h_change!==undefined
+   ){
+
+    updateCryptoChange(
+     symbol,
+     coin.usd_24h_change
+    );
+   }
+
+  });
 
 
   if(
@@ -6464,8 +6088,15 @@ async function loadCoinGeckoMarket(){
 
 async function loadCryptoMarket(){
 
- if(cryptoRequestInProgress)
+ if(cryptoRequestInProgress){
+
+  console.log(
+   "CLIMBORIA: previous crypto request still running"
+  );
+
   return;
+ }
+
 
  cryptoRequestInProgress=true;
 
@@ -6475,16 +6106,14 @@ async function loadCryptoMarket(){
   "syncing"
  );
 
- setCryptoLiveLabels(
-  "SYNC"
- );
+ setCryptoLiveLabels("SYNC");
 
 
  try{
 
   /*
    * FIRST:
-   * Binance live market.
+   * Binance
    */
 
   try{
@@ -6501,25 +6130,24 @@ async function loadCryptoMarket(){
     );
 
     console.log(
-     "CLIMBORIA LIVE CRYPTO:",
-     "BINANCE"
+     "CLIMBORIA LIVE CRYPTO: BINANCE OK"
     );
 
     return;
    }
 
-  }catch(binanceError){
+  }catch(error){
 
    console.warn(
-    "CLIMBORIA Binance feed failed:",
-    binanceError
+    "CLIMBORIA Binance failed:",
+    error
    );
   }
 
 
   /*
-   * FALLBACK:
-   * CoinGecko.
+   * SECOND:
+   * CoinGecko
    */
 
   try{
@@ -6536,31 +6164,28 @@ async function loadCryptoMarket(){
     );
 
     console.log(
-     "CLIMBORIA LIVE CRYPTO:",
-     "COINGECKO"
+     "CLIMBORIA LIVE CRYPTO: COINGECKO OK"
     );
 
     return;
    }
 
-  }catch(geckoError){
+  }catch(error){
 
    console.warn(
-    "CLIMBORIA CoinGecko feed failed:",
-    geckoError
+    "CLIMBORIA CoinGecko failed:",
+    error
    );
   }
 
 
   /*
-   * Both failed.
-   * Keep previous prices.
+   * BOTH FAILED
    */
 
   showCryptoError(
    "LIVE FEEDS"
   );
-
 
  }finally{
 
@@ -6579,10 +6204,6 @@ async function loadCryptoMarket(){
 ===================================================== */
 
 function startCryptoTicker(){
-
- /*
-  * Make sure an old timer cannot survive.
-  */
 
  if(cryptoTimer){
 
@@ -6605,34 +6226,39 @@ function startCryptoTicker(){
 
 
  /*
-  * Initial live request.
+  * IMPORTANT:
+  * Always make ticker visible initially.
   */
+ $("cryptoTicker").style.display="flex";
+
 
  cryptoSecondsLeft=
-  1;
+  10;
 
  updateCryptoCountdown();
 
+
+ /*
+  * Load immediately.
+  */
  loadCryptoMarket();
 
 
  /*
-  * Exact 10-second market refresh.
+  * Exact 10-second refresh.
   */
-
  cryptoTimer=
   setInterval(
    ()=>{
     loadCryptoMarket();
    },
-   CRYPTO_REFRESH_SECONDS*1000
+   10000
   );
 
 
  /*
-  * Visible countdown.
+  * Countdown every second.
   */
-
  cryptoCountdownTimer=
   setInterval(
    ()=>{
@@ -6644,12 +6270,16 @@ function startCryptoTicker(){
      cryptoSecondsLeft--;
     }
 
-
     updateCryptoCountdown();
 
    },
    1000
   );
+
+
+ console.log(
+  "CLIMBORIA: Crypto ticker started. Refresh = 10 seconds."
+ );
 }
 
 
@@ -6699,6 +6329,8 @@ function cancelVictoryTimer(){
 
 function resize(){
 
+ if(!camera||!renderer)return;
+
  camera.aspect=
   innerWidth/
   innerHeight;
@@ -6713,7 +6345,7 @@ function resize(){
 
 
 /* =====================================================
-   ANIMATION LOOP
+   ANIMATION
 ===================================================== */
 
 function animate(time=0){
@@ -6773,28 +6405,24 @@ function animate(time=0){
  updateTouchReticle(time);
 
 
- renderer.render(
-  scene,
-  camera
- );
+ if(renderer&&scene&&camera){
+
+  renderer.render(
+   scene,
+   camera
+  );
+ }
 }
 
 
 /* =====================================================
-   GLOBAL BUTTON FUNCTIONS
+   GLOBAL FUNCTIONS
 ===================================================== */
 
-window.showGame=
- showGame;
-
-window.showMenu=
- showMenu;
-
-window.showLaunchpad=
- showLaunchpad;
-
-window.restartGame=
- restartGame;
+window.showGame=showGame;
+window.showMenu=showMenu;
+window.showLaunchpad=showLaunchpad;
+window.restartGame=restartGame;
 
 </script>
 
