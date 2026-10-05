@@ -176,7 +176,7 @@ button:hover{background:#55ff7022}
  top:18px;
  left:50%;
  transform:translateX(-50%);
- z-index:15;
+ z-index:30;
  display:none;
  width:min(720px,calc(100% - 160px));
  pointer-events:none;
@@ -688,20 +688,10 @@ let summitSequence=false;
 
 /* =====================================================
    CRYPTO
-   COINGECKO ONLY
+   COINGECKO
 ===================================================== */
 
 let cryptoTimer=null;
-
-
-/*
-   CoinGecko simple price API.
-
-   This gives us:
-   - current USD price
-   - 24 hour percentage change
-   - last updated timestamp
-*/
 
 const COINGECKO_API=
  "https://api.coingecko.com/api/v3/simple/price";
@@ -916,7 +906,8 @@ function init(){
 
 
  /*
-   TICKER VISIBLE ONLY ON LANDING
+   CRYPTO TICKER
+   VISIBLE ON LANDING ONLY
  */
 
  $("cryptoTicker").style.display="flex";
@@ -1816,7 +1807,7 @@ function nearestGrip(){
    Math.sqrt(
      dx*dx+
      dy*dy
-   );
+    );
 
   if(d<dist){
 
@@ -2013,9 +2004,9 @@ function updatePhysics(dt){
 
   const distance=
    Math.sqrt(
-    relX*relX+
-    relY*relY
-   );
+     relX*relX+
+     relY*relY
+    );
 
 
   if(distance>.001){
@@ -3570,22 +3561,6 @@ async function loadCryptoMarket(){
 
  try{
 
-  /*
-    Request all 5 coins at once.
-
-    CoinGecko returns:
-
-    bitcoin:
-      usd
-      usd_24h_change
-
-    ethereum:
-      usd
-      usd_24h_change
-
-    etc.
-  */
-
   const url=
    COINGECKO_API+
    "?ids="+
@@ -3593,6 +3568,7 @@ async function loadCryptoMarket(){
    "&vs_currencies=usd"+
    "&include_24hr_change=true"+
    "&include_last_updated_at=true"+
+   "&precision=full"+
    "&_="+
    Date.now();
 
@@ -3621,10 +3597,6 @@ async function loadCryptoMarket(){
    await response.json();
 
 
-  /*
-    Update every coin.
-  */
-
   CRYPTO_IDS.forEach(
    id=>{
 
@@ -3640,10 +3612,6 @@ async function loadCryptoMarket(){
     if(!symbol)return;
 
 
-    /*
-      REAL CURRENT PRICE
-    */
-
     if(
      coin.usd!==undefined
     ){
@@ -3655,10 +3623,6 @@ async function loadCryptoMarket(){
 
     }
 
-
-    /*
-      REAL 24H PRICE ACTION
-    */
 
     if(
      coin.usd_24h_change!==undefined
@@ -3687,14 +3651,6 @@ async function loadCryptoMarket(){
    "CLIMBORIA CoinGecko feed failed:",
    error
   );
-
-
-  /*
-    IMPORTANT:
-    Do not insert fake prices.
-    Existing valid prices remain
-    on screen if API temporarily fails.
-  */
  }
 }
 
@@ -3705,16 +3661,8 @@ async function loadCryptoMarket(){
 
 function startCryptoTicker(){
 
- /*
-   Load immediately.
- */
-
  loadCryptoMarket();
 
-
- /*
-   Refresh every 30 seconds.
- */
 
  if(cryptoTimer){
 
