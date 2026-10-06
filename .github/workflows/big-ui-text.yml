@@ -1,0 +1,240 @@
+name: Make Climboria UI Text Bigger
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bigger-ui-text:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make UI text bigger
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          if 'id="climboria-big-ui-text"' in html:
+              print("Big UI text is already installed.")
+              raise SystemExit(0)
+
+          css = r'''
+          <style id="climboria-big-ui-text">
+
+          /* =========================================
+             CLIMBORIA BIG UI TEXT
+             UI ONLY — GAME LOGIC UNTOUCHED
+             ========================================= */
+
+          /* Main UI containers */
+          #hud,
+          #ui,
+          .hud,
+          .panel,
+          .card,
+          .box,
+          .menu,
+          .status,
+          .info,
+          .controls,
+          .stats,
+          .toolbar,
+          .sidebar,
+          .overlay {
+              font-size: 16px !important;
+              line-height: 1.4 !important;
+          }
+
+          /* Normal text */
+          #hud p,
+          #ui p,
+          .hud p,
+          .panel p,
+          .card p,
+          .box p,
+          .menu p,
+          .status p,
+          .info p,
+          .controls p,
+          .stats p,
+          .toolbar p,
+          .sidebar p,
+          .overlay p {
+              font-size: 16px !important;
+          }
+
+          /* Labels */
+          #hud label,
+          #ui label,
+          .hud label,
+          .panel label,
+          .card label,
+          .box label,
+          .menu label,
+          .status label,
+          .info label,
+          .controls label,
+          .stats label {
+              font-size: 15px !important;
+              font-weight: 700 !important;
+          }
+
+          /* Small text */
+          #hud small,
+          #ui small,
+          .hud small,
+          .panel small,
+          .card small,
+          .box small,
+          .menu small,
+          .status small,
+          .info small,
+          .controls small,
+          .stats small {
+              font-size: 14px !important;
+          }
+
+          /* Buttons */
+          button,
+          input[type="button"],
+          input[type="submit"] {
+              font-size: 16px !important;
+              font-weight: 700 !important;
+              min-height: 40px;
+          }
+
+          /* Price / action / important UI text */
+          [class*="price"],
+          [class*="Price"],
+          [id*="price"],
+          [id*="Price"],
+          [class*="action"],
+          [class*="Action"],
+          [id*="action"],
+          [id*="Action"] {
+              font-size: 17px !important;
+              font-weight: 700 !important;
+          }
+
+          /* Headings */
+          h1 {
+              font-size: clamp(24px, 4vw, 34px) !important;
+          }
+
+          h2 {
+              font-size: clamp(21px, 3vw, 28px) !important;
+          }
+
+          h3 {
+              font-size: clamp(18px, 2.5vw, 23px) !important;
+          }
+
+          /* Inputs and selects */
+          input,
+          select,
+          textarea {
+              font-size: 16px !important;
+          }
+
+          /* Mobile */
+          @media (max-width: 700px) {
+
+              #hud,
+              #ui,
+              .hud,
+              .panel,
+              .card,
+              .box,
+              .menu,
+              .status,
+              .info,
+              .controls,
+              .stats,
+              .toolbar,
+              .sidebar,
+              .overlay {
+                  font-size: 15px !important;
+              }
+
+              #hud p,
+              #ui p,
+              .hud p,
+              .panel p,
+              .card p,
+              .box p,
+              .menu p,
+              .status p,
+              .info p,
+              .controls p,
+              .stats p {
+                  font-size: 15px !important;
+              }
+
+              #hud small,
+              #ui small,
+              .hud small,
+              .panel small,
+              .card small,
+              .box small,
+              .menu small,
+              .status small,
+              .info small,
+              .controls small,
+              .stats small {
+                  font-size: 13px !important;
+              }
+
+              button,
+              input[type="button"],
+              input[type="submit"] {
+                  font-size: 15px !important;
+                  min-height: 40px;
+              }
+
+              [class*="price"],
+              [class*="Price"],
+              [id*="price"],
+              [id*="Price"],
+              [class*="action"],
+              [class*="Action"],
+              [id*="action"],
+              [id*="Action"] {
+                  font-size: 16px !important;
+              }
+          }
+
+          </style>
+          '''
+
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found in index.html")
+
+          html = html.replace("</head>", css + "\n</head>", 1)
+
+          file.write_text(html, encoding="utf-8")
+
+          print("Climboria UI text enlarged successfully.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Increase Climboria UI text size"
+          git push
