@@ -1,4 +1,4 @@
-name: Climboria Fall Reset Center V2
+name: Climboria Fall Reset Center V3
 
 on:
   workflow_dispatch: {}
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Add fall reset to center
+      - name: Fix bottom fall reset
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -23,103 +23,84 @@ jobs:
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
-          marker = 'id="climboria-fall-reset-center-v2"'
+          marker = 'id="climboria-fall-reset-center-v3"'
 
           if marker in html:
-              print("Fall Reset Center V2 already installed.")
+              print("Fall Reset Center V3 already installed.")
               raise SystemExit(0)
 
-          # Locate the existing bottom-fall condition.
-          match = re.search(
-              r'if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)\s*\{.*?\}',
-              html,
+          pattern = re.compile(
+              r'const groundY\s*=\s*\.82\s*;'
+              r'\s*'
+              r'if\s*\(\s*hero\.position\.y\s*<\s*groundY\s*\)\s*\{'
+              r'.*?'
+              r'\}'
+              r'\s*'
+              r'if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)'
+              r'\s*resetPlayer\s*\(\s*\)\s*;',
               re.DOTALL
           )
 
+          match = pattern.search(html)
+
           if not match:
               raise SystemExit(
-                  "ERROR: Bottom fall-reset block not found."
+                  "ERROR: Actual ground/fall block was not found."
               )
 
-          old_block = match.group(0)
+          replacement = """const groundY=.82;
 
-          # Keep the existing fall trigger, but reset the hero
-          # to the center starting position.
-          new_block = """if(hero.position.y<-10){
-              hero.position.x=0;
-              hero.position.y=.82;
-              velocityX=0;
-              velocityY=0;
-              grabbed=null;
-              cameraShake=.12;
-              if(typeof nextGripIndex!=="undefined"){
-                nextGripIndex=0;
-              }
-              if(running){
-                setStatus("RESET","#55ff70");
-              }
-            }"""
+          if(hero.position.y<groundY){
+            resetPlayer();
+            return;
+          }"""
 
           html = (
               html[:match.start()]
-              + new_block
+              + replacement
               + html[match.end():]
           )
 
           marker_block = """
-          <style id="climboria-fall-reset-center-v2">
-          /* Climboria Fall Reset Center V2 */
+          <style id="climboria-fall-reset-center-v3">
+          /* Climboria Fall Reset Center V3 */
           </style>
           """
 
           if "</head>" not in html:
-              raise SystemExit(
-                  "ERROR: </head> not found."
-              )
+              raise SystemExit("ERROR: </head> not found.")
 
           html = html.replace(
               "</head>",
-              marker_block + "\n</head>",
+              marker_block + "\\n</head>",
               1
           )
 
-          file.write_text(
-              html,
-              encoding="utf-8"
-          )
+          file.write_text(html, encoding="utf-8")
 
-          print("Fall Reset Center V2 installed.")
+          print("Fall Reset Center V3 installed successfully.")
           PY
 
       - name: Validate
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           html = Path("index.html").read_text(
               encoding="utf-8"
           )
 
-          if 'id="climboria-fall-reset-center-v2"' not in html:
+          if 'id="climboria-fall-reset-center-v3"' not in html:
               raise SystemExit(
-                  "VALIDATION FAILED: V2 marker missing."
+                  "VALIDATION FAILED: V3 marker missing."
               )
 
-          checks = [
-              r'hero\.position\.x\s*=\s*0',
-              r'hero\.position\.y\s*=\s*\.82',
-              r'velocityX\s*=\s*0',
-              r'velocityY\s*=\s*0'
-          ]
+          if "if(hero.position.y<groundY){\n            resetPlayer();" not in html:
+              raise SystemExit(
+                  "VALIDATION FAILED: center reset logic missing."
+              )
 
-          for pattern in checks:
-              if not re.search(pattern, html):
-                  raise SystemExit(
-                      "VALIDATION FAILED: " + pattern
-                  )
-
-          print("Fall Reset Center V2 validation passed.")
+          print("Fall Reset Center V3 validation passed.")
           PY
 
       - name: Commit changes
@@ -134,5 +115,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Reset fallen hero to center V2"
+          git commit -m "Fix bottom fall reset to center"
           git push
