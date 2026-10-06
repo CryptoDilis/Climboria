@@ -1,0 +1,396 @@
+name: Climboria Climbing V3
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  climbing-v3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Climbing V3
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          if 'id="climboria-climbing-v3"' in html:
+              print("Climbing V3 is already installed.")
+              raise SystemExit(0)
+
+          # ------------------------------------------------------------
+          # 1. CONTROL THE CORE PHYSICS
+          # ------------------------------------------------------------
+
+          replacements = {
+              r'const gravity\s*=\s*[-0-9.]+;':
+                  'const gravity=-16;',
+
+              r'const swingStrength\s*=\s*[-0-9.]+;':
+                  'const swingStrength=27;',
+
+              r'const anchorPull\s*=\s*[-0-9.]+;':
+                  'const anchorPull=9;',
+
+              r'const airDrag\s*=\s*[-0-9.]+;':
+                  'const airDrag=.985;',
+
+              r'const maxSpeed\s*=\s*[-0-9.]+;':
+                  'const maxSpeed=12;'
+          }
+
+          for pattern, replacement in replacements.items():
+              html, count = re.subn(
+                  pattern,
+                  replacement,
+                  html,
+                  count=1
+              )
+
+              if count == 0:
+                  raise SystemExit(
+                      f"ERROR: Could not find physics constant: {pattern}"
+                  )
+
+          # ------------------------------------------------------------
+          # 2. ADD GRIP PROGRESSION STATE
+          # ------------------------------------------------------------
+
+          if "let nextGripIndex=" not in html:
+
+              if "let grabbed=null;" in html:
+                  html = html.replace(
+                      "let grabbed=null;",
+                      """let grabbed=null;
+
+          // Climboria V3 progression.
+          // Only the current grip and the immediately previous
+          // grip can be used. Higher grips cannot be skipped.
+          let nextGripIndex=0;""",
+                      1
+                  )
+
+              else:
+                  raise SystemExit(
+                      "ERROR: Could not find grabbed state."
+                  )
+
+          # ------------------------------------------------------------
+          # 3. RESET PROGRESSION WHEN PLAYER RESETS
+          # ------------------------------------------------------------
+
+          if "function resetPlayer(){" not in html:
+              raise SystemExit(
+                  "ERROR: resetPlayer() not found."
+              )
+
+          html = html.replace(
+              "function resetPlayer(){",
+              """function resetPlayer(){
+
+          // Start the climb from the first grip again.
+          nextGripIndex=0;""",
+              1
+          )
+
+          # ------------------------------------------------------------
+          # 4. REPLACE startGrab()
+          # ------------------------------------------------------------
+
+          start_marker = "function startGrab(){"
+          release_marker = "function releaseGrab(){"
+
+          start_pos = html.find(start_marker)
+          release_pos = html.find(release_marker)
+
+          if start_pos == -1 or release_pos == -1:
+              raise SystemExit(
+                  "ERROR: Could not locate startGrab()/releaseGrab()."
+              )
+
+          if release_pos <= start_pos:
+              raise SystemExit(
+                  "ERROR: Invalid grab function order."
+              )
+
+          new_start_grab = r"""function startGrab(){
+
+          if(!running)
+            return;
+
+          const result=nearestGrip();
+
+          if(!result.grip){
+            setStatus("NO GRIP","#ffcc33");
+            return;
+          }
+
+          const gripIndex=result.grip.index;
+
+          /*
+           * V3 PROGRESSION RULE
+           *
+           * The player can use:
+           *   - the next required grip
+           *   - the grip immediately below it
+           *
+           * But cannot target a grip several levels above.
+           */
+          const minimumAllowed=
+            Math.max(0,nextGripIndex-1);
+
+          const maximumAllowed=
+            nextGripIndex;
+
+          if(
+            gripIndex<minimumAllowed ||
+            gripIndex>maximumAllowed
+          ){
+            setStatus("GRIP TOO HIGH","#ff8844");
+            return;
+          }
+
+          /*
+           * The mouse must be close to the grip.
+           * This keeps grabbing precise.
+           */
+          if(result.distance>1.05){
+            setStatus("AIM AT GRIP","#ffcc33");
+            return;
+          }
+
+          /*
+           * The player also needs to be physically close enough
+           * vertically. This prevents attaching to a distant
+           * grip from far below.
+           */
+          const verticalGap=
+            Math.abs(
+              hero.position.y-
+              result.grip.y
+            );
+
+          if(verticalGap>3.8){
+            setStatus("TOO FAR","#ff8844");
+            return;
+          }
+
+          grabbed=result.grip;
+
+          anchorWorld.set(
+            grabbed.x,
+            grabbed.y,
+            4
+          );
+
+          const dx=
+            hero.position.x-
+            anchorWorld.x;
+
+          const dy=
+            hero.position.y-
+            anchorWorld.y;
+
+          ropeLength=Math.max(
+            2,
+            Math.sqrt(dx*dx+dy*dy)
+          );
+
+          /*
+           * Kill only a portion of momentum.
+           * This keeps the swing feeling physical.
+           */
+          velocityX*=.35;
+          velocityY*=.35;
+
+          /*
+           * Successfully reaching the next grip advances
+           * the climb.
+           */
+          if(gripIndex===nextGripIndex){
+            nextGripIndex=
+              Math.min(
+                nextGripIndex+1,
+                grips.length-1
+              );
+          }
+
+          grabbed.group.scale.setScalar(1.18);
+
+          setStatus(
+            "GRIP "+(gripIndex+1),
+            "#55ff70"
+          );
+          }"""
+
+          html = (
+              html[:start_pos] +
+              new_start_grab +
+              "\n\n" +
+              html[release_pos:]
+          )
+
+          # ------------------------------------------------------------
+          # 5. REPLACE releaseGrab()
+          # ------------------------------------------------------------
+
+          release_marker = "function releaseGrab(){"
+
+          release_pos = html.find(release_marker)
+
+          if release_pos == -1:
+              raise SystemExit(
+                  "ERROR: releaseGrab() not found after replacement."
+              )
+
+          # Find the next function after releaseGrab().
+          next_function = re.search(
+              r'\nfunction\s+[A-Za-z0-9_]+\s*\(',
+              html[release_pos + len(release_marker):]
+          )
+
+          if not next_function:
+              raise SystemExit(
+                  "ERROR: Could not find function after releaseGrab()."
+              )
+
+          end_pos = (
+              release_pos +
+              len(release_marker) +
+              next_function.start()
+          )
+
+          new_release_grab = r"""function releaseGrab(){
+
+          if(grabbed){
+
+            grabbed.group.scale.setScalar(1);
+
+            /*
+             * V3 release:
+             * No giant launch.
+             * Momentum stays, but is controlled.
+             */
+            velocityX*=1.05;
+            velocityY*=1.05;
+
+            velocityX=
+              THREE.MathUtils.clamp(
+                velocityX,
+                -9,
+                9
+              );
+
+            velocityY=
+              THREE.MathUtils.clamp(
+                velocityY,
+                -7,
+                6
+              );
+
+            cameraShake=.05;
+          }
+
+          grabbed=null;
+
+          if(running){
+            setStatus(
+              "FREE",
+              "#55ff70"
+            );
+          }
+          }"""
+
+          html = (
+              html[:release_pos] +
+              new_release_grab +
+              "\n" +
+              html[end_pos:]
+          )
+
+          # ------------------------------------------------------------
+          # 6. V3 MARKER
+          # ------------------------------------------------------------
+
+          marker = """
+          <style id="climboria-climbing-v3">
+          /* Climboria Climbing Physics V3 */
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit(
+                  "ERROR: </head> not found."
+              )
+
+          html = html.replace(
+              "</head>",
+              marker + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("========================================")
+          print("CLIMBORIA CLIMBING V3 INSTALLED")
+          print("========================================")
+          print("Controlled swing:      ON")
+          print("Grip progression:      ON")
+          print("Grip skipping:         BLOCKED")
+          print("Long-distance grab:    BLOCKED")
+          print("Extreme launch:        REMOVED")
+          print("Maximum speed:         12")
+          print("========================================")
+          PY
+
+      - name: Validate HTML
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+
+          required = [
+              'id="climboria-climbing-v3"',
+              'let nextGripIndex=0;',
+              'const swingStrength=27;',
+              'const maxSpeed=12;',
+              'function startGrab(){',
+              'function releaseGrab(){'
+          ]
+
+          for item in required:
+              if item not in html:
+                  raise SystemExit(
+                      f"VALIDATION FAILED: {item}"
+                  )
+
+          print("Climbing V3 validation passed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Install Climboria Climbing V3"
+          git push
