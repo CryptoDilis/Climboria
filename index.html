@@ -5240,21 +5240,19 @@ function updatePhysics(dt){
 
  const groundY=.82;
 
+if(hero.position.y<groundY){
+  if(velocityY<-1){
+    resetPlayer();
+    return;
+  }
 
- if(hero.position.y<groundY){
-
-  hero.position.y=
-   groundY;
+  hero.position.y=groundY;
 
   if(velocityY<0)
-   velocityY=0;
+    velocityY=0;
 
   velocityX*=.86;
- }
-
-
- if(hero.position.y<-10)
-  resetPlayer();
+}
 }
 
 
@@ -7771,5 +7769,9 @@ if(
 
 </script>
 
-<script>/* CLIMBORIA_FALL_RESET_CENTER */</script></body>
+<script>/* CLIMBORIA_FALL_RESET_CENTER */</script>
+<script>
+/* climboria-fall-reset-real-v1 */
+</script>
+\n</body>
 </html>
