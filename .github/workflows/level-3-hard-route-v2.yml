@@ -1,0 +1,165 @@
+name: Climboria Level 3 Hard Route V2
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  level3-hard-v2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Level 3 Hard Route V2
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          marker = 'id="climboria-level-3-hard-route-v2"'
+
+          if marker in html:
+              print("Level 3 Hard Route V2 already installed.")
+              raise SystemExit(0)
+
+          # Harder Level 3 route.
+          # Bigger lateral movement, slower vertical progression,
+          # and fewer easy consecutive grips.
+          level3_route = """const positions=
+           currentLevel>=3?
+           [
+            [-4,4],
+            [3.5,7.5],
+            [-3.5,11],
+            [4.5,14.5],
+            [-1.5,18.5],
+            [-5,22],
+            [3.5,26],
+            [5.5,30],
+            [-2,34],
+            [-5,38],
+            [3.5,42],
+            [-3.5,46],
+            [5,50],
+            [0,54],
+            [-5,58],
+            [3.5,62]
+           ]:
+           [
+            [-4,4],
+            [2,6],
+            [-2,9],
+            [4,12],
+            [0,15],
+            [-4,18],
+            [2,21],
+            [5,24],
+            [0,27],
+            [-4,30],
+            [2,33],
+            [-2,36],
+            [4,39],
+            [0,42],
+            [-4,45],
+            [2,48],
+            [-2,51],
+            [4,54],
+            [0,57],
+            [-3,60]
+           ];"""
+
+          # Replace the existing Level 3 route selector.
+          pattern = re.compile(
+              r'const positions\s*=\s*'
+              r'currentLevel>=3\?'
+              r'.*?'
+              r':\s*\['
+              r'\s*\[-4,4\].*?'
+              r'\[-3,60\]'
+              r'\s*\];',
+              re.DOTALL
+          )
+
+          match = pattern.search(html)
+
+          if not match:
+              raise SystemExit(
+                  "ERROR: Existing Level 3 route selector not found."
+              )
+
+          html = (
+              html[:match.start()]
+              + level3_route
+              + html[match.end():]
+          )
+
+          marker_block = """
+          <style id="climboria-level-3-hard-route-v2">
+          /* Climboria Level 3 Hard Route V2 */
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found.")
+
+          html = html.replace(
+              "</head>",
+              marker_block + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("Level 3 Hard Route V2 installed successfully.")
+          PY
+
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          checks = [
+              'id="climboria-level-3-hard-route-v2"',
+              'currentLevel>=3?',
+              '[-5,22]',
+              '[5.5,30]',
+              '[3.5,62]'
+          ]
+
+          for item in checks:
+              if item not in html:
+                  raise SystemExit(
+                      "VALIDATION FAILED: " + item
+                  )
+
+          print("Level 3 Hard Route V2 validation passed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Make Climboria Level 3 harder"
+          git push
