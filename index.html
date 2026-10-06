@@ -1237,6 +1237,11 @@ button:active{transform:scale(.98)}
 }
 </style>
 
+
+<style id="climboria-difficulty-v1">
+/* Climboria Progressive Difficulty V1 */
+</style>
+
 </head>
 
 <body>
@@ -4442,6 +4447,108 @@ function createHammer(){
 /* =====================================================
    GRIPS
 ===================================================== */
+
+
+/*
+ * ==========================================================
+ * CLIMBORIA PROGRESSIVE DIFFICULTY ENGINE V1
+ * ==========================================================
+ */
+
+if(typeof window.climboriaLevel==="undefined"){
+  window.climboriaLevel=1;
+}
+
+function getClimbDifficulty(){
+
+  const level=Math.max(
+    1,
+    Number(window.climboriaLevel||1)
+  );
+
+  /*
+   * Level 1 = 0 difficulty
+   * Level 20+ approaches maximum difficulty.
+   */
+  const intensity=
+    THREE.MathUtils.clamp(
+      (level-1)/19,
+      0,
+      1
+    );
+
+  return {
+
+    level:level,
+
+    intensity:intensity,
+
+    /*
+     * Horizontal grip difficulty.
+     */
+    horizontalSpread:
+      THREE.MathUtils.lerp(
+        .85,
+        1.35,
+        intensity
+      ),
+
+    /*
+     * Vertical gap difficulty.
+     */
+    verticalSpacing:
+      THREE.MathUtils.lerp(
+        2.0,
+        3.25,
+        intensity
+      ),
+
+    /*
+     * Recovery probability.
+     *
+     * Early game:
+     * 100% recovery factor
+     *
+     * High levels:
+     * approaches 25%
+     */
+    recovery:
+      THREE.MathUtils.lerp(
+        1.0,
+        .25,
+        intensity
+      )
+  };
+}
+
+window.getClimbDifficulty=
+  getClimbDifficulty;
+
+function updateClimboriaDifficulty(){
+
+  const d=
+    getClimbDifficulty();
+
+  console.log(
+    "CLIMBORIA LEVEL:",
+    d.level
+  );
+
+  console.log(
+    "DIFFICULTY:",
+    Math.round(
+      d.intensity*100
+    )+"%"
+  );
+
+  console.log(
+    "RECOVERY:",
+    Math.round(
+      d.recovery*100
+    )+"%"
+  );
+}
+
 
 function createGrips(){
 
