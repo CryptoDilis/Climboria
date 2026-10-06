@@ -1,13 +1,13 @@
 name: Climboria Level 3 V1
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
 
 jobs:
-  level-3:
+  level3:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,16 +22,11 @@ jobs:
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
-          marker = 'id="climboria-level-3-v1"'
-
-          if marker in html:
+          if 'id="climboria-level-3-v1"' in html:
               print("Level 3 V1 already installed.")
               raise SystemExit(0)
 
-          # ----------------------------------------------------------
-          # ENABLE LEVEL 3
-          # ----------------------------------------------------------
-
+          # Enable Level 3.
           old = '''3:{
            name:"BITCOIN BLOCK",
            reward:200,
@@ -49,102 +44,10 @@ jobs:
                   "ERROR: Level 3 definition not found."
               )
 
-          html = html.replace(
-              old,
-              new,
-              1
-          )
+          html = html.replace(old, new, 1)
 
-          # ----------------------------------------------------------
-          # LEVEL-AWARE GRIP ROUTE
-          # ----------------------------------------------------------
-
-          old_positions = '''const positions=[
-   [-4,4],
-   [2,6],
-   [-2,9],
-   [4,12],
-   [0,15],
-   [-4,18],
-   [2,21],
-   [5,24],
-   [0,27],
-   [-4,30],
-   [2,33],
-   [-2,36],
-   [4,39],
-   [0,42],
-   [-4,45],
-   [2,48],
-   [-2,51],
-   [4,54],
-   [0,57],
-   [-3,60]
-  ];'''
-
-          new_positions = '''const positions=
-   currentLevel>=3
-   ?
-   [
-    [-4,4],
-    [3,6.5],
-    [-3,9.5],
-    [4.5,12.5],
-    [-1,16],
-    [-5,19.5],
-    [3.5,23],
-    [5.5,26],
-    [-1.5,29.5],
-    [-5,33],
-    [3.5,36.5],
-    [-3.5,40],
-    [5,43.5],
-    [0,47],
-    [-5,50.5],
-    [3.5,54],
-    [-3,57.5],
-    [4.5,61]
-   ]
-   :
-   [
-    [-4,4],
-    [2,6],
-    [-2,9],
-    [4,12],
-    [0,15],
-    [-4,18],
-    [2,21],
-    [5,24],
-    [0,27],
-    [-4,30],
-    [2,33],
-    [-2,36],
-    [4,39],
-    [0,42],
-    [-4,45],
-    [2,48],
-    [-2,51],
-    [4,54],
-    [0,57],
-    [-3,60]
-   ];'''
-
-          if old_positions not in html:
-              raise SystemExit(
-                  "ERROR: Grip positions not found."
-              )
-
-          html = html.replace(
-              old_positions,
-              new_positions,
-              1
-          )
-
-          # ----------------------------------------------------------
-          # VISIBLE LEVEL 3 MARKER
-          # ----------------------------------------------------------
-
-          marker_code = '''
+          # Add marker only.
+          marker = '''
           <style id="climboria-level-3-v1">
           /* Climboria Level 3 - Bitcoin Block */
           </style>
@@ -157,7 +60,7 @@ jobs:
 
           html = html.replace(
               "</head>",
-              marker_code + "\\n</head>",
+              marker + "\n</head>",
               1
           )
 
@@ -166,15 +69,7 @@ jobs:
               encoding="utf-8"
           )
 
-          print("====================================")
-          print("CLIMBORIA LEVEL 3 ENABLED")
-          print("====================================")
-          print("Name: Bitcoin Block")
-          print("Playable: YES")
-          print("Difficulty: HARDER")
-          print("Grip route: NEW")
-          print("Level 1-2 route: UNCHANGED")
-          print("====================================")
+          print("Level 3 enabled successfully.")
           PY
 
       - name: Validate
@@ -189,20 +84,19 @@ jobs:
           checks = [
               'id="climboria-level-3-v1"',
               'name:"BITCOIN BLOCK"',
-              'playable:true',
-              'currentLevel>=3'
+              'playable:true'
           ]
 
-          for check in checks:
-              if check not in html:
+          for item in checks:
+              if item not in html:
                   raise SystemExit(
-                      "VALIDATION FAILED: " + check
+                      "VALIDATION FAILED: " + item
                   )
 
-          print("Level 3 validation passed.")
+          print("Validation passed.")
           PY
 
-      - name: Commit
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -210,9 +104,9 @@ jobs:
           git add index.html
 
           if git diff --cached --quiet; then
-            echo "No changes."
+            echo "No changes to commit."
             exit 0
           fi
 
-          git commit -m "Enable Climboria Level 3 Bitcoin Block"
+          git commit -m "Enable Climboria Level 3"
           git push
