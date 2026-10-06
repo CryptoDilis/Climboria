@@ -1,0 +1,466 @@
+name: Climboria Climbing V4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  climbing-v4:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Climbing V4
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          if 'id="climboria-climbing-v4"' in html:
+              print("Climbing V4 is already installed.")
+              raise SystemExit(0)
+
+          # ------------------------------------------------------------
+          # 1. SLOW DOWN THE SWING
+          # ------------------------------------------------------------
+
+          replacements = {
+              r'const gravity\s*=\s*[-0-9.]+;':
+                  'const gravity=-16;',
+
+              r'const swingStrength\s*=\s*[-0-9.]+;':
+                  'const swingStrength=18;',
+
+              r'const anchorPull\s*=\s*[-0-9.]+;':
+                  'const anchorPull=7;',
+
+              r'const airDrag\s*=\s*[-0-9.]+;':
+                  'const airDrag=.982;',
+
+              r'const maxSpeed\s*=\s*[-0-9.]+;':
+                  'const maxSpeed=9;'
+          }
+
+          for pattern, replacement in replacements.items():
+              html, count = re.subn(
+                  pattern,
+                  replacement,
+                  html,
+                  count=1
+              )
+
+              if count == 0:
+                  raise SystemExit(
+                      f"ERROR: Missing physics constant: {pattern}"
+                  )
+
+          # ------------------------------------------------------------
+          # 2. ENSURE PROGRESSION VARIABLE EXISTS
+          # ------------------------------------------------------------
+
+          if "let nextGripIndex=" not in html:
+
+              if "let grabbed=null;" not in html:
+                  raise SystemExit(
+                      "ERROR: grabbed state not found."
+                  )
+
+              html = html.replace(
+                  "let grabbed=null;",
+                  """let grabbed=null;
+
+          // Climboria grip progression.
+          // The player must climb through the mountain.
+          let nextGripIndex=0;""",
+                  1
+              )
+
+          # ------------------------------------------------------------
+          # 3. RESET PROGRESSION
+          # ------------------------------------------------------------
+
+          if "function resetPlayer(){" not in html:
+              raise SystemExit(
+                  "ERROR: resetPlayer() not found."
+              )
+
+          if "nextGripIndex=0;" not in html.split(
+              "function resetPlayer(){", 1
+          )[1][:300]:
+
+              html = html.replace(
+                  "function resetPlayer(){",
+                  """function resetPlayer(){
+
+          nextGripIndex=0;""",
+                  1
+              )
+
+          # ------------------------------------------------------------
+          # 4. REPLACE startGrab()
+          # ------------------------------------------------------------
+
+          start_marker = "function startGrab(){"
+          release_marker = "function releaseGrab(){"
+
+          start_pos = html.find(start_marker)
+          release_pos = html.find(release_marker)
+
+          if start_pos == -1 or release_pos == -1:
+              raise SystemExit(
+                  "ERROR: startGrab/releaseGrab not found."
+              )
+
+          new_start = r"""function startGrab(){
+
+          if(!running)
+            return;
+
+          const result=nearestGrip();
+
+          if(!result.grip){
+            setStatus("NO GRIP","#ffcc33");
+            return;
+          }
+
+          const gripIndex=result.grip.index;
+
+          /*
+           * V4 GRIP PROGRESSION
+           *
+           * At any moment the player may grab:
+           *   - the next required grip
+           *   - the grip immediately below it
+           *
+           * A grip several positions above is rejected.
+           */
+
+          const minimumAllowed=
+            Math.max(0,nextGripIndex-1);
+
+          const maximumAllowed=
+            nextGripIndex;
+
+          if(
+            gripIndex<minimumAllowed ||
+            gripIndex>maximumAllowed
+          ){
+            setStatus(
+              "CANNOT SKIP GRIPS",
+              "#ff8844"
+            );
+            return;
+          }
+
+          /*
+           * Precise cursor requirement.
+           */
+          if(result.distance>1.0){
+            setStatus(
+              "AIM AT GRIP",
+              "#ffcc33"
+            );
+            return;
+          }
+
+          /*
+           * Physical distance requirement.
+           *
+           * This prevents attaching to a grip from far below.
+           */
+          const verticalGap=
+            Math.abs(
+              hero.position.y-
+              result.grip.y
+            );
+
+          if(verticalGap>3.8){
+            setStatus(
+              "TOO FAR",
+              "#ff8844"
+            );
+            return;
+          }
+
+          grabbed=result.grip;
+
+          anchorWorld.set(
+            grabbed.x,
+            grabbed.y,
+            4
+          );
+
+          const dx=
+            hero.position.x-
+            anchorWorld.x;
+
+          const dy=
+            hero.position.y-
+            anchorWorld.y;
+
+          ropeLength=Math.max(
+            2,
+            Math.sqrt(dx*dx+dy*dy)
+          );
+
+          /*
+           * Preserve some momentum,
+           * but remove the huge swing energy.
+           */
+          velocityX*=.28;
+          velocityY*=.28;
+
+          /*
+           * Unlock only the next grip.
+           */
+          if(gripIndex===nextGripIndex){
+
+            nextGripIndex=
+              Math.min(
+                nextGripIndex+1,
+                grips.length-1
+              );
+          }
+
+          grabbed.group.scale.setScalar(1.15);
+
+          setStatus(
+            "GRIP "+(gripIndex+1),
+            "#55ff70"
+          );
+          }"""
+
+          html = (
+              html[:start_pos] +
+              new_start +
+              "\n\n" +
+              html[release_pos:]
+          )
+
+          # ------------------------------------------------------------
+          # 5. REPLACE releaseGrab()
+          # ------------------------------------------------------------
+
+          release_pos = html.find(release_marker)
+
+          if release_pos == -1:
+              raise SystemExit(
+                  "ERROR: releaseGrab() disappeared."
+              )
+
+          after = html[release_pos + len(release_marker):]
+
+          next_function = re.search(
+              r'\nfunction\s+[A-Za-z0-9_]+\s*\(',
+              after
+          )
+
+          if not next_function:
+              raise SystemExit(
+                  "ERROR: Cannot locate function after releaseGrab."
+              )
+
+          end_pos = (
+              release_pos +
+              len(release_marker) +
+              next_function.start()
+          )
+
+          new_release = r"""function releaseGrab(){
+
+          if(grabbed){
+
+            grabbed.group.scale.setScalar(1);
+
+            /*
+             * Controlled release.
+             * No artificial launch.
+             */
+            velocityX*=1.02;
+            velocityY*=1.02;
+
+            velocityX=
+              THREE.MathUtils.clamp(
+                velocityX,
+                -7,
+                7
+              );
+
+            velocityY=
+              THREE.MathUtils.clamp(
+                velocityY,
+                -5,
+                5
+              );
+
+            cameraShake=.04;
+          }
+
+          grabbed=null;
+
+          if(running){
+            setStatus(
+              "FREE",
+              "#55ff70"
+            );
+          }
+          }"""
+
+          html = (
+              html[:release_pos] +
+              new_release +
+              "\n" +
+              html[end_pos:]
+          )
+
+          # ------------------------------------------------------------
+          # 6. ADD THE ANTI-BYPASS CEILING
+          # ------------------------------------------------------------
+
+          physics_marker = "hero.position.y+=velocityY*dt;"
+
+          if physics_marker not in html:
+              raise SystemExit(
+                  "ERROR: Physics movement line not found."
+              )
+
+          anti_bypass = r"""
+          /*
+           * ============================================================
+           * CLIMBORIA V4 ANTI-BYPASS SYSTEM
+           * ============================================================
+           *
+           * Momentum can still move the player.
+           *
+           * BUT:
+           * The player cannot physically rise several grips above
+           * the next required grip.
+           *
+           * To unlock more height, the player must actually grab
+           * the next grip.
+           */
+
+          if(
+            running &&
+            grips.length &&
+            typeof nextGripIndex==="number"
+          ){
+
+            const ceilingIndex=
+              Math.min(
+                nextGripIndex,
+                grips.length-1
+              );
+
+            const climbCeiling=
+              grips[ceilingIndex].y+1.35;
+
+            if(hero.position.y>climbCeiling){
+
+              hero.position.y=
+                climbCeiling;
+
+              /*
+               * Kill upward velocity only.
+               * Horizontal movement remains physical.
+               */
+              if(velocityY>0){
+                velocityY*=.15;
+              }
+            }
+          }
+          """
+
+          html = html.replace(
+              physics_marker,
+              physics_marker + anti_bypass,
+              1
+          )
+
+          # ------------------------------------------------------------
+          # 7. ADD V4 MARKER
+          # ------------------------------------------------------------
+
+          marker = """
+          <style id="climboria-climbing-v4">
+          /* Climboria Climbing Physics V4 */
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit(
+                  "ERROR: </head> not found."
+              )
+
+          html = html.replace(
+              "</head>",
+              marker + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("============================================")
+          print("CLIMBORIA CLIMBING V4 INSTALLED")
+          print("============================================")
+          print("Swing acceleration:     REDUCED")
+          print("Maximum speed:          9")
+          print("Release boost:          MINIMAL")
+          print("Grip progression:       ENABLED")
+          print("Grip skipping:          BLOCKED")
+          print("Height bypass:          BLOCKED")
+          print("Progression ceiling:    ENABLED")
+          print("============================================")
+          PY
+
+      - name: Validate V4
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+
+          required = [
+              'id="climboria-climbing-v4"',
+              'let nextGripIndex=0;',
+              'const swingStrength=18;',
+              'const maxSpeed=9;',
+              'CANNOT SKIP GRIPS',
+              'function startGrab(){',
+              'function releaseGrab(){',
+              'CLIMBORIA V4 ANTI-BYPASS SYSTEM'
+          ]
+
+          for item in required:
+              if item not in html:
+                  raise SystemExit(
+                      f"VALIDATION FAILED: {item}"
+                  )
+
+          print("V4 validation passed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Improve Climboria climbing and anti-bypass physics"
+          git push
