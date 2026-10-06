@@ -18,6 +18,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
@@ -26,27 +27,31 @@ jobs:
               print("Level 3 V1 already installed.")
               raise SystemExit(0)
 
-          # Enable Level 3.
-          old = '''3:{
-           name:"BITCOIN BLOCK",
-           reward:200,
-           playable:false
-          }'''
+          # Find Level 3 regardless of spacing/indentation.
+          pattern = re.compile(
+              r'(3\s*:\s*\{\s*'
+              r'name\s*:\s*"BITCOIN BLOCK"\s*,\s*'
+              r'reward\s*:\s*200\s*,\s*'
+              r'playable\s*:\s*)false',
+              re.MULTILINE
+          )
 
-          new = '''3:{
-           name:"BITCOIN BLOCK",
-           reward:200,
-           playable:true
-          }'''
+          match = pattern.search(html)
 
-          if old not in html:
+          if not match:
               raise SystemExit(
                   "ERROR: Level 3 definition not found."
               )
 
-          html = html.replace(old, new, 1)
+          replacement = match.group(1) + "true"
 
-          # Add marker only.
+          html = (
+              html[:match.start()]
+              + replacement
+              + html[match.end():]
+          )
+
+          # Add installation marker.
           marker = '''
           <style id="climboria-level-3-v1">
           /* Climboria Level 3 - Bitcoin Block */
@@ -72,28 +77,35 @@ jobs:
           print("Level 3 enabled successfully.")
           PY
 
-      - name: Validate
+      - name: Validate Level 3
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           html = Path("index.html").read_text(
               encoding="utf-8"
           )
 
-          checks = [
-              'id="climboria-level-3-v1"',
-              'name:"BITCOIN BLOCK"',
-              'playable:true'
-          ]
+          if 'id="climboria-level-3-v1"' not in html:
+              raise SystemExit(
+                  "VALIDATION FAILED: Level 3 marker missing."
+              )
 
-          for item in checks:
-              if item not in html:
-                  raise SystemExit(
-                      "VALIDATION FAILED: " + item
-                  )
+          pattern = re.compile(
+              r'3\s*:\s*\{\s*'
+              r'name\s*:\s*"BITCOIN BLOCK"\s*,\s*'
+              r'reward\s*:\s*200\s*,\s*'
+              r'playable\s*:\s*true',
+              re.MULTILINE
+          )
 
-          print("Validation passed.")
+          if not pattern.search(html):
+              raise SystemExit(
+                  "VALIDATION FAILED: Level 3 is not enabled."
+              )
+
+          print("Level 3 validation passed.")
           PY
 
       - name: Commit changes
