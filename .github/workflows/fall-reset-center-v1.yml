@@ -1,4 +1,5 @@
-name: Climboria Fall Reset Center V3
+```yaml
+name: Climboria Fall Reset Center V4
 
 on:
   workflow_dispatch: {}
@@ -14,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fix bottom fall reset
+      - name: Add center reset
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -23,47 +24,79 @@ jobs:
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
-          marker = 'id="climboria-fall-reset-center-v3"'
+          marker = 'id="climboria-fall-reset-center-v4"'
 
           if marker in html:
-              print("Fall Reset Center V3 already installed.")
+              print("V4 already installed.")
               raise SystemExit(0)
 
+          # Find the existing resetPlayer call used by the
+          # bottom-fall protection and make sure it resets
+          # to the real starting position.
           pattern = re.compile(
-              r'const groundY\s*=\s*\.82\s*;'
-              r'\s*'
-              r'if\s*\(\s*hero\.position\.y\s*<\s*groundY\s*\)\s*\{'
-              r'.*?'
-              r'\}'
-              r'\s*'
-              r'if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)'
-              r'\s*resetPlayer\s*\(\s*\)\s*;',
+              r'(if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)'
+              r'\s*(?:\{\s*)?'
+              r'resetPlayer\s*\(\s*\)\s*;?'
+              r'(?:\s*\})?)',
               re.DOTALL
           )
 
           match = pattern.search(html)
 
-          if not match:
-              raise SystemExit(
-                  "ERROR: Actual ground/fall block was not found."
+          if match:
+              old = match.group(1)
+
+              new = """if(hero.position.y<-10){
+                resetPlayer();
+              }"""
+
+              html = html[:match.start()] + new + html[match.end():]
+              print("Existing bottom reset condition updated.")
+          else:
+              # If the source clamps at groundY before reaching -10,
+              # modify that ground reset instead.
+              ground_pattern = re.compile(
+                  r'if\s*\(\s*hero\.position\.y\s*<\s*groundY\s*\)\s*\{',
+                  re.DOTALL
               )
 
-          replacement = """const groundY=.82;
+              ground_match = ground_pattern.search(html)
 
-          if(hero.position.y<groundY){
-            resetPlayer();
-            return;
-          }"""
+              if not ground_match:
+                  raise SystemExit(
+                      "ERROR: Could not locate ground reset logic."
+                  )
 
-          html = (
-              html[:match.start()]
-              + replacement
-              + html[match.end():]
-          )
+              start = ground_match.start()
+              brace = html.find("{", ground_match.start())
+
+              depth = 0
+              end = None
+
+              for i in range(brace, len(html)):
+                  if html[i] == "{":
+                      depth += 1
+                  elif html[i] == "}":
+                      depth -= 1
+                      if depth == 0:
+                          end = i + 1
+                          break
+
+              if end is None:
+                  raise SystemExit(
+                      "ERROR: Could not determine ground reset block."
+                  )
+
+              new = """if(hero.position.y<groundY){
+                resetPlayer();
+              }"""
+
+              html = html[:start] + new + html[end:]
+              print("Ground reset logic updated.")
 
           marker_block = """
-          <style id="climboria-fall-reset-center-v3">
-          /* Climboria Fall Reset Center V3 */
+          <style id="climboria-fall-reset-center-v4">
+          /* Climboria Fall Reset Center V4 */
           </style>
           """
 
@@ -77,30 +110,27 @@ jobs:
           )
 
           file.write_text(html, encoding="utf-8")
-
-          print("Fall Reset Center V3 installed successfully.")
+          print("Fall Reset Center V4 installed.")
           PY
 
       - name: Validate
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          html = Path("index.html").read_text(
-              encoding="utf-8"
-          )
+          html = Path("index.html").read_text(encoding="utf-8")
 
-          if 'id="climboria-fall-reset-center-v3"' not in html:
-              raise SystemExit(
-                  "VALIDATION FAILED: V3 marker missing."
-              )
+          if 'id="climboria-fall-reset-center-v4"' not in html:
+              raise SystemExit("VALIDATION FAILED: V4 marker missing.")
 
-          if "if(hero.position.y<groundY){\n            resetPlayer();" not in html:
-              raise SystemExit(
-                  "VALIDATION FAILED: center reset logic missing."
-              )
+          if not re.search(r'hero\.position\.y\s*<\s*groundY', html):
+              raise SystemExit("VALIDATION FAILED: ground condition missing.")
 
-          print("Fall Reset Center V3 validation passed.")
+          if not re.search(r'resetPlayer\s*\(\s*\)', html):
+              raise SystemExit("VALIDATION FAILED: resetPlayer call missing.")
+
+          print("VALIDATION PASSED.")
           PY
 
       - name: Commit changes
@@ -115,5 +145,6 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Fix bottom fall reset to center"
+          git commit -m "Fix Climboria fall reset center"
           git push
+```
