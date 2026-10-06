@@ -1,0 +1,178 @@
+name: Climboria Level 3 Hard Route V1
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  level3-hard-route:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Level 3 Hard Route
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          marker = 'id="climboria-level-3-hard-route-v1"'
+
+          if marker in html:
+              print("Level 3 Hard Route V1 already installed.")
+              raise SystemExit(0)
+
+          # Level 3 route:
+          # harder lateral movement and slightly larger gaps,
+          # while keeping the route recoverable.
+          new_route = """const positions=
+           currentLevel>=3?
+           [
+            [-4,4],
+            [2.5,6.5],
+            [-3,9.5],
+            [4.5,12.5],
+            [-1,16],
+            [-5,19.5],
+            [3.5,23],
+            [5.5,26],
+            [-1.5,29.5],
+            [-5,33],
+            [3.5,36.5],
+            [-3.5,40],
+            [5,43.5],
+            [0,47],
+            [-5,50.5],
+            [3.5,54],
+            [-3,57.5],
+            [4.5,61]
+           ]:
+           [
+            [-4,4],
+            [2,6],
+            [-2,9],
+            [4,12],
+            [0,15],
+            [-4,18],
+            [2,21],
+            [5,24],
+            [0,27],
+            [-4,30],
+            [2,33],
+            [-2,36],
+            [4,39],
+            [0,42],
+            [-4,45],
+            [2,48],
+            [-2,51],
+            [4,54],
+            [0,57],
+            [-3,60]
+           ];"""
+
+          pattern = re.compile(
+              r'const positions\s*=\s*\[\s*'
+              r'\[-4,4\]\s*,\s*'
+              r'\[2,6\]\s*,\s*'
+              r'\[-2,9\]\s*,\s*'
+              r'\[4,12\]\s*,\s*'
+              r'\[0,15\]\s*,\s*'
+              r'\[-4,18\]\s*,\s*'
+              r'\[2,21\]\s*,\s*'
+              r'\[5,24\]\s*,\s*'
+              r'\[0,27\]\s*,\s*'
+              r'\[-4,30\]\s*,\s*'
+              r'\[2,33\]\s*,\s*'
+              r'\[-2,36\]\s*,\s*'
+              r'\[4,39\]\s*,\s*'
+              r'\[0,42\]\s*,\s*'
+              r'\[-4,45\]\s*,\s*'
+              r'\[2,48\]\s*,\s*'
+              r'\[-2,51\]\s*,\s*'
+              r'\[4,54\]\s*,\s*'
+              r'\[0,57\]\s*,\s*'
+              r'\[-3,60\]\s*'
+              r'\];',
+              re.MULTILINE
+          )
+
+          match = pattern.search(html)
+
+          if not match:
+              raise SystemExit(
+                  "ERROR: Original grip route not found."
+              )
+
+          html = (
+              html[:match.start()]
+              + new_route
+              + html[match.end():]
+          )
+
+          marker_block = """
+          <style id="climboria-level-3-hard-route-v1">
+          /* Climboria Level 3 Hard Route V1 */
+          </style>
+          """
+
+          html = html.replace(
+              "</head>",
+              marker_block + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("Level 3 Hard Route V1 installed successfully.")
+          PY
+
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          checks = [
+              'id="climboria-level-3-hard-route-v1"',
+              'currentLevel>=3?',
+              '[2.5,6.5]',
+              '[-3,57.5]',
+              '[4.5,61]'
+          ]
+
+          for item in checks:
+              if item not in html:
+                  raise SystemExit(
+                      "VALIDATION FAILED: " + item
+                  )
+
+          print("Level 3 Hard Route validation passed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Add Climboria Level 3 hard route"
+          git push
