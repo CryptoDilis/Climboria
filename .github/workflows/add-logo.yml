@@ -1,0 +1,130 @@
+name: Add Climboria Logo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-logo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Add Climboria logo to game UI
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          # Prevent duplicate installation
+          if 'id="climboria-game-brand"' in html:
+              print("Climboria logo is already installed.")
+              raise SystemExit(0)
+
+          # CSS for the in-game logo
+          css = r'''
+          <style id="climboria-game-brand-style">
+          #climboria-game-brand{
+            position:fixed;
+            top:18px;
+            left:18px;
+            z-index:999999;
+            display:flex;
+            align-items:center;
+            gap:9px;
+            pointer-events:none;
+            user-select:none;
+            font-family:Arial,sans-serif;
+            font-size:13px;
+            font-weight:900;
+            letter-spacing:2px;
+            color:#fff;
+            text-shadow:0 2px 8px rgba(0,0,0,.9);
+          }
+
+          #climboria-game-brand img{
+            width:36px;
+            height:36px;
+            object-fit:contain;
+            display:block;
+            filter:drop-shadow(0 0 7px rgba(255,255,255,.35));
+          }
+
+          @media(max-width:700px){
+            #climboria-game-brand{
+              top:12px;
+              left:12px;
+              gap:6px;
+              font-size:10px;
+              letter-spacing:1.5px;
+            }
+
+            #climboria-game-brand img{
+              width:28px;
+              height:28px;
+            }
+          }
+          </style>
+          '''
+
+          # HTML for the in-game logo
+          brand = r'''
+          <div id="climboria-game-brand">
+            <img src="favicon.png" alt="Climboria">
+            <span>CLIMBORIA</span>
+          </div>
+          '''
+
+          # Insert CSS before </head>
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found in index.html")
+
+          html = html.replace(
+              "</head>",
+              css + "\n</head>",
+              1
+          )
+
+          # Insert logo immediately after <body>
+          if "<body" not in html:
+              raise SystemExit("ERROR: <body> not found in index.html")
+
+          body_start = html.find(">", html.find("<body"))
+          if body_start == -1:
+              raise SystemExit("ERROR: Could not locate opening <body> tag")
+
+          body_start += 1
+
+          html = (
+              html[:body_start]
+              + "\n"
+              + brand
+              + "\n"
+              + html[body_start:]
+          )
+
+          file.write_text(html, encoding="utf-8")
+
+          print("Climboria logo successfully added.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Add Climboria logo to game UI"
+          git push
