@@ -1,0 +1,155 @@
+name: Improve Climboria Climbing Physics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  improve-climbing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Improve climbing physics
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          if 'id="climboria-climbing-v2"' in html:
+              print("Climbing V2 is already installed.")
+              raise SystemExit(0)
+
+          # More forgiving grip detection.
+          old = """result.distance<1.2"""
+
+          if old not in html:
+              raise SystemExit("ERROR: grip distance code not found.")
+
+          html = html.replace(
+              old,
+              "result.distance<1.65",
+              1
+          )
+
+          # Improve the core physics constants.
+          replacements = {
+              "const gravity=-17;": "const gravity=-14;",
+              "const swingStrength=43;": "const swingStrength=58;",
+              "const anchorPull=10;": "const anchorPull=7;",
+              "const airDrag=.988;": "const airDrag=.992;",
+              "const maxSpeed=18;": "const maxSpeed=24;"
+          }
+
+          for old_value, new_value in replacements.items():
+              if old_value not in html:
+                  raise SystemExit(
+                      f"ERROR: Could not find: {old_value}"
+                  )
+              html = html.replace(
+                  old_value,
+                  new_value,
+                  1
+              )
+
+          # Replace release behavior with directional launch.
+          old_release = """velocityX*=1.2;
+           velocityY*=1.2;"""
+
+          new_release = """velocityX*=1.15;
+           velocityY*=1.15;
+
+           /*
+            * CLIMB V2:
+            * Releasing while aiming above the grip
+            * gives the player a controlled upward launch.
+            */
+           const launchX=
+            cursorWorld.x-
+            anchorWorld.x;
+
+           const launchY=
+            cursorWorld.y-
+            anchorWorld.y;
+
+           const launchLen=
+            Math.sqrt(
+             launchX*launchX+
+             launchY*launchY
+            );
+
+           if(launchLen>.001){
+            const lx=
+             launchX/launchLen;
+
+            const ly=
+             launchY/launchLen;
+
+            const upwardBoost=
+             Math.max(
+              0,
+              ly
+             )*7.5;
+
+            velocityX+=
+             lx*4.0;
+
+            velocityY+=
+             upwardBoost;
+           }"""
+
+          if old_release not in html:
+              raise SystemExit(
+                  "ERROR: release physics code not found."
+              )
+
+          html = html.replace(
+              old_release,
+              new_release,
+              1
+          )
+
+          # Add a marker so this exact update isn't installed twice.
+          marker = """
+          <style id="climboria-climbing-v2">
+          /* Climboria Climbing Physics V2 installed */
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found.")
+
+          html = html.replace(
+              "</head>",
+              marker + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("Climboria Climbing Physics V2 installed successfully.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Improve Climboria climbing physics"
+          git push
