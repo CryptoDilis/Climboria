@@ -1,0 +1,207 @@
+name: Improve Climboria UI Text
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  improve-ui-text:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Improve UI text readability
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          # Prevent duplicate installation
+          if 'id="climboria-readable-ui"' in html:
+              print("Readable UI improvements are already installed.")
+              raise SystemExit(0)
+
+          css = r'''
+          <style id="climboria-readable-ui">
+
+          /* =========================================
+             CLIMBORIA READABLE UI
+             Visual-only improvements.
+             Game JavaScript and physics untouched.
+             ========================================= */
+
+          /* General HUD text */
+          #hud,
+          #ui,
+          .hud,
+          .panel,
+          .card,
+          .box,
+          .menu,
+          .status,
+          .info,
+          .controls,
+          .instructions{
+            line-height:1.35;
+          }
+
+          /* Common small text elements */
+          #hud small,
+          #ui small,
+          .hud small,
+          .panel small,
+          .card small,
+          .box small,
+          .menu small,
+          .status small,
+          .info small,
+          .controls small{
+            font-size:13px !important;
+          }
+
+          /* Labels */
+          #hud label,
+          #ui label,
+          .hud label,
+          .panel label,
+          .card label,
+          .box label{
+            font-size:13px !important;
+            font-weight:700;
+          }
+
+          /* Buttons */
+          button{
+            font-size:14px;
+            line-height:1.2;
+          }
+
+          /* Make existing HUD text easier to read */
+          .hud,
+          .panel,
+          .card,
+          .box,
+          .status,
+          .info,
+          .controls{
+            text-shadow:0 1px 3px rgba(0,0,0,.75);
+          }
+
+          /* Price Action and market-related text */
+          [class*="price"],
+          [class*="Price"],
+          [id*="price"],
+          [id*="Price"],
+          [class*="action"],
+          [class*="Action"],
+          [id*="action"],
+          [id*="Action"]{
+            font-size:14px !important;
+          }
+
+          /* Headings */
+          h1{
+            font-size:clamp(20px,3vw,30px);
+          }
+
+          h2{
+            font-size:clamp(17px,2.5vw,24px);
+          }
+
+          h3{
+            font-size:clamp(15px,2vw,20px);
+          }
+
+          /* Mobile readability */
+          @media(max-width:700px){
+
+            #hud,
+            #ui,
+            .hud,
+            .panel,
+            .card,
+            .box,
+            .menu,
+            .status,
+            .info,
+            .controls{
+              font-size:13px;
+            }
+
+            #hud small,
+            #ui small,
+            .hud small,
+            .panel small,
+            .card small,
+            .box small,
+            .menu small,
+            .status small,
+            .info small,
+            .controls small{
+              font-size:12px !important;
+            }
+
+            #hud label,
+            #ui label,
+            .hud label,
+            .panel label,
+            .card label,
+            .box label{
+              font-size:12px !important;
+            }
+
+            button{
+              font-size:14px;
+              min-height:38px;
+            }
+
+            [class*="price"],
+            [class*="Price"],
+            [id*="price"],
+            [id*="Price"],
+            [class*="action"],
+            [class*="Action"],
+            [id*="action"],
+            [id*="Action"]{
+              font-size:13px !important;
+            }
+          }
+
+          </style>
+          '''
+
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found in index.html")
+
+          html = html.replace(
+              "</head>",
+              css + "\n</head>",
+              1
+          )
+
+          file.write_text(html, encoding="utf-8")
+
+          print("Climboria UI readability improvements installed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Improve Climboria UI text readability"
+          git push
