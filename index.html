@@ -1247,6 +1247,11 @@ button:active{transform:scale(.98)}
 /* Climboria Level 3 - Bitcoin Block */
 </style>
 
+
+<style id="climboria-level-3-hard-route-v1">
+/* Climboria Level 3 Hard Route V1 */
+</style>
+
 </head>
 
 <body>
@@ -4557,7 +4562,29 @@ function updateClimboriaDifficulty(){
 
 function createGrips(){
 
- const positions=[
+ const positions=
+ currentLevel>=3?
+ [
+  [-4,4],
+  [2.5,6.5],
+  [-3,9.5],
+  [4.5,12.5],
+  [-1,16],
+  [-5,19.5],
+  [3.5,23],
+  [5.5,26],
+  [-1.5,29.5],
+  [-5,33],
+  [3.5,36.5],
+  [-3.5,40],
+  [5,43.5],
+  [0,47],
+  [-5,50.5],
+  [3.5,54],
+  [-3,57.5],
+  [4.5,61]
+ ]:
+ [
   [-4,4],
   [2,6],
   [-2,9],
