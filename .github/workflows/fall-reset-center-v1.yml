@@ -1,0 +1,130 @@
+name: Climboria Fall Reset Center V1
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fall-reset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Add fall reset to center
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          marker = 'id="climboria-fall-reset-center-v1"'
+
+          if marker in html:
+              print("Fall Reset Center V1 already installed.")
+              raise SystemExit(0)
+
+          # Find the existing bottom-fall reset.
+          old = 'if(hero.position.y<-10)'
+
+          if old not in html:
+              raise SystemExit(
+                  "ERROR: Existing fall reset condition not found."
+              )
+
+          # Replace only the fall reset behavior.
+          new = '''if(hero.position.y<-10){
+              hero.position.x=0;
+              hero.position.y=.82;
+
+              velocityX=0;
+              velocityY=0;
+
+              grabbed=null;
+              ropeLength=0;
+
+              if(typeof nextGripIndex!=="undefined"){
+                nextGripIndex=0;
+              }
+
+              cameraShake=.12;
+
+              if(running){
+                setStatus("RESET","#55ff70");
+              }
+            }'''
+
+          html = html.replace(old + '\n      resetPlayer();', new, 1)
+
+          marker_block = """
+          <style id="climboria-fall-reset-center-v1">
+          /* Climboria Fall Reset Center V1 */
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit(
+                  "ERROR: </head> not found."
+              )
+
+          html = html.replace(
+              "</head>",
+              marker_block + "\n</head>",
+              1
+          )
+
+          file.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print(
+              "Fall Reset Center V1 installed successfully."
+          )
+          PY
+
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          checks = [
+              'id="climboria-fall-reset-center-v1"',
+              'hero.position.x=0;',
+              'hero.position.y=.82;',
+              'velocityX=0;',
+              'velocityY=0;'
+          ]
+
+          for item in checks:
+              if item not in html:
+                  raise SystemExit(
+                      "VALIDATION FAILED: " + item
+                  )
+
+          print("Fall reset validation passed.")
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Reset fallen hero to center"
+          git push
