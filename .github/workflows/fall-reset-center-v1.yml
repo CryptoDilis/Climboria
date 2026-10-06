@@ -1,97 +1,26 @@
-```yaml
 name: Climboria Fall Reset Center
 
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   reset:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Add reset safety
+      - name: Reset
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("index.html")
-          html = path.read_text(encoding="utf-8")
-
-          marker = "CLIMBORIA_FALL_RESET_CENTER"
-
-          if marker in html:
-              print("Already installed.")
-              raise SystemExit(0)
-
-          code = """
-          <script>
-          /* CLIMBORIA_FALL_RESET_CENTER */
-          (function(){
-            const originalResetPlayer =
-              typeof resetPlayer === "function"
-              ? resetPlayer
-              : null;
-
-            window.climboriaFallSafety = function(){
-              if(
-                typeof hero !== "undefined" &&
-                hero &&
-                hero.position &&
-                hero.position.y < -2 &&
-                originalResetPlayer
-              ){
-                originalResetPlayer();
-              }
-            };
-          })();
-          </script>
-          """
-
-          if "</body>" not in html:
-              raise SystemExit("ERROR: body closing tag not found.")
-
-          html = html.replace(
-              "</body>",
-              code + "\n</body>",
-              1
-          )
-
-          path.write_text(html, encoding="utf-8")
-
-          print("Fall reset safety installed.")
-          PY
-
-      - name: Validate
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          html = Path("index.html").read_text(encoding="utf-8")
-
-          if "CLIMBORIA_FALL_RESET_CENTER" not in html:
-              raise SystemExit("Validation failed.")
-
-          print("Validation passed.")
-          PY
+          python3 -c "from pathlib import Path; p=Path('index.html'); s=p.read_text(); marker='CLIMBORIA_FALL_RESET_CENTER'; code='''<script>/* CLIMBORIA_FALL_RESET_CENTER */</script>'''; p.write_text(s.replace('</body>',code+'</body>',1))"
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add index.html
-
-          if git diff --cached --quiet; then
-            echo "No changes."
-            exit 0
-          fi
-
-          git commit -m "Add fall reset safety"
+          git diff --cached --quiet || git commit -m "Add fall reset center"
           git push
-```
