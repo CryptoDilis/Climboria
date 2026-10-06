@@ -1193,9 +1193,60 @@ button:active{transform:scale(.98)}
  }
 }
 </style>
+
+<style id="climboria-game-brand-style">
+#climboria-game-brand{
+  position:fixed;
+  top:18px;
+  left:18px;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  pointer-events:none;
+  user-select:none;
+  font-family:Arial,sans-serif;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+
+#climboria-game-brand img{
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.35));
+}
+
+@media(max-width:700px){
+  #climboria-game-brand{
+    top:12px;
+    left:12px;
+    gap:6px;
+    font-size:10px;
+    letter-spacing:1.5px;
+  }
+
+  #climboria-game-brand img{
+    width:28px;
+    height:28px;
+  }
+}
+</style>
+
 </head>
 
 <body>
+
+<div id="climboria-game-brand">
+  <img src="favicon.png" alt="Climboria">
+  <span>CLIMBORIA</span>
+</div>
+
+
 
 <!-- =========================
      LANDING
