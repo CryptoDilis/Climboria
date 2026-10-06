@@ -1,4 +1,4 @@
-name: Climboria Fall Reset Center V1
+name: Climboria Fall Reset Center V2
 
 on:
   workflow_dispatch: {}
@@ -23,47 +23,52 @@ jobs:
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
-          marker = 'id="climboria-fall-reset-center-v1"'
+          marker = 'id="climboria-fall-reset-center-v2"'
 
           if marker in html:
-              print("Fall Reset Center V1 already installed.")
+              print("Fall Reset Center V2 already installed.")
               raise SystemExit(0)
 
-          # Find the existing bottom-fall reset.
-          old = 'if(hero.position.y<-10)'
+          # Locate the existing bottom-fall condition.
+          match = re.search(
+              r'if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)\s*\{.*?\}',
+              html,
+              re.DOTALL
+          )
 
-          if old not in html:
+          if not match:
               raise SystemExit(
-                  "ERROR: Existing fall reset condition not found."
+                  "ERROR: Bottom fall-reset block not found."
               )
 
-          # Replace only the fall reset behavior.
-          new = '''if(hero.position.y<-10){
+          old_block = match.group(0)
+
+          # Keep the existing fall trigger, but reset the hero
+          # to the center starting position.
+          new_block = """if(hero.position.y<-10){
               hero.position.x=0;
               hero.position.y=.82;
-
               velocityX=0;
               velocityY=0;
-
               grabbed=null;
-              ropeLength=0;
-
+              cameraShake=.12;
               if(typeof nextGripIndex!=="undefined"){
                 nextGripIndex=0;
               }
-
-              cameraShake=.12;
-
               if(running){
                 setStatus("RESET","#55ff70");
               }
-            }'''
+            }"""
 
-          html = html.replace(old + '\n      resetPlayer();', new, 1)
+          html = (
+              html[:match.start()]
+              + new_block
+              + html[match.end():]
+          )
 
           marker_block = """
-          <style id="climboria-fall-reset-center-v1">
-          /* Climboria Fall Reset Center V1 */
+          <style id="climboria-fall-reset-center-v2">
+          /* Climboria Fall Reset Center V2 */
           </style>
           """
 
@@ -83,35 +88,38 @@ jobs:
               encoding="utf-8"
           )
 
-          print(
-              "Fall Reset Center V1 installed successfully."
-          )
+          print("Fall Reset Center V2 installed.")
           PY
 
       - name: Validate
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           html = Path("index.html").read_text(
               encoding="utf-8"
           )
 
+          if 'id="climboria-fall-reset-center-v2"' not in html:
+              raise SystemExit(
+                  "VALIDATION FAILED: V2 marker missing."
+              )
+
           checks = [
-              'id="climboria-fall-reset-center-v1"',
-              'hero.position.x=0;',
-              'hero.position.y=.82;',
-              'velocityX=0;',
-              'velocityY=0;'
+              r'hero\.position\.x\s*=\s*0',
+              r'hero\.position\.y\s*=\s*\.82',
+              r'velocityX\s*=\s*0',
+              r'velocityY\s*=\s*0'
           ]
 
-          for item in checks:
-              if item not in html:
+          for pattern in checks:
+              if not re.search(pattern, html):
                   raise SystemExit(
-                      "VALIDATION FAILED: " + item
+                      "VALIDATION FAILED: " + pattern
                   )
 
-          print("Fall reset validation passed.")
+          print("Fall Reset Center V2 validation passed.")
           PY
 
       - name: Commit changes
@@ -126,5 +134,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Reset fallen hero to center"
+          git commit -m "Reset fallen hero to center V2"
           git push
