@@ -1,26 +1,160 @@
 name: Climboria Fall Reset Center
 
-on:
+"on":
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   reset:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Reset
+      - name: Fix fall reset
         run: |
-          python3 -c "from pathlib import Path; p=Path('index.html'); s=p.read_text(); marker='CLIMBORIA_FALL_RESET_CENTER'; code='''<script>/* CLIMBORIA_FALL_RESET_CENTER */</script>'''; p.write_text(s.replace('</body>',code+'</body>',1))"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+
+          marker = "climboria-fall-reset-real-v1"
+
+          if marker in html:
+              print("Fall reset is already installed.")
+              raise SystemExit(0)
+
+          pattern = re.compile(
+              r'const groundY\s*=\s*\.82\s*;'
+              r'\s*'
+              r'if\s*\(\s*hero\.position\.y\s*<\s*groundY\s*\)\s*\{'
+              r'.*?'
+              r'\}',
+              re.DOTALL
+          )
+
+          match = pattern.search(html)
+
+          if not match:
+              raise SystemExit(
+                  "ERROR: Current ground physics block was not found."
+              )
+
+          old_block = match.group(0)
+
+          new_block = """const groundY=.82;
+
+          if(hero.position.y<groundY){
+            if(velocityY<-1){
+              resetPlayer();
+              return;
+            }
+
+            hero.position.y=groundY;
+
+            if(velocityY<0)
+              velocityY=0;
+
+            velocityX*=.86;
+          }"""
+
+          html = (
+              html[:match.start()]
+              + new_block
+              + html[match.end():]
+          )
+
+          # Remove the old unreachable reset check if present.
+          html = re.sub(
+              r'\s*if\s*\(\s*hero\.position\.y\s*<\s*-10\s*\)'
+              r'\s*resetPlayer\s*\(\s*\)\s*;?',
+              '',
+              html
+          )
+
+          marker_block = """
+          <script>
+          /* climboria-fall-reset-real-v1 */
+          </script>
+          """
+
+          if "</body>" not in html:
+              raise SystemExit(
+                  "ERROR: </body> not found."
+              )
+
+          html = html.replace(
+              "</body>",
+              marker_block + "\\n</body>",
+              1
+          )
+
+          path.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print("REAL FALL RESET INSTALLED.")
+          PY
+
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          if "climboria-fall-reset-real-v1" not in html:
+              raise SystemExit(
+                  "VALIDATION FAILED: marker missing."
+              )
+
+          if not re.search(
+              r'hero\.position\.y\s*<\s*groundY',
+              html
+          ):
+              raise SystemExit(
+                  "VALIDATION FAILED: ground logic missing."
+              )
+
+          if not re.search(
+              r'velocityY\s*<\s*-1',
+              html
+          ):
+              raise SystemExit(
+                  "VALIDATION FAILED: fall detection missing."
+              )
+
+          if not re.search(
+              r'resetPlayer\s*\(\s*\)',
+              html
+          ):
+              raise SystemExit(
+                  "VALIDATION FAILED: resetPlayer missing."
+              )
+
+          print("VALIDATION PASSED.")
+          PY
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add index.html
-          git diff --cached --quiet || git commit -m "Add fall reset center"
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git commit -m "Fix real fall reset to center"
           git push
