@@ -7,71 +7,55 @@ permissions:
   contents: write
 
 jobs:
-  difficulty-v1:
+  difficulty:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Level Difficulty Engine
+      - name: Install difficulty engine
         run: |
-          python3 <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-          import re
 
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
           if 'id="climboria-difficulty-v1"' in html:
-              print("Level Difficulty V1 already installed.")
+              print("Difficulty V1 already installed.")
               raise SystemExit(0)
 
-          # ------------------------------------------------------------
-          # ADD DIFFICULTY ENGINE
-          # ------------------------------------------------------------
+          target = "function createGrips(){"
 
-          marker = "function createGrips(){"
-
-          if marker not in html:
+          if target not in html:
               raise SystemExit(
                   "ERROR: createGrips() not found."
               )
 
-          difficulty_code = r"""
+          difficulty = r"""
           /*
-           * ============================================================
-           * CLIMBORIA LEVEL DIFFICULTY ENGINE V1
-           * ============================================================
-           *
-           * Difficulty increases with level.
-           *
-           * Early levels:
-           *   - forgiving
-           *   - wider grip windows
-           *   - predictable climbing
-           *
-           * Later levels:
-           *   - wider vertical gaps
-           *   - stronger horizontal variation
-           *   - fewer comfortable recovery positions
-           *
-           * The system is intentionally gradual.
+           * ==========================================================
+           * CLIMBORIA PROGRESSIVE DIFFICULTY ENGINE V1
+           * ==========================================================
            */
+
+          if(typeof window.climboriaLevel==="undefined"){
+            window.climboriaLevel=1;
+          }
 
           function getClimbDifficulty(){
 
-            const level=
-              Math.max(
-                1,
-                Number(window.climboriaLevel||1)
-              );
+            const level=Math.max(
+              1,
+              Number(window.climboriaLevel||1)
+            );
 
             /*
-             * 0 at Level 1
-             * approaches 1 at high levels
+             * Level 1 = 0 difficulty
+             * Level 20+ approaches maximum difficulty.
              */
-            const t=
+            const intensity=
               THREE.MathUtils.clamp(
                 (level-1)/19,
                 0,
@@ -79,228 +63,87 @@ jobs:
               );
 
             return {
+
               level:level,
 
-              /*
-               * Overall difficulty.
-               */
-              intensity:t,
+              intensity:intensity,
 
               /*
-               * Horizontal movement becomes less predictable.
+               * Horizontal grip difficulty.
                */
               horizontalSpread:
                 THREE.MathUtils.lerp(
                   .85,
                   1.35,
-                  t
+                  intensity
                 ),
 
               /*
-               * Vertical spacing increases gradually.
+               * Vertical gap difficulty.
                */
               verticalSpacing:
                 THREE.MathUtils.lerp(
                   2.0,
                   3.25,
-                  t
+                  intensity
                 ),
 
               /*
-               * Recovery becomes less forgiving.
+               * Recovery probability.
+               *
+               * Early game:
+               * 100% recovery factor
+               *
+               * High levels:
+               * approaches 25%
                */
               recovery:
                 THREE.MathUtils.lerp(
                   1.0,
                   .25,
-                  t
+                  intensity
                 )
             };
           }
 
-          /*
-           * Make level state available globally.
-           */
-          if(typeof window.climboriaLevel==="undefined"){
-            window.climboriaLevel=1;
-          }
-
           window.getClimbDifficulty=
             getClimbDifficulty;
-          """
 
-          html = html.replace(
-              marker,
-              difficulty_code + "\n\n" + marker,
-              1
-          )
-
-          # ------------------------------------------------------------
-          # DIFFICULTY STATUS DISPLAY
-          # ------------------------------------------------------------
-
-          status_code = r"""
-          /*
-           * Update difficulty information whenever the climb starts.
-           */
           function updateClimboriaDifficulty(){
 
             const d=
               getClimbDifficulty();
 
             console.log(
-              "Climboria Difficulty:",
-              "Level",d.level,
-              "Intensity",d.intensity.toFixed(2),
-              "Recovery",Math.round(d.recovery*100)+"%"
+              "CLIMBORIA LEVEL:",
+              d.level
+            );
+
+            console.log(
+              "DIFFICULTY:",
+              Math.round(
+                d.intensity*100
+              )+"%"
+            );
+
+            console.log(
+              "RECOVERY:",
+              Math.round(
+                d.recovery*100
+              )+"%"
             );
           }
           """
 
-          # Add before createGrips.
           html = html.replace(
-              marker,
-              status_code + "\n\n" + marker,
+              target,
+              difficulty + "\n\n" + target,
               1
           )
 
-          # ------------------------------------------------------------
-          # DIFFICULTY-AWARE GRIP POSITIONING
-          # ------------------------------------------------------------
-
-          old_positions = """const positions=[
-   [-4,4],
-   [2,6],
-   [-2,9],
-   [4,12],
-   [0,15],
-   [-4,18],
-   [2,21],
-   [5,24],
-   [0,27],
-   [-4,30],
-   [2,33],
-   [-2,36],
-   [4,39],
-   [0,42],
-   [-4,45],
-   [2,48],
-   [-2,51],
-   [4,54],
-   [0,57],
-   [-3,60]
-  ];"""
-
-          if old_positions not in html:
-              raise SystemExit(
-                  "ERROR: Original grip positions not found."
-              )
-
-          new_positions = r"""const d=getClimbDifficulty();
-
-  const basePositions=[
-   [-4,4],
-   [2,6],
-   [-2,9],
-   [4,12],
-   [0,15],
-   [-4,18],
-   [2,21],
-   [5,24],
-   [0,27],
-   [-4,30],
-   [2,33],
-   [-2,36],
-   [4,39],
-   [0,42],
-   [-4,45],
-   [2,48],
-   [-2,51],
-   [4,54],
-   [0,57],
-   [-3,60]
-  ];
-
-  const positions=
-    basePositions.map(
-      ([x,y],i)=>{
-
-        /*
-         * Preserve the original route at low levels.
-         * Increase horizontal pressure gradually.
-         */
-        const direction=
-          i%2===0 ? -1 : 1;
-
-        const extra=
-          d.intensity*
-          direction*
-          (i%3===0 ? .65 : .35);
-
-        /*
-         * Vertical spacing grows with difficulty,
-         * but never becomes unreasonable.
-         */
-        const scaledY=
-          y+
-          d.intensity*
-          (i*.065);
-
-        return [
-          THREE.MathUtils.clamp(
-            x+extra,
-            -6,
-            6
-          ),
-          scaledY
-        ];
-      }
-    );"""
-
-          html = html.replace(
-              old_positions,
-              new_positions,
-              1
-          )
-
-          # ------------------------------------------------------------
-          # RUN DIFFICULTY UPDATE WHEN LEVEL STARTS
-          # ------------------------------------------------------------
-
-          # Look for common level-start functions.
-          level_functions = [
-              "function startGame(){",
-              "function startLevel(){",
-              "function beginLevel(){"
-          ]
-
-          inserted = False
-
-          for fn in level_functions:
-              if fn in html:
-                  html = html.replace(
-                      fn,
-                      fn + "\n\n  updateClimboriaDifficulty();",
-                      1
-                  )
-                  inserted = True
-                  break
-
-          if not inserted:
-              print(
-                  "WARNING: No standard level-start function found."
-              )
-              print(
-                  "Difficulty engine will still be available."
-              )
-
-          # ------------------------------------------------------------
-          # ADD V1 MARKER
-          # ------------------------------------------------------------
-
-          style_marker = """
+          marker = """
           <style id="climboria-difficulty-v1">
-          /* Climboria Progressive Level Difficulty V1 */
+          /* Climboria Progressive Difficulty V1 */
           </style>
           """
 
@@ -311,7 +154,7 @@ jobs:
 
           html = html.replace(
               "</head>",
-              style_marker + "\n</head>",
+              marker + "\n</head>",
               1
           )
 
@@ -320,23 +163,18 @@ jobs:
               encoding="utf-8"
           )
 
-          print("============================================")
-          print("CLIMBORIA LEVEL DIFFICULTY V1 INSTALLED")
-          print("============================================")
-          print("Level 1-2:  Forgiving")
-          print("Level 3-5:  Moderate")
-          print("Level 6-10: Technical")
-          print("Level 11+:   Brutal")
-          print("Recovery:   scales toward 25%")
-          print("============================================")
+          print("Climboria Difficulty V1 installed.")
+
           PY
 
       - name: Validate
         run: |
-          python3 <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
 
-          html = Path("index.html").read_text(encoding="utf-8")
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
 
           required = [
               'id="climboria-difficulty-v1"',
@@ -350,10 +188,11 @@ jobs:
           for item in required:
               if item not in html:
                   raise SystemExit(
-                      f"VALIDATION FAILED: {item}"
+                      "VALIDATION FAILED: " + item
                   )
 
-          print("Difficulty V1 validation passed.")
+          print("VALIDATION PASSED.")
+
           PY
 
       - name: Commit changes
@@ -368,5 +207,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Add Climboria progressive level difficulty"
+          git commit -m "Add Climboria progressive difficulty engine"
           git push
