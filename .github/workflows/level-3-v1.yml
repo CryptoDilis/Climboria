@@ -1,4 +1,4 @@
-name: Climboria Level 3 V1
+name: Climboria Level 3 Hard Route V1
 
 on:
   workflow_dispatch: {}
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Enable Level 3
+      - name: Install Level 3 Hard Route
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -23,16 +23,83 @@ jobs:
           file = Path("index.html")
           html = file.read_text(encoding="utf-8")
 
-          if 'id="climboria-level-3-v1"' in html:
-              print("Level 3 V1 already installed.")
+          marker = 'id="climboria-level-3-hard-route-v1"'
+
+          if marker in html:
+              print("Level 3 Hard Route V1 already installed.")
               raise SystemExit(0)
 
-          # Find Level 3 regardless of spacing/indentation.
+          # Level 3 technical route.
+          # Designed to be harder than Levels 1-2 without
+          # creating impossible jumps.
+          new_positions = """const positions=
+           currentLevel>=3?
+           [
+            [-4,4],
+            [2.5,6.5],
+            [-3,9.5],
+            [4.5,12.5],
+            [-1,16],
+            [-5,19.5],
+            [3.5,23],
+            [5.5,26],
+            [-1.5,29.5],
+            [-5,33],
+            [3.5,36.5],
+            [-3.5,40],
+            [5,43.5],
+            [0,47],
+            [-5,50.5],
+            [3.5,54],
+            [-3,57.5],
+            [4.5,61]
+           ]:
+           [
+            [-4,4],
+            [2,6],
+            [-2,9],
+            [4,12],
+            [0,15],
+            [-4,18],
+            [2,21],
+            [5,24],
+            [0,27],
+            [-4,30],
+            [2,33],
+            [-2,36],
+            [4,39],
+            [0,42],
+            [-4,45],
+            [2,48],
+            [-2,51],
+            [4,54],
+            [0,57],
+            [-3,60]
+           ];"""
+
           pattern = re.compile(
-              r'(3\s*:\s*\{\s*'
-              r'name\s*:\s*"BITCOIN BLOCK"\s*,\s*'
-              r'reward\s*:\s*200\s*,\s*'
-              r'playable\s*:\s*)false',
+              r'const positions\s*=\s*\[\s*'
+              r'\[-4,4\]\s*,\s*'
+              r'\[2,6\]\s*,\s*'
+              r'\[-2,9\]\s*,\s*'
+              r'\[4,12\]\s*,\s*'
+              r'\[0,15\]\s*,\s*'
+              r'\[-4,18\]\s*,\s*'
+              r'\[2,21\]\s*,\s*'
+              r'\[5,24\]\s*,\s*'
+              r'\[0,27\]\s*,\s*'
+              r'\[-4,30\]\s*,\s*'
+              r'\[2,33\]\s*,\s*'
+              r'\[-2,36\]\s*,\s*'
+              r'\[4,39\]\s*,\s*'
+              r'\[0,42\]\s*,\s*'
+              r'\[-4,45\]\s*,\s*'
+              r'\[2,48\]\s*,\s*'
+              r'\[-2,51\]\s*,\s*'
+              r'\[4,54\]\s*,\s*'
+              r'\[0,57\]\s*,\s*'
+              r'\[-3,60\]\s*'
+              r'\];',
               re.MULTILINE
           )
 
@@ -40,23 +107,20 @@ jobs:
 
           if not match:
               raise SystemExit(
-                  "ERROR: Level 3 definition not found."
+                  "ERROR: Original grip route not found."
               )
-
-          replacement = match.group(1) + "true"
 
           html = (
               html[:match.start()]
-              + replacement
+              + new_positions
               + html[match.end():]
           )
 
-          # Add installation marker.
-          marker = '''
-          <style id="climboria-level-3-v1">
-          /* Climboria Level 3 - Bitcoin Block */
+          marker_block = """
+          <style id="climboria-level-3-hard-route-v1">
+          /* Climboria Level 3 Hard Route V1 */
           </style>
-          '''
+          """
 
           if "</head>" not in html:
               raise SystemExit(
@@ -65,7 +129,7 @@ jobs:
 
           html = html.replace(
               "</head>",
-              marker + "\n</head>",
+              marker_block + "\n</head>",
               1
           )
 
@@ -74,38 +138,33 @@ jobs:
               encoding="utf-8"
           )
 
-          print("Level 3 enabled successfully.")
+          print("Level 3 Hard Route V1 installed successfully.")
           PY
 
-      - name: Validate Level 3
+      - name: Validate Level 3 Hard Route
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           html = Path("index.html").read_text(
               encoding="utf-8"
           )
 
-          if 'id="climboria-level-3-v1"' not in html:
-              raise SystemExit(
-                  "VALIDATION FAILED: Level 3 marker missing."
-              )
+          checks = [
+              'id="climboria-level-3-hard-route-v1"',
+              'currentLevel>=3?',
+              '[2.5,6.5]',
+              '[-3,57.5]',
+              '[4.5,61]'
+          ]
 
-          pattern = re.compile(
-              r'3\s*:\s*\{\s*'
-              r'name\s*:\s*"BITCOIN BLOCK"\s*,\s*'
-              r'reward\s*:\s*200\s*,\s*'
-              r'playable\s*:\s*true',
-              re.MULTILINE
-          )
+          for item in checks:
+              if item not in html:
+                  raise SystemExit(
+                      "VALIDATION FAILED: " + item
+                  )
 
-          if not pattern.search(html):
-              raise SystemExit(
-                  "VALIDATION FAILED: Level 3 is not enabled."
-              )
-
-          print("Level 3 validation passed.")
+          print("Level 3 Hard Route validation passed.")
           PY
 
       - name: Commit changes
@@ -120,5 +179,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Enable Climboria Level 3"
+          git commit -m "Add Climboria Level 3 hard route"
           git push
