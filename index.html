@@ -1257,6 +1257,154 @@ button:active{transform:scale(.98)}
 /* Climboria Level 3 Hard Route V2 */
 </style>
 
+
+<style id="climboria-readable-ui">
+
+/* =========================================
+   CLIMBORIA READABLE UI
+   Visual-only improvements.
+   Game JavaScript and physics untouched.
+   ========================================= */
+
+/* General HUD text */
+#hud,
+#ui,
+.hud,
+.panel,
+.card,
+.box,
+.menu,
+.status,
+.info,
+.controls,
+.instructions{
+  line-height:1.35;
+}
+
+/* Common small text elements */
+#hud small,
+#ui small,
+.hud small,
+.panel small,
+.card small,
+.box small,
+.menu small,
+.status small,
+.info small,
+.controls small{
+  font-size:13px !important;
+}
+
+/* Labels */
+#hud label,
+#ui label,
+.hud label,
+.panel label,
+.card label,
+.box label{
+  font-size:13px !important;
+  font-weight:700;
+}
+
+/* Buttons */
+button{
+  font-size:14px;
+  line-height:1.2;
+}
+
+/* Make existing HUD text easier to read */
+.hud,
+.panel,
+.card,
+.box,
+.status,
+.info,
+.controls{
+  text-shadow:0 1px 3px rgba(0,0,0,.75);
+}
+
+/* Price Action and market-related text */
+[class*="price"],
+[class*="Price"],
+[id*="price"],
+[id*="Price"],
+[class*="action"],
+[class*="Action"],
+[id*="action"],
+[id*="Action"]{
+  font-size:14px !important;
+}
+
+/* Headings */
+h1{
+  font-size:clamp(20px,3vw,30px);
+}
+
+h2{
+  font-size:clamp(17px,2.5vw,24px);
+}
+
+h3{
+  font-size:clamp(15px,2vw,20px);
+}
+
+/* Mobile readability */
+@media(max-width:700px){
+
+  #hud,
+  #ui,
+  .hud,
+  .panel,
+  .card,
+  .box,
+  .menu,
+  .status,
+  .info,
+  .controls{
+    font-size:13px;
+  }
+
+  #hud small,
+  #ui small,
+  .hud small,
+  .panel small,
+  .card small,
+  .box small,
+  .menu small,
+  .status small,
+  .info small,
+  .controls small{
+    font-size:12px !important;
+  }
+
+  #hud label,
+  #ui label,
+  .hud label,
+  .panel label,
+  .card label,
+  .box label{
+    font-size:12px !important;
+  }
+
+  button{
+    font-size:14px;
+    min-height:38px;
+  }
+
+  [class*="price"],
+  [class*="Price"],
+  [id*="price"],
+  [id*="Price"],
+  [class*="action"],
+  [class*="Action"],
+  [id*="action"],
+  [id*="Action"]{
+    font-size:13px !important;
+  }
+}
+
+</style>
+
 </head>
 
 <body>
