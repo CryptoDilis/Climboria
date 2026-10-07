@@ -1,0 +1,453 @@
+```yaml
+name: Climboria Graphics Upgrade V1
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  graphics-upgrade:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upgrade Climboria graphics
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          file = Path("index.html")
+          html = file.read_text(encoding="utf-8")
+
+          marker = "climboria-graphics-v1"
+
+          if marker in html:
+              print("Graphics V1 is already installed.")
+              raise SystemExit(0)
+
+          # -------------------------------------------------
+          # 1. Add atmospheric graphics CSS
+          # -------------------------------------------------
+
+          graphics_css = r"""
+          <style id="climboria-graphics-v1">
+          /* CLIMBORIA GRAPHICS V1 */
+
+          canvas{
+            filter:saturate(1.08) contrast(1.04);
+          }
+
+          body{
+            background:
+              radial-gradient(
+                ellipse at 50% 20%,
+                #172b35 0%,
+                #09131a 42%,
+                #03070b 100%
+              );
+          }
+
+          #hud{
+            text-shadow:0 1px 5px rgba(0,0,0,.8);
+          }
+          </style>
+          """
+
+          if "</head>" not in html:
+              raise SystemExit("ERROR: </head> not found.")
+
+          html = html.replace(
+              "</head>",
+              graphics_css + "\n</head>",
+              1
+          )
+
+          # -------------------------------------------------
+          # 2. Add advanced visual layer function
+          # -------------------------------------------------
+
+          visual_function = r"""
+          /* =====================================================
+             CLIMBORIA GRAPHICS V1
+          ===================================================== */
+
+          function createGraphicsUpgrade(){
+
+            /*
+             * Mountain atmospheric side lights
+             */
+            const leftLight =
+              new THREE.PointLight(
+                0x183b48,
+                2.2,
+                24
+              );
+
+            leftLight.position.set(
+              -10,
+              30,
+              7
+            );
+
+            scene.add(leftLight);
+
+
+            const rightLight =
+              new THREE.PointLight(
+                0x29404a,
+                1.7,
+                22
+              );
+
+            rightLight.position.set(
+              10,
+              42,
+              6
+            );
+
+            scene.add(rightLight);
+
+
+            /*
+             * Subtle mountain ridge highlights
+             */
+            const ridgeMaterial =
+              new THREE.MeshStandardMaterial({
+                color:0x697376,
+                roughness:1,
+                metalness:0
+              });
+
+            const ridgePositions = [
+              [-8.8,10],
+              [8.4,14],
+              [-8.2,19],
+              [8.7,25],
+              [-8.4,31],
+              [8.8,38],
+              [-8.5,45],
+              [8.3,52]
+            ];
+
+            ridgePositions.forEach(
+              p=>{
+
+                const ridge =
+                  new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                      2.2,
+                      .12,
+                      .22
+                    ),
+                    ridgeMaterial
+                  );
+
+                ridge.position.set(
+                  p[0],
+                  p[1],
+                  -5.35
+                );
+
+                ridge.rotation.z =
+                  p[0] < 0 ? -.12 : .12;
+
+                scene.add(ridge);
+              }
+            );
+
+
+            /*
+             * Atmospheric mountain mist.
+             * Transparent planes create depth without
+             * affecting gameplay or physics.
+             */
+            const mistMaterial =
+              new THREE.MeshBasicMaterial({
+                color:0x6f858d,
+                transparent:true,
+                opacity:.035,
+                depthWrite:false
+              });
+
+            for(let i=0;i<7;i++){
+
+              const mist =
+                new THREE.Mesh(
+                  new THREE.PlaneGeometry(
+                    34,
+                    3.5
+                  ),
+                  mistMaterial.clone()
+                );
+
+                mist.position.set(
+                  0,
+                  7+i*8,
+                  -4.8
+                );
+
+                mist.rotation.z =
+                  (i%2 ? .025 : -.025);
+
+                scene.add(mist);
+            }
+
+
+            /*
+             * Mountain snow / mineral highlights.
+             */
+            const highlightMaterial =
+              new THREE.MeshBasicMaterial({
+                color:0x9ba8aa,
+                transparent:true,
+                opacity:.18
+              });
+
+            const highlights = [
+              [-4.8,7,.9,.08],
+              [5.2,11,1.2,.09],
+              [-4.2,17,1.4,.07],
+              [4.7,23,1.1,.08],
+              [-5.1,29,1.5,.07],
+              [5.3,36,1.3,.08],
+              [-4.8,43,1.6,.07],
+              [4.5,50,1.4,.08]
+            ];
+
+            highlights.forEach(
+              h=>{
+
+                const line =
+                  new THREE.Mesh(
+                    new THREE.BoxGeometry(
+                      h[2],
+                      h[3],
+                      .035
+                    ),
+                    highlightMaterial
+                  );
+
+                line.position.set(
+                  h[0],
+                  h[1],
+                  -5.38
+                );
+
+                line.rotation.z =
+                  h[0] < 0 ? .08 : -.08;
+
+                scene.add(line);
+              }
+            );
+
+
+            /*
+             * Floating dust particles.
+             */
+            const dustMaterial =
+              new THREE.MeshBasicMaterial({
+                color:0x8da3a8,
+                transparent:true,
+                opacity:.22,
+                depthWrite:false
+              });
+
+            for(let i=0;i<45;i++){
+
+              const dust =
+                new THREE.Mesh(
+                  new THREE.SphereGeometry(
+                    .018+
+                    Math.random()*.035,
+                    6,
+                    6
+                  ),
+                  dustMaterial.clone()
+                );
+
+                dust.position.set(
+                  (Math.random()-.5)*20,
+                  Math.random()*65,
+                  Math.random()*3
+                );
+
+                dust.userData={
+                  baseX:dust.position.x,
+                  phase:Math.random()*Math.PI*2,
+                  speed:.15+
+                    Math.random()*.25
+                };
+
+                scene.add(dust);
+
+                dustParticles.push(dust);
+            }
+
+
+            /*
+             * Hero rim light.
+             */
+            if(hero){
+
+              const heroLight =
+                new THREE.PointLight(
+                  0xffcc77,
+                  1.2,
+                  5
+                );
+
+              heroLight.position.set(
+                0,
+                2,
+                4
+              );
+
+              hero.add(heroLight);
+            }
+
+
+            /*
+             * Hammer glow.
+             */
+            if(hammer){
+
+              const hammerLight =
+                new THREE.PointLight(
+                  0xffcc33,
+                  1.4,
+                  4
+                );
+
+              hammerLight.position.set(
+                0,
+                0,
+                1
+              );
+
+              hammer.add(hammerLight);
+            }
+
+          }
+
+          function updateGraphicsUpgrade(time){
+
+            if(
+              typeof dustParticles !==
+              "undefined"
+            ){
+
+              dustParticles.forEach(
+                p=>{
+
+                  p.position.x =
+                    p.userData.baseX +
+                    Math.sin(
+                      time*
+                      p.userData.speed +
+                      p.userData.phase
+                    )*.35;
+
+                  p.position.y +=
+                    Math.sin(
+                      time*
+                      .15 +
+                      p.userData.phase
+                    )*.001;
+                }
+              );
+            }
+
+          }
+
+          """
+
+          # -------------------------------------------------
+          # 3. Add particle storage variable
+          # -------------------------------------------------
+
+          variable_block = r"""
+          const dustParticles = [];
+          """
+
+          anchor = "function createSky(){"
+
+          if anchor not in html:
+              raise SystemExit(
+                "ERROR: createSky anchor not found."
+              )
+
+          html = html.replace(
+              anchor,
+              variable_block + "\n" +
+              visual_function +
+              "\n" + anchor,
+              1
+          )
+
+          # -------------------------------------------------
+          # 4. Call graphics upgrade after scene creation
+          # -------------------------------------------------
+
+          init_anchor = """
+          createSummitParticles();
+          """
+
+          if init_anchor not in html:
+              raise SystemExit(
+                "ERROR: createSummitParticles call not found."
+              )
+
+          html = html.replace(
+              init_anchor,
+              init_anchor +
+              "\n  createGraphicsUpgrade();",
+              1
+          )
+
+          # -------------------------------------------------
+          # 5. Update visual particles every frame
+          # -------------------------------------------------
+
+          animate_anchor = "function animate(){"
+
+          if animate_anchor not in html:
+              raise SystemExit(
+                "ERROR: animate function not found."
+              )
+
+          html = html.replace(
+              animate_anchor,
+              animate_anchor +
+              "\n\n  updateGraphicsUpgrade(performance.now()*.001);",
+              1
+          )
+
+          file.write_text(
+            html,
+            encoding="utf-8"
+          )
+
+          print(
+            "Climboria Graphics V1 installed successfully."
+          )
+          PY
+
+      - name: Commit graphics upgrade
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Upgrade Climboria graphics"
+          git push
+```
