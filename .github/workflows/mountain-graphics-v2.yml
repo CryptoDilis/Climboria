@@ -2,7 +2,7 @@
 name: Climboria Mountain Graphics V2
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,461 +12,164 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install mountain graphics V2
+      - name: Upgrade mountain graphics
         run: |
           python3 <<'PY'
           from pathlib import Path
 
-          file = Path("index.html")
-          html = file.read_text(encoding="utf-8")
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
 
-          marker = "climboria-mountain-graphics-v2"
+          marker = "CLIMBORIA_MOUNTAIN_GRAPHICS_V2"
 
           if marker in html:
-              print("Mountain Graphics V2 is already installed.")
+              print("Already installed.")
               raise SystemExit(0)
 
-          function = r'''
-          /* =====================================================
-             CLIMBORIA MOUNTAIN GRAPHICS V2
-             Visual only - does not change gameplay physics.
-          ===================================================== */
+          code = r'''
+          /* CLIMBORIA_MOUNTAIN_GRAPHICS_V2 */
 
-          function createMountainGraphicsV2(){
+          const mountainVisualGroup = new THREE.Group();
 
-            const rockDark =
+          function addMountainFace(points, color, z) {
+            const geometry = new THREE.BufferGeometry();
+
+            const vertices = new Float32Array([
+              points[0][0], points[0][1], z,
+              points[1][0], points[1][1], z,
+              points[2][0], points[2][1], z
+            ]);
+
+            geometry.setAttribute(
+              "position",
+              new THREE.BufferAttribute(vertices, 3)
+            );
+
+            geometry.computeVertexNormals();
+
+            const material =
               new THREE.MeshStandardMaterial({
-                color:0x252d31,
-                roughness:1,
-                metalness:0
+                color: color,
+                roughness: 1,
+                metalness: 0
               });
 
-            const rockMid =
-              new THREE.MeshStandardMaterial({
-                color:0x3d474b,
-                roughness:1,
-                metalness:0
-              });
-
-            const rockLight =
-              new THREE.MeshStandardMaterial({
-                color:0x596367,
-                roughness:1,
-                metalness:0
-              });
-
-            /*
-             * Helper for large triangular mountain faces.
-             */
-            function mountainFace(
-              points,
-              material,
-              z
-            ){
-
-              const geometry =
-                new THREE.BufferGeometry();
-
-              const vertices =
-                new Float32Array([
-                  points[0][0],
-                  points[0][1],
-                  z,
-
-                  points[1][0],
-                  points[1][1],
-                  z,
-
-                  points[2][0],
-                  points[2][1],
-                  z
-                ]);
-
-              geometry.setAttribute(
-                "position",
-                new THREE.BufferAttribute(
-                  vertices,
-                  3
-                )
+            const mesh =
+              new THREE.Mesh(
+                geometry,
+                material
               );
 
-              geometry.computeVertexNormals();
-
-              const mesh =
-                new THREE.Mesh(
-                  geometry,
-                  material
-                );
-
-              scene.add(mesh);
-
-              return mesh;
-            }
-
-
-            /*
-             * Main mountain silhouette.
-             *
-             * These sit behind the existing handholds
-             * and ledges, so gameplay positions remain intact.
-             */
-
-            mountainFace(
-              [
-                [-10,0],
-                [0,64],
-                [-1,64]
-              ],
-              rockDark,
-              -3.55
-            );
-
-            mountainFace(
-              [
-                [-10,0],
-                [-1,64],
-                [-3,0]
-              ],
-              rockMid,
-              -3.52
-            );
-
-            mountainFace(
-              [
-                [10,0],
-                [0,64],
-                [1,64]
-              ],
-              rockDark,
-              -3.55
-            );
-
-            mountainFace(
-              [
-                [10,0],
-                [1,64],
-                [3,0]
-              ],
-              rockMid,
-              -3.52
-            );
-
-
-            /*
-             * Central rock face.
-             */
-            mountainFace(
-              [
-                [-3,0],
-                [0,64],
-                [3,0]
-              ],
-              rockLight,
-              -3.48
-            );
-
-
-            /*
-             * Deep central shadow creates a strong
-             * mountain valley effect.
-             */
-            mountainFace(
-              [
-                [-1.1,2],
-                [0,62],
-                [0,2]
-              ],
-              rockDark,
-              -3.40
-            );
-
-
-            /*
-             * Opposite central face.
-             */
-            mountainFace(
-              [
-                [0,2],
-                [0,62],
-                [1.1,2]
-              ],
-              rockMid,
-              -3.39
-            );
-
-
-            /*
-             * Large diagonal rock plates.
-             */
-            const plates = [
-              [-6.5,8,3.8,.18,-.18],
-              [5.8,13,4.2,.20,.17],
-              [-6.0,21,4.5,.16,-.16],
-              [5.7,29,4.8,.18,.15],
-              [-5.8,37,4.4,.16,-.14],
-              [5.5,45,4.6,.17,.14],
-              [-4.5,53,3.8,.15,-.12]
-            ];
-
-            plates.forEach(
-              p=>{
-
-                const plate =
-                  new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                      p[2],
-                      p[3],
-                      .10
-                    ),
-                    rockDark
-                  );
-
-                plate.position.set(
-                  p[0],
-                  p[1],
-                  -3.30
-                );
-
-                plate.rotation.z=p[4];
-
-                scene.add(plate);
-              }
-            );
-
-
-            /*
-             * Subtle mineral/snow edge highlights.
-             */
-            const edgeMaterial =
-              new THREE.MeshBasicMaterial({
-                color:0x9ca7a9,
-                transparent:true,
-                opacity:.22
-              });
-
-            const edges = [
-              [-5.8,11,3.0,.045,-.20],
-              [5.2,17,3.2,.045,.19],
-              [-5.0,26,3.5,.045,-.18],
-              [4.8,34,3.6,.045,.17],
-              [-4.7,43,3.4,.045,-.16],
-              [4.1,50,3.0,.045,.15],
-              [-2.8,57,2.3,.045,-.12]
-            ];
-
-            edges.forEach(
-              p=>{
-
-                const edge =
-                  new THREE.Mesh(
-                    new THREE.BoxGeometry(
-                      p[2],
-                      p[3],
-                      .04
-                    ),
-                    edgeMaterial
-                  );
-
-                edge.position.set(
-                  p[0],
-                  p[1],
-                  -3.27
-                );
-
-                edge.rotation.z=p[4];
-
-                scene.add(edge);
-              }
-            );
-
-
-            /*
-             * Small rock chunks across the mountain.
-             */
-            const chunkMaterials=[
-              rockDark,
-              rockMid,
-              rockLight
-            ];
-
-            const chunks=[
-              [-7.5,6,.45],
-              [7.3,10,.55],
-              [-7.0,15,.35],
-              [7.1,20,.50],
-              [-7.4,28,.60],
-              [7.0,33,.42],
-              [-6.8,40,.52],
-              [6.8,47,.58],
-              [-5.7,54,.40],
-              [5.5,57,.45]
-            ];
-
-            chunks.forEach(
-              (p,i)=>{
-
-                const chunk =
-                  new THREE.Mesh(
-                    new THREE.DodecahedronGeometry(
-                      p[2],
-                      0
-                    ),
-                    chunkMaterials[
-                      i%chunkMaterials.length
-                    ]
-                  );
-
-                chunk.position.set(
-                  p[0],
-                  p[1],
-                  -3.05
-                );
-
-                chunk.rotation.set(
-                  i*.7,
-                  i*.43,
-                  i*.31
-                );
-
-                scene.add(chunk);
-              }
-            );
-
-
-            /*
-             * Mountain atmosphere.
-             */
-            const mistMaterial =
-              new THREE.MeshBasicMaterial({
-                color:0x8b999d,
-                transparent:true,
-                opacity:.035,
-                depthWrite:false
-              });
-
-            for(let i=0;i<8;i++){
-
-              const mist =
-                new THREE.Mesh(
-                  new THREE.PlaneGeometry(
-                    25,
-                    2.8
-                  ),
-                  mistMaterial.clone()
-                );
-
-                mist.position.set(
-                  0,
-                  6+i*7,
-                  -3.0
-                );
-
-                mist.rotation.z =
-                  i%2 ? .025 : -.025;
-
-                scene.add(mist);
-              }
-            }
-
-
-            /*
-             * Peak glow.
-             */
-            const peakGlow =
-              new THREE.PointLight(
-                0x667b80,
-                1.2,
-                24
-              );
-
-            peakGlow.position.set(
-              0,
-              57,
-              2
-            );
-
-            scene.add(peakGlow);
+            mountainVisualGroup.add(mesh);
           }
 
-          '''
+          addMountainFace(
+            [[-9,0],[0,62],[-2,0]],
+            0x252c30,
+            -3.2
+          );
 
-          anchor = "function createMountain(){"
+          addMountainFace(
+            [[-2,0],[0,62],[2,0]],
+            0x4b5559,
+            -3.1
+          );
+
+          addMountainFace(
+            [[2,0],[0,62],[9,0]],
+            0x252c30,
+            -3.2
+          );
+
+          const mountainEdgeMaterial =
+            new THREE.MeshBasicMaterial({
+              color: 0x9ba6a8,
+              transparent: true,
+              opacity: 0.22
+            });
+
+          const mountainEdges = [
+            [-5.5,10,3.0,-0.16],
+            [5.0,17,3.4,0.15],
+            [-5.0,25,3.8,-0.14],
+            [4.8,34,3.6,0.13],
+            [-4.2,43,3.4,-0.12],
+            [3.8,51,3.0,0.11]
+          ];
+
+          mountainEdges.forEach(function(p) {
+
+            const edge =
+              new THREE.Mesh(
+                new THREE.BoxGeometry(
+                  p[2],
+                  0.055,
+                  0.04
+                ),
+                mountainEdgeMaterial
+              );
+
+            edge.position.set(
+              p[0],
+              p[1],
+              -2.95
+            );
+
+            edge.rotation.z = p[3];
+
+            mountainVisualGroup.add(edge);
+          });
+
+          scene.add(mountainVisualGroup);
+
+          const mountainLight =
+            new THREE.PointLight(
+              0x789097,
+              1.3,
+              28
+            );
+
+          mountainLight.position.set(
+            0,
+            42,
+            4
+          );
+
+          scene.add(mountainLight);
+
+          '''
+          
+          anchor = "</script>"
 
           if anchor not in html:
               raise SystemExit(
-                "ERROR: createMountain anchor not found."
+                  "ERROR: script closing tag not found."
               )
 
           html = html.replace(
-            anchor,
-            function + "\n" + anchor,
-            1
+              anchor,
+              code + "\n" + anchor,
+              1
           )
 
-
-          /*
-           * Call the new visual layer immediately
-           * after the existing mountain details.
-           */
-
-          call_anchor = "createMountainDetails();"
-
-          if call_anchor not in html:
-              raise SystemExit(
-                "ERROR: createMountainDetails call not found."
-              )
-
-          html = html.replace(
-            call_anchor,
-            call_anchor +
-            "\n  createMountainGraphicsV2();",
-            1
-          )
-
-
-          marker_block = r'''
-          <style id="climboria-mountain-graphics-v2">
-          /* Climboria Mountain Graphics V2 installed */
-          </style>
-          '''
-
-          if "</head>" not in html:
-              raise SystemExit(
-                "ERROR: </head> not found."
-              )
-
-          html = html.replace(
-            "</head>",
-            marker_block + "\n</head>",
-            1
-          )
-
-
-          file.write_text(
-            html,
-            encoding="utf-8"
+          path.write_text(
+              html,
+              encoding="utf-8"
           )
 
           print(
-            "Climboria Mountain Graphics V2 installed successfully."
+              "Mountain Graphics V2 installed."
           )
           PY
 
-      - name: Commit changes
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add index.html
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-
-          git commit -m "Upgrade mountain graphics V2"
+          git diff --cached --quiet || git commit -m "Improve mountain graphics"
           git push
 ```
