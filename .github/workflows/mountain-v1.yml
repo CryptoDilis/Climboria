@@ -1,0 +1,243 @@
+```yaml
+name: Climboria Mountain V1
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mountain:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upgrade mountain visuals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+
+          marker = "climboria-mountain-v1"
+
+          if marker in html:
+              print("Mountain V1 already installed.")
+              raise SystemExit(0)
+
+          start_token = "  const cliff="
+          end_token = "  scene.add(cliff);"
+
+          start = html.find(start_token)
+
+          if start == -1:
+              raise SystemExit("ERROR: Existing cliff definition not found.")
+
+          end = html.find(end_token, start)
+
+          if end == -1:
+              raise SystemExit("ERROR: Existing cliff end not found.")
+
+          end += len(end_token)
+
+          new_mountain = r'''
+          /* climboria-mountain-v1 */
+
+          const mountainShape = new THREE.Shape();
+
+          mountainShape.moveTo(-18,0);
+          mountainShape.lineTo(-15,18);
+          mountainShape.lineTo(-11,34);
+          mountainShape.lineTo(-7,49);
+          mountainShape.lineTo(-3,63);
+          mountainShape.lineTo(0,70);
+          mountainShape.lineTo(3,63);
+          mountainShape.lineTo(7,49);
+          mountainShape.lineTo(11,34);
+          mountainShape.lineTo(15,18);
+          mountainShape.lineTo(18,0);
+          mountainShape.lineTo(-18,0);
+
+          const mountainGeometry =
+            new THREE.ExtrudeGeometry(
+              mountainShape,
+              {
+                depth:4,
+                bevelEnabled:true,
+                bevelSegments:2,
+                bevelSize:.35,
+                bevelThickness:.35
+              }
+            );
+
+          const mountainMaterial =
+            new THREE.MeshStandardMaterial({
+              color:0x303a3e,
+              roughness:1,
+              metalness:.05
+            });
+
+          const mountain =
+            new THREE.Mesh(
+              mountainGeometry,
+              mountainMaterial
+            );
+
+          mountain.position.set(
+            0,
+            0,
+            -7
+          );
+
+          scene.add(mountain);
+
+
+          /* Mountain face layers */
+
+          const ridgeMaterial =
+            new THREE.MeshStandardMaterial({
+              color:0x424d51,
+              roughness:1
+            });
+
+          const ridgeShape =
+            new THREE.Shape();
+
+          ridgeShape.moveTo(-12,0);
+          ridgeShape.lineTo(-8,24);
+          ridgeShape.lineTo(-3,48);
+          ridgeShape.lineTo(0,66);
+          ridgeShape.lineTo(3,48);
+          ridgeShape.lineTo(8,24);
+          ridgeShape.lineTo(12,0);
+          ridgeShape.lineTo(-12,0);
+
+          const ridgeGeometry =
+            new THREE.ExtrudeGeometry(
+              ridgeShape,
+              {
+                depth:.35,
+                bevelEnabled:false
+              }
+            );
+
+          const ridge =
+            new THREE.Mesh(
+              ridgeGeometry,
+              ridgeMaterial
+            );
+
+          ridge.position.set(
+            0,
+            0,
+            -2.82
+          );
+
+          scene.add(ridge);
+
+
+          /* Rocky triangular facets */
+
+          const facetMaterial =
+            new THREE.MeshStandardMaterial({
+              color:0x515b5e,
+              roughness:1,
+              flatShading:true
+            });
+
+          const facets = [
+            [-11,10,5,15],
+            [7,14,4,18],
+            [-8,27,5,17],
+            [5,31,4,19],
+            [-5,44,4,16],
+            [3,48,4,14],
+            [-2,58,3,10],
+            [2,59,3,9]
+          ];
+
+          facets.forEach(v=>{
+            const geo =
+              new THREE.ConeGeometry(
+                v[2],
+                v[3],
+                3
+              );
+
+            const rock =
+              new THREE.Mesh(
+                geo,
+                facetMaterial
+              );
+
+            rock.position.set(
+              v[0],
+              v[1],
+              -2.45
+            );
+
+            rock.rotation.y=
+              Math.PI/2;
+
+            scene.add(rock);
+          });
+          '''
+
+          html = (
+            html[:start]
+            + new_mountain
+            + html[end:]
+          )
+
+          path.write_text(
+            html,
+            encoding="utf-8"
+          )
+
+          print("Mountain V1 installed.")
+          PY
+
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          checks = [
+              "climboria-mountain-v1",
+              "mountainShape",
+              "ExtrudeGeometry",
+              "mountainMaterial"
+          ]
+
+          for check in checks:
+              if check not in html:
+                  raise SystemExit(
+                      "VALIDATION FAILED: " + check
+                  )
+
+          print("Mountain V1 validation passed.")
+          PY
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git commit -m "Upgrade Climboria mountain visuals"
+          git push
+```
