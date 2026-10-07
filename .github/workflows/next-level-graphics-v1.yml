@@ -1,0 +1,842 @@
+name: Climboria Next Level + Graphics V1
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update Climboria
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path("index.html")
+          text = path.read_text(encoding="utf-8")
+
+          # ============================================================
+          # 1. VICTORY SCREEN - ADD NEXT LEVEL BUTTON
+          # ============================================================
+
+          old_victory = '''   <button id="climbAgainButton" type="button">
+    CLIMB AGAIN
+   </button>
+
+   <br><br>
+
+   <button id="levelSelectVictoryButton" type="button">
+    LEVEL SELECT
+   </button>
+
+   <br><br>
+
+   <button id="menuButtonVictory" type="button">
+    MENU
+   </button>'''
+
+          new_victory = '''   <div class="victoryActions">
+
+    <button id="nextLevelButton" type="button">
+     NEXT LEVEL
+    </button>
+
+    <button id="climbAgainButton" type="button">
+     REPLAY LEVEL
+    </button>
+
+    <button id="levelSelectVictoryButton" type="button">
+     LEVEL SELECT
+    </button>
+
+    <button id="menuButtonVictory" type="button">
+     HOME
+    </button>
+
+   </div>'''
+
+          if old_victory not in text:
+              raise SystemExit(
+                  "ERROR: Victory button block was not found. "
+                  "No changes were made."
+              )
+
+          text = text.replace(
+              old_victory,
+              new_victory,
+              1
+          )
+
+          # ============================================================
+          # 2. VICTORY CSS
+          # ============================================================
+
+          css_anchor = ''' .unlockMessage{
+  color:#ffcc33;
+  font-size:9px;
+  letter-spacing:1px;
+  font-weight:bold;
+  margin-top:8px;
+ }'''
+
+          css_add = '''
+
+ /* =========================
+    VICTORY ACTIONS
+ ========================= */
+
+ .victoryActions{
+  width:min(360px,92%);
+  display:grid;
+  grid-template-columns:1fr;
+  gap:9px;
+  margin-top:4px;
+ }
+
+ .victoryActions button{
+  width:100%;
+ }
+
+ #nextLevelButton{
+  background:#55ff7020;
+  box-shadow:
+   0 0 18px #55ff7018,
+   inset 0 0 14px #55ff7008;
+ }
+
+ #nextLevelButton:hover{
+  background:#55ff7030;
+ }
+
+ #nextLevelButton:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+  box-shadow:none;
+ }
+
+ #nextLevelButton:disabled:hover{
+  background:#55ff7012;
+ }'''
+
+          if css_anchor not in text:
+              raise SystemExit(
+                  "ERROR: Victory CSS anchor was not found. "
+                  "No changes were made."
+              )
+
+          text = text.replace(
+              css_anchor,
+              css_anchor + css_add,
+              1
+          )
+
+          # ============================================================
+          # 3. EARLY BUTTON BINDING
+          # ============================================================
+
+          binding_anchor = '''  const climbAgainButton=
+   document.getElementById("climbAgainButton");'''
+
+          binding_add = '''  const nextLevelButton=
+   document.getElementById("nextLevelButton");
+
+  if(nextLevelButton){
+   nextLevelButton.addEventListener(
+    "click",
+    function(){
+
+     if(
+      typeof window.nextLevel==="function"
+     ){
+
+      window.nextLevel();
+
+     }
+
+    }
+   );
+  }
+
+
+'''
+
+          if binding_anchor not in text:
+              raise SystemExit(
+                  "ERROR: Victory button binding anchor was not found."
+              )
+
+          text = text.replace(
+              binding_anchor,
+              binding_add + binding_anchor,
+              1
+          )
+
+          # ============================================================
+          # 4. MOUNTAIN GRAPHICS
+          # ============================================================
+
+          mountain_start = text.find(
+              "function createMountain(){"
+          )
+
+          mountain_end = text.find(
+              "/* =====================================================\n"
+              "    MOUNTAIN DETAILS",
+              mountain_start
+          )
+
+          if mountain_start == -1 or mountain_end == -1:
+              raise SystemExit(
+                  "ERROR: createMountain() boundaries were not found."
+              )
+
+          new_mountain = r'''function createMountain(){
+
+  /*
+   * CLIMBORIA MOUNTAIN GRAPHICS V1
+   *
+   * Replaces the old rectangular cliff with a
+   * faceted mountain silhouette while keeping
+   * the gameplay path completely clear.
+   */
+
+  const mountainGroup=
+   new THREE.Group();
+
+  mountainGroup.position.set(
+   0,
+   0,
+   -7
+  );
+
+  scene.add(
+   mountainGroup
+  );
+
+
+  /* =================================================
+     MAIN MOUNTAIN BODY
+  ================================================= */
+
+  const mountainGeometry=
+   new THREE.ConeGeometry(
+    12.5,
+    68,
+    9,
+    7
+   );
+
+  const mountainMaterial=
+   new THREE.MeshStandardMaterial({
+    color:0x3d474b,
+    roughness:.96,
+    metalness:.02,
+    flatShading:true
+   });
+
+  const mountain=
+   new THREE.Mesh(
+    mountainGeometry,
+    mountainMaterial
+   );
+
+  mountain.position.set(
+   0,
+   34,
+   0
+  );
+
+  mountain.rotation.y=
+   Math.PI*.055;
+
+  mountainGroup.add(
+   mountain
+  );
+
+
+  /* =================================================
+     DARKER BACK ROCK MASS
+  ================================================= */
+
+  const backGeometry=
+   new THREE.ConeGeometry(
+    14.5,
+    70,
+    8,
+    5
+   );
+
+  const backMaterial=
+   new THREE.MeshStandardMaterial({
+    color:0x202a2e,
+    roughness:1,
+    flatShading:true
+   });
+
+  const backMountain=
+   new THREE.Mesh(
+    backGeometry,
+    backMaterial
+   );
+
+  backMountain.position.set(
+   0,
+   34,
+   -2.7
+  );
+
+  backMountain.rotation.y=
+   -.12;
+
+  mountainGroup.add(
+   backMountain
+  );
+
+
+  /* =================================================
+     ROCK FACETS
+  ================================================= */
+
+  const facetMaterialA=
+   new THREE.MeshStandardMaterial({
+    color:0x566166,
+    roughness:1,
+    flatShading:true
+   });
+
+  const facetMaterialB=
+   new THREE.MeshStandardMaterial({
+    color:0x303a3f,
+    roughness:1,
+    flatShading:true
+   });
+
+  const facets=[
+   [-8.5,9,2.5,7, .18],
+   [ 8.2,13,2.8,8,-.22],
+   [-7.2,19,2.3,6,-.12],
+   [ 7.5,24,2.6,8, .20],
+   [-8.0,30,2.5,7, .15],
+   [ 7.0,35,2.8,9,-.18],
+   [-6.8,41,2.2,7,-.16],
+   [ 6.4,47,2.4,8, .18],
+   [-5.8,53,2.1,7, .12],
+   [ 5.2,58,2.0,6,-.14]
+  ];
+
+  facets.forEach(
+   (v,index)=>{
+
+    const rock=
+     new THREE.Mesh(
+      new THREE.DodecahedronGeometry(
+       1,
+       1
+      ),
+      index%2===0?
+       facetMaterialA:
+       facetMaterialB
+     );
+
+    rock.position.set(
+     v[0],
+     v[1],
+     -.8
+    );
+
+    rock.scale.set(
+     v[2],
+     v[3],
+     1.1
+    );
+
+    rock.rotation.set(
+     0,
+     v[4],
+     .08
+    );
+
+    mountainGroup.add(
+     rock
+    );
+
+   }
+  );
+
+
+  /* =================================================
+     LEDGES / ROCK SHELVES
+  ================================================= */
+
+  const ledges=[
+   [-8,5,2.0,1.0],
+   [ 7,8,2.4,1.1],
+   [-6,12,2.2,1.0],
+   [ 6,16,2.5,1.1],
+   [-8,21,2.4,1.0],
+   [ 7,25,2.7,1.1],
+   [-6,30,2.5,1.0],
+   [ 8,35,3.0,1.2],
+   [-7,40,2.7,1.0],
+   [ 6,45,2.8,1.1],
+   [-5,51,2.5,1.0],
+   [ 7,57,2.6,1.0]
+  ];
+
+  ledges.forEach(
+   (v,index)=>{
+
+    const shelf=
+     new THREE.Mesh(
+      new THREE.BoxGeometry(
+       v[2],
+       v[3],
+       4.5
+      ),
+      new THREE.MeshStandardMaterial({
+       color:
+        index%2===0?
+        0x596367:
+        0x485256,
+       roughness:1,
+       flatShading:true
+      })
+     );
+
+    shelf.position.set(
+     v[0],
+     v[1],
+     -2.0
+    );
+
+    shelf.rotation.z=
+     index%2===0?
+     -.06:
+     .06;
+
+    mountainGroup.add(
+     shelf
+    );
+
+   }
+  );
+
+
+  /* =================================================
+     SUMMIT PLATFORM
+  ================================================= */
+
+  const summit=
+   new THREE.Mesh(
+    new THREE.CylinderGeometry(
+     5.7,
+     8.0,
+     5.5,
+     8,
+     2
+    ),
+    new THREE.MeshStandardMaterial({
+     color:0x687276,
+     roughness:.95,
+     flatShading:true
+    })
+   );
+
+  summit.position.set(
+   0,
+   61.0,
+   -.5
+  );
+
+  summit.rotation.y=
+   Math.PI/8;
+
+  mountainGroup.add(
+   summit
+  );
+
+
+  /* =================================================
+     SUMMIT ROCK SPIRES
+  ================================================= */
+
+  [
+   [-3.8,62.5,.9,2.2],
+   [ 3.5,62.2,1.1,2.5],
+   [-1.8,63.3,.75,1.8],
+   [ 1.8,63.5,.9,2.4]
+  ].forEach(
+   v=>{
+
+    const r=
+     new THREE.Mesh(
+      new THREE.DodecahedronGeometry(
+       v[2],
+       1
+      ),
+      new THREE.MeshStandardMaterial({
+       color:0x4c565a,
+       roughness:1,
+       flatShading:true
+      })
+     );
+
+    r.position.set(
+     v[0],
+     v[1],
+     -1
+    );
+
+    r.scale.y=
+     v[3]/v[2];
+
+    mountainGroup.add(
+     r
+    );
+
+   }
+  );
+
+
+  /* =================================================
+     SUMMIT GLOW
+  ================================================= */
+
+  summitGlowMesh=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     2.2,
+     18,
+     12
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.08
+    })
+   );
+
+  summitGlowMesh.position.set(
+   0,
+   61.75,
+   -1
+  );
+
+  scene.add(
+   summitGlowMesh
+  );
+
+
+  summitBeacon=
+   new THREE.Mesh(
+    new THREE.CylinderGeometry(
+     .08,
+     .08,
+     5,
+     8
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70
+    })
+   );
+
+  summitBeacon.position.set(
+   0,
+   61.82,
+   -1
+  );
+
+  scene.add(
+   summitBeacon
+  );
+
+
+  summitLight=
+   new THREE.PointLight(
+    0x55ff70,
+    5,
+       18
+   );
+
+  summitLight.position.set(
+   0,
+   64,
+   4
+  );
+
+  scene.add(
+   summitLight
+  );
+
+
+  /* =================================================
+     FLAG
+  ================================================= */
+
+  const flagPole=
+   new THREE.Mesh(
+    new THREE.CylinderGeometry(
+     .035,
+     .035,
+     4,
+     8
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0xbfc7ca
+    })
+   );
+
+  flagPole.position.set(
+   1.6,
+   64,
+   -.5
+  );
+
+  scene.add(
+   flagPole
+  );
+
+
+  const flag=
+   new THREE.Mesh(
+    new THREE.PlaneGeometry(
+     1.5,
+     .8
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     side:THREE.DoubleSide
+    })
+   );
+
+  flag.position.set(
+   2.25,
+   65.3,
+   -.5
+  );
+
+  scene.add(
+   flag
+  );
+}
+
+
+'''
+
+          text = (
+              text[:mountain_start]
+              + new_mountain
+              + text[mountain_end:]
+          )
+
+          # ============================================================
+          # 5. NEXT LEVEL FUNCTION
+          # ============================================================
+
+          next_level_anchor = '''function restartGame(){
+
+ showGame();
+}'''
+
+          next_level_code = '''function nextLevel(){
+
+ if(
+  currentLevel>=5
+ ){
+
+  showLevelSelect();
+  return;
+ }
+
+
+ const next=
+  currentLevel+1;
+
+
+ if(
+  next>unlockedLevel
+ ){
+
+  showLevelSelect();
+  return;
+ }
+
+
+ if(
+  !LEVELS[next]||
+  !LEVELS[next].playable
+ ){
+
+  showLevelSelect();
+  return;
+ }
+
+
+ currentLevel=
+  next;
+
+
+ showGame();
+} 
+
+
+function restartGame(){
+
+ showGame();
+}'''
+
+          if next_level_anchor not in text:
+              raise SystemExit(
+                  "ERROR: restartGame() anchor was not found."
+              )
+
+          text = text.replace(
+              next_level_anchor,
+              next_level_code,
+              1
+          )
+
+          # ============================================================
+          # 6. VICTORY NEXT BUTTON STATE
+          # ============================================================
+
+          victory_ui_anchor = '''    updatePointsUI();
+    renderLeaderboard();
+    updateLevelUI();
+
+    const peak=
+     $("victoryPeak");'''
+
+          victory_ui_add = '''    updatePointsUI();
+    renderLeaderboard();
+    updateLevelUI();
+
+    const nextButton=
+     $("nextLevelButton");
+
+    if(nextButton){
+
+     const next=
+      currentLevel+1;
+
+     const canNext=
+      currentLevel<5&&
+      next<=unlockedLevel&&
+      LEVELS[next]&&
+      LEVELS[next].playable;
+
+     nextButton.disabled=
+      !canNext;
+
+     nextButton.textContent=
+      canNext?
+      "NEXT LEVEL":
+      "NEXT LEVEL • COMING SOON";
+    }
+
+    const peak=
+     $("victoryPeak");'''
+
+          if victory_ui_anchor not in text:
+              raise SystemExit(
+                  "ERROR: Victory UI anchor was not found."
+              )
+
+          text = text.replace(
+              victory_ui_anchor,
+              victory_ui_add,
+              1
+          )
+
+          # ============================================================
+          # 7. GLOBAL EXPORT
+          # ============================================================
+
+          global_anchor = '''window.restartGame=
+ restartGame;'''
+
+          global_add = '''window.restartGame=
+ restartGame;
+
+window.nextLevel=
+ nextLevel;'''
+
+          if global_anchor not in text:
+              raise SystemExit(
+                  "ERROR: Global restartGame export was not found."
+              )
+
+          text = text.replace(
+              global_anchor,
+              global_add,
+              1
+          )
+
+          # ============================================================
+          # SAVE
+          # ============================================================
+
+          path.write_text(
+              text,
+              encoding="utf-8"
+          )
+
+          print(
+              "CLIMBORIA: NEXT LEVEL + GRAPHICS V1 applied successfully."
+          )
+          PY
+
+      - name: Validate HTML structure
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path("index.html").read_text(encoding="utf-8")
+
+          required = [
+              'id="nextLevelButton"',
+              'function nextLevel(){',
+              'window.nextLevel=',
+              'function createMountain(){',
+              'new THREE.ConeGeometry(',
+              'flatShading:true'
+          ]
+
+          missing = [
+              item for item in required
+              if item not in text
+          ]
+
+          if missing:
+              raise SystemExit(
+                  "VALIDATION FAILED: " +
+                  ", ".join(missing)
+              )
+
+          print("CLIMBORIA VALIDATION: PASS")
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Climboria next level navigation and mountain graphics"
+          git push
