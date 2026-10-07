@@ -14,10 +14,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upgrade mountain graphics
+      - name: Install mountain graphics
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("index.html")
           html = path.read_text(encoding="utf-8")
@@ -25,127 +26,386 @@ jobs:
           marker = "CLIMBORIA_MOUNTAIN_GRAPHICS_V2"
 
           if marker in html:
-              print("Already installed.")
-              raise SystemExit(0)
+              start = html.find(marker)
+              script_start = html.rfind("<script", 0, start)
+              script_end = html.find("</script>", start)
 
-          code = """
-          /* CLIMBORIA_MOUNTAIN_GRAPHICS_V2 */
+              if script_start >= 0 and script_end >= 0:
+                  html = (
+                      html[:script_start]
+                      + html[script_end + len("</script>"):]
+                  )
 
-          const mountainVisualGroup = new THREE.Group();
+          new_mountain = r'''function createMountain(){
 
-          function addMountainFace(points, color, z) {
-            const geometry = new THREE.BufferGeometry();
+            const mountainMaterial =
+              new THREE.MeshStandardMaterial({
+                color:0x394247,
+                roughness:1,
+                metalness:0
+              });
 
-            const vertices = new Float32Array([
-              points[0][0], points[0][1], z,
-              points[1][0], points[1][1], z,
-              points[2][0], points[2][1], z
-            ]);
+            const mountain =
+              new THREE.Mesh(
+                new THREE.ConeGeometry(
+                  14,
+                  64,
+                  8,
+                  1,
+                  false
+                ),
+                mountainMaterial
+              );
 
-            geometry.setAttribute(
-              "position",
-              new THREE.BufferAttribute(vertices, 3)
+            mountain.position.set(
+              0,
+              32,
+              -6
             );
 
-            geometry.computeVertexNormals();
+            mountain.rotation.y =
+              Math.PI / 8;
 
-            const material = new THREE.MeshStandardMaterial({
-              color: color,
-              roughness: 1,
-              metalness: 0
+            scene.add(mountain);
+
+
+            const mountainShadowMaterial =
+              new THREE.MeshStandardMaterial({
+                color:0x20282c,
+                roughness:1
+              });
+
+            const mountainLightMaterial =
+              new THREE.MeshStandardMaterial({
+                color:0x566166,
+                roughness:1
+              });
+
+
+            const rockFaces = [
+              [-7,10,3.5,5.5,0.25],
+              [7,15,4,6,-0.22],
+              [-8,21,3.5,5.5,-0.18],
+              [7,27,4,6,0.2],
+              [-6,34,3.5,6,0.18],
+              [6,40,4,6,-0.2],
+              [-5,47,3.5,5.5,-0.15],
+              [4,54,4,6,0.18]
+            ];
+
+            rockFaces.forEach(function(v,index){
+
+              const rock =
+                new THREE.Mesh(
+                  new THREE.DodecahedronGeometry(
+                    1,
+                    0
+                  ),
+                  index%2===0
+                    ? mountainShadowMaterial
+                    : mountainLightMaterial
+                );
+
+              rock.position.set(
+                v[0],
+                v[1],
+                -2.8
+              );
+
+              rock.scale.set(
+                v[2],
+                v[3],
+                1.2
+              );
+
+              rock.rotation.z =
+                v[4];
+
+              scene.add(rock);
             });
 
-            const mesh = new THREE.Mesh(
-              geometry,
-              material
-            );
 
-            mountainVisualGroup.add(mesh);
-          }
+            const ledges = [
+              [-8,5,1.5,2],
+              [7,8,2,1.5],
+              [-6,12,2.5,2],
+              [6,16,2,2],
+              [-8,21,2.5,1.5],
+              [7,25,2.5,2],
+              [-6,30,2,2],
+              [8,35,3,2],
+              [-7,40,2,2],
+              [6,45,3,2],
+              [-5,51,2.5,2],
+              [7,57,2.5,2]
+            ];
 
-          addMountainFace(
-            [[-9,0],[0,62],[-2,0]],
-            0x252c30,
-            -3.2
-          );
+            ledges.forEach(function(v){
 
-          addMountainFace(
-            [[-2,0],[0,62],[2,0]],
-            0x4b5559,
-            -3.1
-          );
+              const ledge =
+                new THREE.Mesh(
+                  new THREE.BoxGeometry(
+                    v[2],
+                    v[3],
+                    5
+                  ),
+                  new THREE.MeshStandardMaterial({
+                    color:0x626d71,
+                    roughness:1
+                  })
+                );
 
-          addMountainFace(
-            [[2,0],[0,62],[9,0]],
-            0x252c30,
-            -3.2
-          );
+              ledge.position.set(
+                v[0],
+                v[1],
+                -2.8
+              );
 
-          const mountainEdgeMaterial =
-            new THREE.MeshBasicMaterial({
-              color: 0x9ba6a8,
-              transparent: true,
-              opacity: 0.22
+              ledge.rotation.z =
+                v[0] < 0 ? -0.08 : 0.08;
+
+              scene.add(ledge);
             });
 
-          const mountainEdges = [
-            [-5.5,10,3.0,-0.16],
-            [5.0,17,3.4,0.15],
-            [-5.0,25,3.8,-0.14],
-            [4.8,34,3.6,0.13],
-            [-4.2,43,3.4,-0.12],
-            [3.8,51,3.0,0.11]
-          ];
 
-          mountainEdges.forEach(function(p) {
-            const edge = new THREE.Mesh(
-              new THREE.BoxGeometry(
-                p[2],
-                0.055,
-                0.04
-              ),
-              mountainEdgeMaterial
+            const ridgeMaterial =
+              new THREE.MeshBasicMaterial({
+                color:0x9ba6a8,
+                transparent:true,
+                opacity:0.16
+              });
+
+            const ridges = [
+              [-5.5,11,3.4,-0.16],
+              [5.2,18,3.8,0.14],
+              [-5.2,26,4,-0.13],
+              [4.8,34,4.2,0.12],
+              [-4.5,43,3.8,-0.11],
+              [3.8,51,3.4,0.1]
+            ];
+
+            ridges.forEach(function(v){
+
+              const ridge =
+                new THREE.Mesh(
+                  new THREE.BoxGeometry(
+                    v[2],
+                    0.06,
+                    0.08
+                  ),
+                  ridgeMaterial
+                );
+
+              ridge.position.set(
+                v[0],
+                v[1],
+                -0.15
+              );
+
+              ridge.rotation.z =
+                v[3];
+
+              scene.add(ridge);
+            });
+
+
+            const summit =
+              new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                  5.5,
+                  7,
+                  1.2,
+                  7
+                ),
+                new THREE.MeshStandardMaterial({
+                  color:0x737a7c,
+                  roughness:1
+                })
+              );
+
+            summit.position.set(
+              0,
+              61.1,
+              -1
             );
 
-            edge.position.set(
-              p[0],
-              p[1],
-              -2.95
+            summit.rotation.y =
+              Math.PI / 7;
+
+            scene.add(summit);
+
+
+            [
+              [-3.8,62.5,.9,2.2],
+              [3.5,62.2,1.1,2.5],
+              [-1.8,63.3,.75,1.8],
+              [1.8,63.5,.9,2.4]
+            ].forEach(function(v){
+
+              const rock =
+                new THREE.Mesh(
+                  new THREE.DodecahedronGeometry(
+                    v[2],
+                    0
+                  ),
+                  new THREE.MeshStandardMaterial({
+                    color:0x555b5d,
+                    roughness:1
+                  })
+                );
+
+              rock.position.set(
+                v[0],
+                v[1],
+                -1
+              );
+
+              rock.scale.y =
+                v[3] / v[2];
+
+              scene.add(rock);
+            });
+
+
+            summitGlowMesh =
+              new THREE.Mesh(
+                new THREE.SphereGeometry(
+                  2.2,
+                  16,
+                  12
+                ),
+                new THREE.MeshBasicMaterial({
+                  color:0x55ff70,
+                  transparent:true,
+                  opacity:.08
+                })
+              );
+
+            summitGlowMesh.position.set(
+              0,
+              61.75,
+              -1
             );
 
-            edge.rotation.z = p[3];
+            scene.add(
+              summitGlowMesh
+            );
 
-            mountainVisualGroup.add(edge);
-          });
 
-          scene.add(mountainVisualGroup);
+            summitBeacon =
+              new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                  .08,
+                  .08,
+                  5,
+                  8
+                ),
+                new THREE.MeshBasicMaterial({
+                  color:0x55ff70
+                })
+              );
 
-          const mountainLight = new THREE.PointLight(
-            0x789097,
-            1.3,
-            28
-          );
+            summitBeacon.position.set(
+              0,
+              61.82,
+              -1
+            );
 
-          mountainLight.position.set(
-            0,
-            42,
-            4
-          );
+            scene.add(
+              summitBeacon
+            );
 
-          scene.add(mountainLight);
-          """
 
-          anchor = "</script>"
+            summitLight =
+              new THREE.PointLight(
+                0x55ff70,
+                5,
+                18
+              );
 
-          if anchor not in html:
+            summitLight.position.set(
+              0,
+              64,
+              4
+            );
+
+            scene.add(
+              summitLight
+            );
+
+
+            const flagPole =
+              new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                  .035,
+                  .035,
+                  4,
+                  8
+                ),
+                new THREE.MeshBasicMaterial({
+                  color:0xbfc7ca
+                })
+              );
+
+            flagPole.position.set(
+              1.6,
+              64,
+              -.5
+            );
+
+            scene.add(
+              flagPole
+            );
+
+
+            const flag =
+              new THREE.Mesh(
+                new THREE.PlaneGeometry(
+                  1.5,
+                  .8
+                ),
+                new THREE.MeshBasicMaterial({
+                  color:0x55ff70,
+                  side:THREE.DoubleSide
+                })
+              );
+
+            flag.position.set(
+              2.25,
+              65.3,
+              -.5
+            );
+
+            scene.add(flag);
+          }'''
+
+          pattern = re.compile(
+              r"function createMountain\(\)\{.*?\n\}\n\n/\* =====================================================\n    MOUNTAIN DETAILS",
+              re.S
+          )
+
+          replacement = (
+              new_mountain
+              + "\n\n/* =====================================================\n"
+              + "    MOUNTAIN DETAILS"
+          )
+
+          updated, count = pattern.subn(
+              replacement,
+              html,
+              count=1
+          )
+
+          if count != 1:
               raise SystemExit(
-                  "ERROR: script closing tag not found."
+                  "ERROR: createMountain function was not found."
               )
 
+          html = updated
+
           html = html.replace(
-              anchor,
-              code + "\n" + anchor,
-              1
+              "/* CLIMBORIA_MOUNTAIN_GRAPHICS_V2 */",
+              ""
           )
 
           path.write_text(
@@ -153,7 +413,38 @@ jobs:
               encoding="utf-8"
           )
 
-          print("Mountain Graphics V2 installed.")
+          print(
+              "Mountain Graphics V2 installed correctly."
+          )
+          PY
+
+      - name: Validate HTML
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path("index.html").read_text(
+              encoding="utf-8"
+          )
+
+          if "function createMountain(){" not in html:
+              raise SystemExit(
+                  "ERROR: createMountain missing."
+              )
+
+          if "CLIMBORIA_MOUNTAIN_GRAPHICS_V2" in html:
+              raise SystemExit(
+                  "ERROR: old mountain graphics block remains."
+              )
+
+          if html.count("function createMountain(){") != 1:
+              raise SystemExit(
+                  "ERROR: duplicate createMountain detected."
+              )
+
+          print(
+              "Mountain graphics validation passed."
+          )
           PY
 
       - name: Commit
@@ -161,5 +452,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Improve mountain graphics"
+          git diff --cached --quiet || git commit -m "Install real mountain graphics V2"
           git push
