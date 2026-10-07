@@ -3,17 +3,9 @@ name: Climboria Next Level Navigation V1
 on:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  next-level-navigation:
+  check:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check workflow
-        run: |
-          echo "Climboria Next Level Navigation V1 is ready."
+      - name: Check
+        run: echo "Workflow valid."
