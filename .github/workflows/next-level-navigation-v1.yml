@@ -1,0 +1,255 @@
+```yaml
+name: Climboria Next Level Navigation V1
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  next-level-navigation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install navigation
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+
+          marker = "climboria-next-level-navigation-v1"
+
+          if marker in html:
+              print("Next Level Navigation V1 already installed.")
+              raise SystemExit(0)
+
+          old_button = '''<button id="climbAgainButton" type="button">
+    CLIMB AGAIN
+   </button>'''
+
+          new_button = '''<button id="nextLevelButton" type="button">
+    NEXT LEVEL
+   </button>
+
+   <br><br>
+
+   <button id="climbAgainButton" type="button">
+    REPLAY LEVEL
+   </button>'''
+
+          if old_button not in html:
+              raise SystemExit(
+                  "ERROR: Victory buttons were not found."
+              )
+
+          html = html.replace(
+              old_button,
+              new_button,
+              1
+          )
+
+          old_menu = '''<button id="menuButtonVictory" type="button">
+    MENU
+   </button>'''
+
+          new_menu = '''<button id="menuButtonVictory" type="button">
+    HOME
+   </button>'''
+
+          if old_menu not in html:
+              raise SystemExit(
+                  "ERROR: Victory HOME button was not found."
+              )
+
+          html = html.replace(
+              old_menu,
+              new_menu,
+              1
+          )
+
+          css = '''
+          <style id="climboria-next-level-navigation-v1">
+          #nextLevelButton{
+            background:#55ff70;
+            color:#06100a;
+            border-color:#55ff70;
+            box-shadow:0 0 18px #55ff7035;
+            min-width:220px;
+          }
+
+          #nextLevelButton:hover{
+            background:#7aff91;
+          }
+
+          #nextLevelButton:disabled{
+            opacity:.35;
+            cursor:not-allowed;
+            box-shadow:none;
+          }
+          </style>
+          '''
+
+          if "</head>" not in html:
+              raise SystemExit(
+                  "ERROR: </head> not found."
+              )
+
+          html = html.replace(
+              "</head>",
+              css + "\n</head>",
+              1
+          )
+
+          binding_anchor = '''  const climbAgainButton=
+   document.getElementById("climbAgainButton");'''
+
+          next_binding = '''
+  const nextLevelButton=
+   document.getElementById("nextLevelButton");
+
+  if(nextLevelButton){
+
+   nextLevelButton.addEventListener(
+    "click",
+    function(){
+
+     if(
+      typeof currentLevel!=="undefined" &&
+      currentLevel<5 &&
+      typeof unlockedLevel!=="undefined" &&
+      unlockedLevel>currentLevel &&
+      typeof window.startLevel==="function"
+     ){
+
+      window.startLevel(
+       currentLevel+1
+      );
+
+     }
+
+    }
+   );
+
+  }
+
+'''
+
+          if binding_anchor not in html:
+              raise SystemExit(
+                  "ERROR: Victory button binding anchor not found."
+              )
+
+          html = html.replace(
+              binding_anchor,
+              next_binding + binding_anchor,
+              1
+          )
+
+          update_function = '''
+          function updateNextLevelButton(){
+
+            const button=
+              document.getElementById(
+                "nextLevelButton"
+              );
+
+            if(!button)return;
+
+            const hasNext=
+              currentLevel<5 &&
+              unlockedLevel>currentLevel &&
+              LEVELS[currentLevel+1] &&
+              LEVELS[currentLevel+1].playable;
+
+            button.disabled=!hasNext;
+
+            button.style.display=
+              hasNext ?
+              "inline-block" :
+              "none";
+          }
+
+          '''
+
+          anchor = "function updateLevelUI(){"
+
+          if anchor not in html:
+              raise SystemExit(
+                  "ERROR: updateLevelUI function not found."
+              )
+
+          html = html.replace(
+              anchor,
+              update_function + anchor,
+              1
+          )
+
+          calls = [
+              "updateLevelUI();\n }\n\n\n function showLevelSelect(){",
+              "updateLevelUI();\n }\n\n\n function startLevel(level){"
+          ]
+
+          html = html.replace(
+              "updateLevelUI();\n }\n\n\n function showLevelSelect(){",
+              "updateLevelUI();\n  updateNextLevelButton();\n }\n\n\n function showLevelSelect(){",
+              1
+          )
+
+          html = html.replace(
+              "updateLevelUI();\n }\n\n\n function startLevel(level){",
+              "updateLevelUI();\n  updateNextLevelButton();\n }\n\n\n function startLevel(level){",
+              1
+          )
+
+          victory_anchor = '''     updateLevelUI();
+
+     const peak='''
+
+          victory_replacement = '''     updateLevelUI();
+     updateNextLevelButton();
+
+     const peak='''
+
+          if victory_anchor not in html:
+              raise SystemExit(
+                  "ERROR: Victory update section not found."
+              )
+
+          html = html.replace(
+              victory_anchor,
+              victory_replacement,
+              1
+          )
+
+          path.write_text(
+              html,
+              encoding="utf-8"
+          )
+
+          print(
+              "Climboria Next Level Navigation V1 installed."
+          )
+          PY
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Add next level navigation"
+          git push
+```
