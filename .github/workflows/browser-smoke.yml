@@ -2,7 +2,7 @@ name: Climboria Browser Smoke Test
 
 on:
   push:
-    branches: [main, codex/mountain-stability-v2]
+    branches: [main, codex/mountain-stability-v2, codex/ten-summit-expedition]
     paths:
       - "index.html"
       - "favicon.png"
