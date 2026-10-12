@@ -5958,7 +5958,7 @@ function beginSummitSequence(){
        unlockedLevel+
        " UNLOCKED";
 
-     }else if(currentLevel>=5){
+     }else if(currentLevel>=10){
 
       unlock.textContent=
        "ALL CURRENT LEVELS COMPLETED";
@@ -8258,10 +8258,10 @@ if(
  function applyTheme(){
   const p=themes[Math.max(0,Math.min(9,currentLevel-1))];
   if(scene){scene.background.setHex(p.sky);if(scene.fog&&scene.fog.color)scene.fog.color.setHex(p.sky);}
-  const route=routes[Math.max(0,Math.min(9,currentLevel-1))];
+  const route=routes[Math.max(0,Math.min(9,currentLevel-1))].slice(0,grips.length);
   grips.forEach((g,i)=>{
    if(i<route.length){g.x=route[i];g.y=4+i*(58/(route.length-1));g.group.position.set(g.x,g.y,3.1);g.group.visible=true;}
-   else g.group.visible=false;
+   else {g.group.visible=false;g.x=999;g.y=-100;}
    if(g.ring&&g.ring.material){g.ring.material.color.setHex(p.grip);g.ring.material.emissive.setHex(p.emissive);}
    if(g.glow&&g.glow.material)g.glow.material.color.setHex(p.grip);
   });
