@@ -3789,11 +3789,15 @@ function init(){
    150
   );
 
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+
+ camera.fov = portraitMobile ? 78 : 55;
  camera.position.set(
   0,
   7,
-  innerWidth <= 700 && innerHeight > innerWidth ? 23 : 18
+  portraitMobile ? 21 : 18
  );
+ camera.updateProjectionMatrix();
 
  renderer=
   new THREE.WebGLRenderer({
@@ -4647,6 +4651,8 @@ function createHero(){
  const nose=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),skin);nose.position.set(0,2.4,.51);hero.add(nose);
  const smile=new THREE.Mesh(new THREE.TorusGeometry(.075,.012,5,12,Math.PI),new THREE.MeshBasicMaterial({color:0x713c38}));smile.position.set(0,2.34,.48);smile.rotation.z=Math.PI;hero.add(smile);
  for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,8),shirt);arm.position.set(side*.48,1.72,.28);arm.rotation.z=side*.62;hero.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),skin);hand.position.set(side*.68,1.55,.56);hero.add(hand);const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.18,.42),new THREE.MeshStandardMaterial({color:0x101820}));boot.position.set(side*.38,1,.42);hero.add(boot);}
+ /* Face the climbing wall instead of facing the player/camera. */
+ hero.rotation.y = Math.PI;
  hero.position.set(0,.82,3.5);scene.add(hero);
 }
 
@@ -5561,8 +5567,13 @@ function updateCamera(){
 
  if(summitSequence)return;
 
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+ camera.fov = portraitMobile ? 78 : 55;
+ camera.position.z = portraitMobile ? 21 : 18;
+ camera.updateProjectionMatrix();
+
  const targetY=
-  hero.position.y+5;
+  hero.position.y + (portraitMobile ? 6.5 : 5);
 
  camera.position.y+=
   (
@@ -5854,6 +5865,7 @@ function resetPlayer(){
 
  if(!hero||!camera)return;
 
+ hero.rotation.y = Math.PI;
  hero.position.set(
   0,
   .82,
@@ -5883,11 +5895,14 @@ function resetPlayer(){
    g.group.scale.setScalar(1)
  );
 
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+ camera.fov = portraitMobile ? 78 : 55;
  camera.position.set(
   0,
   7,
-  18
+  portraitMobile ? 21 : 18
  );
+ camera.updateProjectionMatrix();
 
  camera.lookAt(
   0,
@@ -7464,7 +7479,8 @@ function resize(){
   players can read the climber, grips, and route together.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = isPortraitMobile ? 23 : 18;
+ camera.position.z = isPortraitMobile ? 21 : 18;
+ camera.fov = isPortraitMobile ? 78 : 55;
 
  camera.updateProjectionMatrix();
 
