@@ -2414,6 +2414,65 @@ body > canvas {
 </script>
 
 
+<script>
+(function(){
+  var started = false;
+  var shown = false;
+  var timer = null;
+
+  function showBootError(message){
+    if(started || shown || document.querySelector("canvas")) return;
+    shown = true;
+    var panel = document.getElementById("climboriaBootError");
+    if(!panel){
+      panel = document.createElement("div");
+      panel.id = "climboriaBootError";
+      panel.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(3,8,12,.96);color:#eef5f7;font:14px/1.6 system-ui,sans-serif;text-align:center";
+      panel.innerHTML = '<div style="max-width:440px;border:1px solid #ff667766;border-radius:16px;padding:24px;background:#10191f"><div style="font-size:24px;font-weight:900;color:#ff6677;margin-bottom:10px">CLIMBORIA DID NOT START</div><div id="climboriaBootErrorMessage" style="color:#c5d0d5;margin-bottom:18px">The game engine did not finish loading.</div><button id="climboriaBootReload" type="button" style="border:0;border-radius:8px;padding:12px 18px;background:#55ff70;color:#07110a;font-weight:900;cursor:pointer">RELOAD GAME</button><div style="font-size:11px;color:#819099;margin-top:14px">Check your connection, then reload. If this repeats, send a screenshot to the Climboria team.</div></div>';
+      document.body.appendChild(panel);
+      document.getElementById("climboriaBootReload").addEventListener("click",function(){ location.reload(); });
+    }
+    var target = document.getElementById("climboriaBootErrorMessage");
+    if(target && message) target.textContent = message;
+  }
+
+  function checkCanvas(){
+    if(document.querySelector("canvas")){
+      started = true;
+      if(timer) clearTimeout(timer);
+      var panel = document.getElementById("climboriaBootError");
+      if(panel) panel.remove();
+      return;
+    }
+  }
+
+  window.addEventListener("error",function(event){
+    if(!document.querySelector("canvas")){
+      showBootError(event && event.message ? "Startup error: " + event.message : "A script failed before the game could start.");
+    }
+  });
+
+  window.addEventListener("unhandledrejection",function(event){
+    if(!document.querySelector("canvas")){
+      var reason = event && event.reason;
+      showBootError("Startup failed: " + (reason && reason.message ? reason.message : "the game could not initialize."));
+    }
+  });
+
+  timer = setTimeout(function(){
+    if(!document.querySelector("canvas")){
+      showBootError("The game engine is taking too long to load. Check your internet connection and tap Reload Game.");
+    } else {
+      started = true;
+    }
+  },25000);
+
+  var observer = new MutationObserver(checkCanvas);
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener("pagehide",function(){ observer.disconnect(); if(timer) clearTimeout(timer); });
+})();
+</script>
+
 <script type="module">
 
 /* =====================================================
