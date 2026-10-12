@@ -3164,7 +3164,9 @@ function registerSummit(){
  totalSummits++;
 
  addClimbPoints(
-  CLIMB_REWARD
+  LEVELS[currentLevel]&&LEVELS[currentLevel].reward
+   ? LEVELS[currentLevel].reward
+   : CLIMB_REWARD
  );
 
  registerAirdropAction(30);
