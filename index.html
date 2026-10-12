@@ -2428,40 +2428,54 @@ try{
   "https://esm.sh/three@0.180.0"
  );
 
-}catch(error){
+}catch(firstError){
 
- console.error(
-  "CLIMBORIA: Three.js failed to load.",
-  error
+ console.warn(
+  "CLIMBORIA: primary Three.js CDN failed; trying fallback.",
+  firstError
  );
 
- const status=
-  document.getElementById("status");
+ try{
 
- if(status){
+  THREE=await import(
+   "https://cdn.jsdelivr.net/npm/three@0.180.0/+esm"
+  );
 
-  status.textContent=
-   "GAME ENGINE LOAD ERROR";
+ }catch(error){
 
-  status.style.color=
-   "#ff6677";
+  console.error(
+   "CLIMBORIA: both Three.js CDNs failed.",
+   error
+  );
+
+  const status=
+   document.getElementById("status");
+
+  if(status){
+
+   status.textContent=
+    "GAME ENGINE LOAD ERROR — CHECK CONNECTION AND RELOAD";
+
+   status.style.color=
+    "#ff6677";
+  }
+
+  const startButton=
+   document.getElementById("startButton");
+
+  if(startButton){
+
+   startButton.textContent=
+    "RELOAD GAME";
+
+   startButton.onclick=
+    function(){
+     location.reload();
+    };
+  }
+
+  throw error;
  }
-
- const startButton=
-  document.getElementById("startButton");
-
- if(startButton){
-
-  startButton.textContent=
-   "RELOAD GAME";
-
-  startButton.onclick=
-   function(){
-    location.reload();
-   };
- }
-
- throw error;
 }
 
 
