@@ -3791,11 +3791,11 @@ function init(){
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
 
- camera.fov = portraitMobile ? 82 : 55;
+ camera.fov = portraitMobile ? 86 : 55;
  camera.position.set(
   0,
   7,
-  portraitMobile ? 32 : 18
+  portraitMobile ? 38 : 18
  );
  camera.updateProjectionMatrix();
 
@@ -5571,12 +5571,12 @@ function updateCamera(){
  if(summitSequence)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 82 : 55;
- camera.position.z = portraitMobile ? 32 : 18;
+ camera.fov = portraitMobile ? 86 : 55;
+ camera.position.z = portraitMobile ? 38 : 18;
  camera.updateProjectionMatrix();
 
  const targetY=
-  hero.position.y + (portraitMobile ? 9.5 : 5);
+  hero.position.y + (portraitMobile ? 8.5 : 5);
 
  camera.position.y+=
   (
@@ -5899,11 +5899,11 @@ function resetPlayer(){
  );
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 82 : 55;
+ camera.fov = portraitMobile ? 86 : 55;
  camera.position.set(
   0,
   7,
-  portraitMobile ? 32 : 18
+  portraitMobile ? 38 : 18
  );
  camera.updateProjectionMatrix();
 
@@ -7477,13 +7477,13 @@ function resize(){
   innerWidth / innerHeight;
 
  /*
-  MOBILE-FIRST CAMERA V1
-  Portrait screens need a little more camera distance so
-  players can read the climber, grips, and route together.
+  MOBILE-FIRST CAMERA V2
+  Portrait screens pull back farther and widen the vertical field
+  so the climber, grips, and more of the route fit in the phone view.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = isPortraitMobile ? 32 : 18;
- camera.fov = isPortraitMobile ? 82 : 55;
+ camera.position.z = isPortraitMobile ? 38 : 18;
+ camera.fov = isPortraitMobile ? 86 : 55;
 
  camera.updateProjectionMatrix();
 
