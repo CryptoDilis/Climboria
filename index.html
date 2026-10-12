@@ -3956,7 +3956,7 @@ function createMountain(){
  ];
 
  mountainFacetData.forEach(function(face){
-  const points=face[0];
+  const points=[face[0],face[1],face[2]];
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute(
    "position",
@@ -3968,7 +3968,7 @@ function createMountain(){
   );
   geometry.computeVertexNormals();
   const material=new THREE.MeshStandardMaterial({
-   color:face[1],
+   color:face[3],
    roughness:1,
    metalness:0,
    side:THREE.DoubleSide
