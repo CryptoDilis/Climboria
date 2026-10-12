@@ -196,6 +196,39 @@ jobs:
               console.log('PASS: all 10 summit cards render and Level 10 launches: ' + finalLevelName);
               await expedition.close();
 
+              // Verify the victory screen's NEXT LEVEL action starts the next unlocked summit.
+              const progression = await browser.newPage({
+                viewport: { width: 1280, height: 800 },
+                deviceScaleFactor: 1
+              });
+              progression.on('pageerror', error => pageErrors.push('progression: ' + error.message));
+              await progression.addInitScript(() => {
+                if (location.origin === 'http://127.0.0.1:4173') {
+                  localStorage.setItem('climboria_unlocked_level', '2');
+                }
+              });
+              await progression.goto('http://127.0.0.1:4173/', {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+              });
+              await progression.getByRole('button', { name: /start climb/i }).click();
+              await progression.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
+              await progression.locator('#level1Card').click();
+              await progression.locator('#hudLevelName').waitFor({ state: 'visible', timeout: 10000 });
+              await progression.evaluate(() => {
+                window.climboriaCurrentLevel = 1;
+                const victory = document.getElementById('victory');
+                victory.style.display = 'flex';
+              });
+              await progression.locator('#nextLevelVictoryButton').click();
+              await progression.waitForTimeout(500);
+              const nextLevelName = await progression.locator('#hudLevelName').innerText();
+              if (!nextLevelName.includes('LEVEL 02') || !nextLevelName.includes("SATOSHI'S ASCENT")) {
+                throw new Error('NEXT LEVEL action failed to launch Level 2: ' + nextLevelName);
+              }
+              console.log('PASS: victory NEXT LEVEL action launches Level 2: ' + nextLevelName);
+              await progression.close();
+
               if (pageErrors.length) {
                 throw new Error('Uncaught browser errors: ' + pageErrors.join(' | '));
               }
