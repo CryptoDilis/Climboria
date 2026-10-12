@@ -4042,6 +4042,87 @@ function createMountain(){
   addMountainTriangle(face.slice(0,3),face[3]);
  });
 
+ // Extra fractured rock planes add uneven depth without touching climb geometry.
+ const microFacets=[
+  [[-9.0,7.5,-3.12],[-7.2,13.5,-3.12],[-5.5,8.5,-3.12],0x222d31],
+  [[-7.0,18.5,-3.11],[-5.8,23.0,-3.11],[-4.1,16.8,-3.11],0x536065],
+  [[-5.0,31.0,-3.10],[-3.6,36.0,-3.10],[-2.0,30.0,-3.10],0x263237],
+  [[-3.4,41.0,-3.10],[-2.2,46.0,-3.10],[-0.7,39.0,-3.10],0x566267],
+  [[-1.0,24.0,-3.11],[1.0,30.0,-3.11],[2.5,22.5,-3.11],0x263237],
+  [[2.4,33.0,-3.10],[4.0,37.0,-3.10],[5.1,29.5,-3.10],0x536065],
+  [[5.3,21.0,-3.11],[6.7,25.0,-3.11],[8.0,17.0,-3.11],0x263237],
+  [[-8.0,10.0,-3.12],[-6.8,12.0,-3.12],[-7.4,6.0,-3.12],0x202b30],
+  [[3.0,12.0,-3.12],[5.1,15.0,-3.12],[6.0,9.0,-3.12],0x202b30]
+ ];
+ microFacets.forEach(face=>{
+  addMountainTriangle(face.slice(0,3),face[3]);
+ });
+
+ // Thin, broken strata and fractures make the cliff read as layered rock.
+ const fractureSegments=[
+  [-9.1,8.1,-7.9,8.8],[-7.9,8.8,-7.2,10.2],
+  [-7.7,14.2,-6.3,14.7],[-6.3,14.7,-5.6,16.0],
+  [-6.0,24.1,-4.8,24.6],[-4.8,24.6,-4.2,26.0],
+  [-4.4,33.8,-3.2,34.1],[-3.2,34.1,-2.5,35.5],
+  [-2.5,43.4,-1.3,43.8],[-1.3,43.8,-0.8,45.0],
+  [2.4,43.1,3.7,42.7],[3.7,42.7,4.4,41.4],
+  [4.8,34.7,6.0,34.2],[6.0,34.2,6.8,32.9],
+  [6.7,24.0,7.8,23.5],[7.8,23.5,8.5,22.1],
+  [-3.7,19.8,-2.4,19.4],[-2.4,19.4,-1.8,18.2],
+  [1.4,15.8,2.8,15.4],[2.8,15.4,3.4,14.1]
+ ];
+ const fracturePositions=[];
+ fractureSegments.forEach(segment=>{
+  fracturePositions.push(
+   segment[0],segment[1],-2.99,
+   segment[2],segment[3],-2.99
+  );
+ });
+ const fractureGeometry=new THREE.BufferGeometry();
+ fractureGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(fracturePositions,3)
+ );
+ const fractureLines=new THREE.LineSegments(
+  fractureGeometry,
+  new THREE.LineBasicMaterial({
+   color:0x151f23,
+   transparent:true,
+   opacity:.72
+  })
+ );
+ mountainGroup.add(fractureLines);
+
+ // Short lighter seams catch the light and break up broad, flat color patches.
+ const seamSegments=[
+  [-8.8,6.6,-7.9,7.0],[-7.0,11.1,-6.0,11.5],
+  [-6.3,20.0,-5.1,20.4],[-4.5,28.2,-3.4,28.6],
+  [-3.0,38.1,-1.8,38.4],[-1.5,47.1,-0.5,47.4],
+  [2.1,48.3,3.0,47.8],[4.0,38.6,5.0,38.2],
+  [5.7,28.1,6.7,27.7],[7.0,18.2,8.0,17.8],
+  [-2.3,12.6,-1.2,12.9],[1.8,26.0,2.8,26.4]
+ ];
+ const seamPositions=[];
+ seamSegments.forEach(segment=>{
+  seamPositions.push(
+   segment[0],segment[1],-2.985,
+   segment[2],segment[3],-2.985
+  );
+ });
+ const seamGeometry=new THREE.BufferGeometry();
+ seamGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(seamPositions,3)
+ );
+ mountainGroup.add(new THREE.LineSegments(
+  seamGeometry,
+  new THREE.LineBasicMaterial({
+   color:0x7a898e,
+   transparent:true,
+   opacity:.32
+  })
+ ));
+
  scene.add(mountainGroup);
 
 
