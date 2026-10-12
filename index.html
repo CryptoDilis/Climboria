@@ -8139,5 +8139,65 @@ if(
 <script>
 /* climboria-fall-reset-real-v1 */
 </script>
+
+<style id="climboria-mobile-hud-spacing-v1">
+/* Keep the live gameplay HUD readable and separated on narrow screens. */
+@media (max-width: 700px) {
+  #hud {
+    top: max(12px, env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+  }
+  #hud .top {
+    min-height: 62px;
+    padding-top: 2px;
+  }
+  #hud > .top > div:first-child {
+    max-width: 42%;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+  #hud > .top > div:first-child small,
+  #hud > .top > div:first-child span {
+    font-size: 9px !important;
+  }
+  #hud .stat {
+    max-width: 42%;
+    font-size: 9px;
+    line-height: 1.55;
+  }
+  #bar {
+    width: clamp(74px, 25vw, 120px);
+  }
+  #status {
+    top: 61px;
+    max-width: calc(100vw - 28px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  #hudPoints {
+    top: 79px;
+  }
+}
+@media (max-width: 380px) {
+  #hud > .top > div:first-child,
+  #hud .stat {
+    font-size: 8px;
+  }
+  #hud .stat {
+    line-height: 1.4;
+  }
+  #status {
+    top: 59px;
+    font-size: 7px;
+  }
+  #hudPoints {
+    top: 75px;
+  }
+}
+</style>
+
 </body>
 </html>
