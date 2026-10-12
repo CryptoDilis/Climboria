@@ -1196,6 +1196,15 @@ button:active{transform:scale(.98)}
 }
 </style>
 
+<style id="climboria-cinematic-gameplay">
+#victory,#failure{background:radial-gradient(ellipse at 50% 35%,#183449 0%,#070d14 68%);backdrop-filter:blur(8px)}
+.resultActions{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:10px;width:min(560px,100%)}
+.resultActions button{min-width:135px}
+#failure .winTitle{color:#ff7b7b;text-shadow:0 0 26px #ff4d4d55}
+#failure .winPoints{border-color:#ff777733;background:#ff555508}
+#failure .winPointsValue{color:#ff8b8b}
+@media(max-width:700px){.resultActions{gap:7px}.resultActions button{min-width:calc(50% - 7px);padding:12px 9px;font-size:9px;letter-spacing:1px}}
+</style>
 <style id="climboria-game-brand-style">
 #climboria-game-brand{
   position:fixed;
@@ -1899,25 +1908,17 @@ h3{
 
   </div>
 
-  <button id="climbAgainButton" type="button">
-   CLIMB AGAIN
-  </button>
-
-  <br><br>
-
-  <button id="levelSelectVictoryButton" type="button">
-   LEVEL SELECT
-  </button>
-
-  <br><br>
-
-  <button id="menuButtonVictory" type="button">
-   MENU
-  </button>
+  <div class="resultActions">
+   <button id="nextLevelVictoryButton" type="button">NEXT LEVEL</button>
+   <button id="levelSelectVictoryButton" type="button">LEVEL MENU</button>
+   <button id="menuButtonVictory" type="button">HOME</button>
+  </div>
 
  </div>
 </div>
-
+<div id="failure" style="display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;text-align:center;padding:18px;">
+ <div class="panel"><div class="winTitle">CLIMB FAILED</div><div class="peak" id="failurePeak">THE MOUNTAIN WINS THIS ROUND</div><div class="winSub">Catch your breath, adjust your swing, and try again.</div><div class="winPoints"><div class="winPointsLabel">CURRENT SUMMIT</div><div class="winPointsValue" id="failureLevel">LEVEL 01</div><div class="winReward">YOUR PROGRESS AND UNLOCKS ARE SAVED</div></div><div class="resultActions"><button id="retryFailureButton" type="button">RETRY</button><button id="levelMenuFailureButton" type="button">LEVEL MENU</button><button id="homeFailureButton" type="button">HOME</button></div></div>
+</div>
 
 <!-- =========================
      HUD
@@ -1947,7 +1948,7 @@ h3{
 
    <br>
 
-   HAMMER:
+   PIKO:
    <b id="hammerState">READY</b>
 
    <br>
@@ -2261,6 +2262,14 @@ h3{
  }
 
 
+ const nextLevelVictoryButton=document.getElementById("nextLevelVictoryButton");
+ if(nextLevelVictoryButton)nextLevelVictoryButton.addEventListener("click",function(){const next=Number(window.climboriaCurrentLevel||1)+1;if(next<=10&&typeof window.startLevel==="function")window.startLevel(next);else if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
+ const retryFailureButton=document.getElementById("retryFailureButton");
+ if(retryFailureButton)retryFailureButton.addEventListener("click",function(){if(typeof window.restartGame==="function")window.restartGame();});
+ const levelMenuFailureButton=document.getElementById("levelMenuFailureButton");
+ if(levelMenuFailureButton)levelMenuFailureButton.addEventListener("click",function(){if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
+ const homeFailureButton=document.getElementById("homeFailureButton");
+ if(homeFailureButton)homeFailureButton.addEventListener("click",function(){if(typeof window.showMenu==="function")window.showMenu();});
  const levelSelectVictoryButton=
   document.getElementById(
    "levelSelectVictoryButton"
@@ -2620,6 +2629,7 @@ function updateLevelUI(){
 
 function showLevelSelect(){
 
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
  running=false;
  grabbed=null;
  touchActive=false;
@@ -3904,19 +3914,19 @@ function createMountain(){
  const mountainShape=
   new THREE.Shape();
 
- mountainShape.moveTo(-11,0);
- mountainShape.lineTo(-8.5,9);
- mountainShape.lineTo(-7.2,19);
- mountainShape.lineTo(-5.2,29);
- mountainShape.lineTo(-3.8,39);
- mountainShape.lineTo(-2.1,49);
+ mountainShape.moveTo(-66,0);
+ mountainShape.lineTo(-54,10);
+ mountainShape.lineTo(-44,20);
+ mountainShape.lineTo(-34,30);
+ mountainShape.lineTo(-24,40);
+ mountainShape.lineTo(-14,50);
  mountainShape.lineTo(0,63);
- mountainShape.lineTo(2.8,50);
- mountainShape.lineTo(4.6,40);
- mountainShape.lineTo(6.5,30);
- mountainShape.lineTo(8.1,19);
- mountainShape.lineTo(9.2,9);
- mountainShape.lineTo(11,0);
+ mountainShape.lineTo(14,50);
+ mountainShape.lineTo(24,40);
+ mountainShape.lineTo(34,30);
+ mountainShape.lineTo(44,20);
+ mountainShape.lineTo(54,10);
+ mountainShape.lineTo(66,0);
  mountainShape.closePath();
 
  const mountainBase=
@@ -4570,253 +4580,42 @@ function createRocks(){
 ===================================================== */
 
 function createHero(){
-
- hero=
-  new THREE.Group();
-
- const pot=
-  new THREE.Mesh(
-   new THREE.CylinderGeometry(
-    1,
-    1.35,
-    1.5,
-    28
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0xd17a3e,
-    roughness:.8
-   })
-  );
-
- pot.position.y=.75;
-
- hero.add(pot);
-
-
- const rim=
-  new THREE.Mesh(
-   new THREE.TorusGeometry(
-    1.03,
-    .12,
-    12,
-    28
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x8e4b28
-   })
-  );
-
- rim.rotation.x=
-  Math.PI/2;
-
- rim.position.y=
-  1.43;
-
- hero.add(rim);
-
-
- const head=
-  new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .68,
-    20,
-    16
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0xe0a078
-   })
-  );
-
- head.position.y=
-  1.35;
-
- hero.add(head);
-
-
- const helmet=
-  new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .72,
-    20,
-    12,
-    0,
-    Math.PI*2,
-    0,
-    Math.PI*.55
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x1a2227,
-    roughness:.7
-   })
-  );
-
- helmet.position.y=
-  1.62;
-
- hero.add(helmet);
-
-
- [-.22,.22].forEach(
-  x=>{
-
-   const eye=
-    new THREE.Mesh(
-     new THREE.SphereGeometry(
-      .07,
-      8,
-      8
-     ),
-     new THREE.MeshBasicMaterial({
-      color:0x111111
-     })
-    );
-
-   eye.position.set(
-    x,
-    1.42,
-    .63
-   );
-
-   hero.add(eye);
-
-  }
- );
-
-
- const nose=
-  new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .07,
-    8,
-    8
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0xc47a5d
-   })
-  );
-
- nose.position.set(
-  0,
-  1.32,
-  .68
- );
-
- hero.add(nose);
-
-
- hero.position.set(
-  0,
-  .82,
-  3.5
- );
-
- scene.add(hero);
+ hero=new THREE.Group();
+ const pot=new THREE.Mesh(new THREE.CylinderGeometry(1,1.42,1.62,40),new THREE.MeshStandardMaterial({color:0x1649a6,roughness:.24,metalness:.28}));pot.position.y=.78;pot.castShadow=true;pot.receiveShadow=true;hero.add(pot);
+ const inner=new THREE.Mesh(new THREE.CylinderGeometry(.88,.72,.13,40),new THREE.MeshStandardMaterial({color:0x071a3b}));inner.position.y=1.53;hero.add(inner);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(1.03,.13,14,40),new THREE.MeshStandardMaterial({color:0x5fa9ff,roughness:.2,metalness:.45,emissive:0x082d70,emissiveIntensity:.35}));rim.rotation.x=Math.PI/2;rim.position.y=1.56;hero.add(rim);
+ const foot=new THREE.Mesh(new THREE.TorusGeometry(1.08,.055,8,40),new THREE.MeshStandardMaterial({color:0x9dd2ff,metalness:.5}));foot.rotation.x=Math.PI/2;foot.position.y=.12;hero.add(foot);
+ for(let i=0;i<12;i++){const q=i/12*Math.PI*2,l=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,6,6),new THREE.MeshStandardMaterial({color:0x8cc8ff,metalness:.5,emissive:0x08265b,emissiveIntensity:.3}));l.position.set(Math.sin(q)*1.04,.78+Math.cos(q)*.42,Math.cos(q)*.9);l.rotation.y=q;l.scale.set(.9,1.15,.45);hero.add(l);}
+ const em=new THREE.Mesh(new THREE.OctahedronGeometry(.28,0),new THREE.MeshStandardMaterial({color:0xc6e7ff,metalness:.55,emissive:0x1649a6,emissiveIntensity:.55}));em.position.set(0,.85,1.04);em.scale.z=.25;hero.add(em);
+ const skin=new THREE.MeshStandardMaterial({color:0xd89a72}),shirt=new THREE.MeshStandardMaterial({color:0x202c3a}),blue=new THREE.MeshStandardMaterial({color:0x55a8ff,metalness:.15});
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.7,5,10),shirt);torso.position.set(0,1.66,.05);torso.rotation.x=-.12;hero.add(torso);
+ const stripe=new THREE.Mesh(new THREE.BoxGeometry(.12,.62,.035),blue);stripe.position.set(0,1.68,.45);hero.add(stripe);
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.19,.21,.28,12),skin);neck.position.set(0,2.08,.08);hero.add(neck);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.43,24,20),skin);head.scale.set(.9,1.12,.92);head.position.set(0,2.48,.1);hero.add(head);
+ const hairMat=new THREE.MeshStandardMaterial({color:0x18202a});const hair=new THREE.Mesh(new THREE.SphereGeometry(.45,20,12,0,Math.PI*2,0,Math.PI*.57),hairMat);hair.position.set(0,2.72,.04);hero.add(hair);
+ const fringe=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),hairMat);fringe.scale.set(1.4,.55,.75);fringe.position.set(-.13,2.69,.43);hero.add(fringe);
+ for(const x of [-.145,.145]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.042,10,8),new THREE.MeshStandardMaterial({color:0x17202a}));eye.position.set(x,2.49,.48);hero.add(eye);const brow=new THREE.Mesh(new THREE.BoxGeometry(.12,.035,.035),hairMat);brow.position.set(x,2.57,.47);hero.add(brow);}
+ const nose=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),skin);nose.position.set(0,2.4,.51);hero.add(nose);
+ const smile=new THREE.Mesh(new THREE.TorusGeometry(.075,.012,5,12,Math.PI),new THREE.MeshBasicMaterial({color:0x713c38}));smile.position.set(0,2.34,.48);smile.rotation.z=Math.PI;hero.add(smile);
+ for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,8),shirt);arm.position.set(side*.48,1.72,.28);arm.rotation.z=side*.62;hero.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),skin);hand.position.set(side*.68,1.55,.56);hero.add(hand);const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.18,.42),new THREE.MeshStandardMaterial({color:0x101820}));boot.position.set(side*.38,1,.42);hero.add(boot);}
+ hero.position.set(0,.82,3.5);scene.add(hero);
 }
-
 
 /* =====================================================
    HAMMER + ROPE
 ===================================================== */
 
 function createHammer(){
-
- hammer=
-  new THREE.Group();
-
- const handle=
-  new THREE.Mesh(
-   new THREE.CylinderGeometry(
-    .09,
-    .09,
-    3.8,
-    14
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x8d5b36
-   })
-  );
-
- handle.rotation.z=
-  Math.PI/2;
-
- handle.position.x=
-  -1.9;
-
- hammer.add(handle);
-
-
- const head=
-  new THREE.Mesh(
-   new THREE.BoxGeometry(
-    .55,
-    .55,
-    1.5
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x737a7e,
-    metalness:.4
-   })
-  );
-
- head.position.x=
-  -.65;
-
- hammer.add(head);
-
-
- const tip=
-  new THREE.Mesh(
-   new THREE.SphereGeometry(
-    .25,
-    16,
-    12
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0xffcc33,
-    emissive:0x664400
-   })
-  );
-
- hammer.add(tip);
-
- hammer.userData.tip=
-  tip;
-
-
- hammer.position.set(
-  3,
-  3,
-  4
- );
-
- scene.add(hammer);
-
-
- hammerRopeMaterial=
-  new THREE.LineBasicMaterial({
-   color:0xffcc33,
-   transparent:true,
-   opacity:.65
-  });
-
- const ropeGeometry=
-  new THREE.BufferGeometry()
-   .setFromPoints([
-    new THREE.Vector3(),
-    new THREE.Vector3()
-   ]);
-
- hammerRope=
-  new THREE.Line(
-   ropeGeometry,
-   hammerRopeMaterial
-  );
-
- hammerRope.visible=false;
-
- scene.add(hammerRope);
+ hammer=new THREE.Group();
+ const handle=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,2.7,12),new THREE.MeshStandardMaterial({color:0x26394b,metalness:.45}));handle.position.y=-.55;hammer.add(handle);
+ const grip=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.62,10),new THREE.MeshStandardMaterial({color:0x55a8ff}));grip.position.y=-.55;hammer.add(grip);
+ const head=new THREE.Mesh(new THREE.BoxGeometry(1.5,.2,.25),new THREE.MeshStandardMaterial({color:0xb8c7d2,metalness:.85,roughness:.25}));head.position.y=.72;hammer.add(head);
+ const tip=new THREE.Mesh(new THREE.ConeGeometry(.13,.58,8),new THREE.MeshStandardMaterial({color:0xd9e7f2,metalness:.9}));tip.position.set(-.76,.72,0);tip.rotation.z=Math.PI/2;hammer.add(tip);
+ const adze=new THREE.Mesh(new THREE.ConeGeometry(.14,.48,8),new THREE.MeshStandardMaterial({color:0x91a5b5,metalness:.9}));adze.position.set(.77,.72,0);adze.rotation.z=-Math.PI/2;hammer.add(adze);
+ hammer.position.set(3,3,4);scene.add(hammer);
+ hammerRopeMaterial=new THREE.LineBasicMaterial({color:0x55a8ff,transparent:true,opacity:.72});
+ hammerRope=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),hammerRopeMaterial);hammerRope.visible=false;scene.add(hammerRope);
 }
-
 
 /* =====================================================
    GRIPS
@@ -5601,7 +5400,7 @@ function updatePhysics(dt){
 
 if(hero.position.y<groundY){
   if(velocityY<-1){
-    resetPlayer();
+    showFailure();
     return;
   }
 
@@ -5939,6 +5738,9 @@ function beginSummitSequence(){
 
     const unlock=
      $("unlockMessage");
+    window.climboriaCurrentLevel=currentLevel;
+    const nextButton=document.getElementById("nextLevelVictoryButton");
+    if(nextButton){nextButton.textContent=currentLevel>=10?"EXPEDITION COMPLETE":"NEXT LEVEL";nextButton.disabled=currentLevel>=10;nextButton.style.opacity=currentLevel>=10?".55":"1";}
 
     if(peak){
 
@@ -5992,6 +5794,13 @@ function showVictory(){
    RESET
 ===================================================== */
 
+function showFailure(){
+ running=false;grabbed=null;touchActive=false;gameWon=false;summitSequence=false;cancelVictoryTimer();
+ if(hammerRope)hammerRope.visible=false;if(touchReticle)touchReticle.visible=false;
+ const failure=document.getElementById("failure");
+ if(failure){const label=document.getElementById("failureLevel");if(label)label.textContent="LEVEL "+String(currentLevel).padStart(2,"0");failure.style.display="flex";}
+ ["hud","hudPoints","help","nav","touchHint","cryptoTicker","victory"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
+}
 function resetPlayer(){
 
  if(!hero||!camera)return;
@@ -7565,7 +7374,7 @@ function updateHelpText(){
   ?
   "<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
   :
-  "Move cursor = hammer tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
+  "Move cursor = piko tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
 }
 
 
@@ -7612,6 +7421,8 @@ function resize(){
 
 function showGame(){
 
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
+ window.climboriaCurrentLevel=currentLevel;
  if(
   !scene||
   !camera||
@@ -7686,6 +7497,7 @@ function showGame(){
 
 function showMenu(){
 
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
  cancelVictoryTimer();
 
  running=false;
@@ -8109,6 +7921,7 @@ window.startLevel=
 
 window.restartGame=
  restartGame;
+window.showFailure=showFailure;
 
 window.copyReferral=
  copyReferral;
