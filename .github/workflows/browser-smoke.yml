@@ -211,6 +211,7 @@ jobs:
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
               });
+              await progression.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
               await progression.getByRole('button', { name: /start climb/i }).click();
               await progression.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await progression.locator('#level1Card').click();
