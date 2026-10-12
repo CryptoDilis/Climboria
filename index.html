@@ -2431,7 +2431,7 @@ try{
 }catch(firstError){
 
  console.warn(
-  "CLIMBORIA: primary Three.js CDN failed; trying fallback.",
+  "CLIMBORIA: esm.sh unavailable; trying jsDelivr.",
   firstError
  );
 
@@ -2441,40 +2441,54 @@ try{
    "https://cdn.jsdelivr.net/npm/three@0.180.0/+esm"
   );
 
- }catch(error){
+ }catch(secondError){
 
-  console.error(
-   "CLIMBORIA: both Three.js CDNs failed.",
-   error
+  console.warn(
+   "CLIMBORIA: jsDelivr unavailable; trying unpkg.",
+   secondError
   );
 
-  const status=
-   document.getElementById("status");
+  try{
 
-  if(status){
+   THREE=await import(
+    "https://unpkg.com/three@0.180.0/build/three.module.js"
+   );
 
-   status.textContent=
-    "GAME ENGINE LOAD ERROR — CHECK CONNECTION AND RELOAD";
+  }catch(error){
 
-   status.style.color=
-    "#ff6677";
+   console.error(
+    "CLIMBORIA: all Three.js CDNs failed.",
+    error
+   );
+
+   const status=
+    document.getElementById("status");
+
+   if(status){
+
+    status.textContent=
+     "GAME ENGINE LOAD ERROR — CHECK CONNECTION AND RELOAD";
+
+    status.style.color=
+     "#ff6677";
+   }
+
+   const startButton=
+    document.getElementById("startButton");
+
+   if(startButton){
+
+    startButton.textContent=
+     "RELOAD GAME";
+
+    startButton.onclick=
+     function(){
+      location.reload();
+     };
+   }
+
+   throw error;
   }
-
-  const startButton=
-   document.getElementById("startButton");
-
-  if(startButton){
-
-   startButton.textContent=
-    "RELOAD GAME";
-
-   startButton.onclick=
-    function(){
-     location.reload();
-    };
-  }
-
-  throw error;
  }
 }
 
@@ -3813,17 +3827,38 @@ function init(){
  );
  camera.updateProjectionMatrix();
 
- renderer=
-  new THREE.WebGLRenderer({
-   antialias:true,
-   powerPreference:
-    "high-performance"
-  });
+ try{
+
+  renderer=
+   new THREE.WebGLRenderer({
+    antialias:true,
+    powerPreference:
+     "high-performance"
+   });
+
+ }catch(rendererError){
+
+  console.warn(
+   "CLIMBORIA: retrying WebGL with lightweight settings.",
+   rendererError
+  );
+
+  renderer=
+   new THREE.WebGLRenderer({
+    antialias:false,
+    powerPreference:
+     "low-power",
+    failIfMajorPerformanceCaveat:false
+   });
+ }
+
+ const maxPixelRatio =
+  innerWidth <= 700 ? 1.5 : 2;
 
  renderer.setPixelRatio(
   Math.min(
-   devicePixelRatio,
-   2
+   window.devicePixelRatio || 1,
+   maxPixelRatio
   )
  );
 
