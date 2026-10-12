@@ -1416,6 +1416,55 @@ h3{
 
 </style>
 
+
+<style id="climboria-mobile-first-v1">
+/* Portrait gameplay: use the whole viewport and keep overlays readable. */
+html, body { min-height:100%; }
+body > canvas {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+}
+#landing, #launchpad, #levelSelect, #victory, #failure { z-index:20; }
+#hud, #hudPoints, #help, #nav, #touchHint { z-index:10; }
+@media (max-width:700px) and (orientation:portrait) {
+  #hud {
+    top: max(8px, env(safe-area-inset-top));
+    left:10px;
+    right:10px;
+  }
+  #hud .top { min-height:66px; }
+  .stat { font-size:10px; line-height:1.65; }
+  #bar { width:clamp(82px, 25vw, 120px); }
+  #status { top:58px; font-size:9px; }
+  #hudPoints { top:75px; }
+  #help {
+    bottom:max(10px, env(safe-area-inset-bottom));
+    white-space:normal;
+    width:94%;
+    font-size:9px;
+    line-height:1.4;
+  }
+  #touchHint {
+    bottom:48px;
+    max-width:92%;
+    white-space:normal;
+    line-height:1.4;
+  }
+  #climboria-game-brand {
+    top:max(8px, env(safe-area-inset-top));
+    left:10px;
+  }
+}
+@media (max-width:380px) and (orientation:portrait) {
+  .stat { font-size:9px; }
+  #bar { width:78px; }
+  #climboria-game-brand span { display:none; }
+}
+</style>
+
 </head>
 
 <body>
@@ -7403,14 +7452,32 @@ function resize(){
 
  if(!camera||!renderer)return;
 
- camera.aspect=
-  innerWidth/innerHeight;
+ const isPortraitMobile =
+  innerWidth <= 700 && innerHeight > innerWidth;
+
+ camera.aspect =
+  innerWidth / innerHeight;
+
+ /*
+  MOBILE-FIRST CAMERA V1
+  Portrait screens need a little more camera distance so
+  players can read the climber, grips, and route together.
+  Landscape/desktop keeps the original framing.
+ */
+ camera.position.z = isPortraitMobile ? 23 : 18;
 
  camera.updateProjectionMatrix();
 
  renderer.setSize(
   innerWidth,
   innerHeight
+ );
+
+ renderer.setPixelRatio(
+  Math.min(
+   window.devicePixelRatio || 1,
+   isPortraitMobile ? 1.5 : 2
+  )
  );
 }
 
