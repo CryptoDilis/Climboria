@@ -5911,7 +5911,7 @@ function beginSummitSequence(){
      $("unlockMessage");
     window.climboriaCurrentLevel=currentLevel;
     const nextButton=document.getElementById("nextLevelVictoryButton");
-    if(nextButton){nextButton.textContent=currentLevel>=10?"EXPEDITION COMPLETE":"NEXT LEVEL";nextButton.disabled=currentLevel>=10;nextButton.style.opacity=currentLevel>=10?".55":"1";}
+    if(nextButton){nextButton.textContent=currentLevel>=10?"EXPEDITION COMPLETE":"NEXT: LEVEL "+String(currentLevel+1).padStart(2,"0")+" →";nextButton.disabled=currentLevel>=10;nextButton.style.opacity=currentLevel>=10?".55":"1";}
 
     if(peak){
 
