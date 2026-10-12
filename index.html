@@ -2351,111 +2351,6 @@ h3{
 
 })();
 
-/* CLIMBORIA_MOUNTAIN_GRAPHICS_V2 */
-
-const mountainVisualGroup = new THREE.Group();
-
-function addMountainFace(points, color, z) {
-  const geometry = new THREE.BufferGeometry();
-
-  const vertices = new Float32Array([
-    points[0][0], points[0][1], z,
-    points[1][0], points[1][1], z,
-    points[2][0], points[2][1], z
-  ]);
-
-  geometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(vertices, 3)
-  );
-
-  geometry.computeVertexNormals();
-
-  const material = new THREE.MeshStandardMaterial({
-    color: color,
-    roughness: 1,
-    metalness: 0
-  });
-
-  const mesh = new THREE.Mesh(
-    geometry,
-    material
-  );
-
-  mountainVisualGroup.add(mesh);
-}
-
-addMountainFace(
-  [[-9,0],[0,62],[-2,0]],
-  0x252c30,
-  -3.2
-);
-
-addMountainFace(
-  [[-2,0],[0,62],[2,0]],
-  0x4b5559,
-  -3.1
-);
-
-addMountainFace(
-  [[2,0],[0,62],[9,0]],
-  0x252c30,
-  -3.2
-);
-
-const mountainEdgeMaterial =
-  new THREE.MeshBasicMaterial({
-    color: 0x9ba6a8,
-    transparent: true,
-    opacity: 0.22
-  });
-
-const mountainEdges = [
-  [-5.5,10,3.0,-0.16],
-  [5.0,17,3.4,0.15],
-  [-5.0,25,3.8,-0.14],
-  [4.8,34,3.6,0.13],
-  [-4.2,43,3.4,-0.12],
-  [3.8,51,3.0,0.11]
-];
-
-mountainEdges.forEach(function(p) {
-  const edge = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      p[2],
-      0.055,
-      0.04
-    ),
-    mountainEdgeMaterial
-  );
-
-  edge.position.set(
-    p[0],
-    p[1],
-    -2.95
-  );
-
-  edge.rotation.z = p[3];
-
-  mountainVisualGroup.add(edge);
-});
-
-scene.add(mountainVisualGroup);
-
-const mountainLight = new THREE.PointLight(
-  0x789097,
-  1.3,
-  28
-);
-
-mountainLight.position.set(
-  0,
-  42,
-  4
-);
-
-scene.add(mountainLight);
-
 </script>
 
 
@@ -3999,28 +3894,89 @@ function createSky(){
 
 function createMountain(){
 
- const cliff=
+ const mountainGroup=
+  new THREE.Group();
+
+ const mountainShape=
+  new THREE.Shape();
+
+ mountainShape.moveTo(-11,0);
+ mountainShape.lineTo(-8.5,9);
+ mountainShape.lineTo(-7.2,19);
+ mountainShape.lineTo(-5.2,29);
+ mountainShape.lineTo(-3.8,39);
+ mountainShape.lineTo(-2.1,49);
+ mountainShape.lineTo(0,63);
+ mountainShape.lineTo(2.8,50);
+ mountainShape.lineTo(4.6,40);
+ mountainShape.lineTo(6.5,30);
+ mountainShape.lineTo(8.1,19);
+ mountainShape.lineTo(9.2,9);
+ mountainShape.lineTo(11,0);
+ mountainShape.closePath();
+
+ const mountainBase=
   new THREE.Mesh(
-   new THREE.BoxGeometry(
-    22,
-    70,
-    7
-   ),
+   new THREE.ShapeGeometry(mountainShape),
    new THREE.MeshStandardMaterial({
-    color:0x4d5558,
-    roughness:1
+    color:0x303a3e,
+    roughness:1,
+    metalness:0,
+    side:THREE.DoubleSide
    })
   );
 
- cliff.position.set(
-   0,
-   34,
-   -7
- );
+ mountainBase.position.set(0,0,-3.7);
+ mountainGroup.add(mountainBase);
 
- cliff.rotation.y=-.04;
+ const mountainFacetData=[
+  [[-11,0],[-8.5,9],[-3.8,0],0x394347],
+  [[-8.5,9],[-7.2,19],[-3.8,0],0x465155],
+  [[-7.2,19],[-5.2,29],[-2.7,17],0x30393d],
+  [[-7.2,19],[-2.7,17],[-3.8,0],0x3d484c],
+  [[-5.2,29],[-3.8,39],[-1.4,27],0x465155],
+  [[-5.2,29],[-1.4,27],[-2.7,17],0x364044],
+  [[-3.8,39],[-2.1,49],[0,38],0x303a3e],
+  [[-3.8,39],[0,38],[-1.4,27],0x414c50],
+  [[-2.1,49],[0,63],[1.1,46],0x4b575b],
+  [[-2.1,49],[1.1,46],[0,38],0x354044],
+  [[0,63],[2.8,50],[1.1,46],0x30393d],
+  [[2.8,50],[4.6,40],[1.1,46],0x465155],
+  [[4.6,40],[6.5,30],[2.7,29],0x303a3e],
+  [[4.6,40],[2.7,29],[1.1,46],0x3b464a],
+  [[6.5,30],[8.1,19],[3.8,18],0x465155],
+  [[6.5,30],[3.8,18],[2.7,29],0x30393d],
+  [[8.1,19],[9.2,9],[4.4,8],0x354044],
+  [[8.1,19],[4.4,8],[3.8,18],0x414c50],
+  [[9.2,9],[11,0],[4.4,8],0x30393d],
+  [[-3.8,0],[-2.7,17],[0,0],0x30393d],
+  [[0,0],[-2.7,17],[2.7,29],0x354044],
+  [[0,0],[2.7,29],[4.4,8],0x414c50],
+  [[0,0],[4.4,8],[11,0],0x30393d]
+ ];
 
- scene.add(cliff);
+ mountainFacetData.forEach(function(face){
+  const points=face[0];
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute(
+   "position",
+   new THREE.Float32BufferAttribute([
+    points[0][0],points[0][1],-3.62,
+    points[1][0],points[1][1],-3.62,
+    points[2][0],points[2][1],-3.62
+   ],3)
+  );
+  geometry.computeVertexNormals();
+  const material=new THREE.MeshStandardMaterial({
+   color:face[1],
+   roughness:1,
+   metalness:0,
+   side:THREE.DoubleSide
+  });
+  mountainGroup.add(new THREE.Mesh(geometry,material));
+ });
+
+ scene.add(mountainGroup);
 
 
  const ledges=[
