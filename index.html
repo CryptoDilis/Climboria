@@ -3986,7 +3986,7 @@ function createMountain(){
 
  const mountainBase=
   new THREE.Mesh(
-   new THREE.ShapeGeometry(mountainShape),
+   new THREE.ExtrudeGeometry(mountainShape,{ depth:6, bevelEnabled:false, steps:1, curveSegments:2 }),
    new THREE.MeshStandardMaterial({
     color:0x303a3e,
     roughness:1,
@@ -3995,7 +3995,8 @@ function createMountain(){
    })
   );
 
- mountainBase.position.set(0,0,-3.7);
+ // Extruded rock body: front face stays at z=-3.7; added depth is behind the climbing face.
+ mountainBase.position.set(0,0,-9.7);
  mountainGroup.add(mountainBase);
 
  const mountainFacetData=[
