@@ -3791,11 +3791,11 @@ function init(){
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
 
- camera.fov = portraitMobile ? 78 : 55;
+ camera.fov = portraitMobile ? 82 : 55;
  camera.position.set(
   0,
   7,
-  portraitMobile ? 21 : 18
+  portraitMobile ? 32 : 18
  );
  camera.updateProjectionMatrix();
 
@@ -5568,12 +5568,12 @@ function updateCamera(){
  if(summitSequence)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 78 : 55;
- camera.position.z = portraitMobile ? 21 : 18;
+ camera.fov = portraitMobile ? 82 : 55;
+ camera.position.z = portraitMobile ? 32 : 18;
  camera.updateProjectionMatrix();
 
  const targetY=
-  hero.position.y + (portraitMobile ? 6.5 : 5);
+  hero.position.y + (portraitMobile ? 9.5 : 5);
 
  camera.position.y+=
   (
@@ -5896,11 +5896,11 @@ function resetPlayer(){
  );
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 78 : 55;
+ camera.fov = portraitMobile ? 82 : 55;
  camera.position.set(
   0,
   7,
-  portraitMobile ? 21 : 18
+  portraitMobile ? 32 : 18
  );
  camera.updateProjectionMatrix();
 
@@ -7479,8 +7479,8 @@ function resize(){
   players can read the climber, grips, and route together.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = isPortraitMobile ? 21 : 18;
- camera.fov = isPortraitMobile ? 78 : 55;
+ camera.position.z = isPortraitMobile ? 32 : 18;
+ camera.fov = isPortraitMobile ? 82 : 55;
 
  camera.updateProjectionMatrix();
 
