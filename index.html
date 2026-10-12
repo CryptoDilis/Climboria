@@ -8205,7 +8205,7 @@ if(
  unlockNextLevel=function(){
   if(currentLevel>=10)return;
   if(unlockedLevel<currentLevel+1){unlockedLevel=currentLevel+1;try{localStorage.setItem("climboria_unlocked_level",String(unlockedLevel));}catch(e){}}
-  window.updateLevelUI();
+  updateLevelUI();
  };
  startLevel=function(level){
   level=Math.floor(Number(level)||0);
@@ -8213,14 +8213,14 @@ if(
   if(level>unlockedLevel){if(typeof setStatus==="function")setStatus("LEVEL LOCKED","#ffcc33");return;}
   currentLevel=level;applyTheme();
   if(typeof showGame==="function")showGame();
-  window.updateLevelUI();
+  updateLevelUI();
  };
  ensureCards();
  try{
   const saved=Number(localStorage.getItem("climboria_unlocked_level"));
   if(Number.isFinite(saved)&&saved>=1)unlockedLevel=Math.min(10,Math.max(unlockedLevel,Math.floor(saved)));
  }catch(e){}
- window.updateLevelUI();
+ updateLevelUI();
  window.startLevel=startLevel;
  window.climboriaApplyLevelTheme=applyTheme;
 })();
