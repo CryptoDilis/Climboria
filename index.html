@@ -7868,6 +7868,15 @@ function animate(time=0){
   animate
  );
 
+ /*
+  Keep gameplay simulation paused while the page is backgrounded.
+  This helps mobile browsers avoid stale input/physics updates when
+  the player switches apps or returns to the game.
+ */
+ if(document.hidden){
+  lastTime=performance.now();
+  return;
+ }
 
  const now=
   performance.now();
