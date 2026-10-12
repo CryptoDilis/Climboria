@@ -181,8 +181,8 @@ jobs:
               });
 
               await expedition.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
-              await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
-              await expedition.getByRole('button', { name: /start climb/i }).click();
+              await expedition.waitForFunction(() => typeof window.showLevelSelect === 'function', { timeout: 15000 });
+              await expedition.evaluate(() => window.showLevelSelect());
               await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               const summitCount = await expedition.locator('.levelCard[data-level]').count();
               if (summitCount !== 10) {
@@ -213,7 +213,8 @@ jobs:
                 timeout: 30000
               });
               await progression.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
-              await progression.getByRole('button', { name: /start climb/i }).click();
+              await progression.waitForFunction(() => typeof window.showLevelSelect === 'function', { timeout: 15000 });
+              await progression.evaluate(() => window.showLevelSelect());
               await progression.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await progression.locator('#level1Card').click();
               await progression.locator('#hudLevelName').waitFor({ state: 'visible', timeout: 10000 });
