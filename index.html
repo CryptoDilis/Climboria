@@ -5948,7 +5948,7 @@ function beginSummitSequence(){
     if(unlock){
 
      if(
-      currentLevel<5&&
+      currentLevel<10&&
       unlockedLevel>
       currentLevel
      ){
@@ -5958,7 +5958,7 @@ function beginSummitSequence(){
        unlockedLevel+
        " UNLOCKED";
 
-     }else if(currentLevel>=5){
+     }else if(currentLevel>=10){
 
       unlock.textContent=
        "ALL CURRENT LEVELS COMPLETED";
@@ -8133,6 +8133,111 @@ if(
  );
 }
 
+
+(function(){
+ const additions={
+  6:{name:"SOLANA SKYBRIDGE",reward:350,playable:true,difficulty:6},
+  7:{name:"AVALANCHE PASS",reward:400,playable:true,difficulty:7},
+  8:{name:"ORACLE'S EDGE",reward:450,playable:true,difficulty:8},
+  9:{name:"THE VOID CLIMB",reward:500,playable:true,difficulty:9},
+  10:{name:"CLIMBORIA: WORLD PEAK",reward:1000,playable:true,difficulty:10}
+ };
+ Object.keys(LEVELS).forEach(k=>{LEVELS[k].playable=true;});
+ Object.assign(LEVELS,additions);
+ const descriptions={
+ 6:"A narrow high-speed traverse above a luminous canyon.",
+ 7:"Jagged switchbacks demand clean swings and careful recovery.",
+ 8:"Long transfers and technical routes leave little margin.",
+ 9:"Thin grips, brutal diagonals, and a lightless wall.",
+ 10:"The ultimate summit. Every swing and recovery counts."
+ };
+ function ensureCards(){
+  const grid=document.querySelector(".levelGrid");if(!grid)return;
+  Object.keys(additions).forEach(key=>{
+   const n=Number(key);if(document.getElementById("level"+n+"Card"))return;
+   const card=document.createElement("div");card.className="levelCard locked";card.id="level"+n+"Card";card.dataset.level=key;
+   card.innerHTML='<div class="levelNumber">LEVEL '+String(n).padStart(2,"0")+(n===10?' · FINAL':'')+'</div><div class="levelName">'+LEVELS[n].name+'</div><div class="levelDescription">'+descriptions[n]+'</div><div class="levelStatus">🔒 LOCKED</div><div class="levelReward">+'+LEVELS[n].reward+' CP</div>';
+   grid.appendChild(card);
+   card.addEventListener("click",()=>window.startLevel(n));
+  });
+ }
+ const themes=[
+  {sky:0x05090d,grip:0x55ff70,emissive:0x113d19},{sky:0x071018,grip:0x62e8ff,emissive:0x103d4a},
+  {sky:0x0c0b18,grip:0xffc857,emissive:0x49320c},{sky:0x0a1020,grip:0x8c9bff,emissive:0x222d66},
+  {sky:0x07141a,grip:0x4ca8ff,emissive:0x0d3158},{sky:0x100b20,grip:0xc38bff,emissive:0x3b1d61},
+  {sky:0x160c0a,grip:0xff815e,emissive:0x5c2116},{sky:0x071b1c,grip:0x56f0d0,emissive:0x104e44},
+  {sky:0x03040b,grip:0xff4e89,emissive:0x57142d},{sky:0x101a29,grip:0xffd66b,emissive:0x5b4514}
+ ];
+ const routes=[
+  [-4,2,-2,4,0,-4,2,5,0,-4,2,-2,4,0,-4,2,-2,4,0,-3],
+  [-4.5,3,-1.5,4.8,-4,1.2,5.2,-2.8,3.8,-5.2,1.2,5.1,-2.8,3.8,-4.5,1.5,4.7,-1.5,2.8],
+  [-4,3.5,-3.5,4.5,-1.5,-5,3.5,5.5,-2,-5,3.5,-3.5,5,0,-5,3.5],
+  [-5,0,-4.5,3.5,-1,5,1,-4.5,0,5.2,-2,-5,2.5,5,-1.5,3.5,-3.5,0],
+  [-4,4.5,-1,5.2,-4.8,0,4.8,-3,1.5,5.5,-4.5,0,4.8,-2.5,3.5,-4.5,1.5,0],
+  [-5,1.5,-3.5,4.8,-.5,-5.2,2.8,5.4,-1.8,-5.3,1.8,5.3,-2.8,-5,2.8,5,-1,1.5],
+  [-4.8,4.8,-4.8,1,5.4,-2.8,-5.3,3.8,5.4,-1.8,-5.3,2.8,5.2,-3.8,-5,2.5,5.2,-1.8,1],
+  [-5,4.8,-1,-5.3,2.8,5.3,-3.8,1,-5.2,4.8,-1.8,5.3,-4.8,2.8,-2.8,5.2,-4.8,1.8,-2.8,2.5],
+  [-5.2,5.2,-4.8,4.8,-1,-5.4,4.8,-4.8,1.8,5.4,-5.2,4.8,-1.8,-5.2,5.2,-4.8,2.8,-2.8,1.5],
+  [-4.8,4.8,-5.2,1.5,5.4,-3.8,4.8,-5.3,.5,5.3,-4.8,3.8,-5.3,1.8,5.3,-4.8,4.8,-2.8,5.2,-4.8,1.5,0]
+ ];
+ function applyTheme(){
+  const p=themes[Math.max(0,Math.min(9,currentLevel-1))];
+  if(scene){
+   scene.background.setHex(p.sky);
+   if(scene.fog&&scene.fog.color)scene.fog.color.setHex(p.sky);
+   scene.children.forEach(obj=>{
+    if(obj.geometry&&obj.geometry.type==="SphereGeometry"&&obj.geometry.parameters&&obj.geometry.parameters.radius===80&&obj.material&&obj.material.color)obj.material.color.setHex(p.sky);
+    if(obj.type==="Group"&&obj.children.some(child=>child.geometry&&child.geometry.type==="ShapeGeometry")){
+     obj.children.forEach(child=>{
+      if(!child.material||!child.material.color)return;
+      if(child.material.userData.climboriaBaseColor===undefined)child.material.userData.climboriaBaseColor=child.material.color.getHex();
+      child.material.color.setHex(child.material.userData.climboriaBaseColor).lerp(new THREE.Color(p.grip),.10);
+     });
+    }
+   });
+  }
+  const route=routes[Math.max(0,Math.min(9,currentLevel-1))].slice(0,grips.length);
+  grips.forEach((g,i)=>{
+   if(i<route.length){g.x=route[i];g.y=4+i*(58/(route.length-1));g.group.position.set(g.x,g.y,3.1);g.group.visible=true;}
+   else {g.group.visible=false;g.x=999;g.y=-100;}
+   if(g.ring&&g.ring.material){g.ring.material.color.setHex(p.grip);g.ring.material.emissive.setHex(p.emissive);}
+   if(g.glow&&g.glow.material)g.glow.material.color.setHex(p.grip);
+  });
+  const status=document.getElementById("status");if(status)status.style.color="#"+p.grip.toString(16).padStart(6,"0");
+  const points=document.getElementById("hudPointsValue");if(points)points.style.color="#"+p.grip.toString(16).padStart(6,"0");
+ }
+ updateLevelUI=function(){
+  for(let i=1;i<=10;i++){
+   const card=document.getElementById("level"+i+"Card");if(!card)continue;
+   const locked=i>unlockedLevel;card.classList.toggle("locked",locked);
+   const status=card.querySelector(".levelStatus");if(status)status.textContent=locked?"🔒 LOCKED":"UNLOCKED";
+  }
+  const hud=document.getElementById("hudLevelName");
+  if(hud&&LEVELS[currentLevel])hud.textContent="LEVEL "+String(currentLevel).padStart(2,"0")+" • "+LEVELS[currentLevel].name;
+ };
+ unlockNextLevel=function(){
+  if(currentLevel>=10)return;
+  if(unlockedLevel<currentLevel+1){unlockedLevel=currentLevel+1;try{localStorage.setItem("climboria_unlocked_level",String(unlockedLevel));}catch(e){}}
+  updateLevelUI();
+ };
+ startLevel=function(level){
+  level=Math.floor(Number(level)||0);
+  if(!LEVELS[level])return;
+  if(level>unlockedLevel){if(typeof setStatus==="function")setStatus("LEVEL LOCKED","#ffcc33");return;}
+  currentLevel=level;applyTheme();
+  if(typeof showGame==="function")showGame();
+  updateLevelUI();
+ };
+ ensureCards();
+ try{
+  const saved=Number(localStorage.getItem("climboria_unlocked_level"));
+  if(Number.isFinite(saved)&&saved>=1)unlockedLevel=Math.min(10,Math.max(unlockedLevel,Math.floor(saved)));
+ }catch(e){}
+ updateLevelUI();
+ window.startLevel=startLevel;
+ window.climboriaApplyLevelTheme=applyTheme;
+})();
+
 </script>
 
 <script>/* CLIMBORIA_FALL_RESET_CENTER */</script>
@@ -8198,6 +8303,17 @@ if(
   }
 }
 </style>
+
+
+<style id="climboria-ten-summit-ui">
+.levelGrid{width:min(920px,96%);max-height:min(58vh,620px);overflow-y:auto;overscroll-behavior:contain;padding:2px 5px 8px 0;scrollbar-width:thin;scrollbar-color:#55ff7050 #ffffff08}
+.levelCard{min-height:132px}
+.levelCard:not(.locked){border-color:#55ff7040;background:linear-gradient(135deg,#55ff7010,#ffffff04)}
+.levelCard[data-level="10"]:not(.locked){border-color:#ffd66b80;background:linear-gradient(135deg,#ffd66b18,#55ff7007)}
+.levelCard[data-level="10"] .levelName{color:#ffdf88}
+@media(max-width:700px){.levelGrid{grid-template-columns:1fr;max-height:56vh}.levelCard{min-height:112px;padding:13px}.levelName{font-size:15px}.levelDescription{font-size:9px}.levelStatus{margin-top:9px}}
+</style>
+
 
 </body>
 </html>

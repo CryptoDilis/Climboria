@@ -2,7 +2,7 @@ name: Climboria Browser Smoke Test
 
 on:
   push:
-    branches: [main, codex/mountain-stability-v2]
+    branches: [main, codex/mountain-stability-v2, codex/ten-summit-expedition]
     paths:
       - "index.html"
       - "favicon.png"
@@ -150,6 +150,34 @@ jobs:
                 throw new Error('Mobile gameplay did not reach the expected state.');
               }
               await mobile.close();
+
+              // Ten-summit progression: preload a fully unlocked save and verify Level 10 can launch.
+              const expedition = await browser.newPage({
+                viewport: { width: 1280, height: 800 },
+                deviceScaleFactor: 1
+              });
+              expedition.on('pageerror', error => pageErrors.push('expedition: ' + error.message));
+              await expedition.goto('http://127.0.0.1:4173/', {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+              });
+              await expedition.evaluate(() => localStorage.setItem('climboria_unlocked_level', '10'));
+              await expedition.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+              await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
+              await expedition.getByRole('button', { name: /start climb/i }).click();
+              await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
+              const summitCount = await expedition.locator('.levelCard[data-level]').count();
+              if (summitCount !== 10) {
+                throw new Error('Expected 10 summit cards, found ' + summitCount);
+              }
+              await expedition.locator('#level10Card').click();
+              await expedition.waitForTimeout(1200);
+              const finalLevelName = await expedition.locator('#hudLevelName').innerText();
+              if (!finalLevelName.includes('WORLD PEAK')) {
+                throw new Error('Level 10 did not launch correctly: ' + finalLevelName);
+              }
+              console.log('PASS: all 10 summit cards render and Level 10 launches: ' + finalLevelName);
+              await expedition.close();
 
               if (pageErrors.length) {
                 throw new Error('Uncaught browser errors: ' + pageErrors.join(' | '));
