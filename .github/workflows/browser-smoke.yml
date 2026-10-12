@@ -153,16 +153,33 @@ jobs:
 
               // Ten-summit progression: preload a fully unlocked save and verify Level 10 can launch.
               const expedition = await browser.newPage({
+
                 viewport: { width: 1280, height: 800 },
+
                 deviceScaleFactor: 1
+
               });
+
               expedition.on('pageerror', error => pageErrors.push('expedition: ' + error.message));
-              await expedition.goto('http://127.0.0.1:4173/', {
-                waitUntil: 'domcontentloaded',
-                timeout: 30000
+
+              await expedition.addInitScript(() => {
+
+                if (location.origin === 'http://127.0.0.1:4173') {
+
+                  localStorage.setItem('climboria_unlocked_level', '10');
+
+                }
+
               });
-              await expedition.evaluate(() => localStorage.setItem('climboria_unlocked_level', '10'));
-              await expedition.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+
+              await expedition.goto('http://127.0.0.1:4173/', {
+
+                waitUntil: 'domcontentloaded',
+
+                timeout: 30000
+
+              });
+
               await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
               await expedition.getByRole('button', { name: /start climb/i }).click();
               await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
