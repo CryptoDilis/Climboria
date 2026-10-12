@@ -180,6 +180,7 @@ jobs:
 
               });
 
+              await expedition.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
               await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
               await expedition.getByRole('button', { name: /start climb/i }).click();
               await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
