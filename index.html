@@ -3967,19 +3967,21 @@ function createMountain(){
  const mountainShape=
   new THREE.Shape();
 
- mountainShape.moveTo(-66,0);
- mountainShape.lineTo(-54,10);
- mountainShape.lineTo(-44,20);
- mountainShape.lineTo(-34,30);
- mountainShape.lineTo(-24,40);
- mountainShape.lineTo(-14,50);
+ // Keep the mountain silhouette proportionate on portrait phones.
+ // The climbing route and grip coordinates stay unchanged.
+ mountainShape.moveTo(-22,0);
+ mountainShape.lineTo(-18,10);
+ mountainShape.lineTo(-15,20);
+ mountainShape.lineTo(-12,30);
+ mountainShape.lineTo(-9,40);
+ mountainShape.lineTo(-6,50);
  mountainShape.lineTo(0,63);
- mountainShape.lineTo(14,50);
- mountainShape.lineTo(24,40);
- mountainShape.lineTo(34,30);
- mountainShape.lineTo(44,20);
- mountainShape.lineTo(54,10);
- mountainShape.lineTo(66,0);
+ mountainShape.lineTo(6,50);
+ mountainShape.lineTo(9,40);
+ mountainShape.lineTo(12,30);
+ mountainShape.lineTo(15,20);
+ mountainShape.lineTo(18,10);
+ mountainShape.lineTo(22,0);
  mountainShape.closePath();
 
  const mountainBase=
