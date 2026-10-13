@@ -3907,26 +3907,30 @@ function createSky(){
 function createAlpineBackdrop(){
  const backdrop=new THREE.Group();
 
- // Tall distant Himalayan silhouettes, staggered in depth for scale.
+ // Layer 1: distant blue-grey Himalayan range.
  const peaks=[
-  {x:-31,z:-31,w:19,h:38,c:0x718b9b},
-  {x:-23,z:-25,w:17,h:49,c:0x879eac},
-  {x:-12,z:-35,w:21,h:42,c:0x6e8798},
-  {x:9,z:-34,w:22,h:48,c:0x7b94a5},
-  {x:24,z:-29,w:19,h:39,c:0x8ba3b1},
-  {x:34,z:-37,w:22,h:51,c:0x6e8798}
+  {x:-34,z:-42,w:20,h:34,c:0x829cab},
+  {x:-25,z:-34,w:18,h:45,c:0x9aafbb},
+  {x:-14,z:-43,w:22,h:39,c:0x718b9c},
+  {x:2,z:-46,w:24,h:49,c:0x8da5b3},
+  {x:20,z:-38,w:20,h:40,c:0x9aafbb},
+  {x:34,z:-45,w:23,h:48,c:0x718b9c},
+  {x:45,z:-39,w:17,h:32,c:0x91a7b3}
  ];
  peaks.forEach((p,i)=>{
-  const base=-2;
+  const base=-3;
+  const peakX=p.x+p.w*.03;
+  const peakY=base+p.h;
   const shape=new THREE.Shape();
   shape.moveTo(p.x-p.w,base);
-  shape.lineTo(p.x-p.w*.66,base+p.h*.48);
-  shape.lineTo(p.x-p.w*.35,base+p.h*.37);
-  shape.lineTo(p.x-p.w*.12,base+p.h*.78);
-  shape.lineTo(p.x+p.w*.03,base+p.h);
-  shape.lineTo(p.x+p.w*.28,base+p.h*.68);
-  shape.lineTo(p.x+p.w*.43,base+p.h*.75);
-  shape.lineTo(p.x+p.w*.7,base+p.h*.34);
+  shape.lineTo(p.x-p.w*.76,base+p.h*.25);
+  shape.lineTo(p.x-p.w*.48,base+p.h*.42);
+  shape.lineTo(p.x-p.w*.31,base+p.h*.35);
+  shape.lineTo(p.x-p.w*.12,base+p.h*.76);
+  shape.lineTo(peakX,peakY);
+  shape.lineTo(p.x+p.w*.22,base+p.h*.65);
+  shape.lineTo(p.x+p.w*.38,base+p.h*.73);
+  shape.lineTo(p.x+p.w*.64,base+p.h*.31);
   shape.lineTo(p.x+p.w,base);
   shape.closePath();
   const mesh=new THREE.Mesh(
@@ -3939,43 +3943,94 @@ function createAlpineBackdrop(){
   mesh.position.z=p.z;
   backdrop.add(mesh);
 
-  // Broken snow faces on the upper ridges.
-  const snowColor=[0xe7f2f6,0xc9dce6,0xf4f8fa][i%3];
-  const snowA=new THREE.Mesh(
-   new THREE.BufferGeometry(),
-   new THREE.MeshStandardMaterial({
-    color:snowColor,roughness:1,side:THREE.DoubleSide,
-    transparent:true,opacity:.96,flatShading:true
-   })
-  );
-  const verts=[
-   p.x-p.w*.12,base+p.h*.78,p.z-.03,
-   p.x+p.w*.03,base+p.h,p.z-.03,
-   p.x+p.w*.28,base+p.h*.68,p.z-.03,
-   p.x-p.w*.12,base+p.h*.78,p.z-.03,
-   p.x-p.w*.35,base+p.h*.37,p.z-.03,
-   p.x+p.w*.03,base+p.h,p.z-.03
+  // Broken snow cap and snow gullies, made from angular alpine planes.
+  const snowTone=[0xf4f8fa,0xd8e7ee,0xe8f1f5,0xcbdde6][i%4];
+  const snowSets=[
+   [[p.x-p.w*.12,base+p.h*.76],[peakX,peakY],[p.x+p.w*.22,base+p.h*.65]],
+   [[p.x-p.w*.12,base+p.h*.76],[p.x-p.w*.31,base+p.h*.35],[peakX,peakY]],
+   [[peakX,peakY],[p.x+p.w*.22,base+p.h*.65],[p.x+p.w*.38,base+p.h*.73]]
   ];
-  snowA.geometry.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
-  snowA.geometry.computeVertexNormals();
-  backdrop.add(snowA);
+  snowSets.forEach((pts,j)=>{
+   const verts=[];
+   pts.forEach(pt=>verts.push(pt[0],pt[1],p.z-.06-j*.006));
+   const geo=new THREE.BufferGeometry();
+   geo.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+   geo.computeVertexNormals();
+   backdrop.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+    color:j===1?0xb9cfd9:snowTone,roughness:1,
+    side:THREE.DoubleSide,flatShading:true
+   })));
+  });
+
+  // Exposed rock facets catch the sunlight and keep silhouettes from looking flat.
+  const facetSets=[
+   [[p.x-p.w*.76,base+p.h*.25],[p.x-p.w*.48,base+p.h*.42],[p.x-p.w*.31,base+p.h*.35]],
+   [[p.x-p.w*.48,base+p.h*.42],[p.x-p.w*.12,base+p.h*.76],[p.x-p.w*.31,base+p.h*.35]],
+   [[p.x+p.w*.22,base+p.h*.65],[p.x+p.w*.64,base+p.h*.31],[p.x+p.w*.38,base+p.h*.73]]
+  ];
+  facetSets.forEach((pts,j)=>{
+   const verts=[];
+   pts.forEach(pt=>verts.push(pt[0],pt[1],p.z-.045));
+   const geo=new THREE.BufferGeometry();
+   geo.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+   geo.computeVertexNormals();
+   backdrop.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+    color:[0x667f8f,0xb0c0c9,0x5c7484][(i+j)%3],
+    roughness:1,side:THREE.DoubleSide,flatShading:true
+   })));
+  });
  });
 
- // High-altitude mist banks: soft layered ellipsoids behind the climb face.
- const mistMaterial=new THREE.MeshBasicMaterial({
-  color:0xeaf5fb,transparent:true,opacity:.16,depthWrite:false
- });
- const mistBands=[
-  {x:-18,y:13,z:-13,sx:15,sy:2.2,sz:2.4},
-  {x:15,y:20,z:-16,sx:17,sy:2.8,sz:2.8},
-  {x:-8,y:31,z:-20,sx:19,sy:2.5,sz:3},
-  {x:25,y:36,z:-22,sx:13,sy:2.1,sz:2.5},
-  {x:-27,y:27,z:-19,sx:12,sy:2.2,sz:2.5}
+ // Mid-distance jagged shoulders give the main climbing cliff a grander scale.
+ const shoulders=[
+  {x:-24,z:-18,w:15,h:26,c:0x8ba0ac},
+  {x:-17,z:-22,w:13,h:31,c:0xa7b9c3},
+  {x:19,z:-21,w:15,h:29,c:0x9bafba},
+  {x:27,z:-19,w:14,h:25,c:0x7c94a2}
  ];
- mistBands.forEach(b=>{
+ shoulders.forEach((p,i)=>{
+  const sh=new THREE.Shape();
+  sh.moveTo(p.x-p.w,-2);
+  sh.lineTo(p.x-p.w*.55,8);
+  sh.lineTo(p.x-p.w*.22,p.h*.68);
+  sh.lineTo(p.x,p.h);
+  sh.lineTo(p.x+p.w*.24,p.h*.61);
+  sh.lineTo(p.x+p.w*.52,10);
+  sh.lineTo(p.x+p.w,-2);
+  sh.closePath();
+  const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshStandardMaterial({
+   color:p.c,roughness:1,side:THREE.DoubleSide,flatShading:true
+  }));
+  m.position.z=p.z;
+  backdrop.add(m);
+  const snow=new THREE.BufferGeometry();
+  snow.setAttribute("position",new THREE.Float32BufferAttribute([
+   p.x-p.w*.22,p.h*.68,p.z-.04,
+   p.x,p.h,p.z-.04,
+   p.x+p.w*.24,p.h*.61,p.z-.04
+  ],3));
+  snow.computeVertexNormals();
+  backdrop.add(new THREE.Mesh(snow,new THREE.MeshStandardMaterial({
+   color:i%2?0xe8f1f5:0xf5f8fa,roughness:1,side:THREE.DoubleSide
+  })));
+ });
+
+ // Soft stacked clouds sit behind the ridge, not over the playable rock face.
+ const cloudLayers=[
+  {x:-25,y:11,z:-15,sx:12,sy:1.8,sz:2.2,o:.17},
+  {x:-8,y:15,z:-19,sx:16,sy:2.0,sz:2.5,o:.22},
+  {x:14,y:18,z:-17,sx:17,sy:2.4,sz:2.6,o:.20},
+  {x:31,y:24,z:-22,sx:13,sy:2.1,sz:2.5,o:.17},
+  {x:-19,y:29,z:-24,sx:14,sy:1.8,sz:2.4,o:.15},
+  {x:8,y:34,z:-25,sx:18,sy:2.0,sz:2.7,o:.13}
+ ];
+ cloudLayers.forEach((b,i)=>{
   const cloud=new THREE.Mesh(
-   new THREE.SphereGeometry(1,14,8),
-   mistMaterial.clone()
+   new THREE.SphereGeometry(1,18,10),
+   new THREE.MeshBasicMaterial({
+    color:i%2?0xf5f9fc:0xdcebf3,
+    transparent:true,opacity:b.o,depthWrite:false
+   })
   );
   cloud.position.set(b.x,b.y,b.z);
   cloud.scale.set(b.sx,b.sy,b.sz);
@@ -3983,7 +4038,6 @@ function createAlpineBackdrop(){
  });
  scene.add(backdrop);
 }
-
 
 /* =====================================================
    MOUNTAIN
