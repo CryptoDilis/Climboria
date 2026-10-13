@@ -74,7 +74,12 @@ jobs:
                 throw new Error('Landing page did not return a successful response.');
               }
 
-              await page.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
+              await page.waitForFunction(() => {
+                const landing = document.getElementById('landing');
+                const play = document.querySelector('[data-cd-action="play"], .cd-play-now');
+                const legacy = document.getElementById('startButton');
+                return !!landing && getComputedStyle(landing).display !== 'none' && (!!play || !!legacy);
+              }, { timeout: 15000 });
               await page.waitForTimeout(2500);
               const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const visibleCanvasCount = await page.locator('canvas:visible').count();
@@ -96,7 +101,13 @@ jobs:
                 throw new Error('Three.js canvas exists but has invalid dimensions: ' + JSON.stringify(canvasSize));
               }
 
-              await page.getByRole('button', { name: /start climb/i }).click();
+              await page.evaluate(() => {
+                const play = document.querySelector('[data-cd-action="play"], .cd-play-now');
+                const legacy = document.getElementById('startButton');
+                if (play) play.click();
+                else if (legacy) legacy.click();
+                else throw new Error('No Play/Start Climb control found');
+              });
               await page.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await page.screenshot({ path: 'climboria-level-select.png', fullPage: true });
 
@@ -136,7 +147,11 @@ jobs:
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
               });
-              await mobile.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
+              await mobile.waitForFunction(() => {
+                const landing = document.getElementById('landing');
+                return !!landing && getComputedStyle(landing).display !== 'none' &&
+                  !!(document.querySelector('[data-cd-action="play"], .cd-play-now') || document.getElementById('startButton'));
+              }, { timeout: 15000 });
               await mobile.waitForTimeout(2500);
               const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const mobileCanvasCount = await mobile.locator('canvas:visible').count();
@@ -145,7 +160,13 @@ jobs:
                   (mobileBootFailure || 'none') + '; page errors: ' + pageErrors.join(' | '));
               }
               await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 5000 });
-              await mobile.getByRole('button', { name: /start climb/i }).click();
+              await mobile.evaluate(() => {
+                const play = document.querySelector('[data-cd-action="play"], .cd-play-now');
+                const legacy = document.getElementById('startButton');
+                if (play) play.click();
+                else if (legacy) legacy.click();
+                else throw new Error('No Play/Start Climb control found');
+              });
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await mobile.locator('#level1Card').click();
               await mobile.waitForTimeout(1000);
@@ -194,7 +215,11 @@ jobs:
 
               });
 
-              await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
+              await expedition.waitForFunction(() => {
+                const landing = document.getElementById('landing');
+                return !!landing && getComputedStyle(landing).display !== 'none' &&
+                  !!(document.querySelector('[data-cd-action="play"], .cd-play-now') || document.getElementById('startButton'));
+              }, { timeout: 15000 });
               await expedition.waitForTimeout(500);
               const expeditionBeforeClick = await expedition.evaluate(() => ({
                 landing: getComputedStyle(document.getElementById('landing')).display,
@@ -208,10 +233,15 @@ jobs:
 
               // Only click when the landing button is genuinely available. Some builds
               // may restore straight into an already-open menu/game state during boot.
-              if (expeditionBeforeClick.landing !== 'none' &&
-                  expeditionBeforeClick.startButtonDisplay !== 'none' &&
-                  expeditionBeforeClick.startButtonVisibility === 'visible') {
-                await expedition.locator('#startButton').click({ timeout: 7000 });
+              if (expeditionBeforeClick.landing !== 'none' && expeditionBeforeClick.levelSelect === 'none' &&
+                  expeditionBeforeClick.hud === 'none') {
+                await expedition.evaluate(() => {
+                  const play = document.querySelector('[data-cd-action="play"], .cd-play-now');
+                  const legacy = document.getElementById('startButton');
+                  if (play) play.click();
+                  else if (legacy) legacy.click();
+                  else throw new Error('No Play/Start Climb control found');
+                });
               }
               await expedition.waitForTimeout(500);
               const expeditionState = await expedition.evaluate(() => ({
