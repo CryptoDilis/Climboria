@@ -4768,7 +4768,7 @@ function createHero(){
  for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,8),shirt);arm.position.set(side*.48,1.72,.28);arm.rotation.z=side*.62;hero.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),skin);hand.position.set(side*.68,1.55,.56);hero.add(hand);const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.18,.42),new THREE.MeshStandardMaterial({color:0x101820}));boot.position.set(side*.38,1,.42);hero.add(boot);}
  /* Face the climbing wall instead of facing the player/camera. */
  hero.rotation.y = Math.PI;
- hero.position.set(0,.82,3.5);scene.add(hero);
+ hero.position.set(0,.03,3.5);scene.add(hero);
 }
 
 /* =====================================================
@@ -5562,7 +5562,7 @@ function updatePhysics(dt){
   );
 
 
- const groundY=.82;
+ const groundY=.03;
 
 if(hero.position.y<groundY){
   if(velocityY<-1){
@@ -5970,7 +5970,7 @@ function resetPlayer(){
  hero.rotation.y = Math.PI;
  hero.position.set(
   0,
-  .82,
+  .03,
   3.5
  );
 
