@@ -5227,8 +5227,9 @@ function startGrab(){
  if(!running)return;
 
  const result=nearestGrip();
- // Larger finger target on phones; forgiving mouse target on desktop.
- const grabRadius=touchActive?92:56;
+ // Use forgiving screen-space targets: the visible ring is larger than its center.
+ // This makes the first grab reliable on both laptop and phone.
+ const grabRadius=touchActive?125:88;
 
  if(
   result.grip&&
