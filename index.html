@@ -5972,6 +5972,7 @@ function resetPlayer(){
  if(!hero||!camera)return;
 
  hero.rotation.y = Math.PI;
+ hero.userData.celebrationArms?.forEach(a=>{a.pivot.rotation.z=a.rest;});
  hero.position.set(
   0,
   .03,
