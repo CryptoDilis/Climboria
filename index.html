@@ -1677,6 +1677,32 @@ body{
 }
 </style>
 
+
+<style id="climboria-desktop-dashboard-spacing-fix">
+/* Desktop dashboard: separate rows so stats never collide with feature cards. */
+@media(min-width:701px){
+ #landing .climboria-launch-announcement{top:26%!important;right:3%!important;width:min(28%,430px)!important}
+ .cd-hero-actions{top:43%!important;left:2.2%!important;width:min(63%,960px)!important;gap:12px!important}
+ #landing .pointsPanel{left:2.2%!important;bottom:29%!important;width:min(55%,760px)!important;gap:10px!important}
+ #landing .progressPanel{left:2.2%!important;right:2.2%!important;bottom:15%!important;gap:10px!important}
+ #landing .cards{left:2.2%!important;bottom:2%!important;width:min(63%,960px)!important;gap:10px!important}
+ .cd-live-price-panel{right:3%!important;bottom:3%!important;width:min(28%,430px)!important}
+ #landing .pointsBox,#landing .progressCard,#landing .card{min-width:0!important}
+ #landing .pointsBox{padding:12px 10px!important}
+ #landing .progressCard{padding:12px 10px!important}
+ #landing .card{min-height:72px!important}
+}
+@media(min-width:701px) and (max-height:760px){
+ .climboria-dashboard-header{height:78px!important}
+ #landing .climboria-launch-announcement{top:24%!important;padding:12px!important}
+ .cd-hero-actions{top:41%!important}
+ #landing .pointsPanel{bottom:28%!important}
+ #landing .progressPanel{bottom:14%!important}
+ #landing .cards{bottom:1.5%!important}
+ #landing .pointsLabel,#landing .pointsSmall,#landing .progressTitle,#landing .progressText,#landing .progressStatus{font-size:11px!important}
+}
+</style>
+
 </head>
 
 <body>
