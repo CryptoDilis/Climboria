@@ -4875,8 +4875,23 @@ function createHero(){
 
  // Traditional Filipino palayok: rounded terracotta body, narrow neck,
  // thick rolled rim, and a genuinely hollow-looking mouth.
+ // Procedural low-cost clay grain keeps the jar tactile without downloading assets.
+ const clayCanvas=document.createElement("canvas");
+ clayCanvas.width=256;clayCanvas.height=256;
+ const clayCtx=clayCanvas.getContext("2d");
+ clayCtx.fillStyle="#9b4e2d";clayCtx.fillRect(0,0,256,256);
+ for(let i=0;i<2400;i++){
+  const x=Math.random()*256,y=Math.random()*256;
+  const r=.4+Math.random()*2.2;
+  clayCtx.fillStyle=Math.random()>.5?"rgba(226,157,103,0.10)":"rgba(55,27,18,0.10)";
+  clayCtx.beginPath();clayCtx.ellipse(x,y,r,r*(.35+Math.random()),Math.random()*.5,0,Math.PI*2);clayCtx.fill();
+ }
+ const clayTexture=new THREE.CanvasTexture(clayCanvas);
+ clayTexture.colorSpace=THREE.SRGBColorSpace;
+ clayTexture.wrapS=THREE.RepeatWrapping;clayTexture.wrapT=THREE.RepeatWrapping;
+ clayTexture.repeat.set(2,1);
  const clay=new THREE.MeshStandardMaterial({
-  color:0x9b4e2d, roughness:.91, metalness:0
+  color:0xffffff, map:clayTexture, roughness:.94, metalness:0
  });
  const clayLight=new THREE.MeshStandardMaterial({
   color:0xb96a40, roughness:.86, metalness:0
@@ -5826,7 +5841,8 @@ function updateHammer(){
 
  // Keep the ice pick anchored to the hero's hand at all times.
  // The gameplay still targets grips with the existing cursor/raycast logic.
- const handX=hero.position.x+.86;
+ // Hero faces the wall (Y rotation = PI), so local +X maps to world -X.
+ const handX=hero.position.x-.86;
  const handY=hero.position.y+2.4;
  const targetX=grabbed?anchorWorld.x:cursorWorld.x;
  const targetY=grabbed?anchorWorld.y:cursorWorld.y;
