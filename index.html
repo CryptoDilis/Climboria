@@ -5203,7 +5203,8 @@ function nearestGrip(){
  const requiredIndex=highestGripIndexReached+1;
 
  for(const g of grips){
-  if(sequentialAdvancedRoute && g.index!==requiredIndex)continue;
+  // Permit the current grip for recovery and only the immediate next grip for progress.
+  if(sequentialAdvancedRoute && (g.index<highestGripIndexReached || g.index>requiredIndex))continue;
   if(!g.group.visible)continue;
   const dx=cursorWorld.x-g.x;
   const dy=cursorWorld.y-g.y;
