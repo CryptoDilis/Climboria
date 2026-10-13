@@ -5638,8 +5638,8 @@ if(hero.position.y<groundY){
 function updateHammer(dt=1/60){
  if(!hammer||!hero)return;
  const pickHand=hero.userData.pickArm?.hand;
- if(pickHand){pickHand.getWorldPosition(hammer.position);hammer.position.z=4;}
- else hammer.position.set(hero.position.x-.61,hero.position.y+1.61,4);
+ if(pickHand){pickHand.getWorldPosition(hammer.position);hammer.position.z=3.62;}
+ else hammer.position.set(hero.position.x-.61,hero.position.y+1.61,3.62);
  const handX=hammer.position.x,handY=hammer.position.y;
  const targetX=grabbed?anchorWorld.x:cursorWorld.x;
  const targetY=grabbed?anchorWorld.y:cursorWorld.y;
@@ -5649,7 +5649,7 @@ function updateHammer(dt=1/60){
  hammer.rotation.z=aim+strike;
  if(hero.userData.pickArm){
   const arm=hero.userData.pickArm;
-  const swingPose=arm.rest-(1-hammerSwing)*.38;
+  const swingPose=arm.rest-Math.sin((1-hammerSwing)*Math.PI)*.38;
   arm.pivot.rotation.z=THREE.MathUtils.lerp(arm.pivot.rotation.z,swingPose,.42);
  }
  if(hammerRope)hammerRope.visible=false;
