@@ -124,12 +124,41 @@ jobs:
                 isMobile: true,
                 hasTouch: true
               });
-              mobile.on('pageerror', error => pageErrors.push('mobile: ' + error.message));
+              mobile.on('pageerror', error => pageErrors.push('mobile pageerror: ' + error.message));
+              mobile.on('console', message => {
+                if (message.type() === 'error') pageErrors.push('mobile console: ' + message.text());
+              });
+              mobile.on('requestfailed', request => pageErrors.push('mobile request failed: ' + request.url() + ' — ' + request.failure()?.errorText));
               await mobile.goto('http://127.0.0.1:4173/', {
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
               });
               await mobile.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
+              // Wait for the canvas to exist first, then report useful diagnostics if rendering
+              // did not create a visible canvas instead of returning only a generic timeout.
+              try {
+                await mobile.locator('canvas').waitFor({ state: 'attached', timeout: 20000 });
+              } catch (error) {
+                const diagnostic = await mobile.evaluate(() => ({
+                  title: document.title,
+                  status: document.getElementById('status')?.innerText || null,
+                  landing: document.getElementById('landing') ? getComputedStyle(document.getElementById('landing')).display : null,
+                  scriptCount: document.scripts.length,
+                  canvasCount: document.querySelectorAll('canvas').length,
+                  bodyText: (document.body.innerText || '').slice(0, 500)
+                }));
+                console.log('Mobile canvas missing diagnostics: ' + JSON.stringify(diagnostic));
+                throw new Error('Mobile renderer did not attach a canvas. Diagnostics: ' + JSON.stringify(diagnostic) + '. Original: ' + error.message);
+              }
+              const mobileCanvasBeforeStart = await mobile.locator('canvas').evaluate(el => ({
+                width: el.width,
+                height: el.height,
+                cssWidth: el.getBoundingClientRect().width,
+                cssHeight: el.getBoundingClientRect().height,
+                display: getComputedStyle(el).display,
+                visibility: getComputedStyle(el).visibility
+              }));
+              console.log('Mobile canvas before start: ' + JSON.stringify(mobileCanvasBeforeStart));
               await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
               await mobile.getByRole('button', { name: /start climb/i }).click();
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
