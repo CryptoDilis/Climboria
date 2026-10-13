@@ -4731,71 +4731,71 @@ function createHero(){
  for(const y of [.36,.43,1.12]){const band=mesh(new THREE.TorusGeometry(y===.36?1.13:1.18,.018,6,48),clayShadow,0,y,0);band.rotation.x=Math.PI/2;}
  // Boots/legs are partially visible in the jar opening.
  for(const side of [-1,1]){
-  capsule(side*.22,1.52,.12,.12,.34,pants,-side*.08);
-  const foot=mesh(new THREE.BoxGeometry(.22,.12,.30),boot,side*.24,1.36,.28);foot.rotation.y=side*.12;
+  capsule(side*.22,1.36,.12,.12,.34,pants,-side*.08);
+  const foot=mesh(new THREE.BoxGeometry(.22,.12,.30),boot,side*.24,1.23,.28);foot.rotation.y=side*.12;
  }
  // Backpack silhouette behind shoulders, with stitched panels.
- const pack=mesh(new THREE.BoxGeometry(.92,1.18,.42),jacketDark,0,2.67,-.34);pack.rotation.x=-.08;
- const packTop=mesh(new THREE.SphereGeometry(.48,14,10),jacket,0,3.15,-.34);packTop.scale.set(1,.56,.62);
+ const pack=mesh(new THREE.BoxGeometry(.92,.95,.42),jacketDark,0,2.10,-.34);pack.rotation.x=-.08;
+ const packTop=mesh(new THREE.SphereGeometry(.48,14,10),jacket,0,2.55,-.34);packTop.scale.set(1,.56,.62);
  for(const side of [-1,1]){
-  const pouch=mesh(new THREE.BoxGeometry(.22,.43,.25),jacket,side*.48,2.48,-.27);pouch.rotation.z=side*.08;
-  capsule(side*.36,2.78,.13,.07,.88,strap,-side*.09);
-  const buckleMesh=mesh(new THREE.BoxGeometry(.11,.14,.035),buckle,side*.36,2.54,.205);
+  const pouch=mesh(new THREE.BoxGeometry(.22,.43,.25),jacket,side*.48,1.95,-.27);pouch.rotation.z=side*.08;
+  capsule(side*.36,2.24,.13,.07,.88,strap,-side*.09);
+  const buckleMesh=mesh(new THREE.BoxGeometry(.11,.14,.035),buckle,side*.36,2.00,.205);
  }
  // Green technical jacket torso, raised shoulders and visible zipper.
- const torso=mesh(new THREE.CapsuleGeometry(.39,.70,7,12),jacket,0,2.52,.02);torso.rotation.x=-.04;
- const chest=mesh(new THREE.BoxGeometry(.62,.45,.12),jacketLight,0,2.60,.31);chest.scale.set(1,.95,.55);
- const zipper=mesh(new THREE.BoxGeometry(.025,.79,.025),buckle,0,2.52,.39);
+ const torso=mesh(new THREE.CapsuleGeometry(.39,.70,7,12),jacket,0,1.98,.02);torso.rotation.x=-.04;
+ const chest=mesh(new THREE.BoxGeometry(.62,.45,.12),jacketLight,0,2.06,.31);chest.scale.set(1,.95,.55);
+ const zipper=mesh(new THREE.BoxGeometry(.025,.79,.025),buckle,0,1.98,.39);
  for(const side of [-1,1]){
-  const pocket=mesh(new THREE.BoxGeometry(.20,.16,.025),jacket,side*.22,2.42,.39);
-  const pocketFlap=mesh(new THREE.BoxGeometry(.22,.035,.03),jacketLight,side*.22,2.51,.405);
-  capsule(side*.43,2.70,.02,.15,.36,jacket,side*.48);
+  const pocket=mesh(new THREE.BoxGeometry(.20,.16,.025),jacket,side*.22,1.88,.39);
+  const pocketFlap=mesh(new THREE.BoxGeometry(.22,.035,.03),jacketLight,side*.22,1.97,.405);
+  capsule(side*.43,2.16,.02,.15,.36,jacket,side*.48);
  }
  // Neck and expressive anime face, oriented toward the climbing wall.
- capsule(0,3.02,.03,.14,.18,skin);
- const face=mesh(new THREE.SphereGeometry(.355,24,20),skin,0,3.37,.07);face.scale.set(.91,1.13,.83);
+ capsule(0,2.48,.03,.14,.18,skin);
+ const face=mesh(new THREE.SphereGeometry(.355,24,20),skin,0,2.83,.07);face.scale.set(.91,1.13,.83);
  // Ears and subtle cheek blush.
  for(const side of [-1,1]){
-  mesh(new THREE.SphereGeometry(.075,10,8),skinShadow,side*.33,3.36,.06);
-  const blush=mesh(new THREE.SphereGeometry(.075,10,8),mat(0xe99587),side*.19,3.28,.30);blush.scale.set(1,.38,.12);
-  const eyeWhite=mesh(new THREE.SphereGeometry(.088,12,10),white,side*.145,3.40,.355);eyeWhite.scale.set(.8,1.25,.42);
-  const iris=mesh(new THREE.SphereGeometry(.061,12,10),eyeBlue,side*.145,3.395,.39);iris.scale.set(.75,1.1,.4);
-  mesh(new THREE.SphereGeometry(.026,8,6),ink,side*.145,3.39,.414);
-  mesh(new THREE.SphereGeometry(.018,8,6),white,side*.13,3.42,.425);
-  const brow=mesh(new THREE.BoxGeometry(.16,.035,.025),hairShadow,side*.15,3.53,.35);brow.rotation.z=side*.13;
+  mesh(new THREE.SphereGeometry(.075,10,8),skinShadow,side*.33,2.82,.06);
+  const blush=mesh(new THREE.SphereGeometry(.075,10,8),mat(0xe99587),side*.19,2.74,.30);blush.scale.set(1,.38,.12);
+  const eyeWhite=mesh(new THREE.SphereGeometry(.088,12,10),white,side*.145,2.86,.355);eyeWhite.scale.set(.8,1.25,.42);
+  const iris=mesh(new THREE.SphereGeometry(.061,12,10),eyeBlue,side*.145,2.855,.39);iris.scale.set(.75,1.1,.4);
+  mesh(new THREE.SphereGeometry(.026,8,6),ink,side*.145,2.85,.414);
+  mesh(new THREE.SphereGeometry(.018,8,6),white,side*.13,2.88,.425);
+  const brow=mesh(new THREE.BoxGeometry(.16,.035,.025),hairShadow,side*.15,2.99,.35);brow.rotation.z=side*.13;
  }
  // Small nose and determined mouth.
- mesh(new THREE.SphereGeometry(.035,8,6),skinShadow,0,3.32,.39);
- const mouth=mesh(new THREE.BoxGeometry(.095,.018,.018),ink,0,3.22,.365);mouth.rotation.z=-.08;
+ mesh(new THREE.SphereGeometry(.035,8,6),skinShadow,0,2.78,.39);
+ const mouth=mesh(new THREE.BoxGeometry(.095,.018,.018),ink,0,2.68,.365);mouth.rotation.z=-.08;
  // Blonde crown, side locks and sculpted fringe.
- const cap=mesh(new THREE.SphereGeometry(.385,20,14,0,Math.PI*2,0,Math.PI*.60),hair,0,3.59,.015);cap.scale.set(1.03,1.08,.98);
- const crownHighlight=mesh(new THREE.SphereGeometry(.345,18,12,0,Math.PI*2,0,Math.PI*.40),hairLight,0,3.66,.015);crownHighlight.scale.set(1,.72,.92);
+ const cap=mesh(new THREE.SphereGeometry(.385,20,14,0,Math.PI*2,0,Math.PI*.60),hair,0,3.05,.015);cap.scale.set(1.03,1.08,.98);
+ const crownHighlight=mesh(new THREE.SphereGeometry(.345,18,12,0,Math.PI*2,0,Math.PI*.40),hairLight,0,3.12,.015);crownHighlight.scale.set(1,.72,.92);
  for(const side of [-1,1]){
-  const lock=capsule(side*.30,3.27,.10,.095,.53,hair,side*.10);
-  const lockHi=capsule(side*.31,3.28,.18,.026,.46,hairLight,side*.10);
+  const lock=capsule(side*.30,2.73,.10,.095,.53,hair,side*.10);
+  const lockHi=capsule(side*.31,2.74,.18,.026,.46,hairLight,side*.10);
   // Long braids sit over the shoulders.
   for(let j=0;j<5;j++){
-   const y=3.45-j*.19,x=side*(.31+j*.025);
+   const y=2.91-j*.15,x=side*(.31+j*.025);
    const braid=mesh(new THREE.SphereGeometry(.115,10,8),j%2?hairLight:hair,x,y,.20);braid.scale.set(.78,1.12,.8);
   }
-  const braidTip=mesh(new THREE.SphereGeometry(.075,10,8),hairShadow,side*.43,2.50,.20);
-  mesh(new THREE.BoxGeometry(.13,.045,.035),jacketLight,side*.43,2.58,.20);
+  const braidTip=mesh(new THREE.SphereGeometry(.075,10,8),hairShadow,side*.43,2.15,.20);
+  mesh(new THREE.BoxGeometry(.13,.045,.035),jacketLight,side*.43,2.23,.20);
  }
  // Layered swept bangs framing the eyes.
  for(let i=0;i<5;i++){
   const x=-.27+i*.135;
-  const bang=mesh(new THREE.SphereGeometry(.14,10,8),i%2?hairLight:hair,x,3.54-Math.abs(x)*.18,.30);
+  const bang=mesh(new THREE.SphereGeometry(.14,10,8),i%2?hairLight:hair,x,3.00-Math.abs(x)*.18,.30);
   bang.scale.set(.75,.62,.45);bang.rotation.z=-.25-x*.4;
  }
  // Coiled climbing rope on the right shoulder, with several readable loops.
  const ropeMat=mat(0xc5a16a),ropeDark=mat(0x735237);
  for(let i=0;i<3;i++){
-  const loop=mesh(new THREE.TorusGeometry(.30+i*.045,.045,8,28),ropeMat,.68,2.86-i*.10,.05);
+  const loop=mesh(new THREE.TorusGeometry(.30+i*.045,.045,8,28),ropeMat,.68,2.30-i*.09,.05);
   loop.scale.set(.78,1.12,1);loop.rotation.z=.18;
  }
  const ropeTail=capsule(.78,2.47,.12,.045,.42,ropeDark,.12);
  // Tiny carabiner at the chest strap.
- const carabiner=mesh(new THREE.TorusGeometry(.09,.025,8,18),buckle,.42,2.45,.30);carabiner.rotation.z=.3;
+ const carabiner=mesh(new THREE.TorusGeometry(.09,.025,8,18),buckle,.42,1.94,.30);carabiner.rotation.z=.3;
  // Preserve the established hero anchor and all climbing/physics references.
  hero.rotation.y=Math.PI;
  hero.position.set(0,.03,3.5);
