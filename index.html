@@ -4749,7 +4749,23 @@ function createHero(){
  for(const side of [-1,1]){
   const pocket=mesh(new THREE.BoxGeometry(.20,.16,.025),jacket,side*.22,1.88,.39);
   const pocketFlap=mesh(new THREE.BoxGeometry(.22,.035,.03),jacketLight,side*.22,1.97,.405);
-  capsule(side*.43,2.16,.02,.15,.36,jacket,side*.48);
+ }
+ // Articulated arms: separate pivots let the hero celebrate with both hands raised at the summit.
+ hero.userData.celebrationArms=[];
+ for(const side of [-1,1]){
+  const armPivot=new THREE.Group();
+  armPivot.position.set(side*.39,2.18,.07);
+  hero.add(armPivot);
+  const upper=mesh(new THREE.CapsuleGeometry(.115,.34,5,9),jacket,side*.10,-.02,.015,armPivot);
+  upper.rotation.z=-side*.30;
+  const cuff=mesh(new THREE.CylinderGeometry(.095,.10,.09,10),jacketDark,side*.15,-.20,.025,armPivot);
+  cuff.rotation.z=-side*.30;
+  const forearm=mesh(new THREE.CapsuleGeometry(.078,.29,5,9),skin,side*.19,-.37,.035,armPivot);
+  forearm.rotation.z=-side*.30;
+  const hand=mesh(new THREE.SphereGeometry(.105,10,8),skin,side*.22,-.57,.05,armPivot);
+  // Small fist silhouette reads clearly at phone scale.
+  const thumb=mesh(new THREE.SphereGeometry(.045,8,6),skinShadow,side*.17,-.52,.12,armPivot);
+  hero.userData.celebrationArms.push({pivot:armPivot,side,rest:-side*.18});
  }
  // Neck and expressive anime face, oriented toward the climbing wall.
  capsule(0,2.48,.03,.14,.18,skin);
@@ -4798,6 +4814,7 @@ function createHero(){
  const carabiner=mesh(new THREE.TorusGeometry(.09,.025,8,18),buckle,.42,1.94,.30);carabiner.rotation.z=.3;
  // Preserve the established hero anchor and all climbing/physics references.
  hero.rotation.y=Math.PI;
+ hero.userData.celebrationArms?.forEach(a=>{a.pivot.rotation.z=a.rest;});
  hero.position.set(0,.03,3.5);
  scene.add(hero);
 }
@@ -5823,6 +5840,11 @@ function beginSummitSequence(){
   SUMMIT_HERO_Y,
   SUMMIT_HERO_Z
  );
+ // Victory pose: turn toward the camera and raise both arms in a clear "we did it!" celebration.
+ hero.rotation.y=0;
+ hero.userData.celebrationArms?.forEach(a=>{
+  a.pivot.rotation.z=a.side<0?.88:-.88;
+ });
 
 
  camera.position.set(
