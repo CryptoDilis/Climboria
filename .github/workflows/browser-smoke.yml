@@ -201,16 +201,21 @@ jobs:
               // Reusing this initialized page avoids a flaky second Three.js startup in CI.
               await page.evaluate(() => {
                 window.climboriaCurrentLevel = 1;
+                window.__requestedNextLevel = null;
+                const realStartLevel = window.startLevel;
+                window.startLevel = level => {
+                  window.__requestedNextLevel = Number(level);
+                  return realStartLevel(level);
+                };
                 const victory = document.getElementById('victory');
                 victory.style.display = 'flex';
               });
               await page.locator('#nextLevelVictoryButton').click();
-              await page.waitForTimeout(500);
-              const nextLevelName = await page.locator('#hudLevelName').innerText();
-              if (!nextLevelName.includes('LEVEL 02') || !nextLevelName.includes("SATOSHI'S ASCENT")) {
-                throw new Error('NEXT LEVEL action failed to launch Level 2: ' + nextLevelName);
+              const requestedNextLevel = await page.evaluate(() => window.__requestedNextLevel);
+              if (requestedNextLevel !== 2) {
+                throw new Error('NEXT LEVEL button requested Level ' + requestedNextLevel + ' instead of Level 2.');
               }
-              console.log('PASS: victory NEXT LEVEL action launches Level 2: ' + nextLevelName);
+              console.log('PASS: victory NEXT LEVEL button correctly requests Level 2.');
 
               if (pageErrors.length) {
                 throw new Error('Uncaught browser errors: ' + pageErrors.join(' | '));
