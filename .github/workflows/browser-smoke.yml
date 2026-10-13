@@ -75,7 +75,14 @@ jobs:
               }
 
               await page.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
-              await page.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
+              await page.waitForTimeout(2500);
+              const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
+              const visibleCanvasCount = await page.locator('canvas:visible').count();
+              if (bootFailure || visibleCanvasCount === 0) {
+                throw new Error('Game boot failed before WebGL canvas became visible. Boot overlay: ' +
+                  (bootFailure || 'none') + '; page errors: ' + pageErrors.join(' | '));
+              }
+              await page.locator('canvas').waitFor({ state: 'visible', timeout: 5000 });
               await page.screenshot({ path: 'climboria-landing.png', fullPage: true });
 
               const canvasSize = await page.locator('canvas').evaluate(el => ({
@@ -130,7 +137,14 @@ jobs:
                 timeout: 30000
               });
               await mobile.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
-              await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
+              await mobile.waitForTimeout(2500);
+              const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
+              const mobileCanvasCount = await mobile.locator('canvas:visible').count();
+              if (mobileBootFailure || mobileCanvasCount === 0) {
+                throw new Error('Mobile game boot failed before WebGL canvas became visible. Boot overlay: ' +
+                  (mobileBootFailure || 'none') + '; page errors: ' + pageErrors.join(' | '));
+              }
+              await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 5000 });
               await mobile.getByRole('button', { name: /start climb/i }).click();
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await mobile.locator('#level1Card').click();
