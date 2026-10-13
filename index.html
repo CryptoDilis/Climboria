@@ -5676,51 +5676,40 @@ function updateHammer(){
 
 function updateCamera(){
 
- if(summitSequence)return;
+ if(summitSequence || !hero || !camera)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
  camera.fov = portraitMobile ? 86 : 55;
  camera.position.z = portraitMobile ? 38 : 18;
  camera.updateProjectionMatrix();
 
- const targetY=
-  hero.position.y + (portraitMobile ? 8.5 : 5);
+ // Keep the climber near the visual center on every device.
+ // Aim around the hero's body center instead of looking above them;
+ // this keeps the next grips and route visible as the player moves.
+ const targetX = hero.position.x;
+ const targetY = hero.position.y + 1.2;
 
- camera.position.y+=
-  (
-   targetY-
-   camera.position.y
-  )*.09;
+ camera.position.y +=
+  (targetY - camera.position.y) * .16;
 
+ camera.position.x +=
+  (targetX - camera.position.x) * .16;
 
- camera.position.x+=
-  (
-   hero.position.x-
-   camera.position.x
-  )*.055;
+ if(cameraShake > 0){
 
+  camera.position.x +=
+   (Math.random() - .5) * cameraShake;
 
- if(cameraShake>0){
+  camera.position.y +=
+   (Math.random() - .5) * cameraShake;
 
-  camera.position.x+=
-   (Math.random()-.5)*
-   cameraShake;
-
-  camera.position.y+=
-   (Math.random()-.5)*
-   cameraShake;
-
-  cameraShake=
-   Math.max(
-    0,
-    cameraShake-.008
-   );
+  cameraShake =
+   Math.max(0, cameraShake - .008);
  }
 
-
  camera.lookAt(
-  hero.position.x,
-  camera.position.y,
+  targetX,
+  targetY,
   0
  );
 }
