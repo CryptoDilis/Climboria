@@ -3876,7 +3876,7 @@ function init(){
   );
 
  // Alpine distance haze blends far ridges into the sky instead of a black void.
- scene.fog=new THREE.FogExp2(0x91adba,0.00145);
+ scene.fog=new THREE.FogExp2(0x8fa4aa,0.0009);
 
  camera=
   new THREE.PerspectiveCamera(
@@ -4615,58 +4615,33 @@ function createScenicMountainBackdrop(){
 
 function createGround(){
 
- const ground=
-  new THREE.Mesh(
-   new THREE.BoxGeometry(
-    40,
-    1,
-    30
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x202b31,
-    roughness:1
-   })
-  );
-
- ground.position.y=-.5;
-
+ // Continuous rocky foothill apron: hides the flat box edge and visually anchors the mountain.
+ const groundMat=new THREE.MeshStandardMaterial({color:0x343f40,roughness:1,metalness:0});
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,120,1,1),groundMat);
+ ground.rotation.x=-Math.PI/2;
+ ground.position.set(0,-.12,-24);
+ ground.receiveShadow=true;
  scene.add(ground);
 
-
- const groundMarks=
-  new THREE.Group();
-
- for(let i=0;i<25;i++){
-
-  const mark=
-   new THREE.Mesh(
-    new THREE.BoxGeometry(
-     .4+
-     Math.random()*.8,
-     .03,
-     .15
-    ),
-    new THREE.MeshBasicMaterial({
-     color:0x354249,
-     transparent:true,
-     opacity:.6
-    })
-   );
-
-  mark.position.set(
-   (Math.random()-.5)*25,
-   .02,
-   5+
-   Math.random()*10
-  );
-
-  mark.rotation.y=
-   Math.random()*Math.PI;
-
-  groundMarks.add(mark);
+ // Irregular talus and scree at the foot of the playable cliff, blending into the terrain.
+ const screeMat=new THREE.MeshStandardMaterial({color:0x465052,roughness:1,flatShading:true});
+ const screeLight=new THREE.MeshStandardMaterial({color:0x697474,roughness:1,flatShading:true});
+ for(let i=0;i<100;i++){
+  const side=i%2===0?-1:1;
+  const x=side*(7+Math.random()*17);
+  const z=-3+Math.random()*22;
+  const size=.25+Math.random()*1.15;
+  const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(size,1),i%4===0?screeLight:screeMat);
+  stone.position.set(x,size*.45,-z);
+  stone.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);
+  stone.scale.set(1.25,.5+Math.random()*.7,.8+Math.random()*.6);
+  stone.castShadow=true;stone.receiveShadow=true;scene.add(stone);
  }
-
- scene.add(groundMarks);
+ // A shallow scree bank rises toward the mountain foot instead of a flat floating platform.
+ const bankShape=new THREE.Shape();
+ bankShape.moveTo(-29,-4);bankShape.lineTo(-25,1);bankShape.lineTo(-20,2.5);bankShape.lineTo(-15,1.1);bankShape.lineTo(-10,.5);bankShape.lineTo(-5,.1);bankShape.lineTo(0,.0);bankShape.lineTo(5,.1);bankShape.lineTo(10,.5);bankShape.lineTo(15,1.1);bankShape.lineTo(20,2.5);bankShape.lineTo(25,1);bankShape.lineTo(29,-4);bankShape.closePath();
+ const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x343f40,roughness:1,side:THREE.DoubleSide}));
+ bank.position.set(0,-.05,1.6);scene.add(bank);
 }
 
 
