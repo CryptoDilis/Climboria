@@ -4231,6 +4231,77 @@ function createMountain(){
  });
 
 
+ /* CLIMBORIA_MOUNTAIN_REALISM_V2
+    Surface relief, broken strata, scree and ice shelves.
+    All added geometry is decorative and does not move grips or alter physics.
+ */
+ function addRockShard(x,y,z,w,h,d,color,rotation){
+  const mesh=new THREE.Mesh(
+   new THREE.DodecahedronGeometry(1,0),
+   new THREE.MeshStandardMaterial({color,roughness:.98,metalness:0,flatShading:true})
+  );
+  mesh.position.set(x,y,z);
+  mesh.scale.set(w,h,d);
+  mesh.rotation.set(rotation[0],rotation[1],rotation[2]);
+  mesh.castShadow=true;mesh.receiveShadow=true;
+  mountainGroup.add(mesh);
+ }
+ // Uneven rock ribs follow the cliff silhouette and create real side-to-side depth.
+ const ribs=[
+  [-9.6,5,1.15,2.6,0x222d31],[-8.0,13,0.75,2.2,0x465256],
+  [-6.9,21,0.9,2.7,0x293439],[-5.0,31,0.8,2.5,0x4b575b],
+  [-3.4,41,0.72,2.7,0x293439],[-1.8,51,0.7,2.2,0x465256],
+  [2.2,48,0.8,2.5,0x293439],[4.3,38,0.9,2.8,0x4b575b],
+  [6.2,28,0.78,2.4,0x293439],[7.7,18,0.82,2.3,0x465256],
+  [9.1,8,1.0,2.2,0x293439]
+ ];
+ ribs.forEach((r,i)=>{
+  addRockShard(r[0],r[1],-3.34,r[2],r[3],.2,r[4],[.12*(i%3),.18*(i%2),-.2*(i%4)]);
+ });
+ // Natural broken rock plates: irregular polygons of varied sizes, kept outside the grip centers.
+ const plates=[
+  [-8.6,4.8,.8,.55,0x566166],[-7.1,8.2,.55,.85,0x202b30],
+  [-6.3,15.7,.65,.45,0x626d71],[-5.2,19.3,.48,.72,0x202b30],
+  [-4.6,26.6,.78,.48,0x566166],[-3.3,30.1,.52,.78,0x202b30],
+  [-2.5,37.8,.66,.5,0x626d71],[-1.2,42.1,.5,.75,0x202b30],
+  [1.5,19.1,.65,.48,0x566166],[2.6,24.2,.48,.72,0x202b30],
+  [3.7,31.3,.7,.5,0x626d71],[5.0,35.7,.5,.72,0x202b30],
+  [5.9,42.6,.65,.48,0x566166],[7.0,14.2,.55,.7,0x202b30],
+  [8.0,9.2,.75,.48,0x626d71],[-4.4,46.3,.58,.75,0x202b30],
+  [3.0,51.1,.65,.42,0x566166]
+ ];
+ plates.forEach((p,i)=>{
+  addRockShard(p[0],p[1],-3.28,p[2],p[3],.11,p[4],[.1*(i%2),.2*(i%3),.16*(i%4)]);
+ });
+ // Thin sediment ledges, staggered like fractured strata rather than continuous cartoon outlines.
+ const strata=[
+  [-10,6,-8.7,6.35],[-8.2,11.7,-7.0,12.05],[-7.2,17.3,-5.8,17.65],
+  [-6.1,23.5,-4.9,23.85],[-5.2,29.4,-4.0,29.7],[-4.1,35.5,-2.9,35.8],
+  [-3.0,41.5,-1.9,41.8],[-2.2,47.3,-.9,47.65],[-1.1,53.2,-.2,53.5],
+  [1.4,49.3,2.6,49.0],[3.0,43.0,4.2,42.7],[4.4,36.8,5.6,36.5],
+  [5.4,30.5,6.7,30.2],[6.7,24.1,7.9,23.8],[7.8,17.5,9.0,17.2],
+  [8.7,11.0,9.8,10.7]
+ ];
+ const strataPositions=[];
+ strata.forEach(v=>strataPositions.push(v[0],v[1],-3.02,v[2],v[3],-3.02));
+ const strataGeo=new THREE.BufferGeometry();
+ strataGeo.setAttribute("position",new THREE.Float32BufferAttribute(strataPositions,3));
+ mountainGroup.add(new THREE.LineSegments(strataGeo,new THREE.LineBasicMaterial({color:0x111a1e,transparent:true,opacity:.55})));
+ // A more irregular snow/ice crown with broken hanging ice facets near the summit.
+ const iceMat=new THREE.MeshStandardMaterial({color:0xc6d8dc,roughness:.72,metalness:.02,flatShading:true});
+ const iceShadowMat=new THREE.MeshStandardMaterial({color:0x70878f,roughness:.9,flatShading:true});
+ [
+  [[-2.7,49.8,-3.0],[-1.25,57.4,-3.0],[-.25,52.3,-3.0]],
+  [[-1.25,57.4,-3.0],[0,62.4,-3.0],[.65,54.1,-3.0]],
+  [[0,62.4,-3.0],[2.0,54.0,-3.0],[.65,54.1,-3.0]],
+  [[-2.7,49.8,-3.0],[-.25,52.3,-3.0],[-1.65,51.5,-3.0]]
+ ].forEach((p,i)=>{
+  const g=new THREE.BufferGeometry();
+  g.setAttribute("position",new THREE.Float32BufferAttribute(p.flat(),3));
+  g.computeVertexNormals();
+  mountainGroup.add(new THREE.Mesh(g,i===3?iceShadowMat:iceMat));
+ });
+
  /* CLIMBORIA_MOUNTAIN_GRAPHICS_V1
     Add distant ridgelines, raised rock planes, and an icy summit.
     Decorative meshes only: grip positions, ledges, and physics stay unchanged.
