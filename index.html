@@ -4619,6 +4619,70 @@ function createMountainDetails(){
  }
 
 
+ // GRAPHICS V4: visible rocky shelf dressing and broken snow rims.
+ // These are surface decorations only; the existing ledge colliders remain unchanged.
+ const shelfDecorations=[
+  {x:-8,y:5,w:1.5},{x:7,y:8,w:2},{x:-6,y:12,w:2.5},
+  {x:6,y:16,w:2},{x:-8,y:21,w:2.5},{x:7,y:25,w:2.5},
+  {x:-6,y:30,w:2},{x:8,y:35,w:3},{x:-7,y:40,w:2},
+  {x:6,y:45,w:3},{x:-5,y:51,w:2.5},{x:7,y:57,w:2.5}
+ ];
+ shelfDecorations.forEach((shelf,index)=>{
+  const rockCount=5+(index%3);
+  for(let i=0;i<rockCount;i++){
+   const t=(i/(rockCount-1))-.5;
+   const rock=new THREE.Mesh(
+    new THREE.DodecahedronGeometry(.22+(i%3)*.09,0),
+    new THREE.MeshStandardMaterial({
+     color:[0x354146,0x4a575c,0x59666a,0x283438][(i+index)%4],
+     roughness:1,flatShading:true
+    })
+   );
+   rock.position.set(
+    shelf.x+t*shelf.w*1.7,
+    shelf.y+.72+(i%2)*.1,
+    -5.42+(i%3)*.08
+   );
+   rock.rotation.set(.12*(i%3),.7*i,.18*(i%4));
+   rock.scale.set(1.05,.7+(i%3)*.12,.55);
+   scene.add(rock);
+  }
+
+  // A broken, narrow snow lip catches light along only part of the shelf.
+  if(index%2===0){
+   const snow=new THREE.Mesh(
+    new THREE.BoxGeometry(shelf.w*.72,.07,.12),
+    new THREE.MeshStandardMaterial({
+     color:0xdce8ec,roughness:1,metalness:0,
+     transparent:true,opacity:.88
+    })
+   );
+   snow.position.set(shelf.x-shelf.w*.12,shelf.y+1.02,-5.34);
+   snow.rotation.z=(index%3-1)*.045;
+   scene.add(snow);
+  }
+ });
+
+ // Small angular scree planes along the outer shoulders soften the old triangular edges.
+ const shoulderScree=[
+  [-12,3,1.8,0x65757a],[-10.8,5.1,1.4,0x435258],
+  [-11.5,7.0,1.1,0x718086],[-9.9,8.4,1.3,0x354146],
+  [11.8,3.2,1.7,0x59686d],[10.5,5.0,1.3,0x354146],
+  [11.3,6.8,1.2,0x718086],[9.8,8.1,1.4,0x435258]
+ ];
+ shoulderScree.forEach((p,index)=>{
+  const slab=new THREE.Mesh(
+   new THREE.DodecahedronGeometry(p[2]*.55,0),
+   new THREE.MeshStandardMaterial({
+    color:p[3],roughness:1,flatShading:true
+   })
+  );
+  slab.position.set(p[0],p[1],-3.25+(index%3)*.12);
+  slab.rotation.set(.2*index,.31*index,.13*index);
+  slab.scale.set(1.35,.58,.42);
+  scene.add(slab);
+ });
+
  const ledgeMarks=[
   [-8,5],
   [7,8],
