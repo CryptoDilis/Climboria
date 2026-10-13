@@ -4872,28 +4872,125 @@ function createRocks(){
 
 function createHero(){
  hero=new THREE.Group();
- const pot=new THREE.Mesh(new THREE.CylinderGeometry(1,1.42,1.62,40),new THREE.MeshStandardMaterial({color:0x1649a6,roughness:.24,metalness:.28}));pot.position.y=.78;pot.castShadow=true;pot.receiveShadow=true;hero.add(pot);
- const inner=new THREE.Mesh(new THREE.CylinderGeometry(.88,.72,.13,40),new THREE.MeshStandardMaterial({color:0x071a3b}));inner.position.y=1.53;hero.add(inner);
- const rim=new THREE.Mesh(new THREE.TorusGeometry(1.03,.13,14,40),new THREE.MeshStandardMaterial({color:0x5fa9ff,roughness:.2,metalness:.45,emissive:0x082d70,emissiveIntensity:.35}));rim.rotation.x=Math.PI/2;rim.position.y=1.56;hero.add(rim);
- const foot=new THREE.Mesh(new THREE.TorusGeometry(1.08,.055,8,40),new THREE.MeshStandardMaterial({color:0x9dd2ff,metalness:.5}));foot.rotation.x=Math.PI/2;foot.position.y=.12;hero.add(foot);
- for(let i=0;i<12;i++){const q=i/12*Math.PI*2,l=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,6,6),new THREE.MeshStandardMaterial({color:0x8cc8ff,metalness:.5,emissive:0x08265b,emissiveIntensity:.3}));l.position.set(Math.sin(q)*1.04,.78+Math.cos(q)*.42,Math.cos(q)*.9);l.rotation.y=q;l.scale.set(.9,1.15,.45);hero.add(l);}
- const em=new THREE.Mesh(new THREE.OctahedronGeometry(.28,0),new THREE.MeshStandardMaterial({color:0xc6e7ff,metalness:.55,emissive:0x1649a6,emissiveIntensity:.55}));em.position.set(0,.85,1.04);em.scale.z=.25;hero.add(em);
- const skin=new THREE.MeshStandardMaterial({color:0xd89a72}),shirt=new THREE.MeshStandardMaterial({color:0x202c3a}),blue=new THREE.MeshStandardMaterial({color:0x55a8ff,metalness:.15});
- const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.7,5,10),shirt);torso.position.set(0,1.66,.05);torso.rotation.x=-.12;hero.add(torso);
- const stripe=new THREE.Mesh(new THREE.BoxGeometry(.12,.62,.035),blue);stripe.position.set(0,1.68,.45);hero.add(stripe);
- const neck=new THREE.Mesh(new THREE.CylinderGeometry(.19,.21,.28,12),skin);neck.position.set(0,2.08,.08);hero.add(neck);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.43,24,20),skin);head.scale.set(.9,1.12,.92);head.position.set(0,2.48,.1);hero.add(head);
- const hairMat=new THREE.MeshStandardMaterial({color:0x18202a});const hair=new THREE.Mesh(new THREE.SphereGeometry(.45,20,12,0,Math.PI*2,0,Math.PI*.57),hairMat);hair.position.set(0,2.72,.04);hero.add(hair);
- const fringe=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),hairMat);fringe.scale.set(1.4,.55,.75);fringe.position.set(-.13,2.69,.43);hero.add(fringe);
- for(const x of [-.145,.145]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.042,10,8),new THREE.MeshStandardMaterial({color:0x17202a}));eye.position.set(x,2.49,.48);hero.add(eye);const brow=new THREE.Mesh(new THREE.BoxGeometry(.12,.035,.035),hairMat);brow.position.set(x,2.57,.47);hero.add(brow);}
- const nose=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),skin);nose.position.set(0,2.4,.51);hero.add(nose);
- const smile=new THREE.Mesh(new THREE.TorusGeometry(.075,.012,5,12,Math.PI),new THREE.MeshBasicMaterial({color:0x713c38}));smile.position.set(0,2.34,.48);smile.rotation.z=Math.PI;hero.add(smile);
- for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,8),shirt);arm.position.set(side*.48,1.72,.28);arm.rotation.z=side*.62;hero.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),skin);hand.position.set(side*.68,1.55,.56);hero.add(hand);const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.18,.42),new THREE.MeshStandardMaterial({color:0x101820}));boot.position.set(side*.38,1,.42);hero.add(boot);}
- /* Face the climbing wall instead of facing the player/camera. */
- hero.rotation.y = Math.PI;
- hero.position.set(0,.03,3.5);scene.add(hero);
-}
 
+ // Traditional Filipino palayok: rounded terracotta body, narrow neck,
+ // thick rolled rim, and a genuinely hollow-looking mouth.
+ const clay=new THREE.MeshStandardMaterial({
+  color:0x9b4e2d, roughness:.91, metalness:0
+ });
+ const clayLight=new THREE.MeshStandardMaterial({
+  color:0xb96a40, roughness:.86, metalness:0
+ });
+ const clayDark=new THREE.MeshStandardMaterial({
+  color:0x63301f, roughness:1, metalness:0
+ });
+ const jarProfile=[
+  new THREE.Vector2(.48,.06),
+  new THREE.Vector2(.68,.09),
+  new THREE.Vector2(.94,.22),
+  new THREE.Vector2(1.18,.48),
+  new THREE.Vector2(1.31,.78),
+  new THREE.Vector2(1.28,1.02),
+  new THREE.Vector2(1.12,1.25),
+  new THREE.Vector2(.91,1.39),
+  new THREE.Vector2(.76,1.42),
+  new THREE.Vector2(.72,1.36),
+  new THREE.Vector2(.78,1.29),
+  new THREE.Vector2(.98,1.15),
+  new THREE.Vector2(1.08,.96),
+  new THREE.Vector2(1.07,.77),
+  new THREE.Vector2(.91,.48),
+  new THREE.Vector2(.66,.28),
+  new THREE.Vector2(.43,.22),
+  new THREE.Vector2(0,.22)
+ ];
+ const pot=new THREE.Mesh(new THREE.LatheGeometry(jarProfile,48),clay);
+ pot.position.y=0;
+ pot.castShadow=true;pot.receiveShadow=true;hero.add(pot);
+
+ // Thick hand-shaped lip and dark inner opening make it read as a clay jar.
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(.745,.095,12,48),clayLight);
+ rim.rotation.x=Math.PI/2;rim.position.y=1.405;rim.castShadow=true;hero.add(rim);
+ const mouth=new THREE.Mesh(new THREE.CircleGeometry(.67,40),clayDark);
+ mouth.rotation.x=-Math.PI/2;mouth.position.y=1.345;hero.add(mouth);
+ const innerShadow=new THREE.Mesh(new THREE.CylinderGeometry(.57,.48,.08,36),new THREE.MeshStandardMaterial({color:0x351c16,roughness:1}));
+ innerShadow.position.y=1.29;hero.add(innerShadow);
+
+ // Restrained hand-painted/etched bands inspired by traditional palayok craft.
+ for(const band of [
+  {y:.35,r:1.105,t:.027,mat:clayDark},
+  {y:.42,r:1.155,t:.018,mat:clayLight},
+  {y:1.12,r:1.205,t:.025,mat:clayDark},
+  {y:1.18,r:1.175,t:.018,mat:clayLight}
+ ]){
+  const line=new THREE.Mesh(new THREE.TorusGeometry(band.r,band.t,6,48),band.mat);
+  line.rotation.x=Math.PI/2;line.position.y=band.y;hero.add(line);
+ }
+ // Small repeating clay impressions around the shoulder; earthy, not metallic.
+ for(let i=0;i<18;i++){
+  const a=i/18*Math.PI*2;
+  const stamp=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),clayDark);
+  stamp.position.set(Math.sin(a)*1.205,.88,Math.cos(a)*1.205);
+  stamp.scale.set(.8,1.25,.38);hero.add(stamp);
+ }
+
+ const skin=new THREE.MeshStandardMaterial({color:0xc88962,roughness:.82});
+ const shirt=new THREE.MeshStandardMaterial({color:0x25443d,roughness:.9});
+ const shirtTrim=new THREE.MeshStandardMaterial({color:0xd8b477,roughness:.8});
+ const trousers=new THREE.MeshStandardMaterial({color:0x30363a,roughness:.95});
+ const bootMat=new THREE.MeshStandardMaterial({color:0x201b18,roughness:.95});
+
+ // Legs extend down into the jar, with the knees/boots partly visible at the mouth:
+ // this reads as a character standing in the palayok rather than sitting on its rim.
+ for(const side of [-1,1]){
+  const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.14,.48,5,8),trousers);
+  leg.position.set(side*.24,1.58,.12);leg.rotation.z=side*.06;hero.add(leg);
+  const boot=new THREE.Mesh(new THREE.BoxGeometry(.22,.13,.32),bootMat);
+  boot.position.set(side*.25,1.38,.34);hero.add(boot);
+ }
+
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.39,.72,6,12),shirt);
+ torso.position.set(0,2.02,.02);torso.rotation.x=-.06;hero.add(torso);
+ const hem=new THREE.Mesh(new THREE.TorusGeometry(.34,.035,6,24),shirtTrim);
+ hem.rotation.x=Math.PI/2;hem.position.set(0,1.63,.02);hero.add(hem);
+ const sash=new THREE.Mesh(new THREE.BoxGeometry(.11,.62,.035),shirtTrim);
+ sash.position.set(-.19,2.02,.365);sash.rotation.z=-.25;hero.add(sash);
+
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.15,.17,.23,12),skin);
+ neck.position.set(0,2.52,.04);hero.add(neck);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.36,24,20),skin);
+ head.scale.set(.9,1.1,.92);head.position.set(0,2.86,.07);hero.add(head);
+ const hairMat=new THREE.MeshStandardMaterial({color:0x211a16,roughness:1});
+ const hair=new THREE.Mesh(new THREE.SphereGeometry(.38,20,12,0,Math.PI*2,0,Math.PI*.58),hairMat);
+ hair.position.set(0,3.08,.015);hero.add(hair);
+ const fringe=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),hairMat);
+ fringe.scale.set(1.4,.55,.75);fringe.position.set(-.1,3.04,.34);hero.add(fringe);
+ for(const x of [-.125,.125]){
+  const eye=new THREE.Mesh(new THREE.SphereGeometry(.032,10,8),new THREE.MeshStandardMaterial({color:0x171717}));
+  eye.position.set(x,2.88,.39);hero.add(eye);
+  const brow=new THREE.Mesh(new THREE.BoxGeometry(.095,.025,.025),hairMat);
+  brow.position.set(x,2.95,.38);hero.add(brow);
+ }
+ const nose=new THREE.Mesh(new THREE.SphereGeometry(.04,8,8),skin);
+ nose.position.set(0,2.8,.42);hero.add(nose);
+
+ // Arms are extended outward and clear of the jar rim, rather than tucked into a seated pose.
+ for(const side of [-1,1]){
+  const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.38,5,8),shirt);
+  upper.position.set(side*.48,2.19,.08);upper.rotation.z=-side*.88;hero.add(upper);
+  const forearm=new THREE.Mesh(new THREE.CapsuleGeometry(.085,.31,5,8),skin);
+  forearm.position.set(side*.73,2.31,.2);forearm.rotation.z=-side*.45;hero.add(forearm);
+  const cuff=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,6,12),shirtTrim);
+  cuff.position.set(side*.82,2.37,.22);cuff.rotation.z=Math.PI/2;hero.add(cuff);
+  const hand=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),skin);
+  hand.position.set(side*.86,2.4,.24);hero.add(hand);
+ }
+
+ /* Face the climbing wall instead of facing the player/camera. */
+ hero.rotation.y=Math.PI;
+ hero.position.set(0,.03,3.5);
+ scene.add(hero);
+}
 /* =====================================================
    HAMMER + ROPE
 ===================================================== */
@@ -5729,8 +5826,8 @@ function updateHammer(){
 
  // Keep the ice pick anchored to the hero's hand at all times.
  // The gameplay still targets grips with the existing cursor/raycast logic.
- const handX=hero.position.x+.68;
- const handY=hero.position.y+1.55;
+ const handX=hero.position.x+.86;
+ const handY=hero.position.y+2.4;
  const targetX=grabbed?anchorWorld.x:cursorWorld.x;
  const targetY=grabbed?anchorWorld.y:cursorWorld.y;
 
