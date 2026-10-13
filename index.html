@@ -3710,14 +3710,14 @@ function init(){
 
  scene.background=
   new THREE.Color(
-   0x05090d
+   0x9fc9e5
   );
 
  scene.fog=
   new THREE.Fog(
-   0x05090d,
-   35,
-   105
+   0xa8cce2,
+   48,
+   135
   );
 
  camera=
@@ -3764,28 +3764,38 @@ function init(){
  );
 
  const amb=
-  new THREE.AmbientLight(
-   0xffffff,
-   .55
+  new THREE.HemisphereLight(
+   0xd8edff,
+   0x46515a,
+   1.05
   );
 
  scene.add(amb);
 
  const sun=
   new THREE.DirectionalLight(
-   0xffffff,
-   1.15
+   0xfff2dc,
+   2.05
   );
 
  sun.position.set(
-  -5,
-  25,
-  18
+  -18,
+  38,
+  24
  );
 
  scene.add(sun);
 
+ const fillLight=
+  new THREE.DirectionalLight(
+   0xb9ddff,
+   .65
+  );
+ fillLight.position.set(18,22,-12);
+ scene.add(fillLight);
+
  createSky();
+ createAlpineBackdrop();
  createMountain();
  createGround();
  createRocks();
@@ -3880,13 +3890,98 @@ function createSky(){
 
  const m=
   new THREE.MeshBasicMaterial({
-   color:0x071018,
+   color:0xa7d2ee,
    side:THREE.BackSide
   });
 
  scene.add(
   new THREE.Mesh(g,m)
  );
+}
+
+
+/* =====================================================
+   CINEMATIC ALPINE BACKDROP — visual layer only
+===================================================== */
+
+function createAlpineBackdrop(){
+ const backdrop=new THREE.Group();
+
+ // Tall distant Himalayan silhouettes, staggered in depth for scale.
+ const peaks=[
+  {x:-31,z:-31,w:19,h:38,c:0x718b9b},
+  {x:-23,z:-25,w:17,h:49,c:0x879eac},
+  {x:-12,z:-35,w:21,h:42,c:0x6e8798},
+  {x:9,z:-34,w:22,h:48,c:0x7b94a5},
+  {x:24,z:-29,w:19,h:39,c:0x8ba3b1},
+  {x:34,z:-37,w:22,h:51,c:0x6e8798}
+ ];
+ peaks.forEach((p,i)=>{
+  const base=-2;
+  const shape=new THREE.Shape();
+  shape.moveTo(p.x-p.w,base);
+  shape.lineTo(p.x-p.w*.66,base+p.h*.48);
+  shape.lineTo(p.x-p.w*.35,base+p.h*.37);
+  shape.lineTo(p.x-p.w*.12,base+p.h*.78);
+  shape.lineTo(p.x+p.w*.03,base+p.h);
+  shape.lineTo(p.x+p.w*.28,base+p.h*.68);
+  shape.lineTo(p.x+p.w*.43,base+p.h*.75);
+  shape.lineTo(p.x+p.w*.7,base+p.h*.34);
+  shape.lineTo(p.x+p.w,base);
+  shape.closePath();
+  const mesh=new THREE.Mesh(
+   new THREE.ShapeGeometry(shape),
+   new THREE.MeshStandardMaterial({
+    color:p.c,roughness:1,metalness:0,
+    side:THREE.DoubleSide,flatShading:true
+   })
+  );
+  mesh.position.z=p.z;
+  backdrop.add(mesh);
+
+  // Broken snow faces on the upper ridges.
+  const snowColor=[0xe7f2f6,0xc9dce6,0xf4f8fa][i%3];
+  const snowA=new THREE.Mesh(
+   new THREE.BufferGeometry(),
+   new THREE.MeshStandardMaterial({
+    color:snowColor,roughness:1,side:THREE.DoubleSide,
+    transparent:true,opacity:.96,flatShading:true
+   })
+  );
+  const verts=[
+   p.x-p.w*.12,base+p.h*.78,p.z-.03,
+   p.x+p.w*.03,base+p.h,p.z-.03,
+   p.x+p.w*.28,base+p.h*.68,p.z-.03,
+   p.x-p.w*.12,base+p.h*.78,p.z-.03,
+   p.x-p.w*.35,base+p.h*.37,p.z-.03,
+   p.x+p.w*.03,base+p.h,p.z-.03
+  ];
+  snowA.geometry.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+  snowA.geometry.computeVertexNormals();
+  backdrop.add(snowA);
+ });
+
+ // High-altitude mist banks: soft layered ellipsoids behind the climb face.
+ const mistMaterial=new THREE.MeshBasicMaterial({
+  color:0xeaf5fb,transparent:true,opacity:.16,depthWrite:false
+ });
+ const mistBands=[
+  {x:-18,y:13,z:-13,sx:15,sy:2.2,sz:2.4},
+  {x:15,y:20,z:-16,sx:17,sy:2.8,sz:2.8},
+  {x:-8,y:31,z:-20,sx:19,sy:2.5,sz:3},
+  {x:25,y:36,z:-22,sx:13,sy:2.1,sz:2.5},
+  {x:-27,y:27,z:-19,sx:12,sy:2.2,sz:2.5}
+ ];
+ mistBands.forEach(b=>{
+  const cloud=new THREE.Mesh(
+   new THREE.SphereGeometry(1,14,8),
+   mistMaterial.clone()
+  );
+  cloud.position.set(b.x,b.y,b.z);
+  cloud.scale.set(b.sx,b.sy,b.sz);
+  backdrop.add(cloud);
+ });
+ scene.add(backdrop);
 }
 
 
