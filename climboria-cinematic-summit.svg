@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#07152e"/><stop offset=".36" stop-color="#16518a"/><stop offset=".62" stop-color="#f4b66a"/><stop offset=".8" stop-color="#163a62"/><stop offset="1" stop-color="#050c1b"/></linearGradient>
+ <radialGradient id="sun"><stop stop-color="#fffde4" stop-opacity=".98"/><stop offset=".25" stop-color="#ffe7a1" stop-opacity=".78"/><stop offset="1" stop-color="#ffbd45" stop-opacity="0"/></radialGradient>
+ <linearGradient id="snow" x2="1" y2="1"><stop stop-color="#fffef4"/><stop offset=".4" stop-color="#b9d9f4"/><stop offset="1" stop-color="#547da5"/></linearGradient>
+ <linearGradient id="rock" x2="0.8" y2="1"><stop stop-color="#45678d"/><stop offset=".35" stop-color="#152b4a"/><stop offset="1" stop-color="#030917"/></linearGradient>
+ <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff6b2"/><stop offset=".35" stop-color="#ffce4b"/><stop offset="1" stop-color="#a85c05"/></linearGradient>
+ <linearGradient id="metal" x2="0.8" y2="1"><stop stop-color="#fff"/><stop offset=".3" stop-color="#d8e7f5"/><stop offset=".6" stop-color="#728da9"/><stop offset="1" stop-color="#fff0c2"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="18"/></filter>
+ <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+ <linearGradient id="cloud" x2="0" y2="1"><stop stop-color="#fff8ed" stop-opacity=".82"/><stop offset="1" stop-color="#f8b96b" stop-opacity=".05"/></linearGradient>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"/>
+<circle cx="990" cy="430" r="330" fill="url(#sun)"/>
+<g fill="#fff" opacity=".18">
+ <path d="M0 280 Q180 190 360 275 T730 250 T1100 265 T1450 230 T1920 270 L1920 340 Q1600 305 1350 335 T850 320 T350 335 T0 340Z"/>
+ <path d="M0 390 Q220 315 440 380 T850 375 T1250 370 T1630 355 T1920 380 L1920 420 Q1500 410 1200 430 T600 420 T0 435Z"/>
+</g>
+<g fill="url(#cloud)" opacity=".75">
+ <path d="M0 590 Q150 520 300 588 T580 570 T830 600 L830 735 L0 735Z"/>
+ <path d="M960 605 Q1150 535 1310 600 T1610 585 T1920 610 L1920 770 L960 770Z"/>
+ <path d="M250 720 Q460 650 630 720 T970 715 T1300 735 L1300 830 L250 830Z"/>
+</g>
+<!-- distant alpine range -->
+<path d="M0 690 L115 600 185 650 315 495 395 565 520 420 625 530 760 355 855 490 980 320 1105 470 1210 380 1325 525 1440 440 1560 565 1670 475 1810 590 1920 540 V1080 H0Z" fill="#183957"/>
+<path d="M0 720 L185 650 315 495 395 565 520 420 625 530 760 355 855 490 980 320 1105 470 1210 380 1325 525 1440 440 1560 565 1670 475 1810 590 1920 540 V1080 H0Z" fill="url(#rock)" opacity=".94"/>
+<g fill="url(#snow)">
+ <path d="M250 570 L315 495 356 537 330 526 314 546 298 533Z"/>
+ <path d="M457 490 L520 420 574 481 539 459 516 474 493 458Z"/>
+ <path d="M692 435 L760 355 814 424 778 405 755 420 733 402Z"/>
+ <path d="M916 405 L980 320 1041 403 1004 379 982 393 959 377Z"/>
+ <path d="M1158 430 L1210 380 1267 449 1235 431 1213 443 1193 424Z"/>
+ <path d="M1388 493 L1440 440 1494 505 1462 487 1438 498 1420 481Z"/>
+ <path d="M1620 528 L1670 475 1728 539 1693 520 1670 534 1650 516Z"/>
+</g>
+<!-- heroic central summit -->
+<path d="M430 1080 L650 725 780 650 910 390 1000 165 1090 388 1210 540 1320 700 1530 1080Z" fill="url(#rock)"/>
+<path d="M650 725 L780 650 910 390 1000 165 970 430 900 570 835 640 760 730 675 835Z" fill="url(#snow)"/>
+<path d="M1000 165 L1090 388 1210 540 1320 700 1155 622 1080 525 1045 425Z" fill="#b9d9f2"/>
+<path d="M970 430 L1000 165 1025 405 1080 525 1040 580 1000 500 960 585 900 570Z" fill="#fff9e7"/>
+<path d="M1000 165 L1025 405 1000 475 970 430Z" fill="#e6f5ff"/>
+<path d="M910 390 L970 430 900 570 835 640 760 730 675 835 790 655Z" fill="#28476b"/>
+<path d="M1000 165 L1045 425 1080 525 1155 622 1210 700 1115 645 1040 540Z" fill="#102945"/>
+<path d="M610 1080 L780 780 865 730 1000 630 1130 700 1260 845 1400 1080Z" fill="#020916" opacity=".82"/>
+<path d="M720 870 L865 730 1000 630 1130 700 1220 790 1100 752 1000 700 910 770 820 820Z" fill="url(#gold)"/>
+<path d="M795 870 L900 790 1000 735 1090 780 1160 840 1075 816 1000 780 925 827 860 878Z" fill="#07152b"/>
+<!-- summit beacon -->
+<circle cx="1000" cy="158" r="115" fill="#ffcf50" opacity=".34" filter="url(#glow)"/>
+<path d="M1000 18 L1080 128 1000 240 920 128Z" fill="url(#gold)" stroke="#fff2a3" stroke-width="5"/>
+<path d="M1000 18 L1000 240 920 128Z" fill="#fff6c5"/>
+<path d="M1000 18 L1080 128 1000 145Z" fill="#ffe879"/>
+<path d="M920 128 L1000 145 1000 240Z" fill="#dc8a0d"/>
+<!-- floating city left -->
+<g transform="translate(160 450)" fill="#152b4a" stroke="#f6bf61" stroke-opacity=".55" stroke-width="2">
+ <path d="M0 120 L110 88 250 120 225 145 45 150Z" fill="#0a1931"/>
+ <path d="M28 118 V55 H54 V118 M63 118 V25 H85 V118 M100 118 V70 H125 V118 M142 118 V40 H164 V118 M182 118 V64 H207 V118" />
+ <path d="M63 25 L74 0 85 25 M142 40 L153 12 164 40" fill="#e8b85c"/>
+ <g fill="#ffe5a1" stroke="none"><rect x="35" y="70" width="5" height="15"/><rect x="70" y="45" width="5" height="16"/><rect x="150" y="52" width="5" height="16"/><rect x="190" y="80" width="5" height="13"/></g>
+</g>
+<!-- floating city right -->
+<g transform="translate(1450 375)" stroke="#e8bd73" stroke-opacity=".72" stroke-width="2">
+ <path d="M-40 200 L80 166 300 190 340 220 210 242 0 222Z" fill="#07162e"/>
+ <g fill="#19395d">
+ <path d="M0 190 V95 H35 V190 M43 190 V52 H75 V190 M83 190 V120 H110 V190 M122 190 V72 H155 V190 M165 190 V18 H194 V190 M204 190 V100 H235 V190 M245 190 V65 H270 V190 M282 190 V126 H308 V190"/>
+ <path d="M43 52 L59 18 75 52 M165 18 L179 -20 194 18 M204 100 L219 76 235 100" fill="#e8bd73"/>
+ </g>
+ <g fill="#ffe5a1" stroke="none"><path d="M55 70h6v18h-6zM177 38h6v20h-6zM215 120h6v16h-6zM137 95h6v17h-6zM259 82h6v16h-6z"/></g>
+ <path d="M0 222 L40 242 210 259 300 230" fill="none" stroke="#ffd36a" stroke-width="4"/>
+</g>
+<!-- climber silhouette on left foreground -->
+<g transform="translate(250 610)">
+ <path d="M-160 470 L-110 385 10 330 95 375 180 470Z" fill="#07111f"/>
+ <path d="M-70 410 Q-20 330 35 360 L70 430Z" fill="#0d1a2c"/>
+ <!-- rope -->
+ <path d="M-25 190 Q-90 290 -38 410" fill="none" stroke="#e9bd6c" stroke-width="5"/>
+ <!-- legs -->
+ <path d="M-10 280 L-62 350 -35 385 10 326 45 390 77 376 43 290Z" fill="#18263a" stroke="#8da9c7" stroke-width="4"/>
+ <!-- pack and torso -->
+ <path d="M-30 165 Q-5 140 36 165 L65 268 8 310 -35 270Z" fill="#111f31" stroke="#d3a454" stroke-width="5"/>
+ <path d="M-35 180 L-67 235 -25 265 2 221Z" fill="#70451f" stroke="#e7b761" stroke-width="5"/>
+ <!-- head and hat -->
+ <circle cx="3" cy="128" r="37" fill="#b87543"/>
+ <path d="M-48 121 Q-34 75 10 81 Q42 83 54 119Z" fill="#17283b" stroke="#e7b75d" stroke-width="5"/>
+ <ellipse cx="3" cy="118" rx="63" ry="12" fill="#27384a" stroke="#d5a456" stroke-width="4"/>
+ <!-- arm raised -->
+ <path d="M-28 185 L-90 220 -115 170" fill="none" stroke="#b87543" stroke-width="22" stroke-linecap="round"/>
+ <path d="M-118 170 L-140 130" stroke="#b87543" stroke-width="16" stroke-linecap="round"/>
+ <!-- ice axe -->
+ <path d="M-160 115 L-128 50" stroke="#d8e7f5" stroke-width="9" stroke-linecap="round"/>
+ <path d="M-148 70 Q-118 40 -91 60" fill="none" stroke="#e6b84f" stroke-width="10" stroke-linecap="round"/>
+ <!-- scarf -->
+ <path d="M-25 142 Q-55 158 -75 145 L-110 155 -83 178 -43 170Z" fill="#a62e38"/>
+</g>
+<!-- bright gold horizon -->
+<path d="M0 790 Q350 730 640 780 T1230 775 T1920 785" fill="none" stroke="#ffd16b" stroke-width="4" opacity=".75"/>
+<rect y="820" width="1920" height="260" fill="#020713" opacity=".48"/>
+</svg>
