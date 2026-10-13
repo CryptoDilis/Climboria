@@ -4317,7 +4317,7 @@ function createMountain(){
  mountainRockBump.wrapS=THREE.RepeatWrapping;mountainRockBump.wrapT=THREE.RepeatWrapping;
  mountainRockBump.repeat.set(3,3);
  const mountainRockMaterial=new THREE.MeshStandardMaterial({
-  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.09,
+  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.025,
   roughness:1,metalness:0,side:THREE.DoubleSide
  });
  // Keep the thick body behind the new sculpted face.
@@ -4339,7 +4339,7 @@ function createMountain(){
    const crag=(Math.sin(x*2.7+y*.87)*Math.sin(y*1.31-x*.63))*.12;
    const ridge=(Math.sin(y*.31+x*.16)+Math.sin(y*.73-x*.23))*.07;
    const z=-3.72+broad+crag+ridge;
-   verts.push(x,y,z);uvs.push(u,v); // Mesh row height and CanvasTexture vertical UV now agree: summit maps to the snow at canvas top.
+   verts.push(x,y,z);uvs.push(u,1-v); // CanvasTexture vertical UV: map the snow painted at canvas top onto the summit.
    if(row<rows&&col<cols){
     const a=row*(cols+1)+col,b=a+1,c=a+(cols+1),d=c+1;
     if((row+col)%2){indices.push(a,c,b,b,c,d);}else{indices.push(a,c,d,a,d,b);}
