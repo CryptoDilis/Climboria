@@ -3720,18 +3720,20 @@ function init(){
    135
   );
 
+ const isPortraitViewport=innerHeight>innerWidth;
+
  camera=
   new THREE.PerspectiveCamera(
-   55,
+   isPortraitViewport?70:58,
    innerWidth/innerHeight,
    .1,
-   150
+   180
   );
 
  camera.position.set(
   0,
   7,
-  18
+  isPortraitViewport?25:21
  );
 
  renderer=
@@ -5987,7 +5989,7 @@ function updateCamera(){
  if(summitSequence)return;
 
  const targetY=
-  hero.position.y+5;
+  hero.position.y+3.4;
 
  camera.position.y+=
   (
@@ -6023,7 +6025,7 @@ function updateCamera(){
 
  camera.lookAt(
   hero.position.x,
-  hero.position.y+2.5,
+  hero.position.y+2.0,
   0
  );
 }
@@ -7869,6 +7871,11 @@ function resize(){
 
  camera.aspect=
   innerWidth/innerHeight;
+
+ // Portrait mode needs a wider view so the climber, grips and route remain readable.
+ const portraitViewport=innerHeight>innerWidth;
+ camera.fov=portraitViewport?70:58;
+ camera.position.z=portraitViewport?25:21;
 
  camera.updateProjectionMatrix();
 
