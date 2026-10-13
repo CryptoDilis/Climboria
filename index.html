@@ -5667,8 +5667,8 @@ function updateCamera(){
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
  // Portrait mobile: bring the climber closer without losing the vertical climbing route.
- camera.fov = portraitMobile ? 70 : 60;
- const baseCameraZ = portraitMobile ? 27 : 25;
+ camera.fov = portraitMobile ? 64 : 60;
+ const baseCameraZ = portraitMobile ? 24 : 25;
  camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
