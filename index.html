@@ -3876,7 +3876,7 @@ function init(){
   );
 
  // Alpine distance haze blends far ridges into the sky instead of a black void.
- scene.fog=new THREE.FogExp2(0x8ca6b2,0.0018);
+ scene.fog=new THREE.FogExp2(0x91adba,0.00145);
 
  camera=
   new THREE.PerspectiveCamera(
@@ -3946,7 +3946,7 @@ function init(){
  // Cinematic rendering: richer rock contrast and more natural highlights.
  // Keep the mobile pixel-ratio cap above to protect phone performance.
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.32;
+ renderer.toneMappingExposure=1.28;
 
  renderer.domElement.style.touchAction=
   "none";
@@ -3964,7 +3964,7 @@ function init(){
  scene.add(amb);
 
  // Cool high-altitude fill and warm directional key light add depth to rock facets.
- const skyFill=new THREE.HemisphereLight(0xd8efff,0x56534b,1.15);
+ const skyFill=new THREE.HemisphereLight(0xd8efff,0x65645a,1.22);
  skyFill.position.set(0,30,0);
  scene.add(skyFill);
 
@@ -3988,7 +3988,7 @@ function init(){
  sun.shadow.bias=-0.00035;
  scene.add(sun);
 
- const rimLight=new THREE.DirectionalLight(0xa4d6ff,.72);
+ const rimLight=new THREE.DirectionalLight(0xb3ddff,.82)
  rimLight.position.set(12,18,-10);
  scene.add(rimLight);
 
@@ -4305,7 +4305,7 @@ function createMountain(){
  mountainRockBump.wrapS=THREE.RepeatWrapping;mountainRockBump.wrapT=THREE.RepeatWrapping;
  mountainRockBump.repeat.set(3,3);
  const mountainRockMaterial=new THREE.MeshStandardMaterial({
-  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.008,
+  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.006,
   roughness:.96,metalness:0,side:THREE.DoubleSide
  });
  // Keep the thick body behind the new sculpted face.
@@ -4324,11 +4324,12 @@ function createMountain(){
   for(let col=0;col<=cols;col++){
    const u=col/cols,x=(u*2-1)*half;
    // Large-scale cliff relief with irregular fracture planes; subtle enough not to distort grip placement.
-   const broad=Math.sin(x*.29+y*.105)*.34+Math.sin(x*.67-y*.17)*.19;
-   const crag=(Math.sin(x*1.72+y*.49)*Math.sin(y*.77-x*.39))*.24;
-   const ridge=(Math.sin(y*.21+x*.17)+Math.sin(y*.46-x*.26))*.13;
-   const brokenFace=Math.sin(x*.61+y*.37)*Math.sin(x*1.29-y*.23)*.16;
-   const z=-3.72+broad+crag+ridge+brokenFace;
+   const broad=Math.sin(x*.25+y*.11)*.42+Math.sin(x*.58-y*.16)*.23;
+   const crag=(Math.sin(x*1.58+y*.44)*Math.sin(y*.72-x*.35))*.28;
+   const ridge=(Math.sin(y*.19+x*.15)+Math.sin(y*.43-x*.24))*.16;
+   const fracture=Math.sin(x*.55+y*.31)*Math.sin(x*1.18-y*.21)*.19;
+   const weathering=Math.sin(x*2.9+y*1.2)*Math.sin(y*1.8-x*.8)*.045;
+   const z=-3.72+broad+crag+ridge+fracture+weathering;
    verts.push(x,y,z);uvs.push(u,1-v); // CanvasTexture vertical UV: map the snow painted at canvas top onto the summit.
    if(row<rows&&col<cols){
     const a=row*(cols+1)+col,b=a+1,c=a+(cols+1),d=c+1;
@@ -4575,9 +4576,9 @@ function createMountainDetails(){
    Decorative scenery only. Does not change grips, hero, physics, or level routes. */
 function createScenicMountainBackdrop(){
  const scenery=new THREE.Group();
- const farRock=new THREE.MeshStandardMaterial({color:0x667d89,roughness:1,flatShading:true});
- const midRock=new THREE.MeshStandardMaterial({color:0x83969b,roughness:1,flatShading:true});
- const snow=new THREE.MeshStandardMaterial({color:0xdbe4e6,roughness:1,flatShading:true});
+ const farRock=new THREE.MeshStandardMaterial({color:0x718792,roughness:1,flatShading:true});
+ const midRock=new THREE.MeshStandardMaterial({color:0x9aabb0,roughness:1,flatShading:true});
+ const snow=new THREE.MeshStandardMaterial({color:0xe8eff0,roughness:1,flatShading:true});
  const shadowSnow=new THREE.MeshStandardMaterial({color:0x9eafb5,roughness:1,flatShading:true});
  function ridge(points,z,mat){
   const shape=new THREE.Shape();
@@ -4674,45 +4675,18 @@ function createGround(){
 ===================================================== */
 
 function createRocks(){
-
- for(let i=0;i<45;i++){
-
-  const side=
-   i%2?
-   1:
-   -1;
-
-  const r=
-   new THREE.Mesh(
-    new THREE.DodecahedronGeometry(
-     .35+
-     Math.random()*.7,
-     0
-    ),
-    new THREE.MeshStandardMaterial({
-     color:0x394348,
-     roughness:1
-    })
-   );
-
-  r.position.set(
-   side*
-   (
-    12+
-    Math.random()*7
-   ),
-   Math.random()*70,
-   -2+
-   Math.random()*3
-  );
-
-  r.rotation.set(
-   Math.random()*3,
-   Math.random()*3,
-   Math.random()*3
-  );
-
-  scene.add(r);
+ // Sparse, small talus rocks stay at the far margins; keep the climbing route readable.
+ const rockMaterial=new THREE.MeshStandardMaterial({color:0x657277,roughness:1,flatShading:true});
+ for(let i=0;i<22;i++){
+  const side=i%2===0?-1:1;
+  const y=2+Math.random()*62;
+  const x=side*(20+Math.random()*5);
+  const size=.22+Math.random()*.42;
+  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(size,1),rockMaterial);
+  rock.position.set(x,y,-1.8+Math.random()*1.2);
+  rock.rotation.set(Math.random()*2,Math.random()*3,Math.random()*2);
+  rock.scale.set(1.15,.7+Math.random()*.8,.65);
+  scene.add(rock);
  }
 }
 
@@ -5717,9 +5691,9 @@ function updateCamera(){
  if(summitSequence)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- // Wider cinematic framing: show more mountain, surrounding ridges, and sky.
- camera.fov = portraitMobile ? 78 : 62;
- const baseCameraZ = portraitMobile ? 36 : 25;
+ // Portrait-first framing keeps the climber centered while showing more route.
+ camera.fov = portraitMobile ? 82 : 60;
+ const baseCameraZ = portraitMobile ? 34 : 25;
  camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
@@ -7622,8 +7596,8 @@ function resize(){
   so the climber, grips, and more of the route fit in the phone view.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = (isPortraitMobile ? 36 : 25) * cameraZoom;
- camera.fov = isPortraitMobile ? 78 : 62;
+ camera.position.z = (isPortraitMobile ? 34 : 25) * cameraZoom;
+ camera.fov = isPortraitMobile ? 82 : 60;
 
  camera.updateProjectionMatrix();
 
