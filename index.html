@@ -2607,6 +2607,8 @@ let touchReticle=null;
 let touchReticleMaterial=null;
 
 let cameraShake=0;
+// Advanced routes require completing grips in order.
+let highestGripIndexReached=-1;
 
 
 /* =====================================================
@@ -2840,6 +2842,8 @@ function startLevel(level){
 
 
  currentLevel=level;
+ window.climboriaLevel=currentLevel;
+ highestGripIndexReached=-1;
 
  $("levelSelect").style.display="none";
 
@@ -5195,33 +5199,19 @@ function nearestGrip(){
 
  let best=null;
  let dist=Infinity;
+ const sequentialAdvancedRoute=currentLevel>=4;
+ const requiredIndex=highestGripIndexReached+1;
 
  for(const g of grips){
-
-  const dx=
-   cursorWorld.x-g.x;
-
-  const dy=
-   cursorWorld.y-g.y;
-
-  const d=
-   Math.sqrt(
-    dx*dx+
-    dy*dy
-   );
-
-  if(d<dist){
-
-   dist=d;
-   best=g;
-
-  }
+  if(sequentialAdvancedRoute && g.index!==requiredIndex)continue;
+  if(!g.group.visible)continue;
+  const dx=cursorWorld.x-g.x;
+  const dy=cursorWorld.y-g.y;
+  const d=Math.sqrt(dx*dx+dy*dy);
+  if(d<dist){dist=d;best=g;}
  }
 
- return{
-  grip:best,
-  distance:dist
- };
+ return{grip:best,distance:dist};
 }
 
 
@@ -5229,16 +5219,18 @@ function startGrab(){
 
  if(!running)return;
 
- const result=
-  nearestGrip();
+ const result=nearestGrip();
+ const grabRadius=currentLevel>=10?.78:currentLevel>=8?.88:currentLevel>=6?1.0:currentLevel>=4?1.08:1.2;
 
  if(
   result.grip&&
-  result.distance<1.2
+  result.distance<grabRadius
  ){
 
   grabbed=
    result.grip;
+
+  if(currentLevel>=4)highestGripIndexReached=grabbed.index;
 
   anchorWorld.set(
    grabbed.x,
@@ -5390,8 +5382,13 @@ function touchEnd(e){
 
 function updatePhysics(dt){
 
+ // Levels 4-10 apply stronger gravity and slightly less swing assistance.
+ const difficultyStep=Math.max(0,currentLevel-3);
+ const gravityScale=1+difficultyStep*.075;
+ const swingScale=1-difficultyStep*.025;
+
  velocityY+=
-  gravity*dt;
+  gravity*gravityScale*dt;
 
 
  if(grabbed){
@@ -5453,12 +5450,14 @@ function updatePhysics(dt){
      tangentX*
      tangential*
      swingStrength*
+     swingScale*
      dt;
 
     velocityY+=
      tangentY*
      tangential*
      swingStrength*
+     swingScale*
      dt;
    }
 
@@ -8198,7 +8197,13 @@ if(
   }
   const route=routes[Math.max(0,Math.min(9,currentLevel-1))].slice(0,grips.length);
   grips.forEach((g,i)=>{
-   if(i<route.length){g.x=route[i];g.y=4+i*(58/(route.length-1));g.group.position.set(g.x,g.y,3.1);g.group.visible=true;}
+   if(i<route.length){
+    g.x=route[i];
+    const levelGapBoost=currentLevel>=4?1+Math.min(.18,(currentLevel-4)*.03):1;
+    g.y=4+i*(58/(route.length-1))*levelGapBoost;
+    g.group.position.set(g.x,g.y,3.1);
+    g.group.visible=true;
+   }
    else {g.group.visible=false;g.x=999;g.y=-100;}
    if(g.ring&&g.ring.material){g.ring.material.color.setHex(p.grip);g.ring.material.emissive.setHex(p.emissive);}
    if(g.glow&&g.glow.material)g.glow.material.color.setHex(p.grip);
@@ -8224,7 +8229,10 @@ if(
   level=Math.floor(Number(level)||0);
   if(!LEVELS[level])return;
   if(level>unlockedLevel){if(typeof setStatus==="function")setStatus("LEVEL LOCKED","#ffcc33");return;}
-  currentLevel=level;applyTheme();
+  currentLevel=level;
+  window.climboriaLevel=currentLevel;
+  highestGripIndexReached=-1;
+  applyTheme();
   if(typeof showGame==="function")showGame();
   updateLevelUI();
  };
