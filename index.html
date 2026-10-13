@@ -2607,6 +2607,15 @@ let touchReticle=null;
 let touchReticleMaterial=null;
 
 let cameraShake=0;
+// Optional manual camera controls: right-drag pan on desktop, pinch zoom on touch.
+let cameraPanX=0;
+let cameraPanY=0;
+let cameraZoom=1;
+let cameraDragActive=false;
+let cameraDragLastX=0;
+let cameraDragLastY=0;
+let pinchStartDistance=0;
+let pinchStartZoom=1;
 // Advanced routes require completing grips in order.
 let highestGripIndexReached=-1;
 let hasLeftGround=false;
@@ -3989,6 +3998,28 @@ function init(){
   mouseDown
  );
 
+ // Right mouse button pans the camera without interfering with the grab button.
+ window.addEventListener("contextmenu", e=>e.preventDefault());
+ window.addEventListener("mousedown", e=>{
+  if(e.button!==2)return;
+  e.preventDefault();
+  cameraDragActive=true;
+  cameraDragLastX=e.clientX;
+  cameraDragLastY=e.clientY;
+ });
+ window.addEventListener("mousemove", e=>{
+  if(!cameraDragActive)return;
+  const scale=cameraZoom*(innerHeight<=700?0.035:0.022);
+  cameraPanX-= (e.clientX-cameraDragLastX)*scale;
+  cameraPanY+= (e.clientY-cameraDragLastY)*scale;
+  cameraPanX=THREE.MathUtils.clamp(cameraPanX,-18,18);
+  cameraPanY=THREE.MathUtils.clamp(cameraPanY,-25,25);
+  cameraDragLastX=e.clientX;
+  cameraDragLastY=e.clientY;
+ });
+ window.addEventListener("mouseup", e=>{if(e.button===2)cameraDragActive=false;});
+ window.addEventListener("mouseleave", ()=>{cameraDragActive=false;});
+
  window.addEventListener(
   "mouseup",
   mouseUp
@@ -3999,6 +4030,25 @@ function init(){
   touchStart,
   {passive:false}
  );
+
+ // Two-finger pinch zoom on phones/tablets; one-finger touch remains the game control.
+ window.addEventListener("touchstart", e=>{
+  if(e.touches.length===2){
+   e.preventDefault();
+   cameraDragActive=false;
+   pinchStartDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+   pinchStartZoom=cameraZoom;
+  }
+ },{passive:false});
+ window.addEventListener("touchmove", e=>{
+  if(e.touches.length!==2||pinchStartDistance<=0)return;
+  e.preventDefault();
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  cameraZoom=THREE.MathUtils.clamp(pinchStartZoom*(pinchStartDistance/Math.max(1,d)),.65,1.8);
+ },{passive:false});
+ window.addEventListener("touchend", e=>{
+  if(e.touches.length<2)pinchStartDistance=0;
+ },{passive:false});
 
  window.addEventListener(
   "touchmove",
@@ -5689,15 +5739,14 @@ function updateCamera(){
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
  camera.fov = portraitMobile ? 86 : 55;
- camera.position.z = portraitMobile ? 38 : 18;
+ const baseCameraZ = portraitMobile ? 38 : 18;
+ camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
- // Keep the climber centered vertically and horizontally.
- // A small smooth vertical follow prevents the camera from lagging
- // far behind during fast swings; horizontal tracking stays locked.
- const targetY = hero.position.y;
+ // Follow the climber by default, while respecting the player's manual camera pan.
+ const targetY = hero.position.y + cameraPanY;
  camera.position.y += (targetY - camera.position.y) * .16;
- camera.position.x = hero.position.x;
+ camera.position.x = hero.position.x + cameraPanX;
 
 
  if(cameraShake>0){
@@ -5719,8 +5768,8 @@ function updateCamera(){
 
 
  camera.lookAt(
-  hero.position.x,
-  hero.position.y,
+  hero.position.x + cameraPanX,
+  hero.position.y + cameraPanY,
   0
  );
 }
