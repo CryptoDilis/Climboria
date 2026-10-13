@@ -1487,6 +1487,30 @@ body > canvas {
 }
 </style>
 
+<style id="climboria-x-social-link">
+.climboria-x-link{
+ position:fixed;z-index:100;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ min-height:42px;padding:0 14px;border:1px solid rgba(217,245,255,.24);
+ border-radius:999px;color:#f2fbff;text-decoration:none;
+ background:linear-gradient(135deg,rgba(24,39,48,.94),rgba(5,11,16,.96));
+ box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.07);
+ backdrop-filter:blur(12px);font:800 9px/1 Arial,Helvetica,sans-serif;letter-spacing:1.4px;
+ transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+.climboria-x-link svg{width:16px;height:16px;flex:none}
+.climboria-x-link:hover,.climboria-x-link:focus-visible{
+ border-color:rgba(103,255,154,.75);background:linear-gradient(135deg,rgba(24,48,47,.98),rgba(5,11,16,.98));
+ transform:translateY(-2px);outline:none;
+}
+.climboria-x-link:focus-visible{box-shadow:0 0 0 3px rgba(103,255,154,.25),0 8px 24px rgba(0,0,0,.28)}
+@media(max-width:700px){
+ .climboria-x-link{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));min-height:38px;padding:0 11px;gap:7px;font-size:8px}
+ .climboria-x-link svg{width:15px;height:15px}
+}
+@media(prefers-reduced-motion:reduce){.climboria-x-link{transition:none}}
+</style>
+
 <style id="climboria-premium-ui-v1">
 /* Premium mountain-tech visual refresh: presentation only. */
 :root{
@@ -1643,6 +1667,13 @@ body{
   <img src="favicon.png" alt="Climboria">
   <span>CLIMBORIA</span>
 </div>
+
+<a class="climboria-x-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer" aria-label="Visit Climboria on X" title="Follow Climboria on X">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path fill="currentColor" d="M18.9 2H22l-6.78 7.75L23.2 22h-6.25l-4.9-7.42L5.55 22H2.4l7.25-8.29L1.9 2h6.4l4.43 6.77L18.9 2Zm-1.1 17.9h1.73L7.37 4H5.5l12.3 15.9Z"/>
+  </svg>
+  <span>FOLLOW ON X</span>
+</a>
 
 
 
