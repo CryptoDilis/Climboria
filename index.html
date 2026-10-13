@@ -2312,7 +2312,7 @@ body > canvas {
 
 
  const nextLevelVictoryButton=document.getElementById("nextLevelVictoryButton");
- if(nextLevelVictoryButton)nextLevelVictoryButton.addEventListener("click",function(){const next=Number(window.climboriaCurrentLevel||1)+1;if(next<=10&&typeof window.startLevel==="function")window.startLevel(next);else if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
+ if(nextLevelVictoryButton)nextLevelVictoryButton.addEventListener("click",function(){const next=Number(window.climboriaCurrentLevel||1)+1;if(next<=5&&typeof window.startLevel==="function")window.startLevel(next);else if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
  const retryFailureButton=document.getElementById("retryFailureButton");
  if(retryFailureButton)retryFailureButton.addEventListener("click",function(){if(typeof window.restartGame==="function")window.restartGame();});
  const levelMenuFailureButton=document.getElementById("levelMenuFailureButton");
@@ -2638,12 +2638,12 @@ const LEVELS={
  4:{
   name:"ETHEREUM TOWER",
   reward:250,
-  playable:false
+  playable:true
  },
  5:{
   name:"BASE SUMMIT",
   reward:300,
-  playable:false
+  playable:true
  }
 };
 
@@ -5683,21 +5683,12 @@ function updateCamera(){
  camera.position.z = portraitMobile ? 38 : 18;
  camera.updateProjectionMatrix();
 
- const targetY=
-  hero.position.y + (portraitMobile ? 8.5 : 5);
-
- camera.position.y+=
-  (
-   targetY-
-   camera.position.y
-  )*.09;
-
-
- camera.position.x+=
-  (
-   hero.position.x-
-   camera.position.x
-  )*.055;
+ // Keep the climber centered vertically and horizontally.
+ // A small smooth vertical follow prevents the camera from lagging
+ // far behind during fast swings; horizontal tracking stays locked.
+ const targetY = hero.position.y;
+ camera.position.y += (targetY - camera.position.y) * .16;
+ camera.position.x = hero.position.x;
 
 
  if(cameraShake>0){
@@ -5720,7 +5711,7 @@ function updateCamera(){
 
  camera.lookAt(
   hero.position.x,
-  camera.position.y,
+  hero.position.y,
   0
  );
 }
@@ -5911,7 +5902,7 @@ function beginSummitSequence(){
      $("unlockMessage");
     window.climboriaCurrentLevel=currentLevel;
     const nextButton=document.getElementById("nextLevelVictoryButton");
-    if(nextButton){nextButton.textContent=currentLevel>=10?"EXPEDITION COMPLETE":"NEXT LEVEL";nextButton.disabled=currentLevel>=10;nextButton.style.opacity=currentLevel>=10?".55":"1";}
+    if(nextButton){nextButton.textContent=currentLevel>=5?"EXPEDITION COMPLETE":"NEXT LEVEL";nextButton.disabled=currentLevel>=5;nextButton.style.opacity=currentLevel>=5?".55":"1";}
 
     if(peak){
 
