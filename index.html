@@ -4018,6 +4018,11 @@ function init(){
   cameraDragLastY=e.clientY;
  });
  window.addEventListener("mouseup", e=>{if(e.button===2)cameraDragActive=false;});
+ window.addEventListener("wheel", e=>{
+  if(!running)return;
+  e.preventDefault();
+  cameraZoom=THREE.MathUtils.clamp(cameraZoom+(e.deltaY>0?.08:-.08),.65,1.8);
+ },{passive:false});
  window.addEventListener("mouseleave", ()=>{cameraDragActive=false;});
 
  window.addEventListener(
@@ -5774,9 +5779,10 @@ function updateCamera(){
  }
 
 
+ // Aim at the climber, not the panned camera offset; otherwise the view barely moves.
  camera.lookAt(
-  hero.position.x + cameraPanX,
-  hero.position.y + cameraPanY,
+  hero.position.x,
+  hero.position.y,
   0
  );
 }
