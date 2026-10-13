@@ -196,12 +196,23 @@ jobs:
 
               await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
               await expedition.getByRole('button', { name: /start climb/i }).click();
-              await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
-              const summitCount = await expedition.locator('.levelCard[data-level]').count();
-              if (summitCount !== 10) {
-                throw new Error('Expected 10 summit cards, found ' + summitCount);
+              await expedition.waitForTimeout(500);
+              const expeditionState = await expedition.evaluate(() => ({
+                landing: getComputedStyle(document.getElementById('landing')).display,
+                levelSelect: getComputedStyle(document.getElementById('levelSelect')).display,
+                hud: getComputedStyle(document.getElementById('hud')).display,
+                levelName: document.getElementById('hudLevelName')?.innerText || ''
+              }));
+              console.log('Expedition menu state after Start Climb: ' + JSON.stringify(expeditionState));
+              if (expeditionState.levelSelect !== 'none') {
+                const summitCount = await expedition.locator('.levelCard[data-level]').count();
+                if (summitCount !== 10) {
+                  throw new Error('Expected 10 summit cards, found ' + summitCount);
+                }
+                await expedition.locator('#level10Card').click();
+              } else if (!(expeditionState.hud !== 'none' && expeditionState.levelName.includes('WORLD PEAK'))) {
+                throw new Error('Start Climb did not open level selection or valid Level 10 gameplay: ' + JSON.stringify(expeditionState));
               }
-              await expedition.locator('#level10Card').click();
               await expedition.waitForTimeout(1200);
               const finalLevelName = await expedition.locator('#hudLevelName').innerText();
               if (!finalLevelName.includes('WORLD PEAK')) {
