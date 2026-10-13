@@ -4629,7 +4629,7 @@ function createGround(){
  for(let i=0;i<100;i++){
   const side=i%2===0?-1:1;
   const x=side*(7+Math.random()*17);
-  const z=-3+Math.random()*22;
+  const z=-4-Math.random()*5;
   const size=.25+Math.random()*1.15;
   const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(size,1),i%4===0?screeLight:screeMat);
   stone.position.set(x,size*.45,-z);
@@ -4641,7 +4641,7 @@ function createGround(){
  const bankShape=new THREE.Shape();
  bankShape.moveTo(-29,-4);bankShape.lineTo(-25,1);bankShape.lineTo(-20,2.5);bankShape.lineTo(-15,1.1);bankShape.lineTo(-10,.5);bankShape.lineTo(-5,.1);bankShape.lineTo(0,.0);bankShape.lineTo(5,.1);bankShape.lineTo(10,.5);bankShape.lineTo(15,1.1);bankShape.lineTo(20,2.5);bankShape.lineTo(25,1);bankShape.lineTo(29,-4);bankShape.closePath();
  const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x343f40,roughness:1,side:THREE.DoubleSide}));
- bank.position.set(0,-.05,1.6);scene.add(bank);
+ bank.position.set(0,-.05,-4.35);scene.add(bank);
 }
 
 
