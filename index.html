@@ -8684,5 +8684,80 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
 @media(prefers-reduced-motion:reduce){#cryptoTicker .cryptoRow{animation:none;overflow-x:auto}}
 </style>
 
+
+<style id="climboria-cinematic-reference-implementation">
+/* Actual illustrated summit scene asset; this replaces the placeholder CSS mountain. */
+#landing{
+ background:#07162d url("climboria-cinematic-summit.svg") center 43%/cover no-repeat!important;
+}
+#landing:before,#landing:after{display:none!important;content:none!important}
+#landing .panel{
+ width:100%!important;max-width:1440px!important;height:100%;max-height:none!important;
+ padding:clamp(66px,8vh,92px) clamp(16px,4vw,64px) 26px!important;
+ overflow-y:auto!important;justify-content:flex-start!important;
+ background:linear-gradient(180deg,rgba(2,9,22,.10) 0%,rgba(2,9,22,.06) 32%,rgba(2,9,22,.55) 64%,rgba(2,8,18,.92) 100%);
+}
+#landing .logo{
+ font-size:clamp(44px,8vw,104px)!important;line-height:1!important;
+ letter-spacing:clamp(2px,.8vw,12px)!important;
+ color:#fff!important;
+ background:linear-gradient(180deg,#fffef5 0%,#f5f7ff 40%,#9bb2cd 64%,#fff0b4 82%,#bd7c1c 100%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;
+ -webkit-text-fill-color:transparent!important;
+ filter:drop-shadow(0 5px 0 #08162b) drop-shadow(0 0 24px #ffcf66aa)!important;
+ margin:clamp(10px,3vh,36px) 0 6px!important;
+}
+#landing .sub{
+ font-size:clamp(13px,1.7vw,20px)!important;letter-spacing:clamp(1px,.45vw,5px)!important;
+ color:#fff7de!important;text-shadow:0 2px 12px #001!important;margin:12px 0 18px!important;
+}
+#landing .climboria-launch-announcement{
+ width:min(680px,100%);margin:12px auto 16px!important;padding:clamp(14px,2vw,22px)!important;
+ backdrop-filter:blur(9px);background:linear-gradient(145deg,rgba(3,15,32,.88),rgba(4,20,42,.82))!important;
+}
+#landing #startButton{width:min(360px,92%);margin:4px auto 18px;flex-shrink:0}
+#landing .pointsPanel{margin:0 auto 10px!important}
+#landing .progressPanel{margin:0 auto 10px!important}
+#landing .cards{margin:12px auto!important}
+#landing .note{color:#e4efff!important;text-shadow:0 2px 8px #000;font-size:13px!important}
+#landing .pointsBox,#landing .progressCard,#landing .card{
+ backdrop-filter:blur(8px);background:linear-gradient(145deg,rgba(7,29,57,.88),rgba(3,11,27,.91))!important;
+ border-color:rgba(255,211,112,.65)!important;box-shadow:0 8px 24px #0007,inset 0 1px #fff2!important;
+}
+#landing .pointsLabel,#landing .progressTitle,#landing .card b{color:#ffe29b!important}
+#landing .pointsValue{color:#fff4c7!important;text-shadow:0 0 15px #ffb52d50}
+#landing .progressText,#landing .progressStatus,#landing .pointsSmall,#landing .card span{color:#f0f5ff!important}
+#landing .card{width:min(220px,30%)!important}
+#landing .card b{font-size:clamp(15px,1.6vw,20px)!important}
+#landing .card span{font-size:clamp(12px,1.2vw,15px)!important}
+@media(min-width:900px){
+ #landing .panel{padding-top:60px!important}
+ #landing .climboria-launch-announcement{max-width:620px}
+ #landing .pointsPanel{max-width:760px}
+ #landing .progressPanel{max-width:760px}
+ #landing .cards{max-width:900px}
+}
+@media(max-width:700px){
+ #landing{background-position:center center!important}
+ #landing .panel{
+  padding:62px 12px 24px!important;
+  background:linear-gradient(180deg,rgba(2,9,22,.2),rgba(2,8,18,.35) 30%,rgba(2,8,18,.91) 72%)!important;
+ }
+ #landing .logo{font-size:clamp(39px,10vw,62px)!important;letter-spacing:2px!important;margin:12px 0 5px!important}
+ #landing .sub{font-size:12px!important;letter-spacing:1px!important;margin:8px 0 12px!important}
+ #landing .climboria-launch-announcement{padding:12px!important;margin:8px auto 12px!important}
+ #landing .pointsPanel{width:100%;gap:6px}
+ #landing .pointsBox{min-width:calc(33.33% - 6px)!important;padding:10px 5px!important}
+ #landing .progressPanel{width:100%;gap:6px}
+ #landing .progressCard{padding:10px 5px!important}
+ #landing .cards{width:100%;gap:7px}
+ #landing .card{width:calc(33.33% - 6px)!important;padding:12px 5px!important}
+ #landing .card b{font-size:12px!important}
+ #landing .card span{font-size:11px!important}
+ #landing .note{font-size:11px!important}
+}
+@media(prefers-reduced-motion:reduce){#cryptoTicker .cryptoRow{animation:none}}
+</style>
+
 </body>
 </html>
