@@ -1197,13 +1197,18 @@ button:active{transform:scale(.98)}
 </style>
 
 <style id="climboria-cinematic-gameplay">
-#victory,#failure{background:radial-gradient(ellipse at 50% 35%,#183449 0%,#070d14 68%);backdrop-filter:blur(8px)}
-.resultActions{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:10px;width:min(560px,100%)}
+#victory,#failure{background:transparent!important;backdrop-filter:none!important;pointer-events:none;align-items:flex-end;padding:0 0 max(16px,env(safe-area-inset-bottom));box-sizing:border-box}
+#victory .panel,#failure .panel{pointer-events:auto;width:min(560px,94%);max-height:56vh;overflow-y:auto;padding:16px 14px;margin:0 auto 12px;border:1px solid #d7f7ff35;border-radius:18px;background:linear-gradient(160deg,rgba(7,17,25,.84),rgba(4,9,14,.68));box-shadow:0 10px 36px #0008;backdrop-filter:blur(7px)}
+#victory .winTitle,#failure .winTitle{font-size:clamp(20px,5vw,34px)}
+#victory .winSub,#failure .winSub{margin:8px 0;font-size:12px}
+#victory .winPoints,#failure .winPoints{margin:7px 0;padding:8px 12px}
+#victory .winPointsValue,#failure .winPointsValue{font-size:clamp(24px,7vw,38px)}
+.resultActions{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:10px;width:100%}
 .resultActions button{min-width:135px}
 #failure .winTitle{color:#ff7b7b;text-shadow:0 0 26px #ff4d4d55}
 #failure .winPoints{border-color:#ff777733;background:#ff555508}
 #failure .winPointsValue{color:#ff8b8b}
-@media(max-width:700px){.resultActions{gap:7px}.resultActions button{min-width:calc(50% - 7px);padding:12px 9px;font-size:9px;letter-spacing:1px}}
+@media(max-width:700px){#victory .panel,#failure .panel{max-height:48vh;padding:12px 10px;margin-bottom:8px}.resultActions{gap:7px}.resultActions button{min-width:calc(50% - 7px);padding:10px 8px;font-size:9px;letter-spacing:1px}}
 </style>
 <style id="climboria-game-brand-style">
 #climboria-game-brand{
@@ -2940,6 +2945,8 @@ const summitParticles=[];
 const summitBurst=[];
 const summitSparks=[];
 const summitShockwaves=[];
+const brokenPotPieces=[];
+let lastVictoryBurstAt=0;
 
 let summitGlowMesh=null;
 let summitLight=null;
@@ -4688,6 +4695,7 @@ function createHero(){
  const pot=mesh(new THREE.LatheGeometry(profile,48),clay,0,0,0);pot.scale.set(1,1.03,1);
  const lip=mesh(new THREE.TorusGeometry(.755,.105,12,48),clayLight,0,1.405,0);lip.rotation.x=Math.PI/2;
  const inside=mesh(new THREE.CircleGeometry(.67,40),clayShadow,0,1.35,0);inside.rotation.x=-Math.PI/2;
+ hero.userData.potParts=[pot,lip,inside];
  // Irregular dark cracks across the front face of the pot.
  const crackPaths=[
   [[.38,1.19],[.29,1.02],[.34,.87],[.22,.73],[.27,.58],[.12,.43]],
@@ -4701,11 +4709,12 @@ function createHero(){
    const p=path[i],q=path[i+1],dx=q[0]-p[0],dy=q[1]-p[1];
    const line=mesh(new THREE.BoxGeometry(.025,Math.hypot(dx,dy),.018),crackMat,(p[0]+q[0])/2,(p[1]+q[1])/2,1.03);
    line.rotation.z=-Math.atan2(dx,dy);
+   hero.userData.potParts.push(line);
   }
  }
  // Pot rim chips and handmade clay flecks.
- for(let i=0;i<20;i++){const an=i/20*Math.PI*2;const dot=mesh(new THREE.SphereGeometry(.035,6,5),i%3?clayShadow:clayLight,Math.sin(an)*1.27,.82,Math.cos(an)*1.27);dot.scale.set(1.1,.7,.45);}
- for(const y of [.36,.43,1.12]){const band=mesh(new THREE.TorusGeometry(y===.36?1.13:1.18,.018,6,48),clayShadow,0,y,0);band.rotation.x=Math.PI/2;}
+ for(let i=0;i<20;i++){const an=i/20*Math.PI*2;const dot=mesh(new THREE.SphereGeometry(.035,6,5),i%3?clayShadow:clayLight,Math.sin(an)*1.27,.82,Math.cos(an)*1.27);dot.scale.set(1.1,.7,.45);hero.userData.potParts.push(dot);}
+ for(const y of [.36,.43,1.12]){const band=mesh(new THREE.TorusGeometry(y===.36?1.13:1.18,.018,6,48),clayShadow,0,y,0);band.rotation.x=Math.PI/2;hero.userData.potParts.push(band);}
  // Boots/legs are partially visible in the jar opening.
  for(const side of [-1,1]){
   capsule(side*.22,1.36,.12,.12,.34,pants,-side*.08);
@@ -5930,6 +5939,7 @@ function beginSummitSequence(){
      }
     }
 
+    lastVictoryBurstAt=performance.now();
     $("victory").style.display=
      "flex";
 
@@ -5949,9 +5959,36 @@ function showVictory(){
    RESET
 ===================================================== */
 
+function clearBrokenPotEffect(){
+ for(const piece of brokenPotPieces){
+  scene.remove(piece);
+  piece.geometry?.dispose();
+  piece.material?.dispose();
+ }
+ brokenPotPieces.length=0;
+ if(hero?.userData?.potParts)hero.userData.potParts.forEach(part=>part.visible=true);
+}
+function createBrokenPotEffect(){
+ if(!hero||!scene)return;
+ clearBrokenPotEffect();
+ if(hero.userData.potParts)hero.userData.potParts.forEach(part=>part.visible=false);
+ const clayColors=[0x98512f,0xb96d45,0x633622,0x8c472c,0xc17a4e];
+ for(let i=0;i<11;i++){
+  const shard=new THREE.Mesh(new THREE.TetrahedronGeometry(.24+Math.random()*.25,0),new THREE.MeshStandardMaterial({color:clayColors[i%clayColors.length],roughness:.96,flatShading:true}));
+  const a=i/11*Math.PI*2;
+  shard.position.set(hero.position.x+Math.cos(a)*(.65+Math.random()*.65),hero.position.y+.2+Math.random()*1.05,hero.position.z+.2+(Math.random()-.5)*.6);
+  shard.rotation.set(Math.random()*3,Math.random()*3,Math.random()*3);
+  shard.userData.spin=(Math.random()-.5)*.035;
+  scene.add(shard);brokenPotPieces.push(shard);
+ }
+ hero.rotation.z=-Math.PI/2;
+ camera.position.set(hero.position.x,hero.position.y+2,innerWidth<=700?24:20);
+ camera.lookAt(hero.position.x,hero.position.y,0);
+}
 function showFailure(){
  running=false;grabbed=null;touchActive=false;gameWon=false;summitSequence=false;cancelVictoryTimer();
  if(hammerRope)hammerRope.visible=false;if(touchReticle)touchReticle.visible=false;
+ createBrokenPotEffect();
  const failure=document.getElementById("failure");
  if(failure){const label=document.getElementById("failureLevel");if(label)label.textContent="LEVEL "+String(currentLevel).padStart(2,"0");failure.style.display="flex";}
  ["hud","hudPoints","help","nav","touchHint","cryptoTicker","victory"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
@@ -5959,7 +5996,8 @@ function showFailure(){
 function resetPlayer(){
 
  if(!hero||!camera)return;
-
+ clearBrokenPotEffect();
+ hero.rotation.z=0;
  hero.rotation.y = Math.PI;
  hero.userData.celebrationArms?.forEach(a=>{a.pivot.rotation.z=a.rest;});
  hero.position.set(
@@ -8012,6 +8050,11 @@ function animate(time=0){
  }
 
 
+ if(gameWon&&time-lastVictoryBurstAt>1100){
+  createSummitBurst();
+  lastVictoryBurstAt=time;
+ }
+ for(const piece of brokenPotPieces)piece.rotation.y+=piece.userData.spin||0;
  updateEffects(dt);
 
  updateSummitBurst(dt);
