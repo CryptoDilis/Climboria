@@ -5750,8 +5750,9 @@ function updateCamera(){
  if(summitSequence)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 86 : 55;
- const baseCameraZ = portraitMobile ? 38 : 18;
+ // Wider cinematic framing: show more mountain, surrounding ridges, and sky.
+ camera.fov = portraitMobile ? 96 : 68;
+ const baseCameraZ = portraitMobile ? 44 : 25;
  camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
@@ -6070,11 +6071,12 @@ function resetPlayer(){
  );
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- camera.fov = portraitMobile ? 86 : 55;
+ // Start with a broad establishing view instead of opening against a close wall.
+ camera.fov = portraitMobile ? 96 : 68;
  camera.position.set(
   0,
   7,
-  portraitMobile ? 38 : 18
+  portraitMobile ? 44 : 25
  );
  camera.updateProjectionMatrix();
 
@@ -7653,8 +7655,8 @@ function resize(){
   so the climber, grips, and more of the route fit in the phone view.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = isPortraitMobile ? 38 : 18;
- camera.fov = isPortraitMobile ? 86 : 55;
+ camera.position.z = (isPortraitMobile ? 44 : 25) * cameraZoom;
+ camera.fov = isPortraitMobile ? 96 : 68;
 
  camera.updateProjectionMatrix();
 
