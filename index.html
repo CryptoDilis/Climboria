@@ -1407,6 +1407,26 @@ h3{
 
 </style>
 
+<style id="climboria-mobile-hud-fix">
+/* Mobile gameplay HUD spacing only; no game logic changes. */
+@media(max-width:700px){
+  #hud{top:10px;left:10px;right:10px}
+  #hud .top{min-height:78px}
+  #hud .stat{top:0;right:0;max-width:58%;font-size:9px;line-height:1.45;overflow-wrap:anywhere}
+  #hudLevelName{display:inline-block;max-width:100%;line-height:1.3}
+  #bar{width:min(112px,42vw);margin-left:auto}
+  #status{top:52px;font-size:8px;letter-spacing:1.5px}
+  #hudPoints{top:82px}
+  .hudPointsLabel{font-size:8px;letter-spacing:1.5px}
+  #hudPointsValue{font-size:17px}
+}
+@media(max-width:420px){
+  #hud .stat{max-width:56%;font-size:8px}
+  #bar{width:min(96px,38vw)}
+  #status{top:50px}
+  #hudPoints{top:78px}
+}
+</style>
 </head>
 
 <body>
