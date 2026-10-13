@@ -4238,67 +4238,55 @@ function createMountain(){
  const mountainRockCanvas=document.createElement("canvas");
  mountainRockCanvas.width=1024;mountainRockCanvas.height=1024;
  const mountainRockCtx=mountainRockCanvas.getContext("2d");
+ // Brighter glacial-rock base: retain shadow detail without turning the cliff nearly black on phones.
  const mountainRockGrad=mountainRockCtx.createLinearGradient(0,0,0,1024);
- mountainRockGrad.addColorStop(0,"#c7d0d0");
- mountainRockGrad.addColorStop(.13,"#777f80");
- mountainRockGrad.addColorStop(.3,"#565f61");
- mountainRockGrad.addColorStop(.65,"#3c4649");
- mountainRockGrad.addColorStop(1,"#252f33");
+ mountainRockGrad.addColorStop(0,"#e0e5e3");
+ mountainRockGrad.addColorStop(.12,"#a8b4b5");
+ mountainRockGrad.addColorStop(.30,"#818e91");
+ mountainRockGrad.addColorStop(.62,"#657276");
+ mountainRockGrad.addColorStop(1,"#4d5a5e");
  mountainRockCtx.fillStyle=mountainRockGrad;mountainRockCtx.fillRect(0,0,1024,1024);
- // Large fractured rock planes break up the surface without repetitive horizontal stripes.
- for(let facet=0;facet<260;facet++){
+ // Broad irregular facets create broken cliff planes rather than repetitive horizontal strata.
+ for(let facet=0;facet<520;facet++){
   const x=Math.random()*1024,y=Math.random()*1024;
-  const w=18+Math.random()*105,h=12+Math.random()*90;
-  const lean=(Math.random()-.5)*w*.7;
-  mountainRockCtx.beginPath();
-  mountainRockCtx.moveTo(x,y);
-  mountainRockCtx.lineTo(x+w*.58,y-h*.12);
-  mountainRockCtx.lineTo(x+w+lean,y+h*.42);
-  mountainRockCtx.lineTo(x+w*.38,y+h);
-  mountainRockCtx.lineTo(x-w*.12,y+h*.55);
-  mountainRockCtx.closePath();
-  mountainRockCtx.fillStyle=Math.random()>.52
-   ? "rgba(194,205,202,0.055)"
-   : "rgba(7,13,16,0.085)";
+  const w=12+Math.random()*130,h=15+Math.random()*115;
+  mountainRockCtx.beginPath();mountainRockCtx.moveTo(x,y);
+  mountainRockCtx.lineTo(x+w*(.25+Math.random()*.45),y-h*.18);
+  mountainRockCtx.lineTo(x+w+(Math.random()-.5)*w*.45,y+h*.38);
+  mountainRockCtx.lineTo(x+w*.42,y+h);
+  mountainRockCtx.lineTo(x-w*.2,y+h*.48);mountainRockCtx.closePath();
+  mountainRockCtx.fillStyle=Math.random()>.47?"rgba(224,232,228,0.075)":"rgba(16,27,31,0.075)";
   mountainRockCtx.fill();
  }
- // A few longer mineral seams follow broken, slanted paths instead of tidy bands.
- for(let seam=0;seam<115;seam++){
+ // Fine, non-directional mineral grain adds detail without stripe-like brush marks.
+ for(let i=0;i<42000;i++){
+  const x=Math.random()*1024,y=Math.random()*1024;
+  mountainRockCtx.fillStyle=Math.random()>.48?"rgba(237,241,235,0.13)":"rgba(13,22,25,0.12)";
+  mountainRockCtx.fillRect(x,y,.5+Math.random()*2.1,.5+Math.random()*2.8);
+ }
+ // Short irregular cracks, mostly diagonal, like fractured alpine rock.
+ for(let i=0;i<320;i++){
   let x=Math.random()*1024,y=Math.random()*1024;
   mountainRockCtx.beginPath();mountainRockCtx.moveTo(x,y);
-  for(let j=0;j<4+Math.random()*8;j++){
-   x+=(Math.random()-.5)*28;y+=(Math.random()-.5)*34;
-   mountainRockCtx.lineTo(x,y);
-  }
-  mountainRockCtx.strokeStyle=Math.random()>.5?"rgba(205,213,207,0.10)":"rgba(8,14,17,0.13)";
-  mountainRockCtx.lineWidth=.5+Math.random()*1.8;
-  mountainRockCtx.stroke();
+  for(let j=0;j<3+Math.random()*6;j++){x+=(Math.random()-.5)*24;y+=(Math.random()-.5)*28;mountainRockCtx.lineTo(x,y);}
+  mountainRockCtx.strokeStyle=Math.random()>.5?"rgba(236,241,235,0.12)":"rgba(14,24,28,0.17)";
+  mountainRockCtx.lineWidth=.45+Math.random()*1.1;mountainRockCtx.stroke();
  }
- // Fine stone grain and scattered mineral flecks.
- for(let i=0;i<26000;i++){
-  const x=Math.random()*1024,y=Math.random()*1024;
-  const light=Math.random()>.52;
-  mountainRockCtx.fillStyle=light?"rgba(220,225,217,0.10)":"rgba(5,10,12,0.14)";
-  mountainRockCtx.fillRect(x,y,.5+Math.random()*2,1+Math.random()*5);
- }
- // Hairline fractures, varied in length and direction.
- for(let i=0;i<170;i++){
-  const x=Math.random()*1024,y=Math.random()*1024;
+ // Wind-loaded summit snow with an uneven boundary and blue-grey ice shadows.
+ mountainRockCtx.beginPath();mountainRockCtx.moveTo(0,0);
+ for(let x=0;x<=1024;x+=32)mountainRockCtx.lineTo(x,125+Math.sin(x*.018)*25+(Math.random()-.5)*26);
+ mountainRockCtx.lineTo(1024,0);mountainRockCtx.closePath();
+ const summitSnow=mountainRockCtx.createLinearGradient(0,0,0,180);
+ summitSnow.addColorStop(0,"#f4f7f4");summitSnow.addColorStop(.55,"#d5e0e2");summitSnow.addColorStop(1,"rgba(165,190,199,0.05)");
+ mountainRockCtx.fillStyle=summitSnow;mountainRockCtx.fill();
+ for(let i=0;i<240;i++){
+  const x=Math.random()*1024,y=Math.random()*145;
   mountainRockCtx.beginPath();mountainRockCtx.moveTo(x,y);
-  let px=x,py=y;
-  for(let j=0;j<3+Math.random()*7;j++){
-   px+=(Math.random()-.5)*15;py+=3+Math.random()*13;mountainRockCtx.lineTo(px,py);
-  }
-  mountainRockCtx.strokeStyle="rgba(8,15,18,0.22)";mountainRockCtx.lineWidth=.6+Math.random()*1.2;mountainRockCtx.stroke();
- }
- // Subtle wind-scoured snow and ice around the summit.
- const snow=mountainRockCtx.createLinearGradient(0,0,0,190);
- snow.addColorStop(0,"rgba(235,242,241,.92)");snow.addColorStop(.48,"rgba(202,218,221,.72)");snow.addColorStop(1,"rgba(190,209,213,0)");
- mountainRockCtx.fillStyle=snow;mountainRockCtx.fillRect(0,0,1024,190);
- for(let i=0;i<170;i++){
-  const x=Math.random()*1024,y=Math.random()*190;
-  mountainRockCtx.fillStyle=Math.random()>.5?"rgba(255,255,255,.16)":"rgba(84,115,126,.13)";
-  mountainRockCtx.beginPath();mountainRockCtx.moveTo(x,y);mountainRockCtx.lineTo(x+8+Math.random()*34,y+Math.random()*7);mountainRockCtx.lineTo(x+2,y+2+Math.random()*4);mountainRockCtx.closePath();mountainRockCtx.fill();
+  mountainRockCtx.lineTo(x+12+Math.random()*48,y+Math.random()*10);
+  mountainRockCtx.lineTo(x+2+Math.random()*18,y+4+Math.random()*9);
+  mountainRockCtx.closePath();
+  mountainRockCtx.fillStyle=Math.random()>.5?"rgba(255,255,255,0.22)":"rgba(87,126,145,0.15)";
+  mountainRockCtx.fill();
  }
  const mountainRockTexture=new THREE.CanvasTexture(mountainRockCanvas);
  mountainRockTexture.colorSpace=THREE.SRGBColorSpace;
@@ -4317,7 +4305,7 @@ function createMountain(){
  mountainRockBump.wrapS=THREE.RepeatWrapping;mountainRockBump.wrapT=THREE.RepeatWrapping;
  mountainRockBump.repeat.set(3,3);
  const mountainRockMaterial=new THREE.MeshStandardMaterial({
-  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.025,
+  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.012,
   roughness:1,metalness:0,side:THREE.DoubleSide
  });
  // Keep the thick body behind the new sculpted face.
@@ -4335,10 +4323,11 @@ function createMountain(){
   const v=row/rows,y=v*63,half=cliffHalfWidth(y);
   for(let col=0;col<=cols;col++){
    const u=col/cols,x=(u*2-1)*half;
-   const broad=Math.sin(x*.62+y*.19)*.16+Math.sin(x*1.37-y*.31)*.075;
-   const crag=(Math.sin(x*2.7+y*.87)*Math.sin(y*1.31-x*.63))*.12;
-   const ridge=(Math.sin(y*.31+x*.16)+Math.sin(y*.73-x*.23))*.07;
-   const z=-3.72+broad+crag+ridge;
+   const broad=Math.sin(x*.38+y*.13)*.25+Math.sin(x*.91-y*.22)*.13;
+   const crag=(Math.sin(x*2.1+y*.63)*Math.sin(y*.91-x*.47))*.20;
+   const ridge=(Math.sin(y*.24+x*.21)+Math.sin(y*.51-x*.31))*.11;
+   const brokenFace=Math.sin(x*.73+y*.42)*Math.sin(x*1.61-y*.27)*.12;
+   const z=-3.72+broad+crag+ridge+brokenFace;
    verts.push(x,y,z);uvs.push(u,1-v); // CanvasTexture vertical UV: map the snow painted at canvas top onto the summit.
    if(row<rows&&col<cols){
     const a=row*(cols+1)+col,b=a+1,c=a+(cols+1),d=c+1;
