@@ -4617,7 +4617,7 @@ function createScenicMountainBackdrop(){
 function createGround(){
 
  // Continuous rocky foothill apron: hides the flat box edge and visually anchors the mountain.
- const groundMat=new THREE.MeshStandardMaterial({color:0x343f40,roughness:1,metalness:0});
+ const groundMat=new THREE.MeshStandardMaterial({color:0x596563,roughness:1,metalness:0});
  const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,120,1,1),groundMat);
  ground.rotation.x=-Math.PI/2;
  ground.position.set(0,-.12,-24);
@@ -4642,7 +4642,7 @@ function createGround(){
  const bankShape=new THREE.Shape();
  // Keep the foothill apron shallow; a deep triangular apron reads like a floating black underside on phones.
  bankShape.moveTo(-29,-.65);bankShape.lineTo(-25,.1);bankShape.lineTo(-20,.65);bankShape.lineTo(-15,.45);bankShape.lineTo(-10,.18);bankShape.lineTo(-5,.04);bankShape.lineTo(0,0);bankShape.lineTo(5,.04);bankShape.lineTo(10,.18);bankShape.lineTo(15,.45);bankShape.lineTo(20,.65);bankShape.lineTo(25,.1);bankShape.lineTo(29,-.65);bankShape.closePath();
- const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x465052,roughness:1,side:THREE.DoubleSide}));
+ const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x68716e,roughness:1,side:THREE.DoubleSide}));
  bank.position.set(0,-.05,-4.35);scene.add(bank);
 }
 
