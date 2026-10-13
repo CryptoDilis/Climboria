@@ -4965,40 +4965,41 @@ function createHero(){
  }
 
  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.39,.72,6,12),shirt);
- torso.position.set(0,2.02,.02);torso.rotation.x=-.06;hero.add(torso);
+ // Lift the full upper body well above the jar mouth so the standing pose reads clearly.
+ torso.position.set(0,2.58,.02);torso.rotation.x=-.06;hero.add(torso);
  const hem=new THREE.Mesh(new THREE.TorusGeometry(.34,.035,6,24),shirtTrim);
- hem.rotation.x=Math.PI/2;hem.position.set(0,1.63,.02);hero.add(hem);
+ hem.rotation.x=Math.PI/2;hem.position.set(0,2.19,.02);hero.add(hem);
  const sash=new THREE.Mesh(new THREE.BoxGeometry(.11,.62,.035),shirtTrim);
- sash.position.set(-.19,2.02,.365);sash.rotation.z=-.25;hero.add(sash);
+ sash.position.set(-.19,2.58,.365);sash.rotation.z=-.25;hero.add(sash);
 
  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.15,.17,.23,12),skin);
- neck.position.set(0,2.52,.04);hero.add(neck);
+ neck.position.set(0,3.08,.04);hero.add(neck);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.36,24,20),skin);
- head.scale.set(.9,1.1,.92);head.position.set(0,2.86,.07);hero.add(head);
+ head.scale.set(.9,1.1,.92);head.position.set(0,3.42,.07);hero.add(head);
  const hairMat=new THREE.MeshStandardMaterial({color:0x211a16,roughness:1});
  const hair=new THREE.Mesh(new THREE.SphereGeometry(.38,20,12,0,Math.PI*2,0,Math.PI*.58),hairMat);
- hair.position.set(0,3.08,.015);hero.add(hair);
+ hair.position.set(0,3.64,.015);hero.add(hair);
  const fringe=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),hairMat);
- fringe.scale.set(1.4,.55,.75);fringe.position.set(-.1,3.04,.34);hero.add(fringe);
+ fringe.scale.set(1.4,.55,.75);fringe.position.set(-.1,3.60,.34);hero.add(fringe);
  for(const x of [-.125,.125]){
   const eye=new THREE.Mesh(new THREE.SphereGeometry(.032,10,8),new THREE.MeshStandardMaterial({color:0x171717}));
-  eye.position.set(x,2.88,.39);hero.add(eye);
+  eye.position.set(x,3.44,.39);hero.add(eye);
   const brow=new THREE.Mesh(new THREE.BoxGeometry(.095,.025,.025),hairMat);
-  brow.position.set(x,2.95,.38);hero.add(brow);
+  brow.position.set(x,3.51,.38);hero.add(brow);
  }
  const nose=new THREE.Mesh(new THREE.SphereGeometry(.04,8,8),skin);
- nose.position.set(0,2.8,.42);hero.add(nose);
+ nose.position.set(0,3.36,.42);hero.add(nose);
 
  // Arms are extended outward and clear of the jar rim, rather than tucked into a seated pose.
  for(const side of [-1,1]){
   const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.38,5,8),shirt);
-  upper.position.set(side*.48,2.19,.08);upper.rotation.z=-side*.88;hero.add(upper);
+  upper.position.set(side*.48,2.75,.08);upper.rotation.z=-side*.88;hero.add(upper);
   const forearm=new THREE.Mesh(new THREE.CapsuleGeometry(.085,.31,5,8),skin);
-  forearm.position.set(side*.73,2.31,.2);forearm.rotation.z=-side*.45;hero.add(forearm);
+  forearm.position.set(side*.73,2.87,.2);forearm.rotation.z=-side*.45;hero.add(forearm);
   const cuff=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,6,12),shirtTrim);
-  cuff.position.set(side*.82,2.37,.22);cuff.rotation.z=Math.PI/2;hero.add(cuff);
+  cuff.position.set(side*.82,2.93,.22);cuff.rotation.z=Math.PI/2;hero.add(cuff);
   const hand=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),skin);
-  hand.position.set(side*.86,2.4,.24);hero.add(hand);
+  hand.position.set(side*.86,2.96,.24);hero.add(hand);
  }
 
  /* Face the climbing wall instead of facing the player/camera. */
@@ -5843,7 +5844,7 @@ function updateHammer(){
  // The gameplay still targets grips with the existing cursor/raycast logic.
  // Hero faces the wall (Y rotation = PI), so local +X maps to world -X.
  const handX=hero.position.x-.86;
- const handY=hero.position.y+2.4;
+ const handY=hero.position.y+2.96;
  const targetX=grabbed?anchorWorld.x:cursorWorld.x;
  const targetY=grabbed?anchorWorld.y:cursorWorld.y;
 
