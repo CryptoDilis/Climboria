@@ -8759,5 +8759,42 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
 @media(prefers-reduced-motion:reduce){#cryptoTicker .cryptoRow{animation:none}}
 </style>
 
+
+<style id="climboria-mobile-safe-top-fix">
+/* Keep the entire wordmark below the scrolling ticker and browser chrome. */
+#cryptoTicker{height:46px!important;padding:4px 8px!important}
+#landing .panel{
+ padding-top:calc(64px + env(safe-area-inset-top,0px))!important;
+}
+#landing .logo{
+ margin-top:4px!important;
+ font-size:clamp(34px,8.8vw,72px)!important;
+ letter-spacing:clamp(1px,.55vw,6px)!important;
+ line-height:1.12!important;
+ overflow:visible!important;
+ max-width:100%;overflow-wrap:normal;word-break:normal;
+}
+#landing .sub{margin-top:8px!important}
+@media(max-width:700px){
+ #cryptoTicker{height:40px!important}
+ #landing .panel{
+  padding-top:calc(52px + env(safe-area-inset-top,0px))!important;
+  padding-left:12px!important;padding-right:12px!important;
+ }
+ #landing .logo{
+  font-size:clamp(32px,8.2vw,50px)!important;
+  letter-spacing:1px!important;
+  margin-top:2px!important;margin-bottom:4px!important;
+  line-height:1.14!important;
+  filter:drop-shadow(0 3px 0 #08162b) drop-shadow(0 0 18px #ffcf66cc)!important;
+ }
+ #landing .sub{font-size:11px!important;letter-spacing:.6px!important;margin:5px 0 10px!important}
+ #landing .climboria-launch-announcement{margin-top:6px!important}
+}
+@media(max-width:380px){
+ #landing .logo{font-size:clamp(29px,7.8vw,36px)!important;letter-spacing:0!important}
+}
+</style>
+
 </body>
 </html>
