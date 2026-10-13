@@ -4001,7 +4001,6 @@ function init(){
  createMountain();
  createGround();
  createRocks();
- createMountainDetails();
  createHero();
  createHammer();
  createGrips();
@@ -4164,17 +4163,33 @@ function createMountain(){
  // Keep the mountain silhouette proportionate on portrait phones.
  // The climbing route and grip coordinates stay unchanged.
  mountainShape.moveTo(-22,0);
- mountainShape.lineTo(-18,10);
- mountainShape.lineTo(-15,20);
- mountainShape.lineTo(-12,30);
- mountainShape.lineTo(-9,40);
- mountainShape.lineTo(-6,50);
+ mountainShape.lineTo(-20.4,4.2);
+ mountainShape.lineTo(-18.2,8.6);
+ mountainShape.lineTo(-18.6,11.1);
+ mountainShape.lineTo(-15.4,17.8);
+ mountainShape.lineTo(-15.9,21.2);
+ mountainShape.lineTo(-12.1,27.5);
+ mountainShape.lineTo(-12.8,31.1);
+ mountainShape.lineTo(-9.3,37.4);
+ mountainShape.lineTo(-9.6,41.2);
+ mountainShape.lineTo(-6.2,47.5);
+ mountainShape.lineTo(-6.7,51.1);
+ mountainShape.lineTo(-3.1,56.7);
+ mountainShape.lineTo(-1.7,60.2);
  mountainShape.lineTo(0,63);
- mountainShape.lineTo(6,50);
- mountainShape.lineTo(9,40);
- mountainShape.lineTo(12,30);
- mountainShape.lineTo(15,20);
- mountainShape.lineTo(18,10);
+ mountainShape.lineTo(2.2,59.5);
+ mountainShape.lineTo(2.8,56.3);
+ mountainShape.lineTo(6.5,50.7);
+ mountainShape.lineTo(6.0,47.1);
+ mountainShape.lineTo(9.7,41.4);
+ mountainShape.lineTo(9.2,37.5);
+ mountainShape.lineTo(12.6,31.4);
+ mountainShape.lineTo(12.0,27.7);
+ mountainShape.lineTo(15.6,21.5);
+ mountainShape.lineTo(15.0,17.8);
+ mountainShape.lineTo(18.5,11.5);
+ mountainShape.lineTo(18.1,8.3);
+ mountainShape.lineTo(20.1,4.0);
  mountainShape.lineTo(22,0);
  mountainShape.closePath();
 
@@ -4214,381 +4229,122 @@ function createMountain(){
  mountainBase.position.set(0,0,-9.7);
  mountainGroup.add(mountainBase);
 
- const mountainFacetData=[
-  [[-11,0],[-8.5,9],[-3.8,0],0x394347],
-  [[-8.5,9],[-7.2,19],[-3.8,0],0x465155],
-  [[-7.2,19],[-5.2,29],[-2.7,17],0x30393d],
-  [[-7.2,19],[-2.7,17],[-3.8,0],0x3d484c],
-  [[-5.2,29],[-3.8,39],[-1.4,27],0x465155],
-  [[-5.2,29],[-1.4,27],[-2.7,17],0x364044],
-  [[-3.8,39],[-2.1,49],[0,38],0x303a3e],
-  [[-3.8,39],[0,38],[-1.4,27],0x414c50],
-  [[-2.1,49],[0,63],[1.1,46],0x4b575b],
-  [[-2.1,49],[1.1,46],[0,38],0x354044],
-  [[0,63],[2.8,50],[1.1,46],0x30393d],
-  [[2.8,50],[4.6,40],[1.1,46],0x465155],
-  [[4.6,40],[6.5,30],[2.7,29],0x303a3e],
-  [[4.6,40],[2.7,29],[1.1,46],0x3b464a],
-  [[6.5,30],[8.1,19],[3.8,18],0x465155],
-  [[6.5,30],[3.8,18],[2.7,29],0x30393d],
-  [[8.1,19],[9.2,9],[4.4,8],0x354044],
-  [[8.1,19],[4.4,8],[3.8,18],0x414c50],
-  [[9.2,9],[11,0],[4.4,8],0x30393d],
-  [[-3.8,0],[-2.7,17],[0,0],0x30393d],
-  [[0,0],[-2.7,17],[2.7,29],0x354044],
-  [[0,0],[2.7,29],[4.4,8],0x414c50],
-  [[0,0],[4.4,8],[11,0],0x30393d]
- ];
-
- mountainFacetData.forEach(function(face){
-  const points=[face[0],face[1],face[2]];
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute(
-   "position",
-   new THREE.Float32BufferAttribute([
-    points[0][0],points[0][1],-3.62,
-    points[1][0],points[1][1],-3.62,
-    points[2][0],points[2][1],-3.62
-   ],3)
-  );
-  geometry.computeVertexNormals();
-  const material=new THREE.MeshStandardMaterial({
-   color:face[3],
-   map:rockTexture,
-   roughness:1,
-   metalness:0,
-   side:THREE.DoubleSide
-  });
-  mountainGroup.add(new THREE.Mesh(geometry,material));
- });
-
-
- /* CLIMBORIA_MOUNTAIN_REALISM_V2
-    Surface relief, broken strata, scree and ice shelves.
-    All added geometry is decorative and does not move grips or alter physics.
- */
- function addRockShard(x,y,z,w,h,d,color,rotation){
-  const mesh=new THREE.Mesh(
-   new THREE.DodecahedronGeometry(1,0),
-   new THREE.MeshStandardMaterial({color,roughness:.98,metalness:0,flatShading:true})
-  );
-  mesh.position.set(x,y,z);
-  mesh.scale.set(w,h,d);
-  mesh.rotation.set(rotation[0],rotation[1],rotation[2]);
-  mesh.castShadow=true;mesh.receiveShadow=true;
-  mountainGroup.add(mesh);
+ // Replace the flat triangle collage with one continuous, displaced cliff surface.
+ // The mesh is generated locally; climbing grip coordinates and physics are untouched.
+ const rockCanvas=document.createElement("canvas");
+ rockCanvas.width=1024;rockCanvas.height=1024;
+ const rockCtx=rockCanvas.getContext("2d");
+ const rockGrad=rockCtx.createLinearGradient(0,0,0,1024);
+ rockGrad.addColorStop(0,"#c7d0d0");
+ rockGrad.addColorStop(.13,"#777f80");
+ rockGrad.addColorStop(.3,"#565f61");
+ rockGrad.addColorStop(.65,"#3c4649");
+ rockGrad.addColorStop(1,"#252f33");
+ rockCtx.fillStyle=rockGrad;rockCtx.fillRect(0,0,1024,1024);
+ // Broad geological strata with broken edges, not evenly spaced cartoon stripes.
+ for(let band=0;band<95;band++){
+  const y=band*11+Math.random()*13;
+  rockCtx.beginPath();rockCtx.moveTo(0,y);
+  for(let x=0;x<=1024;x+=24)rockCtx.lineTo(x,y+Math.sin(x*.017+band*1.7)*5+(Math.random()-.5)*8);
+  rockCtx.lineTo(1024,y+3+Math.random()*9);rockCtx.lineTo(0,y+3);rockCtx.closePath();
+  rockCtx.fillStyle=Math.random()>.48?"rgba(192,199,195,0.075)":"rgba(7,13,16,0.12)";rockCtx.fill();
  }
- // Uneven rock ribs follow the cliff silhouette and create real side-to-side depth.
- const ribs=[
-  [-9.6,5,1.15,2.6,0x222d31],[-8.0,13,0.75,2.2,0x465256],
-  [-6.9,21,0.9,2.7,0x293439],[-5.0,31,0.8,2.5,0x4b575b],
-  [-3.4,41,0.72,2.7,0x293439],[-1.8,51,0.7,2.2,0x465256],
-  [2.2,48,0.8,2.5,0x293439],[4.3,38,0.9,2.8,0x4b575b],
-  [6.2,28,0.78,2.4,0x293439],[7.7,18,0.82,2.3,0x465256],
-  [9.1,8,1.0,2.2,0x293439]
- ];
- ribs.forEach((r,i)=>{
-  addRockShard(r[0],r[1],-3.34,r[2],r[3],.2,r[4],[.12*(i%3),.18*(i%2),-.2*(i%4)]);
- });
- // Natural broken rock plates: irregular polygons of varied sizes, kept outside the grip centers.
- const plates=[
-  [-8.6,4.8,.8,.55,0x566166],[-7.1,8.2,.55,.85,0x202b30],
-  [-6.3,15.7,.65,.45,0x626d71],[-5.2,19.3,.48,.72,0x202b30],
-  [-4.6,26.6,.78,.48,0x566166],[-3.3,30.1,.52,.78,0x202b30],
-  [-2.5,37.8,.66,.5,0x626d71],[-1.2,42.1,.5,.75,0x202b30],
-  [1.5,19.1,.65,.48,0x566166],[2.6,24.2,.48,.72,0x202b30],
-  [3.7,31.3,.7,.5,0x626d71],[5.0,35.7,.5,.72,0x202b30],
-  [5.9,42.6,.65,.48,0x566166],[7.0,14.2,.55,.7,0x202b30],
-  [8.0,9.2,.75,.48,0x626d71],[-4.4,46.3,.58,.75,0x202b30],
-  [3.0,51.1,.65,.42,0x566166]
- ];
- plates.forEach((p,i)=>{
-  addRockShard(p[0],p[1],-3.28,p[2],p[3],.11,p[4],[.1*(i%2),.2*(i%3),.16*(i%4)]);
- });
- // Thin sediment ledges, staggered like fractured strata rather than continuous cartoon outlines.
- const strata=[
-  [-10,6,-8.7,6.35],[-8.2,11.7,-7.0,12.05],[-7.2,17.3,-5.8,17.65],
-  [-6.1,23.5,-4.9,23.85],[-5.2,29.4,-4.0,29.7],[-4.1,35.5,-2.9,35.8],
-  [-3.0,41.5,-1.9,41.8],[-2.2,47.3,-.9,47.65],[-1.1,53.2,-.2,53.5],
-  [1.4,49.3,2.6,49.0],[3.0,43.0,4.2,42.7],[4.4,36.8,5.6,36.5],
-  [5.4,30.5,6.7,30.2],[6.7,24.1,7.9,23.8],[7.8,17.5,9.0,17.2],
-  [8.7,11.0,9.8,10.7]
- ];
- const strataPositions=[];
- strata.forEach(v=>strataPositions.push(v[0],v[1],-3.02,v[2],v[3],-3.02));
- const strataGeo=new THREE.BufferGeometry();
- strataGeo.setAttribute("position",new THREE.Float32BufferAttribute(strataPositions,3));
- mountainGroup.add(new THREE.LineSegments(strataGeo,new THREE.LineBasicMaterial({color:0x111a1e,transparent:true,opacity:.55})));
- // A more irregular snow/ice crown with broken hanging ice facets near the summit.
- const iceMat=new THREE.MeshStandardMaterial({color:0xc6d8dc,roughness:.72,metalness:.02,flatShading:true});
- const iceShadowMat=new THREE.MeshStandardMaterial({color:0x70878f,roughness:.9,flatShading:true});
- [
-  [[-2.7,49.8,-3.0],[-1.25,57.4,-3.0],[-.25,52.3,-3.0]],
-  [[-1.25,57.4,-3.0],[0,62.4,-3.0],[.65,54.1,-3.0]],
-  [[0,62.4,-3.0],[2.0,54.0,-3.0],[.65,54.1,-3.0]],
-  [[-2.7,49.8,-3.0],[-.25,52.3,-3.0],[-1.65,51.5,-3.0]]
- ].forEach((p,i)=>{
-  const g=new THREE.BufferGeometry();
-  g.setAttribute("position",new THREE.Float32BufferAttribute(p.flat(),3));
-  g.computeVertexNormals();
-  mountainGroup.add(new THREE.Mesh(g,i===3?iceShadowMat:iceMat));
- });
-
- /* CLIMBORIA_MOUNTAIN_GRAPHICS_V1
-    Add distant ridgelines, raised rock planes, and an icy summit.
-    Decorative meshes only: grip positions, ledges, and physics stay unchanged.
- */
-
- function addMountainTriangle(points,color,roughness=1){
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute(
-   "position",
-   new THREE.Float32BufferAttribute([
-    points[0][0],points[0][1],points[0][2],
-    points[1][0],points[1][1],points[1][2],
-    points[2][0],points[2][1],points[2][2]
-   ],3)
-  );
-  geometry.computeVertexNormals();
-  const material=new THREE.MeshStandardMaterial({
-   color,
-   roughness,
-   metalness:0,
-   side:THREE.DoubleSide,
-   flatShading:true
-  });
-  mountainGroup.add(new THREE.Mesh(geometry,material));
+ // Fine stone grain and scattered mineral flecks.
+ for(let i=0;i<26000;i++){
+  const x=Math.random()*1024,y=Math.random()*1024;
+  const light=Math.random()>.52;
+  rockCtx.fillStyle=light?"rgba(220,225,217,0.10)":"rgba(5,10,12,0.14)";
+  rockCtx.fillRect(x,y,.5+Math.random()*2,1+Math.random()*5);
  }
-
- // Distant mountain silhouettes create depth behind the main climb face.
- const distantRidges=[
-  [[-16,0,-6.2],[-11,24,-6.2],[-6,0,-6.2],0x182329],
-  [[-12,0,-6.0],[-7,35,-6.0],[-1,0,-6.0],0x202c32],
-  [[3,0,-6.1],[8,31,-6.1],[14,0,-6.1],0x1a252b],
-  [[8,0,-6.3],[13,22,-6.3],[18,0,-6.3],0x141f25]
- ];
- distantRidges.forEach(face=>{
-  addMountainTriangle(face.slice(0,3),face[3]);
+ // Hairline fractures, varied in length and direction.
+ for(let i=0;i<170;i++){
+  const x=Math.random()*1024,y=Math.random()*1024;
+  rockCtx.beginPath();rockCtx.moveTo(x,y);
+  let px=x,py=y;
+  for(let j=0;j<3+Math.random()*7;j++){
+   px+=(Math.random()-.5)*15;py+=3+Math.random()*13;rockCtx.lineTo(px,py);
+  }
+  rockCtx.strokeStyle="rgba(8,15,18,0.22)";rockCtx.lineWidth=.6+Math.random()*1.2;rockCtx.stroke();
+ }
+ // Subtle wind-scoured snow and ice around the summit.
+ const snow=rockCtx.createLinearGradient(0,0,0,190);
+ snow.addColorStop(0,"rgba(235,242,241,.92)");snow.addColorStop(.48,"rgba(202,218,221,.72)");snow.addColorStop(1,"rgba(190,209,213,0)");
+ rockCtx.fillStyle=snow;rockCtx.fillRect(0,0,1024,190);
+ for(let i=0;i<170;i++){
+  const x=Math.random()*1024,y=Math.random()*190;
+  rockCtx.fillStyle=Math.random()>.5?"rgba(255,255,255,.16)":"rgba(84,115,126,.13)";
+  rockCtx.beginPath();rockCtx.moveTo(x,y);rockCtx.lineTo(x+8+Math.random()*34,y+Math.random()*7);rockCtx.lineTo(x+2,y+2+Math.random()*4);rockCtx.closePath();rockCtx.fill();
+ }
+ const rockTexture=new THREE.CanvasTexture(rockCanvas);
+ rockTexture.colorSpace=THREE.SRGBColorSpace;
+ rockTexture.wrapS=THREE.ClampToEdgeWrapping;rockTexture.wrapT=THREE.ClampToEdgeWrapping;
+ rockTexture.anisotropy= Math.min(4,renderer.capabilities.getMaxAnisotropy());
+ const bumpCanvas=document.createElement("canvas");
+ bumpCanvas.width=256;bumpCanvas.height=256;
+ const bumpCtx=bumpCanvas.getContext("2d");
+ bumpCtx.fillStyle="#808080";bumpCtx.fillRect(0,0,256,256);
+ for(let i=0;i<9000;i++){
+  const v=65+Math.random()*125;
+  bumpCtx.fillStyle="rgb("+v+","+v+","+v+")";
+  bumpCtx.fillRect(Math.random()*256,Math.random()*256,1+Math.random()*2,1+Math.random()*3);
+ }
+ const rockBump=new THREE.CanvasTexture(bumpCanvas);
+ rockBump.wrapS=THREE.RepeatWrapping;rockBump.wrapT=THREE.RepeatWrapping;
+ rockBump.repeat.set(3,3);
+ const rockMaterial=new THREE.MeshStandardMaterial({
+  color:0xd0d4d0,map:rockTexture,bumpMap:rockBump,bumpScale:.22,
+  roughness:.96,metalness:0,side:THREE.DoubleSide
  });
-
- // Raised, angular rock planes break up the flat silhouette.
- const reliefFaces=[
-  [[-8.1,10,-3.18],[-5.1,29,-3.18],[-2.7,17,-3.18],0x4b575b],
-  [[-5.1,29,-3.16],[-2.0,48,-3.16],[-1.3,29,-3.16],0x202a2e],
-  [[-2.0,48,-3.14],[0,61.5,-3.14],[1.2,45,-3.14],0x566267],
-  [[1.2,45,-3.16],[4.5,40,-3.16],[2.8,29,-3.16],0x202a2e],
-  [[4.5,40,-3.18],[7.9,19,-3.18],[3.8,18,-3.18],0x4b575b],
-  [[-7.0,20,-3.17],[-4.8,26,-3.17],[-5.6,16,-3.17],0x293439],
-  [[5.2,30,-3.17],[7.1,28,-3.17],[6.2,20,-3.17],0x293439]
- ];
- reliefFaces.forEach(face=>{
-  addMountainTriangle(face.slice(0,3),face[3]);
- });
-
- // Frosted summit facets: subdued ice tones rather than a bright white cap.
- const snowFaces=[
-  [[-2.05,49.2,-3.08],[-1.0,56.5,-3.08],[-.1,52.1,-3.08],0xa6b7bc],
-  [[-1.0,56.5,-3.07],[0,62.1,-3.07],[.55,54.5,-3.07],0xd1dcde],
-  [[0,62.1,-3.06],[1.7,53.2,-3.06],[.55,54.5,-3.06],0x91a5ab],
-  [[1.7,53.2,-3.08],[2.65,50.1,-3.08],[.55,54.5,-3.08],0x71858b],
-  [[-2.05,49.2,-3.09],[-.1,52.1,-3.09],[-1.25,48.8,-3.09],0x708187]
- ];
- snowFaces.forEach(face=>{
-  addMountainTriangle(face.slice(0,3),face[3]);
- });
-
- // Extra fractured rock planes add uneven depth without touching climb geometry.
- const microFacets=[
-  [[-9.0,7.5,-3.12],[-7.2,13.5,-3.12],[-5.5,8.5,-3.12],0x222d31],
-  [[-7.0,18.5,-3.11],[-5.8,23.0,-3.11],[-4.1,16.8,-3.11],0x536065],
-  [[-5.0,31.0,-3.10],[-3.6,36.0,-3.10],[-2.0,30.0,-3.10],0x263237],
-  [[-3.4,41.0,-3.10],[-2.2,46.0,-3.10],[-0.7,39.0,-3.10],0x566267],
-  [[-1.0,24.0,-3.11],[1.0,30.0,-3.11],[2.5,22.5,-3.11],0x263237],
-  [[2.4,33.0,-3.10],[4.0,37.0,-3.10],[5.1,29.5,-3.10],0x536065],
-  [[5.3,21.0,-3.11],[6.7,25.0,-3.11],[8.0,17.0,-3.11],0x263237],
-  [[-8.0,10.0,-3.12],[-6.8,12.0,-3.12],[-7.4,6.0,-3.12],0x202b30],
-  [[3.0,12.0,-3.12],[5.1,15.0,-3.12],[6.0,9.0,-3.12],0x202b30]
- ];
- microFacets.forEach(face=>{
-  addMountainTriangle(face.slice(0,3),face[3]);
- });
-
- // Thin, broken strata and fractures make the cliff read as layered rock.
- const fractureSegments=[
-  [-9.1,8.1,-7.9,8.8],[-7.9,8.8,-7.2,10.2],
-  [-7.7,14.2,-6.3,14.7],[-6.3,14.7,-5.6,16.0],
-  [-6.0,24.1,-4.8,24.6],[-4.8,24.6,-4.2,26.0],
-  [-4.4,33.8,-3.2,34.1],[-3.2,34.1,-2.5,35.5],
-  [-2.5,43.4,-1.3,43.8],[-1.3,43.8,-0.8,45.0],
-  [2.4,43.1,3.7,42.7],[3.7,42.7,4.4,41.4],
-  [4.8,34.7,6.0,34.2],[6.0,34.2,6.8,32.9],
-  [6.7,24.0,7.8,23.5],[7.8,23.5,8.5,22.1],
-  [-3.7,19.8,-2.4,19.4],[-2.4,19.4,-1.8,18.2],
-  [1.4,15.8,2.8,15.4],[2.8,15.4,3.4,14.1]
- ];
- const fracturePositions=[];
- fractureSegments.forEach(segment=>{
-  fracturePositions.push(
-   segment[0],segment[1],-2.99,
-   segment[2],segment[3],-2.99
-  );
- });
- const fractureGeometry=new THREE.BufferGeometry();
- fractureGeometry.setAttribute(
-  "position",
-  new THREE.Float32BufferAttribute(fracturePositions,3)
+ // Keep the thick body behind the new sculpted face.
+ const mountainBase=new THREE.Mesh(
+  new THREE.ExtrudeGeometry(mountainShape,{depth:6,bevelEnabled:false,steps:1,curveSegments:2}),
+  rockMaterial
  );
- const fractureLines=new THREE.LineSegments(
-  fractureGeometry,
-  new THREE.LineBasicMaterial({
-   color:0x151f23,
-   transparent:true,
-   opacity:.72
-  })
- );
- mountainGroup.add(fractureLines);
+ mountainBase.position.set(0,0,-9.7);
+ mountainBase.castShadow=true;mountainBase.receiveShadow=true;
+ mountainGroup.add(mountainBase);
 
- // Short lighter seams catch the light and break up broad, flat color patches.
- const seamSegments=[
-  [-8.8,6.6,-7.9,7.0],[-7.0,11.1,-6.0,11.5],
-  [-6.3,20.0,-5.1,20.4],[-4.5,28.2,-3.4,28.6],
-  [-3.0,38.1,-1.8,38.4],[-1.5,47.1,-0.5,47.4],
-  [2.1,48.3,3.0,47.8],[4.0,38.6,5.0,38.2],
-  [5.7,28.1,6.7,27.7],[7.0,18.2,8.0,17.8],
-  [-2.3,12.6,-1.2,12.9],[1.8,26.0,2.8,26.4]
- ];
- const seamPositions=[];
- seamSegments.forEach(segment=>{
-  seamPositions.push(
-   segment[0],segment[1],-2.985,
-   segment[2],segment[3],-2.985
-  );
+ // Width profile follows a natural irregular ridgeline; this does not move gameplay grips.
+ function cliffHalfWidth(y){
+  const t=THREE.MathUtils.clamp(y/63,0,1);
+  const base=22*Math.pow(1-t,.92);
+  return Math.max(.12,base*(.94+.035*Math.sin(y*.42)+.025*Math.sin(y*1.13)));
+ }
+ const cols=56,rows=150,verts=[],uvs=[],indices=[];
+ for(let row=0;row<=rows;row++){
+  const v=row/rows,y=v*63,half=cliffHalfWidth(y);
+  for(let col=0;col<=cols;col++){
+   const u=col/cols,x=(u*2-1)*half;
+   const broad=Math.sin(x*.62+y*.19)*.16+Math.sin(x*1.37-y*.31)*.075;
+   const crag=(Math.sin(x*2.7+y*.87)*Math.sin(y*1.31-x*.63))*.12;
+   const ridge=(Math.sin(y*.31+x*.16)+Math.sin(y*.73-x*.23))*.07;
+   const z=-3.72+broad+crag+ridge;
+   verts.push(x,y,z);uvs.push(u,1-v);
+   if(row<rows&&col<cols){
+    const a=row*(cols+1)+col,b=a+1,c=a+(cols+1),d=c+1;
+    if((row+col)%2){indices.push(a,c,b,b,c,d);}else{indices.push(a,c,d,a,d,b);}
+   }
+  }
+ }
+ const cliffGeo=new THREE.BufferGeometry();
+ cliffGeo.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));
+ cliffGeo.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
+ cliffGeo.setIndex(indices);cliffGeo.computeVertexNormals();
+ const cliffFace=new THREE.Mesh(cliffGeo,rockMaterial);
+ cliffFace.castShadow=true;cliffFace.receiveShadow=true;
+ mountainGroup.add(cliffFace);
+
+ // A few broad, naturally broken rock shelves give the cliff real silhouette depth.
+ const shelfMat=new THREE.MeshStandardMaterial({color:0x465154,map:rockTexture,bumpMap:rockBump,bumpScale:.16,roughness:1});
+ const shelfSpecs=[[-9,8,2.2,.34],[-7,16,1.5,.28],[-5.4,25,1.4,.3],[-3.5,34,1.25,.25],[-2,43,1.15,.22],[2.6,48,1.25,.24],[4.8,38,1.4,.28],[6.2,28,1.35,.25],[7.5,18,1.3,.3],[9,7,1.8,.34]];
+ shelfSpecs.forEach((p,i)=>{
+  const shelf=new THREE.Mesh(new THREE.BoxGeometry(p[2],p[3],.42),shelfMat);
+  shelf.position.set(p[0],p[1],-3.35+Math.sin(i*2)*.08);
+  shelf.rotation.z=(i%2?-.12:.1);
+  shelf.castShadow=true;shelf.receiveShadow=true;mountainGroup.add(shelf);
  });
- const seamGeometry=new THREE.BufferGeometry();
- seamGeometry.setAttribute(
-  "position",
-  new THREE.Float32BufferAttribute(seamPositions,3)
- );
- mountainGroup.add(new THREE.LineSegments(
-  seamGeometry,
-  new THREE.LineBasicMaterial({
-   color:0x7a898e,
-   transparent:true,
-   opacity:.32
-  })
- ));
 
  scene.add(mountainGroup);
-
-
- const ledges=[
-  [-8,5,1.5,2],
-  [7,8,2,1.5],
-  [-6,12,2.5,2],
-  [6,16,2,2],
-  [-8,21,2.5,1.5],
-  [7,25,2.5,2],
-  [-6,30,2,2],
-  [8,35,3,2],
-  [-7,40,2,2],
-  [6,45,3,2],
-  [-5,51,2.5,2],
-  [7,57,2.5,2]
- ];
-
- ledges.forEach(
-  v=>{
-
-   const[
-    x,
-    y,
-    w,
-    h
-   ]=v;
-
-   const mesh=
-    new THREE.Mesh(
-     new THREE.BoxGeometry(
-      w,
-      h,
-      5
-     ),
-     new THREE.MeshStandardMaterial({
-      color:0x626a6d,
-      roughness:1
-     })
-    );
-
-   mesh.position.set(
-    x,
-    y,
-    -2.8
-   );
-
-   scene.add(mesh);
-
-  }
- );
-
-
- const summit=
-  new THREE.Mesh(
-   new THREE.CylinderGeometry(
-    5.5,
-    7,
-    1.2,
-    7
-   ),
-   new THREE.MeshStandardMaterial({
-    color:0x737a7c,
-    roughness:1
-   })
-  );
-
- summit.position.set(
-  0,
-  61.1,
-  -1
- );
-
- summit.rotation.y=
-  Math.PI/7;
-
- scene.add(summit);
-
-
- [
-  [-3.8,62.5,.9,2.2],
-  [3.5,62.2,1.1,2.5],
-  [-1.8,63.3,.75,1.8],
-  [1.8,63.5,.9,2.4]
- ].forEach(
-  v=>{
-
-   const r=
-    new THREE.Mesh(
-     new THREE.DodecahedronGeometry(
-      v[2],
-      0
-     ),
-     new THREE.MeshStandardMaterial({
-      color:0x555b5d
-     })
-    );
-
-   r.position.set(
-    v[0],
-    v[1],
-    -1
-   );
-
-   r.scale.y=
-    v[3]/v[2];
-
-   scene.add(r);
-
-  }
- );
 
 
  summitGlowMesh=
