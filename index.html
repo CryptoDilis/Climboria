@@ -4230,15 +4230,15 @@ function createMountain(){
  const rockMaterial=new THREE.MeshStandardMaterial({
   color:0xb5b9b6,map:rockTexture,roughness:1,metalness:0,side:THREE.DoubleSide
  });
- const mountainBase=
+ const legacyMountainBase=
   new THREE.Mesh(
    new THREE.ExtrudeGeometry(mountainShape,{ depth:6, bevelEnabled:false, steps:1, curveSegments:2 }),
    rockMaterial
   );
 
  // Extruded rock body: front face stays at z=-3.7; added depth is behind the climbing face.
- mountainBase.position.set(0,0,-9.7);
- mountainGroup.add(mountainBase);
+ legacyMountainBase.position.set(0,0,-9.7);
+ mountainGroup.add(legacyMountainBase);
 
  // Replace the flat triangle collage with one continuous, displaced cliff surface.
  // The mesh is generated locally; climbing grip coordinates and physics are untouched.
