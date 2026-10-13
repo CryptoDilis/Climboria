@@ -4640,8 +4640,9 @@ function createGround(){
  }
  // A shallow scree bank rises toward the mountain foot instead of a flat floating platform.
  const bankShape=new THREE.Shape();
- bankShape.moveTo(-29,-4);bankShape.lineTo(-25,1);bankShape.lineTo(-20,2.5);bankShape.lineTo(-15,1.1);bankShape.lineTo(-10,.5);bankShape.lineTo(-5,.1);bankShape.lineTo(0,.0);bankShape.lineTo(5,.1);bankShape.lineTo(10,.5);bankShape.lineTo(15,1.1);bankShape.lineTo(20,2.5);bankShape.lineTo(25,1);bankShape.lineTo(29,-4);bankShape.closePath();
- const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x343f40,roughness:1,side:THREE.DoubleSide}));
+ // Keep the foothill apron shallow; a deep triangular apron reads like a floating black underside on phones.
+ bankShape.moveTo(-29,-.65);bankShape.lineTo(-25,.1);bankShape.lineTo(-20,.65);bankShape.lineTo(-15,.45);bankShape.lineTo(-10,.18);bankShape.lineTo(-5,.04);bankShape.lineTo(0,0);bankShape.lineTo(5,.04);bankShape.lineTo(10,.18);bankShape.lineTo(15,.45);bankShape.lineTo(20,.65);bankShape.lineTo(25,.1);bankShape.lineTo(29,-.65);bankShape.closePath();
+ const bank=new THREE.Mesh(new THREE.ShapeGeometry(bankShape),new THREE.MeshStandardMaterial({color:0x465052,roughness:1,side:THREE.DoubleSide}));
  bank.position.set(0,-.05,-4.35);scene.add(bank);
 }
 
@@ -5665,9 +5666,9 @@ function updateCamera(){
  if(summitSequence)return;
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
- // Portrait-first framing keeps the climber centered while showing more route.
- camera.fov = portraitMobile ? 82 : 60;
- const baseCameraZ = portraitMobile ? 34 : 25;
+ // Portrait mobile: bring the climber closer without losing the vertical climbing route.
+ camera.fov = portraitMobile ? 70 : 60;
+ const baseCameraZ = portraitMobile ? 27 : 25;
  camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
