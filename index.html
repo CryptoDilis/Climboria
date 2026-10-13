@@ -8541,62 +8541,72 @@ if(
 
 
 
+
 <style id="climboria-gold-readable-ui-v2">
-:root{
- --climb-gold:#ffc84a;--climb-gold-bright:#ffe49a;--climb-navy:#06152b;
- --climb-blue:#159cff;--climb-text:#f7f9ff;--climb-muted:#c1ccdc;
-}
-body{color:var(--climb-text)}
+:root{--gold:#ffd05a;--gold2:#ffab16;--navy:#04152d;--ice:#eaf6ff;--muted:#d0d9e7}
+body{color:#fff;background:#06152b}
 #landing,#launchpad,#levelSelect,#victory,#failure{
+ overflow-y:auto;align-items:flex-start;
  background:
-  radial-gradient(ellipse at 50% 8%,rgba(18,94,170,.42),transparent 42%),
-  radial-gradient(ellipse at 50% 100%,rgba(255,180,44,.12),transparent 40%),
-  linear-gradient(150deg,#061a36 0%,#030711 72%,#090e1a 100%);
+  radial-gradient(ellipse at 50% 10%,rgba(72,166,255,.36),transparent 42%),
+  linear-gradient(180deg,rgba(5,24,50,.12) 0%,rgba(3,10,25,.55) 44%,#030814 100%),
+  linear-gradient(120deg,#0d3157 0%,#e4a95e 48%,#0b2344 76%,#020814 100%);
+}
+#landing:before,#launchpad:before,#levelSelect:before{
+ content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+ background:
+  linear-gradient(180deg,transparent 0 28%,rgba(2,8,18,.1) 45%,#020713 100%),
+  radial-gradient(ellipse at 50% 40%,rgba(255,208,90,.38),transparent 27%);
+}
+#landing:after{
+ content:"";position:fixed;pointer-events:none;z-index:0;left:-8vw;right:-8vw;bottom:14vh;height:54vh;
+ background:linear-gradient(145deg,#c9e7ff 0%,#234e7b 18%,#0b1d37 49%,#020712 80%);
+ clip-path:polygon(0 100%,0 77%,8% 57%,14% 69%,23% 30%,28% 47%,39% 9%,45% 32%,50% 0,57% 33%,65% 17%,73% 53%,80% 27%,88% 60%,94% 42%,100% 72%,100% 100%);
+ filter:drop-shadow(0 -8px 22px rgba(255,195,69,.45));
+ opacity:.88;
 }
 #landing .panel,#launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{
- width:min(1120px,96vw);padding:clamp(18px,3vw,34px);
+ position:relative;z-index:2;width:min(1200px,96vw);max-width:1200px;
+ margin:0 auto;padding:clamp(18px,2.8vw,34px) clamp(14px,2.8vw,32px);
 }
 #landing .logo,#launchpad .logo{
- color:#fff;background:linear-gradient(180deg,#fff9d9 0%,#ffc943 48%,#b86a08 100%);
+ color:#fff;background:linear-gradient(180deg,#fffde7 0%,#ffe08a 34%,#ffb91f 66%,#b66a05 100%);
  -webkit-background-clip:text;background-clip:text;
- filter:drop-shadow(0 3px 0 #4e2c00) drop-shadow(0 0 20px #ffb52d55);
- font-weight:1000;letter-spacing:clamp(2px,.7vw,8px);
+ filter:drop-shadow(0 3px 0 #4b2b00) drop-shadow(0 0 24px #ffc13d66);
+ font-size:clamp(42px,7vw,82px)!important;font-weight:1000;letter-spacing:clamp(2px,.7vw,8px);
 }
 #landing .sub,#launchpad .sub{
- color:#f0dca9;font-size:clamp(13px,1.5vw,17px);
- font-weight:800;letter-spacing:clamp(1px,.3vw,3px);line-height:1.6;
+ color:#fff2c9;font-size:clamp(14px,1.6vw,19px);font-weight:800;
+ letter-spacing:clamp(1px,.3vw,3px);line-height:1.55;text-shadow:0 2px 8px #001;
 }
 .climboria-launch-announcement{
- border-color:#ffc84a!important;
- background:linear-gradient(145deg,rgba(20,28,44,.97),rgba(3,8,17,.98))!important;
- box-shadow:0 0 0 1px #ffc84a20,0 14px 36px #0009,0 0 25px #ffbf3020!important;
+ border:2px solid #ffd05a!important;border-radius:18px!important;
+ background:linear-gradient(145deg,rgba(3,15,32,.95),rgba(7,27,52,.92))!important;
+ box-shadow:0 0 0 1px #ffc84a24,0 18px 42px #000a,0 0 32px #ffbf3033!important;
 }
-.climboria-live-dot{background:#ffc84a!important;box-shadow:0 0 12px #ffc84a!important}
-.climboria-target-pill{color:#ffe49a!important;border-color:#ffc84a88!important}
+.climboria-live-dot{background:#ffd05a!important;box-shadow:0 0 12px #ffd05a!important}
+.climboria-target-pill{color:#ffe9a9!important;border-color:#ffc84a99!important}
 .climboria-announcement-title{font-size:clamp(16px,2vw,22px)!important;color:#fff!important;letter-spacing:1.5px}
-.climboria-announcement-main{font-size:clamp(27px,4.4vw,44px)!important;color:#ffc84a!important;text-shadow:0 0 20px #ffc84a35!important}
-.climboria-announcement-date{font-size:clamp(15px,2vw,20px)!important;letter-spacing:1px!important}
-.climboria-announcement-times span{font-size:14px!important;color:#fff!important;border-color:#ffc84a55!important}
-.climboria-announcement-times b{font-size:19px!important;color:#ffe49a!important}
-.climboria-announcement-note{font-size:13px!important;color:#d1d9e6!important;line-height:1.6!important}
+.climboria-announcement-main{font-size:clamp(28px,4.5vw,48px)!important;color:#ffd05a!important;text-shadow:0 0 24px #ffc13d55!important}
+.climboria-announcement-date{font-size:clamp(16px,2vw,21px)!important;letter-spacing:1px!important}
+.climboria-announcement-times span{font-size:15px!important;color:#fff!important;border-color:#ffc84a66!important}
+.climboria-announcement-times b{font-size:20px!important;color:#ffe9a9!important}
+.climboria-announcement-note{font-size:13px!important;color:#e1eaf7!important;line-height:1.6!important}
 #startButton,#nextLevelVictoryButton,#retryFailureButton{
- min-height:58px;font-size:clamp(17px,2vw,22px)!important;font-weight:900;
- letter-spacing:1.5px;border:2px solid #ffe49a!important;border-radius:13px;
- color:#201400!important;background:linear-gradient(110deg,#fff0a8,#ffbd2e 52%,#e88a00)!important;
- box-shadow:0 0 28px #ffb52d35,inset 0 1px #fff9d6!important;
+ min-height:60px;font-size:clamp(18px,2vw,23px)!important;font-weight:950;letter-spacing:1.5px;
+ border:2px solid #fff0b0!important;border-radius:13px;color:#211400!important;
+ background:linear-gradient(110deg,#fff3b0,#ffc43a 52%,#e98600)!important;
+ box-shadow:0 0 30px #ffb52d55,inset 0 1px #fff!important;
 }
-.pointsPanel,.progressPanel,.cards,.dashboard,.levelGrid,.leaderboard,.airdrop{width:min(1000px,100%)}
+.pointsPanel,.progressPanel,.cards,.dashboard,.levelGrid,.leaderboard,.airdrop{width:min(1050px,100%)}
 .pointsBox,.progressCard,.card,.dashCard,.leaderboard,.airdrop,.levelCard{
- border:1px solid #d5e7ff45!important;
- background:linear-gradient(145deg,rgba(13,33,59,.94),rgba(3,10,23,.96))!important;
- box-shadow:0 10px 28px #0005,inset 0 1px #fff1!important;
+ border:1px solid #c9e3ff66!important;border-radius:14px!important;
+ background:linear-gradient(145deg,rgba(10,35,66,.96),rgba(2,10,25,.96))!important;
+ box-shadow:0 10px 28px #0006,inset 0 1px #fff2!important;
 }
-.pointsLabel,.progressTitle,.dashTitle,.sectionTitle,.levelTitle,.airdropTitle,.card b{
- color:#ffe09a!important;
-}
-.pointsLabel,.progressTitle,.progressText,.progressStatus,.pointsSmall,.dashTitle,.dashSmall,
-.card span,.levelSub,.levelDescription,.levelStatus,.airdropText,.note{
- font-size:clamp(12px,1.2vw,15px)!important;line-height:1.5!important;
+.pointsLabel,.progressTitle,.dashTitle,.sectionTitle,.levelTitle,.airdropTitle,.card b{color:#ffe09a!important}
+.pointsLabel,.progressTitle,.progressText,.progressStatus,.pointsSmall,.dashTitle,.dashSmall,.card span,.levelSub,.levelDescription,.levelStatus,.airdropText,.note{
+ font-size:clamp(12px,1.15vw,15px)!important;line-height:1.5!important;
 }
 .pointsValue,.dashValue{font-size:clamp(24px,3vw,34px)!important;color:#ffd15b!important}
 .progressIcon{font-size:25px!important}
@@ -8609,26 +8619,14 @@ body{color:var(--climb-text)}
 button,.smallButton,.levelCard{font-size:16px}
 button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid #ffe49a!important;outline-offset:3px}
 #cryptoTicker{
- top:0!important;left:0!important;right:0!important;transform:none!important;
- width:100%!important;height:58px;overflow:hidden;z-index:80;
- display:flex;align-items:center;padding:5px 12px;
- background:linear-gradient(90deg,#020817f5,#09264af5 48%,#020817f5);
- border-bottom:1px solid #ffc84a99;
- box-shadow:0 5px 22px #0008;pointer-events:none;
+ position:fixed!important;top:0!important;left:0!important;right:0!important;transform:none!important;
+ width:100%!important;height:58px;overflow:hidden;z-index:80;display:flex;align-items:center;padding:5px 12px;
+ background:linear-gradient(90deg,#020817f7,#0c3159f7 48%,#020817f7);
+ border-bottom:1px solid #ffc84a99;box-shadow:0 5px 22px #0008;pointer-events:none;
 }
 #cryptoTicker .cryptoStatus{display:none!important}
-#cryptoTicker .cryptoRow{
- width:max-content!important;min-width:max-content;justify-content:flex-start!important;
- gap:10px!important;flex-wrap:nowrap!important;margin:0!important;
- animation:climboriaTickerRun 34s linear infinite;
-}
-#cryptoTicker .cryptoCard{
- min-width:190px!important;display:grid;grid-template-columns:auto 1fr auto;
- grid-template-rows:1fr;align-items:center;gap:10px;
- padding:9px 13px!important;border:1px solid #b7d5ff35!important;
- border-radius:10px!important;background:#07162bf2!important;
- text-align:left!important;box-shadow:inset 0 1px #fff1!important;
-}
+#cryptoTicker .cryptoRow{width:max-content!important;min-width:max-content;justify-content:flex-start!important;gap:10px!important;flex-wrap:nowrap!important;margin:0!important;animation:climboriaTickerRun 34s linear infinite}
+#cryptoTicker .cryptoCard{min-width:190px!important;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:1fr;align-items:center;gap:10px;padding:9px 13px!important;border:1px solid #b7d5ff45!important;border-radius:10px!important;background:#07162bf5!important;text-align:left!important;box-shadow:inset 0 1px #fff2!important}
 #cryptoTicker .cryptoLive{display:none!important}
 #cryptoTicker .cryptoTop{justify-content:flex-start;gap:8px;grid-column:1;grid-row:1}
 #cryptoTicker .cryptoSymbol{font-size:15px!important;letter-spacing:.5px;color:#fff!important}
@@ -8647,9 +8645,7 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
  #cryptoTicker .cryptoChange{font-size:13px!important}
  .climboria-x-link{top:60px!important;min-height:36px}
  #climboria-game-brand{top:58px!important}
- #landing .panel,#launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{
-  width:96vw;padding:15px 12px 22px;
- }
+ #landing .panel,#launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{width:96vw;padding:15px 12px 22px}
  #landing .logo,#launchpad .logo{font-size:clamp(36px,10vw,56px)!important;letter-spacing:2px}
  #landing .sub,#launchpad .sub{font-size:13px!important;margin:8px 0 14px;letter-spacing:1px}
  .climboria-launch-announcement{margin-bottom:14px;padding:14px}
