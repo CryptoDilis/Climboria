@@ -4237,7 +4237,7 @@ function createMountain(){
   );
 
  // Extruded rock body: front face stays at z=-3.7; added depth is behind the climbing face.
- legacyMountainBase.position.set(0,0,-9.7);
+ legacyMountainBase.position.set(0,0,-10.35); // Keep backing body behind the sculpted face to prevent z-fighting.
  mountainGroup.add(legacyMountainBase);
 
  // Replace the flat triangle collage with one continuous, displaced cliff surface.
