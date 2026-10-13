@@ -1487,6 +1487,154 @@ body > canvas {
 }
 </style>
 
+<style id="climboria-premium-ui-v1">
+/* Premium mountain-tech visual refresh: presentation only. */
+:root{
+ --climb-emerald:#67ff9a;
+ --climb-ice:#d9f5ff;
+ --climb-muted:#9aadb8;
+ --climb-glass:rgba(7,16,23,.78);
+}
+body{
+ background:
+  radial-gradient(ellipse at 50% 0%,rgba(42,99,112,.20),transparent 44%),
+  #05090d;
+}
+#landing,#launchpad,#levelSelect{
+ background:
+  radial-gradient(ellipse at 50% 12%,rgba(70,130,143,.20),transparent 42%),
+  radial-gradient(ellipse at 15% 90%,rgba(38,111,78,.11),transparent 35%),
+  linear-gradient(155deg,#0a151c 0%,#05090d 60%,#07110f 100%);
+}
+#landing .panel,#launchpad .panel,#levelSelect .panel{
+ width:min(1000px,96%);
+ padding:clamp(18px,3vw,34px) clamp(12px,2.5vw,26px);
+}
+#landing .logo{
+ letter-spacing:clamp(4px,1.1vw,10px);
+ background:linear-gradient(180deg,#f3fdff 5%,#a8c5cd 42%,#65ff9a 100%);
+ -webkit-background-clip:text;
+ background-clip:text;
+ color:transparent;
+ filter:drop-shadow(0 0 20px rgba(83,255,151,.20));
+}
+#landing .sub{
+ color:#b2c4cc;
+ font-size:clamp(9px,1.5vw,12px);
+ letter-spacing:clamp(1px,.35vw,3px);
+}
+#startButton{
+ min-width:min(280px,82vw);
+ position:relative;
+ overflow:hidden;
+ border:1px solid rgba(134,255,181,.88);
+ border-radius:12px;
+ color:#06110c;
+ background:linear-gradient(110deg,#8cffb4,#4be58b 52%,#c7ffdc);
+ box-shadow:0 0 24px rgba(74,255,151,.16),inset 0 1px rgba(255,255,255,.6);
+ font-size:13px;
+ letter-spacing:2.5px;
+ transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+}
+#startButton:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(74,255,151,.28);filter:brightness(1.04)}
+.pointsBox,.progressCard,.card,.dashCard,.leaderboard,.airdrop,.levelCard{
+ border-color:rgba(190,226,236,.14)!important;
+ background:linear-gradient(145deg,rgba(19,34,43,.76),rgba(6,13,18,.82))!important;
+ box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035);
+ backdrop-filter:blur(8px);
+}
+.pointsBox,.progressCard,.card,.dashCard,.levelCard{
+ transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.pointsBox:hover,.progressCard:hover,.card:hover,.dashCard:hover,.levelCard:not(.locked):hover{
+ transform:translateY(-3px);
+ border-color:rgba(103,255,154,.42)!important;
+ box-shadow:0 14px 32px rgba(0,0,0,.25),0 0 22px rgba(103,255,154,.07);
+}
+.pointsValue,.dashValue,.levelReward{color:var(--climb-emerald)!important}
+.sectionTitle,.levelTitle{color:#ecfaff;text-shadow:0 0 22px rgba(103,255,154,.12)}
+.levelCard{border-radius:14px!important}
+.levelCard:not(.locked){border-color:rgba(103,255,154,.38)!important}
+.climboria-launch-announcement{
+ width:min(690px,100%);
+ margin:0 auto 20px;
+ padding:clamp(14px,2.8vw,22px);
+ position:relative;
+ overflow:hidden;
+ text-align:left;
+ border:1px solid rgba(103,255,154,.42);
+ border-radius:16px;
+ background:
+  radial-gradient(ellipse at 100% 0%,rgba(70,255,151,.16),transparent 48%),
+  linear-gradient(135deg,rgba(19,38,47,.96),rgba(5,12,17,.94) 70%);
+ box-shadow:0 14px 38px rgba(0,0,0,.28),0 0 30px rgba(72,255,151,.07),inset 0 1px rgba(255,255,255,.06);
+}
+.climboria-launch-announcement:after{
+ content:"";
+ position:absolute;
+ right:-45px;top:-65px;
+ width:180px;height:180px;
+ border:1px solid rgba(203,246,255,.12);
+ border-radius:50%;
+ box-shadow:0 0 0 18px rgba(203,246,255,.025),0 0 0 38px rgba(203,246,255,.02);
+ pointer-events:none;
+}
+.climboria-announcement-top{
+ display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ color:#a9c3cd;font-size:9px;font-weight:800;letter-spacing:1.8px;
+}
+.climboria-live-dot{
+ width:7px;height:7px;border-radius:50%;background:#67ff9a;
+ box-shadow:0 0 12px #67ff9a;flex:none;
+}
+.climboria-target-pill{
+ margin-left:auto;padding:5px 8px;border-radius:999px;
+ border:1px solid rgba(255,205,105,.4);color:#ffd78c;
+ background:rgba(255,205,105,.07);font-size:8px;letter-spacing:1px;
+}
+.climboria-announcement-title{
+ margin-top:13px;color:#d9f5ff;font-size:clamp(12px,2vw,16px);
+ font-weight:800;letter-spacing:2px;
+}
+.climboria-announcement-main{
+ margin-top:5px;color:#70ffa4;font-weight:950;
+ font-size:clamp(22px,5vw,36px);letter-spacing:clamp(1px,.4vw,4px);
+ line-height:1.1;text-shadow:0 0 22px rgba(103,255,154,.18);
+}
+.climboria-announcement-date{
+ margin-top:9px;color:#fff;font-size:clamp(12px,2vw,15px);
+ font-weight:900;letter-spacing:2px;
+}
+.climboria-announcement-times{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+ margin-top:15px;
+}
+.climboria-announcement-times span{
+ padding:9px 7px;border-radius:9px;text-align:center;
+ background:rgba(226,247,255,.045);border:1px solid rgba(226,247,255,.08);
+ color:#aabec7;font-size:9px;line-height:1.4;
+}
+.climboria-announcement-times b{display:block;color:#f1fcff;font-size:11px;margin-bottom:3px}
+.climboria-announcement-note{
+ margin-top:12px;max-width:600px;color:#8198a3;font-size:9px;line-height:1.55;
+}
+@media(max-width:700px){
+ #landing .panel,#launchpad .panel,#levelSelect .panel{padding:15px 10px}
+ #landing .sub{margin:10px 0 14px}
+ .climboria-launch-announcement{margin-bottom:15px;padding:13px;border-radius:13px}
+ .climboria-announcement-top{font-size:7px;letter-spacing:1.2px}
+ .climboria-announcement-title{margin-top:10px;font-size:11px}
+ .climboria-announcement-main{font-size:clamp(21px,6.4vw,29px);letter-spacing:1px}
+ .climboria-announcement-date{font-size:12px;letter-spacing:1.5px}
+ .climboria-announcement-times{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:11px}
+ .climboria-announcement-times span{padding:7px 5px;font-size:8px}
+ .climboria-announcement-times b{font-size:11px}
+ .climboria-announcement-note{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .pointsBox,.progressCard,.card,.dashCard,.levelCard,#startButton{transition:none}
+}
+</style>
 </head>
 
 <body>
@@ -1510,6 +1658,24 @@ body > canvas {
   <div class="sub">
    CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY
   </div>
+
+  <section class="climboria-launch-announcement" aria-label="Planned token launch announcement">
+   <div class="climboria-announcement-top">
+    <span class="climboria-live-dot"></span>
+    <span>CLIMBORIA TOKEN • LAUNCH WATCH</span>
+    <span class="climboria-target-pill">TARGET DATE</span>
+   </div>
+   <div class="climboria-announcement-title">THE SUMMIT IS CALLING.</div>
+   <div class="climboria-announcement-main">$CLIMB ON PUMP.FUN</div>
+   <div class="climboria-announcement-date">OCTOBER 30, 2026</div>
+   <div class="climboria-announcement-times">
+    <span><b>11:00 PM</b> Philippines</span>
+    <span><b>11:00 AM</b> US Eastern</span>
+    <span><b>8:00 AM</b> US Pacific</span>
+    <span><b>11:00 PM</b> China</span>
+   </div>
+   <div class="climboria-announcement-note">Target schedule only. Official launch details and verified contract address will be shared through Climboria’s official channels when confirmed.</div>
+  </section>
 
   <button id="startButton" type="button">
    START CLIMB
