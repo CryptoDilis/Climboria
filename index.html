@@ -2565,6 +2565,7 @@ let hammer;
 
 let hammerRope;
 let hammerRopeMaterial;
+let hammerSwing=0;
 
 let grips=[];
 
@@ -4738,9 +4739,10 @@ function createHero(){
   const forearm=mesh(new THREE.CapsuleGeometry(.078,.29,5,9),skin,side*.19,-.37,.035,armPivot);
   forearm.rotation.z=-side*.30;
   const hand=mesh(new THREE.SphereGeometry(.105,10,8),skin,side*.22,-.57,.05,armPivot);
-  // Small fist silhouette reads clearly at phone scale.
   const thumb=mesh(new THREE.SphereGeometry(.045,8,6),skinShadow,side*.17,-.52,.12,armPivot);
-  hero.userData.celebrationArms.push({pivot:armPivot,side,rest:-side*.18});
+  const armData={pivot:armPivot,side,rest:-side*.18,hand};
+  hero.userData.celebrationArms.push(armData);
+  if(side===1)hero.userData.pickArm=armData;
  }
  // Neck and expressive anime face, oriented toward the climbing wall.
  capsule(0,2.48,.03,.14,.18,skin);
@@ -4799,18 +4801,20 @@ function createHero(){
 
 function createHammer(){
  hammer=new THREE.Group();
- const handle=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,2.7,12),new THREE.MeshStandardMaterial({color:0x26394b,metalness:.45}));handle.position.y=-.55;hammer.add(handle);
- const grip=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.62,10),new THREE.MeshStandardMaterial({color:0x55a8ff}));grip.position.y=-.55;hammer.add(grip);
- const head=new THREE.Mesh(new THREE.BoxGeometry(1.5,.2,.25),new THREE.MeshStandardMaterial({color:0xb8c7d2,metalness:.85,roughness:.25}));head.position.y=.72;hammer.add(head);
- const tip=new THREE.Mesh(new THREE.ConeGeometry(.13,.58,8),new THREE.MeshStandardMaterial({color:0xd9e7f2,metalness:.9}));tip.position.set(-.76,.72,0);tip.rotation.z=Math.PI/2;hammer.add(tip);
- const adze=new THREE.Mesh(new THREE.ConeGeometry(.14,.48,8),new THREE.MeshStandardMaterial({color:0x91a5b5,metalness:.9}));adze.position.set(.77,.72,0);adze.rotation.z=-Math.PI/2;hammer.add(adze);
- // The ice pick is held by the hero. No visible rope/line is created.
- hammer.position.set(0,0,4);
- scene.add(hammer);
- hammerRope=null;
- hammerRopeMaterial=null;
+ const handle=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,2.7,12),new THREE.MeshStandardMaterial({color:0x26394b,metalness:.45,roughness:.5}));
+ handle.position.y=0;hammer.add(handle);
+ const grip=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.62,10),new THREE.MeshStandardMaterial({color:0x55a8ff,roughness:.6}));
+ grip.position.y=0;hammer.add(grip);
+ const head=new THREE.Mesh(new THREE.BoxGeometry(1.5,.2,.25),new THREE.MeshStandardMaterial({color:0xb8c7d2,metalness:.85,roughness:.25}));
+ head.position.y=1.27;hammer.add(head);
+ const tip=new THREE.Mesh(new THREE.ConeGeometry(.13,.58,8),new THREE.MeshStandardMaterial({color:0xd9e7f2,metalness:.9,roughness:.25}));
+ tip.position.set(-.76,1.27,0);tip.rotation.z=Math.PI/2;hammer.add(tip);
+ const adze=new THREE.Mesh(new THREE.ConeGeometry(.14,.48,8),new THREE.MeshStandardMaterial({color:0x91a5b5,metalness:.9,roughness:.3}));
+ adze.position.set(.77,1.27,0);adze.rotation.z=-Math.PI/2;hammer.add(adze);
+ // Hammer origin is the actual grip point in the climber's hand.
+ hammer.position.set(0,0,4);scene.add(hammer);
+ hammerRope=null;hammerRopeMaterial=null;
 }
-
 /* =====================================================
    GRIPS
 ===================================================== */
@@ -5015,11 +5019,16 @@ function createGrips(){
     );
 
 
-   group.add(
-    glow,
-    ring,
-    center
-   );
+   const marker=new THREE.Group();
+   const markerHalo=new THREE.Mesh(new THREE.SphereGeometry(.48,12,8),new THREE.MeshBasicMaterial({color:0x64f0cf,transparent:true,opacity:.13,depthWrite:false}));
+   const markerCore=new THREE.Mesh(new THREE.IcosahedronGeometry(.19,1),new THREE.MeshStandardMaterial({color:0x80ffe2,emissive:0x28c9a5,emissiveIntensity:1.35,roughness:.45,metalness:.12}));
+   markerCore.position.z=.08;
+   const markerPin=new THREE.Mesh(new THREE.SphereGeometry(.065,8,6),new THREE.MeshBasicMaterial({color:0xdffff8}));
+   markerPin.position.z=.24;
+   marker.add(markerHalo,markerCore,markerPin);
+   marker.visible=currentLevel>=3;
+   group.add(glow,ring,center,marker);
+   ring.visible=currentLevel<3;glow.visible=currentLevel<3;center.visible=currentLevel<3;
 
 
    group.position.set(
@@ -5035,6 +5044,9 @@ function createGrips(){
     group,
     ring,
     glow,
+    marker,
+    markerHalo,
+    markerCore,
     x:p[0],
     y:p[1],
     index
@@ -5248,6 +5260,7 @@ function nearestGrip(){
 function startGrab(){
 
  if(!running)return;
+ hammerSwing=1;
 
  const result=nearestGrip();
  // Use forgiving screen-space targets: the visible ring is larger than its center.
@@ -5622,23 +5635,23 @@ if(hero.position.y<groundY){
    HAMMER
 ===================================================== */
 
-function updateHammer(){
-
+function updateHammer(dt=1/60){
  if(!hammer||!hero)return;
-
- // Keep the ice pick anchored to the hero's hand at all times.
- // The gameplay still targets grips with the existing cursor/raycast logic.
- // Hero faces the wall (Y rotation = PI), so local +X maps to world -X.
- const handX=hero.position.x-.86;
- const handY=hero.position.y+2.96;
+ const pickHand=hero.userData.pickArm?.hand;
+ if(pickHand){pickHand.getWorldPosition(hammer.position);hammer.position.z=4;}
+ else hammer.position.set(hero.position.x-.61,hero.position.y+1.61,4);
+ const handX=hammer.position.x,handY=hammer.position.y;
  const targetX=grabbed?anchorWorld.x:cursorWorld.x;
  const targetY=grabbed?anchorWorld.y:cursorWorld.y;
-
- hammer.position.set(handX,handY,4);
- // The pick's head is along local +Y, so rotate that axis toward the target.
- hammer.rotation.z=Math.atan2(targetY-handY,targetX-handX)-Math.PI/2;
-
- // Explicitly suppress any legacy rope object if one exists.
+ const aim=Math.atan2(targetY-handY,targetX-handX)-Math.PI/2;
+ hammerSwing=Math.max(0,hammerSwing-dt*3.6);
+ const strike=Math.sin((1-hammerSwing)*Math.PI)*.52;
+ hammer.rotation.z=aim+strike;
+ if(hero.userData.pickArm){
+  const arm=hero.userData.pickArm;
+  const swingPose=arm.rest-(1-hammerSwing)*.38;
+  arm.pivot.rotation.z=THREE.MathUtils.lerp(arm.pivot.rotation.z,swingPose,.42);
+ }
  if(hammerRope)hammerRope.visible=false;
 }
 
@@ -7795,60 +7808,21 @@ function restartGame(){
 ===================================================== */
 
 function animateGrips(time){
-
- grips.forEach(
-  g=>{
-
-   if(g===grabbed){
-
-    g.ring.rotation.z+=
-     .025;
-
-    return;
-   }
-
-   const pulse=
-    1+
-    Math.sin(
-     time*.004+
-     g.index
-    )*.12;
-
-   g.ring.scale.setScalar(
-    pulse
-   );
-
-   g.glow.scale.setScalar(
-    pulse
-   );
-
-   const distanceFromPlayer=
-    Math.sqrt(
-     Math.pow(
-      hero.position.x-g.x,
-      2
-     )+
-     Math.pow(
-      hero.position.y-g.y,
-      2
-     )
-    );
-
-   if(
-    distanceFromPlayer<4
-   ){
-
-    g.glow.material.opacity=
-     .16;
-
-   }else{
-
-    g.glow.material.opacity=
-     .08;
-   }
-
+ grips.forEach(g=>{
+  if(currentLevel>=3){
+   if(!g.marker)return;
+   const pulse=1+Math.sin(time*.004+g.index)*.10;
+   g.marker.scale.setScalar(pulse);
+   if(g.markerHalo&&g.markerHalo.material)g.markerHalo.material.opacity=.10+.04*(1+Math.sin(time*.003+g.index));
+   if(g.markerCore&&g.markerCore.material)g.markerCore.material.emissiveIntensity=1+.45*(1+Math.sin(time*.005+g.index));
+   return;
   }
- );
+  if(g===grabbed){g.ring.rotation.z+=.025;return;}
+  const pulse=1+Math.sin(time*.004+g.index)*.12;
+  g.ring.scale.setScalar(pulse);g.glow.scale.setScalar(pulse);
+  const distanceFromPlayer=Math.hypot(hero.position.x-g.x,hero.position.y-g.y);
+  g.glow.material.opacity=distanceFromPlayer<4?.16:.08;
+ });
 }
 
 
@@ -8023,7 +7997,7 @@ function animate(time=0){
 
  if(running){
 
-  updateHammer();
+  updateHammer(dt);
 
   updatePhysics(dt);
 
@@ -8180,6 +8154,11 @@ if(
   }
   const route=routes[Math.max(0,Math.min(9,currentLevel-1))].slice(0,grips.length);
   grips.forEach((g,i)=>{
+   const classic=currentLevel<3;
+   if(g.ring)g.ring.visible=classic;
+   if(g.glow)g.glow.visible=classic;
+   if(g.group.children[2])g.group.children[2].visible=classic;
+   if(g.marker)g.marker.visible=!classic;
    if(i<route.length){
     g.x=route[i];
     const levelGapBoost=currentLevel>=4?1+Math.min(.18,(currentLevel-4)*.03):1;
