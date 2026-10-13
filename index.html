@@ -3943,6 +3943,10 @@ function init(){
  renderer.outputColorSpace=
   THREE.SRGBColorSpace;
 
+ // Soft contact shadows add depth; keep shadow map resolution modest for phones.
+ renderer.shadowMap.enabled=true;
+ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
  // Cinematic rendering: richer rock contrast and more natural highlights.
  // Keep the mobile pixel-ratio cap above to protect phone performance.
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -3979,7 +3983,13 @@ function init(){
   32,
   20
  );
-
+ sun.castShadow=true;
+ sun.shadow.mapSize.set(1024,1024);
+ sun.shadow.camera.left=-28;
+ sun.shadow.camera.right=28;
+ sun.shadow.camera.top=70;
+ sun.shadow.camera.bottom=-5;
+ sun.shadow.bias=-0.00035;
  scene.add(sun);
 
  const rimLight=new THREE.DirectionalLight(0x83bfff,.55);
@@ -4168,15 +4178,36 @@ function createMountain(){
  mountainShape.lineTo(22,0);
  mountainShape.closePath();
 
+ // Procedural cliff texture: layered mineral bands, fine grain and weathered mottling.
+ // Generated locally so no external texture downloads are needed.
+ const rockCanvas=document.createElement("canvas");
+ rockCanvas.width=512;rockCanvas.height=512;
+ const rockCtx=rockCanvas.getContext("2d");
+ const rockGrad=rockCtx.createLinearGradient(0,0,512,512);
+ rockGrad.addColorStop(0,"#697174");rockGrad.addColorStop(.42,"#414b4e");rockGrad.addColorStop(1,"#242e32");
+ rockCtx.fillStyle=rockGrad;rockCtx.fillRect(0,0,512,512);
+ for(let i=0;i<1900;i++){
+  const x=Math.random()*512,y=Math.random()*512;
+  const w=3+Math.random()*44,h=.5+Math.random()*4;
+  rockCtx.fillStyle=Math.random()>.5?"rgba(185,194,190,0.10)":"rgba(8,14,17,0.16)";
+  rockCtx.fillRect(x,y,w,h);
+ }
+ for(let i=0;i<4200;i++){
+  const x=Math.random()*512,y=Math.random()*512;
+  rockCtx.fillStyle=Math.random()>.5?"rgba(220,222,214,0.07)":"rgba(5,10,12,0.10)";
+  rockCtx.fillRect(x,y,1+Math.random()*2,1+Math.random()*3);
+ }
+ const rockTexture=new THREE.CanvasTexture(rockCanvas);
+ rockTexture.colorSpace=THREE.SRGBColorSpace;
+ rockTexture.wrapS=THREE.RepeatWrapping;rockTexture.wrapT=THREE.RepeatWrapping;
+ rockTexture.repeat.set(2.5,2.5);
+ const rockMaterial=new THREE.MeshStandardMaterial({
+  color:0xb5b9b6,map:rockTexture,roughness:1,metalness:0,side:THREE.DoubleSide
+ });
  const mountainBase=
   new THREE.Mesh(
    new THREE.ExtrudeGeometry(mountainShape,{ depth:6, bevelEnabled:false, steps:1, curveSegments:2 }),
-   new THREE.MeshStandardMaterial({
-    color:0x303a3e,
-    roughness:1,
-    metalness:0,
-    side:THREE.DoubleSide
-   })
+   rockMaterial
   );
 
  // Extruded rock body: front face stays at z=-3.7; added depth is behind the climbing face.
@@ -4223,6 +4254,7 @@ function createMountain(){
   geometry.computeVertexNormals();
   const material=new THREE.MeshStandardMaterial({
    color:face[3],
+   map:rockTexture,
    roughness:1,
    metalness:0,
    side:THREE.DoubleSide
