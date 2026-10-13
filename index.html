@@ -9203,5 +9203,151 @@ document.addEventListener("DOMContentLoaded",function(){
 });
 </script>
 
+
+<style id="climboria-mobile-layout-final-v3">
+/* Final mobile override: use normal document flow instead of scattered absolute positions. */
+@media (max-width:700px) {
+  #landing {
+    display:block !important;
+    position:fixed !important;
+    inset:0 !important;
+    overflow:hidden !important;
+    padding:0 !important;
+    text-align:left !important;
+  }
+  #landing .panel {
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    max-width:none !important;
+    height:100% !important;
+    max-height:none !important;
+    margin:0 !important;
+    padding:112px 12px 24px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    justify-content:flex-start !important;
+    gap:0 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    overscroll-behavior:contain !important;
+    -webkit-overflow-scrolling:touch;
+    background:linear-gradient(180deg,rgba(3,10,22,.08) 0%,rgba(3,10,22,.2) 28%,rgba(3,10,22,.78) 70%,rgba(3,10,22,.97) 100%) !important;
+  }
+  #landing .logo {
+    display:block !important;
+    position:relative !important;
+    margin:0 0 4px !important;
+    font-size:clamp(26px,8vw,38px) !important;
+    line-height:1.1 !important;
+    letter-spacing:2px !important;
+    text-align:center !important;
+  }
+  #landing .sub {
+    position:relative !important;
+    margin:0 0 12px !important;
+    font-size:9px !important;
+    line-height:1.4 !important;
+    letter-spacing:1px !important;
+    text-align:center !important;
+  }
+  #landing .climboria-launch-announcement {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+    transform:none !important;
+    flex:none !important;
+    width:100% !important;
+    max-width:none !important;
+    margin:0 0 12px !important;
+    padding:12px !important;
+  }
+  #landing .climboria-announcement-top {font-size:9px !important;letter-spacing:.7px !important}
+  #landing .climboria-announcement-title {font-size:12px !important;margin-top:8px !important}
+  #landing .climboria-announcement-main {font-size:clamp(21px,6.3vw,28px) !important;line-height:1.12 !important;letter-spacing:1px !important}
+  #landing .climboria-announcement-date {font-size:12px !important;margin-top:6px !important}
+  #landing .climboria-announcement-times {margin-top:8px !important}
+  #landing .climboria-announcement-note {font-size:10px !important;line-height:1.45 !important}
+  #landing .cd-hero-actions {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+    transform:none !important;
+    width:100% !important;
+    margin:0 0 12px !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+  #landing .cd-hero-actions button {
+    min-width:0 !important;
+    min-height:58px !important;
+    padding:9px 7px !important;
+    white-space:normal !important;
+  }
+  #landing .cd-hero-actions strong {font-size:19px !important}
+  #landing .cd-hero-actions b {font-size:11px !important;line-height:1.25 !important}
+  #landing .cd-hero-actions small {font-size:9px !important;line-height:1.3 !important}
+  #landing .cd-hero-actions em {font-size:19px !important}
+  #landing .pointsPanel {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+    transform:none !important;
+    width:100% !important;
+    margin:0 0 10px !important;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  #landing .pointsBox {min-width:0 !important;padding:10px 4px !important}
+  #landing .pointsLabel {font-size:clamp(7px,2vw,9px) !important;letter-spacing:.5px !important;line-height:1.3 !important}
+  #landing .pointsValue {font-size:19px !important}
+  #landing .pointsSmall {font-size:9px !important;line-height:1.3 !important}
+  #landing .progressPanel {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+    transform:none !important;
+    width:100% !important;
+    margin:0 0 10px !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  #landing .progressCard {min-width:0 !important;padding:10px 4px !important}
+  #landing .progressIcon {font-size:18px !important}
+  #landing .progressTitle {font-size:clamp(7px,2vw,9px) !important;letter-spacing:.3px !important;line-height:1.3 !important}
+  #landing .progressText,#landing .progressStatus {font-size:9px !important;line-height:1.4 !important;overflow-wrap:anywhere}
+  #landing .cards {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;right:auto !important;bottom:auto !important;left:auto !important;
+    transform:none !important;
+    width:100% !important;
+    margin:0 0 12px !important;
+    gap:7px !important;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  }
+  #landing .card {width:auto !important;min-width:0 !important;padding:11px 5px !important;min-height:72px !important}
+  #landing .card b {font-size:10px !important;line-height:1.3 !important}
+  #landing .card span {font-size:9px !important;line-height:1.4 !important}
+  #landing .cd-live-price-panel {
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    margin:0 0 14px !important;
+  }
+  #landing .cd-bottom-strip {display:none !important}
+}
+@media (max-width:390px) {
+  #landing .panel {padding:108px 9px 20px !important}
+  #landing .climboria-launch-announcement {padding:10px !important}
+  #landing .climboria-announcement-note {font-size:9px !important}
+  #landing .pointsLabel {font-size:7px !important}
+}
+</style>
+
 </body>
 </html>
