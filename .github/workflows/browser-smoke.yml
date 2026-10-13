@@ -65,6 +65,32 @@ jobs:
             const pageErrors = [];
             page.on('pageerror', error => pageErrors.push(error.message));
 
+            // Market tickers are optional UI data, not part of the game-rendering smoke test.
+            // Stub the external APIs so CI is deterministic and avoids CORS/429/rate-limit failures.
+            const stubMarketApis = async context => {
+              await context.route('https://data-api.binance.vision/**', route =>
+                route.fulfill({
+                  status: 200,
+                  contentType: 'application/json',
+                  body: JSON.stringify([])
+                })
+              );
+              await context.route('https://api.coingecko.com/api/v3/simple/price**', route =>
+                route.fulfill({
+                  status: 200,
+                  contentType: 'application/json',
+                  body: JSON.stringify({
+                    bitcoin: { usd: 65000, usd_24h_change: 0.5 },
+                    ethereum: { usd: 3200, usd_24h_change: 0.3 },
+                    solana: { usd: 150, usd_24h_change: 0.8 },
+                    binancecoin: { usd: 600, usd_24h_change: 0.2 },
+                    ripple: { usd: 0.6, usd_24h_change: 0.1 }
+                  })
+                })
+              );
+            };
+            await stubMarketApis(page);
+
             try {
               const response = await page.goto('http://127.0.0.1:4173/', {
                 waitUntil: 'domcontentloaded',
@@ -124,6 +150,7 @@ jobs:
                 isMobile: true,
                 hasTouch: true
               });
+              await stubMarketApis(mobile);
               // External market-price APIs may reject the local smoke-test origin via CORS
               // or be unavailable in CI. Log these network/console errors for visibility, but
               // do not treat optional live-price widgets as a broken game renderer.
