@@ -1659,6 +1659,24 @@ body{
  .pointsBox,.progressCard,.card,.dashCard,.levelCard,#startButton{transition:none}
 }
 </style>
+
+<style id="climboria-reference-brightness-final">
+/* Match the approved reference: brighten the existing summit artwork only. */
+#landing{position:fixed!important;isolation:isolate;background-image:none!important;background-color:#07162d!important}
+#landing:before{
+ content:""!important;display:block!important;position:absolute!important;inset:0!important;
+ z-index:0!important;pointer-events:none!important;
+ background:url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important;
+ filter:brightness(1.22) saturate(1.05)!important;
+}
+#landing>.panel{position:relative;z-index:1}
+.climboria-dashboard-header{z-index:30!important}
+.cd-brand,.cd-brand-name{position:relative;z-index:31!important}
+@media(max-width:700px){
+ #landing:before{background-position:center center!important;filter:brightness(1.22) saturate(1.05)!important}
+}
+</style>
+
 </head>
 
 <body>
