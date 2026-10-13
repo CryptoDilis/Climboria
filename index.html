@@ -4296,8 +4296,8 @@ function createMountain(){
  mountainRockBump.wrapS=THREE.RepeatWrapping;mountainRockBump.wrapT=THREE.RepeatWrapping;
  mountainRockBump.repeat.set(3,3);
  const mountainRockMaterial=new THREE.MeshStandardMaterial({
-  color:0xd0d4d0,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.22,
-  roughness:.96,metalness:0,side:THREE.DoubleSide
+  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.09,
+  roughness:1,metalness:0,side:THREE.DoubleSide
  });
  // Keep the thick body behind the new sculpted face.
  // Removed the second extruded mountain body: it overlapped the sculpted cliff
@@ -4595,7 +4595,8 @@ function createScenicMountainBackdrop(){
   g.computeVertexNormals();
   scenery.add(new THREE.Mesh(g,snowMat));
  }
- // Removed foreground triangular buttresses: their flat faces produced the oversized black polygon artifacts. scene.add(scenery);
+ // Keep the distant alpine ridges behind the playable mountain; the old foreground buttresses stay removed.
+ scene.add(scenery);
 }
 
 function createGround(){
