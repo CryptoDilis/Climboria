@@ -3876,7 +3876,7 @@ function init(){
   );
 
  // Alpine distance haze blends far ridges into the sky instead of a black void.
- scene.fog=new THREE.FogExp2(0x84949a,0.0028);
+ scene.fog=new THREE.FogExp2(0x8ca6b2,0.0018);
 
  camera=
   new THREE.PerspectiveCamera(
@@ -3946,7 +3946,7 @@ function init(){
  // Cinematic rendering: richer rock contrast and more natural highlights.
  // Keep the mobile pixel-ratio cap above to protect phone performance.
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.22;
+ renderer.toneMappingExposure=1.32;
 
  renderer.domElement.style.touchAction=
   "none";
@@ -3964,7 +3964,7 @@ function init(){
  scene.add(amb);
 
  // Cool high-altitude fill and warm directional key light add depth to rock facets.
- const skyFill=new THREE.HemisphereLight(0xc8e0ee,0x45413a,.95);
+ const skyFill=new THREE.HemisphereLight(0xd8efff,0x56534b,1.15);
  skyFill.position.set(0,30,0);
  scene.add(skyFill);
 
@@ -3988,7 +3988,7 @@ function init(){
  sun.shadow.bias=-0.00035;
  scene.add(sun);
 
- const rimLight=new THREE.DirectionalLight(0x83bfff,.55);
+ const rimLight=new THREE.DirectionalLight(0xa4d6ff,.72);
  rimLight.position.set(12,18,-10);
  scene.add(rimLight);
 
@@ -4305,8 +4305,8 @@ function createMountain(){
  mountainRockBump.wrapS=THREE.RepeatWrapping;mountainRockBump.wrapT=THREE.RepeatWrapping;
  mountainRockBump.repeat.set(3,3);
  const mountainRockMaterial=new THREE.MeshStandardMaterial({
-  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.012,
-  roughness:1,metalness:0,side:THREE.DoubleSide
+  color:0xffffff,map:mountainRockTexture,bumpMap:mountainRockBump,bumpScale:.008,
+  roughness:.96,metalness:0,side:THREE.DoubleSide
  });
  // Keep the thick body behind the new sculpted face.
  // Removed the second extruded mountain body: it overlapped the sculpted cliff
@@ -4323,10 +4323,11 @@ function createMountain(){
   const v=row/rows,y=v*63,half=cliffHalfWidth(y);
   for(let col=0;col<=cols;col++){
    const u=col/cols,x=(u*2-1)*half;
-   const broad=Math.sin(x*.38+y*.13)*.25+Math.sin(x*.91-y*.22)*.13;
-   const crag=(Math.sin(x*2.1+y*.63)*Math.sin(y*.91-x*.47))*.20;
-   const ridge=(Math.sin(y*.24+x*.21)+Math.sin(y*.51-x*.31))*.11;
-   const brokenFace=Math.sin(x*.73+y*.42)*Math.sin(x*1.61-y*.27)*.12;
+   // Large-scale cliff relief with irregular fracture planes; subtle enough not to distort grip placement.
+   const broad=Math.sin(x*.29+y*.105)*.34+Math.sin(x*.67-y*.17)*.19;
+   const crag=(Math.sin(x*1.72+y*.49)*Math.sin(y*.77-x*.39))*.24;
+   const ridge=(Math.sin(y*.21+x*.17)+Math.sin(y*.46-x*.26))*.13;
+   const brokenFace=Math.sin(x*.61+y*.37)*Math.sin(x*1.29-y*.23)*.16;
    const z=-3.72+broad+crag+ridge+brokenFace;
    verts.push(x,y,z);uvs.push(u,1-v); // CanvasTexture vertical UV: map the snow painted at canvas top onto the summit.
    if(row<rows&&col<cols){
@@ -4340,7 +4341,7 @@ function createMountain(){
  cliffGeo.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
  cliffGeo.setIndex(indices);cliffGeo.computeVertexNormals();
  const cliffFace=new THREE.Mesh(cliffGeo,mountainRockMaterial);
- cliffFace.castShadow=true;cliffFace.receiveShadow=true;
+ cliffFace.castShadow=false;cliffFace.receiveShadow=false; // Prevent large low-poly props from stamping near-black blobs onto the playable cliff.
  mountainGroup.add(cliffFace);
 
  // Keep the sculpted cliff surface unobstructed; old box shelves created visible prop-like artifacts.
