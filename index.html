@@ -1758,6 +1758,151 @@ body{
 }
 </style>
 
+
+<style id="climboria-mobile-landing-readability-v2">
+/* Phone landing: keep the important controls together, higher, and readable. */
+@media (max-width:700px) {
+  #landing {
+    align-items:flex-start !important;
+    justify-content:flex-start !important;
+    padding: max(12px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom)) !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain;
+  }
+  #landing .panel {
+    width:100% !important;
+    max-width:560px !important;
+    max-height:none !important;
+    height:auto !important;
+    margin:0 auto !important;
+    padding:8px 14px 18px !important;
+    justify-content:flex-start !important;
+    gap:0 !important;
+    overflow:visible !important;
+  }
+  #landing .logo {
+    font-size:clamp(30px,8.8vw,42px) !important;
+    letter-spacing:clamp(2px,1vw,4px) !important;
+    line-height:1.08 !important;
+    white-space:nowrap;
+  }
+  #landing .sub {
+    margin:5px 0 12px !important;
+    font-size:10px !important;
+    line-height:1.45 !important;
+    letter-spacing:1.1px !important;
+  }
+  #landing .climboria-launch-announcement {
+    width:100% !important;
+    margin:0 auto 12px !important;
+    padding:12px 13px !important;
+    border-radius:13px !important;
+  }
+  #landing .climboria-announcement-top {
+    font-size:9px !important;
+    letter-spacing:1px !important;
+    gap:6px !important;
+  }
+  #landing .climboria-target-pill {
+    padding:4px 6px !important;
+    font-size:8px !important;
+  }
+  #landing .climboria-announcement-title {
+    margin-top:9px !important;
+    font-size:12px !important;
+    letter-spacing:1.2px !important;
+  }
+  #landing .climboria-announcement-main {
+    font-size:clamp(22px,6.5vw,29px) !important;
+    letter-spacing:1.2px !important;
+    line-height:1.12 !important;
+    overflow-wrap:anywhere;
+  }
+  #landing .climboria-announcement-date {
+    margin-top:7px !important;
+    font-size:12px !important;
+    letter-spacing:1.3px !important;
+  }
+  #landing .climboria-announcement-times { margin-top:9px !important; }
+  #landing .climboria-announcement-times span {
+    padding:7px 6px !important;
+    font-size:9px !important;
+  }
+  #landing .climboria-announcement-times b { font-size:12px !important; }
+  #landing .climboria-announcement-note {
+    margin-top:8px !important;
+    font-size:10px !important;
+    line-height:1.45 !important;
+  }
+  #landing #startButton {
+    width:100% !important;
+    min-height:50px !important;
+    margin:0 0 12px !important;
+    font-size:13px !important;
+  }
+  #landing .pointsPanel {
+    width:100% !important;
+    margin:0 0 10px !important;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  #landing .pointsBox {
+    min-width:0 !important;
+    padding:10px 4px !important;
+    border-radius:10px !important;
+  }
+  #landing .pointsLabel { font-size:clamp(7px,1.9vw,9px) !important; letter-spacing:.7px !important; line-height:1.3 !important; }
+  #landing .pointsValue { font-size:20px !important; }
+  #landing .pointsSmall { font-size:9px !important; line-height:1.3 !important; }
+  #landing .progressPanel {
+    width:100% !important;
+    margin:0 0 10px !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  #landing .progressCard {
+    min-width:0 !important;
+    padding:10px 5px !important;
+    border-radius:10px !important;
+  }
+  #landing .progressIcon { font-size:17px !important; }
+  #landing .progressTitle { font-size:clamp(7px,2vw,9px) !important; letter-spacing:.4px !important; line-height:1.3 !important; }
+  #landing .progressText,.progressStatus { font-size:9px !important; line-height:1.4 !important; overflow-wrap:anywhere; }
+  #landing .dashboard {
+    width:100% !important;
+    margin:0 0 10px !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:7px !important;
+  }
+  #landing .dashCard { padding:11px !important; }
+  #landing .dashTitle { font-size:9px !important; letter-spacing:.8px !important; }
+  #landing .dashSmall { font-size:10px !important; line-height:1.45 !important; }
+  #landing .leaderboard,#landing .airdrop {
+    width:100% !important;
+    margin:0 0 10px !important;
+    padding:12px !important;
+  }
+  #landing .sectionTitle,#landing .airdropTitle { font-size:11px !important; }
+  #landing .airdropText,#landing .airdropStats { font-size:10px !important; line-height:1.45 !important; }
+  #landing .card { padding:12px 8px !important; }
+  #landing .card b { font-size:10px !important; }
+  #landing .card span { font-size:9px !important; line-height:1.4 !important; }
+}
+@media (max-width:390px) {
+  #landing .panel { padding-left:10px !important; padding-right:10px !important; }
+  #landing .climboria-launch-announcement { padding:10px !important; }
+  #landing .climboria-announcement-note { font-size:9px !important; }
+  #landing .pointsLabel { font-size:7px !important; }
+}
+@media (max-height:740px) and (max-width:700px) {
+  #landing .logo { font-size:30px !important; }
+  #landing .sub { margin-bottom:8px !important; }
+  #landing .climboria-launch-announcement { padding:9px 11px !important; margin-bottom:9px !important; }
+  #landing .climboria-announcement-note { font-size:9px !important; }
+}
+</style>
+
 </head>
 
 <body>
