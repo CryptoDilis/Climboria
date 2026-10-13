@@ -4035,6 +4035,7 @@ function init(){
  window.addEventListener("touchstart", e=>{
   if(e.touches.length===2){
    e.preventDefault();
+   if(touchActive){touchActive=false;releaseGrab();$("touchHint").style.display="none";}
    cameraDragActive=false;
    pinchStartDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
    pinchStartZoom=cameraZoom;
@@ -5382,6 +5383,12 @@ function releaseGrab(){
 function touchStart(e){
 
  if(!running)return;
+
+ // Two fingers are reserved for camera zoom, not grabbing a climbing grip.
+ if(e.touches&&e.touches.length>=2){
+  if(touchActive){touchActive=false;releaseGrab();}
+  return;
+ }
 
  if(!e.touches?.length)return;
 
