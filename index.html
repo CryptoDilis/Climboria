@@ -4585,38 +4585,40 @@ function createMountainDetails(){
    Decorative scenery only. Does not change grips, hero, physics, or level routes. */
 function createScenicMountainBackdrop(){
  const scenery=new THREE.Group();
- const ridgeMat1=new THREE.MeshStandardMaterial({color:0x65777b,roughness:1});
- const ridgeMat2=new THREE.MeshStandardMaterial({color:0x879598,roughness:1});
- const snowMat=new THREE.MeshStandardMaterial({color:0xd6dedc,roughness:.95});
+ const farRock=new THREE.MeshStandardMaterial({color:0x667d89,roughness:1,flatShading:true});
+ const midRock=new THREE.MeshStandardMaterial({color:0x83969b,roughness:1,flatShading:true});
+ const snow=new THREE.MeshStandardMaterial({color:0xdbe4e6,roughness:1,flatShading:true});
+ const shadowSnow=new THREE.MeshStandardMaterial({color:0x9eafb5,roughness:1,flatShading:true});
  function ridge(points,z,mat){
   const shape=new THREE.Shape();
   shape.moveTo(points[0][0],points[0][1]);
   for(let i=1;i<points.length;i++)shape.lineTo(points[i][0],points[i][1]);
-  shape.lineTo(points[points.length-1][0],-3);
-  shape.lineTo(points[0][0],-3);
-  shape.closePath();
+  shape.lineTo(points[points.length-1][0],-8);
+  shape.lineTo(points[0][0],-8);shape.closePath();
   const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape),mat);
-  mesh.position.z=z;
-  scenery.add(mesh);
+  mesh.position.z=z;scenery.add(mesh);
  }
- // Layered peaks sit behind the playable cliff to create a broad alpine horizon.
- ridge([[-38,-3],[-31,12],[-25,7],[-18,23],[-12,10],[-5,19],[2,8],[10,24],[17,9],[24,20],[31,8],[39,14],[45,-3]],-24,ridgeMat1);
- ridge([[-35,-3],[-28,7],[-21,18],[-15,11],[-7,29],[0,15],[8,26],[14,13],[22,22],[29,10],[36,17],[43,-3]],-20,ridgeMat2);
- // Pale, angular snow caps on distant summits.
+ // Layered distant alpine ranges, kept behind the playable cliff and clear of the hero.
+ ridge([[-48,-8],[-42,7],[-37,3],[-31,17],[-27,10],[-20,26],[-15,16],[-9,32],[-3,20],[3,30],[8,19],[15,35],[20,22],[26,31],[32,17],[39,23],[45,9],[50,-8]],-34,farRock);
+ ridge([[-47,-8],[-41,2],[-35,14],[-30,8],[-23,21],[-17,12],[-11,28],[-5,18],[1,27],[7,15],[13,31],[19,17],[25,27],[31,13],[37,19],[44,4],[49,-8]],-28,midRock);
+ // Snow fields are broad irregular polygons, not tiny floating triangle props.
  const caps=[
-  [[-21,18],[-17,23],[-14,17]],
-  [[-9,25],[-7,29],[-4,23]],
-  [[6,22],[8,26],[11,21]],
-  [[19,18],[22,22],[25,17]],
-  [[-30,9],[-28,12],[-25,8]]
+  {p:[[-33,12],[-31,17],[-28,12],[-30,14]],z:-27,m:snow},
+  {p:[[-22,18],[-20,26],[-17,20],[-18,22]],z:-27,m:snow},
+  {p:[[-13,23],[-9,32],[-6,24],[-9,27]],z:-27,m:snow},
+  {p:[[-2,22],[3,30],[6,22],[2,25]],z:-27,m:snow},
+  {p:[[11,25],[15,35],[19,25],[15,29]],z:-27,m:snow},
+  {p:[[22,21],[26,31],[30,21],[26,25]],z:-27,m:snow},
+  {p:[[35,15],[39,23],[42,14],[39,18]],z:-27,m:snow},
+  {p:[[-12,24],[-9,32],[-6,24],[-9,26]],z:-26.8,m:shadowSnow},
+  {p:[[12,26],[15,35],[18,26],[15,29]],z:-26.8,m:shadowSnow}
  ];
- for(const pts of caps){
+ for(const cap of caps){
   const g=new THREE.BufferGeometry();
-  g.setAttribute("position",new THREE.Float32BufferAttribute(pts.flatMap(p=>[p[0],p[1],-11.35]),3));
-  g.computeVertexNormals();
-  scenery.add(new THREE.Mesh(g,snowMat));
+  g.setAttribute("position",new THREE.Float32BufferAttribute(cap.p.flatMap(p=>[p[0],p[1],cap.z]),3));
+  g.setIndex([0,1,2,0,2,3]);g.computeVertexNormals();
+  scenery.add(new THREE.Mesh(g,cap.m));
  }
- // Keep the distant alpine ridges behind the playable mountain; the old foreground buttresses stay removed.
  scene.add(scenery);
 }
 
