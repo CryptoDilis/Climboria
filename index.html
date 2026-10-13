@@ -4891,9 +4891,11 @@ function createHammer(){
  const head=new THREE.Mesh(new THREE.BoxGeometry(1.5,.2,.25),new THREE.MeshStandardMaterial({color:0xb8c7d2,metalness:.85,roughness:.25}));head.position.y=.72;hammer.add(head);
  const tip=new THREE.Mesh(new THREE.ConeGeometry(.13,.58,8),new THREE.MeshStandardMaterial({color:0xd9e7f2,metalness:.9}));tip.position.set(-.76,.72,0);tip.rotation.z=Math.PI/2;hammer.add(tip);
  const adze=new THREE.Mesh(new THREE.ConeGeometry(.14,.48,8),new THREE.MeshStandardMaterial({color:0x91a5b5,metalness:.9}));adze.position.set(.77,.72,0);adze.rotation.z=-Math.PI/2;hammer.add(adze);
- hammer.position.set(3,3,4);scene.add(hammer);
- hammerRopeMaterial=new THREE.LineBasicMaterial({color:0x55a8ff,transparent:true,opacity:.72});
- hammerRope=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),hammerRopeMaterial);hammerRope.visible=false;scene.add(hammerRope);
+ // The ice pick is held by the hero. No visible rope/line is created.
+ hammer.position.set(0,0,4);
+ scene.add(hammer);
+ hammerRope=null;
+ hammerRopeMaterial=null;
 }
 
 /* =====================================================
@@ -5709,87 +5711,21 @@ if(hero.position.y<groundY){
 
 function updateHammer(){
 
- if(!hammer)return;
+ if(!hammer||!hero)return;
 
- if(grabbed){
+ // Keep the ice pick anchored to the hero's hand at all times.
+ // The gameplay still targets grips with the existing cursor/raycast logic.
+ const handX=hero.position.x+.68;
+ const handY=hero.position.y+1.55;
+ const targetX=grabbed?anchorWorld.x:cursorWorld.x;
+ const targetY=grabbed?anchorWorld.y:cursorWorld.y;
 
-  hammer.position.copy(
-   anchorWorld
-  );
+ hammer.position.set(handX,handY,4);
+ // The pick's head is along local +Y, so rotate that axis toward the target.
+ hammer.rotation.z=Math.atan2(targetY-handY,targetX-handX)-Math.PI/2;
 
-  const dx=
-   cursorWorld.x-
-   anchorWorld.x;
-
-  const dy=
-   cursorWorld.y-
-   anchorWorld.y;
-
-  hammer.rotation.z=
-   Math.atan2(
-    dy,
-    dx
-   );
-
- }else{
-
-  hammer.position.copy(
-   cursorWorld
-  );
-
-  const dx=
-   cursorWorld.x-
-   hero.position.x;
-
-  const dy=
-   cursorWorld.y-
-   hero.position.y;
-
-  hammer.rotation.z=
-   Math.atan2(
-    dy,
-    dx
-   );
- }
-
- hammer.position.z=4;
-
-
- if(hammerRope){
-
-  if(grabbed){
-
-   hammerRope.visible=true;
-
-   const points=[
-    new THREE.Vector3(
-     hero.position.x,
-     hero.position.y+1,
-     3.8
-    ),
-    new THREE.Vector3(
-     anchorWorld.x,
-     anchorWorld.y,
-     3.8
-    )
-   ];
-
-   hammerRope.geometry
-    .setFromPoints(
-     points
-    );
-
-   hammerRopeMaterial.color.set(
-    0x55ff70
-   );
-
-   hammerRopeMaterial.opacity=.7;
-
-  }else{
-
-   hammerRope.visible=false;
-  }
- }
+ // Explicitly suppress any legacy rope object if one exists.
+ if(hammerRope)hammerRope.visible=false;
 }
 
 
