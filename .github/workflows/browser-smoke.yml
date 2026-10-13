@@ -195,7 +195,24 @@ jobs:
               });
 
               await expedition.getByRole('button', { name: /start climb/i }).waitFor({ timeout: 15000 });
-              await expedition.getByRole('button', { name: /start climb/i }).click();
+              await expedition.waitForTimeout(500);
+              const expeditionBeforeClick = await expedition.evaluate(() => ({
+                landing: getComputedStyle(document.getElementById('landing')).display,
+                levelSelect: getComputedStyle(document.getElementById('levelSelect')).display,
+                hud: getComputedStyle(document.getElementById('hud')).display,
+                levelName: document.getElementById('hudLevelName')?.innerText || '',
+                startButtonDisplay: getComputedStyle(document.getElementById('startButton')).display,
+                startButtonVisibility: getComputedStyle(document.getElementById('startButton')).visibility
+              }));
+              console.log('Expedition state before Start Climb: ' + JSON.stringify(expeditionBeforeClick));
+
+              // Only click when the landing button is genuinely available. Some builds
+              // may restore straight into an already-open menu/game state during boot.
+              if (expeditionBeforeClick.landing !== 'none' &&
+                  expeditionBeforeClick.startButtonDisplay !== 'none' &&
+                  expeditionBeforeClick.startButtonVisibility === 'visible') {
+                await expedition.locator('#startButton').click({ timeout: 7000 });
+              }
               await expedition.waitForTimeout(500);
               const expeditionState = await expedition.evaluate(() => ({
                 landing: getComputedStyle(document.getElementById('landing')).display,
@@ -203,7 +220,7 @@ jobs:
                 hud: getComputedStyle(document.getElementById('hud')).display,
                 levelName: document.getElementById('hudLevelName')?.innerText || ''
               }));
-              console.log('Expedition menu state after Start Climb: ' + JSON.stringify(expeditionState));
+              console.log('Expedition state after Start Climb/state restore: ' + JSON.stringify(expeditionState));
               if (expeditionState.levelSelect !== 'none') {
                 const summitCount = await expedition.locator('.levelCard[data-level]').count();
                 if (summitCount !== 10) {
