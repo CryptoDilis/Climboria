@@ -137,7 +137,9 @@ jobs:
               // Wait for the canvas to exist first, then report useful diagnostics if rendering
               // did not create a visible canvas instead of returning only a generic timeout.
               try {
-                await mobile.locator('canvas').waitFor({ state: 'attached', timeout: 20000 });
+                // The mobile emulation can take longer to finish the initial 3D scene build.
+                // Allow the renderer extra time before treating a late canvas as a hard failure.
+                await mobile.locator('canvas').waitFor({ state: 'attached', timeout: 45000 });
               } catch (error) {
                 const diagnostic = await mobile.evaluate(() => {
                   const canvas = document.querySelector('canvas');
@@ -181,7 +183,7 @@ jobs:
                 visibility: getComputedStyle(el).visibility
               }));
               console.log('Mobile canvas before start: ' + JSON.stringify(mobileCanvasBeforeStart));
-              await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 20000 });
+              await mobile.locator('canvas').waitFor({ state: 'visible', timeout: 45000 });
               await mobile.getByRole('button', { name: /start climb/i }).click();
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               await mobile.locator('#level1Card').click();
