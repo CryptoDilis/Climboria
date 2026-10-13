@@ -3875,12 +3875,8 @@ function init(){
    0x05090d
   );
 
- scene.fog=
-  new THREE.Fog(
-   0x05090d,
-   35,
-   105
-  );
+ // Alpine distance haze blends far ridges into the sky instead of a black void.
+ scene.fog=new THREE.FogExp2(0x84949a,0.0028);
 
  camera=
   new THREE.PerspectiveCamera(
@@ -3950,7 +3946,7 @@ function init(){
  // Cinematic rendering: richer rock contrast and more natural highlights.
  // Keep the mobile pixel-ratio cap above to protect phone performance.
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.12;
+ renderer.toneMappingExposure=1.22;
 
  renderer.domElement.style.touchAction=
   "none";
@@ -3961,21 +3957,21 @@ function init(){
 
  const amb=
   new THREE.AmbientLight(
-   0xc8d9e8,
-   .62
+   0xd8e2e4,
+   .82
   );
 
  scene.add(amb);
 
  // Cool high-altitude fill and warm directional key light add depth to rock facets.
- const skyFill=new THREE.HemisphereLight(0x9dc9ed,0x292b30,.72);
+ const skyFill=new THREE.HemisphereLight(0xc8e0ee,0x45413a,.95);
  skyFill.position.set(0,30,0);
  scene.add(skyFill);
 
  const sun=
   new THREE.DirectionalLight(
-   0xfff0d8,
-   1.65
+   0xffe5c2,
+   2.15
   );
 
  sun.position.set(
@@ -4128,23 +4124,38 @@ function init(){
 ===================================================== */
 
 function createSky(){
+ // Full-sky shader gradient replaces the near-black studio backdrop.
+ const skyGeometry=new THREE.SphereGeometry(120,32,20);
+ const skyMaterial=new THREE.ShaderMaterial({
+  side:THREE.BackSide,
+  depthWrite:false,
+  uniforms:{
+   zenith:{value:new THREE.Color(0x63859a)},
+   upper:{value:new THREE.Color(0x9bb4bf)},
+   horizon:{value:new THREE.Color(0xc5c5b6)},
+   lower:{value:new THREE.Color(0x5c6b70)}
+  },
+  vertexShader:`varying vec3 vWorldPosition;
+   void main(){vec4 worldPosition=modelMatrix*vec4(position,1.0);vWorldPosition=worldPosition.xyz;gl_Position=projectionMatrix*viewMatrix*worldPosition;}`,
+  fragmentShader:`varying vec3 vWorldPosition;
+   uniform vec3 zenith;uniform vec3 upper;uniform vec3 horizon;uniform vec3 lower;
+   void main(){float h=normalize(vWorldPosition).y;vec3 c;
+    if(h>0.32)c=mix(upper,zenith,smoothstep(0.32,0.92,h));
+    else if(h>0.0)c=mix(horizon,upper,smoothstep(0.0,0.32,h));
+    else c=mix(lower,horizon,smoothstep(-0.48,0.0,h));
+    float haze=1.0-smoothstep(0.0,0.18,abs(h));c=mix(c,horizon,haze*0.28);
+    gl_FragColor=vec4(c,1.0);
+   }`
+ });
+ scene.add(new THREE.Mesh(skyGeometry,skyMaterial));
 
- const g=
-  new THREE.SphereGeometry(
-   80,
-   24,
-   16
-  );
-
- const m=
-  new THREE.MeshBasicMaterial({
-   color:0x071018,
-   side:THREE.BackSide
-  });
-
- scene.add(
-  new THREE.Mesh(g,m)
+ // A soft, distant sun disk adds a natural light source without heavy post-processing.
+ const sunGlow=new THREE.Mesh(
+  new THREE.SphereGeometry(2.3,20,14),
+  new THREE.MeshBasicMaterial({color:0xffe4b2,transparent:true,opacity:.28,depthWrite:false})
  );
+ sunGlow.position.set(-34,43,-72);
+ scene.add(sunGlow);
 }
 
 
@@ -4573,9 +4584,9 @@ function createMountainDetails(){
    Decorative scenery only. Does not change grips, hero, physics, or level routes. */
 function createScenicMountainBackdrop(){
  const scenery=new THREE.Group();
- const ridgeMat1=new THREE.MeshStandardMaterial({color:0x263941,roughness:1,flatShading:true});
- const ridgeMat2=new THREE.MeshStandardMaterial({color:0x344951,roughness:1,flatShading:true});
- const snowMat=new THREE.MeshStandardMaterial({color:0xb7c9ce,roughness:1,flatShading:true});
+ const ridgeMat1=new THREE.MeshStandardMaterial({color:0x65777b,roughness:1});
+ const ridgeMat2=new THREE.MeshStandardMaterial({color:0x879598,roughness:1});
+ const snowMat=new THREE.MeshStandardMaterial({color:0xd6dedc,roughness:.95});
  function ridge(points,z,mat){
   const shape=new THREE.Shape();
   shape.moveTo(points[0][0],points[0][1]);
@@ -4588,8 +4599,8 @@ function createScenicMountainBackdrop(){
   scenery.add(mesh);
  }
  // Layered peaks sit behind the playable cliff to create a broad alpine horizon.
- ridge([[-38,-3],[-31,12],[-25,7],[-18,23],[-12,10],[-5,19],[2,8],[10,24],[17,9],[24,20],[31,8],[39,14],[45,-3]],-12,ridgeMat1);
- ridge([[-35,-3],[-28,7],[-21,18],[-15,11],[-7,29],[0,15],[8,26],[14,13],[22,22],[29,10],[36,17],[43,-3]],-11.5,ridgeMat2);
+ ridge([[-38,-3],[-31,12],[-25,7],[-18,23],[-12,10],[-5,19],[2,8],[10,24],[17,9],[24,20],[31,8],[39,14],[45,-3]],-24,ridgeMat1);
+ ridge([[-35,-3],[-28,7],[-21,18],[-15,11],[-7,29],[0,15],[8,26],[14,13],[22,22],[29,10],[36,17],[43,-3]],-20,ridgeMat2);
  // Pale, angular snow caps on distant summits.
  const caps=[
   [[-21,18],[-17,23],[-14,17]],
@@ -4605,7 +4616,7 @@ function createScenicMountainBackdrop(){
   scenery.add(new THREE.Mesh(g,snowMat));
  }
  // Side buttresses frame the main wall without covering any climb grips.
- const buttressMat=new THREE.MeshStandardMaterial({color:0x29363b,roughness:1,flatShading:true});
+ const buttressMat=new THREE.MeshStandardMaterial({color:0x536267,roughness:1});
  const buttresses=[
   [[-22,0],[-16,18],[-12,9]], [[-22,0],[-12,9],[-10,0]],
   [[22,0],[15,16],[11,8]], [[22,0],[11,8],[10,0]],
@@ -5726,8 +5737,8 @@ function updateCamera(){
 
  const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
  // Wider cinematic framing: show more mountain, surrounding ridges, and sky.
- camera.fov = portraitMobile ? 96 : 68;
- const baseCameraZ = portraitMobile ? 44 : 25;
+ camera.fov = portraitMobile ? 78 : 62;
+ const baseCameraZ = portraitMobile ? 36 : 25;
  camera.position.z = baseCameraZ * cameraZoom;
  camera.updateProjectionMatrix();
 
@@ -7630,8 +7641,8 @@ function resize(){
   so the climber, grips, and more of the route fit in the phone view.
   Landscape/desktop keeps the original framing.
  */
- camera.position.z = (isPortraitMobile ? 44 : 25) * cameraZoom;
- camera.fov = isPortraitMobile ? 96 : 68;
+ camera.position.z = (isPortraitMobile ? 36 : 25) * cameraZoom;
+ camera.fov = isPortraitMobile ? 78 : 62;
 
  camera.updateProjectionMatrix();
 
