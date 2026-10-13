@@ -4245,13 +4245,34 @@ function createMountain(){
  mountainRockGrad.addColorStop(.65,"#3c4649");
  mountainRockGrad.addColorStop(1,"#252f33");
  mountainRockCtx.fillStyle=mountainRockGrad;mountainRockCtx.fillRect(0,0,1024,1024);
- // Broad geological strata with broken edges, not evenly spaced cartoon stripes.
- for(let band=0;band<95;band++){
-  const y=band*11+Math.random()*13;
-  mountainRockCtx.beginPath();mountainRockCtx.moveTo(0,y);
-  for(let x=0;x<=1024;x+=24)mountainRockCtx.lineTo(x,y+Math.sin(x*.017+band*1.7)*5+(Math.random()-.5)*8);
-  mountainRockCtx.lineTo(1024,y+3+Math.random()*9);mountainRockCtx.lineTo(0,y+3);mountainRockCtx.closePath();
-  mountainRockCtx.fillStyle=Math.random()>.48?"rgba(192,199,195,0.075)":"rgba(7,13,16,0.12)";mountainRockCtx.fill();
+ // Large fractured rock planes break up the surface without repetitive horizontal stripes.
+ for(let facet=0;facet<260;facet++){
+  const x=Math.random()*1024,y=Math.random()*1024;
+  const w=18+Math.random()*105,h=12+Math.random()*90;
+  const lean=(Math.random()-.5)*w*.7;
+  mountainRockCtx.beginPath();
+  mountainRockCtx.moveTo(x,y);
+  mountainRockCtx.lineTo(x+w*.58,y-h*.12);
+  mountainRockCtx.lineTo(x+w+lean,y+h*.42);
+  mountainRockCtx.lineTo(x+w*.38,y+h);
+  mountainRockCtx.lineTo(x-w*.12,y+h*.55);
+  mountainRockCtx.closePath();
+  mountainRockCtx.fillStyle=Math.random()>.52
+   ? "rgba(194,205,202,0.055)"
+   : "rgba(7,13,16,0.085)";
+  mountainRockCtx.fill();
+ }
+ // A few longer mineral seams follow broken, slanted paths instead of tidy bands.
+ for(let seam=0;seam<115;seam++){
+  let x=Math.random()*1024,y=Math.random()*1024;
+  mountainRockCtx.beginPath();mountainRockCtx.moveTo(x,y);
+  for(let j=0;j<4+Math.random()*8;j++){
+   x+=(Math.random()-.5)*28;y+=(Math.random()-.5)*34;
+   mountainRockCtx.lineTo(x,y);
+  }
+  mountainRockCtx.strokeStyle=Math.random()>.5?"rgba(205,213,207,0.10)":"rgba(8,14,17,0.13)";
+  mountainRockCtx.lineWidth=.5+Math.random()*1.8;
+  mountainRockCtx.stroke();
  }
  // Fine stone grain and scattered mineral flecks.
  for(let i=0;i<26000;i++){
