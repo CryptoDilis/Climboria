@@ -5292,62 +5292,6 @@ function createHero(){
  scene.add(hero);
 }
 
-/* LANDING HERO PREVIEW
-   Reuses the real game character mesh in a transparent, isolated renderer.
-   This is decorative only: the live gameplay hero, camera, physics and controls are untouched. */
-function createLandingHeroPreview(){
- const landing=document.querySelector("#landing .panel");
- if(!landing||!hero||typeof THREE==="undefined") return;
- const wrap=document.createElement("div");
- wrap.id="landingHeroPreview";
- wrap.setAttribute("aria-hidden","true");
- const previewCanvas=document.createElement("canvas");
- wrap.appendChild(previewCanvas);
- landing.insertBefore(wrap,landing.firstChild);
- let previewRenderer;
- try{
-  previewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:true,antialias:true,powerPreference:"low-power"});
- }catch(err){wrap.remove();return;}
- previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
- previewRenderer.setSize(420,520,false);
- previewRenderer.setClearColor(0x000000,0);
- previewRenderer.outputColorSpace=THREE.SRGBColorSpace;
- previewRenderer.toneMapping=THREE.ACESFilmicToneMapping;
- previewRenderer.toneMappingExposure=1.18;
- const previewScene=new THREE.Scene();
- previewScene.add(new THREE.HemisphereLight(0xd8edff,0x3c3028,2.0));
- const key=new THREE.DirectionalLight(0xffe1a7,2.8);key.position.set(-3,6,5);previewScene.add(key);
- const fill=new THREE.DirectionalLight(0x8dc8ff,1.4);fill.position.set(4,2,-3);previewScene.add(fill);
- const previewHero=hero.clone(true);
- previewHero.position.set(0,-.08,0);
- previewHero.rotation.set(0,Math.PI,0);
- previewHero.scale.setScalar(.96);
- previewScene.add(previewHero);
- const previewCamera=new THREE.OrthographicCamera(-2.05,2.05,2.55,-2.55,.1,40);
- previewCamera.position.set(0,1.62,9);
- previewCamera.lookAt(0,1.62,0);
- let raf=0,disposed=false;
- function resizePreview(){
-  if(disposed)return;
-  const w=Math.max(1,wrap.clientWidth),h=Math.max(1,wrap.clientHeight);
-  previewRenderer.setSize(Math.round(w*1.5),Math.round(h*1.5),false);
-  previewCanvas.style.width="100%";previewCanvas.style.height="100%";
-  previewCamera.left=-2.05;previewCamera.right=2.05;previewCamera.top=2.55;previewCamera.bottom=-2.55;
-  previewCamera.updateProjectionMatrix();
- }
- function draw(){
-  if(disposed)return;
-  if(wrap.isConnected && getComputedStyle(document.getElementById("landing")).display!=="none"){
-   previewHero.rotation.y=Math.PI+Math.sin(performance.now()*.00045)*.035;
-   previewRenderer.render(previewScene,previewCamera);
-  }
-  raf=requestAnimationFrame(draw);
- }
- if("ResizeObserver" in window)new ResizeObserver(resizePreview).observe(wrap);
- window.addEventListener("resize",resizePreview,{passive:true});
- resizePreview();draw();
-}
-
 /* =====================================================
    HAMMER + ROPE
 ===================================================== */
