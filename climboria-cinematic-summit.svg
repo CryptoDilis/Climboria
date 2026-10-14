@@ -11,8 +11,23 @@
  <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
  <filter id="glow"><feGaussianBlur stdDeviation="24"/></filter>
  <pattern id="rockgrain" width="95" height="82" patternUnits="userSpaceOnUse"><path d="M4 8l22 12-9 17M52 4l-7 20 21 15M74 52l-21 7-9 18M15 59l18-9 12 12" fill="none" stroke="#d4e3ee" stroke-opacity=".12" stroke-width="2"/><path d="M30 0l-8 15m63 25l-17 8M4 78l15-9" fill="none" stroke="#020914" stroke-opacity=".28" stroke-width="4"/></pattern>
+
+ <linearGradient id="cinematicSky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#061426"/><stop offset=".28" stop-color="#16446a"/><stop offset=".49" stop-color="#d59a68"/><stop offset=".58" stop-color="#f6d5a3"/><stop offset=".72" stop-color="#47718b"/><stop offset="1" stop-color="#06101d"/></linearGradient>
+ <radialGradient id="cinematicSun"><stop stop-color="#fff8df" stop-opacity=".95"/><stop offset=".18" stop-color="#ffd89a" stop-opacity=".45"/><stop offset="1" stop-color="#ffc36c" stop-opacity="0"/></radialGradient>
+ <linearGradient id="newMountainLit" x1=".15" y1="0" x2=".85" y2="1"><stop stop-color="#f7fbff"/><stop offset=".18" stop-color="#c7dce8"/><stop offset=".42" stop-color="#7e9fb4"/><stop offset=".72" stop-color="#304d67"/><stop offset="1" stop-color="#091522"/></linearGradient>
+ <linearGradient id="newMountainShadow" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#3e617e"/><stop offset=".45" stop-color="#162e47"/><stop offset="1" stop-color="#030a13"/></linearGradient>
+ <linearGradient id="newSnow" x1=".1" y1="0" x2=".8" y2="1"><stop stop-color="#fff"/><stop offset=".38" stop-color="#e4f2fa"/><stop offset=".7" stop-color="#9dbcd0"/><stop offset="1" stop-color="#4a6c86"/></linearGradient>
+ <filter id="cinematicHaze"><feGaussianBlur stdDeviation="34"/></filter>
+ <filter id="fineTexture"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="11"/><feColorMatrix values="0.35 0 0 0 0.1 0 0.4 0 0 0.15 0 0 0.5 0 0.2 0 0 0 .16 0"/></filter>
 </defs>
-<rect width="1920" height="1080" fill="url(#sky)"/>
+<rect width="1920" height="1080" fill="url(#cinematicSky)"/>
+<rect width="1920" height="1080" fill="#071321" opacity=".12"/>
+<circle cx="1200" cy="420" r="510" fill="url(#cinematicSun)"/>
+<circle cx="1200" cy="420" r="105" fill="#fff3d5" opacity=".25" filter="url(#glow)"/>
+<!-- broad atmospheric glow and layered alpine silhouettes -->
+<ellipse cx="1060" cy="650" rx="1050" ry="170" fill="#ffcc91" opacity=".12" filter="url(#cinematicHaze)"/>
+<path d="M0 590L125 486 210 530 342 414 456 505 570 400 690 512 818 390 936 492 1058 365 1170 472 1300 380 1415 505 1540 392 1665 500 1780 410 1920 492V1080H0Z" fill="#7697ad" opacity=".27"/>
+<path d="M0 674L130 565 250 625 390 505 510 604 645 495 770 600 900 488 1030 598 1150 470 1280 590 1400 485 1535 598 1660 500 1790 590 1920 525V1080H0Z" fill="#183752" opacity=".86"/>
 <circle cx="1110" cy="415" r="420" fill="url(#sun)"/>
 <circle cx="1110" cy="415" r="115" fill="#fff4cf" opacity=".25" filter="url(#glow)"/>
 <!-- brighter golden sunrise rays for a more premium cinematic welcome -->
@@ -34,6 +49,26 @@
  <path d="M1045 420l60-54 42 53-30-15-15 14-18-9z"/><path d="M1257 457l53-49 43 54-31-18-17 16-17-8z"/>
  <path d="M1470 481l55-49 40 48-30-15-17 15-16-9z"/><path d="M1680 504l50-52 43 49-31-15-14 14-18-8z"/>
 </g>
+<!-- cinematic foreground mountain: deep sculpted faces, sunlit snow ridges, and glacial cuts -->
+<g id="cinematic-alpine-overhaul">
+ <path d="M120 1080L330 870 470 765 580 650 690 575 800 430 900 325 1000 170 1060 108 1120 228 1185 365 1275 480 1360 590 1480 710 1600 820 1770 1080Z" fill="url(#newMountainShadow)"/>
+ <path d="M330 870L470 765 580 650 690 575 800 430 900 325 1000 170 1060 108 1035 290 985 390 940 470 875 560 810 630 740 710 655 800 570 920 470 1010Z" fill="url(#newMountainLit)"/>
+ <path d="M1060 108L1120 228 1185 365 1275 480 1360 590 1480 710 1600 820 1450 770 1350 690 1275 620 1205 540 1150 445 1100 345Z" fill="#7d9bb0" opacity=".9"/>
+ <path d="M1000 170L1035 290 985 390 940 470 875 560 810 630 740 710 655 800 570 920 650 760 720 660 785 560 850 465 910 365Z" fill="#263f58"/>
+ <path d="M1060 108L1035 290 1068 370 1115 450 1170 520 1205 540 1160 550 1090 475 1045 405 1015 330Z" fill="url(#newSnow)"/>
+ <path d="M1000 170L1060 108 1038 194 1012 244 980 290 955 345 925 365 950 310Z" fill="#f8fcff"/>
+ <path d="M1038 194L1060 108 1120 228 1090 207 1064 178 1050 228Z" fill="#d9e9f3"/>
+ <path d="M900 325L1000 170 1012 244 980 290 955 345 925 365Z" fill="#b8d1e0" opacity=".8"/>
+ <path d="M1120 228L1185 365 1275 480 1205 440 1150 370 1110 300Z" fill="#243f59"/>
+ <path d="M800 430L875 360 900 325 860 420 820 485 770 550 720 605 690 575Z" fill="#dceaf2" opacity=".58"/>
+ <path d="M580 650L690 575 655 650 600 710 545 770 470 830Z" fill="#8da9bd" opacity=".65"/>
+ <path d="M1275 480L1360 590 1480 710 1390 670 1320 610 1270 550Z" fill="#0b1c2c" opacity=".72"/>
+ <path d="M655 800L740 710 810 630 875 560 940 470 985 390" fill="none" stroke="#d7e8f2" stroke-opacity=".5" stroke-width="4"/>
+ <path d="M1090 475L1150 540 1205 590 1275 650" fill="none" stroke="#d9eaf5" stroke-opacity=".4" stroke-width="4"/>
+ <path d="M470 1010L570 920 650 800 690 770 640 875 590 945 530 1000Z" fill="#071321" opacity=".6"/>
+</g>
+<rect width="1920" height="1080" filter="url(#fineTexture)" opacity=".13" pointer-events="none"/>
+
 <!-- central massive alpine summit with asymmetrical rock faces -->
 <path d="M260 1080L435 905 560 775 650 686 740 628 830 485 912 383 982 236 1035 145 1094 265 1140 390 1225 505 1290 604 1395 712 1515 838 1655 1080Z" fill="url(#shadowrock)"/>
 <path d="M435 905L560 775 650 686 740 628 830 485 912 383 982 236 1035 145 1013 340 966 464 904 562 849 637 778 701 719 785 637 872 570 978Z" fill="url(#ice)"/>
