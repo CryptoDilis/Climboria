@@ -7520,24 +7520,26 @@ function showCryptoError(
  CRYPTO_IDS.forEach(
   id=>{
 
-   const symbol=
-    CRYPTO_SYMBOLS[id];
+   const symbol=CRYPTO_SYMBOLS[id];
+   const key=symbol.toLowerCase();
+   const updated=$(key+"Updated");
+   const price=$(key+"Price");
+   const change=$(key+"Change");
 
-   const el=
-    $(
-     symbol.toLowerCase()+
-     "Updated"
-    );
+   if(updated){
+    updated.textContent="Retrying automatically";
+    updated.classList.add("cryptoError");
+   }
 
-   if(!el)return;
-
-   el.textContent=
-    "Retrying automatically";
-
-   el.classList.add(
-    "cryptoError"
-   );
-
+   // Never leave a failed mobile/API request looking like an endless load.
+   // Live values are restored automatically when a later retry succeeds.
+   if(price && /loading/i.test(price.textContent)){
+    price.textContent="Unavailable";
+   }
+   if(change){
+    change.textContent="--";
+    change.classList.remove("cryptoLoading");
+   }
   }
  );
 }
