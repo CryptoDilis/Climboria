@@ -176,6 +176,12 @@ jobs:
                 else throw new Error('No Play/Start Climb control found');
               });
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
+              const landingHiddenInMenu = await mobile.evaluate(() =>
+                getComputedStyle(document.getElementById('landing')).display === 'none'
+              );
+              if (!landingHiddenInMenu) {
+                throw new Error('Mobile landing overlay remains visible over the level-selection screen.');
+              }
               const mobileLevelSelect = await mobile.evaluate(() => {
                 const bounds = selector => {
                   const el = document.querySelector(selector);
@@ -205,6 +211,7 @@ jobs:
               await mobile.locator('#level1Card').click();
               await mobile.waitForTimeout(1000);
               const mobileState = await mobile.evaluate(() => ({
+                landingDisplay: getComputedStyle(document.getElementById('landing')).display,
                 hudDisplay: getComputedStyle(document.getElementById('hud')).display,
                 levelSelectDisplay: getComputedStyle(document.getElementById('levelSelect')).display,
                 canvas: (() => {
@@ -237,7 +244,8 @@ jobs:
               }
               console.log('Mobile gameplay state: ' + JSON.stringify(mobileState));
               await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
-              if (mobileState.hudDisplay === 'none' || mobileState.levelSelectDisplay !== 'none' ||
+              if (mobileState.landingDisplay !== 'none' || mobileState.hudDisplay === 'none' ||
+                  mobileState.levelSelectDisplay !== 'none' ||
                   mobileState.canvas.width < 100 || mobileState.canvas.height < 100) {
                 throw new Error('Mobile gameplay did not reach the expected state.');
               }
