@@ -5226,6 +5226,18 @@ function createHero(){
  // Small nose and determined mouth.
  mesh(new THREE.SphereGeometry(.035,8,6),skinShadow,0,2.78,.39);
  const mouth=mesh(new THREE.BoxGeometry(.095,.018,.018),ink,0,2.68,.365);mouth.rotation.z=-.08;
+ // Small beauty mark beside the smile, inspired by the supplied character reference.
+ mesh(new THREE.SphereGeometry(.022,8,6),ink,.245,2.69,.405);
+ // Compact climbing pick held upright on the character's left side.
+ const pickWood=mat(0x493327),pickSteel=mat(0x8eabb9,.32,.72);
+ const pickHandle=mesh(new THREE.CylinderGeometry(.035,.045,.86,10),pickWood,-.91,2.03,.30);
+ pickHandle.rotation.z=-.18;
+ const pickGrip=mesh(new THREE.CylinderGeometry(.055,.055,.24,10),strap,-.83,1.82,.30);
+ pickGrip.rotation.z=-.18;
+ const pickHead=mesh(new THREE.BoxGeometry(.66,.075,.10),pickSteel,-.88,2.49,.30);
+ pickHead.rotation.z=-.12;
+ const pickPoint=mesh(new THREE.ConeGeometry(.07,.30,8),pickSteel,-1.23,2.48,.30);
+ pickPoint.rotation.z=Math.PI/2-.12;
  // Blonde crown, side locks and sculpted fringe.
  const cap=mesh(new THREE.SphereGeometry(.385,20,14,0,Math.PI*2,0,Math.PI*.60),hair,0,3.05,.015);cap.scale.set(1.03,1.08,.98);
  const crownHighlight=mesh(new THREE.SphereGeometry(.345,18,12,0,Math.PI*2,0,Math.PI*.40),hairLight,0,3.12,.015);crownHighlight.scale.set(1,.72,.92);
