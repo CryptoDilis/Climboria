@@ -216,9 +216,14 @@ jobs:
               });
 
               await expedition.waitForFunction(() => {
-                const landing = document.getElementById('landing');
-                return !!landing && getComputedStyle(landing).display !== 'none' &&
+                const visible = id => {
+                  const el = document.getElementById(id);
+                  return !!el && getComputedStyle(el).display !== 'none';
+                };
+                const landingReady = visible('landing') &&
                   !!(document.querySelector('[data-cd-action="play"], .cd-play-now') || document.getElementById('startButton'));
+                // A restored save can legitimately bypass the landing screen; accept any stable app state.
+                return landingReady || visible('levelSelect') || visible('hud');
               }, { timeout: 15000 });
               await expedition.waitForTimeout(500);
               const expeditionBeforeClick = await expedition.evaluate(() => ({
