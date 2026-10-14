@@ -8436,7 +8436,12 @@ function animateHero(
    velocityY*velocityY
   );
 
- if(speed>.2){
+ const moving=speed>.2;
+ const phase=time*.008;
+ const climbPulse=Math.sin(phase);
+ const climbReach=Math.sin(phase*1.35);
+
+ if(moving){
 
   const lean=
    THREE.MathUtils.clamp(
@@ -8462,11 +8467,32 @@ function animateHero(
    );
  }
 
+ // Keep the hammer arm controlled by updateHammer(); animate only the free arm
+ // so it counterbalances the climber without fighting the grip/aiming system.
+ const freeArm=
+  hero.userData.celebrationArms?.find(
+   arm=>arm!==hero.userData.pickArm
+  );
 
+ if(freeArm){
+
+  const armTarget=
+   freeArm.rest+
+   (moving?climbReach*.22:Math.sin(time*.0022)*.035);
+
+  freeArm.pivot.rotation.z=
+   THREE.MathUtils.lerp(
+    freeArm.pivot.rotation.z,
+    armTarget,
+    moving?.12:.045
+   );
+ }
+
+ // A restrained body bounce gives the pot-riding climber life without
+ // changing the hero's physics anchor or grip calculations.
  const bob=
-  Math.sin(
-   time*.012
-  )*.025;
+  Math.sin(time*(moving?.014:.0025))*
+  (moving?.045:.018);
 
  hero.position.z=
   3.5+bob;
