@@ -9455,7 +9455,7 @@ document.addEventListener("DOMContentLoaded",function(){
   var actions=document.createElement('div');
   actions.id='climboria-primary-actions';
   actions.setAttribute('aria-label','Main game actions');
-  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Start your climb</small></span></button><button type="button" class="climboria-levels"><span class="climboria-action-icon" aria-hidden="true">🏔️</span><span class="climboria-action-copy"><strong>CHOOSE LEVEL</strong><small>Pick your summit</small></span></button>';
+  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Start your climb</small></span></button><button type="button" class="climboria-trade"><span class="climboria-action-icon" aria-hidden="true">↔️</span><span class="climboria-action-copy"><strong>TRADE</strong><small>DEX coming soon</small></span></button><button type="button" class="climboria-create-token"><span class="climboria-action-icon" aria-hidden="true">🪙</span><span class="climboria-action-copy"><strong>CREATE TOKEN</strong><small>Launch tools</small></span></button>';
   announcement.insertAdjacentElement('afterend',actions);
   actions.querySelector('.climboria-play').addEventListener('click',function(){
    var start=document.getElementById('startButton');
@@ -9464,10 +9464,17 @@ document.addEventListener("DOMContentLoaded",function(){
    var levels=document.getElementById('levelSelect');
    if(levels){landing.style.display='none';levels.style.display='flex';}
   });
-  actions.querySelector('.climboria-levels').addEventListener('click',function(){
-   if(typeof window.showLevelSelect==='function'){window.showLevelSelect();return;}
-   var levels=document.getElementById('levelSelect');
-   if(levels){landing.style.display='none';levels.style.display='flex';}
+  actions.querySelector('.climboria-trade').addEventListener('click',function(){
+   var msg=document.getElementById('status');
+   if(msg){msg.textContent='CLIMBORIA DEX — COMING SOON';msg.style.display='block';}
+   var dex=document.querySelector('#launchpad .card:last-child');
+   if(dex){dex.scrollIntoView({behavior:'smooth',block:'center'});}
+  });
+  actions.querySelector('.climboria-create-token').addEventListener('click',function(){
+   var msg=document.getElementById('status');
+   if(msg){msg.textContent='TOKEN CREATION IS NOT LIVE YET — CHECK OFFICIAL CLIMBORIA CHANNELS';msg.style.display='block';}
+   var launch=document.getElementById('launchpad');
+   if(launch){landing.style.display='none';launch.style.display='flex';}
   });
  }
  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountClimboriaPrimaryActions);
@@ -9769,6 +9776,24 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .climboria-launch-announcement{margin-top:2px!important;margin-bottom:10px!important}
  #climboria-primary-actions{margin-top:0!important;margin-bottom:10px!important}
  #landing .pointsPanel,#landing .progressPanel,#landing .cards{margin-bottom:9px!important}
+}
+</style>
+
+
+<style id="climboria-three-primary-options">
+#climboria-primary-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important;width:min(68%,1040px)!important;left:2.2%!important;gap:12px!important}
+#climboria-primary-actions .climboria-trade{background:linear-gradient(115deg,#142d50,#07182e)!important;border:1px solid #76cfff99!important;color:#fff!important;box-shadow:0 0 18px #229eff20,inset 0 1px #ffffff15!important}
+#climboria-primary-actions .climboria-create-token{background:linear-gradient(115deg,#2a2250,#100f2c)!important;border:1px solid #b6a0ff99!important;color:#fff!important;box-shadow:0 0 18px #9b76ff25,inset 0 1px #ffffff15!important}
+@media(min-width:701px){
+ #climboria-primary-actions{top:56%!important}
+}
+@media(max-width:700px){
+ #climboria-primary-actions{width:100%!important;left:auto!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+ #climboria-primary-actions button{min-width:0!important;min-height:58px!important;padding:7px 4px!important;gap:4px!important;justify-content:center!important;text-align:center!important}
+ #climboria-primary-actions .climboria-action-icon{font-size:19px!important}
+ #climboria-primary-actions .climboria-action-copy{align-items:center!important;gap:3px!important}
+ #climboria-primary-actions strong{font-size:clamp(9px,2.7vw,12px)!important;letter-spacing:0!important}
+ #climboria-primary-actions small{font-size:clamp(7px,2.1vw,9px)!important;line-height:1.15!important}
 }
 </style>
 
