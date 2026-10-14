@@ -1,0 +1,123 @@
+name: Validate Climboria
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate HTML structure and hero integration
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+
+          class StructureCheck(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.stack = []
+                  self.errors = []
+                  self.void = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"}
+              def handle_starttag(self, tag, attrs):
+                  if tag not in self.void:
+                      self.stack.append(tag)
+              def handle_endtag(self, tag):
+                  if tag in self.void:
+                      return
+                  if tag not in self.stack:
+                      self.errors.append(f"unexpected closing tag: {tag}")
+                      return
+                  while self.stack:
+                      current = self.stack.pop()
+                      if current == tag:
+                          break
+
+          parser = StructureCheck()
+          parser.feed(html)
+          if parser.errors:
+              raise SystemExit("; ".join(parser.errors[:10]))
+
+          required = [
+              'id="landingHeroPreview"',
+              'id="climboria-direct-hero-image"',
+              'id="climboria-hero-cutout-blend-fix"',
+              'id="nextLevelVictoryButton"',
+              'id="levelSelect"',
+              'id="failure"',
+          ]
+          for marker in required:
+              if marker not in html:
+                  raise SystemExit(f"missing required game marker: {marker}")
+
+          if 'img.id="climboriaHeroCutout"' not in html:
+              raise SystemExit("hero image element creation is missing")
+          if 'background-image:none!important' not in html:
+              raise SystemExit("hero duplicate-background prevention is missing")
+
+          print("HTML structure and core Climboria markers passed.")
+          PY
+
+      - name: Syntax-check inline JavaScript
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class ScriptExtractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_script = False
+                  self.attrs = {}
+                  self.buffer = []
+                  self.scripts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script":
+                      self.in_script = True
+                      self.attrs = dict(attrs)
+                      self.buffer = []
+              def handle_data(self, data):
+                  if self.in_script:
+                      self.buffer.append(data)
+              def handle_endtag(self, tag):
+                  if tag == "script" and self.in_script:
+                      src = self.attrs.get("src")
+                      typ = (self.attrs.get("type") or "").lower()
+                      if not src and typ not in ("application/json", "application/ld+json", "importmap"):
+                          code = "".join(self.buffer).strip()
+                          if code:
+                              self.scripts.append(code)
+                      self.in_script = False
+                      self.attrs = {}
+                      self.buffer = []
+
+          parser = ScriptExtractor()
+          parser.feed(Path("index.html").read_text(encoding="utf-8"))
+          out = Path("/tmp/climboria-inline-js")
+          out.mkdir(exist_ok=True)
+          for i, code in enumerate(parser.scripts, 1):
+              (out / f"script-{i}.js").write_text(code, encoding="utf-8")
+          (out / "count.txt").write_text(str(len(parser.scripts)))
+          print(f"Extracted {len(parser.scripts)} inline JavaScript blocks.")
+          PY
+          count=$(cat /tmp/climboria-inline-js/count.txt)
+          for file in /tmp/climboria-inline-js/script-*.js; do
+            node --check "$file"
+          done
+          echo "Syntax-checked $count inline JavaScript blocks."
