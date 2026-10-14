@@ -9940,3 +9940,49 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;width:auto!important;height:auto!important;min-width:0!important;min-height:68px!important;max-width:none!important;margin:0!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:8px!important;padding:10px!important}
 }
 </style>
+
+<style id="climboria-mobile-first-fold-final">
+/* Mobile first-fold correction based on the supplied real-device screenshot. */
+@media(max-width:700px){
+ #landing .panel>.logo,
+ #landing .panel>.sub{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important}
+ #landing .climboria-dashboard-header{
+  position:absolute!important;inset:0 0 auto!important;
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:6px!important;padding:8px 10px!important;min-height:0!important;
+  background:linear-gradient(180deg,rgba(3,11,23,.98),rgba(5,17,32,.96))!important;
+  border-bottom:1px solid rgba(112,172,220,.32)!important;
+ }
+ #landing .cd-brand{display:flex!important;min-height:27px!important;justify-content:center!important;gap:8px!important}
+ #landing .cd-brand-mark{font-size:19px!important}
+ #landing .cd-brand-name{font-size:12px!important;letter-spacing:1.5px!important;line-height:1.1!important}
+ #landing .cd-brand-name small{font-size:6px!important;letter-spacing:1px!important;margin-top:2px!important}
+ #landing .cd-nav-minimal{display:grid!important;grid-template-columns:1fr 1fr!important;gap:5px!important}
+ #landing .cd-nav-minimal>button{min-width:0!important;min-height:34px!important;padding:4px!important;border:1px solid #ffffff18!important;border-radius:6px!important;background:#071423cc!important;font-size:8px!important;letter-spacing:1.1px!important}
+ #landing .cd-nav-minimal>button b{font-size:14px!important}
+ #landing .cd-climb-ticker{display:flex!important;justify-content:center!important;gap:7px!important;min-height:28px!important;padding:4px 8px!important}
+ #landing .cd-climb-ticker strong{font-size:12px!important}
+ #landing .cd-climb-ticker small{font-size:7px!important}
+ #landing .cd-climb-ticker em{font-size:7px!important}
+ #landing .cd-follow{min-height:32px!important;padding:5px 8px!important}
+ #landing .cd-follow strong{font-size:17px!important}
+ #landing .cd-follow span{font-size:8px!important}
+ #landing .panel{position:absolute!important;inset:0!important;overflow-y:auto!important;box-sizing:border-box!important;padding:164px 0 26px!important}
+ #landing .panel:before{inset:160px 0 0!important;background:radial-gradient(ellipse at 72% 36%,#ffc16924,transparent 26%),linear-gradient(180deg,#06152b08 0%,#06152b0a 42%,#02091280 100%),url("climboria-cinematic-summit.svg") center 35%/auto 100% no-repeat!important;filter:brightness(1.08) saturate(1.08)!important}
+ #landing .climboria-launch-announcement{
+  position:relative!important;top:auto!important;right:auto!important;left:auto!important;
+  width:calc(100% - 28px)!important;max-width:none!important;box-sizing:border-box!important;
+  margin:8px 14px 12px!important;padding:14px!important;border-radius:13px!important;
+ }
+ #landing .climboria-launch-announcement h1,
+ #landing .climboria-launch-announcement .climboria-launch-title{font-size:clamp(22px,6vw,30px)!important;line-height:1.08!important}
+ #climboria-primary-actions{
+  position:relative!important;inset:auto!important;left:auto!important;top:auto!important;
+  width:calc(100% - 28px)!important;margin:0 14px 12px!important;
+  display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
+ }
+ #climboria-primary-actions button{min-height:56px!important;padding:10px 14px!important;border-radius:10px!important}
+ #landing .pointsPanel,#landing .progressPanel,#landing .cards{position:relative!important;inset:auto!important;box-sizing:border-box!important;margin:10px 14px!important;width:calc(100% - 28px)!important;max-width:none!important}
+ #landing .pointsPanel,#landing .progressPanel{min-height:78px!important}
+}
+</style>
