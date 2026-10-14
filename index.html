@@ -10144,3 +10144,18 @@ document.addEventListener("DOMContentLoaded",function(){
 
 
 
+
+
+<style id="climboria-final-hero-removal-override">
+/* Final override: this must remain after every legacy hero style so old rules cannot restore the broken artwork. */
+#landingHeroPreview,
+#climboriaHeroCutout,
+#climboria-direct-hero-image,
+#climboria-generated-hero-v2,
+#climboria-hero-visibility-hotfix {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+</style>
