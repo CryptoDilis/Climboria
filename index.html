@@ -9893,3 +9893,28 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-follow{display:none!important}
 }
 </style>
+
+<style id="climboria-header-overlap-and-premium-cards-fix">
+/* Reserve a dedicated ticker row above the navigation. No text may overlap the top ticker. */
+@media(min-width:701px){
+ #cryptoTicker{position:fixed!important;top:0!important;left:0!important;right:0!important;transform:none!important;width:100%!important;box-sizing:border-box!important;height:30px!important;min-height:30px!important;padding:3px clamp(18px,3vw,44px)!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:18px!important;overflow:hidden!important;white-space:nowrap!important;background:rgba(2,9,19,.98)!important;border:0!important;border-bottom:1px solid #5e789455!important;z-index:10000!important}
+ #landing .climboria-dashboard-header{top:30px!important;min-height:66px!important;padding-top:0!important;padding-bottom:0!important}
+ #landing .cd-nav-minimal>button{min-height:60px!important}
+ #landing .cd-climb-ticker{margin-top:0!important}
+ #landing .panel{padding-top:96px!important}
+ #landing .climboria-launch-announcement{top:29%!important}
+}
+#landing .cd-feature-grid{gap:12px!important}
+#landing .cd-feature{background:linear-gradient(150deg,rgba(10,28,49,.96),rgba(3,12,25,.94))!important;border:1px solid rgba(105,195,242,.62)!important;box-shadow:0 12px 30px #0005,inset 0 1px #ffffff12!important;backdrop-filter:blur(10px)!important;transition:transform .18s,border-color .18s,box-shadow .18s!important}
+#landing .cd-feature:hover{transform:translateY(-4px)!important;border-color:#f2c761!important;box-shadow:0 16px 32px #0007,0 0 20px #e9b94a16!important}
+#landing .cd-feature .cd-art{filter:drop-shadow(0 3px 8px #0007)!important}
+#landing .cd-feature b{font-size:clamp(10px,.85vw,13px)!important;letter-spacing:1.4px!important}
+#landing .cd-feature small{font-size:clamp(9px,.72vw,11px)!important;color:#c0d2e4!important;letter-spacing:.7px!important}
+#climboria-primary-actions button{backdrop-filter:blur(12px)!important;box-shadow:0 14px 32px #0007,inset 0 1px #ffffff30!important}
+#landing .climboria-launch-announcement{box-shadow:0 18px 45px #0007,0 0 26px #ffc84a12!important;backdrop-filter:blur(14px)!important}
+@media(max-width:700px){
+ #cryptoTicker{top:0!important;left:50%!important;transform:translateX(-50%)!important;width:96%!important;height:25px!important;min-height:25px!important;z-index:10000!important}
+ #landing .climboria-dashboard-header{top:25px!important}
+ #landing .panel{padding-top:118px!important}
+}
+</style>
