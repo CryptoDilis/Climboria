@@ -9918,3 +9918,36 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .panel{padding-top:118px!important}
 }
 </style>
+
+<style id="climboria-premium-landing-final-pass">
+/* One intentional header, one CLIMB tracker. Remove the unrelated ticker that collided with the brand. */
+@media(min-width:701px){
+ #cryptoTicker{display:none!important;visibility:hidden!important;pointer-events:none!important}
+ #landing .climboria-dashboard-header{top:0!important;left:0!important;right:0!important;min-height:76px!important;padding:0 clamp(22px,3.5vw,56px)!important;grid-template-columns:minmax(240px,1fr) auto minmax(210px,1fr)!important;background:linear-gradient(180deg,rgba(3,12,25,.98),rgba(4,17,33,.96))!important;border-bottom:1px solid #6ba8d455!important}
+ #landing .cd-brand{min-height:76px!important}
+ #landing .cd-brand-mark{font-size:36px!important}
+ #landing .cd-brand-name{font-size:20px!important;letter-spacing:2.5px!important}
+ #landing .cd-nav-minimal{gap:12px!important}
+ #landing .cd-nav-minimal>button{min-width:142px!important;min-height:64px!important;border-radius:0 0 10px 10px!important;font-size:11px!important}
+ #landing .cd-climb-ticker{min-width:200px!important}
+ #landing .panel{padding-top:86px!important}
+ #landing .climboria-launch-announcement{top:24%!important;right:3%!important;width:min(25%,390px)!important}
+ #climboria-primary-actions{top:55%!important;left:3%!important;width:min(48%,790px)!important}
+ #landing .cd-feature-grid{left:2.5%!important;right:2.5%!important;bottom:2.8%!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:12px!important}
+ #landing .cd-feature{min-height:108px!important;justify-content:center!important;background:linear-gradient(145deg,rgba(7,20,36,.96),rgba(4,12,24,.93))!important;border:1px solid #4d9fcf88!important;border-radius:12px!important;box-shadow:0 14px 34px #0007,inset 0 1px #ffffff13!important}
+ #landing .cd-feature .cd-art{font-size:30px!important;margin-bottom:4px!important}
+ #landing .cd-feature b{font-size:12px!important;letter-spacing:1.3px!important}
+ #landing .cd-feature small{font-size:10px!important;color:#b8cce0!important}
+ #landing .cd-challenge-strip{left:2.5%!important;right:2.5%!important;bottom:15%!important;width:auto!important}
+ #landing .cd-airdrop-tile{display:none!important}
+}
+@media(max-width:700px){
+ #cryptoTicker{display:none!important;visibility:hidden!important}
+ #landing .climboria-dashboard-header{top:0!important;padding:10px 12px!important}
+ #landing .panel{padding-top:120px!important}
+ #landing .cd-climb-ticker{display:flex!important}
+ #landing .climboria-launch-announcement{position:relative!important;top:auto!important;right:auto!important;width:calc(100% - 24px)!important;margin:12px!important}
+ #climboria-primary-actions{position:relative!important;left:auto!important;top:auto!important;width:calc(100% - 24px)!important;margin:12px!important;grid-template-columns:1fr!important}
+ #climboria-primary-actions button{min-height:58px!important}
+}
+</style>
