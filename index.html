@@ -10077,6 +10077,24 @@ Ffl4w5c4VRGGLgCr9tA1YY2KG/55o2guSX7cWUSsz6Q54059FD4HVInhRMT5y8vn5euGARnSr0O1yqIg
     filter:brightness(1.045) saturate(1.025) contrast(1.005) drop-shadow(0 6px 8px rgba(0,0,0,.23))!important;
   }
 }
+
+/* Phones using browser "desktop site" can report a wide CSS viewport. Detect touch hardware too. */
+@media (pointer:coarse) and (hover:none){
+  #landingHeroPreview{
+    left:50%!important;
+    top:clamp(185px,29vh,340px)!important;
+    transform:translateX(-50%)!important;
+    width:clamp(145px,34vw,220px)!important;
+    height:clamp(218px,51vw,330px)!important;
+  }
+}
+@media (pointer:coarse) and (hover:none) and (orientation:portrait){
+  #landingHeroPreview{
+    top:clamp(185px,28vh,310px)!important;
+    width:clamp(145px,34vw,210px)!important;
+    height:clamp(218px,51vw,315px)!important;
+  }
+}
 </style>
 
 </body>
