@@ -1903,6 +1903,24 @@ body{
 }
 </style>
 
+
+<!-- Emergency hero shutdown: higher specificity than all legacy hero rules. -->
+<style id="climboria-hero-shutdown">
+html body #landing #landingHeroPreview,
+html body #landing #climboriaHeroCutout,
+html body #landingHeroPreview,
+html body #climboriaHeroCutout {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  pointer-events: none !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -9939,6 +9957,20 @@ document.addEventListener("DOMContentLoaded",function(){
 #landingHeroPreview,
 #climboriaHeroCutout { display: none !important; }
 </style>
+
+<script id="climboria-hero-dom-shutdown">
+(() => {
+  const removeBrokenHero = () => {
+    document.querySelectorAll("#landingHeroPreview, #climboriaHeroCutout").forEach(node => node.remove());
+  };
+  removeBrokenHero();
+  const observer = new MutationObserver(removeBrokenHero);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener("pageshow", removeBrokenHero);
+  window.addEventListener("resize", removeBrokenHero);
+})();
+</script>
+
 </body>
 </html>
 
@@ -10144,18 +10176,3 @@ document.addEventListener("DOMContentLoaded",function(){
 
 
 
-
-
-<style id="climboria-final-hero-removal-override">
-/* Final override: this must remain after every legacy hero style so old rules cannot restore the broken artwork. */
-#landingHeroPreview,
-#climboriaHeroCutout,
-#climboria-direct-hero-image,
-#climboria-generated-hero-v2,
-#climboria-hero-visibility-hotfix {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-</style>
