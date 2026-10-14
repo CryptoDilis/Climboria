@@ -81,9 +81,17 @@ jobs:
                 return !!landing && getComputedStyle(landing).display !== 'none' && (!!play || !!legacy);
               }, { timeout: 15000 });
               await page.waitForTimeout(2500);
-              const desktopHeroNodes = await page.locator('#landingHeroPreview, #climboriaHeroCutout').count();
-              if (desktopHeroNodes !== 0) {
-                throw new Error('Legacy landing hero unexpectedly exists in desktop DOM.');
+              const desktopHero = page.locator('#climboriaHeroCutout');
+              await desktopHero.waitFor({ state: 'attached', timeout: 10000 });
+              const desktopHeroState = await desktopHero.evaluate(img => ({
+                complete: img.complete,
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+                visible: !!(img.getBoundingClientRect().width && img.getBoundingClientRect().height)
+              }));
+              if (!desktopHeroState.complete || desktopHeroState.naturalWidth < 100 ||
+                  desktopHeroState.naturalHeight < 100 || !desktopHeroState.visible) {
+                throw new Error('Approved landing hero failed to load or render on desktop: ' + JSON.stringify(desktopHeroState));
               }
               const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const visibleCanvasCount = await page.locator('canvas:visible').count();
@@ -157,9 +165,17 @@ jobs:
                   !!(document.querySelector('[data-cd-action="play"], .cd-play-now') || document.getElementById('startButton'));
               }, { timeout: 15000 });
               await mobile.waitForTimeout(2500);
-              const mobileHeroNodes = await mobile.locator('#landingHeroPreview, #climboriaHeroCutout').count();
-              if (mobileHeroNodes !== 0) {
-                throw new Error('Legacy landing hero unexpectedly exists in mobile DOM.');
+              const mobileHero = mobile.locator('#climboriaHeroCutout');
+              await mobileHero.waitFor({ state: 'attached', timeout: 10000 });
+              const mobileHeroState = await mobileHero.evaluate(img => ({
+                complete: img.complete,
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+                visible: !!(img.getBoundingClientRect().width && img.getBoundingClientRect().height)
+              }));
+              if (!mobileHeroState.complete || mobileHeroState.naturalWidth < 100 ||
+                  mobileHeroState.naturalHeight < 100 || !mobileHeroState.visible) {
+                throw new Error('Approved landing hero failed to load or render on mobile: ' + JSON.stringify(mobileHeroState));
               }
               const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const mobileCanvasCount = await mobile.locator('canvas:visible').count();
