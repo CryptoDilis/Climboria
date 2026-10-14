@@ -9673,5 +9673,33 @@ document.addEventListener("DOMContentLoaded",function(){
 })();
 </script>
 
+
+<style id="climboria-overlay-cleanup">
+/* Remove legacy floating controls that duplicate the new dashboard and sit over the content. */
+#climboria-game-brand,
+.climboria-x-link{display:none!important;visibility:hidden!important;pointer-events:none!important}
+@media(min-width:701px){
+ #landing .climboria-dashboard-header{top:38px!important}
+ #landing .cd-base-label{top:150px!important;right:3%!important}
+ #landing .climboria-launch-announcement{z-index:26!important}
+ #climboria-primary-actions{z-index:27!important}
+ #landing .cd-feature-grid{z-index:24!important}
+ #landing .cd-live-price-panel{z-index:25!important}
+ #landing .cd-challenge-strip,#landing .cd-airdrop-tile{z-index:26!important}
+}
+@media(max-width:700px){
+ /* The compact phone layout keeps one brand and one launch card, with no floating desktop controls. */
+ #landing .cd-base-label,
+ #landing .climboria-dashboard-header,
+ #landing .cd-feature-grid,
+ #landing .cd-live-price-panel,
+ #landing .cd-challenge-strip,
+ #landing .cd-airdrop-tile{display:none!important}
+ #landing .climboria-launch-announcement{z-index:2!important}
+ #climboria-primary-actions{position:relative!important;z-index:3!important}
+ #landing .pointsPanel,#landing .progressPanel,#landing .cards{position:relative!important;z-index:1!important}
+}
+</style>
+
 </body>
 </html>
