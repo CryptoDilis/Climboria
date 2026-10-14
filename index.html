@@ -9646,9 +9646,10 @@ document.addEventListener("DOMContentLoaded",function(){
   challenge.innerHTML='<span class="cd-challenge-trophy">🏆</span><span class="cd-challenge-copy"><b>DAILY CHALLENGE</b><small>Climb today. Keep your streak alive!</small></span><span class="cd-streak">🔥 <span><b id="cdStreakValue">0</b> STREAK</span></span><div class="cd-progress"><i></i></div><span class="cd-challenge-gift">🎁</span><span class="cd-challenge-next">›</span>';
   panel.appendChild(challenge);
   var airdrop=document.createElement("button");
-  airdrop.type="button";airdrop.className="cd-airdrop-tile";airdrop.setAttribute("data-cd-action","airdrop");
-  airdrop.innerHTML='<span class="cd-airdrop-icon">🪂</span><span><b>AIRDROP TRACKER</b><small>Complete tasks. Earn rewards.</small></span><span class="cd-next">›</span>';
-  panel.appendChild(airdrop);
+  airdrop.type="button";airdrop.className="cd-feature cd-airdrop-tile";airdrop.setAttribute("data-cd-action","airdrop");
+  airdrop.innerHTML='<span class="cd-art">🪂</span><b>AIRDROP TRACKER</b><small>Complete tasks. Earn rewards.</small>';
+  // Keep the tracker inside the same feature grid so it cannot float over another card.
+  features.appendChild(airdrop);
   function syncDashboard(){
    var pairs=[["btc","BTC"],["eth","ETH"],["sol","SOL"],["bnb","BNB"],["xrp","XRP"]];
    pairs.forEach(function(p){
@@ -9926,5 +9927,16 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-follow small{display:inline!important;margin-left:7px!important;font-size:9px!important;color:#c4d4e5!important}
  #landing .panel{padding-top:195px!important}
  #landing .panel:before{inset:190px 0 0!important}
+}
+</style>
+
+<style id="climboria-six-card-grid-fix">
+@media(min-width:1051px){
+ #landing .cd-feature-grid{left:2%!important;right:2%!important;bottom:2%!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important}
+ #landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:auto!important;height:auto!important;min-width:0!important;min-height:98px!important;max-width:none!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:12px 8px!important;margin:0!important;transform:none!important;z-index:auto!important}
+}
+@media(min-width:701px) and (max-width:1050px){
+ #landing .cd-feature-grid{left:2%!important;right:2%!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;bottom:2%!important}
+ #landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;width:auto!important;height:auto!important;min-width:0!important;min-height:68px!important;max-width:none!important;margin:0!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:8px!important;padding:10px!important}
 }
 </style>
