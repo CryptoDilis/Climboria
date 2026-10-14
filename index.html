@@ -9745,5 +9745,32 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<style id="climboria-price-and-mobile-x-fix">
+/* Keep the top ticker as the single crypto-price display; restore X link on phones. */
+@media(min-width:701px){
+ #landing .cd-live-price-panel{display:none!important}
+ .climboria-x-link{display:none!important}
+}
+@media(max-width:700px){
+ /* The old floating X link is the mobile fallback because the desktop nav is hidden. */
+ .climboria-x-link{
+  display:inline-flex!important;visibility:visible!important;pointer-events:auto!important;
+  position:fixed!important;z-index:100000!important;
+  top:max(8px,env(safe-area-inset-top))!important;
+  right:max(8px,env(safe-area-inset-right))!important;
+  left:auto!important;min-height:34px!important;padding:0 10px!important;
+  font-size:8px!important;background:rgba(3,15,31,.96)!important;
+  border:1px solid #ffc84a!important;border-radius:999px!important;
+ }
+ #climboria-game-brand{display:flex!important;visibility:visible!important;z-index:99999!important;top:max(8px,env(safe-area-inset-top))!important;left:8px!important}
+ #climboria-game-brand img{width:26px!important;height:26px!important}
+ #landing .panel{padding-top:calc(66px + env(safe-area-inset-top,0px))!important}
+ #landing .climboria-launch-announcement{margin-top:2px!important;margin-bottom:10px!important}
+ #climboria-primary-actions{margin-top:0!important;margin-bottom:10px!important}
+ #landing .pointsPanel,#landing .progressPanel,#landing .cards{margin-bottom:9px!important}
+}
+</style>
+
 </body>
 </html>
