@@ -9624,7 +9624,7 @@ document.addEventListener("DOMContentLoaded",function(){
   panel.appendChild(header);
   var base=document.createElement("div");
   base.className="cd-base-label";
-  base.innerHTML="🔵 BASE NETWORK <i></i>";
+  base.innerHTML="🟣 SOLANA NETWORK <i></i>";
   panel.appendChild(base);
   var features=document.createElement("div");
   features.className="cd-feature-grid";
@@ -9698,6 +9698,50 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .climboria-launch-announcement{z-index:2!important}
  #climboria-primary-actions{position:relative!important;z-index:3!important}
  #landing .pointsPanel,#landing .progressPanel,#landing .cards{position:relative!important;z-index:1!important}
+}
+</style>
+
+
+<style id="climboria-solana-bottom-layout-fix">
+/* Solana-first brand and non-overlapping desktop bottom row. */
+@media(min-width:701px){
+ #landing .climboria-dashboard-header{top:38px!important}
+ #landing .cd-base-label{top:120px!important;right:3%!important;color:#f7f2ff!important}
+ #landing .cd-base-label i{background:#9945ff!important}
+ #landing .climboria-launch-announcement{
+  top:19%!important;right:2.2%!important;width:min(23%,360px)!important;
+  padding:12px!important;z-index:28!important;
+ }
+ #landing .climboria-announcement-top{font-size:9px!important}
+ #landing .climboria-announcement-title{font-size:clamp(13px,1.15vw,17px)!important}
+ #landing .climboria-announcement-main{font-size:clamp(24px,2.1vw,34px)!important;line-height:1.08!important}
+ #landing .climboria-announcement-date{font-size:clamp(12px,1vw,16px)!important}
+ #landing .climboria-announcement-times{margin-top:8px!important}
+ #landing .climboria-announcement-times span{padding:8px!important}
+ #landing .climboria-announcement-times b{font-size:clamp(16px,1.4vw,22px)!important}
+ #landing .climboria-announcement-note{font-size:clamp(9px,.72vw,11px)!important;line-height:1.4!important}
+ #climboria-primary-actions{top:56%!important;left:18.8%!important;width:min(48%,760px)!important;z-index:27!important}
+ #landing .cd-feature-grid{left:2%;right:30%;bottom:15.4%!important;gap:8px!important}
+ #landing .cd-feature{min-height:112px!important}
+ #landing .cd-live-price-panel{
+  top:auto!important;right:2%!important;bottom:15.4%!important;width:26%!important;
+  max-width:400px!important;padding:9px 12px!important;z-index:25!important;
+ }
+ #landing .cd-live-title{font-size:12px!important}
+ #landing .cd-live-rows{margin-top:3px!important}
+ #landing .cd-live-rows div{padding:3px 0!important;font-size:11px!important}
+ #landing .cd-live-rows div:nth-child(n+5){display:none!important}
+ #landing .cd-challenge-strip{
+  left:1%!important;right:29%!important;bottom:1.8%!important;height:10.2%!important;
+  min-height:72px!important;max-height:92px!important;z-index:26!important;
+ }
+ #landing .cd-airdrop-tile{
+  right:1%!important;bottom:1.8%!important;width:27%!important;height:10.2%!important;
+  min-height:72px!important;max-height:92px!important;z-index:26!important;
+ }
+}
+@media(max-width:700px){
+ #landing .cd-base-label{display:none!important}
 }
 </style>
 
