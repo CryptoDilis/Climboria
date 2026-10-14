@@ -9509,8 +9509,8 @@ document.addEventListener("DOMContentLoaded",function(){
   linear-gradient(180deg,rgba(2,12,27,.08) 0%,rgba(3,14,28,.12) 44%,rgba(1,7,17,.68) 100%)!important;
 }
 #landing{
- background:
-  radial-gradient(ellipse at 50% 24%,#8a9c9c 0%,#405d70 34%,#102c49 68%,#020814 100%)!important;
+ /* Restore the shipped cinematic alpine artwork; the gradient-only override hid the summit on both desktop and phones. */
+ background:#06152b url("climboria-cinematic-summit.svg") center 43%/cover no-repeat!important;
 }
 #landing .panel{isolation:isolate}
 #landing .climboria-launch-announcement,
