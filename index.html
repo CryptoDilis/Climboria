@@ -9198,7 +9198,7 @@ document.addEventListener("DOMContentLoaded",function(){
  document.querySelectorAll("[data-cd-action]").forEach(function(btn){
   btn.addEventListener("click",function(){
    var action=btn.getAttribute("data-cd-action");
-   if(action==="home"){window.showMenu&&window.showMenu();return;}
+   if(action==="more"){var menu=document.getElementById("cdMoreMenu");var toggle=header.querySelector('[data-cd-action="more"]');var opening=menu&&menu.hidden;if(menu)menu.hidden=!opening;if(toggle)toggle.setAttribute("aria-expanded",String(!!opening));return;}var menu=document.getElementById("cdMoreMenu");if(menu)menu.hidden=true;var moreToggle=header.querySelector('[data-cd-action="more"]');if(moreToggle)moreToggle.setAttribute("aria-expanded","false");if(action==="home"){window.showMenu&&window.showMenu();return;}
    if(action==="play"){var start=document.getElementById("startButton");if(start)start.click();return;}
    if(action==="levels"){if(typeof window.showLevelSelect==="function"){window.showLevelSelect();}else{var l=document.getElementById("landing"),v=document.getElementById("levelSelect");if(l)l.style.display="none";if(v)v.style.display="flex";}return;}
    if(action==="launch"){var launch=document.getElementById("launchpad");if(launch){document.getElementById("landing").style.display="none";launch.style.display="flex";}return;}
@@ -9627,7 +9627,7 @@ document.addEventListener("DOMContentLoaded",function(){
   if(!landing||!panel||!announcement||landing.querySelector(".climboria-dashboard-header"))return;
   var header=document.createElement("header");
   header.className="climboria-dashboard-header";
-  header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><span class="cd-brand-mark">🏔️</span><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav" aria-label="Main navigation"><button class="active" data-cd-action="home"><b>⌂</b>HOME</button><button data-cd-action="play"><b>🎮</b>PLAY</button><button data-cd-action="levels"><b>△</b>LEVELS</button><button data-cd-action="market"><b>🛒</b>MARKETPLACE</button><button data-cd-action="launch"><b>🚀</b>LAUNCH</button><button data-cd-action="leaderboard"><b>▥</b>LEADERBOARD</button><button data-cd-action="community"><b>♟</b>COMMUNITY</button><button data-cd-action="more"><b>☰</b>MORE</button></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
+  header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><span class="cd-brand-mark">🏔️</span><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav" aria-label="Main navigation"><button class="active" data-cd-action="home"><b>⌂</b>HOME</button><button data-cd-action="play"><b>🎮</b>PLAY</button><button data-cd-action="levels"><b>△</b>LEVELS</button><div class="cd-more-wrap"><button data-cd-action="more" aria-expanded="false" aria-controls="cdMoreMenu"><b>☰</b>MORE</button><div class="cd-more-menu" id="cdMoreMenu" hidden><div class="cd-more-heading">EXPLORE CLIMBORIA</div><button data-cd-action="overview"><b>◈</b><span><strong>PROJECT OVERVIEW</strong><small>What we are building</small></span></button><button data-cd-action="roadmap"><b>⌁</b><span><strong>ROADMAP</strong><small>Our climb ahead</small></span></button><button data-cd-action="market"><b>🛒</b><span><strong>MARKETPLACE</strong><small>Items and assets</small></span></button><button data-cd-action="launch"><b>🚀</b><span><strong>LAUNCHPAD</strong><small>Token launch information</small></span></button><button data-cd-action="leaderboard"><b>▥</b><span><strong>LEADERBOARD</strong><small>Top climbers</small></span></button><button data-cd-action="community"><b>♟</b><span><strong>COMMUNITY</strong><small>Join the expedition</small></span></button><button data-cd-action="dex"><b>↔</b><span><strong>DEX</strong><small>Coming soon</small></span></button><button data-cd-action="airdrop"><b>🪂</b><span><strong>AIRDROP TRACKER</strong><small>Tasks and rewards</small></span></button></div></div></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
   panel.appendChild(header);
   var base=document.createElement("div");
   base.className="cd-base-label";
@@ -9804,3 +9804,19 @@ document.addEventListener("DOMContentLoaded",function(){
 
 </body>
 </html>
+
+<style id="climboria-clean-more-menu">
+#landing .cd-nav{gap:clamp(12px,2.3vw,34px)!important;justify-content:center!important}
+#landing .cd-nav>button{min-width:94px!important}
+#landing .cd-more-wrap{position:relative;display:flex;align-items:center}
+#landing .cd-more-menu{position:absolute;top:calc(100% + 13px);right:0;width:290px;max-width:min(88vw,320px);padding:10px;border:1px solid #8ca9c744;border-radius:14px;background:linear-gradient(155deg,#0c1b2cfa,#050c18fc);box-shadow:0 18px 50px #000b;z-index:100;backdrop-filter:blur(18px)}
+#landing .cd-more-menu[hidden]{display:none!important}
+#landing .cd-more-heading{padding:10px 12px 12px;color:#91a9c1;font-size:9px;font-weight:900;letter-spacing:2px;border-bottom:1px solid #ffffff14;margin-bottom:6px}
+#landing .cd-more-menu>button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border:0;border-radius:9px;background:transparent;color:#eaf3ff;cursor:pointer}
+#landing .cd-more-menu>button:hover,#landing .cd-more-menu>button:focus-visible{background:#ffffff10;outline:none}
+#landing .cd-more-menu>button>b{width:26px;flex:0 0 26px;text-align:center;font-size:18px;color:#f4c96b}
+#landing .cd-more-menu>button span{display:flex;flex-direction:column;gap:3px}
+#landing .cd-more-menu>button strong{font-size:10px;letter-spacing:1px}
+#landing .cd-more-menu>button small{font-size:10px;color:#8fa2b7}
+@media(max-width:700px){#landing .cd-more-menu{position:fixed;top:64px;right:12px;left:12px;width:auto;max-width:none}#landing .cd-nav>button{min-width:68px!important}}
+</style>
