@@ -9545,5 +9545,133 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<style id="climboria-reference-layout-v2">
+/* Desktop reference layout: cinematic hero, navigation, feature tiles, market panel and challenge strip. */
+@media (min-width:701px){
+ #cryptoTicker{top:0!important;left:0!important;right:0!important;transform:none!important;width:100%!important;height:38px!important;z-index:80!important;justify-content:flex-start!important;padding:3px 12px!important;background:rgba(1,8,20,.96)!important;border-bottom:1px solid #1687c7!important;overflow:hidden!important}
+ #cryptoTicker .cryptoStatus{display:none!important}
+ #cryptoTicker .cryptoRow{justify-content:flex-start!important;gap:7px!important;max-width:none!important}
+ #cryptoTicker .cryptoCard{display:flex!important;align-items:center!important;gap:7px!important;min-width:0!important;flex:1 1 0!important;padding:3px 8px!important;border:0!important;border-right:1px solid #ffffff18!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+ #cryptoTicker .cryptoLive,#cryptoTicker .cryptoUpdated,#cryptoTicker .cryptoCountdown{display:none!important}
+ #cryptoTicker .cryptoTop{display:contents!important}
+ #cryptoTicker .cryptoSymbol{font-size:12px!important;color:#fff!important;font-weight:900!important}
+ #cryptoTicker .cryptoPrice{font-size:12px!important;white-space:nowrap!important}
+ #cryptoTicker .cryptoChange{font-size:11px!important;white-space:nowrap!important}
+ #landing{background:#06152b url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important}
+ #landing .panel{padding-top:42px!important}
+ #landing .climboria-dashboard-header{display:flex!important}
+ #landing .climboria-launch-announcement{top:33%!important;right:2.5%!important;width:min(25%,390px)!important}
+ #climboria-primary-actions{left:19.5%!important;top:58%!important;width:min(51%,780px)!important;gap:14px!important}
+ #climboria-primary-actions button{min-height:74px!important}
+ #landing .pointsPanel,#landing .progressPanel,#landing .cards{display:none!important}
+ #landing .cd-feature-grid{display:grid!important;position:absolute;z-index:24;left:2.2%;right:30%;bottom:15.4%;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+ #landing .cd-feature{min-width:0;min-height:124px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;padding:10px 6px;border:1px solid #6acaffbb;border-radius:13px;color:#fff;text-decoration:none;text-align:center;background:linear-gradient(180deg,rgba(4,20,43,.2),rgba(2,10,23,.96));box-shadow:0 0 18px #138dff30;cursor:pointer}
+ #landing .cd-feature:hover{transform:translateY(-3px);border-color:#ffd66b;box-shadow:0 0 22px #ffc24a55}
+ #landing .cd-feature .cd-art{font-size:clamp(25px,3vw,42px);line-height:1.1;filter:drop-shadow(0 3px 8px #000)}
+ #landing .cd-feature b{font-size:clamp(10px,.95vw,14px);line-height:1.15}
+ #landing .cd-feature small{font-size:clamp(9px,.75vw,11px);color:#d5e4f6}
+ #landing .cd-live-price-panel{display:block!important;position:absolute!important;z-index:25;right:2.2%;bottom:15.4%;width:26%!important;max-width:420px;margin:0!important;padding:12px 14px!important;border:1px solid #6acaffaa!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(5,23,44,.96),rgba(1,8,20,.98))!important;box-shadow:0 10px 28px #0009!important}
+ #landing .cd-live-title{display:flex;align-items:center;justify-content:space-between;font-size:clamp(11px,.9vw,14px);font-weight:900;color:#fff}
+ #landing .cd-live-title span{color:#24f3a1;font-size:10px}
+ #landing .cd-live-rows{margin-top:6px}
+ #landing .cd-live-rows div{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid #d5eaff20;font-size:clamp(10px,.8vw,13px)}
+ #landing .cd-live-rows div:last-child{border:0}
+ #landing .cd-live-rows b{color:#e9f3ff}
+ #landing .cd-live-rows span{color:#b8cbe0}
+ #landing .cd-challenge-strip{display:flex!important;position:absolute;z-index:26;left:2%;right:2%;bottom:2.2%;height:10.5%;min-height:70px;align-items:center;gap:16px;padding:10px 18px;border:1px solid #ffcb54;border-radius:15px;background:linear-gradient(100deg,rgba(35,22,4,.96),rgba(5,13,27,.97) 65%);box-shadow:0 0 20px #ffb82b55}
+ #landing .cd-challenge-trophy{font-size:clamp(26px,3vw,42px)}
+ #landing .cd-challenge-copy{display:flex;flex-direction:column;gap:5px;min-width:180px}
+ #landing .cd-challenge-copy b{font-size:clamp(12px,1.2vw,18px);color:#fff}
+ #landing .cd-challenge-copy small{font-size:clamp(9px,.8vw,12px);color:#d7dce5}
+ #landing .cd-streak{display:flex;align-items:center;gap:8px;font-size:clamp(12px,1.2vw,18px);font-weight:900;color:#ffd257;white-space:nowrap}
+ #landing .cd-streak span{display:block;font-size:9px;color:#d4deec;text-align:center}
+ #landing .cd-progress{height:13px;flex:1;min-width:40px;border:1px solid #a88b45;border-radius:99px;background:#120f0a;overflow:hidden}
+ #landing .cd-progress i{display:block;height:100%;width:42%;border-radius:99px;background:linear-gradient(90deg,#fff2a0,#ffc52e,#ff9d0a);box-shadow:0 0 12px #ffc52e}
+ #landing .cd-challenge-gift{font-size:clamp(24px,3vw,40px)}
+ #landing .cd-challenge-next{font-size:30px;color:#fff;margin-left:auto}
+ #landing .cd-airdrop-tile{display:flex!important;position:absolute;z-index:26;right:2%;bottom:2.2%;width:26%;height:10.5%;min-height:70px;align-items:center;gap:12px;padding:10px 14px;border:1px solid #7bd2ffb8;border-radius:14px;background:linear-gradient(110deg,rgba(5,25,47,.98),rgba(1,9,22,.98));box-shadow:0 8px 24px #0008;cursor:pointer}
+ #landing .cd-challenge-strip{right:29.5%}
+ #landing .cd-airdrop-tile .cd-airdrop-icon{font-size:clamp(24px,2.7vw,38px)}
+ #landing .cd-airdrop-tile b{font-size:clamp(11px,1vw,15px)}
+ #landing .cd-airdrop-tile small{display:block;margin-top:4px;font-size:clamp(9px,.75vw,11px);color:#d1dfed}
+ #landing .cd-airdrop-tile .cd-next{margin-left:auto;font-size:26px}
+}
+@media (max-width:1100px) and (min-width:701px){
+ #landing .climboria-dashboard-header{gap:8px!important;padding-left:1%!important;padding-right:1%!important}
+ .cd-brand{flex-basis:24%!important;min-width:150px!important}
+ .cd-follow{display:none!important}
+ #landing .cd-feature-grid{right:31%;gap:6px}
+ #landing .cd-feature{min-height:100px}
+ #landing .cd-challenge-copy{min-width:120px}
+}
+@media(max-width:700px){
+ #landing .climboria-dashboard-header,#landing .cd-feature-grid,#landing .cd-live-price-panel,#landing .cd-challenge-strip,#landing .cd-airdrop-tile{display:none!important}
+ #cryptoTicker{top:0!important;left:50%!important;transform:translateX(-50%)!important;width:96%!important;height:auto!important;background:transparent!important;border:0!important;padding:0!important}
+ #cryptoTicker .cryptoStatus{display:none!important}
+}
+</style>
+<script id="climboria-reference-layout-v2-js">
+(function(){
+ function mountReferenceDashboard(){
+  var landing=document.getElementById("landing");
+  var panel=landing&&landing.querySelector(".panel");
+  var announcement=landing&&landing.querySelector(".climboria-launch-announcement");
+  if(!landing||!panel||!announcement||landing.querySelector(".climboria-dashboard-header"))return;
+  var header=document.createElement("header");
+  header.className="climboria-dashboard-header";
+  header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><span class="cd-brand-mark">🏔️</span><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav" aria-label="Main navigation"><button class="active" data-cd-action="home"><b>⌂</b>HOME</button><button data-cd-action="play"><b>🎮</b>PLAY</button><button data-cd-action="levels"><b>△</b>LEVELS</button><button data-cd-action="market"><b>🛒</b>MARKETPLACE</button><button data-cd-action="launch"><b>🚀</b>LAUNCH</button><button data-cd-action="leaderboard"><b>▥</b>LEADERBOARD</button><button data-cd-action="community"><b>♟</b>COMMUNITY</button><button data-cd-action="more"><b>☰</b>MORE</button></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
+  panel.appendChild(header);
+  var base=document.createElement("div");
+  base.className="cd-base-label";
+  base.innerHTML="🔵 BASE NETWORK <i></i>";
+  panel.appendChild(base);
+  var features=document.createElement("div");
+  features.className="cd-feature-grid";
+  features.innerHTML='<button class="cd-feature" data-cd-action="points"><span class="cd-art">💎</span><b>EARN POINTS</b><small>Climb &amp; Win</small></button><button class="cd-feature" data-cd-action="market"><span class="cd-art">🧰</span><b>MARKETPLACE</b><small>Trade Assets</small></button><button class="cd-feature" data-cd-action="launch"><span class="cd-art">🚀</span><b>LAUNCHPAD</b><small>Build Together</small></button><button class="cd-feature" data-cd-action="dex"><span class="cd-art">↔️</span><b>DEX</b><small>Trade Freely</small></button><button class="cd-feature" data-cd-action="community"><span class="cd-art">🏴</span><b>COMMUNITY</b><small>Join the Climb</small></button>';
+  panel.appendChild(features);
+  var prices=document.createElement("section");
+  prices.className="cd-live-price-panel";
+  prices.innerHTML='<div class="cd-live-title">LIVE CRYPTO PRICES <span>● LIVE</span></div><div class="cd-live-rows"><div><b>₿ BTC</b><strong id="cdBTCPrice">—</strong><span id="cdBTCChange">—</span></div><div><b>◆ ETH</b><strong id="cdETHPrice">—</strong><span id="cdETHChange">—</span></div><div><b>◎ SOL</b><strong id="cdSOLPrice">—</strong><span id="cdSOLChange">—</span></div><div><b>◆ BNB</b><strong id="cdBNBPrice">—</strong><span id="cdBNBChange">—</span></div><div><b>✕ XRP</b><strong id="cdXRPPrice">—</strong><span id="cdXRPChange">—</span></div></div>';
+  panel.appendChild(prices);
+  var challenge=document.createElement("section");
+  challenge.className="cd-challenge-strip";
+  challenge.innerHTML='<span class="cd-challenge-trophy">🏆</span><span class="cd-challenge-copy"><b>DAILY CHALLENGE</b><small>Climb today. Keep your streak alive!</small></span><span class="cd-streak">🔥 <span><b id="cdStreakValue">0</b> STREAK</span></span><div class="cd-progress"><i></i></div><span class="cd-challenge-gift">🎁</span><span class="cd-challenge-next">›</span>';
+  panel.appendChild(challenge);
+  var airdrop=document.createElement("button");
+  airdrop.type="button";airdrop.className="cd-airdrop-tile";airdrop.setAttribute("data-cd-action","airdrop");
+  airdrop.innerHTML='<span class="cd-airdrop-icon">🪂</span><span><b>AIRDROP TRACKER</b><small>Complete tasks. Earn rewards.</small></span><span class="cd-next">›</span>';
+  panel.appendChild(airdrop);
+  function syncDashboard(){
+   var pairs=[["btc","BTC"],["eth","ETH"],["sol","SOL"],["bnb","BNB"],["xrp","XRP"]];
+   pairs.forEach(function(p){
+    var price=document.getElementById(p[0]+"Price"),change=document.getElementById(p[0]+"Change");
+    var targetPrice=document.getElementById("cd"+p[1]+"Price"),targetChange=document.getElementById("cd"+p[1]+"Change");
+    if(price&&targetPrice)targetPrice.textContent=price.textContent;
+    if(change&&targetChange){targetChange.textContent=change.textContent;targetChange.style.color=change.classList.contains("negative")?"#ff6b78":"#27ffa5";}
+   });
+   var streak=document.getElementById("landingStreakText"),value=document.getElementById("cdStreakValue");
+   if(streak&&value){var match=streak.textContent.match(/\d+/);if(match)value.textContent=match[0];}
+  }
+  syncDashboard();
+  window.setInterval(syncDashboard,1000);
+  panel.querySelectorAll("[data-cd-action]").forEach(function(btn){
+   btn.addEventListener("click",function(){
+    var action=btn.getAttribute("data-cd-action");
+    if(action==="home"){window.showMenu&&window.showMenu();return;}
+    if(action==="play"||action==="points"){var start=document.getElementById("startButton");if(start)start.click();return;}
+    if(action==="levels"){var levels=document.getElementById("levelSelect");if(typeof window.showLevelSelect==="function")window.showLevelSelect();else if(levels){landing.style.display="none";levels.style.display="flex";}return;}
+    if(action==="launch"){var launch=document.getElementById("launchpad");if(launch){landing.style.display="none";launch.style.display="flex";}return;}
+    var msg=document.getElementById("status");
+    if(msg){msg.textContent=action.toUpperCase()+" — COMING SOON";msg.style.display="block";}
+   });
+  });
+  header.querySelector(".cd-brand").addEventListener("click",function(e){e.preventDefault();});
+ }
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mountReferenceDashboard);
+ else mountReferenceDashboard();
+})();
+</script>
+
 </body>
 </html>
