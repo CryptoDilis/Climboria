@@ -56,7 +56,6 @@ jobs:
 
           required = [
               'id="landingHeroPreview"',
-              'id="climboria-direct-hero-image"',
               'id="climboria-hero-cutout-blend-fix"',
               'id="nextLevelVictoryButton"',
               'id="levelSelect"',
@@ -66,12 +65,10 @@ jobs:
               if marker not in html:
                   raise SystemExit(f"missing required game marker: {marker}")
 
-          if 'img.id="climboriaHeroCutout"' not in html:
-              raise SystemExit("hero image element creation is missing")
           if 'background-image:none!important' not in html:
               raise SystemExit("hero duplicate-background prevention is missing")
 
-          print("HTML structure and core Climboria markers passed.")
+          print("HTML structure and core Climboria markers passed; legacy hero injector is not required.")
           PY
 
       - name: Syntax-check inline JavaScript
