@@ -4461,6 +4461,7 @@ function init(){
  createGround();
  createRocks();
  createHero();
+ createLandingHeroPreview();
  createHammer();
  createGrips();
  createTouchReticle();
@@ -5260,6 +5261,63 @@ function createHero(){
  hero.position.set(0,.03,3.5);
  scene.add(hero);
 }
+
+/* LANDING HERO PREVIEW
+   Reuses the real game character mesh in a transparent, isolated renderer.
+   This is decorative only: the live gameplay hero, camera, physics and controls are untouched. */
+function createLandingHeroPreview(){
+ const landing=document.querySelector("#landing .panel");
+ if(!landing||!hero||typeof THREE==="undefined") return;
+ const wrap=document.createElement("div");
+ wrap.id="landingHeroPreview";
+ wrap.setAttribute("aria-hidden","true");
+ const previewCanvas=document.createElement("canvas");
+ wrap.appendChild(previewCanvas);
+ landing.insertBefore(wrap,landing.firstChild);
+ let previewRenderer;
+ try{
+  previewRenderer=new THREE.WebGLRenderer({canvas:previewCanvas,alpha:true,antialias:true,powerPreference:"low-power"});
+ }catch(err){wrap.remove();return;}
+ previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+ previewRenderer.setSize(420,520,false);
+ previewRenderer.setClearColor(0x000000,0);
+ previewRenderer.outputColorSpace=THREE.SRGBColorSpace;
+ previewRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+ previewRenderer.toneMappingExposure=1.18;
+ const previewScene=new THREE.Scene();
+ previewScene.add(new THREE.HemisphereLight(0xd8edff,0x3c3028,2.0));
+ const key=new THREE.DirectionalLight(0xffe1a7,2.8);key.position.set(-3,6,5);previewScene.add(key);
+ const fill=new THREE.DirectionalLight(0x8dc8ff,1.4);fill.position.set(4,2,-3);previewScene.add(fill);
+ const previewHero=hero.clone(true);
+ previewHero.position.set(0,-.08,0);
+ previewHero.rotation.set(0,Math.PI,0);
+ previewHero.scale.setScalar(.96);
+ previewScene.add(previewHero);
+ const previewCamera=new THREE.OrthographicCamera(-2.05,2.05,2.55,-2.55,.1,40);
+ previewCamera.position.set(0,1.62,9);
+ previewCamera.lookAt(0,1.62,0);
+ let raf=0,disposed=false;
+ function resizePreview(){
+  if(disposed)return;
+  const w=Math.max(1,wrap.clientWidth),h=Math.max(1,wrap.clientHeight);
+  previewRenderer.setSize(Math.round(w*1.5),Math.round(h*1.5),false);
+  previewCanvas.style.width="100%";previewCanvas.style.height="100%";
+  previewCamera.left=-2.05;previewCamera.right=2.05;previewCamera.top=2.55;previewCamera.bottom=-2.55;
+  previewCamera.updateProjectionMatrix();
+ }
+ function draw(){
+  if(disposed)return;
+  if(wrap.isConnected && getComputedStyle(document.getElementById("landing")).display!=="none"){
+   previewHero.rotation.y=Math.PI+Math.sin(performance.now()*.00045)*.035;
+   previewRenderer.render(previewScene,previewCamera);
+  }
+  raf=requestAnimationFrame(draw);
+ }
+ if("ResizeObserver" in window)new ResizeObserver(resizePreview).observe(wrap);
+ window.addEventListener("resize",resizePreview,{passive:true});
+ resizePreview();draw();
+}
+
 /* =====================================================
    HAMMER + ROPE
 ===================================================== */
@@ -9961,5 +10019,25 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .panel{padding-top:285px!important}
  #landing .climboria-launch-announcement{margin-top:10px!important}
  #climboria-primary-actions{left:auto!important;bottom:auto!important;top:auto!important;width:calc(100% - 28px)!important}
+}
+</style>
+
+<style id="climboria-landing-hero-preview-style">
+#landingHeroPreview{
+ position:absolute!important;left:clamp(8px,4vw,64px)!important;top:18%!important;
+ width:clamp(150px,20vw,300px)!important;height:clamp(210px,31vw,430px)!important;
+ z-index:0!important;pointer-events:none!important;overflow:visible!important;
+ filter:drop-shadow(0 16px 22px rgba(0,0,0,.48))!important;
+}
+#landingHeroPreview canvas{display:block!important;width:100%!important;height:100%!important;background:transparent!important;touch-action:none!important}
+@media(min-width:701px){
+ #landing .climboria-launch-announcement{right:3%!important}
+ #climboria-primary-actions{left:clamp(250px,30vw,520px)!important;width:min(66%,1180px)!important}
+ #landingHeroPreview{top:15%!important;left:clamp(12px,4vw,70px)!important;width:clamp(210px,21vw,340px)!important;height:clamp(300px,35vw,480px)!important}
+}
+@media(max-width:700px){
+ #landingHeroPreview{left:50%!important;top:clamp(185px,25vh,255px)!important;transform:translateX(-50%)!important;width:clamp(135px,39vw,190px)!important;height:clamp(190px,53vw,255px)!important;opacity:.96!important}
+ #landing .climboria-launch-announcement{margin-top:clamp(185px,27vh,250px)!important}
+ #climboria-primary-actions{position:relative!important;z-index:2!important}
 }
 </style>
