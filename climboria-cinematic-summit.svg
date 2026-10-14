@@ -58,12 +58,12 @@
  <path d="M849 637l55-75 62-98-35 88-42 51z"/><path d="M1090 500l45 72 62 52-51-17-43-47z"/>
  <path d="M1194 624l76 70 90 91-93-62-53-54z"/>
 </g>
-<!-- gold summit beacon -->
-<circle cx="1035" cy="145" r="140" fill="#ffcf50" opacity=".25" filter="url(#glow)"/>
-<path d="M1035 24L1118 118 1035 220 952 118Z" fill="url(#gold)" stroke="#fff3a6" stroke-width="4"/>
-<path d="M1035 24L1035 220 952 118Z" fill="#fff8d4"/>
-<path d="M1035 24L1118 118 1035 145Z" fill="#ffdf67"/>
-<path d="M952 118L1035 145 1035 220Z" fill="#cf7c0a"/>
+<!-- summit marker: warm sunrise glow and a small expedition flag, not a token-shaped crystal -->
+<circle cx="1035" cy="145" r="112" fill="#ffcf50" opacity=".20" filter="url(#glow)"/>
+<circle cx="1035" cy="145" r="38" fill="#ffe7a0" opacity=".16" filter="url(#soft)"/>
+<path d="M1035 143L1035 70" fill="none" stroke="#f4ead1" stroke-width="7" stroke-linecap="round"/>
+<path d="M1038 73L1092 91L1038 108Z" fill="url(#gold)" stroke="#fff0b0" stroke-width="2"/>
+<circle cx="1035" cy="143" r="7" fill="#fff5c8" stroke="#f8c64b" stroke-width="3"/>
 <!-- cloud sea wrapping mountain -->
 <g fill="url(#cloud)">
  <path d="M0 652Q100 598 205 645T430 638T650 653T865 625T1080 650T1320 630T1540 651T1760 620T1920 646V820H0Z"/>
