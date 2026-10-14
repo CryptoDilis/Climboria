@@ -176,6 +176,32 @@ jobs:
                 else throw new Error('No Play/Start Climb control found');
               });
               await mobile.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
+              const mobileLevelSelect = await mobile.evaluate(() => {
+                const bounds = selector => {
+                  const el = document.querySelector(selector);
+                  if (!el) return null;
+                  const r = el.getBoundingClientRect();
+                  return { left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
+                };
+                return {
+                  viewportWidth: document.documentElement.clientWidth,
+                  documentWidth: document.documentElement.scrollWidth,
+                  panel: bounds('#levelSelect .panel'),
+                  firstCard: bounds('#level1Card'),
+                  lastCard: bounds('#level10Card')
+                };
+              });
+              console.log('Mobile level-select bounds: ' + JSON.stringify(mobileLevelSelect));
+              if (mobileLevelSelect.documentWidth > mobileLevelSelect.viewportWidth + 2 ||
+                  !mobileLevelSelect.panel ||
+                  mobileLevelSelect.panel.left < -2 ||
+                  mobileLevelSelect.panel.right > mobileLevelSelect.viewportWidth + 2 ||
+                  !mobileLevelSelect.firstCard ||
+                  mobileLevelSelect.firstCard.left < -2 ||
+                  mobileLevelSelect.firstCard.right > mobileLevelSelect.viewportWidth + 2) {
+                throw new Error('Mobile level-select layout exceeds viewport bounds: ' + JSON.stringify(mobileLevelSelect));
+              }
+              await mobile.screenshot({ path: 'climboria-mobile-level-select.png' });
               await mobile.locator('#level1Card').click();
               await mobile.waitForTimeout(1000);
               const mobileState = await mobile.evaluate(() => ({
@@ -291,6 +317,7 @@ jobs:
             climboria-landing.png
             climboria-level-select.png
             climboria-gameplay.png
+            climboria-mobile-level-select.png
             climboria-mobile-gameplay.png
           if-no-files-found: warn
           retention-days: 7
