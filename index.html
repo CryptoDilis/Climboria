@@ -9986,3 +9986,35 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .pointsPanel,#landing .progressPanel{min-height:78px!important}
 }
 </style>
+
+<style id="climboria-restore-price-ticker">
+/* Restore the market ticker that was hidden during landing cleanup. */
+#cryptoTicker{
+ display:flex!important;visibility:visible!important;opacity:1!important;
+ position:fixed!important;top:0!important;left:0!important;right:0!important;
+ transform:none!important;width:100%!important;max-width:none!important;
+ box-sizing:border-box!important;min-height:27px!important;height:27px!important;
+ padding:2px clamp(10px,2vw,28px)!important;gap:16px!important;
+ align-items:center!important;justify-content:center!important;overflow:hidden!important;
+ white-space:nowrap!important;background:rgba(2,8,17,.97)!important;
+ border:0!important;border-bottom:1px solid #59738a55!important;
+ z-index:10001!important;
+}
+#cryptoTicker .cryptoTop{display:contents!important}
+#cryptoTicker .cryptoSymbol{font-size:11px!important;font-weight:900!important;color:#f2f6fb!important}
+#cryptoTicker .cryptoPrice{font-size:11px!important;color:#e7eef7!important;white-space:nowrap!important}
+#cryptoTicker .cryptoChange{font-size:10px!important;white-space:nowrap!important}
+#landing .cd-live-price-panel{display:none!important}
+@media(min-width:701px){
+ #landing .climboria-dashboard-header{top:27px!important}
+ #landing .panel{padding-top:103px!important}
+ #landing .panel:before{inset:103px 0 0!important}
+}
+@media(max-width:700px){
+ #cryptoTicker{height:25px!important;min-height:25px!important;padding:2px 8px!important;gap:10px!important;justify-content:flex-start!important;overflow-x:auto!important;scrollbar-width:none!important}
+ #cryptoTicker::-webkit-scrollbar{display:none!important}
+ #landing .climboria-dashboard-header{top:25px!important}
+ #landing .panel{padding-top:189px!important}
+ #landing .panel:before{inset:185px 0 0!important}
+}
+</style>
