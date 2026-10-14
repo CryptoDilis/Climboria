@@ -1905,22 +1905,6 @@ body{
 
 
 <!-- Emergency hero shutdown: higher specificity than all legacy hero rules. -->
-<style id="climboria-hero-shutdown">
-html body #landing #landingHeroPreview,
-html body #landing #climboriaHeroCutout,
-html body #landingHeroPreview,
-html body #climboriaHeroCutout {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
-  max-width: 0 !important;
-  max-height: 0 !important;
-  pointer-events: none !important;
-}
-</style>
-
 </head>
 
 <body>
@@ -9836,14 +9820,6 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- End Cloudflare Web Analytics -->
 
 
-<style id="climboria-remove-current-hero">
-/* Temporarily remove the broken landing hero artwork; leave the rest of the landing UI untouched. */
-#landingHeroPreview,
-#climboriaHeroCutout { display: none !important; }
-</style>
-
-
-
 <style id="climboria-clean-more-menu">
 #landing .cd-nav{gap:clamp(12px,2.3vw,34px)!important;justify-content:center!important}
 #landing .cd-nav>button{min-width:94px!important}
@@ -9997,25 +9973,6 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .panel{padding-top:285px!important}
  #landing .climboria-launch-announcement{margin-top:10px!important}
  #climboria-primary-actions{left:auto!important;bottom:auto!important;top:auto!important;width:calc(100% - 28px)!important}
-}
-</style>
-
-<style id="climboria-landing-hero-preview-style">
-#landingHeroPreview{
- position:absolute!important;left:clamp(8px,4vw,64px)!important;top:18%!important;
- width:clamp(150px,20vw,300px)!important;height:clamp(210px,31vw,430px)!important;
- z-index:0!important;pointer-events:none!important;overflow:visible!important;
- filter:drop-shadow(0 16px 22px rgba(0,0,0,.48))!important;
-}
-#landingHeroPreview canvas{display:none!important;width:100%!important;height:100%!important;background:transparent!important;touch-action:none!important} #landingHeroPreview{background-repeat:no-repeat!important;background-position:center bottom!important;background-size:contain!important;}
-@media(min-width:701px){
- #landing .climboria-launch-announcement{right:3%!important}
- #climboria-primary-actions{left:clamp(250px,30vw,520px)!important;width:min(66%,1180px)!important}
- #landingHeroPreview{top:15%!important;left:clamp(12px,4vw,70px)!important;width:clamp(210px,21vw,340px)!important;height:clamp(300px,35vw,480px)!important}
-}
-@media(max-width:700px){
- #landingHeroPreview{left:50%!important;top:clamp(185px,25vh,255px)!important;transform:translateX(-50%)!important;width:clamp(135px,39vw,190px)!important;height:clamp(190px,53vw,255px)!important;opacity:.96!important}
- #climboria-primary-actions{position:relative!important;z-index:2!important}
 }
 </style>
 
