@@ -185,6 +185,9 @@ jobs:
                 throw new Error('Mobile gameplay did not reach the expected state.');
               }
               await mobile.close();
+              // Release the desktop WebGL page before the final expedition test.
+              // Keeping multiple software-rendered WebGL pages alive can starve Chromium on CI.
+              await page.close();
 
               // Ten-summit progression: preload a fully unlocked save and verify Level 10 can launch.
               const expedition = await browser.newPage({
