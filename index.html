@@ -9498,5 +9498,50 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<style id="climboria-graphics-pass-2026">
+/* Replace the flat CSS polygon mountain with the live Three.js alpine scene. */
+#landing:after{content:none!important;display:none!important}
+#landing:before{
+ background:
+  radial-gradient(ellipse at 51% 24%,rgba(255,218,145,.25),transparent 24%),
+  radial-gradient(ellipse at 12% 45%,rgba(44,128,185,.20),transparent 38%),
+  linear-gradient(180deg,rgba(2,12,27,.08) 0%,rgba(3,14,28,.12) 44%,rgba(1,7,17,.68) 100%)!important;
+}
+#landing{
+ background:
+  radial-gradient(ellipse at 50% 24%,#8a9c9c 0%,#405d70 34%,#102c49 68%,#020814 100%)!important;
+}
+#landing .panel{isolation:isolate}
+#landing .climboria-launch-announcement,
+#climboria-primary-actions button,
+#landing .pointsBox,#landing .progressCard,#landing .card{
+ backdrop-filter:blur(10px)!important;
+ -webkit-backdrop-filter:blur(10px)!important;
+}
+#landing .climboria-launch-announcement{
+ background:linear-gradient(145deg,rgba(3,15,32,.94),rgba(7,27,52,.86))!important;
+}
+#landing .pointsBox,#landing .progressCard{
+ background:linear-gradient(145deg,rgba(6,25,47,.94),rgba(2,11,25,.91))!important;
+ border:1px solid rgba(255,214,112,.44)!important;
+}
+#landing .pointsValue{color:#fff0bd!important;text-shadow:0 0 12px rgba(255,201,70,.18)}
+#landing .progressStatus{color:#ffdb79!important}
+@media(min-width:701px){
+ #landing .climboria-launch-announcement{top:24%!important;right:3%!important}
+ #climboria-primary-actions{top:43%!important}
+}
+@media(max-width:700px){
+ #landing .panel{padding-top:104px!important}
+ #landing .climboria-launch-announcement{margin-bottom:10px!important}
+ #climboria-primary-actions{margin-bottom:10px!important}
+ #landing .pointsPanel,#landing .progressPanel,#landing .cards{margin-bottom:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #landing *{scroll-behavior:auto!important;transition:none!important}
+}
+</style>
+
 </body>
 </html>
