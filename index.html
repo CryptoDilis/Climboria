@@ -10337,7 +10337,9 @@ document.addEventListener("DOMContentLoaded",function(){
    {symbol:'GOLD',name:'Gold spot'},
    {symbol:'S&P 500',name:'US large-cap stocks'},
    {symbol:'NASDAQ',name:'US technology stocks'},
-   {symbol:'DOW',name:'US blue-chip stocks'}
+   {symbol:'DOW',name:'US blue-chip stocks'},
+   {symbol:'NVDA',name:'NVIDIA stock'},
+   {symbol:'AAPL',name:'Apple stock'}
   ].forEach(function(item){
    var card=document.createElement('div');
    card.className='cryptoCard cd-market-pending';
@@ -10525,6 +10527,139 @@ document.addEventListener("DOMContentLoaded",function(){
 </style>
 </body>
 </html>
+
+<!-- Static, readable market strip + hamburger positioning. Artwork is untouched. -->
+<style id="climboria-static-market-strip-v1">
+/* Keep the ticker as a thin, fixed strip over the approved artwork; never auto-scroll. */
+#landing #climboria-reference-canvas #cryptoTicker{
+  display:flex!important;visibility:visible!important;position:absolute!important;
+  left:0!important;right:0!important;top:0!important;width:100%!important;
+  height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
+  margin:0!important;padding:0 34px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
+  align-items:center!important;justify-content:center!important;box-sizing:border-box!important;
+  border:0!important;border-bottom:1px solid #f4c86a99!important;border-radius:0!important;
+  background:linear-gradient(90deg,rgba(3,11,24,.97),rgba(16,36,58,.96) 48%,rgba(3,11,24,.97))!important;
+  box-shadow:0 2px 8px #0007!important;scrollbar-width:none!important;
+  overscroll-behavior-x:contain!important;touch-action:pan-x!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker::-webkit-scrollbar{display:none!important}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoStatus,
+#landing #climboria-reference-canvas #cryptoTicker .cryptoUpdated,
+#landing #climboria-reference-canvas #cryptoTicker .cryptoCountdown,
+#landing #climboria-reference-canvas #cryptoTicker .cryptoLive{display:none!important}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoRow{
+  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+  width:max-content!important;min-width:100%!important;gap:0!important;margin:0 auto!important;
+  justify-content:center!important;animation:none!important;transform:none!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoCard{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;
+  flex:0 0 auto!important;min-width:0!important;margin:0!important;padding:2px 6px!important;
+  border:0!important;border-right:1px solid #d9b76b66!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;text-align:left!important;
+  transition:none!important;transform:none!important;white-space:nowrap!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoTop{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:3px!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol{
+  font-size:clamp(6px,.72vw,10px)!important;line-height:1.1!important;color:#fff!important;
+  font-weight:900!important;letter-spacing:.2px!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{
+  display:block!important;margin:0!important;font-size:clamp(6px,.72vw,10px)!important;
+  line-height:1.1!important;font-weight:900!important;color:#fff!important;white-space:nowrap!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoChange{
+  display:block!important;font-size:clamp(5px,.62vw,9px)!important;
+  line-height:1.1!important;font-weight:900!important;white-space:nowrap!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoLogo{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:12px!important;height:12px!important;flex:0 0 12px!important;border-radius:50%!important;
+  overflow:hidden!important;font-size:7px!important;line-height:12px!important;font-weight:900!important;
+  color:#fff!important;background:#34445a!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoLogo img{
+  display:block!important;width:12px!important;height:12px!important;object-fit:contain!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending{display:flex!important}
+#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoSymbol{color:#f4c86a!important}
+#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoPrice{
+  color:#d4dfed!important;font-size:clamp(5px,.65vw,9px)!important;
+}
+#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoChange{color:#f4c86a!important}
+#climboria-hamburger-toggle{
+  position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
+  width:27px!important;height:18px!important;min-height:18px!important;padding:2px!important;
+  transform:none!important;gap:2px!important;border:0!important;border-radius:3px!important;
+  background:rgba(3,11,24,.92)!important;box-shadow:none!important;
+}
+#climboria-hamburger-toggle span{
+  width:15px!important;height:1.5px!important;background:#ffd36e!important;
+}
+#climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(3.5px) rotate(45deg)!important}
+#climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-3.5px) rotate(-45deg)!important}
+@media(max-width:700px){
+  #landing #climboria-reference-canvas #cryptoTicker{height:clamp(20px,4.8%,27px)!important;min-height:20px!important;padding:0 29px 0 2px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoRow{justify-content:flex-start!important;margin:0!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{gap:2px!important;padding:2px 4px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol{font-size:7px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:7px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:6px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoLogo,
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoLogo img{width:10px!important;height:10px!important;flex-basis:10px!important}
+  #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:25px!important;height:18px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoRow{animation:none!important}
+  #climboria-hamburger-toggle span{transition:none!important}
+}
+</style>
+<script id="climboria-market-favicon-logos-v1">
+(function(){
+  var logos={
+    BTC:{url:'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',fallback:'₿',color:'#f7931a'},
+    ETH:{url:'https://assets.coingecko.com/coins/images/279/large/ethereum.png',fallback:'Ξ',color:'#627eea'},
+    BNB:{url:'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',fallback:'B',color:'#f3ba2f'},
+    XRP:{url:'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',fallback:'X',color:'#23292f'},
+    SOL:{url:'https://assets.coingecko.com/coins/images/4128/large/solana.png',fallback:'S',color:'#7c5cff'},
+    DOGE:{url:'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',fallback:'Ð',color:'#c2a633'},
+    GOLD:{url:'',fallback:'Au',color:'#d9b45b'},
+    'S&P 500':{url:'',fallback:'500',color:'#5076aa'},
+    NASDAQ:{url:'',fallback:'N',color:'#2875d0'},
+    DOW:{url:'',fallback:'D',color:'#6385ac'},
+    NVDA:{url:'https://logo.clearbit.com/nvidia.com',fallback:'N',color:'#76b900'},
+    AAPL:{url:'https://logo.clearbit.com/apple.com',fallback:'A',color:'#aeb4bd'}
+  };
+  function applyLogos(){
+    document.querySelectorAll('#cryptoTicker .cryptoCard').forEach(function(card){
+      var symbolNode=card.querySelector('.cryptoSymbol');
+      var top=card.querySelector('.cryptoTop');
+      if(!symbolNode||!top||top.querySelector('.cryptoLogo'))return;
+      var symbol=(symbolNode.textContent||'').trim().toUpperCase();
+      var data=logos[symbol];
+      if(!data)return;
+      var badge=document.createElement('span');badge.className='cryptoLogo';badge.setAttribute('aria-hidden','true');
+      badge.style.background=data.color;badge.textContent=data.fallback;
+      if(data.url){
+        var img=document.createElement('img');img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.src=data.url;
+        img.onerror=function(){img.remove();badge.textContent=data.fallback;};
+        badge.textContent='';badge.appendChild(img);
+      }
+      top.insertBefore(badge,top.firstChild);
+    });
+  }
+  function init(){
+    applyLogos();
+    var row=document.querySelector('#cryptoTicker .cryptoRow');
+    if(row&&window.MutationObserver){
+      new MutationObserver(function(){applyLogos();}).observe(row,{childList:true,subtree:true});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 
 <!-- Final visual hardening: remove legacy pseudo-heading that leaks above the header. -->
 <style id="climboria-final-legacy-heading-guard-v1">
