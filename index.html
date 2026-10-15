@@ -3452,7 +3452,10 @@ const CRYPTO_IDS=[
  "ethereum",
  "solana",
  "binancecoin",
- "ripple"
+ "ripple",
+ "dogecoin",
+ "nvidia-xstock",
+ "apple-xstock"
 ];
 
 const CRYPTO_SYMBOLS={
@@ -3460,7 +3463,10 @@ const CRYPTO_SYMBOLS={
  ethereum:"ETH",
  solana:"SOL",
  binancecoin:"BNB",
- ripple:"XRP"
+ ripple:"XRP",
+ dogecoin:"DOGE",
+ "nvidia-xstock":"NVDAX",
+ "apple-xstock":"AAPLX"
 };
 
 let cryptoSecondsLeft=
@@ -10902,3 +10908,36 @@ body{overflow:hidden!important}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
+
+<script id="climboria-verified-extra-market-cards-v1">
+(function(){
+ var items=[
+  {symbol:"DOGE",name:"Dogecoin"},
+  {symbol:"NVDAX",name:"NVIDIA xStock"},
+  {symbol:"AAPLX",name:"Apple xStock"}
+ ];
+ function mount(){
+  var row=document.querySelector("#cryptoTicker .cryptoRow");
+  if(!row)return false;
+  items.forEach(function(item){
+   var id=item.symbol.toLowerCase()+"Card";
+   if(document.getElementById(id))return;
+   var card=document.createElement("div");
+   card.className="cryptoCard";
+   card.id=id;
+   card.setAttribute("aria-label",item.name+" price");
+   card.innerHTML='<div class="cryptoTop"><span class="cryptoSymbol"></span><span class="cryptoChange cryptoLoading">--</span></div><div class="cryptoPrice cryptoLoading">Loading…</div>';
+   card.querySelector(".cryptoSymbol").textContent=item.symbol;
+   row.appendChild(card);
+  });
+  return true;
+ }
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);else mount();
+ var obs=new MutationObserver(mount);
+ if(document.documentElement)obs.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+<style id="climboria-extra-market-card-style-v1">
+#landing #climboria-reference-canvas #cryptoTicker .cryptoCard{display:flex!important;visibility:visible!important;opacity:1!important}
+#landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{display:block!important}
+</style>
