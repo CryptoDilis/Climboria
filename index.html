@@ -10585,6 +10585,7 @@ document.addEventListener("DOMContentLoaded",function(){
     });
    } else {
     b.addEventListener('click',function(){
+     if(index===1){window.location.href='./swap/';return;}
      var status=document.getElementById('status');
      var message=index===1?'TRADE — NOT CONNECTED YET. No official Climboria token or verified contract is available here.':'CREATE TOKEN — CREATOR TOOLS ARE NOT CONNECTED YET.';
      if(status){status.textContent=message;status.style.display='block';status.setAttribute('role','status');}
