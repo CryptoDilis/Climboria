@@ -3452,10 +3452,7 @@ const CRYPTO_IDS=[
  "ethereum",
  "solana",
  "binancecoin",
- "ripple",
- "dogecoin",
- "nvidia-xstock",
- "apple-xstock"
+ "ripple"
 ];
 
 const CRYPTO_SYMBOLS={
@@ -3463,10 +3460,7 @@ const CRYPTO_SYMBOLS={
  ethereum:"ETH",
  solana:"SOL",
  binancecoin:"BNB",
- ripple:"XRP",
- dogecoin:"DOGE",
- "nvidia-xstock":"NVDAX",
- "apple-xstock":"AAPLX"
+ ripple:"XRP"
 };
 
 let cryptoSecondsLeft=
@@ -7942,15 +7936,8 @@ async function loadCryptoMarket(){
 
    if(binanceOK){
 
-    try{await loadExtraCoinGeckoMarket();}
-    catch(extraError){console.warn("CLIMBORIA CoinGecko extra markets unavailable:",extraError);}
-
     updateCryptoTimestamp();
-
-    showCryptoSuccess(
-     "BINANCE + COINGECKO"
-    );
-
+    showCryptoSuccess("BINANCE");
     return;
    }
 
@@ -7993,6 +7980,12 @@ async function loadCryptoMarket(){
   );
 
  }finally{
+
+  try{
+   await loadExtraCoinGeckoMarket();
+  }catch(extraError){
+   console.warn("CLIMBORIA CoinGecko extra markets unavailable:",extraError);
+  }
 
   cryptoRequestInProgress=false;
 
@@ -10967,4 +10960,22 @@ body{overflow:hidden!important}
 <style id="climboria-extra-market-card-style-v1">
 #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{display:flex!important;visibility:visible!important;opacity:1!important}
 #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{display:block!important}
+</style>
+
+<style id="climboria-desktop-ticker-center-v1">
+@media(min-width:701px){
+ #landing #climboria-reference-canvas #cryptoTicker{
+  justify-content:center!important;
+  overflow-x:auto!important;
+  padding-left:8px!important;padding-right:8px!important;
+ }
+ #landing #climboria-reference-canvas #cryptoTicker .cryptoRow{
+  width:max-content!important;min-width:0!important;
+  margin-left:auto!important;margin-right:auto!important;
+  justify-content:center!important;gap:5px!important;
+ }
+ #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{
+  flex:0 0 auto!important;padding:4px 7px!important;
+ }
+}
 </style>
