@@ -1728,7 +1728,7 @@ body{
 @media(min-width:701px) and (max-width:1100px){
  .climboria-dashboard-header{height:74px!important;top:44px!important}
  .cd-brand{flex-basis:22%!important;min-width:135px!important}
- .cd-brand img{width:42px!important;height:42px!important}
+ .cd-brand img,.cd-brand-logo{width:34px!important;height:34px!important}
  .cd-nav button{min-width:35px!important;font-size:8px!important}
  .cd-follow{padding:6px 8px!important}
  #landing .climboria-launch-announcement{top:24%!important;width:31%!important;right:2%!important}
@@ -9105,7 +9105,7 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
  border-bottom:1px solid #6ab7ff55;box-shadow:0 8px 30px #0005
 }
 .cd-brand{display:flex;align-items:center;gap:10px;flex:0 0 30%;min-width:230px;text-decoration:none;color:#fff}
-.cd-brand img{width:clamp(52px,7vw,94px);height:clamp(52px,7vw,94px);object-fit:contain;filter:drop-shadow(0 0 10px #ffbf4c99)}
+.cd-brand img,.cd-brand-logo{width:clamp(34px,3.2vw,48px);height:clamp(34px,3.2vw,48px);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 1px 2px #0008)}
 .cd-brand-name{font-size:clamp(25px,3vw,46px);font-weight:1000;letter-spacing:-1.8px;line-height:.92;color:#fff;text-shadow:0 3px 0 #1a253b,0 0 18px #ffca54aa}
 .cd-brand-name span{color:#ffce53}
 .cd-brand-name small{display:block;margin-top:8px;font-size:clamp(8px,.8vw,12px);letter-spacing:3px;color:#f2f5ff;text-shadow:none;white-space:nowrap}
@@ -9178,7 +9178,7 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
  .cd-brand{flex-basis:25%;min-width:150px}
  .cd-brand-name{font-size:24px}
  .cd-brand-name small{font-size:7px;letter-spacing:1px}
- .cd-brand img{width:46px;height:46px}
+ .cd-brand img,.cd-brand-logo{width:36px;height:36px}
  .cd-nav{gap:0}
  .cd-nav button{min-width:40px;padding:4px 2px;font-size:8px}
  .cd-follow{padding:7px 9px;gap:6px}
@@ -9192,7 +9192,7 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
 @media(max-width:700px){
  .climboria-dashboard-header{top:40px;height:60px;padding:4px 9px;justify-content:space-between}
  .cd-brand{flex:1;min-width:0;gap:5px}
- .cd-brand img{width:42px;height:42px}
+ .cd-brand img,.cd-brand-logo{width:30px;height:30px}
  .cd-brand-name{font-size:clamp(20px,5.8vw,30px);letter-spacing:-1px}
  .cd-brand-name small{font-size:7px;letter-spacing:.6px;margin-top:4px}
  .cd-nav{display:none}
@@ -9670,7 +9670,7 @@ document.addEventListener("DOMContentLoaded",function(){
   if(!landing||!panel||!announcement||landing.querySelector(".climboria-dashboard-header"))return;
   var header=document.createElement("header");
   header.className="climboria-dashboard-header";
-  header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><span class="cd-brand-mark">🏔️</span><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav cd-nav-minimal" aria-label="Main navigation"><button data-cd-action="roadmap"><b>⌁</b>ROADMAP</button><button data-cd-action="overview"><b>◈</b>OVERVIEW</button><div class="cd-climb-ticker" role="status" aria-label="CLIMB token tracker coming soon"><span class="cd-ticker-dot"></span><strong>$CLIMB</strong><span class="cd-ticker-divider"></span><small>TOKEN TRACKER</small><em>SOON</em></div></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
+  header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><img class="cd-brand-logo" src="./favicon.png" alt="Official Climboria logo" width="48" height="48"><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav cd-nav-minimal" aria-label="Main navigation"><button data-cd-action="roadmap"><b>⌁</b>ROADMAP</button><button data-cd-action="overview"><b>◈</b>OVERVIEW</button><div class="cd-climb-ticker" role="status" aria-label="CLIMB token tracker coming soon"><span class="cd-ticker-dot"></span><strong>$CLIMB</strong><span class="cd-ticker-divider"></span><small>TOKEN TRACKER</small><em>SOON</em></div></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
   panel.appendChild(header);
   var base=document.createElement("div");
   base.className="cd-base-label";
