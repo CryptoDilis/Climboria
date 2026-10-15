@@ -10003,7 +10003,7 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 <style id="climboria-hero-cutout-blend-fix">
-/* Approved composition: full hero left beside the tree, large enough to read, pot grounded. */
+/* Keep the approved left-side composition; integrate the pot into the mountain lighting. */
 :root{
   --climboria-hero-width:clamp(280px,19vw,340px);
   --climboria-hero-height:clamp(420px,27vw,480px);
@@ -10016,34 +10016,32 @@ document.addEventListener("DOMContentLoaded",function(){
   top:var(--climboria-hero-top)!important;
   width:var(--climboria-hero-width)!important;
   height:var(--climboria-hero-height)!important;
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  transform:none!important;
-  isolation:isolate!important;
-  background:transparent!important;
-  background-image:none!important;
-  overflow:visible!important;
-  z-index:2!important;
-  pointer-events:none!important;
+  display:block!important;visibility:visible!important;opacity:1!important;
+  transform:none!important;isolation:isolate!important;
+  background:transparent!important;background-image:none!important;
+  overflow:visible!important;z-index:2!important;pointer-events:none!important;
 }
+/* A soft, wide contact shadow grounds the base of the pot without looking like a sticker. */
 #landingHeroPreview::after{
-  content:""!important;
-  position:absolute!important;
-  left:10%!important;right:10%!important;bottom:0!important;height:6%!important;
+  content:""!important;position:absolute!important;
+  left:12%!important;right:12%!important;bottom:0!important;height:7%!important;
   border-radius:50%!important;
-  background:radial-gradient(ellipse at center,rgba(0,0,0,.56) 0%,rgba(0,0,0,.22) 48%,rgba(0,0,0,0) 78%)!important;
-  filter:blur(8px)!important;pointer-events:none!important;z-index:0!important;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.64) 0%,rgba(0,0,0,.34) 36%,rgba(0,0,0,.12) 62%,transparent 82%)!important;
+  filter:blur(7px)!important;pointer-events:none!important;z-index:0!important;
 }
 #climboriaHeroCutout{
   position:relative!important;display:block!important;width:100%!important;height:100%!important;
   object-fit:contain!important;object-position:center bottom!important;
   background:transparent!important;border:0!important;mix-blend-mode:normal!important;
   image-rendering:auto!important;
-  filter:brightness(1.025) saturate(1.015) contrast(1.005) drop-shadow(0 8px 12px rgba(0,0,0,.24))!important;
+  /* restrained color/contrast correction plus grounded shadow; avoid changing face or artwork */
+  filter:brightness(1.025) saturate(1.035) contrast(1.025)
+    drop-shadow(0 2px 2px rgba(0,0,0,.20))
+    drop-shadow(0 7px 10px rgba(0,0,0,.20))!important;
   z-index:1!important;
 }
-/* Real phones and phones running browser desktop mode: same left-side composition, responsive scale. */
+/* Ambient edge light subtly matches the cool mountain scene; clipped to the hero's silhouette. */
+#climboriaHeroCutout{ -webkit-backface-visibility:hidden; backface-visibility:hidden; }
 @media(max-width:700px), (pointer:coarse) and (hover:none){
   #landingHeroPreview{
     left:clamp(105px,15vw,210px)!important;
@@ -10052,8 +10050,12 @@ document.addEventListener("DOMContentLoaded",function(){
     width:clamp(240px,42vw,320px)!important;
     height:clamp(360px,63vw,480px)!important;
   }
-  #landingHeroPreview::after{left:10%!important;right:10%!important;bottom:0!important;height:5%!important;filter:blur(6px)!important}
-  #climboriaHeroCutout{filter:brightness(1.035) saturate(1.015) contrast(1.005) drop-shadow(0 7px 10px rgba(0,0,0,.23))!important}
+  #landingHeroPreview::after{left:10%!important;right:10%!important;bottom:0!important;height:6%!important;filter:blur(6px)!important}
+  #climboriaHeroCutout{
+    filter:brightness(1.035) saturate(1.035) contrast(1.02)
+      drop-shadow(0 2px 2px rgba(0,0,0,.20))
+      drop-shadow(0 6px 9px rgba(0,0,0,.22))!important;
+  }
 }
 </style>
 
