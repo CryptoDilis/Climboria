@@ -10677,32 +10677,6 @@ document.addEventListener("DOMContentLoaded",function(){
 </script>
 
 
-<!-- Android portrait composition: fill unused vertical space without stretching or editing the approved artwork. -->
-<style id="climboria-android-portrait-composition-v4">
-#landing #cryptoTicker{display:none!important}
-@media(max-width:700px){
- #landing{background:#06152b!important;overflow:hidden!important}
- #landing:before{
-  content:""!important;display:block!important;position:absolute!important;inset:-24px!important;
-  z-index:0!important;pointer-events:none!important;
-  background-image:url("./climboria-homepage.png")!important;
-  background-repeat:no-repeat!important;background-position:center center!important;
-  background-size:cover!important;filter:blur(18px) brightness(.48) saturate(1.12)!important;
-  transform:scale(1.04)!important;opacity:.95!important;
- }
- #landing #climboria-reference-canvas{
-  position:absolute!important;left:50%!important;top:50%!important;
-  width:100vw!important;max-width:100vw!important;height:auto!important;
-  aspect-ratio:3/2!important;max-height:none!important;
-  transform:translate(-50%,-50%)!important;
-  background-size:100% 100%!important;background-position:center center!important;
-  z-index:5!important;
- }
- #landing .climboria-hero-actions-v1{z-index:8!important}
-}
-</style>
-
-
 <!-- Premium full-viewport shell: sharp approved artwork over a matching cinematic ambient backdrop. -->
 <style id="climboria-premium-full-viewport-v6">
 html,body{width:100%;min-width:0;min-height:100%;margin:0!important;background:#061329!important}
