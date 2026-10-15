@@ -10008,7 +10008,7 @@ document.addEventListener("DOMContentLoaded",function(){
   --climboria-hero-width:clamp(280px,19vw,340px);
   --climboria-hero-height:clamp(420px,27vw,480px);
   --climboria-hero-left:clamp(170px,13vw,250px);
-  --climboria-hero-top:23%;
+  --climboria-hero-top:25%;
 }
 #landingHeroPreview{
   position:absolute!important;
@@ -10035,9 +10035,9 @@ document.addEventListener("DOMContentLoaded",function(){
   background:transparent!important;border:0!important;mix-blend-mode:normal!important;
   image-rendering:auto!important;
   /* restrained color/contrast correction plus grounded shadow; avoid changing face or artwork */
-  filter:brightness(1.025) saturate(1.035) contrast(1.025)
-    drop-shadow(0 2px 2px rgba(0,0,0,.20))
-    drop-shadow(0 7px 10px rgba(0,0,0,.20))!important;
+  filter:brightness(1.015) saturate(1.045) contrast(1.02)
+    drop-shadow(0 2px 3px rgba(4,12,22,.28))
+    drop-shadow(0 9px 13px rgba(4,12,22,.25))!important;
   z-index:1!important;
 }
 /* Ambient edge light subtly matches the cool mountain scene; clipped to the hero's silhouette. */
@@ -10052,7 +10052,7 @@ document.addEventListener("DOMContentLoaded",function(){
   }
   #landingHeroPreview::after{left:10%!important;right:10%!important;bottom:0!important;height:6%!important;filter:blur(6px)!important}
   #climboriaHeroCutout{
-    filter:brightness(1.035) saturate(1.035) contrast(1.02)
+    filter:brightness(1.025) saturate(1.045) contrast(1.02)
       drop-shadow(0 2px 2px rgba(0,0,0,.20))
       drop-shadow(0 6px 9px rgba(0,0,0,.22))!important;
   }
