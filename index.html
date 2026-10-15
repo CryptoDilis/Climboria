@@ -10518,6 +10518,47 @@ document.addEventListener("DOMContentLoaded",function(){
   }
 }
 </style>
+
+<!-- Visible responsive CTA fallback: artwork stays unchanged; controls are real HTML buttons. -->
+<style id="climboria-visible-cta-repair-v1">
+#landing .climboria-hero-actions-v1{
+ position:fixed!important;z-index:10020!important;display:block!important;
+ margin:0!important;padding:0!important;pointer-events:none!important;
+}
+#landing #startButton,#landing .climboria-reference-action{
+ position:absolute!important;top:80.5%!important;height:7.4%!important;min-height:44px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;margin:0!important;padding:0 8px!important;
+ border:1.5px solid #4d9bff!important;border-radius:8px!important;
+ background:linear-gradient(180deg,#102b50 0%,#06172e 100%)!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ font:800 clamp(10px,1.15vw,17px)/1.1 Arial,sans-serif!important;
+ letter-spacing:clamp(.4px,.08vw,1.2px)!important;text-shadow:0 1px 2px #000!important;
+ box-shadow:0 0 12px rgba(35,126,255,.24),inset 0 1px 0 rgba(255,255,255,.12)!important;
+ opacity:1!important;visibility:visible!important;transform:none!important;
+ pointer-events:auto!important;cursor:pointer!important;
+}
+#landing #startButton{
+ left:21.55%!important;width:18.2%!important;
+ border-color:#ffe29a!important;
+ background:linear-gradient(180deg,#ffe49a 0%,#f6b936 100%)!important;
+ color:#101521!important;-webkit-text-fill-color:#101521!important;
+ text-shadow:0 1px 0 rgba(255,255,255,.35)!important;
+ box-shadow:0 0 16px rgba(255,193,64,.38),inset 0 1px 0 rgba(255,255,255,.75)!important;
+}
+#landing .climboria-reference-action:nth-of-type(2){left:41%!important;width:18.2%!important}
+#landing .climboria-reference-action:nth-of-type(3){left:60.45%!important;width:18.2%!important}
+#landing #startButton:hover,#landing .climboria-reference-action:hover{filter:brightness(1.12)!important}
+#landing #startButton:focus-visible,#landing .climboria-reference-action:focus-visible{outline:2px solid #fff!important;outline-offset:3px!important}
+@media(max-width:700px){
+ #landing #startButton,#landing .climboria-reference-action{
+  top:78%!important;height:6.5%!important;min-height:36px!important;
+  font-size:clamp(9px,2.6vw,13px)!important;letter-spacing:0!important;
+  border-radius:6px!important;padding:0 2px!important;
+ }
+}
+</style>
+
 </body>
 </html>
 
