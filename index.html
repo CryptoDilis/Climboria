@@ -10559,6 +10559,71 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<!-- Independent visible CTA overlay v2: does not depend on the old action wrapper or its CSS. -->
+<script id="climboria-visible-cta-overlay-v2">
+(function(){
+ function mount(){
+  if(document.getElementById('climboria-visible-cta-overlay-v2-root'))return true;
+  var landing=document.getElementById('landing');
+  if(!landing)return false;
+  var root=document.createElement('div');
+  root.id='climboria-visible-cta-overlay-v2-root';
+  root.setAttribute('aria-label','Climboria main actions');
+  root.style.cssText='position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:2147483000!important;pointer-events:none!important;margin:0!important;padding:0!important;';
+  function make(label,index){
+   var b=document.createElement('button');
+   b.type='button';b.textContent=label;b.setAttribute('aria-label',label==='PLAY'?'Play Climboria':label==='TRADE'?'Trade (not connected yet)':'Create token (not connected yet)');
+   var left=[21.55,41.0,60.45][index];
+   b.style.cssText='position:absolute!important;left:'+left+'%!important;top:80.5%!important;width:18.2%!important;height:7.4%!important;min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;margin:0!important;padding:0 8px!important;border:1.5px solid '+(index===0?'#ffe29a':'#4d9bff')+'!important;border-radius:8px!important;background:'+(index===0?'linear-gradient(180deg,#ffe49a 0%,#f6b936 100%)':'linear-gradient(180deg,#102b50 0%,#06172e 100%)')+'!important;color:'+(index===0?'#101521':'#ffffff')+'!important;-webkit-text-fill-color:'+(index===0?'#101521':'#ffffff')+'!important;font:800 clamp(10px,1.15vw,17px)/1.1 Arial,sans-serif!important;letter-spacing:clamp(.4px,.08vw,1.2px)!important;text-shadow:0 1px 2px rgba(0,0,0,.4)!important;box-shadow:0 0 12px '+(index===0?'rgba(255,193,64,.4)':'rgba(35,126,255,.3)')+',inset 0 1px 0 rgba(255,255,255,.18)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;cursor:pointer!important;appearance:none!important;transform:none!important;';
+   if(index===0){
+    b.addEventListener('click',function(){
+     var original=document.getElementById('startButton');
+     if(original&&original!==b){original.click();return;}
+     var status=document.getElementById('status');
+     if(status){status.textContent='Game launch is not connected yet.';status.style.display='block';status.setAttribute('role','status');}
+    });
+   } else {
+    b.addEventListener('click',function(){
+     var status=document.getElementById('status');
+     var message=index===1?'TRADE — NOT CONNECTED YET. No official Climboria token or verified contract is available here.':'CREATE TOKEN — CREATOR TOOLS ARE NOT CONNECTED YET.';
+     if(status){status.textContent=message;status.style.display='block';status.setAttribute('role','status');}
+     else{
+      var note=document.getElementById('climboria-action-status-v1');
+      if(!note){note=document.createElement('div');note.id='climboria-action-status-v1';note.setAttribute('role','status');note.style.cssText='position:fixed!important;z-index:2147483001!important;left:50%!important;bottom:20px!important;transform:translateX(-50%)!important;max-width:90vw!important;padding:12px 16px!important;border:1px solid #f4c86a!important;border-radius:10px!important;background:#07152a!important;color:#fff!important;text-align:center!important;font:600 12px/1.5 sans-serif!important';document.body.appendChild(note);}
+      note.textContent=message;
+     }
+    });
+   }
+   root.appendChild(b);
+  }
+  make('PLAY',0);make('TRADE',1);make('CREATE TOKEN',2);
+  document.body.appendChild(root);
+  function responsive(){
+   var mobile=window.matchMedia('(max-width:700px)').matches;
+   root.querySelectorAll('button').forEach(function(b){
+    b.style.setProperty('top',mobile?'78%':'80.5%','important');
+    b.style.setProperty('height',mobile?'6.5%':'7.4%','important');
+    b.style.setProperty('min-height',mobile?'36px':'44px','important');
+    b.style.setProperty('font-size',mobile?'clamp(9px,2.6vw,13px)':'clamp(10px,1.15vw,17px)','important');
+    b.style.setProperty('letter-spacing',mobile?'0':'clamp(.4px,.08vw,1.2px)','important');
+    b.style.setProperty('border-radius',mobile?'6px':'8px','important');
+    b.style.setProperty('padding',mobile?'0 2px':'0 8px','important');
+   });
+  }
+  responsive();window.addEventListener('resize',responsive,{passive:true});
+  return true;
+ }
+ function init(){
+  if(mount())return;
+  var observer=new MutationObserver(function(){if(mount())observer.disconnect();});
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  var attempts=0;(function retry(){if(mount()){observer.disconnect();return;}if(++attempts<80)setTimeout(retry,250);else observer.disconnect();})();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
 
