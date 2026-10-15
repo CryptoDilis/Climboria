@@ -47,7 +47,7 @@ The design goal is to keep free progression viable. Players should be able to ea
 
 Climboria is designed as **free-to-play**, with a planned **play-to-earn** layer. “Play-to-earn” describes a possible reward model, not guaranteed income. Rewards may depend on game performance, eligibility, event rules, available funding, anti-cheat review, token launch readiness and applicable restrictions.
 
-CLIMB Points are intended as off-chain progression points. They are not currently a token, are not freely transferable, and do not guarantee cash, tokens, NFTs, a future airdrop, or any financial value. Campaigns, giveaways and event prizes should only be announced when funded and accompanied by clear eligibility, timing, scoring and payout rules.
+CLIMB Points are intended as off-chain progression points. They are not currently a token, are not freely transferable, and do not guarantee cash, tokens, NFTs, a future token distribution, or any financial value. Campaigns, giveaways and event prizes should only be announced when funded and accompanied by clear eligibility, timing, scoring and payout rules.
 
 ## 5. Items, Forge and NFTs
 
