@@ -50,6 +50,29 @@ The former November 1 airdrop campaign target is removed from the tokenomics pla
 
 The previous percentage pie chart (20% community/airdrop, 20% gameplay, 15% liquidity, 15% treasury, 10% development, 10% team, 5% marketing, 3% partnerships, 2% security) is retired and must not be presented as reserved supply or a commitment for a standard Pump.fun launch.
 
+## Game economy and season-end rewards
+
+Climboria's long-term reward loop is funded by the game economy, not a promised pre-launch airdrop.
+
+### Season leaderboard rewards
+- When a season's ranking is finalized, the planned season reward pool is **3% of eligible marketplace sales** generated during that season.
+- The planned events/community pool is **2% of eligible marketplace sales**.
+- These are proposed game-economy rules and apply only after the marketplace and accounting are implemented. They are not percentages of $CLIMB token supply, Pump.fun trading volume, or creator fees.
+- Publish the exact eligible transaction types, calculation basis, exclusions, season cutoff, anti-wash-trading checks, and reward distribution rules before a season starts.
+- Do not promise a fixed prize amount until eligible sales actually occur and the pool is calculated.
+- The earlier season structure: top 25 players receive a free mint badge; ranks 26–100 receive free ingredients. Badge utility, mint network, and marketability depend on implementation and final rules.
+- Rewards must be funded from actual collected game fees/sales and reconciled publicly; never spend the same fee revenue twice.
+
+### Marketplace, Forge, and Refine fees
+- **Marketplace transaction fee:** may contribute to the season and events/community pools according to the published fee policy.
+- **Forge fee:** may be charged separately from blockchain gas and may vary by item rarity; any fee share used for rewards must be stated before launch.
+- **Refine:** the previously discussed design was free refining, with a risk that ingredients can be permanently consumed/destroyed. Therefore, no refining-fee revenue is assumed in this version. If a refining fee is introduced later, update the economy rules and disclose it before implementation.
+- **Network gas:** player-paid chain gas is separate from Climboria's game fee. Do not label gas as project revenue.
+- Keep fees affordable, show them before confirmation, and log transactions so players can audit season-pool calculations.
+
+### Important separation
+These game-economy rewards are distinct from $CLIMB tokenomics and from community giveaways. They do not require a dedicated pre-launch airdrop campaign. Any conversion of game rewards into $CLIMB or other transferable assets requires a separately funded, published, and reviewed plan.
+
 ## Launch readiness checks
 
 Before announcing a launch, verify:
