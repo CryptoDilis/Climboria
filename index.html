@@ -10306,5 +10306,25 @@ document.addEventListener("DOMContentLoaded",function(){
 })();
 </script>
 
+
+<!-- V1.1 cascade and viewport hardening: these rules intentionally follow all legacy overrides -->
+<style id="climboria-reference-homepage-hardening-v1">
+#landing:before{display:block!important;content:""!important}
+#landing:after{display:none!important}
+#landing .panel>.logo,#landing .panel>.sub{display:block!important}
+#cryptoTicker{display:block!important;visibility:visible!important}
+#landing #startButton{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:5!important;flex:1 1 0!important}
+#landing .climboria-hero-actions-v1{position:relative!important;z-index:5!important}
+#landing .cd-hero-actions{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
+#landing .logo,#landing .sub{pointer-events:none!important}
+#landing #landingHeroPreview{z-index:1!important}
+#landing .climboria-hero-actions-v1,#landing .cd-hero-actions{pointer-events:auto!important}
+@media(max-width:700px){
+ #landing .panel>.logo{margin-top:clamp(30px,7vh,64px)!important}
+ #landing .climboria-hero-actions-v1{position:absolute!important;left:50%!important;right:auto!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;top:auto!important;transform:translateX(-50%)!important}
+ #landing #startButton{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;top:auto!important}
+}
+</style>
+
 </body>
 </html>
