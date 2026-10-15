@@ -10465,8 +10465,9 @@ document.addEventListener("DOMContentLoaded",function(){
 (function(){
  function fitApprovedReference(){
   var landing=document.getElementById('landing');
-  var actions=landing&&landing.querySelector('.climboria-hero-actions-v1');
-  if(!landing||!actions)return;
+  if(!landing)return false;
+  var actions=landing.querySelector('.climboria-hero-actions-v1');
+  if(!actions)return false;
   var canvas=document.getElementById('climboria-reference-canvas');
   if(!canvas){
    canvas=document.createElement('div');
@@ -10475,11 +10476,24 @@ document.addEventListener("DOMContentLoaded",function(){
    landing.insertBefore(canvas,landing.firstChild);
   }
   if(actions.parentNode!==canvas)canvas.appendChild(actions);
+  return true;
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fitApprovedReference);
- else fitApprovedReference();
-})();
-</script>
+ function initialize(){
+  if(fitApprovedReference())return;
+  var observer=new MutationObserver(function(){
+   if(fitApprovedReference())observer.disconnect();
+  });
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  var attempts=0;
+  (function retry(){
+   if(fitApprovedReference()){observer.disconnect();return;}
+   if(++attempts<40)setTimeout(retry,250);
+   else observer.disconnect();
+  })();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);
+ else initialize();
+})();</script>
 
 </body>
 </html>
