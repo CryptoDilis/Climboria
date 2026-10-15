@@ -9736,6 +9736,8 @@ document.addEventListener("DOMContentLoaded",function(){
    btn.addEventListener("click",function(){
     var action=btn.getAttribute("data-cd-action");
     if(action==="home"){window.showMenu&&window.showMenu();return;}
+    if(action==="overview"){window.location.href="./overview/";return;}
+    if(action==="roadmap"){window.location.href="./overview/#roadmap";return;}
     if(action==="play"||action==="points"){var start=document.getElementById("startButton");if(start)start.click();return;}
     if(action==="levels"){var levels=document.getElementById("levelSelect");if(typeof window.showLevelSelect==="function")window.showLevelSelect();else if(levels){landing.style.display="none";levels.style.display="flex";}return;}
     if(action==="launch"){var launch=document.getElementById("launchpad");if(launch){landing.style.display="none";launch.style.display="flex";}return;}
@@ -10223,7 +10225,9 @@ document.addEventListener("DOMContentLoaded",function(){
    if(action==='play'){close();var start=document.getElementById('startButton');if(start)start.click();return;}
    if(action==='leaderboard'){close();var msg=document.getElementById('status');if(msg){msg.textContent='LEADERBOARD — NOT CONNECTED YET';msg.style.display='block';}return;}
    if(action==='login'||action==='signup'){e.preventDefault();var msg=document.getElementById('status');if(msg){msg.textContent=action.toUpperCase()+' — ACCOUNT SYSTEM NOT CONNECTED YET';msg.style.display='block';}return;}
-   if(['overview','roadmap','tokenomics','whitepaper'].indexOf(action)!==-1){e.preventDefault();close();showInfo(action);}
+   if(action==='overview'){e.preventDefault();close();window.location.href='./overview/';return;}
+   if(action==='roadmap'){e.preventDefault();close();window.location.href='./overview/#roadmap';return;}
+   if(['tokenomics','whitepaper'].indexOf(action)!==-1){e.preventDefault();close();showInfo(action);}
   });
   function showInfo(action){
    var existing=document.getElementById('climboria-info-dialog');if(existing)existing.remove();
