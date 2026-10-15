@@ -177,7 +177,7 @@ jobs:
               // Check the reference asset directly. The landing root is transient during
               // responsive/game boot, so do not re-query it as a second condition here.
               const mobileReferenceState = await mobile.evaluate(async () => {
-                const response = await fetch(new URL('./climboria-homepage-reference.png.png', location.href));
+                const response = await fetch(new URL('./climboria-homepage.png', location.href));
                 const blob = response.ok ? await response.blob() : null;
                 const landing = document.getElementById('landing');
                 const rect = landing?.getBoundingClientRect();
