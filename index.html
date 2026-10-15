@@ -10476,7 +10476,9 @@ document.addEventListener("DOMContentLoaded",function(){
   // Create the artwork canvas as soon as the landing root exists. The CTA
   // script may mount its action wrapper later, especially on mobile.
   var actions=landing.querySelector('.climboria-hero-actions-v1');
-  if(actions&&actions.parentNode!==canvas)canvas.appendChild(actions);
+  // Keep interactive controls outside the pointer-transparent artwork canvas.
+  // This prevents the image layer from swallowing taps/clicks on some browsers.
+  if(actions&&actions.parentNode!==landing)landing.appendChild(actions);
   return !!actions;
  }
  function initialize(){
@@ -10517,7 +10519,7 @@ document.addEventListener("DOMContentLoaded",function(){
 /* Keep the reference image and its transparent, accurately positioned CTA hit areas above legacy UI. */
 #landing{position:fixed!important;inset:0!important;overflow:hidden!important;background:#07152a!important;isolation:isolate!important}
 #landing #climboria-reference-canvas{
- position:absolute!important;z-index:5!important;left:50%!important;top:50%!important;
+ position:absolute!important;z-index:1!important;left:50%!important;top:50%!important;
  width:min(100vw,269.473684dvh)!important;aspect-ratio:2048/760!important;
  height:auto!important;max-width:100vw!important;max-height:100dvh!important;
  transform:translate(-50%,-50%)!important;
@@ -10540,7 +10542,7 @@ document.addEventListener("DOMContentLoaded",function(){
 #landing .panel>.logo,#landing .panel>.sub,#landing #landingHeroPreview,
 #cryptoTicker{display:none!important}
 #landing .climboria-hero-actions-v1{
- position:absolute!important;inset:0!important;z-index:8!important;
+ position:fixed!important;inset:0!important;z-index:10020!important;
  display:block!important;width:100%!important;height:100%!important;
  margin:0!important;padding:0!important;transform:none!important;
  pointer-events:none!important;
@@ -10560,7 +10562,7 @@ document.addEventListener("DOMContentLoaded",function(){
  outline:3px solid #ffe7a0!important;outline-offset:2px!important
 }
 @media(max-width:700px){
- #landing #climboria-reference-canvas{width:min(100vw,269.473684dvh)!important;max-width:100vw!important;top:42%!important}
+ #landing #climboria-reference-canvas{width:min(100vw,269.473684dvh)!important;max-width:100vw!important;top:50%!important}
  #landing #startButton,#landing .climboria-reference-action{min-height:44px!important}
 }
 @media(prefers-reduced-motion:reduce){
