@@ -30,6 +30,58 @@
     .notice{margin-top:18px;padding:15px 17px;border:1px solid #f4c86a4a;border-radius:12px;background:#f4c86a0b;color:#e8d7ad;font-size:12px}.notice strong{color:#ffe19a}
     footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:30px;padding-top:18px;border-top:1px solid #ffffff18;color:#8395aa;font-size:10px}footer a{color:#c7d7e8}
     @media(max-width:720px){.shell{padding:12px 12px 30px}header{padding-bottom:18px}.grid{grid-template-columns:1fr}.roadmap{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.hero{border-radius:16px}.brand strong{font-size:14px}.actions .btn{flex:1}.card{padding:16px}}
+
+    /* Premium roadmap presentation — uses the existing official cinematic artwork unchanged. */
+    .roadmap-section{scroll-margin-top:24px}
+    .roadmap-heading{align-items:end;gap:28px;margin-bottom:20px}
+    .roadmap-heading h2{font-size:clamp(29px,4.5vw,44px);line-height:1.08;letter-spacing:-1.4px;margin-top:8px}
+    .roadmap-heading>p{max-width:390px;font-size:12px;line-height:1.8}
+    .roadmap-feature{display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);align-items:stretch;overflow:hidden;border:1px solid #a6cce42b;border-radius:20px;background:linear-gradient(125deg,#10243a,#081321 72%);box-shadow:0 22px 65px #0005}
+    .roadmap-feature-copy{padding:clamp(22px,4vw,40px);align-self:center}
+    .roadmap-kicker{display:inline-flex;align-items:center;gap:9px;color:#f4c86a;font-size:9px;font-weight:900;letter-spacing:2px}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:#f4c86a;box-shadow:0 0 12px #f4c86a99}
+    .roadmap-feature-copy h3{max-width:460px;font-size:clamp(23px,3.4vw,36px);line-height:1.12;letter-spacing:-1px;margin:17px 0 12px}
+    .roadmap-feature-copy>p{max-width:480px;color:#b5c5d6;font-size:12px;line-height:1.9;margin:0}
+    .roadmap-principles{display:grid;gap:8px;margin-top:23px;padding-top:17px;border-top:1px solid #ffffff16}
+    .roadmap-principles span{font-size:9px;font-weight:900;letter-spacing:1.3px;color:#d2deea}
+    .roadmap-principles span:first-child{color:#f4c86a}
+    .roadmap-art{margin:0;min-width:0;display:flex;flex-direction:column;justify-content:center;background:#07111d;border-left:1px solid #ffffff12}
+    .roadmap-art img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+    .roadmap-art figcaption{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;border-top:1px solid #ffffff12;color:#91a6bb;font-size:8px;font-weight:900;letter-spacing:1.7px}
+    .roadmap-art figcaption span{color:#f4c86a}
+    .roadmap-subhead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin:34px 0 15px}
+    .roadmap-subhead h3{font-size:22px;letter-spacing:-.5px;margin:5px 0 0}
+    .roadmap-subhead>p{max-width:330px;margin:0;color:var(--muted);font-size:11px}
+    .roadmap-section .roadmap{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .roadmap-section .roadmap-step{position:relative;align-items:flex-start;gap:15px;padding:20px;border-radius:15px;background:linear-gradient(145deg,#102034,#091421 82%);border-color:#a3c4df20;min-width:0;transition:border-color .2s,transform .2s}
+    .roadmap-section .roadmap-step:hover{border-color:#f4c86a65;transform:translateY(-2px)}
+    .roadmap-section .roadmap-step-focus{border-color:#f4c86a68;background:linear-gradient(145deg,#182a3c,#0b1725 82%)}
+    .roadmap-section .num{flex:0 0 39px;height:39px;border-radius:11px;font-size:13px;background:linear-gradient(145deg,#f4c86a20,#f4c86a08);border-color:#f4c86a55;box-shadow:inset 0 1px #ffffff10}
+    .roadmap-section .step-copy{min-width:0}
+    .roadmap-section .step-label{display:block;margin:2px 0 8px;color:#8ca6bf;font-size:8px;font-weight:900;letter-spacing:1.6px}
+    .roadmap-section .roadmap-step-focus .step-label{color:#f4c86a}
+    .roadmap-section .step h3{font-size:14px;line-height:1.4;margin:0 0 7px}
+    .roadmap-section .step p{font-size:11px;line-height:1.8;color:#aabbd0}
+    .step-outcome{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;padding-top:11px;border-top:1px solid #ffffff12;color:#7189a1;font-size:8px;font-weight:900;letter-spacing:1px}
+    .step-outcome b{color:#dce7f3;font-weight:800;letter-spacing:.2px}
+    .roadmap-footnote{display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:16px 18px;border:1px solid #f4c86a35;border-radius:13px;background:linear-gradient(110deg,#f4c86a0d,#091421)}
+    .roadmap-footnote-mark{flex:0 0 23px;height:23px;display:grid;place-items:center;border:1px solid #f4c86a55;border-radius:50%;color:#f4c86a;font-size:12px;font-weight:900}
+    .roadmap-footnote p{margin:0;color:#b4c2d2;font-size:10px;line-height:1.8}
+    .roadmap-footnote strong{color:#ffe09a}
+    @media(max-width:720px){
+      .roadmap-heading{align-items:start;flex-direction:column;gap:9px}
+      .roadmap-feature{grid-template-columns:1fr;border-radius:16px}
+      .roadmap-feature-copy{padding:23px 20px 19px}
+      .roadmap-feature-copy h3{font-size:27px}
+      .roadmap-art{border-left:0;border-top:1px solid #ffffff12}
+      .roadmap-art img{width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+      .roadmap-subhead{align-items:start;flex-direction:column;gap:7px;margin-top:27px}
+      .roadmap-section .roadmap{grid-template-columns:1fr;gap:10px}
+      .roadmap-section .roadmap-step{padding:17px}
+      .roadmap-principles{grid-template-columns:1fr}
+    }
+    @media(prefers-reduced-motion:reduce){.roadmap-section .roadmap-step{transition:none}.roadmap-section .roadmap-step:hover{transform:none}}
+
   </style>
 </head>
 <body>
@@ -92,23 +144,40 @@
       </div>
     </section>
 
-    <section class="section" id="roadmap" aria-labelledby="roadmap-title">
-      <div class="section-head"><h2 id="roadmap-title">Development roadmap</h2><p>Priorities may change as testing reveals what needs attention.</p></div>
-      <div class="roadmap">
-        <article class="step"><span class="num">01</span><div><h3>Stabilize the core game</h3><p>Prioritize reliable gameplay, controls, camera behavior, readable mobile layouts, and a smooth browser experience.</p></div></article>
-        <article class="step"><span class="num">02</span><div><h3>Expand levels and seasons</h3><p>Improve level selection and progression, then develop season rules, leaderboard scoring, and competitive events.</p></div></article>
-        <article class="step"><span class="num">03</span><div><h3>Build crafting and player systems</h3><p>Design the Forge and refine loops, inventory, tools, ingredients, skins, badges, profiles, and achievement records.</p></div></article>
-        <article class="step"><span class="num">04</span><div><h3>Connect community features</h3><p>Develop CLIMB Points, daily streaks, referrals, event tracking, and transparent reward eligibility rules.</p></div></article>
-        <article class="step"><span class="num">05</span><div><h3>Build the social lobby</h3><p>Create a shared hangout with chat, friend discovery, player profiles, skin and badge showcases, and a safe path toward player-to-player trading.</p></div></article>
-        <article class="step"><span class="num">06</span><div><h3>Build multi-chain foundations</h3><p>Start with the initial Solana focus, evaluate Base later, and research secure cross-chain swaps, liquidity routing, wallet support, and supply/accounting safeguards before adding more networks.</p></div></article>
-        <article class="step"><span class="num">07</span><div><h3>Prepare the Climboria mobile app</h3><p>Polish the browser game, mobile controls, and core levels first, then package and test an app release. Store submission and availability will be announced only when ready.</p></div></article>
-        <article class="step"><span class="num">08</span><div><h3>Work toward Climboria DEX</h3><p>Move beyond the temporary swap concept toward a dedicated Climboria DEX only after architecture, liquidity, security, and operational requirements are met.</p></div></article>
+    <section class="section roadmap-section" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="section-head roadmap-heading">
+        <div><div class="eyebrow">THE CLIMBORIA PLAN</div><h2 id="roadmap-title">Built with purpose.<br>Expanded in stages.</h2></div>
+        <p>A game-first roadmap focused on quality, clear milestones, and responsible ecosystem growth. Priorities may evolve as development and testing progress.</p>
       </div>
+
+      <div class="roadmap-feature">
+        <div class="roadmap-feature-copy">
+          <span class="roadmap-kicker"><span class="status-dot"></span> DEVELOPMENT ROADMAP</span>
+          <h3>Every summit starts with a solid foundation.</h3>
+          <p>First, make the climbing experience feel right on desktop and mobile. Then expand progression, bring players together, and carefully build the wider Climboria ecosystem when each piece is ready.</p>
+          <div class="roadmap-principles"><span>01 / GAMEPLAY FIRST</span><span>02 / COMMUNITY NEXT</span><span>03 / WEB3 WHEN READY</span></div>
+        </div>
+        <figure class="roadmap-art">
+          <img src="../climboria-cinematic-summit.svg" alt="Climboria cinematic alpine summit at golden hour" width="1920" height="1080" loading="eager" decoding="async">
+          <figcaption>THE ASCENT CONTINUES <span>CLIMBORIA</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="roadmap-subhead"><div><span class="eyebrow">MILESTONES</span><h3>The path ahead</h3></div><p>No artificial deadlines. Each stage moves forward as the work is ready.</p></div>
+      <div class="roadmap">
+        <article class="step roadmap-step roadmap-step-focus"><div class="num">01</div><div class="step-copy"><span class="step-label">FOUNDATION</span><h3>Stabilize the core game</h3><p>Prioritize reliable gameplay, responsive controls, a camera that keeps the climber in view, readable mobile layouts, and a smooth browser experience.</p><span class="step-outcome">OUTCOME <b>A stronger, playable core</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">02</div><div class="step-copy"><span class="step-label">GAME CONTENT</span><h3>Expand levels and seasons</h3><p>Improve level selection and progression, then design seasonal rules, leaderboard scoring, competitive events, and clear ranking criteria.</p><span class="step-outcome">OUTCOME <b>More reasons to climb</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">03</div><div class="step-copy"><span class="step-label">PLAYER PROGRESSION</span><h3>Build Forge and inventory systems</h3><p>Develop the Forge and refine loops, materials, tools, skins, badges, player profiles, and achievement records with understandable in-game rules.</p><span class="step-outcome">OUTCOME <b>Deeper player progression</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">04</div><div class="step-copy"><span class="step-label">COMMUNITY</span><h3>Connect events and rewards</h3><p>Plan CLIMB Points, daily streaks, referrals, event tracking, and transparent eligibility rules before any rewards are distributed.</p><span class="step-outcome">OUTCOME <b>Clear participation systems</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">05</div><div class="step-copy"><span class="step-label">SOCIAL EXPERIENCE</span><h3>Create the Social Lobby</h3><p>Build a shared hangout for chat, meeting friends, player profiles, and showcasing skins and badges, with privacy and moderation considered from the start.</p><span class="step-outcome">OUTCOME <b>A place to meet climbers</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">06</div><div class="step-copy"><span class="step-label">BLOCKCHAIN FOUNDATIONS</span><h3>Build toward multi-chain support</h3><p>Keep Solana as the initial focus and consider Base later. Research wallet support, liquidity routing, cross-chain security, and supply/accounting safeguards before expanding networks.</p><span class="step-outcome">OUTCOME <b>Careful, staged integration</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">07</div><div class="step-copy"><span class="step-label">MOBILE</span><h3>Prepare the Climboria app</h3><p>Polish the browser experience and touch controls first, then package and test a dedicated app. Platform availability will be announced only when a release is ready.</p><span class="step-outcome">OUTCOME <b>A tested mobile experience</b></span></div></article>
+        <article class="step roadmap-step"><div class="num">08</div><div class="step-copy"><span class="step-label">LONG-TERM ECOSYSTEM</span><h3>Work toward the Climboria DEX</h3><p>Move beyond the temporary swap concept toward a dedicated DEX only after architecture, liquidity, wallet compatibility, security, and operational requirements are met.</p><span class="step-outcome">OUTCOME <b>A responsible DEX foundation</b></span></div></article>
+      </div>
+      <div class="roadmap-footnote"><span class="roadmap-footnote-mark">i</span><p><strong>Transparency matters.</strong> These milestones describe the direction of development, not a promise that every feature is live or has a fixed release date. The mobile app, Social Lobby, marketplace, multi-chain support, and Climboria DEX remain future plans until officially released. No verified official $CLIM mint address is configured on this overview; beware of unofficial tokens.</p></div>
     </section>
 
-    <div class="notice"><strong>Transparency matters:</strong> These are project goals and planned systems, not a claim that every feature is live. Climboria has not configured a verified official $CLIM mint address on this overview. Do not treat a ticker or third-party listing as proof of an official token launch. Official contract details, reward terms, and launch announcements will be published only after verification.</div>
-
-    <footer><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="../">Back to the game</a> · <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a></span></footer>
+        <footer><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="../">Back to the game</a> · <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a></span></footer>
   </main>
 </body>
 </html>
