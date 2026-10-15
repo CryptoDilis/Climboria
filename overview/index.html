@@ -82,6 +82,30 @@
     }
     @media(prefers-reduced-motion:reduce){.roadmap-section .roadmap-step{transition:none}.roadmap-section .roadmap-step:hover{transform:none}}
 
+
+    /* Premium overview visual: reuse the official artwork unchanged. */
+    .overview-visual{position:relative;isolation:isolate;overflow:hidden;margin-top:18px;border:1px solid #9cc5e52b;border-radius:20px;background:#07111d;box-shadow:0 24px 70px #0005}
+    .overview-visual>img{display:block;width:100%;height:auto;aspect-ratio:16/7;object-fit:cover;object-position:center 46%;filter:saturate(.98) contrast(1.02)}
+    .overview-visual:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,#06111ce8 0%,#07121c99 38%,#07121c08 76%),linear-gradient(0deg,#06111ce8 0%,transparent 58%)}
+    .overview-visual-caption{position:absolute;z-index:1;inset:auto 0 0;display:flex;align-items:end;gap:17px;padding:clamp(18px,4vw,34px)}
+    .visual-line{align-self:stretch;flex:0 0 3px;min-height:62px;background:linear-gradient(#ffe4a0,#d99e36);box-shadow:0 0 22px #f4c86a35}
+    .overview-visual-caption .eyebrow{font-size:9px;letter-spacing:2px}
+    .overview-visual-caption h2{margin-top:6px;font-size:clamp(23px,4vw,39px);line-height:1.06;letter-spacing:-1.2px;text-shadow:0 2px 20px #0008}
+    .visual-index{margin-left:auto;padding-bottom:3px;color:#d3deea;font-size:8px;font-weight:900;letter-spacing:1.5px;white-space:nowrap}
+    .icon{width:34px;height:3px;margin-bottom:15px;border-radius:4px;background:linear-gradient(90deg,var(--gold),#77c7ff);box-shadow:0 0 15px #f4c86a1f}
+    .card{position:relative;overflow:hidden}
+    .card:after{content:"";position:absolute;top:0;right:0;width:72px;height:72px;pointer-events:none;background:radial-gradient(circle at top right,#77c7ff0c,transparent 72%)}
+    @media(max-width:720px){
+      .overview-visual{margin-top:12px;border-radius:15px}
+      .overview-visual>img{aspect-ratio:4/3;object-fit:cover;object-position:center 48%}
+      .overview-visual:after{background:linear-gradient(0deg,#06111cf2 0%,#07121c66 48%,#07121c00 100%)}
+      .overview-visual-caption{gap:11px;padding:17px 15px}
+      .overview-visual-caption h2{font-size:25px}
+      .overview-visual-caption .eyebrow{font-size:8px;letter-spacing:1.4px}
+      .visual-index{font-size:7px;letter-spacing:1px;white-space:normal;max-width:74px;text-align:right}
+      .visual-line{min-height:52px}
+    }
+
   </style>
 </head>
 <body>
@@ -98,49 +122,54 @@
       <div class="actions"><a class="btn primary" href="../">PLAY CLIMBORIA</a><a class="btn" href="#roadmap">EXPLORE THE PLAN ↓</a></div>
     </section>
 
+    <section class="overview-visual" aria-label="Climboria mountain artwork">
+      <img src="../climboria-homepage.png" alt="Official Climboria mountain artwork" width="1920" height="1080" loading="eager" decoding="async">
+      <div class="overview-visual-caption"><span class="visual-line"></span><div><span class="eyebrow">THE CLIMBORIA EXPERIENCE</span><h2>Earn every ascent.</h2></div><span class="visual-index">01 — THE JOURNEY</span></div>
+    </section>
+
     <section class="section" aria-labelledby="vision-title">
       <div class="section-head"><h2 id="vision-title">The game comes first</h2><p>Game first. Speculation later.</p></div>
       <div class="grid">
-        <article class="card"><div class="icon" aria-hidden="true">⛰️</div><h3>Browser climbing game</h3><p>A climbing experience designed for web browsers, with mobile and desktop play in mind. The aim is to make the core game fun and accessible without requiring crypto.</p><span class="tag active">CORE EXPERIENCE</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🧗</div><h3>Levels and progression</h3><p>Progress through challenging climbs, learn the mechanics, improve your runs, and work toward more mountain themes and level content over time.</p><span class="tag planned">EXPANDING</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">📱</div><h3>Dedicated mobile app</h3><p>A Climboria app is planned for the future. The priority is to polish gameplay and touch controls first, then prepare and test a mobile release before announcing platform availability.</p><span class="tag planned">FUTURE PLAN · NOT RELEASED</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🏆</div><h3>Seasons and rankings</h3><p>Seasonal competition is planned, including leaderboards and a Top 100 ranking concept. Season rules, scoring, and eligibility must be published before rewards go live.</p><span class="tag planned">PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Browser climbing game</h3><p>A climbing experience designed for web browsers, with mobile and desktop play in mind. The aim is to make the core game fun and accessible without requiring crypto.</p><span class="tag active">CORE EXPERIENCE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Levels and progression</h3><p>Progress through challenging climbs, learn the mechanics, improve your runs, and work toward more mountain themes and level content over time.</p><span class="tag planned">EXPANDING</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Dedicated mobile app</h3><p>A Climboria app is planned for the future. The priority is to polish gameplay and touch controls first, then prepare and test a mobile release before announcing platform availability.</p><span class="tag planned">FUTURE PLAN · NOT RELEASED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Seasons and rankings</h3><p>Seasonal competition is planned, including leaderboards and a Top 100 ranking concept. Season rules, scoring, and eligibility must be published before rewards go live.</p><span class="tag planned">PLANNED</span></article>
       </div>
     </section>
 
     <section class="section" aria-labelledby="forge-title">
       <div class="section-head"><h2 id="forge-title">Forge, refine, and collect</h2><p>Progression beyond the climb.</p></div>
       <div class="grid">
-        <article class="card"><div class="icon" aria-hidden="true">⚒️</div><h3>Forge and refine</h3><p>Gather or earn materials and ingredients, then use a future Forge system to craft, upgrade, or refine climbing tools and equipment. Recipes, costs, and success rules will be defined in-game before launch.</p><span class="tag planned">PLANNED SYSTEM</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🧰</div><h3>Tools, skins, and inventory</h3><p>Future player profiles and inventories may track tools, equipment, ingredients, character skins, and progression records, giving players ways to personalize their climb.</p><span class="tag planned">PLANNED SYSTEM</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🎖️</div><h3>Badges and achievements</h3><p>Badges are envisioned as achievement and season recognition items, with rarity tiers and special recognition for top-ranked players. Some badges may later support ecosystem voting, with clear rules and no governance rights implied until implemented.</p><span class="tag planned">PLANNED SYSTEM</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Forge and refine</h3><p>Gather or earn materials and ingredients, then use a future Forge system to craft, upgrade, or refine climbing tools and equipment. Recipes, costs, and success rules will be defined in-game before launch.</p><span class="tag planned">PLANNED SYSTEM</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Tools, skins, and inventory</h3><p>Future player profiles and inventories may track tools, equipment, ingredients, character skins, and progression records, giving players ways to personalize their climb.</p><span class="tag planned">PLANNED SYSTEM</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Badges and achievements</h3><p>Badges are envisioned as achievement and season recognition items, with rarity tiers and special recognition for top-ranked players. Some badges may later support ecosystem voting, with clear rules and no governance rights implied until implemented.</p><span class="tag planned">PLANNED SYSTEM</span></article>
       </div>
     </section>
 
     <section class="section" aria-labelledby="community-title">
       <div class="section-head"><h2 id="community-title">Community and rewards</h2><p>Participation should be clear and fair.</p></div>
       <div class="grid">
-        <article class="card"><div class="icon" aria-hidden="true">⭐</div><h3>CLIMB Points and streaks</h3><p>A planned progression layer may include CLIMB Points, daily streaks, and challenges to recognize activity. Points are not a promise of token value, cash, or an airdrop.</p><span class="tag planned">PLANNED</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🤝</div><h3>Referrals and events</h3><p>Referral features and community events are planned to help players invite friends and compete together. Eligibility and anti-abuse rules should be shared before any rewards are distributed.</p><span class="tag planned">PLANNED</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🎁</div><h3>Reward and airdrop tracker</h3><p>A future tracker may show event participation or reward eligibility. No airdrop, allocation, or payout is guaranteed unless officially announced with published terms.</p><span class="tag planned">NOT A GUARANTEE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>CLIMB Points and streaks</h3><p>A planned progression layer may include CLIMB Points, daily streaks, and challenges to recognize activity. Points are not a promise of token value, cash, or an airdrop.</p><span class="tag planned">PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Referrals and events</h3><p>Referral features and community events are planned to help players invite friends and compete together. Eligibility and anti-abuse rules should be shared before any rewards are distributed.</p><span class="tag planned">PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Reward and airdrop tracker</h3><p>A future tracker may show event participation or reward eligibility. No airdrop, allocation, or payout is guaranteed unless officially announced with published terms.</p><span class="tag planned">NOT A GUARANTEE</span></article>
       </div>
     </section>
 
     <section class="section" aria-labelledby="lobby-title">
       <div class="section-head"><h2 id="lobby-title">Social Lobby & Trading Hangout</h2><p>A place to meet, show off, and connect.</p></div>
       <div class="grid">
-        <article class="card"><div class="icon" aria-hidden="true">🧑‍🤝‍🧑</div><h3>Meet and make friends</h3><p>A planned shared lobby where climbers can hang out, chat, meet new friends, and find other players between climbs. Social tools will need clear privacy and moderation controls.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">✨</div><h3>Show your best look</h3><p>Showcase your favorite character skins, tools, and earned badges on your player profile or in the lobby, so other climbers can see your style and achievements.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🔄</div><h3>Trade with other players</h3><p>The long-term social hub may connect to a player marketplace for eligible skins, tools, ingredients, and badges. Trading will only be enabled after item rules, ownership, and transaction safety are implemented.</p><span class="tag planned">PLANNED · NOT LIVE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Meet and make friends</h3><p>A planned shared lobby where climbers can hang out, chat, meet new friends, and find other players between climbs. Social tools will need clear privacy and moderation controls.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Show your best look</h3><p>Showcase your favorite character skins, tools, and earned badges on your player profile or in the lobby, so other climbers can see your style and achievements.</p><span class="tag planned">FUTURE SOCIAL FEATURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Trade with other players</h3><p>The long-term social hub may connect to a player marketplace for eligible skins, tools, ingredients, and badges. Trading will only be enabled after item rules, ownership, and transaction safety are implemented.</p><span class="tag planned">PLANNED · NOT LIVE</span></article>
       </div>
     </section>
 
     <section class="section" aria-labelledby="market-title">
       <div class="section-head"><h2 id="market-title">The wider Climboria ecosystem</h2><p>Built in stages, not all at once.</p></div>
       <div class="grid">
-        <article class="card"><div class="icon" aria-hidden="true">🛒</div><h3>Marketplace</h3><p>A future marketplace may support eligible tools, ingredients, skins, and badges. Tradability, ownership, fees, and supported networks will depend on implementation and published rules.</p><span class="tag planned">FUTURE</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🔁</div><h3>Temporary swap → Climboria DEX</h3><p>The current swap concept is only a temporary stepping stone. The long-term vision is our own Climboria DEX, growing toward multi-chain trading so users can swap supported assets from different blockchains in one place. Each network will be added only when integrations, liquidity, and security checks are ready.</p><span class="tag planned">FUTURE VISION · NOT LIVE</span></article>
-        <article class="card"><div class="icon" aria-hidden="true">🌐</div><h3>Multi-chain vision</h3><p>Climboria aims to expand beyond a single blockchain over time. Solana is the initial focus, Base is a later consideration, and additional networks may follow as secure cross-chain infrastructure, supported assets, and liquidity become available. “Multi-chain” does not mean every chain is supported at launch.</p><span class="tag planned">PHASED EXPANSION</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Marketplace</h3><p>A future marketplace may support eligible tools, ingredients, skins, and badges. Tradability, ownership, fees, and supported networks will depend on implementation and published rules.</p><span class="tag planned">FUTURE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Temporary swap → Climboria DEX</h3><p>The current swap concept is only a temporary stepping stone. The long-term vision is our own Climboria DEX, growing toward multi-chain trading so users can swap supported assets from different blockchains in one place. Each network will be added only when integrations, liquidity, and security checks are ready.</p><span class="tag planned">FUTURE VISION · NOT LIVE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true"></div><h3>Multi-chain vision</h3><p>Climboria aims to expand beyond a single blockchain over time. Solana is the initial focus, Base is a later consideration, and additional networks may follow as secure cross-chain infrastructure, supported assets, and liquidity become available. “Multi-chain” does not mean every chain is supported at launch.</p><span class="tag planned">PHASED EXPANSION</span></article>
       </div>
     </section>
 
