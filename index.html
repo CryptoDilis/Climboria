@@ -11363,3 +11363,19 @@ body{overflow:hidden!important}
  outline:2px solid #ffe7a0!important;outline-offset:2px!important
 }
 </style>
+
+
+<!-- Keep homepage calls-to-action inside the hero experience; never float over the navigation drawer. -->
+<style id="climboria-mobile-menu-cta-fix-v1">
+/* The overlay was viewport-fixed, so its controls stayed visible over every page/menu. */
+#climboria-visible-cta-overlay-v2-root{z-index:100!important}
+body:has(#climboria-menu-drawer:not([hidden])) #climboria-visible-cta-overlay-v2-root,
+body:has(#climboria-menu-drawer:not([hidden])) #landing .climboria-hero-actions-v1,
+body:has(#climboria-menu-drawer:not([hidden])) #landing #startButton,
+body:has(#climboria-menu-drawer:not([hidden])) #landing .climboria-reference-action{
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+@media(max-width:700px){
+ #climboria-visible-cta-overlay-v2-root{z-index:100!important}
+}
+</style>
