@@ -10413,5 +10413,73 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<!-- Reference-fit correction: keep the approved artwork's original 2048:760 ratio and pixels. -->
+<style id="climboria-reference-fit-v2">
+#landing{background:#07152a!important}
+#landing #climboria-reference-canvas{
+ position:absolute!important;z-index:1!important;left:50%!important;top:50%!important;
+ width:min(100vw,269.473684dvh)!important;aspect-ratio:2048/760!important;
+ height:auto!important;max-width:100vw!important;max-height:100dvh!important;
+ transform:translate(-50%,-50%)!important;
+ background-image:url("./climboria-homepage-reference.png.png")!important;
+ background-repeat:no-repeat!important;background-position:center!important;
+ background-size:100% 100%!important;pointer-events:none!important;
+}
+#landing>.panel{z-index:2!important;background:transparent!important}
+#landing .panel>.logo,#landing .panel>.sub,#landing #landingHeroPreview,
+#landing .climboria-launch-announcement,#landing .pointsPanel,#landing .progressPanel,
+#landing .cards,#landing .note{display:none!important}
+#landing .cd-hero-actions{display:none!important}
+#landing .climboria-hero-actions-v1{
+ position:absolute!important;inset:0!important;z-index:8!important;
+ display:block!important;width:100%!important;height:100%!important;
+ margin:0!important;padding:0!important;transform:none!important;
+ pointer-events:none!important;
+}
+#landing #startButton,#landing .climboria-reference-action{
+ position:absolute!important;top:67.9%!important;height:16.8%!important;
+ min-height:44px!important;margin:0!important;padding:0!important;
+ border:0!important;border-radius:7px!important;background:transparent!important;
+ color:transparent!important;font-size:0!important;letter-spacing:0!important;
+ box-shadow:none!important;text-shadow:none!important;transform:none!important;
+ pointer-events:auto!important;flex:none!important;width:auto!important;
+}
+#landing #startButton{left:33.0%!important;width:20.1%!important}
+#landing .climboria-reference-action:nth-of-type(2){left:53.9%!important;width:18.95%!important}
+#landing .climboria-reference-action:nth-of-type(3){left:73.63%!important;width:18.1%!important}
+#landing #startButton:hover,#landing .climboria-reference-action:hover{background:#ffffff0b!important}
+#landing #startButton:focus-visible,#landing .climboria-reference-action:focus-visible{
+ outline:3px solid #ffe7a0!important;outline-offset:2px!important
+}
+#cryptoTicker{display:none!important}
+@media(max-width:700px){
+ #landing #climboria-reference-canvas{width:100vw!important;max-width:100vw!important}
+ #landing #startButton,#landing .climboria-reference-action{min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #landing #startButton,#landing .climboria-reference-action{transition:none!important}
+}
+</style>
+<script id="climboria-reference-fit-v2-script">
+(function(){
+ function fitApprovedReference(){
+  var landing=document.getElementById('landing');
+  var actions=landing&&landing.querySelector('.climboria-hero-actions-v1');
+  if(!landing||!actions)return;
+  var canvas=document.getElementById('climboria-reference-canvas');
+  if(!canvas){
+   canvas=document.createElement('div');
+   canvas.id='climboria-reference-canvas';
+   canvas.setAttribute('aria-hidden','true');
+   landing.insertBefore(canvas,landing.firstChild);
+  }
+  if(actions.parentNode!==canvas)canvas.appendChild(actions);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fitApprovedReference);
+ else fitApprovedReference();
+})();
+</script>
+
 </body>
 </html>
