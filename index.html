@@ -10624,6 +10624,43 @@ document.addEventListener("DOMContentLoaded",function(){
 })();
 </script>
 
+
+<!-- Keep homepage CTA overlay strictly on the landing screen; never leak into level menu/gameplay. -->
+<script id="climboria-cta-landing-only-v1">
+(function(){
+ function sync(){
+  var landing=document.getElementById('landing');
+  var menu=document.getElementById('levelSelect');
+  var root=document.getElementById('climboria-visible-cta-overlay-v2-root');
+  var actions=landing&&landing.querySelector('.climboria-hero-actions-v1');
+  var landingVisible=!!landing&&getComputedStyle(landing).display!=='none'&&getComputedStyle(landing).visibility!=='hidden';
+  var menuVisible=!!menu&&getComputedStyle(menu).display!=='none'&&getComputedStyle(menu).visibility!=='hidden';
+  var show=landingVisible&&!menuVisible;
+  if(root){
+   root.style.setProperty('display',show?'block':'none','important');
+   root.style.setProperty('visibility',show?'visible':'hidden','important');
+   root.style.setProperty('pointer-events',show?'none':'none','important');
+   root.querySelectorAll('button').forEach(function(b){b.style.setProperty('pointer-events',show?'auto':'none','important');});
+  }
+  if(actions){
+   actions.style.setProperty('display',show?'block':'none','important');
+   actions.style.setProperty('visibility',show?'visible':'hidden','important');
+   actions.style.setProperty('pointer-events','none','important');
+  }
+ }
+ function init(){
+  sync();
+  var observer=new MutationObserver(sync);
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden','aria-hidden']});
+  window.addEventListener('pageshow',sync);
+  window.addEventListener('resize',sync,{passive:true});
+  document.addEventListener('click',function(){setTimeout(sync,0);},true);
+  setInterval(sync,400);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
 
