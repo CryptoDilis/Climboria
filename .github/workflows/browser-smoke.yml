@@ -81,17 +81,26 @@ jobs:
                 return !!landing && getComputedStyle(landing).display !== 'none' && (!!play || !!legacy);
               }, { timeout: 15000 });
               await page.waitForTimeout(2500);
-              const desktopHero = page.locator('#climboriaHeroCutout');
-              await desktopHero.waitFor({ state: 'attached', timeout: 10000 });
-              const desktopHeroState = await desktopHero.evaluate(img => ({
-                complete: img.complete,
-                naturalWidth: img.naturalWidth,
-                naturalHeight: img.naturalHeight,
-                visible: !!(img.getBoundingClientRect().width && img.getBoundingClientRect().height)
-              }));
-              if (!desktopHeroState.complete || desktopHeroState.naturalWidth < 100 ||
-                  desktopHeroState.naturalHeight < 100 || !desktopHeroState.visible) {
-                throw new Error('Approved landing hero failed to load or render on desktop: ' + JSON.stringify(desktopHeroState));
+              // The approved full-page reference artwork intentionally replaces the old
+              // standalone hero cutout. Verify the exact source image and its fitted canvas.
+              const referenceCanvas = page.locator('#climboria-reference-canvas');
+              await referenceCanvas.waitFor({ state: 'attached', timeout: 10000 });
+              const referenceState = await referenceCanvas.evaluate(async el => {
+                const style = getComputedStyle(el);
+                const url = style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
+                let imageOk = false;
+                if (url) {
+                  const response = await fetch(new URL(url, location.href));
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    imageOk = blob.size > 100000 && blob.type.startsWith('image/');
+                  }
+                }
+                const rect = el.getBoundingClientRect();
+                return { imageOk, backgroundImage: style.backgroundImage, width: rect.width, height: rect.height };
+              });
+              if (!referenceState.imageOk || referenceState.width < 100 || referenceState.height < 30) {
+                throw new Error('Approved full reference artwork failed to load or fit on desktop: ' + JSON.stringify(referenceState));
               }
               const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const visibleCanvasCount = await page.locator('canvas:visible').count();
