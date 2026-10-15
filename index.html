@@ -7891,6 +7891,30 @@ async function loadCoinGeckoMarket(){
    LOAD MARKET
 ===================================================== */
 
+async function loadExtraCoinGeckoMarket(){
+ const ids=["dogecoin","nvidia-xstock","apple-xstock"];
+ const symbols={dogecoin:"DOGE","nvidia-xstock":"NVDAX","apple-xstock":"AAPLX"};
+ const url=COINGECKO_API+"?ids="+ids.join(",")+"&vs_currencies=usd&include_24hr_change=true&precision=full&_="+Date.now();
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),5000);
+ try{
+  const response=await fetch(url,{method:"GET",cache:"no-store",signal:controller.signal,headers:{"Accept":"application/json"}});
+  if(!response.ok)throw new Error("CoinGecko extras HTTP "+response.status);
+  const data=await response.json();
+  ids.forEach(id=>{
+   const coin=data[id],symbol=symbols[id];
+   if(!coin||coin.usd===undefined)return;
+   updateCryptoPrice(symbol,coin.usd);
+   if(coin.usd_24h_change!==undefined)updateCryptoChange(symbol,coin.usd_24h_change);
+   const updated=$(symbol.toLowerCase()+"Updated");
+   if(updated)updated.textContent="CoinGecko";
+  });
+ }finally{
+  clearTimeout(timeout);
+ }
+}
+
+
 async function loadCryptoMarket(){
 
  if(cryptoRequestInProgress)
@@ -7918,10 +7942,13 @@ async function loadCryptoMarket(){
 
    if(binanceOK){
 
+    try{await loadExtraCoinGeckoMarket();}
+    catch(extraError){console.warn("CLIMBORIA CoinGecko extra markets unavailable:",extraError);}
+
     updateCryptoTimestamp();
 
     showCryptoSuccess(
-     "BINANCE"
+     "BINANCE + COINGECKO"
     );
 
     return;
@@ -10926,7 +10953,7 @@ body{overflow:hidden!important}
    card.className="cryptoCard";
    card.id=id;
    card.setAttribute("aria-label",item.name+" price");
-   card.innerHTML='<div class="cryptoTop"><span class="cryptoSymbol"></span><span class="cryptoChange cryptoLoading">--</span></div><div class="cryptoPrice cryptoLoading">Loading…</div>';
+   card.innerHTML='<div class="cryptoTop"><span class="cryptoSymbol"></span><span class="cryptoChange cryptoLoading" id="'+item.symbol.toLowerCase()+'Change">--</span></div><div class="cryptoPrice cryptoLoading" id="'+item.symbol.toLowerCase()+'Price">Loading…</div><div class="cryptoUpdated" id="'+item.symbol.toLowerCase()+'Updated">CoinGecko</div>';
    card.querySelector(".cryptoSymbol").textContent=item.symbol;
    row.appendChild(card);
   });
