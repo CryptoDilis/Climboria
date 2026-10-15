@@ -10059,5 +10059,63 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+<style id="climboria-ui-declutter-v2">
+:root{--climb-gold:#FFC83D;--climb-navy:#0B1220;--climb-white:#F8FAFC}
+#landing .panel:after{
+ content:"A PHYSICS CLIMBING ADVENTURE"!important;
+ white-space:normal!important;max-width:47%!important;
+ color:#fff!important;background:none!important;-webkit-text-fill-color:#fff!important;
+ text-shadow:0 4px 22px rgba(0,0,0,.48)!important;
+ font-family:Impact,"Arial Narrow",system-ui,sans-serif!important;
+ font-weight:900!important;letter-spacing:1px!important;
+}
+#landing .climboria-launch-announcement{
+ background:rgba(15,23,42,.72)!important;
+ -webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important;
+ border:1px solid rgba(255,255,255,.16)!important;border-radius:18px!important;
+ box-shadow:0 18px 48px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.08)!important;
+}
+.climboria-live-dot{background:var(--climb-gold)!important;box-shadow:0 0 8px rgba(255,200,61,.45)!important}
+.climboria-announcement-title{color:#fff!important;font-family:Impact,"Arial Narrow",system-ui,sans-serif!important;letter-spacing:1px!important}
+.climboria-announcement-main{color:var(--climb-gold)!important;text-shadow:0 3px 18px rgba(255,200,61,.12)!important}
+.climboria-announcement-times span{background:rgba(11,18,32,.58)!important;border-color:rgba(255,255,255,.12)!important;color:#cbd5e1!important}
+.climboria-announcement-times b{color:var(--climb-gold)!important}
+.climboria-target-pill{border-color:rgba(255,200,61,.45)!important;color:var(--climb-gold)!important}
+#climboria-primary-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:12px!important}
+#climboria-primary-actions .climboria-play{background:var(--climb-gold)!important;color:var(--climb-navy)!important;border:1px solid var(--climb-gold)!important;box-shadow:0 8px 24px rgba(255,200,61,.18)!important}
+#climboria-primary-actions .climboria-trade{background:rgba(11,18,32,.68)!important;color:#fff!important;border:1px solid rgba(255,255,255,.48)!important;box-shadow:none!important}
+#climboria-primary-actions .climboria-create-token{display:none!important}
+#climboria-primary-actions .climboria-action-copy small{color:inherit!important;opacity:.78}
+#landing .cd-base-label{padding:6px 10px!important;border-radius:999px!important;background:rgba(11,18,32,.55)!important;border:1px solid rgba(255,255,255,.14)!important;color:#dbeafe!important;font-size:10px!important;letter-spacing:1px!important}
+#landing .cd-base-label i{background:var(--climb-gold)!important}
+#landing .cd-challenge-strip{margin-top:28px!important}
+#landing .cd-feature-grid{gap:12px!important;margin-top:20px!important}
+#landing .cd-feature{border-color:rgba(255,255,255,.15)!important;background:rgba(11,18,32,.82)!important}
+#landing .cd-feature:hover{border-color:rgba(255,200,61,.5)!important}
+#landing .cd-challenge-strip{border-color:rgba(255,200,61,.7)!important}
+@media(min-width:701px){
+ #climboria-primary-actions{bottom:24%!important}
+ #landing .cd-challenge-strip{bottom:11%!important}
+ #landing .cd-feature-grid{bottom:1%!important}
+}
+@media(max-width:700px){
+ #landing .panel:after{max-width:92%!important;left:18px!important;top:8px!important;font-size:clamp(23px,7vw,32px)!important}
+ #climboria-primary-actions{grid-template-columns:1fr!important}
+}
+</style>
+<script id="climboria-launch-countdown-v1">
+(function(){
+ const target=Date.UTC(2026,9,30,15,0,0);
+ function tick(){
+  const node=document.querySelector('.climboria-announcement-times b');
+  if(!node)return;
+  const left=target-Date.now();
+  if(left<=0){node.textContent='TARGET TIME REACHED';return;}
+  const days=Math.floor(left/86400000),hours=Math.floor(left%86400000/3600000),mins=Math.floor(left%3600000/60000);
+  node.textContent=days+'d '+String(hours).padStart(2,'0')+'h '+String(mins).padStart(2,'0')+'m';
+ }
+ tick();setInterval(tick,60000);
+})();
+</script>
 </body>
 </html>
