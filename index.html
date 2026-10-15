@@ -10281,6 +10281,38 @@ document.addEventListener("DOMContentLoaded",function(){
  #climboria-menu-drawer{padding:20px 16px 28px}
 }
 @media(prefers-reduced-motion:reduce){#climboria-menu-drawer,#climboria-hamburger-toggle span{transition:none!important}}
+
+/* Premium artwork banner inside the hamburger drawer; original asset reused unchanged. */
+#climboria-menu-drawer{padding:18px 20px 30px}
+.cd-menu-visual{height:156px;position:relative;overflow:hidden;margin:-18px -20px 20px;background:#07111d;border-bottom:1px solid #e9bc5c55}
+.cd-menu-visual img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 48%;opacity:.94}
+.cd-menu-visual-shade{position:absolute;inset:0;background:linear-gradient(90deg,#06101de8 0%,#07121c70 62%,#07121c10 100%),linear-gradient(0deg,#06101dcc,transparent 70%)}
+.cd-menu-visual-caption{position:absolute;inset:auto 17px 15px;display:flex;flex-direction:column;gap:6px}
+.cd-menu-visual-caption span{font-size:10px;font-weight:900;letter-spacing:1.8px;color:#f4c86a}
+.cd-menu-visual-caption strong{font-size:21px;line-height:1.12;letter-spacing:-.3px;color:#f5f8ff;text-shadow:0 2px 15px #0009}
+.cd-menu-head{padding-bottom:17px}
+.cd-menu-brand{font-size:25px;letter-spacing:1.2px}
+.cd-menu-brand small{font-size:10px;letter-spacing:1.3px}
+.cd-menu-label{font-size:11px;letter-spacing:1.5px}
+.cd-menu-link{padding:13px 11px;gap:13px}
+.cd-menu-copy strong{font-size:13px;letter-spacing:.7px}
+.cd-menu-copy small{font-size:12px;line-height:1.5}
+.cd-menu-icon{width:36px;height:36px;font-size:16px}
+#climboria-menu-close{flex:none}
+.cd-menu-auth button{font-size:12px}
+.cd-menu-note{font-size:12px;line-height:1.7}
+@media(max-width:700px){
+ #climboria-menu-drawer{padding:16px 16px 26px}
+ .cd-menu-visual{height:145px;margin:-16px -16px 17px}
+ .cd-menu-visual-caption{inset:auto 14px 13px}
+ .cd-menu-visual-caption strong{font-size:20px}
+ .cd-menu-brand{font-size:23px}
+ .cd-menu-brand small{font-size:9px;letter-spacing:1px}
+ .cd-menu-link{padding:12px 9px}
+ .cd-menu-copy strong{font-size:13px}
+ .cd-menu-copy small{font-size:12px}
+ .cd-menu-note{font-size:12px}
+}
 </style>
 <script id="climboria-cinematic-menu-v1-js">
 (function(){
@@ -10294,7 +10326,7 @@ document.addEventListener("DOMContentLoaded",function(){
   header.appendChild(toggle);
   var backdrop=document.createElement('div');backdrop.id='climboria-menu-backdrop';backdrop.hidden=true;
   var drawer=document.createElement('aside');drawer.id='climboria-menu-drawer';drawer.setAttribute('aria-label','Climboria navigation');drawer.setAttribute('aria-hidden','true');drawer.hidden=true;
-  drawer.innerHTML='<div class="cd-menu-head"><div class="cd-menu-brand">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></div><button id="climboria-menu-close" type="button" aria-label="Close menu">×</button></div>'+
+  drawer.innerHTML='<div class="cd-menu-visual"><img src="./climboria-cinematic-summit.svg" alt="" aria-hidden="true"><div class="cd-menu-visual-shade"></div><div class="cd-menu-visual-caption"><span>THE CLIMBORIA EXPERIENCE</span><strong>YOUR NEXT ASCENT<br>STARTS HERE</strong></div></div>'+'<div class="cd-menu-head"><div class="cd-menu-brand">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></div><button id="climboria-menu-close" type="button" aria-label="Close menu">×</button></div>'+
   '<div class="cd-menu-auth"><button type="button" class="cd-menu-login" data-cd-menu-action="login">LOG IN</button><button type="button" class="cd-menu-signup" data-cd-menu-action="signup">SIGN UP</button></div>'+
   '<section class="cd-menu-section"><p class="cd-menu-label">EXPLORE CLIMBORIA</p>'+
   '<a class="cd-menu-link" href="#climboria-overview" data-cd-menu-action="overview"><span class="cd-menu-icon">◈</span><span class="cd-menu-copy"><strong>OVERVIEW</strong><small>What Climboria is building</small></span></a>'+
