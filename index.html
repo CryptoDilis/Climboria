@@ -10327,40 +10327,7 @@ document.addEventListener("DOMContentLoaded",function(){
 </style>
 
 
-<script id="climboria-market-placeholder-cards-v1">
-(function(){
- function addPendingMarkets(){
-  var row=document.querySelector('#cryptoTicker .cryptoRow');
-  if(!row||row.dataset.extendedMarkets==='yes')return;
-  row.dataset.extendedMarkets='yes';
-  [
-   {symbol:'GOLD',name:'Gold spot'},
-   {symbol:'S&P 500',name:'US large-cap stocks'},
-   {symbol:'NASDAQ',name:'US technology stocks'},
-   {symbol:'DOW',name:'US blue-chip stocks'},
-   {symbol:'NVDA',name:'NVIDIA stock'},
-   {symbol:'AAPL',name:'Apple stock'}
-  ].forEach(function(item){
-   var card=document.createElement('div');
-   card.className='cryptoCard cd-market-pending';
-   card.setAttribute('aria-label',item.name+' price data not connected');
-   card.innerHTML='<div class="cryptoTop"><span class="cryptoSymbol"></span><span class="cryptoChange cryptoLoading">--</span></div><div class="cryptoPrice">Data unavailable</div><div class="cryptoUpdated">Source not connected</div>';
-   card.querySelector('.cryptoSymbol').textContent=item.symbol;
-   row.appendChild(card);
-  });
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addPendingMarkets);
- else addPendingMarkets();
-})();
-</script>
-<style id="climboria-market-placeholder-style-v1">
-#cryptoTicker{touch-action:pan-x!important;scrollbar-width:thin!important;scrollbar-color:#d9b76b66 #07152a!important}
-#cryptoTicker .cryptoRow{touch-action:pan-x!important}
-#cryptoTicker .cd-market-pending{min-width:126px!important;border-color:#d9b76b44!important}
-#cryptoTicker .cd-market-pending .cryptoSymbol{color:#f4c86a!important}
-#cryptoTicker .cd-market-pending .cryptoPrice{font-size:11px!important;color:#d4dfed!important}
-#cryptoTicker .cd-market-pending .cryptoUpdated{color:#f4c86a!important}
-</style>
+
 
 
 
@@ -10877,12 +10844,6 @@ body{overflow:hidden!important}
 #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{
  display:flex!important;visibility:visible!important;opacity:1!important;
  flex:0 0 auto!important;min-width:0!important;white-space:nowrap!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending{
- display:flex!important;visibility:visible!important;opacity:1!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoPrice{
- display:block!important;color:#e7edf6!important;
 }
 #landing #climboria-reference-canvas #cryptoTicker .cryptoLogo{display:inline-flex!important}
 #climboria-hamburger-toggle{
