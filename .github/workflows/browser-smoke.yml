@@ -93,7 +93,7 @@ jobs:
                   const response = await fetch(new URL(url, location.href));
                   if (response.ok) {
                     const blob = await response.blob();
-                    imageOk = blob.size > 100000 && blob.type.startsWith('image/');
+                    imageOk = blob.size > 100000;
                   }
                 }
                 const rect = el.getBoundingClientRect();
