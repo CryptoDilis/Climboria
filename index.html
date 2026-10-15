@@ -10498,3 +10498,9 @@ document.addEventListener("DOMContentLoaded",function(){
 
 </body>
 </html>
+
+<!-- Final visual hardening: remove legacy pseudo-heading that leaks above the header. -->
+<style id="climboria-final-legacy-heading-guard-v1">
+#landing>.panel:after{content:none!important;display:none!important;background:none!important}
+#landing>.panel{isolation:isolate!important}
+</style>
