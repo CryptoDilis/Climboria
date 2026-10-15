@@ -10330,7 +10330,7 @@ document.addEventListener("DOMContentLoaded",function(){
   '<a class="cd-menu-link" href="#climboria-roadmap" data-cd-menu-action="roadmap"><span class="cd-menu-icon">⌁</span><span class="cd-menu-copy"><strong>ROADMAP</strong><small>Development milestones</small></span></a>'+
   '<a class="cd-menu-link" href="#climboria-tokenomics" data-cd-menu-action="tokenomics"><span class="cd-menu-icon">◉</span><span class="cd-menu-copy"><strong>TOKENOMICS</strong><small>Token plan and allocation</small></span></a>'+
   '<a class="cd-menu-link" href="./swap/" data-cd-menu-action="swap"><span class="cd-menu-icon">↔</span><span class="cd-menu-copy"><strong>SWAP</strong><small>Open Climboria Swap</small></span></a>'+
-  '<a class="cd-menu-link" href="#climboria-whitepaper" data-cd-menu-action="whitepaper"><span class="cd-menu-icon">▤</span><span class="cd-menu-copy"><strong>WHITEPAPER</strong><small>Project vision and design</small></span></a>'+
+  '<a class="cd-menu-link" href="./whitepaper/" data-cd-menu-action="whitepaper"><span class="cd-menu-icon">▤</span><span class="cd-menu-copy"><strong>WHITEPAPER</strong><small>Official project document</small></span></a>'+
   '<a class="cd-menu-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><span class="cd-menu-icon">𝕏</span><span class="cd-menu-copy"><strong>COMMUNITY</strong><small>Follow Climboria on X</small></span></a>'+
   '<button class="cd-menu-link" type="button" data-cd-menu-action="leaderboard"><span class="cd-menu-icon">♛</span><span class="cd-menu-copy"><strong>LEADERBOARD</strong><small>Climb points and rankings</small></span></button>'+
   '<button class="cd-menu-link" type="button" data-cd-menu-action="play"><span class="cd-menu-icon">▶</span><span class="cd-menu-copy"><strong>PLAY GAME</strong><small>Return to the climbing game</small></span></button></section>'+
@@ -10350,7 +10350,8 @@ document.addEventListener("DOMContentLoaded",function(){
    if(action==='login'||action==='signup'){e.preventDefault();var msg=document.getElementById('status');if(msg){msg.textContent=action.toUpperCase()+' — ACCOUNT SYSTEM NOT CONNECTED YET';msg.style.display='block';}return;}
    if(action==='overview'){e.preventDefault();close();window.location.href='./overview/';return;}
    if(action==='roadmap'){e.preventDefault();close();window.location.href='./overview/#roadmap';return;}
-   if(['tokenomics','whitepaper'].indexOf(action)!==-1){e.preventDefault();close();showInfo(action);}
+   if(action==='whitepaper'){e.preventDefault();close();window.location.href='./whitepaper/';return;}
+   if(action==='tokenomics'){e.preventDefault();close();showInfo(action);}
   });
   function showInfo(action){
    var existing=document.getElementById('climboria-info-dialog');if(existing)existing.remove();
