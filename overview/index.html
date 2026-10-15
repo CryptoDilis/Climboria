@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07101b">
+  <meta name="description" content="Official Climboria project overview: browser climbing game, progression, community plans, and staged Web3 roadmap.">
+  <title>Climboria Overview</title>
+  <link rel="icon" type="image/png" href="../favicon.png?v=official-climboria">
+  <style>
+    :root{color-scheme:dark;--bg:#07101b;--panel:#0d1a2a;--panel2:#112238;--line:#29415a;--text:#f3f7fc;--muted:#a1b1c4;--gold:#f4c86a;--green:#55ff70;--blue:#77c7ff}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:radial-gradient(ellipse at 50% -10%,#1b3a50 0%,var(--bg) 58%);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .shell{width:min(1060px,100%);margin:auto;padding:18px 18px 44px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0 30px}
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+    .mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid #f4c86a88;border-radius:12px;color:var(--gold);font-size:22px;background:#f4c86a0d}
+    .brand strong{display:block;font-size:16px;letter-spacing:2px}
+    .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px}
+    .actions{display:flex;gap:9px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 15px;border:1px solid var(--line);border-radius:9px;background:#0a1522;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:1px}
+    .btn.primary{background:linear-gradient(180deg,#ffe49a,#e6ae3d);border-color:#ffe6a0;color:#101521}
+    .hero{padding:clamp(25px,6vw,58px);border:1px solid #76bde33a;border-radius:22px;background:linear-gradient(135deg,#10243aee,#081321f5);box-shadow:0 22px 70px #0004;position:relative;overflow:hidden}
+    .hero:after{content:"▲";position:absolute;right:-15px;bottom:-100px;font-size:clamp(200px,35vw,380px);line-height:1;color:#77c7ff08;pointer-events:none}
+    .eyebrow{font-size:10px;font-weight:900;letter-spacing:3px;color:var(--gold)}
+    h1{font-size:clamp(34px,7vw,62px);line-height:1.03;letter-spacing:-2px;margin:12px 0 15px;max-width:760px}
+    .hero p{max-width:700px;color:#c1cede;font-size:clamp(14px,2vw,17px);margin:0}
+    .hero .actions{margin-top:24px}
+    .section{margin-top:28px}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:13px}
+    h2{font-size:20px;letter-spacing:-.4px;margin:0}
+    .section-head p{font-size:11px;color:var(--muted);margin:0}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .card{border:1px solid var(--line);border-radius:15px;padding:19px;background:linear-gradient(160deg,#102034,#091421)}
+    .icon{font-size:24px;margin-bottom:9px}
+    .card h3{font-size:14px;margin:0 0 7px}
+    .card p{font-size:12px;color:var(--muted);margin:0}
+    .tag{display:inline-flex;margin-top:13px;border:1px solid #77c7ff44;border-radius:20px;padding:4px 8px;color:var(--blue);font-size:9px;font-weight:900;letter-spacing:.8px}
+    .tag.active{color:var(--green);border-color:#55ff7050}
+    .tag.planned{color:var(--gold);border-color:#f4c86a50}
+    .roadmap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .step{display:flex;gap:13px;border:1px solid var(--line);border-radius:14px;padding:16px;background:#0b1725}
+    .num{flex:0 0 34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#f4c86a12;border:1px solid #f4c86a44;color:var(--gold);font-weight:900}
+    .step h3{font-size:13px;margin:0 0 5px}
+    .step p{font-size:11px;color:var(--muted);margin:0}
+    .notice{margin-top:18px;padding:15px 17px;border:1px solid #f4c86a4a;border-radius:12px;background:#f4c86a0b;color:#e8d7ad;font-size:12px}
+    .notice strong{color:#ffe19a}
+    footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:30px;padding-top:18px;border-top:1px solid #ffffff18;color:#8395aa;font-size:10px}
+    footer a{color:#c7d7e8}
+    @media(max-width:720px){.shell{padding:12px 12px 30px}header{padding-bottom:18px}.grid{grid-template-columns:1fr}.roadmap{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.hero{border-radius:16px}.brand strong{font-size:14px}.actions .btn{flex:1}.card{padding:16px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <a class="brand" href="../" aria-label="Climboria home"><span class="mark" aria-hidden="true">▲</span><span><strong>CLIMBORIA</strong><small>MORE THAN A GAME · IT’S A CLIMB</small></span></a>
+      <nav class="actions" aria-label="Page navigation"><a class="btn" href="#roadmap">ROADMAP</a><a class="btn" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">FOLLOW ON X ↗</a></nav>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">OFFICIAL PROJECT OVERVIEW</div>
+      <h1>One climb.<br>Room to grow.</h1>
+      <p>Climboria is building a browser-based climbing game focused on skill, progression, and community. The goal is to make the game enjoyable first, then introduce optional ecosystem features carefully as they become ready.</p>
+      <div class="actions"><a class="btn primary" href="../">PLAY CLIMBORIA</a><a class="btn" href="#roadmap">EXPLORE THE PLAN ↓</a></div>
+    </section>
+
+    <section class="section" aria-labelledby="vision-title">
+      <div class="section-head"><h2 id="vision-title">What we're building</h2><p>Game first. Speculation later.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true">⛰️</div><h3>Browser climbing game</h3><p>A climbing experience designed to run in a web browser, with mobile and desktop play in mind—no game download intended.</p><span class="tag active">CORE EXPERIENCE</span></article>
+        <article class="card"><div class="icon" aria-hidden="true">🧗</div><h3>Skill and progression</h3><p>Climb through increasingly challenging routes, learn the controls, and build toward a broader level-based experience.</p><span class="tag planned">EXPANDING</span></article>
+        <article class="card"><div class="icon" aria-hidden="true">🏆</div><h3>Community competition</h3><p>Leaderboards, events, streaks, and community rewards are part of the direction; features will be labeled clearly until connected and verified.</p><span class="tag planned">PLANNED FEATURES</span></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="ecosystem-title">
+      <div class="section-head"><h2 id="ecosystem-title">The ecosystem direction</h2><p>Optional features—not prerequisites to play.</p></div>
+      <div class="grid">
+        <article class="card"><div class="icon" aria-hidden="true">🎮</div><h3>Play without crypto</h3><p>The game should remain accessible to players who simply want to climb. Wallets and tokens should not be required for the core game.</p></article>
+        <article class="card"><div class="icon" aria-hidden="true">↔️</div><h3>Swap and marketplace</h3><p>A branded swap experience and future marketplace may be added separately after integrations, safety checks, and availability are verified.</p><span class="tag planned">IN DEVELOPMENT / PLANNED</span></article>
+        <article class="card"><div class="icon" aria-hidden="true">🌐</div><h3>Solana first, Base later</h3><p>The intended blockchain sequence is to evaluate Solana first, with Base considered later. Cross-chain features are not promised until they are built and tested.</p><span class="tag planned">FUTURE DIRECTION</span></article>
+      </div>
+    </section>
+
+    <section class="section" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="section-head"><h2 id="roadmap-title">Development roadmap</h2><p>Milestones may change as testing reveals what needs attention.</p></div>
+      <div class="roadmap">
+        <article class="step"><span class="num">01</span><div><h3>Stabilize the core game</h3><p>Prioritize reliable gameplay, controls, camera behavior, and a usable mobile experience.</p></div></article>
+        <article class="step"><span class="num">02</span><div><h3>Build level progression</h3><p>Improve level selection and structure levels so future additions can be made without rebuilding the whole site.</p></div></article>
+        <article class="step"><span class="num">03</span><div><h3>Connect community systems</h3><p>Validate leaderboards, events, and reward tracking before presenting them as live features.</p></div></article>
+        <article class="step"><span class="num">04</span><div><h3>Integrate Web3 carefully</h3><p>Test wallet and swap integrations, publish verified official details, and evaluate Base only when the project is ready.</p></div></article>
+      </div>
+    </section>
+
+    <div class="notice"><strong>Token transparency:</strong> Climboria has not configured a verified official $CLIM mint address on this overview. Do not treat a token ticker or third-party listing as proof of an official launch. Official contract details should be published only after verification.</div>
+
+    <footer><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="../">Back to the game</a> · <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a></span></footer>
+  </main>
+</body>
+</html>

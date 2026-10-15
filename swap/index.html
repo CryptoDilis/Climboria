@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07101b">
+  <meta name="description" content="Swap supported Solana tokens through Climboria's Jupiter-powered swap interface.">
+  <title>Climboria Swap</title>
+  <link rel="icon" type="image/png" href="../favicon.png?v=official-climboria">
+  <script src="https://terminal.jup.ag/main-v3.js"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#07101b;--panel:#101c2b;--line:#26364a;--text:#f4f7fb;--muted:#9aabc0;--gold:#f4c86a;--green:#55ff70}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#173044 0%,var(--bg) 58%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .shell{width:min(1040px,100%);margin:0 auto;padding:20px 18px 40px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0 24px}
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+    .mark{display:grid;place-items:center;width:42px;height:42px;border:1px solid #f4c86a80;border-radius:12px;color:var(--gold);font-size:22px;background:#f4c86a0c}
+    .brand strong{display:block;font-size:16px;letter-spacing:2px}
+    .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px}
+    .back{border:1px solid var(--line);border-radius:9px;padding:10px 13px;text-decoration:none;font-weight:700;font-size:12px;color:#dbe6f4;background:#0a1522}
+    .intro{text-align:center;margin:8px auto 22px;max-width:650px}
+    .eyebrow{color:var(--gold);font-size:10px;letter-spacing:3px;font-weight:800}
+    h1{margin:8px 0;font-size:clamp(30px,6vw,48px);line-height:1.08;letter-spacing:-1.5px}
+    .intro p{margin:0;color:var(--muted);font-size:14px}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
+    .swap-card,.info-card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,#101d2cfa,#0a1421fa);box-shadow:0 18px 55px #0004}
+    .swap-card{padding:14px;min-height:430px}
+    #jupiter-terminal{width:100%;min-height:400px;display:flex;justify-content:center;align-items:flex-start}
+    .info-card{padding:18px}
+    .info-card h2{font-size:13px;letter-spacing:1px;margin:0 0 12px}
+    .info-card p,.info-card li{font-size:12px;color:var(--muted);line-height:1.65}
+    .info-card ul{padding-left:17px;margin:8px 0 16px}
+    .notice{border:1px solid #f4c86a40;background:#f4c86a0c;border-radius:10px;padding:11px 12px;margin-top:15px;color:#f1dba5;font-size:11px;line-height:1.6}
+    .status{font-size:11px;color:var(--muted);text-align:center;margin:12px 0 0}
+    footer{text-align:center;color:#70839a;font-size:10px;margin-top:24px}
+    @media(max-width:760px){.shell{padding:12px 12px 28px}header{padding-bottom:18px}.layout{grid-template-columns:1fr}.swap-card{padding:8px;min-height:410px}#jupiter-terminal{min-height:400px}.info-card{padding:15px}.intro{margin-bottom:18px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <a class="brand" href="../" aria-label="Climboria home">
+        <span class="mark" aria-hidden="true">▲</span>
+        <span><strong>CLIMBORIA</strong><small>SWAP · SOLANA</small></span>
+      </a>
+      <a class="back" href="../">← BACK TO GAME</a>
+    </header>
+    <section class="intro">
+      <div class="eyebrow">CLIMBORIA ECOSYSTEM</div>
+      <h1>Make your next move.</h1>
+      <p>Swap supported Solana tokens using Jupiter routing, without leaving the Climboria site.</p>
+    </section>
+    <section class="layout" aria-label="Token swap">
+      <div class="swap-card">
+        <div id="jupiter-terminal" aria-label="Jupiter token swap interface"></div>
+        <p class="status" id="terminal-status" role="status">Loading swap interface…</p>
+      </div>
+      <aside class="info-card">
+        <h2>BEFORE YOU SWAP</h2>
+        <ul>
+          <li>Check the token name and mint address carefully.</li>
+          <li>Review price impact, slippage, and network fees before approving.</li>
+          <li>Only approve a transaction you understand in your wallet.</li>
+          <li>Never share your seed phrase or private key.</li>
+        </ul>
+        <div class="notice"><strong>Official token notice</strong><br>There is currently no verified official $CLIMB mint address configured on this page. Do not assume a token using the ticker $CLIMB is the official Climboria token.</div>
+        <p>Swaps depend on third-party services, wallet support, token availability, and on-chain liquidity. Climboria does not guarantee a price or successful transaction.</p>
+      </aside>
+    </section>
+    <footer>CLIMBORIA · SOLANA FIRST · BASE INTEGRATION PLANNED LATER</footer>
+  </main>
+  <script>
+    (function(){
+      var status=document.getElementById('terminal-status');
+      function initTerminal(){
+        if(!window.Jupiter||typeof window.Jupiter.init!=='function'){
+          status.textContent='Swap provider did not load. Check your connection and try again.';
+          return;
+        }
+        try{
+          window.Jupiter.init({
+            displayMode:'integrated',
+            integratedTargetId:'jupiter-terminal',
+            endpoint:'https://api.mainnet-beta.solana.com',
+            strictTokenList:true,
+            defaultExplorer:'Solana Explorer'
+          });
+          status.textContent='Powered by Jupiter. Review every transaction in your wallet before signing.';
+        }catch(error){
+          console.error('Climboria Swap initialization failed',error);
+          status.textContent='Swap interface could not start. Please try again later.';
+        }
+      }
+      if(document.readyState==='complete')initTerminal();
+      else window.addEventListener('load',initTerminal,{once:true});
+    })();
+  </script>
+</body>
+</html>
