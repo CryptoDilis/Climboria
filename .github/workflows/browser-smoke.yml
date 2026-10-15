@@ -174,23 +174,29 @@ jobs:
                   !!(document.querySelector('[data-cd-action="play"], .cd-play-now') || document.getElementById('startButton'));
               }, { timeout: 15000 });
               await mobile.waitForTimeout(2500);
-              // The mobile landing layout may omit the desktop-only cutout.
-              // If present, verify it; do not block gameplay smoke tests on an optional mobile decoration.
-              const mobileHero = mobile.locator('#climboriaHeroCutout');
-              const mobileHeroCount = await mobileHero.count();
-              if (mobileHeroCount) {
-                const mobileHeroState = await mobileHero.evaluate(img => ({
-                  complete: img.complete,
-                  naturalWidth: img.naturalWidth,
-                  naturalHeight: img.naturalHeight,
-                  visible: !!(img.getBoundingClientRect().width && img.getBoundingClientRect().height)
-                }));
-                if (!mobileHeroState.complete || mobileHeroState.naturalWidth < 100 ||
-                    mobileHeroState.naturalHeight < 100 || !mobileHeroState.visible) {
-                  throw new Error('Landing hero failed to load or render on mobile: ' + JSON.stringify(mobileHeroState));
+              // The full approved reference artwork is used on desktop and mobile.
+              // Validate the shared image canvas instead of the removed hero cutout.
+              const mobileReference = mobile.locator('#climboria-reference-canvas');
+              await mobileReference.waitFor({ state: 'attached', timeout: 10000 });
+              const mobileReferenceState = await mobileReference.evaluate(async el => {
+                const style = getComputedStyle(el);
+                const match = style.backgroundImage.match(/url\\(["']?(.*?)["']?\\)/);
+                const rect = el.getBoundingClientRect();
+                let imageOk = false;
+                if (match?.[1]) {
+                  const response = await fetch(new URL(match[1], location.href));
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    imageOk = blob.size > 100000 && blob.type.startsWith('image/');
+                  }
                 }
-              } else {
-                console.log('Mobile layout does not include the desktop hero cutout; continuing mobile gameplay checks.');
+                return { imageOk, backgroundImage: style.backgroundImage,
+                  width: rect.width, height: rect.height };
+              });
+              if (!mobileReferenceState.imageOk || mobileReferenceState.width < 100 ||
+                  mobileReferenceState.height < 30) {
+                throw new Error('Approved full reference artwork failed to load or fit on mobile: ' +
+                  JSON.stringify(mobileReferenceState));
               }
               const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const mobileCanvasCount = await mobile.locator('canvas:visible').count();
