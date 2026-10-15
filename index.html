@@ -10220,5 +10220,145 @@ document.addEventListener("DOMContentLoaded",function(){
 })();
 </script>
 
+
+<!-- CLIMBORIA REFERENCE HOMEPAGE V1: scoped visual integration, preserving game systems -->
+<style id="climboria-reference-homepage-v1">
+:root{--climboria-gold:#f4c86a;--climboria-ice:#dcecff;--climboria-navy:#07152a}
+#landing{position:fixed!important;inset:0!important;min-height:100dvh!important;overflow:hidden!important;background:#07152a!important;isolation:isolate!important}
+#landing:before{background-image:url("./climboria-cinematic-summit.svg")!important;background-position:center 48%!important;background-size:cover!important;filter:brightness(1.18) saturate(1.08)!important}
+#landing>.panel{position:relative!important;z-index:2!important;width:100%!important;max-width:none!important;height:100%!important;min-height:100dvh!important;max-height:none!important;margin:0!important;padding:clamp(100px,13vh,145px) clamp(18px,4vw,64px) 24px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;overflow:hidden!important;background:transparent!important}
+#landing .logo{position:relative!important;z-index:3!important;margin:0!important;font-size:clamp(42px,7vw,94px)!important;line-height:1!important;letter-spacing:clamp(3px,.8vw,10px)!important;text-align:center!important;color:#f6d889!important;text-shadow:0 3px 0 #6d481d,0 0 24px #ffc85788,0 10px 28px #000b!important}
+#landing .sub{position:relative!important;z-index:3!important;margin:12px 0 0!important;text-align:center!important;color:#e3edfb!important;font-size:clamp(9px,1.1vw,13px)!important;letter-spacing:clamp(1px,.3vw,3px)!important;text-shadow:0 2px 8px #000!important}
+#landing #landingHeroPreview{position:absolute!important;z-index:1!important;left:clamp(-24px,2vw,36px)!important;bottom:0!important;width:clamp(240px,32vw,510px)!important;height:min(78vh,780px)!important;display:block!important;pointer-events:none!important;overflow:visible!important}
+#landing #climboriaHeroCutout{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;filter:drop-shadow(0 14px 22px #0008)!important}
+#landing .climboria-launch-announcement{display:none!important}
+#landing .pointsPanel,#landing .progressPanel,#landing .cards,#landing .note{display:none!important}
+#landing .cd-hero-actions,#landing .climboria-hero-actions-v1{position:relative!important;z-index:4!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:clamp(10px,1.5vw,20px)!important;width:min(680px,90vw)!important;margin:clamp(26px,5vh,54px) auto 0!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
+#landing #startButton,#landing .climboria-reference-action{min-width:clamp(110px,15vw,190px)!important;min-height:52px!important;padding:14px 24px!important;border:1px solid #ffe4a0!important;border-radius:9px!important;background:linear-gradient(180deg,#f8d681,#bb7d2c)!important;color:#111827!important;font-size:clamp(12px,1.4vw,16px)!important;font-weight:950!important;letter-spacing:2px!important;box-shadow:0 8px 24px #0008,inset 0 1px #fff9!important;text-shadow:none!important;cursor:pointer!important}
+#landing #startButton:hover,#landing .climboria-reference-action:hover{filter:brightness(1.1)!important;transform:translateY(-1px)!important}
+#cryptoTicker{position:fixed!important;z-index:90!important;top:0!important;left:0!important;right:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:8px max(10px,env(safe-area-inset-left))!important;background:linear-gradient(180deg,#06101ff5,#0b1d31ed)!important;border-bottom:1px solid #d6b36577!important;backdrop-filter:blur(12px)!important;overflow-x:auto!important;overscroll-behavior-x:contain!important}
+#cryptoTicker .cryptoStatus{display:none!important}
+#cryptoTicker .cryptoRow{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;width:max-content!important;min-width:100%!important;justify-content:flex-start!important}
+#cryptoTicker .cryptoCard{flex:0 0 auto!important;min-width:112px!important;padding:7px 10px!important;border:1px solid #b8d1ef2c!important;border-radius:9px!important;background:#10243acc!important}
+#cryptoTicker .cryptoPrice{font-size:13px!important;color:#f3f7ff!important}
+#cryptoTicker .cryptoSymbol{color:#f3cc75!important;font-weight:900!important}
+#cryptoTicker .cryptoUpdated,#cryptoTicker .cryptoCountdown{font-size:9px!important}
+.climboria-dashboard-header{z-index:95!important;top:clamp(52px,7vh,78px)!important}
+#landing .panel:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,#07152a55 0%,transparent 34%,#07152a25 65%,#07152a66 100%),linear-gradient(180deg,#06132615 0%,transparent 45%,#06132666 100%)}
+#landing .logo,#landing .sub,#landing .climboria-hero-actions-v1,#landing .cd-hero-actions{isolation:isolate}
+@media(max-width:700px){
+ #landing:before{background-position:58% center!important;filter:brightness(1.15) saturate(1.06)!important}
+ #landing>.panel{padding:calc(95px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))!important;justify-content:flex-start!important}
+ #landing .logo{margin-top:clamp(32px,8vh,72px)!important;font-size:clamp(34px,10vw,54px)!important;letter-spacing:2px!important;white-space:nowrap!important}
+ #landing .sub{max-width:90vw!important;font-size:9px!important;letter-spacing:1px!important;line-height:1.5!important}
+ #landing #landingHeroPreview{left:-32px!important;bottom:0!important;width:clamp(210px,64vw,340px)!important;height:55vh!important;max-height:520px!important;opacity:.98!important}
+ #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{position:absolute!important;left:50%!important;bottom:clamp(22px,5vh,44px)!important;transform:translateX(-50%)!important;width:min(94vw,430px)!important;gap:8px!important;margin:0!important;flex-wrap:nowrap!important}
+ #landing #startButton,#landing .climboria-reference-action{min-width:0!important;flex:1 1 0!important;min-height:47px!important;padding:12px 8px!important;font-size:11px!important;letter-spacing:1px!important}
+ #cryptoTicker{padding:6px 8px!important}
+ #cryptoTicker .cryptoCard{min-width:100px!important;padding:6px 8px!important}
+ .climboria-dashboard-header{top:calc(54px + env(safe-area-inset-top))!important}
+}
+@media(max-width:370px){
+ #landing .logo{font-size:32px!important;letter-spacing:1px!important}
+ #landing #landingHeroPreview{left:-48px!important;width:68vw!important}
+ #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{width:96vw!important;gap:5px!important}
+ #landing #startButton,#landing .climboria-reference-action{font-size:10px!important;padding-inline:5px!important}
+}
+@media(min-width:701px){
+ #landing .logo{margin-top:clamp(0px,4vh,50px)!important}
+ #landing #landingHeroPreview{left:1vw!important;bottom:0!important}
+}
+</style>
+<script id="climboria-reference-homepage-actions-v1">
+(function(){
+ function initReferenceHomepage(){
+  var landing=document.getElementById('landing');
+  var start=document.getElementById('startButton');
+  if(!landing||!start||landing.dataset.referenceHomeV1==='ready')return;
+  landing.dataset.referenceHomeV1='ready';
+  start.textContent='PLAY';
+  start.setAttribute('aria-label','Play Climboria');
+  var actions=document.createElement('div');
+  actions.className='climboria-hero-actions-v1';
+  actions.setAttribute('aria-label','Climboria main actions');
+  start.parentNode.insertBefore(actions,start);
+  actions.appendChild(start);
+  function actionButton(label,kind){
+   var b=document.createElement('button');
+   b.type='button';b.className='climboria-reference-action';b.textContent=label;
+   b.addEventListener('click',function(){
+    var status=document.getElementById('status');
+    var message=kind==='trade'?'TRADE — NOT CONNECTED YET. No official Climboria token or verified contract is available here.': 'CREATE — CREATOR TOOLS ARE NOT CONNECTED YET.';
+    if(status){status.textContent=message;status.style.display='block';status.setAttribute('role','status');}
+    else{
+     var note=document.getElementById('climboria-action-status-v1');
+     if(!note){note=document.createElement('div');note.id='climboria-action-status-v1';note.setAttribute('role','status');note.style.cssText='position:fixed;z-index:120;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 16px;border:1px solid #f4c86a;border-radius:10px;background:#07152a;color:#fff;text-align:center;font:600 12px/1.5 sans-serif';document.body.appendChild(note);}
+     note.textContent=message;
+    }
+   });
+   actions.appendChild(b);
+  }
+  actionButton('TRADE','trade');
+  actionButton('CREATE','create');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initReferenceHomepage);
+ else initReferenceHomepage();
+})();
+</script>
+
+
+<!-- V1.1 cascade and viewport hardening: these rules intentionally follow all legacy overrides -->
+<style id="climboria-reference-homepage-hardening-v1">
+#landing:before{display:block!important;content:""!important}
+#landing:after{display:none!important}
+#landing .panel>.logo,#landing .panel>.sub{display:block!important}
+#cryptoTicker{display:block!important;visibility:visible!important}
+#landing #startButton{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:5!important;flex:1 1 0!important}
+#landing .climboria-hero-actions-v1{position:relative!important;z-index:5!important}
+#landing .cd-hero-actions{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
+#landing .logo,#landing .sub{pointer-events:none!important}
+#landing #landingHeroPreview{z-index:1!important}
+#landing .climboria-hero-actions-v1,#landing .cd-hero-actions{pointer-events:auto!important}
+@media(max-width:700px){
+ #landing .panel>.logo{margin-top:clamp(30px,7vh,64px)!important}
+ #landing .climboria-hero-actions-v1{position:absolute!important;left:50%!important;right:auto!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;top:auto!important;transform:translateX(-50%)!important}
+ #landing #startButton{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;top:auto!important}
+}
+</style>
+
+
+<script id="climboria-market-placeholder-cards-v1">
+(function(){
+ function addPendingMarkets(){
+  var row=document.querySelector('#cryptoTicker .cryptoRow');
+  if(!row||row.dataset.extendedMarkets==='yes')return;
+  row.dataset.extendedMarkets='yes';
+  [
+   {symbol:'GOLD',name:'Gold spot'},
+   {symbol:'S&P 500',name:'US large-cap stocks'},
+   {symbol:'NASDAQ',name:'US technology stocks'},
+   {symbol:'DOW',name:'US blue-chip stocks'}
+  ].forEach(function(item){
+   var card=document.createElement('div');
+   card.className='cryptoCard cd-market-pending';
+   card.setAttribute('aria-label',item.name+' price data not connected');
+   card.innerHTML='<div class="cryptoTop"><span class="cryptoSymbol"></span><span class="cryptoChange cryptoLoading">--</span></div><div class="cryptoPrice">Data unavailable</div><div class="cryptoUpdated">Source not connected</div>';
+   card.querySelector('.cryptoSymbol').textContent=item.symbol;
+   row.appendChild(card);
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addPendingMarkets);
+ else addPendingMarkets();
+})();
+</script>
+<style id="climboria-market-placeholder-style-v1">
+#cryptoTicker{touch-action:pan-x!important;scrollbar-width:thin!important;scrollbar-color:#d9b76b66 #07152a!important}
+#cryptoTicker .cryptoRow{touch-action:pan-x!important}
+#cryptoTicker .cd-market-pending{min-width:126px!important;border-color:#d9b76b44!important}
+#cryptoTicker .cd-market-pending .cryptoSymbol{color:#f4c86a!important}
+#cryptoTicker .cd-market-pending .cryptoPrice{font-size:11px!important;color:#d4dfed!important}
+#cryptoTicker .cd-market-pending .cryptoUpdated{color:#f4c86a!important}
+</style>
+
 </body>
 </html>
