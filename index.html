@@ -10523,6 +10523,97 @@ document.addEventListener("DOMContentLoaded",function(){
   }
 }
 </style>
+
+
+<!-- Climboria clickable homepage actions v1: restore code-based controls above the approved artwork. -->
+<style id="climboria-clickable-home-actions-v1">
+/* Restore real, accessible controls without modifying the approved image asset. */
+#landing #climboria-primary-actions{
+ display:grid!important;position:fixed!important;z-index:10030!important;
+ left:50%!important;right:auto!important;top:auto!important;bottom:max(18px,env(safe-area-inset-bottom))!important;
+ transform:translateX(-50%)!important;width:min(760px,94vw)!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:clamp(6px,1.2vw,14px)!important;
+ margin:0!important;padding:0!important;pointer-events:auto!important;
+}
+#landing #climboria-primary-actions button{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ min-width:0!important;min-height:clamp(54px,8vh,76px)!important;padding:10px clamp(8px,1.2vw,16px)!important;
+ border:1px solid #f2cb79!important;border-radius:12px!important;
+ color:#f7f9ff!important;background:linear-gradient(145deg,#102b49f5,#061326f5)!important;
+ box-shadow:0 8px 24px #0009,inset 0 1px #ffffff18!important;text-align:left!important;
+ font-family:Arial,Helvetica,sans-serif!important;letter-spacing:0!important;
+}
+#landing #climboria-primary-actions .climboria-play{
+ color:#171b27!important;background:linear-gradient(115deg,#fff0a0,#ffc53c 58%,#df8500)!important;
+}
+#landing #climboria-primary-actions .climboria-action-icon{font-size:clamp(17px,2vw,26px)!important}
+#landing #climboria-primary-actions strong{font-size:clamp(10px,1.3vw,16px)!important;line-height:1.2!important;letter-spacing:.3px!important}
+#landing #climboria-primary-actions small{font-size:clamp(8px,.85vw,11px)!important;line-height:1.25!important}
+#landing #climboria-primary-actions button:focus-visible,#climboria-menu-toggle-v1:focus-visible,
+#climboria-menu-v1 button:focus-visible{outline:3px solid #fff0a0!important;outline-offset:3px!important}
+#climboria-menu-toggle-v1{
+ position:fixed!important;z-index:10040!important;top:max(12px,env(safe-area-inset-top))!important;
+ right:max(12px,env(safe-area-inset-right))!important;width:46px!important;height:46px!important;
+ min-height:46px!important;padding:0!important;display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;gap:5px!important;
+ border:1px solid #f2cb79!important;border-radius:12px!important;
+ background:linear-gradient(145deg,#102b49f5,#061326f5)!important;color:#ffd36e!important;
+ box-shadow:0 6px 18px #0008!important;pointer-events:auto!important;
+}
+#climboria-menu-toggle-v1 span{display:block;width:20px;height:2px;border-radius:2px;background:#ffd36e}
+#climboria-menu-backdrop-v1[hidden],#climboria-menu-v1[hidden]{display:none!important}
+#climboria-menu-backdrop-v1{position:fixed;inset:0;z-index:10050;background:#020713b8;backdrop-filter:blur(4px)}
+#climboria-menu-v1{
+ position:fixed;z-index:10051;top:0;right:0;width:min(360px,90vw);height:100dvh;overflow:auto;
+ padding:calc(22px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+ background:linear-gradient(160deg,#0b1b31,#050a14 78%);border-left:1px solid #e9bc5c80;
+ box-shadow:-20px 0 60px #0009;color:#f4f7ff;transform:translateX(105%);transition:transform .22s ease;
+}
+#climboria-menu-v1.is-open{transform:translateX(0)}
+#climboria-menu-v1 h2{margin:0 0 8px;color:#ffd36e;font-size:22px;letter-spacing:2px}
+#climboria-menu-v1 p{margin:0 0 20px;color:#9baab2;font-size:12px;line-height:1.5}
+#climboria-menu-v1 button{display:block;width:100%;margin:9px 0;padding:14px 12px;min-height:48px;text-align:left;border:1px solid #ffffff26;border-radius:10px;background:#10243a;color:#fff;font-weight:800;letter-spacing:1px}
+@media(max-width:700px){
+ #landing #climboria-primary-actions{width:calc(100vw - 20px)!important;bottom:max(12px,env(safe-area-inset-bottom))!important;gap:5px!important}
+ #landing #climboria-primary-actions button{min-height:52px!important;padding:8px 5px!important;gap:5px!important;border-radius:9px!important}
+ #landing #climboria-primary-actions .climboria-action-icon{font-size:16px!important}
+ #landing #climboria-primary-actions strong{font-size:clamp(9px,2.7vw,12px)!important}
+ #landing #climboria-primary-actions small{font-size:clamp(7px,2vw,9px)!important}
+ #climboria-menu-toggle-v1{width:42px!important;height:42px!important;min-height:42px!important}
+}
+@media(prefers-reduced-motion:reduce){#climboria-menu-v1{transition:none}}
+</style>
+<script id="climboria-clickable-home-actions-v1-js">
+(function(){
+ function init(){
+  var landing=document.getElementById('landing');
+  var actions=document.getElementById('climboria-primary-actions');
+  if(!landing||!actions||document.getElementById('climboria-menu-toggle-v1'))return;
+  var toggle=document.createElement('button');
+  toggle.id='climboria-menu-toggle-v1';toggle.type='button';toggle.setAttribute('aria-label','Open Climboria menu');toggle.setAttribute('aria-expanded','false');
+  toggle.innerHTML='<span></span><span></span><span></span>';
+  document.body.appendChild(toggle);
+  var backdrop=document.createElement('div');backdrop.id='climboria-menu-backdrop-v1';backdrop.hidden=true;
+  var menu=document.createElement('nav');menu.id='climboria-menu-v1';menu.hidden=true;menu.setAttribute('aria-label','Climboria navigation');
+  menu.innerHTML='<h2>CLIMBORIA</h2><p>Choose your next step.</p><button type="button" data-action="play">⛰️ &nbsp; PLAY CLIMBORIA</button><button type="button" data-action="trade">↔ &nbsp; TRADE — COMING SOON</button><button type="button" data-action="create">🪙 &nbsp; CREATE TOKEN</button><button type="button" data-action="close">CLOSE MENU</button>';
+  document.body.appendChild(backdrop);document.body.appendChild(menu);
+  function close(){menu.classList.remove('is-open');menu.hidden=true;backdrop.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Open Climboria menu')}
+  function open(){menu.hidden=false;backdrop.hidden=false;requestAnimationFrame(function(){menu.classList.add('is-open')});toggle.setAttribute('aria-expanded','true');toggle.setAttribute('aria-label','Close Climboria menu')}
+  toggle.addEventListener('click',function(){if(menu.hidden)open();else close()});
+  backdrop.addEventListener('click',close);
+  menu.addEventListener('click',function(e){
+   var b=e.target.closest('button[data-action]');if(!b)return;
+   var a=b.getAttribute('data-action');close();
+   if(a==='close')return;
+   var target=actions.querySelector(a==='play'?'.climboria-play':a==='trade'?'.climboria-trade':'.climboria-create-token');
+   if(target)target.click();
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!menu.hidden){close();toggle.focus()}});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
 
