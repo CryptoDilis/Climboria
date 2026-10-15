@@ -10466,8 +10466,6 @@ document.addEventListener("DOMContentLoaded",function(){
  function fitApprovedReference(){
   var landing=document.getElementById('landing');
   if(!landing)return false;
-  var actions=landing.querySelector('.climboria-hero-actions-v1');
-  if(!actions)return false;
   var canvas=document.getElementById('climboria-reference-canvas');
   if(!canvas){
    canvas=document.createElement('div');
@@ -10475,8 +10473,11 @@ document.addEventListener("DOMContentLoaded",function(){
    canvas.setAttribute('aria-hidden','true');
    landing.insertBefore(canvas,landing.firstChild);
   }
-  if(actions.parentNode!==canvas)canvas.appendChild(actions);
-  return true;
+  // Create the artwork canvas as soon as the landing root exists. The CTA
+  // script may mount its action wrapper later, especially on mobile.
+  var actions=landing.querySelector('.climboria-hero-actions-v1');
+  if(actions&&actions.parentNode!==canvas)canvas.appendChild(actions);
+  return !!actions;
  }
  function initialize(){
   if(fitApprovedReference())return;
