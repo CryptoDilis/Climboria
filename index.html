@@ -1194,6 +1194,98 @@ button:active{transform:scale(.98)}
   grid-template-columns:1fr 1fr;
  }
 }
+
+/* Accessibility/readability pass: enlarge secondary labels and touch UI without changing the game artwork. */
+.panel{padding:clamp(22px,4vw,34px) 22px;scroll-padding-bottom:20px}
+.sub{font-size:15px;line-height:1.6;letter-spacing:1.8px}
+.note{font-size:13px;line-height:1.6;color:#9baab2}
+button{font-size:14px;letter-spacing:1.2px;min-height:48px;padding:14px 24px}
+.card b{font-size:16px}
+.card span{font-size:13px;line-height:1.55;color:#aab7bf}
+.levelSub{font-size:12px;line-height:1.6;letter-spacing:1.2px}
+.levelNumber{font-size:11px;letter-spacing:1.5px}
+.levelName{font-size:20px;line-height:1.35}
+.levelDescription{font-size:13px;line-height:1.65;color:#aab7bf}
+.levelStatus{font-size:11px;line-height:1.4;padding:6px 10px}
+.levelReward{font-size:10px;line-height:1.4}
+.pointsLabel{font-size:11px;letter-spacing:1.3px}
+.pointsValue{font-size:23px}
+.pointsSmall{font-size:12px;line-height:1.5}
+.progressTitle{font-size:11px;line-height:1.4}
+.progressText{font-size:11px;line-height:1.55;color:#aab7bf}
+.progressStatus{font-size:10px;line-height:1.4}
+.dashTitle{font-size:12px;letter-spacing:1px}
+.dashBadge{font-size:10px;line-height:1.4}
+.dashSmall{font-size:12px;line-height:1.65;color:#aab7bf}
+.smallButton{font-size:11px;letter-spacing:.6px;min-height:42px}
+.sectionTitle{font-size:13px;letter-spacing:1.4px}
+.leaderRow{font-size:12px;gap:8px;padding:10px 5px}
+.leaderTime{font-size:11px}
+.airdropTitle{font-size:13px;letter-spacing:1.3px}
+.airdropSoon{font-size:10px}
+.airdropText{font-size:12px;line-height:1.7;color:#aab7bf}
+.airdropStats{font-size:11px;line-height:1.5}
+.stat{font-size:13px;line-height:1.7}
+#status{font-size:13px;letter-spacing:1.3px}
+.hudPointsLabel{font-size:10px;letter-spacing:1.3px}
+#hudPointsValue{font-size:18px}
+.cryptoSymbol{font-size:11px}
+.cryptoChange{font-size:10px}
+.cryptoPrice{font-size:12px}
+.cryptoLive{font-size:9px}
+@media(max-width:600px){
+ .panel{width:100%;padding:20px 14px;max-height:100dvh}
+ .sub{font-size:13px;letter-spacing:1px;margin:13px 0 20px}
+ .note{font-size:12px}
+ .cards{gap:10px;margin-top:18px}
+ .card{width:calc(50% - 6px);min-width:0;padding:16px 12px}
+ .card b{font-size:15px}
+ .card span{font-size:12px}
+ .levelGrid{width:100%;gap:9px;margin-top:18px}
+ .levelCard{min-height:160px;padding:14px 12px}
+ .levelName{font-size:17px;letter-spacing:.3px}
+ .levelDescription{font-size:12px;line-height:1.55}
+ .levelNumber{font-size:10px;letter-spacing:1px}
+ .levelStatus{font-size:10px;letter-spacing:.5px;padding:6px 7px}
+ .levelReward{right:9px;top:9px;font-size:9px;max-width:72px;text-align:right}
+ .pointsPanel{gap:7px;margin-top:15px}
+ .pointsBox{min-width:calc(50% - 5px);padding:12px 10px}
+ .pointsLabel{font-size:10px;letter-spacing:.8px}
+ .pointsValue{font-size:21px}
+ .pointsSmall{font-size:11px}
+ .progressPanel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .progressCard{padding:12px 9px}
+ .progressTitle{font-size:11px}
+ .progressText{font-size:11px}
+ .dashboard{gap:8px;width:100%}
+ .dashCard{padding:12px 10px}
+ .dashTitle{font-size:11px;letter-spacing:.6px}
+ .dashBadge{font-size:9px;padding:4px 6px}
+ .dashValue{font-size:22px}
+ .dashSmall{font-size:11px}
+ .smallButton{font-size:10px;padding:8px 5px;letter-spacing:.3px}
+ .leaderboard{padding:10px 8px}
+ .leaderRow{grid-template-columns:28px minmax(0,1fr) 64px 48px;gap:5px;font-size:11px;padding:10px 2px}
+ .leaderTime{font-size:10px}
+ .airdrop{padding:12px 10px}
+ .airdropTitle{font-size:12px}
+ .airdropText{font-size:11px}
+ .airdropStats{font-size:10px}
+ #cryptoTicker{top:auto;bottom:10px;width:calc(100% - 16px)}
+ .cryptoRow{gap:5px}
+ .cryptoCard{min-width:0;flex:1;padding:7px 5px}
+ .cryptoSymbol{font-size:10px}
+ .cryptoChange{font-size:9px}
+ .cryptoPrice{font-size:11px}
+ .cryptoLive{font-size:8px}
+ #hud{top:12px;left:12px;right:12px}
+ .stat{font-size:12px}
+ #status{top:68px;font-size:12px;letter-spacing:.8px}
+ #hudPoints{top:90px}
+ .hudPointsLabel{font-size:9px}
+ #hudPointsValue{font-size:17px}
+}
+
 </style>
 
 <style id="climboria-result-options-raised">
