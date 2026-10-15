@@ -10979,3 +10979,33 @@ body{overflow:hidden!important}
  }
 }
 </style>
+
+
+<!-- Reference-matched CTA hit areas only. Premium artwork remains untouched. -->
+<style id="climboria-reference-cta-hitareas-v1">
+/* Match the three clickable regions to the buttons already drawn in climboria-homepage.png. */
+#landing .climboria-hero-actions-v1{
+ position:fixed!important;z-index:10020!important;display:block!important;
+ margin:0!important;padding:0!important;pointer-events:none!important;
+}
+#landing #startButton,
+#landing .climboria-reference-action{
+ position:absolute!important;
+ top:72%!important;height:7.1%!important;min-height:44px!important;
+ margin:0!important;padding:0!important;
+ border:0!important;border-radius:7px!important;
+ background:transparent!important;color:transparent!important;
+ font-size:0!important;letter-spacing:0!important;
+ box-shadow:none!important;text-shadow:none!important;
+ transform:none!important;pointer-events:auto!important;
+}
+#landing #startButton{left:21.55%!important;width:18.2%!important}
+#landing .climboria-reference-action:nth-of-type(2){left:41.0%!important;width:18.2%!important}
+#landing .climboria-reference-action:nth-of-type(3){left:60.45%!important;width:18.2%!important}
+#landing #startButton:hover,
+#landing .climboria-reference-action:hover{filter:none!important;transform:none!important}
+#landing #startButton:focus-visible,
+#landing .climboria-reference-action:focus-visible{
+ outline:2px solid #ffe7a0!important;outline-offset:2px!important
+}
+</style>
