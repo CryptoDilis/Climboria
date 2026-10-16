@@ -9626,7 +9626,7 @@ document.addEventListener("DOMContentLoaded",function(){
    if(levels){landing.style.display='none';levels.style.display='flex';}
   });
   actions.querySelector('.climboria-trade').addEventListener('click',function(){
-   window.location.href='./swap/';
+   window.location.href='./overview/#market-title';
   });
   actions.querySelector('.climboria-create-token').addEventListener('click',function(){
    var msg=document.getElementById('status');
@@ -10328,11 +10328,11 @@ document.addEventListener("DOMContentLoaded",function(){
   '<section class="cd-menu-section"><p class="cd-menu-label">EXPLORE CLIMBORIA</p>'+
   '<a class="cd-menu-link" href="#climboria-overview" data-cd-menu-action="overview"><span class="cd-menu-icon">◈</span><span class="cd-menu-copy"><strong>OVERVIEW</strong><small>What Climboria is building</small></span></a>'+
   '<a class="cd-menu-link" href="#climboria-roadmap" data-cd-menu-action="roadmap"><span class="cd-menu-icon">⌁</span><span class="cd-menu-copy"><strong>ROADMAP</strong><small>Development milestones</small></span></a>'+
-  '<a class="cd-menu-link" href="#climboria-tokenomics" data-cd-menu-action="tokenomics"><span class="cd-menu-icon">◉</span><span class="cd-menu-copy"><strong>TOKENOMICS</strong><small>Token plan and allocation</small></span></a>'+
-  '<a class="cd-menu-link" href="./swap/" data-cd-menu-action="swap"><span class="cd-menu-icon">↔</span><span class="cd-menu-copy"><strong>SWAP</strong><small>Open Climboria Swap</small></span></a>'+
-  '<a class="cd-menu-link" href="#climboria-whitepaper" data-cd-menu-action="whitepaper"><span class="cd-menu-icon">▤</span><span class="cd-menu-copy"><strong>WHITEPAPER</strong><small>Project vision and design</small></span></a>'+
+  '<a class="cd-menu-link" href="./overview/#season-economy-title" data-cd-menu-action="tokenomics"><span class="cd-menu-icon">◉</span><span class="cd-menu-copy"><strong>TOKENOMICS</strong><small>Supply status, fees and reward rules</small></span></a>'+
+  '<a class="cd-menu-link" href="./overview/#market-title" data-cd-menu-action="swap"><span class="cd-menu-icon">↔</span><span class="cd-menu-copy"><strong>SWAP & MARKETPLACE</strong><small>View plans and current status</small></span></a>'+
+  '<a class="cd-menu-link" href="./overview/#climboria-whitepaper" data-cd-menu-action="whitepaper"><span class="cd-menu-icon">▤</span><span class="cd-menu-copy"><strong>PROJECT BRIEF</strong><small>Vision, gameplay and ecosystem</small></span></a>'+
   '<a class="cd-menu-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><span class="cd-menu-icon">𝕏</span><span class="cd-menu-copy"><strong>COMMUNITY</strong><small>Follow Climboria on X</small></span></a>'+
-  '<button class="cd-menu-link" type="button" data-cd-menu-action="leaderboard"><span class="cd-menu-icon">♛</span><span class="cd-menu-copy"><strong>LEADERBOARD</strong><small>Climb points and rankings</small></span></button>'+
+  '<a class="cd-menu-link" href="./overview/#season-economy-title" data-cd-menu-action="leaderboard-plan"><span class="cd-menu-icon">♛</span><span class="cd-menu-copy"><strong>LEADERBOARD & SEASONS</strong><small>Ranks, Top 10 badges and proposed rewards</small></span></a>'+
   '<button class="cd-menu-link" type="button" data-cd-menu-action="play"><span class="cd-menu-icon">▶</span><span class="cd-menu-copy"><strong>PLAY GAME</strong><small>Return to the climbing game</small></span></button></section>'+
   '<div class="cd-menu-note">Climboria is game-first. Token launch details and account features will be marked clearly when officially available.</div>';
   document.body.appendChild(backdrop);document.body.appendChild(drawer);
@@ -10344,13 +10344,13 @@ document.addEventListener("DOMContentLoaded",function(){
   drawer.addEventListener('click',function(e){
    var link=e.target.closest('[data-cd-menu-action]');if(!link)return;
    var action=link.getAttribute('data-cd-menu-action');
-   if(action==='swap'){e.preventDefault();close();window.location.href='./swap/';return;}
+   if(action==='swap'){e.preventDefault();close();window.location.href='./overview/#market-title';return;}
    if(action==='play'){close();var start=document.getElementById('startButton');if(start)start.click();return;}
-   if(action==='leaderboard'){close();var msg=document.getElementById('status');if(msg){msg.textContent='LEADERBOARD — NOT CONNECTED YET';msg.style.display='block';}return;}
+   if(action==='leaderboard-plan'){e.preventDefault();close();window.location.href='./overview/#season-economy-title';return;}
    if(action==='login'||action==='signup'){e.preventDefault();var msg=document.getElementById('status');if(msg){msg.textContent=action.toUpperCase()+' — ACCOUNT SYSTEM NOT CONNECTED YET';msg.style.display='block';}return;}
    if(action==='overview'){e.preventDefault();close();window.location.href='./overview/';return;}
    if(action==='roadmap'){e.preventDefault();close();window.location.href='./overview/#roadmap';return;}
-   if(['tokenomics','whitepaper'].indexOf(action)!==-1){e.preventDefault();close();showInfo(action);}
+   if(['tokenomics','whitepaper'].indexOf(action)!==-1){e.preventDefault();close();window.location.href=action==='tokenomics'?'./overview/#season-economy-title':'./overview/#climboria-whitepaper';return;}
   });
   function showInfo(action){
    var existing=document.getElementById('climboria-info-dialog');if(existing)existing.remove();
