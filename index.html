@@ -8914,11 +8914,7 @@ document.addEventListener("DOMContentLoaded",function(){
   features.className="cd-feature-grid";
   features.innerHTML='<button class="cd-feature" data-cd-action="points"><span class="cd-art">💎</span><b>EARN POINTS</b><small>Climb &amp; Win</small></button><button class="cd-feature" data-cd-action="market"><span class="cd-art">🧰</span><b>MARKETPLACE</b><small>Trade Assets</small></button><button class="cd-feature" data-cd-action="launch"><span class="cd-art">🚀</span><b>LAUNCHPAD</b><small>Build Together</small></button><button class="cd-feature" data-cd-action="dex"><span class="cd-art">↔️</span><b>DEX</b><small>Trade Freely</small></button><button class="cd-feature" data-cd-action="community"><span class="cd-art">🏴</span><b>COMMUNITY</b><small>Join the Climb</small></button>';
   panel.appendChild(features);
-  var prices=document.createElement("section");
-  prices.className="cd-live-price-panel";
-  prices.innerHTML='<div class="cd-live-title">LIVE CRYPTO PRICES <span>● LIVE</span></div><div class="cd-live-rows"><div><b>₿ BTC</b><strong id="cdBTCPrice">—</strong><span id="cdBTCChange">—</span></div><div><b>◆ ETH</b><strong id="cdETHPrice">—</strong><span id="cdETHChange">—</span></div><div><b>◎ SOL</b><strong id="cdSOLPrice">—</strong><span id="cdSOLChange">—</span></div><div><b>◆ BNB</b><strong id="cdBNBPrice">—</strong><span id="cdBNBChange">—</span></div><div><b>✕ XRP</b><strong id="cdXRPPrice">—</strong><span id="cdXRPChange">—</span></div></div>';
-  panel.appendChild(prices);
-  var challenge=document.createElement("section");
+var challenge=document.createElement("section");
   challenge.className="cd-challenge-strip";
   challenge.innerHTML='<span class="cd-challenge-trophy">🏆</span><span class="cd-challenge-copy"><b>DAILY CHALLENGE</b><small>Climb today. Keep your streak alive!</small></span><span class="cd-streak">🔥 <span><b id="cdStreakValue">0</b> STREAK</span></span><div class="cd-progress"><i></i></div><span class="cd-challenge-gift">🎁</span><span class="cd-challenge-next">›</span>';
   panel.appendChild(challenge);
@@ -8928,14 +8924,8 @@ document.addEventListener("DOMContentLoaded",function(){
   // Keep the tracker inside the same feature grid so it cannot float over another card.
   features.appendChild(airdrop);
   function syncDashboard(){
-   var pairs=[["btc","BTC"],["eth","ETH"],["sol","SOL"],["bnb","BNB"],["xrp","XRP"]];
-   pairs.forEach(function(p){
-    var price=document.getElementById(p[0]+"Price"),change=document.getElementById(p[0]+"Change");
-    var targetPrice=document.getElementById("cd"+p[1]+"Price"),targetChange=document.getElementById("cd"+p[1]+"Change");
-    if(price&&targetPrice)targetPrice.textContent=price.textContent;
-    if(change&&targetChange){targetChange.textContent=change.textContent;targetChange.style.color=change.classList.contains("negative")?"#ff6b78":"#27ffa5";}
-   });
-   var streak=document.getElementById("landingStreakText"),value=document.getElementById("cdStreakValue");
+   var streak=document.getElementById("landingStreakText");
+   var value=document.getElementById("cdStreakValue");
    if(streak&&value){var match=streak.textContent.match(/\d+/);if(match)value.textContent=match[0];}
   }
   syncDashboard();
@@ -9436,7 +9426,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 <!-- Emergency homepage artwork layout repair: keep official art centered, keep controls independent. -->
 <style id="climboria-clean-homepage-layout-v1">
 /* Consolidated homepage controls: one source of truth, no artwork overlay. */
-#landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 52%,#07152a 100%)!important;overflow-x:hidden!important;overflow-y:auto!important}
+#landing{display:block!important;background:linear-gradient(180deg,#07152a 0%,#0a1b31 52%,#07152a 100%)!important;overflow-x:hidden!important;overflow-y:auto!important}
 #landing>.panel{position:relative!important;inset:auto!important;width:min(1200px,100%)!important;max-width:1200px!important;min-height:100dvh!important;height:auto!important;margin:0 auto!important;padding:92px clamp(14px,3vw,32px) 28px!important;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:14px!important;background:transparent!important;isolation:isolate!important}
 #landing>.panel>*{position:relative;z-index:2}
 #landing>.panel>.logo,#landing>.panel>.sub{display:block!important;text-align:center!important;margin:0!important}
@@ -9459,7 +9449,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 #landing .progressPanel{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
 #landing .cards{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
 #landing .pointsBox,#landing .progressCard,#landing .card{min-width:0!important;width:auto!important;max-width:100%!important;backdrop-filter:none!important}
-#landing .cd-feature-grid,#landing .cd-challenge-strip,#landing .cd-live-price-panel{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;width:100%!important;max-width:100%!important;margin:0!important}
+#landing .cd-feature-grid,#landing .cd-challenge-strip{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;transform:none!important;width:100%!important;max-width:100%!important;margin:0!important}
 #landing .cd-feature-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
 #landing .cd-feature-grid>.cd-feature,#landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;min-width:0!important;width:auto!important;max-width:none!important;min-height:80px!important;margin:0!important;transform:none!important}
 #landing .note{margin:0!important;text-align:center!important}
