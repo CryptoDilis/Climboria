@@ -162,8 +162,12 @@ jobs:
               console.log('Post-Level-1 UI state: ' + JSON.stringify(uiState));
               await page.screenshot({ path: 'climboria-gameplay.png', fullPage: false });
 
-              if (uiState.hud?.display === 'none' || uiState.levelSelect?.display !== 'none') {
-                throw new Error('Level 1 did not enter the expected gameplay UI state.');
+              if (uiState.landing?.display !== 'none' ||
+                  uiState.hud?.display === 'none' ||
+                  uiState.levelSelect?.display !== 'none') {
+                throw new Error('Level 1 did not enter the expected gameplay UI state: ' +
+                  JSON.stringify({landing: uiState.landing?.display, hud: uiState.hud?.display,
+                    levelSelect: uiState.levelSelect?.display}));
               }
 
               const mobile = await browser.newPage({
