@@ -57,9 +57,11 @@ jobs:
           for tag in ("html", "body"):
               starts = sum(1 for name, attrs in probe.tags if name == tag)
               ends = probe.end_tags.count(tag)
-              if starts != 1 or ends != 1:
+              # Inline legacy scripts may contain literal closing-tag strings;
+              # require a single parsed root and at least one closing marker.
+              if starts != 1 or ends < 1:
                   raise SystemExit(
-                      f"expected one parsed <{tag}> and </{tag}>; found {starts} and {ends}"
+                      f"expected one parsed <{tag}> and a closing marker; found {starts} and {ends}"
                   )
 
           required = [
