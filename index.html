@@ -11667,3 +11667,29 @@ html body #landing #climboria-reference-canvas{
  }
 }
 </style>
+
+
+<!-- Emergency homepage artwork layout repair: keep official art centered, keep controls independent. -->
+<style id="climboria-desktop-artwork-repair-v1">
+html body #landing{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;overflow:hidden!important;background:#061329!important;isolation:isolate!important}
+html body #landing #climboria-reference-canvas{
+ position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;
+ width:100vw!important;height:100dvh!important;min-width:0!important;min-height:0!important;
+ max-width:none!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;
+ transform:translate(-50%,-50%)!important;transform-origin:center center!important;
+ background-image:url("./climboria-homepage.png")!important;
+ background-size:contain!important;background-position:center center!important;background-repeat:no-repeat!important;
+ background-color:#061329!important;pointer-events:none!important;
+}
+html body #landing #landingHeroPreview{display:none!important}
+html body #landing>.panel{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;margin:0!important;padding:0!important;background:transparent!important;pointer-events:none!important}
+html body #landing .climboria-hero-actions-v1{z-index:10020!important}
+html body #landing #startButton,html body #landing .climboria-reference-action{pointer-events:auto!important}
+@media(max-width:700px){
+ html body #landing #climboria-reference-canvas{
+  width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;
+  left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;
+  background-size:contain!important;background-position:center center!important;background-repeat:no-repeat!important;
+ }
+}
+</style>
