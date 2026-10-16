@@ -10919,6 +10919,53 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 </body>
 </html>
 
+<!-- Mobile-only definitive fix: sync CTA visibility directly with the menu toggle and drawer. -->
+<style id="climboria-mobile-menu-cta-final-v4">
+@media (max-width:700px){
+ body.climboria-mobile-menu-open #climboria-visible-cta-overlay-v2-root,
+ body.climboria-mobile-menu-open #landing .climboria-hero-actions-v1,
+ body.climboria-mobile-menu-open #landing #startButton,
+ body.climboria-mobile-menu-open #landing .climboria-reference-action{
+  display:none!important;visibility:hidden!important;pointer-events:none!important;
+ }
+}
+</style>
+<script id="climboria-mobile-menu-cta-final-sync-v4">
+(function(){
+ function sync(){
+  if(!window.matchMedia('(max-width:700px)').matches){
+   document.body.classList.remove('climboria-mobile-menu-open');
+   return;
+  }
+  var drawer=document.getElementById('climboria-menu-drawer');
+  var toggle=document.getElementById('climboria-hamburger-toggle');
+  var open=!!(drawer && !drawer.hidden &&
+    (drawer.classList.contains('is-open') || drawer.getAttribute('aria-hidden')==='false' ||
+     (toggle && toggle.getAttribute('aria-expanded')==='true')));
+  document.body.classList.toggle('climboria-mobile-menu-open',open);
+  var root=document.getElementById('climboria-visible-cta-overlay-v2-root');
+  var old=document.querySelector('#landing .climboria-hero-actions-v1');
+  [root,old].forEach(function(el){
+   if(!el)return;
+   var d=open?'none':'block',v=open?'hidden':'visible',p=open?'none':'auto';
+   if(el.style.getPropertyValue('display')!==d)el.style.setProperty('display',d,'important');
+   if(el.style.getPropertyValue('visibility')!==v)el.style.setProperty('visibility',v,'important');
+   if(el.style.getPropertyValue('pointer-events')!==p)el.style.setProperty('pointer-events',p,'important');
+  });
+ }
+ function init(){
+  sync();
+  var obs=new MutationObserver(sync);
+  obs.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','aria-hidden','aria-expanded']});
+  document.addEventListener('click',function(){requestAnimationFrame(sync);setTimeout(sync,280);},true);
+  window.addEventListener('pageshow',sync);
+  window.addEventListener('resize',sync,{passive:true});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+
 <!-- Static, readable market strip + hamburger positioning. Artwork is untouched. -->
 <style id="climboria-static-market-strip-v1">
 /* Keep the ticker as a thin, fixed strip over the approved artwork; never auto-scroll. */
