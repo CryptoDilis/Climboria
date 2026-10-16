@@ -11744,3 +11744,22 @@ html body #landing>.panel{position:absolute!important;inset:0!important;width:10
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+
+<!-- Code-only homepage foundation v2: disable all raster hero artwork. Build the scene in code layers. -->
+<style id="climboria-code-only-foundation-v2">
+html body #landing #climboria-reference-canvas{
+  background-image:none!important;
+  background:none!important;
+  background-color:#061329!important;
+}
+html body #landing #landingHeroPreview,
+html body #landing #climboriaHeroCutout{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+}
+html body #landing #climboria-generated-mountain{
+  display:block!important;
+}
+</style>
