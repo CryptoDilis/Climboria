@@ -9616,7 +9616,7 @@ document.addEventListener("DOMContentLoaded",function(){
   var actions=document.createElement('div');
   actions.id='climboria-primary-actions';
   actions.setAttribute('aria-label','Main game actions');
-  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Start your climb</small></span></button><button type="button" class="climboria-trade"><span class="climboria-action-icon" aria-hidden="true">↔️</span><span class="climboria-action-copy"><strong>TRADE</strong><small>DEX coming soon</small></span></button><button type="button" class="climboria-create-token"><span class="climboria-action-icon" aria-hidden="true">🪙</span><span class="climboria-action-copy"><strong>CREATE TOKEN</strong><small>Launch tools</small></span></button>';
+  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Start your climb</small></span></button><button type="button" class="climboria-trade"><span class="climboria-action-icon" aria-hidden="true">↔️</span><span class="climboria-action-copy"><strong>SWAP</strong><small>Open Climboria Swap</small></span></button><button type="button" class="climboria-create-token"><span class="climboria-action-icon" aria-hidden="true">🪙</span><span class="climboria-action-copy"><strong>CREATE TOKEN</strong><small>Launch tools</small></span></button>';
   announcement.insertAdjacentElement('afterend',actions);
   actions.querySelector('.climboria-play').addEventListener('click',function(){
    var start=document.getElementById('startButton');
@@ -9626,10 +9626,7 @@ document.addEventListener("DOMContentLoaded",function(){
    if(levels){landing.style.display='none';levels.style.display='flex';}
   });
   actions.querySelector('.climboria-trade').addEventListener('click',function(){
-   var msg=document.getElementById('status');
-   if(msg){msg.textContent='CLIMBORIA DEX — COMING SOON';msg.style.display='block';}
-   var dex=document.querySelector('#launchpad .card:last-child');
-   if(dex){dex.scrollIntoView({behavior:'smooth',block:'center'});}
+   window.location.href='./swap/';
   });
   actions.querySelector('.climboria-create-token').addEventListener('click',function(){
    var msg=document.getElementById('status');
@@ -10332,6 +10329,7 @@ document.addEventListener("DOMContentLoaded",function(){
   '<a class="cd-menu-link" href="#climboria-overview" data-cd-menu-action="overview"><span class="cd-menu-icon">◈</span><span class="cd-menu-copy"><strong>OVERVIEW</strong><small>What Climboria is building</small></span></a>'+
   '<a class="cd-menu-link" href="#climboria-roadmap" data-cd-menu-action="roadmap"><span class="cd-menu-icon">⌁</span><span class="cd-menu-copy"><strong>ROADMAP</strong><small>Development milestones</small></span></a>'+
   '<a class="cd-menu-link" href="#climboria-tokenomics" data-cd-menu-action="tokenomics"><span class="cd-menu-icon">◉</span><span class="cd-menu-copy"><strong>TOKENOMICS</strong><small>Token plan and allocation</small></span></a>'+
+  '<a class="cd-menu-link" href="./swap/" data-cd-menu-action="swap"><span class="cd-menu-icon">↔</span><span class="cd-menu-copy"><strong>SWAP</strong><small>Open Climboria Swap</small></span></a>'+
   '<a class="cd-menu-link" href="#climboria-whitepaper" data-cd-menu-action="whitepaper"><span class="cd-menu-icon">▤</span><span class="cd-menu-copy"><strong>WHITEPAPER</strong><small>Project vision and design</small></span></a>'+
   '<a class="cd-menu-link" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><span class="cd-menu-icon">𝕏</span><span class="cd-menu-copy"><strong>COMMUNITY</strong><small>Follow Climboria on X</small></span></a>'+
   '<button class="cd-menu-link" type="button" data-cd-menu-action="leaderboard"><span class="cd-menu-icon">♛</span><span class="cd-menu-copy"><strong>LEADERBOARD</strong><small>Climb points and rankings</small></span></button>'+
@@ -10346,6 +10344,7 @@ document.addEventListener("DOMContentLoaded",function(){
   drawer.addEventListener('click',function(e){
    var link=e.target.closest('[data-cd-menu-action]');if(!link)return;
    var action=link.getAttribute('data-cd-menu-action');
+   if(action==='swap'){e.preventDefault();close();window.location.href='./swap/';return;}
    if(action==='play'){close();var start=document.getElementById('startButton');if(start)start.click();return;}
    if(action==='leaderboard'){close();var msg=document.getElementById('status');if(msg){msg.textContent='LEADERBOARD — NOT CONNECTED YET';msg.style.display='block';}return;}
    if(action==='login'||action==='signup'){e.preventDefault();var msg=document.getElementById('status');if(msg){msg.textContent=action.toUpperCase()+' — ACCOUNT SYSTEM NOT CONNECTED YET';msg.style.display='block';}return;}
@@ -10442,7 +10441,7 @@ document.addEventListener("DOMContentLoaded",function(){
    b.type='button';b.className='climboria-reference-action';b.textContent=label;
    b.addEventListener('click',function(){
     var status=document.getElementById('status');
-    var message=kind==='trade'?'TRADE — NOT CONNECTED YET. No official Climboria token or verified contract is available here.': 'CREATE — CREATOR TOOLS ARE NOT CONNECTED YET.';
+    var message=kind==='trade'?'SWAP — OPEN CLIMBORIA SWAP. Trading is available only when the swap interface and supported liquidity are operational.': 'CREATE — CREATOR TOOLS ARE NOT CONNECTED YET.';
     if(status){status.textContent=message;status.style.display='block';status.setAttribute('role','status');}
     else{
      var note=document.getElementById('climboria-action-status-v1');
@@ -10452,7 +10451,7 @@ document.addEventListener("DOMContentLoaded",function(){
    });
    actions.appendChild(b);
   }
-  actionButton('TRADE','trade');
+  actionButton('SWAP','trade');
   actionButton('CREATE','create');
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initReferenceHomepage);
@@ -11362,5 +11361,21 @@ body{overflow:hidden!important}
 #landing #startButton:focus-visible,
 #landing .climboria-reference-action:focus-visible{
  outline:2px solid #ffe7a0!important;outline-offset:2px!important
+}
+</style>
+
+
+<!-- Keep homepage calls-to-action inside the hero experience; never float over the navigation drawer. -->
+<style id="climboria-mobile-menu-cta-fix-v1">
+/* The overlay was viewport-fixed, so its controls stayed visible over every page/menu. */
+#climboria-visible-cta-overlay-v2-root{z-index:100!important}
+body:has(#climboria-menu-drawer:not([hidden])) #climboria-visible-cta-overlay-v2-root,
+body:has(#climboria-menu-drawer:not([hidden])) #landing .climboria-hero-actions-v1,
+body:has(#climboria-menu-drawer:not([hidden])) #landing #startButton,
+body:has(#climboria-menu-drawer:not([hidden])) #landing .climboria-reference-action{
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+@media(max-width:700px){
+ #climboria-visible-cta-overlay-v2-root{z-index:100!important}
 }
 </style>
