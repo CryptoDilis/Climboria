@@ -2067,7 +2067,7 @@ body{
 
    <div class="progressCard">
     <div class="progressIcon">🎁</div>
-    <div class="progressTitle">AIRDROP</div>
+    <div class="progressTitle">GIVEAWAYS</div>
     <div class="progressText">
      Future rewards
     </div>
@@ -2375,7 +2375,7 @@ body{
    <div class="airdropHeader">
 
     <div class="airdropTitle">
-     🎁 FUTURE AIRDROP TRACKER
+     🎁 GIVEAWAYS &amp; PROMOTIONS
     </div>
 
     <div class="airdropSoon">
@@ -2385,9 +2385,7 @@ body{
    </div>
 
    <div class="airdropText">
-    Your Climboria activity is being tracked locally.
-    Future seasons may use these activities for community rewards
-    and airdrop eligibility.
+    Activity tracking is local in this prototype. Future giveaways and promotions will publish their own eligibility rules. No token airdrop or reward is currently promised.
    </div>
 
    <div class="airdropProgress">
@@ -9534,7 +9532,7 @@ document.addEventListener("DOMContentLoaded",function(){
   var actions=document.createElement('div');
   actions.id='climboria-primary-actions';
   actions.setAttribute('aria-label','Main game actions');
-  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Start your climb</small></span></button><button type="button" class="climboria-trade"><span class="climboria-action-icon" aria-hidden="true">↔️</span><span class="climboria-action-copy"><strong>SWAP</strong><small>Open Climboria Swap</small></span></button><button type="button" class="climboria-create-token"><span class="climboria-action-icon" aria-hidden="true">🪙</span><span class="climboria-action-copy"><strong>CREATE TOKEN</strong><small>Launch tools</small></span></button>';
+  actions.innerHTML='<button type="button" class="climboria-play"><span class="climboria-action-icon" aria-hidden="true">⛰️</span><span class="climboria-action-copy"><strong>PLAY CLIMBORIA</strong><small>Free to Start</small></span></button><button type="button" class="climboria-trade"><span class="climboria-action-icon" aria-hidden="true">↔️</span><span class="climboria-action-copy"><strong>TRADE</strong><small>Open the swap interface</small></span></button><button type="button" class="climboria-create-token"><span class="climboria-action-icon" aria-hidden="true">🪙</span><span class="climboria-action-copy"><strong>CREATE TOKEN</strong><small>Launch tools</small></span></button>';
   announcement.insertAdjacentElement('afterend',actions);
   actions.querySelector('.climboria-play').addEventListener('click',function(){
    var start=document.getElementById('startButton');
@@ -9707,8 +9705,8 @@ document.addEventListener("DOMContentLoaded",function(){
   challenge.innerHTML='<span class="cd-challenge-trophy">🏆</span><span class="cd-challenge-copy"><b>DAILY CHALLENGE</b><small>Climb today. Keep your streak alive!</small></span><span class="cd-streak">🔥 <span><b id="cdStreakValue">0</b> STREAK</span></span><div class="cd-progress"><i></i></div><span class="cd-challenge-gift">🎁</span><span class="cd-challenge-next">›</span>';
   panel.appendChild(challenge);
   var airdrop=document.createElement("button");
-  airdrop.type="button";airdrop.className="cd-feature cd-airdrop-tile";airdrop.setAttribute("data-cd-action","airdrop");
-  airdrop.innerHTML='<span class="cd-art">🪂</span><b>AIRDROP TRACKER</b><small>Complete tasks. Earn rewards.</small>';
+  airdrop.type="button";airdrop.className="cd-feature cd-airdrop-tile";airdrop.setAttribute("data-cd-action","promotions");
+  airdrop.innerHTML='<span class="cd-art">🎁</span><b>GIVEAWAYS &amp; PROMOTIONS</b><small>Community events &amp; rewards</small>';
   // Keep the tracker inside the same feature grid so it cannot float over another card.
   features.appendChild(airdrop);
   function syncDashboard(){
