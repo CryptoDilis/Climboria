@@ -1735,17 +1735,10 @@ body{
 <style id="climboria-reference-brightness-final">
 /* Match the approved reference: brighten the existing summit artwork only. */
 #landing{position:fixed!important;isolation:isolate;background-image:none!important;background-color:#07162d!important}
-#landing:before{
- content:""!important;display:block!important;position:absolute!important;inset:0!important;
- z-index:0!important;pointer-events:none!important;
- background:url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important;
- filter:brightness(1.22) saturate(1.05)!important;
-}
 #landing>.panel{position:relative;z-index:1}
 .climboria-dashboard-header{z-index:30!important}
 .cd-brand,.cd-brand-name{position:relative;z-index:31!important}
 @media(max-width:700px){
- #landing:before{background-position:center center!important;filter:brightness(1.22) saturate(1.05)!important}
 }
 </style>
 
@@ -8934,19 +8927,11 @@ body{color:#fff;background:#06152b}
   radial-gradient(ellipse at 50% 10%,rgba(72,166,255,.36),transparent 42%),
   linear-gradient(180deg,rgba(5,24,50,.12) 0%,rgba(3,10,25,.55) 44%,#030814 100%),
   linear-gradient(120deg,#0d3157 0%,#e4a95e 48%,#0b2344 76%,#020814 100%);
-}
-#landing:before,#launchpad:before,#levelSelect:before{
+}#launchpad:before,#levelSelect:before{
  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
  background:
   linear-gradient(180deg,transparent 0 28%,rgba(2,8,18,.1) 45%,#020713 100%),
   radial-gradient(ellipse at 50% 40%,rgba(255,208,90,.38),transparent 27%);
-}
-#landing:after{
- content:"";position:fixed;pointer-events:none;z-index:0;left:-8vw;right:-8vw;bottom:14vh;height:54vh;
- background:linear-gradient(145deg,#c9e7ff 0%,#234e7b 18%,#0b1d37 49%,#020712 80%);
- clip-path:polygon(0 100%,0 77%,8% 57%,14% 69%,23% 30%,28% 47%,39% 9%,45% 32%,50% 0,57% 33%,65% 17%,73% 53%,80% 27%,88% 60%,94% 42%,100% 72%,100% 100%);
- filter:drop-shadow(0 -8px 22px rgba(255,195,69,.45));
- opacity:.88;
 }
 #landing .panel,#launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{
  position:relative;z-index:2;width:min(1200px,96vw);max-width:1200px;
@@ -9071,9 +9056,8 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
 <style id="climboria-cinematic-reference-implementation">
 /* Actual illustrated summit scene asset; this replaces the placeholder CSS mountain. */
 #landing{
- background:#07162d url("climboria-cinematic-summit.svg") center 43%/cover no-repeat!important;
+ background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;
 }
-#landing:before,#landing:after{display:none!important;content:none!important}
 #landing .panel{
  width:100%!important;max-width:1440px!important;height:100%;max-height:none!important;
  padding:clamp(66px,8vh,92px) clamp(16px,4vw,64px) 26px!important;
@@ -9181,8 +9165,7 @@ button:focus-visible,a:focus-visible,.levelCard:focus-visible{outline:3px solid 
 
 
 <style id="climboria-full-reference-dashboard">
-#landing{background:#06152b url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important}
-#landing:before,#landing:after{display:none!important}
+#landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important}
 #landing .panel{
  position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;height:100%!important;
  margin:0!important;padding:0!important;overflow:hidden!important;display:block!important;
@@ -9636,17 +9619,9 @@ document.addEventListener("DOMContentLoaded",function(){
 
 
 <style id="climboria-graphics-pass-2026">
-/* Replace the flat CSS polygon mountain with the live Three.js alpine scene. */
-#landing:after{content:none!important;display:none!important}
-#landing:before{
- background:
-  radial-gradient(ellipse at 51% 24%,rgba(255,218,145,.25),transparent 24%),
-  radial-gradient(ellipse at 12% 45%,rgba(44,128,185,.20),transparent 38%),
-  linear-gradient(180deg,rgba(2,12,27,.08) 0%,rgba(3,14,28,.12) 44%,rgba(1,7,17,.68) 100%)!important;
-}
 #landing{
  /* Restore the shipped cinematic alpine artwork; the gradient-only override hid the summit on both desktop and phones. */
- background:#06152b url("climboria-cinematic-summit.svg") center 43%/cover no-repeat!important;
+ background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;
 }
 #landing .panel{isolation:isolate}
 #landing .climboria-launch-announcement,
@@ -9692,7 +9667,7 @@ document.addEventListener("DOMContentLoaded",function(){
  #cryptoTicker .cryptoSymbol{font-size:12px!important;color:#fff!important;font-weight:900!important}
  #cryptoTicker .cryptoPrice{font-size:12px!important;white-space:nowrap!important}
  #cryptoTicker .cryptoChange{font-size:11px!important;white-space:nowrap!important}
- #landing{background:#06152b url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important}
+ #landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important}
  #landing .panel{padding-top:42px!important}
  #landing .climboria-dashboard-header{display:flex!important}
  #landing .climboria-launch-announcement{top:33%!important;right:2.5%!important;width:min(25%,390px)!important}
@@ -9968,7 +9943,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <style id="climboria-landing-consolidated">
 #cryptoTicker{display:none!important}
-#landing{background:#06152b url("climboria-cinematic-summit.svg") center 44%/cover no-repeat!important;overflow:hidden!important;isolation:isolate!important}
+#landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;overflow:hidden!important;isolation:isolate!important}
 #landing .climboria-dashboard-header{position:absolute!important;inset:0 0 auto!important;box-sizing:border-box!important;min-height:76px!important;padding:0 clamp(18px,3.5vw,54px)!important;display:grid!important;grid-template-columns:minmax(210px,1fr) auto minmax(190px,1fr)!important;align-items:center!important;gap:18px!important;background:linear-gradient(180deg,rgba(3,11,23,.98),rgba(5,17,32,.95))!important;border-bottom:1px solid #70acdc52!important;box-shadow:0 10px 30px #0004!important;z-index:90!important;backdrop-filter:blur(14px)!important}
 #landing .cd-brand{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important}
 #landing .cd-brand-mark{font-size:30px!important}
@@ -9982,7 +9957,6 @@ document.addEventListener("DOMContentLoaded",function(){
 #landing .cd-climb-ticker strong,#landing .cd-climb-ticker em{color:#ffd26a!important}
 #landing .cd-climb-ticker small{font-size:8px!important;letter-spacing:1px!important;color:#9fb0c3!important}
 #landing .panel{position:absolute!important;inset:0!important;min-height:100vh!important;box-sizing:border-box!important;padding-top:76px!important;background:linear-gradient(90deg,#030c1980,#030c1908 62%,#030c192e),linear-gradient(0deg,#020914b8,transparent 42%)!important}
-#landing .panel:before{content:"";position:absolute;inset:76px 0 0;pointer-events:none;background:radial-gradient(ellipse at 72% 42%,#ffc16928,transparent 24%),linear-gradient(180deg,#06152b12 0%,#06152b08 48%,#02091262 100%),url("climboria-cinematic-summit.svg") center 44%/cover no-repeat;filter:brightness(1.18) saturate(1.08);z-index:0}
 #landing .panel>*{z-index:1}
 #landing .climboria-launch-announcement{top:22%!important;right:3%!important;width:min(25%,370px)!important;padding:18px!important;border-radius:14px!important;border:1px solid #efc65f!important;background:linear-gradient(150deg,#071627f5,#040c18f0)!important;box-shadow:0 18px 45px #0008,0 0 30px #f6c75c12!important;backdrop-filter:blur(14px)!important}
 #climboria-primary-actions{position:absolute!important;left:3%!important;top:53%!important;width:min(49%,760px)!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;z-index:5!important}
@@ -10019,7 +9993,6 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-nav-minimal>button b{font-size:16px!important}
  #landing .cd-climb-ticker{justify-content:center!important;justify-self:stretch!important;padding:8px!important}
  #landing .panel{inset:0!important;overflow-y:auto!important;padding-top:158px!important;padding-bottom:20px!important}
- #landing .panel:before{inset:155px 0 0!important}
  #landing .climboria-launch-announcement{position:relative!important;top:auto!important;right:auto!important;width:calc(100% - 24px)!important;margin:12px!important;padding:14px!important}
  #climboria-primary-actions{position:relative!important;left:auto!important;top:auto!important;width:calc(100% - 24px)!important;margin:12px!important;grid-template-columns:1fr!important;gap:8px!important}
  #climboria-primary-actions button{min-height:56px!important}
@@ -10046,14 +10019,13 @@ document.addEventListener("DOMContentLoaded",function(){
 #climboria-game-brand,.climboria-x-link,#landing .panel>.logo,#landing .panel>.sub{display:none!important}
 #cryptoTicker{display:flex!important;visibility:visible!important;opacity:1!important;position:fixed!important;top:0!important;left:0!important;right:0!important;transform:none!important;width:100%!important;max-width:none!important;height:27px!important;min-height:27px!important;box-sizing:border-box!important;padding:2px 16px!important;gap:16px!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;white-space:nowrap!important;background:rgba(2,8,17,.98)!important;border:0!important;border-bottom:1px solid #59738a55!important;z-index:10001!important}
 #cryptoTicker .cryptoTop{display:contents!important}#cryptoTicker .cryptoSymbol{font-size:11px!important;font-weight:900!important;color:#f2f6fb!important}#cryptoTicker .cryptoPrice{font-size:11px!important;color:#e7eef7!important;white-space:nowrap!important}#cryptoTicker .cryptoChange{font-size:10px!important;white-space:nowrap!important}
-#landing{background:#06152b url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=90") center 48%/cover no-repeat!important;overflow:hidden!important;isolation:isolate!important}
+#landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;overflow:hidden!important;isolation:isolate!important}
 #landing .climboria-dashboard-header{position:absolute!important;top:27px!important;left:0!important;right:0!important;min-height:66px!important;padding:0 clamp(18px,3vw,44px)!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(180px,1fr) auto minmax(170px,1fr)!important;align-items:center!important;gap:16px!important;background:linear-gradient(180deg,rgba(3,11,23,.97),rgba(5,17,32,.92))!important;border-bottom:1px solid #70acdc44!important;box-shadow:0 8px 26px #0003!important;z-index:90!important;backdrop-filter:blur(12px)!important}
 #landing .cd-brand{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;text-decoration:none!important}#landing .cd-brand-mark{font-size:26px!important}#landing .cd-brand-name{font-size:16px!important;font-weight:950!important;letter-spacing:1.8px!important;color:#f6f8fc!important;white-space:nowrap!important}#landing .cd-brand-name small{display:block!important;margin-top:3px!important;font-size:7px!important;letter-spacing:1.1px!important;color:#9db0c5!important}
 #landing .cd-nav-minimal{display:flex!important;align-items:stretch!important;justify-content:center!important;gap:6px!important;white-space:nowrap!important}#landing .cd-nav-minimal>button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:105px!important;min-height:54px!important;padding:7px 13px!important;border:1px solid transparent!important;border-radius:0 0 8px 8px!important;background:transparent!important;color:#eaf1fb!important;font-size:10px!important;font-weight:950!important;letter-spacing:1.4px!important;cursor:pointer!important}#landing .cd-nav-minimal>button b{font-size:18px!important;color:#dce8f4!important}
 #landing .cd-climb-ticker{justify-self:end!important;display:flex!important;align-items:center!important;gap:7px!important;min-width:0!important;padding:9px 11px!important;border:1px solid #e7bb5d77!important;border-radius:8px!important;background:linear-gradient(120deg,#211b11,#071423)!important}#landing .cd-climb-ticker strong,#landing .cd-climb-ticker em{color:#ffd26a!important}#landing .cd-climb-ticker small{font-size:7px!important;letter-spacing:.8px!important;color:#9fb0c3!important}
 #landing .cd-follow{display:flex!important;justify-self:end!important;align-items:center!important;gap:8px!important;max-width:180px!important;padding:8px 12px!important;border:1px solid #e9bd5c!important;border-radius:999px!important;background:#061321ed!important;color:#f4f7fc!important;text-decoration:none!important}#landing .cd-follow strong{font-size:19px!important}#landing .cd-follow span{font-size:8px!important;letter-spacing:.8px!important;font-weight:900!important}#landing .cd-follow small{display:block!important;margin-top:2px!important;font-size:8px!important;color:#c4d4e5!important}
-#landing .panel{position:absolute!important;inset:0!important;min-height:100vh!important;box-sizing:border-box!important;padding:103px 0 24px!important;overflow-y:auto!important;background:linear-gradient(90deg,#030c1940,#030c1905 60%,#030c1922),linear-gradient(0deg,#02091488,transparent 48%)!important}
-#landing .panel:before{content:"";position:absolute;inset:103px 0 0;pointer-events:none;background:linear-gradient(90deg,rgba(2,9,20,.55) 0%,rgba(2,9,20,.08) 48%,rgba(2,9,20,.32) 100%),linear-gradient(180deg,rgba(2,9,20,.05) 0%,rgba(2,9,20,.08) 50%,rgba(2,9,20,.88) 100%),url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2400&q=90") center 48%/cover no-repeat;filter:saturate(1.12) contrast(1.05);z-index:0}#landing .panel>*{z-index:1}
+#landing .panel{position:absolute!important;inset:0!important;min-height:100vh!important;box-sizing:border-box!important;padding:103px 0 24px!important;overflow-y:auto!important;background:linear-gradient(90deg,#030c1940,#030c1905 60%,#030c1922),linear-gradient(0deg,#02091488,transparent 48%)!important}#landing .panel>*{z-index:1}
 #landing .climboria-launch-announcement{position:absolute!important;top:21%!important;right:3%!important;left:auto!important;width:min(26%,370px)!important;max-width:370px!important;box-sizing:border-box!important;padding:18px!important;border-radius:14px!important;border:1px solid #efc65f!important;background:linear-gradient(150deg,#071627f5,#040c18ed)!important;box-shadow:0 18px 45px #0007!important;backdrop-filter:blur(13px)!important}
 #climboria-primary-actions{position:absolute!important;left:3%!important;top:53%!important;width:min(50%,760px)!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;z-index:5!important}#climboria-primary-actions button{min-width:0!important;min-height:64px!important;padding:11px 13px!important;border-radius:11px!important;box-shadow:0 13px 30px #0006,inset 0 1px #ffffff30!important;backdrop-filter:blur(10px)!important}
 #landing .cd-feature-grid{position:absolute!important;left:2%!important;right:2%!important;bottom:2%!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:9px!important;z-index:4!important}#landing .cd-feature-grid>.cd-feature,#landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;min-width:0!important;width:auto!important;max-width:none!important;min-height:94px!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;margin:0!important;padding:10px 6px!important;border:1px solid #51aedf88!important;border-radius:11px!important;background:linear-gradient(145deg,#071425f5,#040b17ed)!important;box-shadow:0 12px 28px #0006!important}#landing .cd-feature .cd-art,#landing .cd-airdrop-tile .cd-art{font-size:24px!important}#landing .cd-feature b,#landing .cd-airdrop-tile b{font-size:9px!important;letter-spacing:.8px!important;color:#f5f7fc!important}#landing .cd-feature small,#landing .cd-airdrop-tile small{font-size:8px!important;line-height:1.3!important;color:#b6c9dc!important}
@@ -10066,7 +10038,7 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-nav-minimal{display:grid!important;grid-template-columns:1fr 1fr!important;gap:5px!important}#landing .cd-nav-minimal>button{min-width:0!important;min-height:33px!important;padding:4px!important;border:1px solid #ffffff18!important;border-radius:6px!important;background:#071423cc!important;font-size:8px!important;letter-spacing:1px!important}#landing .cd-nav-minimal>button b{font-size:13px!important}
  #landing .cd-climb-ticker{justify-content:center!important;align-self:center!important;padding:5px 8px!important;gap:6px!important}#landing .cd-climb-ticker strong{font-size:11px!important}#landing .cd-climb-ticker small,#landing .cd-climb-ticker em{font-size:7px!important}
  #landing .cd-follow{align-self:stretch!important;justify-self:stretch!important;justify-content:center!important;max-width:none!important;min-height:30px!important;margin:0!important;padding:5px 8px!important;border-radius:7px!important}#landing .cd-follow strong{font-size:16px!important}#landing .cd-follow span{font-size:8px!important}#landing .cd-follow small{display:inline!important;margin:0 0 0 6px!important;font-size:8px!important}
- #landing .panel{inset:0!important;min-height:100vh!important;overflow-y:auto!important;padding:190px 0 28px!important}#landing .panel:before{inset:190px 0 0!important;background:radial-gradient(ellipse at 70% 28%,#ffc1692c,transparent 27%),linear-gradient(180deg,#06152b00 0%,#06152b05 45%,#0209129c 100%),url("climboria-cinematic-summit.svg") center 18%/auto 78% no-repeat!important;filter:brightness(1.12) saturate(1.08)!important}
+ #landing .panel{inset:0!important;min-height:100vh!important;overflow-y:auto!important;padding:190px 0 28px!important}
  #landing .climboria-launch-announcement{position:relative!important;top:auto!important;right:auto!important;left:auto!important;width:calc(100% - 28px)!important;max-width:none!important;margin:8px 14px 12px!important;padding:13px!important;border-radius:12px!important}#landing .climboria-announcement-top{gap:6px!important;flex-wrap:wrap!important}#landing .climboria-announcement-title{font-size:14px!important;letter-spacing:1px!important}#landing .climboria-announcement-main{font-size:clamp(22px,6vw,30px)!important;line-height:1.08!important;overflow-wrap:anywhere!important}#landing .climboria-announcement-date{font-size:13px!important;letter-spacing:1px!important}#landing .climboria-announcement-times{padding:10px!important}#landing .climboria-announcement-note{font-size:10px!important;line-height:1.5!important}
  #climboria-primary-actions{position:relative!important;inset:auto!important;left:auto!important;top:auto!important;width:calc(100% - 28px)!important;margin:0 14px 12px!important;grid-template-columns:1fr!important;gap:8px!important}#climboria-primary-actions button{min-height:55px!important;padding:9px 13px!important;border-radius:10px!important}
  #landing .cd-challenge-strip{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:auto!important;margin:12px 14px!important}
@@ -10074,15 +10046,11 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-feature-grid>.cd-feature,#landing .cd-feature-grid>.cd-airdrop-tile{min-height:75px!important;flex-direction:row!important;justify-content:flex-start!important;gap:8px!important;padding:9px!important}#landing .cd-feature .cd-art,#landing .cd-airdrop-tile .cd-art{font-size:21px!important}#landing .cd-feature b,#landing .cd-airdrop-tile b{font-size:8px!important}#landing .cd-feature small,#landing .cd-airdrop-tile small{font-size:8px!important}
  #landing .pointsPanel,#landing .progressPanel,#landing .cards{position:relative!important;inset:auto!important;box-sizing:border-box!important;margin:10px 14px!important;width:calc(100% - 28px)!important;max-width:none!important}
 }
-
-#landing .panel:after{content:"A PHYSICS CLIMBING ADVENTURE\\A CLIMBORIA\\A MORE THAN A GAME\\A IT’S A CLIMB";white-space:pre;position:absolute;left:5.5%;top:15%;z-index:1;pointer-events:none;color:#f7f9fc;text-shadow:0 3px 24px #000b;font-weight:950;font-size:clamp(24px,4.5vw,66px);line-height:1.08;letter-spacing:1.5px;max-width:42%;background:linear-gradient(180deg,#fff 0%,#ffe4ad 48%,#c7d9eb 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 #landing .climboria-launch-announcement{z-index:3!important}
 #climboria-primary-actions{top:auto!important;bottom:27%!important;left:31%!important;width:65%!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
 #landing .cd-challenge-strip{bottom:14%!important}
 #landing .cd-feature-grid{bottom:2%!important}
 @media(max-width:700px){
- #landing .panel:after{top:8px;left:18px;right:18px;max-width:none;font-size:clamp(23px,7vw,32px);line-height:1.12;letter-spacing:.8px}
- #landing .panel:before{inset:190px 0 0!important;background:linear-gradient(180deg,rgba(2,9,20,.02),rgba(2,9,20,.08) 45%,rgba(2,9,20,.85)),url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1400&q=85") center 20%/cover no-repeat!important}
  #landing .panel{padding-top:285px!important}
  #landing .climboria-launch-announcement{margin-top:10px!important}
  #climboria-primary-actions{left:auto!important;bottom:auto!important;top:auto!important;width:calc(100% - 28px)!important}
@@ -10090,14 +10058,6 @@ document.addEventListener("DOMContentLoaded",function(){
 </style>
 <style id="climboria-ui-declutter-v2">
 :root{--climb-gold:#FFC83D;--climb-navy:#0B1220;--climb-white:#F8FAFC}
-#landing .panel:after{
- content:"A PHYSICS CLIMBING ADVENTURE"!important;
- white-space:normal!important;max-width:47%!important;
- color:#fff!important;background:none!important;-webkit-text-fill-color:#fff!important;
- text-shadow:0 4px 22px rgba(0,0,0,.48)!important;
- font-family:Impact,"Arial Narrow",system-ui,sans-serif!important;
- font-weight:900!important;letter-spacing:1px!important;
-}
 #landing .climboria-launch-announcement{
  background:rgba(15,23,42,.72)!important;
  -webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important;
@@ -10128,7 +10088,6 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing .cd-feature-grid{bottom:1%!important}
 }
 @media(max-width:700px){
- #landing .panel:after{max-width:92%!important;left:18px!important;top:8px!important;font-size:clamp(23px,7vw,32px)!important}
  #climboria-primary-actions{grid-template-columns:1fr!important}
 }
 </style>
@@ -10235,7 +10194,7 @@ document.addEventListener("DOMContentLoaded",function(){
   header.appendChild(toggle);
   var backdrop=document.createElement('div');backdrop.id='climboria-menu-backdrop';backdrop.hidden=true;
   var drawer=document.createElement('aside');drawer.id='climboria-menu-drawer';drawer.setAttribute('aria-label','Climboria navigation');drawer.setAttribute('aria-hidden','true');drawer.hidden=true;
-  drawer.innerHTML='<div class="cd-menu-visual"><img src="./climboria-cinematic-summit.svg" alt="" aria-hidden="true"><div class="cd-menu-visual-shade"></div><div class="cd-menu-visual-caption"><span>THE CLIMBORIA EXPERIENCE</span><strong>YOUR NEXT ASCENT<br>STARTS HERE</strong></div></div>'+'<div class="cd-menu-head"><div class="cd-menu-brand">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></div><button id="climboria-menu-close" type="button" aria-label="Close menu">×</button></div>'+
+  drawer.innerHTML='<div class="cd-menu-visual"><div class="cd-menu-visual-shade"></div><div class="cd-menu-visual-caption"><span>THE CLIMBORIA EXPERIENCE</span><strong>YOUR NEXT ASCENT<br>STARTS HERE</strong></div></div>'+'<div class="cd-menu-head"><div class="cd-menu-brand">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></div><button id="climboria-menu-close" type="button" aria-label="Close menu">×</button></div>'+
   '<div class="cd-menu-auth"><button type="button" class="cd-menu-login" data-cd-menu-action="login">LOG IN</button><button type="button" class="cd-menu-signup" data-cd-menu-action="signup">SIGN UP</button></div>'+
   '<section class="cd-menu-section"><p class="cd-menu-label">EXPLORE CLIMBORIA</p>'+
   '<a class="cd-menu-link" href="#climboria-overview" data-cd-menu-action="overview"><span class="cd-menu-icon">◈</span><span class="cd-menu-copy"><strong>OVERVIEW</strong><small>What Climboria is building</small></span></a>'+
@@ -10290,12 +10249,9 @@ document.addEventListener("DOMContentLoaded",function(){
 <style id="climboria-reference-homepage-v1">
 :root{--climboria-gold:#f4c86a;--climboria-ice:#dcecff;--climboria-navy:#07152a}
 #landing{position:fixed!important;inset:0!important;min-height:100dvh!important;overflow:hidden!important;background:#07152a!important;isolation:isolate!important}
-#landing:before{background-image:url("./climboria-cinematic-summit.svg")!important;background-position:center 48%!important;background-size:cover!important;filter:brightness(1.18) saturate(1.08)!important}
 #landing>.panel{position:relative!important;z-index:2!important;width:100%!important;max-width:none!important;height:100%!important;min-height:100dvh!important;max-height:none!important;margin:0!important;padding:clamp(100px,13vh,145px) clamp(18px,4vw,64px) 24px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;overflow:hidden!important;background:transparent!important}
 #landing .logo{position:relative!important;z-index:3!important;margin:0!important;font-size:clamp(42px,7vw,94px)!important;line-height:1!important;letter-spacing:clamp(3px,.8vw,10px)!important;text-align:center!important;color:#f6d889!important;text-shadow:0 3px 0 #6d481d,0 0 24px #ffc85788,0 10px 28px #000b!important}
 #landing .sub{position:relative!important;z-index:3!important;margin:12px 0 0!important;text-align:center!important;color:#e3edfb!important;font-size:clamp(9px,1.1vw,13px)!important;letter-spacing:clamp(1px,.3vw,3px)!important;text-shadow:0 2px 8px #000!important}
-#landing #landingHeroPreview{position:absolute!important;z-index:1!important;left:clamp(-24px,2vw,36px)!important;bottom:0!important;width:clamp(240px,32vw,510px)!important;height:min(78vh,780px)!important;display:block!important;pointer-events:none!important;overflow:visible!important}
-#landing #climboriaHeroCutout{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;filter:drop-shadow(0 14px 22px #0008)!important}
 #landing .climboria-launch-announcement{display:none!important}
 #landing .pointsPanel,#landing .progressPanel,#landing .cards,#landing .note{display:none!important}
 #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{position:relative!important;z-index:4!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:clamp(10px,1.5vw,20px)!important;width:min(680px,90vw)!important;margin:clamp(26px,5vh,54px) auto 0!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
@@ -10309,14 +10265,11 @@ document.addEventListener("DOMContentLoaded",function(){
 #cryptoTicker .cryptoSymbol{color:#f3cc75!important;font-weight:900!important}
 #cryptoTicker .cryptoUpdated,#cryptoTicker .cryptoCountdown{font-size:9px!important}
 .climboria-dashboard-header{z-index:95!important;top:clamp(52px,7vh,78px)!important}
-#landing .panel:after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,#07152a55 0%,transparent 34%,#07152a25 65%,#07152a66 100%),linear-gradient(180deg,#06132615 0%,transparent 45%,#06132666 100%)}
 #landing .logo,#landing .sub,#landing .climboria-hero-actions-v1,#landing .cd-hero-actions{isolation:isolate}
 @media(max-width:700px){
- #landing:before{background-position:58% center!important;filter:brightness(1.15) saturate(1.06)!important}
  #landing>.panel{padding:calc(95px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))!important;justify-content:flex-start!important}
  #landing .logo{margin-top:clamp(32px,8vh,72px)!important;font-size:clamp(34px,10vw,54px)!important;letter-spacing:2px!important;white-space:nowrap!important}
  #landing .sub{max-width:90vw!important;font-size:9px!important;letter-spacing:1px!important;line-height:1.5!important}
- #landing #landingHeroPreview{left:-32px!important;bottom:0!important;width:clamp(210px,64vw,340px)!important;height:55vh!important;max-height:520px!important;opacity:.98!important}
  #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{position:absolute!important;left:50%!important;bottom:clamp(22px,5vh,44px)!important;transform:translateX(-50%)!important;width:min(94vw,430px)!important;gap:8px!important;margin:0!important;flex-wrap:nowrap!important}
  #landing #startButton,#landing .climboria-reference-action{min-width:0!important;flex:1 1 0!important;min-height:47px!important;padding:12px 8px!important;font-size:11px!important;letter-spacing:1px!important}
  #cryptoTicker{padding:6px 8px!important}
@@ -10325,13 +10278,11 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 @media(max-width:370px){
  #landing .logo{font-size:32px!important;letter-spacing:1px!important}
- #landing #landingHeroPreview{left:-48px!important;width:68vw!important}
  #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{width:96vw!important;gap:5px!important}
  #landing #startButton,#landing .climboria-reference-action{font-size:10px!important;padding-inline:5px!important}
 }
 @media(min-width:701px){
  #landing .logo{margin-top:clamp(0px,4vh,50px)!important}
- #landing #landingHeroPreview{left:1vw!important;bottom:0!important}
 }
 </style>
 <script id="climboria-reference-homepage-actions-v1">
@@ -10374,15 +10325,12 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <!-- V1.1 cascade and viewport hardening: these rules intentionally follow all legacy overrides -->
 <style id="climboria-reference-homepage-hardening-v1">
-#landing:before{display:block!important;content:""!important}
-#landing:after{display:none!important}
 #landing .panel>.logo,#landing .panel>.sub{display:block!important}
 #cryptoTicker{display:block!important;visibility:visible!important}
 #landing #startButton{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:5!important;flex:1 1 0!important}
 #landing .climboria-hero-actions-v1{position:relative!important;z-index:5!important}
 #landing .cd-hero-actions{position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
 #landing .logo,#landing .sub{pointer-events:none!important}
-#landing #landingHeroPreview{z-index:1!important}
 #landing .climboria-hero-actions-v1,#landing .cd-hero-actions{pointer-events:auto!important}
 @media(max-width:700px){
  #landing .panel>.logo{margin-top:clamp(30px,7vh,64px)!important}
@@ -10400,15 +10348,14 @@ document.addEventListener("DOMContentLoaded",function(){
 <style id="climboria-approved-full-reference-v1">
 #landing{
  position:fixed!important;inset:0!important;overflow:hidden!important;
- background:#07152a url("./climboria-homepage.png") center center/cover no-repeat!important;
+ background:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;
 }
-#landing:before,#landing:after{display:none!important;content:none!important}
 #landing>.panel{
  position:relative!important;z-index:2!important;width:100%!important;height:100%!important;
  min-height:100dvh!important;max-height:none!important;margin:0!important;
  background:transparent!important;overflow:hidden!important;
 }
-#landing .panel>.logo,#landing .panel>.sub,#landing #landingHeroPreview,
+#landing .panel>.logo,#landing .panel>.sub,
 #landing .climboria-launch-announcement,#landing .pointsPanel,#landing .progressPanel,
 #landing .cards,#landing .note{display:none!important}
 #landing .cd-hero-actions,#landing .climboria-hero-actions-v1{
@@ -10456,12 +10403,12 @@ document.addEventListener("DOMContentLoaded",function(){
  width:min(100vw,269.473684dvh)!important;aspect-ratio:3/2!important;
  height:auto!important;max-width:100vw!important;max-height:100dvh!important;
  transform:translate(-50%,-50%)!important;
- background-image:url("./climboria-homepage.png")!important;
+ background-image:none!important;
  background-repeat:no-repeat!important;background-position:center!important;
  background-size:100% 100%!important;pointer-events:none!important;
 }
 #landing>.panel{z-index:2!important;background:transparent!important}
-#landing .panel>.logo,#landing .panel>.sub,#landing #landingHeroPreview,
+#landing .panel>.logo,#landing .panel>.sub,
 #landing .climboria-launch-announcement,#landing .pointsPanel,#landing .progressPanel,
 #landing .cards,#landing .note{display:none!important}
 #landing .cd-hero-actions{display:none!important}
@@ -10536,10 +10483,6 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- Android final override: one sharp, undistorted artwork; no duplicate blur layer. -->
 <style id="climboria-android-sharp-artwork-final-v1">
 @media(max-width:700px){
-  #landing:before,#landing::before{
-    content:none!important;display:none!important;visibility:hidden!important;
-    background-image:none!important;filter:none!important;-webkit-filter:none!important;
-  }
   #landing{
     background:#07152a!important;
     background-image:linear-gradient(180deg,#07152a 0%,#0a1b31 50%,#07152a 100%)!important;
@@ -10551,7 +10494,7 @@ document.addEventListener("DOMContentLoaded",function(){
     min-height:0!important;max-width:100vw!important;max-height:none!important;
     aspect-ratio:3/2!important;
     transform:translate(-50%,-50%)!important;
-    background-image:url("./climboria-homepage.png")!important;
+    background-image:none!important;
     background-repeat:no-repeat!important;background-position:center center!important;
     background-size:contain!important;
   }
@@ -11040,18 +10983,12 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 
 <!-- Final visual hardening: remove legacy pseudo-heading that leaks above the header. -->
 <style id="climboria-final-legacy-heading-guard-v1">
-#landing>.panel:after{content:none!important;display:none!important;background:none!important}
 #landing>.panel{isolation:isolate!important}
 </style>
 
 
 <!-- Final cascade correction: the approved reference is the only visible homepage artwork. -->
 <style id="climboria-reference-layer-root-fix-v3">
-/* Remove the legacy mountain pseudo-layer; it was painting over the approved reference canvas. */
-#landing>.panel:before,
-#landing>.panel:after,
-#landing:before,
-#landing:after{content:none!important;display:none!important;background:none!important}
 
 /* Keep the reference image and its transparent, accurately positioned CTA hit areas above legacy UI. */
 #landing{position:fixed!important;inset:0!important;overflow:hidden!important;background:#07152a!important;isolation:isolate!important}
@@ -11060,7 +10997,7 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
  width:min(100vw,269.473684dvh)!important;aspect-ratio:3/2!important;
  height:auto!important;max-width:100vw!important;max-height:100dvh!important;
  transform:translate(-50%,-50%)!important;
- background-image:url("./climboria-homepage.png")!important;
+ background-image:none!important;
  background-repeat:no-repeat!important;background-position:center center!important;
  background-size:contain!important;pointer-events:none!important;
 }
@@ -11076,7 +11013,7 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 #landing .cd-challenge-strip,
 #landing .cd-feature-grid,
 #landing .pointsPanel,#landing .progressPanel,#landing .cards,#landing .note,
-#landing .panel>.logo,#landing .panel>.sub,#landing #landingHeroPreview{display:none!important}
+#landing .panel>.logo,#landing .panel>.sub{display:none!important}
 #landing #climboria-reference-canvas #cryptoTicker{
  display:flex!important;position:absolute!important;left:0!important;right:0!important;top:0!important;
  width:100%!important;height:4.8%!important;min-height:18px!important;z-index:10!important;
@@ -11199,17 +11136,11 @@ body{overflow:hidden!important}
  radial-gradient(ellipse at 50% 42%,#142b49 0%,#0a1b33 48%,#040b18 100%)!important;
  isolation:isolate!important;overscroll-behavior:none!important;
 }
-#landing:before{display:none!important;content:none!important}
-#landing:after{
- content:""!important;display:block!important;position:absolute!important;inset:0!important;
- z-index:1!important;pointer-events:none!important;
- background:radial-gradient(ellipse at center,transparent 38%,rgba(1,7,18,.16) 78%,rgba(1,5,14,.34) 100%)!important;
-}
 #landing #climboria-reference-canvas{
  position:absolute!important;inset:0!important;left:0!important;top:0!important;z-index:5!important;
  width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;
  aspect-ratio:auto!important;transform:none!important;
- background-image:url("./climboria-homepage.png")!important;
+ background-image:none!important;
  background-repeat:no-repeat!important;background-position:center center!important;
  background-size:cover!important;pointer-events:none!important;
 }
@@ -11218,10 +11149,6 @@ body{overflow:hidden!important}
 #landing #startButton,#landing .climboria-reference-action{pointer-events:auto!important}
 @media(max-width:700px){
  #landing{background:linear-gradient(180deg,#07152a 0%,#0a1d35 50%,#07152a 100%)!important}
- #landing:before{content:none!important;display:none!important;background:none!important;filter:none!important}
- #landing:after{
-  background:linear-gradient(180deg,rgba(2,8,20,.08),transparent 24%,transparent 76%,rgba(2,8,20,.16))!important;
- }
  #landing #climboria-reference-canvas{
   inset:auto!important;left:50%!important;top:50%!important;
   /* Portrait phones: use more of the available height without cropping or replacing the approved artwork. */
@@ -11232,7 +11159,6 @@ body{overflow:hidden!important}
  }
 }
 @media(prefers-reduced-motion:reduce){
- #landing:before{display:none!important}
 }
 </style>
 
@@ -11392,7 +11318,7 @@ body{overflow:hidden!important}
 
 <!-- Reference-matched CTA hit areas only. Premium artwork remains untouched. -->
 <style id="climboria-reference-cta-hitareas-v1">
-/* Match the three clickable regions to the buttons already drawn in climboria-homepage.png. */
+
 #landing .climboria-hero-actions-v1{
  position:fixed!important;z-index:10020!important;display:block!important;
  margin:0!important;padding:0!important;pointer-events:none!important;
@@ -11564,7 +11490,7 @@ html body #landing #climboria-reference-canvas{
 <style id="climboria-true-final-mobile-artwork-rule">
 @media screen and (max-width:700px){
  html body #landing #climboria-reference-canvas{
-  background-image:url("./climboria-homepage.png")!important;
+  background-image:none!important;
   /* Portrait mobile hero: fill the screen height without distorting the source image.
      The wide source is cropped at its sides instead of being squeezed into a banner. */
   width:100vw!important;
@@ -11592,11 +11518,10 @@ html body #landing #climboria-reference-canvas{
  width:100vw!important;height:100dvh!important;min-width:0!important;min-height:0!important;
  max-width:none!important;max-height:none!important;aspect-ratio:auto!important;inset:auto!important;
  transform:translate(-50%,-50%)!important;transform-origin:center center!important;
- background-image:url("./climboria-homepage.png")!important;
+ background-image:none!important;
  background-size:contain!important;background-position:center center!important;background-repeat:no-repeat!important;
  background-color:#061329!important;pointer-events:none!important;
 }
-html body #landing #landingHeroPreview{display:none!important}
 html body #landing>.panel{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100dvh!important;margin:0!important;padding:0!important;background:transparent!important;pointer-events:none!important}
 html body #landing .climboria-hero-actions-v1{z-index:10020!important}
 html body #landing #startButton,html body #landing .climboria-reference-action{pointer-events:auto!important}
