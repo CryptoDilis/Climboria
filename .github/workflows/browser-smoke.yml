@@ -318,11 +318,8 @@ jobs:
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
               });
-              await expedition.waitForFunction(() =>
-                typeof window.showLevelSelect === 'function' &&
-                typeof window.startLevel === 'function',
-                { timeout: 20000 }
-              );
+              await expedition.locator('#startButton').waitFor({ state: 'attached', timeout: 20000 });
+              await expedition.locator('canvas:visible').first().waitFor({ state: 'visible', timeout: 20000 });
               const unlocked = await expedition.evaluate(() => ({
                 saved: localStorage.getItem('climboria_unlocked_level'),
                 landingDisplay: getComputedStyle(document.getElementById('landing')).display,
@@ -332,7 +329,7 @@ jobs:
               if (unlocked.saved !== '10') {
                 throw new Error('Expedition save did not load level 10 unlock: ' + JSON.stringify(unlocked));
               }
-              await expedition.evaluate(() => window.showLevelSelect());
+              await expedition.locator('#startButton').evaluate(el => el.click());
               await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               const summitCount = await expedition.locator('.levelCard[data-level]').count();
               if (summitCount !== 10) {
