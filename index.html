@@ -11370,3 +11370,99 @@ body:has(#climboria-menu-drawer:not([hidden])) #landing .climboria-reference-act
  #climboria-visible-cta-overlay-v2-root{z-index:100!important}
 }
 </style>
+
+
+<!-- Climboria mobile UI pass v1: touch targets, safe areas, readable panels. Artwork/branding remain unchanged. -->
+<style id="climboria-mobile-ui-pass-v1">
+html,body{width:100%;min-width:0;min-height:100%;overscroll-behavior:none}
+button,a,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px solid #ffe29a!important;outline-offset:3px!important}
+@media (max-width:700px){
+  html,body{height:100%;height:100dvh}
+  #landing,#launchpad,#levelSelect,#victory,#failure{
+    width:100vw!important;height:100dvh!important;min-height:100dvh!important;
+    padding-top:env(safe-area-inset-top,0px)!important;
+    padding-bottom:env(safe-area-inset-bottom,0px)!important;
+    overflow:hidden!important;
+  }
+  /* Menus and results can scroll on short phones instead of clipping their actions. */
+  #launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{
+    width:min(100%,560px)!important;max-width:100%!important;
+    max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 16px)!important;
+    margin:0 auto!important;padding:14px 12px 18px!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+    overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+    gap:10px!important;
+  }
+  #levelSelect .levelTitle{font-size:clamp(27px,8vw,38px)!important;letter-spacing:1.5px!important;line-height:1.12!important}
+  #levelSelect .levelSub{font-size:11px!important;line-height:1.5!important;letter-spacing:1px!important}
+  #levelSelect .levelGrid{
+    width:100%!important;max-height:52dvh!important;grid-template-columns:1fr!important;
+    gap:8px!important;margin-top:8px!important;padding:2px 2px 8px!important;
+  }
+  #levelSelect .levelCard{min-height:92px!important;padding:12px!important;border-radius:12px!important}
+  #levelSelect .levelName{font-size:15px!important;line-height:1.3!important}
+  #levelSelect .levelDescription{font-size:11px!important;line-height:1.45!important}
+  #levelSelect .levelStatus{font-size:10px!important;line-height:1.4!important;margin-top:6px!important}
+  #levelSelect button,#launchpad button,#victory button,#failure button{
+    min-height:44px!important;font-size:12px!important;line-height:1.3!important;
+    letter-spacing:.7px!important;padding:11px 12px!important;
+  }
+  #victory .panel,#failure .panel{transform:none!important;margin:0 auto!important;max-height:calc(100dvh - 24px)!important}
+  #victory .resultActions,#failure .resultActions{display:flex!important;flex-wrap:wrap!important;gap:8px!important;justify-content:center!important}
+  #victory .resultActions button,#failure .resultActions button{flex:1 1 calc(50% - 8px)!important;min-width:0!important}
+  #hud{
+    top:max(10px,env(safe-area-inset-top,0px))!important;
+    left:max(10px,env(safe-area-inset-left,0px))!important;
+    right:max(10px,env(safe-area-inset-right,0px))!important;
+  }
+  #hud .top{min-height:58px!important;gap:8px!important}
+  #hud > .top > div:first-child{max-width:46%!important;font-size:11px!important;line-height:1.4!important}
+  #hud > .top > div:first-child small,#hud > .top > div:first-child span{font-size:10px!important}
+  #hud .stat{max-width:46%!important;font-size:10px!important;line-height:1.5!important}
+  #bar{width:clamp(82px,27vw,122px)!important}
+  #status{top:64px!important;max-width:calc(100vw - 24px)!important;font-size:10px!important;line-height:1.4!important;letter-spacing:.6px!important}
+  #hudPoints{top:84px!important;max-width:calc(100vw - 24px)!important;font-size:11px!important}
+  #help{bottom:max(8px,env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 24px)!important;max-width:520px!important;font-size:10px!important;line-height:1.5!important;white-space:normal!important}
+  #touchHint{bottom:max(48px,calc(env(safe-area-inset-bottom,0px) + 38px))!important;max-width:calc(100vw - 28px)!important;font-size:11px!important;line-height:1.45!important;white-space:normal!important}
+  #nav button,#nav a{min-width:44px!important;min-height:44px!important}
+  /* Keep ticker readable and scrollable; give the hamburger a real touch target below it. */
+  #landing #climboria-reference-canvas #cryptoTicker{
+    height:30px!important;min-height:30px!important;padding:0 52px 0 5px!important;
+    justify-content:flex-start!important;touch-action:pan-x!important;
+  }
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{min-height:26px!important;padding:3px 7px!important;gap:4px!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol,
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:10px!important;line-height:1.2!important}
+  #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:8px!important;line-height:1.2!important}
+  #climboria-hamburger-toggle{
+    top:calc(32px + env(safe-area-inset-top,0px))!important;
+    right:max(8px,env(safe-area-inset-right,0px))!important;
+    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+    padding:10px!important;gap:5px!important;border-radius:10px!important;
+    background:rgba(4,15,32,.97)!important;border:1px solid #ffd36ecc!important;
+    box-shadow:0 4px 14px #0009!important;
+  }
+  #climboria-hamburger-toggle span{width:22px!important;height:2px!important}
+  #climboria-menu-drawer{
+    padding-top:calc(16px + env(safe-area-inset-top,0px))!important;
+    padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  #climboria-menu-drawer button,#climboria-menu-drawer a{
+    min-height:46px!important;font-size:13px!important;line-height:1.35!important;
+  }
+}
+@media (max-width:390px){
+  #levelSelect .levelGrid{max-height:48dvh!important}
+  #hud > .top > div:first-child,#hud .stat{font-size:9px!important}
+  #status{font-size:9px!important}
+  #help{font-size:9px!important}
+  #touchHint{font-size:10px!important}
+}
+@media (max-height:720px) and (max-width:700px){
+  #levelSelect .levelGrid{max-height:44dvh!important}
+  #launchpad .panel,#levelSelect .panel,#victory .panel,#failure .panel{gap:7px!important;padding-top:10px!important;padding-bottom:12px!important}
+}
+</style>
