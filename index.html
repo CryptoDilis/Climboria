@@ -9629,11 +9629,8 @@ document.addEventListener("DOMContentLoaded",function(){
    window.location.href='./overview/#market-title';
   });
   actions.querySelector('.climboria-create-token').addEventListener('click',function(){
-   var msg=document.getElementById('status');
-   if(msg){msg.textContent='TOKEN CREATION IS NOT LIVE YET — CHECK OFFICIAL CLIMBORIA CHANNELS';msg.style.display='block';}
-   var launch=document.getElementById('launchpad');
-   if(launch){landing.style.display='none';launch.style.display='flex';}
-  });
+    window.location.href='./overview/#launchpad-title';
+   });
  }
  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountClimboriaPrimaryActions);
  else mountClimboriaPrimaryActions();
