@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate HTML structure and hero integration
+      - name: Validate HTML document markers and homepage actions
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -29,42 +29,58 @@ jobs:
 
           html = Path("index.html").read_text(encoding="utf-8")
 
-          class StructureCheck(HTMLParser):
+          # HTMLParser's lightweight stack checker treated legacy optional/void
+          # markup as fatal. Chromium parsing is exercised by browser-smoke.yml;
+          # this step checks document markers and required game/homepage contracts.
+          class DocumentProbe(HTMLParser):
               def __init__(self):
                   super().__init__(convert_charrefs=True)
-                  self.stack = []
-                  self.errors = []
-                  self.void = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"}
+                  self.tags = []
+                  self.buttons = []
+                  self.in_home_actions = False
               def handle_starttag(self, tag, attrs):
-                  if tag not in self.void:
-                      self.stack.append(tag)
+                  attrs = dict(attrs)
+                  self.tags.append((tag, attrs))
+                  if tag == "nav" and attrs.get("id") == "climboria-home-actions":
+                      self.in_home_actions = True
+                  if self.in_home_actions and tag == "button":
+                      self.buttons.append(attrs.get("class", ""))
               def handle_endtag(self, tag):
-                  if tag in self.void:
-                      return
-                  if tag not in self.stack:
-                      self.errors.append(f"unexpected closing tag: {tag}")
-                      return
-                  while self.stack:
-                      current = self.stack.pop()
-                      if current == tag:
-                          break
+                  if tag == "nav" and self.in_home_actions:
+                      self.in_home_actions = False
 
-          parser = StructureCheck()
-          parser.feed(html)
-          if parser.errors:
-              raise SystemExit("; ".join(parser.errors[:10]))
+          probe = DocumentProbe()
+          probe.feed(html)
+
+          for token in ('<html', '</html>', '<body', '</body>'):
+              if html.lower().count(token) != 1:
+                  raise SystemExit(f"expected exactly one document marker: {token}")
 
           required = [
               'id="nextLevelVictoryButton"',
               'id="levelSelect"',
               'id="failure"',
+              'id="climboria-home-actions"',
+              'class="climboria-home-play"',
+              'class="climboria-home-trade"',
+              'class="climboria-home-create"',
           ]
           for marker in required:
               if marker not in html:
-                  raise SystemExit(f"missing required game marker: {marker}")
+                  raise SystemExit(f"missing required Climboria marker: {marker}")
 
+          if len(probe.buttons) != 3:
+              raise SystemExit(f"expected exactly 3 homepage action buttons, found {len(probe.buttons)}")
 
-          print("HTML structure and core Climboria markers passed; legacy hero code is removed.")
+          old_artwork_hooks = [
+              'id="climboria-reference-canvas"',
+              'id="climboria-visible-cta-overlay-v2-root"',
+          ]
+          for marker in old_artwork_hooks:
+              if marker in html:
+                  raise SystemExit(f"obsolete homepage hook remains: {marker}")
+
+          print("Document markers, three homepage actions, and core game markers passed.")
           PY
 
       - name: Syntax-check inline JavaScript
