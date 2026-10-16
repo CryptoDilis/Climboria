@@ -11619,15 +11619,16 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 <!-- Final balanced hero sizing: smaller on desktop and mobile, preserve artwork proportions. -->
 <style id="climboria-balanced-hero-size-v1">
+/* Scale only the hero artwork layer. Do not resize the canvas or touch any UI/control layout. */
 html body #landing #climboria-reference-canvas{
   position:absolute!important;
   left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;
-  width:46vw!important;height:41dvh!important;
+  width:92vw!important;height:82dvh!important;
   min-width:0!important;min-height:0!important;
-  max-width:46vw!important;max-height:41dvh!important;
-  aspect-ratio:auto!important;
-  inset:auto!important;
-  transform:translate(-50%,-50%)!important;
+  max-width:92vw!important;max-height:82dvh!important;
+  aspect-ratio:auto!important;inset:auto!important;
+  transform:translate(-50%,-50%) scale(.5)!important;
+  transform-origin:center center!important;
   background-size:contain!important;
   background-position:center center!important;
   background-repeat:no-repeat!important;
@@ -11635,12 +11636,12 @@ html body #landing #climboria-reference-canvas{
 }
 @media screen and (max-width:700px){
   html body #landing #climboria-reference-canvas{
-    width:50vw!important;height:34dvh!important;
-    max-width:50vw!important;max-height:34dvh!important;
+    width:100vw!important;height:68dvh!important;
+    max-width:100vw!important;max-height:68dvh!important;
     top:42%!important;left:50%!important;
-    transform:translate(-50%,-50%)!important;
-    background-size:contain!important;
-    background-position:center center!important;
+    transform:translate(-50%,-50%) scale(.5)!important;
+    transform-origin:center center!important;
+    background-size:contain!important;background-position:center center!important;
   }
 }
 </style>
