@@ -9563,22 +9563,22 @@ document.addEventListener("DOMContentLoaded",function(){
 }
   color:#d4dfed!important;font-size:clamp(5px,.65vw,9px)!important;
 }
+/* Restore the full-size, tappable navigation toggle; the old micro-button override made it nearly invisible. */
 #climboria-hamburger-toggle{
-  position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
-  width:27px!important;height:18px!important;min-height:18px!important;padding:2px!important;
-  transform:none!important;gap:2px!important;border:0!important;border-radius:3px!important;
-  background:rgba(3,11,24,.92)!important;box-shadow:none!important;
+  position:absolute!important;z-index:10030!important;top:50%!important;
+  right:clamp(14px,2.4vw,38px)!important;transform:translateY(-50%)!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
+  padding:0!important;gap:5px!important;border:1px solid #f4c66b88!important;border-radius:12px!important;
+  background:linear-gradient(180deg,#14243bef,#050d1bea)!important;
+  box-shadow:0 0 22px #f3bf4a1c,inset 0 1px #fff2!important;
 }
-#climboria-hamburger-toggle span{
-  width:15px!important;height:1.5px!important;background:#ffd36e!important;
-}
-#climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(3.5px) rotate(45deg)!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-3.5px) rotate(-45deg)!important}
+#climboria-hamburger-toggle span{display:block!important;width:22px!important;height:2px!important;background:#ffd36e!important}
+#climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(7px) rotate(45deg)!important}
+#climboria-hamburger-toggle[aria-expanded="true"] span:nth-child(2){opacity:0!important}
+#climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-7px) rotate(-45deg)!important}
 @media(max-width:700px){
-  #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:25px!important;height:18px!important}
-}
-@media(prefers-reduced-motion:reduce){
-  #climboria-hamburger-toggle span{transition:none!important}
+  #climboria-hamburger-toggle{top:50%!important;right:12px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
 }
 </style>
 <script id="climboria-market-favicon-logos-v1">
