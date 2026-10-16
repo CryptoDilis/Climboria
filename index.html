@@ -10333,7 +10333,7 @@ document.addEventListener("DOMContentLoaded",function(){
   if(!canvas){
    canvas=document.createElement('div');
    canvas.id='climboria-reference-canvas';
-   canvas.setAttribute('aria-hidden','true');
+   
    canvas.style.cssText='position:absolute;inset:0;pointer-events:none;background:transparent;';
    landing.insertBefore(canvas,landing.firstChild);
   }
@@ -10626,54 +10626,6 @@ document.addEventListener("DOMContentLoaded",function(){
  #landing #startButton{transition:none!important}
 }
 </style>
-
-
-<script id="climboria-responsive-image-interactions-v1">
-(function(){
- function mountResponsiveLayers(){
-  var landing=document.getElementById('landing');
-  var canvas=document.getElementById('climboria-reference-canvas');
-  var ticker=document.getElementById('cryptoTicker');
-  var actions=landing&&landing.querySelector('.climboria-hero-actions-v1');
-  if(!landing||!canvas)return false;
-  if(ticker&&ticker.parentNode!==canvas)canvas.appendChild(ticker);
-  if(actions){
-   if(actions.parentNode!==landing)landing.appendChild(actions);
-   function placeActions(){
-    var r=canvas.getBoundingClientRect();
-    actions.style.position='fixed';
-    actions.style.left=r.left+'px';
-    actions.style.top=r.top+'px';
-    actions.style.width=r.width+'px';
-    actions.style.height=r.height+'px';
-    actions.style.right='auto';
-    actions.style.bottom='auto';
-    actions.style.inset='auto';
-    actions.style.transform='none';
-   }
-   placeActions();
-   if(!actions.dataset.responsiveBound){
-    actions.dataset.responsiveBound='yes';
-    window.addEventListener('resize',placeActions,{passive:true});
-    window.addEventListener('orientationchange',placeActions,{passive:true});
-    if(window.visualViewport)window.visualViewport.addEventListener('resize',placeActions,{passive:true});
-    if(window.ResizeObserver){new ResizeObserver(placeActions).observe(canvas);}
-   }
-  }
-  canvas.removeAttribute('aria-hidden');
-  return true;
- }
- function init(){
-  if(mountResponsiveLayers())return;
-  var observer=new MutationObserver(function(){if(mountResponsiveLayers())observer.disconnect();});
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-  var tries=0;(function retry(){if(mountResponsiveLayers()){observer.disconnect();return;}if(++tries<60)setTimeout(retry,250);else observer.disconnect();})();
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
-
-
 <!-- Premium full-viewport shell: sharp approved artwork over a matching cinematic ambient backdrop. -->
 <style id="climboria-premium-full-viewport-v6">
 html,body{width:100%;min-width:0;min-height:100%;margin:0!important;background:#061329!important}
