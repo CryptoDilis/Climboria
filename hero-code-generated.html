@@ -4,9 +4,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Climboria — Modular Code Hero</title>
 <style>
-:root{--navy:#061329;--gold:#ffc83d;--ice:#dcecff;--hero-scale:1;--hero-x:50%;--hero-y:49%;--mountain-brightness:1;--mountain-shift:0px}
+:root{--navy:#061329;--gold:#ffc83d;--ice:#dcecff;--hero-scale:1;--hero-x:50%;--hero-y:49%;--mountain-brightness:1;--mountain-shift:0px;--hero-width:52vw;--hero-height:72dvh;--mountain-hue:0deg}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--navy);color:#fff;font-family:Inter,system-ui,Arial,sans-serif}
-#stage{position:relative;width:100%;height:100dvh;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 44%,#173553 0,#0a1c34 50%,#040b17 100%)}
+#stage{position:relative;width:100%;height:100dvh;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 44%,#173553 0,#0a1c34 50%,#040b17 100%);filter:brightness(var(--mountain-brightness))}
 #environment{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #mist{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#07152a20 0%,transparent 42%,#03091666 100%),radial-gradient(ellipse at center,transparent 35%,#02071270 100%)}
 #brand{position:absolute;z-index:8;top:clamp(20px,4vh,42px);left:50%;transform:translateX(-50%);width:max-content;max-width:92vw;text-align:center;text-shadow:0 3px 0 #704b20,0 0 24px #ffc85766,0 8px 25px #000b}
@@ -14,7 +14,7 @@
 #brand small{display:block;margin-top:7px;font-size:clamp(8px,1vw,12px);letter-spacing:.18em;color:#e3edfb}
 #network{position:absolute;z-index:8;right:clamp(14px,3vw,36px);top:clamp(82px,15vh,150px);padding:8px 13px;border:1px solid #ffffff2c;border-radius:99px;background:#061329b8;font-size:10px;letter-spacing:.08em;color:#dce7f7}
 #network:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#a889ed;margin-right:8px}
-#character{position:absolute;z-index:4;left:var(--hero-x);top:var(--hero-y);width:min(52vw,540px);height:min(72dvh,680px);transform:translate(-50%,-50%) scale(var(--hero-scale));transform-origin:center center;display:flex;align-items:center;justify-content:center;pointer-events:none;filter:drop-shadow(0 16px 26px #0008);animation:float 5s ease-in-out infinite}
+#character{position:absolute;z-index:4;left:var(--hero-x);top:var(--hero-y);width:min(var(--hero-width),540px);height:min(var(--hero-height),680px);transform:translate(-50%,-50%) scale(var(--hero-scale));transform-origin:center center;display:flex;align-items:center;justify-content:center;pointer-events:none;filter:drop-shadow(0 16px 26px #0008);animation:float 5s ease-in-out infinite}
 #character img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
 #actions{position:absolute;z-index:12;left:50%;bottom:max(38px,calc(env(safe-area-inset-bottom) + 30px));transform:translateX(-50%);width:min(720px,88vw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .action{min-height:64px;border-radius:9px;font:900 clamp(11px,1.2vw,14px)/1.1 Inter,system-ui,sans-serif;letter-spacing:.04em;cursor:pointer}
@@ -24,15 +24,16 @@
 #ticker{position:absolute;z-index:9;left:50%;top:clamp(20px,4vh,42px);transform:translateX(-50%);margin-top:clamp(70px,8vh,92px);max-width:calc(100% - 32px);padding:8px 14px;border:1px solid #ffffff26;border-radius:99px;background:#061329c9;white-space:nowrap;overflow:hidden;font-size:10px;letter-spacing:.07em;color:#e1eaf7}
 #menu{position:absolute;z-index:14;right:8px;top:8px;width:38px;height:30px;border:1px solid #ffc83d99;border-radius:5px;background:#061329dd;display:grid;place-content:center;gap:4px}
 #menu span{display:block;width:19px;height:2px;background:var(--gold)}
-#tagline{position:absolute;z-index:7;left:50%;top:calc(var(--hero-y) + min(34dvh,300px));transform:translateX(-50%);white-space:nowrap;font-size:clamp(9px,1.1vw,13px);letter-spacing:.18em;color:#dce8f6b8;text-shadow:0 2px 8px #000;text-align:center}
+#editor{position:absolute;z-index:30;right:14px;top:52px;width:min(300px,calc(100vw - 28px));padding:16px;border:1px solid #ffc83d99;border-radius:12px;background:#061329f5;box-shadow:0 14px 40px #0008;font-size:12px}#editor[hidden]{display:none}#editor header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;color:#ffc83d}#editor header button{font-size:22px;background:transparent;color:#fff;border:0;padding:0 8px}#editor label{display:block;margin:12px 0;color:#e4edf9}#editor output{float:right;color:#ffc83d}#editor input{display:block;width:100%;margin-top:8px;accent-color:#ffc83d}#editor #resetEditor{width:100%;padding:10px;background:#122b49;border:1px solid #4a8ddd;color:#fff;border-radius:8px}#editor p{color:#9caec5;font-size:10px;line-height:1.5}#tagline{position:absolute;z-index:7;left:50%;top:calc(var(--hero-y) + min(34dvh,300px));transform:translateX(-50%);white-space:nowrap;font-size:clamp(9px,1.1vw,13px);letter-spacing:.18em;color:#dce8f6b8;text-shadow:0 2px 8px #000;text-align:center}
 @keyframes float{0%,100%{margin-top:0}50%{margin-top:-7px}}
-@media(max-width:700px){#brand{top:clamp(20px,4vh,36px)}#brand strong{font-size:clamp(28px,8vw,42px)}#network{top:104px;right:10px;font-size:8px}#ticker{top:72px;margin-top:0;font-size:8px;max-width:calc(100% - 80px);left:10px;transform:none}#character{width:min(94vw,500px);height:58dvh;top:47%}#tagline{top:75%;font-size:8px;letter-spacing:.1em;max-width:90vw;white-space:normal}#actions{bottom:max(24px,calc(env(safe-area-inset-bottom) + 18px));width:calc(100% - 28px);gap:7px} .action{min-height:55px;padding:8px 4px;font-size:10px}#play{grid-column:1/-1;min-height:56px}.ghost{min-height:48px}#brand small{font-size:8px}}
+@media(max-width:700px){#editor{top:48px}#brand{top:clamp(20px,4vh,36px)}#brand strong{font-size:clamp(28px,8vw,42px)}#network{top:104px;right:10px;font-size:8px}#ticker{top:72px;margin-top:0;font-size:8px;max-width:calc(100% - 80px);left:10px;transform:none}#character{width:min(94vw,500px);height:58dvh;top:47%}#tagline{top:75%;font-size:8px;letter-spacing:.1em;max-width:90vw;white-space:normal}#actions{bottom:max(24px,calc(env(safe-area-inset-bottom) + 18px));width:calc(100% - 28px);gap:7px} .action{min-height:55px;padding:8px 4px;font-size:10px}#play{grid-column:1/-1;min-height:56px}.ghost{min-height:48px}#brand small{font-size:8px}}
 @media(prefers-reduced-motion:reduce){#character{animation:none}}
 </style></head>
 <body><main id="stage">
 <canvas id="environment" aria-hidden="true"></canvas><div id="mist"></div>
 <header id="brand"><strong>CLIMBORIA</strong><small>MORE THAN A GAME. IT'S A CLIMB.</small></header>
-<div id="ticker">SOLANA NETWORK　 •　 BASE ECOSYSTEM　 •　 CLIMBORIA</div><div id="network">SOLANA NETWORK　 ━━━</div><button id="menu" aria-label="Menu"><span></span><span></span><span></span></button>
+<div id="ticker">SOLANA NETWORK　 •　 BASE ECOSYSTEM　 •　 CLIMBORIA</div><div id="network">SOLANA NETWORK　 ━━━</div><button id="menu" aria-label="Open layout controls"><span></span><span></span><span></span></button>
+<aside id="editor" aria-label="Hero layout editor" hidden><header><b>HERO CONTROLS</b><button id="closeEditor" aria-label="Close editor">×</button></header><label>Hero size <output id="scaleOut">100%</output><input id="scale" type="range" min=".5" max="1.3" step=".05" value="1"></label><label>Horizontal position <output id="xOut">50%</output><input id="posX" type="range" min="15" max="85" value="50"></label><label>Vertical position <output id="yOut">49%</output><input id="posY" type="range" min="20" max="75" value="49"></label><label>Background brightness <output id="brightOut">100%</output><input id="bright" type="range" min=".65" max="1.3" step=".05" value="1"></label><button id="resetEditor">RESET LAYOUT</button><p>Prototype controls only. Does not change the live homepage.</p></aside>
 <div id="character"><img src="./aaaaaa.png..png" alt="Climboria original character cutout"></div>
 <div id="tagline">A PHYSICS CLIMBING ADVENTURE</div>
 <nav id="actions"><button id="play" class="action">PLAY<small>Free to Start</small></button><button class="action ghost">TRADE</button><button class="action ghost">CREATE TOKEN<small>SOLANA · COMING SOON</small></button></nav>
@@ -45,6 +46,13 @@ function draw(){t+=.003;x.clearRect(0,0,w,h);const g=x.createRadialGradient(w*.5
 cfg.layers.forEach((L,li)=>{x.beginPath();x.moveTo(0,h);L.peaks.forEach((p,i)=>{const xx=(i/(L.peaks.length-1))*w;const yy=h*p+Math.sin(t+li+i*.8)*4*(li+1);x.lineTo(xx,yy)});x.lineTo(w,h);x.closePath();x.fillStyle=L.color;x.fill()});
 /* geometric summit facets, separate from the character and UI */x.globalAlpha=.48;x.fillStyle=cfg.snow;x.beginPath();x.moveTo(w*.49,h*.29);x.lineTo(w*.45,h*.39);x.lineTo(w*.48,h*.37);x.lineTo(w*.51,h*.4);x.lineTo(w*.49,h*.29);x.fill();x.globalAlpha=1;
 for(let i=0;i<cfg.starCount;i++){const xx=(i*167.7+(t*7)%w)%w,yy=(i*71.3%Math.max(1,h*.56));x.globalAlpha=.12+(i%4)*.035;x.fillStyle='#dcecff';x.fillRect(xx,yy,1,1)}x.globalAlpha=1;requestAnimationFrame(draw)}
-window.addEventListener('resize',resize,{passive:true});resize();draw();
+const root=document.documentElement,editor=document.getElementById('editor');
+const scale=document.getElementById('scale'),posX=document.getElementById('posX'),posY=document.getElementById('posY'),bright=document.getElementById('bright');
+function sync(){root.style.setProperty('--hero-scale',scale.value);root.style.setProperty('--hero-x',posX.value+'%');root.style.setProperty('--hero-y',posY.value+'%');root.style.setProperty('--mountain-brightness',bright.value);document.getElementById('scaleOut').value=Math.round(scale.value*100)+'%';document.getElementById('xOut').value=posX.value+'%';document.getElementById('yOut').value=posY.value+'%';document.getElementById('brightOut').value=Math.round(bright.value*100)+'%'}
+[scale,posX,posY,bright].forEach(el=>el.addEventListener('input',sync));
+document.getElementById('menu').addEventListener('click',()=>{editor.hidden=!editor.hidden});
+document.getElementById('closeEditor').addEventListener('click',()=>editor.hidden=true);
+document.getElementById('resetEditor').addEventListener('click',()=>{scale.value=1;posX.value=50;posY.value=49;bright.value=1;sync()});
+window.addEventListener('resize',resize,{passive:true});sync();resize();draw();
 })();
 </script></body></html>
