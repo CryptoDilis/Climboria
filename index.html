@@ -10039,15 +10039,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
   #help{bottom:max(8px,env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 24px)!important;max-width:520px!important;font-size:10px!important;line-height:1.5!important;white-space:normal!important}
   #touchHint{bottom:max(48px,calc(env(safe-area-inset-bottom,0px) + 38px))!important;max-width:calc(100vw - 28px)!important;font-size:11px!important;line-height:1.45!important;white-space:normal!important}
   #nav button,#nav a{min-width:44px!important;min-height:44px!important}
-  /* Keep ticker readable and scrollable; give the hamburger a real touch target below it. */
-  #landing #climboria-reference-canvas #cryptoTicker{
-    height:30px!important;min-height:30px!important;padding:0 52px 0 5px!important;
-    justify-content:flex-start!important;touch-action:pan-x!important;
-  }
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{min-height:26px!important;padding:3px 7px!important;gap:4px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol,
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:10px!important;line-height:1.2!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:8px!important;line-height:1.2!important}
+  /* Give the hamburger a real touch target below the clean header. */
   #climboria-hamburger-toggle{
     top:calc(32px + env(safe-area-inset-top,0px))!important;
     right:max(8px,env(safe-area-inset-right,0px))!important;
@@ -10124,7 +10116,7 @@ html,body{background:#061329!important;color:#f8fafc!important}
  min-height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;
 }
 #landing .climboria-launch-announcement,#landing .pointsPanel,#landing .progressPanel,#landing .cards,#landing .note,
-#landingHeroPreview,#climboriaHeroCutout,#cryptoTicker{
+#cryptoTicker{
  display:none!important;visibility:hidden!important;opacity:0!important;
 }
 #climboria-visible-cta-overlay-v2-root{
