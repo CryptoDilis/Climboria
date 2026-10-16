@@ -10625,7 +10625,6 @@ document.addEventListener("DOMContentLoaded",function(){
   window.addEventListener('pageshow',sync);
   window.addEventListener('resize',sync,{passive:true});
   document.addEventListener('click',function(){setTimeout(sync,0);},true);
-  setInterval(sync,400);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
