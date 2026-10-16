@@ -10885,6 +10885,8 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 <script id="climboria-runtime-drawer-cta-sync-v3">
 (function(){
  function sync(){
+  /* Strictly mobile-only: leave the already-approved desktop experience untouched. */
+  if(!window.matchMedia('(max-width:700px)').matches)return;
   var drawer=document.getElementById('climboria-menu-drawer');
   var root=document.getElementById('climboria-visible-cta-overlay-v2-root');
   var old=document.querySelector('#landing .climboria-hero-actions-v1');
