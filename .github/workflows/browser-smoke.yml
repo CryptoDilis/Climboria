@@ -2,7 +2,13 @@ name: Climboria Browser Smoke Test
 
 on:
   push:
-    branches: [main, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results]
+    branches: [main, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, codex/modular-code-generated-homepage]
+    paths:
+      - "index.html"
+      - "favicon.png"
+      - ".github/workflows/browser-smoke.yml"
+  pull_request:
+    branches: [main]
     paths:
       - "index.html"
       - "favicon.png"
@@ -81,27 +87,29 @@ jobs:
                 return !!landing && getComputedStyle(landing).display !== 'none' && (!!play || !!legacy);
               }, { timeout: 15000 });
               await page.waitForTimeout(2500);
-              // The approved full-page reference artwork intentionally replaces the old
-              // standalone hero cutout. Verify the exact source image and its fitted canvas.
-              const referenceCanvas = page.locator('#climboria-reference-canvas');
-              await referenceCanvas.waitFor({ state: 'attached', timeout: 10000 });
-              const referenceState = await referenceCanvas.evaluate(async el => {
-                const style = getComputedStyle(el);
-                const url = style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
-                let imageOk = false;
-                if (url) {
-                  const response = await fetch(new URL(url, location.href));
-                  if (response.ok) {
-                    const blob = await response.blob();
-                    imageOk = blob.size > 100000;
-                  }
-                }
-                const rect = el.getBoundingClientRect();
-                return { imageOk, backgroundImage: style.backgroundImage, width: rect.width, height: rect.height };
+              // Clean homepage mode: no legacy artwork/reference; only the brand and primary CTA controls.
+              const cleanHomeState = await page.evaluate(() => {
+                const landing = document.getElementById('landing');
+                const root = document.getElementById('climboria-visible-cta-overlay-v2-root');
+                const buttons = root ? Array.from(root.querySelectorAll('button')) : [];
+                const image = document.querySelector('#landing img, #landingHeroPreview, #climboriaHeroCutout');
+                return {
+                  landingVisible: !!landing && getComputedStyle(landing).display !== 'none',
+                  buttonCount: buttons.length,
+                  visibleButtons: buttons.filter(b => {
+                    const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+                    return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+                  }).length,
+                  noHomepageArtwork: !image && !/climboria-homepage\.png|climboria-cinematic-summit\.svg/.test(document.documentElement.innerHTML),
+                  logo: document.querySelector('#landing .logo')?.textContent?.trim() || ''
+                };
               });
-              if (!referenceState.imageOk || referenceState.width < 100 || referenceState.height < 30) {
-                throw new Error('Approved full reference artwork failed to load or fit on desktop: ' + JSON.stringify(referenceState));
+              if (!cleanHomeState.landingVisible || cleanHomeState.buttonCount !== 3 ||
+                  cleanHomeState.visibleButtons !== 3 || !cleanHomeState.noHomepageArtwork ||
+                  cleanHomeState.logo !== 'CLIMBORIA') {
+                throw new Error('Clean button-only homepage failed: ' + JSON.stringify(cleanHomeState));
               }
+              console.log('Clean homepage check: ' + JSON.stringify(cleanHomeState));
               const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const visibleCanvasCount = await page.locator('canvas:visible').count();
               if (bootFailure || visibleCanvasCount === 0) {
@@ -177,26 +185,26 @@ jobs:
                 return (!!landing && !!play) || typeof window.showLevelSelect === 'function';
               }, { timeout: 20000 });
               await mobile.waitForTimeout(2500);
-              // Check the reference asset directly. The landing root is transient during
-              // responsive/game boot, so do not re-query it as a second condition here.
-              const mobileReferenceState = await mobile.evaluate(async () => {
-                const response = await fetch(new URL('./climboria-homepage.png', location.href));
-                const blob = response.ok ? await response.blob() : null;
-                const landing = document.getElementById('landing');
-                const rect = landing?.getBoundingClientRect();
+              // Mobile clean-home check: legacy artwork is absent and all three CTA buttons fit.
+              const mobileCleanHome = await mobile.evaluate(() => {
+                const root = document.getElementById('climboria-visible-cta-overlay-v2-root');
+                const buttons = root ? Array.from(root.querySelectorAll('button')) : [];
                 return {
-                  imageOk: !!blob && blob.size > 100000,
-                  imageStatus: response.status,
-                  landingPresentAtCheck: !!landing,
-                  landingWidth: rect ? rect.width : 0,
-                  landingHeight: rect ? rect.height : 0
+                  buttonCount: buttons.length,
+                  visibleButtons: buttons.filter(b => {
+                    const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+                    return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0 &&
+                      r.left >= -2 && r.right <= document.documentElement.clientWidth + 2;
+                  }).length,
+                  noHomepageArtwork: !document.querySelector('#landing img, #landingHeroPreview, #climboriaHeroCutout') &&
+                    !/climboria-homepage\.png|climboria-cinematic-summit\.svg/.test(document.documentElement.innerHTML)
                 };
               });
-              if (!mobileReferenceState.imageOk) {
-                throw new Error('Approved homepage reference asset failed on mobile: ' +
-                  JSON.stringify(mobileReferenceState));
+              if (mobileCleanHome.buttonCount !== 3 || mobileCleanHome.visibleButtons !== 3 ||
+                  !mobileCleanHome.noHomepageArtwork) {
+                throw new Error('Mobile clean button-only homepage failed: ' + JSON.stringify(mobileCleanHome));
               }
-              console.log('Mobile reference asset check: ' + JSON.stringify(mobileReferenceState));
+              console.log('Mobile clean homepage check: ' + JSON.stringify(mobileCleanHome));
               const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const mobileCanvasCount = await mobile.locator('canvas:visible').count();
               if (mobileBootFailure || mobileCanvasCount === 0) {
@@ -310,11 +318,8 @@ jobs:
                 waitUntil: 'domcontentloaded',
                 timeout: 30000
               });
-              await expedition.waitForFunction(() =>
-                typeof window.showLevelSelect === 'function' &&
-                typeof window.startLevel === 'function',
-                { timeout: 20000 }
-              );
+              await expedition.locator('#startButton').waitFor({ state: 'attached', timeout: 20000 });
+              await expedition.locator('canvas:visible').first().waitFor({ state: 'visible', timeout: 20000 });
               const unlocked = await expedition.evaluate(() => ({
                 saved: localStorage.getItem('climboria_unlocked_level'),
                 landingDisplay: getComputedStyle(document.getElementById('landing')).display,
@@ -324,7 +329,7 @@ jobs:
               if (unlocked.saved !== '10') {
                 throw new Error('Expedition save did not load level 10 unlock: ' + JSON.stringify(unlocked));
               }
-              await expedition.evaluate(() => window.showLevelSelect());
+              await expedition.locator('#startButton').evaluate(el => el.click());
               await expedition.locator('#levelSelect').waitFor({ state: 'visible', timeout: 10000 });
               const summitCount = await expedition.locator('.levelCard[data-level]').count();
               if (summitCount !== 10) {
