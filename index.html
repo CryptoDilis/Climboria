@@ -1814,27 +1814,7 @@ body{
    </div>
 
   </div>
-
-  <div class="cards">
-
-   <div class="card">
-    <b>GAME</b>
-    <span>Climb. Swing. Survive.</span>
-   </div>
-
-   <div class="card">
-    <b>LAUNCHPAD</b>
-    <span>Community projects coming soon.</span>
-   </div>
-
-   <div class="card">
-    <b>DEX</b>
-    <span>Climboria DEX — in development.</span>
-   </div>
-
-  </div>
-
-  <div class="note">
+<div class="note">
    Built for the climb. For Jarrell Escalante ❤️
   </div>
 
@@ -8897,19 +8877,23 @@ document.addEventListener("DOMContentLoaded",function(){
   var header=document.createElement("header");
   header.className="climboria-dashboard-header";
   header.innerHTML='<a class="cd-brand" href="#" aria-label="Climboria home"><img class="cd-brand-logo" src="./favicon.png" alt="Official Climboria logo" width="48" height="48"><span class="cd-brand-name">CLIMBORIA<small>MORE THAN A GAME · IT’S A CLIMB</small></span></a><nav class="cd-nav cd-nav-minimal" aria-label="Main navigation"><button data-cd-action="roadmap"><b>⌁</b>ROADMAP</button><button data-cd-action="overview"><b>◈</b>OVERVIEW</button><div class="cd-climb-ticker" role="status" aria-label="CLIMB token tracker coming soon"><span class="cd-ticker-dot"></span><strong>$CLIMB</strong><span class="cd-ticker-divider"></span><small>TOKEN TRACKER</small><em>SOON</em></div></nav><a class="cd-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener"><strong>𝕏</strong><span>FOLLOW ON X<small>@ClimboriaHQ</small></span></a>';
-  panel.appendChild(header);
+  panel.insertBefore(header,panel.firstChild);
   var base=document.createElement("div");
   base.className="cd-base-label";
   base.innerHTML="🟣 SOLANA NETWORK <i></i>";
-  panel.appendChild(base);
+  header.insertAdjacentElement("afterend",base);
   var features=document.createElement("div");
   features.className="cd-feature-grid";
   features.innerHTML='<button class="cd-feature" data-cd-action="points"><span class="cd-art">💎</span><b>EARN POINTS</b><small>Climb &amp; Win</small></button><button class="cd-feature" data-cd-action="market"><span class="cd-art">🧰</span><b>MARKETPLACE</b><small>Trade Assets</small></button><button class="cd-feature" data-cd-action="launch"><span class="cd-art">🚀</span><b>LAUNCHPAD</b><small>Build Together</small></button><button class="cd-feature" data-cd-action="dex"><span class="cd-art">↔️</span><b>DEX</b><small>Trade Freely</small></button><button class="cd-feature" data-cd-action="community"><span class="cd-art">🏴</span><b>COMMUNITY</b><small>Join the Climb</small></button>';
-  panel.appendChild(features);
+  var progress=panel.querySelector(".progressPanel");
+  var actions=document.getElementById("climboria-primary-actions");
+  if(progress)progress.insertAdjacentElement("afterend",features);
+  else if(actions)actions.insertAdjacentElement("afterend",features);
+  else announcement.insertAdjacentElement("afterend",features);
 var challenge=document.createElement("section");
   challenge.className="cd-challenge-strip";
   challenge.innerHTML='<span class="cd-challenge-trophy">🏆</span><span class="cd-challenge-copy"><b>DAILY CHALLENGE</b><small>Climb today. Keep your streak alive!</small></span><span class="cd-streak">🔥 <span><b id="cdStreakValue">0</b> STREAK</span></span><div class="cd-progress"><i></i></div><span class="cd-challenge-gift">🎁</span><span class="cd-challenge-next">›</span>';
-  panel.appendChild(challenge);
+  features.insertAdjacentElement("afterend",challenge);
   var airdrop=document.createElement("button");
   airdrop.type="button";airdrop.className="cd-feature cd-airdrop-tile";airdrop.setAttribute("data-cd-action","promotions");
   airdrop.innerHTML='<span class="cd-art">🎁</span><b>GIVEAWAYS &amp; PROMOTIONS</b><small>Community events &amp; rewards</small>';
@@ -9417,6 +9401,8 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 <!-- True final cascade fix: this must be the LAST artwork rule in the file. -->
 <!-- Emergency homepage artwork layout repair: keep official art centered, keep controls independent. -->
 <style id="climboria-clean-homepage-layout-v1">
+#landing>.panel>.logo,#landing>.panel>.sub{display:none!important}
+
 /* Consolidated homepage controls: one source of truth, no artwork overlay. */
 #landing{display:block!important;background:linear-gradient(180deg,#07152a 0%,#0a1b31 52%,#07152a 100%)!important;overflow-x:hidden!important;overflow-y:auto!important}
 #landing>.panel{position:relative!important;inset:auto!important;width:min(1200px,100%)!important;max-width:1200px!important;min-height:100dvh!important;height:auto!important;margin:0 auto!important;padding:92px clamp(14px,3vw,32px) 28px!important;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:14px!important;background:transparent!important;isolation:isolate!important}
