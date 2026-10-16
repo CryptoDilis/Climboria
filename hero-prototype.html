@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Climboria — 2.5D Hero Prototype</title>
+<style>
+:root{color-scheme:dark;--gold:#ffc83d;--navy:#061329}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--navy);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
+#stage{position:relative;width:100%;height:100dvh;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#1a4265 0,#0b2442 43%,#061329 78%)}
+canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.atmosphere{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#06132922 0%,transparent 38%,#06132977 100%),radial-gradient(ellipse at center,transparent 25%,#02081488 100%);z-index:1}
+.topbar{position:absolute;z-index:5;top:max(16px,env(safe-area-inset-top));left:clamp(16px,4vw,52px);right:clamp(16px,4vw,52px);display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:900;letter-spacing:.16em;font-size:clamp(14px,2vw,20px);text-shadow:0 2px 14px #0008}
+.menu{width:44px;height:44px;border:1px solid #ffd36e88;border-radius:10px;background:#061329d9;display:grid;place-content:center;gap:5px}
+.menu span{display:block;width:20px;height:2px;background:#ffd36e;border-radius:2px}
+.ticker{position:absolute;z-index:5;top:max(72px,calc(env(safe-area-inset-top) + 68px));left:50%;transform:translateX(-50%);max-width:calc(100% - 28px);white-space:nowrap;overflow:hidden;border:1px solid #ffffff25;border-radius:999px;padding:8px 14px;background:#061329c9;font-size:11px;letter-spacing:.04em;color:#e6edf7}
+.artwork{position:absolute;z-index:2;left:50%;top:48%;width:min(76vw,760px);height:min(72dvh,760px);transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none;animation:heroFloat 6s ease-in-out infinite}
+.artwork img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 18px 32px #0007)}
+.ctas{position:absolute;z-index:6;bottom:max(28px,calc(env(safe-area-inset-bottom) + 24px));left:16px;right:16px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;letter-spacing:.08em;border-radius:12px;padding:14px 22px;min-height:48px}
+.play{background:var(--gold);color:#101827;border:1px solid #ffe08b;box-shadow:0 8px 30px #ffc83d33}
+.secondary{background:#061329a8;color:#fff;border:1px solid #ffffff70}
+.note{position:absolute;z-index:5;left:16px;right:16px;bottom:calc(max(92px,env(safe-area-inset-bottom) + 88px));text-align:center;color:#dce8f7b8;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+@keyframes heroFloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-7px)}}
+@media(max-width:700px){.artwork{top:45%;width:100vw;height:62dvh}.ticker{font-size:9px;padding:7px 10px}.ctas{gap:8px}.play{flex:1 1 100%;max-width:340px}.secondary{flex:1 1 calc(50% - 8px);max-width:164px;padding:12px 10px;font-size:11px}.note{bottom:calc(max(104px,env(safe-area-inset-bottom) + 98px));font-size:9px}}
+@media(prefers-reduced-motion:reduce){.artwork{animation:none}}
+</style>
+</head>
+<body>
+<main id="stage" aria-label="Climboria hero animation prototype">
+<canvas id="mountain" aria-hidden="true"></canvas>
+<div class="atmosphere"></div>
+<header class="topbar"><div class="brand">CLIMBORIA</div><button class="menu" aria-label="Menu"><span></span><span></span><span></span></button></header>
+<div class="ticker">SOLANA · BASE · CLIMBORIA — GAME FIRST, SPECULATION LATER</div>
+<div class="artwork"><img src="./climboria-homepage.png" alt="Official Climboria hero artwork — preserved unchanged"></div>
+<div class="note">Original hero art preserved · Code-generated mountain atmosphere</div>
+<div class="ctas"><button class="play">PLAY — FREE TO START</button><button class="secondary">TRADE</button><button class="secondary">CREATE TOKEN</button></div>
+</main>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('mountain'),ctx=canvas.getContext('2d');let w=0,h=0,dpr=1,t=0,raf=0;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,1.7);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+function ridge(points,fill){ctx.beginPath();ctx.moveTo(points[0][0]*w,points[0][1]*h);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0]*w,points[i][1]*h);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle=fill;ctx.fill()}
+function draw(){t+=.003;ctx.clearRect(0,0,w,h);
+const glow=ctx.createRadialGradient(w*.5,h*.42,0,w*.5,h*.42,Math.max(w,h)*.75);glow.addColorStop(0,'#204f70');glow.addColorStop(.45,'#0c2948');glow.addColorStop(1,'#061329');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+const drift=Math.sin(t)*w*.012;
+ridge([[0,.56],[.12,.42],[.23,.49],[.38,.30],[.49,.44],[.63,.26],[.77,.43],[.9,.33],[1,.48]],'#294d69');
+ridge([[0,.69],[.14,.55],[.29,.64],[.45,.39],[.56,.54],[.72,.36],[.86,.55],[1,.43]],'#173b58');
+ctx.save();ctx.translate(drift,0);ridge([[0,.83],[.16,.68],[.31,.74],[.48,.46],[.59,.64],[.73,.48],[.87,.69],[1,.55]],'#102d49');ctx.restore();
+ridge([[0,.94],[.18,.79],[.31,.85],[.47,.59],[.56,.72],[.7,.58],[.83,.79],[1,.68]],'#0a2038');
+ctx.globalAlpha=.18;for(let i=0;i<24;i++){let x=(i*137.5+(t*13)%w)%w,y=h*(.15+(i*47%65)/100);ctx.fillStyle='#dcecff';ctx.beginPath();ctx.arc(x,y,(i%3)+.4,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+raf=requestAnimationFrame(draw)}
+window.addEventListener('resize',resize,{passive:true});resize();draw();
+})();
+</script>
+</body>
+</html>
