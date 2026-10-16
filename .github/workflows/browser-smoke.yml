@@ -87,40 +87,29 @@ jobs:
                 return !!landing && getComputedStyle(landing).display !== 'none' && (!!play || !!legacy);
               }, { timeout: 15000 });
               await page.waitForTimeout(2500);
-              // Code-only homepage mode: verify the procedural mountain canvas fills
-              // the viewport and raster hero artwork is not displayed.
-              const referenceCanvas = page.locator('#climboria-reference-canvas');
-              await referenceCanvas.waitFor({ state: 'attached', timeout: 10000 });
-              const referenceState = await referenceCanvas.evaluate(async el => {
-                const rect = el.getBoundingClientRect();
-                const generated = el.querySelector('#climboria-generated-mountain');
-                const cutout = document.getElementById('climboriaHeroCutout');
-                const cutoutHidden = !cutout || getComputedStyle(cutout).display === 'none';
-                const style = getComputedStyle(el);
-                const url = style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
-                let imageOk = false;
-                if (url && url !== 'none') {
-                  const response = await fetch(new URL(url, location.href));
-                  if (response.ok) {
-                    const blob = await response.blob();
-                    imageOk = blob.size > 100000;
-                  }
-                }
-                const generatedOk = !!generated && generated.width >= 100 && generated.height >= 100;
+              // Clean homepage mode: no legacy artwork/reference; only the brand and primary CTA controls.
+              const cleanHomeState = await page.evaluate(() => {
+                const landing = document.getElementById('landing');
+                const root = document.getElementById('climboria-visible-cta-overlay-v2-root');
+                const buttons = root ? Array.from(root.querySelectorAll('button')) : [];
+                const image = document.querySelector('#landing img, #landingHeroPreview, #climboriaHeroCutout');
                 return {
-                  imageOk, generatedOk, cutoutHidden,
-                  backgroundImage: style.backgroundImage,
-                  width: rect.width, height: rect.height,
-                  generatedWidth: generated?.width || 0,
-                  generatedHeight: generated?.height || 0
+                  landingVisible: !!landing && getComputedStyle(landing).display !== 'none',
+                  buttonCount: buttons.length,
+                  visibleButtons: buttons.filter(b => {
+                    const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+                    return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+                  }).length,
+                  noHomepageArtwork: !image && !/climboria-homepage\.png|climboria-cinematic-summit\.svg/.test(document.documentElement.innerHTML),
+                  logo: document.querySelector('#landing .logo')?.textContent?.trim() || ''
                 };
               });
-              const modularMode = referenceState.generatedOk;
-              if ((!modularMode && !referenceState.imageOk) ||
-                  referenceState.width < 100 || referenceState.height < 100 ||
-                  (modularMode && !referenceState.cutoutHidden)) {
-                throw new Error('Homepage artwork/generated mountain failed to load or fit: ' + JSON.stringify(referenceState));
+              if (!cleanHomeState.landingVisible || cleanHomeState.buttonCount !== 3 ||
+                  cleanHomeState.visibleButtons !== 3 || !cleanHomeState.noHomepageArtwork ||
+                  cleanHomeState.logo !== 'CLIMBORIA') {
+                throw new Error('Clean button-only homepage failed: ' + JSON.stringify(cleanHomeState));
               }
+              console.log('Clean homepage check: ' + JSON.stringify(cleanHomeState));
               const bootFailure = await page.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const visibleCanvasCount = await page.locator('canvas:visible').count();
               if (bootFailure || visibleCanvasCount === 0) {
@@ -196,24 +185,26 @@ jobs:
                 return (!!landing && !!play) || typeof window.showLevelSelect === 'function';
               }, { timeout: 20000 });
               await mobile.waitForTimeout(2500);
-              // Mobile code-only check: ensure the procedural background exists and
-              // the original raster character artwork is hidden.
-              const mobileReferenceState = await mobile.evaluate(() => {
-                const generated = document.getElementById('climboria-generated-mountain');
-                const cutout = document.getElementById('climboriaHeroCutout');
-                const root = document.getElementById('climboria-reference-canvas');
+              // Mobile clean-home check: legacy artwork is absent and all three CTA buttons fit.
+              const mobileCleanHome = await mobile.evaluate(() => {
+                const root = document.getElementById('climboria-visible-cta-overlay-v2-root');
+                const buttons = root ? Array.from(root.querySelectorAll('button')) : [];
                 return {
-                  generatedOk: !!generated && generated.width >= 100 && generated.height >= 100,
-                  cutoutHidden: !cutout || getComputedStyle(cutout).display === 'none',
-                  backgroundImage: root ? getComputedStyle(root).backgroundImage : null
+                  buttonCount: buttons.length,
+                  visibleButtons: buttons.filter(b => {
+                    const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+                    return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0 &&
+                      r.left >= -2 && r.right <= document.documentElement.clientWidth + 2;
+                  }).length,
+                  noHomepageArtwork: !document.querySelector('#landing img, #landingHeroPreview, #climboriaHeroCutout') &&
+                    !/climboria-homepage\.png|climboria-cinematic-summit\.svg/.test(document.documentElement.innerHTML)
                 };
               });
-              if (!mobileReferenceState.generatedOk || !mobileReferenceState.cutoutHidden ||
-                  mobileReferenceState.backgroundImage !== 'none') {
-                throw new Error('Code-only homepage layer failed on mobile: ' +
-                  JSON.stringify(mobileReferenceState));
+              if (mobileCleanHome.buttonCount !== 3 || mobileCleanHome.visibleButtons !== 3 ||
+                  !mobileCleanHome.noHomepageArtwork) {
+                throw new Error('Mobile clean button-only homepage failed: ' + JSON.stringify(mobileCleanHome));
               }
-              console.log('Mobile code-only check: ' + JSON.stringify(mobileReferenceState));
+              console.log('Mobile clean homepage check: ' + JSON.stringify(mobileCleanHome));
               const mobileBootFailure = await mobile.locator('#climboriaBootErrorMessage').textContent().catch(() => null);
               const mobileCanvasCount = await mobile.locator('canvas:visible').count();
               if (mobileBootFailure || mobileCanvasCount === 0) {
