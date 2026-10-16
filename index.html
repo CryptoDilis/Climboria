@@ -9486,6 +9486,9 @@ document.addEventListener("DOMContentLoaded",function(){
  #climboria-home-actions .climboria-home-label{font-size:10px!important}
 }
 @media(prefers-reduced-motion:reduce){#climboria-home-actions button{transition:none!important}}
+
+/* Let the game hide the landing shell when entering level selection/gameplay. */
+#landing[style*="display: none"],#landing[style*="display:none"]{display:none!important}
 </style>
 <script id="climboria-clean-homepage-actions-v1-js">
 (function(){
