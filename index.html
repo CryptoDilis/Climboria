@@ -10863,6 +10863,23 @@ document.addEventListener("DOMContentLoaded",function(){
 }
 </style>
 
+
+<!-- Mobile screenshot fix: never let fixed hero CTAs cover the open navigation drawer. -->
+<style id="climboria-mobile-drawer-cta-priority-v2">
+body:has(#climboria-menu-drawer.is-open) #climboria-visible-cta-overlay-v2-root,
+body:has(#climboria-menu-drawer.is-open) #landing .climboria-hero-actions-v1,
+body:has(#climboria-menu-drawer.is-open) #landing #startButton,
+body:has(#climboria-menu-drawer.is-open) #landing .climboria-reference-action,
+body:has(#climboria-menu-drawer[aria-hidden="false"]) #climboria-visible-cta-overlay-v2-root,
+body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-hero-actions-v1,
+body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing #startButton,
+body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-reference-action{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+#climboria-menu-drawer{z-index:10040!important}
+#climboria-menu-backdrop{z-index:10030!important}
+</style>
+
 </body>
 </html>
 
