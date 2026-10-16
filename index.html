@@ -9722,7 +9722,7 @@ document.addEventListener("DOMContentLoaded",function(){
   function make(label,index){
    var b=document.createElement('button');
    b.type='button';b.innerHTML=label==='PLAY'?'<span class="cd-cta-main-label">PLAY</span><span class="cd-cta-microcopy">Free to Start</span>':label==='TRADE'?'<span class="cd-cta-main-label">TRADE</span>':'<span class="cd-cta-main-label">CREATE TOKEN</span><span class="cd-solana-badge">SOLANA · COMING SOON</span>';b.setAttribute('aria-label',label==='PLAY'?'Play Climboria — Free to Start':label==='TRADE'?'Trade (not connected yet)':'Create token — Solana coming soon');
-   var left=[21.55,41.0,60.45][index];
+   var left=[24,41,58][index];
    b.style.cssText='position:absolute!important;left:'+left+'%!important;top:80.5%!important;width:18.2%!important;height:7.4%!important;min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;margin:0!important;padding:0 8px!important;border:1.5px solid '+(index===0?'#ffe29a':'#4d9bff')+'!important;border-radius:8px!important;background:'+(index===0?'linear-gradient(180deg,#ffe49a 0%,#f6b936 100%)':'linear-gradient(180deg,#102b50 0%,#06172e 100%)')+'!important;color:'+(index===0?'#101521':'#ffffff')+'!important;-webkit-text-fill-color:'+(index===0?'#101521':'#ffffff')+'!important;font:800 clamp(10px,1.15vw,17px)/1.1 Arial,sans-serif!important;letter-spacing:clamp(.4px,.08vw,1.2px)!important;text-shadow:0 1px 2px rgba(0,0,0,.4)!important;box-shadow:0 0 12px '+(index===0?'rgba(255,193,64,.4)':'rgba(35,126,255,.3)')+',inset 0 1px 0 rgba(255,255,255,.18)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;cursor:pointer!important;appearance:none!important;transform:none!important;';
    if(index===0){
     b.addEventListener('click',function(){
@@ -9744,13 +9744,15 @@ document.addEventListener("DOMContentLoaded",function(){
   function responsive(){
    var mobile=window.matchMedia('(max-width:700px)').matches;
    root.querySelectorAll('button').forEach(function(b){
-    b.style.setProperty('top',mobile?'78%':'80.5%','important');
-    b.style.setProperty('height',mobile?'6.5%':'7.4%','important');
-    b.style.setProperty('min-height',mobile?'36px':'44px','important');
+    b.style.setProperty('top','calc(50% + 42px)','important');
+    b.style.setProperty('height','auto','important');
+    b.style.setProperty('min-height',mobile?'48px':'54px','important');
     b.style.setProperty('font-size',mobile?'clamp(9px,2.6vw,13px)':'clamp(10px,1.15vw,17px)','important');
     b.style.setProperty('letter-spacing',mobile?'0':'clamp(.4px,.08vw,1.2px)','important');
     b.style.setProperty('border-radius',mobile?'6px':'8px','important');
-    b.style.setProperty('padding',mobile?'0 2px':'0 8px','important');
+    b.style.setProperty('padding',mobile?'8px 3px':'10px 8px','important');
+    b.style.setProperty('width',mobile?'29vw':'16%','important');
+    b.style.setProperty('left',mobile?['4vw','35.5vw','67vw'][Array.prototype.indexOf.call(root.querySelectorAll('button'),b)]:[24,41,58][Array.prototype.indexOf.call(root.querySelectorAll('button'),b)]+'%','important');
    });
   }
   responsive();window.addEventListener('resize',responsive,{passive:true});
