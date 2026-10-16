@@ -10880,6 +10880,35 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 #climboria-menu-backdrop{z-index:10030!important}
 </style>
 
+
+<!-- Reliable runtime fix: observe actual drawer state and toggle the independent fixed CTA overlay. -->
+<script id="climboria-runtime-drawer-cta-sync-v3">
+(function(){
+ function sync(){
+  var drawer=document.getElementById('climboria-menu-drawer');
+  var root=document.getElementById('climboria-visible-cta-overlay-v2-root');
+  var old=document.querySelector('#landing .climboria-hero-actions-v1');
+  var open=!!(drawer && !drawer.hidden && (drawer.classList.contains('is-open') || drawer.getAttribute('aria-hidden')==='false'));
+  [root,old].forEach(function(el){
+   if(!el)return;
+   el.style.setProperty('display',open?'none':'block','important');
+   el.style.setProperty('visibility',open?'hidden':'visible','important');
+   el.style.setProperty('pointer-events',open?'none':'auto','important');
+   el.setAttribute('aria-hidden',open?'true':'false');
+  });
+ }
+ function init(){
+  sync();
+  var obs=new MutationObserver(sync);
+  obs.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','aria-hidden','style']});
+  document.addEventListener('click',function(){setTimeout(sync,0);setTimeout(sync,260);},true);
+  window.addEventListener('pageshow',sync);
+  window.addEventListener('resize',sync,{passive:true});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
 
