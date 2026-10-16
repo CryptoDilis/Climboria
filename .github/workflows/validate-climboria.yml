@@ -36,6 +36,7 @@ jobs:
               def __init__(self):
                   super().__init__(convert_charrefs=True)
                   self.tags = []
+                  self.end_tags = []
                   self.buttons = []
                   self.in_home_actions = False
               def handle_starttag(self, tag, attrs):
@@ -46,15 +47,20 @@ jobs:
                   if self.in_home_actions and tag == "button":
                       self.buttons.append(attrs.get("class", ""))
               def handle_endtag(self, tag):
+                  self.end_tags.append(tag)
                   if tag == "nav" and self.in_home_actions:
                       self.in_home_actions = False
 
           probe = DocumentProbe()
           probe.feed(html)
 
-          for token in ('<html', '</html>', '<body', '</body>'):
-              if html.lower().count(token) != 1:
-                  raise SystemExit(f"expected exactly one document marker: {token}")
+          for tag in ("html", "body"):
+              starts = sum(1 for name, attrs in probe.tags if name == tag)
+              ends = probe.end_tags.count(tag)
+              if starts != 1 or ends != 1:
+                  raise SystemExit(
+                      f"expected one parsed <{tag}> and </{tag}>; found {starts} and {ends}"
+                  )
 
           required = [
               'id="nextLevelVictoryButton"',
