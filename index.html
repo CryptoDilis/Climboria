@@ -11185,7 +11185,9 @@ body{overflow:hidden!important}
  }
  #landing #climboria-reference-canvas{
   inset:auto!important;left:50%!important;top:50%!important;
-  width:100vw!important;height:70dvh!important;max-width:100vw!important;max-height:none!important;
+  /* Portrait phones: use more of the available height without cropping or replacing the approved artwork. */
+  width:100vw!important;height:clamp(70dvh,185vw,92dvh)!important;
+  max-width:100vw!important;max-height:92dvh!important;
   aspect-ratio:auto!important;transform:translate(-50%,-50%)!important;
   background-size:100% 100%!important;background-position:center center!important;
  }
