@@ -10885,7 +10885,7 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
 <script id="climboria-runtime-drawer-cta-sync-v3">
 (function(){
  function sync(){
-  /* Strictly mobile-only: leave the already-approved desktop experience untouched. */
+  /* Strictly mobile-only: leave the approved desktop experience untouched. */
   if(!window.matchMedia('(max-width:700px)').matches)return;
   var drawer=document.getElementById('climboria-menu-drawer');
   var root=document.getElementById('climboria-visible-cta-overlay-v2-root');
@@ -10893,16 +10893,21 @@ body:has(#climboria-menu-drawer[aria-hidden="false"]) #landing .climboria-refere
   var open=!!(drawer && !drawer.hidden && (drawer.classList.contains('is-open') || drawer.getAttribute('aria-hidden')==='false'));
   [root,old].forEach(function(el){
    if(!el)return;
-   el.style.setProperty('display',open?'none':'block','important');
-   el.style.setProperty('visibility',open?'hidden':'visible','important');
-   el.style.setProperty('pointer-events',open?'none':'auto','important');
-   el.setAttribute('aria-hidden',open?'true':'false');
+   var display=open?'none':'block';
+   var visibility=open?'hidden':'visible';
+   var pointerEvents=open?'none':'auto';
+   if(el.style.getPropertyValue('display')!==display)el.style.setProperty('display',display,'important');
+   if(el.style.getPropertyValue('visibility')!==visibility)el.style.setProperty('visibility',visibility,'important');
+   if(el.style.getPropertyValue('pointer-events')!==pointerEvents)el.style.setProperty('pointer-events',pointerEvents,'important');
+   var hidden=open?'true':'false';
+   if(el.getAttribute('aria-hidden')!==hidden)el.setAttribute('aria-hidden',hidden);
   });
  }
  function init(){
   sync();
   var obs=new MutationObserver(sync);
-  obs.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','aria-hidden','style']});
+  /* Do not observe style mutations: sync writes styles, which otherwise retriggered itself indefinitely. */
+  obs.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','aria-hidden']});
   document.addEventListener('click',function(){setTimeout(sync,0);setTimeout(sync,260);},true);
   window.addEventListener('pageshow',sync);
   window.addEventListener('resize',sync,{passive:true});
