@@ -199,6 +199,21 @@
     }
 
 </style>
+<style id="climboria-overview-navigation-v1">
+  .overview-jump{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 30px;padding:14px;border:1px solid #a6cce42b;border-radius:15px;background:linear-gradient(120deg,#0e2033,#081321)}
+  .overview-jump-label{flex:0 0 100%;color:#f4c86a;font-size:10px;font-weight:900;letter-spacing:1.7px;margin:0 0 2px}
+  .overview-jump a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #a6cce43a;border-radius:8px;color:#e7f0fb;text-decoration:none;font-size:11px;font-weight:850;letter-spacing:.45px;background:#0b1725;transition:border-color .15s,background .15s}
+  .overview-jump a:hover,.overview-jump a:focus-visible{border-color:#f4c86a;background:#172a40;outline:none}
+  .whitepaper-section{margin-top:34px;padding:clamp(20px,4vw,36px);border:1px solid #a6cce42b;border-radius:18px;background:linear-gradient(145deg,#10243a,#081321 78%)}
+  .whitepaper-section h2{font-size:clamp(25px,4vw,36px);line-height:1.2;margin:8px 0 12px}
+  .whitepaper-section p,.whitepaper-section li{color:#b8c8d9;font-size:14px;line-height:1.85}
+  .whitepaper-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+  .whitepaper-columns article{padding:17px;border:1px solid #a6cce420;border-radius:12px;background:#071321}
+  .whitepaper-columns h3{margin:0 0 8px;color:#f3cc75;font-size:14px}
+  .whitepaper-columns p{margin:0;font-size:13px}
+  .whitepaper-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  @media(max-width:700px){.overview-jump{gap:7px;padding:11px}.overview-jump a{flex:1 1 calc(50% - 7px);font-size:11px}.whitepaper-columns{grid-template-columns:1fr}.whitepaper-section p,.whitepaper-section li{font-size:14px}}
+</style>
 </head>
 <body>
   <main class="shell">
@@ -213,6 +228,21 @@
       <p>Climboria is building a free-to-play, play-to-earn browser climbing game focused on skill, progression, crafting, guilds, and community, with a dedicated mobile app planned for the future. Players can enjoy the core game without buying items or using crypto; optional Web3 features will be introduced in stages as they are built, tested, and ready.</p>
       <div class="actions"><a class="btn primary" href="../">PLAY CLIMBORIA</a><a class="btn" href="#roadmap">EXPLORE THE PLAN ↓</a></div>
     </section>
+
+    <nav class="overview-jump" aria-label="Explore Climboria sections">
+      <p class="overview-jump-label">EXPLORE CLIMBORIA · TAP A SECTION</p>
+      <a href="#vision-title">OVERVIEW</a>
+      <a href="#ecosystem-map">ECOSYSTEM</a>
+      <a href="#forge-title">FORGE & ITEMS</a>
+      <a href="#heroes-title">HEROES & TOOLS</a>
+      <a href="#community-title">COMMUNITY</a>
+      <a href="#lobby-title">SOCIAL LOBBY</a>
+      <a href="#market-title">MARKETPLACE & SWAP</a>
+      <a href="#season-economy-title">TOKENOMICS & REWARDS</a>
+      <a href="#launchpad-title">LAUNCHPAD</a>
+      <a href="#roadmap">ROADMAP</a>
+      <a href="#climboria-whitepaper">PROJECT BRIEF</a>
+    </nav>
 
     <section class="overview-visual" aria-label="Climboria mountain artwork">
       <img src="../climboria-homepage.png" alt="Official Climboria mountain artwork" width="1920" height="1080" loading="eager" decoding="async">
@@ -379,6 +409,23 @@
         <article class="step roadmap-step"><div class="num">08</div><div class="step-copy"><span class="step-label">LONG-TERM ECOSYSTEM</span><h3>Build the Climboria Launchpad and DEX</h3><p>Target Q1 2027 for the Launchpad and dedicated DEX, following the core ecosystem target before the end of 2026. Release depends on architecture, liquidity, wallet compatibility, security, and operational requirements.</p><span class="step-outcome">OUTCOME <b>Launchpad + DEX target · Q1 2027</b></span></div></article>
       </div>
       <div class="roadmap-footnote"><span class="roadmap-footnote-mark">i</span><p><strong>Transparency matters.</strong> The target is to deliver the core Climboria ecosystem before the end of 2026. The Launchpad and dedicated DEX are targeted for Q1 2027, subject to readiness and security reviews. The Solana TGE may happen in October or November 2026, depending on development progress; there is no fixed or guaranteed launch date. Campaigns must have funded rewards and published rules; CLIMB Points are not tokens and do not guarantee a payout. The official token address must be announced through Climboria’s official channels after deployment. Base and the dedicated app remain future plans until officially released. Beware of unofficial tokens.</p></div>
+    </section>
+
+    <section class="whitepaper-section" id="climboria-whitepaper" aria-labelledby="climboria-whitepaper-title">
+      <div class="eyebrow">PROJECT BRIEF · GAME FIRST</div>
+      <h2 id="climboria-whitepaper-title">What Climboria is building</h2>
+      <p>Climboria is a browser-first climbing game built around skill, physical movement, progression, competition, and community. The guiding principle is simple: make the game worth playing before asking players to care about tokens or trading. The core experience is intended to remain accessible without a crypto wallet or required purchases.</p>
+      <div class="whitepaper-columns">
+        <article><h3>Gameplay & progression</h3><p>Players climb challenging mountain levels, improve their technique, collect eligible materials, and work toward tools and crafting through the planned Forge. A free starter route is intended to remain viable; optional purchases must not be required to finish the game.</p></article>
+        <article><h3>Competition & recognition</h3><p>Season rules are to be published before rewarded competition begins. Season One numbered badges are reserved for ranks 1–10 only. Ranks 11–100 may have separate proposed rewards under final, funded, published rules.</p></article>
+        <article><h3>Digital items & marketplace</h3><p>Eligible items may later be minted as NFTs and traded through supported marketplaces. In-game use should not require minting. Minting requires network gas; marketplace fees, eligibility, ownership rules, and any buy/sell tax must be disclosed before trading opens.</p></article>
+        <article><h3>Token & security status</h3><p>Solana is the initial blockchain focus; Base is a later possibility. $CLIMB is a candidate ticker, not proof of an official token. Verify the contract address only through Climboria’s official channels. Swap, Launchpad, DEX, rewards, and other planned features must not be treated as live until released.</p></article>
+      </div>
+      <div class="whitepaper-actions">
+        <a class="btn primary" href="../">PLAY CLIMBORIA</a>
+        <a class="btn" href="#season-economy-title">TOKENOMICS & REWARD RULES</a>
+        <a class="btn" href="#roadmap">VIEW DEVELOPMENT ROADMAP</a>
+      </div>
     </section>
 
         <footer><span>CLIMBORIA · GAME FIRST, SPECULATION LATER</span><span><a href="../">Back to the game</a> · <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a></span></footer>
