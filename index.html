@@ -9120,33 +9120,6 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- V1.1 cascade and viewport hardening: these rules intentionally follow all legacy overrides -->
 <!-- Approved full homepage artwork: preserve source image pixels; only interaction layers remain live. -->
 <!-- Reference-fit correction: keep the approved artwork's original 2048:760 ratio and pixels. -->
-<script id="climboria-reference-fit-v2-script">
-(function(){
- function ensureReferenceContainer(){
-  var landing=document.getElementById('landing');
-  if(!landing)return false;
-  var canvas=document.getElementById('climboria-reference-canvas');
-  if(!canvas){
-   canvas=document.createElement('div');
-   canvas.id='climboria-reference-canvas';
-   
-   canvas.style.cssText='position:absolute;inset:0;pointer-events:none;background:transparent;';
-   landing.insertBefore(canvas,landing.firstChild);
-  }
-  var ticker=document.getElementById('cryptoTicker');
-  if(ticker&&ticker.parentNode!==canvas)canvas.appendChild(ticker);
-  return true;
- }
- function init(){
-  if(ensureReferenceContainer())return;
-  var observer=new MutationObserver(function(){if(ensureReferenceContainer())observer.disconnect();});
-  observer.observe(document.documentElement,{childList:true,subtree:true});
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
-
-
 <!-- Android final override: one sharp, undistorted artwork; no duplicate blur layer. -->
 <!-- Visible responsive CTA fallback: artwork stays unchanged; controls are real HTML buttons. -->
 
@@ -9183,8 +9156,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <!-- Static, readable market strip + hamburger positioning. Artwork is untouched. -->
 <style id="climboria-static-market-strip-v1">
-/* Keep the ticker as a thin, fixed strip over the approved artwork; never auto-scroll. */
-#landing #climboria-reference-canvas #cryptoTicker{
+/* Keep the ticker as a thin{
   display:flex!important;visibility:visible!important;position:absolute!important;
   left:0!important;right:0!important;top:0!important;width:100%!important;
   height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
@@ -9195,53 +9167,6 @@ document.addEventListener("DOMContentLoaded",function(){
   box-shadow:0 2px 8px #0007!important;scrollbar-width:none!important;
   overscroll-behavior-x:contain!important;touch-action:pan-x!important;
 }
-#landing #climboria-reference-canvas #cryptoTicker::-webkit-scrollbar{display:none!important}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoStatus,
-#landing #climboria-reference-canvas #cryptoTicker .cryptoUpdated,
-#landing #climboria-reference-canvas #cryptoTicker .cryptoCountdown,
-#landing #climboria-reference-canvas #cryptoTicker .cryptoLive{display:none!important}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoRow{
-  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
-  width:max-content!important;min-width:100%!important;gap:0!important;margin:0 auto!important;
-  justify-content:center!important;animation:none!important;transform:none!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoCard{
-  display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;
-  flex:0 0 auto!important;min-width:0!important;margin:0!important;padding:2px 6px!important;
-  border:0!important;border-right:1px solid #d9b76b66!important;border-radius:0!important;
-  background:transparent!important;box-shadow:none!important;text-align:left!important;
-  transition:none!important;transform:none!important;white-space:nowrap!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoTop{
-  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:3px!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol{
-  font-size:clamp(6px,.72vw,10px)!important;line-height:1.1!important;color:#fff!important;
-  font-weight:900!important;letter-spacing:.2px!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{
-  display:block!important;margin:0!important;font-size:clamp(6px,.72vw,10px)!important;
-  line-height:1.1!important;font-weight:900!important;color:#fff!important;white-space:nowrap!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoChange{
-  display:block!important;font-size:clamp(5px,.62vw,9px)!important;
-  line-height:1.1!important;font-weight:900!important;white-space:nowrap!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoLogo{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:12px!important;height:12px!important;flex:0 0 12px!important;border-radius:50%!important;
-  overflow:hidden!important;font-size:7px!important;line-height:12px!important;font-weight:900!important;
-  color:#fff!important;background:#34445a!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoLogo img{
-  display:block!important;width:12px!important;height:12px!important;object-fit:contain!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending{display:flex!important}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoSymbol{color:#f4c86a!important}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoPrice{
-  color:#d4dfed!important;font-size:clamp(5px,.65vw,9px)!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cd-market-pending .cryptoChange{color:#f4c86a!important}
 #climboria-hamburger-toggle{
   position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
   width:27px!important;height:18px!important;min-height:18px!important;padding:2px!important;
@@ -9254,18 +9179,9 @@ document.addEventListener("DOMContentLoaded",function(){
 #climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(3.5px) rotate(45deg)!important}
 #climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-3.5px) rotate(-45deg)!important}
 @media(max-width:700px){
-  #landing #climboria-reference-canvas #cryptoTicker{height:clamp(20px,4.8%,27px)!important;min-height:20px!important;padding:0 29px 0 2px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoRow{justify-content:flex-start!important;margin:0!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{gap:2px!important;padding:2px 4px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol{font-size:7px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:7px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:6px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoLogo,
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoLogo img{width:10px!important;height:10px!important;flex-basis:10px!important}
   #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:25px!important;height:18px!important}
 }
 @media(prefers-reduced-motion:reduce){
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoRow{animation:none!important}
   #climboria-hamburger-toggle span{transition:none!important}
 }
 </style>
@@ -9326,26 +9242,10 @@ body{overflow:hidden!important}
  radial-gradient(ellipse at 50% 42%,#142b49 0%,#0a1b33 48%,#040b18 100%)!important;
  isolation:isolate!important;overscroll-behavior:none!important;
 }
-#landing #climboria-reference-canvas{
- position:absolute!important;inset:0!important;left:0!important;top:0!important;z-index:5!important;
- width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;
- aspect-ratio:auto!important;transform:none!important;
- background-image:none!important;
- background-repeat:no-repeat!important;background-position:center center!important;
- background-size:cover!important;pointer-events:none!important;
-}
 #landing>.panel{background:transparent!important;pointer-events:none!important}
 #landing #startButton{pointer-events:auto!important}
 @media(max-width:700px){
  #landing{background:linear-gradient(180deg,#07152a 0%,#0a1d35 50%,#07152a 100%)!important}
- #landing #climboria-reference-canvas{
-  inset:auto!important;left:50%!important;top:50%!important;
-  /* Portrait phones: use more of the available height without cropping or replacing the approved artwork. */
-  width:100vw!important;height:clamp(70dvh,185vw,92dvh)!important;
-  max-width:100vw!important;max-height:92dvh!important;
-  aspect-ratio:auto!important;transform:translate(-50%,-50%)!important;
-  background-size:100% 100%!important;background-position:center center!important;
- }
 }
 @media(prefers-reduced-motion:reduce){
 }
@@ -9356,25 +9256,6 @@ body{overflow:hidden!important}
 <!-- Final mobile-only artwork fit: overrides the later full-viewport stretch rule. -->
 <!-- Climboria ticker/menu visibility hotfix v2: last-in-cascade override. Artwork remains unchanged. -->
 <style id="climboria-ticker-menu-visibility-hotfix-v2">
-/* The approved image is a canvas; keep ticker visible over its top edge. */
-#landing #climboria-reference-canvas #cryptoTicker{
- display:flex!important;visibility:visible!important;opacity:1!important;
- position:absolute!important;left:0!important;right:0!important;top:0!important;
- width:100%!important;height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
- padding:0 38px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
- justify-content:flex-start!important;align-items:center!important;pointer-events:auto!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoRow{
- display:flex!important;visibility:visible!important;opacity:1!important;
- width:max-content!important;min-width:max-content!important;flex-wrap:nowrap!important;
- justify-content:flex-start!important;gap:0!important;margin:0!important;
- animation:none!important;transform:none!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoCard{
- display:flex!important;visibility:visible!important;opacity:1!important;
- flex:0 0 auto!important;min-width:0!important;white-space:nowrap!important;
-}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoLogo{display:inline-flex!important}
 #climboria-hamburger-toggle{
  display:flex!important;visibility:visible!important;opacity:1!important;
  position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
@@ -9387,11 +9268,6 @@ body{overflow:hidden!important}
 #climboria-hamburger-toggle span{display:block!important;width:16px!important;height:2px!important;background:#ffd36e!important}
 #climboria-menu-backdrop[hidden],#climboria-menu-drawer[hidden]{display:none!important}
 @media(max-width:700px){
- #landing #climboria-reference-canvas #cryptoTicker{height:24px!important;min-height:24px!important;padding-right:34px!important}
- #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{padding:2px 4px!important;gap:2px!important}
- #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol,
- #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:7px!important}
- #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:6px!important}
  #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:28px!important;height:22px!important}
 }
 </style>
@@ -9399,22 +9275,20 @@ body{overflow:hidden!important}
 (function(){
  function repair(){
   var landing=document.getElementById('landing');
-  var canvas=document.getElementById('climboria-reference-canvas');
+  var panel=landing&&landing.querySelector('.panel');
   var ticker=document.getElementById('cryptoTicker');
   var toggle=document.getElementById('climboria-hamburger-toggle');
-  if(canvas&&ticker&&ticker.parentNode!==canvas)canvas.appendChild(ticker);
-  /* The original header is hidden with the reference artwork, so the menu button
-     must not remain a child of that hidden header. Its existing click handlers survive reparenting. */
+  if(landing&&panel&&ticker&&ticker.parentNode!==landing)landing.insertBefore(ticker,panel);
   if(toggle&&toggle.parentNode!==document.body)document.body.appendChild(toggle);
   if(ticker){
    var row=ticker.querySelector('.cryptoRow');
    if(row){
     row.style.setProperty('animation','none','important');
     row.style.setProperty('transform','none','important');
-    row.style.setProperty('justify-content','flex-start','important');
-    row.style.setProperty('width','max-content','important');
-    row.style.setProperty('min-width','max-content','important');
-    row.style.setProperty('flex-wrap','nowrap','important');
+    row.style.setProperty('justify-content','center','important');
+    row.style.setProperty('width','100%','important');
+    row.style.setProperty('min-width','0','important');
+    row.style.setProperty('flex-wrap','wrap','important');
     row.querySelectorAll('.cryptoCard').forEach(function(card){
      card.style.setProperty('display','flex','important');
      card.style.setProperty('visibility','visible','important');
@@ -9460,10 +9334,8 @@ body{overflow:hidden!important}
  if(document.documentElement)obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<style id="climboria-extra-market-card-style-v1">
-#landing #climboria-reference-canvas #cryptoTicker .cryptoCard{display:flex!important;visibility:visible!important;opacity:1!important}
-#landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{display:block!important}
-</style>
+
+
 <!-- Reference-matched CTA hit areas only. Premium artwork remains untouched. -->
 
 
@@ -9526,15 +9398,6 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
   #help{bottom:max(8px,env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 24px)!important;max-width:520px!important;font-size:10px!important;line-height:1.5!important;white-space:normal!important}
   #touchHint{bottom:max(48px,calc(env(safe-area-inset-bottom,0px) + 38px))!important;max-width:calc(100vw - 28px)!important;font-size:11px!important;line-height:1.45!important;white-space:normal!important}
   #nav button,#nav a{min-width:44px!important;min-height:44px!important}
-  /* Keep ticker readable and scrollable; give the hamburger a real touch target below it. */
-  #landing #climboria-reference-canvas #cryptoTicker{
-    height:30px!important;min-height:30px!important;padding:0 52px 0 5px!important;
-    justify-content:flex-start!important;touch-action:pan-x!important;
-  }
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoCard{min-height:26px!important;padding:3px 7px!important;gap:4px!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoSymbol,
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoPrice{font-size:10px!important;line-height:1.2!important}
-  #landing #climboria-reference-canvas #cryptoTicker .cryptoChange{font-size:8px!important;line-height:1.2!important}
   #climboria-hamburger-toggle{
     top:calc(32px + env(safe-area-inset-top,0px))!important;
     right:max(8px,env(safe-area-inset-right,0px))!important;
@@ -9574,7 +9437,6 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 <style id="climboria-clean-homepage-layout-v1">
 /* Consolidated homepage controls: one source of truth, no artwork overlay. */
 #landing{background:linear-gradient(180deg,#07152a 0%,#0a1b31 52%,#07152a 100%)!important;overflow-x:hidden!important;overflow-y:auto!important}
-#landing #climboria-reference-canvas{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;background:transparent!important;pointer-events:none!important;z-index:0!important}
 #landing>.panel{position:relative!important;inset:auto!important;width:min(1200px,100%)!important;max-width:1200px!important;min-height:100dvh!important;height:auto!important;margin:0 auto!important;padding:92px clamp(14px,3vw,32px) 28px!important;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:14px!important;background:transparent!important;isolation:isolate!important}
 #landing>.panel>*{position:relative;z-index:2}
 #landing>.panel>.logo,#landing>.panel>.sub{display:block!important;text-align:center!important;margin:0!important}
@@ -9601,7 +9463,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 #landing .cd-feature-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
 #landing .cd-feature-grid>.cd-feature,#landing .cd-feature-grid>.cd-airdrop-tile{position:relative!important;inset:auto!important;min-width:0!important;width:auto!important;max-width:none!important;min-height:80px!important;margin:0!important;transform:none!important}
 #landing .note{margin:0!important;text-align:center!important}
-#cryptoTicker{position:relative!important;inset:auto!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:34px!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:10px!important;padding:8px!important;overflow-x:auto!important;background:#050d19!important;border:1px solid #ffffff18!important;border-radius:8px!important;z-index:5!important}
+#cryptoTicker{position:absolute!important;top:0!important;left:0!important;right:0!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:34px!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:10px!important;padding:8px!important;overflow-x:auto!important;background:#050d19!important;border:1px solid #ffffff18!important;border-radius:0!important;z-index:10001!important}
 #cryptoTicker .cryptoRow{display:flex!important;flex-wrap:wrap!important;justify-content:center!important;gap:8px!important;width:100%!important;min-width:0!important;animation:none!important;transform:none!important}
 #cryptoTicker .cryptoCard{min-width:90px!important;flex:1 1 90px!important;max-width:180px!important}
 @media(max-width:700px){
