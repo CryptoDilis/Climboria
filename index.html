@@ -2001,10 +2001,7 @@ body{
 
 <div id="landing">
  <div class="panel">
-
-  <div id="landingHeroPreview" aria-hidden="true"><img id="climboriaHeroCutout" alt="" src="./aaaaaa.png..png" decoding="async"></div>
-
-  <div class="logo">CLIMBORIA</div>
+<div class="logo">CLIMBORIA</div>
 
   <div class="sub">
    CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY
@@ -8856,11 +8853,6 @@ if(
 
 </script>
 
-<script>/* CLIMBORIA_FALL_RESET_CENTER */</script>
-<script>
-/* climboria-fall-reset-real-v1 */
-</script>
-
 <style id="climboria-mobile-hud-spacing-v1">
 /* Keep the live gameplay HUD readable and separated on narrow screens. */
 @media (max-width: 700px) {
@@ -10096,63 +10088,6 @@ document.addEventListener("DOMContentLoaded",function(){
  #climboria-primary-actions{left:auto!important;bottom:auto!important;top:auto!important;width:calc(100% - 28px)!important}
 }
 </style>
-<style id="climboria-hero-cutout-blend-fix">
-/* Keep the approved left-side composition; integrate the pot into the mountain lighting. */
-:root{
-  --climboria-hero-width:clamp(280px,19vw,340px);
-  --climboria-hero-height:clamp(420px,27vw,480px);
-  --climboria-hero-left:clamp(170px,13vw,250px);
-  --climboria-hero-top:25%;
-}
-#landingHeroPreview{
-  position:absolute!important;
-  left:var(--climboria-hero-left)!important;
-  top:var(--climboria-hero-top)!important;
-  width:var(--climboria-hero-width)!important;
-  height:var(--climboria-hero-height)!important;
-  display:block!important;visibility:visible!important;opacity:1!important;
-  transform:none!important;isolation:isolate!important;
-  background:transparent!important;background-image:none!important;
-  overflow:visible!important;z-index:2!important;pointer-events:none!important;
-}
-/* A soft, wide contact shadow grounds the base of the pot without looking like a sticker. */
-#landingHeroPreview::after{
-  content:""!important;position:absolute!important;
-  left:12%!important;right:12%!important;bottom:0!important;height:7%!important;
-  border-radius:50%!important;
-  background:radial-gradient(ellipse at center,rgba(0,0,0,.64) 0%,rgba(0,0,0,.34) 36%,rgba(0,0,0,.12) 62%,transparent 82%)!important;
-  filter:blur(7px)!important;pointer-events:none!important;z-index:0!important;
-}
-#climboriaHeroCutout{
-  position:relative!important;display:block!important;width:100%!important;height:100%!important;
-  object-fit:contain!important;object-position:center bottom!important;
-  background:transparent!important;border:0!important;mix-blend-mode:normal!important;
-  image-rendering:auto!important;
-  /* restrained color/contrast correction plus grounded shadow; avoid changing face or artwork */
-  filter:brightness(1.015) saturate(1.045) contrast(1.02)
-    drop-shadow(0 2px 3px rgba(4,12,22,.28))
-    drop-shadow(0 9px 13px rgba(4,12,22,.25))!important;
-  z-index:1!important;
-}
-/* Ambient edge light subtly matches the cool mountain scene; clipped to the hero's silhouette. */
-#climboriaHeroCutout{ -webkit-backface-visibility:hidden; backface-visibility:hidden; }
-@media(max-width:700px), (pointer:coarse) and (hover:none){
-  #landingHeroPreview{
-    left:clamp(105px,15vw,210px)!important;
-    top:clamp(270px,30vh,390px)!important;
-    transform:none!important;
-    width:clamp(240px,42vw,320px)!important;
-    height:clamp(360px,63vw,480px)!important;
-  }
-  #landingHeroPreview::after{left:10%!important;right:10%!important;bottom:0!important;height:6%!important;filter:blur(6px)!important}
-  #climboriaHeroCutout{
-    filter:brightness(1.025) saturate(1.045) contrast(1.02)
-      drop-shadow(0 2px 2px rgba(0,0,0,.20))
-      drop-shadow(0 6px 9px rgba(0,0,0,.22))!important;
-  }
-}
-</style>
-
 <style id="climboria-ui-declutter-v2">
 :root{--climb-gold:#FFC83D;--climb-navy:#0B1220;--climb-white:#F8FAFC}
 #landing .panel:after{
