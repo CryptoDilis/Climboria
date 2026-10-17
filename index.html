@@ -1844,7 +1844,7 @@ body{
    </button>
    <button type="button" class="climboria-home-create">
     <span class="climboria-home-label">CREATE TOKEN</span>
-    <span class="climboria-home-note">Launch tools</span>
+    <span class="climboria-home-note">For Creators</span>
    </button>
   </nav>
  </div>
@@ -10110,6 +10110,44 @@ html body #landing{
  background-position:center 44%!important;
  background-repeat:no-repeat!important;
 }
+</style>
+
+
+<style id="climboria-home-cta-hierarchy-v2">
+html body #landing #climboria-home-actions{
+ position:absolute!important;left:50%!important;top:auto!important;right:auto!important;
+ bottom:clamp(26px,6vh,68px)!important;inset-inline:auto!important;transform:translateX(-50%)!important;
+ width:min(900px,88vw)!important;margin:0!important;
+ grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1.12fr)!important;
+ align-items:center!important;gap:clamp(10px,1.5vw,18px)!important;z-index:30!important;
+}
+html body #landing #climboria-home-actions button{
+ min-height:clamp(62px,8vh,82px)!important;padding:12px 14px!important;color:#fff!important;
+ background:linear-gradient(145deg,rgba(8,24,46,.96),rgba(15,43,73,.96))!important;
+ border:1px solid rgba(255,211,112,.8)!important;
+ box-shadow:0 8px 24px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.13)!important;
+ text-shadow:0 1px 3px #000!important;
+}
+html body #landing #climboria-home-actions .climboria-home-play{
+ min-height:clamp(78px,10vh,98px)!important;color:#18120a!important;
+ background:linear-gradient(115deg,#fff0a0,#ffc53c 58%,#df8500)!important;
+ border:1px solid #ffe68a!important;
+ box-shadow:0 0 28px rgba(255,191,59,.34),0 8px 25px rgba(0,0,0,.35),inset 0 1px #fff9!important;
+ text-shadow:none!important;transform:scale(1.04)!important;
+}
+html body #landing #climboria-home-actions .climboria-home-label{font-size:clamp(14px,1.6vw,20px)!important;letter-spacing:.055em!important}
+html body #landing #climboria-home-actions .climboria-home-note{font-size:clamp(11px,1vw,14px)!important;opacity:1!important}
+@media(max-width:700px){
+ html body #landing #climboria-home-actions{
+  bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;width:min(460px,90vw)!important;
+  grid-template-columns:minmax(0,1fr)!important;gap:8px!important;
+ }
+ html body #landing #climboria-home-actions button{min-height:52px!important;padding:8px 12px!important;border-radius:11px!important}
+ html body #landing #climboria-home-actions .climboria-home-play{min-height:62px!important;transform:none!important}
+ html body #landing #climboria-home-actions .climboria-home-label{font-size:clamp(14px,4vw,17px)!important}
+ html body #landing #climboria-home-actions .climboria-home-note{font-size:clamp(10px,2.8vw,12px)!important}
+}
+@media(prefers-reduced-motion:reduce){html body #landing #climboria-home-actions .climboria-home-play{transform:none!important}}
 </style>
 
 </body>
