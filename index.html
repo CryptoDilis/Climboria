@@ -9537,29 +9537,7 @@ html body #climboria-hamburger-toggle{display:flex!important;visibility:visible!
 html body #climboria-hamburger-toggle span{display:block!important;flex:0 0 2px!important;width:22px!important;height:2px!important;min-height:2px!important;background:#ffd36e!important;border-radius:2px!important}
 html body #climboria-menu-drawer{z-index:2147483001!important}html body #climboria-menu-backdrop{z-index:2147483000!important}
 </style>
-<script id="climboria-ui-repair-nav-mount">
-(function(){
- function mount(){
-  var btn=document.getElementById('climboria-hamburger-toggle');
-  if(!btn){btn=document.createElement('button');btn.id='climboria-hamburger-toggle';btn.type='button';btn.setAttribute('aria-label','Open navigation menu');btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-controls','climboria-menu-drawer');btn.innerHTML='<span></span><span></span><span></span>';document.body.appendChild(btn);}
-  else if(btn.parentNode!==document.body)document.body.appendChild(btn);
-  var drawer=document.getElementById('climboria-menu-drawer'),backdrop=document.getElementById('climboria-menu-backdrop');
-  if(!drawer){drawer=document.createElement('aside');drawer.id='climboria-menu-drawer';drawer.setAttribute('aria-label','Climboria navigation');drawer.setAttribute('aria-hidden','true');drawer.hidden=true;drawer.style.cssText='position:fixed;top:0;right:0;width:min(390px,92vw);height:100dvh;overflow:auto;padding:24px 20px;background:linear-gradient(160deg,#0b1b31,#050a14);border-left:1px solid #e9bc5c;color:#f4f7ff;transform:translateX(105%);transition:transform .22s;box-sizing:border-box';
-   drawer.innerHTML='<header style="display:flex;justify-content:space-between;align-items:center;color:#ffd16a;font-weight:900;font-size:22px">CLIMBORIA<button type="button" id="climboria-ui-repair-close" aria-label="Close menu" style="font-size:26px;color:#ffd16a;background:transparent;border:0">×</button></header><p style="font-size:11px;letter-spacing:1px;color:#9fb0c5">EXPLORE CLIMBORIA</p><nav style="display:grid;gap:10px"><a href="./overview/" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">OVERVIEW</a><a href="./overview/#roadmap" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">ROADMAP</a><a href="./overview/#season-economy-title" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">TOKENOMICS</a><a href="./overview/#market-title" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">SWAP & MARKETPLACE</a><a href="./overview/#climboria-whitepaper" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">PROJECT BRIEF</a><a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener" style="padding:14px;border:1px solid #ffffff22;border-radius:9px;color:#fff;text-decoration:none">COMMUNITY (X)</a><button type="button" id="climboria-ui-repair-play" style="padding:14px;border:1px solid #e9bc5c;border-radius:9px;background:#14243b;color:#ffd16a;font-weight:900">PLAY GAME</button></nav>';
-   document.body.appendChild(drawer);
-  }
-  if(!backdrop){backdrop=document.createElement('div');backdrop.id='climboria-menu-backdrop';backdrop.hidden=true;backdrop.style.cssText='position:fixed;inset:0;background:#020713a8;';document.body.appendChild(backdrop);}
-  function close(){drawer.classList.remove('is-open');drawer.style.transform='translateX(105%)';drawer.hidden=true;backdrop.hidden=true;btn.setAttribute('aria-expanded','false');btn.setAttribute('aria-label','Open navigation menu');document.body.style.overflow='';}
-  function open(){drawer.hidden=false;backdrop.hidden=false;drawer.style.transform='translateX(0)';drawer.classList.add('is-open');btn.setAttribute('aria-expanded','true');btn.setAttribute('aria-label','Close navigation menu');}
-  if(!btn.dataset.uiRepairBound){btn.dataset.uiRepairBound='1';btn.addEventListener('click',function(){btn.getAttribute('aria-expanded')==='true'?close():open();});}
-  if(!backdrop.dataset.uiRepairBound){backdrop.dataset.uiRepairBound='1';backdrop.addEventListener('click',close);}
-  var x=document.getElementById('climboria-ui-repair-close');if(x&&!x.dataset.bound){x.dataset.bound='1';x.addEventListener('click',close);}
-  var play=document.getElementById('climboria-ui-repair-play');if(play&&!play.dataset.bound){play.dataset.bound='1';play.addEventListener('click',function(){close();var p=document.querySelector('.climboria-home-play');if(p)p.click();});}
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
-})();
-</script>
-
+<!-- Removed duplicate navigation fallback script: climboria-ui-repair-nav-mount -->
 </body>
 </html>
 
@@ -9568,66 +9546,7 @@ html body #climboria-menu-drawer{z-index:2147483001!important}html body #climbor
 
 
 
-<style id="climboria-static-market-strip-v1">
-/* Keep the ticker as a thin, fixed strip over the approved artwork; never auto-scroll. */
-  display:flex!important;visibility:visible!important;position:absolute!important;
-  left:0!important;right:0!important;top:0!important;width:100%!important;
-  height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
-  margin:0!important;padding:0 34px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
-  align-items:center!important;justify-content:center!important;box-sizing:border-box!important;
-  border:0!important;border-bottom:1px solid #f4c86a99!important;border-radius:0!important;
-  background:linear-gradient(90deg,rgba(3,11,24,.97),rgba(16,36,58,.96) 48%,rgba(3,11,24,.97))!important;
-  box-shadow:0 2px 8px #0007!important;scrollbar-width:none!important;
-  overscroll-behavior-x:contain!important;touch-action:pan-x!important;
-}
-  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
-  width:max-content!important;min-width:100%!important;gap:0!important;margin:0 auto!important;
-  justify-content:center!important;animation:none!important;transform:none!important;
-}
-  display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;
-  flex:0 0 auto!important;min-width:0!important;margin:0!important;padding:2px 6px!important;
-  border:0!important;border-right:1px solid #d9b76b66!important;border-radius:0!important;
-  background:transparent!important;box-shadow:none!important;text-align:left!important;
-  transition:none!important;transform:none!important;white-space:nowrap!important;
-}
-  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:3px!important;
-}
-  font-size:clamp(6px,.72vw,10px)!important;line-height:1.1!important;color:#fff!important;
-  font-weight:900!important;letter-spacing:.2px!important;
-}
-  display:block!important;margin:0!important;font-size:clamp(6px,.72vw,10px)!important;
-  line-height:1.1!important;font-weight:900!important;color:#fff!important;white-space:nowrap!important;
-}
-  display:block!important;font-size:clamp(5px,.62vw,9px)!important;
-  line-height:1.1!important;font-weight:900!important;white-space:nowrap!important;
-}
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:12px!important;height:12px!important;flex:0 0 12px!important;border-radius:50%!important;
-  overflow:hidden!important;font-size:7px!important;line-height:12px!important;font-weight:900!important;
-  color:#fff!important;background:#34445a!important;
-}
-  display:block!important;width:12px!important;height:12px!important;object-fit:contain!important;
-}
-  color:#d4dfed!important;font-size:clamp(5px,.65vw,9px)!important;
-}
-/* Restore the full-size, tappable navigation toggle; the old micro-button override made it nearly invisible. */
-#climboria-hamburger-toggle{
-  position:absolute!important;z-index:10030!important;top:50%!important;
-  right:clamp(14px,2.4vw,38px)!important;transform:translateY(-50%)!important;
-  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-  width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
-  padding:0!important;gap:5px!important;border:1px solid #f4c66b88!important;border-radius:12px!important;
-  background:linear-gradient(180deg,#14243bef,#050d1bea)!important;
-  box-shadow:0 0 22px #f3bf4a1c,inset 0 1px #fff2!important;
-}
-#climboria-hamburger-toggle span{display:block!important;width:22px!important;height:2px!important;background:#ffd36e!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(7px) rotate(45deg)!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:nth-child(2){opacity:0!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-7px) rotate(-45deg)!important}
-@media(max-width:700px){
-  #climboria-hamburger-toggle{top:50%!important;right:12px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-static-market-strip-v1 -->
 <script id="climboria-market-favicon-logos-v1">
 (function(){
   var logos={
@@ -9801,37 +9720,7 @@ body{overflow:hidden!important}
 
 
 
-<style id="climboria-ticker-menu-visibility-hotfix-v2">
-/* The approved image is a canvas; keep ticker visible over its top edge. */
- display:flex!important;visibility:visible!important;opacity:1!important;
- position:absolute!important;left:0!important;right:0!important;top:0!important;
- width:100%!important;height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
- padding:0 38px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
- justify-content:flex-start!important;align-items:center!important;pointer-events:auto!important;
-}
- display:flex!important;visibility:visible!important;opacity:1!important;
- width:max-content!important;min-width:max-content!important;flex-wrap:nowrap!important;
- justify-content:flex-start!important;gap:0!important;margin:0!important;
- animation:none!important;transform:none!important;
-}
- display:flex!important;visibility:visible!important;opacity:1!important;
- flex:0 0 auto!important;min-width:0!important;white-space:nowrap!important;
-}
-#climboria-hamburger-toggle{
- display:flex!important;visibility:visible!important;opacity:1!important;
- position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
- width:29px!important;height:22px!important;min-width:29px!important;min-height:22px!important;
- padding:3px!important;gap:3px!important;transform:none!important;
- border:1px solid #f4c86a99!important;border-radius:4px!important;
- background:#07152af2!important;box-shadow:0 1px 6px #0008!important;
- pointer-events:auto!important;cursor:pointer!important;
-}
-#climboria-hamburger-toggle span{display:block!important;width:16px!important;height:2px!important;background:#ffd36e!important}
-#climboria-menu-backdrop[hidden],#climboria-menu-drawer[hidden]{display:none!important}
-@media(max-width:700px){
- #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:28px!important;height:22px!important}
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-ticker-menu-visibility-hotfix-v2 -->
 <script id="climboria-ticker-menu-visibility-hotfix-v2-js">
 (function(){
  function repair(){
@@ -9895,23 +9784,9 @@ body{overflow:hidden!important}
  if(document.documentElement)obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<style id="climboria-extra-market-card-style-v1">
-</style>
+<!-- Removed obsolete ticker override: climboria-extra-market-card-style-v1 -->
 
-<style id="climboria-desktop-ticker-center-v1">
-@media(min-width:701px){
-  justify-content:center!important;
-  overflow-x:auto!important;
-  padding-left:8px!important;padding-right:8px!important;
- }
-  width:max-content!important;min-width:0!important;
-  margin-left:auto!important;margin-right:auto!important;
-  justify-content:center!important;gap:5px!important;
- }
-  flex:0 0 auto!important;padding:4px 7px!important;
- }
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-desktop-ticker-center-v1 -->
 
 
 
@@ -10062,37 +9937,8 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 
 
 <!-- Consolidated UI hotfix: remove market strip; keep nav button visible. -->
-<style id="climboria-ui-final-fix">
-#cryptoTicker{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;height:0!important;max-height:0!important;overflow:hidden!important}
-#climboria-hamburger-toggle{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:fixed!important;z-index:2147483000!important;top:calc(12px + env(safe-area-inset-top,0px))!important;right:calc(12px + env(safe-area-inset-right,0px))!important;left:auto!important;bottom:auto!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;padding:10px!important;box-sizing:border-box!important;transform:none!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;border:1px solid #f4c66bcc!important;border-radius:12px!important;background:#07152af5!important;box-shadow:0 3px 14px #0009!important;cursor:pointer!important}
-#climboria-hamburger-toggle span{display:block!important;flex:0 0 2px!important;width:22px!important;height:2px!important;min-height:2px!important;background:#ffd36e!important;border-radius:2px!important}
-#climboria-menu-drawer{z-index:2147483001!important}
-#climboria-menu-backdrop{z-index:2147483000!important}
-</style>
-<script id="climboria-ui-final-fix-js">
-(function(){
- function ensure(){
-  var b=document.getElementById('climboria-hamburger-toggle');
-  if(!b){
-   b=document.createElement('button');b.id='climboria-hamburger-toggle';b.type='button';
-   b.setAttribute('aria-label','Open navigation menu');b.setAttribute('aria-expanded','false');
-   b.innerHTML='<span></span><span></span><span></span>';document.body.appendChild(b);
-  } else if(b.parentElement!==document.body){document.body.appendChild(b);}
-  /* Existing menu initializer owns its click behavior/drawer. If it hasn't created
-     a drawer, provide a tiny fallback with direct links rather than a dead icon. */
-  if(!document.getElementById('climboria-menu-drawer')){
-   var d=document.createElement('aside');d.id='climboria-menu-drawer';d.hidden=true;
-   d.style.cssText='position:fixed;z-index:2147483001;inset:0 0 0 auto;width:min(360px,90vw);height:100dvh;overflow:auto;padding:24px;background:#07152a;color:white;box-sizing:border-box';
-   d.innerHTML='<button id="climboria-ui-close" style="float:right;color:#ffd36e;background:none;border:0;font-size:28px">×</button><h2 style="color:#ffd36e">CLIMBORIA</h2><nav style="display:grid;gap:14px"><a style="color:white" href="./overview/">Overview</a><a style="color:white" href="./overview/#roadmap">Roadmap</a><a style="color:white" href="./overview/#season-economy-title">Tokenomics</a><a style="color:white" href="./overview/#market-title">Swap & Marketplace</a><a style="color:white" href="./overview/#climboria-whitepaper">Project Brief</a><a style="color:white" href="https://x.com/ClimboriaHQ">Community</a></nav>';
-   document.body.appendChild(d);
-   var close=d.querySelector('#climboria-ui-close');close.addEventListener('click',function(){d.hidden=true;b.setAttribute('aria-expanded','false')});
-   b.addEventListener('click',function(){d.hidden=!d.hidden;b.setAttribute('aria-expanded',String(!d.hidden))});
-  }
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensure);else ensure();
-})();
-</script>
-
+<!-- Removed duplicate nav CSS; authoritative nav repair rules remain above. -->
+<!-- Removed duplicate navigation fallback script: climboria-ui-final-fix-js -->
 <!-- Final homepage artwork override: place after all legacy styles so later background shorthands cannot hide the approved artwork. -->
 
 
