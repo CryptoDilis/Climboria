@@ -10114,3 +10114,43 @@ html body #landing{
 
 </body>
 </html>
+
+
+<style id="climboria-home-cta-rearrange-v1">
+/* Reposition homepage actions into a clear hierarchy; keep existing button hooks intact. */
+html body #landing #climboria-home-actions{
+  position:absolute!important;
+  left:50%!important;
+  top:40%!important;
+  transform:translate(-50%,-50%)!important;
+  width:min(620px,76vw)!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-areas:"play play" "trade create"!important;
+  gap:12px!important;
+  z-index:30!important;
+}
+html body #landing #climboria-home-actions .climboria-home-play{grid-area:play!important;min-height:66px!important;width:min(300px,100%)!important;justify-self:center!important;font-size:1.08em!important}
+html body #landing #climboria-home-actions .climboria-home-trade{grid-area:trade!important}
+html body #landing #climboria-home-actions .climboria-home-create{grid-area:create!important}
+html body #landing #climboria-home-actions .climboria-home-trade,
+html body #landing #climboria-home-actions .climboria-home-create{
+  min-height:52px!important;
+  background:rgba(7,19,38,.78)!important;
+  border:1px solid rgba(220,235,255,.72)!important;
+  box-shadow:0 5px 18px rgba(0,0,0,.24)!important;
+  color:#f5f8ff!important;
+}
+@media(max-width:700px){
+ html body #landing #climboria-home-actions{
+  top:49%!important;
+  width:min(340px,88vw)!important;
+  gap:9px!important;
+ }
+ html body #landing #climboria-home-actions .climboria-home-play{min-height:58px!important}
+ html body #landing #climboria-home-actions .climboria-home-trade,
+ html body #landing #climboria-home-actions .climboria-home-create{min-height:46px!important}
+}
+</style>
