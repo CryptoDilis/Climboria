@@ -77,7 +77,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
   </div>
   <div class="hero-content">
     <div class="hero-buttons">
-      <button class="btn-play" id="playBtn">▶ PLAY</button>
+      <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
       <button class="btn-trade" id="swapBtn">SWAP / DEX</button>
       <button class="btn-launch" onclick="window.open('#','_blank')">LAUNCHPAD (SOON)</button>
     </div>
@@ -151,7 +151,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 const ham=document.getElementById('hamburger');const menu=document.getElementById('mobileMenu');let open=false;
 ham.addEventListener('click',()=>{open=!open;menu.classList.toggle('active',open);ham.children[0].style.transform=open?'rotate(45deg) translate(5px,5px)':'';ham.children[1].style.opacity=open?'0':'';ham.children[2].style.transform=open?'rotate(-45deg) translate(5px,-5px)':'';});
 document.querySelectorAll('#mobileMenu a').forEach(a=>a.addEventListener('click',()=>{open=false;menu.classList.remove('active');ham.children[0].style.transform='';ham.children[1].style.opacity='';ham.children[2].style.transform='';}));
-document.getElementById('playBtn').addEventListener('click',()=>alert('CLIMBORIA game starting...'));
+document.getElementById('nextlevelVictoryButton').addEventListener('click',()=>alert('CLIMBORIA game starting...'));
 const swapModal=document.getElementById('swapModal');document.getElementById('swapBtn').addEventListener('click',()=>swapModal.classList.add('active'));document.getElementById('closeSwap').addEventListener('click',()=>swapModal.classList.remove('active'));swapModal.addEventListener('click',(e)=>{if(e.target===swapModal)swapModal.classList.remove('active')});
 const pay=document.getElementById('payInput');const rec=document.getElementById('receiveInput');pay.addEventListener('input',()=>{rec.value=(parseFloat(pay.value||0)*125000).toFixed(0)});document.getElementById('swapArrow').addEventListener('click',()=>{alert('Switch SOL ↔ $CLIMB')});document.getElementById('doSwap').addEventListener('click',()=>{alert('Token not live yet! TGE at end of month. Join waitlist now!')});
 </script>
