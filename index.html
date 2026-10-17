@@ -9568,66 +9568,7 @@ html body #climboria-menu-drawer{z-index:2147483001!important}html body #climbor
 
 
 
-<style id="climboria-static-market-strip-v1">
-/* Keep the ticker as a thin, fixed strip over the approved artwork; never auto-scroll. */
-  display:flex!important;visibility:visible!important;position:absolute!important;
-  left:0!important;right:0!important;top:0!important;width:100%!important;
-  height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
-  margin:0!important;padding:0 34px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
-  align-items:center!important;justify-content:center!important;box-sizing:border-box!important;
-  border:0!important;border-bottom:1px solid #f4c86a99!important;border-radius:0!important;
-  background:linear-gradient(90deg,rgba(3,11,24,.97),rgba(16,36,58,.96) 48%,rgba(3,11,24,.97))!important;
-  box-shadow:0 2px 8px #0007!important;scrollbar-width:none!important;
-  overscroll-behavior-x:contain!important;touch-action:pan-x!important;
-}
-  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
-  width:max-content!important;min-width:100%!important;gap:0!important;margin:0 auto!important;
-  justify-content:center!important;animation:none!important;transform:none!important;
-}
-  display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;
-  flex:0 0 auto!important;min-width:0!important;margin:0!important;padding:2px 6px!important;
-  border:0!important;border-right:1px solid #d9b76b66!important;border-radius:0!important;
-  background:transparent!important;box-shadow:none!important;text-align:left!important;
-  transition:none!important;transform:none!important;white-space:nowrap!important;
-}
-  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:3px!important;
-}
-  font-size:clamp(6px,.72vw,10px)!important;line-height:1.1!important;color:#fff!important;
-  font-weight:900!important;letter-spacing:.2px!important;
-}
-  display:block!important;margin:0!important;font-size:clamp(6px,.72vw,10px)!important;
-  line-height:1.1!important;font-weight:900!important;color:#fff!important;white-space:nowrap!important;
-}
-  display:block!important;font-size:clamp(5px,.62vw,9px)!important;
-  line-height:1.1!important;font-weight:900!important;white-space:nowrap!important;
-}
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  width:12px!important;height:12px!important;flex:0 0 12px!important;border-radius:50%!important;
-  overflow:hidden!important;font-size:7px!important;line-height:12px!important;font-weight:900!important;
-  color:#fff!important;background:#34445a!important;
-}
-  display:block!important;width:12px!important;height:12px!important;object-fit:contain!important;
-}
-  color:#d4dfed!important;font-size:clamp(5px,.65vw,9px)!important;
-}
-/* Restore the full-size, tappable navigation toggle; the old micro-button override made it nearly invisible. */
-#climboria-hamburger-toggle{
-  position:absolute!important;z-index:10030!important;top:50%!important;
-  right:clamp(14px,2.4vw,38px)!important;transform:translateY(-50%)!important;
-  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-  width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
-  padding:0!important;gap:5px!important;border:1px solid #f4c66b88!important;border-radius:12px!important;
-  background:linear-gradient(180deg,#14243bef,#050d1bea)!important;
-  box-shadow:0 0 22px #f3bf4a1c,inset 0 1px #fff2!important;
-}
-#climboria-hamburger-toggle span{display:block!important;width:22px!important;height:2px!important;background:#ffd36e!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:first-child{transform:translateY(7px) rotate(45deg)!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:nth-child(2){opacity:0!important}
-#climboria-hamburger-toggle[aria-expanded="true"] span:last-child{transform:translateY(-7px) rotate(-45deg)!important}
-@media(max-width:700px){
-  #climboria-hamburger-toggle{top:50%!important;right:12px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-static-market-strip-v1 -->
 <script id="climboria-market-favicon-logos-v1">
 (function(){
   var logos={
@@ -9801,37 +9742,7 @@ body{overflow:hidden!important}
 
 
 
-<style id="climboria-ticker-menu-visibility-hotfix-v2">
-/* The approved image is a canvas; keep ticker visible over its top edge. */
- display:flex!important;visibility:visible!important;opacity:1!important;
- position:absolute!important;left:0!important;right:0!important;top:0!important;
- width:100%!important;height:clamp(22px,4.8%,34px)!important;min-height:22px!important;
- padding:0 38px 0 4px!important;overflow-x:auto!important;overflow-y:hidden!important;
- justify-content:flex-start!important;align-items:center!important;pointer-events:auto!important;
-}
- display:flex!important;visibility:visible!important;opacity:1!important;
- width:max-content!important;min-width:max-content!important;flex-wrap:nowrap!important;
- justify-content:flex-start!important;gap:0!important;margin:0!important;
- animation:none!important;transform:none!important;
-}
- display:flex!important;visibility:visible!important;opacity:1!important;
- flex:0 0 auto!important;min-width:0!important;white-space:nowrap!important;
-}
-#climboria-hamburger-toggle{
- display:flex!important;visibility:visible!important;opacity:1!important;
- position:fixed!important;z-index:10030!important;top:2px!important;right:3px!important;
- width:29px!important;height:22px!important;min-width:29px!important;min-height:22px!important;
- padding:3px!important;gap:3px!important;transform:none!important;
- border:1px solid #f4c86a99!important;border-radius:4px!important;
- background:#07152af2!important;box-shadow:0 1px 6px #0008!important;
- pointer-events:auto!important;cursor:pointer!important;
-}
-#climboria-hamburger-toggle span{display:block!important;width:16px!important;height:2px!important;background:#ffd36e!important}
-#climboria-menu-backdrop[hidden],#climboria-menu-drawer[hidden]{display:none!important}
-@media(max-width:700px){
- #climboria-hamburger-toggle{top:1px!important;right:2px!important;width:28px!important;height:22px!important}
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-ticker-menu-visibility-hotfix-v2 -->
 <script id="climboria-ticker-menu-visibility-hotfix-v2-js">
 (function(){
  function repair(){
@@ -9895,23 +9806,9 @@ body{overflow:hidden!important}
  if(document.documentElement)obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-<style id="climboria-extra-market-card-style-v1">
-</style>
+<!-- Removed obsolete ticker override: climboria-extra-market-card-style-v1 -->
 
-<style id="climboria-desktop-ticker-center-v1">
-@media(min-width:701px){
-  justify-content:center!important;
-  overflow-x:auto!important;
-  padding-left:8px!important;padding-right:8px!important;
- }
-  width:max-content!important;min-width:0!important;
-  margin-left:auto!important;margin-right:auto!important;
-  justify-content:center!important;gap:5px!important;
- }
-  flex:0 0 auto!important;padding:4px 7px!important;
- }
-}
-</style>
+<!-- Removed obsolete ticker override: climboria-desktop-ticker-center-v1 -->
 
 
 
