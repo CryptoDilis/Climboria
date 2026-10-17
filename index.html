@@ -10113,41 +10113,58 @@ html body #landing{
 </style>
 
 
-<style id="climboria-home-cta-hierarchy-v2">
+
+
+
+<style id="climboria-hero-polish-v1">
+/* Keep CTA in the hero's lower visual band, below the baked-in wordmark; avoid oversized floating overlay. */
+html body #landing{position:relative!important;isolation:isolate!important}
+html body #landing::after{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(180deg,rgba(3,12,27,0) 42%,rgba(3,10,24,.10) 59%,rgba(3,10,24,.48) 100%);
+}
+html body #landing>.panel{position:static!important;z-index:2!important}
 html body #landing #climboria-home-actions{
- position:absolute!important;left:50%!important;top:auto!important;right:auto!important;
- bottom:clamp(26px,6vh,68px)!important;inset-inline:auto!important;transform:translateX(-50%)!important;
- width:min(900px,88vw)!important;margin:0!important;
- grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1.12fr)!important;
- align-items:center!important;gap:clamp(10px,1.5vw,18px)!important;z-index:30!important;
+ position:absolute!important;left:50%!important;right:auto!important;top:auto!important;
+ bottom:clamp(22px,5.5vh,58px)!important;transform:translateX(-50%)!important;
+ width:min(760px,82vw)!important;margin:0!important;padding:0!important;
+ display:grid!important;grid-template-columns:1.22fr 1fr 1.12fr!important;
+ gap:clamp(9px,1.25vw,16px)!important;align-items:center!important;z-index:12!important;
 }
 html body #landing #climboria-home-actions button{
- min-height:clamp(62px,8vh,82px)!important;padding:12px 14px!important;color:#fff!important;
- background:linear-gradient(145deg,rgba(8,24,46,.96),rgba(15,43,73,.96))!important;
- border:1px solid rgba(255,211,112,.8)!important;
- box-shadow:0 8px 24px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.13)!important;
- text-shadow:0 1px 3px #000!important;
+ min-height:clamp(54px,6.5vh,70px)!important;padding:10px 12px!important;border-radius:12px!important;
+ color:#f7fbff!important;background:linear-gradient(145deg,rgba(10,32,58,.94),rgba(7,20,39,.94))!important;
+ border:1px solid rgba(190,220,255,.82)!important;
+ box-shadow:0 6px 20px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.14)!important;
+ text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
 }
 html body #landing #climboria-home-actions .climboria-home-play{
- min-height:clamp(78px,10vh,98px)!important;color:#18120a!important;
- background:linear-gradient(115deg,#fff0a0,#ffc53c 58%,#df8500)!important;
- border:1px solid #ffe68a!important;
- box-shadow:0 0 28px rgba(255,191,59,.34),0 8px 25px rgba(0,0,0,.35),inset 0 1px #fff9!important;
- text-shadow:none!important;transform:scale(1.04)!important;
+ min-height:clamp(68px,8vh,86px)!important;color:#241705!important;
+ background:linear-gradient(115deg,#fff0a4,#ffc83d 58%,#e68c05)!important;
+ border:1px solid #ffe9a0!important;box-shadow:0 0 24px rgba(255,190,54,.28),0 7px 22px #0005,inset 0 1px #fff9!important;
+ text-shadow:none!important;
 }
-html body #landing #climboria-home-actions .climboria-home-label{font-size:clamp(14px,1.6vw,20px)!important;letter-spacing:.055em!important}
-html body #landing #climboria-home-actions .climboria-home-note{font-size:clamp(11px,1vw,14px)!important;opacity:1!important}
+html body #landing #climboria-home-actions .climboria-home-label{
+ font-size:clamp(13px,1.35vw,18px)!important;line-height:1.2!important;letter-spacing:.045em!important
+}
+html body #landing #climboria-home-actions .climboria-home-note{
+ font-size:clamp(10px,1vw,12px)!important;line-height:1.25!important;opacity:1!important;color:inherit!important
+}
+/* Improve any live DOM logo/tagline without modifying the official artwork asset. */
+html body #landing .logo{
+ filter:drop-shadow(0 3px 5px rgba(0,0,0,.72)) drop-shadow(0 0 15px rgba(3,12,27,.5))!important;
+}
+html body #landing .sub{margin-top:3px!important;line-height:1.25!important;text-shadow:0 2px 5px #061326!important}
 @media(max-width:700px){
  html body #landing #climboria-home-actions{
-  bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;width:min(460px,90vw)!important;
-  grid-template-columns:minmax(0,1fr)!important;gap:8px!important;
+  bottom:calc(14px + env(safe-area-inset-bottom,0px))!important;width:min(430px,88vw)!important;
+  grid-template-columns:1fr!important;gap:7px!important;
  }
- html body #landing #climboria-home-actions button{min-height:52px!important;padding:8px 12px!important;border-radius:11px!important}
- html body #landing #climboria-home-actions .climboria-home-play{min-height:62px!important;transform:none!important}
- html body #landing #climboria-home-actions .climboria-home-label{font-size:clamp(14px,4vw,17px)!important}
- html body #landing #climboria-home-actions .climboria-home-note{font-size:clamp(10px,2.8vw,12px)!important}
+ html body #landing #climboria-home-actions button{min-height:47px!important;padding:7px 10px!important;border-radius:10px!important}
+ html body #landing #climboria-home-actions .climboria-home-play{min-height:58px!important}
+ html body #landing #climboria-home-actions .climboria-home-label{font-size:clamp(13px,3.8vw,16px)!important}
+ html body #landing #climboria-home-actions .climboria-home-note{font-size:11px!important}
 }
-@media(prefers-reduced-motion:reduce){html body #landing #climboria-home-actions .climboria-home-play{transform:none!important}}
 </style>
 
 </body>
