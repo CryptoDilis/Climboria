@@ -42,7 +42,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <body>
 <nav>
 <a class="logo" href="./" aria-label="Climboria home" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a>
+<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a><a href="#" id="dexNavLink">DEX (Demo)</a><a href="#" id="launchpadNavLink">Launchpad (Demo)</a>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px;transition:.2s" onmouseover="this.style.borderColor='#fbbf24';this.style.color='#fbbf24'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='#fff'">𝕏</a>
 <button class="btn-gold" onclick="alert('Wallet connection is not available yet.')">CONNECT</button></div>
 <div style="display:flex;align-items:center;gap:12px">
@@ -56,6 +56,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <a href="#tokenomics">Tokenomics</a>
 <a href="#roadmap">Roadmap</a>
 <a href="#whitepaper">Whitepaper</a>
+<a href="#" id="mobileDexBtn">DEX — Demo Only</a><a href="#" id="mobileLaunchpadBtn">Launchpad — Demo Only</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" onclick="alert('Wallet connection is not available yet.')">CONNECT WALLET</button>
 <button class="btn-outline" onclick="alert('Waitlist is not open yet.')">JOIN WAITLIST</button>
@@ -77,7 +78,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     <div id="climboria-home-actions" class="hero-buttons">
       <button class="climboria-home-play btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
       <button class="climboria-home-trade btn-trade" id="swapBtn">SWAP / DEX</button>
-      <button class="climboria-home-create btn-launch" onclick="alert('Climboria Launchpad is planned and not live yet.')">LAUNCHPAD (SOON)</button>
+      <button class="climboria-home-create btn-launch" id="launchpadBtn">LAUNCHPAD (DEMO)</button>
     </div>
     <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.75)">FREE TO START • BUILT ON SOLANA</div>
   </div>
@@ -127,18 +128,35 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 .swap-info{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);margin:16px 0;letter-spacing:1px}
 .btn-swap{width:100%;background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;font-weight:900;letter-spacing:2px;padding:16px;border-radius:999px;border:none;cursor:pointer;box-shadow:0 0 20px rgba(251,191,36,.4);font-size:14px}
 .dex-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px}
+.demo-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.35);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px;color:#fbbf24}
+.btn-swap:disabled{opacity:.55;cursor:not-allowed}
+.dex-layout{max-width:1100px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+@media(max-width:900px){.dex-layout{grid-template-columns:1fr}.swap-card{max-width:95vw;padding:20px}}
 </style>
-<div class="swap-modal" id="swapModal">
+<div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
 <div class="swap-card">
-<div class="swap-header"><h3>CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap">×</button></div>
-<div class="dex-badge"><div style="width:6px;height:6px;background:#00ff88;border-radius:50%;box-shadow:0 0 8px #00ff88"></div> TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
-<div class="swap-box"><label>YOU PAY</label><div class="swap-input"><input type="number" id="payInput" value="1.0" placeholder="0.0"><div class="token-select">◎ SOL ▼</div></div></div>
-<div class="swap-arrow" id="swapArrow">⇅</div>
-<div class="swap-box"><label>YOU RECEIVE (EST.)</label><div class="swap-input"><input type="number" id="receiveInput" value="" placeholder="0.0" readonly><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB ▼</div></div></div>
-<div class="swap-info"><span>TGE: Not announced</span><span>Slippage: not set</span></div>
-<div class="swap-info"><span>Route: not connected</span><span>Fee: not set</span></div>
-<button class="btn-swap" id="doSwap">TOKEN LAUNCH NOT ANNOUNCED</button>
-<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1px">TOKEN LAUNCH: NOT ANNOUNCED • SOLANA</div>
+<div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX preview">×</button></div>
+<div class="demo-badge">DEX PREVIEW • NO WALLET • NO TRANSACTION</div>
+<div class="dex-badge">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
+<div class="swap-box"><label>YOU PAY — PREVIEW ONLY</label><div class="swap-input"><input type="number" id="payInput" placeholder="0.0" disabled aria-label="Demo pay amount"><div class="token-select" aria-hidden="true">◎ SOL</div></div></div>
+<div class="swap-arrow" aria-hidden="true">⇅</div>
+<div class="swap-box"><label>YOU RECEIVE — NO QUOTE AVAILABLE</label><div class="swap-input"><input type="text" id="receiveInput" placeholder="—" readonly disabled aria-label="No receive quote"><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB</div></div></div>
+<div class="swap-info"><span>TGE: not announced</span><span>Slippage: not configured</span></div>
+<div class="swap-info"><span>Route: not connected</span><span>Fee: not configured</span></div>
+<button class="btn-swap" id="doSwap" disabled>Preview only — swapping unavailable</button>
+<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px">No price, quote, wallet connection, or on-chain swap is implemented.</div>
+</div>
+</div>
+
+<div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
+<div class="swap-card">
+<div class="swap-header"><h3 id="launchpadTitle">CLIMBORIA LAUNCHPAD</h3><button class="close-swap" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button></div>
+<div class="demo-badge">LAUNCHPAD PREVIEW • NO MINT • NO TRANSACTION</div>
+<div class="swap-box"><label>PROJECT NAME — PREVIEW</label><input type="text" value="Climboria" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
+<div class="swap-box"><label>TOKEN SYMBOL — PROPOSED, NOT VERIFIED</label><input type="text" value="$CLIMB" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
+<div class="swap-box"><label>SUPPLY / LOCK / SALE SETTINGS</label><input type="text" placeholder="Not configured" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
+<button class="btn-swap" disabled>Preview only — token creation unavailable</button>
+<p style="margin-top:14px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.5)">This is a visual mockup. No token is created, no sale is open, and launch details are not announced.</p>
 </div>
 </div>
 
@@ -146,12 +164,65 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 
 
 <script>
-const ham=document.getElementById('hamburger');const menu=document.getElementById('mobileMenu');let open=false;
-ham.addEventListener('click',()=>{open=!open;menu.classList.toggle('active',open);ham.children[0].style.transform=open?'rotate(45deg) translate(5px,5px)':'';ham.children[1].style.opacity=open?'0':'';ham.children[2].style.transform=open?'rotate(-45deg) translate(5px,-5px)':'';});
-document.querySelectorAll('#mobileMenu a').forEach(a=>a.addEventListener('click',()=>{open=false;menu.classList.remove('active');ham.children[0].style.transform='';ham.children[1].style.opacity='';ham.children[2].style.transform='';}));
-document.getElementById('nextlevelVictoryButton').addEventListener('click',()=>alert('CLIMBORIA game starting...'));
-const swapModal=document.getElementById('swapModal');document.getElementById('swapBtn').addEventListener('click',()=>swapModal.classList.add('active'));document.getElementById('closeSwap').addEventListener('click',()=>swapModal.classList.remove('active'));swapModal.addEventListener('click',(e)=>{if(e.target===swapModal)swapModal.classList.remove('active')});
-const pay=document.getElementById('payInput');const rec=document.getElementById('receiveInput');pay.addEventListener('input',()=>{rec.value=(parseFloat(pay.value||0)*0).toFixed(0)});document.getElementById('swapArrow').addEventListener('click',()=>{alert('Switch SOL ↔ $CLIMB')});document.getElementById('doSwap').addEventListener('click',()=>{alert('Token not live yet! Token launch has not been announced. This swap preview is not connected.')});
+(() => {
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('mobileMenu');
+  let menuOpen = false;
+  const setMenu = (open) => {
+    menuOpen = open;
+    menu.classList.toggle('active', open);
+    ham.setAttribute('aria-expanded', String(open));
+    ham.children[0].style.transform = open ? 'rotate(45deg) translate(5px,5px)' : '';
+    ham.children[1].style.opacity = open ? '0' : '';
+    ham.children[2].style.transform = open ? 'rotate(-45deg) translate(5px,-5px)' : '';
+  };
+  ham.setAttribute('role','button');
+  ham.setAttribute('tabindex','0');
+  ham.setAttribute('aria-label','Toggle navigation');
+  ham.setAttribute('aria-expanded','false');
+  ham.addEventListener('click', () => setMenu(!menuOpen));
+  ham.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();setMenu(!menuOpen);} });
+  menu.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => {
+    if(a.id !== 'mobileDexBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
+  }));
+
+  // Keep the existing PLAY placeholder honest; game launch is not wired yet.
+  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => alert('The playable game is not connected to this homepage yet.'));
+
+  const swapModal = document.getElementById('swapModal');
+  const launchModal = document.getElementById('launchpadModal');
+  let lastFocus = null;
+  const openModal = modal => {
+    setMenu(false);
+    lastFocus = document.activeElement;
+    modal.classList.add('active');
+    modal.querySelector('button[aria-label^="Close"]').focus();
+  };
+  const closeModal = modal => {
+    modal.classList.remove('active');
+    if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  };
+  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); };
+  const openLaunch = e => { if(e) e.preventDefault(); openModal(launchModal); };
+  document.getElementById('swapBtn').addEventListener('click', openSwap);
+  document.getElementById('dexNavLink').addEventListener('click', openSwap);
+  document.getElementById('mobileDexBtn').addEventListener('click', openSwap);
+  document.getElementById('launchpadBtn').addEventListener('click', openLaunch);
+  document.getElementById('launchpadNavLink').addEventListener('click', openLaunch);
+  document.getElementById('mobileLaunchpadBtn').addEventListener('click', openLaunch);
+  document.getElementById('closeSwap').addEventListener('click', () => closeModal(swapModal));
+  document.getElementById('closeLaunchpad').addEventListener('click', () => closeModal(launchModal));
+  [swapModal,launchModal].forEach(modal => {
+    modal.addEventListener('click', e => { if(e.target===modal) closeModal(modal); });
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key==='Escape') {
+      if(swapModal.classList.contains('active')) closeModal(swapModal);
+      if(launchModal.classList.contains('active')) closeModal(launchModal);
+      if(menuOpen) setMenu(false);
+    }
+  });
+})();
 </script>
 
 </body>
