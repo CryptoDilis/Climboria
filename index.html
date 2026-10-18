@@ -154,7 +154,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
  <div class="dex-live">
   <div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX">×</button></div>
-  <div class="dex-live-pill">SOLANA MAINNET · JUPITER ROUTING</div>
+  <div class="dex-live-pill">SOLANA MAINNET · JUPITER ROUTING</div><div id="dexWalletLine" class="dex-details" style="margin:0 0 8px">Wallet not connected</div>
   <div class="dex-tokenbox"><label id="dexPayLabel">YOU PAY</label><div class="dex-amountrow"><input id="dexAmount" inputmode="decimal" type="number" min="0" step="any" placeholder="0.00" autocomplete="off"><select id="dexPayToken" aria-label="Pay token"><option value="SOL">SOL</option><option value="USDC">USDC</option></select></div></div>
   <button class="dex-switch" id="dexFlip" aria-label="Switch swap direction" title="Switch direction">⇅</button>
   <div class="dex-tokenbox"><label id="dexReceiveLabel">YOU RECEIVE (ESTIMATE)</label><div class="dex-amountrow"><input id="dexReceive" placeholder="—" readonly><select id="dexReceiveToken" aria-label="Receive token" disabled><option value="USDC">USDC</option><option value="SOL">SOL</option></select></div></div>
@@ -218,7 +218,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     modal.classList.remove('active');
     if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   };
-  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); };
+  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); swapModal.dispatchEvent(new CustomEvent("climboria:dex-open")); };
   const openLaunch = e => { if(e) e.preventDefault(); openModal(launchModal); };
   document.getElementById('swapBtn').addEventListener('click', openSwap);
   document.getElementById('dexNavLink').addEventListener('click', openSwap);
@@ -249,12 +249,12 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
  const RPC="https://api.mainnet-beta.solana.com";
  const $=id=>document.getElementById(id);
  const modal=$("swapModal"), amount=$("dexAmount"), receive=$("dexReceive"), pay=$("dexPayToken"), out=$("dexReceiveToken"), slippage=$("dexSlippage"), details=$("dexQuoteDetails"), status=$("dexStatus"), action=$("dexAction");
- let wallet=null, quote=null, quoteKey="", timer=null, busy=false, seq=0;
+ let wallet=null, quote=null, quoteKey="", quoteAt=0, timer=null, busy=false, seq=0;
  const mint=t=>t==="SOL"?SOL_MINT:USDC_MINT;
  const decimals=t=>t==="SOL"?9:6;
  const fmt=(raw,t)=>{const n=Number(raw)/10**decimals(t);return n.toLocaleString(undefined,{maximumFractionDigits:t==="SOL"?6:4});};
  const say=(m,color)=>{status.textContent=m;status.style.color=color||"#fbbf24";};
- const clearQuote=()=>{quote=null;quoteKey="";receive.value="";details.textContent="Quote cleared. Enter an amount to fetch a fresh route.";};
+ const clearQuote=()=>{quote=null;quoteKey="";quoteAt=0;receive.value="";details.textContent="Quote cleared. Enter an amount to fetch a fresh route.";};
  function syncTokens(){out.value=pay.value==="SOL"?"USDC":"SOL";out.querySelectorAll("option").forEach(o=>o.selected=o.value===out.value);$("dexPayLabel").textContent="YOU PAY · "+pay.value;$("dexReceiveLabel").textContent="YOU RECEIVE · "+out.value+" ESTIMATE";clearQuote();}
  function rawAmount(){const n=Number(amount.value);if(!Number.isFinite(n)||n<=0)return null;const raw=Math.floor(n*10**decimals(pay.value));return Number.isSafeInteger(raw)&&raw>0?String(raw):null;}
  async function getQuote(){
@@ -268,7 +268,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     const data=await res.json();if(!res.ok)throw Error(data.error||data.message||"Quote service rejected request.");
     if(my!==seq)return;
     if(!data.outAmount||!data.otherAmountThreshold)throw Error("No route available for this pair/amount.");
-    quote=data;quoteKey=key;receive.value=fmt(data.outAmount,out.value);
+    quote=data;quoteKey=key;quoteAt=Date.now();receive.value=fmt(data.outAmount,out.value);
     const impact=Math.max(0,Number(data.priceImpactPct||0)*100);
     const route=(data.routePlan||[]).map(x=>x.swapInfo?.label).filter(Boolean).join(" → ")||"Jupiter route";
     details.textContent="Route: "+route+" · Price impact: "+impact.toFixed(3)+"% · Minimum received: "+fmt(data.otherAmountThreshold,out.value)+" "+out.value+" · Quote is indicative and can change.";
@@ -279,12 +279,12 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
  function scheduleQuote(){clearTimeout(timer);seq++;clearQuote();action.textContent=wallet?"Get Quote":"Connect Wallet";action.disabled=!rawAmount();if(rawAmount())timer=setTimeout(getQuote,450);}
  async function connect(){
   const p=window.solana;if(!p?.isPhantom){say("Phantom wallet not detected. Open Climboria in Phantom's in-app browser or install Phantom.");return;}
-  try{const r=await p.connect();wallet=r.publicKey;say("Wallet connected: "+wallet.toString().slice(0,4)+"…"+wallet.toString().slice(-4),"#86efac");action.textContent="Get Quote";scheduleQuote();}
+  try{const r=await p.connect();wallet=r.publicKey;$("dexWalletLine").textContent="Connected: "+wallet.toString().slice(0,5)+"…"+wallet.toString().slice(-5)+" · Solana mainnet";say("Wallet connected. Confirm the network in Phantom before swapping.","#86efac");action.textContent="Get Quote";scheduleQuote();}
   catch(e){say(e.message||"Wallet connection was cancelled.");}
  }
  async function swap(){
   if(!wallet){await connect();return;}
-  if(!quote||!rawAmount()||quoteKey!==[wallet.toString(),pay.value,out.value,rawAmount(),slippage.value].join("|")){await getQuote();return;}
+  if(!quote||Date.now()-quoteAt>20000||!rawAmount()||quoteKey!==[wallet.toString(),pay.value,out.value,rawAmount(),slippage.value].join("|")){await getQuote();return;}
   if(busy)return;busy=true;action.disabled=true;action.textContent="Building transaction…";say("Building swap transaction. Review and approve only in your wallet.");
   try{
    const res=await fetch(API+"/swap",{method:"POST",headers:{"content-type":"application/json",accept:"application/json"},body:JSON.stringify({quoteResponse:quote,userPublicKey:wallet.toString(),wrapAndUnwrapSol:true,dynamicComputeUnitLimit:true,prioritizationFeeLamports:{priorityLevelWithMaxLamports:{priorityLevel:"medium",maxLamports:300000}}})});
@@ -292,14 +292,14 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
    const {VersionedTransaction,Connection}=await import("https://esm.sh/@solana/web3.js@1.98.4");
    const bytes=Uint8Array.from(atob(built.swapTransaction),c=>c.charCodeAt(0));
    const tx=VersionedTransaction.deserialize(bytes);
-   if(!tx.message.staticAccountKeys.some(k=>k.equals(wallet)))throw Error("Transaction wallet does not match the connected wallet. Aborted.");
+   if(!tx.message.staticAccountKeys[0]?.equals(wallet))throw Error("Transaction fee payer does not match the connected wallet. Aborted.");
    say("Approve the swap in Phantom. Verify tokens, amount, and network fee.");
-   const signed=await window.solana.signAndSendTransaction(tx);
+   const provider=window.solana;if(!provider?.publicKey?.equals(wallet))throw Error("Wallet account changed. Reconnect and fetch a fresh quote.");\n   const signed=await provider.signAndSendTransaction(tx);
    const signature=typeof signed==="string"?signed:signed.signature;
    if(!signature)throw Error("Wallet did not return a transaction signature.");
    action.textContent="Confirming…";say("Submitted: "+signature+". Waiting for on-chain confirmation…");
    const connection=new Connection(RPC,"confirmed");
-   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
+   if(!built.lastValidBlockHeight)throw Error("Swap submitted, but Jupiter omitted transaction expiry data. Check the signature in Solscan before retrying: "+signature);\n   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
    if(confirmation.value.err)throw Error("Transaction failed on-chain. Signature: "+signature);
    say("Swap confirmed. Signature: "+signature,"#86efac");
    details.innerHTML="Confirmed on Solana · <a style='color:#fbbf24;text-decoration:underline' target='_blank' rel='noopener noreferrer' href='https://solscan.io/tx/"+encodeURIComponent(signature)+"'>View transaction on Solscan</a>";
@@ -308,8 +308,8 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
   finally{busy=false;action.disabled=false;action.textContent=wallet?"Get New Quote":"Connect Wallet";}
  }
  pay.addEventListener("change",syncTokens);$("dexFlip").addEventListener("click",()=>{pay.value=pay.value==="SOL"?"USDC":"SOL";syncTokens();scheduleQuote();});amount.addEventListener("input",scheduleQuote);slippage.addEventListener("change",scheduleQuote);action.addEventListener("click",()=>{if(!wallet)connect();else if(!quote) getQuote();else swap();});
- modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet)scheduleQuote();});
- if(window.solana?.isPhantom){window.solana.on("disconnect",()=>{wallet=null;clearQuote();action.textContent="Connect Wallet";say("Wallet disconnected.");});}
+ modal.addEventListener("climboria:dex-open",()=>{if(wallet&&rawAmount())scheduleQuote();});\n modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet&&rawAmount())scheduleQuote();});
+ if(window.solana?.isPhantom){window.solana.on("disconnect",()=>{wallet=null;clearQuote();$("dexWalletLine").textContent="Wallet disconnected";action.textContent="Connect Wallet";say("Wallet disconnected.");});}
  syncTokens();
 })();
 </script>
