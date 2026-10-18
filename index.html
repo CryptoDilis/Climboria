@@ -133,22 +133,38 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 .dex-layout{max-width:1100px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
 @media(max-width:900px){.dex-layout{grid-template-columns:1fr}.swap-card{max-width:95vw;padding:20px}}
 </style>
+<style>
+.dex-live{width:min(480px,94vw);max-height:90dvh;overflow:auto;background:#0b1220;border:1px solid rgba(251,191,36,.28);border-radius:22px;padding:24px;box-shadow:0 24px 80px #000b;color:#fff}
+.dex-live .swap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dex-live h3{font:900 17px Cinzel,serif;letter-spacing:1.5px}
+.dex-live .dex-live-pill{display:inline-flex;padding:5px 9px;border-radius:999px;border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:10px;letter-spacing:1px;margin-bottom:12px}
+.dex-live .dex-tokenbox{background:#111c2e;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin:10px 0}
+.dex-live label{display:block;font-size:10px;letter-spacing:1px;color:#94a3b8;margin-bottom:8px}
+.dex-live .dex-amountrow{display:flex;gap:8px;align-items:center}
+.dex-live input,.dex-live select{background:transparent;color:#fff;border:0;outline:none;font:600 22px Inter,sans-serif;width:100%;min-width:0}
+.dex-live select{font-size:13px;width:auto;background:#1e293b;border-radius:8px;padding:8px}
+.dex-live .dex-switch{display:block;margin:-3px auto;background:#172338;border:1px solid #334155;color:#fbbf24;border-radius:10px;width:38px;height:38px;font-size:20px;cursor:pointer}
+.dex-live .dex-details{font-size:11px;color:#aab7ca;line-height:1.8;margin:12px 0;overflow-wrap:anywhere}
+.dex-live .dex-primary{width:100%;border:0;border-radius:12px;padding:14px;background:linear-gradient(180deg,#fbbf24,#d97706);color:#090d15;font-weight:900;letter-spacing:.7px;cursor:pointer}
+.dex-live .dex-primary:disabled{opacity:.45;cursor:not-allowed}
+.dex-live .dex-note{font-size:10px;color:#718096;line-height:1.6;margin-top:12px}
+.dex-live .dex-status{font-size:12px;line-height:1.5;margin:10px 0;color:#fbbf24;overflow-wrap:anywhere}
+@media(max-width:480px){.dex-live{padding:18px}.dex-live input{font-size:19px}}
+</style>
 <div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
-<div class="swap-card">
-<div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX preview">×</button></div>
-<div class="demo-badge">DEX PREVIEW • NO WALLET • NO TRANSACTION</div>
-<div class="dex-badge">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
-<div class="swap-box"><label>YOU PAY — PREVIEW ONLY</label><div class="swap-input"><input type="number" id="payInput" placeholder="0.0" disabled aria-label="Demo pay amount"><div class="token-select" aria-hidden="true">◎ SOL</div></div></div>
-<div class="swap-arrow" aria-hidden="true">⇅</div>
-<div class="swap-box"><label>YOU RECEIVE — NO QUOTE AVAILABLE</label><div class="swap-input"><input type="text" id="receiveInput" placeholder="—" readonly disabled aria-label="No receive quote"><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB</div></div></div>
-<div class="swap-info"><span>TGE: not announced</span><span>Slippage: not configured</span></div>
-<div class="swap-info"><span>Route: not connected</span><span>Fee: not configured</span></div>
-<button class="btn-swap" id="doSwap" disabled>Preview only — swapping unavailable</button>
-<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px">No price, quote, wallet connection, or on-chain swap is implemented.</div>
-</div>
-</div>
-
-<div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
+ <div class="dex-live">
+  <div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX">×</button></div>
+  <div class="dex-live-pill">SOLANA MAINNET · JUPITER ROUTING</div>
+  <div class="dex-tokenbox"><label id="dexPayLabel">YOU PAY</label><div class="dex-amountrow"><input id="dexAmount" inputmode="decimal" type="number" min="0" step="any" placeholder="0.00" autocomplete="off"><select id="dexPayToken" aria-label="Pay token"><option value="SOL">SOL</option><option value="USDC">USDC</option></select></div></div>
+  <button class="dex-switch" id="dexFlip" aria-label="Switch swap direction" title="Switch direction">⇅</button>
+  <div class="dex-tokenbox"><label id="dexReceiveLabel">YOU RECEIVE (ESTIMATE)</label><div class="dex-amountrow"><input id="dexReceive" placeholder="—" readonly><select id="dexReceiveToken" aria-label="Receive token" disabled><option value="USDC">USDC</option><option value="SOL">SOL</option></select></div></div>
+  <div class="dex-details" id="dexQuoteDetails">Connect your Solana wallet, enter an amount, and fetch a live route quote.</div>
+  <div class="dex-amountrow" style="justify-content:space-between;margin:8px 0 14px"><label for="dexSlippage" style="margin:0">SLIPPAGE</label><select id="dexSlippage" aria-label="Slippage tolerance"><option value="50">0.5%</option><option value="100">1.0%</option><option value="200">2.0%</option></select></div>
+  <button class="dex-primary" id="dexAction">Connect Wallet</button>
+  <div class="dex-status" id="dexStatus" role="status" aria-live="polite"></div>
+  <div class="dex-note">Swaps are real Solana mainnet transactions. Review the wallet prompt carefully; rates, network fees, and execution are not guaranteed. CLIMB token trading is disabled until its official mint is verified and configured. Climboria does not custody funds.</div>
+ </div>
+</div><div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
 <div class="swap-card">
 <div class="swap-header"><h3 id="launchpadTitle">CLIMBORIA LAUNCHPAD</h3><button class="close-swap" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button></div>
 <div class="demo-badge">LAUNCHPAD PREVIEW • NO MINT • NO TRANSACTION</div>
@@ -225,5 +241,77 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 })();
 </script>
 
+<script type="module">
+(() => {
+ const SOL_MINT="So11111111111111111111111111111111111111112";
+ const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+ const API="https://lite-api.jup.ag/swap/v1";
+ const RPC="https://api.mainnet-beta.solana.com";
+ const $=id=>document.getElementById(id);
+ const modal=$("swapModal"), amount=$("dexAmount"), receive=$("dexReceive"), pay=$("dexPayToken"), out=$("dexReceiveToken"), slippage=$("dexSlippage"), details=$("dexQuoteDetails"), status=$("dexStatus"), action=$("dexAction");
+ let wallet=null, quote=null, quoteKey="", timer=null, busy=false, seq=0;
+ const mint=t=>t==="SOL"?SOL_MINT:USDC_MINT;
+ const decimals=t=>t==="SOL"?9:6;
+ const fmt=(raw,t)=>{const n=Number(raw)/10**decimals(t);return n.toLocaleString(undefined,{maximumFractionDigits:t==="SOL"?6:4});};
+ const say=(m,color)=>{status.textContent=m;status.style.color=color||"#fbbf24";};
+ const clearQuote=()=>{quote=null;quoteKey="";receive.value="";details.textContent="Quote cleared. Enter an amount to fetch a fresh route.";};
+ function syncTokens(){out.value=pay.value==="SOL"?"USDC":"SOL";out.querySelectorAll("option").forEach(o=>o.selected=o.value===out.value);$("dexPayLabel").textContent="YOU PAY · "+pay.value;$("dexReceiveLabel").textContent="YOU RECEIVE · "+out.value+" ESTIMATE";clearQuote();}
+ function rawAmount(){const n=Number(amount.value);if(!Number.isFinite(n)||n<=0)return null;const raw=Math.floor(n*10**decimals(pay.value));return Number.isSafeInteger(raw)&&raw>0?String(raw):null;}
+ async function getQuote(){
+   const my=++seq, raw=rawAmount();clearQuote();
+   if(!raw){details.textContent="Enter a valid positive amount.";return;}
+   const key=[wallet?.publicKey?.toString()||"",pay.value,out.value,raw,slippage.value].join("|");
+   say("Fetching current Jupiter route…");
+   try{
+    const u=new URL(API+"/quote");u.search=new URLSearchParams({inputMint:mint(pay.value),outputMint:mint(out.value),amount:raw,slippageBps:slippage.value,restrictIntermediateTokens:"true"}).toString();
+    const res=await fetch(u,{headers:{accept:"application/json"}});
+    const data=await res.json();if(!res.ok)throw Error(data.error||data.message||"Quote service rejected request.");
+    if(my!==seq)return;
+    if(!data.outAmount||!data.otherAmountThreshold)throw Error("No route available for this pair/amount.");
+    quote=data;quoteKey=key;receive.value=fmt(data.outAmount,out.value);
+    const impact=Math.max(0,Number(data.priceImpactPct||0)*100);
+    const route=(data.routePlan||[]).map(x=>x.swapInfo?.label).filter(Boolean).join(" → ")||"Jupiter route";
+    details.textContent="Route: "+route+" · Price impact: "+impact.toFixed(3)+"% · Minimum received: "+fmt(data.otherAmountThreshold,out.value)+" "+out.value+" · Quote is indicative and can change.";
+    say("Quote ready. Check the minimum received before swapping.","#86efac");
+    action.textContent=wallet?"Review & Swap":"Connect Wallet";action.disabled=false;
+   }catch(e){if(my!==seq)return;clearQuote();details.textContent=e.message||"Could not retrieve a route.";say("Quote unavailable. Try again or reduce the amount.");action.textContent=wallet?"Refresh Quote":"Connect Wallet";action.disabled=false;}
+ }
+ function scheduleQuote(){clearTimeout(timer);seq++;clearQuote();action.textContent=wallet?"Get Quote":"Connect Wallet";action.disabled=!rawAmount();if(rawAmount())timer=setTimeout(getQuote,450);}
+ async function connect(){
+  const p=window.solana;if(!p?.isPhantom){say("Phantom wallet not detected. Open Climboria in Phantom's in-app browser or install Phantom.");return;}
+  try{const r=await p.connect();wallet=r.publicKey;say("Wallet connected: "+wallet.toString().slice(0,4)+"…"+wallet.toString().slice(-4),"#86efac");action.textContent="Get Quote";scheduleQuote();}
+  catch(e){say(e.message||"Wallet connection was cancelled.");}
+ }
+ async function swap(){
+  if(!wallet){await connect();return;}
+  if(!quote||!rawAmount()||quoteKey!==[wallet.toString(),pay.value,out.value,rawAmount(),slippage.value].join("|")){await getQuote();return;}
+  if(busy)return;busy=true;action.disabled=true;action.textContent="Building transaction…";say("Building swap transaction. Review and approve only in your wallet.");
+  try{
+   const res=await fetch(API+"/swap",{method:"POST",headers:{"content-type":"application/json",accept:"application/json"},body:JSON.stringify({quoteResponse:quote,userPublicKey:wallet.toString(),wrapAndUnwrapSol:true,dynamicComputeUnitLimit:true,prioritizationFeeLamports:{priorityLevelWithMaxLamports:{priorityLevel:"medium",maxLamports:300000}}})});
+   const built=await res.json();if(!res.ok||!built.swapTransaction)throw Error(built.error||built.message||"Jupiter could not build the transaction.");
+   const {VersionedTransaction,Connection}=await import("https://esm.sh/@solana/web3.js@1.98.4");
+   const bytes=Uint8Array.from(atob(built.swapTransaction),c=>c.charCodeAt(0));
+   const tx=VersionedTransaction.deserialize(bytes);
+   if(!tx.message.staticAccountKeys.some(k=>k.equals(wallet)))throw Error("Transaction wallet does not match the connected wallet. Aborted.");
+   say("Approve the swap in Phantom. Verify tokens, amount, and network fee.");
+   const signed=await window.solana.signAndSendTransaction(tx);
+   const signature=typeof signed==="string"?signed:signed.signature;
+   if(!signature)throw Error("Wallet did not return a transaction signature.");
+   action.textContent="Confirming…";say("Submitted: "+signature+". Waiting for on-chain confirmation…");
+   const connection=new Connection(RPC,"confirmed");
+   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
+   if(confirmation.value.err)throw Error("Transaction failed on-chain. Signature: "+signature);
+   say("Swap confirmed. Signature: "+signature,"#86efac");
+   details.innerHTML="Confirmed on Solana · <a style='color:#fbbf24;text-decoration:underline' target='_blank' rel='noopener noreferrer' href='https://solscan.io/tx/"+encodeURIComponent(signature)+"'>View transaction on Solscan</a>";
+   clearQuote();amount.value="";receive.value="";
+  }catch(e){say(e.message||"Swap cancelled or failed.");}
+  finally{busy=false;action.disabled=false;action.textContent=wallet?"Get New Quote":"Connect Wallet";}
+ }
+ pay.addEventListener("change",syncTokens);$("dexFlip").addEventListener("click",()=>{pay.value=pay.value==="SOL"?"USDC":"SOL";syncTokens();scheduleQuote();});amount.addEventListener("input",scheduleQuote);slippage.addEventListener("change",scheduleQuote);action.addEventListener("click",()=>{if(!wallet)connect();else if(!quote) getQuote();else swap();});
+ modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet)scheduleQuote();});
+ if(window.solana?.isPhantom){window.solana.on("disconnect",()=>{wallet=null;clearQuote();action.textContent="Connect Wallet";say("Wallet disconnected.");});}
+ syncTokens();
+})();
+</script>
 </body>
 </html>
