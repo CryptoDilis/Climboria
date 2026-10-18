@@ -101,10 +101,7 @@ jobs:
         with:
           name: climboria-browser-smoke-screenshots
           path: |
-            climboria-landing.png
-            climboria-level-select.png
-            climboria-gameplay.png
-            climboria-mobile-level-select.png
-            climboria-mobile-gameplay.png
+            climboria-desktop-home.png
+climboria-mobile-menu.png
           if-no-files-found: warn
           retention-days: 7
