@@ -17,7 +17,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;justify-content:
 .hero{position:relative;width:100%;height:100svh;min-height:100svh;background:#000;overflow:hidden}
 .hero picture, .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,0) 35%,rgba(7,10,20,.4) 70%,rgba(7,10,20,.95) 100%);z-index:1}
-.hero-content{position:absolute;left:0;right:0;bottom:clamp(24px,7vh,64px);transform:none;z-index:5;width:100%;max-width:none;text-align:center;padding:0 16px}
+.hero-content{position:absolute;left:0;right:0;bottom:clamp(10px,2vh,22px);transform:none;z-index:5;width:100%;max-width:none;text-align:center;padding:0 16px}
+@media(min-width:901px){.hero-content{bottom:clamp(18px,3vh,34px)}.hero-content>div:last-child{margin-top:8px !important}.hero-buttons{gap:14px}}
 .hero-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:18px}
 .btn-play{background:linear-gradient(180deg,#fff,#e8e8e8);color:#000;font-weight:900;font-size:16px;letter-spacing:3px;padding:15px 48px;border-radius:999px;border:2px solid rgba(251,191,36,.9);box-shadow:0 0 28px rgba(251,191,36,.6),0 4px 18px rgba(0,0,0,.4);cursor:pointer;transition:.2s}
 .btn-play:hover{transform:scale(1.03);box-shadow:0 0 36px rgba(251,191,36,.8)}
@@ -36,13 +37,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;justify-content:
 .road{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px} .phase{background:linear-gradient(180deg,rgba(251,191,36,.08),rgba(255,255,255,.02));border:1px solid rgba(251,191,36,.18);border-radius:18px;padding:24px} .phase .num{font-size:12px;letter-spacing:3px;color:#fbbf24;margin-bottom:10px} .phase h4{font-family:'Cinzel';margin-bottom:8px} .phase li{font-size:13px;color:rgba(255,255,255,.55);margin:6px 0;list-style:none} .phase li::before{content:'• ';color:#fbbf24}
 .white{display:flex;gap:20px;margin-top:30px;flex-wrap:wrap} .wp{flex:1;min-width:260px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:24px;text-decoration:none;color:#fff;display:block;transition:.2s} .wp:hover{border-color:rgba(251,191,36,.3);transform:translateY(-2px)}
 footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;color:rgba(255,255,255,.4);font-size:12px}
+@media(min-width:901px){.hero-content{bottom:12px}}
 @media(max-width:900px){nav{padding:14px 20px} .navl{display:none} .hamburger{display:flex} #xLogo{display:flex !important} .sec{padding:60px 20px} .grid3,.tok-wrap,.road{grid-template-columns:1fr} .title{font-size:30px} .hero{height:100svh;min-height:100svh} .hero-content{bottom:12px} .hero-buttons{flex-direction:column;align-items:center;gap:4px;margin-top:5px} .btn-play,.btn-trade,.btn-launch{width:min(65.6vw,256px);padding:6px 14px;font-size:11px} .hero-content>div:last-child{margin-top:8px !important;font-size:9px !important;letter-spacing:2px !important} .highlights{top:25%;bottom:auto;left:50%;transform:translateX(-50%);flex-direction:row;flex-wrap:wrap;justify-content:center;width:90%}}
 </style>
 </head>
 <body>
 <nav>
 <a class="logo" href="./" aria-label="Climboria home" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a><a href="#" id="dexNavLink">DEX (Demo)</a><a href="#" id="launchpadNavLink">Launchpad (Demo)</a>
+<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a><a href="#ecosystem">Ecosystem</a><a href="#" id="dexNavLink">DEX / Swap</a><a href="#" id="launchpadNavLink">Launchpad</a>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px;transition:.2s" onmouseover="this.style.borderColor='#fbbf24';this.style.color='#fbbf24'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='#fff'">𝕏</a>
 <button class="btn-gold" onclick="alert('Wallet connection is not available yet.')">CONNECT</button></div>
 <div style="display:flex;align-items:center;gap:12px">
@@ -56,7 +58,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <a href="#tokenomics">Tokenomics</a>
 <a href="#roadmap">Roadmap</a>
 <a href="#whitepaper">Whitepaper</a>
-<a href="#" id="mobileDexBtn">DEX — Demo Only</a><a href="#" id="mobileLaunchpadBtn">Launchpad — Demo Only</a>
+<a href="#ecosystem">Ecosystem</a><a href="#" id="mobileDexBtn">DEX / Swap</a><a href="#" id="mobileLaunchpadBtn">Launchpad</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" onclick="alert('Wallet connection is not available yet.')">CONNECT WALLET</button>
 <button class="btn-outline" onclick="alert('Waitlist is not open yet.')">JOIN WAITLIST</button>
@@ -71,8 +73,11 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     <img src="./official%20homepage%20for%20desktop.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <div class="highlights">
-    <div class="hl"><div class="hl-dot"></div> TOKEN LAUNCH: NOT ANNOUNCED</div>
+  <div class="highlights" aria-label="Climboria ecosystem highlights">
+    <div class="hl"><div class="hl-dot"></div> CLIMBORIA SIGNATURE · PUMP.FUN CHALLENGER</div>
+    <div class="hl"><div class="hl-dot"></div> SOLANA DEX · SWAP SUPPORTED LIVE TOKENS</div>
+    <div class="hl"><div class="hl-dot"></div> CLIMBING GAME · TOKEN LAUNCHPAD</div>
+    <div class="hl" style="border-color:rgba(251,191,36,.35);color:#fbbf24">SIGNATURE: IN DEVELOPMENT · NOT LIVE YET</div>
   </div>
   <div class="hero-content">
     <div id="climboria-home-actions" class="hero-buttons">
@@ -80,9 +85,10 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
       <button class="climboria-home-trade btn-trade" id="swapBtn">SWAP / DEX</button>
       <button class="climboria-home-create btn-launch" id="launchpadBtn">LAUNCHPAD (DEMO)</button>
     </div>
-    <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.75)">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED</div>
+    <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.75)">GAME • MULTI-TOKEN DEX / SWAP • CLIMBORIA SIGNATURE LAUNCHPAD</div>
   </div>
 </div>
+<section id="ecosystem" class="sec" style="background:rgba(255,255,255,.025)"><div class="label">The Climboria Ecosystem</div><div class="title">One home. Three ways to climb.</div><div class="desc">Explore the game, swap supported Solana assets, or review token-launch options. Each product clearly shows what is playable, live, preview-only, or still planned.</div><div class="grid3"><article class="card"><div class="label">01 · GAME</div><h3>Play Climboria</h3><p>Enter the climbing adventure. The standalone game is under active development; check the playable build for current features.</p><button class="btn-play" style="margin-top:18px;width:100%;padding:12px 16px;font-size:12px" id="ecosystemPlay">PLAY GAME</button></article><article class="card"><div class="label">02 · DEX / SWAP</div><h3>Swap on Solana</h3><p>Jupiter-routed SOL ↔ USDC swaps. Wallet signing and transactions happen in your wallet. CLIMB is unavailable until its official mint is verified.</p><button class="btn-gold" style="margin-top:18px;width:100%" id="ecosystemDex">OPEN DEX / SWAP</button></article><article class="card"><div class="label">03 · LAUNCHPAD</div><h3>Launch a project</h3><p>Normal Launchpad, Developer Options, and Climboria Signature: our planned pump.fun challenger, built around a distinct rule-aware launch experience. Signature is still a preview; token creation, restrictions, and sales are not live.</p><button class="btn-outline" style="margin-top:18px;width:100%" id="ecosystemLaunchpad">EXPLORE LAUNCHPAD</button></article></div></section>
 
 <div id="overview" class="sec"><div class="label">Overview</div><div class="title">The mountain does not forgive.<br>It remembers.</div><div class="desc">Official hero is the girl in the pot — Climboria version. Climb with ice pick, ropes, and will. Sky Castle waits.<br><span class="chain-badge">◎ TOKEN LAUNCH: NOT ANNOUNCED • SOLANA</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Open full Overview folder</a></div>
 <div class="grid3"><div class="card"><h3>Physics Climb</h3><p>Climbing mechanics and grip/stamina systems are planned; exact physics will be confirmed through testing.</p></div><div class="card"><h3>Live Mountain</h3><p>Environmental hazards and changing mountain conditions are future concepts, not confirmed features.</p></div><div class="card"><h3>On-Chain Legend</h3><p>Collectible summit banners may be explored later; no minting feature is live.</p></div></div></div>
@@ -133,30 +139,47 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 .dex-layout{max-width:1100px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
 @media(max-width:900px){.dex-layout{grid-template-columns:1fr}.swap-card{max-width:95vw;padding:20px}}
 </style>
+<style>
+.dex-live{width:min(480px,94vw);max-height:90dvh;overflow:auto;background:#0b1220;border:1px solid rgba(251,191,36,.28);border-radius:22px;padding:24px;box-shadow:0 24px 80px #000b;color:#fff}
+.dex-live .swap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.dex-live h3{font:900 17px Cinzel,serif;letter-spacing:1.5px}
+.dex-live .dex-live-pill{display:inline-flex;padding:5px 9px;border-radius:999px;border:1px solid rgba(34,197,94,.35);color:#86efac;font-size:10px;letter-spacing:1px;margin-bottom:12px}
+.dex-live .dex-tokenbox{background:#111c2e;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin:10px 0}
+.dex-live label{display:block;font-size:10px;letter-spacing:1px;color:#94a3b8;margin-bottom:8px}
+.dex-live .dex-amountrow{display:flex;gap:8px;align-items:center}
+.dex-live input,.dex-live select{background:transparent;color:#fff;border:0;outline:none;font:600 22px Inter,sans-serif;width:100%;min-width:0}
+.dex-live select{font-size:13px;width:auto;background:#1e293b;border-radius:8px;padding:8px}
+.dex-live .dex-switch{display:block;margin:-3px auto;background:#172338;border:1px solid #334155;color:#fbbf24;border-radius:10px;width:38px;height:38px;font-size:20px;cursor:pointer}
+.dex-live .dex-details{font-size:11px;color:#aab7ca;line-height:1.8;margin:12px 0;overflow-wrap:anywhere}
+.dex-live .dex-primary{width:100%;border:0;border-radius:12px;padding:14px;background:linear-gradient(180deg,#fbbf24,#d97706);color:#090d15;font-weight:900;letter-spacing:.7px;cursor:pointer}
+.dex-live .dex-primary:disabled{opacity:.45;cursor:not-allowed}
+.dex-live .dex-note{font-size:10px;color:#718096;line-height:1.6;margin-top:12px}
+.dex-live .dex-status{font-size:12px;line-height:1.5;margin:10px 0;color:#fbbf24;overflow-wrap:anywhere}
+@media(max-width:480px){.dex-live{padding:18px}.dex-live input{font-size:19px}}
+</style>
 <div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
-<div class="swap-card">
-<div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX preview">×</button></div>
-<div class="demo-badge">DEX PREVIEW • NO WALLET • NO TRANSACTION</div>
-<div class="dex-badge">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
-<div class="swap-box"><label>YOU PAY — PREVIEW ONLY</label><div class="swap-input"><input type="number" id="payInput" placeholder="0.0" disabled aria-label="Demo pay amount"><div class="token-select" aria-hidden="true">◎ SOL</div></div></div>
-<div class="swap-arrow" aria-hidden="true">⇅</div>
-<div class="swap-box"><label>YOU RECEIVE — NO QUOTE AVAILABLE</label><div class="swap-input"><input type="text" id="receiveInput" placeholder="—" readonly disabled aria-label="No receive quote"><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB</div></div></div>
-<div class="swap-info"><span>TGE: not announced</span><span>Slippage: not configured</span></div>
-<div class="swap-info"><span>Route: not connected</span><span>Fee: not configured</span></div>
-<button class="btn-swap" id="doSwap" disabled>Preview only — swapping unavailable</button>
-<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px">No price, quote, wallet connection, or on-chain swap is implemented.</div>
-</div>
-</div>
-
-<div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
-<div class="swap-card">
+ <div class="dex-live">
+  <div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX">×</button></div>
+  <div class="dex-live-pill">SOLANA MAINNET · JUPITER ROUTING</div><div id="dexWalletLine" class="dex-details" style="margin:0 0 8px">Wallet not connected</div>
+  <div class="dex-tokenbox"><label id="dexPayLabel">YOU PAY</label><div class="dex-amountrow"><input id="dexAmount" inputmode="decimal" type="number" min="0" step="any" placeholder="0.00" autocomplete="off"><select id="dexPayToken" aria-label="Pay token"><option value="SOL">SOL</option><option value="USDC">USDC</option></select></div></div>
+  <button class="dex-switch" id="dexFlip" aria-label="Switch swap direction" title="Switch direction">⇅</button>
+  <div class="dex-tokenbox"><label id="dexReceiveLabel">YOU RECEIVE (ESTIMATE)</label><div class="dex-amountrow"><input id="dexReceive" placeholder="—" readonly><select id="dexReceiveToken" aria-label="Receive token" disabled><option value="USDC">USDC</option><option value="SOL">SOL</option></select></div></div>
+  <div class="dex-details" id="dexQuoteDetails">Connect your Solana wallet, enter an amount, and fetch a live route quote.</div>
+  <div class="dex-amountrow" style="justify-content:space-between;margin:8px 0 14px"><label for="dexSlippage" style="margin:0">SLIPPAGE</label><select id="dexSlippage" aria-label="Slippage tolerance"><option value="50">0.5%</option><option value="100">1.0%</option><option value="200">2.0%</option></select></div>
+  <button class="dex-primary" id="dexAction">Connect Wallet</button>
+  <div class="dex-status" id="dexStatus" role="status" aria-live="polite"></div>
+  <div class="dex-note">Swaps are real Solana mainnet transactions. Review the wallet prompt carefully; rates, network fees, and execution are not guaranteed. CLIMB token trading is disabled until its official mint is verified and configured. Climboria does not custody funds.</div>
+ </div>
+</div><div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
+<div class="swap-card" style="max-height:88dvh;overflow:auto">
 <div class="swap-header"><h3 id="launchpadTitle">CLIMBORIA LAUNCHPAD</h3><button class="close-swap" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button></div>
-<div class="demo-badge">LAUNCHPAD PREVIEW • NO MINT • NO TRANSACTION</div>
-<div class="swap-box"><label>PROJECT NAME — PREVIEW</label><input type="text" value="Climboria" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<div class="swap-box"><label>TOKEN SYMBOL — PROPOSED, NOT VERIFIED</label><input type="text" value="$CLIMB" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<div class="swap-box"><label>SUPPLY / LOCK / SALE SETTINGS</label><input type="text" placeholder="Not configured" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<button class="btn-swap" disabled>Preview only — token creation unavailable</button>
-<p style="margin-top:14px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.5)">This is a visual mockup. No token is created, no sale is open, and launch details are not announced.</p>
+<div class="demo-badge">PREVIEW ONLY · TOKEN CREATION / SALES NOT ENABLED</div>
+<p style="font-size:12px;line-height:1.6;color:rgba(255,255,255,.65);margin-bottom:16px">Choose a launch path to review its intended scope. These are informational previews, not working launch contracts.</p>
+<div class="swap-box"><label>NORMAL LAUNCHPAD</label><h3 style="font-size:14px;margin:4px 0 8px">Standard token launch</h3><p style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.55)">A straightforward launch flow. Exact creation, liquidity, sale, and safety parameters remain to be designed and audited.</p></div>
+<div class="swap-box"><label>DEVELOPER OPTIONS</label><h3 style="font-size:14px;margin:4px 0 8px">Creator configuration</h3><p style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.55)">A planned advanced path for project creators to configure supported launch settings. Options are not active yet.</p></div>
+<div class="swap-box" style="border-color:rgba(251,191,36,.45)"><label style="color:#fbbf24">CLIMBORIA SIGNATURE</label><h3 style="font-size:14px;margin:4px 0 8px">Rule-aware launch experience</h3><p style="font-size:11px;line-height:1.6;color:rgba(255,255,255,.65)">The planned Signature path will disclose its special restrictions and conditions to creators before they create, and to buyers before they participate. The specific rule set, enforcement mechanism, and disclosures must be finalized and audited before launch.</p><p style="font-size:10px;line-height:1.6;color:rgba(255,191,36,.8);margin-top:8px">Signature rules are not enforced by this preview. Do not treat this as a live token launch or buyer protection.</p></div>
+<button class="btn-swap" disabled>Preview only — launch functionality not live</button>
+<p style="margin-top:14px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.5)">No token is created, no sale is open, and no wallet transaction is requested by this launchpad preview.</p>
 </div>
 </div>
 
@@ -186,8 +209,11 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     if(a.id !== 'mobileDexBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
   }));
 
-  // Keep the existing PLAY placeholder honest; game launch is not wired yet.
-  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => alert('The playable game is not connected to this homepage yet.'));
+  // Launch the restored standalone playable build from the homepage PLAY CTA.
+  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => {
+    window.location.href = './game/';
+  });
+  document.getElementById('ecosystemPlay').addEventListener('click', () => { window.location.href = './game/'; });
 
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
@@ -202,8 +228,10 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     modal.classList.remove('active');
     if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   };
-  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); };
+  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); swapModal.dispatchEvent(new CustomEvent("climboria:dex-open")); };
   const openLaunch = e => { if(e) e.preventDefault(); openModal(launchModal); };
+  document.getElementById('ecosystemDex').addEventListener('click', openSwap);
+  document.getElementById('ecosystemLaunchpad').addEventListener('click', openLaunch);
   document.getElementById('swapBtn').addEventListener('click', openSwap);
   document.getElementById('dexNavLink').addEventListener('click', openSwap);
   document.getElementById('mobileDexBtn').addEventListener('click', openSwap);
@@ -225,5 +253,89 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 })();
 </script>
 
+<script type="module">
+(() => {
+ const SOL_MINT="So11111111111111111111111111111111111111112";
+ const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+ const API="https://lite-api.jup.ag/swap/v1";
+ const RPC="https://api.mainnet-beta.solana.com";
+ const $=id=>document.getElementById(id);
+ const modal=$("swapModal"), amount=$("dexAmount"), receive=$("dexReceive"), pay=$("dexPayToken"), out=$("dexReceiveToken"), slippage=$("dexSlippage"), details=$("dexQuoteDetails"), status=$("dexStatus"), action=$("dexAction");
+ let wallet=null, quote=null, quoteKey="", quoteAt=0, timer=null, busy=false, seq=0;
+ const mint=t=>t==="SOL"?SOL_MINT:USDC_MINT;
+ const decimals=t=>t==="SOL"?9:6;
+ const fmt=(raw,t)=>{const n=Number(raw)/10**decimals(t);return n.toLocaleString(undefined,{maximumFractionDigits:t==="SOL"?6:4});};
+ const say=(m,color)=>{status.textContent=m;status.style.color=color||"#fbbf24";};
+ const clearQuote=()=>{quote=null;quoteKey="";quoteAt=0;receive.value="";details.textContent="Quote cleared. Enter an amount to fetch a fresh route.";};
+ function syncTokens(){out.value=pay.value==="SOL"?"USDC":"SOL";out.querySelectorAll("option").forEach(o=>o.selected=o.value===out.value);$("dexPayLabel").textContent="YOU PAY · "+pay.value;$("dexReceiveLabel").textContent="YOU RECEIVE · "+out.value+" ESTIMATE";clearQuote();}
+ function rawAmount(){const n=Number(amount.value);if(!Number.isFinite(n)||n<=0)return null;const raw=Math.floor(n*10**decimals(pay.value));return Number.isSafeInteger(raw)&&raw>0?String(raw):null;}
+ async function getQuote(){
+   const my=++seq, raw=rawAmount();clearQuote();
+   if(!raw){details.textContent="Enter a valid positive amount.";return;}
+   const key=[wallet?.publicKey?.toString()||"",pay.value,out.value,raw,slippage.value].join("|");
+   say("Fetching current Jupiter route…");
+   try{
+    const u=new URL(API+"/quote");u.search=new URLSearchParams({inputMint:mint(pay.value),outputMint:mint(out.value),amount:raw,slippageBps:slippage.value,restrictIntermediateTokens:"true"}).toString();
+    const res=await fetch(u,{headers:{accept:"application/json"}});
+    const data=await res.json();if(!res.ok)throw Error(data.error||data.message||"Quote service rejected request.");
+    if(my!==seq)return;
+    if(!data.outAmount||!data.otherAmountThreshold)throw Error("No route available for this pair/amount.");
+    quote=data;quoteKey=key;quoteAt=Date.now();receive.value=fmt(data.outAmount,out.value);
+    const impact=Math.max(0,Number(data.priceImpactPct||0)*100);
+    const route=(data.routePlan||[]).map(x=>x.swapInfo?.label).filter(Boolean).join(" → ")||"Jupiter route";
+    details.textContent="Route: "+route+" · Price impact: "+impact.toFixed(3)+"% · Minimum received: "+fmt(data.otherAmountThreshold,out.value)+" "+out.value+" · Quote is indicative and can change.";
+    say("Quote ready. Check the minimum received before swapping.","#86efac");
+    action.textContent=wallet?"Review & Swap":"Connect Wallet";action.disabled=false;
+   }catch(e){if(my!==seq)return;clearQuote();details.textContent=e.message||"Could not retrieve a route.";say("Quote unavailable. Try again or reduce the amount.");action.textContent=wallet?"Refresh Quote":"Connect Wallet";action.disabled=false;}
+ }
+ function scheduleQuote(){clearTimeout(timer);seq++;clearQuote();action.textContent=wallet?"Get Quote":"Connect Wallet";action.disabled=!rawAmount();if(rawAmount())timer=setTimeout(getQuote,450);}
+ async function connect(){
+  const p=window.solana;if(!p?.isPhantom){say("Phantom wallet not detected. Open Climboria in Phantom's in-app browser or install Phantom.");return;}
+  try{const r=await p.connect();wallet=r.publicKey;$("dexWalletLine").textContent="Connected: "+wallet.toString().slice(0,5)+"…"+wallet.toString().slice(-5)+" · Solana mainnet";say("Wallet connected. Confirm the network in Phantom before swapping.","#86efac");action.textContent="Get Quote";scheduleQuote();}
+  catch(e){say(e.message||"Wallet connection was cancelled.");}
+ }
+ async function swap(){
+  if(!wallet){await connect();return;}
+  if(!quote||Date.now()-quoteAt>20000||!rawAmount()||quoteKey!==[wallet.toString(),pay.value,out.value,rawAmount(),slippage.value].join("|")){await getQuote();return;}
+  if(busy)return;busy=true;action.disabled=true;action.textContent="Building transaction…";say("Building swap transaction. Review and approve only in your wallet.");
+  try{
+   const res=await fetch(API+"/swap",{method:"POST",headers:{"content-type":"application/json",accept:"application/json"},body:JSON.stringify({quoteResponse:quote,userPublicKey:wallet.toString(),wrapAndUnwrapSol:true,dynamicComputeUnitLimit:true,prioritizationFeeLamports:{priorityLevelWithMaxLamports:{priorityLevel:"medium",maxLamports:300000}}})});
+   const built=await res.json();if(!res.ok||!built.swapTransaction)throw Error(built.error||built.message||"Jupiter could not build the transaction.");
+   const {VersionedTransaction,Connection}=await import("https://esm.sh/@solana/web3.js@1.98.4");
+   const bytes=Uint8Array.from(atob(built.swapTransaction),c=>c.charCodeAt(0));
+   const tx=VersionedTransaction.deserialize(bytes);
+   if(!tx.message.staticAccountKeys[0]?.equals(wallet))throw Error("Transaction fee payer does not match the connected wallet. Aborted.");
+   say("Approve the swap in Phantom. Verify tokens, amount, and network fee.");
+   const provider=window.solana;if(!provider?.publicKey?.equals(wallet))throw Error("Wallet account changed. Reconnect and fetch a fresh quote.");
+   const signed=await provider.signAndSendTransaction(tx);
+   const signature=typeof signed==="string"?signed:signed.signature;
+   if(!signature)throw Error("Wallet did not return a transaction signature.");
+   action.textContent="Confirming…";say("Submitted: "+signature+". Waiting for on-chain confirmation…");
+   const connection=new Connection(RPC,"confirmed");
+   if(!built.lastValidBlockHeight)throw Error("Swap submitted, but Jupiter omitted transaction expiry data. Check the signature in Solscan before retrying: "+signature);
+   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
+   if(confirmation.value.err)throw Error("Transaction failed on-chain. Signature: "+signature);
+   say("Swap confirmed. Signature: "+signature,"#86efac");
+   details.innerHTML="Confirmed on Solana · <a style='color:#fbbf24;text-decoration:underline' target='_blank' rel='noopener noreferrer' href='https://solscan.io/tx/"+encodeURIComponent(signature)+"'>View transaction on Solscan</a>";
+   // Clear the cached quote without overwriting the confirmation link/status.
+   quote=null;quoteKey="";quoteAt=0;amount.value="";receive.value="";
+  }catch(e){say(e.message||"Swap cancelled or failed.");}
+  finally{busy=false;action.disabled=false;action.textContent=wallet?"Get New Quote":"Connect Wallet";}
+ }
+ pay.addEventListener("change",syncTokens);$("dexFlip").addEventListener("click",()=>{pay.value=pay.value==="SOL"?"USDC":"SOL";syncTokens();scheduleQuote();});amount.addEventListener("input",scheduleQuote);slippage.addEventListener("change",scheduleQuote);action.addEventListener("click",()=>{if(!wallet)connect();else if(!quote) getQuote();else swap();});
+ modal.addEventListener("climboria:dex-open",()=>{if(wallet&&rawAmount())scheduleQuote();});
+ modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet&&rawAmount())scheduleQuote();});
+ if(window.solana?.isPhantom){
+  window.solana.on("disconnect",()=>{wallet=null;clearQuote();$("dexWalletLine").textContent="Wallet disconnected";action.textContent="Connect Wallet";say("Wallet disconnected.");});
+  window.solana.on("accountChanged",publicKey=>{
+   wallet=publicKey||null;seq++;clearQuote();
+   $("dexWalletLine").textContent=wallet?"Connected: "+wallet.toString().slice(0,5)+"…"+wallet.toString().slice(-5)+" · Solana mainnet":"Wallet disconnected";
+   action.textContent=wallet?"Get Quote":"Connect Wallet";
+   say(wallet?"Wallet account changed. Fetch a fresh quote before swapping.":"Wallet disconnected.");
+  });
+ }
+ syncTokens();
+})();
+</script>
 </body>
 </html>
