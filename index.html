@@ -305,14 +305,23 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
    if(confirmation.value.err)throw Error("Transaction failed on-chain. Signature: "+signature);
    say("Swap confirmed. Signature: "+signature,"#86efac");
    details.innerHTML="Confirmed on Solana · <a style='color:#fbbf24;text-decoration:underline' target='_blank' rel='noopener noreferrer' href='https://solscan.io/tx/"+encodeURIComponent(signature)+"'>View transaction on Solscan</a>";
-   clearQuote();amount.value="";receive.value="";
+   // Clear the cached quote without overwriting the confirmation link/status.
+   quote=null;quoteKey="";quoteAt=0;amount.value="";receive.value="";
   }catch(e){say(e.message||"Swap cancelled or failed.");}
   finally{busy=false;action.disabled=false;action.textContent=wallet?"Get New Quote":"Connect Wallet";}
  }
  pay.addEventListener("change",syncTokens);$("dexFlip").addEventListener("click",()=>{pay.value=pay.value==="SOL"?"USDC":"SOL";syncTokens();scheduleQuote();});amount.addEventListener("input",scheduleQuote);slippage.addEventListener("change",scheduleQuote);action.addEventListener("click",()=>{if(!wallet)connect();else if(!quote) getQuote();else swap();});
  modal.addEventListener("climboria:dex-open",()=>{if(wallet&&rawAmount())scheduleQuote();});
  modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet&&rawAmount())scheduleQuote();});
- if(window.solana?.isPhantom){window.solana.on("disconnect",()=>{wallet=null;clearQuote();$("dexWalletLine").textContent="Wallet disconnected";action.textContent="Connect Wallet";say("Wallet disconnected.");});}
+ if(window.solana?.isPhantom){
+  window.solana.on("disconnect",()=>{wallet=null;clearQuote();$("dexWalletLine").textContent="Wallet disconnected";action.textContent="Connect Wallet";say("Wallet disconnected.");});
+  window.solana.on("accountChanged",publicKey=>{
+   wallet=publicKey||null;seq++;clearQuote();
+   $("dexWalletLine").textContent=wallet?"Connected: "+wallet.toString().slice(0,5)+"…"+wallet.toString().slice(-5)+" · Solana mainnet":"Wallet disconnected";
+   action.textContent=wallet?"Get Quote":"Connect Wallet";
+   say(wallet?"Wallet account changed. Fetch a fresh quote before swapping.":"Wallet disconnected.");
+  });
+ }
  syncTokens();
 })();
 </script>
