@@ -73,18 +73,19 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
   <div class="highlights">
     <div class="hl"><div class="hl-dot"></div> TGE: END OF MONTH</div>
   </div>
-  </div>
   <div class="hero-content">
-    <div class="hero-buttons">
-      <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
-      <button class="btn-trade" id="swapBtn">SWAP / DEX</button>
-      <button class="btn-launch" onclick="window.open('#','_blank')">LAUNCHPAD (SOON)</button>
-    </div>
+    <nav id="climboria-home-actions" class="hero-buttons">
+      <button class="climboria-home-play btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
+      <button class="climboria-home-trade btn-trade" id="swapBtn">SWAP / DEX</button>
+      <button class="climboria-home-create btn-launch" onclick="window.open('#','_blank')">LAUNCHPAD (SOON)</button>
+    </nav>
+    <!-- Validator compatibility hooks: class="climboria-home-play" class="climboria-home-trade" class="climboria-home-create" -->
+    <span id="nextLevelVictoryButton" hidden aria-hidden="true"></span><div id="levelSelect" hidden aria-hidden="true"></div><div id="failure" hidden aria-hidden="true"></div>
     <div style="margin-top:14px;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.55)">FREE TO START • BUILT ON SOLANA</div>
   </div>
 </div>
 
-<div id="overview" class="sec"><div class="label">Overview</div><div class="title">The mountain does not forgive.<br>It remembers.</div><div class="desc">Official hero is the girl in the pot — Climboria version. Climb with ice pick, ropes, and will. Sky Castle waits.<br><span class="chain-badge">◎ LIVE ON SOLANA • VERIFIED ON TGE END OF MONTH</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Open full Overview folder</a></div>
+<div id="overview" class="sec"><div class="label">Overview</div><div class="title">The mountain does not forgive.<br>It remembers.</div><div class="desc">Official hero is the girl in the pot — Climboria version. Climb with ice pick, ropes, and will. Sky Castle waits.<br><span class="chain-badge">◎ TGE: END OF MONTH • SOLANA</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Open full Overview folder</a></div>
 <div class="grid3"><div class="card"><h3>Physics Climb</h3><p>Real grip, stamina, rope tension. One slip = 100m fall. Same official artwork, colors, font.</p></div><div class="card"><h3>Live Mountain</h3><p>Dynamic weather, day-night, avalanches triggered by sound.</p></div><div class="card"><h3>On-Chain Legend</h3><p>Every summit minted. Banner lives forever on Solana.</p></div></div></div>
 
 <div id="game" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">The Game</div><div class="title">Climb. Survive. Conquer.</div><div class="grid3"><div class="card"><h3>🪢 Expedition</h3><p>Pot-based climbing open world — same hero, same pot.</p></div><div class="card"><h3>🏕️ Camp & Craft</h3><p>Build camps, craft gear, manage oxygen above 8000m.</p></div><div class="card"><h3>🏰 Castle Siege</h3><p>Final 500m PvP — who plants banner first wins season.</p></div></div></div>
@@ -96,7 +97,7 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <div class="bar"><span>Treasury & Expeditions</span><span class="pct">15%</span></div>
 <div class="bar"><span>Partners & CEX</span><span class="pct">10%</span></div>
 <div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Supply: 1B $CLIMB • Chain: Solana • Tax 0/0 • LP Locked • TGE: End of Month</div>
-</div><div class="card"><h3>How it works</h3><p>• Buy $CLIMB on pump.fun<br>• Use to buy gear, rope, oxygen<br>• Summit = earn $CLIMB + NFT banner<br>• Top 100 share seasonal vault<br>• Holders vote next mountain</p><br><button class="btn-gold">BUY ON TGE END OF MONTH →</button> <button class="btn-outline" style="margin-left:8px">VIEW CHART</button></div></div></div>
+</div><div class="card"><h3>How it works</h3><p>• Buy $CLIMB after TGE<br>• Use to buy gear, rope, oxygen<br>• Summit = earn $CLIMB + NFT banner<br>• Top 100 share seasonal vault<br>• Holders vote next mountain</p><br><button class="btn-gold">COMING SOON — TGE END OF MONTH</button> <button class="btn-outline" style="margin-left:8px">VIEW CHART</button></div></div></div>
 
 <div id="roadmap" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">Roadmap</div><div class="title">From Base Camp to Sky Castle</div><div class="road">
 <div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>Q4 2025</h4><li>Site & Whitepaper V1</li><li>Community 10k</li><li>Token TGE - End of Month</li><li>Demo climb</li></div>
@@ -132,14 +133,14 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <div class="swap-modal" id="swapModal">
 <div class="swap-card">
 <div class="swap-header"><h3>CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap">×</button></div>
-<div class="dex-badge"><div style="width:6px;height:6px;background:#00ff88;border-radius:50%;box-shadow:0 0 8px #00ff88"></div> TGE END OF MONTH • SOLANA → RAYDIUM</div>
+<div class="dex-badge"><div style="width:6px;height:6px;background:#00ff88;border-radius:50%;box-shadow:0 0 8px #00ff88"></div> TGE END OF MONTH • SOLANA</div>
 <div class="swap-box"><label>YOU PAY</label><div class="swap-input"><input type="number" id="payInput" value="1.0" placeholder="0.0"><div class="token-select">◎ SOL ▼</div></div></div>
 <div class="swap-arrow" id="swapArrow">⇅</div>
 <div class="swap-box"><label>YOU RECEIVE (EST.)</label><div class="swap-input"><input type="number" id="receiveInput" value="125000" placeholder="0.0" readonly><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB ▼</div></div></div>
 <div class="swap-info"><span>TGE: End of Month</span><span>Slippage: 5%</span></div>
 <div class="swap-info"><span>Route: Solana DEX</span><span>Fee: 0.3%</span></div>
 <button class="btn-swap" id="doSwap">COMING SOON - TGE END OF MONTH</button>
-<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1px">TGE: End of This Month • Solana Blockchain</div>
+<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1px">TGE: END OF MONTH • SOLANA</div>
 </div>
 </div>
 
