@@ -18,6 +18,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;justify-content:
 .hero picture, .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,0) 35%,rgba(7,10,20,.4) 70%,rgba(7,10,20,.95) 100%);z-index:1}
 .hero-content{position:absolute;left:0;right:0;bottom:clamp(10px,2vh,22px);transform:none;z-index:5;width:100%;max-width:none;text-align:center;padding:0 16px}
+@media(min-width:901px){.hero-content{bottom:clamp(18px,3vh,34px)}.hero-content>div:last-child{margin-top:8px !important}.hero-buttons{gap:14px}}
 .hero-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:18px}
 .btn-play{background:linear-gradient(180deg,#fff,#e8e8e8);color:#000;font-weight:900;font-size:16px;letter-spacing:3px;padding:15px 48px;border-radius:999px;border:2px solid rgba(251,191,36,.9);box-shadow:0 0 28px rgba(251,191,36,.6),0 4px 18px rgba(0,0,0,.4);cursor:pointer;transition:.2s}
 .btn-play:hover{transform:scale(1.03);box-shadow:0 0 36px rgba(251,191,36,.8)}
