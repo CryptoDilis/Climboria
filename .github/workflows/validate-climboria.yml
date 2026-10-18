@@ -33,10 +33,10 @@ jobs:
                   self.in_actions=False
               def handle_starttag(self, tag, attrs):
                   a=dict(attrs); self.tags.append((tag,a))
-                  if tag=="nav" and a.get("id")=="climboria-home-actions": self.in_actions=True
+                  if tag in ("nav","div") and a.get("id")=="climboria-home-actions": self.in_actions=True
                   elif self.in_actions and tag=="button": self.buttons.append(a)
               def handle_endtag(self, tag):
-                  if tag=="nav" and self.in_actions: self.in_actions=False
+                  if tag in ("nav","div") and self.in_actions: self.in_actions=False
           p=Probe(); p.feed(html)
           for tag in ("html","body"):
               if sum(1 for t,_ in p.tags if t==tag)!=1:
