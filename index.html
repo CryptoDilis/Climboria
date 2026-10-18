@@ -202,8 +202,10 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
     if(a.id !== 'mobileDexBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
   }));
 
-  // Keep the existing PLAY placeholder honest; game launch is not wired yet.
-  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => alert('The playable game is not connected to this homepage yet.'));
+  // Launch the restored standalone playable build from the homepage PLAY CTA.
+  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => {
+    window.location.href = './game/';
+  });
 
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
