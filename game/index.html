@@ -1,0 +1,8269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <link rel="icon" type="image/png" href="../climboria-favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>CLIMBORIA</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:#05090d;
+ font-family:Arial,Helvetica,sans-serif;
+ color:#fff;
+}
+
+body{touch-action:none}
+
+canvas{
+ display:block;
+ touch-action:none;
+}
+
+/* =========================
+   LANDING / SCREENS
+========================= */
+
+#landing,#launchpad,#levelSelect,#victory{
+ position:fixed;
+ inset:0;
+ z-index:20;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ background:
+ radial-gradient(circle at 50% 45%,#15232b 0%,#05090d 68%);
+}
+
+#launchpad,#levelSelect,#victory{display:none}
+
+.panel{
+ width:min(950px,94%);
+ max-width:950px;
+ padding:24px 20px;
+ margin:0 auto;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ max-height:100%;
+ overflow-y:auto;
+ scrollbar-width:none;
+}
+
+.panel::-webkit-scrollbar{display:none}
+
+.logo{
+ font-size:clamp(42px,9vw,92px);
+ font-weight:900;
+ letter-spacing:7px;
+ color:#55ff70;
+ text-shadow:0 0 30px #55ff7066;
+ line-height:1;
+ text-align:center;
+}
+
+.sub{
+ color:#9baab2;
+ letter-spacing:3px;
+ font-size:12px;
+ margin:15px 0 24px;
+ text-align:center;
+}
+
+.note{
+ color:#67757d;
+ font-size:11px;
+ margin-top:18px;
+ text-align:center;
+}
+
+button{
+ border:1px solid #55ff70;
+ background:#55ff7012;
+ color:#55ff70;
+ padding:14px 25px;
+ border-radius:8px;
+ font-weight:bold;
+ letter-spacing:2px;
+ cursor:pointer;
+ min-height:44px;
+}
+
+button:hover{background:#55ff7022}
+button:active{transform:scale(.98)}
+
+.cards{
+ width:100%;
+ display:flex;
+ gap:14px;
+ justify-content:center;
+ align-items:stretch;
+ flex-wrap:wrap;
+ margin-top:24px;
+}
+
+.card{
+ width:190px;
+ padding:20px;
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+ text-align:center;
+}
+
+.card b{
+ display:block;
+ color:#55ff70;
+ margin-bottom:8px;
+}
+
+.card span{
+ font-size:10px;
+ color:#718087;
+}
+
+/* =========================
+   LEVEL SELECT
+========================= */
+
+.levelTitle{
+ font-size:clamp(28px,7vw,58px);
+ font-weight:900;
+ letter-spacing:4px;
+ color:#55ff70;
+ text-shadow:0 0 25px #55ff7045;
+}
+
+.levelSub{
+ color:#718087;
+ font-size:9px;
+ letter-spacing:2px;
+ margin-top:8px;
+}
+
+.levelGrid{
+ width:min(780px,96%);
+ margin-top:22px;
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
+.levelCard{
+ position:relative;
+ min-height:150px;
+ border:1px solid #ffffff15;
+ background:#ffffff05;
+ border-radius:12px;
+ padding:17px;
+ text-align:left;
+ cursor:pointer;
+ transition:
+  border-color .2s ease,
+  background .2s ease,
+  transform .2s ease;
+}
+
+.levelCard:hover{
+ border-color:#55ff7045;
+ background:#55ff7009;
+ transform:translateY(-2px);
+}
+
+.levelCard.locked{
+ cursor:not-allowed;
+ opacity:.48;
+}
+
+.levelCard.locked:hover{
+ border-color:#ffffff15;
+ background:#ffffff05;
+ transform:none;
+}
+
+.levelNumber{
+ color:#718087;
+ font-size:8px;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+
+.levelName{
+ color:#fff;
+ font-size:18px;
+ font-weight:900;
+ margin-top:7px;
+ letter-spacing:1px;
+}
+
+.levelDescription{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:7px;
+ max-width:300px;
+}
+
+.levelStatus{
+ display:inline-block;
+ margin-top:13px;
+ padding:5px 8px;
+ border-radius:20px;
+ border:1px solid #55ff7030;
+ color:#55ff70;
+ background:#55ff7009;
+ font-size:7px;
+ font-weight:900;
+ letter-spacing:1px;
+}
+
+.levelCard.locked .levelStatus{
+ color:#718087;
+ border-color:#ffffff15;
+ background:#ffffff05;
+}
+
+.levelReward{
+ position:absolute;
+ right:14px;
+ top:14px;
+ color:#ffcc33;
+ font-size:7px;
+ font-weight:bold;
+ letter-spacing:1px;
+}
+
+.levelBack{
+ margin-top:18px;
+}
+
+/* =========================
+   CLIMB POINTS
+========================= */
+
+.pointsPanel{
+ width:min(700px,94%);
+ margin-top:20px;
+ display:flex;
+ justify-content:center;
+ align-items:stretch;
+ gap:8px;
+ flex-wrap:wrap;
+}
+
+.pointsBox{
+ min-width:145px;
+ flex:1;
+ padding:12px 15px;
+ border:1px solid #55ff7025;
+ background:#55ff7008;
+ border-radius:9px;
+ text-align:center;
+}
+
+.pointsLabel{
+ color:#718087;
+ font-size:8px;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+.pointsValue{
+ color:#55ff70;
+ font-size:20px;
+ font-weight:900;
+ margin-top:4px;
+ letter-spacing:1px;
+}
+
+.pointsSmall{
+ color:#c8d0d4;
+ font-size:8px;
+ margin-top:3px;
+}
+
+/* =========================
+   COMMUNITY PROGRESS
+========================= */
+
+.progressPanel{
+ width:min(700px,94%);
+ margin-top:12px;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+}
+
+.progressCard{
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:9px;
+ padding:11px 8px;
+ text-align:center;
+}
+
+.progressIcon{
+ font-size:16px;
+ margin-bottom:4px;
+}
+
+.progressTitle{
+ color:#fff;
+ font-size:8px;
+ font-weight:900;
+ letter-spacing:1px;
+}
+
+.progressText{
+ color:#718087;
+ font-size:7px;
+ margin-top:4px;
+ line-height:1.4;
+}
+
+.progressStatus{
+ color:#55ff70;
+ font-size:7px;
+ font-weight:bold;
+ margin-top:5px;
+ letter-spacing:1px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+.dashboard{
+ width:min(760px,96%);
+ margin-top:18px;
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:9px;
+}
+
+.dashCard{
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+ padding:13px;
+ text-align:left;
+}
+
+.dashHeader{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+ margin-bottom:9px;
+}
+
+.dashTitle{
+ color:#fff;
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:1.5px;
+}
+
+.dashBadge{
+ color:#55ff70;
+ border:1px solid #55ff7030;
+ background:#55ff7009;
+ border-radius:20px;
+ padding:3px 7px;
+ font-size:7px;
+ font-weight:bold;
+ letter-spacing:1px;
+ white-space:nowrap;
+}
+
+.dashValue{
+ color:#55ff70;
+ font-size:21px;
+ font-weight:900;
+}
+
+.dashSmall{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:4px;
+}
+
+.refCode{
+ color:#fff;
+ background:#0007;
+ border:1px solid #ffffff12;
+ border-radius:6px;
+ padding:7px 8px;
+ margin-top:8px;
+ font-size:11px;
+ font-weight:900;
+ letter-spacing:2px;
+ text-align:center;
+}
+
+.refActions{
+ display:flex;
+ gap:6px;
+ margin-top:7px;
+}
+
+.smallButton{
+ flex:1;
+ padding:8px 8px;
+ min-height:38px;
+ font-size:7px;
+ letter-spacing:1px;
+}
+
+.streakBar{
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+ margin-top:8px;
+}
+
+.streakFill{
+ height:100%;
+ width:0%;
+ background:#55ff70;
+ box-shadow:0 0 8px #55ff70;
+ transition:width .3s ease;
+}
+
+/* =========================
+   LEADERBOARD
+========================= */
+
+.leaderboard{
+ width:min(760px,96%);
+ margin-top:18px;
+ border:1px solid #ffffff12;
+ background:#ffffff05;
+ border-radius:10px;
+ padding:13px;
+}
+
+.sectionTitle{
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:2px;
+ color:#fff;
+ margin-bottom:10px;
+}
+
+.leaderRow{
+ display:grid;
+ grid-template-columns:38px 1fr 90px 70px;
+ gap:7px;
+ align-items:center;
+ padding:7px 5px;
+ border-bottom:1px solid #ffffff08;
+ font-size:8px;
+}
+
+.leaderRow:last-child{border-bottom:0}
+
+.leaderRank{
+ color:#718087;
+ font-weight:bold;
+ text-align:center;
+}
+
+.leaderName{
+ color:#dce2e5;
+ text-align:left;
+ font-weight:bold;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+}
+
+.leaderPoints{
+ color:#55ff70;
+ text-align:right;
+ font-weight:bold;
+}
+
+.leaderTime{
+ color:#718087;
+ text-align:right;
+ font-size:7px;
+}
+
+.leaderYou{
+ background:#55ff7009;
+ border-radius:5px;
+}
+
+/* =========================
+   AIRDROP
+========================= */
+
+.airdrop{
+ width:min(760px,96%);
+ margin-top:12px;
+ border:1px solid #55ff7020;
+ background:#55ff7006;
+ border-radius:10px;
+ padding:13px;
+ text-align:left;
+}
+
+.airdropHeader{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+}
+
+.airdropTitle{
+ color:#55ff70;
+ font-size:10px;
+ font-weight:900;
+ letter-spacing:2px;
+}
+
+.airdropSoon{
+ color:#ffcc33;
+ font-size:7px;
+ letter-spacing:1px;
+ font-weight:bold;
+}
+
+.airdropText{
+ color:#718087;
+ font-size:8px;
+ line-height:1.5;
+ margin-top:6px;
+}
+
+.airdropProgress{
+ margin-top:10px;
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+}
+
+.airdropProgressFill{
+ height:100%;
+ width:0%;
+ background:#55ff70;
+ box-shadow:0 0 8px #55ff70;
+}
+
+.airdropStats{
+ display:flex;
+ justify-content:space-between;
+ gap:10px;
+ margin-top:7px;
+ color:#9baab2;
+ font-size:7px;
+}
+
+/* =========================
+   HUD
+========================= */
+
+#hud{
+ position:fixed;
+ top:18px;
+ left:18px;
+ right:18px;
+ z-index:10;
+ display:none;
+ pointer-events:none;
+}
+
+.top{
+ display:flex;
+ justify-content:center;
+ align-items:flex-start;
+ position:relative;
+ min-height:70px;
+}
+
+#hud .brand{display:none!important}
+
+.brand{
+ font-size:18px;
+ font-weight:900;
+ letter-spacing:3px;
+ color:#55ff70;
+ text-align:center;
+}
+
+#hud>.top>div:first-child{
+ position:absolute;
+ left:0;
+ top:0;
+ text-align:left;
+}
+
+.stat{
+ position:absolute;
+ right:0;
+ top:0;
+ text-align:right;
+ font-size:11px;
+ color:#9baab2;
+ line-height:1.8;
+}
+
+.stat b{color:#fff}
+
+#bar{
+ width:170px;
+ height:5px;
+ background:#182126;
+ border-radius:5px;
+ overflow:hidden;
+ margin-top:5px;
+}
+
+#progress{
+ height:100%;
+ width:0;
+ background:#55ff70;
+ box-shadow:0 0 10px #55ff70;
+}
+
+#status{
+ position:fixed;
+ top:70px;
+ left:50%;
+ transform:translateX(-50%);
+ font-size:11px;
+ font-weight:bold;
+ letter-spacing:2px;
+ white-space:nowrap;
+}
+
+/* =========================
+   HUD POINTS
+========================= */
+
+#hudPoints{
+ position:fixed;
+ top:90px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:10;
+ display:none;
+ text-align:center;
+ pointer-events:none;
+}
+
+.hudPointsLabel{
+ font-size:7px;
+ color:#718087;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+#hudPointsValue{
+ font-size:15px;
+ color:#55ff70;
+ font-weight:900;
+ margin-top:2px;
+}
+
+/* =========================
+   CRYPTO TICKER
+========================= */
+
+#cryptoTicker{
+ position:fixed;
+ top:18px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:50;
+ display:flex;
+ width:min(900px,96%);
+ pointer-events:none;
+}
+
+.cryptoRow{
+ width:100%;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:7px;
+ flex-wrap:nowrap;
+ margin:0 auto;
+}
+
+.cryptoCard{
+ min-width:110px;
+ padding:7px 10px;
+ border:1px solid #ffffff12;
+ background:rgba(5,9,13,.92);
+ backdrop-filter:blur(8px);
+ border-radius:7px;
+ box-shadow:0 5px 25px #0005;
+ text-align:center;
+ transition:border-color .25s ease,transform .25s ease,box-shadow .25s ease;
+}
+
+.cryptoTop{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:8px;
+}
+
+.cryptoSymbol{
+ font-size:9px;
+ font-weight:900;
+ letter-spacing:1px;
+ color:#fff;
+}
+
+.cryptoChange{
+ font-size:8px;
+ font-weight:bold;
+ white-space:nowrap;
+}
+
+.cryptoPrice{
+ margin-top:3px;
+ font-size:10px;
+ color:#c8d0d4;
+ font-weight:bold;
+ text-align:center;
+ transition:color .25s ease,transform .25s ease;
+}
+
+.cryptoCard.priceUp{
+ border-color:#55ff7060;
+ box-shadow:0 0 16px #55ff7020,0 5px 25px #0005;
+ transform:translateY(-1px);
+}
+
+.cryptoCard.priceDown{
+ border-color:#ff667760;
+ box-shadow:0 0 16px #ff667720,0 5px 25px #0005;
+ transform:translateY(-1px);
+}
+
+.cryptoCard.priceFlashUp .cryptoPrice{
+ color:#55ff70;
+ transform:scale(1.06);
+}
+
+.cryptoCard.priceFlashDown .cryptoPrice{
+ color:#ff6677;
+ transform:scale(1.06);
+}
+
+.cryptoCard.priceSync{
+ border-color:#ffffff35;
+ box-shadow:0 0 12px #ffffff10,0 5px 25px #0005;
+}
+
+.cryptoCard.priceSync .cryptoPrice{
+ transform:scale(1.025);
+}
+
+.cryptoLive{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:4px;
+ color:#55ff70;
+ font-size:7px;
+ font-weight:900;
+ letter-spacing:1px;
+ margin-bottom:3px;
+ transition:color .25s ease;
+}
+
+.cryptoLiveDot{
+ width:5px;
+ height:5px;
+ border-radius:50%;
+ background:#55ff70;
+ box-shadow:0 0 7px #55ff70;
+ animation:livePulse 1.4s infinite;
+}
+
+.cryptoUpdated{
+ color:#67757d;
+ font-size:6px;
+ letter-spacing:.5px;
+ margin-top:3px;
+ min-height:8px;
+}
+
+.cryptoCountdown{
+ color:#718087;
+ font-size:5.5px;
+ letter-spacing:.5px;
+ margin-top:2px;
+ min-height:7px;
+}
+
+.cryptoStatus{
+ position:absolute;
+ left:50%;
+ top:-12px;
+ transform:translateX(-50%);
+ color:#55ff70;
+ font-size:6px;
+ font-weight:bold;
+ letter-spacing:1.5px;
+ white-space:nowrap;
+ opacity:.9;
+}
+
+.cryptoStatus.offline{color:#ffcc33}
+.cryptoStatus.syncing{color:#c8d0d4}
+
+@keyframes livePulse{
+ 0%,100%{opacity:1;transform:scale(1)}
+ 50%{opacity:.35;transform:scale(.7)}
+}
+
+.cryptoLoading{
+ color:#67757d;
+ font-size:8px;
+ letter-spacing:1px;
+}
+
+.up{color:#55ff70}
+.down{color:#ff6677}
+.cryptoError{color:#ffcc33}
+
+/* =========================
+   HELP
+========================= */
+
+#help{
+ position:fixed;
+ bottom:18px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:10;
+ font-size:9px;
+ color:#77858c;
+ letter-spacing:1px;
+ text-align:center;
+ white-space:nowrap;
+ width:max-content;
+ max-width:94%;
+}
+
+#touchHint{
+ position:fixed;
+ left:50%;
+ bottom:58px;
+ transform:translateX(-50%);
+ z-index:25;
+ display:none;
+ padding:8px 13px;
+ border:1px solid #55ff7040;
+ border-radius:20px;
+ background:#000b;
+ color:#9baab2;
+ font-size:9px;
+ font-weight:bold;
+ letter-spacing:1px;
+ pointer-events:none;
+ text-align:center;
+ white-space:nowrap;
+}
+
+.nav{
+ position:fixed;
+ left:50%;
+ bottom:18px;
+ transform:translateX(-50%);
+ z-index:12;
+ display:none;
+}
+
+.nav button{
+ padding:8px 12px;
+ font-size:9px;
+}
+
+/* =========================
+   VICTORY
+========================= */
+
+.winTitle{
+ font-size:clamp(30px,7vw,65px);
+ font-weight:900;
+ color:#55ff70;
+ letter-spacing:3px;
+ text-shadow:0 0 25px #55ff7070;
+ text-align:center;
+ line-height:1.1;
+}
+
+.peak{
+ font-size:20px;
+ font-weight:900;
+ letter-spacing:5px;
+ margin:18px 0;
+ color:#fff;
+ text-align:center;
+ text-shadow:0 0 8px #ffffff66,0 0 20px #55ff7040;
+}
+
+.winSub{
+ color:#829098;
+ font-size:11px;
+ letter-spacing:2px;
+ margin-bottom:28px;
+ text-align:center;
+}
+
+.winPoints{
+ margin-bottom:28px;
+ padding:15px 30px;
+ border:1px solid #55ff7030;
+ background:#55ff7009;
+ border-radius:10px;
+ text-align:center;
+}
+
+.winPointsLabel{
+ color:#718087;
+ font-size:8px;
+ letter-spacing:2px;
+ font-weight:bold;
+}
+
+.winPointsValue{
+ color:#55ff70;
+ font-size:25px;
+ font-weight:900;
+ margin-top:5px;
+}
+
+.winReward{
+ color:#55ff70;
+ font-size:10px;
+ letter-spacing:1px;
+ margin-top:5px;
+}
+
+.unlockMessage{
+ color:#ffcc33;
+ font-size:9px;
+ letter-spacing:1px;
+ font-weight:bold;
+ margin-top:8px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:700px){
+
+ #landing,#launchpad,#levelSelect,#victory{
+  padding:12px 0;
+ }
+
+ .panel{
+  width:94%;
+  padding:16px 8px;
+ }
+
+ .logo{
+  font-size:clamp(38px,12vw,64px);
+  letter-spacing:4px;
+ }
+
+ .sub{
+  font-size:9px;
+  letter-spacing:2px;
+  line-height:1.6;
+  margin:12px 0 20px;
+ }
+
+ .cards{
+  gap:8px;
+  margin-top:20px;
+ }
+
+ .card{
+  width:min(170px,44vw);
+  padding:16px 10px;
+ }
+
+ .card b{font-size:11px}
+ .card span{font-size:9px}
+ .note{font-size:9px}
+
+ .pointsPanel{
+  margin-top:17px;
+  gap:6px;
+ }
+
+ .pointsBox{
+  min-width:105px;
+  padding:10px 8px;
+ }
+
+ .pointsLabel{font-size:7px}
+ .pointsValue{font-size:16px}
+ .pointsSmall{font-size:7px}
+
+ .progressPanel{
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  margin-top:8px;
+ }
+
+ .progressCard{padding:8px 4px}
+ .progressIcon{font-size:13px}
+ .progressTitle{font-size:7px}
+ .progressText{font-size:6px}
+ .progressStatus{font-size:6px}
+
+ .dashboard{
+  gap:6px;
+  margin-top:10px;
+ }
+
+ .dashCard{padding:10px}
+ .dashTitle{font-size:7px}
+ .dashValue{font-size:17px}
+ .dashSmall{font-size:7px}
+ .refCode{font-size:9px}
+
+ .smallButton{
+  font-size:6px;
+  padding:7px 4px;
+ }
+
+ .leaderboard{
+  margin-top:10px;
+  padding:9px;
+ }
+
+ .leaderRow{
+  grid-template-columns:28px 1fr 62px;
+  gap:4px;
+  padding:6px 3px;
+ }
+
+ .leaderTime{display:none}
+
+ .leaderName,.leaderPoints{font-size:7px}
+
+ .airdrop{
+  margin-top:8px;
+  padding:10px;
+ }
+
+ .airdropTitle{font-size:8px}
+ .airdropText{font-size:7px}
+
+ .levelGrid{
+  grid-template-columns:1fr;
+  width:94%;
+  gap:8px;
+  margin-top:17px;
+ }
+
+ .levelCard{
+  min-height:125px;
+  padding:14px;
+ }
+
+ .levelName{
+  font-size:16px;
+ }
+
+ #bar{width:120px}
+ #status{top:65px;font-size:9px}
+ #hudPoints{top:78px}
+
+ #cryptoTicker{
+  top:82px;
+  width:96%;
+ }
+
+ .cryptoRow{
+  gap:4px;
+  justify-content:center;
+ }
+
+ .cryptoCard{
+  min-width:0;
+  width:20%;
+  flex:1 1 20%;
+  padding:6px 4px;
+ }
+
+ .cryptoPrice{font-size:8px}
+ .cryptoChange{
+  font-size:7px;
+  min-width:0;
+  text-align:center;
+ }
+
+ .cryptoSymbol{font-size:8px}
+
+ .cryptoLive{
+  font-size:5px;
+  gap:3px;
+  margin-bottom:2px;
+ }
+
+ .cryptoLiveDot{
+  width:4px;
+  height:4px;
+ }
+
+ .cryptoUpdated{font-size:5px}
+ .cryptoCountdown{font-size:4.5px}
+
+ .cryptoStatus{
+  top:-10px;
+  font-size:5px;
+ }
+
+ .winTitle{
+  font-size:clamp(30px,9vw,50px);
+  letter-spacing:2px;
+ }
+
+ .peak{
+  font-size:16px;
+  letter-spacing:3px;
+  margin:15px 0;
+ }
+
+ .winSub{font-size:9px}
+
+ #touchHint{
+  font-size:8px;
+  max-width:90%;
+  white-space:normal;
+ }
+}
+
+@media(max-width:420px){
+
+ .panel{width:96%}
+
+ .cards{gap:6px}
+
+ .card{
+  width:31%;
+  min-width:0;
+  padding:13px 6px;
+ }
+
+ .card b{font-size:9px}
+ .card span{font-size:7px}
+
+ #cryptoTicker{top:80px}
+
+ .cryptoCard{padding:5px 2px}
+ .cryptoSymbol{font-size:7px}
+ .cryptoPrice{font-size:7px}
+ .cryptoChange{font-size:6px}
+ .cryptoLive{font-size:4.5px}
+ .cryptoUpdated{font-size:4.5px}
+ .cryptoCountdown{font-size:4px}
+ .cryptoStatus{font-size:4.5px}
+
+ .pointsPanel{gap:4px}
+
+ .pointsBox{padding:9px 5px}
+ .pointsValue{font-size:14px}
+
+ .dashboard{
+  grid-template-columns:1fr 1fr;
+ }
+}
+</style>
+
+<style id="climboria-cinematic-gameplay">
+#victory,#failure{background:radial-gradient(ellipse at 50% 35%,#183449 0%,#070d14 68%);backdrop-filter:blur(8px)}
+.resultActions{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:10px;width:min(560px,100%)}
+.resultActions button{min-width:135px}
+#failure .winTitle{color:#ff7b7b;text-shadow:0 0 26px #ff4d4d55}
+#failure .winPoints{border-color:#ff777733;background:#ff555508}
+#failure .winPointsValue{color:#ff8b8b}
+@media(max-width:700px){.resultActions{gap:7px}.resultActions button{min-width:calc(50% - 7px);padding:12px 9px;font-size:9px;letter-spacing:1px}}
+</style>
+<style id="climboria-game-brand-style">
+#climboria-game-brand{
+  position:fixed;
+  top:18px;
+  left:18px;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  pointer-events:none;
+  user-select:none;
+  font-family:Arial,sans-serif;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+
+#climboria-game-brand img{
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.35));
+}
+
+@media(max-width:700px){
+  #climboria-game-brand{
+    top:12px;
+    left:12px;
+    gap:6px;
+    font-size:10px;
+    letter-spacing:1.5px;
+  }
+
+  #climboria-game-brand img{
+    width:28px;
+    height:28px;
+  }
+}
+</style>
+
+
+<style id="climboria-difficulty-v1">
+/* Climboria Progressive Difficulty V1 */
+</style>
+
+
+<style id="climboria-level-3-v1">
+/* Climboria Level 3 - Bitcoin Block */
+</style>
+
+
+<style id="climboria-level-3-hard-route-v1">
+/* Climboria Level 3 Hard Route V1 */
+</style>
+
+
+<style id="climboria-level-3-hard-route-v2">
+/* Climboria Level 3 Hard Route V2 */
+</style>
+
+
+<style id="climboria-readable-ui">
+
+/* =========================================
+   CLIMBORIA READABLE UI
+   Visual-only improvements.
+   Game JavaScript and physics untouched.
+   ========================================= */
+
+/* General HUD text */
+#hud,
+#ui,
+.hud,
+.panel,
+.card,
+.box,
+.menu,
+.status,
+.info,
+.controls,
+.instructions{
+  line-height:1.35;
+}
+
+/* Common small text elements */
+#hud small,
+#ui small,
+.hud small,
+.panel small,
+.card small,
+.box small,
+.menu small,
+.status small,
+.info small,
+.controls small{
+  font-size:13px !important;
+}
+
+/* Labels */
+#hud label,
+#ui label,
+.hud label,
+.panel label,
+.card label,
+.box label{
+  font-size:13px !important;
+  font-weight:700;
+}
+
+/* Buttons */
+button{
+  font-size:14px;
+  line-height:1.2;
+}
+
+/* Make existing HUD text easier to read */
+.hud,
+.panel,
+.card,
+.box,
+.status,
+.info,
+.controls{
+  text-shadow:0 1px 3px rgba(0,0,0,.75);
+}
+
+/* Price Action and market-related text */
+[class*="price"],
+[class*="Price"],
+[id*="price"],
+[id*="Price"],
+[class*="action"],
+[class*="Action"],
+[id*="action"],
+[id*="Action"]{
+  font-size:14px !important;
+}
+
+/* Headings */
+h1{
+  font-size:clamp(20px,3vw,30px);
+}
+
+h2{
+  font-size:clamp(17px,2.5vw,24px);
+}
+
+h3{
+  font-size:clamp(15px,2vw,20px);
+}
+
+/* Mobile readability */
+@media(max-width:700px){
+
+  #hud,
+  #ui,
+  .hud,
+  .panel,
+  .card,
+  .box,
+  .menu,
+  .status,
+  .info,
+  .controls{
+    font-size:13px;
+  }
+
+  #hud small,
+  #ui small,
+  .hud small,
+  .panel small,
+  .card small,
+  .box small,
+  .menu small,
+  .status small,
+  .info small,
+  .controls small{
+    font-size:12px !important;
+  }
+
+  #hud label,
+  #ui label,
+  .hud label,
+  .panel label,
+  .card label,
+  .box label{
+    font-size:12px !important;
+  }
+
+  button{
+    font-size:14px;
+    min-height:38px;
+  }
+
+  [class*="price"],
+  [class*="Price"],
+  [id*="price"],
+  [id*="Price"],
+  [class*="action"],
+  [class*="Action"],
+  [id*="action"],
+  [id*="Action"]{
+    font-size:13px !important;
+  }
+}
+
+</style>
+
+
+<style id="climboria-mobile-first-v1">
+/* Portrait gameplay: use the whole viewport and keep overlays readable. */
+html, body { min-height:100%; }
+body > canvas {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+}
+#landing, #launchpad, #levelSelect, #victory, #failure { z-index:20; }
+#hud, #hudPoints, #help, #nav, #touchHint { z-index:10; }
+@media (max-width:700px) and (orientation:portrait) {
+  #hud {
+    top: max(8px, env(safe-area-inset-top));
+    left:10px;
+    right:10px;
+  }
+  #hud .top { min-height:66px; }
+  .stat { font-size:10px; line-height:1.65; }
+  #bar { width:clamp(82px, 25vw, 120px); }
+  #status { top:58px; font-size:9px; }
+  #hudPoints { top:75px; }
+  #help {
+    bottom:max(10px, env(safe-area-inset-bottom));
+    white-space:normal;
+    width:94%;
+    font-size:9px;
+    line-height:1.4;
+  }
+  #touchHint {
+    bottom:48px;
+    max-width:92%;
+    white-space:normal;
+    line-height:1.4;
+  }
+  #climboria-game-brand {
+    top:max(8px, env(safe-area-inset-top));
+    left:10px;
+  }
+}
+@media (max-width:380px) and (orientation:portrait) {
+  .stat { font-size:9px; }
+  #bar { width:78px; }
+  #climboria-game-brand span { display:none; }
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="climboria-game-brand">
+  <img src="favicon.png" alt="Climboria">
+  <span>CLIMBORIA</span>
+</div>
+
+
+
+<!-- =========================
+     LANDING
+========================= -->
+
+<div id="landing">
+ <div class="panel">
+
+  <div class="logo">CLIMBORIA</div>
+
+  <div class="sub">
+   CLIMB HIGHER • PLAY HARDER • BUILD YOUR WAY
+  </div>
+
+  <button id="startButton" type="button">
+   START CLIMB
+  </button>
+
+  <div class="pointsPanel">
+
+   <div class="pointsBox">
+    <div class="pointsLabel">CLIMB POINTS</div>
+    <div class="pointsValue" id="landingPoints">0</div>
+    <div class="pointsSmall">YOUR PROGRESS</div>
+   </div>
+
+   <div class="pointsBox">
+    <div class="pointsLabel">SUMMITS</div>
+    <div class="pointsValue" id="landingSummits">0</div>
+    <div class="pointsSmall">COMPLETED</div>
+   </div>
+
+   <div class="pointsBox">
+    <div class="pointsLabel">ATTEMPTS</div>
+    <div class="pointsValue" id="landingAttempts">0</div>
+    <div class="pointsSmall">TOTAL CLIMBS</div>
+   </div>
+
+  </div>
+
+  <div class="progressPanel">
+
+   <div class="progressCard">
+    <div class="progressIcon">🔥</div>
+    <div class="progressTitle">DAILY STREAK</div>
+    <div class="progressText" id="landingStreakText">
+     0 day streak
+    </div>
+    <div class="progressStatus" id="landingStreakStatus">
+     START TODAY
+    </div>
+   </div>
+
+   <div class="progressCard">
+    <div class="progressIcon">🔗</div>
+    <div class="progressTitle">REFERRALS</div>
+    <div class="progressText" id="landingReferralText">
+     0 referrals
+    </div>
+    <div class="progressStatus">
+     +50 POINTS
+    </div>
+   </div>
+
+   <div class="progressCard">
+    <div class="progressIcon">🎁</div>
+    <div class="progressTitle">AIRDROP</div>
+    <div class="progressText">
+     Future rewards
+    </div>
+    <div class="progressStatus">
+     TRACKING
+    </div>
+   </div>
+
+  </div>
+
+  <div class="cards">
+
+   <div class="card">
+    <b>GAME</b>
+    <span>Climb. Swing. Survive.</span>
+   </div>
+
+   <div class="card">
+    <b>LAUNCHPAD</b>
+    <span>Community projects coming soon.</span>
+   </div>
+
+   <div class="card">
+    <b>DEX</b>
+    <span>Climboria DEX — in development.</span>
+   </div>
+
+  </div>
+
+  <div class="note">
+   Built for the climb. For Jarrell Escalante ❤️
+  </div>
+
+ </div>
+</div>
+
+
+<!-- =========================
+     LEVEL SELECT
+========================= -->
+
+<div id="levelSelect">
+ <div class="panel">
+
+  <div class="levelTitle">
+   CHOOSE YOUR CLIMB
+  </div>
+
+  <div class="levelSub">
+   COMPLETE LEVELS TO UNLOCK THE NEXT SUMMIT
+  </div>
+
+  <div class="levelGrid">
+
+   <div
+    class="levelCard"
+    id="level1Card"
+    data-level="1"
+   >
+
+    <div class="levelNumber">
+     LEVEL 01
+    </div>
+
+    <div class="levelName">
+     GENESIS WALLET
+    </div>
+
+    <div class="levelDescription">
+     Your first climb. Learn the ropes,
+     master the hammer, and reach the first summit.
+    </div>
+
+    <div class="levelStatus">
+     UNLOCKED
+    </div>
+
+    <div class="levelReward">
+     +100 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level2Card"
+    data-level="2"
+   >
+
+    <div class="levelNumber">
+     LEVEL 02
+    </div>
+
+    <div class="levelName">
+     SATOSHI'S ASCENT
+    </div>
+
+    <div class="levelDescription">
+     A harder route awaits.
+     Complete Genesis Wallet to unlock this mountain.
+    </div>
+
+    <div class="levelStatus" id="level2Status">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +150 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level3Card"
+    data-level="3"
+   >
+
+    <div class="levelNumber">
+     LEVEL 03
+    </div>
+
+    <div class="levelName">
+     BITCOIN BLOCK
+    </div>
+
+    <div class="levelDescription">
+     A deeper climb with more dangerous routes
+     and better future rewards.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +200 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level4Card"
+    data-level="4"
+   >
+
+    <div class="levelNumber">
+     LEVEL 04
+    </div>
+
+    <div class="levelName">
+     ETHEREUM TOWER
+    </div>
+
+    <div class="levelDescription">
+     Advanced climbing territory.
+     This level is coming later.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +250 CP
+    </div>
+
+   </div>
+
+
+   <div
+    class="levelCard locked"
+    id="level5Card"
+    data-level="5"
+   >
+
+    <div class="levelNumber">
+     LEVEL 05
+    </div>
+
+    <div class="levelName">
+     BASE SUMMIT
+    </div>
+
+    <div class="levelDescription">
+     The final planned prototype destination.
+     More content coming soon.
+    </div>
+
+    <div class="levelStatus">
+     🔒 LOCKED
+    </div>
+
+    <div class="levelReward">
+     +300 CP
+    </div>
+
+   </div>
+
+  </div>
+
+  <button
+   id="levelBackButton"
+   class="levelBack"
+   type="button"
+  >
+   BACK
+  </button>
+
+ </div>
+</div>
+
+
+<!-- =========================
+     LAUNCHPAD
+========================= -->
+
+<div id="launchpad">
+ <div class="panel">
+
+  <div class="logo" style="font-size:48px">
+   CLIMBORIA
+  </div>
+
+  <div class="sub">
+   THE CLIMBORIA ECOSYSTEM
+  </div>
+
+  <div class="dashboard">
+
+   <div class="dashCard">
+
+    <div class="dashHeader">
+     <div class="dashTitle">DAILY STREAK</div>
+     <div class="dashBadge">+5 DAILY</div>
+    </div>
+
+    <div class="dashValue" id="dashStreak">
+     0 DAYS
+    </div>
+
+    <div class="dashSmall" id="dashStreakText">
+     Visit daily to build your streak.
+    </div>
+
+    <div class="streakBar">
+     <div class="streakFill" id="streakFill"></div>
+    </div>
+
+   </div>
+
+   <div class="dashCard">
+
+    <div class="dashHeader">
+     <div class="dashTitle">REFERRAL SYSTEM</div>
+     <div class="dashBadge">+50 EACH</div>
+    </div>
+
+    <div class="dashValue" id="dashReferrals">0</div>
+
+    <div class="dashSmall">
+     Your referral code
+    </div>
+
+    <div class="refCode" id="refCode">
+     CLIMB-0000
+    </div>
+
+    <div class="refActions">
+
+     <button class="smallButton" id="copyReferralButton" type="button">
+      COPY CODE
+     </button>
+
+     <button class="smallButton" id="shareReferralButton" type="button">
+      SHARE LINK
+     </button>
+
+    </div>
+
+   </div>
+
+  </div>
+
+  <div class="leaderboard">
+
+   <div class="sectionTitle">
+    🏆 CLIMBORIA LEADERBOARD
+   </div>
+
+   <div id="leaderboardRows"></div>
+
+   <div class="dashSmall" style="text-align:center;margin-top:8px">
+    Global leaderboard will be connected to the backend later.
+   </div>
+
+  </div>
+
+  <div class="airdrop">
+
+   <div class="airdropHeader">
+
+    <div class="airdropTitle">
+     🎁 FUTURE AIRDROP TRACKER
+    </div>
+
+    <div class="airdropSoon">
+     COMING SOON
+    </div>
+
+   </div>
+
+   <div class="airdropText">
+    Your Climboria activity is being tracked locally.
+    Future seasons may use these activities for community rewards
+    and airdrop eligibility.
+   </div>
+
+   <div class="airdropProgress">
+    <div class="airdropProgressFill" id="airdropProgress"></div>
+   </div>
+
+   <div class="airdropStats">
+
+    <span>
+     Activity score:
+     <b id="airdropScore">0%</b>
+    </span>
+
+    <span>
+     Tracked actions:
+     <b id="airdropActions">0</b>
+    </span>
+
+   </div>
+
+  </div>
+
+  <div class="cards">
+
+   <div class="card">
+    <b>NEW PROJECTS</b>
+    <span>COMING SOON</span>
+   </div>
+
+   <div class="card">
+    <b>COMMUNITY</b>
+    <span>BUILDING</span>
+   </div>
+
+   <div class="card">
+    <b>CLIMBORIA DEX</b>
+    <span>IN DEVELOPMENT</span>
+   </div>
+
+  </div>
+
+  <br>
+
+  <button id="backButton" type="button">
+   BACK
+  </button>
+
+ </div>
+</div>
+
+
+<!-- =========================
+     VICTORY
+========================= -->
+
+<div id="victory">
+ <div class="panel">
+
+  <div class="winTitle">
+   SUMMIT REACHED
+  </div>
+
+  <div class="peak" id="victoryPeak">
+   GENESIS WALLET
+  </div>
+
+  <div class="winSub">
+   YOU MADE IT.
+   <br><br>
+   Every climb has a reason. ❤️
+  </div>
+
+  <div class="winPoints">
+
+   <div class="winPointsLabel">
+    CLIMB POINTS
+   </div>
+
+   <div class="winPointsValue" id="victoryPoints">
+    0
+   </div>
+
+   <div class="winReward">
+    +100 SUMMIT REWARD
+   </div>
+
+   <div
+    class="unlockMessage"
+    id="unlockMessage"
+   >
+    NEXT LEVEL UNLOCKED
+   </div>
+
+  </div>
+
+  <div class="resultActions">
+   <button id="nextLevelVictoryButton" type="button">NEXT LEVEL</button>
+   <button id="levelSelectVictoryButton" type="button">LEVEL MENU</button>
+   <button id="menuButtonVictory" type="button">HOME</button>
+  </div>
+
+ </div>
+</div>
+<div id="failure" style="display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;text-align:center;padding:18px;">
+ <div class="panel"><div class="winTitle">CLIMB FAILED</div><div class="peak" id="failurePeak">THE MOUNTAIN WINS THIS ROUND</div><div class="winSub">Catch your breath, adjust your swing, and try again.</div><div class="winPoints"><div class="winPointsLabel">CURRENT SUMMIT</div><div class="winPointsValue" id="failureLevel">LEVEL 01</div><div class="winReward">YOUR PROGRESS AND UNLOCKS ARE SAVED</div></div><div class="resultActions"><button id="retryFailureButton" type="button">RETRY</button><button id="levelMenuFailureButton" type="button">LEVEL MENU</button><button id="homeFailureButton" type="button">HOME</button></div></div>
+</div>
+
+<!-- =========================
+     HUD
+========================= -->
+
+<div id="hud">
+
+ <div class="top">
+
+  <div>
+
+   <div class="brand">
+    CLIMBORIA
+   </div>
+
+   <div id="status">
+    FREE
+   </div>
+
+  </div>
+
+  <div class="stat">
+
+   <span id="hudLevelName">
+    LEVEL 01 • GENESIS WALLET
+   </span>
+
+   <br>
+
+   PIKO:
+   <b id="hammerState">READY</b>
+
+   <br>
+
+   HEIGHT:
+   <b id="height">0</b>
+
+   <br>
+
+   SUMMIT:
+   <b id="pct">0%</b>
+
+   <div id="bar">
+    <div id="progress"></div>
+   </div>
+
+  </div>
+
+ </div>
+
+</div>
+
+
+<div id="hudPoints">
+
+ <div class="hudPointsLabel">
+  CLIMB POINTS
+ </div>
+
+ <div id="hudPointsValue">
+  0
+ </div>
+
+</div>
+
+
+<!-- =========================
+     CRYPTO TICKER
+========================= -->
+
+<div id="cryptoTicker">
+
+ <div class="cryptoStatus" id="cryptoStatus">
+  CONNECTING LIVE MARKET
+ </div>
+
+ <div class="cryptoRow">
+
+  <div class="cryptoCard" id="btcCard">
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    <span id="btcLiveText">WAIT</span>
+   </div>
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">BTC</span>
+    <span id="btcChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="btcPrice" class="cryptoPrice">Loading...</div>
+   <div id="btcUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="btcCountdown" class="cryptoCountdown">Refresh in 10s</div>
+  </div>
+
+  <div class="cryptoCard" id="ethCard">
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    <span id="ethLiveText">WAIT</span>
+   </div>
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">ETH</span>
+    <span id="ethChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="ethPrice" class="cryptoPrice">Loading...</div>
+   <div id="ethUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="ethCountdown" class="cryptoCountdown">Refresh in 10s</div>
+  </div>
+
+  <div class="cryptoCard" id="solCard">
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    <span id="solLiveText">WAIT</span>
+   </div>
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">SOL</span>
+    <span id="solChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="solPrice" class="cryptoPrice">Loading...</div>
+   <div id="solUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="solCountdown" class="cryptoCountdown">Refresh in 10s</div>
+  </div>
+
+  <div class="cryptoCard" id="bnbCard">
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    <span id="bnbLiveText">WAIT</span>
+   </div>
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">BNB</span>
+    <span id="bnbChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="bnbPrice" class="cryptoPrice">Loading...</div>
+   <div id="bnbUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="bnbCountdown" class="cryptoCountdown">Refresh in 10s</div>
+  </div>
+
+  <div class="cryptoCard" id="xrpCard">
+   <div class="cryptoLive">
+    <span class="cryptoLiveDot"></span>
+    <span id="xrpLiveText">WAIT</span>
+   </div>
+   <div class="cryptoTop">
+    <span class="cryptoSymbol">XRP</span>
+    <span id="xrpChange" class="cryptoChange cryptoLoading">--</span>
+   </div>
+   <div id="xrpPrice" class="cryptoPrice">Loading...</div>
+   <div id="xrpUpdated" class="cryptoUpdated">Connecting...</div>
+   <div id="xrpCountdown" class="cryptoCountdown">Refresh in 10s</div>
+  </div>
+
+ </div>
+</div>
+
+
+<div id="help"></div>
+
+<div id="touchHint">
+ MOVE FINGER • HOLD GREEN GRIP • DRAG TO SWING
+</div>
+
+<div class="nav" id="nav">
+ <button id="menuButton" type="button">
+  MENU
+ </button>
+</div>
+
+
+<!-- =========================
+     EARLY BUTTON BINDINGS
+========================= -->
+
+<script>
+(function(){
+
+ const startButton=
+  document.getElementById("startButton");
+
+ if(startButton){
+
+  startButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showLevelSelect==="function"){
+
+     window.showLevelSelect();
+
+    }else{
+
+     window.climboriaStartRequested=true;
+
+     const status=
+      document.getElementById("status");
+
+     if(status){
+
+      status.textContent=
+       "LOADING GAME...";
+
+      status.style.color=
+       "#ffcc33";
+     }
+    }
+
+   }
+  );
+ }
+
+
+ const levelBackButton=
+  document.getElementById("levelBackButton");
+
+ if(levelBackButton){
+
+  levelBackButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const level1Card=
+  document.getElementById("level1Card");
+
+ if(level1Card){
+
+  level1Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(1);
+
+   }
+  );
+ }
+
+
+ const level2Card=
+  document.getElementById("level2Card");
+
+ if(level2Card){
+
+  level2Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(2);
+
+   }
+  );
+ }
+
+
+ const level3Card=
+  document.getElementById("level3Card");
+
+ if(level3Card){
+
+  level3Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(3);
+
+   }
+  );
+ }
+
+
+ const level4Card=
+  document.getElementById("level4Card");
+
+ if(level4Card){
+
+  level4Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(4);
+
+   }
+  );
+ }
+
+
+ const level5Card=
+  document.getElementById("level5Card");
+
+ if(level5Card){
+
+  level5Card.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.startLevel==="function")
+     window.startLevel(5);
+
+   }
+  );
+ }
+
+
+ const backButton=
+  document.getElementById("backButton");
+
+ if(backButton){
+
+  backButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const climbAgainButton=
+  document.getElementById("climbAgainButton");
+
+ if(climbAgainButton){
+
+  climbAgainButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.restartGame==="function")
+     window.restartGame();
+
+   }
+  );
+ }
+
+
+ const nextLevelVictoryButton=document.getElementById("nextLevelVictoryButton");
+ if(nextLevelVictoryButton)nextLevelVictoryButton.addEventListener("click",function(){const next=Number(window.climboriaCurrentLevel||1)+1;if(next<=10&&typeof window.startLevel==="function")window.startLevel(next);else if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
+ const retryFailureButton=document.getElementById("retryFailureButton");
+ if(retryFailureButton)retryFailureButton.addEventListener("click",function(){if(typeof window.restartGame==="function")window.restartGame();});
+ const levelMenuFailureButton=document.getElementById("levelMenuFailureButton");
+ if(levelMenuFailureButton)levelMenuFailureButton.addEventListener("click",function(){if(typeof window.showLevelSelect==="function")window.showLevelSelect();});
+ const homeFailureButton=document.getElementById("homeFailureButton");
+ if(homeFailureButton)homeFailureButton.addEventListener("click",function(){if(typeof window.showMenu==="function")window.showMenu();});
+ const levelSelectVictoryButton=
+  document.getElementById(
+   "levelSelectVictoryButton"
+  );
+
+ if(levelSelectVictoryButton){
+
+  levelSelectVictoryButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showLevelSelect==="function")
+     window.showLevelSelect();
+
+   }
+  );
+ }
+
+
+ const menuButtonVictory=
+  document.getElementById("menuButtonVictory");
+
+ if(menuButtonVictory){
+
+  menuButtonVictory.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const menuButton=
+  document.getElementById("menuButton");
+
+ if(menuButton){
+
+  menuButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.showMenu==="function")
+     window.showMenu();
+
+   }
+  );
+ }
+
+
+ const copyButton=
+  document.getElementById(
+   "copyReferralButton"
+  );
+
+ if(copyButton){
+
+  copyButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.copyReferral==="function")
+     window.copyReferral();
+
+   }
+  );
+ }
+
+
+ const shareButton=
+  document.getElementById(
+   "shareReferralButton"
+  );
+
+ if(shareButton){
+
+  shareButton.addEventListener(
+   "click",
+   function(){
+
+    if(typeof window.shareReferral==="function")
+     window.shareReferral();
+
+   }
+  );
+ }
+
+})();
+
+</script>
+
+
+<script type="module">
+
+/* =====================================================
+   THREE.JS
+===================================================== */
+
+let THREE;
+
+try{
+
+ THREE=await import(
+  "https://esm.sh/three@0.180.0"
+ );
+
+}catch(firstError){
+
+ console.warn(
+  "CLIMBORIA: esm.sh unavailable; trying jsDelivr.",
+  firstError
+ );
+
+ try{
+
+  THREE=await import(
+   "https://cdn.jsdelivr.net/npm/three@0.180.0/+esm"
+  );
+
+ }catch(secondError){
+
+  console.warn(
+   "CLIMBORIA: jsDelivr unavailable; trying unpkg.",
+   secondError
+  );
+
+  try{
+
+   THREE=await import(
+    "https://unpkg.com/three@0.180.0/build/three.module.js"
+   );
+
+  }catch(error){
+
+   console.error(
+    "CLIMBORIA: all Three.js CDNs failed.",
+    error
+   );
+
+   const status=
+    document.getElementById("status");
+
+   if(status){
+
+    status.textContent=
+     "GAME ENGINE LOAD ERROR — CHECK CONNECTION AND RELOAD";
+
+    status.style.color=
+     "#ff6677";
+   }
+
+   const startButton=
+    document.getElementById("startButton");
+
+   if(startButton){
+
+    startButton.textContent=
+     "RELOAD GAME";
+
+    startButton.onclick=
+     function(){
+      location.reload();
+     };
+   }
+
+   throw error;
+  }
+ }
+}
+
+
+/* =====================================================
+   CORE
+===================================================== */
+
+let scene;
+let camera;
+let renderer;
+
+let hero;
+let hammer;
+
+let hammerRope;
+let hammerRopeMaterial;
+
+let grips=[];
+
+let grabbed=null;
+
+let anchorWorld=
+ new THREE.Vector3();
+
+let cursorWorld=
+ new THREE.Vector3();
+
+let lastTime=
+ performance.now();
+
+const mouse={
+ x:0,
+ y:0
+};
+
+const raycaster=
+ new THREE.Raycaster();
+
+const cursorPlane=
+ new THREE.Plane(
+  new THREE.Vector3(0,0,1),
+  -4
+ );
+
+let velocityX=0;
+let velocityY=0;
+
+let ropeLength=0;
+
+let running=false;
+let gameWon=false;
+
+let touchActive=false;
+
+let touchReticle=null;
+let touchReticleMaterial=null;
+
+let cameraShake=0;
+
+
+/* =====================================================
+   LEVEL SYSTEM
+===================================================== */
+
+const LEVEL_KEY=
+ "climboria_unlocked_level";
+
+let unlockedLevel=1;
+let currentLevel=1;
+
+const LEVELS={
+ 1:{
+  name:"GENESIS WALLET",
+  reward:100,
+  playable:true
+ },
+ 2:{
+  name:"SATOSHI'S ASCENT",
+  reward:150,
+  playable:true
+ },
+ 3:{
+  name:"BITCOIN BLOCK",
+  reward:200,
+  playable:true
+ },
+ 4:{
+  name:"ETHEREUM TOWER",
+  reward:250,
+  playable:false
+ },
+ 5:{
+  name:"BASE SUMMIT",
+  reward:300,
+  playable:false
+ }
+};
+
+function loadLevelData(){
+
+ try{
+
+  const saved=
+   Number(
+    localStorage.getItem(
+     LEVEL_KEY
+    )
+   );
+
+  unlockedLevel=
+   Number.isFinite(saved)&&
+   saved>=1
+   ?
+   Math.min(
+    5,
+    Math.floor(saved)
+   )
+   :
+   1;
+
+ }catch(error){
+
+  unlockedLevel=1;
+
+ }
+
+ updateLevelUI();
+}
+
+
+function saveLevelData(){
+
+ try{
+
+  localStorage.setItem(
+   LEVEL_KEY,
+   String(unlockedLevel)
+  );
+
+ }catch(error){}
+}
+
+
+function unlockNextLevel(){
+
+ if(currentLevel>=5)
+  return;
+
+ if(unlockedLevel<
+    currentLevel+1){
+
+  unlockedLevel=
+   currentLevel+1;
+
+  saveLevelData();
+
+ }
+
+ updateLevelUI();
+}
+
+
+function updateLevelUI(){
+
+ for(let i=1;i<=5;i++){
+
+  const card=
+   $("level"+i+"Card");
+
+  if(!card)continue;
+
+  const status=
+   card.querySelector(
+    ".levelStatus"
+   );
+
+  if(i<=unlockedLevel){
+
+   card.classList.remove("locked");
+
+   if(status)
+    status.textContent=
+     i===1?
+     "UNLOCKED":
+     "UNLOCKED";
+
+  }else{
+
+   card.classList.add("locked");
+
+   if(status)
+    status.textContent=
+     "🔒 LOCKED";
+  }
+ }
+
+ const hudLevel=
+  $("hudLevelName");
+
+ if(hudLevel){
+
+  const level=
+   LEVELS[currentLevel];
+
+  hudLevel.textContent=
+   "LEVEL 0"+
+   currentLevel+
+   " • "+
+   level.name;
+ }
+
+}
+
+
+function showLevelSelect(){
+
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
+ running=false;
+ grabbed=null;
+ touchActive=false;
+ gameWon=false;
+ summitSequence=false;
+
+ cancelVictoryTimer();
+
+ $("landing").style.display="none";
+ $("launchpad").style.display="none";
+ $("levelSelect").style.display="flex";
+ $("victory").style.display="none";
+
+ $("hud").style.display="none";
+ $("hudPoints").style.display="none";
+ $("help").style.display="none";
+ $("nav").style.display="none";
+ $("touchHint").style.display="none";
+
+ $("cryptoTicker").style.display="none";
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ clearBursts();
+
+ updateLevelUI();
+ updatePointsUI();
+}
+
+
+function startLevel(level){
+
+ level=
+  Math.floor(
+   Number(level)||0
+  );
+
+ if(!LEVELS[level])
+  return;
+
+ if(level>unlockedLevel){
+
+  setStatus(
+   "LEVEL LOCKED",
+   "#ffcc33"
+  );
+
+  return;
+ }
+
+
+ /*
+  Level 2-5 are intentionally not
+  playable yet. This lets us build
+  the level structure without touching
+  the working Level 1 physics.
+ */
+
+ if(!LEVELS[level].playable){
+
+  alert(
+   LEVELS[level].name+
+   " is coming soon. Complete the current content first."
+  );
+
+  return;
+ }
+
+
+ currentLevel=level;
+
+ $("levelSelect").style.display="none";
+
+ showGame();
+}
+
+
+/* =====================================================
+   POINTS
+===================================================== */
+
+const POINTS_KEY=
+ "climboria_climb_points";
+
+const SUMMITS_KEY=
+ "climboria_summits";
+
+const ATTEMPTS_KEY=
+ "climboria_attempts";
+
+const STREAK_KEY=
+ "climboria_daily_streak";
+
+const LAST_VISIT_KEY=
+ "climboria_last_visit";
+
+const REFERRAL_CODE_KEY=
+ "climboria_referral_code";
+
+const REFERRALS_KEY=
+ "climboria_referrals";
+
+const AIRDROP_ACTIONS_KEY=
+ "climboria_airdrop_actions";
+
+const AIRDROP_SCORE_KEY=
+ "climboria_airdrop_score";
+
+const CLIMB_REWARD=100;
+const ATTEMPT_REWARD=10;
+const DAILY_REWARD=5;
+const REFERRAL_REWARD=50;
+
+let climbPoints=0;
+let totalSummits=0;
+let totalAttempts=0;
+
+let dailyStreak=0;
+let lastVisit="";
+
+let referralCode="";
+let totalReferrals=0;
+
+let airdropActions=0;
+let airdropScore=0;
+
+
+/* =====================================================
+   PHYSICS
+===================================================== */
+
+const gravity=-17;
+const swingStrength=43;
+const anchorPull=10;
+const airDrag=.988;
+const maxSpeed=18;
+
+
+/* =====================================================
+   SUMMIT
+===================================================== */
+
+const SUMMIT_HEIGHT=64;
+
+const SUMMIT_CENTER_X=0;
+const SUMMIT_CENTER_Y=62;
+
+const SUMMIT_HERO_X=0;
+const SUMMIT_HERO_Y=61.75;
+const SUMMIT_HERO_Z=3.5;
+
+const summitParticles=[];
+const summitBurst=[];
+const summitSparks=[];
+const summitShockwaves=[];
+
+let summitGlowMesh=null;
+let summitLight=null;
+let summitBeacon=null;
+
+let victoryTimer=null;
+let summitSequence=false;
+
+
+/* =====================================================
+   CRYPTO
+===================================================== */
+
+let cryptoTimer=null;
+let cryptoCountdownTimer=null;
+let cryptoRequestInProgress=false;
+
+const CRYPTO_REFRESH_SECONDS=10;
+
+const BINANCE_API=
+ "https://data-api.binance.vision/api/v3/ticker/24hr";
+
+const BINANCE_SYMBOLS=[
+ "BTCUSDT",
+ "ETHUSDT",
+ "SOLUSDT",
+ "BNBUSDT",
+ "XRPUSDT"
+];
+
+const BINANCE_TO_SYMBOL={
+ BTCUSDT:"BTC",
+ ETHUSDT:"ETH",
+ SOLUSDT:"SOL",
+ BNBUSDT:"BNB",
+ XRPUSDT:"XRP"
+};
+
+const COINGECKO_API=
+ "https://api.coingecko.com/api/v3/simple/price";
+
+const CRYPTO_IDS=[
+ "bitcoin",
+ "ethereum",
+ "solana",
+ "binancecoin",
+ "ripple"
+];
+
+const CRYPTO_SYMBOLS={
+ bitcoin:"BTC",
+ ethereum:"ETH",
+ solana:"SOL",
+ binancecoin:"BNB",
+ ripple:"XRP"
+};
+
+let cryptoSecondsLeft=
+ CRYPTO_REFRESH_SECONDS;
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+function $(id){
+ return document.getElementById(id);
+}
+
+
+/* =====================================================
+   DATE
+===================================================== */
+
+function getDateKey(date=new Date()){
+
+ return [
+  date.getFullYear(),
+  String(date.getMonth()+1).padStart(2,"0"),
+  String(date.getDate()).padStart(2,"0")
+ ].join("-");
+}
+
+
+function dateDifferenceInDays(
+ olderKey,
+ newerKey
+){
+
+ if(!olderKey||!newerKey)
+  return Infinity;
+
+ const a=
+  new Date(
+   olderKey+"T00:00:00"
+  );
+
+ const b=
+  new Date(
+   newerKey+"T00:00:00"
+  );
+
+ return Math.round(
+  (b.getTime()-a.getTime())/
+  86400000
+ );
+}
+
+
+/* =====================================================
+   STREAK
+===================================================== */
+
+function updateDailyStreak(){
+
+ const today=getDateKey();
+
+ let previous="";
+
+ try{
+
+  previous=
+   localStorage.getItem(
+    LAST_VISIT_KEY
+   )||"";
+
+  dailyStreak=
+   Number(
+    localStorage.getItem(
+     STREAK_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  dailyStreak=0;
+
+ }
+
+ if(previous===today){
+
+  updateStreakUI();
+  return;
+ }
+
+ const difference=
+  dateDifferenceInDays(
+   previous,
+   today
+  );
+
+ if(difference===1){
+
+  dailyStreak=
+   Math.max(
+    0,
+    dailyStreak
+   )+1;
+
+ }else{
+
+  dailyStreak=1;
+
+ }
+
+ try{
+
+  localStorage.setItem(
+   STREAK_KEY,
+   String(dailyStreak)
+  );
+
+  localStorage.setItem(
+   LAST_VISIT_KEY,
+   today
+  );
+
+ }catch(error){}
+
+ addClimbPoints(
+  DAILY_REWARD
+ );
+
+ registerAirdropAction(5);
+
+ updateStreakUI();
+}
+
+
+function updateStreakUI(){
+
+ const streakText=
+  dailyStreak+
+  (
+   dailyStreak===1?
+   " day streak":
+   " day streaks"
+  );
+
+ if($("landingStreakText"))
+  $("landingStreakText").textContent=
+   streakText;
+
+ if($("landingStreakStatus"))
+  $("landingStreakStatus").textContent=
+   dailyStreak>0?
+   "ACTIVE":
+   "START TODAY";
+
+ if($("dashStreak"))
+  $("dashStreak").textContent=
+   dailyStreak+
+   (
+    dailyStreak===1?
+    " DAY":
+    " DAYS"
+   );
+
+ if($("dashStreakText")){
+
+  if(dailyStreak>=7){
+
+   $("dashStreakText").textContent=
+    "7+ day streak reached. Keep climbing!";
+
+  }else{
+
+   const remaining=
+    Math.max(
+     0,
+     7-dailyStreak
+    );
+
+   $("dashStreakText").textContent=
+    remaining+
+    " more day"+
+    (
+     remaining===1?
+     "":
+     "s"
+    )+
+    " to reach 7 days.";
+
+  }
+ }
+
+ if($("streakFill")){
+
+  $("streakFill").style.width=
+   Math.min(
+    100,
+    dailyStreak/7*100
+   )+"%";
+
+ }
+}
+
+
+/* =====================================================
+   POINT STORAGE
+===================================================== */
+
+function loadClimbData(){
+
+ try{
+
+  const savedPoints=
+   Number(
+    localStorage.getItem(
+     POINTS_KEY
+    )
+   );
+
+  const savedSummits=
+   Number(
+    localStorage.getItem(
+     SUMMITS_KEY
+    )
+   );
+
+  const savedAttempts=
+   Number(
+    localStorage.getItem(
+     ATTEMPTS_KEY
+    )
+   );
+
+  climbPoints=
+   Number.isFinite(savedPoints)&&
+   savedPoints>=0
+   ?
+   Math.floor(savedPoints)
+   :
+   0;
+
+  totalSummits=
+   Number.isFinite(savedSummits)&&
+   savedSummits>=0
+   ?
+   Math.floor(savedSummits)
+   :
+   0;
+
+  totalAttempts=
+   Number.isFinite(savedAttempts)&&
+   savedAttempts>=0
+   ?
+   Math.floor(savedAttempts)
+   :
+   0;
+
+ }catch(error){
+
+  climbPoints=0;
+  totalSummits=0;
+  totalAttempts=0;
+
+ }
+
+ updatePointsUI();
+}
+
+
+function saveClimbData(){
+
+ try{
+
+  localStorage.setItem(
+   POINTS_KEY,
+   String(climbPoints)
+  );
+
+  localStorage.setItem(
+   SUMMITS_KEY,
+   String(totalSummits)
+  );
+
+  localStorage.setItem(
+   ATTEMPTS_KEY,
+   String(totalAttempts)
+  );
+
+ }catch(error){}
+}
+
+
+function addClimbPoints(amount){
+
+ amount=
+  Math.max(
+   0,
+   Math.floor(
+    Number(amount)||0
+   )
+  );
+
+ if(amount<=0)return;
+
+ climbPoints+=amount;
+
+ saveClimbData();
+ updatePointsUI();
+}
+
+
+function registerAttempt(){
+
+ totalAttempts++;
+
+ addClimbPoints(
+  ATTEMPT_REWARD
+ );
+
+ registerAirdropAction(10);
+
+ saveClimbData();
+ updatePointsUI();
+}
+
+
+function registerSummit(){
+
+ totalSummits++;
+
+ addClimbPoints(
+  LEVELS[currentLevel]&&LEVELS[currentLevel].reward
+   ? LEVELS[currentLevel].reward
+   : CLIMB_REWARD
+ );
+
+ registerAirdropAction(30);
+
+ saveClimbData();
+ updatePointsUI();
+}
+
+
+function updatePointsUI(){
+
+ const formatted=
+  climbPoints.toLocaleString(
+   "en-US"
+  );
+
+ if($("landingPoints"))
+  $("landingPoints").textContent=
+   formatted;
+
+ if($("landingSummits"))
+  $("landingSummits").textContent=
+   totalSummits.toLocaleString(
+    "en-US"
+   );
+
+ if($("landingAttempts"))
+  $("landingAttempts").textContent=
+   totalAttempts.toLocaleString(
+    "en-US"
+   );
+
+ if($("hudPointsValue"))
+  $("hudPointsValue").textContent=
+   formatted;
+
+ if($("victoryPoints"))
+  $("victoryPoints").textContent=
+   formatted;
+
+ if($("landingReferralText"))
+  $("landingReferralText").textContent=
+   totalReferrals+
+   (
+    totalReferrals===1?
+    " referral":
+    " referrals"
+   );
+
+ if($("dashReferrals"))
+  $("dashReferrals").textContent=
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
+
+ updateAirdropUI();
+}
+
+
+/* =====================================================
+   REFERRAL
+===================================================== */
+
+function generateReferralCode(){
+
+ const chars=
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+ let code="";
+
+ for(let i=0;i<6;i++){
+
+  code+=chars[
+   Math.floor(
+    Math.random()*chars.length
+   )
+  ];
+
+ }
+
+ return "CLIMB-"+code;
+}
+
+
+function loadReferralData(){
+
+ try{
+
+  referralCode=
+   localStorage.getItem(
+    REFERRAL_CODE_KEY
+   )||"";
+
+  totalReferrals=
+   Number(
+    localStorage.getItem(
+     REFERRALS_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  referralCode="";
+  totalReferrals=0;
+
+ }
+
+ if(!referralCode){
+
+  referralCode=
+   generateReferralCode();
+
+  try{
+
+   localStorage.setItem(
+    REFERRAL_CODE_KEY,
+    referralCode
+   );
+
+  }catch(error){}
+
+ }
+
+ try{
+
+  const params=
+   new URLSearchParams(
+    window.location.search
+   );
+
+  const incoming=
+   params.get("ref");
+
+  if(
+   incoming&&
+   incoming.toUpperCase()!==
+   referralCode.toUpperCase()
+  ){
+
+   const usedKey=
+    "climboria_ref_used";
+
+   const alreadyUsed=
+    localStorage.getItem(
+     usedKey
+    );
+
+   if(!alreadyUsed){
+
+    localStorage.setItem(
+     usedKey,
+     incoming
+    );
+
+    registerAirdropAction(20);
+    addClimbPoints(20);
+
+   }
+  }
+
+ }catch(error){}
+
+ updateReferralUI();
+}
+
+
+function updateReferralUI(){
+
+ if($("refCode"))
+  $("refCode").textContent=
+   referralCode||
+   "CLIMB-0000";
+
+ if($("dashReferrals"))
+  $("dashReferrals").textContent=
+   totalReferrals.toLocaleString(
+    "en-US"
+   );
+
+ if($("landingReferralText"))
+  $("landingReferralText").textContent=
+   totalReferrals+
+   (
+    totalReferrals===1?
+    " referral":
+    " referrals"
+   );
+}
+
+
+function buildReferralLink(){
+
+ return (
+  window.location.origin+
+  window.location.pathname+
+  "?ref="+
+  encodeURIComponent(
+   referralCode
+  )
+ );
+}
+
+
+async function copyReferral(){
+
+ const text=
+  buildReferralLink();
+
+ try{
+
+  if(
+   navigator.clipboard&&
+   navigator.clipboard.writeText
+  ){
+
+   await navigator.clipboard.writeText(
+    text
+   );
+
+   setStatus(
+    "REFERRAL LINK COPIED",
+    "#55ff70"
+   );
+
+   return;
+  }
+
+ }catch(error){}
+
+ window.prompt(
+  "Copy your Climboria referral link:",
+  text
+ );
+}
+
+
+async function shareReferral(){
+
+ const text=
+  "Join me on Climboria and climb to the summit! "+
+  buildReferralLink();
+
+ try{
+
+  if(navigator.share){
+
+   await navigator.share({
+    title:"CLIMBORIA",
+    text
+   });
+
+   return;
+  }
+
+ }catch(error){}
+
+ await copyReferral();
+}
+
+
+/* =====================================================
+   AIRDROP
+===================================================== */
+
+function loadAirdropData(){
+
+ try{
+
+  airdropActions=
+   Number(
+    localStorage.getItem(
+     AIRDROP_ACTIONS_KEY
+    )
+   )||0;
+
+  airdropScore=
+   Number(
+    localStorage.getItem(
+     AIRDROP_SCORE_KEY
+    )
+   )||0;
+
+ }catch(error){
+
+  airdropActions=0;
+  airdropScore=0;
+
+ }
+
+ airdropActions=
+  Math.max(
+   0,
+   Math.floor(
+    airdropActions
+   )
+  );
+
+ airdropScore=
+  Math.max(
+   0,
+   Math.min(
+    100,
+    Math.floor(
+     airdropScore
+    )
+   )
+  );
+
+ updateAirdropUI();
+}
+
+
+function saveAirdropData(){
+
+ try{
+
+  localStorage.setItem(
+   AIRDROP_ACTIONS_KEY,
+   String(airdropActions)
+  );
+
+  localStorage.setItem(
+   AIRDROP_SCORE_KEY,
+   String(airdropScore)
+  );
+
+ }catch(error){}
+}
+
+
+function registerAirdropAction(points){
+
+ points=
+  Math.max(
+   0,
+   Math.floor(
+    Number(points)||0
+   )
+  );
+
+ if(points<=0)return;
+
+ airdropActions++;
+
+ airdropScore=
+  Math.min(
+   100,
+   airdropScore+points
+  );
+
+ saveAirdropData();
+ updateAirdropUI();
+}
+
+
+function updateAirdropUI(){
+
+ const score=
+  Math.max(
+   0,
+   Math.min(
+    100,
+    Math.floor(
+     airdropScore
+    )
+   )
+  );
+
+ if($("airdropProgress"))
+  $("airdropProgress").style.width=
+   score+"%";
+
+ if($("airdropScore"))
+  $("airdropScore").textContent=
+   score+"%";
+
+ if($("airdropActions"))
+  $("airdropActions").textContent=
+   airdropActions.toLocaleString(
+    "en-US"
+   );
+}
+
+
+/* =====================================================
+   LEADERBOARD
+===================================================== */
+
+const DEMO_LEADERBOARD=[
+ {
+  name:"SummitHunter",
+  points:12840,
+  time:"02:18"
+ },
+ {
+  name:"ClimbMaster",
+  points:11320,
+  time:"02:31"
+ },
+ {
+  name:"PotClimber",
+  points:9870,
+  time:"02:46"
+ },
+ {
+  name:"Genesis",
+  points:8640,
+  time:"03:04"
+ },
+ {
+  name:"Satoshi",
+  points:7310,
+  time:"03:22"
+ }
+];
+
+
+function getLeaderboardData(){
+
+ const player={
+  name:"YOU",
+  points:climbPoints,
+  time:"LOCAL"
+ };
+
+ return [
+  ...DEMO_LEADERBOARD,
+  player
+ ]
+ .sort(
+  (a,b)=>
+   b.points-a.points
+ )
+ .slice(0,6);
+}
+
+
+function renderLeaderboard(){
+
+ const container=
+  $("leaderboardRows");
+
+ if(!container)return;
+
+ container.innerHTML="";
+
+ getLeaderboardData().forEach(
+  (row,index)=>{
+
+   const div=
+    document.createElement(
+     "div"
+    );
+
+   div.className=
+    "leaderRow"+
+    (
+     row.name==="YOU"?
+     " leaderYou":
+     ""
+    );
+
+   div.innerHTML=`
+    <div class="leaderRank">#${index+1}</div>
+    <div class="leaderName">${escapeHTML(row.name)}</div>
+    <div class="leaderPoints">${Number(row.points).toLocaleString("en-US")}</div>
+    <div class="leaderTime">${escapeHTML(row.time)}</div>
+   `;
+
+   container.appendChild(div);
+
+  }
+ );
+}
+
+
+function escapeHTML(value){
+
+ return String(value)
+  .replaceAll(
+   "&",
+   "&amp;"
+  )
+  .replaceAll(
+   "<",
+   "&lt;"
+  )
+  .replaceAll(
+   ">",
+   "&gt;"
+  )
+  .replaceAll(
+   '"',
+   "&quot;"
+  )
+  .replaceAll(
+   "'",
+   "&#039;"
+  );
+}
+
+
+/* =====================================================
+   INIT
+===================================================== */
+
+try{
+
+ init();
+
+}catch(error){
+
+ console.error(
+  "CLIMBORIA INIT ERROR:",
+  error
+ );
+
+ const status=
+  $("status");
+
+ if(status){
+
+  status.textContent=
+   "GAME INITIALIZATION ERROR";
+
+  status.style.color=
+   "#ff6677";
+ }
+}
+
+
+function init(){
+
+ loadClimbData();
+ loadAirdropData();
+ loadReferralData();
+ updateDailyStreak();
+ loadLevelData();
+ renderLeaderboard();
+
+ scene=
+  new THREE.Scene();
+
+ scene.background=
+  new THREE.Color(
+   0x05090d
+  );
+
+ scene.fog=
+  new THREE.Fog(
+   0x05090d,
+   35,
+   105
+  );
+
+ camera=
+  new THREE.PerspectiveCamera(
+   55,
+   innerWidth/innerHeight,
+   .1,
+   150
+  );
+
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+
+ camera.fov = portraitMobile ? 86 : 55;
+ camera.position.set(
+  0,
+  7,
+  portraitMobile ? 38 : 18
+ );
+ camera.updateProjectionMatrix();
+
+ try{
+
+  renderer=
+   new THREE.WebGLRenderer({
+    antialias:true,
+    powerPreference:
+     "high-performance"
+   });
+
+ }catch(rendererError){
+
+  console.warn(
+   "CLIMBORIA: retrying WebGL with lightweight settings.",
+   rendererError
+  );
+
+  renderer=
+   new THREE.WebGLRenderer({
+    antialias:false,
+    powerPreference:
+     "low-power",
+    failIfMajorPerformanceCaveat:false
+   });
+ }
+
+ const maxPixelRatio =
+  innerWidth <= 700 ? 1.5 : 2;
+
+ renderer.setPixelRatio(
+  Math.min(
+   window.devicePixelRatio || 1,
+   maxPixelRatio
+  )
+ );
+
+ renderer.setSize(
+  innerWidth,
+  innerHeight
+ );
+
+ renderer.outputColorSpace=
+  THREE.SRGBColorSpace;
+
+ renderer.domElement.style.touchAction=
+  "none";
+
+ document.body.appendChild(
+  renderer.domElement
+ );
+
+ const amb=
+  new THREE.AmbientLight(
+   0xffffff,
+   .55
+  );
+
+ scene.add(amb);
+
+ const sun=
+  new THREE.DirectionalLight(
+   0xffffff,
+   1.15
+  );
+
+ sun.position.set(
+  -5,
+  25,
+  18
+ );
+
+ scene.add(sun);
+
+ createSky();
+ createMountain();
+ createGround();
+ createRocks();
+ createMountainDetails();
+ createHero();
+ createHammer();
+ createGrips();
+ createTouchReticle();
+ createSummitParticles();
+
+ window.addEventListener(
+  "resize",
+  resize
+ );
+
+ window.addEventListener(
+  "mousemove",
+  mouseMove
+ );
+
+ window.addEventListener(
+  "mousedown",
+  mouseDown
+ );
+
+ window.addEventListener(
+  "mouseup",
+  mouseUp
+ );
+
+ window.addEventListener(
+  "touchstart",
+  touchStart,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchmove",
+  touchMove,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchend",
+  touchEnd,
+  {passive:false}
+ );
+
+ window.addEventListener(
+  "touchcancel",
+  touchEnd,
+  {passive:false}
+ );
+
+ updateHelpText();
+
+ $("cryptoTicker").style.display=
+  "flex";
+
+ startCryptoTicker();
+
+ if(
+  window.climboriaStartRequested
+ ){
+
+  window.climboriaStartRequested=false;
+
+  setTimeout(
+   ()=>showLevelSelect(),
+   0
+  );
+ }
+
+ requestAnimationFrame(
+  animate
+ );
+}
+
+
+/* =====================================================
+   SKY
+===================================================== */
+
+function createSky(){
+
+ const g=
+  new THREE.SphereGeometry(
+   80,
+   24,
+   16
+  );
+
+ const m=
+  new THREE.MeshBasicMaterial({
+   color:0x071018,
+   side:THREE.BackSide
+  });
+
+ scene.add(
+  new THREE.Mesh(g,m)
+ );
+}
+
+
+/* =====================================================
+   MOUNTAIN
+===================================================== */
+
+function createMountain(){
+
+ const mountainGroup=
+  new THREE.Group();
+
+ const mountainShape=
+  new THREE.Shape();
+
+ // Keep the mountain silhouette proportionate on portrait phones.
+ // The climbing route and grip coordinates stay unchanged.
+ mountainShape.moveTo(-22,0);
+ mountainShape.lineTo(-18,10);
+ mountainShape.lineTo(-15,20);
+ mountainShape.lineTo(-12,30);
+ mountainShape.lineTo(-9,40);
+ mountainShape.lineTo(-6,50);
+ mountainShape.lineTo(0,63);
+ mountainShape.lineTo(6,50);
+ mountainShape.lineTo(9,40);
+ mountainShape.lineTo(12,30);
+ mountainShape.lineTo(15,20);
+ mountainShape.lineTo(18,10);
+ mountainShape.lineTo(22,0);
+ mountainShape.closePath();
+
+ const mountainBase=
+  new THREE.Mesh(
+   new THREE.ExtrudeGeometry(mountainShape,{ depth:6, bevelEnabled:false, steps:1, curveSegments:2 }),
+   new THREE.MeshStandardMaterial({
+    color:0x303a3e,
+    roughness:1,
+    metalness:0,
+    side:THREE.DoubleSide
+   })
+  );
+
+ // Extruded rock body: front face stays at z=-3.7; added depth is behind the climbing face.
+ mountainBase.position.set(0,0,-9.7);
+ mountainGroup.add(mountainBase);
+
+ const mountainFacetData=[
+  [[-11,0],[-8.5,9],[-3.8,0],0x394347],
+  [[-8.5,9],[-7.2,19],[-3.8,0],0x465155],
+  [[-7.2,19],[-5.2,29],[-2.7,17],0x30393d],
+  [[-7.2,19],[-2.7,17],[-3.8,0],0x3d484c],
+  [[-5.2,29],[-3.8,39],[-1.4,27],0x465155],
+  [[-5.2,29],[-1.4,27],[-2.7,17],0x364044],
+  [[-3.8,39],[-2.1,49],[0,38],0x303a3e],
+  [[-3.8,39],[0,38],[-1.4,27],0x414c50],
+  [[-2.1,49],[0,63],[1.1,46],0x4b575b],
+  [[-2.1,49],[1.1,46],[0,38],0x354044],
+  [[0,63],[2.8,50],[1.1,46],0x30393d],
+  [[2.8,50],[4.6,40],[1.1,46],0x465155],
+  [[4.6,40],[6.5,30],[2.7,29],0x303a3e],
+  [[4.6,40],[2.7,29],[1.1,46],0x3b464a],
+  [[6.5,30],[8.1,19],[3.8,18],0x465155],
+  [[6.5,30],[3.8,18],[2.7,29],0x30393d],
+  [[8.1,19],[9.2,9],[4.4,8],0x354044],
+  [[8.1,19],[4.4,8],[3.8,18],0x414c50],
+  [[9.2,9],[11,0],[4.4,8],0x30393d],
+  [[-3.8,0],[-2.7,17],[0,0],0x30393d],
+  [[0,0],[-2.7,17],[2.7,29],0x354044],
+  [[0,0],[2.7,29],[4.4,8],0x414c50],
+  [[0,0],[4.4,8],[11,0],0x30393d]
+ ];
+
+ mountainFacetData.forEach(function(face){
+  const points=[face[0],face[1],face[2]];
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute(
+   "position",
+   new THREE.Float32BufferAttribute([
+    points[0][0],points[0][1],-3.62,
+    points[1][0],points[1][1],-3.62,
+    points[2][0],points[2][1],-3.62
+   ],3)
+  );
+  geometry.computeVertexNormals();
+  const material=new THREE.MeshStandardMaterial({
+   color:face[3],
+   roughness:1,
+   metalness:0,
+   side:THREE.DoubleSide
+  });
+  mountainGroup.add(new THREE.Mesh(geometry,material));
+ });
+
+
+ /* CLIMBORIA_MOUNTAIN_GRAPHICS_V1
+    Add distant ridgelines, raised rock planes, and an icy summit.
+    Decorative meshes only: grip positions, ledges, and physics stay unchanged.
+ */
+
+ function addMountainTriangle(points,color,roughness=1){
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute(
+   "position",
+   new THREE.Float32BufferAttribute([
+    points[0][0],points[0][1],points[0][2],
+    points[1][0],points[1][1],points[1][2],
+    points[2][0],points[2][1],points[2][2]
+   ],3)
+  );
+  geometry.computeVertexNormals();
+  const material=new THREE.MeshStandardMaterial({
+   color,
+   roughness,
+   metalness:0,
+   side:THREE.DoubleSide,
+   flatShading:true
+  });
+  mountainGroup.add(new THREE.Mesh(geometry,material));
+ }
+
+ // Distant mountain silhouettes create depth behind the main climb face.
+ const distantRidges=[
+  [[-16,0,-6.2],[-11,24,-6.2],[-6,0,-6.2],0x182329],
+  [[-12,0,-6.0],[-7,35,-6.0],[-1,0,-6.0],0x202c32],
+  [[3,0,-6.1],[8,31,-6.1],[14,0,-6.1],0x1a252b],
+  [[8,0,-6.3],[13,22,-6.3],[18,0,-6.3],0x141f25]
+ ];
+ distantRidges.forEach(face=>{
+  addMountainTriangle(face.slice(0,3),face[3]);
+ });
+
+ // Raised, angular rock planes break up the flat silhouette.
+ const reliefFaces=[
+  [[-8.1,10,-3.18],[-5.1,29,-3.18],[-2.7,17,-3.18],0x4b575b],
+  [[-5.1,29,-3.16],[-2.0,48,-3.16],[-1.3,29,-3.16],0x202a2e],
+  [[-2.0,48,-3.14],[0,61.5,-3.14],[1.2,45,-3.14],0x566267],
+  [[1.2,45,-3.16],[4.5,40,-3.16],[2.8,29,-3.16],0x202a2e],
+  [[4.5,40,-3.18],[7.9,19,-3.18],[3.8,18,-3.18],0x4b575b],
+  [[-7.0,20,-3.17],[-4.8,26,-3.17],[-5.6,16,-3.17],0x293439],
+  [[5.2,30,-3.17],[7.1,28,-3.17],[6.2,20,-3.17],0x293439]
+ ];
+ reliefFaces.forEach(face=>{
+  addMountainTriangle(face.slice(0,3),face[3]);
+ });
+
+ // Frosted summit facets: subdued ice tones rather than a bright white cap.
+ const snowFaces=[
+  [[-2.05,49.2,-3.08],[-1.0,56.5,-3.08],[-.1,52.1,-3.08],0xa6b7bc],
+  [[-1.0,56.5,-3.07],[0,62.1,-3.07],[.55,54.5,-3.07],0xd1dcde],
+  [[0,62.1,-3.06],[1.7,53.2,-3.06],[.55,54.5,-3.06],0x91a5ab],
+  [[1.7,53.2,-3.08],[2.65,50.1,-3.08],[.55,54.5,-3.08],0x71858b],
+  [[-2.05,49.2,-3.09],[-.1,52.1,-3.09],[-1.25,48.8,-3.09],0x708187]
+ ];
+ snowFaces.forEach(face=>{
+  addMountainTriangle(face.slice(0,3),face[3]);
+ });
+
+ // Extra fractured rock planes add uneven depth without touching climb geometry.
+ const microFacets=[
+  [[-9.0,7.5,-3.12],[-7.2,13.5,-3.12],[-5.5,8.5,-3.12],0x222d31],
+  [[-7.0,18.5,-3.11],[-5.8,23.0,-3.11],[-4.1,16.8,-3.11],0x536065],
+  [[-5.0,31.0,-3.10],[-3.6,36.0,-3.10],[-2.0,30.0,-3.10],0x263237],
+  [[-3.4,41.0,-3.10],[-2.2,46.0,-3.10],[-0.7,39.0,-3.10],0x566267],
+  [[-1.0,24.0,-3.11],[1.0,30.0,-3.11],[2.5,22.5,-3.11],0x263237],
+  [[2.4,33.0,-3.10],[4.0,37.0,-3.10],[5.1,29.5,-3.10],0x536065],
+  [[5.3,21.0,-3.11],[6.7,25.0,-3.11],[8.0,17.0,-3.11],0x263237],
+  [[-8.0,10.0,-3.12],[-6.8,12.0,-3.12],[-7.4,6.0,-3.12],0x202b30],
+  [[3.0,12.0,-3.12],[5.1,15.0,-3.12],[6.0,9.0,-3.12],0x202b30]
+ ];
+ microFacets.forEach(face=>{
+  addMountainTriangle(face.slice(0,3),face[3]);
+ });
+
+ // Thin, broken strata and fractures make the cliff read as layered rock.
+ const fractureSegments=[
+  [-9.1,8.1,-7.9,8.8],[-7.9,8.8,-7.2,10.2],
+  [-7.7,14.2,-6.3,14.7],[-6.3,14.7,-5.6,16.0],
+  [-6.0,24.1,-4.8,24.6],[-4.8,24.6,-4.2,26.0],
+  [-4.4,33.8,-3.2,34.1],[-3.2,34.1,-2.5,35.5],
+  [-2.5,43.4,-1.3,43.8],[-1.3,43.8,-0.8,45.0],
+  [2.4,43.1,3.7,42.7],[3.7,42.7,4.4,41.4],
+  [4.8,34.7,6.0,34.2],[6.0,34.2,6.8,32.9],
+  [6.7,24.0,7.8,23.5],[7.8,23.5,8.5,22.1],
+  [-3.7,19.8,-2.4,19.4],[-2.4,19.4,-1.8,18.2],
+  [1.4,15.8,2.8,15.4],[2.8,15.4,3.4,14.1]
+ ];
+ const fracturePositions=[];
+ fractureSegments.forEach(segment=>{
+  fracturePositions.push(
+   segment[0],segment[1],-2.99,
+   segment[2],segment[3],-2.99
+  );
+ });
+ const fractureGeometry=new THREE.BufferGeometry();
+ fractureGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(fracturePositions,3)
+ );
+ const fractureLines=new THREE.LineSegments(
+  fractureGeometry,
+  new THREE.LineBasicMaterial({
+   color:0x151f23,
+   transparent:true,
+   opacity:.72
+  })
+ );
+ mountainGroup.add(fractureLines);
+
+ // Short lighter seams catch the light and break up broad, flat color patches.
+ const seamSegments=[
+  [-8.8,6.6,-7.9,7.0],[-7.0,11.1,-6.0,11.5],
+  [-6.3,20.0,-5.1,20.4],[-4.5,28.2,-3.4,28.6],
+  [-3.0,38.1,-1.8,38.4],[-1.5,47.1,-0.5,47.4],
+  [2.1,48.3,3.0,47.8],[4.0,38.6,5.0,38.2],
+  [5.7,28.1,6.7,27.7],[7.0,18.2,8.0,17.8],
+  [-2.3,12.6,-1.2,12.9],[1.8,26.0,2.8,26.4]
+ ];
+ const seamPositions=[];
+ seamSegments.forEach(segment=>{
+  seamPositions.push(
+   segment[0],segment[1],-2.985,
+   segment[2],segment[3],-2.985
+  );
+ });
+ const seamGeometry=new THREE.BufferGeometry();
+ seamGeometry.setAttribute(
+  "position",
+  new THREE.Float32BufferAttribute(seamPositions,3)
+ );
+ mountainGroup.add(new THREE.LineSegments(
+  seamGeometry,
+  new THREE.LineBasicMaterial({
+   color:0x7a898e,
+   transparent:true,
+   opacity:.32
+  })
+ ));
+
+ scene.add(mountainGroup);
+
+
+ const ledges=[
+  [-8,5,1.5,2],
+  [7,8,2,1.5],
+  [-6,12,2.5,2],
+  [6,16,2,2],
+  [-8,21,2.5,1.5],
+  [7,25,2.5,2],
+  [-6,30,2,2],
+  [8,35,3,2],
+  [-7,40,2,2],
+  [6,45,3,2],
+  [-5,51,2.5,2],
+  [7,57,2.5,2]
+ ];
+
+ ledges.forEach(
+  v=>{
+
+   const[
+    x,
+    y,
+    w,
+    h
+   ]=v;
+
+   const mesh=
+    new THREE.Mesh(
+     new THREE.BoxGeometry(
+      w,
+      h,
+      5
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x626a6d,
+      roughness:1
+     })
+    );
+
+   mesh.position.set(
+    x,
+    y,
+    -2.8
+   );
+
+   scene.add(mesh);
+
+  }
+ );
+
+
+ const summit=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    5.5,
+    7,
+    1.2,
+    7
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x737a7c,
+    roughness:1
+   })
+  );
+
+ summit.position.set(
+  0,
+  61.1,
+  -1
+ );
+
+ summit.rotation.y=
+  Math.PI/7;
+
+ scene.add(summit);
+
+
+ [
+  [-3.8,62.5,.9,2.2],
+  [3.5,62.2,1.1,2.5],
+  [-1.8,63.3,.75,1.8],
+  [1.8,63.5,.9,2.4]
+ ].forEach(
+  v=>{
+
+   const r=
+    new THREE.Mesh(
+     new THREE.DodecahedronGeometry(
+      v[2],
+      0
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x555b5d
+     })
+    );
+
+   r.position.set(
+    v[0],
+    v[1],
+    -1
+   );
+
+   r.scale.y=
+    v[3]/v[2];
+
+   scene.add(r);
+
+  }
+ );
+
+
+ summitGlowMesh=
+  new THREE.Mesh(
+   new THREE.SphereGeometry(
+    2.2,
+    16,
+    12
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70,
+    transparent:true,
+    opacity:.08
+   })
+  );
+
+ summitGlowMesh.position.set(
+  0,
+  61.75,
+  -1
+ );
+
+ scene.add(
+  summitGlowMesh
+ );
+
+
+ summitBeacon=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    .08,
+    .08,
+    5,
+    8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70
+   })
+  );
+
+ summitBeacon.position.set(
+  0,
+  61.82,
+  -1
+ );
+
+ scene.add(
+  summitBeacon
+ );
+
+
+ summitLight=
+  new THREE.PointLight(
+   0x55ff70,
+   5,
+   18
+  );
+
+ summitLight.position.set(
+  0,
+  64,
+  4
+ );
+
+ scene.add(
+  summitLight
+ );
+
+
+ const flagPole=
+  new THREE.Mesh(
+   new THREE.CylinderGeometry(
+    .035,
+    .035,
+    4,
+    8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0xbfc7ca
+   })
+  );
+
+ flagPole.position.set(
+  1.6,
+  64,
+  -.5
+ );
+
+ scene.add(
+  flagPole
+ );
+
+
+ const flag=
+  new THREE.Mesh(
+   new THREE.PlaneGeometry(
+    1.5,
+    .8
+   ),
+   new THREE.MeshBasicMaterial({
+    color:0x55ff70,
+    side:THREE.DoubleSide
+   })
+  );
+
+ flag.position.set(
+  2.25,
+  65.3,
+  -.5
+ );
+
+ scene.add(flag);
+}
+
+
+/* =====================================================
+   MOUNTAIN DETAILS
+===================================================== */
+
+function createMountainDetails(){
+
+ const rockMaterial=
+  new THREE.MeshStandardMaterial({
+   color:0x343d41,
+   roughness:1
+  });
+
+ for(let i=0;i<32;i++){
+
+  const y=
+   2+
+   Math.random()*58;
+
+  const side=
+   i%2===0?-1:1;
+
+  const x=
+   side*
+   (
+    5+
+    Math.random()*4.5
+   );
+
+  const rock=
+   new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+     .25+
+     Math.random()*.5,
+     0
+    ),
+    rockMaterial
+   );
+
+  rock.position.set(
+   x,
+   y,
+   -2.8+
+   Math.random()*1.5
+  );
+
+  rock.rotation.set(
+   Math.random()*3,
+   Math.random()*3,
+   Math.random()*3
+  );
+
+  rock.scale.y=
+   .7+
+   Math.random()*1.8;
+
+  scene.add(rock);
+ }
+
+
+ const ledgeMarks=[
+  [-8,5],
+  [7,8],
+  [-6,12],
+  [6,16],
+  [-8,21],
+  [7,25],
+  [-6,30],
+  [8,35],
+  [-7,40],
+  [6,45],
+  [-5,51],
+  [7,57]
+ ];
+
+ ledgeMarks.forEach(
+  (p,index)=>{
+
+   const line=
+    new THREE.Mesh(
+     new THREE.BoxGeometry(
+      1.2+
+      (index%3)*.5,
+      .035,
+      .035
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0x7c8689,
+      transparent:true,
+      opacity:.28
+     })
+    );
+
+   line.position.set(
+    p[0],
+    p[1]+.95,
+    -5.32
+   );
+
+   scene.add(line);
+
+  }
+ );
+}
+
+
+/* =====================================================
+   GROUND
+===================================================== */
+
+function createGround(){
+
+ const ground=
+  new THREE.Mesh(
+   new THREE.BoxGeometry(
+    40,
+    1,
+    30
+   ),
+   new THREE.MeshStandardMaterial({
+    color:0x202b31,
+    roughness:1
+   })
+  );
+
+ ground.position.y=-.5;
+
+ scene.add(ground);
+
+
+ const groundMarks=
+  new THREE.Group();
+
+ for(let i=0;i<25;i++){
+
+  const mark=
+   new THREE.Mesh(
+    new THREE.BoxGeometry(
+     .4+
+     Math.random()*.8,
+     .03,
+     .15
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x354249,
+     transparent:true,
+     opacity:.6
+    })
+   );
+
+  mark.position.set(
+   (Math.random()-.5)*25,
+   .02,
+   5+
+   Math.random()*10
+  );
+
+  mark.rotation.y=
+   Math.random()*Math.PI;
+
+  groundMarks.add(mark);
+ }
+
+ scene.add(groundMarks);
+}
+
+
+/* =====================================================
+   ROCKS
+===================================================== */
+
+function createRocks(){
+
+ for(let i=0;i<45;i++){
+
+  const side=
+   i%2?
+   1:
+   -1;
+
+  const r=
+   new THREE.Mesh(
+    new THREE.DodecahedronGeometry(
+     .35+
+     Math.random()*.7,
+     0
+    ),
+    new THREE.MeshStandardMaterial({
+     color:0x394348,
+     roughness:1
+    })
+   );
+
+  r.position.set(
+   side*
+   (
+    12+
+    Math.random()*7
+   ),
+   Math.random()*70,
+   -2+
+   Math.random()*3
+  );
+
+  r.rotation.set(
+   Math.random()*3,
+   Math.random()*3,
+   Math.random()*3
+  );
+
+  scene.add(r);
+ }
+}
+
+
+/* =====================================================
+   HERO
+===================================================== */
+
+function createHero(){
+ hero=new THREE.Group();
+ const pot=new THREE.Mesh(new THREE.CylinderGeometry(1,1.42,1.62,40),new THREE.MeshStandardMaterial({color:0x1649a6,roughness:.24,metalness:.28}));pot.position.y=.78;pot.castShadow=true;pot.receiveShadow=true;hero.add(pot);
+ const inner=new THREE.Mesh(new THREE.CylinderGeometry(.88,.72,.13,40),new THREE.MeshStandardMaterial({color:0x071a3b}));inner.position.y=1.53;hero.add(inner);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(1.03,.13,14,40),new THREE.MeshStandardMaterial({color:0x5fa9ff,roughness:.2,metalness:.45,emissive:0x082d70,emissiveIntensity:.35}));rim.rotation.x=Math.PI/2;rim.position.y=1.56;hero.add(rim);
+ const foot=new THREE.Mesh(new THREE.TorusGeometry(1.08,.055,8,40),new THREE.MeshStandardMaterial({color:0x9dd2ff,metalness:.5}));foot.rotation.x=Math.PI/2;foot.position.y=.12;hero.add(foot);
+ for(let i=0;i<12;i++){const q=i/12*Math.PI*2,l=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,6,6),new THREE.MeshStandardMaterial({color:0x8cc8ff,metalness:.5,emissive:0x08265b,emissiveIntensity:.3}));l.position.set(Math.sin(q)*1.04,.78+Math.cos(q)*.42,Math.cos(q)*.9);l.rotation.y=q;l.scale.set(.9,1.15,.45);hero.add(l);}
+ const em=new THREE.Mesh(new THREE.OctahedronGeometry(.28,0),new THREE.MeshStandardMaterial({color:0xc6e7ff,metalness:.55,emissive:0x1649a6,emissiveIntensity:.55}));em.position.set(0,.85,1.04);em.scale.z=.25;hero.add(em);
+ const skin=new THREE.MeshStandardMaterial({color:0xd89a72}),shirt=new THREE.MeshStandardMaterial({color:0x202c3a}),blue=new THREE.MeshStandardMaterial({color:0x55a8ff,metalness:.15});
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.7,5,10),shirt);torso.position.set(0,1.66,.05);torso.rotation.x=-.12;hero.add(torso);
+ const stripe=new THREE.Mesh(new THREE.BoxGeometry(.12,.62,.035),blue);stripe.position.set(0,1.68,.45);hero.add(stripe);
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.19,.21,.28,12),skin);neck.position.set(0,2.08,.08);hero.add(neck);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.43,24,20),skin);head.scale.set(.9,1.12,.92);head.position.set(0,2.48,.1);hero.add(head);
+ const hairMat=new THREE.MeshStandardMaterial({color:0x18202a});const hair=new THREE.Mesh(new THREE.SphereGeometry(.45,20,12,0,Math.PI*2,0,Math.PI*.57),hairMat);hair.position.set(0,2.72,.04);hero.add(hair);
+ const fringe=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),hairMat);fringe.scale.set(1.4,.55,.75);fringe.position.set(-.13,2.69,.43);hero.add(fringe);
+ for(const x of [-.145,.145]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.042,10,8),new THREE.MeshStandardMaterial({color:0x17202a}));eye.position.set(x,2.49,.48);hero.add(eye);const brow=new THREE.Mesh(new THREE.BoxGeometry(.12,.035,.035),hairMat);brow.position.set(x,2.57,.47);hero.add(brow);}
+ const nose=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),skin);nose.position.set(0,2.4,.51);hero.add(nose);
+ const smile=new THREE.Mesh(new THREE.TorusGeometry(.075,.012,5,12,Math.PI),new THREE.MeshBasicMaterial({color:0x713c38}));smile.position.set(0,2.34,.48);smile.rotation.z=Math.PI;hero.add(smile);
+ for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,8),shirt);arm.position.set(side*.48,1.72,.28);arm.rotation.z=side*.62;hero.add(arm);const hand=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),skin);hand.position.set(side*.68,1.55,.56);hero.add(hand);const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.18,.42),new THREE.MeshStandardMaterial({color:0x101820}));boot.position.set(side*.38,1,.42);hero.add(boot);}
+ /* Face the climbing wall instead of facing the player/camera. */
+ hero.rotation.y = Math.PI;
+ hero.position.set(0,.82,3.5);scene.add(hero);
+}
+
+/* =====================================================
+   HAMMER + ROPE
+===================================================== */
+
+function createHammer(){
+ hammer=new THREE.Group();
+ const handle=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,2.7,12),new THREE.MeshStandardMaterial({color:0x26394b,metalness:.45}));handle.position.y=-.55;hammer.add(handle);
+ const grip=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.62,10),new THREE.MeshStandardMaterial({color:0x55a8ff}));grip.position.y=-.55;hammer.add(grip);
+ const head=new THREE.Mesh(new THREE.BoxGeometry(1.5,.2,.25),new THREE.MeshStandardMaterial({color:0xb8c7d2,metalness:.85,roughness:.25}));head.position.y=.72;hammer.add(head);
+ const tip=new THREE.Mesh(new THREE.ConeGeometry(.13,.58,8),new THREE.MeshStandardMaterial({color:0xd9e7f2,metalness:.9}));tip.position.set(-.76,.72,0);tip.rotation.z=Math.PI/2;hammer.add(tip);
+ const adze=new THREE.Mesh(new THREE.ConeGeometry(.14,.48,8),new THREE.MeshStandardMaterial({color:0x91a5b5,metalness:.9}));adze.position.set(.77,.72,0);adze.rotation.z=-Math.PI/2;hammer.add(adze);
+ hammer.position.set(3,3,4);scene.add(hammer);
+ hammerRopeMaterial=new THREE.LineBasicMaterial({color:0x55a8ff,transparent:true,opacity:.72});
+ hammerRope=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),hammerRopeMaterial);hammerRope.visible=false;scene.add(hammerRope);
+}
+
+/* =====================================================
+   GRIPS
+===================================================== */
+
+
+/*
+ * ==========================================================
+ * CLIMBORIA PROGRESSIVE DIFFICULTY ENGINE V1
+ * ==========================================================
+ */
+
+if(typeof window.climboriaLevel==="undefined"){
+  window.climboriaLevel=1;
+}
+
+function getClimbDifficulty(){
+
+  const level=Math.max(
+    1,
+    Number(window.climboriaLevel||1)
+  );
+
+  /*
+   * Level 1 = 0 difficulty
+   * Level 20+ approaches maximum difficulty.
+   */
+  const intensity=
+    THREE.MathUtils.clamp(
+      (level-1)/19,
+      0,
+      1
+    );
+
+  return {
+
+    level:level,
+
+    intensity:intensity,
+
+    /*
+     * Horizontal grip difficulty.
+     */
+    horizontalSpread:
+      THREE.MathUtils.lerp(
+        .85,
+        1.35,
+        intensity
+      ),
+
+    /*
+     * Vertical gap difficulty.
+     */
+    verticalSpacing:
+      THREE.MathUtils.lerp(
+        2.0,
+        3.25,
+        intensity
+      ),
+
+    /*
+     * Recovery probability.
+     *
+     * Early game:
+     * 100% recovery factor
+     *
+     * High levels:
+     * approaches 25%
+     */
+    recovery:
+      THREE.MathUtils.lerp(
+        1.0,
+        .25,
+        intensity
+      )
+  };
+}
+
+window.getClimbDifficulty=
+  getClimbDifficulty;
+
+function updateClimboriaDifficulty(){
+
+  const d=
+    getClimbDifficulty();
+
+  console.log(
+    "CLIMBORIA LEVEL:",
+    d.level
+  );
+
+  console.log(
+    "DIFFICULTY:",
+    Math.round(
+      d.intensity*100
+    )+"%"
+  );
+
+  console.log(
+    "RECOVERY:",
+    Math.round(
+      d.recovery*100
+    )+"%"
+  );
+}
+
+
+function createGrips(){
+
+ const positions=
+ currentLevel>=3?
+ [
+  [-4,4],
+  [3.5,7.5],
+  [-3.5,11],
+  [4.5,14.5],
+  [-1.5,18.5],
+  [-5,22],
+  [3.5,26],
+  [5.5,30],
+  [-2,34],
+  [-5,38],
+  [3.5,42],
+  [-3.5,46],
+  [5,50],
+  [0,54],
+  [-5,58],
+  [3.5,62]
+ ]:
+ [
+  [-4,4],
+  [2,6],
+  [-2,9],
+  [4,12],
+  [0,15],
+  [-4,18],
+  [2,21],
+  [5,24],
+  [0,27],
+  [-4,30],
+  [2,33],
+  [-2,36],
+  [4,39],
+  [0,42],
+  [-4,45],
+  [2,48],
+  [-2,51],
+  [4,54],
+  [0,57],
+  [-3,60]
+ ];
+
+
+ positions.forEach(
+  (p,index)=>{
+
+   const group=
+    new THREE.Group();
+
+
+   const glow=
+    new THREE.Mesh(
+     new THREE.SphereGeometry(
+      1.2,
+      12,
+      8
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0x55ff70,
+      transparent:true,
+      opacity:.08,
+      depthWrite:false
+     })
+    );
+
+
+   const ring=
+    new THREE.Mesh(
+     new THREE.TorusGeometry(
+      .72,
+      .17,
+      12,
+      28
+     ),
+     new THREE.MeshStandardMaterial({
+      color:0x55ff70,
+      emissive:0x113d19,
+      emissiveIntensity:.8
+     })
+    );
+
+
+   const center=
+    new THREE.Mesh(
+     new THREE.SphereGeometry(
+      .3,
+      12,
+      8
+     ),
+     new THREE.MeshBasicMaterial({
+      color:0xffffff
+     })
+    );
+
+
+   group.add(
+    glow,
+    ring,
+    center
+   );
+
+
+   group.position.set(
+    p[0],
+    p[1],
+    3.1
+   );
+
+   scene.add(group);
+
+
+   grips.push({
+    group,
+    ring,
+    glow,
+    x:p[0],
+    y:p[1],
+    index
+   });
+
+  }
+ );
+}
+
+
+/* =====================================================
+   RETICLE
+===================================================== */
+
+function createTouchReticle(){
+
+ touchReticleMaterial=
+  new THREE.MeshBasicMaterial({
+   color:0xffcc33,
+   transparent:true,
+   opacity:.9,
+   depthWrite:false
+  });
+
+ touchReticle=
+  new THREE.Mesh(
+   new THREE.TorusGeometry(
+    .42,
+    .055,
+    10,
+    32
+   ),
+   touchReticleMaterial
+  );
+
+ touchReticle.position.z=
+  4.15;
+
+ touchReticle.rotation.x=
+  Math.PI/2;
+
+ touchReticle.visible=false;
+
+ scene.add(
+  touchReticle
+ );
+}
+
+
+/* =====================================================
+   SUMMIT PARTICLES
+===================================================== */
+
+function createSummitParticles(){
+
+ for(let i=0;i<70;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .025+
+     Math.random()*.045,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.35
+    })
+   );
+
+  p.position.set(
+   (Math.random()-.5)*8,
+   61+
+   Math.random()*5,
+   Math.random()*2
+  );
+
+  p.userData={
+   speed:.2+
+    Math.random()*.5,
+   phase:
+    Math.random()*6
+  };
+
+  scene.add(p);
+
+  summitParticles.push(p);
+ }
+}
+
+
+/* =====================================================
+   POINTER
+===================================================== */
+
+function setPointerPosition(
+ x,
+ y
+){
+
+ mouse.x=
+  x/innerWidth*2-1;
+
+ mouse.y=
+  -(y/innerHeight)*2+1;
+
+ updateCursorWorld();
+}
+
+
+function updateCursorWorld(){
+
+ if(!camera)return;
+
+ raycaster.setFromCamera(
+  mouse,
+  camera
+ );
+
+ const hit=
+  new THREE.Vector3();
+
+ if(
+  raycaster.ray.intersectPlane(
+   cursorPlane,
+   hit
+  )
+ ){
+
+  cursorWorld.copy(hit);
+
+ }
+
+ cursorWorld.x=
+  THREE.MathUtils.clamp(
+   cursorWorld.x,
+   -10,
+   10
+  );
+
+ cursorWorld.y=
+  THREE.MathUtils.clamp(
+   cursorWorld.y,
+   -2,
+   70
+  );
+}
+
+
+function mouseMove(e){
+
+ if(touchActive)return;
+
+ setPointerPosition(
+  e.clientX,
+  e.clientY
+ );
+}
+
+
+function mouseDown(e){
+
+ if(!running)return;
+
+ if(e.button!==0)return;
+
+ startGrab();
+}
+
+
+function mouseUp(){
+
+ if(!running)return;
+
+ releaseGrab();
+}
+
+
+/* =====================================================
+   GRAB
+===================================================== */
+
+function nearestGrip(){
+
+ let best=null;
+ let dist=Infinity;
+
+ for(const g of grips){
+
+  const dx=
+   cursorWorld.x-g.x;
+
+  const dy=
+   cursorWorld.y-g.y;
+
+  const d=
+   Math.sqrt(
+    dx*dx+
+    dy*dy
+   );
+
+  if(d<dist){
+
+   dist=d;
+   best=g;
+
+  }
+ }
+
+ return{
+  grip:best,
+  distance:dist
+ };
+}
+
+
+function startGrab(){
+
+ if(!running)return;
+
+ const result=
+  nearestGrip();
+
+ if(
+  result.grip&&
+  result.distance<1.2
+ ){
+
+  grabbed=
+   result.grip;
+
+  anchorWorld.set(
+   grabbed.x,
+   grabbed.y,
+   4
+  );
+
+  const dx=
+   hero.position.x-
+   anchorWorld.x;
+
+  const dy=
+   hero.position.y-
+   anchorWorld.y;
+
+  ropeLength=
+   Math.max(
+    2,
+    Math.sqrt(
+     dx*dx+
+     dy*dy
+    )
+   );
+
+
+  velocityX*=.35;
+  velocityY*=.35;
+
+
+  setStatus(
+   "GRIP LOCKED",
+   "#55ff70"
+  );
+
+
+  grabbed.group
+   .scale
+   .setScalar(
+    1.55
+   );
+
+
+  createGripBurst(
+   grabbed.x,
+   grabbed.y
+  );
+
+  cameraShake=.12;
+
+ }else{
+
+  setStatus(
+   "MOVE CLOSER",
+   "#ffcc33"
+  );
+ }
+}
+
+
+function releaseGrab(){
+
+ if(grabbed){
+
+  grabbed.group
+   .scale
+   .setScalar(1);
+
+  velocityX*=1.2;
+  velocityY*=1.2;
+
+  cameraShake=.08;
+ }
+
+ grabbed=null;
+
+ if(running){
+
+  setStatus(
+   "FREE",
+   "#55ff70"
+  );
+ }
+}
+
+
+/* =====================================================
+   TOUCH
+===================================================== */
+
+function touchStart(e){
+
+ if(!running)return;
+
+ if(!e.touches?.length)return;
+
+ e.preventDefault();
+
+ touchActive=true;
+
+ const t=e.touches[0];
+
+ setPointerPosition(
+  t.clientX,
+  t.clientY
+ );
+
+ $("touchHint").style.display=
+  "block";
+
+ startGrab();
+}
+
+
+function touchMove(e){
+
+ if(!touchActive)return;
+
+ if(!e.touches?.length)return;
+
+ e.preventDefault();
+
+ const t=e.touches[0];
+
+ setPointerPosition(
+  t.clientX,
+  t.clientY
+ );
+}
+
+
+function touchEnd(e){
+
+ if(!touchActive)return;
+
+ e.preventDefault();
+
+ touchActive=false;
+
+ $("touchHint").style.display=
+  "none";
+
+ releaseGrab();
+}
+
+
+/* =====================================================
+   PHYSICS
+===================================================== */
+
+function updatePhysics(dt){
+
+ velocityY+=
+  gravity*dt;
+
+
+ if(grabbed){
+
+  const relX=
+   hero.position.x-
+   anchorWorld.x;
+
+  const relY=
+   hero.position.y-
+   anchorWorld.y;
+
+  const distance=
+   Math.sqrt(
+    relX*relX+
+    relY*relY
+   );
+
+
+  if(distance>.001){
+
+   const tangentX=
+    -relY/distance;
+
+   const tangentY=
+    relX/distance;
+
+
+   const mouseX=
+    cursorWorld.x-
+    anchorWorld.x;
+
+   const mouseY=
+    cursorWorld.y-
+    anchorWorld.y;
+
+   const mouseLen=
+    Math.sqrt(
+     mouseX*mouseX+
+     mouseY*mouseY
+    );
+
+
+   if(mouseLen>.001){
+
+    const nx=
+     mouseX/mouseLen;
+
+    const ny=
+     mouseY/mouseLen;
+
+
+    const tangential=
+     nx*tangentX+
+     ny*tangentY;
+
+
+    velocityX+=
+     tangentX*
+     tangential*
+     swingStrength*
+     dt;
+
+    velocityY+=
+     tangentY*
+     tangential*
+     swingStrength*
+     dt;
+   }
+
+
+   if(distance>ropeLength){
+
+    const correction=
+     distance-ropeLength;
+
+    const nx=
+     relX/distance;
+
+    const ny=
+     relY/distance;
+
+
+    hero.position.x-=
+     nx*correction;
+
+    hero.position.y-=
+     ny*correction;
+
+
+    const outward=
+     velocityX*nx+
+     velocityY*ny;
+
+
+    if(outward>0){
+
+     velocityX-=
+      nx*outward;
+
+     velocityY-=
+      ny*outward;
+    }
+
+   }
+
+
+   const spring=
+    (
+     ropeLength-
+     distance
+    )*
+    anchorPull;
+
+
+   velocityX+=
+    (relX/distance)*
+    spring*
+    dt;
+
+   velocityY+=
+    (relY/distance)*
+    spring*
+    dt;
+  }
+ }
+
+
+ const speed=
+  Math.sqrt(
+   velocityX*velocityX+
+   velocityY*velocityY
+  );
+
+
+ if(speed>maxSpeed){
+
+  const s=
+   maxSpeed/speed;
+
+  velocityX*=s;
+  velocityY*=s;
+ }
+
+
+ hero.position.x+=
+  velocityX*dt;
+
+ hero.position.y+=
+  velocityY*dt;
+
+
+ const damping=
+  Math.pow(
+   airDrag,
+   dt*60
+  );
+
+ velocityX*=damping;
+ velocityY*=damping;
+
+
+ hero.position.x=
+  THREE.MathUtils.clamp(
+   hero.position.x,
+   -9,
+   9
+  );
+
+
+ const groundY=.82;
+
+if(hero.position.y<groundY){
+  if(velocityY<-1){
+    showFailure();
+    return;
+  }
+
+  hero.position.y=groundY;
+
+  if(velocityY<0)
+    velocityY=0;
+
+  velocityX*=.86;
+}
+}
+
+
+/* =====================================================
+   HAMMER
+===================================================== */
+
+function updateHammer(){
+
+ if(!hammer)return;
+
+ if(grabbed){
+
+  hammer.position.copy(
+   anchorWorld
+  );
+
+  const dx=
+   cursorWorld.x-
+   anchorWorld.x;
+
+  const dy=
+   cursorWorld.y-
+   anchorWorld.y;
+
+  hammer.rotation.z=
+   Math.atan2(
+    dy,
+    dx
+   );
+
+ }else{
+
+  hammer.position.copy(
+   cursorWorld
+  );
+
+  const dx=
+   cursorWorld.x-
+   hero.position.x;
+
+  const dy=
+   cursorWorld.y-
+   hero.position.y;
+
+  hammer.rotation.z=
+   Math.atan2(
+    dy,
+    dx
+   );
+ }
+
+ hammer.position.z=4;
+
+
+ if(hammerRope){
+
+  if(grabbed){
+
+   hammerRope.visible=true;
+
+   const points=[
+    new THREE.Vector3(
+     hero.position.x,
+     hero.position.y+1,
+     3.8
+    ),
+    new THREE.Vector3(
+     anchorWorld.x,
+     anchorWorld.y,
+     3.8
+    )
+   ];
+
+   hammerRope.geometry
+    .setFromPoints(
+     points
+    );
+
+   hammerRopeMaterial.color.set(
+    0x55ff70
+   );
+
+   hammerRopeMaterial.opacity=.7;
+
+  }else{
+
+   hammerRope.visible=false;
+  }
+ }
+}
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+function updateCamera(){
+
+ if(summitSequence)return;
+
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+ camera.fov = portraitMobile ? 86 : 55;
+ camera.position.z = portraitMobile ? 38 : 18;
+ camera.updateProjectionMatrix();
+
+ const targetY=
+  hero.position.y + (portraitMobile ? 8.5 : 5);
+
+ camera.position.y+=
+  (
+   targetY-
+   camera.position.y
+  )*.09;
+
+
+ camera.position.x+=
+  (
+   hero.position.x-
+   camera.position.x
+  )*.055;
+
+
+ if(cameraShake>0){
+
+  camera.position.x+=
+   (Math.random()-.5)*
+   cameraShake;
+
+  camera.position.y+=
+   (Math.random()-.5)*
+   cameraShake;
+
+  cameraShake=
+   Math.max(
+    0,
+    cameraShake-.008
+   );
+ }
+
+
+ camera.lookAt(
+  hero.position.x,
+  camera.position.y,
+  0
+ );
+}
+
+
+/* =====================================================
+   HEIGHT
+===================================================== */
+
+function updateHeight(){
+
+ if(!hero)return;
+
+ const h=
+  Math.max(
+   0,
+   Math.floor(
+    hero.position.y
+   )
+  );
+
+ const p=
+  Math.min(
+   100,
+   Math.max(
+    0,
+    hero.position.y/
+    SUMMIT_HEIGHT*
+    100
+   )
+  );
+
+ $("height").textContent=h;
+
+ $("pct").textContent=
+  Math.floor(p)+"%";
+
+ $("progress").style.width=
+  p+"%";
+
+ $("hammerState").textContent=
+  grabbed?
+  "GRABBED":
+  "READY";
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function setStatus(
+ text,
+ color
+){
+
+ if(!$("status"))return;
+
+ $("status").textContent=
+  text;
+
+ $("status").style.color=
+  color;
+}
+
+
+/* =====================================================
+   SUMMIT
+===================================================== */
+
+function checkSummit(){
+
+ if(gameWon)return;
+
+ if(summitSequence)return;
+
+ if(
+  hero&&
+  hero.position.y>=60.8
+ ){
+
+  beginSummitSequence();
+ }
+}
+
+
+function beginSummitSequence(){
+
+ if(summitSequence)return;
+
+ summitSequence=true;
+ running=false;
+ gameWon=false;
+ grabbed=null;
+ touchActive=false;
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
+
+ setStatus(
+  "SUMMIT REACHED",
+  "#55ff70"
+ );
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ grips.forEach(
+  g=>{
+   g.group.scale.setScalar(1);
+  }
+ );
+
+
+ velocityX=0;
+ velocityY=0;
+
+
+ hero.position.set(
+  SUMMIT_HERO_X,
+  SUMMIT_HERO_Y,
+  SUMMIT_HERO_Z
+ );
+
+
+ camera.position.set(
+  SUMMIT_CENTER_X,
+  SUMMIT_CENTER_Y+5,
+  18
+ );
+
+
+ camera.lookAt(
+  SUMMIT_CENTER_X,
+  SUMMIT_CENTER_Y,
+  0
+ );
+
+
+ updateHeight();
+
+ registerSummit();
+
+ unlockNextLevel();
+
+
+ setTimeout(
+  ()=>{
+
+   if(!summitSequence)return;
+
+   createSummitBurst();
+
+  },
+  350
+ );
+
+
+ cancelVictoryTimer();
+
+ victoryTimer=
+  setTimeout(
+   ()=>{
+
+    victoryTimer=null;
+
+    if(!summitSequence)return;
+
+    gameWon=true;
+
+    $("cryptoTicker").style.display=
+     "none";
+
+    updatePointsUI();
+    renderLeaderboard();
+    updateLevelUI();
+
+    const peak=
+     $("victoryPeak");
+
+    const unlock=
+     $("unlockMessage");
+    window.climboriaCurrentLevel=currentLevel;
+    const nextButton=document.getElementById("nextLevelVictoryButton");
+    if(nextButton){nextButton.textContent=currentLevel>=10?"EXPEDITION COMPLETE":"NEXT LEVEL";nextButton.disabled=currentLevel>=10;nextButton.style.opacity=currentLevel>=10?".55":"1";}
+
+    if(peak){
+
+     peak.textContent=
+      LEVELS[currentLevel].name;
+
+    }
+
+    if(unlock){
+
+     if(
+      currentLevel<10&&
+      unlockedLevel>
+      currentLevel
+     ){
+
+      unlock.textContent=
+       "LEVEL 0"+
+       unlockedLevel+
+       " UNLOCKED";
+
+     }else if(currentLevel>=10){
+
+      unlock.textContent=
+       "ALL CURRENT LEVELS COMPLETED";
+
+     }else{
+
+      unlock.textContent=
+       "KEEP CLIMBING";
+
+     }
+    }
+
+    $("victory").style.display=
+     "flex";
+
+   },
+   1500
+  );
+}
+
+
+function showVictory(){
+
+ beginSummitSequence();
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function showFailure(){
+ running=false;grabbed=null;touchActive=false;gameWon=false;summitSequence=false;cancelVictoryTimer();
+ if(hammerRope)hammerRope.visible=false;if(touchReticle)touchReticle.visible=false;
+ const failure=document.getElementById("failure");
+ if(failure){const label=document.getElementById("failureLevel");if(label)label.textContent="LEVEL "+String(currentLevel).padStart(2,"0");failure.style.display="flex";}
+ ["hud","hudPoints","help","nav","touchHint","cryptoTicker","victory"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
+}
+function resetPlayer(){
+
+ if(!hero||!camera)return;
+
+ hero.rotation.y = Math.PI;
+ hero.position.set(
+  0,
+  .82,
+  3.5
+ );
+
+ velocityX=0;
+ velocityY=0;
+
+ grabbed=null;
+ touchActive=false;
+ summitSequence=false;
+ gameWon=false;
+ cameraShake=0;
+
+ $("touchHint").style.display=
+  "none";
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ grips.forEach(
+  g=>
+   g.group.scale.setScalar(1)
+ );
+
+ const portraitMobile = innerWidth <= 700 && innerHeight > innerWidth;
+ camera.fov = portraitMobile ? 86 : 55;
+ camera.position.set(
+  0,
+  7,
+  portraitMobile ? 38 : 18
+ );
+ camera.updateProjectionMatrix();
+
+ camera.lookAt(
+  0,
+  7,
+  0
+ );
+
+ setStatus(
+  "FREE",
+  "#55ff70"
+ );
+
+ updateHeight();
+}
+
+
+/* =====================================================
+   BURSTS
+===================================================== */
+
+function clearBursts(){
+
+ [
+  ...summitBurst,
+  ...summitSparks
+ ].forEach(
+  p=>{
+
+   scene.remove(p);
+
+   if(p.geometry)
+    p.geometry.dispose();
+
+   if(p.material)
+    p.material.dispose();
+
+  }
+ );
+
+ summitBurst.length=0;
+ summitSparks.length=0;
+
+
+ summitShockwaves.forEach(
+  p=>{
+
+   scene.remove(p);
+
+   if(p.geometry)
+    p.geometry.dispose();
+
+   if(p.material)
+    p.material.dispose();
+
+  }
+ );
+
+ summitShockwaves.length=0;
+}
+
+
+/* =====================================================
+   GRIP BURST
+===================================================== */
+
+function createGripBurst(
+ x,
+ y
+){
+
+ for(let i=0;i<12;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .045+
+     Math.random()*.06,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:
+      i%3===0?
+      0xffcc33:
+      0x55ff70,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   x,
+   y,
+   3.5
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const s=
+   1.5+
+   Math.random()*2.5;
+
+
+  p.userData.vx=
+   Math.cos(a)*s;
+
+  p.userData.vy=
+   Math.sin(a)*s;
+
+  p.userData.life=1;
+
+  scene.add(p);
+
+  summitBurst.push(p);
+ }
+}
+
+
+/* =====================================================
+   EFFECTS
+===================================================== */
+
+function updateEffects(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitBurst[i];
+
+  if(
+   p.userData&&
+   p.userData.summit
+  )
+   continue;
+
+
+  p.position.x+=
+   p.userData.vx*dt;
+
+  p.position.y+=
+   p.userData.vy*dt;
+
+  p.userData.vy-=
+   5*dt;
+
+  p.userData.life-=
+   dt*2;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    p.userData.life
+   );
+
+
+  if(
+   p.userData.life<=0
+  ){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitBurst.splice(
+    i,
+    1
+   );
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT EXPLOSION
+===================================================== */
+
+function createSummitBurst(){
+
+ if(!hero)return;
+
+ const explosionX=
+  hero.position.x;
+
+ const explosionY=
+  hero.position.y+.7;
+
+ const explosionZ=
+  hero.position.z;
+
+
+ for(let i=0;i<150;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .04+
+     Math.random()*.09,
+     6,
+     6
+    ),
+    new THREE.MeshBasicMaterial({
+     color:
+      i%3===0?
+      0xffcc33:
+      0x55ff70,
+     transparent:true,
+     opacity:1
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const speed=
+   3+
+   Math.random()*9;
+
+
+  p.userData={
+   vx:
+    Math.cos(a)*speed,
+   vy:
+    .5+
+    Math.random()*9,
+   vz:
+    (Math.random()-.5)*speed,
+   life:
+    1+
+    Math.random()*.8,
+   summit:true
+  };
+
+
+  scene.add(p);
+
+  summitBurst.push(p);
+ }
+
+
+ for(let i=0;i<55;i++){
+
+  const p=
+   new THREE.Mesh(
+    new THREE.SphereGeometry(
+     .025,
+     5,
+     5
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0xffffff,
+     transparent:true
+    })
+   );
+
+
+  p.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+
+  const a=
+   Math.random()*
+   Math.PI*2;
+
+  const speed=
+   8+
+   Math.random()*12;
+
+
+  p.userData={
+   vx:
+    Math.cos(a)*speed,
+   vy:
+    Math.random()*10+4,
+   vz:
+    (Math.random()-.5)*speed,
+   life:
+    .5+
+    Math.random()*.7
+  };
+
+
+  scene.add(p);
+
+  summitSparks.push(p);
+ }
+
+
+ for(let i=0;i<2;i++){
+
+  const shock=
+   new THREE.Mesh(
+    new THREE.TorusGeometry(
+     .4,
+     .05,
+     8,
+     48
+    ),
+    new THREE.MeshBasicMaterial({
+     color:0x55ff70,
+     transparent:true,
+     opacity:.9
+    })
+   );
+
+
+  shock.position.set(
+   explosionX,
+   explosionY,
+   explosionZ
+  );
+
+  shock.rotation.x=
+   Math.PI/2;
+
+  shock.userData={
+   life:1,
+   speed:5+i*2
+  };
+
+  scene.add(shock);
+
+  summitShockwaves.push(
+   shock
+  );
+ }
+
+
+ if(summitLight){
+
+  summitLight.intensity=18;
+
+  setTimeout(
+   ()=>{
+
+    if(summitLight)
+     summitLight.intensity=5;
+
+   },
+   500
+  );
+ }
+}
+
+
+/* =====================================================
+   SUMMIT UPDATE
+===================================================== */
+
+function updateSummitBurst(dt){
+
+ for(
+  let i=summitBurst.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitBurst[i];
+
+  const v=
+   p.userData;
+
+  if(!v.summit)
+   continue;
+
+  p.position.x+=
+   v.vx*dt;
+
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+  v.vy-=
+   8*dt;
+
+  v.life-=
+   dt;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitBurst.splice(
+    i,
+    1
+   );
+  }
+ }
+
+
+ for(
+  let i=summitSparks.length-1;
+  i>=0;
+  i--
+ ){
+
+  const p=
+   summitSparks[i];
+
+  const v=
+   p.userData;
+
+  p.position.x+=
+   v.vx*dt;
+
+  p.position.y+=
+   v.vy*dt;
+
+  p.position.z+=
+   v.vz*dt;
+
+  v.vy-=
+   10*dt;
+
+  v.life-=
+   dt;
+
+  p.material.opacity=
+   Math.max(
+    0,
+    v.life
+   );
+
+
+  if(v.life<=0){
+
+   scene.remove(p);
+
+   p.geometry.dispose();
+   p.material.dispose();
+
+   summitSparks.splice(
+    i,
+    1
+   );
+  }
+ }
+
+
+ for(
+  let i=summitShockwaves.length-1;
+  i>=0;
+  i--
+ ){
+
+  const s=
+   summitShockwaves[i];
+
+  const v=
+   s.userData;
+
+  const scale=
+   1+
+   (1-v.life)*12;
+
+  s.scale.setScalar(
+   scale
+  );
+
+  s.material.opacity=
+   v.life;
+
+  v.life-=
+   dt*1.4;
+
+
+  if(v.life<=0){
+
+   scene.remove(s);
+
+   s.geometry.dispose();
+   s.material.dispose();
+
+   summitShockwaves.splice(
+    i,
+    1
+   );
+  }
+ }
+}
+
+
+/* =====================================================
+   SUMMIT PARTICLES
+===================================================== */
+
+function updateSummitParticles(
+ time,
+ dt
+){
+
+ summitParticles.forEach(
+  p=>{
+
+   p.position.y+=
+    p.userData.speed*dt;
+
+   p.position.x+=
+    Math.sin(
+     time*.001+
+     p.userData.phase
+    )*.002;
+
+   if(p.position.y>68)
+    p.position.y=61;
+
+  }
+ );
+}
+
+
+/* =====================================================
+   SUMMIT ANIMATION
+===================================================== */
+
+function animateSummit(time){
+
+ if(summitGlowMesh){
+
+  const s=
+   1+
+   Math.sin(
+    time*.003
+   )*.15;
+
+  summitGlowMesh
+   .scale
+   .setScalar(s);
+ }
+
+
+ if(summitBeacon){
+
+  summitBeacon.scale.y=
+   1+
+   Math.sin(
+    time*.004
+   )*.15;
+ }
+}
+
+
+/* =====================================================
+   CRYPTO FORMAT
+===================================================== */
+
+function formatCryptoPrice(
+ price
+){
+
+ price=Number(price);
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
+  return "—";
+
+
+ if(price>=1000){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:0,
+     maximumFractionDigits:0
+    }
+   );
+ }
+
+
+ if(price>=1){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:2,
+     maximumFractionDigits:2
+    }
+   );
+ }
+
+
+ if(price>=.01){
+
+  return "$"+
+   price.toLocaleString(
+    "en-US",
+    {
+     minimumFractionDigits:3,
+     maximumFractionDigits:3
+    }
+   );
+ }
+
+
+ return "$"+
+  price.toLocaleString(
+   "en-US",
+   {
+    minimumFractionDigits:4,
+    maximumFractionDigits:8
+   }
+  );
+}
+
+
+/* =====================================================
+   CRYPTO STATUS
+===================================================== */
+
+function setCryptoStatus(
+ text,
+ type="live"
+){
+
+ const el=
+  $("cryptoStatus");
+
+ if(!el)return;
+
+ el.textContent=text;
+
+ el.classList.remove(
+  "offline",
+  "syncing"
+ );
+
+ if(type==="offline")
+  el.classList.add(
+   "offline"
+  );
+
+ if(type==="syncing")
+  el.classList.add(
+   "syncing"
+  );
+}
+
+
+function setCryptoLiveLabels(
+ text
+){
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "LiveText"
+    );
+
+   if(el)
+    el.textContent=text;
+
+  }
+ );
+}
+
+
+/* =====================================================
+   CRYPTO FLASH
+===================================================== */
+
+function flashCryptoCard(
+ symbol,
+ direction
+){
+
+ const card=
+  $(
+   symbol.toLowerCase()+
+   "Card"
+  );
+
+ if(!card)return;
+
+ card.classList.remove(
+  "priceUp",
+  "priceDown",
+  "priceFlashUp",
+  "priceFlashDown",
+  "priceSync"
+ );
+
+ void card.offsetWidth;
+
+
+ if(direction==="up"){
+
+  card.classList.add(
+   "priceUp",
+   "priceFlashUp"
+  );
+
+ }else if(
+  direction==="down"
+ ){
+
+  card.classList.add(
+   "priceDown",
+   "priceFlashDown"
+  );
+
+ }else{
+
+  card.classList.add(
+   "priceSync"
+  );
+ }
+
+
+ setTimeout(
+  ()=>{
+
+   card.classList.remove(
+    "priceFlashUp",
+    "priceFlashDown",
+    "priceSync"
+   );
+
+  },
+  700
+ );
+}
+
+
+/* =====================================================
+   UPDATE CRYPTO
+===================================================== */
+
+function updateCryptoPrice(
+ symbol,
+ price
+){
+
+ const priceEl=
+  $(
+   symbol.toLowerCase()+
+   "Price"
+  );
+
+ if(!priceEl)return false;
+
+ price=Number(price);
+
+ if(
+  !Number.isFinite(price)||
+  price<=0
+ )
+  return false;
+
+
+ const previous=
+  Number(
+   priceEl.dataset.price||0
+  );
+
+
+ priceEl.textContent=
+  formatCryptoPrice(
+   price
+  );
+
+ priceEl.classList.remove(
+  "cryptoLoading"
+ );
+
+ priceEl.dataset.price=
+  String(price);
+
+
+ if(previous>0){
+
+  if(price>previous){
+
+   flashCryptoCard(
+    symbol,
+    "up"
+   );
+
+  }else if(
+   price<previous
+  ){
+
+   flashCryptoCard(
+    symbol,
+    "down"
+   );
+
+  }else{
+
+   flashCryptoCard(
+    symbol,
+    "sync"
+   );
+  }
+
+ }else{
+
+  flashCryptoCard(
+   symbol,
+   "sync"
+  );
+ }
+
+ return true;
+}
+
+
+function updateCryptoChange(
+ symbol,
+ change
+){
+
+ const changeEl=
+  $(
+   symbol.toLowerCase()+
+   "Change"
+  );
+
+ if(!changeEl)return;
+
+ change=Number(change);
+
+ if(!Number.isFinite(change)){
+
+  changeEl.textContent="--";
+
+  changeEl.classList.remove(
+   "cryptoLoading",
+   "up",
+   "down"
+  );
+
+  changeEl.classList.add(
+   "cryptoLoading"
+  );
+
+  return;
+ }
+
+
+ const sign=
+  change>=0?
+  "+":
+  "";
+
+ changeEl.textContent=
+  sign+
+  change.toFixed(2)+
+  "%";
+
+
+ changeEl.classList.remove(
+  "cryptoLoading",
+  "up",
+  "down"
+ );
+
+ changeEl.classList.add(
+  change>=0?
+  "up":
+  "down"
+ );
+}
+
+
+/* =====================================================
+   TIMESTAMP
+===================================================== */
+
+function updateCryptoTimestamp(){
+
+ const now=
+  new Date();
+
+ const time=
+  now.toLocaleTimeString(
+   "en-US",
+   {
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:false
+   }
+  );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
+
+   if(el)
+    el.textContent=
+     "Updated "+
+     time;
+
+  }
+ );
+}
+
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+function updateCryptoCountdown(){
+
+ cryptoSecondsLeft=
+  Math.max(
+   0,
+   Math.floor(
+    cryptoSecondsLeft
+   )
+  );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Countdown"
+    );
+
+   if(el){
+
+    el.textContent=
+     "Refresh in "+
+     cryptoSecondsLeft+
+     "s";
+
+   }
+
+  }
+ );
+
+
+ if(
+  cryptoSecondsLeft<=0
+ ){
+
+  setCryptoStatus(
+   "SYNCING LIVE MARKET",
+   "syncing"
+  );
+ }
+}
+
+
+/* =====================================================
+   CRYPTO ERROR
+===================================================== */
+
+function showCryptoError(
+ source="LIVE FEEDS"
+){
+
+ setCryptoStatus(
+  source+
+  " TEMPORARILY UNAVAILABLE",
+  "offline"
+ );
+
+ setCryptoLiveLabels(
+  "WAIT"
+ );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
+
+   if(!el)return;
+
+   el.textContent=
+    "Retrying automatically";
+
+   el.classList.add(
+    "cryptoError"
+   );
+
+  }
+ );
+}
+
+
+/* =====================================================
+   CRYPTO SUCCESS
+===================================================== */
+
+function showCryptoSuccess(
+ source
+){
+
+ setCryptoStatus(
+  "LIVE • "+
+  source+
+  " • 10s REFRESH",
+  "live"
+ );
+
+ setCryptoLiveLabels(
+  "LIVE"
+ );
+
+
+ CRYPTO_IDS.forEach(
+  id=>{
+
+   const symbol=
+    CRYPTO_SYMBOLS[id];
+
+   const el=
+    $(
+     symbol.toLowerCase()+
+     "Updated"
+    );
+
+   if(el)
+    el.classList.remove(
+     "cryptoError"
+    );
+
+  }
+ );
+
+
+ cryptoSecondsLeft=
+  CRYPTO_REFRESH_SECONDS;
+
+ updateCryptoCountdown();
+}
+
+
+/* =====================================================
+   BINANCE
+===================================================== */
+
+function buildBinanceURL(){
+
+ const encoded=
+  encodeURIComponent(
+   JSON.stringify(
+    BINANCE_SYMBOLS
+   )
+  );
+
+ return BINANCE_API+
+  "?symbols="+
+  encoded+
+  "&type=FULL"+
+  "&_="+
+  Date.now();
+}
+
+
+async function loadBinanceMarket(){
+
+ const controller=
+  new AbortController();
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   4500
+  );
+
+
+ try{
+
+  const response=
+   await fetch(
+    buildBinanceURL(),
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":
+       "application/json"
+     }
+    }
+   );
+
+
+  if(!response.ok)
+   throw new Error(
+    "Binance HTTP "+
+    response.status
+   );
+
+
+  const data=
+   await response.json();
+
+
+  if(!Array.isArray(data))
+   throw new Error(
+    "Unexpected Binance response"
+   );
+
+
+  let validCoins=0;
+
+
+  data.forEach(
+   coin=>{
+
+    if(!coin)return;
+
+    const symbol=
+     BINANCE_TO_SYMBOL[
+      coin.symbol
+     ];
+
+    if(!symbol)return;
+
+
+    const price=
+     Number(
+      coin.lastPrice
+     );
+
+    const change=
+     Number(
+      coin.priceChangePercent
+     );
+
+
+    if(
+     updateCryptoPrice(
+      symbol,
+      price
+     )
+    ){
+
+     validCoins++;
+
+    }
+
+
+    if(
+     Number.isFinite(change)
+    ){
+
+     updateCryptoChange(
+      symbol,
+      change
+     );
+
+    }
+
+   }
+  );
+
+
+  if(
+   validCoins<
+   BINANCE_SYMBOLS.length
+  ){
+
+   throw new Error(
+    "Incomplete Binance data"
+   );
+
+  }
+
+
+  return true;
+
+ }finally{
+
+  clearTimeout(
+   timeout
+  );
+ }
+}
+
+
+/* =====================================================
+   COINGECKO
+===================================================== */
+
+async function loadCoinGeckoMarket(){
+
+ const url=
+  COINGECKO_API+
+  "?ids="+
+  CRYPTO_IDS.join(",")+
+  "&vs_currencies=usd"+
+  "&include_24hr_change=true"+
+  "&precision=full"+
+  "&_="+
+  Date.now();
+
+
+ const controller=
+  new AbortController();
+
+
+ const timeout=
+  setTimeout(
+   ()=>{
+    controller.abort();
+   },
+   5000
+  );
+
+
+ try{
+
+  const response=
+   await fetch(
+    url,
+    {
+     method:"GET",
+     cache:"no-store",
+     signal:controller.signal,
+     headers:{
+      "Accept":
+       "application/json"
+     }
+    }
+   );
+
+
+  if(!response.ok)
+   throw new Error(
+    "CoinGecko HTTP "+
+    response.status
+   );
+
+
+  const data=
+   await response.json();
+
+
+  let validCoins=0;
+
+
+  CRYPTO_IDS.forEach(
+   id=>{
+
+    const coin=data[id];
+
+    if(!coin)return;
+
+    const symbol=
+     CRYPTO_SYMBOLS[id];
+
+
+    if(
+     coin.usd!==undefined&&
+     updateCryptoPrice(
+      symbol,
+      coin.usd
+     )
+    ){
+
+     validCoins++;
+
+    }
+
+
+    if(
+     coin.usd_24h_change!==undefined
+    ){
+
+     updateCryptoChange(
+      symbol,
+      coin.usd_24h_change
+     );
+
+    }
+
+   }
+  );
+
+
+  if(
+   validCoins<
+   CRYPTO_IDS.length
+  ){
+
+   throw new Error(
+    "Incomplete CoinGecko data"
+   );
+
+  }
+
+
+  return true;
+
+ }finally{
+
+  clearTimeout(
+   timeout
+  );
+ }
+}
+
+
+/* =====================================================
+   LOAD MARKET
+===================================================== */
+
+async function loadCryptoMarket(){
+
+ if(cryptoRequestInProgress)
+  return;
+
+ cryptoRequestInProgress=true;
+
+
+ setCryptoStatus(
+  "SYNCING LIVE MARKET",
+  "syncing"
+ );
+
+ setCryptoLiveLabels(
+  "SYNC"
+ );
+
+
+ try{
+
+  try{
+
+   const binanceOK=
+    await loadBinanceMarket();
+
+   if(binanceOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "BINANCE"
+    );
+
+    return;
+   }
+
+  }catch(error){
+
+   console.warn(
+    "CLIMBORIA Binance failed:",
+    error
+   );
+  }
+
+
+  try{
+
+   const geckoOK=
+    await loadCoinGeckoMarket();
+
+   if(geckoOK){
+
+    updateCryptoTimestamp();
+
+    showCryptoSuccess(
+     "COINGECKO"
+    );
+
+    return;
+   }
+
+  }catch(error){
+
+   console.warn(
+    "CLIMBORIA CoinGecko failed:",
+    error
+   );
+  }
+
+
+  showCryptoError(
+   "LIVE FEEDS"
+  );
+
+ }finally{
+
+  cryptoRequestInProgress=false;
+
+  cryptoSecondsLeft=
+   CRYPTO_REFRESH_SECONDS;
+
+  updateCryptoCountdown();
+ }
+}
+
+
+/* =====================================================
+   START TICKER
+===================================================== */
+
+function startCryptoTicker(){
+
+ if(cryptoTimer){
+
+  clearInterval(
+   cryptoTimer
+  );
+
+  cryptoTimer=null;
+ }
+
+ if(cryptoCountdownTimer){
+
+  clearInterval(
+   cryptoCountdownTimer
+  );
+
+  cryptoCountdownTimer=null;
+ }
+
+
+ $("cryptoTicker").style.display=
+  "flex";
+
+ cryptoSecondsLeft=
+  CRYPTO_REFRESH_SECONDS;
+
+ updateCryptoCountdown();
+
+ loadCryptoMarket();
+
+
+ cryptoTimer=
+  setInterval(
+   loadCryptoMarket,
+   CRYPTO_REFRESH_SECONDS*1000
+  );
+
+
+ cryptoCountdownTimer=
+  setInterval(
+   ()=>{
+
+    if(
+     cryptoSecondsLeft>0
+    ){
+
+     cryptoSecondsLeft--;
+
+    }
+
+    updateCryptoCountdown();
+
+   },
+   1000
+  );
+}
+
+
+/* =====================================================
+   HELP
+===================================================== */
+
+function updateHelpText(){
+
+ const mobile=
+  matchMedia(
+   "(pointer:coarse)"
+  ).matches||
+  "ontouchstart" in window;
+
+
+ $("help").innerHTML=
+  mobile
+  ?
+  "<b>TOUCH + HOLD GREEN GRIP</b> &nbsp; | &nbsp; DRAG TO SWING &nbsp; | &nbsp; RELEASE"
+  :
+  "Move cursor = piko tip &nbsp; | &nbsp; <b>CLICK + HOLD GREEN GRIP</b> &nbsp; | &nbsp; Move around grip = swing &nbsp; | &nbsp; Release";
+}
+
+
+/* =====================================================
+   VICTORY TIMER
+===================================================== */
+
+function cancelVictoryTimer(){
+
+ if(victoryTimer){
+
+  clearTimeout(
+   victoryTimer
+  );
+
+  victoryTimer=null;
+ }
+}
+
+
+/* =====================================================
+   RESIZE
+===================================================== */
+
+function resize(){
+
+ if(!camera||!renderer)return;
+
+ const isPortraitMobile =
+  innerWidth <= 700 && innerHeight > innerWidth;
+
+ camera.aspect =
+  innerWidth / innerHeight;
+
+ /*
+  MOBILE-FIRST CAMERA V2
+  Portrait screens pull back farther and widen the vertical field
+  so the climber, grips, and more of the route fit in the phone view.
+  Landscape/desktop keeps the original framing.
+ */
+ camera.position.z = isPortraitMobile ? 38 : 18;
+ camera.fov = isPortraitMobile ? 86 : 55;
+
+ camera.updateProjectionMatrix();
+
+ renderer.setSize(
+  innerWidth,
+  innerHeight
+ );
+
+ renderer.setPixelRatio(
+  Math.min(
+   window.devicePixelRatio || 1,
+   isPortraitMobile ? 1.5 : 2
+  )
+ );
+}
+
+
+/* =====================================================
+   SHOW GAME
+===================================================== */
+
+function showGame(){
+
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
+ window.climboriaCurrentLevel=currentLevel;
+ if(
+  !scene||
+  !camera||
+  !renderer||
+  !hero
+ ){
+
+  setStatus(
+   "GAME STILL LOADING",
+   "#ffcc33"
+  );
+
+  return;
+ }
+
+
+ cancelVictoryTimer();
+
+ $("landing").style.display=
+  "none";
+
+ $("launchpad").style.display=
+  "none";
+
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "block";
+
+ $("hudPoints").style.display=
+  "block";
+
+ $("help").style.display=
+  "block";
+
+ $("nav").style.display=
+  "block";
+
+ $("cryptoTicker").style.display=
+  "none";
+
+ gameWon=false;
+ summitSequence=false;
+
+ clearBursts();
+
+ resetPlayer();
+
+ registerAttempt();
+
+ running=true;
+
+ updateCursorWorld();
+
+ lastTime=
+  performance.now();
+
+ updateHelpText();
+ updatePointsUI();
+ renderLeaderboard();
+ updateLevelUI();
+}
+
+
+/* =====================================================
+   MENU
+===================================================== */
+
+function showMenu(){
+
+ const failure=document.getElementById("failure");if(failure)failure.style.display="none";
+ cancelVictoryTimer();
+
+ running=false;
+ grabbed=null;
+ touchActive=false;
+ gameWon=false;
+ summitSequence=false;
+
+ $("landing").style.display=
+  "flex";
+
+ $("launchpad").style.display=
+  "none";
+
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "none";
+
+ $("hudPoints").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "flex";
+
+ clearBursts();
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ resetPlayer();
+
+ updatePointsUI();
+ updateStreakUI();
+ updateReferralUI();
+ updateLevelUI();
+ renderLeaderboard();
+}
+
+
+/* =====================================================
+   LAUNCHPAD
+===================================================== */
+
+function showLaunchpad(){
+
+ cancelVictoryTimer();
+
+ running=false;
+ grabbed=null;
+ touchActive=false;
+ gameWon=false;
+ summitSequence=false;
+
+ $("landing").style.display=
+  "none";
+
+ $("launchpad").style.display=
+  "flex";
+
+ $("levelSelect").style.display=
+  "none";
+
+ $("victory").style.display=
+  "none";
+
+ $("hud").style.display=
+  "none";
+
+ $("hudPoints").style.display=
+  "none";
+
+ $("help").style.display=
+  "none";
+
+ $("nav").style.display=
+  "none";
+
+ $("touchHint").style.display=
+  "none";
+
+ $("cryptoTicker").style.display=
+  "none";
+
+ if(touchReticle)
+  touchReticle.visible=false;
+
+ if(hammerRope)
+  hammerRope.visible=false;
+
+ clearBursts();
+
+ updateStreakUI();
+ updateReferralUI();
+ updateAirdropUI();
+ renderLeaderboard();
+}
+
+
+/* =====================================================
+   RESTART
+===================================================== */
+
+function restartGame(){
+
+ showGame();
+}
+
+
+/* =====================================================
+   GRIP ANIMATION
+===================================================== */
+
+function animateGrips(time){
+
+ grips.forEach(
+  g=>{
+
+   if(g===grabbed){
+
+    g.ring.rotation.z+=
+     .025;
+
+    return;
+   }
+
+   const pulse=
+    1+
+    Math.sin(
+     time*.004+
+     g.index
+    )*.12;
+
+   g.ring.scale.setScalar(
+    pulse
+   );
+
+   g.glow.scale.setScalar(
+    pulse
+   );
+
+   const distanceFromPlayer=
+    Math.sqrt(
+     Math.pow(
+      hero.position.x-g.x,
+      2
+     )+
+     Math.pow(
+      hero.position.y-g.y,
+      2
+     )
+    );
+
+   if(
+    distanceFromPlayer<4
+   ){
+
+    g.glow.material.opacity=
+     .16;
+
+   }else{
+
+    g.glow.material.opacity=
+     .08;
+   }
+
+  }
+ );
+}
+
+
+/* =====================================================
+   RETICLE
+===================================================== */
+
+function updateTouchReticle(
+ time
+){
+
+ if(!touchReticle)return;
+
+
+ if(
+  !running||
+  !touchActive||
+  summitSequence
+ ){
+
+  touchReticle.visible=false;
+
+  return;
+ }
+
+
+ touchReticle.visible=true;
+
+ touchReticle.position.set(
+  cursorWorld.x,
+  cursorWorld.y,
+  4.15
+ );
+
+
+ const result=
+  nearestGrip();
+
+
+ if(
+  result.grip&&
+  result.distance<1.2
+ ){
+
+  touchReticleMaterial.color
+   .set(
+    0x55ff70
+   );
+
+  touchReticleMaterial.opacity=
+   .95;
+
+
+  const pulse=
+   1+
+   Math.sin(
+    time*.018
+   )*.12;
+
+  touchReticle.scale
+   .setScalar(
+    pulse
+   );
+
+ }else{
+
+  touchReticleMaterial.color
+   .set(
+    0xffcc33
+   );
+
+  touchReticleMaterial.opacity=
+   .8;
+
+  touchReticle.scale
+   .setScalar(1);
+ }
+}
+
+
+/* =====================================================
+   HERO ANIMATION
+===================================================== */
+
+function animateHero(
+ time
+){
+
+ if(!hero)return;
+
+ if(!running)return;
+
+ const speed=
+  Math.sqrt(
+   velocityX*velocityX+
+   velocityY*velocityY
+  );
+
+ if(speed>.2){
+
+  const lean=
+   THREE.MathUtils.clamp(
+    velocityX*.025,
+    -.28,
+    .28
+   );
+
+  hero.rotation.z=
+   THREE.MathUtils.lerp(
+    hero.rotation.z,
+    lean,
+    .08
+   );
+
+ }else{
+
+  hero.rotation.z=
+   THREE.MathUtils.lerp(
+    hero.rotation.z,
+    0,
+    .08
+   );
+ }
+
+
+ const bob=
+  Math.sin(
+   time*.012
+  )*.025;
+
+ hero.position.z=
+  3.5+bob;
+}
+
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+function animate(time=0){
+
+ requestAnimationFrame(
+  animate
+ );
+
+ /*
+  Keep gameplay simulation paused while the page is backgrounded.
+  This helps mobile browsers avoid stale input/physics updates when
+  the player switches apps or returns to the game.
+ */
+ if(document.hidden){
+  lastTime=performance.now();
+  return;
+ }
+
+ const now=
+  performance.now();
+
+
+ let dt=
+  (now-lastTime)/1000;
+
+ lastTime=now;
+
+
+ dt=
+  Math.min(
+   dt,
+   .033
+  );
+
+
+ if(running){
+
+  updateHammer();
+
+  updatePhysics(dt);
+
+  updateCamera();
+
+  updateHeight();
+
+  checkSummit();
+
+  animateHero(time);
+ }
+
+
+ updateEffects(dt);
+
+ updateSummitBurst(dt);
+
+ updateSummitParticles(
+  time,
+  dt
+ );
+
+ animateSummit(time);
+
+ animateGrips(time);
+
+ updateTouchReticle(time);
+
+
+ if(
+  renderer&&
+  scene&&
+  camera
+ ){
+
+  renderer.render(
+   scene,
+   camera
+  );
+ }
+}
+
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+window.showGame=
+ showGame;
+
+window.showMenu=
+ showMenu;
+
+window.showLaunchpad=
+ showLaunchpad;
+
+window.showLevelSelect=
+ showLevelSelect;
+
+window.startLevel=
+ startLevel;
+
+window.restartGame=
+ restartGame;
+window.showFailure=showFailure;
+
+window.copyReferral=
+ copyReferral;
+
+window.shareReferral=
+ shareReferral;
+
+
+/* =====================================================
+   START SAFETY
+===================================================== */
+
+if(
+ window.climboriaStartRequested
+){
+
+ window.climboriaStartRequested=false;
+
+ setTimeout(
+  ()=>{
+   showLevelSelect();
+  },
+  0
+ );
+}
+
+
+(function(){
+ const additions={
+  6:{name:"SOLANA SKYBRIDGE",reward:350,playable:true,difficulty:6},
+  7:{name:"AVALANCHE PASS",reward:400,playable:true,difficulty:7},
+  8:{name:"ORACLE'S EDGE",reward:450,playable:true,difficulty:8},
+  9:{name:"THE VOID CLIMB",reward:500,playable:true,difficulty:9},
+  10:{name:"CLIMBORIA: WORLD PEAK",reward:1000,playable:true,difficulty:10}
+ };
+ Object.keys(LEVELS).forEach(k=>{LEVELS[k].playable=true;});
+ Object.assign(LEVELS,additions);
+ const descriptions={
+ 6:"A narrow high-speed traverse above a luminous canyon.",
+ 7:"Jagged switchbacks demand clean swings and careful recovery.",
+ 8:"Long transfers and technical routes leave little margin.",
+ 9:"Thin grips, brutal diagonals, and a lightless wall.",
+ 10:"The ultimate summit. Every swing and recovery counts."
+ };
+ function ensureCards(){
+  const grid=document.querySelector(".levelGrid");if(!grid)return;
+  Object.keys(additions).forEach(key=>{
+   const n=Number(key);if(document.getElementById("level"+n+"Card"))return;
+   const card=document.createElement("div");card.className="levelCard locked";card.id="level"+n+"Card";card.dataset.level=key;
+   card.innerHTML='<div class="levelNumber">LEVEL '+String(n).padStart(2,"0")+(n===10?' · FINAL':'')+'</div><div class="levelName">'+LEVELS[n].name+'</div><div class="levelDescription">'+descriptions[n]+'</div><div class="levelStatus">🔒 LOCKED</div><div class="levelReward">+'+LEVELS[n].reward+' CP</div>';
+   grid.appendChild(card);
+   card.addEventListener("click",()=>window.startLevel(n));
+  });
+ }
+ const themes=[
+  {sky:0x05090d,grip:0x55ff70,emissive:0x113d19},{sky:0x071018,grip:0x62e8ff,emissive:0x103d4a},
+  {sky:0x0c0b18,grip:0xffc857,emissive:0x49320c},{sky:0x0a1020,grip:0x8c9bff,emissive:0x222d66},
+  {sky:0x07141a,grip:0x4ca8ff,emissive:0x0d3158},{sky:0x100b20,grip:0xc38bff,emissive:0x3b1d61},
+  {sky:0x160c0a,grip:0xff815e,emissive:0x5c2116},{sky:0x071b1c,grip:0x56f0d0,emissive:0x104e44},
+  {sky:0x03040b,grip:0xff4e89,emissive:0x57142d},{sky:0x101a29,grip:0xffd66b,emissive:0x5b4514}
+ ];
+ const routes=[
+  [-4,2,-2,4,0,-4,2,5,0,-4,2,-2,4,0,-4,2,-2,4,0,-3],
+  [-4.5,3,-1.5,4.8,-4,1.2,5.2,-2.8,3.8,-5.2,1.2,5.1,-2.8,3.8,-4.5,1.5,4.7,-1.5,2.8],
+  [-4,3.5,-3.5,4.5,-1.5,-5,3.5,5.5,-2,-5,3.5,-3.5,5,0,-5,3.5],
+  [-5,0,-4.5,3.5,-1,5,1,-4.5,0,5.2,-2,-5,2.5,5,-1.5,3.5,-3.5,0],
+  [-4,4.5,-1,5.2,-4.8,0,4.8,-3,1.5,5.5,-4.5,0,4.8,-2.5,3.5,-4.5,1.5,0],
+  [-5,1.5,-3.5,4.8,-.5,-5.2,2.8,5.4,-1.8,-5.3,1.8,5.3,-2.8,-5,2.8,5,-1,1.5],
+  [-4.8,4.8,-4.8,1,5.4,-2.8,-5.3,3.8,5.4,-1.8,-5.3,2.8,5.2,-3.8,-5,2.5,5.2,-1.8,1],
+  [-5,4.8,-1,-5.3,2.8,5.3,-3.8,1,-5.2,4.8,-1.8,5.3,-4.8,2.8,-2.8,5.2,-4.8,1.8,-2.8,2.5],
+  [-5.2,5.2,-4.8,4.8,-1,-5.4,4.8,-4.8,1.8,5.4,-5.2,4.8,-1.8,-5.2,5.2,-4.8,2.8,-2.8,1.5],
+  [-4.8,4.8,-5.2,1.5,5.4,-3.8,4.8,-5.3,.5,5.3,-4.8,3.8,-5.3,1.8,5.3,-4.8,4.8,-2.8,5.2,-4.8,1.5,0]
+ ];
+ function applyTheme(){
+  const p=themes[Math.max(0,Math.min(9,currentLevel-1))];
+  if(scene){
+   scene.background.setHex(p.sky);
+   if(scene.fog&&scene.fog.color)scene.fog.color.setHex(p.sky);
+   scene.children.forEach(obj=>{
+    if(obj.geometry&&obj.geometry.type==="SphereGeometry"&&obj.geometry.parameters&&obj.geometry.parameters.radius===80&&obj.material&&obj.material.color)obj.material.color.setHex(p.sky);
+    if(obj.type==="Group"&&obj.children.some(child=>child.geometry&&child.geometry.type==="ShapeGeometry")){
+     obj.children.forEach(child=>{
+      if(!child.material||!child.material.color)return;
+      if(child.material.userData.climboriaBaseColor===undefined)child.material.userData.climboriaBaseColor=child.material.color.getHex();
+      child.material.color.setHex(child.material.userData.climboriaBaseColor).lerp(new THREE.Color(p.grip),.10);
+     });
+    }
+   });
+  }
+  const route=routes[Math.max(0,Math.min(9,currentLevel-1))].slice(0,grips.length);
+  grips.forEach((g,i)=>{
+   if(i<route.length){g.x=route[i];g.y=4+i*(58/(route.length-1));g.group.position.set(g.x,g.y,3.1);g.group.visible=true;}
+   else {g.group.visible=false;g.x=999;g.y=-100;}
+   if(g.ring&&g.ring.material){g.ring.material.color.setHex(p.grip);g.ring.material.emissive.setHex(p.emissive);}
+   if(g.glow&&g.glow.material)g.glow.material.color.setHex(p.grip);
+  });
+  const status=document.getElementById("status");if(status)status.style.color="#"+p.grip.toString(16).padStart(6,"0");
+  const points=document.getElementById("hudPointsValue");if(points)points.style.color="#"+p.grip.toString(16).padStart(6,"0");
+ }
+ updateLevelUI=function(){
+  for(let i=1;i<=10;i++){
+   const card=document.getElementById("level"+i+"Card");if(!card)continue;
+   const locked=i>unlockedLevel;card.classList.toggle("locked",locked);
+   const status=card.querySelector(".levelStatus");if(status)status.textContent=locked?"🔒 LOCKED":"UNLOCKED";
+  }
+  const hud=document.getElementById("hudLevelName");
+  if(hud&&LEVELS[currentLevel])hud.textContent="LEVEL "+String(currentLevel).padStart(2,"0")+" • "+LEVELS[currentLevel].name;
+ };
+ unlockNextLevel=function(){
+  if(currentLevel>=10)return;
+  if(unlockedLevel<currentLevel+1){unlockedLevel=currentLevel+1;try{localStorage.setItem("climboria_unlocked_level",String(unlockedLevel));}catch(e){}}
+  updateLevelUI();
+ };
+ startLevel=function(level){
+  level=Math.floor(Number(level)||0);
+  if(!LEVELS[level])return;
+  if(level>unlockedLevel){if(typeof setStatus==="function")setStatus("LEVEL LOCKED","#ffcc33");return;}
+  currentLevel=level;applyTheme();
+  if(typeof showGame==="function")showGame();
+  updateLevelUI();
+ };
+ ensureCards();
+ try{
+  const saved=Number(localStorage.getItem("climboria_unlocked_level"));
+  if(Number.isFinite(saved)&&saved>=1)unlockedLevel=Math.min(10,Math.max(unlockedLevel,Math.floor(saved)));
+ }catch(e){}
+ updateLevelUI();
+ window.startLevel=startLevel;
+ window.climboriaApplyLevelTheme=applyTheme;
+})();
+
+</script>
+
+<script>/* CLIMBORIA_FALL_RESET_CENTER */</script>
+<script>
+/* climboria-fall-reset-real-v1 */
+</script>
+
+<style id="climboria-mobile-hud-spacing-v1">
+/* Keep the live gameplay HUD readable and separated on narrow screens. */
+@media (max-width: 700px) {
+  #hud {
+    top: max(12px, env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+  }
+  #hud .top {
+    min-height: 62px;
+    padding-top: 2px;
+  }
+  #hud > .top > div:first-child {
+    max-width: 42%;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+  #hud > .top > div:first-child small,
+  #hud > .top > div:first-child span {
+    font-size: 9px !important;
+  }
+  #hud .stat {
+    max-width: 42%;
+    font-size: 9px;
+    line-height: 1.55;
+  }
+  #bar {
+    width: clamp(74px, 25vw, 120px);
+  }
+  #status {
+    top: 61px;
+    max-width: calc(100vw - 28px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  #hudPoints {
+    top: 79px;
+  }
+}
+@media (max-width: 380px) {
+  #hud > .top > div:first-child,
+  #hud .stat {
+    font-size: 8px;
+  }
+  #hud .stat {
+    line-height: 1.4;
+  }
+  #status {
+    top: 59px;
+    font-size: 7px;
+  }
+  #hudPoints {
+    top: 75px;
+  }
+}
+</style>
+
+
+<style id="climboria-ten-summit-ui">
+.levelGrid{width:min(920px,96%);max-height:min(58vh,620px);overflow-y:auto;overscroll-behavior:contain;padding:2px 5px 8px 0;scrollbar-width:thin;scrollbar-color:#55ff7050 #ffffff08}
+.levelCard{min-height:132px}
+.levelCard:not(.locked){border-color:#55ff7040;background:linear-gradient(135deg,#55ff7010,#ffffff04)}
+.levelCard[data-level="10"]:not(.locked){border-color:#ffd66b80;background:linear-gradient(135deg,#ffd66b18,#55ff7007)}
+.levelCard[data-level="10"] .levelName{color:#ffdf88}
+@media(max-width:700px){.levelGrid{grid-template-columns:1fr;max-height:56vh}.levelCard{min-height:112px;padding:13px}.levelName{font-size:15px}.levelDescription{font-size:9px}.levelStatus{margin-top:9px}}
+</style>
+
+
+</body>
+</html>
