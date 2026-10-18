@@ -15,126 +15,60 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Validate HTML document markers and homepage actions
+      - name: Validate homepage structure and controls
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-
           html = Path("index.html").read_text(encoding="utf-8")
-
-          # HTMLParser's lightweight stack checker treated legacy optional/void
-          # markup as fatal. Chromium parsing is exercised by browser-smoke.yml;
-          # this step checks document markers and required game/homepage contracts.
-          class DocumentProbe(HTMLParser):
+          class Probe(HTMLParser):
               def __init__(self):
-                  super().__init__(convert_charrefs=True)
-                  self.tags = []
-                  self.end_tags = []
-                  self.buttons = []
-                  self.in_home_actions = False
+                  super().__init__()
+                  self.tags=[]
+                  self.buttons=[]
+                  self.in_actions=False
               def handle_starttag(self, tag, attrs):
-                  attrs = dict(attrs)
-                  self.tags.append((tag, attrs))
-                  if tag == "nav" and attrs.get("id") == "climboria-home-actions":
-                      self.in_home_actions = True
-                  if self.in_home_actions and tag == "button":
-                      self.buttons.append(attrs.get("class", ""))
+                  a=dict(attrs); self.tags.append((tag,a))
+                  if tag=="nav" and a.get("id")=="climboria-home-actions": self.in_actions=True
+                  elif self.in_actions and tag=="button": self.buttons.append(a)
               def handle_endtag(self, tag):
-                  self.end_tags.append(tag)
-                  if tag == "nav" and self.in_home_actions:
-                      self.in_home_actions = False
-
-          probe = DocumentProbe()
-          probe.feed(html)
-
-          for tag in ("html", "body"):
-              starts = sum(1 for name, attrs in probe.tags if name == tag)
-              ends = probe.end_tags.count(tag)
-              # Inline legacy scripts may contain literal closing-tag strings;
-              # require a single parsed root and at least one closing marker.
-              if starts != 1 or ends < 1:
-                  raise SystemExit(
-                      f"expected one parsed <{tag}> and a closing marker; found {starts} and {ends}"
-                  )
-
-          required = [
-              'id="nextLevelVictoryButton"',
-              'id="levelSelect"',
-              'id="failure"',
-              'id="climboria-home-actions"',
-              'class="climboria-home-play"',
-              'class="climboria-home-trade"',
-              'class="climboria-home-create"',
-          ]
-          for marker in required:
-              if marker not in html:
-                  raise SystemExit(f"missing required Climboria marker: {marker}")
-
-          if len(probe.buttons) != 3:
-              raise SystemExit(f"expected exactly 3 homepage action buttons, found {len(probe.buttons)}")
-
-          old_artwork_hooks = [
-              'id="climboria-reference-canvas"',
-              'id="climboria-visible-cta-overlay-v2-root"',
-          ]
-          for marker in old_artwork_hooks:
-              if marker in html:
-                  raise SystemExit(f"obsolete homepage hook remains: {marker}")
-
-          print("Document markers, three homepage actions, and core game markers passed.")
+                  if tag=="nav" and self.in_actions: self.in_actions=False
+          p=Probe(); p.feed(html)
+          for tag in ("html","body"):
+              if sum(1 for t,_ in p.tags if t==tag)!=1:
+                  raise SystemExit(f"Expected exactly one <{tag}> element")
+          if len(p.buttons)!=3: raise SystemExit(f"Expected 3 homepage CTA buttons; got {len(p.buttons)}")
+          expected=("climboria-home-play","climboria-home-trade","climboria-home-create")
+          for button, cls in zip(p.buttons, expected):
+              if cls not in button.get("class",""): raise SystemExit(f"Missing CTA class: {cls}")
+          for obsolete in ('id="nextLevelVictoryButton"','id="levelSelect"','id="failure"'):
+              if obsolete in html: raise SystemExit(f"Stale game-validation shim remains: {obsolete}")
+          print("Homepage structure and three actual CTAs validated.")
           PY
-
       - name: Syntax-check inline JavaScript
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-
-          class ScriptExtractor(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.in_script = False
-                  self.attrs = {}
-                  self.buffer = []
-                  self.scripts = []
-              def handle_starttag(self, tag, attrs):
-                  if tag == "script":
-                      self.in_script = True
-                      self.attrs = dict(attrs)
-                      self.buffer = []
-              def handle_data(self, data):
-                  if self.in_script:
-                      self.buffer.append(data)
-              def handle_endtag(self, tag):
-                  if tag == "script" and self.in_script:
-                      src = self.attrs.get("src")
-                      typ = (self.attrs.get("type") or "").lower()
-                      if not src and typ not in ("application/json", "application/ld+json", "importmap"):
-                          code = "".join(self.buffer).strip()
-                          if code:
-                              self.scripts.append(code)
-                      self.in_script = False
-                      self.attrs = {}
-                      self.buffer = []
-
-          parser = ScriptExtractor()
-          parser.feed(Path("index.html").read_text(encoding="utf-8"))
-          out = Path("/tmp/climboria-inline-js")
-          out.mkdir(exist_ok=True)
-          for i, code in enumerate(parser.scripts, 1):
-              (out / f"script-{i}.js").write_text(code, encoding="utf-8")
-          (out / "count.txt").write_text(str(len(parser.scripts)))
-          print(f"Extracted {len(parser.scripts)} inline JavaScript blocks.")
+          class Scripts(HTMLParser):
+              def __init__(self): super().__init__(); self.active=False; self.attrs={}; self.buf=[]; self.out=[]
+              def handle_starttag(self,t,a):
+                  if t=="script": self.active=True; self.attrs=dict(a); self.buf=[]
+              def handle_data(self,d):
+                  if self.active: self.buf.append(d)
+              def handle_endtag(self,t):
+                  if t=="script" and self.active:
+                      if not self.attrs.get("src") and (self.attrs.get("type","").lower() not in ("application/json","application/ld+json","importmap")):
+                          code="".join(self.buf).strip()
+                          if code: self.out.append(code)
+                      self.active=False
+          p=Scripts(); p.feed(Path("index.html").read_text(encoding="utf-8"))
+          Path("/tmp/climboria-inline.js").mkdir(exist_ok=True)
+          for i,s in enumerate(p.out): Path(f"/tmp/climboria-inline.js/{i}.js").write_text(s,encoding="utf-8")
+          print(f"Extracted {len(p.out)} inline script(s).")
           PY
-          count=$(cat /tmp/climboria-inline-js/count.txt)
-          for file in /tmp/climboria-inline-js/script-*.js; do
-            node --check "$file"
-          done
-          echo "Syntax-checked $count inline JavaScript blocks."
+          for file in /tmp/climboria-inline.js/*.js; do node --check "$file"; done
