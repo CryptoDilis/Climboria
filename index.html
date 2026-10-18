@@ -294,12 +294,14 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
    const tx=VersionedTransaction.deserialize(bytes);
    if(!tx.message.staticAccountKeys[0]?.equals(wallet))throw Error("Transaction fee payer does not match the connected wallet. Aborted.");
    say("Approve the swap in Phantom. Verify tokens, amount, and network fee.");
-   const provider=window.solana;if(!provider?.publicKey?.equals(wallet))throw Error("Wallet account changed. Reconnect and fetch a fresh quote.");\n   const signed=await provider.signAndSendTransaction(tx);
+   const provider=window.solana;if(!provider?.publicKey?.equals(wallet))throw Error("Wallet account changed. Reconnect and fetch a fresh quote.");
+   const signed=await provider.signAndSendTransaction(tx);
    const signature=typeof signed==="string"?signed:signed.signature;
    if(!signature)throw Error("Wallet did not return a transaction signature.");
    action.textContent="Confirming…";say("Submitted: "+signature+". Waiting for on-chain confirmation…");
    const connection=new Connection(RPC,"confirmed");
-   if(!built.lastValidBlockHeight)throw Error("Swap submitted, but Jupiter omitted transaction expiry data. Check the signature in Solscan before retrying: "+signature);\n   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
+   if(!built.lastValidBlockHeight)throw Error("Swap submitted, but Jupiter omitted transaction expiry data. Check the signature in Solscan before retrying: "+signature);
+   const confirmation=await connection.confirmTransaction({signature,blockhash:tx.message.recentBlockhash,lastValidBlockHeight:Number(built.lastValidBlockHeight)},"confirmed");
    if(confirmation.value.err)throw Error("Transaction failed on-chain. Signature: "+signature);
    say("Swap confirmed. Signature: "+signature,"#86efac");
    details.innerHTML="Confirmed on Solana · <a style='color:#fbbf24;text-decoration:underline' target='_blank' rel='noopener noreferrer' href='https://solscan.io/tx/"+encodeURIComponent(signature)+"'>View transaction on Solscan</a>";
@@ -308,7 +310,8 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
   finally{busy=false;action.disabled=false;action.textContent=wallet?"Get New Quote":"Connect Wallet";}
  }
  pay.addEventListener("change",syncTokens);$("dexFlip").addEventListener("click",()=>{pay.value=pay.value==="SOL"?"USDC":"SOL";syncTokens();scheduleQuote();});amount.addEventListener("input",scheduleQuote);slippage.addEventListener("change",scheduleQuote);action.addEventListener("click",()=>{if(!wallet)connect();else if(!quote) getQuote();else swap();});
- modal.addEventListener("climboria:dex-open",()=>{if(wallet&&rawAmount())scheduleQuote();});\n modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet&&rawAmount())scheduleQuote();});
+ modal.addEventListener("climboria:dex-open",()=>{if(wallet&&rawAmount())scheduleQuote();});
+ modal.addEventListener("transitionend",()=>{if(modal.classList.contains("active")&&wallet&&rawAmount())scheduleQuote();});
  if(window.solana?.isPhantom){window.solana.on("disconnect",()=>{wallet=null;clearQuote();$("dexWalletLine").textContent="Wallet disconnected";action.textContent="Connect Wallet";say("Wallet disconnected.");});}
  syncTokens();
 })();
