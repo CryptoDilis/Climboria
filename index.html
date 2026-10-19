@@ -63,7 +63,7 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 #launchpadModal .swap-header h3{font:900 clamp(18px,2.7vw,32px) Cinzel,serif;letter-spacing:2px;color:#ffe2a0;text-shadow:0 2px 0 #4c2f12,0 0 14px rgba(255,194,77,.35);padding:9px 40px;border:1px solid #9a7538;background:linear-gradient(90deg,transparent,rgba(103,73,31,.45),transparent)}
 #launchpadModal .close-swap{position:absolute;right:0;top:0;background:#211a12;border:1px solid #9b783e;color:#f7d48b;z-index:2}
 .launch-subtitle{text-align:center;color:#c9b27e;font:italic 10px Cinzel,serif;letter-spacing:3px;margin:4px 0 14px}
-.launch-badge{display:none}
+
 .launch-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(6px,1.2vw,14px)}
 .launch-option{position:relative;min-width:0;min-height:180px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(10px,1.4vw,18px);gap:7px;color:#f8e7bd;border:1px solid #92703b;border-radius:0;background:linear-gradient(160deg,rgba(30,25,21,.98),rgba(4,5,9,.98));box-shadow:inset 0 0 0 3px rgba(198,150,61,.08),inset 0 0 18px rgba(0,0,0,.8);cursor:pointer;transition:.18s}
 .launch-option:before{content:"";position:absolute;inset:4px;border:1px solid rgba(207,165,85,.24);pointer-events:none}
@@ -194,8 +194,8 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 .dex-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px}
 .demo-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.35);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px;color:#fbbf24}
 .btn-swap:disabled{opacity:.55;cursor:not-allowed}
-.dex-layout{max-width:1100px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
-@media(max-width:900px){.dex-layout{grid-template-columns:1fr}.swap-card{max-width:95vw;padding:20px}}
+
+@media(max-width:900px){.swap-card{max-width:95vw;padding:20px}}
 </style>
 <div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
 <div class="swap-card">
