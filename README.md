@@ -1,45 +1,59 @@
-# Climboria
+# Climboria — Game Design Reference
 
-Climboria is a browser-first, multiplayer 3D mountain-climbing adventure with dangerous expeditions, meaningful loot, player cooperation, and the possibility of betrayal. **The game comes first**; any token, Launchpad, or DEX features are separate products and are not assumed to be live.
+Climboria is a browser-first multiplayer 3D climbing adventure. The game is the priority; crypto features are optional layers, not a requirement to play.
 
-## Core game structure
+> This README is the working source of truth for the agreed design. It records intended rules and economy; it does not claim that every system is already implemented or tested.
+
+## World structure
 
 ### The 10 normal mountain levels
-- The main climb is a sequence of **10 substantial, challenging mountain levels**. Each level is intended to take **more than five hours to complete**, not a short, quick stage. This is a design target; actual duration must be validated through playtesting.
-- The normal mountain is a dangerous climb: players can lose carried loot when they die, and the climb should create real tension around risk, teamwork, and recovery.
-- **Level 10 is distinct:** it includes a recovery opportunity and a safe zone. Do not apply the endless-farming rules of Jarrell's Peak to this final normal level. The precise recovery interaction, safe-zone boundaries, and protections still need implementation and balancing.
+- There are 10 challenging, sequential normal mountain levels. The intended challenge is extreme: the user’s target is for a level to take more than five hours to finish; validate this through playtesting.
+- Each mountain has a summit leaderboard recording player display name, finish time, and retries.
+- The 10 levels share one summit-reward treasury. The 5% marketplace-sales allocation is distributed weekly using eligible points; the mountains’ allocation is equal, rather than a separate progressive pool for each mountain.
+- At zero health in a normal level, the player returns to the starting point and loses a portion of carried loot (the selected rule was partial loss).
+- **Normal Level 10 has a special recovery feature and a safe zone.** This is a distinct feature of the final normal level; do not conflate it with Jarrell’s Peak or imply every level has the same safe-zone/recovery setup.
 
-### Jarrell's Peak — separate endless/farming area
-- Jarrell's Peak is a separate, **endless** high-risk area for continued climbing, farming, and treasure hunting; it is not the 10th normal level.
-- The farther/higher players push, the more difficult and dangerous the run becomes.
-- Loot dropped there can be at risk of decay and can be taken by other players before it decays. Decay timing, loot ownership rules, and exact recovery mechanics need playtesting and final specification.
+### Jarrell’s Peak — separate endless expedition
+- Jarrell’s Peak is a separate endless, increasingly difficult high-risk climbing/farming and treasure area—not Normal Level 10.
+- It is intended to be especially dangerous solo; team play and rescue mechanics are part of the design.
+- On death/return to the starting point, the player loses part of carried expedition loot. A loot bag can remain at the death location, be recovered, or be looted by another player before its decay timer expires.
+- Its public treasure display should show both the actual funded reserve and the estimated value of in-game/NFT loot separately. Exact chest locations remain hidden until discovery; discovery triggers an in-game announcement and a public record of the location and amount.
 
-## Risk, loot, and player interaction
+## Risk, loot, combat, and trust
 
-- **Loot loss and theft:** death can leave loot behind for other players to find or take. Looting another player's dropped items is part of the intended risk/reward loop, subject to final rules and safeguards.
-- **Loot decay:** dropped loot may expire/decay, creating urgency to recover it. The decay timer and whether different item classes decay differently are not finalized.
-- **Safe zones:** safe-zone protection is specifically part of **normal Level 10**, alongside a recovery opportunity. Other safe-zone placements and the exact PvP restrictions are not yet settled.
-- **Traps and combat (“bugbugan”):** the design includes dangerous traps and player-versus-player conflict. Traps should create tactical risk rather than cheap, unavoidable deaths; details such as damage, warning, placement, and counterplay require balancing.
-- **Team betrayal:** groups may face betrayal—such as a teammate turning hostile, sabotaging a route, or exploiting trust. The exact permitted actions, warnings, penalties, and anti-griefing limits are not finalized. Cooperation should be valuable, but betrayal should be a deliberate gameplay risk, not an uncontrolled exploit.
-- **Recovery:** recovery is a core mechanic, and Level 10 normal has a specifically intended recovery feature. Do not claim that all deaths are safely recoverable; rules differ by area and must be made clear in-game.
+- **Loot theft:** Other players may steal eligible non-NFT carried items or loot bags in the dangerous expedition context. Loot theft is part of the intended risk/reward loop.
+- **Loot decay:** Dropped loot bags have a limited recovery window. If not recovered before decay, they expire. The exact timer/item-by-item tuning should be set during balancing, not invented as a committed number here.
+- **Traps:** Dangerous traps are part of the mountain gameplay and should create meaningful tactical choices.
+- **Bugbugan / PvP:** Player conflict, attacks, and theft belong to the high-risk gameplay. The user delegated the detailed rule design to the assistant (“fair but dangerous”); implement a coherent rule set with counterplay, limits, and anti-griefing safeguards rather than making PvP harmless or unrestricted.
+- **Team betrayal:** Betrayal is an intentional social risk—teammates may turn against the group or exploit trust. Its exact allowed actions and balancing protections are to be designed as part of the delegated fair-but-dangerous PvP rules.
+- **Rescue:** Teammates can help/rescue a downed climber; rescue mechanics are intended, especially for Jarrell’s Peak.
+- **Safe-zone distinction:** The explicitly agreed safe zone/recovery feature belongs to Normal Level 10. Other safe areas and their protections should not be assumed without a design decision.
 
-## Treasure and progression
+## Treasure, rewards, and progression
 
-- Treasure/chests may contain useful materials, equipment, rare cosmetics/skins, or other rewards. Discovery, rarity, and reward tables require implementation and balancing.
-- Non-crypto players should be able to play and progress without connecting a wallet. Wallet-dependent claims or NFT actions, if built, must be optional and clearly separated from ordinary gameplay.
-- The game should remain playable as a game; token speculation must not be required to climb.
+- Random chests may contain $CLIMB, ingredients/materials, gear, and NFT skin/gear. There is no player chest-claim cap in the agreed notes.
+- Chest locations are hidden before discovery. On discovery, announce it in-game and record the location and amount publicly (while avoiding advance exposure of undiscovered coordinates).
+- Players may play and keep ordinary non-NFT items without a wallet. A compatible wallet is required to claim on-chain rewards.
+- Summit records use display names. Weekly points reset; the player keeps a permanent, non-transferable emblem/record.
+- Players may return to the summit or linger/interact after finishing; repeat-run eligibility and scoring must follow the game’s validated points/anti-cheat rules.
 
-## Product and implementation status
+## Agreed reward economy (design intent)
 
-This README records the intended game direction; it is **not a feature-completion claim**. Gameplay systems described above may still be design-only or prototype-stage. Confirm implementation and browser/mobile testing before presenting a feature as live.
+- Marketplace payment is $CLIMB on-chain only.
+- 5% of gross marketplace sales is allocated to one shared summit-reward treasury for the 10 normal levels.
+- Summit payout is weekly and points-based: **player share = eligible player points ÷ total eligible points × weekly treasury**. Faster completion matters; retries are recorded and factor into the points system.
+- Weekly cutoff: Friday, 03:00 UTC. Weekly points reset; permanent non-tradable emblem/record remains.
+- A separate 5% marketplace buy/sell tax on ingredients and crafted gear was specified; its exact accounting destination should be documented when finalized.
+- NFT minting is intended to be free; the player pays the blockchain gas fee.
+- Treasury balances, contributions, leaderboards, and payout records are intended to be public.
+- Optional creator donations may be made in SOL; convert to $CLIMB when claimable rewards are distributed, using a safe/verified route.
+- Jarrell’s Peak funding is separate; a share of Launchpad/DEX fees was delegated for proposal, not fixed here. Sponsor-backed events may also be hosted and highlighted on mountains.
 
-Launchpad, DEX, token, NFT, marketplace, and reward-economy details are separate planned work. Fees, taxes, tokenomics, reward funding, and launch timing are not finalized unless documented and officially announced. Do not imply a token launch, wallet flow, swap, or on-chain reward is operational without verified implementation.
+## Implementation and transparency
 
-## Safety and transparency
-
-Any smart contracts, token launch, transaction fees, or on-chain asset-handling features require implementation, testing, and appropriate security review. Mockups and plans are not live financial products.
+This is a design reference, not a statement that these features are live. Verify code, server authority, browser/mobile behavior, economy accounting, and security before claiming a feature is implemented. Do not advertise a token, wallet flow, marketplace, NFT, swap, or payout as operational unless it is actually deployed and verified.
 
 ## Terms of Use
 
 - [Read Climboria Terms of Use](./terms.html) (preliminary, pre-launch draft; not legal-reviewed).
-- The terms page is informational and does not imply planned game, swap, token-launch, or financial features are live or legally authorized.
+- The terms page does not imply planned game, token, swap, marketplace, or financial features are live or legally authorized.
