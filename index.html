@@ -52,6 +52,8 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 .auth-tag{font-size:9px;letter-spacing:1px;color:#fbbf24;text-transform:uppercase;white-space:nowrap}
 .auth-note{min-height:34px;margin-top:12px!important;padding:10px 12px;border-radius:10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.15);font-size:11px!important}
 @media(max-width:520px){.auth-panel{padding:22px 18px}.auth-panel h2{font-size:22px}}
+
+.launchpad-card{max-width:560px!important}.launchpad-intro{margin:4px 0 16px;color:rgba(255,255,255,.72);font-size:13px;line-height:1.6}.launch-options{display:grid;grid-template-columns:1fr;gap:10px}.launch-option{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:15px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.025));color:#fff;text-align:left;cursor:pointer;transition:border-color .18s,background .18s,transform .18s}.launch-option:hover,.launch-option:focus-visible{border-color:rgba(251,191,36,.7);background:rgba(251,191,36,.08);outline:none}.launch-option:active{transform:scale(.99)}.launch-option-title{font-size:12px;font-weight:800;letter-spacing:1.1px}.launch-option-sub{font-size:11px;color:rgba(255,255,255,.55)}.launch-option-cta{align-self:flex-end;margin-top:-19px;color:#fbbf24;font-size:10px;font-weight:800;letter-spacing:1.4px}.launch-option-signature{border-color:rgba(251,191,36,.45);background:linear-gradient(120deg,rgba(251,191,36,.12),rgba(255,255,255,.025))}.launch-choice-status{margin-top:14px;padding:12px;border:1px solid rgba(251,191,36,.2);border-radius:10px;background:rgba(251,191,36,.06);font-size:12px;line-height:1.55;color:#f5d98a}.launchpad-footnote{margin:12px 0 0;font-size:10px;line-height:1.6;color:rgba(255,255,255,.42)}@media(min-width:560px){.launch-options{grid-template-columns:1fr 1fr}.launch-option-signature{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -178,14 +180,17 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 </div>
 
 <div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
-<div class="swap-card">
+<div class="swap-card launchpad-card">
 <div class="swap-header"><h3 id="launchpadTitle">CLIMBORIA LAUNCHPAD</h3><button class="close-swap" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button></div>
-<div class="demo-badge">LAUNCHPAD PREVIEW • NO MINT • NO TRANSACTION</div>
-<div class="swap-box"><label>PROJECT NAME — PREVIEW</label><input type="text" value="Climboria" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<div class="swap-box"><label>TOKEN SYMBOL — PROPOSED, NOT VERIFIED</label><input type="text" value="$CLIMB" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<div class="swap-box"><label>SUPPLY / LOCK / SALE SETTINGS</label><input type="text" placeholder="Not configured" disabled style="width:100%;background:transparent;border:0;color:#fff;opacity:.65;font-size:16px"></div>
-<button class="btn-swap" disabled>Preview only — token creation unavailable</button>
-<p style="margin-top:14px;font-size:11px;line-height:1.6;color:rgba(255,255,255,.5)">This is a visual mockup. No token is created, no sale is open, and launch details are not announced.</p>
+<div class="demo-badge">LAUNCH OPTIONS • COMING SOON</div>
+<p class="launchpad-intro">Choose a launch path to preview its status. Token creation is not available yet.</p>
+<div class="launch-options">
+<button type="button" class="launch-option" data-launch-choice="normal"><span class="launch-option-title">NORMAL LAUNCHPAD</span><span class="launch-option-sub">Simple launch flow</span><span class="launch-option-cta">SELECT</span></button>
+<button type="button" class="launch-option" data-launch-choice="developer"><span class="launch-option-title">DEVELOPER OPTIONS</span><span class="launch-option-sub">Advanced creator settings</span><span class="launch-option-cta">SELECT</span></button>
+<button type="button" class="launch-option launch-option-signature" data-launch-choice="signature"><span class="launch-option-title">CLIMBORIA SIGNATURE</span><span class="launch-option-sub">Safeguards concept — details TBA</span><span class="launch-option-cta">SELECT</span></button>
+</div>
+<div id="launchChoiceStatus" class="launch-choice-status" role="status" aria-live="polite">Tap any option to see its current availability: TBA.</div>
+<p class="launchpad-footnote">Preview only. No token is created, no sale is open, and no on-chain transaction is performed.</p>
 </div>
 </div>
 
@@ -267,6 +272,17 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
   document.getElementById('mobileLaunchpadBtn').addEventListener('click', openLaunch);
   document.getElementById('closeSwap').addEventListener('click', () => closeModal(swapModal));
   document.getElementById('closeLaunchpad').addEventListener('click', () => closeModal(launchModal));
+  const launchChoiceCopy = {
+    normal: 'Normal Launchpad — TBA. This option is not available yet.',
+    developer: 'Developer Options — TBA. Advanced creator settings are not available yet.',
+    signature: 'Climboria Signature — TBA. Rules and safeguards will be disclosed before this option opens.'
+  };
+  document.querySelectorAll('[data-launch-choice]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.getElementById('launchChoiceStatus').textContent =
+        launchChoiceCopy[button.dataset.launchChoice] || 'Availability: TBA.';
+    });
+  });
   [swapModal,launchModal].forEach(modal => {
     modal.addEventListener('click', e => { if(e.target===modal) closeModal(modal); });
   });
