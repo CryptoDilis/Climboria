@@ -114,7 +114,7 @@ renderer.domElement.addEventListener("pointerup",()=>dragging=false);
 renderer.domElement.addEventListener("pointermove",e=>{if(!dragging)return;yaw-= (e.clientX-lastX)*.004;pitch=Math.max(-.05,Math.min(.72,pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY;});
 let grounded=false;
 const ray=new RAPIER.Ray({x:start.x,y:start.y-.2,z:start.z},{x:0,y:-1,z:0});
-function checkGrounded(){const p=playerBody.translation();const r=new RAPIER.Ray({x:p.x,y:p.y-.7,z:p.z},{x:0,y:-1,z:0});const hit=world.castRay(r,.45,true);return !!hit;}
+function checkGrounded(){const p=playerBody.translation();const r=new RAPIER.Ray({x:p.x,y:p.y-.7,z:p.z},{x:0,y:-1,z:0});const hit=world.castRay(r,.45,true,undefined,undefined,undefined,playerBody);return !!hit;}
 const clock=new THREE.Clock();let accumulator=0,frames=0,fps=0,fpsTimer=0;
 function animate(){
  requestAnimationFrame(animate);
