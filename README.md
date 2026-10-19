@@ -15,3 +15,7 @@ This repository contains the Climboria website and project documentation. Produc
 
 ## Safety and transparency
 Do not treat proposed token details, reward concepts, or mockup interfaces as live financial products. Any smart contracts, token launch, transaction fees, and asset-handling features require implementation, testing, and independent security review.
+
+## Terms of Use
+- [Read Climboria Terms of Use](./terms.html) (preliminary, pre-launch draft; not legal-reviewed).
+- The terms page is informational and does not imply that planned game, swap, token-launch, or financial features are live or legally authorized.
