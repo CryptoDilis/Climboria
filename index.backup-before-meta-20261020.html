@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><link rel="icon" type="image/png" href="./climboria-favicon.png"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CLIMBORIA - More Than A Game. It Is A Climb.</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box} body{background:#070a14;color:#fff;font-family:'Inter',sans-serif;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;justify-content:space-between;align-items:center;padding:18px 48px;background:rgba(7,10,20,.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(251,191,36,.15)}
+.logo{font-family:'Cinzel';font-weight:900;letter-spacing:3px;font-size:22px;background:linear-gradient(180deg,#fff8dc,#fbbf24 50%,#d97706);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.navl{display:flex;gap:28px;align-items:center} .navl a{color:rgba(255,255,255,.65);text-decoration:none;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;transition:.2s} .navl a:hover{color:#fbbf24}
+.btn-gold{background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;padding:10px 22px;border-radius:999px;font-weight:800;font-size:12px;border:none;box-shadow:0 0 22px rgba(251,191,36,.45);cursor:pointer;letter-spacing:1px}
+.btn-outline{background:transparent;color:#fff;padding:10px 20px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,.25);cursor:pointer;letter-spacing:1px;transition:.2s} .btn-outline:hover{border-color:#fbbf24;color:#fbbf24}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;z-index:100} .hamburger span{width:24px;height:2px;background:#fbbf24;display:block;transition:.3s;border-radius:2px}
+.mobile-menu{position:fixed;top:0;right:-100%;width:300px;height:100vh;background:rgba(7,10,20,.96);backdrop-filter:blur(20px);border-left:1px solid rgba(251,191,36,.15);padding:90px 30px 30px;display:flex;flex-direction:column;gap:22px;transition:.4s cubic-bezier(.77,0,.175,1);z-index:98}
+.mobile-menu.active{right:0} .mobile-menu a{color:rgba(255,255,255,.7);text-decoration:none;font-size:14px;letter-spacing:2px;text-transform:uppercase} .mobile-menu a:hover{color:#fbbf24}
+.hero{position:relative;width:100%;height:100svh;min-height:100svh;background:#000;overflow:hidden}
+.hero picture, .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,0) 35%,rgba(7,10,20,.4) 70%,rgba(7,10,20,.95) 100%);z-index:1}
+.hero-content{position:absolute;left:0;right:0;bottom:clamp(24px,7vh,64px);transform:none;z-index:5;width:100%;max-width:none;text-align:center;padding:0 16px}
+.hero-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.btn-play{background:linear-gradient(180deg,#fff,#e8e8e8);color:#000;font-weight:900;font-size:16px;letter-spacing:3px;padding:15px 48px;border-radius:999px;border:2px solid rgba(251,191,36,.9);box-shadow:0 0 28px rgba(251,191,36,.6),0 4px 18px rgba(0,0,0,.4);cursor:pointer;transition:.2s}
+.btn-play:hover{transform:scale(1.03);box-shadow:0 0 36px rgba(251,191,36,.8)}
+.btn-trade{background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;font-weight:800;font-size:13px;letter-spacing:2px;padding:14px 30px;border-radius:999px;border:none;box-shadow:0 0 20px rgba(251,191,36,.4);cursor:pointer}
+.btn-launch{background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13px;letter-spacing:2px;padding:14px 30px;border-radius:999px;border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(10px);cursor:pointer;transition:.2s} .btn-launch:hover{border-color:#fbbf24;color:#fbbf24;background:rgba(251,191,36,.08)}
+.highlights{position:absolute;top:18%;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;width:min(94%,1000px)}
+.hl{display:flex;align-items:center;gap:8px;background:rgba(7,10,20,.68);border:1px solid rgba(251,191,36,.28);backdrop-filter:blur(12px);padding:9px 14px;border-radius:999px;font-size:10px;letter-spacing:1.2px;white-space:nowrap;color:#f4f4f5}
+.hl-primary{border-color:rgba(251,191,36,.55);box-shadow:0 0 14px rgba(251,191,36,.08)}.hl-primary b{color:#fbbf24}.hl-status{background:rgba(0,0,0,.42);border-color:rgba(255,255,255,.13);color:rgba(255,255,255,.7);font-size:9px;letter-spacing:1px}
+.hl-dot{width:7px;height:7px;flex:0 0 7px;background:#fbbf24;border-radius:50%;box-shadow:0 0 9px rgba(251,191,36,.65)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.sec{padding:90px 48px;max-width:1300px;margin:0 auto} .label{font-size:11px;letter-spacing:4px;color:#fbbf24;text-transform:uppercase;margin-bottom:14px} .title{font-family:'Cinzel';font-size:42px;font-weight:900;line-height:1.1;margin-bottom:18px} .desc{color:rgba(255,255,255,.55);line-height:1.7;max-width:700px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px} .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px;backdrop-filter:blur(12px);transition:.2s} .card:hover{border-color:rgba(251,191,36,.25);transform:translateY(-2px)}
+.card h3{font-family:'Cinzel';margin-bottom:10px} .card p{color:rgba(255,255,255,.5);font-size:14px;line-height:1.6}
+.chain-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);padding:8px 14px;border-radius:999px;font-size:11px;letter-spacing:1.5px;margin-top:14px}
+.tok-wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;margin-top:40px;align-items:start} .tok-chart{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)} .bar span{font-size:14px} .pct{color:#fbbf24;font-weight:800}
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px} .phase{background:linear-gradient(180deg,rgba(251,191,36,.08),rgba(255,255,255,.02));border:1px solid rgba(251,191,36,.18);border-radius:18px;padding:24px} .phase .num{font-size:12px;letter-spacing:3px;color:#fbbf24;margin-bottom:10px} .phase h4{font-family:'Cinzel';margin-bottom:8px} .phase li{font-size:13px;color:rgba(255,255,255,.55);margin:6px 0;list-style:none} .phase li::before{content:'• ';color:#fbbf24}
+.white{display:flex;gap:20px;margin-top:30px;flex-wrap:wrap} .wp{flex:1;min-width:260px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:24px;text-decoration:none;color:#fff;display:block;transition:.2s} .wp:hover{border-color:rgba(251,191,36,.3);transform:translateY(-2px)}
+footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;color:rgba(255,255,255,.4);font-size:12px}
+@media(max-width:900px){nav{padding:14px 20px} .navl{display:none} .hamburger{display:flex} #xLogo{display:flex !important} .sec{padding:60px 20px} .grid3,.tok-wrap,.road{grid-template-columns:1fr} .title{font-size:30px} .hero{height:100svh;min-height:100svh} .hero-content{bottom:clamp(95px,12vh,150px)} .hero-buttons{flex-direction:column;align-items:center;gap:5px;margin-top:5px} .btn-play,.btn-trade,.btn-launch{width:min(49.5vw,193px);padding:5px 10px;line-height:1.15;font-size:11px} .hero-content>div:last-child{margin-top:8px !important;font-size:9px !important;letter-spacing:2px !important} .highlights{top:24%;bottom:auto;left:50%;transform:translateX(-50%);flex-direction:column;flex-wrap:nowrap;gap:6px;width:96%}.hl{font-size:9px;letter-spacing:1px;padding:7px 11px}.hl-status{font-size:8px;padding:6px 10px}}
+
+/* Sign-in chooser: provider wiring is intentionally explicit, never fake-auth. */
+.auth-backdrop{position:fixed;inset:0;z-index:300;background:rgba(2,5,12,.78);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}
+.auth-backdrop.open{display:flex}
+.auth-panel{width:min(100%,440px);background:linear-gradient(160deg,#111a2c,#080d18);border:1px solid rgba(251,191,36,.3);border-radius:22px;padding:26px;box-shadow:0 24px 90px rgba(0,0,0,.65);position:relative}
+.auth-panel h2{font-family:'Cinzel';font-size:25px;color:#fbbf24;margin:0 32px 8px 0}
+.auth-panel p{color:rgba(255,255,255,.62);font-size:13px;line-height:1.55;margin-bottom:18px}
+.auth-close{position:absolute;right:16px;top:14px;background:transparent;border:0;color:#fff;font-size:26px;cursor:pointer}
+.auth-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;margin:9px 0;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.14);color:#fff;font:600 14px Inter,sans-serif;cursor:pointer;text-align:left}
+.auth-option:hover:not(:disabled){border-color:#fbbf24;background:rgba(251,191,36,.08)}
+.auth-option:disabled{opacity:.55;cursor:not-allowed}
+.auth-tag{font-size:9px;letter-spacing:1px;color:#fbbf24;text-transform:uppercase;white-space:nowrap}
+.auth-note{min-height:34px;margin-top:12px!important;padding:10px 12px;border-radius:10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.15);font-size:11px!important}
+@media(max-width:520px){.auth-panel{padding:22px 18px}.auth-panel h2{font-size:22px}}
+
+/* Reference-inspired full launchpad panel: ornate fantasy-gold frame, 3 cards, rule tiles. */
+#launchpadModal{background:rgba(1,3,9,.9);padding:clamp(8px,2vw,24px);overflow:auto}
+#launchpadModal .launchpad-card{width:min(100%,1080px);max-width:1080px!important;padding:clamp(10px,1.6vw,22px);border-radius:0;border:2px solid #8f6829;background:
+radial-gradient(ellipse at 50% 0%,rgba(80,62,34,.38),transparent 55%),
+linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px #17131a,0 0 0 6px #b58a3e,0 0 48px rgba(255,183,55,.24);position:relative;overflow:hidden}
+#launchpadModal .launchpad-card:before{content:"";position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(239,190,94,.45)}
+#launchpadModal .swap-header{display:block;text-align:center;margin:0 0 5px;position:relative}
+#launchpadModal .swap-header h3{font:900 clamp(18px,2.7vw,32px) Cinzel,serif;letter-spacing:2px;color:#ffe2a0;text-shadow:0 2px 0 #4c2f12,0 0 14px rgba(255,194,77,.35);padding:9px 40px;border:1px solid #9a7538;background:linear-gradient(90deg,transparent,rgba(103,73,31,.45),transparent)}
+#launchpadModal .close-swap{position:absolute;right:0;top:0;background:#211a12;border:1px solid #9b783e;color:#f7d48b;z-index:2}
+.launch-subtitle{text-align:center;color:#c9b27e;font:italic 10px Cinzel,serif;letter-spacing:3px;margin:4px 0 14px}
+.launch-badge{display:none}
+.launch-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(6px,1.2vw,14px)}
+.launch-option{position:relative;min-width:0;min-height:180px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(10px,1.4vw,18px);gap:7px;color:#f8e7bd;border:1px solid #92703b;border-radius:0;background:linear-gradient(160deg,rgba(30,25,21,.98),rgba(4,5,9,.98));box-shadow:inset 0 0 0 3px rgba(198,150,61,.08),inset 0 0 18px rgba(0,0,0,.8);cursor:pointer;transition:.18s}
+.launch-option:before{content:"";position:absolute;inset:4px;border:1px solid rgba(207,165,85,.24);pointer-events:none}
+.launch-option:hover,.launch-option:focus-visible{outline:none;border-color:#ffdc72;box-shadow:inset 0 0 0 3px rgba(255,211,100,.16),0 0 18px rgba(255,190,63,.25)}
+.launch-option-signature{border:2px solid #f0c35b;background:linear-gradient(155deg,rgba(78,54,18,.98),rgba(7,6,8,.98));box-shadow:inset 0 0 22px rgba(255,193,58,.12),0 0 17px rgba(255,193,58,.25)}
+.launch-option-icon{font-size:clamp(23px,3vw,36px);line-height:1;color:#f5c95d;text-shadow:0 0 12px rgba(255,194,64,.4)}
+.launch-option-title{font:900 clamp(10px,1.3vw,15px) Cinzel,serif;letter-spacing:.6px;color:#f9dfa2;line-height:1.25;min-height:2.5em;display:flex;align-items:center;justify-content:center}
+.launch-option-sub{font-size:clamp(9px,1vw,11px);line-height:1.35;color:#c7c0b3;min-height:2.6em}
+.launch-feature-list{list-style:none;text-align:left;width:100%;font-size:clamp(8px,.95vw,10px);line-height:1.55;color:#d8cda9;margin:2px 0 7px}
+.launch-feature-list li:before{content:"◉";color:#e9c65f;margin-right:6px;font-size:9px}
+.launch-option-cta{margin-top:auto;align-self:stretch;padding:7px 5px;border:1px solid #b68a42;background:linear-gradient(#7e5c2d,#3e2a15);color:#ffe7ae;font:900 11px Cinzel,serif;letter-spacing:1.5px;box-shadow:inset 0 1px rgba(255,255,255,.12)}
+.launch-option-signature .launch-option-cta{background:linear-gradient(#ffe18a,#b47a20);color:#241606;border-color:#ffe9a5;box-shadow:0 0 12px rgba(255,198,61,.35)}
+.launch-rules{margin-top:12px;border:1px solid #98743b;background:linear-gradient(90deg,rgba(66,47,21,.4),rgba(8,8,12,.8),rgba(66,47,21,.4));padding:9px}
+.launch-rules-heading{font:900 clamp(12px,1.7vw,18px) Cinzel,serif;letter-spacing:1.4px;color:#f4d27f;text-align:center;margin-bottom:8px}
+.launch-rules-heading small{display:block;font:8px Inter,sans-serif;letter-spacing:1px;color:#a99b7b;margin-top:3px}
+.launch-rule-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.launch-rule{min-width:0;padding:9px 7px;border:1px solid rgba(184,143,69,.58);background:rgba(0,0,0,.55);text-align:center}
+.launch-rule-icon{font-size:21px;color:#e8c15c;margin-bottom:4px}
+.launch-rule h4{font:900 clamp(8px,1vw,10px) Cinzel,serif;color:#e8cb88;line-height:1.25;margin-bottom:5px}
+.launch-rule p{font-size:clamp(7px,.8vw,9px);line-height:1.35;color:#bdb5a5}
+.launch-choice-status{margin-top:8px;padding:9px;text-align:center;border:1px solid #a47a36;background:rgba(0,0,0,.7);font:700 11px Inter,sans-serif;color:#ffe39b}
+.launchpad-footnote{margin:6px 0 0;text-align:center;font-size:9px;line-height:1.4;color:#b6a786}
+@media(max-width:620px){#launchpadModal .launchpad-card{margin:auto}.launch-options{grid-template-columns:1fr}.launch-option{min-height:0;display:grid;grid-template-columns:40px 1fr;column-gap:10px;text-align:left;align-items:center}.launch-option-icon{grid-row:1/4}.launch-option-title,.launch-option-sub{min-height:0;justify-content:flex-start}.launch-feature-list{grid-column:2}.launch-option-cta{grid-column:2;align-self:stretch;text-align:center}.launch-option-signature{grid-column:auto}.launch-rule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.launch-rule p{font-size:9px}}
+
+
+</style>
+</head>
+<body>
+<nav>
+<a class="logo" href="./" aria-label="Climboria home" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
+<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a><a href="#" id="dexNavLink">DEX (Demo)</a><a href="#" id="launchpadNavLink">Launchpad (Demo)</a>
+<a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px;transition:.2s" onmouseover="this.style.borderColor='#fbbf24';this.style.color='#fbbf24'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='#fff'">𝕏</a>
+<button class="btn-gold" data-open-auth>SIGN IN</button></div>
+<div style="display:flex;align-items:center;gap:12px">
+<a href="https://x.com/ClimboriaHQ" target="_blank" id="xLogo" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
+<div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+<a href="#overview">Overview</a>
+<a href="#game">Game</a>
+<a href="#tokenomics">Tokenomics</a>
+<a href="#roadmap">Roadmap</a>
+<a href="#whitepaper">Whitepaper</a>
+<a href="#" id="mobileDexBtn">DEX — Demo Only</a><a href="#" id="mobileLaunchpadBtn">Launchpad — Demo Only</a>
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
+<button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
+</div>
+<a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-top:10px"><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;font-weight:900">𝕏</span> @ClimboriaHQ</a>
+<div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
+</div>
+
+
+<div class="auth-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+ <div class="auth-panel">
+  <button class="auth-close" id="authClose" aria-label="Close sign-in">×</button>
+  <h2 id="authTitle">Enter Climboria</h2>
+  <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
+  <button class="auth-option" id="authWallet"><span>Connect crypto wallet</span><span class="auth-tag">Phantom / EVM</span></button>
+  <button class="auth-option" disabled><span>Continue with X</span><span class="auth-tag">OAuth setup needed</span></button>
+  <button class="auth-option" disabled><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth setup needed</span></button>
+  <button class="auth-option" disabled><span>Email and password</span><span class="auth-tag">Auth backend needed</span></button>
+  <p class="auth-note" id="authStatus" role="status">No account is created or logged in yet.</p>
+ </div>
+</div>
+<div class="hero">
+  <picture>
+    <source media="(max-width: 768px)" srcset="./855294431_1120833350354855_774972947416786858_n.webp">
+    <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
+  </picture>
+  <div class="hero-overlay"></div>
+  <div class="highlights" aria-label="Climboria ecosystem highlights">
+    <div class="hl hl-primary"><span class="hl-dot"></span><span>LAUNCHPAD <b>•</b> TOKEN CREATION DEMO</span></div>
+    <div class="hl hl-primary"><span class="hl-dot"></span><span>DEX <b>•</b> SWAP DEMO</span></div>
+    <div class="hl hl-status">TOKEN LAUNCH: NOT ANNOUNCED</div>
+  </div>
+  <div class="hero-content">
+    <div id="climboria-home-actions" class="hero-buttons">
+      <button class="climboria-home-play btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
+      <button class="climboria-home-trade btn-trade" id="swapBtn">SWAP / DEX</button>
+      <button class="climboria-home-create btn-launch" id="launchpadBtn">LAUNCHPAD (DEMO)</button>
+    </div>
+    
+  </div>
+</div>
+
+<div id="overview" class="sec"><div class="label">Climboria Ecosystem</div><div class="title">Launch. Trade. Climb.</div><div class="desc">Climboria is being built around three connected pillars: a creator-focused Launchpad, a dedicated DEX, and a mountain survival game. The products are currently previews/planned features; no token launch or on-chain transactions are live.<br><span class="chain-badge">◎ SOLANA ECOSYSTEM PLANNED • TOKEN LAUNCH NOT ANNOUNCED</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Explore the project overview</a></div>
+<div class="grid3"><div class="card"><h3>⚡ Climboria Signature</h3><p>Our proposed signature launch experience: creator and buyer rules disclosed before token creation, with configurable safeguards designed to make launch conditions clearer. Demo only; mechanics and protections still need implementation and review.</p></div><div class="card"><h3>⇄ Climboria DEX</h3><p>A planned swap and trading interface for the Climboria ecosystem. Live liquidity, routing, fees, wallet connection, and on-chain swaps are not available yet.</p></div><div class="card"><h3>🏔️ Climboria Game</h3><p>A persistent mountain expedition built around climbing, survival, gear, and multiplayer. The game is in development; features and release timing are not confirmed.</p></div></div></div>
+
+<div id="game" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">The Game</div><div class="title">Explore. Survive. Ascend.</div><div class="desc">Climboria’s game direction is a multiplayer mountain survival and exploration adventure. The systems below are planned and under development—not yet represented as live gameplay.</div><div class="grid3"><div class="card"><h3>⛰️ Ten Expeditions</h3><p>Ten long-form mountain expeditions with escalating terrain, weather, survival pressure, and summit objectives.</p></div><div class="card"><h3>🧭 Survival & Teamwork</h3><p>Manage health, stamina, supplies, gear durability, and risk. Team rescue and cooperative exploration are planned.</p></div><div class="card"><h3>🌑 Jarrell’s Peak</h3><p>An envisioned endless, high-risk mountain mode with hidden treasure, no map, and dangerous player encounters.</p></div></div></div>
+
+<div id="tokenomics" class="sec"><div class="label">Token Utility</div><div class="title">$CLIMB — Built for the Climboria Ecosystem</div><div class="tok-wrap"><div class="tok-chart">
+<div class="bar"><span>Community & Play-to-Climb</span><span class="pct">TBD</span></div>
+<div class="bar"><span>Liquidity (planned)</span><span class="pct">TBD</span></div>
+<div class="bar"><span>Team allocation</span><span class="pct">TBD</span></div>
+<div class="bar"><span>Treasury & development</span><span class="pct">TBD</span></div>
+<div class="bar"><span>Partners & exchange plans</span><span class="pct">TBD</span></div>
+<div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Token supply, allocation, fees, liquidity, and launch details have not been finalized or announced.</div>
+</div><div class="card"><h3>What $CLIMB is for</h3><p>$CLIMB is planned to connect Climboria’s game and platforms. In-game, it may be used for eligible purchases, forging, upgrades, and marketplace activity as those features are introduced.<br><br>On the Climboria DEX, we plan to explore utility tied to trading features and platform fees. On the Launchpad, $CLIMB may support eligible launch services and features for creators.<br><br>We’re building the game, DEX, and Launchpad step by step. Specific token uses, fee benefits, and requirements will be announced once they’re confirmed and implemented.</p><br><button class="btn-gold">TOKEN LAUNCH NOT ANNOUNCED</button> <button class="btn-outline" style="margin-left:8px" onclick="alert('Token chart will be available after an official token launch.')">VIEW CHART</button></div></div></div>
+
+<div id="roadmap" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">Roadmap</div><div class="title">Build the launch tools. Then expand the mountain.</div><div class="desc">Product order and milestones are directional; no delivery dates are promised.</div><div class="road">
+<div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>CORE PLATFORM</h4><li>Site and project documentation</li><li>Launchpad and DEX demo interfaces</li><li>Define Signature launch rules</li><li>Token launch: not announced</li></div>
+<div class="phase"><div class="num">PHASE 02 — ASCENT</div><h4>LAUNCHPAD + DEX</h4><li>Build and test token-creation flow</li><li>Implement Climboria Signature safeguards</li><li>Develop swap routing and transaction safety</li><li>Security review before any live launch</li></div>
+<div class="phase"><div class="num">PHASE 03 — HIGH ALTITUDE</div><h4>GAME DEVELOPMENT</h4><li>Playable climbing prototype</li><li>Gear durability and survival systems</li><li>Multiplayer and mobile performance tests</li><li>Game release timing: TBD</li></div>
+<div class="phase"><div class="num">PHASE 04 — SUMMIT</div><h4>CONNECTED ECOSYSTEM</h4><li>Connect game economy only after testing</li><li>Marketplace and collectible features: evaluate</li><li>Community events and new mountain content</li><li>Further expansion based on player feedback</li></div>
+</div></div>
+
+<div id="whitepaper" class="sec"><div class="label">Whitepaper</div><div class="title">Read the climb.</div><div class="desc">Project overview, mountain survival design, ecosystem plans, and future ecosystem plans.</div><div class="white">
+<a class="wp" href="./overview/"><h3>📄 Overview →</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">The current mountain survival game direction and ecosystem plan.</p></a>
+<a class="wp" href="./overview/"><h3>📘 Whitepaper / Project Brief</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Whitepaper: publication status and contents to be confirmed.</p></a>
+<a class="wp" href="./overview/#gameplay"><h3>🗺️ Game Overview</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Mountain survival design and planned systems; features are not yet live.</p></a>
+</div></div>
+
+
+<style>
+.swap-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(20px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.swap-modal.active{display:flex}
+.swap-card{width:100%;max-width:420px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid rgba(251,191,36,.25);border-radius:24px;padding:28px;backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(251,191,36,.2)}
+.swap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.swap-header h3{font-family:'Cinzel';font-size:18px}
+.close-swap{background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px}
+.swap-box{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;margin-bottom:12px}
+.swap-box label{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.5);display:block;margin-bottom:8px}
+.swap-input{display:flex;justify-content:space-between;align-items:center}
+.swap-input input{background:transparent;border:none;color:#fff;font-size:22px;font-weight:800;width:60%;outline:none}
+.token-select{display:flex;align-items:center;gap:8px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer}
+.swap-arrow{width:40px;height:40px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto -20px;position:relative;z-index:2;cursor:pointer}
+.swap-info{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);margin:16px 0;letter-spacing:1px}
+.btn-swap{width:100%;background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;font-weight:900;letter-spacing:2px;padding:16px;border-radius:999px;border:none;cursor:pointer;box-shadow:0 0 20px rgba(251,191,36,.4);font-size:14px}
+.dex-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px}
+.demo-badge{display:inline-flex;gap:6px;align-items:center;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.35);padding:6px 12px;border-radius:999px;font-size:10px;letter-spacing:1px;margin-bottom:12px;color:#fbbf24}
+.btn-swap:disabled{opacity:.55;cursor:not-allowed}
+.dex-layout{max-width:1100px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+@media(max-width:900px){.dex-layout{grid-template-columns:1fr}.swap-card{max-width:95vw;padding:20px}}
+</style>
+<div class="swap-modal" id="swapModal" role="dialog" aria-modal="true" aria-labelledby="swapTitle">
+<div class="swap-card">
+<div class="swap-header"><h3 id="swapTitle">CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap" aria-label="Close DEX preview">×</button></div>
+<div class="demo-badge">DEX PREVIEW • NO WALLET • NO TRANSACTION</div>
+<div class="dex-badge">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
+<div class="swap-box"><label>YOU PAY — PREVIEW ONLY</label><div class="swap-input"><input type="number" id="payInput" placeholder="0.0" disabled aria-label="Demo pay amount"><div class="token-select" aria-hidden="true">◎ SOL</div></div></div>
+<div class="swap-arrow" aria-hidden="true">⇅</div>
+<div class="swap-box"><label>YOU RECEIVE — NO QUOTE AVAILABLE</label><div class="swap-input"><input type="text" id="receiveInput" placeholder="—" readonly disabled aria-label="No receive quote"><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB</div></div></div>
+<div class="swap-info"><span>TGE: not announced</span><span>Slippage: not configured</span></div>
+<div class="swap-info"><span>Route: not connected</span><span>Fee: not configured</span></div>
+<button class="btn-swap" id="doSwap" disabled>Preview only — swapping unavailable</button>
+<div style="text-align:center;margin-top:12px;font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px">No price, quote, wallet connection, or on-chain swap is implemented.</div>
+</div>
+</div>
+
+<div class="swap-modal launchpad-art-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
+  <div class="launchpad-art-frame">
+    <div class="launchpad-art-stage">
+      <img class="launchpad-reference-art" src="https://github.com/user-attachments/assets/864bca16-efb2-4edd-b4ce-f57a6c3ad3c4" alt="Climboria Signature Launchpad reference artwork" />
+      <button type="button" class="launch-art-hotspot launch-art-normal" data-launch-choice="normal" aria-label="Select Normal Launchpad"></button>
+      <button type="button" class="launch-art-hotspot launch-art-developer" data-launch-choice="developer" aria-label="Select Developer Options"></button>
+      <button type="button" class="launch-art-hotspot launch-art-signature" data-launch-choice="signature" aria-label="Select Climboria Signature"></button>
+      <button type="button" class="launch-art-hotspot launch-art-preview" id="signatureRulesPreview" aria-expanded="false" aria-label="Preview Signature Launch Rules"></button>
+      <button type="button" class="launch-art-close" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button>
+      <div id="signatureRulesDetails" class="launch-art-details" role="region" aria-live="polite" hidden>
+        <button type="button" class="launch-art-details-close" id="signatureRulesDetailsClose" aria-label="Close rules preview">×</button>
+        <strong>SIGNATURE RULES — PREVIEW</strong>
+        <p>Climboria Signature is in development. Final parameters, limits, enforcement, and creator/buyer disclosures will be finalized before official release.</p>
+      </div>
+      <div id="launchChoiceStatus" class="launch-art-status" role="status" aria-live="polite" hidden></div>
+    </div>
+  </div>
+</div>
+
+<footer><div>© 2026 Climboria. All rights reserved.</div></footer>
+
+
+<script>
+(() => {
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('mobileMenu');
+  let menuOpen = false;
+  const setMenu = (open) => {
+    menuOpen = open;
+    menu.classList.toggle('active', open);
+    ham.setAttribute('aria-expanded', String(open));
+    ham.children[0].style.transform = open ? 'rotate(45deg) translate(5px,5px)' : '';
+    ham.children[1].style.opacity = open ? '0' : '';
+    ham.children[2].style.transform = open ? 'rotate(-45deg) translate(5px,-5px)' : '';
+  };
+  ham.setAttribute('role','button');
+  ham.setAttribute('tabindex','0');
+  ham.setAttribute('aria-label','Toggle navigation');
+  ham.setAttribute('aria-expanded','false');
+  ham.addEventListener('click', () => setMenu(!menuOpen));
+  ham.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();setMenu(!menuOpen);} });
+  menu.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => {
+    if(a.id !== 'mobileDexBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
+  }));
+
+
+  // Auth entry point. Wallet connect is a provider handshake only; server-backed login/OAuth is not configured.
+  const authModal = document.getElementById('authModal');
+  const authStatus = document.getElementById('authStatus');
+  const openAuth = () => { setMenu(false); authModal.classList.add('open'); document.getElementById('authClose').focus(); };
+  const closeAuth = () => authModal.classList.remove('open');
+  document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
+  document.getElementById('authClose').addEventListener('click',closeAuth);
+  authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
+  document.getElementById('authWallet').addEventListener('click',async()=>{
+    authStatus.textContent='Looking for an installed wallet…';
+    try {
+      let address='';
+      if(window.solana && window.solana.isPhantom){
+        const result=await window.solana.connect(); address=result?.publicKey?.toString()||'';
+      } else if(window.ethereum){
+        const accounts=await window.ethereum.request({method:'eth_requestAccounts'}); address=accounts?.[0]||'';
+      } else {
+        authStatus.textContent='No compatible wallet detected. Install Phantom (Solana) or an EVM wallet, then retry.';return;
+      }
+      authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login; signed-message verification and account sessions still need backend setup.' : 'Wallet returned no address. Please retry.';
+    } catch(err) {
+      authStatus.textContent=err?.code===4001?'Wallet connection was rejected.':'Wallet connection failed. Please retry.';
+    }
+  });
+
+  // Keep the existing PLAY placeholder honest; game launch is not wired yet.
+  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => alert('The playable game is not connected to this homepage yet.'));
+
+  const swapModal = document.getElementById('swapModal');
+  const launchModal = document.getElementById('launchpadModal');
+  let lastFocus = null;
+  const openModal = modal => {
+    setMenu(false);
+    lastFocus = document.activeElement;
+    modal.classList.add('active');
+    modal.querySelector('button[aria-label^="Close"]').focus();
+  };
+  const closeModal = modal => {
+    modal.classList.remove('active');
+    if(lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  };
+  const openSwap = e => { if(e) e.preventDefault(); openModal(swapModal); };
+  const openLaunch = e => { if(e) e.preventDefault(); openModal(launchModal); };
+  document.getElementById('swapBtn').addEventListener('click', openSwap);
+  document.getElementById('dexNavLink').addEventListener('click', openSwap);
+  document.getElementById('mobileDexBtn').addEventListener('click', openSwap);
+  document.getElementById('launchpadBtn').addEventListener('click', openLaunch);
+  document.getElementById('launchpadNavLink').addEventListener('click', openLaunch);
+  document.getElementById('mobileLaunchpadBtn').addEventListener('click', openLaunch);
+  document.getElementById('closeSwap').addEventListener('click', () => closeModal(swapModal));
+  document.getElementById('closeLaunchpad').addEventListener('click', () => closeModal(launchModal));
+  const launchChoiceCopy = {
+    normal: 'Normal Launchpad — TBA. This option is not available yet.',
+    developer: 'Developer Options — TBA. Advanced creator settings are not available yet.',
+    signature: 'Climboria Signature — TBA. Rules and safeguards will be disclosed before this option opens.'
+  };
+  document.querySelectorAll('[data-launch-choice]').forEach(button => {
+    button.setAttribute('aria-pressed','false');
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-launch-choice]').forEach(card => card.setAttribute('aria-pressed',String(card===button)));
+      document.getElementById('launchChoiceStatus').textContent =
+        launchChoiceCopy[button.dataset.launchChoice] || 'Availability: TBA.';
+    });
+  });
+  const rulesPreview=document.getElementById('signatureRulesPreview');
+  const rulesDetails=document.getElementById('signatureRulesDetails');
+  rulesPreview.addEventListener('click',()=>{
+    const open=rulesPreview.getAttribute('aria-expanded')!=='true';
+    rulesPreview.setAttribute('aria-expanded',String(open));
+    rulesDetails.hidden=!open;
+  });
+  document.getElementById('signatureRulesDetailsClose').addEventListener('click',()=>{
+    rulesDetails.hidden=true; rulesPreview.setAttribute('aria-expanded','false');
+  });
+  document.querySelectorAll('[data-launch-choice]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const status=document.getElementById('launchChoiceStatus');
+      status.hidden=false;
+      status.textContent=launchChoiceCopy[button.dataset.launchChoice]||'Availability: TBA.';
+    });
+  });
+  [swapModal,launchModal].forEach(modal => {
+    modal.addEventListener('click', e => { if(e.target===modal) closeModal(modal); });
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key==='Escape') {
+      if(swapModal.classList.contains('active')) closeModal(swapModal);
+      if(launchModal.classList.contains('active')) closeModal(launchModal);
+      if(authModal.classList.contains('open')) closeAuth();
+      if(menuOpen) setMenu(false);
+    }
+  });
+})();
+</script>
+
+<footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED <span aria-hidden="true">•</span> <a href="./terms/" style="color:#fbbf24;text-decoration:underline;text-underline-offset:3px">TERMS OF USE</a></footer>
+<style>.site-status{padding:22px 16px;text-align:center;background:#070a14;color:rgba(255,255,255,.65);font-size:10px;letter-spacing:3px;border-top:1px solid rgba(251,191,36,.12)}@media(max-width:600px){footer{flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px 18px;text-align:center;line-height:1.5}footer>div{width:100%;text-align:center}.site-status{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:9px;letter-spacing:1.2px;line-height:1.6;padding:18px 12px;white-space:normal}}</style>
+
+<style id="launchpad-reference-overrides">
+/* Editable reference-style Launchpad: the layout is real DOM, not a flattened screenshot. */
+#launchpadModal{position:fixed;inset:0;z-index:250;background:
+ radial-gradient(ellipse at 50% 14%,rgba(28,91,145,.52),transparent 48%),
+ linear-gradient(180deg,#082344 0%,#102b48 42%,#080c16 100%);
+ padding:clamp(8px,2vw,28px);overflow:auto;align-items:flex-start}
+#launchpadModal:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.42;background:
+ linear-gradient(145deg,transparent 65%,#050914 65.2% 68%,transparent 68.2%),
+ linear-gradient(35deg,transparent 62%,#08101d 62.2% 66%,transparent 66.2%),
+ radial-gradient(ellipse at 7% 88%,#d18a38 0,transparent 18%),
+ radial-gradient(ellipse at 94% 84%,#e4a24d 0,transparent 20%)}
+#launchpadModal .launchpad-card{position:relative;z-index:1;width:min(100%,1560px);max-width:none!important;min-height:min(92vh,900px);margin:auto;padding:clamp(12px,2vw,30px);border:2px solid #b8893b;border-radius:0;background:linear-gradient(145deg,rgba(5,8,15,.96),rgba(10,12,18,.97));box-shadow:0 0 0 4px #17131a,0 0 0 6px #d5a24a,0 0 38px #f4b94155;overflow:visible}
+#launchpadModal .launchpad-card:before{inset:5px;border:1px solid #e4bc6755}
+#launchpadModal .swap-header{display:flex;justify-content:center;align-items:center;margin:0 auto 5px;min-height:clamp(42px,5.6vw,80px);max-width:95%;border:2px solid #a47b36;background:linear-gradient(90deg,#080a10,#17151a,#080a10);box-shadow:inset 0 0 0 3px #000}
+#launchpadModal .swap-header h3{padding:0;border:0;background:none;font:900 clamp(17px,2.5vw,38px) Cinzel,serif;letter-spacing:clamp(1px,.25vw,4px);color:#f5d38b;text-shadow:0 2px #3e260e,0 0 14px #eab54a55}
+#launchpadModal .close-swap{right:8px;top:8px;border-radius:0;background:#211a12}
+#launchpadModal .launch-subtitle{font:600 clamp(9px,1.2vw,16px) Cinzel,serif;letter-spacing:clamp(2px,.45vw,6px);color:#b9d5f2;margin:8px 0 clamp(12px,2vw,26px)}
+#launchpadModal .launch-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1.4vw,22px)}
+#launchpadModal .launch-option{min-height:clamp(260px,36vh,390px);display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:clamp(12px,1.8vw,26px);gap:clamp(7px,1vw,14px);border:2px solid #967039;border-radius:0;background:
+ radial-gradient(ellipse at 30% 0%,#34302b55,transparent 50%),
+ linear-gradient(145deg,#111217,#05070c 72%);box-shadow:inset 0 0 0 4px #000,inset 0 0 0 5px #9b743655,inset 0 0 24px #000}
+#launchpadModal .launch-option:before{inset:5px;border:1px solid #c6a05a55}
+#launchpadModal .launch-option-signature{border:3px solid #f0bd4d;box-shadow:inset 0 0 0 4px #080706,inset 0 0 24px #e7a72a22,0 0 20px #ffc34b55}
+#launchpadModal .launch-option-icon{align-self:flex-start;font-size:clamp(28px,3.3vw,48px);width:clamp(52px,6vw,84px);height:clamp(52px,6vw,84px);display:grid;place-items:center;border:2px solid #d6aa4e;clip-path:polygon(50% 0,94% 24%,94% 76%,50% 100%,6% 76%,6% 24%);background:#14120d;color:#f7ce69}
+#launchpadModal .launch-option-title{justify-content:flex-start;min-height:2.4em;font:900 clamp(13px,1.55vw,23px) Cinzel,serif;letter-spacing:.4px;color:#f4d078;line-height:1.2}
+#launchpadModal .launch-option-sub{min-height:3em;font-size:clamp(11px,1.2vw,17px);line-height:1.35;color:#c8d7e7}
+#launchpadModal .launch-feature-list{font-size:clamp(10px,1.1vw,15px);line-height:1.7;color:#d5d8dc;margin:4px 0 8px}
+#launchpadModal .launch-feature-list li:before{content:"✓";font-size:13px;color:#f7c94f;margin-right:9px}
+#launchpadModal .launch-option-cta{padding:clamp(8px,1vw,14px);font:900 clamp(12px,1.4vw,20px) Cinzel,serif;letter-spacing:1px;text-align:center;background:linear-gradient(#cfa45a,#8d5d25);border:2px solid #eac77f;color:#1b1004}
+#launchpadModal .launch-option-signature .launch-option-cta{background:linear-gradient(#ffe58b,#e9a92d);box-shadow:0 0 16px #ffc34b77}
+#launchpadModal .launch-rules{margin-top:clamp(12px,1.8vw,24px);padding:clamp(10px,1.4vw,20px);border:2px solid #9e793d;background:linear-gradient(145deg,#0b0d13f5,#05070bf5);box-shadow:inset 0 0 0 4px #000}
+#launchpadModal .launch-rules-heading{font:900 clamp(16px,2vw,30px) Cinzel,serif;letter-spacing:clamp(1px,.3vw,4px);margin-bottom:clamp(10px,1.2vw,18px);color:#f4d078}
+#launchpadModal .launch-rules-heading small{display:inline-block;margin-left:clamp(8px,2vw,28px);padding:6px 10px;border:1px solid #bd9141;color:#ffdb6d;font:800 clamp(8px,.9vw,13px) Cinzel,serif;letter-spacing:1px}
+#launchpadModal .launch-rule-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(6px,1vw,14px)}
+#launchpadModal .launch-rule{display:grid;grid-template-columns:clamp(42px,5vw,70px) 1fr;column-gap:clamp(8px,1vw,14px);align-content:start;text-align:left;min-height:clamp(125px,19vh,205px);padding:clamp(8px,1vw,14px);border:1px solid #a27b3f;background:linear-gradient(145deg,#101116,#05070b)}
+#launchpadModal .launch-rule-icon{grid-row:1/3;display:grid;place-items:center;width:clamp(40px,5vw,68px);height:clamp(40px,5vw,68px);font-size:clamp(22px,2.4vw,34px);border:2px solid #d3a647;clip-path:polygon(50% 0,94% 24%,94% 76%,50% 100%,6% 76%,6% 24%);color:#f8cf64;background:#17130b}
+#launchpadModal .launch-rule h4{font:900 clamp(9px,1.05vw,15px) Cinzel,serif;line-height:1.3;color:#f0ce73;margin:3px 0 7px}
+#launchpadModal .launch-rule p{font-size:clamp(9px,.95vw,14px);line-height:1.4;color:#c9d7e5}
+#launchpadModal .launch-choice-status{margin-top:10px;background:#090a0e;border:1px solid #c39945;color:#f9d977;padding:9px}
+#launchpadModal .launchpad-footnote{padding:10px;border:1px solid #b38a3d;background:#08090d;color:#f0cc6e;font-size:clamp(9px,.95vw,14px)}
+@media(max-width:700px){
+ #launchpadModal{padding:7px}
+ #launchpadModal .launchpad-card{min-height:0;padding:12px}
+ #launchpadModal .swap-header{min-height:48px;margin-top:18px}
+ #launchpadModal .swap-header h3{font-size:16px;letter-spacing:1px}
+ #launchpadModal .launch-options{grid-template-columns:1fr}
+ #launchpadModal .launch-option{min-height:0;display:grid;grid-template-columns:54px 1fr;gap:7px 12px;padding:12px;text-align:left}
+ #launchpadModal .launch-option-icon{grid-row:1/4;width:48px;height:48px;font-size:24px}
+ #launchpadModal .launch-option-title{font-size:14px;min-height:0}
+ #launchpadModal .launch-option-sub{font-size:11px;min-height:0}
+ #launchpadModal .launch-feature-list{grid-column:2;font-size:10px;margin:0}
+ #launchpadModal .launch-option-cta{grid-column:2;padding:8px;font-size:13px}
+ #launchpadModal .launch-rule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #launchpadModal .launch-rule{grid-template-columns:38px 1fr;min-height:0;padding:7px;gap:5px}
+ #launchpadModal .launch-rule-icon{width:36px;height:36px;font-size:19px}
+ #launchpadModal .launch-rule h4{font-size:9px}
+ #launchpadModal .launch-rule p{font-size:9px}
+ #launchpadModal .launch-rules-heading small{display:block;margin:6px auto 0;width:max-content}
+}
+
+/* Final interaction polish + reference-like frame ornament, all editable CSS/DOM. */
+#launchpadModal .launch-rules-heading{display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,30px);flex-wrap:wrap}
+#launchpadModal .launch-rules-heading button{cursor:pointer;padding:7px 12px;border:1px solid #d4a64b;background:#090a0d;color:#ffdb6d;font:800 clamp(8px,.9vw,13px) Cinzel,serif;letter-spacing:1px}
+#launchpadModal .launch-rules-heading button:hover,#launchpadModal .launch-rules-heading button:focus-visible{outline:2px solid #ffe08a;outline-offset:2px;background:#2b1c08}
+#launchpadModal .launch-rules-details{margin-top:10px;padding:10px 12px;border:1px solid #c69b47;background:#080a10;color:#e9d49e;font-size:clamp(10px,1vw,14px);line-height:1.5}
+#launchpadModal .launch-option[aria-pressed="true"]{outline:2px solid #ffdb70;outline-offset:2px;filter:brightness(1.12)}
+#launchpadModal .launch-option[aria-pressed="true"] .launch-option-cta:after{content:" ✓"}
+#launchpadModal .launch-choice-status{font-size:clamp(10px,1vw,14px);line-height:1.45}
+#launchpadModal .launch-option{cursor:pointer}
+#launchpadModal .launch-option-cta{display:block}
+#launchpadModal .launchpad-card{max-height:calc(100svh - 28px);overflow:auto;scrollbar-color:#9a7436 #090a0d}
+#launchpadModal .launchpad-card:after{content:"";position:absolute;inset:0;pointer-events:none;background:
+linear-gradient(135deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) top left/28px 28px no-repeat,
+linear-gradient(225deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) top right/28px 28px no-repeat,
+linear-gradient(45deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bottom left/28px 28px no-repeat,
+linear-gradient(315deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bottom right/28px 28px no-repeat}
+@media(max-width:700px){
+ #launchpadModal .launchpad-card{max-height:calc(100svh - 14px)}
+ #launchpadModal .launch-rules-heading{font-size:15px}
+ #launchpadModal .launch-rules-heading button{font-size:9px}
+ #launchpadModal .launch-choice-status{font-size:11px}
+}
+
+</style>
+
+
+<style id="launchpad-art-hotspot-css">
+/* Exact supplied reference artwork; real transparent HTML controls sit on top. */
+#launchpadModal.launchpad-art-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:0;background:rgba(2,5,12,.92);overflow:hidden}
+#launchpadModal.launchpad-art-modal.active{display:flex}
+#launchpadModal .launchpad-art-frame{position:relative;width:min(100vw,calc(100svh * 16 / 9));max-width:100vw;max-height:100svh;margin:auto;line-height:0}
+#launchpadModal .launchpad-art-stage{position:relative;width:100%;aspect-ratio:16/9;max-height:100svh;line-height:normal}
+#launchpadModal .launchpad-reference-art{display:block;width:100%;height:100%;object-fit:contain;border:0;box-shadow:0 0 28px #e7ae4533}
+#launchpadModal .launch-art-hotspot{position:absolute;z-index:2;display:block;margin:0;padding:0;border:0;border-radius:2px;background:transparent;cursor:pointer;line-height:normal}
+#launchpadModal .launch-art-hotspot:focus-visible{outline:3px solid #fff2a6;outline-offset:2px;background:#ffd45b22}
+#launchpadModal .launch-art-normal{left:12.7%;top:52.2%;width:19.2%;height:6.3%}
+#launchpadModal .launch-art-developer{left:41%;top:52.2%;width:18.3%;height:6.3%}
+#launchpadModal .launch-art-signature{left:67.3%;top:52.2%;width:20.8%;height:6.3%}
+#launchpadModal .launch-art-preview{left:74.9%;top:64.4%;width:19.2%;height:4.2%}
+#launchpadModal .launch-art-close{position:absolute;z-index:5;right:1.2%;top:1.5%;width:34px;height:34px;border:1px solid #e6b64f;background:#080b12dd;color:#ffda75;font-size:24px;line-height:1;cursor:pointer}
+#launchpadModal .launch-art-close:focus-visible,#launchpadModal .launch-art-details-close:focus-visible{outline:2px solid white;outline-offset:2px}
+#launchpadModal .launch-art-status{position:absolute;z-index:4;left:50%;bottom:2.3%;transform:translateX(-50%);width:max-content;max-width:86%;padding:9px 16px;border:1px solid #f4c75c;background:#070a12f2;color:#ffe08a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;box-shadow:0 0 16px #f5bd4b55}
+#launchpadModal .launch-art-details{position:absolute;z-index:4;right:2.5%;bottom:8.5%;width:min(47%,560px);padding:18px 22px;border:2px solid #f4c75c;background:linear-gradient(145deg,#080b13f5,#16121af5);color:#dce8f7;box-shadow:0 0 24px #f0b94b66;font:14px/1.5 system-ui,sans-serif}
+#launchpadModal .launch-art-details strong{display:block;margin-bottom:7px;color:#ffda75;font-family:Georgia,serif;letter-spacing:1px}
+#launchpadModal .launch-art-details p{margin:0}
+#launchpadModal .launch-art-details-close{position:absolute;right:5px;top:4px;border:0;background:transparent;color:#ffda75;font-size:20px;cursor:pointer}
+/* Desktop and mobile sizing are deliberately isolated: tune either media block
+   without changing the other. The 16:9 artwork stays whole; hotspots scale with it. */
+@media(min-width:651px){
+ #launchpadModal.launchpad-art-modal{padding:0}
+ #launchpadModal .launchpad-art-frame{width:min(100vw,calc(100svh * 16 / 9));max-width:100vw}
+ #launchpadModal .launch-art-close{width:34px;height:34px;font-size:24px}
+ #launchpadModal .launch-art-status{font-size:13px;padding:9px 16px}
+ #launchpadModal .launch-art-details{width:min(47%,560px);padding:18px 22px;font-size:14px}
+}
+@media(max-width:650px){
+ #launchpadModal.launchpad-art-modal{padding:5px}
+ #launchpadModal .launchpad-art-frame{width:100%;min-width:0}
+ #launchpadModal .launch-art-close{width:24px;height:24px;font-size:18px}
+ #launchpadModal .launch-art-status{font-size:9px;padding:5px 7px;max-width:90%}
+ #launchpadModal .launch-art-details{right:2%;bottom:8%;width:70%;padding:10px;font-size:10px}
+ #launchpadModal .launch-art-details strong{font-size:10px}
+}
+</style>
+</body>
+</html>
