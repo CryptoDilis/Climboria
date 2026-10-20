@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="lheiz-shadowforge-spire">
+<defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eadbff"/><stop offset=".48" stop-color="#a78bd5"/><stop offset="1" stop-color="#282a34"/></linearGradient><radialGradient id="aura"><stop stop-color="#a78bd5" stop-opacity=".32"/><stop offset="1" stop-color="#a78bd5" stop-opacity="0"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+<circle cx="64" cy="57" r="57" fill="url(#aura)"/>
+
+<path d="M64 8 L110 29 L104 83 L64 116 L24 83 L18 29 Z" fill="#111722" fill-opacity=".78" stroke="url(#metal)" stroke-width="3"/>
+<path d="M64 15 L101 33 L96 78 L64 105 L32 78 L27 33 Z" fill="none" stroke="#eadbff" stroke-width="1" opacity=".4"/>
+<path d="M20 70 L40 44 L51 53 L63 13 L75 53 L86 44 L106 70 Z" fill="url(#metal)" stroke="#eadbff" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M63 13 L56 31 L69 31 L63 44" fill="none" stroke="#eadbff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M38 88 L90 88" stroke="url(#metal)" stroke-width="2.5"/><circle cx="64" cy="97" r="3" fill="#eadbff"/>
+</svg>

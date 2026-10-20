@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="gabs-doomspire">
+<defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e8d6ff"/><stop offset=".48" stop-color="#ad8de2"/><stop offset="1" stop-color="#282a34"/></linearGradient><radialGradient id="aura"><stop stop-color="#ad8de2" stop-opacity=".32"/><stop offset="1" stop-color="#ad8de2" stop-opacity="0"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+<circle cx="64" cy="57" r="57" fill="url(#aura)"/>
+
+<path d="M64 8 L110 29 L104 83 L64 116 L24 83 L18 29 Z" fill="#111722" fill-opacity=".78" stroke="url(#metal)" stroke-width="3"/>
+<path d="M64 15 L101 33 L96 78 L64 105 L32 78 L27 33 Z" fill="none" stroke="#e8d6ff" stroke-width="1" opacity=".4"/>
+<path d="M23 70 L43 40 L52 49 L63 7 L74 49 L83 40 L103 70 Z" fill="url(#metal)" stroke="#e8d6ff" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M63 7 L57 25 L69 25 L63 36" fill="none" stroke="#e8d6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M38 88 L90 88" stroke="url(#metal)" stroke-width="2.5"/><circle cx="64" cy="97" r="3" fill="#e8d6ff"/>
+</svg>

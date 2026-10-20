@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="zaldys-thundermaw-crag">
+<defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d5edff"/><stop offset=".48" stop-color="#75baf2"/><stop offset="1" stop-color="#282a34"/></linearGradient><radialGradient id="aura"><stop stop-color="#75baf2" stop-opacity=".32"/><stop offset="1" stop-color="#75baf2" stop-opacity="0"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+<circle cx="64" cy="57" r="57" fill="url(#aura)"/>
+
+<path d="M64 8 L110 29 L104 83 L64 116 L24 83 L18 29 Z" fill="#111722" fill-opacity=".78" stroke="url(#metal)" stroke-width="3"/>
+<path d="M64 15 L101 33 L96 78 L64 105 L32 78 L27 33 Z" fill="none" stroke="#d5edff" stroke-width="1" opacity=".4"/>
+<path d="M18 70 L31 45 L44 56 L57 25 L70 53 L83 14 L93 54 L105 70 Z" fill="url(#metal)" stroke="#d5edff" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M83 14 L75 34 L88 34 L82 46" fill="none" stroke="#d5edff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M38 88 L90 88" stroke="url(#metal)" stroke-width="2.5"/><circle cx="64" cy="97" r="3" fill="#d5edff"/>
+</svg>

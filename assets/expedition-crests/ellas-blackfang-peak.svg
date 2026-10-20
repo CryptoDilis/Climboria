@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="ellas-blackfang-peak">
+<defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9efff"/><stop offset=".48" stop-color="#8fc8f7"/><stop offset="1" stop-color="#282a34"/></linearGradient><radialGradient id="aura"><stop stop-color="#8fc8f7" stop-opacity=".32"/><stop offset="1" stop-color="#8fc8f7" stop-opacity="0"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="1.8"/></filter></defs>
+<circle cx="64" cy="57" r="57" fill="url(#aura)"/>
+
+<path d="M64 8 L110 29 L104 83 L64 116 L24 83 L18 29 Z" fill="#111722" fill-opacity=".78" stroke="url(#metal)" stroke-width="3"/>
+<path d="M64 15 L101 33 L96 78 L64 105 L32 78 L27 33 Z" fill="none" stroke="#d9efff" stroke-width="1" opacity=".4"/>
+<path d="M18 70 L34 43 L45 56 L60 20 L76 56 L88 39 L108 70 Z" fill="url(#metal)" stroke="#d9efff" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M60 20 L53 39 L65 39" fill="none" stroke="#d9efff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M38 88 L90 88" stroke="url(#metal)" stroke-width="2.5"/><circle cx="64" cy="97" r="3" fill="#d9efff"/>
+</svg>
