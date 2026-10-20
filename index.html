@@ -88,32 +88,6 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 .launchpad-footnote{margin:6px 0 0;text-align:center;font-size:9px;line-height:1.4;color:#b6a786}
 @media(max-width:620px){#launchpadModal .launchpad-card{margin:auto}.launch-options{grid-template-columns:1fr}.launch-option{min-height:0;display:grid;grid-template-columns:40px 1fr;column-gap:10px;text-align:left;align-items:center}.launch-option-icon{grid-row:1/4}.launch-option-title,.launch-option-sub{min-height:0;justify-content:flex-start}.launch-feature-list{grid-column:2}.launch-option-cta{grid-column:2;align-self:stretch;text-align:center}.launch-option-signature{grid-column:auto}.launch-rule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.launch-rule p{font-size:9px}}
 
-/* Mobile homepage restoration based on the user's original phone screenshot.
-   This block affects only the homepage at <=900px; desktop styles remain untouched. */
-@media(max-width:900px){
-  body{overflow-x:hidden}
-  nav{padding:18px 22px;min-height:76px;background:rgba(5,15,31,.96);backdrop-filter:blur(12px)}
-  nav>.logo{font-size:clamp(20px,5.4vw,27px);letter-spacing:2px;white-space:nowrap}
-  nav>.navl{display:none!important}
-  nav #xLogo{display:flex!important;width:42px!important;height:42px!important;flex:0 0 42px}
-  nav>div:last-child{gap:14px!important}
-  nav .hamburger{display:flex!important;width:26px;height:24px;justify-content:center}
-  nav .hamburger span{width:24px;height:2px}
-  .hero{height:100svh;min-height:100svh;background:#061329}
-  .hero picture{position:absolute;inset:0;width:100%;height:100%}
-  .hero picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center}
-  .hero-content{left:0;right:0;bottom:clamp(76px,10vh,130px);padding:0 12px}
-  .hero-buttons{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-top:0}
-  .hero-buttons .btn-play,.hero-buttons .btn-trade,.hero-buttons .btn-launch{width:min(72vw,340px);max-width:340px;padding:12px 16px;line-height:1.2;font-size:clamp(12px,3.6vw,16px);letter-spacing:2px}
-  .highlights{top:22%;left:50%;width:96%;flex-direction:column;flex-wrap:nowrap;align-items:center;gap:8px}
-  .highlights .hl{font-size:clamp(9px,2.7vw,12px);padding:9px 14px;letter-spacing:1.2px}
-}
-@media(max-width:520px){
-  nav{padding:16px 20px}
-  nav>.logo{font-size:clamp(18px,5vw,24px);letter-spacing:1.5px}
-  .hero-content{bottom:clamp(74px,9vh,116px)}
-  .hero-buttons .btn-play,.hero-buttons .btn-trade,.hero-buttons .btn-launch{width:min(72vw,340px);padding:11px 14px}
-}
 
 </style>
 </head>
