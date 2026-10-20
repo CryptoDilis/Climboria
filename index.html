@@ -266,6 +266,26 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
  background:#334155!important;color:#94a3b8!important;box-shadow:none;
 }
 #dexModal .swap-card p,#swapModal .swap-card p{color:#cbd5e1}
+
+/* Center copyright footer on every viewport; add a little breathing room on phones. */
+footer:first-of-type{
+ display:flex!important;
+ justify-content:center!important;
+ align-items:center!important;
+ width:100%;
+ box-sizing:border-box;
+ text-align:center!important;
+ padding:26px 16px!important;
+ margin:0!important;
+}
+footer:first-of-type>div{
+ width:100%;
+ text-align:center!important;
+ margin:0 auto!important;
+}
+@media(max-width:600px){
+ footer:first-of-type{padding:34px 16px 38px!important}
+}
 }
 </style>
 </head>
