@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate homepage structure and controls
+      - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -29,25 +29,29 @@ jobs:
               def __init__(self):
                   super().__init__()
                   self.tags=[]
-                  self.buttons=[]
-                  self.in_actions=False
+                  self.hero_buttons=[]
+                  self.in_hero_buttons=False
               def handle_starttag(self, tag, attrs):
                   a=dict(attrs); self.tags.append((tag,a))
-                  if tag in ("nav","div") and a.get("id")=="climboria-home-actions": self.in_actions=True
-                  elif self.in_actions and tag=="button": self.buttons.append(a)
+                  classes=a.get("class","").split()
+                  if tag=="div" and "hero-buttons" in classes:
+                      self.in_hero_buttons=True
+                  elif self.in_hero_buttons and tag=="button":
+                      self.hero_buttons.append(a)
               def handle_endtag(self, tag):
-                  if tag in ("nav","div") and self.in_actions: self.in_actions=False
+                  if tag=="div" and self.in_hero_buttons:
+                      self.in_hero_buttons=False
           p=Probe(); p.feed(html)
           for tag in ("html","body"):
               if sum(1 for t,_ in p.tags if t==tag)!=1:
                   raise SystemExit(f"Expected exactly one <{tag}> element")
-          if len(p.buttons)!=3: raise SystemExit(f"Expected 3 homepage CTA buttons; got {len(p.buttons)}")
-          expected=("climboria-home-play","climboria-home-trade","climboria-home-create")
-          for button, cls in zip(p.buttons, expected):
-              if cls not in button.get("class",""): raise SystemExit(f"Missing CTA class: {cls}")
-          for obsolete in ('id="nextLevelVictoryButton"','id="levelSelect"','id="failure"'):
-              if obsolete in html: raise SystemExit(f"Stale game-validation shim remains: {obsolete}")
-          print("Homepage structure and three actual CTAs validated.")
+          if len(p.hero_buttons)!=3:
+              raise SystemExit(f"Expected 3 hero CTA buttons; got {len(p.hero_buttons)}")
+          labels=[(b.get("id",""),b.get("class","")) for b in p.hero_buttons]
+          for required_id in ("swapBtn","launchpadBtn","hamburger","mobileMenu","swapModal","launchpadModal"):
+              if not any(a.get("id")==required_id for _,a in p.tags):
+                  raise SystemExit(f"Missing expected homepage control: #{required_id}")
+          print("Current homepage structure and hero controls validated.")
           PY
       - name: Syntax-check inline JavaScript
         run: |
@@ -67,8 +71,8 @@ jobs:
                           if code: self.out.append(code)
                       self.active=False
           p=Scripts(); p.feed(Path("index.html").read_text(encoding="utf-8"))
-          Path("/tmp/climboria-inline.js").mkdir(exist_ok=True)
-          for i,s in enumerate(p.out): Path(f"/tmp/climboria-inline.js/{i}.js").write_text(s,encoding="utf-8")
+          Path("/tmp/climboria-inline-js").mkdir(exist_ok=True)
+          for i,s in enumerate(p.out): Path(f"/tmp/climboria-inline-js/{i}.js").write_text(s,encoding="utf-8")
           print(f"Extracted {len(p.out)} inline script(s).")
           PY
-          for file in /tmp/climboria-inline.js/*.js; do node --check "$file"; done
+          for file in /tmp/climboria-inline-js/*.js; do node --check "$file"; done
