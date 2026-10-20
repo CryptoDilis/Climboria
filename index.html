@@ -496,7 +496,7 @@ footer:first-of-type>div{
       authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
     } catch { authStatus.textContent='Wallet connection failed.'; }
   });
-  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => alert('The playable game is not connected to this homepage yet.'));
+  document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
   let lastFocus = null;
