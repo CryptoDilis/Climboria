@@ -55,10 +55,10 @@ jobs:
               page.on('pageerror',e=>errors.push(e.message));
               const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               if(!response?.ok()) throw new Error('Homepage HTTP load failed');
-              const ctas=page.locator('#climboria-home-actions button');
-              if(await ctas.count()!==3) throw new Error('Expected 3 homepage CTAs');
+              const ctas=page.locator('.hero-buttons button');
+              if(await ctas.count()!==3) throw new Error('Expected 3 hero CTA buttons');
               const labels=(await ctas.allTextContents()).map(s=>s.trim());
-              if(!labels[0].includes('PLAY')||!labels[1].includes('SWAP')||!labels[2].includes('LAUNCHPAD')) throw new Error('Unexpected CTA labels: '+JSON.stringify(labels));
+              if(!labels[0].includes('PLAY')||!labels[1].includes('SWAP')||!labels[2].includes('LAUNCHPAD')) throw new Error('Unexpected hero CTA labels: '+JSON.stringify(labels));
               await page.locator('#swapBtn').click();
               if(!await page.locator('#swapModal').evaluate(el=>el.classList.contains('active'))) throw new Error('DEX modal did not open');
               await page.locator('#closeSwap').click();
@@ -69,11 +69,11 @@ jobs:
               await mobile.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               await mobile.locator('#hamburger').click();
               if(!await mobile.locator('#mobileMenu').evaluate(el=>el.classList.contains('active'))) throw new Error('Mobile menu did not open');
-              const metrics=await mobile.evaluate(()=>({vw:document.documentElement.clientWidth,sw:document.documentElement.scrollWidth,ctas:document.querySelectorAll('#climboria-home-actions button').length}));
+              const metrics=await mobile.evaluate(()=>({vw:document.documentElement.clientWidth,sw:document.documentElement.scrollWidth,ctas:document.querySelectorAll('.hero-buttons button').length}));
               if(metrics.sw>metrics.vw+2||metrics.ctas!==3) throw new Error('Mobile layout overflow/CTA check: '+JSON.stringify(metrics));
               await mobile.screenshot({path:'climboria-mobile-home.png',fullPage:true});
               if(errors.length) throw new Error('Browser errors: '+errors.join(' | '));
-              console.log('PASS: homepage, 3 CTAs, DEX modal, mobile menu, and mobile width.');
+              console.log('PASS: homepage, 3 hero CTAs, DEX modal, mobile menu, and mobile width.');
             } finally { await browser.close(); }
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
