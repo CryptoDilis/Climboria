@@ -144,6 +144,14 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
  .hero-buttons{gap:7px}
  .btn-play,.btn-trade,.btn-launch{width:min(86vw,310px);min-height:39px;padding:9px 12px}
 }
+
+/* Mobile polish: center the bottom status line and give PLAY a bold gold glow. */
+@media(max-width:600px){
+ .site-status{display:block!important;width:100%;box-sizing:border-box;text-align:center!important;line-height:1.8;letter-spacing:2.5px;padding:24px 22px}
+ .site-status a{display:inline;color:#ffd65a!important;white-space:nowrap}
+ .btn-play{background:linear-gradient(180deg,#fff4bf 0%,#ffd34d 35%,#f5a900 100%);color:#171006;border-color:#ffe58a;box-shadow:0 0 12px 4px rgba(255,196,36,.95),0 0 30px 12px rgba(255,174,0,.72),0 0 65px 24px rgba(255,190,25,.42),inset 0 1px 0 rgba(255,255,255,.95);text-shadow:0 1px 0 rgba(255,255,255,.3)}
+ .btn-play:active{box-shadow:0 0 18px 7px rgba(255,207,57,1),0 0 42px 18px rgba(255,174,0,.85),0 0 80px 30px rgba(255,190,25,.5)}
+}
 </style>
 </head>
 <body>
