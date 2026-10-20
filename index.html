@@ -230,6 +230,42 @@ footer{padding:50px 48px;border-top:1px solid rgba(255,255,255,.06);display:flex
 #launchpadModal .launch-choice-status{background:#111827;border-color:#475569;color:#cbd5e1}
 #launchpadModal .launchpad-footnote{border-color:#334155;background:#111827;color:#cbd5e1}
 #launchpadModal .launch-option[aria-pressed="true"]{outline-color:#fbbf24}
+
+/* Match the DEX/swap UI to the launchpad's premium slate + gold palette. */
+#dexModal,#swapModal{
+ background:rgba(10,14,26,.88)!important;
+ color:#cbd5e1;
+}
+#dexModal .swap-card,#swapModal .swap-card{
+ background:#111827!important;
+ border:1px solid #334155!important;
+ box-shadow:0 0 0 1px rgba(51,65,85,.25),0 18px 48px rgba(0,0,0,.45)!important;
+ color:#cbd5e1;
+}
+#dexModal .swap-header h3,#swapModal .swap-header h3{color:#fde68a}
+#dexModal .close-swap,#swapModal .close-swap{
+ background:#1e293b!important;border:1px solid #334155!important;color:#fff!important;
+}
+#dexModal .swap-box,#swapModal .swap-box{
+ background:#0a0e1a!important;border:1px solid #334155!important;color:#cbd5e1;
+}
+#dexModal .swap-box label,#swapModal .swap-box label{color:#cbd5e1}
+#dexModal .swap-input input,#swapModal .swap-input input{color:#f8fafc}
+#dexModal .token-select,#swapModal .token-select{
+ background:#1e293b!important;border:1px solid #475569!important;color:#e2e8f0!important;
+}
+#dexModal .swap-arrow,#swapModal .swap-arrow{
+ background:#1e293b!important;border:1px solid #475569!important;color:#cbd5e1;
+}
+#dexModal .swap-info,#swapModal .swap-info{color:#94a3b8}
+#dexModal .btn-swap,#swapModal .btn-swap{
+ background:linear-gradient(90deg,#fbbf24,#d97706)!important;color:#000!important;
+ box-shadow:0 0 12px rgba(251,191,36,.16);
+}
+#dexModal .btn-swap:disabled,#swapModal .btn-swap:disabled{
+ background:#334155!important;color:#94a3b8!important;box-shadow:none;
+}
+#dexModal .swap-card p,#swapModal .swap-card p{color:#cbd5e1}
 }
 </style>
 </head>
