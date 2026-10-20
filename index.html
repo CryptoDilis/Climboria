@@ -345,5 +345,67 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 
 <footer class="site-status">GAME DEVELOPMENT • SOLANA ECOSYSTEM PLANNED <span aria-hidden="true">•</span> <a href="./terms/" style="color:#fbbf24;text-decoration:underline;text-underline-offset:3px">TERMS OF USE</a></footer>
 <style>.site-status{padding:22px 16px;text-align:center;background:#070a14;color:rgba(255,255,255,.65);font-size:10px;letter-spacing:3px;border-top:1px solid rgba(251,191,36,.12)}@media(max-width:600px){footer{flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px 18px;text-align:center;line-height:1.5}footer>div{width:100%;text-align:center}.site-status{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:9px;letter-spacing:1.2px;line-height:1.6;padding:18px 12px;white-space:normal}}</style>
+
+<style id="launchpad-reference-overrides">
+/* Editable reference-style Launchpad: the layout is real DOM, not a flattened screenshot. */
+#launchpadModal{position:fixed;inset:0;z-index:250;background:
+ radial-gradient(ellipse at 50% 14%,rgba(28,91,145,.52),transparent 48%),
+ linear-gradient(180deg,#082344 0%,#102b48 42%,#080c16 100%);
+ padding:clamp(8px,2vw,28px);overflow:auto;align-items:flex-start}
+#launchpadModal:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.42;background:
+ linear-gradient(145deg,transparent 65%,#050914 65.2% 68%,transparent 68.2%),
+ linear-gradient(35deg,transparent 62%,#08101d 62.2% 66%,transparent 66.2%),
+ radial-gradient(ellipse at 7% 88%,#d18a38 0,transparent 18%),
+ radial-gradient(ellipse at 94% 84%,#e4a24d 0,transparent 20%)}
+#launchpadModal .launchpad-card{position:relative;z-index:1;width:min(100%,1560px);max-width:none!important;min-height:min(92vh,900px);margin:auto;padding:clamp(12px,2vw,30px);border:2px solid #b8893b;border-radius:0;background:linear-gradient(145deg,rgba(5,8,15,.96),rgba(10,12,18,.97));box-shadow:0 0 0 4px #17131a,0 0 0 6px #d5a24a,0 0 38px #f4b94155;overflow:visible}
+#launchpadModal .launchpad-card:before{inset:5px;border:1px solid #e4bc6755}
+#launchpadModal .swap-header{display:flex;justify-content:center;align-items:center;margin:0 auto 5px;min-height:clamp(42px,5.6vw,80px);max-width:95%;border:2px solid #a47b36;background:linear-gradient(90deg,#080a10,#17151a,#080a10);box-shadow:inset 0 0 0 3px #000}
+#launchpadModal .swap-header h3{padding:0;border:0;background:none;font:900 clamp(17px,2.5vw,38px) Cinzel,serif;letter-spacing:clamp(1px,.25vw,4px);color:#f5d38b;text-shadow:0 2px #3e260e,0 0 14px #eab54a55}
+#launchpadModal .close-swap{right:8px;top:8px;border-radius:0;background:#211a12}
+#launchpadModal .launch-subtitle{font:600 clamp(9px,1.2vw,16px) Cinzel,serif;letter-spacing:clamp(2px,.45vw,6px);color:#b9d5f2;margin:8px 0 clamp(12px,2vw,26px)}
+#launchpadModal .launch-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1.4vw,22px)}
+#launchpadModal .launch-option{min-height:clamp(260px,36vh,390px);display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:clamp(12px,1.8vw,26px);gap:clamp(7px,1vw,14px);border:2px solid #967039;border-radius:0;background:
+ radial-gradient(ellipse at 30% 0%,#34302b55,transparent 50%),
+ linear-gradient(145deg,#111217,#05070c 72%);box-shadow:inset 0 0 0 4px #000,inset 0 0 0 5px #9b743655,inset 0 0 24px #000}
+#launchpadModal .launch-option:before{inset:5px;border:1px solid #c6a05a55}
+#launchpadModal .launch-option-signature{border:3px solid #f0bd4d;box-shadow:inset 0 0 0 4px #080706,inset 0 0 24px #e7a72a22,0 0 20px #ffc34b55}
+#launchpadModal .launch-option-icon{align-self:flex-start;font-size:clamp(28px,3.3vw,48px);width:clamp(52px,6vw,84px);height:clamp(52px,6vw,84px);display:grid;place-items:center;border:2px solid #d6aa4e;clip-path:polygon(50% 0,94% 24%,94% 76%,50% 100%,6% 76%,6% 24%);background:#14120d;color:#f7ce69}
+#launchpadModal .launch-option-title{justify-content:flex-start;min-height:2.4em;font:900 clamp(13px,1.55vw,23px) Cinzel,serif;letter-spacing:.4px;color:#f4d078;line-height:1.2}
+#launchpadModal .launch-option-sub{min-height:3em;font-size:clamp(11px,1.2vw,17px);line-height:1.35;color:#c8d7e7}
+#launchpadModal .launch-feature-list{font-size:clamp(10px,1.1vw,15px);line-height:1.7;color:#d5d8dc;margin:4px 0 8px}
+#launchpadModal .launch-feature-list li:before{content:"✓";font-size:13px;color:#f7c94f;margin-right:9px}
+#launchpadModal .launch-option-cta{padding:clamp(8px,1vw,14px);font:900 clamp(12px,1.4vw,20px) Cinzel,serif;letter-spacing:1px;text-align:center;background:linear-gradient(#cfa45a,#8d5d25);border:2px solid #eac77f;color:#1b1004}
+#launchpadModal .launch-option-signature .launch-option-cta{background:linear-gradient(#ffe58b,#e9a92d);box-shadow:0 0 16px #ffc34b77}
+#launchpadModal .launch-rules{margin-top:clamp(12px,1.8vw,24px);padding:clamp(10px,1.4vw,20px);border:2px solid #9e793d;background:linear-gradient(145deg,#0b0d13f5,#05070bf5);box-shadow:inset 0 0 0 4px #000}
+#launchpadModal .launch-rules-heading{font:900 clamp(16px,2vw,30px) Cinzel,serif;letter-spacing:clamp(1px,.3vw,4px);margin-bottom:clamp(10px,1.2vw,18px);color:#f4d078}
+#launchpadModal .launch-rules-heading small{display:inline-block;margin-left:clamp(8px,2vw,28px);padding:6px 10px;border:1px solid #bd9141;color:#ffdb6d;font:800 clamp(8px,.9vw,13px) Cinzel,serif;letter-spacing:1px}
+#launchpadModal .launch-rule-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(6px,1vw,14px)}
+#launchpadModal .launch-rule{display:grid;grid-template-columns:clamp(42px,5vw,70px) 1fr;column-gap:clamp(8px,1vw,14px);align-content:start;text-align:left;min-height:clamp(125px,19vh,205px);padding:clamp(8px,1vw,14px);border:1px solid #a27b3f;background:linear-gradient(145deg,#101116,#05070b)}
+#launchpadModal .launch-rule-icon{grid-row:1/3;display:grid;place-items:center;width:clamp(40px,5vw,68px);height:clamp(40px,5vw,68px);font-size:clamp(22px,2.4vw,34px);border:2px solid #d3a647;clip-path:polygon(50% 0,94% 24%,94% 76%,50% 100%,6% 76%,6% 24%);color:#f8cf64;background:#17130b}
+#launchpadModal .launch-rule h4{font:900 clamp(9px,1.05vw,15px) Cinzel,serif;line-height:1.3;color:#f0ce73;margin:3px 0 7px}
+#launchpadModal .launch-rule p{font-size:clamp(9px,.95vw,14px);line-height:1.4;color:#c9d7e5}
+#launchpadModal .launch-choice-status{margin-top:10px;background:#090a0e;border:1px solid #c39945;color:#f9d977;padding:9px}
+#launchpadModal .launchpad-footnote{padding:10px;border:1px solid #b38a3d;background:#08090d;color:#f0cc6e;font-size:clamp(9px,.95vw,14px)}
+@media(max-width:700px){
+ #launchpadModal{padding:7px}
+ #launchpadModal .launchpad-card{min-height:0;padding:12px}
+ #launchpadModal .swap-header{min-height:48px;margin-top:18px}
+ #launchpadModal .swap-header h3{font-size:16px;letter-spacing:1px}
+ #launchpadModal .launch-options{grid-template-columns:1fr}
+ #launchpadModal .launch-option{min-height:0;display:grid;grid-template-columns:54px 1fr;gap:7px 12px;padding:12px;text-align:left}
+ #launchpadModal .launch-option-icon{grid-row:1/4;width:48px;height:48px;font-size:24px}
+ #launchpadModal .launch-option-title{font-size:14px;min-height:0}
+ #launchpadModal .launch-option-sub{font-size:11px;min-height:0}
+ #launchpadModal .launch-feature-list{grid-column:2;font-size:10px;margin:0}
+ #launchpadModal .launch-option-cta{grid-column:2;padding:8px;font-size:13px}
+ #launchpadModal .launch-rule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #launchpadModal .launch-rule{grid-template-columns:38px 1fr;min-height:0;padding:7px;gap:5px}
+ #launchpadModal .launch-rule-icon{width:36px;height:36px;font-size:19px}
+ #launchpadModal .launch-rule h4{font-size:9px}
+ #launchpadModal .launch-rule p{font-size:9px}
+ #launchpadModal .launch-rules-heading small{display:block;margin:6px auto 0;width:max-content}
+}
+</style>
+
 </body>
 </html>
