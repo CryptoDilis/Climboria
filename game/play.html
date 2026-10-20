@@ -35,7 +35,7 @@ function jump(){if(latched){latched=false;vel.y=4.6;document.getElementById('sta
 function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys.KeyS?1:0);x+=touchMove.x;z+=touchMove.y;const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}return{x,z}}
 function update(dt){if(paused)return;const m=moveVec(),speed=sprinting||keys.ShiftLeft?6.2:3.6;
 if(latched){player.position.x+=m.x*speed*.55*dt;player.position.y+=m.z*speed*.55*dt;player.position.z=-1.2;player.position.y=Math.max(.5,Math.min(20,player.position.y));}
-else{vel.y-=12*dt;player.position.x+=m.x*speed*dt;player.position.z+=m.z*speed*dt;player.position.y+=vel.y*dt;if(player.position.y<0){player.position.y=0;vel.y=0}player.position.x=Math.max(-5.5,Math.min(5.5,player.position.x));player.position.z=Math.max(-1,Math.min(5,player.position.z))}
+else{vel.y-=12*dt;player.position.x+=m.x*speed*dt;player.position.z-=m.z*speed*dt;player.position.y+=vel.y*dt;if(player.position.y<0){player.position.y=0;vel.y=0}player.position.x=Math.max(-5.5,Math.min(5.5,player.position.x));player.position.z=Math.max(-1,Math.min(5,player.position.z))}
 stamina=Math.max(0,Math.min(100,stamina+(latched?-10:7)*dt));document.getElementById('staminaBar').style.width=stamina+'%';document.getElementById('healthBar').style.width=health+'%';document.getElementById('altitude').textContent=Math.round(player.position.y*5)+' m';
 const target=new THREE.Vector3(player.position.x,player.position.y+1.1,player.position.z);const camPos=new THREE.Vector3(player.position.x+4,player.position.y+3.1,player.position.z+8);camera.position.lerp(camPos,1-Math.pow(.001,dt));camera.lookAt(target);
 }
