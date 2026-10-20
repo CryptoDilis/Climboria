@@ -16,7 +16,7 @@ scene.add(new THREE.HemisphereLight(0xd7eaff,0x453b31,2));
 const sun=new THREE.DirectionalLight(0xffe2b0,3.2);sun.position.set(-8,18,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
+const holds=[]; // climbable grips\nconst ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
 // Climbable crag wall, ledges and highlighted holds.
 const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-3.4);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
 for(let i=0;i<24;i++){const x=(Math.sin(i*2.31)*4.8),y=1+i*.82,z=-1.85+(Math.cos(i*1.7)*.3);const hold=new THREE.Mesh(new THREE.DodecahedronGeometry(.23+(i%3)*.04,0),gripMat);hold.position.set(x,y,z);hold.castShadow=true;scene.add(hold);holds.push(hold)}
