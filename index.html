@@ -444,10 +444,10 @@ linear-gradient(315deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bo
 
 <style id="launchpad-art-hotspot-css">
 /* Exact supplied reference artwork; real transparent HTML controls sit on top. */
-#launchpadModal.launchpad-art-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(2,5,12,.92);overflow:auto}
+#launchpadModal.launchpad-art-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:0;background:rgba(2,5,12,.92);overflow:hidden}
 #launchpadModal.launchpad-art-modal.active{display:flex}
-#launchpadModal .launchpad-art-frame{position:relative;width:min(96vw,1536px);margin:auto;line-height:0}
-#launchpadModal .launchpad-art-stage{position:relative;width:100%;aspect-ratio:16/9;line-height:normal}
+#launchpadModal .launchpad-art-frame{position:relative;width:min(100vw,calc(100svh * 16 / 9));max-width:100vw;max-height:100svh;margin:auto;line-height:0}
+#launchpadModal .launchpad-art-stage{position:relative;width:100%;aspect-ratio:16/9;max-height:100svh;line-height:normal}
 #launchpadModal .launchpad-reference-art{display:block;width:100%;height:100%;object-fit:contain;border:0;box-shadow:0 0 28px #e7ae4533}
 #launchpadModal .launch-art-hotspot{position:absolute;z-index:2;display:block;margin:0;padding:0;border:0;border-radius:2px;background:transparent;cursor:pointer;line-height:normal}
 #launchpadModal .launch-art-hotspot:focus-visible{outline:3px solid #fff2a6;outline-offset:2px;background:#ffd45b22}
