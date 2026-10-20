@@ -212,32 +212,23 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 </div>
 </div>
 
-<div class="swap-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
-<div class="swap-card launchpad-card">
-<div class="swap-header"><h3 id="launchpadTitle">CLIMBORIA SIGNATURE LAUNCHPAD</h3><button class="close-swap" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button></div>
-<div class="launch-subtitle">TURN IDEAS INTO REAL PROJECTS</div>
-<div class="launch-options">
-<button type="button" class="launch-option" data-launch-choice="normal">
-<span class="launch-option-icon" aria-hidden="true">🚀</span><span class="launch-option-title">NORMAL LAUNCHPAD</span><span class="launch-option-sub">Simple and fast token launch for everyone.</span>
-<ul class="launch-feature-list"><li>Easy to use</li><li>Standard token launch</li><li>Open to all creators</li></ul><span class="launch-option-cta">SELECT</span></button>
-<button type="button" class="launch-option" data-launch-choice="developer">
-<span class="launch-option-icon" aria-hidden="true">〈/〉</span><span class="launch-option-title">DEVELOPER OPTIONS</span><span class="launch-option-sub">Advanced settings for developers and experienced creators.</span>
-<ul class="launch-feature-list"><li>Custom configuration</li><li>More control</li><li>For advanced users</li></ul><span class="launch-option-cta">SELECT</span></button>
-<button type="button" class="launch-option launch-option-signature" data-launch-choice="signature">
-<span class="launch-option-icon" aria-hidden="true">⛰</span><span class="launch-option-title">CLIMBORIA SIGNATURE</span><span class="launch-option-sub">Built-in safeguards for a healthier launch.</span>
-<ul class="launch-feature-list"><li>Transparency by design</li><li>Anti-dump safeguards</li><li>A different approach to token launches</li></ul><span class="launch-option-cta">SELECT</span></button>
-</div>
-<section class="launch-rules" aria-label="Signature launch rules">
-<h4 class="launch-rules-heading">SIGNATURE LAUNCH RULES <button type="button" id="signatureRulesPreview" aria-expanded="false">PREVIEW · IN DEVELOPMENT</button></h4>
-<div class="launch-rule-grid">
-<div class="launch-rule"><div class="launch-rule-icon">🔒</div><h4>24H CREATOR LOCK</h4><p>Creator allocation is locked for 24 hours after launch.</p></div>
-<div class="launch-rule"><div class="launch-rule-icon">▥</div><h4>HOURLY SELL LIMITS</h4><p>Limits how much eligible tokens can be sold within a given period.</p></div>
-<div class="launch-rule"><div class="launch-rule-icon">⇄</div><h4>TRANSFER-AWARE RULES</h4><p>Selling allowances are designed to follow restricted tokens, instead of simply resetting when tokens move between wallets.</p></div>
-<div class="launch-rule"><div class="launch-rule-icon">▤</div><h4>RULES DISCLOSED UPFRONT</h4><p>Creators see the restrictions before launching, and buyers are informed before purchasing.</p></div>
-</div><div id="signatureRulesDetails" hidden class="launch-rules-details" role="region" aria-live="polite">Preview only: Signature restrictions are still being designed. Final rules, parameters, enforcement, and creator/buyer disclosures will be published before launch.</div></section>
-<div id="launchChoiceStatus" class="launch-choice-status" role="status" aria-live="polite">Select a launchpad option to see its status: TBA.</div>
-<p class="launchpad-footnote">Climboria Signature is currently in development. Exact parameters, limits, and implementation details will be finalized before official release.</p>
-</div>
+<div class="swap-modal launchpad-art-modal" id="launchpadModal" role="dialog" aria-modal="true" aria-labelledby="launchpadTitle">
+  <div class="launchpad-art-frame">
+    <div class="launchpad-art-stage">
+      <img class="launchpad-reference-art" src="https://github.com/user-attachments/assets/864bca16-efb2-4edd-b4ce-f57a6c3ad3c4" alt="Climboria Signature Launchpad reference artwork" />
+      <button type="button" class="launch-art-hotspot launch-art-normal" data-launch-choice="normal" aria-label="Select Normal Launchpad"></button>
+      <button type="button" class="launch-art-hotspot launch-art-developer" data-launch-choice="developer" aria-label="Select Developer Options"></button>
+      <button type="button" class="launch-art-hotspot launch-art-signature" data-launch-choice="signature" aria-label="Select Climboria Signature"></button>
+      <button type="button" class="launch-art-hotspot launch-art-preview" id="signatureRulesPreview" aria-expanded="false" aria-label="Preview Signature Launch Rules"></button>
+      <button type="button" class="launch-art-close" id="closeLaunchpad" aria-label="Close Launchpad preview">×</button>
+      <div id="signatureRulesDetails" class="launch-art-details" role="region" aria-live="polite" hidden>
+        <button type="button" class="launch-art-details-close" id="signatureRulesDetailsClose" aria-label="Close rules preview">×</button>
+        <strong>SIGNATURE RULES — PREVIEW</strong>
+        <p>Climboria Signature is in development. Final parameters, limits, enforcement, and creator/buyer disclosures will be finalized before official release.</p>
+      </div>
+      <div id="launchChoiceStatus" class="launch-art-status" role="status" aria-live="polite" hidden></div>
+    </div>
+  </div>
 </div>
 
 <footer><div>© 2026 Climboria. All rights reserved.</div></footer>
@@ -337,7 +328,16 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
     const open=rulesPreview.getAttribute('aria-expanded')!=='true';
     rulesPreview.setAttribute('aria-expanded',String(open));
     rulesDetails.hidden=!open;
-    rulesPreview.textContent=open?'HIDE PREVIEW':'PREVIEW · IN DEVELOPMENT';
+  });
+  document.getElementById('signatureRulesDetailsClose').addEventListener('click',()=>{
+    rulesDetails.hidden=true; rulesPreview.setAttribute('aria-expanded','false');
+  });
+  document.querySelectorAll('[data-launch-choice]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const status=document.getElementById('launchChoiceStatus');
+      status.hidden=false;
+      status.textContent=launchChoiceCopy[button.dataset.launchChoice]||'Availability: TBA.';
+    });
   });
   [swapModal,launchModal].forEach(modal => {
     modal.addEventListener('click', e => { if(e.target===modal) closeModal(modal); });
@@ -441,5 +441,35 @@ linear-gradient(315deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bo
 
 </style>
 
+
+<style id="launchpad-art-hotspot-css">
+/* Exact supplied reference artwork; real transparent HTML controls sit on top. */
+#launchpadModal.launchpad-art-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(2,5,12,.92);overflow:auto}
+#launchpadModal.launchpad-art-modal.active{display:flex}
+#launchpadModal .launchpad-art-frame{position:relative;width:min(96vw,1536px);margin:auto;line-height:0}
+#launchpadModal .launchpad-art-stage{position:relative;width:100%;aspect-ratio:16/9;line-height:normal}
+#launchpadModal .launchpad-reference-art{display:block;width:100%;height:100%;object-fit:contain;border:0;box-shadow:0 0 28px #e7ae4533}
+#launchpadModal .launch-art-hotspot{position:absolute;z-index:2;display:block;margin:0;padding:0;border:0;border-radius:2px;background:transparent;cursor:pointer;line-height:normal}
+#launchpadModal .launch-art-hotspot:focus-visible{outline:3px solid #fff2a6;outline-offset:2px;background:#ffd45b22}
+#launchpadModal .launch-art-normal{left:12.7%;top:52.2%;width:19.2%;height:6.3%}
+#launchpadModal .launch-art-developer{left:41%;top:52.2%;width:18.3%;height:6.3%}
+#launchpadModal .launch-art-signature{left:67.3%;top:52.2%;width:20.8%;height:6.3%}
+#launchpadModal .launch-art-preview{left:74.9%;top:64.4%;width:19.2%;height:4.2%}
+#launchpadModal .launch-art-close{position:absolute;z-index:5;right:1.2%;top:1.5%;width:34px;height:34px;border:1px solid #e6b64f;background:#080b12dd;color:#ffda75;font-size:24px;line-height:1;cursor:pointer}
+#launchpadModal .launch-art-close:focus-visible,#launchpadModal .launch-art-details-close:focus-visible{outline:2px solid white;outline-offset:2px}
+#launchpadModal .launch-art-status{position:absolute;z-index:4;left:50%;bottom:2.3%;transform:translateX(-50%);width:max-content;max-width:86%;padding:9px 16px;border:1px solid #f4c75c;background:#070a12f2;color:#ffe08a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;box-shadow:0 0 16px #f5bd4b55}
+#launchpadModal .launch-art-details{position:absolute;z-index:4;right:2.5%;bottom:8.5%;width:min(47%,560px);padding:18px 22px;border:2px solid #f4c75c;background:linear-gradient(145deg,#080b13f5,#16121af5);color:#dce8f7;box-shadow:0 0 24px #f0b94b66;font:14px/1.5 system-ui,sans-serif}
+#launchpadModal .launch-art-details strong{display:block;margin-bottom:7px;color:#ffda75;font-family:Georgia,serif;letter-spacing:1px}
+#launchpadModal .launch-art-details p{margin:0}
+#launchpadModal .launch-art-details-close{position:absolute;right:5px;top:4px;border:0;background:transparent;color:#ffda75;font-size:20px;cursor:pointer}
+@media(max-width:650px){
+ #launchpadModal.launchpad-art-modal{padding:5px}
+ #launchpadModal .launchpad-art-frame{width:100%;min-width:0}
+ #launchpadModal .launch-art-close{width:24px;height:24px;font-size:18px}
+ #launchpadModal .launch-art-status{font-size:9px;padding:5px 7px;max-width:90%}
+ #launchpadModal .launch-art-details{right:2%;bottom:8%;width:70%;padding:10px;font-size:10px}
+ #launchpadModal .launch-art-details strong{font-size:10px}
+}
+</style>
 </body>
 </html>
