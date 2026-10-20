@@ -228,13 +228,13 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
 <ul class="launch-feature-list"><li>Transparency by design</li><li>Anti-dump safeguards</li><li>A different approach to token launches</li></ul><span class="launch-option-cta">SELECT</span></button>
 </div>
 <section class="launch-rules" aria-label="Signature launch rules">
-<h4 class="launch-rules-heading">SIGNATURE LAUNCH RULES <small>PREVIEW · IN DEVELOPMENT</small></h4>
+<h4 class="launch-rules-heading">SIGNATURE LAUNCH RULES <button type="button" id="signatureRulesPreview" aria-expanded="false">PREVIEW · IN DEVELOPMENT</button></h4>
 <div class="launch-rule-grid">
 <div class="launch-rule"><div class="launch-rule-icon">🔒</div><h4>24H CREATOR LOCK</h4><p>Creator allocation is locked for 24 hours after launch.</p></div>
 <div class="launch-rule"><div class="launch-rule-icon">▥</div><h4>HOURLY SELL LIMITS</h4><p>Limits how much eligible tokens can be sold within a given period.</p></div>
 <div class="launch-rule"><div class="launch-rule-icon">⇄</div><h4>TRANSFER-AWARE RULES</h4><p>Selling allowances are designed to follow restricted tokens, instead of simply resetting when tokens move between wallets.</p></div>
 <div class="launch-rule"><div class="launch-rule-icon">▤</div><h4>RULES DISCLOSED UPFRONT</h4><p>Creators see the restrictions before launching, and buyers are informed before purchasing.</p></div>
-</div></section>
+</div><div id="signatureRulesDetails" hidden class="launch-rules-details" role="region" aria-live="polite">Preview only: Signature restrictions are still being designed. Final rules, parameters, enforcement, and creator/buyer disclosures will be published before launch.</div></section>
 <div id="launchChoiceStatus" class="launch-choice-status" role="status" aria-live="polite">Select a launchpad option to see its status: TBA.</div>
 <p class="launchpad-footnote">Climboria Signature is currently in development. Exact parameters, limits, and implementation details will be finalized before official release.</p>
 </div>
@@ -324,10 +324,20 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
     signature: 'Climboria Signature — TBA. Rules and safeguards will be disclosed before this option opens.'
   };
   document.querySelectorAll('[data-launch-choice]').forEach(button => {
+    button.setAttribute('aria-pressed','false');
     button.addEventListener('click', () => {
+      document.querySelectorAll('[data-launch-choice]').forEach(card => card.setAttribute('aria-pressed',String(card===button)));
       document.getElementById('launchChoiceStatus').textContent =
         launchChoiceCopy[button.dataset.launchChoice] || 'Availability: TBA.';
     });
+  });
+  const rulesPreview=document.getElementById('signatureRulesPreview');
+  const rulesDetails=document.getElementById('signatureRulesDetails');
+  rulesPreview.addEventListener('click',()=>{
+    const open=rulesPreview.getAttribute('aria-expanded')!=='true';
+    rulesPreview.setAttribute('aria-expanded',String(open));
+    rulesDetails.hidden=!open;
+    rulesPreview.textContent=open?'HIDE PREVIEW':'PREVIEW · IN DEVELOPMENT';
   });
   [swapModal,launchModal].forEach(modal => {
     modal.addEventListener('click', e => { if(e.target===modal) closeModal(modal); });
@@ -405,6 +415,30 @@ linear-gradient(145deg,#080a12 0%,#11101a 50%,#070911 100%);box-shadow:0 0 0 4px
  #launchpadModal .launch-rule p{font-size:9px}
  #launchpadModal .launch-rules-heading small{display:block;margin:6px auto 0;width:max-content}
 }
+
+/* Final interaction polish + reference-like frame ornament, all editable CSS/DOM. */
+#launchpadModal .launch-rules-heading{display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,30px);flex-wrap:wrap}
+#launchpadModal .launch-rules-heading button{cursor:pointer;padding:7px 12px;border:1px solid #d4a64b;background:#090a0d;color:#ffdb6d;font:800 clamp(8px,.9vw,13px) Cinzel,serif;letter-spacing:1px}
+#launchpadModal .launch-rules-heading button:hover,#launchpadModal .launch-rules-heading button:focus-visible{outline:2px solid #ffe08a;outline-offset:2px;background:#2b1c08}
+#launchpadModal .launch-rules-details{margin-top:10px;padding:10px 12px;border:1px solid #c69b47;background:#080a10;color:#e9d49e;font-size:clamp(10px,1vw,14px);line-height:1.5}
+#launchpadModal .launch-option[aria-pressed="true"]{outline:2px solid #ffdb70;outline-offset:2px;filter:brightness(1.12)}
+#launchpadModal .launch-option[aria-pressed="true"] .launch-option-cta:after{content:" ✓"}
+#launchpadModal .launch-choice-status{font-size:clamp(10px,1vw,14px);line-height:1.45}
+#launchpadModal .launch-option{cursor:pointer}
+#launchpadModal .launch-option-cta{display:block}
+#launchpadModal .launchpad-card{max-height:calc(100svh - 28px);overflow:auto;scrollbar-color:#9a7436 #090a0d}
+#launchpadModal .launchpad-card:after{content:"";position:absolute;inset:0;pointer-events:none;background:
+linear-gradient(135deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) top left/28px 28px no-repeat,
+linear-gradient(225deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) top right/28px 28px no-repeat,
+linear-gradient(45deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bottom left/28px 28px no-repeat,
+linear-gradient(315deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bottom right/28px 28px no-repeat}
+@media(max-width:700px){
+ #launchpadModal .launchpad-card{max-height:calc(100svh - 14px)}
+ #launchpadModal .launch-rules-heading{font-size:15px}
+ #launchpadModal .launch-rules-heading button{font-size:9px}
+ #launchpadModal .launch-choice-status{font-size:11px}
+}
+
 </style>
 
 </body>
