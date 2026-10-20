@@ -481,25 +481,5 @@ linear-gradient(315deg,transparent 0 10px,#d6a64a 10px 12px,transparent 12px) bo
  #launchpadModal .launch-art-details strong{font-size:10px}
 }
 </style>
-
-/* Mobile homepage image/layout is isolated from desktop and from Launchpad modal CSS. */
-@media(max-width:900px){
-  .hero{height:100svh;min-height:100svh;background:#070a14}
-  .hero picture,.hero picture img,.hero>img{
-    object-fit:contain;
-    object-position:center center;
-    background:#070a14;
-  }
-  .hero-content{left:0;right:0;width:100%;padding-inline:12px}
-  .hero-buttons{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px}
-  .btn-play,.btn-trade,.btn-launch{width:auto;min-width:0;max-width:31%;padding:9px 10px;font-size:clamp(9px,2.5vw,12px);white-space:nowrap}
-  .highlights{max-width:96%;align-items:center}
-}
-@media(max-width:520px){
-  .hero-content{bottom:max(22px,env(safe-area-inset-bottom))}
-  .hero-buttons{gap:6px}
-  .btn-play,.btn-trade,.btn-launch{max-width:32%;padding:8px 6px;font-size:9px;letter-spacing:.5px}
-}
-
 </body>
 </html>
