@@ -14,10 +14,15 @@ h1{text-align:center;font:900 clamp(28px,4vw,48px)/1.1 Cinzel,serif;margin:14px 
 .card{height:220px;min-width:0;position:relative;display:flex;flex-direction:column;text-align:left;padding:20px;border:1px solid var(--border);border-radius:20px;background:#151b27;color:#f8fafc;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}
 .card.active{border-color:var(--gold);box-shadow:0 0 18px #D4AF3722}.card.active:hover{transform:translateY(-4px);box-shadow:0 0 28px #D4AF3750,0 12px 28px #0007}
 .card.locked{background:rgba(15,20,31,.4);cursor:not-allowed}.card.locked:hover{transform:none;box-shadow:none}
-.card.jarrell{border-color:#57242b;background:linear-gradient(145deg,#17151d,#1b1219 58%,#160f16);box-shadow:inset 0 0 24px #8b1e2b18,0 0 12px #7f1d1d22}
-.card.jarrell .expedition,.card.jarrell h2{color:#e6b0b2}.card.jarrell .crest{stroke:#a83b45;filter:drop-shadow(0 0 3px #a32636aa)}.card.jarrell .status{border-color:#79313a;color:#d28a90;background:#2b111833}.card.jarrell .difficulty{color:#b98b91}
+.card.jarrell{grid-column:span 2;border:2px solid #8e303c;background:linear-gradient(145deg,#17151d,#1b1219 58%,#160f16);box-shadow:inset 0 0 30px #8b1e2b30,0 0 20px #a3263644,0 0 4px #c04a58aa}
+.card.jarrell .expedition,.card.jarrell h2{color:#e6b0b2}
+.card.jarrell .expedition{font-size:12px;letter-spacing:1.5px}
+.card.jarrell h2{font-size:clamp(23px,3vw,30px);line-height:1.12;min-height:0;margin-top:18px;max-width:calc(100% - 52px)}
+.card.jarrell .desc{font-size:16px;line-height:1.45;color:#c5a7ab;max-width:95%}
+.card.jarrell .difficulty{font-size:12px;letter-spacing:1px}
+.card.jarrell .status{font-size:11px;padding:9px 13px;border-width:1.5px}.card.jarrell .crest{stroke:#a83b45;filter:drop-shadow(0 0 3px #a32636aa)}.card.jarrell .status{border-color:#79313a;color:#d28a90;background:#2b111833}.card.jarrell .difficulty{color:#b98b91}
 .card.jarrell::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 90% 8%,#8b1e2b20,transparent 52%)}
-.card.jarrell.active{border-color:#9f3540;box-shadow:0 0 18px #8b1e2b40,inset 0 0 26px #8b1e2b20}.card.jarrell.active:hover{box-shadow:0 0 24px #a3263655,0 12px 28px #0008,inset 0 0 26px #8b1e2b25}
+.card.jarrell.active{border-color:#b34350;box-shadow:0 0 25px #8b1e2b66,0 0 5px #d65b69aa,inset 0 0 32px #8b1e2b30}.card.jarrell.active:hover{box-shadow:0 0 24px #a3263655,0 12px 28px #0008,inset 0 0 26px #8b1e2b25}
 .expedition{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--gold)}
 .crest{position:absolute;right:20px;top:20px;width:32px;height:32px;fill:none;stroke:var(--gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.locked .crest{stroke:var(--gray)}
 h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
@@ -26,7 +31,7 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 .status{align-self:flex-start;margin-top:auto;max-width:100%;border:1px solid var(--gold);border-radius:999px;padding:7px 11px;color:var(--gold);font-size:10px;font-weight:800;letter-spacing:.8px;background:transparent;white-space:nowrap}
 .locked .status{border-color:#4B5563;color:#9CA3AF}
 @media(min-width:768px) and (max-width:1024px){main{padding-inline:24px}.grid{gap:20px}.card{height:220px}}
-@media(max-width:767px){header{height:64px;padding:0 14px}.brand{font-size:16px;letter-spacing:1.5px}.back{font-size:10px;padding:9px 10px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{height:180px;padding:16px;border-radius:18px}.crest{right:14px;top:14px;width:32px;height:32px}h2{font-size:clamp(15px,3.8vw,18px);margin:18px 34px 7px 0}.expedition{font-size:9px;letter-spacing:.8px}.status{font-size:9px;padding:6px 8px}.difficulty{font-size:9px;letter-spacing:0}}
+@media(max-width:767px){.card.jarrell{grid-column:span 2;height:220px;padding:20px}.card.jarrell .expedition{font-size:12px}.card.jarrell h2{font-size:25px;margin-top:16px}.card.jarrell .desc{font-size:16px}.card.jarrell .status{font-size:11px;padding:9px 13px}header{height:64px;padding:0 14px}.brand{font-size:16px;letter-spacing:1.5px}.back{font-size:10px;padding:9px 10px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{height:180px;padding:16px;border-radius:18px}.crest{right:14px;top:14px;width:32px;height:32px}h2{font-size:clamp(15px,3.8vw,18px);margin:18px 34px 7px 0}.expedition{font-size:9px;letter-spacing:.8px}.status{font-size:9px;padding:6px 8px}.difficulty{font-size:9px;letter-spacing:0}}
 @media(min-width:1441px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.card{height:264px}h2{font-size:21px}.desc{font-size:16px}.expedition{font-size:13px}.status{font-size:11px}}
 </style></head><body>
 <header><a class="brand" href="../">CLIMBORIA</a><a class="back" href="../">← BACK TO HOME</a></header>
