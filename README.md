@@ -57,3 +57,14 @@ This is a design reference, not a statement that these features are live. Verify
 
 - [Read Climboria Terms of Use](./terms.html) (preliminary, pre-launch draft; not legal-reviewed).
 - The terms page does not imply planned game, token, swap, marketplace, or financial features are live or legally authorized.
+
+## Player baseline stats and PvP damage (newly agreed)
+
+- **Default player Health: 500 HP.**
+- **Default player Stamina: 100.**
+- **Default player Strength: 3.**
+- **PvP direct-damage rule:** on a successful hit, damage dealt equals the attacker's current Strength. Subtract that amount from the target's Health. The defender's Strength does not add to or reduce this damage.
+- Example: an attacker with Strength 3 deals 3 HP damage per successful hit to a target with 500 HP; it takes 167 successful hits to reduce 500 HP to zero (the final hit may deal only the remaining 2 HP).
+- Strength upgrades increase damage one-for-one (e.g., Strength 5 deals 5 HP per successful hit).
+- Stamina consumption per attack, attack cadence, recovery, and how Health/Stamina behave on death or between expeditions are **not decided yet**; do not assume values until agreed and recorded here.
+
