@@ -16,19 +16,26 @@
 <section class="profile-overlay" id="profileOverlay" role="dialog" aria-modal="true" aria-label="Player inventory"><div class="profile-shell"><div class="profile-head"><div><small>CLIMBER PROFILE · EXPEDITION LOADOUT</small><h2 id="profileName">YOUR CLIMBER</h2></div><button class="profile-close" id="profileClose" aria-label="Close inventory">×</button></div><div class="profile-body"><section class="profile-card"><h3>CORE ATTRIBUTES</h3><div class="profile-stats"><div class="profile-stat"><label>HEALTH</label><strong id="profileHealth">100</strong></div><div class="profile-stat"><label>STAMINA</label><strong id="profileStamina">100</strong></div><div class="profile-stat"><label>STRENGTH</label><strong id="profileStrength">10</strong></div></div><h3 style="margin-top:16px">EXPEDITION BAG · 50 SLOTS</h3><div class="inv-grid" id="bagSlots"></div></section><section class="profile-card"><h3>EQUIPMENT SLOTS</h3><div class="gear-list"><div class="gear-row"><span>🛡 ARMOR</span><b>Empty</b></div><div class="gear-row"><span>🎭 SKIN</span><b>Default</b></div><div class="gear-row"><span>📿 ACCESSORY</span><b>Empty</b></div><div class="gear-row"><span>⚔ WEAPON</span><b>Basic tool</b></div><div class="gear-row"><span>＋ OTHER GEAR</span><b>Empty</b></div></div><h3 style="margin-top:16px">ITEMS</h3><div class="inv-grid" id="storageSlots"></div></section></div><div class="profile-foot">Prototype inventory display. Storage is camp-only; expedition bag is carried into the climb. Item equip effects and persistent multiplayer inventory are not connected yet.</div></div></section><div class="toast" id="toast"><b id="toastTitle">PAUSED</b><span id="toastText">Take a breather.</span><br><button class="btn" id="resume">RESUME</button></div>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
-const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x8da8bc);scene.fog=new THREE.Fog(0x8da8bc,24,95);
+const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x8da8bc);scene.fog=new THREE.Fog(0x8da8bc,55,180);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,220);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd7eaff,0x453b31,2));
 const sun=new THREE.DirectionalLight(0xffe2b0,3.2);sun.position.set(-8,18,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
-const holds=[]; // climbable grips\nconst ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
-// Climbable crag wall, ledges and highlighted holds.
-const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-3.4);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
-for(let i=0;i<24;i++){const x=(Math.sin(i*2.31)*4.8),y=1+i*.82,z=-1.85+(Math.cos(i*1.7)*.3);const hold=new THREE.Mesh(new THREE.DodecahedronGeometry(.23+(i%3)*.04,0),gripMat);hold.position.set(x,y,z);hold.castShadow=true;scene.add(hold);holds.push(hold)}
-function addRidge(x,z,s,h){const m=new THREE.Mesh(new THREE.ConeGeometry(s,h,5),darkRock);m.position.set(x,h/2-0.2,z);m.rotation.y=.3;m.castShadow=true;scene.add(m)}
-for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
+const holds=[]; // climbable grips
+// Procedural alpine massif: broad sloped terrain, fractured cliff, snow crown and distant peaks.
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),mat(0x26382f));ground.rotation.x=-Math.PI/2;ground.position.y=-.35;ground.receiveShadow=true;scene.add(ground);
+function mountainHeight(x,z){const dx=x/31,dz=(z+39)/48,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -1.5;return Math.max(-.5,Math.pow(Math.max(0,1-r),.72)*34+(Math.sin(x*.48+z*.19)+Math.sin(z*.34-x*.27))*.95)}
+const mountainGeo=new THREE.PlaneGeometry(76,112,100,130);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position;for(let i=0;i<mp.count;i++)mp.setY(i,mountainHeight(mp.getX(i),mp.getZ(i)));mountainGeo.computeVertexNormals();
+const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({color:0x68705a,roughness:1,flatShading:true}));mountain.position.z=-10;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+// Steep climbable face in the foreground, with uneven fractured rock geometry.
+const wallGeo=new THREE.PlaneGeometry(18,34,28,42),wp=wallGeo.attributes.position;for(let i=0;i<wp.count;i++){const x=wp.getX(i),y=wp.getY(i);wp.setZ(i,(Math.sin(x*1.3+y*.7)+Math.sin(y*1.8-x*.6))*.42)}wallGeo.computeVertexNormals();
+const wall=new THREE.Mesh(wallGeo,new THREE.MeshStandardMaterial({color:0x59636a,roughness:1,flatShading:true,side:THREE.DoubleSide}));wall.position.set(0,17,-3.7);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
+const snow=new THREE.Mesh(new THREE.ConeGeometry(8,9,7),mat(0xe4edf0));snow.position.set(0,34,-43);snow.rotation.y=.25;snow.castShadow=true;scene.add(snow);
+function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,6,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=Math.random();m.castShadow=true;scene.add(m)}
+for(let i=0;i<18;i++)addRidge((Math.random()-.5)*72,-32-Math.random()*58,5+Math.random()*9,13+Math.random()*24,i%3?0x53616a:0x77817c);
+for(let i=0;i<64;i++){const row=Math.floor(i/8),col=i%8,x=(col-3.5)*1.9+(row%2?-.65:.65),y=1+row*4.1+Math.sin(col*1.7+row)*.65,z=-2.55+Math.cos(i*1.3)*.18;const hold=new THREE.Mesh(new THREE.DodecahedronGeometry(.2+(i%3)*.035,0),gripMat);hold.position.set(x,y,z);hold.castShadow=true;scene.add(hold);holds.push(hold)}
 const player=new THREE.Group();scene.add(player);
 const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.95,4,8),mat(0xc98b50));body.position.y=1.05;body.castShadow=true;player.add(body);
 const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),mat(0xd7a477));head.position.y=1.82;player.add(head);
