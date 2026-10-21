@@ -68,3 +68,13 @@ This is a design reference, not a statement that these features are live. Verify
 - Strength upgrades increase damage one-for-one (e.g., Strength 5 deals 5 HP per successful hit).
 - Stamina consumption per attack, attack cadence, recovery, and how Health/Stamina behave on death or between expeditions are **not decided yet**; do not assume values until agreed and recorded here.
 
+## Gameplay HUD, player profile, inventory, and map (newly agreed)
+
+- At gameplay start, show the player's **name in the upper-left**.
+- The player's **emblem/avatar/photo is clickable**. Clicking it opens the player's inventory/profile panel.
+- The inventory/profile panel should include equipment slots or sections for **armor, skins, accessories, weapons, and other gear/items**.
+- Under the player's name in the upper-left HUD, show **Health, Stamina, and Strength**, including each stat's current value and total/maximum value where applicable. Health and Stamina should have visible bars; Strength should be clearly displayed as a stat (not an energy bar).
+- Show the **map in the upper-right** during normal mountain levels.
+- **Jarrell's Peak has no map**; hide/omit the map HUD there.
+- These are agreed design requirements; the HUD/profile/inventory behavior is not claimed to be implemented yet. Layout, responsive behavior, and actual inventory data integration still need implementation and testing.
+
