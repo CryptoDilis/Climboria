@@ -24,6 +24,8 @@ const sun=new THREE.DirectionalLight(0xffe2b0,3.2);sun.position.set(-8,18,12);su
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
 const holds=[]; // climbable grips
+const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
+if(currentLevel==='01'){
 // Procedural alpine massif: broad sloped terrain, fractured cliff, snow crown and distant peaks.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),mat(0x26382f));ground.rotation.x=-Math.PI/2;ground.position.y=-.35;ground.receiveShadow=true;scene.add(ground);
 function mountainHeight(x,z){const dx=x/31,dz=(z+39)/48,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -1.5;return Math.max(-.5,Math.pow(Math.max(0,1-r),.72)*34+(Math.sin(x*.48+z*.19)+Math.sin(z*.34-x*.27))*.95)}
@@ -36,6 +38,16 @@ const snow=new THREE.Mesh(new THREE.ConeGeometry(8,9,7),mat(0xe4edf0));snow.posi
 function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,6,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=Math.random();m.castShadow=true;scene.add(m)}
 for(let i=0;i<18;i++)addRidge((Math.random()-.5)*72,-32-Math.random()*58,5+Math.random()*9,13+Math.random()*24,i%3?0x53616a:0x77817c);
 for(let i=0;i<64;i++){const row=Math.floor(i/8),col=i%8,x=(col-3.5)*1.9+(row%2?-.65:.65),y=1+row*4.1+Math.sin(col*1.7+row)*.65,z=-2.55+Math.cos(i*1.3)*.18;const hold=new THREE.Mesh(new THREE.DodecahedronGeometry(.2+(i%3)*.035,0),gripMat);hold.position.set(x,y,z);hold.castShadow=true;scene.add(hold);holds.push(hold)}
+
+}else{
+// Other expeditions stay on their simple blockout for now; focus art development on Level 1.
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
+const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-3.4);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
+for(let i=0;i<24;i++){const x=Math.sin(i*2.31)*4.8,y=1+i*.82,z=-1.85+Math.cos(i*1.7)*.3;const hold=new THREE.Mesh(new THREE.DodecahedronGeometry(.23+(i%3)*.04,0),gripMat);hold.position.set(x,y,z);hold.castShadow=true;scene.add(hold);holds.push(hold)}
+function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,6),mat(c));m.position.set(x,h/2-.2,z);m.castShadow=true;scene.add(m)}
+for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
+
+}
 const player=new THREE.Group();scene.add(player);
 const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.95,4,8),mat(0xc98b50));body.position.y=1.05;body.castShadow=true;player.add(body);
 const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),mat(0xd7a477));head.position.y=1.82;player.add(head);
