@@ -41,7 +41,6 @@ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.95,4,8),mat(0xc98b50));
 const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),mat(0xd7a477));head.position.y=1.82;player.add(head);
 const pack=new THREE.Mesh(new THREE.BoxGeometry(.42,.55,.22),mat(0x263d54));pack.position.set(0,1.1,.32);player.add(pack);
 player.position.set(0,0,3);
-const holds=[]; // holds are populated below (declared before construction)
 let latched=false,paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false;
 function closestHold(){let best=null,d=2.2;for(const h of holds){const n=player.position.distanceTo(h.position);if(n<d){d=n;best=h}}return best}
 function grab(){if(latched){latched=false;document.getElementById('state').textContent='FREE CLIMB';return}const h=closestHold();if(h){latched=true;player.position.copy(h.position).add(new THREE.Vector3(0,-.75,.65));vel.set(0,0,0);document.getElementById('state').textContent='GRIPPING HOLD';document.getElementById('objective').textContent='Latched! Move toward the next glowing grip.'}else{document.getElementById('objective').textContent='Move closer to a glowing grip, then GRAB.'}}
