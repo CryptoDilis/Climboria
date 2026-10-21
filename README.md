@@ -78,3 +78,11 @@ This is a design reference, not a statement that these features are live. Verify
 - **Jarrell's Peak has no map**; hide/omit the map HUD there.
 - These are agreed design requirements; the HUD/profile/inventory behavior is not claimed to be implemented yet. Layout, responsive behavior, and actual inventory data integration still need implementation and testing.
 
+## HUD implementation status (prototype update)
+
+- The expedition-select page no longer shows the standalone Marketplace and Inventory buttons/modal previews.
+- The climbing prototype HUD now places the player name and clickable emblem at upper-left, with Health (500 max), Stamina (100 max), and Strength (3) shown beneath.
+- Clicking the emblem opens a profile/inventory prototype with equipment categories for armor, skin, accessory, weapon, and other gear, plus item slots.
+- A live-position minimap is shown in normal-level gameplay; it is hidden for level 11 (Jarrell's Peak).
+- These are front-end prototype changes. Player-name entry/persistence, actual inventory/equipment data, combat damage, and multiplayer synchronization are not connected or verified.
+
