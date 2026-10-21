@@ -287,6 +287,27 @@ footer:first-of-type>div{
  footer:first-of-type{padding:34px 16px 38px!important}
 }
 }
+
+/* Premium token launch announcement + live countdown */
+.launch-countdown{position:absolute;z-index:4;top:48%;left:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 36px));padding:22px 24px 20px;text-align:center;border:1px solid rgba(245,197,91,.52);border-radius:20px;background:linear-gradient(145deg,rgba(8,12,22,.91),rgba(17,12,19,.82));box-shadow:0 18px 55px rgba(0,0,0,.42),0 0 30px rgba(217,119,6,.12),inset 0 1px rgba(255,255,255,.07);backdrop-filter:blur(18px)}
+.launch-countdown:before{content:"";position:absolute;inset:5px;border:1px solid rgba(245,197,91,.14);border-radius:15px;pointer-events:none}
+.launch-kicker{display:flex;align-items:center;justify-content:center;gap:8px;color:#f4c96c;font-size:10px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase}
+.launch-kicker:before,.launch-kicker:after{content:"";height:1px;width:26px;background:linear-gradient(90deg,transparent,#d7a64a)}
+.launch-kicker:after{transform:rotate(180deg)}
+.launch-countdown h2{font:900 clamp(22px,3vw,32px)/1.15 Cinzel,serif;letter-spacing:1.2px;color:#fff2cf;margin:10px 0 7px;text-shadow:0 2px 18px #d99b3633}
+.launch-meta{font-size:12px;letter-spacing:.6px;color:rgba(255,255,255,.72)}
+.launch-meta strong{color:#f5cb6b;font-weight:800}
+.launch-timer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:17px auto 14px;max-width:410px}
+.launch-time-unit{padding:10px 5px 8px;border:1px solid rgba(245,197,91,.2);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(0,0,0,.2))}
+.launch-time-unit b{display:block;font:800 clamp(23px,3vw,30px)/1 Inter,sans-serif;color:#fff;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.launch-time-unit span{display:block;margin-top:5px;color:#d4b77b;font-size:8px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase}
+.launch-foot{display:flex;align-items:center;justify-content:center;gap:7px;font-size:9px;letter-spacing:1.3px;color:rgba(255,255,255,.52);text-transform:uppercase}
+.launch-foot i{width:5px;height:5px;border-radius:50%;background:#e7b653;box-shadow:0 0 8px #e7b653;display:inline-block}
+.launch-follow{display:inline-flex;margin-top:13px;padding:9px 17px;border:1px solid rgba(245,197,91,.38);border-radius:999px;color:#f5d88f;text-decoration:none;font-size:10px;font-weight:800;letter-spacing:1.4px;transition:.2s}
+.launch-follow:hover{background:rgba(245,197,91,.1);border-color:#f5c55b;box-shadow:0 0 16px #e0a33b22}
+@media(max-width:900px){.launch-countdown{top:47%;padding:16px 14px 14px;width:min(440px,calc(100% - 30px));border-radius:16px}.launch-countdown:before{border-radius:12px}.launch-kicker{font-size:8px;letter-spacing:1.8px}.launch-countdown h2{font-size:clamp(19px,5.2vw,25px);margin:8px 0 6px}.launch-meta{font-size:10px}.launch-timer{gap:6px;margin:12px auto 10px}.launch-time-unit{padding:8px 3px 7px;border-radius:8px}.launch-time-unit b{font-size:clamp(20px,6vw,26px)}.launch-time-unit span{font-size:7px;letter-spacing:1px}.launch-foot{font-size:8px;letter-spacing:.8px}.launch-follow{margin-top:10px;padding:8px 14px;font-size:9px}}
+@media(max-height:700px) and (max-width:900px){.launch-countdown{top:45%;padding:11px 12px}.launch-countdown h2{font-size:19px}.launch-timer{margin:8px auto}.launch-time-unit{padding:5px 2px}.launch-follow{margin-top:7px}}
+
 </style>
 </head>
 <body>
@@ -307,7 +328,7 @@ footer:first-of-type>div{
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
 </div>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;margin-top:10px"><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;font-weight:900">𝕏</span> @ClimboriaHQ</a>
-<div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
+<div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:2px">TOKEN LAUNCH • NOV 15, 2026 • SOLANA</div>
 </div>
 
 <div class="auth-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
@@ -332,8 +353,22 @@ footer:first-of-type>div{
   <div class="highlights">
     <div class="hl hl-primary"><span class="hl-dot"></span><span>LAUNCHPAD <b>•</b> TOKEN CREATION DEMO</span></div>
     <div class="hl hl-primary"><span class="hl-dot"></span><span>DEX <b>•</b> SWAP DEMO</span></div>
-    <div class="hl hl-status">TOKEN LAUNCH: NOT ANNOUNCED</div>
+    <div class="hl hl-status">TOKEN LAUNCH • NOV 15</div>
   </div>
+
+  <section class="launch-countdown" aria-label="Climboria token launch countdown">
+    <div class="launch-kicker">Official launch announcement</div>
+    <h2>$CLIMB IS TAKING OFF</h2>
+    <div class="launch-meta">PUMP.FUN · <strong>NOVEMBER 15, 2026</strong> · <strong>15:00 UTC</strong> / 11:00 PM PHT</div>
+    <div class="launch-timer" role="timer" aria-live="off">
+      <div class="launch-time-unit"><b id="launchDays">--</b><span>Days</span></div>
+      <div class="launch-time-unit"><b id="launchHours">--</b><span>Hours</span></div>
+      <div class="launch-time-unit"><b id="launchMinutes">--</b><span>Minutes</span></div>
+      <div class="launch-time-unit"><b id="launchSeconds">--</b><span>Seconds</span></div>
+    </div>
+    <div class="launch-foot"><i></i>Countdown to announced launch time · follow official channels for launch link</div>
+    <a class="launch-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">FOLLOW @CLIMBORIAHQ ↗</a>
+  </section>
   <div class="hero-content">
     <div class="hero-buttons">
       <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
@@ -343,7 +378,7 @@ footer:first-of-type>div{
   </div>
 </div>
 
-<div id="overview" class="sec"><div class="label">Climboria Ecosystem</div><div class="title">Launch. Trade. Climb.</div><div class="desc">Climboria is being built around three connected pillars: a creator-focused Launchpad, a dedicated DEX, and a mountain survival game. The products are currently previews/planned features; no token launch or on-chain transactions are live.<br><span class="chain-badge">◎ SOLANA ECOSYSTEM PLANNED • TOKEN LAUNCH NOT ANNOUNCED</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Explore the project overview</a></div>
+<div id="overview" class="sec"><div class="label">Climboria Ecosystem</div><div class="title">Launch. Trade. Climb.</div><div class="desc">Climboria is being built around three connected pillars: a creator-focused Launchpad, a dedicated DEX, and a mountain survival game. The products are currently previews/planned features; the $CLIMB launch is announced for November 15, 2026; no token or on-chain transactions are live yet.<br><span class="chain-badge">◎ SOLANA • $CLIMB LAUNCH NOV 15, 2026</span><br><br><a href="./overview/" style="color:#fbbf24;text-decoration:none">→ Explore the project overview</a></div>
 <div class="grid3"><div class="card"><h3>⚡ Climboria Signature</h3><p>Our proposed signature launch experience: creator and buyer rules disclosed before token creation, with configurable safeguards designed to make launch conditions clearer. Demo only; mechanics and protections still need implementation and review.</p></div><div class="card"><h3>⇄ Climboria DEX</h3><p>A planned swap and trading interface for the Climboria ecosystem. Live liquidity, routing, fees, wallet connection, and on-chain swaps are not available yet.</p></div><div class="card"><h3>🏔 Climboria Game</h3><p>A persistent mountain expedition built around climbing, survival, gear, and multiplayer. The game is in development; features and release timing are not confirmed.</p></div></div></div>
 
 <div id="game" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">The Game</div><div class="title">Explore. Survive. Ascend.</div><div class="desc">Climboria’s game direction is a multiplayer mountain survival and exploration adventure. The systems below are planned and under development—not yet represented as live gameplay.</div><div class="grid3"><div class="card"><h3>⛰ Ten Expeditions</h3><p>Ten long-form mountain expeditions with escalating terrain, weather, survival pressure, and summit objectives.</p></div><div class="card"><h3>🧭 Survival & Teamwork</h3><p>Manage health, stamina, supplies, gear durability, and risk. Team rescue and cooperative exploration are planned.</p></div><div class="card"><h3>🌑 Jarrell’s Peak</h3><p>An envisioned endless, high-risk mountain mode with hidden treasure, no map, and dangerous player encounters.</p></div></div></div>
@@ -355,10 +390,10 @@ footer:first-of-type>div{
 <div class="bar"><span>Treasury & development</span><span class="pct">TBD</span></div>
 <div class="bar"><span>Partners & exchange plans</span><span class="pct">TBD</span></div>
 <div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Token supply, allocation, fees, liquidity, and launch details have not been finalized or announced.</div>
-</div><div class="card"><h3>What $CLIMB is for</h3><p>$CLIMB is planned to connect Climboria’s game and platforms. In-game, it may be used for eligible purchases, forging, upgrades, and marketplace activity as those features are introduced.<br><br>On the Climboria DEX, we plan to explore utility tied to trading features and platform fees. On the Launchpad, $CLIMB may support eligible launch services and features for creators.<br><br>We’re building the game, DEX, and Launchpad step by step. Specific token uses, fee benefits, and requirements will be announced once they’re confirmed and implemented.</p><br><button class="btn-gold">TOKEN LAUNCH NOT ANNOUNCED</button> <button class="btn-outline" style="margin-left:8px">VIEW CHART</button></div></div></div>
+</div><div class="card"><h3>What $CLIMB is for</h3><p>$CLIMB is planned to connect Climboria’s game and platforms. In-game, it may be used for eligible purchases, forging, upgrades, and marketplace activity as those features are introduced.<br><br>On the Climboria DEX, we plan to explore utility tied to trading features and platform fees. On the Launchpad, $CLIMB may support eligible launch services and features for creators.<br><br>We’re building the game, DEX, and Launchpad step by step. Specific token uses, fee benefits, and requirements will be announced once they’re confirmed and implemented.</p><br><button class="btn-gold">LAUNCH: NOV 15, 2026</button> <button class="btn-outline" style="margin-left:8px">VIEW CHART</button></div></div></div>
 
 <div id="roadmap" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">Roadmap</div><div class="title">Build the launch tools. Then expand the mountain.</div><div class="desc">Product order and milestones are directional; no delivery dates are promised.</div><div class="road">
-<div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>CORE PLATFORM</h4><li>Site and project documentation</li><li>Launchpad and DEX demo interfaces</li><li>Define Signature launch rules</li><li>Token launch: not announced</li></div>
+<div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>CORE PLATFORM</h4><li>Site and project documentation</li><li>Launchpad and DEX demo interfaces</li><li>Define Signature launch rules</li><li>Token launch announced: Nov 15, 2026 · 15:00 UTC</li></div>
 <div class="phase"><div class="num">PHASE 02 — ASCENT</div><h4>LAUNCHPAD + DEX</h4><li>Build and test token-creation flow</li><li>Implement Climboria Signature safeguards</li><li>Develop swap routing and transaction safety</li><li>Security review before any live launch</li></div>
 <div class="phase"><div class="num">PHASE 03 — HIGH ALTITUDE</div><h4>GAME DEVELOPMENT</h4><li>Playable climbing prototype</li><li>Gear durability and survival systems</li><li>Multiplayer and mobile performance tests</li><li>Game release timing: TBD</li></div>
 <div class="phase"><div class="num">PHASE 04 — SUMMIT</div><h4>CONNECTED ECOSYSTEM</h4><li>Connect game economy only after testing</li><li>Marketplace and collectible features: evaluate</li><li>Community events and new mountain content</li><li>Further expansion based on player feedback</li></div>
@@ -374,7 +409,7 @@ footer:first-of-type>div{
 <div class="swap-card">
 <div class="swap-header"><h3>CLIMBORIA DEX</h3><button class="close-swap" id="closeSwap">×</button></div>
 <div class="demo-badge">DEX PREVIEW • NO WALLET • NO TRANSACTION</div>
-<div class="dex-badge">TOKEN LAUNCH NOT ANNOUNCED • SOLANA PLANNED</div>
+<div class="dex-badge">LAUNCH NOV 15, 2026 • SOLANA</div>
 <div class="swap-box"><label>YOU PAY — PREVIEW ONLY</label><div class="swap-input"><input type="number" placeholder="0.0" disabled><div class="token-select">◎ SOL</div></div></div>
 <div class="swap-arrow">⇅</div>
 <div class="swap-box"><label>YOU RECEIVE — NO QUOTE AVAILABLE</label><div class="swap-input"><input type="text" placeholder="—" readonly disabled><div class="token-select" style="background:linear-gradient(180deg,#fbbf24,#d97706);color:#000;border-color:#fbbf24">$CLIMB</div></div></div>
@@ -463,6 +498,18 @@ footer:first-of-type>div{
 
 <script>
 (() => {
+  const launchAt = Date.UTC(2026, 10, 15, 15, 0, 0);
+  const updateLaunchCountdown = () => {
+    let remaining = Math.max(0, launchAt - Date.now());
+    const days = Math.floor(remaining / 86400000); remaining %= 86400000;
+    const hours = Math.floor(remaining / 3600000); remaining %= 3600000;
+    const minutes = Math.floor(remaining / 60000); remaining %= 60000;
+    const seconds = Math.floor(remaining / 1000);
+    const put = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=String(value).padStart(2,"0"); };
+    put("launchDays",days); put("launchHours",hours); put("launchMinutes",minutes); put("launchSeconds",seconds);
+    if(Date.now() >= launchAt){ const foot=document.querySelector(".launch-foot"); if(foot) foot.textContent="Scheduled launch time reached · check @ClimboriaHQ for official status and link"; }
+  };
+  updateLaunchCountdown(); window.setInterval(updateLaunchCountdown,1000);
   const ham = document.getElementById('hamburger');
   const menu = document.getElementById('mobileMenu');
   let menuOpen = false;
