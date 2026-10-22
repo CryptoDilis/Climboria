@@ -72,12 +72,7 @@ const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertex
  for(let i=0;i<42;i++){const x=(Math.sin(i*12.7)*.5)*300,z=-45-(i*19)%260;if(Math.abs(x)<42)continue;const y=1.9+Math.sin(i*2.4)*1.4;d.position.set(x,y,z);d.rotation.y=i*1.7;d.scale.set(.7+(i%4)*.2,1+(i%3)*.15,.7+(i%4)*.2);d.updateMatrix();ts.setMatrixAt(count,d.matrix);d.position.y+=3.5;d.scale.set(1.2,1.1,1.2);d.updateMatrix();cs.setMatrixAt(count,d.matrix);count++}
  ts.count=count;cs.count=count;ts.instanceMatrix.needsUpdate=true;cs.instanceMatrix.needsUpdate=true;scene.add(ts,cs);
 }
-// Distant mountain backdrop: use a low, continuous hazy ridge instead of oversized floating-looking cone peaks.
-{
- const ridgeGeo=new THREE.PlaneGeometry(900,120,1,1);ridgeGeo.rotateX(-Math.PI/2);
- const ridgeMat=new THREE.MeshStandardMaterial({color:0x91a9b2,roughness:1,transparent:true,opacity:.42,depthWrite:false});
- const ridge=new THREE.Mesh(ridgeGeo,ridgeMat);ridge.position.set(0,42,-455);scene.add(ridge);
-}
+// Remove the decorative backdrop ridge: it was a detached plane and read as a floating mountain.
 // Conservative mountain dressing: remove suspended upper-slope debris; place only modest boulders on lower slopes.
 {
  const geo=new THREE.DodecahedronGeometry(1,0);
