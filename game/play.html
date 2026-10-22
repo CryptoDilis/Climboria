@@ -65,13 +65,38 @@ const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertex
  }
  cottage(-72,-78,.8);cottage(-58,-92,.65);cottage(72,-108,.9);
  for(const [x,z,len] of [[-86,-88,24],[-48,-102,18],[55,-120,28]]){const wall=new THREE.Mesh(new THREE.BoxGeometry(len,.8,1.1),stoneWallMat);wall.position.set(x,.45,z);wall.rotation.y=.12;wall.castShadow=true;scene.add(wall)}
- // Broad-canopy deciduous trees to evoke open Rohan pasture, kept in small instanced batches.
- const trunk=new THREE.CylinderGeometry(.35,.55,5,7),canopy=new THREE.SphereGeometry(2.7,9,7);
- const bark=mat(0x55412c),leaf=new THREE.MeshStandardMaterial({color:0x42683c,roughness:1,flatShading:true});
- const ts=new THREE.InstancedMesh(trunk,bark,42),cs=new THREE.InstancedMesh(canopy,leaf,42),d=new THREE.Object3D();let count=0;
- for(let i=0;i<42;i++){const x=(Math.sin(i*12.7)*.5)*300,z=-45-(i*19)%260;if(Math.abs(x)<42)continue;const y=1.9+Math.sin(i*2.4)*1.4;d.position.set(x,y,z);d.rotation.y=i*1.7;d.scale.set(.7+(i%4)*.2,1+(i%3)*.15,.7+(i%4)*.2);d.updateMatrix();ts.setMatrixAt(count,d.matrix);d.position.y+=3.5;d.scale.set(1.2,1.1,1.2);d.updateMatrix();cs.setMatrixAt(count,d.matrix);count++}
- ts.count=count;cs.count=count;ts.instanceMatrix.needsUpdate=true;cs.instanceMatrix.needsUpdate=true;scene.add(ts,cs);
-}
+ // Forest belt on the surrounding foothills: each trunk is grounded to the pasture's sampled height.
+ const trunk=new THREE.CylinderGeometry(.28,.46,4.2,7),canopy=new THREE.SphereGeometry(2.25,9,7);
+ const bark=mat(0x55412c),leafMats=[0x42683c,0x527844,0x355c36].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
+ const forestTrunks=new THREE.InstancedMesh(trunk,bark,180),forestCanopies=leafMats.map(m=>new THREE.InstancedMesh(canopy,m,60));
+ const dummy=new THREE.Object3D();let trunkCount=0,leafCounts=[0,0,0],seed=18821;
+ const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<1800;i++){
+  const x=(rand()-.5)*570,z=-28-rand()*320;
+  // Forest stays on the grassy foothill belt, outside the climb lane and away from the steep main massif.
+  if(Math.abs(x)<48||Math.abs(x)>275||Math.abs(z+170)<30)continue;
+  const roll=.38*Math.sin(x*.014+z*.009)+.18*Math.sin(z*.025-x*.018);
+  const groundY=-.55+roll;
+  const scale=.72+rand()*.65;
+  dummy.position.set(x,groundY+2.1*scale,z);dummy.rotation.y=rand()*Math.PI*2;dummy.scale.set(scale,scale,scale);dummy.updateMatrix();
+  if(trunkCount<180)forestTrunks.setMatrixAt(trunkCount++,dummy.matrix);
+  dummy.position.y+=2.65*scale;dummy.scale.set(1.15*scale,1.05*scale,1.15*scale);dummy.updateMatrix();
+  const k=Math.floor(rand()*3);if(leafCounts[k]<60)forestCanopies[k].setMatrixAt(leafCounts[k]++,dummy.matrix);
+ }
+ forestTrunks.count=trunkCount;forestTrunks.instanceMatrix.needsUpdate=true;scene.add(forestTrunks);
+ forestCanopies.forEach((m,i)=>{m.count=leafCounts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
+ // Grounded foothill boulders: low, partly embedded rocks, kept outside the route and camp clearing.
+ const bGeo=new THREE.DodecahedronGeometry(1,0),bMat=[0x59645f,0x74746b,0x4c5b61].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
+ const boulders=bMat.map(m=>new THREE.InstancedMesh(bGeo,m,45)),bc=[0,0,0];
+ for(let i=0;i<1100;i++){
+  const x=(rand()-.5)*560,z=-24-rand()*330;
+  if(Math.abs(x)<55||Math.abs(x)>270||Math.abs(z+170)<34)continue;
+  const roll=.38*Math.sin(x*.014+z*.009)+.18*Math.sin(z*.025-x*.018),gy=-.55+roll;
+  const size=.55+rand()*1.15,k=Math.floor(rand()*3);
+  dummy.position.set(x,gy+size*.32,z);dummy.rotation.set(rand()*.25,rand()*Math.PI,rand()*.2);dummy.scale.set(size*1.25,size*.7,size);dummy.updateMatrix();
+  if(bc[k]<45)boulders[k].setMatrixAt(bc[k]++,dummy.matrix);
+ }
+ boulders.forEach((m,i)=>{m.count=bc[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
 // Remove the decorative backdrop ridge: it was a detached plane and read as a floating mountain.
 // Conservative mountain dressing: remove suspended upper-slope debris; place only modest boulders on lower slopes.
 {
