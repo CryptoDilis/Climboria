@@ -167,7 +167,7 @@ function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeome
 for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
 
 }
-const player=new THREE.Group();if(currentLevel==='01')player.position.y=Math.max(0,mountainHeight(0,8+90)+.25);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const player=new THREE.Group();if(currentLevel==='01')player.position.y=Math.max(0,terrainHeightAt(0,8+90)+.25);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 const dirt=mat(0x66513a),canvasMat=mat(0x9a7547),tentMat=mat(0x425c63),wood=mat(0x4b3424);
