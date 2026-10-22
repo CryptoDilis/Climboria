@@ -257,6 +257,9 @@ function update(dt){if(paused||levelCleared)return;const m=moveVec(),speed=sprin
 vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*speed*dt,nextZ=player.position.z+m.z*speed*dt;
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.x=nextX;player.position.z=nextZ;player.position.y+=vel.y*dt;
+// Terrain collision: mountain mesh is centered at z=-90, so convert world Z to its local height-map Z.
+const terrainY=mountainHeight(player.position.x,player.position.z+90);const bodyClearance=.18;
+if(terrainY>-1&&player.position.y<terrainY+bodyClearance){player.position.y=terrainY+bodyClearance;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);document.getElementById('state').textContent='FELL · BACK TO TRAILHEAD'}
