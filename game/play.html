@@ -42,6 +42,29 @@ const ground=new THREE.Mesh(new THREE.PlaneGeometry(900,900),mat(0x26382f));grou
 function mountainHeight(x,z){const dz=(z+245)/285,dx=x/190,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const base=Math.pow(Math.max(0,1-r),.72)*158;const broad=Math.sin(x*.021+z*.014)*Math.sin(z*.019-x*.012)*12;const sharp=(Math.sin(x*.073+z*.041)+Math.sin(z*.061-x*.057))*4.8;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.82),1.7)*Math.max(0,Math.sin((z+390)*.012))*18;return Math.max(-1,base+broad+sharp+spine)}
 const mountainGeo=new THREE.PlaneGeometry(390,570,150,220);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.025,c=new THREE.Color();if(h>88)c.setRGB(.78+n,.82+n,.84+n);else if(h>48)c.setRGB(.34+n,.38+n,.40+n);else if(h>20)c.setRGB(.29+n,.34+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
 const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+// Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
+{
+ const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
+ const hillGeo=new THREE.SphereGeometry(1,24,14);
+ const hillData=[[-185,-105,82,20,78],[-145,-215,115,28,95],[175,-125,90,22,84],[220,-250,135,31,110],[-260,-320,165,38,125],[285,-390,190,42,145]];
+ const hillObj=new THREE.Object3D();
+ for(const [x,z,sx,sy,sz] of hillData){hillObj.position.set(x,sy*.05,z);hillObj.scale.set(sx,sy,sz);hillObj.updateMatrix();const h=new THREE.Mesh(hillGeo,hillMat);h.position.copy(hillObj.position);h.scale.copy(hillObj.scale);h.receiveShadow=true;scene.add(h)}
+ // Medieval farmstead silhouettes on a distant shelf: tiny huts, pitched thatch roofs and stone boundary lines.
+ const stoneWallMat=mat(0x777568),timberMat=mat(0x493a2b),thatchMat=mat(0x9a8350);
+ function cottage(x,z,s=1){
+  const body=new THREE.Mesh(new THREE.BoxGeometry(5*s,3.2*s,4*s),timberMat);body.position.set(x,1.6*s,z);body.castShadow=true;body.receiveShadow=true;scene.add(body);
+  const roof=new THREE.Mesh(new THREE.ConeGeometry(3.8*s,2.8*s,4),thatchMat);roof.position.set(x,4*s,z);roof.rotation.y=Math.PI/4;roof.castShadow=true;scene.add(roof);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(.8*s,1.6*s,.12*s),mat(0x241d17));door.position.set(x, .8*s,z+2.05*s);scene.add(door);
+ }
+ cottage(-72,-78,.8);cottage(-58,-92,.65);cottage(72,-108,.9);
+ for(const [x,z,len] of [[-86,-88,24],[-48,-102,18],[55,-120,28]]){const wall=new THREE.Mesh(new THREE.BoxGeometry(len,.8,1.1),stoneWallMat);wall.position.set(x,.45,z);wall.rotation.y=.12;wall.castShadow=true;scene.add(wall)}
+ // Broad-canopy deciduous trees to evoke open Rohan pasture, kept in small instanced batches.
+ const trunk=new THREE.CylinderGeometry(.35,.55,5,7),canopy=new THREE.SphereGeometry(2.7,9,7);
+ const bark=mat(0x55412c),leaf=new THREE.MeshStandardMaterial({color:0x42683c,roughness:1,flatShading:true});
+ const ts=new THREE.InstancedMesh(trunk,bark,42),cs=new THREE.InstancedMesh(canopy,leaf,42),d=new THREE.Object3D();let count=0;
+ for(let i=0;i<42;i++){const x=(Math.sin(i*12.7)*.5)*300,z=-45-(i*19)%260;if(Math.abs(x)<42)continue;const y=1.9+Math.sin(i*2.4)*1.4;d.position.set(x,y,z);d.rotation.y=i*1.7;d.scale.set(.7+(i%4)*.2,1+(i%3)*.15,.7+(i%4)*.2);d.updateMatrix();ts.setMatrixAt(count,d.matrix);d.position.y+=3.5;d.scale.set(1.2,1.1,1.2);d.updateMatrix();cs.setMatrixAt(count,d.matrix);count++}
+ ts.count=count;cs.count=count;ts.instanceMatrix.needsUpdate=true;cs.instanceMatrix.needsUpdate=true;scene.add(ts,cs);
+}
 // Grand layered ranges: serrated silhouettes behind the playable mountain, fading into atmospheric distance.
 function addRidge(x,z,r,h,c=0x53616a,segments=6){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,segments,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=(x*.17+z*.11)%6.28;m.castShadow=true;scene.add(m)}
 const farPalette=[0x718493,0x647987,0x536675,0x87959a];for(let band=0;band<3;band++){const z=-390-band*105,scale=1+band*.32;for(let i=0;i<17;i++){const x=-300+i*37+(band%2)*15,seed=Math.sin(i*12.71+band*8.3),h=(48+Math.abs(seed)*85)*scale,r=(20+Math.abs(Math.cos(i*4.3+band))*26)*scale;addRidge(x,z+Math.sin(i*2.1)*28,r,h,farPalette[(i+band)%farPalette.length],5+(i%3));}}
