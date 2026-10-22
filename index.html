@@ -351,25 +351,6 @@ footer:first-of-type>div{
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
   </picture>
   <div class="hero-overlay"></div>
-  <div class="highlights">
-    <div class="hl hl-primary"><span class="hl-dot"></span><span>LAUNCHPAD <b>•</b> TOKEN CREATION DEMO</span></div>
-    <div class="hl hl-primary"><span class="hl-dot"></span><span>DEX <b>•</b> SWAP DEMO</span></div>
-    <div class="hl hl-status">TOKEN LAUNCH • NOV 15</div>
-  </div>
-
-  <section class="launch-countdown" aria-label="Climboria token launch countdown">
-    <div class="launch-kicker">Official launch announcement</div>
-    <h2>$CLIMB IS TAKING OFF</h2>
-    <div class="launch-meta">PUMP.FUN · <strong>NOVEMBER 15, 2026</strong> · <strong>15:00 UTC</strong> / 11:00 PM PHT</div>
-    <div class="launch-timer" role="timer" aria-live="off">
-      <div class="launch-time-unit"><b id="launchDays">--</b><span>Days</span></div>
-      <div class="launch-time-unit"><b id="launchHours">--</b><span>Hours</span></div>
-      <div class="launch-time-unit"><b id="launchMinutes">--</b><span>Minutes</span></div>
-      <div class="launch-time-unit"><b id="launchSeconds">--</b><span>Seconds</span></div>
-    </div>
-    <div class="launch-foot"><i></i>Countdown to announced launch time · follow official channels for launch link</div>
-    <a class="launch-follow" href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener noreferrer">FOLLOW @CLIMBORIAHQ ↗</a>
-  </section>
   <div class="hero-content">
     <div class="hero-buttons">
       <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
@@ -499,18 +480,6 @@ footer:first-of-type>div{
 
 <script>
 (() => {
-  const launchAt = Date.UTC(2026, 10, 15, 15, 0, 0);
-  const updateLaunchCountdown = () => {
-    let remaining = Math.max(0, launchAt - Date.now());
-    const days = Math.floor(remaining / 86400000); remaining %= 86400000;
-    const hours = Math.floor(remaining / 3600000); remaining %= 3600000;
-    const minutes = Math.floor(remaining / 60000); remaining %= 60000;
-    const seconds = Math.floor(remaining / 1000);
-    const put = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=String(value).padStart(2,"0"); };
-    put("launchDays",days); put("launchHours",hours); put("launchMinutes",minutes); put("launchSeconds",seconds);
-    if(Date.now() >= launchAt){ const foot=document.querySelector(".launch-foot"); if(foot) foot.textContent="Scheduled launch time reached · check @ClimboriaHQ for official status and link"; }
-  };
-  updateLaunchCountdown(); window.setInterval(updateLaunchCountdown,1000);
   const ham = document.getElementById('hamburger');
   const menu = document.getElementById('mobileMenu');
   let menuOpen = false;
