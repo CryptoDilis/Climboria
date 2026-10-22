@@ -142,7 +142,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
 }
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
-for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z-90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
+for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z+90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
 }else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
@@ -152,7 +152,7 @@ function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeome
 for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
 
 }
-const player=new THREE.Group();scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const player=new THREE.Group();if(currentLevel==='01')player.position.y=Math.max(0,mountainHeight(0,8+90)+.25);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 const dirt=mat(0x66513a),canvasMat=mat(0x9a7547),tentMat=mat(0x425c63),wood=mat(0x4b3424);
@@ -259,16 +259,14 @@ vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*spee
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.y+=vel.y*dt;
 // Resolve horizontal movement against the actual height field: sample along the proposed step and block uphill penetration.
-const footClear=.22,stepRise=.8,probeCount=5;let blockedX=false,blockedZ=false;const hitsCliff=(x,z)=>cliffColliders.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+.65&&player.position.y+1.7>o.y0&&player.position.y<o.y1);if(hitsCliff(nextX,nextZ)){blockedX=true;blockedZ=true;}
-for(let k=1;k<=probeCount;k++){const t=k/probeCount,tx=player.position.x+(nextX-player.position.x)*t,tz=player.position.z+(nextZ-player.position.z)*t,hy=terrainHeightAt(tx,tz+90);if(hy>player.position.y+footClear+stepRise){blockedX=true;blockedZ=true;break}}
-if(!blockedX&&!blockedZ){player.position.x=nextX;player.position.z=nextZ}else{
- const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);
- if(hx<=player.position.y+footClear+stepRise)player.position.x=nextX;
- if(hz<=player.position.y+footClear+stepRise)player.position.z=nextZ;
-}
-// Keep the climber above terrain when landing; this also prevents vertical tunnelling through the height-map.
-const terrainY=terrainHeightAt(player.position.x,player.position.z+90);
-if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
+const footClear=.22,maxWalkSlope=.72;let blocked=false;const hitsCliff=(x,z)=>cliffColliders.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+.65&&player.position.y+1.7>o.y0&&player.position.y<o.y1);
+// Heightfield is in mountain-local Z; convert world Z (+90). Snap feet to gentle terrain, block abrupt/steep walls.
+const fromH=terrainHeightAt(player.position.x,player.position.z+90),toH=terrainHeightAt(nextX,nextZ+90),rise=toH-fromH;
+const gradX=(terrainHeightAt(nextX+.65,nextZ+90)-terrainHeightAt(nextX-.65,nextZ+90))/1.3,gradZ=(terrainHeightAt(nextX,nextZ+90+.65)-terrainHeightAt(nextX,nextZ+90-.65))/1.3,slope=Math.hypot(gradX,gradZ);
+if(hitsCliff(nextX,nextZ)||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)blocked=true;
+if(!blocked){player.position.x=nextX;player.position.z=nextZ;if(player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);if(!hitsCliff(nextX,player.position.z)&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
+// Ground contact: never allow feet to sink beneath terrain.
+const terrainY=terrainHeightAt(player.position.x,player.position.z+90);if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);document.getElementById('state').textContent='FELL · BACK TO TRAILHEAD'}
