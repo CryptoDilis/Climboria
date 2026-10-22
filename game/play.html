@@ -77,26 +77,24 @@ function addRidge(x,z,r,h,c=0x53616a,segments=6){const m=new THREE.Mesh(new THRE
 const farPalette=[0x718493,0x647987,0x536675,0x87959a];for(let band=0;band<3;band++){const z=-390-band*105,scale=1+band*.32;for(let i=0;i<17;i++){const x=-300+i*37+(band%2)*15,seed=Math.sin(i*12.71+band*8.3),h=(48+Math.abs(seed)*85)*scale,r=(20+Math.abs(Math.cos(i*4.3+band))*26)*scale;addRidge(x,z+Math.sin(i*2.1)*28,r,h,farPalette[(i+band)%farPalette.length],5+(i%3));}}
 // Broken snowy crown and angular shoulders.
 const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));summit.position.set(-8,143,-350);summit.rotation.z=-.08;summit.castShadow=true;scene.add(summit);addRidge(-31,-344,17,38,0xb9c9ce,5);addRidge(19,-359,20,42,0xe7eeee,6);
-// Cinematic rock-face detailing: layered, elongated facets follow upper mountain contours.
-// Instanced and decorative only; no extra collision checks.
+// Conservative mountain dressing: remove suspended upper-slope debris; place only modest boulders on lower slopes.
 {
  const geo=new THREE.DodecahedronGeometry(1,0);
  const mats=[0x6b777b,0x827b70,0xdce5e7].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
- const batches=mats.map(m=>new THREE.InstancedMesh(geo,m,125));
+ const batches=mats.map(m=>new THREE.InstancedMesh(geo,m,90));
  const d=new THREE.Object3D();let counts=[0,0,0],seed=91427;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let i=0;i<760;i++){
-  const x=(rand()-.5)*300,z=-45-rand()*330,y=mountainHeight(x,z+90);
-  if(y<32)continue;
-  const k=y>108&&rand()<.42?2:(rand()<.4?1:0),q=1.8+rand()*4.6;
-  d.position.set(x,y+q*.12,z);d.rotation.set(rand()*1.05,rand()*Math.PI*2,(rand()-.5)*.9);
-  d.scale.set(q*(.7+rand()),q*(1.2+rand()*1.5),q*(.35+rand()*.55));d.updateMatrix();
-  if(counts[k]<125)batches[k].setMatrixAt(counts[k]++,d.matrix);
+ for(let i=0;i<900;i++){
+  const x=(rand()-.5)*280,z=-35-rand()*310,y=mountainHeight(x,z+90);
+  if(y<8||y>76)continue;
+  const k=rand()<.18?2:(rand()<.45?1:0),q=1.1+rand()*2.2;
+  d.position.set(x,y+90-q*.38,z);d.rotation.set(0,rand()*Math.PI*2,0);
+  d.scale.set(q*(.8+rand()*.45),q*(.65+rand()*.45),q*(.8+rand()*.45));d.updateMatrix();
+  if(counts[k]<90)batches[k].setMatrixAt(counts[k]++,d.matrix);
  }
  batches.forEach((m,i)=>{m.count=counts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
 }
-// Upper-slope rock ribs, batched to keep draw calls low on mobile.
-{const ribGeo=new THREE.DodecahedronGeometry(1,1),ribMat=mat(0x48545a,1),ribs=new THREE.InstancedMesh(ribGeo,ribMat,115),o=new THREE.Object3D();let n=0;for(let i=0;i<520&&n<115;i++){const x=Math.sin(i*17.13)*135,z=-95-(i*1.71)%270,y=mountainHeight(x,z+90);if(y<28||y>118)continue;const s=2.8+(i%7)*.75;o.position.set(x,y+s*.15,z);o.rotation.set(Math.sin(i)*.7,i*1.91,Math.cos(i)*.5);o.scale.set(s*1.3,s*2.4,s*.8);o.updateMatrix();ribs.setMatrixAt(n++,o.matrix)}ribs.count=n;ribs.instanceMatrix.needsUpdate=true;scene.add(ribs)}
+// Upper-slope rock ribs disabled: their independent meshes read as floating debris.
 // First mobile-friendly biome pass: instanced tall grass in lower meadows.
 // Keep a clear corridor around the winding trail; grass is decorative and has no collision.
 {
