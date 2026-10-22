@@ -46,6 +46,30 @@ const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({color:
 function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=Math.random();m.castShadow=true;scene.add(m)}
 for(let i=0;i<70;i++)addRidge((Math.random()-.5)*420,-100-Math.random()*330,12+Math.random()*27,25+Math.random()*65,i%4===0?0x77817c:0x53616a);
 const summit=new THREE.Mesh(new THREE.ConeGeometry(25,34,8),mat(0xe4edf0));summit.position.set(0,130,-350);summit.castShadow=true;scene.add(summit);
+// First mobile-friendly biome pass: instanced tall grass in lower meadows.
+// Keep a clear corridor around the winding trail; grass is decorative and has no collision.
+{
+ const grassGeo=new THREE.ConeGeometry(.11,1.05,3,1);
+ grassGeo.translate(0,.52,0);
+ const grassMat=new THREE.MeshStandardMaterial({color:0x6f9650,roughness:1,side:THREE.DoubleSide});
+ const grass=new THREE.InstancedMesh(grassGeo,grassMat,720);
+ grass.frustumCulled=false;
+ const dummy=new THREE.Object3D();
+ let placed=0,seed=8417;
+ const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let n=0;n<2600&&placed<720;n++){
+  const x=(rand()-.5)*300,z=5-rand()*230;
+  const y=mountainHeight(x,z+90);
+  if(y<0||y>48)continue;
+  const t=(5-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
+  if(Math.abs(x-trailX)<9)continue;
+  dummy.position.set(x,y-.05,z);
+  dummy.rotation.set((rand()-.5)*.18,rand()*Math.PI*2,(rand()-.5)*.18);
+  const s=.55+rand()*.95;dummy.scale.set(s,s*(.75+rand()*.8),s);
+  dummy.updateMatrix();grass.setMatrixAt(placed++,dummy.matrix);
+ }
+ grass.count=placed;grass.instanceMatrix.needsUpdate=true;scene.add(grass);
+}
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
 for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z-90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
