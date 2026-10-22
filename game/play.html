@@ -40,7 +40,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(25,34,8),mat(0xe4edf0));summi
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
 for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z-90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
-}else{{
+}else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
 const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-25);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
@@ -79,7 +79,9 @@ function pickup(){grab()}
 function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys.KeyS?1:0);x+=touchMove.x;z+=touchMove.y;const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}return{x,z}}
 function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||document.getElementById('mapPanel').hidden)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='#142536';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#526b7d';x.lineWidth=2;x.beginPath();x.moveTo(90,138);x.lineTo(90,18);x.stroke();x.strokeStyle='#8aa1b4';x.beginPath();x.moveTo(55,138);x.lineTo(70,105);x.lineTo(52,78);x.lineTo(88,48);x.lineTo(112,20);x.stroke();for(const p of trailPlatforms){const px=90+p.x*7,py=137-p.z*5.5;x.fillStyle='#9aa8a9';x.fillRect(px-4,py-3,8,6)}const px=90+player.position.x*7,py=137-player.position.y*5.5;x.fillStyle='#ffcf5a';x.beginPath();x.arc(px,Math.max(8,Math.min(142,py)),4,0,Math.PI*2);x.fill();x.strokeStyle='#ffcf5a';x.strokeRect(4,4,c.width-8,c.height-8)}
 function update(dt){if(paused||levelCleared)return;const m=moveVec(),speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();
-vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*speed*dt,nextZ=player.position.z-m.z*speed*dt;\n// Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.\nplayer.position.x=nextX;player.position.z=nextZ;player.position.y+=vel.y*dt;
+vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*speed*dt,nextZ=player.position.z-m.z*speed*dt;
+// Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
+player.position.x=nextX;player.position.z=nextZ;player.position.y+=vel.y*dt;
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);document.getElementById('state').textContent='FELL · BACK TO TRAILHEAD'}
