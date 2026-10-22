@@ -220,6 +220,29 @@ new GLTFLoader().load('../../climboria_free_base.glb',gltf=>{
  }catch(err){window.__climbDiag('GLB framing failed; fallback kept: '+err.message)}
 },undefined,err=>window.__climbDiag('GLB unavailable at ../../climboria_free_base.glb; fallback skin remains. '+(err?.message||'')));
 
+
+// Climboria modular-ready collision/interaction foundation (phase 1).
+// Player is approximated by a vertical capsule; resolve against explicit static boxes/spheres
+// and keep interaction raycasts separate from movement input.
+const collisionWorld={
+ staticAABBs:[],
+ addAABB(min,max){this.staticAABBs.push({min:new THREE.Vector3(...min),max:new THREE.Vector3(...max)})},
+ capsuleBlocked(x,z,feetY,r=.34,h=1.75){
+  const lo=feetY,hi=feetY+h;
+  for(const b of this.staticAABBs){
+   if(hi<=b.min.y||lo>=b.max.y)continue;
+   const qx=Math.max(b.min.x,Math.min(x,b.max.x)),qz=Math.max(b.min.z,Math.min(z,b.max.z));
+   if((x-qx)**2+(z-qz)**2<r*r)return true;
+  }return false
+ }
+};
+const interactionRaycaster=new THREE.Raycaster();
+function rayInteract(targets,maxDistance=3.2){
+ interactionRaycaster.setFromCamera(new THREE.Vector2(0,0),camera);
+ interactionRaycaster.far=maxDistance;
+ return interactionRaycaster.intersectObjects(targets,true)[0]||null;
+}
+
 let paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false,attackCooldown=0,camYaw=.48,camPitch=.28,camDistance=11,orbiting=false,lastPointer={x:0,y:0};
 function grab(){if(quartermaster&&player.position.distanceTo(quartermaster.position)<2.7){document.getElementById('campOverlay').classList.add('open');paused=true;document.getElementById('state').textContent='AT BASE CAMP'}}
 function jump(){if(player.position.y<.3)vel.y=7}
