@@ -38,7 +38,7 @@ function addFarRidge(z,baseY,peakScale,color,seed){const pts=[[-310,0],[-270,.22
 addFarRidge(-465,18,145,0x8ba9b9,-24);addFarRidge(-505,8,190,0x9bb8c6,18);
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
 const trailPlatforms=[],cliffColliders=[];
-function mountainHeight(x,z){const dz=(z+245)/285,dx=x/190,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*158;const broad=(Math.sin(x*.021+z*.014)*Math.sin(z*.019-x*.012))*12;const ridgeA=Math.abs(Math.sin(x*.034+z*.019)),ridgeB=Math.abs(Math.sin(z*.027-x*.031)),ridgeC=Math.abs(Math.sin(x*.061+z*.047));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*17*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.82),1.7)*Math.max(0,Math.sin((z+390)*.012))*18;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.28)*2.3),2)*Math.max(0,Math.sin((z+305)*.025))*13*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
+function mountainHeight(x,z){const dz=(z+245)/365,dx=x/255,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*178;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*19*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+485)*.009))*24;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+380)*.021))*15*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
 let terrainHeightAt=mountainHeight;
 const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
 if(currentLevel==='01'){
@@ -47,13 +47,13 @@ if(currentLevel==='01'){
 const grassCanvas=document.createElement('canvas');grassCanvas.width=512;grassCanvas.height=512;const gctx=grassCanvas.getContext('2d');gctx.fillStyle='#587747';gctx.fillRect(0,0,512,512);let gseed=74123;const grnd=()=>{gseed=(gseed*1664525+1013904223)>>>0;return gseed/4294967296};for(let i=0;i<14500;i++){const x=grnd()*512,y=grnd()*512,len=2+grnd()*13;gctx.strokeStyle=['#718d51','#3f6138','#8b9a5c','#526f3e','#a1a16a'][Math.floor(grnd()*5)];gctx.globalAlpha=.12+grnd()*.24;gctx.lineWidth=.5+grnd()*1.4;gctx.beginPath();gctx.moveTo(x,y);gctx.lineTo(x+(grnd()-.5)*4,y-len);gctx.stroke()}gctx.globalAlpha=1;const grassTex=new THREE.CanvasTexture(grassCanvas);grassTex.wrapS=grassTex.wrapT=THREE.RepeatWrapping;grassTex.repeat.set(32,32);grassTex.colorSpace=THREE.SRGBColorSpace;grassTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),4);const pastureMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x82966a,roughness:1});
 const groundGeo=new THREE.PlaneGeometry(900,900,100,100);groundGeo.rotateX(-Math.PI/2);const gp=groundGeo.attributes.position;for(let i=0;i<gp.count;i++){const x=gp.getX(i),z=gp.getZ(i);const roll=Math.sin(x*.014+z*.009)*.38+Math.sin(z*.025-x*.018)*.18;gp.setY(i,-.55+roll)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,pastureMat);ground.receiveShadow=true;scene.add(ground);
 terrainHeightAt=mountainHeight;
-const mountainGeo=new THREE.PlaneGeometry(390,570,150,220);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.035,ridgeTint=(Math.abs(Math.sin(x*.034+z*.019))*.5+Math.abs(Math.sin(z*.027-x*.031))*.5),c=new THREE.Color();if(h>112)c.setRGB(.78+n,.83+n,.86+n);else if(h>78)c.setRGB(.43+n+ridgeTint*.08,.47+n+ridgeTint*.07,.49+n+ridgeTint*.06);else if(h>42)c.setRGB(.34+n+ridgeTint*.06,.38+n+ridgeTint*.05,.39+n+ridgeTint*.04);else if(h>18)c.setRGB(.31+n,.36+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
+const mountainGeo=new THREE.PlaneGeometry(520,730,180,260);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.035,ridgeTint=(Math.abs(Math.sin(x*.034+z*.019))*.5+Math.abs(Math.sin(z*.027-x*.031))*.5),c=new THREE.Color();if(h>112)c.setRGB(.78+n,.83+n,.86+n);else if(h>78)c.setRGB(.43+n+ridgeTint*.08,.47+n+ridgeTint*.07,.49+n+ridgeTint*.06);else if(h>42)c.setRGB(.34+n+ridgeTint*.06,.38+n+ridgeTint*.05,.39+n+ridgeTint*.04);else if(h>18)c.setRGB(.31+n,.36+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
 const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
  const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
  const hillGeo=new THREE.SphereGeometry(1,24,14);
- const hillData=[[-185,-105,82,20,78],[-145,-215,115,28,95],[175,-125,90,22,84],[220,-250,135,31,110],[-260,-320,165,38,125],[285,-390,190,42,145]];
+ const hillData=[[-245,-125,64,15,64],[-205,-245,76,18,82],[245,-145,70,17,72],[270,-285,92,22,105],[-315,-355,112,25,132],[330,-445,128,28,155]];
  const hillObj=new THREE.Object3D();
  for(const [x,z,sx,sy,sz] of hillData){hillObj.position.set(x,sy*.05,z);hillObj.scale.set(sx,sy,sz);hillObj.updateMatrix();const h=new THREE.Mesh(hillGeo,hillMat);h.position.copy(hillObj.position);h.scale.copy(hillObj.scale);h.receiveShadow=true;scene.add(h)}
  // Medieval farmstead silhouettes on a distant shelf: tiny huts, pitched thatch roofs and stone boundary lines.
@@ -127,16 +127,16 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  const trunkGeo=new THREE.CylinderGeometry(.16,.24,2.2,5);
  const crownGeo=new THREE.ConeGeometry(1.25,3.4,6,1);
  const trunkMat=mat(0x51402d),crownMat=new THREE.MeshStandardMaterial({color:0x31543b,roughness:1,flatShading:true});
- const trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,340),crowns=new THREE.InstancedMesh(crownGeo,crownMat,340);
+ const trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,240),crowns=new THREE.InstancedMesh(crownGeo,crownMat,240);
  const rockGeo=new THREE.DodecahedronGeometry(1,0),rockMat=mat(0x59615e,1);
- const stones=new THREE.InstancedMesh(rockGeo,rockMat,620);
+ const stones=new THREE.InstancedMesh(rockGeo,rockMat,420);
  const dummy=new THREE.Object3D();let trees=0,stoneCount=0;
- for(let i=0;i<4200&&trees<340;i++){
-  const x=(seedRand()-.5)*290,z=4-seedRand()*220;
+ for(let i=0;i<5200&&trees<240;i++){
+  const x=(seedRand()-.5)*420,z=4-seedRand()*335;
   const y=mountainHeight(x,z+90);
-  if(y<3||y>34)continue;
+  if(y<3||y>30)continue;
   const t=(4-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
-  if(Math.abs(x-trailX)<13)continue;
+  if(Math.abs(x-trailX)<20)continue;
   // Keep tree patches in lower/mid slopes; thin out near the summit.
   if(seedRand()>.72)continue;
   const s=.7+seedRand()*.8;
@@ -144,11 +144,11 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
   dummy.position.set(x,y+2.85*s,z);dummy.scale.set(s,s,s);dummy.updateMatrix();crowns.setMatrixAt(trees,dummy.matrix);trees++;
  }
  trunks.count=trees;crowns.count=trees;trunks.instanceMatrix.needsUpdate=true;crowns.instanceMatrix.needsUpdate=true;scene.add(trunks,crowns);
- for(let i=0;i<5000&&stoneCount<620;i++){
-  const x=(seedRand()-.5)*340,z=3-seedRand()*285,y=mountainHeight(x,z+90);
-  if(y<1||y>112)continue;
+ for(let i=0;i<6500&&stoneCount<420;i++){
+  const x=(seedRand()-.5)*450,z=3-seedRand()*350,y=mountainHeight(x,z+90);
+  if(y<1||y>68)continue;
   const t=(3-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
-  if(Math.abs(x-trailX)<5)continue;
+  if(Math.abs(x-trailX)<17)continue;
   const s=.45+seedRand()*2.1;dummy.position.set(x,y+s*.35,z);dummy.rotation.set(seedRand()*2,seedRand()*Math.PI*2,seedRand()*2);dummy.scale.set(s*(.7+seedRand()*.7),s*(.45+seedRand()*.55),s*(.7+seedRand()*.7));dummy.updateMatrix();stones.setMatrixAt(stoneCount++,dummy.matrix);
  }
  stones.count=stoneCount;stones.instanceMatrix.needsUpdate=true;scene.add(stones);
