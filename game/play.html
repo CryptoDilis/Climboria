@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>window.__climbDiag=(m)=>{console.error('[Climboria diag]',m)};window.addEventListener('error',e=>window.__climbDiag('ERROR: '+e.message+' @ '+e.filename+':'+e.lineno));window.addEventListener('unhandledrejection',e=>window.__climbDiag('PROMISE REJECTION: '+String(e.reason)));</script>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
-const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x8da8bc);scene.fog=new THREE.Fog(0x8da8bc,55,180);
+const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0x9eb9c8);scene.fog=new THREE.Fog(0x9eb9c8,95,255);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,220);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.8;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
 scene.add(new THREE.HemisphereLight(0xd7eaff,0x5c5348,4.5));scene.add(new THREE.AmbientLight(0xffffff,1.25));
@@ -40,8 +40,8 @@ if(currentLevel==='01'){
 // Vast expedition mountain: scale the route across a long, winding ascent.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(900,900),mat(0x26382f));ground.rotation.x=-Math.PI/2;ground.position.y=-.35;ground.receiveShadow=true;scene.add(ground);
 function mountainHeight(x,z){const dz=(z+245)/285,dx=x/190,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const base=Math.pow(Math.max(0,1-r),.72)*145;const ridges=(Math.sin(x*.045+z*.026)+Math.sin(z*.038-x*.031))*5.5;return Math.max(-1,base+ridges)}
-const mountainGeo=new THREE.PlaneGeometry(390,570,150,220);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position;for(let i=0;i<mp.count;i++)mp.setY(i,mountainHeight(mp.getX(i),mp.getZ(i)));mountainGeo.computeVertexNormals();
-const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({color:0x68705a,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+const mountainGeo=new THREE.PlaneGeometry(390,570,150,220);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.025,c=new THREE.Color();if(h>88)c.setRGB(.78+n,.82+n,.84+n);else if(h>48)c.setRGB(.34+n,.38+n,.40+n);else if(h>20)c.setRGB(.29+n,.34+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
+const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Layered distant ranges make the mountain feel like a vast landscape.
 function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=Math.random();m.castShadow=true;scene.add(m)}
 for(let i=0;i<70;i++)addRidge((Math.random()-.5)*420,-100-Math.random()*330,12+Math.random()*27,25+Math.random()*65,i%4===0?0x77817c:0x53616a);
