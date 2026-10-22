@@ -97,6 +97,7 @@ const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertex
   if(bc[k]<45)boulders[k].setMatrixAt(bc[k]++,dummy.matrix);
  }
  boulders.forEach((m,i)=>{m.count=bc[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
+}
 // Remove the decorative backdrop ridge: it was a detached plane and read as a floating mountain.
 // Conservative mountain dressing: remove suspended upper-slope debris; place only modest boulders on lower slopes.
 {
