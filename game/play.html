@@ -32,6 +32,58 @@ const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
 scene.add(new THREE.HemisphereLight(0xdceeff,0x526044,1.55));scene.add(new THREE.AmbientLight(0xffffff,.28));
 const sun=new THREE.DirectionalLight(0xffe8c5,2.35);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
+scene.add(sun);
+// Level 1 weather cycle: 10 minutes per phase, with smooth visual transitions.
+const weatherEnabled=currentLevel==='01';
+const weatherClock={elapsed:0,phase:0,blend:0};
+const weatherPhases=[
+ {name:'CLEAR',sky:new THREE.Color(0xb8d0dc),fog:new THREE.Color(0xb8d0dc),near:155,far:470,sun:2.35,hemi:1.55,rain:0},
+ {name:'OVERCAST',sky:new THREE.Color(0x8799a0),fog:new THREE.Color(0x7c8c87),near:90,far:330,sun:1.35,hemi:1.05,rain:0},
+ {name:'RAIN',sky:new THREE.Color(0x53636b),fog:new THREE.Color(0x46554f),near:55,far:220,sun:.72,hemi:.72,rain:1},
+ {name:'DRIZZLE',sky:new THREE.Color(0x89999c),fog:new THREE.Color(0x74827b),near:100,far:350,sun:1.25,hemi:1.05,rain:.28}
+];
+const rainCount=new URLSearchParams(location.search).get('q')==='low'||/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?1800:5200;
+const rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
+let rainSeed=83471;const rainRand=()=>{rainSeed=(rainSeed*1664525+1013904223)>>>0;return rainSeed/4294967296};
+for(let i=0;i<rainCount;i++){rainPositions[i*3]=(rainRand()-.5)*95;rainPositions[i*3+1]=rainRand()*55;rainPositions[i*3+2]=(rainRand()-.5)*95}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+const rainUniforms={uTime:{value:0},uPlayer:{value:new THREE.Vector3()},uStrength:{value:0}};
+const rainMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:rainUniforms,vertexShader:`
+uniform float uTime; uniform vec3 uPlayer; uniform float uStrength;
+attribute vec3 position;
+varying float vFade;
+void main(){
+ vec3 p=position;
+ p.y=mod(p.y-uTime*24.0+55.0,55.0)-2.0;
+ p.x+=sin(uTime*0.7+p.z*.11)*1.7;
+ p.x+=uPlayer.x; p.z+=uPlayer.z;
+ vec4 mv=modelViewMatrix*vec4(p,1.0);
+ gl_Position=projectionMatrix*mv;
+ gl_PointSize=clamp(2.0*(-mv.z)/90.0,1.0,3.0);
+ vFade=uStrength*smoothstep(0.0,8.0,p.y+2.0);
+}`,fragmentShader:`
+varying float vFade;
+void main(){float streak=1.0-smoothstep(.22,.5,abs(gl_PointCoord.x-.5));float tip=smoothstep(0.0,.12,gl_PointCoord.y)*(1.0-smoothstep(.78,1.0,gl_PointCoord.y));gl_FragColor=vec4(.72,.84,.92,streak*tip*vFade*.52);}
+`});
+const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
+function smoothWeather(t){return t*t*(3-2*t)}
+function updateWeather(dt){
+ if(!weatherEnabled)return;
+ weatherClock.elapsed+=dt;
+ const phaseDuration=600,transition=22;
+ const absolute=weatherClock.elapsed/phaseDuration;
+ weatherClock.phase=Math.floor(absolute)%weatherPhases.length;
+ const local=weatherClock.elapsed%phaseDuration;
+ const from=weatherPhases[weatherClock.phase],to=weatherPhases[(weatherClock.phase+1)%weatherPhases.length];
+ const blend=local>phaseDuration-transition?smoothWeather((local-(phaseDuration-transition))/transition):0;
+ const mixColor=(a,b,t)=>a.clone().lerp(b,t);
+ scene.background=mixColor(from.sky,to.sky,blend);
+ if(scene.fog){scene.fog.color.copy(mixColor(from.fog,to.fog,blend));scene.fog.near=THREE.MathUtils.lerp(from.near,to.near,blend);scene.fog.far=THREE.MathUtils.lerp(from.far,to.far,blend)}
+ sun.intensity=THREE.MathUtils.lerp(from.sun,to.sun,blend);
+ rainUniforms.uTime.value+=dt;rainUniforms.uPlayer.value.set(player.position.x,0,player.position.z);
+ rainUniforms.uStrength.value=THREE.MathUtils.lerp(from.rain,to.rain,blend);
+ rain.visible=rainUniforms.uStrength.value>.015;
+}
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 // Cinematic distant mountain layers: muted silhouettes create depth behind the playable massif.
 function addFarRidge(z,baseY,peakScale,color,seed){const pts=[[-310,0],[-270,.22],[-228,.05],[-182,.72],[-132,.28],[-75,.88],[-22,.16],[38,.58],[95,.12],[154,.78],[212,.25],[268,.62],[315,0]];const verts=[];for(let i=0;i<pts.length-1;i++){const x0=pts[i][0],x1=pts[i+1][0],y0=baseY+pts[i][1]*peakScale,y1=baseY+pts[i+1][1]*peakScale;verts.push(x0,baseY,z,x1,baseY,z,x1,y1,z,x0,baseY,z,x1,y1,z,x0,y0,z)}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.computeVertexNormals();const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:true,opacity:.72,depthWrite:false}));m.position.x=seed;scene.add(m)}
@@ -300,7 +352,7 @@ if(quartermaster){const near=player.position.distanceTo(quartermaster.position)<
 const target=new THREE.Vector3(player.position.x,player.position.y+1.15,player.position.z);const horizontal=Math.cos(camPitch)*camDistance;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(camYaw)*horizontal,player.position.y+1.15+Math.sin(camPitch)*camDistance,player.position.z+Math.cos(camYaw)*horizontal);/* Keep the follow camera above the trailhead pasture, preventing terrain from swallowing the view. */desiredCam.y=Math.max(desiredCam.y,player.position.y+3.1);camera.position.lerp(desiredCam,1-Math.pow(.001,dt));camera.lookAt(target);attackCooldown=Math.max(0,attackCooldown-dt);
 }
 function clearSummit(){if(levelCleared)return;levelCleared=true;const level=String(currentLevel).padStart(2,'0');localStorage.setItem('climboria_completed_'+level,'true');paused=true;document.getElementById('toast').classList.add('show');document.getElementById('toastTitle').textContent='SUMMIT CLEARED!';document.getElementById('toastText').textContent='Expedition '+level+' complete. The next summit is now unlocked.';document.getElementById('resume').textContent='BACK TO EXPEDITIONS'}
-function loop(now){requestAnimationFrame(loop);const dt=Math.min(.035,(now-last)/1000||0);last=now;update(dt);renderer.render(scene,camera)}let last=performance.now();requestAnimationFrame(loop);
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.035,(now-last)/1000||0);last=now;update(dt);updateWeather(dt);renderer.render(scene,camera)}let last=performance.now();requestAnimationFrame(loop);
 
 // Desktop mouse controls: LMB pickup/interact, RMB tap attack, RMB drag orbit, wheel zoom.
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
