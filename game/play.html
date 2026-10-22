@@ -34,7 +34,7 @@ scene.add(new THREE.HemisphereLight(0xd7eaff,0x5c5348,4.5));scene.add(new THREE.
 const sun=new THREE.DirectionalLight(0xffe2b0,3.2);sun.position.set(-8,18,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
-const trailPlatforms=[];let terrainHeightAt=()=>-2;
+const trailPlatforms=[],cliffColliders=[];let terrainHeightAt=()=>-2;
 const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
 if(currentLevel==='01'){
 // Vast expedition mountain: scale the route across a long, winding ascent.
@@ -137,7 +137,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  // A few angular cliff outcrops frame the route without adding individual draw calls.
  const outcropGeo=new THREE.DodecahedronGeometry(1,1),outcropMat=mat(0x48535a,1);
  const outcrops=new THREE.InstancedMesh(outcropGeo,outcropMat,90);
- for(let i=0;i<90;i++){const z=-25-seedRand()*320,x=(seedRand()>.5?1:-1)*(30+seedRand()*58),y=mountainHeight(x,z+90);dummy.position.set(x,y+3,z);dummy.rotation.set(seedRand()*.8,seedRand()*Math.PI,seedRand()*.7);const s=4+seedRand()*8;dummy.scale.set(s*(.8+seedRand()),s*(1.5+seedRand()),s*(.65+seedRand()*.5));dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix)}
+ for(let i=0;i<90;i++){const z=-25-seedRand()*320,x=(seedRand()>.5?1:-1)*(30+seedRand()*58),y=mountainHeight(x,z+90);dummy.position.set(x,y+3,z);dummy.rotation.set(seedRand()*.8,seedRand()*Math.PI,seedRand()*.7);const s=4+seedRand()*8,sx=s*(.8+seedRand()),sy=s*(1.5+seedRand()),sz=s*(.65+seedRand()*.5);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix);cliffColliders.push({x,z,r:Math.max(sx,sz)*.72,y0:y,y1:y+sy*2.2})}
  outcrops.instanceMatrix.needsUpdate=true;scene.add(outcrops);
 }
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
@@ -259,7 +259,7 @@ vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*spee
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.y+=vel.y*dt;
 // Resolve horizontal movement against the actual height field: sample along the proposed step and block uphill penetration.
-const footClear=.22,stepRise=.8,probeCount=5;let blockedX=false,blockedZ=false;
+const footClear=.22,stepRise=.8,probeCount=5;let blockedX=false,blockedZ=false;const hitsCliff=(x,z)=>cliffColliders.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+.65&&player.position.y+1.7>o.y0&&player.position.y<o.y1);if(hitsCliff(nextX,nextZ)){blockedX=true;blockedZ=true;}
 for(let k=1;k<=probeCount;k++){const t=k/probeCount,tx=player.position.x+(nextX-player.position.x)*t,tz=player.position.z+(nextZ-player.position.z)*t,hy=terrainHeightAt(tx,tz+90);if(hy>player.position.y+footClear+stepRise){blockedX=true;blockedZ=true;break}}
 if(!blockedX&&!blockedZ){player.position.x=nextX;player.position.z=nextZ}else{
  const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);
