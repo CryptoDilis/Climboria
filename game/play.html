@@ -179,6 +179,34 @@ const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertex
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
 for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z+90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
+// Route dressing: readable switchback trail, weathered edge stones, trail markers, and a summit beacon.
+// These are visual props only; the existing trail platform colliders remain the traversal surface.
+const trailEdgeMat=new THREE.MeshStandardMaterial({color:0x817c70,roughness:1,flatShading:true});
+const markerCloth=new THREE.MeshStandardMaterial({color:0xd7b45e,roughness:.82,emissive:0x33220a,emissiveIntensity:.18});
+for(let i=0;i<route.length;i++){
+ const p=route[i];
+ if(p.w>3.5){
+  for(const side of [-1,1]){
+   const edge=new THREE.Mesh(new THREE.BoxGeometry(.38,.42,7.7),trailEdgeMat);
+   edge.position.set(p.x+side*(p.w*.5-.12),p.y+.12,p.z);
+   edge.rotation.y=Math.sin(i*.13)*.08;edge.castShadow=true;edge.receiveShadow=true;scene.add(edge);
+  }
+ }
+ if(i%15===0&&i>0){
+  const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.14,1.25,6),mat(0x4b3926));
+  post.position.set(p.x-p.w*.5-.45,p.y+.62,p.z);post.castShadow=true;scene.add(post);
+  const pennant=new THREE.Mesh(new THREE.ConeGeometry(.28,.58,3),markerCloth);
+  pennant.position.set(post.position.x+.2,p.y+1.12,p.z);pennant.rotation.z=-Math.PI/2;scene.add(pennant);
+ }
+}
+const summit=route[route.length-1];
+if(summit){
+ const beaconBase=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.7,.8,8),trailEdgeMat);
+ beaconBase.position.set(summit.x,summit.y+.4,summit.z);beaconBase.castShadow=true;scene.add(beaconBase);
+ const beacon=new THREE.PointLight(0xffd27a,2.2,24);beacon.position.set(summit.x,summit.y+3,summit.z);scene.add(beacon);
+ const crystal=new THREE.Mesh(new THREE.OctahedronGeometry(1.05),new THREE.MeshStandardMaterial({color:0xffd779,emissive:0xc58a25,emissiveIntensity:1.3,metalness:.25,roughness:.3}));
+ crystal.position.set(summit.x,summit.y+2.1,summit.z);crystal.castShadow=true;scene.add(crystal);
+}
 }else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
