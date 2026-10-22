@@ -275,12 +275,14 @@ vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*spee
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.y+=vel.y*dt;
 // Resolve horizontal movement against the actual height field: sample along the proposed step and block uphill penetration.
-const footClear=.22,maxWalkSlope=.72;let blocked=false;const hitsCliff=(x,z)=>cliffColliders.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+.65&&player.position.y+1.7>o.y0&&player.position.y<o.y1);
+const footClear=.22,maxWalkSlope=.72;let blocked=false;const hitsCliff=(x,z)=>cliffColliders.some(o=>{const dx=x-o.x,dz=z-o.z,dist=Math.hypot(dx,dz),vertical=player.position.y+1.7>o.y0&&player.position.y<o.y1;return dist<o.r+.65&&vertical});
+ // Main mountain is a solid surface: reject movement that would put the climber's body inside its mesh. The surface height must be sampled in mountain-local coordinates (mountain mesh is shifted z=-90).
 // Heightfield is in mountain-local Z; convert world Z (+90). Snap feet to gentle terrain, block abrupt/steep walls.
 const fromH=terrainHeightAt(player.position.x,player.position.z+90),toH=terrainHeightAt(nextX,nextZ+90),rise=toH-fromH;
 const gradX=(terrainHeightAt(nextX+.65,nextZ+90)-terrainHeightAt(nextX-.65,nextZ+90))/1.3,gradZ=(terrainHeightAt(nextX,nextZ+90+.65)-terrainHeightAt(nextX,nextZ+90-.65))/1.3,slope=Math.hypot(gradX,gradZ);
-if(hitsCliff(nextX,nextZ)||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)blocked=true;
-if(!blocked){player.position.x=nextX;player.position.z=nextZ;if(player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);if(!hitsCliff(nextX,player.position.z)&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
+const bodyBottom=player.position.y,bodyTop=player.position.y+1.8,insideMountain=toH>bodyBottom+.45&&toH<bodyTop-.1;
+ if(hitsCliff(nextX,nextZ)||insideMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)blocked=true;
+if(!blocked){player.position.x=nextX;player.position.z=nextZ;if(player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);if(!hitsCliff(nextX,player.position.z)&&!(hx>bodyBottom+.45&&hx<bodyTop-.1)&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&!(hz>bodyBottom+.45&&hz<bodyTop-.1)&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
 // Ground contact: never allow feet to sink beneath terrain.
 const terrainY=terrainHeightAt(player.position.x,player.position.z+90);if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
