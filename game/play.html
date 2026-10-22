@@ -39,13 +39,16 @@ const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01'
 if(currentLevel==='01'){
 // Vast expedition mountain: scale the route across a long, winding ascent.
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(900,900),mat(0x26382f));ground.rotation.x=-Math.PI/2;ground.position.y=-.35;ground.receiveShadow=true;scene.add(ground);
-function mountainHeight(x,z){const dz=(z+245)/285,dx=x/190,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const base=Math.pow(Math.max(0,1-r),.72)*145;const ridges=(Math.sin(x*.045+z*.026)+Math.sin(z*.038-x*.031))*5.5;return Math.max(-1,base+ridges)}
+function mountainHeight(x,z){const dz=(z+245)/285,dx=x/190,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const base=Math.pow(Math.max(0,1-r),.72)*158;const broad=Math.sin(x*.021+z*.014)*Math.sin(z*.019-x*.012)*12;const sharp=(Math.sin(x*.073+z*.041)+Math.sin(z*.061-x*.057))*4.8;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.82),1.7)*Math.max(0,Math.sin((z+390)*.012))*18;return Math.max(-1,base+broad+sharp+spine)}
 const mountainGeo=new THREE.PlaneGeometry(390,570,150,220);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.025,c=new THREE.Color();if(h>88)c.setRGB(.78+n,.82+n,.84+n);else if(h>48)c.setRGB(.34+n,.38+n,.40+n);else if(h>20)c.setRGB(.29+n,.34+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
 const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
-// Layered distant ranges make the mountain feel like a vast landscape.
-function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,7,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=Math.random();m.castShadow=true;scene.add(m)}
-for(let i=0;i<70;i++)addRidge((Math.random()-.5)*420,-100-Math.random()*330,12+Math.random()*27,25+Math.random()*65,i%4===0?0x77817c:0x53616a);
-const summit=new THREE.Mesh(new THREE.ConeGeometry(25,34,8),mat(0xe4edf0));summit.position.set(0,130,-350);summit.castShadow=true;scene.add(summit);
+// Grand layered ranges: serrated silhouettes behind the playable mountain, fading into atmospheric distance.
+function addRidge(x,z,r,h,c=0x53616a,segments=6){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,segments,2),mat(c));m.position.set(x,h*.42,z);m.rotation.y=(x*.17+z*.11)%6.28;m.castShadow=true;scene.add(m)}
+const farPalette=[0x718493,0x647987,0x536675,0x87959a];for(let band=0;band<3;band++){const z=-390-band*105,scale=1+band*.32;for(let i=0;i<17;i++){const x=-300+i*37+(band%2)*15,seed=Math.sin(i*12.71+band*8.3),h=(48+Math.abs(seed)*85)*scale,r=(20+Math.abs(Math.cos(i*4.3+band))*26)*scale;addRidge(x,z+Math.sin(i*2.1)*28,r,h,farPalette[(i+band)%farPalette.length],5+(i%3));}}
+// Broken snowy crown and angular shoulders.
+const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));summit.position.set(-8,143,-350);summit.rotation.z=-.08;summit.castShadow=true;scene.add(summit);addRidge(-31,-344,17,38,0xb9c9ce,5);addRidge(19,-359,20,42,0xe7eeee,6);
+// Upper-slope rock ribs, batched to keep draw calls low on mobile.
+{const ribGeo=new THREE.DodecahedronGeometry(1,1),ribMat=mat(0x48545a,1),ribs=new THREE.InstancedMesh(ribGeo,ribMat,115),o=new THREE.Object3D();let n=0;for(let i=0;i<520&&n<115;i++){const x=Math.sin(i*17.13)*135,z=-95-(i*1.71)%270,y=mountainHeight(x,z+90);if(y<28||y>118)continue;const s=2.8+(i%7)*.75;o.position.set(x,y+s*.15,z);o.rotation.set(Math.sin(i)*.7,i*1.91,Math.cos(i)*.5);o.scale.set(s*1.3,s*2.4,s*.8);o.updateMatrix();ribs.setMatrixAt(n++,o.matrix)}ribs.count=n;ribs.instanceMatrix.needsUpdate=true;scene.add(ribs)}
 // First mobile-friendly biome pass: instanced tall grass in lower meadows.
 // Keep a clear corridor around the winding trail; grass is decorative and has no collision.
 {
