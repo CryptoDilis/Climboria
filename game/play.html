@@ -256,10 +256,18 @@ function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||documen
 function update(dt){if(paused||levelCleared)return;const m=moveVec(),speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();const gait=Math.min(1,Math.hypot(m.x,m.z)*1.7)*(sprinting||keys.ShiftLeft?1.45:1);const stride=performance.now()*.009;leftLeg.rotation.x=Math.sin(stride)*.62*gait;rightLeg.rotation.x=-Math.sin(stride)*.62*gait;leftArm.rotation.x=-Math.sin(stride)*.48*gait;rightArm.rotation.x=Math.sin(stride)*.48*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=Math.sin(stride)*.42*gait;climbSkinRightLeg.rotation.x=-Math.sin(stride)*.42*gait;climbSkinLeftArm.rotation.x=-Math.sin(stride)*.3*gait;climbSkinRightArm.rotation.x=Math.sin(stride)*.3*gait;}if(Math.hypot(m.x,m.z)>.08)player.rotation.y=Math.atan2(-m.x,-m.z);
 vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*speed*dt,nextZ=player.position.z+m.z*speed*dt;
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
-player.position.x=nextX;player.position.z=nextZ;player.position.y+=vel.y*dt;
-// Terrain collision: mountain mesh is centered at z=-90, so convert world Z to its local height-map Z.
-const terrainY=mountainHeight(player.position.x,player.position.z+90);const bodyClearance=.18;
-if(terrainY>-1&&player.position.y<terrainY+bodyClearance){player.position.y=terrainY+bodyClearance;if(vel.y<0)vel.y=0;}
+player.position.y+=vel.y*dt;
+// Resolve horizontal movement against the actual height field: sample along the proposed step and block uphill penetration.
+const footClear=.22,stepRise=.8,probeCount=5;let blockedX=false,blockedZ=false;
+for(let k=1;k<=probeCount;k++){const t=k/probeCount,tx=player.position.x+(nextX-player.position.x)*t,tz=player.position.z+(nextZ-player.position.z)*t,hy=mountainHeight(tx,tz+90);if(hy>player.position.y+footClear+stepRise){blockedX=true;blockedZ=true;break}}
+if(!blockedX&&!blockedZ){player.position.x=nextX;player.position.z=nextZ}else{
+ const hx=mountainHeight(nextX,player.position.z+90),hz=mountainHeight(player.position.x,nextZ+90);
+ if(hx<=player.position.y+footClear+stepRise)player.position.x=nextX;
+ if(hz<=player.position.y+footClear+stepRise)player.position.z=nextZ;
+}
+// Keep the climber above terrain when landing; this also prevents vertical tunnelling through the height-map.
+const terrainY=mountainHeight(player.position.x,player.position.z+90);
+if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);document.getElementById('state').textContent='FELL · BACK TO TRAILHEAD'}
