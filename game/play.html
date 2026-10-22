@@ -72,7 +72,7 @@ const npcBadge=new THREE.Mesh(new THREE.OctahedronGeometry(.22),mat(0xf3c85c));n
 const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.95,4,8),mat(0xc98b50));body.position.y=1.05;body.castShadow=true;player.add(body);
 const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),mat(0xd7a477));head.position.y=1.82;player.add(head);
 const pack=new THREE.Mesh(new THREE.BoxGeometry(.42,.55,.22),mat(0x263d54));pack.position.set(0,1.1,.32);player.add(pack);
-player.position.set(0,0,3);
+player.position.set(0,.16,3);
 let paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false;
 function grab(){if(quartermaster&&player.position.distanceTo(quartermaster.position)<2.7){document.getElementById('campOverlay').classList.add('open');paused=true;document.getElementById('state').textContent='AT BASE CAMP'}}
 function jump(){if(player.position.y<.3)vel.y=7}
@@ -80,8 +80,8 @@ function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys
 function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||document.getElementById('mapPanel').hidden)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='#142536';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#526b7d';x.lineWidth=2;x.beginPath();x.moveTo(90,138);x.lineTo(90,18);x.stroke();x.strokeStyle='#8aa1b4';x.beginPath();x.moveTo(55,138);x.lineTo(70,105);x.lineTo(52,78);x.lineTo(88,48);x.lineTo(112,20);x.stroke();for(const p of trailPlatforms){const px=90+p.x*7,py=137-p.z*5.5;x.fillStyle='#9aa8a9';x.fillRect(px-4,py-3,8,6)}const px=90+player.position.x*7,py=137-player.position.y*5.5;x.fillStyle='#ffcf5a';x.beginPath();x.arc(px,Math.max(8,Math.min(142,py)),4,0,Math.PI*2);x.fill();x.strokeStyle='#ffcf5a';x.strokeRect(4,4,c.width-8,c.height-8)}
 function update(dt){if(paused||levelCleared)return;const m=moveVec(),speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();
 vel.y-=15*dt;const oldY=player.position.y;player.position.x+=m.x*speed*dt;player.position.z-=m.z*speed*dt;player.position.y+=vel.y*dt;
-let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.15&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
-if(player.position.z>4&&player.position.y<.2){player.position.y=0;vel.y=0;grounded=true}
+let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
+if(player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);document.getElementById('state').textContent='FELL · BACK TO TRAILHEAD'}
 player.position.x=Math.max(-12,Math.min(12,player.position.x));player.position.z=Math.max(-22,Math.min(8,player.position.z));if(player.position.z<-20&&player.position.y<.5){clearSummit();return}
 if(quartermaster){const near=player.position.distanceTo(quartermaster.position)<2.7;document.getElementById('campHint').classList.toggle('show',near&&!paused);if(campFireLight)campFireLight.intensity=2.5+Math.sin(performance.now()*.006)*.7;}stamina=Math.max(0,Math.min(100,stamina+7*dt));document.getElementById('staminaBar').style.width=stamina+'%';document.getElementById('healthBar').style.width=(health/500*100)+'%';document.getElementById('healthValue').textContent=Math.round(health)+' / 500';document.getElementById('staminaValue').textContent=Math.round(stamina)+' / 100';document.getElementById('strengthValue').textContent=strength;document.getElementById('altitude').textContent=Math.round(player.position.y*5)+' m';
