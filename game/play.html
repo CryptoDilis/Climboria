@@ -95,32 +95,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  batches.forEach((m,i)=>{m.count=counts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
 }
 // Upper-slope rock ribs disabled: their independent meshes read as floating debris.
-// First mobile-friendly biome pass: instanced tall grass in lower meadows.
-// Keep a clear corridor around the winding trail; grass is decorative and has no collision.
-{
- const grassGeo=new THREE.ConeGeometry(.11,1.05,3,1);
- grassGeo.translate(0,.52,0);
- const grassMat=new THREE.MeshStandardMaterial({color:0x6f9650,roughness:1,side:THREE.DoubleSide});
- const grass=new THREE.InstancedMesh(grassGeo,grassMat,2400);
- grass.frustumCulled=false;
- const dummy=new THREE.Object3D();
- let placed=0,seed=8417;
- const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let n=0;n<9000&&placed<2400;n++){
-  const x=(rand()-.5)*300,z=5-rand()*230;
-  const y=mountainHeight(x,z+90);
-  if(y<0||y>48)continue;
-  const t=(5-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
-  if(Math.abs(x-trailX)<9)continue;
-  dummy.position.set(x,y-.05,z);
-  dummy.rotation.set((rand()-.5)*.18,rand()*Math.PI*2,(rand()-.5)*.18);
-  const s=.55+rand()*.95;dummy.scale.set(s,s*(.75+rand()*.8),s);
-  dummy.updateMatrix();grass.setMatrixAt(placed++,dummy.matrix);
- }
- grass.count=placed;grass.instanceMatrix.needsUpdate=true;scene.add(grass);
-}
-// Meadow scatter temporarily disabled: heightfield/mesh transforms were producing visibly airborne trees and stones.
-// Reintroduce terrain props only after placement is sampled from the rendered world-space mesh.
+// Remove the remaining airborne-looking grass spears from the distant mountain; retain meadow ground texture.
 // Cinematic pasture dressing across the whole expedition: soft cloud banks, meadow flowers and distant grazing silhouettes.
 {
  const cloudGeo=new THREE.SphereGeometry(1,10,7),cloudMat=new THREE.MeshStandardMaterial({color:0xe2e8e6,roughness:1,transparent:true,opacity:.58,depthWrite:false});
