@@ -339,18 +339,50 @@ function ensureAudio(){
  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
  if(!musicStarted&&audioCtx.state!=='closed'){
   musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // Original synthesized mountain theme: gentle repeating melody over a low drone.
-  const notes=[220,261.63,329.63,392,329.63,261.63,196,246.94];
-  const melody=ctx.createOscillator(),melodyGain=ctx.createGain(),filter=ctx.createBiquadFilter();
-  melody.type='triangle';melody.frequency.value=notes[0];filter.type='lowpass';filter.frequency.value=950;
-  melodyGain.gain.value=.0001;melody.connect(filter);filter.connect(melodyGain);melodyGain.connect(master);melody.start();
-  const drone=ctx.createOscillator(),droneGain=ctx.createGain();drone.type='sine';drone.frequency.value=110;droneGain.gain.value=.0001;drone.connect(droneGain);droneGain.connect(master);drone.start();
-  audioCtx.musicGain=melodyGain;audioCtx.droneGain=droneGain;
-  let step=0;const schedule=()=>{if(!audioCtx||audioCtx.state==='closed')return;const now=ctx.currentTime;melody.frequency.setTargetAtTime(notes[step%notes.length],now,.025);melodyGain.gain.setTargetAtTime(.055*audioSettings.music,now,.03);droneGain.gain.setTargetAtTime(.045*audioSettings.music,now,.2);step++;setTimeout(schedule,720)};schedule();
+  // Original fantasy-adventure arrangement: sustained harmonized strings, bass, and a lilting melody.
+  const chords=[
+   [146.83,220,293.66], // D minor
+   [130.81,196,261.63], // C
+   [110,164.81,220],    // A minor
+   [123.47,185,246.94] // B diminished-ish color
+  ];
+  const chordBus=ctx.createGain();chordBus.gain.value=.34;chordBus.connect(master);
+  const padFilter=ctx.createBiquadFilter();padFilter.type='lowpass';padFilter.frequency.value=1250;padFilter.connect(chordBus);
+  const pads=[];
+  chords[0].forEach((hz,i)=>{
+   const osc=ctx.createOscillator(),osc2=ctx.createOscillator(),g=ctx.createGain(),vib=ctx.createOscillator(),vg=ctx.createGain();
+   osc.type='sawtooth';osc.frequency.value=hz;osc2.type='triangle';osc2.frequency.value=hz*1.004;
+   vib.frequency.value=.18+i*.04;vg.gain.value=.8;vib.connect(vg);vg.connect(osc.frequency);
+   g.gain.value=.0001;osc.connect(g);osc2.connect(g);g.connect(padFilter);osc.start();osc2.start();vib.start();pads.push({osc,osc2,g});
+  });
+  const bass=ctx.createOscillator(),bassGain=ctx.createGain();bass.type='sine';bass.frequency.value=73.42;bassGain.gain.value=.0001;bass.connect(bassGain);bassGain.connect(master);bass.start();
+  const lead=ctx.createOscillator(),leadGain=ctx.createGain(),leadFilter=ctx.createBiquadFilter();lead.type='triangle';leadFilter.type='lowpass';leadFilter.frequency.value=1800;lead.connect(leadFilter);leadFilter.connect(leadGain);leadGain.connect(master);leadGain.gain.value=.0001;lead.start();
+  const pluck=ctx.createOscillator(),pluckGain=ctx.createGain(),pluckFilter=ctx.createBiquadFilter();pluck.type='triangle';pluckFilter.type='lowpass';pluckFilter.frequency.value=2400;pluck.connect(pluckFilter);pluckFilter.connect(pluckGain);pluckGain.connect(master);pluckGain.gain.value=.0001;pluck.start();
+  audioCtx.fantasyMusic={pads,bass,bassGain,lead,leadGain,pluck,pluckGain};
+  const progression=[0,1,2,3,0,1,2,2],melody=[293.66,349.23,392,440,392,349.23,329.63,293.66,261.63,293.66,329.63,392,349.23,329.63,293.66,220];
+  let beat=0;
+  const tick=()=>{
+   if(!audioCtx||audioCtx.state==='closed')return;
+   const now=ctx.currentTime,mi=beat%melody.length,ci=progression[Math.floor(beat/4)%progression.length],ch=chords[ci];
+   pads.forEach((p,i)=>{p.osc.frequency.setTargetAtTime(ch[i],now,.32);p.osc2.frequency.setTargetAtTime(ch[i]*1.003,now,.32);p.g.gain.setTargetAtTime(.035*audioSettings.music,now,.35)});
+   bass.frequency.setTargetAtTime(ch[0]/2,now,.3);bassGain.gain.setTargetAtTime(.11*audioSettings.music,now,.25);
+   lead.frequency.setTargetAtTime(melody[mi],now,.04);leadGain.gain.setTargetAtTime((beat%2===0?.10:.055)*audioSettings.music,now,.04);
+   pluck.frequency.setTargetAtTime(ch[(beat%3)+0] * (beat%2?2:1),now,.01);pluckGain.gain.setTargetAtTime((beat%2===0?.035:.018)*audioSettings.music,now,.025);pluckGain.gain.setTargetAtTime(.0001,now+.24,.08);
+   beat++;setTimeout(tick,600);
+  };tick();
+ }
  }
  applyAudioVolumes();
 }
-function applyAudioVolumes(){if(!audioCtx?.masterGain)return;audioCtx.masterGain.gain.setTargetAtTime(audioSettings.muted?0:1,audioCtx.currentTime,.06);if(audioCtx.musicGain)audioCtx.musicGain.gain.setTargetAtTime(.12*audioSettings.music,audioCtx.currentTime,.12);if(audioCtx.droneGain)audioCtx.droneGain.gain.setTargetAtTime(.08*audioSettings.music,audioCtx.currentTime,.12)}
+function applyAudioVolumes(){
+ if(!audioCtx?.masterGain)return;
+ audioCtx.masterGain.gain.setTargetAtTime(audioSettings.muted?0:1,audioCtx.currentTime,.06);
+ const m=audioCtx.fantasyMusic;if(!m)return;
+ m.pads.forEach(p=>p.g.gain.setTargetAtTime(.035*audioSettings.music,audioCtx.currentTime,.15));
+ m.bassGain.gain.setTargetAtTime(.11*audioSettings.music,audioCtx.currentTime,.15);
+ m.leadGain.gain.setTargetAtTime(.075*audioSettings.music,audioCtx.currentTime,.15);
+}
+
 function synthSfx(kind){
  ensureAudio();if(!audioCtx||audioCtx.state!=='running'||audioSettings.muted||audioSettings.sfx<=0)return;
  if(!audioCtx||audioSettings.muted||audioSettings.sfx<=0)return;
