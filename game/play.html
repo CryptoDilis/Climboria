@@ -55,12 +55,12 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  const grassGeo=new THREE.ConeGeometry(.11,1.05,3,1);
  grassGeo.translate(0,.52,0);
  const grassMat=new THREE.MeshStandardMaterial({color:0x6f9650,roughness:1,side:THREE.DoubleSide});
- const grass=new THREE.InstancedMesh(grassGeo,grassMat,720);
+ const grass=new THREE.InstancedMesh(grassGeo,grassMat,2400);
  grass.frustumCulled=false;
  const dummy=new THREE.Object3D();
  let placed=0,seed=8417;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let n=0;n<2600&&placed<720;n++){
+ for(let n=0;n<9000&&placed<2400;n++){
   const x=(rand()-.5)*300,z=5-rand()*230;
   const y=mountainHeight(x,z+90);
   if(y<0||y>48)continue;
@@ -79,11 +79,11 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  const trunkGeo=new THREE.CylinderGeometry(.16,.24,2.2,5);
  const crownGeo=new THREE.ConeGeometry(1.25,3.4,6,1);
  const trunkMat=mat(0x51402d),crownMat=new THREE.MeshStandardMaterial({color:0x31543b,roughness:1,flatShading:true});
- const trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,180),crowns=new THREE.InstancedMesh(crownGeo,crownMat,180);
+ const trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,340),crowns=new THREE.InstancedMesh(crownGeo,crownMat,340);
  const rockGeo=new THREE.DodecahedronGeometry(1,0),rockMat=mat(0x59615e,1);
- const stones=new THREE.InstancedMesh(rockGeo,rockMat,360);
+ const stones=new THREE.InstancedMesh(rockGeo,rockMat,620);
  const dummy=new THREE.Object3D();let trees=0,stoneCount=0;
- for(let i=0;i<1800&&trees<180;i++){
+ for(let i=0;i<4200&&trees<340;i++){
   const x=(seedRand()-.5)*290,z=4-seedRand()*220;
   const y=mountainHeight(x,z+90);
   if(y<3||y>34)continue;
@@ -96,7 +96,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
   dummy.position.set(x,y+2.85*s,z);dummy.scale.set(s,s,s);dummy.updateMatrix();crowns.setMatrixAt(trees,dummy.matrix);trees++;
  }
  trunks.count=trees;crowns.count=trees;trunks.instanceMatrix.needsUpdate=true;crowns.instanceMatrix.needsUpdate=true;scene.add(trunks,crowns);
- for(let i=0;i<2400&&stoneCount<360;i++){
+ for(let i=0;i<5000&&stoneCount<620;i++){
   const x=(seedRand()-.5)*340,z=3-seedRand()*285,y=mountainHeight(x,z+90);
   if(y<1||y>112)continue;
   const t=(3-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
@@ -110,8 +110,8 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  const water=new THREE.Mesh(new THREE.CircleGeometry(11.5,40),new THREE.MeshStandardMaterial({color:0x477f91,roughness:.22,metalness:.12,transparent:true,opacity:.88}));water.rotation.x=-Math.PI/2;water.position.set(lakeX,lakeY,lakeZ);scene.add(water);
  // A few angular cliff outcrops frame the route without adding individual draw calls.
  const outcropGeo=new THREE.DodecahedronGeometry(1,1),outcropMat=mat(0x48535a,1);
- const outcrops=new THREE.InstancedMesh(outcropGeo,outcropMat,48);
- for(let i=0;i<48;i++){const z=-35-seedRand()*290,x=(seedRand()>.5?1:-1)*(34+seedRand()*42),y=mountainHeight(x,z+90);dummy.position.set(x,y+2,z);dummy.rotation.set(seedRand(),seedRand()*Math.PI,seedRand());dummy.scale.set(3+seedRand()*6,4+seedRand()*10,3+seedRand()*5);dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix)}
+ const outcrops=new THREE.InstancedMesh(outcropGeo,outcropMat,90);
+ for(let i=0;i<90;i++){const z=-25-seedRand()*320,x=(seedRand()>.5?1:-1)*(30+seedRand()*58),y=mountainHeight(x,z+90);dummy.position.set(x,y+3,z);dummy.rotation.set(seedRand()*.8,seedRand()*Math.PI,seedRand()*.7);const s=4+seedRand()*8;dummy.scale.set(s*(.8+seedRand()),s*(1.5+seedRand()),s*(.65+seedRand()*.5));dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix)}
  outcrops.instanceMatrix.needsUpdate=true;scene.add(outcrops);
 }
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
