@@ -332,17 +332,27 @@ const audioSettings={music:.28,sfx:.7,muted:false};
 try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0;
 function ensureAudio(){
- if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();const master=audioCtx.createGain();master.gain.value=audioSettings.muted?0:1;master.connect(audioCtx.destination);audioCtx.masterGain=master}
+ if(!audioCtx){
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC){console.warn('Web Audio API unavailable');return}
+  audioCtx=new AC();const master=audioCtx.createGain();master.gain.value=audioSettings.muted?0:1;master.connect(audioCtx.destination);audioCtx.masterGain=master;
+ }
  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
- if(!musicStarted){musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // Soft, original mountain-atmosphere drone: layered fifths with slow modulation.
-  [110,164.81,220].forEach((hz,i)=>{const o=ctx.createOscillator(),g=ctx.createGain(),lfo=ctx.createOscillator(),lg=ctx.createGain();o.type=i===1?'triangle':'sine';o.frequency.value=hz;lfo.frequency.value=.07+i*.025;lg.gain.value=2+i*.5;lfo.connect(lg);lg.connect(o.frequency);g.gain.value=.025/(i+1);o.connect(g);g.connect(master);o.start();lfo.start();musicNodes.push(o,lfo)});
-  const shimmer=ctx.createOscillator(),sg=ctx.createGain();shimmer.type='sine';shimmer.frequency.value=329.63;sg.gain.value=.008;shimmer.connect(sg);sg.connect(master);shimmer.start();musicNodes.push(shimmer);
+ if(!musicStarted&&audioCtx.state!=='closed'){
+  musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
+  // Original synthesized mountain theme: gentle repeating melody over a low drone.
+  const notes=[220,261.63,329.63,392,329.63,261.63,196,246.94];
+  const melody=ctx.createOscillator(),melodyGain=ctx.createGain(),filter=ctx.createBiquadFilter();
+  melody.type='triangle';melody.frequency.value=notes[0];filter.type='lowpass';filter.frequency.value=950;
+  melodyGain.gain.value=.0001;melody.connect(filter);filter.connect(melodyGain);melodyGain.connect(master);melody.start();
+  const drone=ctx.createOscillator(),droneGain=ctx.createGain();drone.type='sine';drone.frequency.value=110;droneGain.gain.value=.0001;drone.connect(droneGain);droneGain.connect(master);drone.start();
+  audioCtx.musicGain=melodyGain;audioCtx.droneGain=droneGain;
+  let step=0;const schedule=()=>{if(!audioCtx||audioCtx.state==='closed')return;const now=ctx.currentTime;melody.frequency.setTargetAtTime(notes[step%notes.length],now,.025);melodyGain.gain.setTargetAtTime(.055*audioSettings.music,now,.03);droneGain.gain.setTargetAtTime(.045*audioSettings.music,now,.2);step++;setTimeout(schedule,720)};schedule();
  }
  applyAudioVolumes();
 }
-function applyAudioVolumes(){if(audioCtx?.masterGain)audioCtx.masterGain.gain.setTargetAtTime(audioSettings.muted?0:1,audioCtx.currentTime,.06);if(audioCtx)musicNodes.forEach(n=>{if(n.gain)n.gain.setTargetAtTime(audioSettings.music*.22,audioCtx.currentTime,.2)})}
+function applyAudioVolumes(){if(!audioCtx?.masterGain)return;audioCtx.masterGain.gain.setTargetAtTime(audioSettings.muted?0:1,audioCtx.currentTime,.06);if(audioCtx.musicGain)audioCtx.musicGain.gain.setTargetAtTime(.12*audioSettings.music,audioCtx.currentTime,.12);if(audioCtx.droneGain)audioCtx.droneGain.gain.setTargetAtTime(.08*audioSettings.music,audioCtx.currentTime,.12)}
 function synthSfx(kind){
+ ensureAudio();if(!audioCtx||audioCtx.state!=='running'||audioSettings.muted||audioSettings.sfx<=0)return;
  if(!audioCtx||audioSettings.muted||audioSettings.sfx<=0)return;
  const c=audioCtx,t=c.currentTime,g=c.createGain();g.gain.setValueAtTime(Math.max(.001,audioSettings.sfx*.22),t);g.gain.exponentialRampToValueAtTime(.001,t+(kind==='step'?.12:.38));g.connect(c.masterGain);
  if(kind==='step'||kind==='land'||kind==='hit'){const n=c.createBufferSource(),buf=c.createBuffer(1,Math.floor(c.sampleRate*(kind==='step'?.08:.22)),c.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);n.buffer=buf;const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=kind==='step'?240:kind==='land'?520:1100;n.connect(f);f.connect(g);n.start(t)}
@@ -359,7 +369,7 @@ function bindAudioSettings(){
  document.getElementById('audioMute').onclick=e=>{audioSettings.muted=!audioSettings.muted;e.currentTarget.textContent=audioSettings.muted?'Unmute all':'Mute all';ensureAudio();applyAudioVolumes()};
  async function refreshWalletStatus(){const p=window.solana;if(p?.isPhantom){try{const r=await p.connect({onlyIfTrusted:true});status.textContent='Connected: '+r.publicKey.toString().slice(0,4)+'…'+r.publicKey.toString().slice(-4);document.getElementById('walletConnect').textContent='Connected'}catch{status.textContent='Phantom available · not connected'}}else status.textContent='No supported Solana wallet detected · connection optional'}
  document.getElementById('walletConnect').onclick=async()=>{const p=window.solana;if(!p?.isPhantom){status.textContent='Install or enable a Solana wallet extension to connect.';return}try{const r=await p.connect();const key=r.publicKey.toString();status.textContent='Connected: '+key.slice(0,4)+'…'+key.slice(-4);document.getElementById('walletConnect').textContent='Connected'}catch(e){status.textContent='Wallet connection cancelled or failed.'}};
- addEventListener('pointerdown',()=>{if(!audioCtx)ensureAudio()},{once:true});addEventListener('keydown',()=>{if(!audioCtx)ensureAudio()},{once:true});
+ addEventListener('pointerdown',()=>ensureAudio());addEventListener('keydown',()=>ensureAudio());
 }
 bindAudioSettings();
 function grab(){if(quartermaster&&player.position.distanceTo(quartermaster.position)<2.7){document.getElementById('campOverlay').classList.add('open');paused=true;document.getElementById('state').textContent='AT BASE CAMP'}}
