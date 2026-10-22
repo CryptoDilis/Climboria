@@ -86,7 +86,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
  for(let i=0;i<900;i++){
   const x=(rand()-.5)*280,z=-35-rand()*310,y=mountainHeight(x,z+90);
-  if(y<8||y>76)continue;
+  if(y<0||y>2.5)continue;
   const k=rand()<.18?2:(rand()<.45?1:0),q=1.1+rand()*2.2;
   d.position.set(x,y+90-q*.38,z);d.rotation.set(0,rand()*Math.PI*2,0);
   d.scale.set(q*(.8+rand()*.45),q*(.65+rand()*.45),q*(.8+rand()*.45));d.updateMatrix();
@@ -132,7 +132,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  for(let i=0;i<5200&&trees<240;i++){
   const x=(seedRand()-.5)*420,z=4-seedRand()*335;
   const y=mountainHeight(x,z+90);
-  if(y<3||y>30)continue;
+  if(y<0||y>2.5)continue;
   const t=(4-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
   if(Math.abs(x-trailX)<20)continue;
   // Keep tree patches in lower/mid slopes; thin out near the summit.
@@ -144,7 +144,7 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  trunks.count=trees;crowns.count=trees;trunks.instanceMatrix.needsUpdate=true;crowns.instanceMatrix.needsUpdate=true;scene.add(trunks,crowns);
  for(let i=0;i<6500&&stoneCount<420;i++){
   const x=(seedRand()-.5)*450,z=3-seedRand()*350,y=mountainHeight(x,z+90);
-  if(y<1||y>68)continue;
+  if(y<0||y>2.5)continue;
   const t=(3-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;
   if(Math.abs(x-trailX)<17)continue;
   const s=.45+seedRand()*2.1;dummy.position.set(x,y+s*.35,z);dummy.rotation.set(seedRand()*2,seedRand()*Math.PI*2,seedRand()*2);dummy.scale.set(s*(.7+seedRand()*.7),s*(.45+seedRand()*.55),s*(.7+seedRand()*.7));dummy.updateMatrix();stones.setMatrixAt(stoneCount++,dummy.matrix);
@@ -199,6 +199,26 @@ const stones=campMesh(new THREE.TorusGeometry(.65,.12,6,12),rock,0,.18,7.8);ston
 for(let i=0;i<5;i++){const flame=campMesh(new THREE.ConeGeometry(.16+i*.025,.65+i*.12,5),mat(i%2?0xff8a35:0xffc85a),Math.sin(i*2)*.2,.55+i*.04,7.8+Math.cos(i*2)*.2);flame.material.emissive=new THREE.Color(0xff5b12);flame.material.emissiveIntensity=1.3}
 campFireLight=new THREE.PointLight(0xff8b3d,3,12);campFireLight.position.set(0,1.2,7.8);scene.add(campFireLight);
 quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(quartermaster);
+ // Quartermaster's trading wagon and compact forge station: visible camp props, grouped beside NPC.
+ const cartWood=mat(0x704522),cartIron=mat(0x303b43),goodsMat=mat(0xb18a4d),forgeGlow=mat(0xff7133);
+ function campProp(g,m,x,y,z,par=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;par.add(o);return o}
+ // Handcart with timber bed, handles, axle and two chunky wheels.
+ const cart=new THREE.Group();cart.position.set(-5.3,0,1.8);cart.rotation.y=-.35;scene.add(cart);
+ campProp(new THREE.BoxGeometry(2.35,.22,1.35),cartWood,0,.75,0,cart);
+ campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,-.62,cart);
+ campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,.62,cart);
+ campProp(new THREE.CylinderGeometry(.09,.09,1.5,8),cartIron,0,.48,0,cart).rotation.z=Math.PI/2;
+ for(const x of [-.82,.82]){const wheel=campProp(new THREE.TorusGeometry(.43,.11,8,14),cartIron,x,.48,0,cart);wheel.rotation.y=Math.PI/2}
+ for(let i=0;i<5;i++){const sack=campProp(new THREE.SphereGeometry(.28,8,6),goodsMat,-.72+(i%3)*.62,1.12+(i%2)*.12,-.2+(i%2)*.38,cart);sack.scale.set(1,.8,1)}
+ campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-1.55,.45,0,cart);campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-2.25,.45,0,cart);
+ // Forge anvil, stone hearth and warm ember bowl.
+ const forge=new THREE.Group();forge.position.set(4.5,0,-1.8);scene.add(forge);
+ campProp(new THREE.BoxGeometry(1.5,.65,1.25),rock,0,.34,0,forge);
+ campProp(new THREE.BoxGeometry(.75,.22,.42),cartIron,0,.82,0,forge);
+ campProp(new THREE.CylinderGeometry(.42,.55,.45,8),cartIron,.0,.93,.65,forge);
+ const ember=campProp(new THREE.SphereGeometry(.28,8,6),forgeGlow,0,1.18,.65,forge);ember.material.emissive=new THREE.Color(0xff4c12);ember.material.emissiveIntensity=1.7;
+ const forgeLight=new THREE.PointLight(0xff6b2d,1.6,7);forgeLight.position.set(0,1.5,.65);forge.add(forgeLight);
+
 const npcBody=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.85,4,8),mat(0x426b79));npcBody.position.y=1;quartermaster.add(npcBody);
 const npcHead=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),mat(0xc88e65));npcHead.position.y=1.72;quartermaster.add(npcHead);
 const npcPack=new THREE.Mesh(new THREE.BoxGeometry(.5,.55,.25),mat(0x8b5b2c));npcPack.position.set(0,1.05,.32);quartermaster.add(npcPack);
@@ -286,7 +306,7 @@ let paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys=
 function grab(){if(quartermaster&&player.position.distanceTo(quartermaster.position)<2.7){document.getElementById('campOverlay').classList.add('open');paused=true;document.getElementById('state').textContent='AT BASE CAMP'}}
 function jump(){if(player.position.y<.3)vel.y=7}
 function attack(){if(paused||attackCooldown>0)return;attackCooldown=.42;body.rotation.x=-.65;setTimeout(()=>{body.rotation.x=0},140);document.getElementById('state').textContent='SWING';}
-function pickup(){grab()}
+function pickup(){/* World clicks never open NPC dialogue; interaction is proximity-gated by E/TALK only. */}
 function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys.KeyS?1:0);x+=touchMove.x;z+=touchMove.y;const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}/* Camera-relative: W follows the horizontal direction the camera faces. */const cy=Math.cos(camYaw),sy=Math.sin(camYaw);return{x:x*cy-z*sy,z:-x*sy-z*cy}}
 function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||document.getElementById('mapPanel').hidden)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='#142536';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#526b7d';x.lineWidth=2;x.beginPath();x.moveTo(90,138);x.lineTo(90,18);x.stroke();x.strokeStyle='#8aa1b4';x.beginPath();x.moveTo(55,138);x.lineTo(70,105);x.lineTo(52,78);x.lineTo(88,48);x.lineTo(112,20);x.stroke();for(const p of trailPlatforms){const px=90+p.x*7,py=137-p.z*5.5;x.fillStyle='#9aa8a9';x.fillRect(px-4,py-3,8,6)}const px=90+player.position.x*7,py=137-player.position.y*5.5;x.fillStyle='#ffcf5a';x.beginPath();x.arc(px,Math.max(8,Math.min(142,py)),4,0,Math.PI*2);x.fill();x.strokeStyle='#ffcf5a';x.strokeRect(4,4,c.width-8,c.height-8)}
 function update(dt){if(paused||levelCleared)return;const m=moveVec(),speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();const gait=Math.min(1,Math.hypot(m.x,m.z)*1.7)*(sprinting||keys.ShiftLeft?1.45:1);const stride=performance.now()*.009;leftLeg.rotation.x=Math.sin(stride)*.62*gait;rightLeg.rotation.x=-Math.sin(stride)*.62*gait;leftArm.rotation.x=-Math.sin(stride)*.48*gait;rightArm.rotation.x=Math.sin(stride)*.48*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=Math.sin(stride)*.42*gait;climbSkinRightLeg.rotation.x=-Math.sin(stride)*.42*gait;climbSkinLeftArm.rotation.x=-Math.sin(stride)*.3*gait;climbSkinRightArm.rotation.x=Math.sin(stride)*.3*gait;}if(Math.hypot(m.x,m.z)>.08)player.rotation.y=Math.atan2(-m.x,-m.z);
@@ -320,7 +340,7 @@ renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 renderer.domElement.style.touchAction='none';
 renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){if(e.button===2){orbiting=true;lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}}else{orbiting=true;lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}});
 renderer.domElement.addEventListener('pointermove',e=>{if(!orbiting)return;const dx=e.clientX-lastPointer.x,dy=e.clientY-lastPointer.y;lastPointer={x:e.clientX,y:e.clientY};camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045))});
-renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0)pickup();if(e.pointerType==='mouse'&&e.button===2){const moved=Math.abs(e.clientX-lastPointer.x)+Math.abs(e.clientY-lastPointer.y);if(moved<5)attack()}orbiting=false});
+renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===2){const moved=Math.abs(e.clientX-lastPointer.x)+Math.abs(e.clientY-lastPointer.y);if(moved<5)attack()}orbiting=false});
 renderer.domElement.addEventListener('pointercancel',()=>orbiting=false);
 renderer.domElement.addEventListener('wheel',e=>{camDistance=Math.max(3.5,Math.min(18,camDistance+Math.sign(e.deltaY)*.8));e.preventDefault()},{passive:false});
 
