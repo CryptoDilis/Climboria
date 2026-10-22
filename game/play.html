@@ -140,6 +140,21 @@ const summit=new THREE.Mesh(new THREE.ConeGeometry(31,49,7,2),mat(0xdce7e8));sum
  for(let i=0;i<90;i++){const z=-25-seedRand()*320,x=(seedRand()>.5?1:-1)*(30+seedRand()*58),y=mountainHeight(x,z+90);dummy.position.set(x,y+3,z);dummy.rotation.set(seedRand()*.8,seedRand()*Math.PI,seedRand()*.7);const s=4+seedRand()*8,sx=s*(.8+seedRand()),sy=s*(1.5+seedRand()),sz=s*(.65+seedRand()*.5);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix);cliffColliders.push({x,z,r:Math.max(sx,sz)*.72,y0:y,y1:y+sy*2.2})}
  outcrops.instanceMatrix.needsUpdate=true;scene.add(outcrops);
 }
+// Cinematic pasture dressing across the whole expedition: soft cloud banks, meadow flowers and distant grazing silhouettes.
+{
+ const cloudGeo=new THREE.SphereGeometry(1,10,7),cloudMat=new THREE.MeshStandardMaterial({color:0xe2e8e6,roughness:1,transparent:true,opacity:.58,depthWrite:false});
+ const clouds=new THREE.InstancedMesh(cloudGeo,cloudMat,54),o=new THREE.Object3D();let n=0;
+ for(let band=0;band<3;band++)for(let i=0;i<18;i++){const x=-260+i*31+(band%2)*13,z=-85-band*125+Math.sin(i*1.8)*20,y=94+band*19+Math.sin(i*2.3)*8,s=7+(i%5)*2.4;o.position.set(x,y,z);o.scale.set(s*1.8,s*.48,s*.75);o.rotation.y=i*.27;o.updateMatrix();clouds.setMatrixAt(n++,o.matrix)}
+ clouds.count=n;clouds.instanceMatrix.needsUpdate=true;scene.add(clouds);
+ const flowerStem=new THREE.CylinderGeometry(.025,.035,.34,4),flowerHead=new THREE.SphereGeometry(.095,6,5),stemMat=mat(0x496b3a),petalMat=new THREE.MeshStandardMaterial({color:0xd9c4a1,roughness:1});
+ const stems=new THREE.InstancedMesh(flowerStem,stemMat,520),heads=new THREE.InstancedMesh(flowerHead,petalMat,520);let f=0,fs=7721;const fr=()=>{fs=(fs*1664525+1013904223)>>>0;return fs/4294967296};
+ for(let i=0;i<520;i++){const x=(fr()-.5)*250,z=4-fr()*215,y=mountainHeight(x,z+90);if(y<0||y>20)continue;const t=(4-z)/365,trailX=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;if(Math.abs(x-trailX)<10)continue;o.position.set(x,y+.16,z);o.rotation.set(0,fr()*6.28,(fr()-.5)*.2);o.scale.set(1,1,1);o.updateMatrix();stems.setMatrixAt(f,o.matrix);o.position.y+=.34;o.scale.set(1.2,1,.8);o.updateMatrix();heads.setMatrixAt(f++,o.matrix)}
+ stems.count=f;heads.count=f;stems.instanceMatrix.needsUpdate=true;heads.instanceMatrix.needsUpdate=true;scene.add(stems,heads);
+ // Small distant grazing-herd silhouettes on the valley floor, deliberately subtle at gameplay distance.
+ const animalGeo=new THREE.SphereGeometry(1,7,5),animalMat=mat(0x4b4a3d),herd=new THREE.InstancedMesh(animalGeo,animalMat,24);let a=0;
+ for(let i=0;i<24;i++){const x=(fr()-.5)*210,z=-35-fr()*160,y=mountainHeight(x,z+90);if(y<0||y>16)continue;o.position.set(x,y+.42,z);o.rotation.y=fr()*6.28;o.scale.set(.65,.42,.28);o.updateMatrix();herd.setMatrixAt(a++,o.matrix)}
+ herd.count=a;herd.instanceMatrix.needsUpdate=true;scene.add(herd);
+}
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
 for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z+90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
