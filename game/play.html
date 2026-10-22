@@ -105,6 +105,29 @@ const grassCanvas=document.createElement('canvas');grassCanvas.width=512;grassCa
 const groundGeo=new THREE.PlaneGeometry(900,900,100,100);groundGeo.rotateX(-Math.PI/2);const gp=groundGeo.attributes.position;for(let i=0;i<gp.count;i++){const x=gp.getX(i),z=gp.getZ(i);const roll=Math.sin(x*.014+z*.009)*.38+Math.sin(z*.025-x*.018)*.18;gp.setY(i,-.55+roll)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,pastureMat);ground.receiveShadow=true;scene.add(ground);
 terrainHeightAt=mountainHeight;
 const mountainGeo=new THREE.PlaneGeometry(520,730,180,260);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.035,ridgeTint=(Math.abs(Math.sin(x*.034+z*.019))*.5+Math.abs(Math.sin(z*.027-x*.031))*.5),c=new THREE.Color();if(h>112)c.setRGB(.78+n,.83+n,.86+n);else if(h>78)c.setRGB(.43+n+ridgeTint*.08,.47+n+ridgeTint*.07,.49+n+ridgeTint*.06);else if(h>42)c.setRGB(.34+n+ridgeTint*.06,.38+n+ridgeTint*.05,.39+n+ridgeTint*.04);else if(h>18)c.setRGB(.31+n,.36+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
+
+// Cinematic AAA-inspired atmosphere pass: layered sky, warm key light, cool fill, and atmospheric depth.
+{
+ const skyCanvas=document.createElement('canvas');skyCanvas.width=2;skyCanvas.height=256;
+ const sctx=skyCanvas.getContext('2d'),grad=sctx.createLinearGradient(0,0,0,256);
+ grad.addColorStop(0,'#4c789c');grad.addColorStop(.48,'#b5cbd0');grad.addColorStop(.78,'#e3d7b8');grad.addColorStop(1,'#71866b');
+ sctx.fillStyle=grad;sctx.fillRect(0,0,2,256);
+ const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
+ scene.background=skyTex;
+ scene.fog=new THREE.FogExp2(0xb7c9c6,.00165);
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ if(sun){sun.color.set(0xffe1b1);sun.intensity=2.35;sun.position.set(-180,260,115);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=240;sun.shadow.camera.bottom=-240;sun.shadow.bias=-.00018;sun.shadow.normalBias=.025}
+ const fill=new THREE.HemisphereLight(0xc5e1f2,0x4c4636,1.05);scene.add(fill);
+ const rim=new THREE.DirectionalLight(0x9bc7e7,.8);rim.position.set(180,150,-260);scene.add(rim);
+ // Sunlit atmospheric cloud wisps are translucent meshes in the distant sky, not gameplay colliders.
+ const cloudMat=new THREE.MeshBasicMaterial({color:0xf0e9d8,transparent:true,opacity:.16,depthWrite:false});
+ for(let i=0;i<11;i++){const cloud=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),cloudMat);cloud.scale.set(18+((i*7)%19),1.4+(i%3),5+(i%5)*2);cloud.position.set(-250+i*49,105+(i%4)*17,-380-(i%3)*45);scene.add(cloud)}
+ // Filmic vignette and subtle grain are screen-space overlays; no external assets.
+ const film=document.createElement('div');film.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 48%,transparent 48%,rgba(7,15,24,.28) 100%),linear-gradient(180deg,rgba(8,18,30,.12),transparent 24%,transparent 78%,rgba(8,15,22,.18)';
+ document.body.appendChild(film);
+}
 const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
