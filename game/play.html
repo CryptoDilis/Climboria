@@ -67,9 +67,6 @@ void main(){float streak=1.0-smoothstep(.22,.5,abs(gl_PointCoord.x-.5));float ti
 `});
 const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
 function smoothWeather(t){return t*t*(3-2*t)}
-function updateWeather(dt){
- if(!weatherEnabled)return;
- weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);cloudMat.opacity=.72*daylight;for(const c of cloudPuffs){c.position.x=c.userData.baseX+Math.sin(windClock.elapsed*.018+c.position.z*.01)*13+windClock.elapsed*c.userData.speed*.22;if(c.position.x>490)c.position.x=-490;}stars.material.uniforms.uNight.value=nightBlend;stars.material.uniforms.uTime.value=dayNightClock.elapsed;stars.rotation.y=dayNightClock.elapsed*.001;moonGroup.position.set(-Math.cos(sunAngle)*330,Math.sin(sunAngle)*330+115,-250);moonLight.position.copy(moonGroup.position).multiplyScalar(-1).normalize();moonLight.intensity=nightBlend*.32;sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
 // Cinematic sky objects: layered cloud banks by day; moon and twinkling stars at night.
 const skyDome=new THREE.Group();scene.add(skyDome);
 const cloudMat=new THREE.MeshStandardMaterial({color:0xf0f3f2,roughness:1,transparent:true,opacity:.76,depthWrite:false});
@@ -84,6 +81,10 @@ const stars=new THREE.Points(starGeo,starMat);stars.frustumCulled=false;scene.ad
 const moonGroup=new THREE.Group();scene.add(moonGroup);const moon=new THREE.Mesh(new THREE.SphereGeometry(10,32,24),new THREE.MeshStandardMaterial({color:0xdce5f0,emissive:0x5c6f91,emissiveIntensity:.32,roughness:.88}));moonGroup.add(moon);
 const moonGlow=new THREE.Mesh(new THREE.SphereGeometry(14,24,16),new THREE.MeshBasicMaterial({color:0xa9c6ee,transparent:true,opacity:.09,depthWrite:false}));moonGroup.add(moonGlow);
 const moonLight=new THREE.DirectionalLight(0x9eb9e8,.0);moonLight.position.set(0,1,0);scene.add(moonLight);
+
+function updateWeather(dt){
+ if(!weatherEnabled)return;
+ weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);cloudMat.opacity=.72*daylight;for(const c of cloudPuffs){c.position.x=c.userData.baseX+Math.sin(windClock.elapsed*.018+c.position.z*.01)*13+windClock.elapsed*c.userData.speed*.22;if(c.position.x>490)c.position.x=-490;}stars.material.uniforms.uNight.value=nightBlend;stars.material.uniforms.uTime.value=dayNightClock.elapsed;stars.rotation.y=dayNightClock.elapsed*.001;moonGroup.position.set(-Math.cos(sunAngle)*330,Math.sin(sunAngle)*330+115,-250);moonLight.position.copy(moonGroup.position).multiplyScalar(-1).normalize();moonLight.intensity=nightBlend*.32;sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
  const phaseDuration=600,transition=45;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
@@ -454,7 +455,7 @@ function rayInteract(targets,maxDistance=3.2){
 let paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false,attackCooldown=0,camYaw=.48,camPitch=.28,camDistance=11,orbiting=false,lastPointer={x:0,y:0};
 // Procedural original audio (Web Audio synthesis; no external copyrighted tracks/assets).
 const audioSettings={music:.28,sfx:.7,muted:false};
-try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
+try{const savedMusic=localStorage.getItem('climboria_music_volume'),savedSfx=localStorage.getItem('climboria_sfx_volume');if(savedMusic!==null&&Number.isFinite(Number(savedMusic)))audioSettings.music=THREE.MathUtils.clamp(Number(savedMusic),0,1);if(savedSfx!==null&&Number.isFinite(Number(savedSfx)))audioSettings.sfx=THREE.MathUtils.clamp(Number(savedSfx),0,1)}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0;
 function ensureAudio(){
  if(!audioCtx){
