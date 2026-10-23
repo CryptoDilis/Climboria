@@ -284,6 +284,18 @@ function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeome
 for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
 
 }
+// Shared environmental dressing applied to every expedition (keeps each level's route/layout intact).
+// Peripheral foothill ponds: shallow shore shelves, reflective water, and scattered shoreline stones.
+const sharedWaterMat=new THREE.MeshPhysicalMaterial({color:0x4e8792,roughness:.19,metalness:.08,transparent:true,opacity:.84,clearcoat:.8,clearcoatRoughness:.16});
+const shoreMat=mat(0x766d54),shoreRockMat=mat(0x65716d);
+function addSharedPond(x,z,rx,rz,seed){
+ const shore=new THREE.Mesh(new THREE.CircleGeometry(1,48),shoreMat);shore.rotation.x=-Math.PI/2;shore.scale.set(rx*1.16,rz*1.16,1);shore.position.set(x,-.43,z);shore.receiveShadow=true;scene.add(shore);
+ const water=new THREE.Mesh(new THREE.CircleGeometry(1,64),sharedWaterMat);water.rotation.x=-Math.PI/2;water.scale.set(rx,rz,1);water.position.set(x,-.385,z);water.receiveShadow=true;scene.add(water);
+ const rim=new THREE.Mesh(new THREE.TorusGeometry(1,.035,6,64),mat(0x9a9275));rim.rotation.x=Math.PI/2;rim.scale.set(rx*1.03,rz*1.03,1);rim.position.set(x,-.36,z);scene.add(rim);
+ let rs=seed;const rand=()=>{rs=(rs*1664525+1013904223)>>>0;return rs/4294967296};
+ for(let k=0;k<15;k++){const a=rand()*Math.PI*2,r=.94+rand()*.28;const rockMesh=new THREE.Mesh(new THREE.DodecahedronGeometry(.28+rand()*.48,0),shoreRockMat);rockMesh.position.set(x+Math.cos(a)*rx*r,-.27,z+Math.sin(a)*rz*r);rockMesh.rotation.set(rand(),rand()*Math.PI,rand());rockMesh.scale.y=.45+rand()*.55;rockMesh.castShadow=true;rockMesh.receiveShadow=true;scene.add(rockMesh)}
+}
+addSharedPond(-305,78,17,11,1101);addSharedPond(310,145,23,14,2202);
 const player=new THREE.Group();if(currentLevel==='01')player.position.y=Math.max(0,terrainHeightAt(0,8+90)+.25);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
