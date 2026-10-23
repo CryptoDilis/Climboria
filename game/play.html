@@ -29,9 +29,9 @@ window.addEventListener('DOMContentLoaded',()=>{
 import * as THREE from 'https://esm.sh/three@0.180.0';
 const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xb8d0dc);scene.fog=new THREE.Fog(0xb8d0dc,155,470);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
+const isMobileGPU=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileGPU?1.35:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
 scene.add(new THREE.HemisphereLight(0xdceeff,0x526044,1.55));scene.add(new THREE.AmbientLight(0xffffff,.28));
-const sun=new THREE.DirectionalLight(0xffe8c5,2.35);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
+const sun=new THREE.DirectionalLight(0xffe8c5,2.35);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(isMobileGPU?1024:2048,isMobileGPU?1024:2048);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
 scene.add(sun);
 // Level 1 weather cycle: 10 minutes per phase, with smooth visual transitions.
 const weatherEnabled=new URLSearchParams(location.search).get('level')==='01';
@@ -148,7 +148,7 @@ for(let i=0;i<95;i++){
 rockCtx.globalAlpha=1;
 const rockTex=new THREE.CanvasTexture(rockCanvas);rockTex.wrapS=rockTex.wrapT=THREE.RepeatWrapping;
 rockTex.repeat.set(11,15);rockTex.colorSpace=THREE.SRGBColorSpace;
-rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?4:12);
 const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.42,roughness:.96,flatShading:true});
 const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
