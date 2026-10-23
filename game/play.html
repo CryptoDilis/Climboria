@@ -224,7 +224,7 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
 // Dense lower-slope woodland: layered firs, understory shrubs, mossy stones and fallen logs.
 // Instanced meshes keep this scenic dressing relatively light; props deliberately stay outside the trail corridor.
 {
- const treeCount=340,treeTrunkGeo=new THREE.CylinderGeometry(.18,.42,5.2,7),
+ const treeCount=220,treeTrunkGeo=new THREE.CylinderGeometry(.18,.42,5.2,7),
        firGeo=new THREE.ConeGeometry(2.35,5.8,7),firTopGeo=new THREE.ConeGeometry(1.65,4.6,7);
  const barkMat=new THREE.MeshStandardMaterial({color:0x493526,roughness:1,flatShading:true});
  const firMats=[0x244b35,0x2e5b3b,0x3b6942,0x426b47].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,flatShading:true}));
@@ -238,7 +238,7 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
   const side=rand()<.5?-1:1,x=side*(52+rand()*115),z=-12-rand()*190;
   if(Math.abs(x)<50||Math.abs(z+155)<22)continue;
   const groundY=mountainHeight(x,z+90);
-  if(groundY<-.1||groundY>49)continue;
+  if(groundY<-.1||groundY>22)continue;
   const scale=.72+rand()*.82,lean=(rand()-.5)*.12,k=Math.floor(rand()*4);
   dummy.position.set(x,groundY+2.55*scale,z);dummy.rotation.set(lean,rand()*Math.PI*2,lean);dummy.scale.setScalar(scale);dummy.updateMatrix();
   trunks.setMatrixAt(n++,dummy.matrix);
@@ -253,7 +253,7 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
  const logGeo=new THREE.CylinderGeometry(.18,.25,2.8,7),logMat=new THREE.MeshStandardMaterial({color:0x5c4935,roughness:1,flatShading:true}),logs=new THREE.InstancedMesh(logGeo,logMat,70);let lc=0;
  for(let i=0;i<1100;i++){
   const side=rand()<.5?-1:1,x=side*(49+rand()*118),z=-8-rand()*195,gy=mountainHeight(x,z+90);
-  if(gy<-.1||gy>48||Math.abs(z+155)<20)continue;
+  if(gy<-.1||gy>22||Math.abs(z+155)<20)continue;
   const k=Math.floor(rand()*3),size=.45+rand()*1.15;
   dummy.position.set(x,gy+size*.48,z);dummy.rotation.set(rand()*.3,rand()*Math.PI*2,rand()*.3);dummy.scale.set(size*1.25,size*.8,size);dummy.updateMatrix();
   if(sc[k]<180)shrubs[k].setMatrixAt(sc[k]++,dummy.matrix);
