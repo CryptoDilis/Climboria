@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>window.__climbDiag=(m)=>{console.error('[Climboria diag]',m)};window.addEventListener('error',e=>window.__climbDiag('ERROR: '+e.message+' @ '+e.filename+':'+e.lineno));window.addEventListener('unhandledrejection',e=>window.__climbDiag('PROMISE REJECTION: '+String(e.reason)));</script>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
-const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xb8d0dc);scene.fog=new THREE.Fog(0xb8d0dc,155,470);
+const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xb8d0dc);scene.fog=new THREE.Fog(0xb8d0dc,205,610);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
 const isMobileGPU=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileGPU?1.35:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
 scene.add(new THREE.HemisphereLight(0xdceeff,0x526044,1.55));scene.add(new THREE.AmbientLight(0xffffff,.28));
