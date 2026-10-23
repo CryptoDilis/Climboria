@@ -30,12 +30,12 @@ import * as THREE from 'https://esm.sh/three@0.180.0';
 const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xb7c9ce);scene.fog=new THREE.Fog(0xb7c9ce,230,660);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
 const isMobileGPU=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileGPU?1.35:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
-scene.add(new THREE.HemisphereLight(0xdce8e8,0x3c4933,1.25));scene.add(new THREE.AmbientLight(0xffffff,.18));
+const hemiLight=new THREE.HemisphereLight(0xdce8e8,0x3c4933,1.25);scene.add(hemiLight);const fillLight=new THREE.AmbientLight(0xffffff,.18);scene.add(fillLight);
 const sun=new THREE.DirectionalLight(0xffdfb0,2.0);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(isMobileGPU?1024:2048,isMobileGPU?1024:2048);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
 scene.add(sun);
 // Level 1 weather cycle: 10 minutes per phase, with smooth visual transitions.
 const weatherEnabled=new URLSearchParams(location.search).get('level')==='01';
-const weatherClock={elapsed:0,phase:0,blend:0};
+const weatherClock={elapsed:0,phase:0,blend:0};const dayNightClock={elapsed:0};const windClock={elapsed:0};const dayDuration=480;const windMaterials=[];function addWindShader(material,amplitude){material.onBeforeCompile=shader=>{shader.uniforms.uClimbWindTime={value:0};shader.uniforms.uClimbWindAmp={value:amplitude};shader.vertexShader='uniform float uClimbWindTime;uniform float uClimbWindAmp;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat windPhase=position.y*1.7+position.x*.31+position.z*.23+uClimbWindTime;transformed.x+=sin(windPhase)*uClimbWindAmp*position.y;transformed.z+=cos(windPhase*.83)*uClimbWindAmp*.45*position.y;');material.userData.climbWindShader=shader};material.customProgramCacheKey=()=>`climb-wind-${amplitude}`;windMaterials.push(material);return material}
 const weatherPhases=[
  {name:'CLEAR',sky:new THREE.Color(0xb8d0dc),fog:new THREE.Color(0xb8d0dc),near:155,far:470,sun:2.35,hemi:1.55,rain:0},
  {name:'OVERCAST',sky:new THREE.Color(0x8799a0),fog:new THREE.Color(0x7c8c87),near:90,far:330,sun:1.35,hemi:1.05,rain:0},
@@ -69,7 +69,7 @@ const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visib
 function smoothWeather(t){return t*t*(3-2*t)}
 function updateWeather(dt){
  if(!weatherEnabled)return;
- weatherClock.elapsed+=dt;
+ weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
  const phaseDuration=600,transition=22;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
@@ -82,9 +82,9 @@ function updateWeather(dt){
  if(!from||!to)return;
  const blend=local>phaseDuration-transition?smoothWeather((local-(phaseDuration-transition))/transition):0;
  const mixColor=(a,b,t)=>a.clone().lerp(b,t);
- scene.background=mixColor(from.sky,to.sky,blend);
- if(scene.fog){scene.fog.color.copy(mixColor(from.fog,to.fog,blend));scene.fog.near=THREE.MathUtils.lerp(from.near,to.near,blend);scene.fog.far=THREE.MathUtils.lerp(from.far,to.far,blend)}
- sun.intensity=THREE.MathUtils.lerp(from.sun,to.sun,blend);
+ const weatherSky=mixColor(from.sky,to.sky,blend),weatherFog=mixColor(from.fog,to.fog,blend);scene.background=weatherSky.lerp(nightSky,nightBlend*.88);
+ if(scene.fog){scene.fog.color.copy(weatherFog).lerp(nightFog,nightBlend*.82);scene.fog.near=THREE.MathUtils.lerp(from.near,to.near,blend);scene.fog.far=THREE.MathUtils.lerp(from.far,to.far,blend)}
+ sun.intensity=THREE.MathUtils.lerp(from.sun,to.sun,blend)*THREE.MathUtils.lerp(.12,1,daylight);
  rainUniforms.uTime.value+=dt;rainUniforms.uPlayer.value.set(player.position.x,0,player.position.z);
  rainUniforms.uStrength.value=THREE.MathUtils.lerp(from.rain,to.rain,blend);
  rain.visible=rainUniforms.uStrength.value>.015;
@@ -169,7 +169,7 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
  for(const [x,z,len] of [[-86,-88,24],[-48,-102,18],[55,-120,28]]){const wall=new THREE.Mesh(new THREE.BoxGeometry(len,.8,1.1),stoneWallMat);wall.position.set(x,.45,z);wall.rotation.y=.12;wall.castShadow=true;scene.add(wall)}
  // Forest belt on the surrounding foothills: each trunk is grounded to the pasture's sampled height.
  const trunk=new THREE.CylinderGeometry(.22,.42,4.4,12),canopy=new THREE.SphereGeometry(2.05,20,14);
- const bark=mat(0x55412c),leafMats=[0x42683c,0x527844,0x355c36].map(color=>new THREE.MeshStandardMaterial({color,roughness:.92,flatShading:false}));
+ const bark=mat(0x55412c),leafMats=[0x42683c,0x527844,0x355c36].map(color=>addWindShader(new THREE.MeshStandardMaterial({color,roughness:.92,flatShading:false}),.018));
  const forestTrunks=new THREE.InstancedMesh(trunk,bark,260),forestCanopies=leafMats.map(m=>new THREE.InstancedMesh(canopy,m,90));
  const dummy=new THREE.Object3D();let trunkCount=0,leafCounts=[0,0,0],seed=18821;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
