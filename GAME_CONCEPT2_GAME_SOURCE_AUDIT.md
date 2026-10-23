@@ -23,3 +23,5 @@
 ## Concept ledger entry
 
 - **2026-10-23 — Source audit only (not a design change):** Recorded the existing expedition selection, HUD/settings affordances, advertised controls, and prototype limitations. No new mechanic was approved or implemented by this audit.
+
+- **2026-10-23 — Alpine surface art pass:** Added a runtime-generated mineral-grain texture with subtle weathering seams and bump relief to the Level 1 mountain material. It is procedural (no downloaded asset); inspect in-browser for texture scale, visual quality, and mobile GPU cost before treating it as approved final art.
