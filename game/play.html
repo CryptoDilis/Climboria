@@ -128,7 +128,29 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,180,260);mountainGeo.rotateX(-
  const film=document.createElement('div');film.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 48%,transparent 48%,rgba(7,15,24,.28) 100%),linear-gradient(180deg,rgba(8,18,30,.12),transparent 24%,transparent 78%,rgba(8,15,22,.18)';
  document.body.appendChild(film);
 }
-const mountain=new THREE.Mesh(mountainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:true}));mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+// Procedural alpine rock surface: fine mineral grain, weathered seams, and subtle relief.
+// Generated locally at runtime so this art pass adds no external asset dependency.
+const rockCanvas=document.createElement('canvas');rockCanvas.width=512;rockCanvas.height=512;
+const rockCtx=rockCanvas.getContext('2d');
+rockCtx.fillStyle='#c9c7bd';rockCtx.fillRect(0,0,512,512);
+let rockSeed=52719;const rockRand=()=>{rockSeed=(rockSeed*1664525+1013904223)>>>0;return rockSeed/4294967296};
+for(let i=0;i<18000;i++){
+ const x=rockRand()*512,y=rockRand()*512,r=.35+rockRand()*2.2;
+ rockCtx.globalAlpha=.035+rockRand()*.11;
+ rockCtx.fillStyle=rockRand()<.52?'#4b5558':'#fff4df';
+ rockCtx.beginPath();rockCtx.ellipse(x,y,r*1.7,r,rockRand()*Math.PI,0,Math.PI*2);rockCtx.fill();
+}
+rockCtx.globalAlpha=.12;rockCtx.strokeStyle='#525b5c';rockCtx.lineWidth=1;
+for(let i=0;i<95;i++){
+ const x=rockRand()*512,y=rockRand()*512;
+ rockCtx.beginPath();rockCtx.moveTo(x,y);rockCtx.lineTo(x+(rockRand()-.5)*38,y+8+rockRand()*42);rockCtx.stroke();
+}
+rockCtx.globalAlpha=1;
+const rockTex=new THREE.CanvasTexture(rockCanvas);rockTex.wrapS=rockTex.wrapT=THREE.RepeatWrapping;
+rockTex.repeat.set(11,15);rockTex.colorSpace=THREE.SRGBColorSpace;
+rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.42,roughness:.96,flatShading:true});
+const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
  const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
