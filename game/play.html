@@ -154,7 +154,7 @@ rockCtx.globalAlpha=1;
 const rockTex=new THREE.CanvasTexture(rockCanvas);rockTex.wrapS=rockTex.wrapT=THREE.RepeatWrapping;
 rockTex.repeat.set(11,15);rockTex.colorSpace=THREE.SRGBColorSpace;
 rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?4:12);
-const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.42,roughness:.96,flatShading:true});
+const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.58,roughness:.94,metalness:.015,flatShading:false});
 const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
@@ -173,25 +173,36 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
  cottage(-72,-78,.8);cottage(-58,-92,.65);cottage(72,-108,.9);
  for(const [x,z,len] of [[-86,-88,24],[-48,-102,18],[55,-120,28]]){const wall=new THREE.Mesh(new THREE.BoxGeometry(len,.8,1.1),stoneWallMat);wall.position.set(x,.45,z);wall.rotation.y=.12;wall.castShadow=true;scene.add(wall)}
  // Forest belt on the surrounding foothills: each trunk is grounded to the pasture's sampled height.
- const trunk=new THREE.CylinderGeometry(.22,.42,4.4,12),canopy=new THREE.SphereGeometry(2.05,20,14);
- const bark=mat(0x55412c),leafMats=[0x42683c,0x527844,0x355c36].map(color=>addWindShader(new THREE.MeshStandardMaterial({color,roughness:.92,flatShading:false}),.018));
- const forestTrunks=new THREE.InstancedMesh(trunk,bark,260),forestCanopies=leafMats.map(m=>new THREE.InstancedMesh(canopy,m,90));
- const dummy=new THREE.Object3D();let trunkCount=0,leafCounts=[0,0,0],seed=18821;
+ const barkMat=new THREE.MeshStandardMaterial({color:0x493020,roughness:.96});
+ const leafColors=[0x294e2e,0x37643a,0x527548,0x6c8050];
+ const foliage=leafColors.map(c=>addWindShader(new THREE.MeshStandardMaterial({color:c,roughness:.92}),.022));
+ // Three distinct silhouettes: tiered firs, rounded broadleaf crowns, and tall narrow spruce.
+ const trunkGeo=new THREE.CylinderGeometry(.13,.38,1,9);
+ const coneGeo=new THREE.ConeGeometry(1,2.8,9,2);
+ const crownGeo=new THREE.SphereGeometry(1,12,9);
+ const trunks=new THREE.InstancedMesh(trunkGeo,barkMat,460);
+ const firTiers=foliage.map(m=>new THREE.InstancedMesh(coneGeo,m,460*3));
+ const leafyCrowns=foliage.map(m=>new THREE.InstancedMesh(crownGeo,m,460*3));
+ const spruceTiers=foliage.map(m=>new THREE.InstancedMesh(coneGeo,m,460*3));
+ const dummy=new THREE.Object3D();let trunkN=0,firN=[0,0,0,0],broadN=[0,0,0,0],spruceN=[0,0,0,0],seed=18821;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let i=0;i<3200;i++){
+ for(let i=0;i<5200&&trunkN<460;i++){
   const x=(rand()-.5)*570,z=-28-rand()*320;
-  // Forest stays on the grassy foothill belt, outside the climb lane and away from the steep main massif.
   if(Math.abs(x)<48||Math.abs(x)>275||Math.abs(z+170)<30)continue;
-  const roll=.38*Math.sin(x*.014+z*.009)+.18*Math.sin(z*.025-x*.018);
-  const groundY=-.55+roll;
-  const scale=.72+rand()*.65;
-  dummy.position.set(x,groundY+2.1*scale,z);dummy.rotation.y=rand()*Math.PI*2;dummy.scale.set(scale,scale,scale);dummy.updateMatrix();
-  if(trunkCount<260)forestTrunks.setMatrixAt(trunkCount++,dummy.matrix);
-  dummy.position.y+=2.65*scale;dummy.scale.set(1.15*scale,1.05*scale,1.15*scale);dummy.updateMatrix();
-  const k=Math.floor(rand()*3);if(leafCounts[k]<90)forestCanopies[k].setMatrixAt(leafCounts[k]++,dummy.matrix);
+  const roll=.38*Math.sin(x*.014+z*.009)+.18*Math.sin(z*.025-x*.018),gy=-.55+roll;
+  const scale=.7+rand()*.8,height=5.5+rand()*7.5,type=Math.floor(rand()*3),yaw=rand()*Math.PI*2;
+  dummy.position.set(x,gy+height*.5,z);dummy.rotation.set(0,yaw,0);dummy.scale.set(scale,height,scale);dummy.updateMatrix();trunks.setMatrixAt(trunkN++,dummy.matrix);
+  const col=Math.floor(rand()*foliage.length);
+  if(type===0){
+   for(let tier=0;tier<3;tier++){dummy.position.set(x,gy+height*(.34+tier*.22),z);dummy.rotation.set(0,yaw+tier*.75,0);const r=height*(.24-tier*.045)*scale;dummy.scale.set(r,height*.34*scale,r);dummy.updateMatrix();if(firN[col]<firTiers[col].count)firTiers[col].setMatrixAt(firN[col]++,dummy.matrix)}
+  }else if(type===1){
+   for(let cl=0;cl<3;cl++){const ang=yaw+cl*2.1;dummy.position.set(x+Math.cos(ang)*.65*scale,gy+height*(.64+(cl===1?.1:0)),z+Math.sin(ang)*.65*scale);dummy.rotation.set(rand()*.2,yaw,rand()*.2);const r=(1.35+rand()*.55)*scale;dummy.scale.set(r,r*(.82+rand()*.28),r);dummy.updateMatrix();if(broadN[col]<leafyCrowns[col].count)leafyCrowns[col].setMatrixAt(broadN[col]++,dummy.matrix)}
+  }else{
+   for(let tier=0;tier<3;tier++){dummy.position.set(x,gy+height*(.3+tier*.23),z);dummy.rotation.set(0,yaw+tier*.45,0);const r=height*(.19-tier*.035)*scale;dummy.scale.set(r,height*.38*scale,r);dummy.updateMatrix();if(spruceN[col]<spruceTiers[col].count)spruceTiers[col].setMatrixAt(spruceN[col]++,dummy.matrix)}
+  }
  }
- forestTrunks.count=trunkCount;forestTrunks.instanceMatrix.needsUpdate=true;scene.add(forestTrunks);
- forestCanopies.forEach((m,i)=>{m.count=leafCounts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
+ trunks.count=trunkN;trunks.instanceMatrix.needsUpdate=true;scene.add(trunks);
+ for(let k=0;k<foliage.length;k++){firTiers[k].count=firN[k];firTiers[k].instanceMatrix.needsUpdate=true;scene.add(firTiers[k]);leafyCrowns[k].count=broadN[k];leafyCrowns[k].instanceMatrix.needsUpdate=true;scene.add(leafyCrowns[k]);spruceTiers[k].count=spruceN[k];spruceTiers[k].instanceMatrix.needsUpdate=true;scene.add(spruceTiers[k])}
  // Grounded foothill boulders: low, partly embedded rocks, kept outside the route and camp clearing.
  const bGeo=new THREE.DodecahedronGeometry(1,0),bMat=[0x59645f,0x74746b,0x4c5b61].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
  const boulders=bMat.map(m=>new THREE.InstancedMesh(bGeo,m,45)),bc=[0,0,0];
