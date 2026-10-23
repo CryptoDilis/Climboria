@@ -532,7 +532,7 @@ const footClear=.22,maxWalkSlope=.72;let blocked=false;const hitsCliff=(x,z)=>cl
 const fromH=terrainHeightAt(player.position.x,player.position.z+90),toH=terrainHeightAt(nextX,nextZ+90),rise=toH-fromH;
 const gradX=(terrainHeightAt(nextX+.65,nextZ+90)-terrainHeightAt(nextX-.65,nextZ+90))/1.3,gradZ=(terrainHeightAt(nextX,nextZ+90+.65)-terrainHeightAt(nextX,nextZ+90-.65))/1.3,slope=Math.hypot(gradX,gradZ);
 // TEMPORARY FREE-ROAM MODE: bypass mountain/cliff blockers so the player can approach and orbit the massif to inspect its shape. This is for environment review, not final climbing physics.
-const FREE_ROAM_ENV_REVIEW=false;
+const FREE_ROAM_ENV_REVIEW=true;
 const feetY=player.position.y,penetratingMountain=toH>feetY+.38;
 if(!FREE_ROAM_ENV_REVIEW&&(hitsCliff(nextX,nextZ)||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12))blocked=true;
 if(FREE_ROAM_ENV_REVIEW||!blocked){player.position.x=nextX;player.position.z=nextZ;if(!FREE_ROAM_ENV_REVIEW&&player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);if(!hitsCliff(nextX,player.position.z)&&hx<=player.position.y+.38&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&hz<=player.position.y+.38&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
