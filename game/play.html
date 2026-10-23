@@ -34,7 +34,7 @@ const hemiLight=new THREE.HemisphereLight(0xdce8e8,0x3c4933,1.25);scene.add(hemi
 const sun=new THREE.DirectionalLight(0xffdfb0,2.0);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(isMobileGPU?1024:2048,isMobileGPU?1024:2048);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
 scene.add(sun);
 // Level 1 weather cycle: 10 minutes per phase, with smooth visual transitions.
-const weatherEnabled=new URLSearchParams(location.search).get('level')==='01';
+const weatherEnabled=true;
 const weatherClock={elapsed:0,phase:0,blend:0};const dayNightClock={elapsed:0};const windClock={elapsed:0};const dayDuration=480;const windMaterials=[];function addWindShader(material,amplitude){material.onBeforeCompile=shader=>{shader.uniforms.uClimbWindTime={value:0};shader.uniforms.uClimbWindAmp={value:amplitude};shader.vertexShader='uniform float uClimbWindTime;uniform float uClimbWindAmp;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat windPhase=position.y*1.7+position.x*.31+position.z*.23+uClimbWindTime;transformed.x+=sin(windPhase)*uClimbWindAmp*position.y;transformed.z+=cos(windPhase*.83)*uClimbWindAmp*.45*position.y;');material.userData.climbWindShader=shader};material.customProgramCacheKey=()=>`climb-wind-${amplitude}`;windMaterials.push(material);return material}
 const weatherPhases=[
  {name:'CLEAR',sky:new THREE.Color(0xb8d0dc),fog:new THREE.Color(0xb8d0dc),near:155,far:470,sun:2.35,hemi:1.55,rain:0},
@@ -84,7 +84,7 @@ const stars=new THREE.Points(starGeo,starMat);stars.frustumCulled=false;scene.ad
 const moonGroup=new THREE.Group();scene.add(moonGroup);const moon=new THREE.Mesh(new THREE.SphereGeometry(10,32,24),new THREE.MeshStandardMaterial({color:0xdce5f0,emissive:0x5c6f91,emissiveIntensity:.32,roughness:.88}));moonGroup.add(moon);
 const moonGlow=new THREE.Mesh(new THREE.SphereGeometry(14,24,16),new THREE.MeshBasicMaterial({color:0xa9c6ee,transparent:true,opacity:.09,depthWrite:false}));moonGroup.add(moonGlow);
 const moonLight=new THREE.DirectionalLight(0x9eb9e8,.0);moonLight.position.set(0,1,0);scene.add(moonLight);
- const phaseDuration=600,transition=22;
+ const phaseDuration=600,transition=45;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
  const cycleDuration=phaseDuration*phaseCount;
