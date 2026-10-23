@@ -221,6 +221,46 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
 // Upper-slope rock ribs disabled: their independent meshes read as floating debris.
 // Remove the remaining airborne-looking grass spears from the distant mountain; retain meadow ground texture.
 // Disable cloud, flower and grazing-silhouette scatter until placement can be grounded to terrain reliably.
+// Dense lower-slope woodland: layered firs, understory shrubs, mossy stones and fallen logs.
+// Instanced meshes keep this scenic dressing relatively light; props deliberately stay outside the trail corridor.
+{
+ const treeCount=340,treeTrunkGeo=new THREE.CylinderGeometry(.18,.42,5.2,7),
+       firGeo=new THREE.ConeGeometry(2.35,5.8,7),firTopGeo=new THREE.ConeGeometry(1.65,4.6,7);
+ const barkMat=new THREE.MeshStandardMaterial({color:0x493526,roughness:1,flatShading:true});
+ const firMats=[0x244b35,0x2e5b3b,0x3b6942,0x426b47].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,flatShading:true}));
+ const trunks=new THREE.InstancedMesh(treeTrunkGeo,barkMat,treeCount);
+ const firs=firMats.map(m=>new THREE.InstancedMesh(firGeo,m,treeCount));
+ const tops=firMats.map(m=>new THREE.InstancedMesh(firTopGeo,m,treeCount));
+ const dummy=new THREE.Object3D();let n=0,counts=[0,0,0,0],seed=43117;
+ const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<1700&&n<treeCount;i++){
+  // Broad woodland bands frame the route, opening up near the base camp and avoiding the switchbacks.
+  const side=rand()<.5?-1:1,x=side*(52+rand()*115),z=-12-rand()*190;
+  if(Math.abs(x)<50||Math.abs(z+155)<22)continue;
+  const groundY=mountainHeight(x,z+90);
+  if(groundY<-.1||groundY>49)continue;
+  const scale=.72+rand()*.82,lean=(rand()-.5)*.12,k=Math.floor(rand()*4);
+  dummy.position.set(x,groundY+2.55*scale,z);dummy.rotation.set(lean,rand()*Math.PI*2,lean);dummy.scale.setScalar(scale);dummy.updateMatrix();
+  trunks.setMatrixAt(n++,dummy.matrix);
+  dummy.position.y=groundY+5.0*scale;dummy.scale.set(1.05*scale,1.0*scale,1.05*scale);dummy.updateMatrix();firs[k].setMatrixAt(counts[k]++,dummy.matrix);
+  dummy.position.y=groundY+7.5*scale;dummy.scale.set(.76*scale,.82*scale,.76*scale);dummy.updateMatrix();tops[k].setMatrixAt(counts[k]-1,dummy.matrix);
+ }
+ trunks.count=n;trunks.instanceMatrix.needsUpdate=true;scene.add(trunks);
+ firs.forEach((m,k)=>{m.count=counts[k];m.instanceMatrix.needsUpdate=true;scene.add(m);tops[k].count=counts[k];tops[k].instanceMatrix.needsUpdate=true;scene.add(tops[k])});
+ // Low shrub clusters and fallen timber add a layered forest floor; kept out of the playable lane.
+ const shrubGeo=new THREE.IcosahedronGeometry(1,1),shrubMats=[0x3d613b,0x526f3c,0x6b7845].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1,flatShading:true}));
+ const shrubs=shrubMats.map(m=>new THREE.InstancedMesh(shrubGeo,m,180)),sc=[0,0,0];
+ const logGeo=new THREE.CylinderGeometry(.18,.25,2.8,7),logMat=new THREE.MeshStandardMaterial({color:0x5c4935,roughness:1,flatShading:true}),logs=new THREE.InstancedMesh(logGeo,logMat,70);let lc=0;
+ for(let i=0;i<1100;i++){
+  const side=rand()<.5?-1:1,x=side*(49+rand()*118),z=-8-rand()*195,gy=mountainHeight(x,z+90);
+  if(gy<-.1||gy>48||Math.abs(z+155)<20)continue;
+  const k=Math.floor(rand()*3),size=.45+rand()*1.15;
+  dummy.position.set(x,gy+size*.48,z);dummy.rotation.set(rand()*.3,rand()*Math.PI*2,rand()*.3);dummy.scale.set(size*1.25,size*.8,size);dummy.updateMatrix();
+  if(sc[k]<180)shrubs[k].setMatrixAt(sc[k]++,dummy.matrix);
+  if(lc<70&&rand()<.08){dummy.position.set(x,gy+.22,z);dummy.rotation.set(0,rand()*Math.PI*2,Math.PI/2+(rand()-.5)*.25);dummy.scale.setScalar(.65+rand()*.7);dummy.updateMatrix();logs.setMatrixAt(lc++,dummy.matrix)}
+ }
+ shrubs.forEach((m,k)=>{m.count=sc[k];m.instanceMatrix.needsUpdate=true;scene.add(m)});logs.count=lc;logs.instanceMatrix.needsUpdate=true;scene.add(logs);
+}
 // Route spans hundreds of world units: long switchbacks, occasional narrow crossings.
 const route=[];
 for(let i=0;i<150;i++){const t=i/149,z=5-t*365,x=Math.sin(t*Math.PI*7)*28+Math.sin(t*13)*7;const y=Math.max(.15,mountainHeight(x,z+90)+1.5);const w=(i%19===0||i%23===0)?2.4:7.5;route.push({x,z,y,w});const platform=new THREE.Mesh(new THREE.BoxGeometry(w,.9,9),mat(i%4===0?0x6c716d:0x555f62));platform.position.set(x,y-.45,z);platform.castShadow=true;platform.receiveShadow=true;scene.add(platform);trailPlatforms.push({mesh:platform,x,z,w,d:9,top:y});if(i%27===14){const hazard=new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3),rock);hazard.position.set(x+2,y+1,z);hazard.castShadow=true;scene.add(hazard)}}
