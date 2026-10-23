@@ -267,10 +267,29 @@ for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.
 const player=new THREE.Group();if(currentLevel==='01')player.position.y=Math.max(0,terrainHeightAt(0,8+90)+.25);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
-const dirt=mat(0x66513a),canvasMat=mat(0x9a7547),tentMat=mat(0x425c63),wood=mat(0x4b3424);
+// Hard-packed camp earth: layered irregular ground with a fine dirt/gravel canvas texture.
+const dirtCanvas=document.createElement('canvas');dirtCanvas.width=dirtCanvas.height=512;const dctx=dirtCanvas.getContext('2d');
+dctx.fillStyle='#756044';dctx.fillRect(0,0,512,512);let dirtSeed=741;const dirtRand=()=>{dirtSeed=(dirtSeed*1664525+1013904223)>>>0;return dirtSeed/4294967296};
+for(let i=0;i<18000;i++){const v=Math.floor(70+dirtRand()*95);dctx.fillStyle='rgba('+v+','+Math.floor(v*.82)+','+Math.floor(v*.62)+','+(0.12+dirtRand()*.28)+')';const x=dirtRand()*512,y=dirtRand()*512,r=.4+dirtRand()*2.2;dctx.beginPath();dctx.ellipse(x,y,r,r*.55,dirtRand()*3,0,Math.PI*2);dctx.fill()}
+const dirtTex=new THREE.CanvasTexture(dirtCanvas);dirtTex.wrapS=dirtTex.wrapT=THREE.RepeatWrapping;dirtTex.repeat.set(2,2);dirtTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),8);
+const dirt=new THREE.MeshStandardMaterial({map:dirtTex,color:0xc1ad8c,roughness:1});
+const canvasMat=mat(0x9a7547),tentMat=mat(0x425c63),wood=mat(0x4b3424);
 function campMesh(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
-campMesh(new THREE.CylinderGeometry(5.8,6.5,.22,12),dirt,0,.02,5.5);
-const tent=campMesh(new THREE.ConeGeometry(2.1,2.7,4),tentMat,-3,1.35,6.2);tent.rotation.y=Math.PI/4;
+const campGround=campMesh(new THREE.CylinderGeometry(6.1,6.35,.26,32),dirt,0,.02,5.5);campGround.scale.set(1.15,1,0.92);
+const earthRim=campMesh(new THREE.CylinderGeometry(6.28,6.5,.18,32),mat(0x55442f),0,-.12,5.5);earthRim.scale.set(1.15,1,.92);
+// Canvas A-frame expedition tent moved to the camp's outer left edge, clear of the fire and NPC.
+const tentGroup=new THREE.Group();tentGroup.position.set(-5.1,.05,3.8);tentGroup.rotation.y=-.18;scene.add(tentGroup);
+const tentCloth=new THREE.MeshStandardMaterial({color:0x88734f,roughness:.96,side:THREE.DoubleSide});
+const tentSide=new THREE.MeshStandardMaterial({color:0x554936,roughness:1,side:THREE.DoubleSide});
+function tentPart(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;tentGroup.add(o);return o}
+const tentRidge=tentPart(new THREE.CylinderGeometry(.055,.055,3.2,8),wood,0,2.15,0);tentRidge.rotation.z=Math.PI/2;
+for(const x of [-1.45,1.45]){const pole=tentPart(new THREE.CylinderGeometry(.045,.06,2.25,7),wood,x,1.1,0);pole.rotation.z=x<0?-.72:.72}
+const tentFront=tentPart(new THREE.BufferGeometry(),tentCloth,0,0,0);
+const tentVerts=new Float32Array([-1.55,0,-1.25,1.55,0,-1.25,0,2.15,-1.25,-1.55,0,1.25,1.55,0,1.25,0,2.15,1.25]);tentFront.geometry.setAttribute('position',new THREE.BufferAttribute(tentVerts,3));tentFront.geometry.setIndex([0,1,2,3,5,4]);tentFront.geometry.computeVertexNormals();
+const flap=tentPart(new THREE.PlaneGeometry(1.35,1.72),tentSide,0,.91,-1.27);flap.rotation.x=0;flap.position.z=-1.255;
+const tentBack=tentPart(new THREE.BufferGeometry(),tentCloth,0,0,0);const backVerts=new Float32Array([-1.55,0,-1.25,1.55,0,-1.25,0,2.15,-1.25]);tentBack.geometry.setAttribute('position',new THREE.BufferAttribute(backVerts,3));tentBack.geometry.setIndex([0,1,2]);tentBack.geometry.computeVertexNormals();tentBack.position.z=2.5;
+const tentFloor=tentPart(new THREE.PlaneGeometry(2.9,2.4),tentSide,0,.035,0);tentFloor.rotation.x=-Math.PI/2;
+for(const x of [-1.35,1.35]){const rope=tentPart(new THREE.CylinderGeometry(.018,.018,1.45,5),mat(0xb7a27b),x*1.55,.45,-1.1);rope.rotation.z=x<0?-.8:.8}
 campMesh(new THREE.BoxGeometry(1.4,.65,.8),wood,3.3,.4,6.3);campMesh(new THREE.BoxGeometry(1.1,.55,.7),wood,4.2,.35,5.3);
 const stones=campMesh(new THREE.TorusGeometry(.65,.12,6,12),rock,0,.18,7.8);stones.rotation.x=Math.PI/2;
 for(let i=0;i<5;i++){const flame=campMesh(new THREE.ConeGeometry(.16+i*.025,.65+i*.12,5),mat(i%2?0xff8a35:0xffc85a),Math.sin(i*2)*.2,.55+i*.04,7.8+Math.cos(i*2)*.2);flame.material.emissive=new THREE.Color(0xff5b12);flame.material.emissiveIntensity=1.3}
@@ -296,10 +315,21 @@ quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(qu
  const ember=campProp(new THREE.SphereGeometry(.28,8,6),forgeGlow,0,1.18,.65,forge);ember.material.emissive=new THREE.Color(0xff4c12);ember.material.emissiveIntensity=1.7;
  const forgeLight=new THREE.PointLight(0xff6b2d,1.6,7);forgeLight.position.set(0,1.5,.65);forge.add(forgeLight);
 
-const npcBody=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.85,4,8),mat(0x426b79));npcBody.position.y=1;quartermaster.add(npcBody);
-const npcHead=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),mat(0xc88e65));npcHead.position.y=1.72;quartermaster.add(npcHead);
-const npcPack=new THREE.Mesh(new THREE.BoxGeometry(.5,.55,.25),mat(0x8b5b2c));npcPack.position.set(0,1.05,.32);quartermaster.add(npcPack);
-const npcBadge=new THREE.Mesh(new THREE.OctahedronGeometry(.22),mat(0xf3c85c));npcBadge.position.set(.48,1.5,0);quartermaster.add(npcBadge);
+// Elderly, wealthy quartermaster: layered merchant robes, silver beard, turban and gold ornaments.
+const npcSkin=mat(0x9d6848),npcRobe=mat(0x26384a),npcRobeTrim=mat(0xb08b45),npcCloth=mat(0x6f4b32),npcBeard=mat(0xd0c2a7),npcGold=mat(0xe1bd63,.35);
+const npcBody=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.78,6,12),npcRobe);npcBody.position.y=1.05;quartermaster.add(npcBody);
+const robeSkirt=new THREE.Mesh(new THREE.CylinderGeometry(.62,.72,.75,12),npcCloth);robeSkirt.position.y=.58;quartermaster.add(robeSkirt);
+const robeHem=new THREE.Mesh(new THREE.TorusGeometry(.67,.055,8,16),npcRobeTrim);robeHem.position.y=.23;robeHem.rotation.x=Math.PI/2;quartermaster.add(robeHem);
+const npcHead=new THREE.Mesh(new THREE.SphereGeometry(.3,20,16),npcSkin);npcHead.position.y=1.82;quartermaster.add(npcHead);
+const beard=new THREE.Mesh(new THREE.ConeGeometry(.24,.58,9),npcBeard);beard.position.set(0,1.48,-.04);beard.rotation.x=Math.PI;quartermaster.add(beard);
+const moustache=new THREE.Mesh(new THREE.SphereGeometry(.16,12,8),npcBeard);moustache.scale.set(1,.45,.65);moustache.position.set(0,1.72,-.25);quartermaster.add(moustache);
+const turban=new THREE.Mesh(new THREE.SphereGeometry(.34,16,10),npcCloth);turban.scale.set(1, .62,1);turban.position.y=2.08;quartermaster.add(turban);
+const turbanBand=new THREE.Mesh(new THREE.TorusGeometry(.29,.055,8,16),npcGold);turbanBand.position.y=2.02;turbanBand.rotation.x=Math.PI/2;quartermaster.add(turbanBand);
+const jewel=new THREE.Mesh(new THREE.OctahedronGeometry(.105),npcGold);jewel.position.set(0,2.18,-.29);quartermaster.add(jewel);
+const mantle=new THREE.Mesh(new THREE.BoxGeometry(.9,.22,.48),npcCloth);mantle.position.set(0,1.55,.02);quartermaster.add(mantle);
+const belt=new THREE.Mesh(new THREE.TorusGeometry(.43,.065,8,16),npcGold);belt.position.y=.98;belt.rotation.x=Math.PI/2;quartermaster.add(belt);
+const medallion=new THREE.Mesh(new THREE.OctahedronGeometry(.13),npcGold);medallion.position.set(.32,1.42,-.28);quartermaster.add(medallion);
+const npcPack=new THREE.Mesh(new THREE.BoxGeometry(.48,.52,.25),mat(0x5b3926));npcPack.position.set(0,1.08,.38);quartermaster.add(npcPack);
 }
 
 // Climboria signature third-person climber: tactical expedition gear in the project navy/gold palette.
