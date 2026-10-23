@@ -170,10 +170,10 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
  // Forest belt on the surrounding foothills: each trunk is grounded to the pasture's sampled height.
  const trunk=new THREE.CylinderGeometry(.28,.46,4.2,7),canopy=new THREE.SphereGeometry(2.25,9,7);
  const bark=mat(0x55412c),leafMats=[0x42683c,0x527844,0x355c36].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
- const forestTrunks=new THREE.InstancedMesh(trunk,bark,180),forestCanopies=leafMats.map(m=>new THREE.InstancedMesh(canopy,m,60));
+ const forestTrunks=new THREE.InstancedMesh(trunk,bark,260),forestCanopies=leafMats.map(m=>new THREE.InstancedMesh(canopy,m,90));
  const dummy=new THREE.Object3D();let trunkCount=0,leafCounts=[0,0,0],seed=18821;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
- for(let i=0;i<1800;i++){
+ for(let i=0;i<3200;i++){
   const x=(rand()-.5)*570,z=-28-rand()*320;
   // Forest stays on the grassy foothill belt, outside the climb lane and away from the steep main massif.
   if(Math.abs(x)<48||Math.abs(x)>275||Math.abs(z+170)<30)continue;
@@ -181,9 +181,9 @@ const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;m
   const groundY=-.55+roll;
   const scale=.72+rand()*.65;
   dummy.position.set(x,groundY+2.1*scale,z);dummy.rotation.y=rand()*Math.PI*2;dummy.scale.set(scale,scale,scale);dummy.updateMatrix();
-  if(trunkCount<180)forestTrunks.setMatrixAt(trunkCount++,dummy.matrix);
+  if(trunkCount<260)forestTrunks.setMatrixAt(trunkCount++,dummy.matrix);
   dummy.position.y+=2.65*scale;dummy.scale.set(1.15*scale,1.05*scale,1.15*scale);dummy.updateMatrix();
-  const k=Math.floor(rand()*3);if(leafCounts[k]<60)forestCanopies[k].setMatrixAt(leafCounts[k]++,dummy.matrix);
+  const k=Math.floor(rand()*3);if(leafCounts[k]<90)forestCanopies[k].setMatrixAt(leafCounts[k]++,dummy.matrix);
  }
  forestTrunks.count=trunkCount;forestTrunks.instanceMatrix.needsUpdate=true;scene.add(forestTrunks);
  forestCanopies.forEach((m,i)=>{m.count=leafCounts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});
