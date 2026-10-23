@@ -59,7 +59,7 @@ void main(){
  p.x+=uPlayer.x; p.z+=uPlayer.z;
  vec4 mv=modelViewMatrix*vec4(p,1.0);
  gl_Position=projectionMatrix*mv;
- gl_PointSize=clamp(2.0*(-mv.z)/90.0,1.0,3.0);
+ gl_PointSize=clamp(2.7*(-mv.z)/90.0,1.2,4.0);
  vFade=uStrength*smoothstep(0.0,8.0,p.y+2.0);
 }`,fragmentShader:`
 varying float vFade;
