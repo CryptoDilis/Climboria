@@ -441,10 +441,30 @@ new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-model
   const desiredHeight=1.85,scale=desiredHeight/Math.max(size.y,.001);
   model.scale.setScalar(scale);
   // Correct the imported GLB's forward axis: its face should point along the climber's travel direction, away from the follow camera.
-  model.rotation.y=Math.PI;
   model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.side=THREE.DoubleSide;if(o.material.metalness!==undefined)o.material.metalness=Math.min(o.material.metalness,.25)}}});
-  player.add(model);
+  // Compose the playable adventurer silhouette around the rigged base: ponytail, expedition pack,
+  // chest/waist straps and a compact climbing pick. These accessories stay parented to the hero.
+  const heroVisual=new THREE.Group();heroVisual.rotation.y=Math.PI;heroVisual.add(model);
+  const gearMat=(color,rough=.82)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:.08});
+  const olive=gearMat(0x454331),darkLeather=gearMat(0x332820),strap=gearMat(0x79603b),metal=gearMat(0x777b7b,.42),hair=gearMat(0x211914);
+  const gearMesh=(geo,mat,pos,rot)=>{const o=new THREE.Mesh(geo,mat);o.position.set(...pos);if(rot)o.rotation.set(...rot);o.castShadow=true;o.receiveShadow=true;heroVisual.add(o);return o};
+  // Backpack body and rolled bedroll (behind the torso).
+  gearMesh(new THREE.BoxGeometry(.48,.62,.23),olive,[0,1.18,-.22]);
+  gearMesh(new THREE.CylinderGeometry(.095,.095,.48,10),strap,[0,1.55,-.31],[Math.PI/2,0,0]);
+  // Visible shoulder straps and waist belt.
+  gearMesh(new THREE.BoxGeometry(.075,.58,.045),strap,[-.17,1.29,-.045],[0,0,-.13]);
+  gearMesh(new THREE.BoxGeometry(.075,.58,.045),strap,[.17,1.29,-.045],[0,0,.13]);
+  gearMesh(new THREE.BoxGeometry(.47,.09,.055),darkLeather,[0,.91,.015]);
+  gearMesh(new THREE.BoxGeometry(.10,.10,.035),metal,[0,.91,.05]);
+  // Ponytail silhouette: tied base plus tapered strand behind the head.
+  gearMesh(new THREE.SphereGeometry(.105,12,10),hair,[.02,1.72,-.12]);
+  gearMesh(new THREE.CapsuleGeometry(.075,.34,4,8),hair,[.10,1.54,-.22],[.45,0,-.22]);
+  // Small climbing pick carried along the hero's right side.
+  gearMesh(new THREE.CylinderGeometry(.018,.025,.52,8),darkLeather,[.34,.66,.13],[0,0,-.12]);
+  gearMesh(new THREE.BoxGeometry(.27,.045,.07),metal,[.34,.92,.13],[0,0,-.18]);
+  gearMesh(new THREE.ConeGeometry(.055,.17,8),metal,[.20,.91,.13],[0,0,Math.PI/2]);
+  player.add(heroVisual);
   // Load CC0 locomotion clips authored for the same KayKit Medium skeleton as this body.
   const animationLoader=new GLTFLoader();
   animationLoader.load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/animations/Rig_Medium_MovementBasic.glb',animGltf=>{
