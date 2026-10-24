@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Climboria — Free Asset Field Test</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08111b;color:#fff;font:14px system-ui}canvas{display:block}#panel{position:fixed;top:12px;left:12px;right:12px;max-width:640px;padding:12px 14px;border:1px solid #a98742;border-radius:12px;background:#101d2be8;line-height:1.4;pointer-events:none}#panel b{color:#f7c65b}#status{color:#c2cfde}</style></head><body><div id="panel"><b>CLIMBORIA · Free asset field test</b><br>Humanoid body + pickaxe/hammer + CC0 nature kit (mountains, cliffs, rocks, trees, grass). Drag to rotate; pinch/scroll to zoom.<br><span id="status">Loading assets…</span></div><script type="module">
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import {GLTFLoader} from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color('#8fb5d2');scene.fog=new THREE.Fog('#8fb5d2',22,65);
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,150);camera.position.set(13,10,18);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd9edff,0x44503b,2.1));const sun=new THREE.DirectionalLight(0xffedcf,3.2);sun.position.set(-8,16,9);sun.castShadow=true;scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:'#526c4c',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.03;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(32,32,'#c6d3c0','#718a6a');grid.position.y=.005;scene.add(grid);
+const loader=new GLTFLoader();let count=0,total=0;const status=document.querySelector('#status');
+function load(url,pos,scale=1,rot=0){total++;loader.load(url,g=>{const o=g.scene;o.position.set(...pos);o.scale.setScalar(scale);o.rotation.y=rot;o.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true}});scene.add(o);count++;status.textContent='Loaded '+count+'/'+total+' assets. (Static display; game animations/placement still need integration.)'},undefined,e=>{status.textContent='Some remote asset failed to load: '+e.message});}
+const gob='https://raw.githubusercontent.com/Ariescar/gobkit-free-assets/main/nature/';
+const nexus='https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/';
+load(nexus+'body/Body.glb',[0,0,0],1.35,Math.PI);
+load(nexus+'tools/pickaxe.glb',[.85,.5,.25],.8,-.4);load(nexus+'tools/hammer.glb',[-.85,.4,.2],.8,.5);
+load(gob+'Mountain001.glb',[-7,0,-8],3.5);load(gob+'Mountain002.glb',[0,0,-10],3.1,.5);load(gob+'Mountain003.glb',[7,0,-8],3.5,-.4);
+load(gob+'Cliff001.glb',[-6,0,1],2.2);load(gob+'Cliff002.glb',[6,0,1],2.2,1.4);load(gob+'Rock001.glb',[-3,0,3],1.5);load(gob+'Rock002.glb',[3,0,3],1.5,1);
+load(gob+'TreeMed001.glb',[-5,0,-3],1.8);load(gob+'TreeMed002.glb',[5,0,-3],1.8,1.8);load(gob+'TreeLow001.glb',[-4,0,5],1.5);load(gob+'Bush001.glb',[4,0,5],1.4);load(gob+'Grass001.glb',[1.7,0,4],1.5);load(gob+'Hill001.glb',[0,0,-5],1.7);
+let dragging=false,px=0,py=0,theta=Math.atan2(camera.position.x,camera.position.z),phi=.5,radius=24;
+function place(){camera.position.set(Math.sin(theta)*radius,Math.max(2,Math.sin(phi)*radius*.65),Math.cos(theta)*radius);camera.lookAt(0,1,0)}place();
+renderer.domElement.addEventListener('pointerdown',e=>{dragging=true;px=e.clientX;py=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});renderer.domElement.addEventListener('pointerup',()=>dragging=false);renderer.domElement.addEventListener('pointermove',e=>{if(!dragging)return;theta-=(e.clientX-px)*.008;phi=Math.max(.15,Math.min(1.35,phi+(e.clientY-py)*.005));px=e.clientX;py=e.clientY;place()});renderer.domElement.addEventListener('wheel',e=>{radius=Math.max(8,Math.min(45,radius+e.deltaY*.025));place()},{passive:true});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});function loop(){requestAnimationFrame(loop);renderer.render(scene,camera)}loop();
+</script></body></html>
