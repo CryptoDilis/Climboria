@@ -510,13 +510,32 @@ new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-model
   gearMesh(new THREE.BoxGeometry(.27,.045,.07),metal,[.34,.92,.13],[0,0,-.18]);
   gearMesh(new THREE.ConeGeometry(.055,.17,8),metal,[.20,.91,.13],[0,0,Math.PI/2]);
   player.add(heroVisual);
-  // The current external body/animation rigs are not confirmed compatible. Keep the
-  // animated GLB hidden so a successful file download cannot leave the player in T-pose.
+  // Load locomotion clips separately and only reveal the rig if compatible clips are found.
+  // Keep the procedural model as a safe fallback so missing assets never leave a T-pose.
   heroVisual.visible=false;
   if(climbSkin)climbSkin.visible=true;
   legacyPlayerParts.forEach(o=>o.visible=false);
-  window.__climbDiag('Using Climboria procedural climber until a rig-compatible animated GLB is installed.');
-
+  const animUrl='https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/animations/Rig_Medium_MovementBasic.glb';
+  new GLTFLoader().load(animUrl,animGltf=>{
+   try{
+    const clips=animGltf.animations||[];
+    const idle=clips.find(c=>/Idle_A|Idle_B/i.test(c.name));
+    const walk=clips.find(c=>/Walking_A|Walking_B|Walk/i.test(c.name));
+    const run=clips.find(c=>/Running_A|Running_B|Run/i.test(c.name));
+    if(!idle||!walk){window.__climbDiag('Humanoid animation clips missing; procedural fallback kept.');return;}
+    const boneNames=new Set();model.traverse(o=>{if(o.isBone)boneNames.add(o.name);});
+    const compatible=clip=>clip&&clip.tracks.some(t=>boneNames.has(t.name.split('.')[0]));
+    if(!compatible(idle)||!compatible(walk)){window.__climbDiag('Humanoid animation rig mismatch; procedural fallback kept.');return;}
+    heroMixer=new THREE.AnimationMixer(model);
+    heroIdleAction=heroMixer.clipAction(idle);heroWalkAction=heroMixer.clipAction(walk);
+    heroRunAction=compatible(run)?heroMixer.clipAction(run):heroWalkAction;
+    heroIdleAction.play();heroActiveAction=heroIdleAction;
+    heroVisual.visible=true;if(climbSkin)climbSkin.visible=false;
+    const saved=readSavedHero();
+    if(saved){const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};const hairs={blonde:0xe0b64f,brown:0x68432c,black:0x211914,auburn:0x8b3f24,silver:0xb8bdc4};model.traverse(o=>{if(!o.isMesh||!o.material)return;const apply=mat=>{const n=(mat.name||'').toLowerCase();if(n.includes('skin'))mat.color.setHex(tones[saved.skin]||tones.medium);else if(n.includes('hair'))mat.color.setHex(hairs[saved.hairColor]||hairs.blonde);};if(Array.isArray(o.material))o.material.forEach(apply);else apply(o.material);});}
+    window.__climbDiag('Rigged humanoid + idle/walk/run animation loaded.');
+   }catch(err){window.__climbDiag('Humanoid animation setup failed; procedural fallback kept: '+err.message);}
+  },undefined,err=>window.__climbDiag('Animation asset unavailable; procedural fallback kept: '+(err?.message||err)));
  }catch(err){window.__climbDiag('GLB framing failed; fallback kept: '+err.message)}
 },undefined,err=>{
  if(climbSkin)climbSkin.visible=true;
