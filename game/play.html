@@ -452,14 +452,27 @@ let paused=false,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys=
 // Procedural original audio (Web Audio synthesis; no external copyrighted tracks/assets).
 const audioSettings={music:.28,sfx:.7,muted:false};
 try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
-let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0;
+let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
+ const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
+ function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return n.includes('jarrellspeak')||n.includes('jarrellpeak')}
+ function startExpeditionSoundtrack(){
+  if(isJarrellPeakExpedition())return;
+  if(!soundtrackAudio){
+   soundtrackAudio=new Audio('assets/music/climboria-theme-60s.mp3');
+   soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
+   soundtrackAudio.addEventListener('error',()=>console.warn('Climboria soundtrack could not load:',soundtrackAudio.currentSrc));
+  }
+  soundtrackAudio.volume=audioSettings.muted?0:Math.max(0,Math.min(1,audioSettings.music));
+  if(!audioSettings.muted&&audioSettings.music>0)soundtrackAudio.play().catch(()=>{});
+ }
 function ensureAudio(){
  if(!audioCtx){
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC){console.warn('Web Audio API unavailable');return}
   audioCtx=new AC();const master=audioCtx.createGain();master.gain.value=audioSettings.muted?0:1;master.connect(audioCtx.destination);audioCtx.masterGain=master;
  }
  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
- if(!musicStarted&&audioCtx.state!=='closed'){
+ if(!isJarrellPeakExpedition())startExpeditionSoundtrack();
+ if(isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
   musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
   // Original fantasy-adventure arrangement: sustained harmonized strings, bass, and a lilting melody.
   const chords=[
@@ -508,6 +521,10 @@ function ensureAudio(){
  applyAudioVolumes();
 }
 function applyAudioVolumes(){
+ if(soundtrackAudio){
+  soundtrackAudio.volume=audioSettings.muted?0:Math.max(0,Math.min(1,audioSettings.music));
+  if(!audioSettings.muted&&audioSettings.music>0)soundtrackAudio.play().catch(()=>{});else soundtrackAudio.pause();
+ }
  if(!audioCtx?.masterGain)return;
  audioCtx.masterGain.gain.setTargetAtTime(audioSettings.muted?0:1,audioCtx.currentTime,.06);
  const m=audioCtx.fantasyMusic;if(!m)return;
