@@ -45,6 +45,26 @@
 .creator-head{padding:22px;border-bottom:1px solid #ffffff18}.creator-head small{color:#b9c9da;letter-spacing:2px;font-weight:800}.creator-head h1{margin:7px 0;color:#f5d78a;font:800 clamp(21px,4vw,30px) Cinzel,Georgia,serif}.creator-head p{margin:0;color:#aebed0;line-height:1.5;font-size:12px}
 .creator-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 22px}.creator-field{display:grid;gap:7px;text-align:left}.creator-field label{font-size:10px;letter-spacing:1.2px;color:#b7c7d9;font-weight:800}.creator-field input,.creator-field select{width:100%;min-height:44px;border:1px solid #52677e;border-radius:10px;background:#0a1421;color:#f7f8fa;padding:10px 12px;font:inherit;outline-color:#f4ca63}.creator-field.full{grid-column:1/-1}.creator-note{margin:0 22px;color:#8194aa;font-size:10px;line-height:1.5}.creator-start{display:block;margin:18px 22px 22px;width:calc(100% - 44px);min-height:50px;border:1px solid #ffe19a;border-radius:999px;background:linear-gradient(90deg,#dcae3e,#f7d879);color:#17130a;font-weight:900;letter-spacing:1.2px;font-size:14px;cursor:pointer}.creator-start:disabled{opacity:.45;cursor:not-allowed}.creator-error{display:none;margin:0 22px;color:#ff9999;font-size:12px}.creator-error.show{display:block}
 @media(max-width:600px){.creator-overlay{padding:10px;align-items:center}.creator-panel{max-height:94dvh;border-radius:16px}.creator-head{padding:17px}.creator-fields{grid-template-columns:1fr;padding:14px 17px;gap:10px}.creator-field.full{grid-column:auto}.creator-note{margin:0 17px}.creator-start{margin:15px 17px 17px;width:calc(100% - 34px)}}
+
+/* Mobile HUD: keep player stats, altitude/map, and actions in separate compact lanes. */
+@media (max-width:760px){
+ .hud{padding:calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 8px)}
+ .top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px}
+ .player-hud{width:100%;max-width:none;min-width:0;padding:9px;gap:7px}
+ .player-details{min-width:0;flex:1}
+ .player-level{overflow-wrap:anywhere;max-width:100%}
+ .stat-row{display:grid;grid-template-columns:minmax(0,1fr) 52px;align-items:center;gap:5px}
+ .stat-label{min-width:0;white-space:nowrap;font-size:9px}
+ .meter{width:52px;min-width:52px}
+ .top-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:0}
+ .top .right{width:clamp(96px,29vw,132px);padding:8px}
+ .map-stack{align-items:flex-end;gap:5px}
+ .map-panel{width:clamp(96px,29vw,132px)}
+ .map-panel canvas{width:100%;height:auto;aspect-ratio:1.2}
+ .map-tools{width:clamp(96px,29vw,132px);display:grid;grid-template-columns:1fr;gap:5px}
+ .expedition-menu-btn{width:100%;min-width:0;text-align:center;font-size:8px;letter-spacing:.25px;padding:8px 4px;white-space:normal;line-height:1.15}
+}
+@media(max-width:390px){.player-hud{padding:7px}.stat-label{font-size:8px}.meter{width:42px;min-width:42px}.stat-row{grid-template-columns:minmax(0,1fr) 42px}.top .right,.map-panel,.map-tools{width:98px}.expedition-menu-btn{font-size:7px}}
 </style></head><body><div id="game"></div><div id="cinemaGrade" aria-hidden="true"></div><div id="runtimeError" style="display:none;position:fixed;z-index:99999;left:8px;right:8px;top:42%;padding:14px;background:#400;color:#fff;font:12px monospace;white-space:pre-wrap;border:2px solid #f66"></div><script>window.addEventListener('error',e=>{const d=document.getElementById('runtimeError');if(d){d.style.display='block';d.textContent='JS ERROR: '+e.message+'\\n'+e.filename+':'+e.lineno}});window.addEventListener('unhandledrejection',e=>{const d=document.getElementById('runtimeError');if(d){d.style.display='block';d.textContent='PROMISE ERROR: '+String(e.reason)}});window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{const cv=document.querySelector('#game canvas'),d=document.getElementById('runtimeError');if(!cv&&d){d.style.display='block';d.textContent='RENDER DIAGNOSTIC: Three.js canvas was not created. Check module import/WebGL.'}},2500));</script>
 <section class="creator-overlay" id="creatorOverlay" role="dialog" aria-modal="true" aria-label="Create your climber"><div class="creator-panel"><header class="creator-head"><small>CLIMBORIA · HERO SETUP</small><h1>Create Your Climber</h1><p>Set your hero name and expedition look before entering the mountain.</p></header><form id="creatorForm"><div class="creator-fields"><div class="creator-field full"><label for="heroNameInput">HERO NAME (REQUIRED)</label><input id="heroNameInput" maxlength="18" minlength="2" autocomplete="nickname" placeholder="Enter your climber name" required></div><div class="creator-field"><label for="heroStyle">HERO STYLE</label><select id="heroStyle"><option value="trail">Trail Adventurer</option><option value="summit">Summit Climber</option></select></div><div class="creator-field"><label for="heroPalette">OUTFIT COLOR</label><select id="heroPalette"><option value="gold">Climboria Gold</option><option value="forest">Forest Green</option><option value="ice">Glacier Blue</option><option value="ember">Ember Red</option></select></div></div><p class="creator-note">Name is saved to this browser. Style and outfit palette are saved as your hero preferences; detailed face, hair and separate clothing meshes require a modular character model.</p><p class="creator-error" id="creatorError">Enter a hero name (2–18 characters) to unlock Play.</p><button class="creator-start" id="creatorStart" type="submit">SAVE HERO · ENTER MOUNTAIN</button></form></div></section><div class="hud"><div class="top"><div class="plate player-hud"><div class="player-icons"><button class="player-emblem" id="profileLaunch" aria-label="Open player inventory">♙</button><button class="settings-btn" id="settingsOpen" aria-label="Settings and wallet" title="Settings">⚙</button></div><div class="player-details"><button class="player-name" id="hudPlayerName">CLIMBER</button><div class="player-level small" id="levelName">EXPEDITION 01 · BINANCE RIDGE</div><div class="stat-row"><span class="stat-label">HP <b id="healthValue">500 / 500</b></span><div class="meter health"><i id="healthBar"></i></div></div><div class="stat-row"><span class="stat-label">STA <b id="staminaValue">100 / 100</b></span><div class="meter stamina"><i id="staminaBar"></i></div></div><div class="stat-row strength-row"><span class="stat-label">STR <b id="strengthValue">3</b></span></div></div></div><div class="top-right"><div class="plate right"><div class="small">ALTITUDE</div><strong id="altitude">0 m</strong><div class="small" id="state">ON THE GROUND</div></div><div class="map-stack"><div class="map-panel" id="mapPanel"><div class="map-label">MOUNTAIN MAP</div><canvas id="miniMap" width="180" height="150"></canvas></div><div class="map-tools"><button class="btn expedition-menu-btn" id="hudCreateHero" type="button">♙ CREATE HERO</button><a class="btn expedition-menu-btn" id="menu" href="./index.html">EXPEDITION MENU</a></div></div></div></div><div class="bottom"><div class="plate help">DESKTOP: WASD walk · SPACE jump · SHIFT sprint · LMB interact/pickup · RMB tap attack / hold-drag camera · wheel zoom · ESC pause<br>Cross narrow ledges and gaps. Fall? You respawn at the trailhead.</div><div id="touch"><div class="stick" id="stick"><div class="knob" id="knob"></div></div><div class="actions"><button class="btn" id="jump">JUMP</button><button class="btn" id="grab">TALK</button><button class="btn" id="sprint">RUN</button><button class="btn" id="pause">PAUSE</button></div></div></div></div>
 <section class="settings-panel" id="settingsPanel" role="dialog" aria-label="Settings"><button class="settings-close" id="settingsClose" aria-label="Close settings">×</button><h3>SETTINGS · AUDIO & ACCOUNT</h3><div class="settings-row"><label for="musicVolume">Background music</label><input id="musicVolume" type="range" min="0" max="100" value="28"></div><div class="settings-row"><label for="sfxVolume">Sound effects</label><input id="sfxVolume" type="range" min="0" max="100" value="70"></div><div class="settings-row"><span>Wallet</span><button class="settings-action" id="walletConnect">Connect</button></div><div class="wallet-status" id="walletStatus">Not connected · wallet connection is optional</div><div class="settings-row"><button class="settings-action" id="audioTest">Test sound</button><button class="settings-action" id="audioMute">Mute all</button></div></section><section class="camp-overlay" id="campOverlay" role="dialog" aria-modal="true" aria-label="Mountain camp services"><div class="camp-card"><div class="small">BASE CAMP · NPC QUARTERMASTER</div><h2>Welcome, climber.</h2><p>Need supplies before your next ascent?</p><div class="camp-actions"><button class="btn" id="campMarket">⚒ MARKETPLACE</button><button class="btn" id="campInventory">◈ INVENTORY</button><button class="btn" id="campCreateHero">♙ CREATE HERO</button><button class="btn" id="campClose">CLOSE</button></div></div></section><div class="camp-hint" id="campHint">PRESS E · TALK TO QUARTERMASTER</div><section class="profile-overlay" id="profileOverlay" role="dialog" aria-modal="true" aria-label="Player inventory"><div class="profile-shell"><div class="profile-head"><div><small>CLIMBER PROFILE · EXPEDITION LOADOUT</small><h2 id="profileName">YOUR CLIMBER</h2></div><button class="profile-close" id="profileClose" aria-label="Close inventory">×</button></div><div class="profile-body"><section class="profile-card"><h3>CORE ATTRIBUTES</h3><div class="profile-stats"><div class="profile-stat"><label>HEALTH</label><strong id="profileHealth">100</strong></div><div class="profile-stat"><label>STAMINA</label><strong id="profileStamina">100</strong></div><div class="profile-stat"><label>STRENGTH</label><strong id="profileStrength">10</strong></div></div><h3 style="margin-top:16px">EXPEDITION BAG · 50 SLOTS</h3><div class="inv-grid" id="bagSlots"></div></section><section class="profile-card"><h3>EQUIPMENT SLOTS</h3><div class="gear-list"><div class="gear-row"><span>🛡 ARMOR</span><b>Empty</b></div><div class="gear-row"><span>🎭 SKIN</span><b>Default</b></div><div class="gear-row"><span>📿 ACCESSORY</span><b>Empty</b></div><div class="gear-row"><span>⚔ WEAPON</span><b>Basic tool</b></div><div class="gear-row"><span>＋ OTHER GEAR</span><b>Empty</b></div></div><h3 style="margin-top:16px">ITEMS</h3><div class="inv-grid" id="storageSlots"></div></section></div><div class="profile-foot">Prototype inventory display. Storage is camp-only; expedition bag is carried into the climb. Item equip effects and persistent multiplayer inventory are not connected yet.</div></div></section><div class="toast" id="toast"><b id="toastTitle">PAUSED</b><span id="toastText">Take a breather.</span><br><button class="btn" id="resume">RESUME</button></div>
@@ -675,7 +695,7 @@ addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE')grab();if(e.
 document.getElementById('jump').onclick=jump;document.getElementById('grab').onclick=grab;document.getElementById('sprint').onpointerdown=()=>sprinting=true;document.getElementById('sprint').onpointerup=()=>sprinting=false;document.getElementById('sprint').onpointerleave=()=>sprinting=false;document.getElementById('pause').onclick=()=>togglePause(true);
 function togglePause(p){paused=p;document.getElementById('toast').classList.toggle('show',p);document.getElementById('toastTitle').textContent=p?'PAUSED':'CLIMB ON';document.getElementById('toastText').textContent=p?'Your ascent is paused.':'Back to the mountain.'}
 document.getElementById('campClose').onclick=()=>{document.getElementById('campOverlay').classList.remove('open');paused=false};
-const openHeroCreator=()=>{document.getElementById('campOverlay').classList.remove('open');paused=true;heroNameInput.value=localStorage.getItem('climboria_player_name')||'';creatorOverlay.classList.remove('closed');heroNameInput.focus()};document.getElementById('campCreateHero').onclick=openHeroCreator;document.getElementById('hudCreateHero').onclick=openHeroCreator;
+// Hero creator click handlers are registered once in the persistence block below.
  document.getElementById('campOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget){e.currentTarget.classList.remove('open');paused=false}});
  addEventListener('keydown',e=>{if(e.code==='Escape'&&document.getElementById('campOverlay').classList.contains('open')){document.getElementById('campOverlay').classList.remove('open');paused=false}});
 document.getElementById('campInventory').onclick=()=>{document.getElementById('campOverlay').classList.remove('open');paused=false;document.getElementById('profileOverlay').classList.add('open')};document.getElementById('campMarket').onclick=()=>{document.getElementById('campOverlay').classList.remove('open');document.getElementById('campOverlay').classList.add('open');document.querySelector('#campOverlay .camp-card').innerHTML='<div class="small">QUARTERMASTER STOCK · DEMO</div><h2>Camp Marketplace</h2><p>Pickaxe · 250 coins<br>Ridgeguard Armor · 500 coins<br>Trail Boots · 400 coins</p><div class="camp-actions"><button class="btn" id="campBack">BACK</button><button class="btn" id="campMarketClose">CLOSE</button></div>';document.getElementById('campBack').onclick=()=>location.reload();document.getElementById('campMarketClose').onclick=()=>{document.getElementById('campOverlay').classList.remove('open');paused=false}};document.getElementById('resume').onclick=()=>{if(levelCleared){location.href='./'}else togglePause(false)};
@@ -690,17 +710,62 @@ function closeInventory(){profileOverlay.classList.remove('open');if(!document.g
 document.getElementById('profileLaunch').addEventListener('click',openInventory);document.getElementById('profileClose').addEventListener('click',closeInventory);profileOverlay.addEventListener('click',e=>{if(e.target===profileOverlay)closeInventory()});
 
 
-// Required first-time hero creation gate. Keep the expedition paused until a valid name is saved.
-const creatorOverlay=document.getElementById('creatorOverlay'),creatorForm=document.getElementById('creatorForm'),heroNameInput=document.getElementById('heroNameInput'),creatorError=document.getElementById('creatorError');
-try{heroNameInput.value=localStorage.getItem('climboria_player_name')||'';document.getElementById('heroStyle').value=localStorage.getItem('climboria_hero_style')||'trail';document.getElementById('heroPalette').value=localStorage.getItem('climboria_hero_palette')||'gold'}catch{}
-const heroSetupComplete=(()=>{try{return (localStorage.getItem('climboria_hero_created')==='1'||(localStorage.getItem('climboria_player_name')||'').trim().length>=2)&&(localStorage.getItem('climboria_player_name')||'').trim().length>=2}catch{return false}})();
-if(heroSetupComplete){creatorOverlay.classList.add('closed');creatorOverlay.style.display='none';heroNameInput.value=localStorage.getItem('climboria_player_name')||'';paused=false;}
-creatorForm.addEventListener('submit',e=>{e.preventDefault();const heroName=heroNameInput.value.trim().replace(/\\s+/g,' ');if(heroName.length<2||heroName.length>18){creatorError.classList.add('show');heroNameInput.focus();return}try{localStorage.setItem('climboria_player_name',heroName);localStorage.setItem('climboria_hero_created','1');localStorage.setItem('climboria_hero_style',document.getElementById('heroStyle').value);localStorage.setItem('climboria_hero_palette',document.getElementById('heroPalette').value)}catch(e){window.__climbDiag('Could not save hero settings: '+e.message)}document.getElementById('hudPlayerName').textContent=heroName;document.getElementById('profileName').textContent=heroName;creatorError.classList.remove('show');creatorOverlay.classList.add('closed');paused=false;});
+// Persistent hero profile: one saved character per browser/origin, reused across levels.
+const creatorOverlay=document.getElementById('creatorOverlay');
+const creatorForm=document.getElementById('creatorForm');
+const heroNameInput=document.getElementById('heroNameInput');
+const creatorError=document.getElementById('creatorError');
+const heroStyleInput=document.getElementById('heroStyle');
+const heroPaletteInput=document.getElementById('heroPalette');
+const hudCreateHero=document.getElementById('hudCreateHero');
+const campCreateHero=document.getElementById('campCreateHero');
+function readSavedHero(){
+  try{
+    const raw=localStorage.getItem('climboria_hero_profile');
+    if(raw){const hero=JSON.parse(raw);if(hero&&typeof hero.name==='string'&&hero.name.trim().length>=2)return hero;}
+    const name=(localStorage.getItem('climboria_player_name')||'').trim();
+    if(name.length>=2)return {name,style:localStorage.getItem('climboria_hero_style')||'trail',palette:localStorage.getItem('climboria_hero_palette')||'gold'};
+  }catch(err){window.__climbDiag('Hero save could not be read: '+err.message);}
+  return null;
+}
+function applySavedHero(hero){
+  if(!hero)return;
+  document.getElementById('hudPlayerName').textContent=hero.name;
+  document.getElementById('profileName').textContent=hero.name;
+  hudCreateHero.textContent='♙ EDIT HERO';
+}
+function openHeroEditor(){
+  const hero=readSavedHero();
+  if(hero){heroNameInput.value=hero.name;heroStyleInput.value=hero.style||'trail';heroPaletteInput.value=hero.palette||'gold';}
+  else{heroNameInput.value='';heroStyleInput.value='trail';heroPaletteInput.value='gold';}
+  const camp=document.getElementById('campOverlay');if(camp)camp.classList.remove('open');
+  creatorError.classList.remove('show');
+  paused=true;creatorOverlay.classList.remove('closed');creatorOverlay.style.display='flex';heroNameInput.focus();
+}
+function closeHeroCreator(){
+  creatorOverlay.classList.add('closed');creatorOverlay.style.display='none';
+  paused=false;
+}
+const savedHeroAtBoot=readSavedHero();
+if(savedHeroAtBoot){applySavedHero(savedHeroAtBoot);closeHeroCreator();}
+else{hudCreateHero.textContent='♙ CREATE HERO';}
+creatorForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=heroNameInput.value.trim().replace(/\s+/g,' ');
+  if(name.length<2||name.length>18){creatorError.classList.add('show');heroNameInput.focus();return;}
+  const hero={name,style:heroStyleInput.value,palette:heroPaletteInput.value,savedAt:Date.now()};
+  try{
+    // Write profile first, then legacy keys for compatibility with existing HUD/profile code.
+    localStorage.setItem('climboria_hero_profile',JSON.stringify(hero));
+    localStorage.setItem('climboria_player_name',name);
+    localStorage.setItem('climboria_hero_created','1');
+    localStorage.setItem('climboria_hero_style',hero.style);
+    localStorage.setItem('climboria_hero_palette',hero.palette);
+  }catch(err){window.__climbDiag('Hero save failed: '+err.message);creatorError.textContent='Could not save hero in this browser. Check browser storage settings.';creatorError.classList.add('show');return;}
+  applySavedHero(hero);creatorError.classList.remove('show');closeHeroCreator();
+});
 heroNameInput.addEventListener('input',()=>creatorError.classList.remove('show'));
-function showHeroCreator(){if((localStorage.getItem('climboria_hero_created')==='1'||(localStorage.getItem('climboria_player_name')||'').trim().length>=2)){creatorOverlay.classList.add('closed');creatorOverlay.style.display='none';return}const camp=document.getElementById('campOverlay');if(camp)camp.classList.remove('open');paused=true;try{heroNameInput.value=localStorage.getItem('climboria_player_name')||''}catch{}creatorOverlay.classList.remove('closed');creatorOverlay.style.display='flex';heroNameInput.focus();}
-document.getElementById('hudCreateHero').addEventListener('click',showHeroCreator);
-document.getElementById('campCreateHero').addEventListener('click',showHeroCreator);
-
-
+hudCreateHero.addEventListener('click',openHeroEditor);
+campCreateHero.addEventListener('click',openHeroEditor);
 const lev=currentLevel,name=new URLSearchParams(location.search).get('name')||'Binance Ridge';document.getElementById('levelName').textContent='EXPEDITION '+lev+' · '+name.toUpperCase();document.getElementById('hudPlayerName').textContent=localStorage.getItem('climboria_player_name')||'CLIMBER';if(lev==='11')document.getElementById('mapPanel').hidden=true;
 </script></body></html>
