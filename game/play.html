@@ -505,48 +505,13 @@ new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-model
   gearMesh(new THREE.BoxGeometry(.27,.045,.07),metal,[.34,.92,.13],[0,0,-.18]);
   gearMesh(new THREE.ConeGeometry(.055,.17,8),metal,[.20,.91,.13],[0,0,Math.PI/2]);
   player.add(heroVisual);
-  // Keep the procedural hero visible until a compatible animation is confirmed.
-  // A static rigged model without a working clip can otherwise remain stuck in T-pose.
-  const showProceduralFallback=reason=>{
-   heroVisual.visible=false;
-   if(climbSkin)climbSkin.visible=true;
-   legacyPlayerParts.forEach(o=>o.visible=true);
-   window.__climbDiag(reason||'Animated hero unavailable; using procedural fallback.');
-  };
-  const showAnimatedHero=()=>{
-   heroVisual.visible=true;
-   if(climbSkin)climbSkin.visible=false;
-   legacyPlayerParts.forEach(o=>o.visible=false);
-  };
-  const animationLoader=new GLTFLoader();
-  animationLoader.load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/animations/Rig_Medium_MovementBasic.glb',animGltf=>{
-   try{
-    const clips=animGltf.animations||[];
-    const clipByName=(...names)=>clips.find(c=>names.some(n=>c.name.toLowerCase()===n.toLowerCase()));
-    const idleClip=clipByName('Idle_A','Idle','Idle_B','Idle_Stand');
-    const walkClip=clipByName('Walking_A','Walking','Walk');
-    const runClip=clipByName('Running_A','Running','Run');
-    if(!idleClip&&!walkClip&&!runClip){
-     showProceduralFallback('Animation file loaded but no compatible idle/walk/run clips were found; using procedural fallback.');
-     return;
-    }
-    heroMixer=new THREE.AnimationMixer(model);
-    if(idleClip)heroIdleAction=heroMixer.clipAction(idleClip);
-    if(walkClip)heroWalkAction=heroMixer.clipAction(walkClip);
-    if(runClip)heroRunAction=heroMixer.clipAction(runClip);
-    heroActiveAction=heroIdleAction||heroWalkAction||heroRunAction;
-    if(!heroActiveAction){
-     showProceduralFallback('No playable locomotion animation; using procedural fallback.');
-     return;
-    }
-    heroActiveAction.reset().play();
-    showAnimatedHero();
-    window.__climbDiag('Animated humanoid loaded; locomotion clip active.');
-   }catch(animErr){
-    showProceduralFallback('Animation setup failed; using procedural fallback: '+(animErr?.message||animErr));
-   }
-  },undefined,err=>showProceduralFallback('Animation clips unavailable; using procedural fallback: '+(err?.message||'')));
-  window.__climbDiag('Humanoid model loaded; checking compatible locomotion animations.');
+  // The current external body/animation rigs are not confirmed compatible. Keep the
+  // animated GLB hidden so a successful file download cannot leave the player in T-pose.
+  heroVisual.visible=false;
+  if(climbSkin)climbSkin.visible=true;
+  legacyPlayerParts.forEach(o=>o.visible=false);
+  window.__climbDiag('Using Climboria procedural climber until a rig-compatible animated GLB is installed.');
+
  }catch(err){window.__climbDiag('GLB framing failed; fallback kept: '+err.message)}
 },undefined,err=>{
  if(climbSkin)climbSkin.visible=true;
