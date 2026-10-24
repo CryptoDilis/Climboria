@@ -747,8 +747,21 @@ function closeHeroCreator(){
   paused=false;
 }
 const savedHeroAtBoot=readSavedHero();
-if(savedHeroAtBoot){applySavedHero(savedHeroAtBoot);closeHeroCreator();}
-else{hudCreateHero.textContent='♙ CREATE HERO';}
+// Hard gate: never let a first-time player enter active gameplay before tapping SAVE HERO.
+paused=true;
+if(savedHeroAtBoot){
+  applySavedHero(savedHeroAtBoot);
+  creatorOverlay.classList.add('closed');
+  creatorOverlay.style.display='none';
+  // A saved character may enter the expedition normally.
+  paused=false;
+}else{
+  hudCreateHero.textContent='♙ CREATE HERO';
+  creatorOverlay.classList.remove('closed');
+  creatorOverlay.style.display='flex';
+  // Keep gameplay frozen while the first hero is being created.
+  paused=true;
+}
 creatorForm.addEventListener('submit',e=>{
   e.preventDefault();
   const name=heroNameInput.value.trim().replace(/\s+/g,' ');
