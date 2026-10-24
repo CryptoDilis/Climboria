@@ -24,7 +24,13 @@ load(gob+'TreeHigh001.glb',[-9,0,3],2.1);load(gob+'TreeMed003.glb',[9,0,4],1.9,2
 load(gob+'Rock003.glb',[0,0,5.3],1.4,.3);load(gob+'Grass002.glb',[-1,0,6],1.2);load(gob+'Grass003.glb',[2.4,0,6.2],1.3);
 load('https://raw.githubusercontent.com/Ariescar/gobkit-free-assets/main/animal/Corgi.glb',[-3.5,0,1.5],.8,Math.PI);load('https://raw.githubusercontent.com/Ariescar/gobkit-free-assets/main/animal/Duck.glb',[3.5,0,1.5],.85,Math.PI);
 load('https://raw.githubusercontent.com/Ariescar/gobkit-free-assets/main/minion/minion-d01.glb',[0,0,3.8],1.1,Math.PI);
+// Touch-friendly on-screen zoom controls for mobile.
+const zoomUI=document.createElement('div');zoomUI.innerHTML='<button aria-label="Zoom in">+</button><button aria-label="Zoom out">−</button>';zoomUI.style.cssText='position:fixed;right:14px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:5';
+for(const b of zoomUI.querySelectorAll('button'))b.style.cssText='width:54px;height:54px;border-radius:16px;border:1px solid #f7c65b;background:#101d2beF;color:#f7c65b;font-size:30px;font-weight:700;touch-action:manipulation;box-shadow:0 4px 16px #0008';
+document.body.appendChild(zoomUI);
 let dragging=false,px=0,py=0,theta=Math.atan2(camera.position.x,camera.position.z),phi=.5,radius=24;
+zoomUI.children[0].addEventListener('click',()=>{radius=Math.max(7,radius-2);place()});
+zoomUI.children[1].addEventListener('click',()=>{radius=Math.min(48,radius+2);place()});
 function place(){camera.position.set(Math.sin(theta)*radius,Math.max(2,Math.sin(phi)*radius*.65),Math.cos(theta)*radius);camera.lookAt(0,1,0)}place();
 renderer.domElement.addEventListener('pointerdown',e=>{dragging=true;px=e.clientX;py=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});renderer.domElement.addEventListener('pointerup',()=>dragging=false);renderer.domElement.addEventListener('pointermove',e=>{if(!dragging)return;theta-=(e.clientX-px)*.008;phi=Math.max(.15,Math.min(1.35,phi+(e.clientY-py)*.005));px=e.clientX;py=e.clientY;place()});renderer.domElement.addEventListener('wheel',e=>{radius=Math.max(8,Math.min(45,radius+e.deltaY*.025));place()},{passive:true});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});function loop(){requestAnimationFrame(loop);renderer.render(scene,camera)}loop();
