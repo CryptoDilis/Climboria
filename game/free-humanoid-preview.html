@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CLIMBORIA — Free Humanoid Asset Test</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07101b;color:#f8fafc;font:14px system-ui,sans-serif}canvas{display:block;width:100%;height:100%}
+#note{position:fixed;left:14px;right:14px;top:14px;max-width:620px;padding:12px 14px;border:1px solid #8b7543;border-radius:12px;background:#101d2bdd;line-height:1.45;pointer-events:none}#note strong{color:#f7c65b}#status{color:#b9c6d5}
+</style>
+</head>
+<body>
+<div id="note"><strong>Climboria free humanoid preview</strong><br>CC0 model from NoLimitNexus/game-models. This is an isolated visual test; it does not replace the live player.<br><span id="status">Loading model…</span></div>
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color('#07101b');
+const camera=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,.1,100);camera.position.set(2.7,1.7,4.5);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xc8ddff,0x26303a,2));
+const key=new THREE.DirectionalLight(0xffe2ad,3);key.position.set(3,5,4);key.castShadow=true;scene.add(key);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshStandardMaterial({color:'#172433',roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(4,20,'#536579','#26384a');grid.position.y=0;scene.add(grid);
+let model;
+new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',g=>{
+ model=g.scene;model.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());const scale=1.75/Math.max(size.y,.001);model.scale.setScalar(scale);model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});scene.add(model);document.querySelector('#status').textContent='Loaded. Rotate the view by dragging; model is for appearance/rig inspection only.';
+},undefined,e=>{document.querySelector('#status').textContent='Could not load model: '+e.message});
+let down=false,lastX=0;renderer.domElement.addEventListener('pointerdown',e=>{down=true;lastX=e.clientX;renderer.domElement.setPointerCapture(e.pointerId)});renderer.domElement.addEventListener('pointerup',()=>down=false);renderer.domElement.addEventListener('pointermove',e=>{if(down&&model){model.rotation.y+=(e.clientX-lastX)*.008;lastX=e.clientX}});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function frame(){requestAnimationFrame(frame);renderer.render(scene,camera)}frame();
+</script>
+</body></html>
