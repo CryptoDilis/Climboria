@@ -408,7 +408,7 @@ try{
 }catch(err){if(climbSkin)climbSkin.visible=false;legacyPlayerParts.forEach(o=>o.visible=true);window.__climbDiag('Fallback skin failed: '+err.message)}
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-new GLTFLoader().load('../../climboria_free_base.glb',gltf=>{
+new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
  try{
   const model=gltf.scene;model.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
@@ -421,7 +421,7 @@ new GLTFLoader().load('../../climboria_free_base.glb',gltf=>{
   player.add(model);
   if(climbSkin)climbSkin.visible=false;
   legacyPlayerParts.forEach(o=>o.visible=false);
-  window.__climbDiag('Original GLB loaded and auto-framed.');
+  window.__climbDiag('Free NoLimitNexus humanoid loaded and auto-framed.');
  }catch(err){window.__climbDiag('GLB framing failed; fallback kept: '+err.message)}
 },undefined,err=>window.__climbDiag('GLB unavailable at ../../climboria_free_base.glb; fallback skin remains. '+(err?.message||'')));
 
