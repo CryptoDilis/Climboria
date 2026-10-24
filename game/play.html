@@ -695,6 +695,10 @@ const creatorOverlay=document.getElementById('creatorOverlay'),creatorForm=docum
 try{heroNameInput.value=localStorage.getItem('climboria_player_name')||'';document.getElementById('heroStyle').value=localStorage.getItem('climboria_hero_style')||'trail';document.getElementById('heroPalette').value=localStorage.getItem('climboria_hero_palette')||'gold'}catch{}
 creatorForm.addEventListener('submit',e=>{e.preventDefault();const heroName=heroNameInput.value.trim().replace(/\\s+/g,' ');if(heroName.length<2||heroName.length>18){creatorError.classList.add('show');heroNameInput.focus();return}try{localStorage.setItem('climboria_player_name',heroName);localStorage.setItem('climboria_hero_style',document.getElementById('heroStyle').value);localStorage.setItem('climboria_hero_palette',document.getElementById('heroPalette').value)}catch(e){window.__climbDiag('Could not save hero settings: '+e.message)}document.getElementById('hudPlayerName').textContent=heroName;document.getElementById('profileName').textContent=heroName;creatorError.classList.remove('show');creatorOverlay.classList.add('closed');paused=false;});
 heroNameInput.addEventListener('input',()=>creatorError.classList.remove('show'));
+function showHeroCreator(){const camp=document.getElementById('campOverlay');if(camp)camp.classList.remove('open');paused=true;try{heroNameInput.value=localStorage.getItem('climboria_player_name')||''}catch{}creatorOverlay.classList.remove('closed');creatorOverlay.style.display='flex';heroNameInput.focus();}
+document.getElementById('hudCreateHero').addEventListener('click',showHeroCreator);
+document.getElementById('campCreateHero').addEventListener('click',showHeroCreator);
+
 
 const lev=currentLevel,name=new URLSearchParams(location.search).get('name')||'Binance Ridge';document.getElementById('levelName').textContent='EXPEDITION '+lev+' · '+name.toUpperCase();document.getElementById('hudPlayerName').textContent=localStorage.getItem('climboria_player_name')||'CLIMBER';if(lev==='11')document.getElementById('mapPanel').hidden=true;
 </script></body></html>
