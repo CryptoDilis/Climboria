@@ -6,7 +6,8 @@ try{
  const raw=localStorage.getItem('climboria_hero_profile');
  const profile=raw?JSON.parse(raw):null;
  const legacy=(localStorage.getItem('climboria_player_name')||'').trim();
- if((profile&&typeof profile.name==='string'&&profile.name.trim().length>=2)||legacy.length>=2){
+ const explicitHeroEditor=new URLSearchParams(location.search).get('createHero')==='1';
+ if(!explicitHeroEditor&&((profile&&typeof profile.name==='string'&&profile.name.trim().length>=2)||legacy.length>=2)){
    document.documentElement.classList.add('climboria-has-saved-hero');
  }
 }catch(e){}
