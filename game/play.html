@@ -433,7 +433,8 @@ try{
 }catch(err){if(climbSkin)climbSkin.visible=false;legacyPlayerParts.forEach(o=>o.visible=true);window.__climbDiag('Fallback skin failed: '+err.message)}
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;\nnew GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
+let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;
+new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
  try{
   const model=gltf.scene;model.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
