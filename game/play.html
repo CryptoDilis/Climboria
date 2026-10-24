@@ -595,14 +595,13 @@ renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse
 renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!orbiting)return;const dx=e.clientX-lastPointer.x,dy=e.clientY-lastPointer.y;lastPointer={x:e.clientX,y:e.clientY};camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045))});
 renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===2){const moved=Math.abs(e.clientX-lastPointer.x)+Math.abs(e.clientY-lastPointer.y);if(moved<5)attack();orbiting=false}});
 renderer.domElement.addEventListener('pointercancel',()=>orbiting=false);
-// Mobile camera gestures. Listen on window in capture phase so HUD overlays
-// cannot swallow the two-finger pinch. Pinch changes the follow-camera distance.
-let touchOrbitLast=null,pinchLastDistance=0;
-const touchDistance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-window.addEventListener('touchstart',e=>{if(e.touches.length===1){touchOrbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};pinchLastDistance=0}else if(e.touches.length===2){touchOrbitLast=null;pinchLastDistance=touchDistance(e.touches[0],e.touches[1]);e.preventDefault()}},{capture:true,passive:false});
-window.addEventListener('touchmove',e=>{if(e.touches.length===2){const d=touchDistance(e.touches[0],e.touches[1]);if(pinchLastDistance>0){camDistance=Math.max(3.5,Math.min(18,camDistance-(d-pinchLastDistance)*.06))}pinchLastDistance=d;touchOrbitLast=null;e.preventDefault()}else if(e.touches.length===1&&touchOrbitLast){const t=e.touches[0],dx=t.clientX-touchOrbitLast.x,dy=t.clientY-touchOrbitLast.y;camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045));touchOrbitLast={x:t.clientX,y:t.clientY}}},{capture:true,passive:false});
-window.addEventListener('touchend',e=>{if(e.touches.length===1){touchOrbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};pinchLastDistance=0}else if(e.touches.length===0){touchOrbitLast=null;pinchLastDistance=0}},{capture:true,passive:true});
-window.addEventListener('touchcancel',()=>{touchOrbitLast=null;pinchLastDistance=0},{capture:true,passive:true});
+// Mobile camera: track touch pointers globally so HUD elements don't block pinch.
+const activeTouches=new Map();let pinchPrev=0,oneFingerPrev=null;
+const touchGap=()=>{const pts=[...activeTouches.values()];return pts.length>=2?Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y):0};
+window.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activeTouches.size===2){pinchPrev=touchGap();oneFingerPrev=null}else if(activeTouches.size===1){oneFingerPrev={x:e.clientX,y:e.clientY}}},{capture:true,passive:true});
+window.addEventListener('pointermove',e=>{if(e.pointerType!=='touch'||!activeTouches.has(e.pointerId))return;activeTouches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activeTouches.size>=2){const gap=touchGap();if(pinchPrev>0){const delta=gap-pinchPrev;camDistance=Math.max(3.5,Math.min(18,camDistance-delta*.075));}pinchPrev=gap;oneFingerPrev=null;e.preventDefault()}else if(activeTouches.size===1&&oneFingerPrev){const dx=e.clientX-oneFingerPrev.x,dy=e.clientY-oneFingerPrev.y;camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045));oneFingerPrev={x:e.clientX,y:e.clientY}}},{capture:true,passive:false});
+const endTouch=e=>{if(e.pointerType!=='touch')return;activeTouches.delete(e.pointerId);if(activeTouches.size===1){const p=[...activeTouches.values()][0];oneFingerPrev={x:p.x,y:p.y};pinchPrev=0}else if(activeTouches.size===0){oneFingerPrev=null;pinchPrev=0}};
+window.addEventListener('pointerup',endTouch,{capture:true,passive:true});window.addEventListener('pointercancel',endTouch,{capture:true,passive:true});
 renderer.domElement.addEventListener('wheel',e=>{camDistance=Math.max(3.5,Math.min(18,camDistance+Math.sign(e.deltaY)*.8));e.preventDefault()},{passive:false});
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
