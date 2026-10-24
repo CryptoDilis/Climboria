@@ -480,9 +480,18 @@ try{
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;
-let heroModelVisual=null;
+let heroModelVisual=null,maleHeroModelVisual=null;
+let femaleAnimState=null,maleAnimState=null;
 function savedHeroType(){try{const h=JSON.parse(localStorage.getItem('climboria_hero_profile')||'null');return h?.type||'woman'}catch{return 'woman'}}
-function syncHeroAppearanceType(){const male=savedHeroType()==='man';if(heroModelVisual)heroModelVisual.visible=!male;if(climbSkin)climbSkin.visible=male;legacyPlayerParts.forEach(o=>o.visible=false);}
+function syncHeroAppearanceType(){
+ const male=savedHeroType()==='man';
+ if(heroModelVisual)heroModelVisual.visible=!male;
+ if(maleHeroModelVisual)maleHeroModelVisual.visible=male;
+ if(climbSkin)climbSkin.visible=male&&!maleHeroModelVisual;
+ legacyPlayerParts.forEach(o=>o.visible=false);
+ const state=male?(maleAnimState||femaleAnimState):femaleAnimState;
+ if(state){heroMixer=state.mixer;heroIdleAction=state.idle;heroWalkAction=state.walk;heroRunAction=state.run;heroActiveAction=state.active||state.idle;}
+}
 // Load the user's tested Ara 3D Gen GLB. It includes the skinned mesh and its own
 // Mixamo-compatible animation clips, so use the same rig rather than mixing external rigs.
 const heroAssetUrl='https://raw.githubusercontent.com/CryptoDilis/Climboria/main/assets/expedition-crests/The_Adventurer.glb';
@@ -544,15 +553,12 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   };
   const idleClip=stripRootMotion(idleSource),walkClip=stripRootMotion(walkSource),runClip=stripRootMotion(runSource),jumpClip=stripRootMotion(jumpSource);
   const mixer=new THREE.AnimationMixer(model);
-  heroMixer=mixer;
-  heroIdleAction=mixer.clipAction(idleClip);
-  heroWalkAction=mixer.clipAction(walkClip);
-  heroRunAction=runClip?mixer.clipAction(runClip):heroWalkAction;
-  heroIdleAction.setLoop(THREE.LoopRepeat,Infinity).play();
-  heroActiveAction=heroIdleAction;
+  const idleAction=mixer.clipAction(idleClip),walkAction=mixer.clipAction(walkClip),runAction=runClip?mixer.clipAction(runClip):walkAction;
+  idleAction.setLoop(THREE.LoopRepeat,Infinity).play();
+  femaleAnimState={mixer,idle:idleAction,walk:walkAction,run:runAction,active:idleAction};
   syncHeroAppearanceType();
   // Keep extra clips available for future jump/climb integration without mixing another rig.
-  window.__climbAraAnimations={mixer,clips:sourceClips,actions:{idle:heroIdleAction,walk:heroWalkAction,run:heroRunAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
+  window.__climbAraAnimations={mixer,clips:sourceClips,actions:{idle:idleAction,walk:walkAction,run:runAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
   window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+sourceClips.length+' clips; root-motion translations neutralized.');
  }catch(err){
   if(climbSkin)climbSkin.visible=true;
@@ -563,6 +569,30 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
  legacyPlayerParts.forEach(o=>o.visible=true);
  window.__climbDiag('Ara 3D GLB could not load; procedural fallback kept: '+(err?.message||err));
 });
+
+// Load the uploaded male hero separately, preserving the female GLB and its rig.
+const maleHeroAssetUrl='https://raw.githubusercontent.com/CryptoDilis/Climboria/main/assets/expedition-crests/The_Police_Officer_Nigeria.glb';
+new GLTFLoader().load(maleHeroAssetUrl,gltf=>{
+ try{
+  const model=gltf.scene;model.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=1.98/Math.max(size.y,.001);model.scale.setScalar(scale);
+  model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+  model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.side=THREE.DoubleSide;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;if(m.metalness!==undefined)m.metalness=Math.min(m.metalness,.22);m.needsUpdate=true;}}});
+  const visual=new THREE.Group();maleHeroModelVisual=visual;visual.name='Climboria_Male_Adventurer';visual.rotation.y=Math.PI;visual.add(model);player.add(visual);visual.visible=false;
+  const clips=gltf.animations||[],choose=patterns=>clips.find(c=>patterns.some(p=>p.test(c.name)));
+  const idleSrc=choose([/idle/i,/stand/i]),walkSrc=choose([/walk.*loop/i,/walk/i]),runSrc=choose([/run.*loop/i,/running/i,/run/i]);
+  const bones=[];model.traverse(o=>{if(o.isBone)bones.push(o.name);});
+  if(!bones.length)throw new Error('Male GLB has no humanoid skeleton.');
+  if(!idleSrc||!walkSrc)throw new Error('Male GLB is missing idle or walk animations.');
+  const strip=clip=>{if(!clip)return null;const tracks=clip.tracks.filter(track=>{if(!/\.position$/.test(track.name))return true;const target=track.name.split('.')[0].toLowerCase().replace(/^.*[/:]/,'');if(!/^(root|armature|hips|mixamorig:hips|mixamorighips)$/i.test(target))return true;const v=track.values;for(let i=3;i<v.length;i+=3){v[i]=v[0];v[i+1]=v[1];v[i+2]=v[2];}return true;});return new THREE.AnimationClip(clip.name,clip.duration,tracks);};
+  const mixer=new THREE.AnimationMixer(model),idle=mixer.clipAction(strip(idleSrc)),walk=mixer.clipAction(strip(walkSrc)),run=runSrc?mixer.clipAction(strip(runSrc)):walk;
+  idle.setLoop(THREE.LoopRepeat,Infinity).play();maleAnimState={mixer,idle,walk,run,active:idle};
+  syncHeroAppearanceType();
+  window.__climbMaleAnimations={mixer,clips,actions:{idle,walk,run}};
+  window.__climbDiag('Male GLB loaded: '+bones.length+' bones, '+clips.length+' animation clips.');
+ }catch(err){if(maleHeroModelVisual)maleHeroModelVisual.visible=false;window.__climbDiag('Male GLB setup failed; using procedural fallback: '+(err?.message||err));}
+},undefined,err=>window.__climbDiag('Male GLB failed to load: '+(err?.message||err)));
 
 // Climboria modular-ready collision/interaction foundation (phase 1).
 // Player is approximated by a vertical capsule; resolve against explicit static boxes/spheres
@@ -784,8 +814,8 @@ function readSavedHero(){
 }
 function applySavedHero(hero){
   if(!hero)return;
-  // Switch between the available female GLB and the procedural male placeholder.
-  if(heroModelVisual){const male=hero.type==='man';heroModelVisual.visible=!male;if(climbSkin)climbSkin.visible=male;}
+  // Switch between the uploaded male and female GLB characters.
+  syncHeroAppearanceType();
   // Apply the saved appearance to the live procedural climber, not just the form.
   if(climbHeroMaterials){
     const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};
