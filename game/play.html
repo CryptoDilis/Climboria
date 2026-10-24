@@ -741,9 +741,10 @@ function readSavedHero(){
 }
 function applySavedHero(hero){
   if(!hero)return;
-  document.getElementById('hudPlayerName').textContent=hero.name;
-  document.getElementById('profileName').textContent=hero.name;
-  hudCreateHero.textContent='♙ EDIT HERO';
+  const hudName=document.getElementById('hudPlayerName');
+  const profileName=document.getElementById('profileName');
+  if(hudName)hudName.textContent=hero.name;
+  if(profileName)profileName.textContent=hero.name;
 }
 function openHeroEditor(){
   const hero=readSavedHero();
@@ -767,7 +768,6 @@ if(savedHeroAtBoot){
   // A saved character may enter the expedition normally.
   paused=false;
 }else{
-  hudCreateHero.textContent='♙ CREATE HERO';
   creatorOverlay.classList.remove('closed');
   creatorOverlay.style.display='flex';
   // Keep gameplay frozen while the first hero is being created.
@@ -789,8 +789,10 @@ creatorForm.addEventListener('submit',e=>{
   applySavedHero(hero);creatorError.classList.remove('show');closeHeroCreator();
 });
 heroNameInput.addEventListener('input',()=>creatorError.classList.remove('show'));
-hudCreateHero.addEventListener('click',openHeroEditor);
-campCreateHero.addEventListener('click',openHeroEditor);
+const hudCreateHeroButton=document.getElementById('hudCreateHero');
+if(hudCreateHeroButton)hudCreateHeroButton.addEventListener('click',openHeroEditor);
+const campCreateHeroButton=document.getElementById('campCreateHero');
+if(campCreateHeroButton)campCreateHeroButton.addEventListener('click',openHeroEditor);
 // The expedition menu's Create/Edit Hero link uses this query flag; honor it and prefill the saved profile.
 if(new URLSearchParams(location.search).get('createHero')==='1' && !savedHeroAtBoot){openHeroEditor();}
 else if(new URLSearchParams(location.search).get('createHero')==='1' && savedHeroAtBoot){openHeroEditor();}
