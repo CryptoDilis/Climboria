@@ -447,17 +447,19 @@ player.position.set(0,.16,3);
 // remains visible as a fallback until the GLB loads and is framed successfully.
 const legacyPlayerParts=[...player.children];
 let climbSkin=null,climbSkinLeftLeg=null,climbSkinRightLeg=null,climbSkinLeftArm=null,climbSkinRightArm=null;
+let climbHeroMaterials=null,climbHeroHairParts=[];
 try{
  climbSkin=new THREE.Group();climbSkin.name='Climboria_Procedural_Fallback';player.add(climbSkin);
  const skinMat=mat(0xd9a27e),green=mat(0x587746),greenDark=mat(0x354a2b),leather=mat(0x68452d),leatherLite=mat(0x9a7147),hairMat=mat(0xe0b64f),hairLight=mat(0xf2d17a),bootMat=mat(0x3b2b22),metalMat=mat(0xb5c3c8,.4),eyeMat=mat(0x252c32),freckleMat=mat(0x8a5139),shortsMat=mat(0x785536),kneeMat=mat(0x4c5558),packMat=mat(0x344a39),bedrollMat=mat(0xb9a17a);
+ climbHeroMaterials={skinMat,green,greenDark,leather,leatherLite,hairMat,hairLight,bootMat,shortsMat,packMat,bedrollMat};
  function skinPart(g,m,p,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
  skinPart(new THREE.CapsuleGeometry(.22,.42,4,8),green,climbSkin,0,1.14,0).scale.set(.92,1,.72);
  skinPart(new THREE.BoxGeometry(.43,.24,.28),greenDark,climbSkin,0,.83,0);
  skinPart(new THREE.BoxGeometry(.48,.09,.31),leather,climbSkin,0,.78,.015);
  skinPart(new THREE.SphereGeometry(.205,14,12),skinMat,climbSkin,0,1.66,-.005);
  skinPart(new THREE.SphereGeometry(.218,14,10,0,Math.PI*2,0,Math.PI*.62),hairMat,climbSkin,0,1.72,-.025);
- skinPart(new THREE.CapsuleGeometry(.075,.31,4,6),hairMat,climbSkin,-.16,1.48,-.06).rotation.z=-.12;
- skinPart(new THREE.CapsuleGeometry(.075,.31,4,6),hairMat,climbSkin,.16,1.48,-.06).rotation.z=.12;
+ climbHeroHairParts.push(skinPart(new THREE.CapsuleGeometry(.075,.31,4,6),hairMat,climbSkin,-.16,1.48,-.06));climbHeroHairParts[0].rotation.z=-.12;
+ climbHeroHairParts.push(skinPart(new THREE.CapsuleGeometry(.075,.31,4,6),hairMat,climbSkin,.16,1.48,-.06));climbHeroHairParts[1].rotation.z=.12;
  skinPart(new THREE.BoxGeometry(.38,.48,.22),leather,climbSkin,0,1.22,.19);
   skinPart(new THREE.BoxGeometry(.3,.42,.18),packMat,climbSkin,0,1.28,-.19);
   skinPart(new THREE.CapsuleGeometry(.085,.22,4,7),bedrollMat,climbSkin,0,1.53,-.19).rotation.x=Math.PI/2;
@@ -743,6 +745,21 @@ function readSavedHero(){
 }
 function applySavedHero(hero){
   if(!hero)return;
+  // Apply the saved appearance to the live procedural climber, not just the form.
+  if(climbHeroMaterials){
+    const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};
+    const hairs={blonde:0xe0b64f,brown:0x68432c,black:0x211914,auburn:0x8b3f24,silver:0xb8bdc4};
+    const palettes={gold:{shirt:0x587746,dark:0x354a2b,shorts:0x785536,pack:0x344a39},forest:{shirt:0x3f6746,dark:0x293f2c,shorts:0x66513a,pack:0x263b2c},ice:{shirt:0x477d9b,dark:0x294d63,shorts:0x53616a,pack:0x2d4655},ember:{shirt:0x9a4936,dark:0x602b25,shorts:0x604330,pack:0x49302a}};
+    const tone=tones[hero.skin]||tones.medium,hair=hairs[hero.hairColor]||hairs.blonde,p=palettes[hero.palette]||palettes.gold;
+    climbHeroMaterials.skinMat.color.setHex(tone);
+    climbHeroMaterials.hairMat.color.setHex(hair);
+    climbHeroMaterials.hairLight.color.setHex(new THREE.Color(hair).lerp(new THREE.Color(0xffffff),.28).getHex());
+    climbHeroMaterials.green.color.setHex(p.shirt);climbHeroMaterials.greenDark.color.setHex(p.dark);
+    climbHeroMaterials.shortsMat.color.setHex(p.shorts);climbHeroMaterials.packMat.color.setHex(p.pack);
+    // Short/bob styles tuck the long side locks away; long/ponytail styles keep them visible.
+    const shortHair=['short','bob'].includes(hero.hair);
+    climbHeroHairParts.forEach((part,i)=>{if(part)part.visible=!(shortHair&&i>0);});
+  }
   const hudName=document.getElementById('hudPlayerName');
   const profileName=document.getElementById('profileName');
   if(hudName)hudName.textContent=hero.name;
