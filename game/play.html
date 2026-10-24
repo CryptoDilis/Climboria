@@ -433,7 +433,7 @@ try{
 }catch(err){if(climbSkin)climbSkin.visible=false;legacyPlayerParts.forEach(o=>o.visible=true);window.__climbDiag('Fallback skin failed: '+err.message)}
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
+let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;\nnew GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
  try{
   const model=gltf.scene;model.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
@@ -444,6 +444,19 @@ new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-model
   model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
   model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.side=THREE.DoubleSide;if(o.material.metalness!==undefined)o.material.metalness=Math.min(o.material.metalness,.25)}}});
   player.add(model);
+  // Load CC0 locomotion clips authored for the same KayKit Medium skeleton as this body.
+  const animationLoader=new GLTFLoader();
+  animationLoader.load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/animations/Rig_Medium_MovementBasic.glb',animGltf=>{
+   heroMixer=new THREE.AnimationMixer(model);
+   const clipByName=name=>animGltf.animations.find(c=>c.name===name);
+   const idleClip=clipByName('Idle_A'),walkClip=clipByName('Walking_A'),runClip=clipByName('Running_A');
+   if(idleClip)heroIdleAction=heroMixer.clipAction(idleClip);
+   if(walkClip)heroWalkAction=heroMixer.clipAction(walkClip);
+   if(runClip)heroRunAction=heroMixer.clipAction(runClip);
+   heroActiveAction=heroIdleAction||heroWalkAction||heroRunAction;
+   if(heroActiveAction)heroActiveAction.reset().play();
+   window.__climbDiag('Free humanoid + CC0 idle/walk/run clips loaded.');
+  },undefined,err=>window.__climbDiag('Humanoid loaded; animation clips unavailable: '+(err?.message||'')));
   if(climbSkin)climbSkin.visible=false;
   legacyPlayerParts.forEach(o=>o.visible=false);
   window.__climbDiag('Free NoLimitNexus humanoid loaded and auto-framed.');
@@ -587,7 +600,7 @@ function attack(){if(paused||attackCooldown>0)return;attackCooldown=.42;body.rot
 function pickup(){/* World clicks never open NPC dialogue; interaction is proximity-gated by E/TALK only. */}
 function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys.KeyS?1:0);x+=touchMove.x;z+=touchMove.y;const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}/* Camera-relative: W follows the horizontal direction the camera faces. */const cy=Math.cos(camYaw),sy=Math.sin(camYaw);return{x:x*cy-z*sy,z:-x*sy-z*cy}}
 function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||document.getElementById('mapPanel').hidden)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='#142536';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#526b7d';x.lineWidth=2;x.beginPath();x.moveTo(90,138);x.lineTo(90,18);x.stroke();x.strokeStyle='#8aa1b4';x.beginPath();x.moveTo(55,138);x.lineTo(70,105);x.lineTo(52,78);x.lineTo(88,48);x.lineTo(112,20);x.stroke();for(const p of trailPlatforms){const px=90+p.x*7,py=137-p.z*5.5;x.fillStyle='#9aa8a9';x.fillRect(px-4,py-3,8,6)}const px=90+player.position.x*7,py=137-player.position.y*5.5;x.fillStyle='#ffcf5a';x.beginPath();x.arc(px,Math.max(8,Math.min(142,py)),4,0,Math.PI*2);x.fill();x.strokeStyle='#ffcf5a';x.strokeRect(4,4,c.width-8,c.height-8)}
-function update(dt){if(paused||levelCleared)return;const m=moveVec();if(Math.hypot(m.x,m.z)>.2&&performance.now()-lastStepSfx>430){lastStepSfx=performance.now();synthSfx('step')}const speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();const gait=Math.min(1,Math.hypot(m.x,m.z)*1.7)*(sprinting||keys.ShiftLeft?1.45:1);const stride=performance.now()*.009;leftLeg.rotation.x=Math.sin(stride)*.62*gait;rightLeg.rotation.x=-Math.sin(stride)*.62*gait;leftArm.rotation.x=-Math.sin(stride)*.48*gait;rightArm.rotation.x=Math.sin(stride)*.48*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=Math.sin(stride)*.42*gait;climbSkinRightLeg.rotation.x=-Math.sin(stride)*.42*gait;climbSkinLeftArm.rotation.x=-Math.sin(stride)*.3*gait;climbSkinRightArm.rotation.x=Math.sin(stride)*.3*gait;}if(Math.hypot(m.x,m.z)>.08)player.rotation.y=Math.atan2(-m.x,-m.z);
+function update(dt){if(paused||levelCleared)return;const m=moveVec();if(heroMixer){heroMixer.update(dt);const moving=Math.hypot(m.x,m.z)>.12;const desired=(moving&&(sprinting||keys.ShiftLeft)?heroRunAction:moving?heroWalkAction:heroIdleAction)||heroIdleAction||heroWalkAction||heroRunAction;if(desired&&desired!==heroActiveAction){desired.reset().play();if(heroActiveAction)desired.crossFadeFrom(heroActiveAction,.18,true);heroActiveAction=desired;}}if(Math.hypot(m.x,m.z)>.2&&performance.now()-lastStepSfx>430){lastStepSfx=performance.now();synthSfx('step')}const speed=sprinting||keys.ShiftLeft?6.2:3.6;drawMiniMap();const gait=Math.min(1,Math.hypot(m.x,m.z)*1.7)*(sprinting||keys.ShiftLeft?1.45:1);const stride=performance.now()*.009;leftLeg.rotation.x=Math.sin(stride)*.62*gait;rightLeg.rotation.x=-Math.sin(stride)*.62*gait;leftArm.rotation.x=-Math.sin(stride)*.48*gait;rightArm.rotation.x=Math.sin(stride)*.48*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=Math.sin(stride)*.42*gait;climbSkinRightLeg.rotation.x=-Math.sin(stride)*.42*gait;climbSkinLeftArm.rotation.x=-Math.sin(stride)*.3*gait;climbSkinRightArm.rotation.x=Math.sin(stride)*.3*gait;}if(Math.hypot(m.x,m.z)>.08)player.rotation.y=Math.atan2(-m.x,-m.z);
 vel.y-=15*dt;const oldY=player.position.y;const nextX=player.position.x+m.x*speed*dt,nextZ=player.position.z+m.z*speed*dt;
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.y+=vel.y*dt;
