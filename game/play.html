@@ -591,10 +591,17 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.min(.035,(now-last)
 // Desktop mouse controls: LMB pickup/interact, RMB tap attack, RMB drag orbit, wheel zoom.
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 renderer.domElement.style.touchAction='none';
-renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){if(e.button===2){orbiting=true;lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}}else{orbiting=true;lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}});
-renderer.domElement.addEventListener('pointermove',e=>{if(!orbiting)return;const dx=e.clientX-lastPointer.x,dy=e.clientY-lastPointer.y;lastPointer={x:e.clientX,y:e.clientY};camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045))});
-renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===2){const moved=Math.abs(e.clientX-lastPointer.x)+Math.abs(e.clientY-lastPointer.y);if(moved<5)attack()}orbiting=false});
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===2){orbiting=true;lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId)}});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!orbiting)return;const dx=e.clientX-lastPointer.x,dy=e.clientY-lastPointer.y;lastPointer={x:e.clientX,y:e.clientY};camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045))});
+renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===2){const moved=Math.abs(e.clientX-lastPointer.x)+Math.abs(e.clientY-lastPointer.y);if(moved<5)attack();orbiting=false}});
 renderer.domElement.addEventListener('pointercancel',()=>orbiting=false);
+// Mobile camera: one finger rotates, two-finger pinch changes follow-camera distance.
+let touchOrbitLast=null,pinchLastDistance=0;
+const touchDistance=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1){touchOrbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};pinchLastDistance=0}else if(e.touches.length===2){touchOrbitLast=null;pinchLastDistance=touchDistance(e.touches[0],e.touches[1])}e.preventDefault()},{passive:false});
+renderer.domElement.addEventListener('touchmove',e=>{if(e.touches.length===2){const d=touchDistance(e.touches[0],e.touches[1]);if(pinchLastDistance>0){camDistance=Math.max(3.5,Math.min(18,camDistance-(d-pinchLastDistance)*.035))}pinchLastDistance=d;touchOrbitLast=null}else if(e.touches.length===1&&touchOrbitLast){const t=e.touches[0],dx=t.clientX-touchOrbitLast.x,dy=t.clientY-touchOrbitLast.y;camYaw-=dx*.006;camPitch=Math.max(-.12,Math.min(.95,camPitch+dy*.0045));touchOrbitLast={x:t.clientX,y:t.clientY}}e.preventDefault()},{passive:false});
+renderer.domElement.addEventListener('touchend',e=>{if(e.touches.length===1){touchOrbitLast={x:e.touches[0].clientX,y:e.touches[0].clientY};pinchLastDistance=0}else if(e.touches.length===0){touchOrbitLast=null;pinchLastDistance=0}},{passive:true});
+renderer.domElement.addEventListener('touchcancel',()=>{touchOrbitLast=null;pinchLastDistance=0},{passive:true});
 renderer.domElement.addEventListener('wheel',e=>{camDistance=Math.max(3.5,Math.min(18,camDistance+Math.sign(e.deltaY)*.8));e.preventDefault()},{passive:false});
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
