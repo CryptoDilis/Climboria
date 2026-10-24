@@ -74,6 +74,17 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 @media(max-width:760px){.topbar{height:auto;min-height:76px;grid-template-columns:1fr auto;gap:10px;padding:12px 16px}.topbar .brand{grid-column:1;grid-row:1}.topbar .back{grid-column:2;grid-row:1}.top-actions{grid-column:1 / -1;grid-row:2;padding-top:5px}.menu-action{padding:10px 14px;font-size:11px;min-height:42px}.menu-shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.menu-inventory-layout{grid-template-columns:1fr}.menu-modal-shell{padding:16px}}
 </style>
 <script>
+// Reflect the locally saved hero in the expedition menu instead of always showing "not created".
+try{
+ const saved=JSON.parse(localStorage.getItem("climboria_hero_profile")||"null");
+ const legacy=localStorage.getItem("climboria_player_name")||"";
+ const heroName=(saved&&typeof saved.name==="string"&&saved.name.trim())||legacy.trim();
+ const preview=document.getElementById("heroPreviewName");
+ const previewCopy=document.querySelector(".hero-preview-copy p");
+ const heroLink=document.querySelector(".hero-preview-link");
+ if(heroName){preview.textContent=heroName;previewCopy.textContent="Your climber is saved on this browser. You can edit your hero any time.";heroLink.textContent="EDIT HERO ↗";}
+ else{preview.textContent="Hero not created yet";previewCopy.textContent="Create your climber once, then return here to choose an expedition.";heroLink.textContent="CREATE HERO ↗";}
+}catch{}
 const shopProducts=[["⛏","Climber's Pick","250 Coins"],["🪖","Ridgeguard Armor","500 Coins"],["🎭","Summit Skin","750 Coins"],["📿","Grip Charm","300 Coins"],["🥾","Trail Boots","400 Coins"],["🧤","Grip Gloves","350 Coins"]];
 const shopGrid=document.getElementById("menuShopGrid");shopProducts.forEach(([icon,name,price])=>{const card=document.createElement("article");card.className="menu-shop-item";card.innerHTML='<div class="item-icon">'+icon+'</div><strong>'+name+'</strong><span>'+price+'</span><button type="button">PREVIEW</button>';card.querySelector("button").onclick=()=>{card.querySelector("button").textContent="DEMO ONLY"};shopGrid.appendChild(card)});
 const itemGrid=document.getElementById("menuItemGrid");for(let i=0;i<20;i++){const slot=document.createElement("span");slot.textContent=i===0?"⛏":"·";itemGrid.appendChild(slot)}
