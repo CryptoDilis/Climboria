@@ -511,16 +511,33 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   // Keep the procedural fallback visible until the GLB skeleton and core clips validate.
   heroVisual.visible=false;
 
-  const clips=gltf.animations||[];
-  const chooseClip=patterns=>clips.find(clip=>patterns.some(pattern=>pattern.test(clip.name)));
-  const idleClip=chooseClip([/idle/i,/stand/i]);
-  const walkClip=chooseClip([/walk.*loop/i,/walk/i]);
-  const runClip=chooseClip([/run.*loop/i,/running/i,/run/i]);
-  const jumpClip=chooseClip([/jump.*loop/i,/jump/i]);
-  const namedBones=new Set();
-  model.traverse(o=>{if(o.isBone)namedBones.add(o.name);});
+  const sourceClips=gltf.animations||[];
+  const chooseClip=patterns=>sourceClips.find(clip=>patterns.some(pattern=>pattern.test(clip.name)));
+  const idleSource=chooseClip([/idle/i,/stand/i]);
+  const walkSource=chooseClip([/walk.*loop/i,/walk/i]);
+  const runSource=chooseClip([/run.*loop/i,/running/i,/run/i]);
+  const jumpSource=chooseClip([/jump.*loop/i,/jump/i]);
+  const namedBones=new Set(),boneByName=new Map();
+  model.traverse(o=>{if(o.isBone){namedBones.add(o.name);boneByName.set(o.name.toLowerCase(),o);}});
   if(!namedBones.size)throw new Error('The uploaded GLB contains no skeleton bones.');
-  if(!idleClip||!walkClip)throw new Error('The uploaded GLB is missing an idle or walk clip.');
+  if(!idleSource||!walkSource)throw new Error('The uploaded GLB is missing an idle or walk clip.');
+  // Remove root-motion translation tracks from locomotion clips. The game already moves
+  // the player capsule in world space; applying animated root translation too makes the
+  // visible character step forward and then snap back against the moving player.
+  const stripRootMotion=clip=>{
+   if(!clip)return null;
+   const tracks=clip.tracks.filter(track=>{
+    if(!/\.position$/.test(track.name))return true;
+    const target=track.name.split('.')[0].toLowerCase().replace(/^.*[/:]/,'');
+    const rootLike=/^(root|armature|hips|mixamorig:hips|mixamorighips)$/i.test(target);
+    if(!rootLike)return true;
+    const values=track.values;
+    for(let i=3;i<values.length;i+=3){values[i]=values[0];values[i+1]=values[1];values[i+2]=values[2];}
+    return true;
+   });
+   return new THREE.AnimationClip(clip.name,clip.duration,tracks);
+  };
+  const idleClip=stripRootMotion(idleSource),walkClip=stripRootMotion(walkSource),runClip=stripRootMotion(runSource),jumpClip=stripRootMotion(jumpSource);
   const mixer=new THREE.AnimationMixer(model);
   heroMixer=mixer;
   heroIdleAction=mixer.clipAction(idleClip);
@@ -532,8 +549,8 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   if(climbSkin)climbSkin.visible=false;
   legacyPlayerParts.forEach(o=>o.visible=false);
   // Keep extra clips available for future jump/climb integration without mixing another rig.
-  window.__climbAraAnimations={mixer,clips,actions:{idle:heroIdleAction,walk:heroWalkAction,run:heroRunAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
-  window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+clips.length+' embedded animation clips.');
+  window.__climbAraAnimations={mixer,clips:sourceClips,actions:{idle:heroIdleAction,walk:heroWalkAction,run:heroRunAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
+  window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+sourceClips.length+' clips; root-motion translations neutralized.');
  }catch(err){
   if(climbSkin)climbSkin.visible=true;
   window.__climbDiag('Ara 3D character setup failed; procedural fallback kept: '+(err?.message||err));
