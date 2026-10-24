@@ -767,5 +767,8 @@ creatorForm.addEventListener('submit',e=>{
 heroNameInput.addEventListener('input',()=>creatorError.classList.remove('show'));
 hudCreateHero.addEventListener('click',openHeroEditor);
 campCreateHero.addEventListener('click',openHeroEditor);
+// The expedition menu's Create/Edit Hero link uses this query flag; honor it and prefill the saved profile.
+if(new URLSearchParams(location.search).get('createHero')==='1' && !savedHeroAtBoot){openHeroEditor();}
+else if(new URLSearchParams(location.search).get('createHero')==='1' && savedHeroAtBoot){openHeroEditor();}
 const lev=currentLevel,name=new URLSearchParams(location.search).get('name')||'Binance Ridge';document.getElementById('levelName').textContent='EXPEDITION '+lev+' · '+name.toUpperCase();document.getElementById('hudPlayerName').textContent=localStorage.getItem('climboria_player_name')||'CLIMBER';if(lev==='11')document.getElementById('mapPanel').hidden=true;
 </script></body></html>
