@@ -479,70 +479,69 @@ try{
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;
-new GLTFLoader().load('https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/ours/body/Body.glb',gltf=>{
+// Load the user's tested Ara 3D Gen GLB. It includes the skinned mesh and its own
+// Mixamo-compatible animation clips, so use the same rig rather than mixing external rigs.
+const heroAssetUrl='https://raw.githubusercontent.com/CryptoDilis/Climboria/main/assets/expedition-crests/The_Adventurer.glb';
+new GLTFLoader().load(heroAssetUrl,gltf=>{
  try{
-  const model=gltf.scene;model.updateMatrixWorld(true);
-  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const desiredHeight=1.85,scale=desiredHeight/Math.max(size.y,.001);
+  const model=gltf.scene;
+  model.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(model);
+  const size=bounds.getSize(new THREE.Vector3());
+  const center=bounds.getCenter(new THREE.Vector3());
+  const desiredHeight=1.82;
+  const scale=desiredHeight/Math.max(size.y,.001);
   model.scale.setScalar(scale);
-  // Correct the imported GLB's forward axis: its face should point along the climber's travel direction, away from the follow camera.
+  // Put the model's feet on the player origin. The containing group handles facing direction.
   model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
-  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){o.material.side=THREE.DoubleSide;if(o.material.metalness!==undefined)o.material.metalness=Math.min(o.material.metalness,.25)}}});
-  // Compose the playable adventurer silhouette around the rigged base: ponytail, expedition pack,
-  // chest/waist straps and a compact climbing pick. These accessories stay parented to the hero.
-  const heroVisual=new THREE.Group();heroVisual.rotation.y=Math.PI;heroVisual.add(model);
-  const gearMat=(color,rough=.82)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:.08});
-  const olive=gearMat(0x454331),darkLeather=gearMat(0x332820),strap=gearMat(0x79603b),metal=gearMat(0x777b7b,.42),hair=gearMat(0x211914);
-  const gearMesh=(geo,mat,pos,rot)=>{const o=new THREE.Mesh(geo,mat);o.position.set(...pos);if(rot)o.rotation.set(...rot);o.castShadow=true;o.receiveShadow=true;heroVisual.add(o);return o};
-  // Backpack body and rolled bedroll (behind the torso).
-  gearMesh(new THREE.BoxGeometry(.48,.62,.23),olive,[0,1.18,-.22]);
-  gearMesh(new THREE.CylinderGeometry(.095,.095,.48,10),strap,[0,1.55,-.31],[Math.PI/2,0,0]);
-  // Visible shoulder straps and waist belt.
-  gearMesh(new THREE.BoxGeometry(.075,.58,.045),strap,[-.17,1.29,-.045],[0,0,-.13]);
-  gearMesh(new THREE.BoxGeometry(.075,.58,.045),strap,[.17,1.29,-.045],[0,0,.13]);
-  gearMesh(new THREE.BoxGeometry(.47,.09,.055),darkLeather,[0,.91,.015]);
-  gearMesh(new THREE.BoxGeometry(.10,.10,.035),metal,[0,.91,.05]);
-  // Ponytail silhouette: tied base plus tapered strand behind the head.
-  gearMesh(new THREE.SphereGeometry(.105,12,10),hair,[.02,1.72,-.12]);
-  gearMesh(new THREE.CapsuleGeometry(.075,.34,4,8),hair,[.10,1.54,-.22],[.45,0,-.22]);
-  // Small climbing pick carried along the hero's right side.
-  gearMesh(new THREE.CylinderGeometry(.018,.025,.52,8),darkLeather,[.34,.66,.13],[0,0,-.12]);
-  gearMesh(new THREE.BoxGeometry(.27,.045,.07),metal,[.34,.92,.13],[0,0,-.18]);
-  gearMesh(new THREE.ConeGeometry(.055,.17,8),metal,[.20,.91,.13],[0,0,Math.PI/2]);
+  model.traverse(o=>{
+   if(!o.isMesh)return;
+   o.castShadow=true;o.receiveShadow=true;
+   if(o.material){
+    o.material.side=THREE.DoubleSide;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    for(const m of mats){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;if(m.metalness!==undefined)m.metalness=Math.min(m.metalness,.22);m.needsUpdate=true;}
+   }
+  });
+  const heroVisual=new THREE.Group();
+  heroVisual.name='Climboria_Ara3D_Adventurer';
+  heroVisual.rotation.y=Math.PI;
+  heroVisual.add(model);
   player.add(heroVisual);
-  // Load locomotion clips separately and only reveal the rig if compatible clips are found.
-  // Keep the procedural model as a safe fallback so missing assets never leave a T-pose.
-  heroVisual.visible=false;
-  if(climbSkin)climbSkin.visible=true;
+  // Reveal the uploaded model only after it has loaded and been framed successfully.
+  heroVisual.visible=true;
+  if(climbSkin)climbSkin.visible=false;
   legacyPlayerParts.forEach(o=>o.visible=false);
-  const animUrl='https://raw.githubusercontent.com/NoLimitNexus/game-models/main/library/animations/Rig_Medium_MovementBasic.glb';
-  new GLTFLoader().load(animUrl,animGltf=>{
-   try{
-    const clips=animGltf.animations||[];
-    const idle=clips.find(c=>/Idle_A|Idle_B/i.test(c.name));
-    const walk=clips.find(c=>/Walking_A|Walking_B|Walk/i.test(c.name));
-    const run=clips.find(c=>/Running_A|Running_B|Run/i.test(c.name));
-    if(!idle||!walk){window.__climbDiag('Humanoid animation clips missing; procedural fallback kept.');return;}
-    const boneNames=new Set();model.traverse(o=>{if(o.isBone)boneNames.add(o.name);});
-    const compatible=clip=>clip&&clip.tracks.some(t=>boneNames.has(t.name.split('.')[0]));
-    if(!compatible(idle)||!compatible(walk)){window.__climbDiag('Humanoid animation rig mismatch; procedural fallback kept.');return;}
-    heroMixer=new THREE.AnimationMixer(model);
-    heroIdleAction=heroMixer.clipAction(idle);heroWalkAction=heroMixer.clipAction(walk);
-    heroRunAction=compatible(run)?heroMixer.clipAction(run):heroWalkAction;
-    heroIdleAction.play();heroActiveAction=heroIdleAction;
-    heroVisual.visible=true;if(climbSkin)climbSkin.visible=false;
-    const saved=readSavedHero();
-    if(saved){const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};const hairs={blonde:0xe0b64f,brown:0x68432c,black:0x211914,auburn:0x8b3f24,silver:0xb8bdc4};model.traverse(o=>{if(!o.isMesh||!o.material)return;const apply=mat=>{const n=(mat.name||'').toLowerCase();if(n.includes('skin'))mat.color.setHex(tones[saved.skin]||tones.medium);else if(n.includes('hair'))mat.color.setHex(hairs[saved.hairColor]||hairs.blonde);};if(Array.isArray(o.material))o.material.forEach(apply);else apply(o.material);});}
-    window.__climbDiag('Rigged humanoid + idle/walk/run animation loaded.');
-   }catch(err){window.__climbDiag('Humanoid animation setup failed; procedural fallback kept: '+err.message);}
-  },undefined,err=>window.__climbDiag('Animation asset unavailable; procedural fallback kept: '+(err?.message||err)));
- }catch(err){window.__climbDiag('GLB framing failed; fallback kept: '+err.message)}
+
+  const clips=gltf.animations||[];
+  const chooseClip=patterns=>clips.find(clip=>patterns.some(pattern=>pattern.test(clip.name)));
+  const idleClip=chooseClip([/idle/i,/stand/i]);
+  const walkClip=chooseClip([/walk.*loop/i,/walk/i]);
+  const runClip=chooseClip([/run.*loop/i,/running/i,/run/i]);
+  const jumpClip=chooseClip([/jump.*loop/i,/jump/i]);
+  const namedBones=new Set();
+  model.traverse(o=>{if(o.isBone)namedBones.add(o.name);});
+  if(!namedBones.size)throw new Error('The uploaded GLB contains no skeleton bones.');
+  if(!idleClip||!walkClip)throw new Error('The uploaded GLB is missing an idle or walk clip.');
+  const mixer=new THREE.AnimationMixer(model);
+  heroMixer=mixer;
+  heroIdleAction=mixer.clipAction(idleClip);
+  heroWalkAction=mixer.clipAction(walkClip);
+  heroRunAction=runClip?mixer.clipAction(runClip):heroWalkAction;
+  heroIdleAction.setLoop(THREE.LoopRepeat,Infinity).play();
+  heroActiveAction=heroIdleAction;
+  // Keep extra clips available for future jump/climb integration without mixing another rig.
+  window.__climbAraAnimations={mixer,clips,actions:{idle:heroIdleAction,walk:heroWalkAction,run:heroRunAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
+  window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+clips.length+' embedded animation clips.');
+ }catch(err){
+  if(climbSkin)climbSkin.visible=true;
+  window.__climbDiag('Ara 3D character setup failed; procedural fallback kept: '+(err?.message||err));
+ }
 },undefined,err=>{
  if(climbSkin)climbSkin.visible=true;
  legacyPlayerParts.forEach(o=>o.visible=true);
- window.__climbDiag('Humanoid GLB unavailable; procedural fallback kept: '+(err?.message||err));
+ window.__climbDiag('Ara 3D GLB could not load; procedural fallback kept: '+(err?.message||err));
 });
-
 
 // Climboria modular-ready collision/interaction foundation (phase 1).
 // Player is approximated by a vertical capsule; resolve against explicit static boxes/spheres
