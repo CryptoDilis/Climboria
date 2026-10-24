@@ -480,6 +480,9 @@ try{
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroActiveAction=null;
+let heroModelVisual=null;
+function savedHeroType(){try{const h=JSON.parse(localStorage.getItem('climboria_hero_profile')||'null');return h?.type||'woman'}catch{return 'woman'}}
+function syncHeroAppearanceType(){const male=savedHeroType()==='man';if(heroModelVisual)heroModelVisual.visible=!male;if(climbSkin)climbSkin.visible=male;legacyPlayerParts.forEach(o=>o.visible=false);}
 // Load the user's tested Ara 3D Gen GLB. It includes the skinned mesh and its own
 // Mixamo-compatible animation clips, so use the same rig rather than mixing external rigs.
 const heroAssetUrl='https://raw.githubusercontent.com/CryptoDilis/Climboria/main/assets/expedition-crests/The_Adventurer.glb';
@@ -505,6 +508,7 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
    }
   });
   const heroVisual=new THREE.Group();
+  heroModelVisual=heroVisual;
   heroVisual.name='Climboria_Ara3D_Adventurer';
   heroVisual.rotation.y=Math.PI;
   heroVisual.add(model);
@@ -546,9 +550,7 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   heroRunAction=runClip?mixer.clipAction(runClip):heroWalkAction;
   heroIdleAction.setLoop(THREE.LoopRepeat,Infinity).play();
   heroActiveAction=heroIdleAction;
-  heroVisual.visible=true;
-  if(climbSkin)climbSkin.visible=false;
-  legacyPlayerParts.forEach(o=>o.visible=false);
+  syncHeroAppearanceType();
   // Keep extra clips available for future jump/climb integration without mixing another rig.
   window.__climbAraAnimations={mixer,clips:sourceClips,actions:{idle:heroIdleAction,walk:heroWalkAction,run:heroRunAction,jump:jumpClip?mixer.clipAction(jumpClip):null}};
   window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+sourceClips.length+' clips; root-motion translations neutralized.');
@@ -782,6 +784,8 @@ function readSavedHero(){
 }
 function applySavedHero(hero){
   if(!hero)return;
+  // Switch between the available female GLB and the procedural male placeholder.
+  if(heroModelVisual){const male=hero.type==='man';heroModelVisual.visible=!male;if(climbSkin)climbSkin.visible=male;}
   // Apply the saved appearance to the live procedural climber, not just the form.
   if(climbHeroMaterials){
     const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};
