@@ -486,8 +486,8 @@ function savedHeroType(){try{const h=JSON.parse(localStorage.getItem('climboria_
 function syncHeroAppearanceType(){
  const male=savedHeroType()==='man';
  if(heroModelVisual)heroModelVisual.visible=!male;
- if(maleHeroModelVisual)maleHeroModelVisual.visible=male;
- if(climbSkin)climbSkin.visible=male&&!maleHeroModelVisual;
+ if(maleHeroModelVisual)maleHeroModelVisual.visible=male&&!!maleAnimState;
+ if(climbSkin)climbSkin.visible=male&&!maleAnimState;
  legacyPlayerParts.forEach(o=>o.visible=false);
  const state=male?(maleAnimState||femaleAnimState):femaleAnimState;
  if(state){heroMixer=state.mixer;heroIdleAction=state.idle;heroWalkAction=state.walk;heroRunAction=state.run;heroActiveAction=state.active||state.idle;}
