@@ -229,19 +229,19 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
 {
  const skyCanvas=document.createElement('canvas');skyCanvas.width=2;skyCanvas.height=256;
  const sctx=skyCanvas.getContext('2d'),grad=sctx.createLinearGradient(0,0,0,256);
- grad.addColorStop(0,'#3e6585');grad.addColorStop(.38,'#8fadb9');grad.addColorStop(.68,'#d2d8d0');grad.addColorStop(.84,'#e7d9bd');grad.addColorStop(1,'#607b65');
+ if(currentLevel==='11'){grad.addColorStop(0,'#080f1b');grad.addColorStop(.34,'#202d3b');grad.addColorStop(.62,'#47545a');grad.addColorStop(.82,'#6b5b52');grad.addColorStop(1,'#17221f')}else{grad.addColorStop(0,'#3e6585');grad.addColorStop(.38,'#8fadb9');grad.addColorStop(.68,'#d2d8d0');grad.addColorStop(.84,'#e7d9bd');grad.addColorStop(1,'#607b65')}
  sctx.fillStyle=grad;sctx.fillRect(0,0,2,256);
  const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
  scene.background=skyTex;
- scene.fog=new THREE.FogExp2(0xb8cbd0,.00105);
+ scene.fog=new THREE.FogExp2(currentLevel==='11'?0x303a42:0xb8cbd0,currentLevel==='11'?.0023:.00105);
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- if(sun){sun.color.set(0xffe1b1);sun.intensity=2.35;sun.position.set(-180,260,115);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=240;sun.shadow.camera.bottom=-240;sun.shadow.bias=-.00018;sun.shadow.normalBias=.025}
- const fill=new THREE.HemisphereLight(0xc5e1f2,0x4c4636,1.05);scene.add(fill);
- const rim=new THREE.DirectionalLight(0x9bc7e7,.8);rim.position.set(180,150,-260);scene.add(rim);
+ if(sun){sun.color.set(currentLevel==='11'?0x8294b5:0xffe1b1);sun.intensity=currentLevel==='11'?.72:2.35;sun.position.set(-180,260,115);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=240;sun.shadow.camera.bottom=-240;sun.shadow.bias=-.00018;sun.shadow.normalBias=.025}
+ const fill=new THREE.HemisphereLight(currentLevel==='11'?0x637b9a:0xc5e1f2,currentLevel==='11'?0x171a20:0x4c4636,currentLevel==='11'?.62:1.05);scene.add(fill);
+ const rim=new THREE.DirectionalLight(currentLevel==='11'?0x526b93:0x9bc7e7,currentLevel==='11'?.38:.8);rim.position.set(180,150,-260);scene.add(rim);
  // Sunlit atmospheric cloud wisps are translucent meshes in the distant sky, not gameplay colliders.
- const cloudMat=new THREE.MeshBasicMaterial({color:0xf0e9d8,transparent:true,opacity:.16,depthWrite:false});
+ const cloudMat=new THREE.MeshBasicMaterial({color:currentLevel==='11'?0x303b4b:0xf0e9d8,transparent:true,opacity:currentLevel==='11'?.07:.16,depthWrite:false});
  for(let i=0;i<11;i++){const cloud=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),cloudMat);cloud.scale.set(18+((i*7)%19),1.4+(i%3),5+(i%5)*2);cloud.position.set(-250+i*49,105+(i%4)*17,-380-(i%3)*45);scene.add(cloud)}
  // Filmic vignette and subtle grain are screen-space overlays; no external assets.
  const film=document.createElement('div');film.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 48%,transparent 48%,rgba(7,15,24,.28) 100%),linear-gradient(180deg,rgba(8,18,30,.12),transparent 24%,transparent 78%,rgba(8,15,22,.18)';
