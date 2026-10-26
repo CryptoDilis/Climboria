@@ -157,26 +157,31 @@ function updateWeather(dt){
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 // Cinematic distant mountain layers: muted silhouettes create depth behind the playable massif.
 function addFarRidge(z,baseY,peakScale,color,seed){
- // Layered, volumetric faceted mountain range instead of flat triangular billboard silhouettes.
+ // Procedural volumetric alpine massif: subdivided front/back surfaces with deterministic rocky displacement.
  const profile=[[-390,.02],[-340,.12],[-300,.04],[-258,.30],[-220,.10],[-178,.62],[-145,.18],[-106,.42],[-65,.09],[-24,.72],[8,.22],[48,.48],[88,.12],[132,.78],[170,.25],[211,.56],[252,.13],[292,.43],[335,.04],[390,.02]];
- const verts=[],cols=[],indices=[];
- const base=new THREE.Color(color);
- for(let i=0;i<profile.length;i++){
-  const [x,p]=profile[i],jitter=(Math.sin(i*12.9898+seed)*.5+.5)*peakScale*.09;
-  const peakY=baseY+p*peakScale+jitter;
-  const backZ=z-32-(Math.sin(i*7.17+seed)*.5+.5)*72;
-  const frontZ=z+16+(Math.sin(i*3.71+seed)*.5+.5)*46;
-  const sideShade=.68+(.5+.5*Math.sin(i*9.3+seed))*.3;
-  const c=base.clone().multiplyScalar(sideShade);
-  verts.push(x,baseY-5,frontZ,x,peakY,frontZ,x,peakY-peakScale*(.06+.06*(i%3)),backZ);
-  for(let k=0;k<3;k++)cols.push(c.r*(k===1?1.12:1),c.g*(k===1?1.12:1),c.b*(k===1?1.12:1));
-  if(i>0){const a=(i-1)*3,b=i*3;indices.push(a,b,a+1,b,b+1,a+1,a+1,b+1,a+2,b+1,b+2,a+2);}
+ const seg=5,depthRows=16,base=new THREE.Color(color),verts=[],cols=[],indices=[];
+ const ridgeY=(x)=>{const q=(x+390)/780*(profile.length-1),i=Math.min(profile.length-2,Math.floor(q)),t=q-i;const smooth=t*t*(3-2*t),p=THREE.MathUtils.lerp(profile[i][1],profile[i+1][1],smooth);return baseY+p*peakScale;};
+ for(let iz=0;iz<=depthRows;iz++){
+  const v=iz/depthRows;
+  for(let ix=0;ix<=(profile.length-1)*seg;ix++){
+   const x=-390+780*ix/((profile.length-1)*seg),peak=ridgeY(x),depthNoise=Math.sin(x*.037+seed)*Math.cos(iz*.83+seed)*peakScale*.045;
+   const edge=Math.sin(Math.PI*v),y=baseY-7+edge*(peak-baseY+7)+depthNoise*edge;
+   const zz=z+THREE.MathUtils.lerp(34,-132,v)+Math.sin(x*.022+iz*.71+seed)*9;
+   verts.push(x,y,zz);
+   const rockNoise=.78+.18*(.5+.5*Math.sin(x*.09+iz*1.7+seed))+.08*Math.sin(x*.21+iz*.9);
+   const slopeShade=.78+.2*Math.max(0,Math.sin(x*.031+seed)*Math.cos(iz*.55+seed));
+   const c=base.clone().multiplyScalar(rockNoise*slopeShade);
+   if(y>baseY+peakScale*.68)c.lerp(new THREE.Color(0xd5e0e2),.18);
+   cols.push(c.r,c.g,c.b);
+  }
  }
+ const row=(profile.length-1)*seg+1;
+ for(let iz=0;iz<depthRows;iz++)for(let ix=0;ix<row-1;ix++){const a=iz*row+ix,b=a+1,c=(iz+1)*row+ix,d=c+1;indices.push(a,c,b,b,c,d);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));g.setIndex(indices);g.computeVertexNormals();
- const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,color:0xffffff,roughness:1,metalness:0,side:THREE.DoubleSide,flatShading:true}));m.position.x=seed*.22;m.castShadow=true;m.receiveShadow=true;scene.add(m);
- // Add a second offset ridge layer for true depth and overlapping alpine silhouettes.
- const ridgeMat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.74),roughness:1,flatShading:true});
- for(let i=0;i<9;i++){const h=peakScale*(.18+((Math.sin(i*17.7+seed)*.5+.5)*.32)),r=18+((Math.sin(i*8.3+seed)*.5+.5)*24);const peak=new THREE.Mesh(new THREE.ConeGeometry(r,h,6,2),ridgeMat);peak.position.set(-330+i*82,baseY+h*.42,z-95-((i%3)*34));peak.rotation.y=i*.73;peak.castShadow=true;peak.receiveShadow=true;scene.add(peak);}
+ const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.98,metalness:0,side:THREE.DoubleSide,flatShading:true}));m.position.x=seed*.22;m.castShadow=true;m.receiveShadow=true;scene.add(m);
+ // Individual crags layered in front of the massif to break the continuous saw-tooth skyline.
+ const cragMat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.8),roughness:1,flatShading:true});
+ for(let i=0;i<12;i++){const h=peakScale*(.13+((Math.sin(i*17.7+seed)*.5+.5)*.25)),r=14+((Math.sin(i*8.3+seed)*.5+.5)*20);const geo=new THREE.ConeGeometry(r,h,7,3);const pos=geo.attributes.position;for(let j=0;j<pos.count;j++){const n=Math.sin(j*12.9898+i*78.233)*.5;pos.setX(j,pos.getX(j)*(1+n*.22));pos.setZ(j,pos.getZ(j)*(1+n*.22));}geo.computeVertexNormals();const peak=new THREE.Mesh(geo,cragMat);peak.position.set(-350+i*64,baseY+h*.38,z-58-((i%4)*25));peak.rotation.y=i*.73;peak.castShadow=true;peak.receiveShadow=true;scene.add(peak);}
 }
 addFarRidge(-465,18,145,0x8ba9b9,-24);addFarRidge(-505,8,190,0x9bb8c6,18);
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
@@ -205,7 +210,7 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
  sctx.fillStyle=grad;sctx.fillRect(0,0,2,256);
  const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
  scene.background=skyTex;
- scene.fog=new THREE.FogExp2(0xb7c9c6,.00165);
+ scene.fog=new THREE.FogExp2(0xb8cbd0,.00125);
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
