@@ -220,12 +220,12 @@ const rockTex=new THREE.CanvasTexture(rockCanvas);rockTex.wrapS=rockTex.wrapT=TH
 rockTex.repeat.set(11,15);rockTex.colorSpace=THREE.SRGBColorSpace;
 rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?4:12);
 const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.58,roughness:.94,metalness:.015,flatShading:false});
-const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-90;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
  const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
  const hillGeo=new THREE.SphereGeometry(1,24,14);
- const hillData=[[-245,-125,64,15,64],[-205,-245,76,18,82],[245,-145,70,17,72],[270,-285,92,22,105],[-315,-355,112,25,132],[330,-445,128,28,155]];
+ const hillData=[[-245,-85,64,15,64],[-205,-190,76,18,82],[245,-105,70,17,72],[270,-225,92,22,105],[-315,-315,112,25,132],[330,-405,128,28,155]];
  const hillObj=new THREE.Object3D();
  for(const [x,z,sx,sy,sz] of hillData){hillObj.position.set(x,sy*.05,z);hillObj.scale.set(sx,sy,sz);hillObj.updateMatrix();const h=new THREE.Mesh(hillGeo,hillMat);h.position.copy(hillObj.position);h.scale.copy(hillObj.scale);h.receiveShadow=true;scene.add(h)}
  // Medieval farmstead silhouettes on a distant shelf: tiny huts, pitched thatch roofs and stone boundary lines.
