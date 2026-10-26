@@ -7,6 +7,9 @@ on:
       - "index.html"
       - "favicon.png"
       - "game/play.html"
+      - "game/index.html"
+      - "overview/index.html"
+      - "terms/index.html"
       - ".github/workflows/browser-smoke.yml"
   workflow_dispatch:
 
@@ -99,6 +102,45 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Test expedition select locks and demo modals
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const errors=[];
+            try {
+              const page=await browser.newPage({viewport:{width:1365,height:900}});
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.goto('http://127.0.0.1:4173/game/',{waitUntil:'networkidle'});
+              const cards=page.locator('.card');
+              if(await cards.count()!==11) throw new Error('Expected 11 expedition cards');
+              if(await page.locator('.card[data-level="01"]').getAttribute('aria-disabled')!=='false') throw new Error('Expedition 01 must be unlocked');
+              for(const n of ['02','03','04','05','06','07','08','09','10','11']){
+                if(await page.locator('.card[data-level="'+n+'"]').getAttribute('aria-disabled')!=='true') throw new Error('Expedition '+n+' should be locked before prior completion');
+              }
+              await page.locator('.card[data-level="02"]').click();
+              if(!page.url().endsWith('/game/')) throw new Error('Clicking a locked expedition navigated away');
+              await page.locator('#menuMarketplace').click();
+              if(!await page.locator('#levelShopModal').evaluate(el=>el.classList.contains('open'))) throw new Error('Marketplace demo modal failed to open');
+              await page.locator('[data-close="levelShopModal"]').click();
+              if(await page.locator('#levelShopModal').evaluate(el=>el.classList.contains('open'))) throw new Error('Marketplace demo modal failed to close');
+              await page.screenshot({path:'climboria-expedition-select.png',fullPage:true});
+              if(errors.length) throw new Error('Expedition select browser errors: '+errors.join(' | '));
+              console.log('PASS: 11 expeditions, sequential locks, locked-card navigation guard, and marketplace demo modal.');
+            } finally { await browser.close(); }
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Upload expedition select screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climboria-expedition-select-preview
+          path: climboria-expedition-select.png
           if-no-files-found: warn
           retention-days: 7
 
