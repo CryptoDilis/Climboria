@@ -396,7 +396,7 @@ if(summit){
 }
 }else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(currentLevel==='11'?0x53634a:0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
+if(currentLevel==='11'){const terrainGeo=new THREE.PlaneGeometry(900,1000,180,200);terrainGeo.rotateX(-Math.PI/2);const tp=terrainGeo.attributes.position;for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i)-170;const ridge=Math.sin(x*.012+z*.009)*3.8+Math.sin(z*.021-x*.016)*2.1+Math.sin(x*.004-z*.006)*5.2;const campBlend=Math.max(0,1-Math.hypot(x+1,z+340)/24);const h=ridge*(1-campBlend)-.42*campBlend;const riverX=8+Math.sin(((z+360)/720)*4.6)*17+Math.sin(((z+360)/720)*9.2)*5.5+Math.sin(((z+360)/720)*15.5)*1.4;const riverBlend=Math.max(0,1-Math.abs(x-riverX)/15);tp.setY(i,h*(1-riverBlend)-.52*riverBlend)}terrainGeo.computeVertexNormals();const terrainMat=new THREE.MeshStandardMaterial({color:0x53634a,roughness:1,side:THREE.DoubleSide});const terrain=new THREE.Mesh(terrainGeo,terrainMat);terrain.position.z=170;terrain.receiveShadow=true;terrain.castShadow=false;scene.add(terrain)}else{const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground)}
 const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-25);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
 // This expedition uses foot trails, not grip climbing.
 function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,6),mat(c));m.position.set(x,h/2-.2,z);m.castShadow=true;scene.add(m)}
