@@ -86,3 +86,23 @@ This is a design reference, not a statement that these features are live. Verify
 - A live-position minimap is shown in normal-level gameplay; it is hidden for level 11 (Jarrell's Peak).
 - These are front-end prototype changes. Player-name entry/persistence, actual inventory/equipment data, combat damage, and multiplayer synchronization are not connected or verified.
 
+## Jarrell's Peak — endless survival treasure hunt (agreed design)
+
+Jarrell's Peak is a special, endless wilderness map. It has **no summit, no final level, and no completion point**. The core loop is exploration, survival, and treasure hunting—not climbing to a summit.
+
+- **Starting area:** Build a beautiful riverside trailhead/camp. Players can fish at the nearby river for randomized ingredients and other rewards.
+- **Endless exploration:** The world should feel vast, with wilderness, rivers, forests, cliffs, ruins, hidden paths, and discoverable treasure locations. The map should support continued exploration rather than a fixed summit route.
+- **Distance-based treasure:** The farther a player travels from the starting area, the better the potential chest tiers and loot quality should become.
+- **Survival-time influence:** Longer survival runs should improve opportunities to discover better treasure. Time and distance should influence loot opportunities without guaranteeing a rare reward every time.
+- **Randomized chest loot:** Chests can contain ingredients, crafting materials, gear, and other rewards across rarity tiers, from Common through Mythic. Loot should remain randomized and balanced.
+- **Fishing at the starting river:** Fishing is a repeatable activity with randomized rewards. The initial proposed drop-rate table is a design target, not a deployed or audited reward system:
+  - 1% — $CLIMB token
+  - 4% — Legendary item (e.g., Abyssal Pearl)
+  - 15% — Rare ingredient (e.g., Frostglass Scale)
+  - 30% — Uncommon ingredient (e.g., Moonfin / River Herb)
+  - 50% — Common ingredient (e.g., River Minnow / Wild Reed)
+- **Risk:** Jarrell's Peak has no safe zone. Death sends the player back to the starting point; survival and the choice to keep exploring are part of the risk/reward loop.
+- **Identity:** Motto: **“Vengeance Is Always an Option.”**
+- **Development priority:** Finish Jarrell's Peak first, starting with its spawn point and riverside environment, then the fishing interaction, endless exploration, treasure/chest placement, survival mechanics, and reliable reward/inventory handling.
+- **Implementation status:** These are agreed design requirements. The visual fishing/loot interactions currently in the prototype are not a secure, persistent inventory or on-chain token payout. Any real $CLIMB reward must be validated and protected against client-side cheating before production.
+
