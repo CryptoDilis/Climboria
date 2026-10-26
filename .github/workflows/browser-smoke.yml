@@ -122,7 +122,7 @@ jobs:
               for(const n of ['02','03','04','05','06','07','08','09','10','11']){
                 if(await page.locator('.card[data-level="'+n+'"]').getAttribute('aria-disabled')!=='true') throw new Error('Expedition '+n+' should be locked before prior completion');
               }
-              await page.locator('.card[data-level="02"]').click();
+              await page.locator('.card[data-level="02"]').dispatchEvent('click');
               if(!page.url().endsWith('/game/')) throw new Error('Clicking a locked expedition navigated away');
               await page.locator('#menuMarketplace').click();
               if(!await page.locator('#levelShopModal').evaluate(el=>el.classList.contains('open'))) throw new Error('Marketplace demo modal failed to open');
