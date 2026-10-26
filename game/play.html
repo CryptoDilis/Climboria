@@ -191,7 +191,7 @@ let terrainHeightAt=mountainHeight;
 const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
 // Shared ground-height helper is declared before player spawn; Jarrell's Peak camp uses the same terrain profile.
 const campGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
-if(true){
+if(currentLevel!=='11'){
 // Shared world terrain is created for every expedition. Biome tint varies by expedition while the shared terrain/collision foundation stays consistent.
 // Broad Rohan-like pasture floor with subtle rolling elevation and a procedural grass albedo texture.
 const grassCanvas=document.createElement('canvas');grassCanvas.width=1024;grassCanvas.height=1024;const gctx=grassCanvas.getContext('2d');gctx.fillStyle='#587747';gctx.fillRect(0,0,1024,1024);let gseed=74123;const grnd=()=>{gseed=(gseed*1664525+1013904223)>>>0;return gseed/4294967296};for(let i=0;i<(isMobileGPU?22000:42000);i++){const x=grnd()*1024,y=grnd()*1024,len=2+grnd()*17;gctx.strokeStyle=['#718d51','#3f6138','#8b9a5c','#526f3e','#a1a16a'][Math.floor(grnd()*5)];gctx.globalAlpha=.12+grnd()*.24;gctx.lineWidth=.5+grnd()*1.4;gctx.beginPath();gctx.moveTo(x,y);gctx.lineTo(x+(grnd()-.5)*4,y-len);gctx.stroke()}gctx.globalAlpha=1;const grassTex=new THREE.CanvasTexture(grassCanvas);grassTex.wrapS=grassTex.wrapT=THREE.RepeatWrapping;grassTex.repeat.set(15,15);grassTex.colorSpace=THREE.SRGBColorSpace;grassTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),4);const biomePalette=currentLevel==='11'?0x9baa78:Number(currentLevel)>=7?0x7c8989:Number(currentLevel)>=4?0x78856b:Number(currentLevel)>=2?0x82966a:0x82966a;const pastureMat=new THREE.MeshStandardMaterial({map:grassTex,color:biomePalette,roughness:1});
