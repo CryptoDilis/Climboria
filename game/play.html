@@ -772,27 +772,6 @@ new GLTFLoader().load(maleHeroAssetUrl,gltf=>{
  }catch(err){if(maleHeroModelVisual)maleHeroModelVisual.visible=false;window.__climbDiag('Male GLB setup failed; using procedural fallback: '+(err?.message||err));}
 },undefined,err=>window.__climbDiag('Male GLB failed to load: '+(err?.message||err)));
 
-// Climboria modular-ready collision/interaction foundation (phase 1).
-// Player is approximated by a vertical capsule; resolve against explicit static boxes/spheres
-// and keep interaction raycasts separate from movement input.
-const collisionWorld={
- staticAABBs:[],
- addAABB(min,max){this.staticAABBs.push({min:new THREE.Vector3(...min),max:new THREE.Vector3(...max)})},
- capsuleBlocked(x,z,feetY,r=.34,h=1.75){
-  const lo=feetY,hi=feetY+h;
-  for(const b of this.staticAABBs){
-   if(hi<=b.min.y||lo>=b.max.y)continue;
-   const qx=Math.max(b.min.x,Math.min(x,b.max.x)),qz=Math.max(b.min.z,Math.min(z,b.max.z));
-   if((x-qx)**2+(z-qz)**2<r*r)return true;
-  }return false
- }
-};
-const interactionRaycaster=new THREE.Raycaster();
-function rayInteract(targets,maxDistance=3.2){
- interactionRaycaster.setFromCamera(new THREE.Vector2(0,0),camera);
- interactionRaycaster.far=maxDistance;
- return interactionRaycaster.intersectObjects(targets,true)[0]||null;
-}
 
 let paused=true,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false,attackCooldown=0,camYaw=currentLevel==='11'?.10:.48,camPitch=currentLevel==='11'?.20:.28,camDistance=currentLevel==='11'?7:11,orbiting=false,lastPointer={x:0,y:0};
 // Procedural original audio (Web Audio synthesis; no external copyrighted tracks/assets).
