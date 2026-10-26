@@ -143,3 +143,12 @@ Jarrell's Peak may be called **gameplay-complete** only when all applicable chec
 
 Track each item as **Not started**, **In progress**, **Implemented — unverified**, or **Tested — passed**. A commit means the code was changed; it does not prove the game works visually or in the browser. Only mark a checklist item as passed after the relevant test has actually been performed. Jarrell's Peak's world/exploration goal can be called complete when all core world, survival, treasure, performance, and desktop/mobile verification checks above pass. Production multiplayer, anti-cheat, and on-chain reward security remain separate release gates if those features are enabled.
 
+### Jarrell's Peak — Death Stone item rule (newly confirmed)
+
+- **Chest drop chance:** Death Stone has a **1.5% chance per eligible chest loot roll**. This is a rare item, not a guaranteed drop.
+- **Marketplace:** Death Stones are intended to be tradable/sellable through the Climboria marketplace, so the item is part of the player-driven economy.
+- **Solo use:** A player can use a Death Stone to teleport back to that player's exact recorded death location.
+- **Team use:** A team can use a Death Stone to teleport the team to the relevant recorded death location, subject to finalized party range, consent, cooldown, and eligibility rules.
+- **Purpose:** The item supports attempts to recover dropped expedition loot after death; it does not guarantee that loot remains there or can be recovered safely.
+- **Implementation status:** This is the agreed design rule. The 1.5% drop, marketplace listing/trading, exact-location teleport, and team teleport must be implemented and tested before being described as live. Define and validate anti-exploit safeguards (death-location ownership, valid coordinates, teleport bounds, cooldown, and team consent) before production.
+
