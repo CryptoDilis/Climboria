@@ -762,10 +762,10 @@ function ensureAudio(){
   audioCtx=new AC();const master=audioCtx.createGain();master.gain.value=audioSettings.muted?0:1;master.connect(audioCtx.destination);audioCtx.masterGain=master;
  }
  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
- if(!isJarrellPeakExpedition())startExpeditionSoundtrack();
- if(isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
+ startExpeditionSoundtrack();
+ if(false&&isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
   musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // Jarrell's Peak exclusive original soundtrack: dark, spacious survival-fantasy ambience with layered harmony, low cinematic pulse, wind bed, and a wandering melody. Level 1 uses its own TRACK_01 soundtrack.
+  // All mountains use the same official Climboria soundtrack asset; keep expedition ambience and gameplay SFX separate from the shared BGM.
   const chords=[
    [146.83,220,293.66], // D minor
    [130.81,196,261.63], // C
