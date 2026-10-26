@@ -401,8 +401,8 @@ function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeome
 for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.random()*5,8+Math.random()*16);
 
 }
-const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*.38+Math.sin(z*.025-x*.018)*.18;
-const player=new THREE.Group();player.position.y=currentLevel==='01'?meadowGroundY(0,3):-.25;scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
+const player=new THREE.Group();player.position.y=currentLevel==='01'?meadowGroundY(0,3)+.9:.65;scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 // Hard-packed camp earth: layered irregular ground with a fine dirt/gravel canvas texture.
@@ -801,7 +801,7 @@ const feetY=player.position.y,penetratingMountain=toH>feetY+.38;
 if(!FREE_ROAM_ENV_REVIEW&&(hitsCliff(nextX,nextZ)||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12))blocked=true;
 if(FREE_ROAM_ENV_REVIEW||!blocked){player.position.x=nextX;player.position.z=nextZ;if(!FREE_ROAM_ENV_REVIEW&&player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+90),hz=terrainHeightAt(player.position.x,nextZ+90);if(!hitsCliff(nextX,player.position.z)&&hx<=player.position.y+.38&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&hz<=player.position.y+.38&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
 // In free-roam review, use the flat meadow floor as ground so mountain meshes don't stop movement; hero may visibly clip through terrain until proper mesh collision is implemented.
-const terrainY=FREE_ROAM_ENV_REVIEW?(currentLevel==='01'?meadowGroundY(player.position.x,player.position.z):-.25):terrainHeightAt(player.position.x,player.position.z+90);if(FREE_ROAM_ENV_REVIEW){if(player.position.y<terrainY){player.position.y=terrainY;if(vel.y<0)vel.y=0;}}else if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
+const terrainY=FREE_ROAM_ENV_REVIEW?(currentLevel==='01'?meadowGroundY(player.position.x,player.position.z):-.25):terrainHeightAt(player.position.x,player.position.z+90);if(FREE_ROAM_ENV_REVIEW){const safeGroundY=terrainY+footClear;if(player.position.y<safeGroundY){player.position.y=safeGroundY;if(vel.y<0)vel.y=0;}}else if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(!FREE_ROAM_ENV_REVIEW&&player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
 if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);{const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FELL · BACK TO TRAILHEAD'}}
