@@ -222,7 +222,7 @@ meadowGrass.count=grassN;meadowGrass.instanceMatrix.needsUpdate=true;scene.add(m
   const gy=-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
   dummy.position.set(x,gy+h*.42,z);dummy.rotation.set(.08*(i%3),i*1.71,.04*(i%5));dummy.scale.set(w,h,w*(.7+(i%3)*.2));dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix);
  }
- outcrops.instanceMatrix.needsUpdate=true;outcrops.castShadow=true;outcrops.receiveShadow=true;scene.add(outcrops);
+ outcrops.instanceMatrix.needsUpdate=true;outcrops.castShadow=true;outcrops.receiveShadow=true;outcrops.visible=currentLevel!=='11';scene.add(outcrops);
 }
 terrainHeightAt=mountainHeight;
 const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGPU?340:440);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.035,ridgeTint=(Math.abs(Math.sin(x*.034+z*.019))*.5+Math.abs(Math.sin(z*.027-x*.031))*.5),snowMask=Math.max(0,Math.min(1,(h-142)/34))*(.35+.65*Math.max(0,Math.sin(x*.055+z*.041)*.5+.5)),rockVariation=.88+.12*Math.sin(x*.13+z*.17),c=new THREE.Color();if(h>168){c.setRGB(.73+n,.79+n,.82+n);c.lerp(new THREE.Color(currentLevel==='11'?0xc7d0d2:0xe7edf0),snowMask*(currentLevel==='11'?.52:.78))}else if(h>125){c.setRGB(.38+n+ridgeTint*.10,.42+n+ridgeTint*.09,.44+n+ridgeTint*.08);c.lerp(new THREE.Color(currentLevel==='11'?0x929b9d:0xdbe5e8),snowMask*(currentLevel==='11'?.38:.68))}else if(h>48)c.setRGB((.30+n+ridgeTint*.06)*rockVariation,(.34+n+ridgeTint*.05)*rockVariation,(.35+n+ridgeTint*.04)*rockVariation);else if(h>18)c.setRGB(.31+n,.36+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
@@ -278,7 +278,7 @@ for(let i=0;i<9000;i++){const x=rnRand()*512,y=rnRand()*512,r=.6+rnRand()*3;rn.g
 rn.globalAlpha=1;
 const rockNormalTex=new THREE.CanvasTexture(rockNormalCanvas);rockNormalTex.wrapS=rockNormalTex.wrapT=THREE.RepeatWrapping;rockNormalTex.repeat.set(13,17);rockNormalTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?2:8);
 const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.34,normalMap:rockNormalTex,normalScale:new THREE.Vector2(.48,.48),roughness:.96,metalness:0,flatShading:false});
-const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;mountain.visible=currentLevel!=='11';scene.add(mountain);
+const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;mountain.visible=currentLevel!=='11';if(currentLevel==='11'){mountain.parent?.remove(mountain);mountain.geometry.dispose();}else{scene.add(mountain)}
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
  const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
