@@ -745,7 +745,7 @@ const audioSettings={music:.28,sfx:.7,muted:false};
 try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
- function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return n.includes('jarrellspeak')||n.includes('jarrellpeak')}
+ function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
  function startExpeditionSoundtrack(){
   if(isJarrellPeakExpedition())return;
   if(!soundtrackAudio){
@@ -765,7 +765,7 @@ function ensureAudio(){
  if(!isJarrellPeakExpedition())startExpeditionSoundtrack();
  if(isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
   musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // Original fantasy-adventure arrangement: sustained harmonized strings, bass, and a lilting melody.
+  // Jarrell's Peak exclusive original soundtrack: dark, spacious survival-fantasy ambience with layered harmony, low cinematic pulse, wind bed, and a wandering melody. Level 1 uses its own TRACK_01 soundtrack.
   const chords=[
    [146.83,220,293.66], // D minor
    [130.81,196,261.63], // C
