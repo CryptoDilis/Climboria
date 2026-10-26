@@ -411,11 +411,11 @@ let fishingRiver=null,fishingBank=null;
 if(currentLevel==='11'){
  // A broad, shallow river ribbon with a curved shoreline instead of a raised tube.
  const riverMat=new THREE.MeshPhysicalMaterial({color:0x236f86,roughness:.22,metalness:.08,clearcoat:.85,clearcoatRoughness:.16,transparent:true,opacity:.91,side:THREE.DoubleSide});
- const riverPts=[];for(let i=0;i<=180;i++){const t=i/180;riverPts.push(new THREE.Vector3(10+Math.sin(t*8.4)*5.2+Math.sin(t*21)*1.15,.015+Math.sin(t*31)*.008,-360+t*720))}
+ const riverPts=[];for(let i=0;i<=180;i++){const t=i/180;riverPts.push(new THREE.Vector3(10+Math.sin(t*3.1)*4.0+Math.sin(t*7.5)*.55,.015,-360+t*720))}
  const riverCurve=new THREE.CatmullRomCurve3(riverPts);
  const riverShapePts=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180);riverShapePts.push(new THREE.Vector2(p.x,p.z))}
  // Create a flat triangulated ribbon around the river centerline; vertices sit just above the ground.
- const verts=[],indices=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180),t=i/180,dx=Math.cos(t*8.4)*.42+Math.cos(t*21)*.16,dz=1;const len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=4.2+Math.sin(t*13)*.75;for(const side of [-1,1])verts.push(p.x+nx*w*side,.035+Math.sin(t*45+side)*.012,p.z+nz*w*side);if(i<180){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}}
+ const verts=[],indices=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180),t=i/180,dx=Math.cos(t*3.1)*.18+Math.cos(t*7.5)*.04,dz=1;const len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=3.5+Math.sin(t*5.2)*.22;for(const side of [-1,1])verts.push(p.x+nx*w*side,.035,p.z+nz*w*side);if(i<180){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}}
  const riverGeo=new THREE.BufferGeometry();riverGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));riverGeo.setIndex(indices);riverGeo.computeVertexNormals();
  fishingRiver=new THREE.Mesh(riverGeo,riverMat);fishingRiver.name='JarrellFishingRiver';fishingRiver.receiveShadow=true;scene.add(fishingRiver);
  // Jarrell's Peak starting camp: actual spawn is on this clearing beside the river.
