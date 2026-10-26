@@ -278,7 +278,7 @@ for(let i=0;i<9000;i++){const x=rnRand()*512,y=rnRand()*512,r=.6+rnRand()*3;rn.g
 rn.globalAlpha=1;
 const rockNormalTex=new THREE.CanvasTexture(rockNormalCanvas);rockNormalTex.wrapS=rockNormalTex.wrapT=THREE.RepeatWrapping;rockNormalTex.repeat.set(13,17);rockNormalTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?2:8);
 const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.34,normalMap:rockNormalTex,normalScale:new THREE.Vector2(.48,.48),roughness:.96,metalness:0,flatShading:false});
-const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
+const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;mountain.visible=currentLevel!=='11';scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
  const hillMat=new THREE.MeshStandardMaterial({color:0x536f45,roughness:1,flatShading:false});
