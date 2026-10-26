@@ -394,7 +394,7 @@ if(summit){
 }
 }else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(currentLevel==='11'?0x53634a:0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
 const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-25);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
 // This expedition uses foot trails, not grip climbing.
 function addRidge(x,z,r,h,c=0x53616a){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,6),mat(c));m.position.set(x,h/2-.2,z);m.castShadow=true;scene.add(m)}
