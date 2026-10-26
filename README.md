@@ -106,3 +106,40 @@ Jarrell's Peak is a special, endless wilderness map. It has **no summit, no fina
 - **Development priority:** Finish Jarrell's Peak first, starting with its spawn point and riverside environment, then the fishing interaction, endless exploration, treasure/chest placement, survival mechanics, and reliable reward/inventory handling.
 - **Implementation status:** These are agreed design requirements. The visual fishing/loot interactions currently in the prototype are not a secure, persistent inventory or on-chain token payout. Any real $CLIMB reward must be validated and protected against client-side cheating before production.
 
+## Jarrell's Peak — development procedure and definition of done
+
+This section is the agreed implementation order and the completion checklist for Jarrell's Peak. It is a project plan, not a claim that the listed work is already complete. Keep this section updated as work is implemented and verified.
+
+### Build order (follow in sequence)
+
+1. **Audit and protect the existing game.** Inspect `game/play.html` and shared systems before changing them. Preserve working controls, player/HUD behavior, level selection, audio, day/night, weather, and other existing features. Fix root causes rather than layering on repeated visual patches.
+2. **Replace the oversized terrain foundation.** Remove reliance on one giant, low-resolution terrain plane as the world itself. Implement deterministic, coordinate-based terrain chunks with suitable local detail, seamless chunk edges, chunk loading/unloading around the player, and lower-cost distant terrain/LOD. The world must continue generating as the player travels; a large finite plane alone does not count as endless.
+3. **Finish the starting camp and river first.** Establish a clear, attractive spawn point and readable trailhead/camp. Build a long, natural-looking river with believable banks and terrain transitions, plus reachable fishing spots. Ensure the player spawns on walkable ground and cannot begin inside terrain, water, or props.
+4. **Make the nearby wilderness believable.** Improve terrain relief and materials; add varied forest density, natural rocks, cliffs, distant ridgelines, paths, and atmospheric depth. Avoid obvious repeated cone trees, primitive placeholder walls, oversized artificial-looking mountain meshes, and visible terrain seams.
+5. **Build exploration regions and landmarks.** Add and visually distinguish caves, rice fields, battlefield remnants, sanctuary lake/shrine, abandoned places, traps, and hidden paths. Landmarks should be grounded in the terrain and discoverable through exploration, not just floating props.
+6. **Implement survival and world interactions.** Verify fishing, wildlife roaming/attacks, damage and death/respawn, weather and day/night, chest discovery, loot tables, inventory updates, and survival-time/distance effects. Use deterministic world seeds where useful so chunk boundaries and world features remain stable.
+7. **Implement endless treasure progression.** Generate chest locations and contents without revealing undiscovered coordinates. Travel distance and survival time should improve the chance of better loot, not guarantee it. Keep the starting camp as the return point after death; Jarrell's Peak has no summit, no final level, and no safe zone.
+8. **Polish visuals and optimize.** Use appropriate high-quality models and textures, consistent scale, natural lighting/shadows, fog and weather that support visibility, and performance techniques such as instancing, culling, LOD, and cleanup of unloaded chunks. Target both desktop and mobile browsers; do not trade basic playability for effects.
+9. **Test before declaring completion.** Run syntax/build checks and test the deployed browser game on desktop and a mobile-sized viewport. Verify spawn, movement, chunk transitions in every direction, long-distance travel, river and fishing, landmarks, combat/death/respawn, chest discovery/loot, weather/day-night, audio, HUD, and performance. Check browser console for errors and memory/performance degradation. Fix regressions before release.
+
+### Definition of done — Jarrell's Peak
+
+Jarrell's Peak may be called **gameplay-complete** only when all applicable checks below pass in the actual browser game, not merely because code has been committed:
+
+- [ ] The player starts at a deliberate, attractive riverside camp with a clear starting point and nearby accessible fishing water.
+- [ ] The river is long, navigable, visually integrated with its banks, and supports a working fishing interaction with randomized rewards.
+- [ ] Terrain is generated in coordinate-based chunks around the player, adjacent chunks join without visible gaps/height seams, and chunks unload or reuse resources safely.
+- [ ] The world keeps extending during travel in all tested directions; there is no reachable outer edge or summit route. The implementation is technically bounded by browser resources, but gameplay must not expose a fixed map boundary.
+- [ ] Nearby terrain has enough detail for close views, while distant mountains and scenery use appropriate lower-cost detail. The ground does not look like a single coarse, flat plane.
+- [ ] Forests, mountains, caves, rice fields, battlefield remnants, sanctuary lake/shrine, traps, and hidden exploration routes are placed naturally and do not float, intersect badly, or block the spawn unfairly.
+- [ ] Wildlife can roam and its attacks/damage work as designed; death returns the player to the starting point and applies the agreed carried-loot loss rule.
+- [ ] Chests and loot are randomized and discoverable; better opportunities scale with distance and survival time without exposing undiscovered locations or guaranteeing rare drops.
+- [ ] Weather and day/night transitions work alongside movement, lighting, audio, HUD, and world interactions without breaking gameplay.
+- [ ] Chunk loading, unloading, and world interactions remain stable during extended exploration; no persistent accumulation of duplicate chunks, meshes, event listeners, or other resources.
+- [ ] Desktop and mobile-browser smoke tests pass, including controls, rendering, respawn, and core interactions; no blocking console errors remain.
+- [ ] The README accurately distinguishes implemented and tested features from planned, prototype-only, or unverified features. Do not claim real token payouts, multiplayer synchronization, or persistent/on-chain rewards are production-ready unless separately verified.
+
+### Status reporting rule
+
+Track each item as **Not started**, **In progress**, **Implemented — unverified**, or **Tested — passed**. A commit means the code was changed; it does not prove the game works visually or in the browser. Only mark a checklist item as passed after the relevant test has actually been performed. Jarrell's Peak's world/exploration goal can be called complete when all core world, survival, treasure, performance, and desktop/mobile verification checks above pass. Production multiplayer, anti-cheat, and on-chain reward security remain separate release gates if those features are enabled.
+
