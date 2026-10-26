@@ -402,7 +402,45 @@ for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.
 
 }
 const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
-const player=new THREE.Group();const TRAILHEAD_Z=0;player.position.set(0,currentLevel==='01'?meadowGroundY(0,TRAILHEAD_Z)+.9:mountainHeight(0,TRAILHEAD_Z+18)+1.1,TRAILHEAD_Z);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const player=new THREE.Group();const TRAILHEAD_Z=0;player.position.set(0,currentLevel==='01'?meadowGroundY(0,TRAILHEAD_Z)+.9:mountainHeight(0,TRAILHEAD_Z+18)+1.1,TRAILHEAD_Z);scene.add(player);
+
+// Jarrell's Peak trailhead: a sheltered riverside landing with a shallow, winding fishing stream.
+let fishingRiver=null,fishingBank=null;
+if(currentLevel==='11'){
+ const riverMat=new THREE.MeshStandardMaterial({color:0x287f9b,roughness:.19,metalness:.12,transparent:true,opacity:.86});
+ const riverPts=[];for(let i=0;i<=36;i++){const t=i/36;riverPts.push(new THREE.Vector3(10+Math.sin(t*5.2)*2.7,.12+Math.sin(t*7)*.025, -19+t*43))}
+ const riverCurve=new THREE.CatmullRomCurve3(riverPts);
+ const riverGeo=new THREE.TubeGeometry(riverCurve,100,2.25,10,false);
+ fishingRiver=new THREE.Mesh(riverGeo,riverMat);fishingRiver.name='JarrellFishingRiver';scene.add(fishingRiver);
+ const bankMat=new THREE.MeshStandardMaterial({color:0x343e3b,roughness:1});
+ for(let i=0;i<24;i++){const t=i/23,p=riverCurve.getPoint(t);for(const side of [-1,1]){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+(i%4)*.13,0),bankMat);rock.position.set(p.x+side*(2.2+(i%3)*.3),.1,p.z);rock.scale.y=.55;rock.rotation.set(i*.4,i*.7,i*.2);rock.castShadow=true;scene.add(rock)}}
+ const reedMat=new THREE.MeshStandardMaterial({color:0x65734d,roughness:1});
+ for(let i=0;i<18;i++){const t=(i+.35)/18,p=riverCurve.getPoint(t);for(const side of [-1,1]){const reed=new THREE.Mesh(new THREE.ConeGeometry(.12,1.1,5),reedMat);reed.position.set(p.x+side*(3.0+(i%2)*.25),.5,p.z);reed.rotation.z=side*.12;scene.add(reed)}}
+ const rippleMat=new THREE.MeshBasicMaterial({color:0x9ce6ee,transparent:true,opacity:.42});
+ for(let i=0;i<12;i++){const p=riverCurve.getPoint((i+.2)/12),r=new THREE.Mesh(new THREE.TorusGeometry(.25+(i%3)*.1,.025,4,16),rippleMat);r.rotation.x=-Math.PI/2;r.position.set(p.x+Math.sin(i*3)*.8,.28,p.z);r.scale.x=1.6;scene.add(r)}
+ const sign=document.createElement('div');sign.id='jarrellFishingHint';sign.textContent='RIVERSIDE CAMP  ·  E TO FISH';sign.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744';document.body.appendChild(sign);
+}
+function fishAtRiver(){
+ if(currentLevel!=='11'||paused)return false;
+ const dx=player.position.x-10,dz=player.position.z-2;
+ if(Math.hypot(dx,dz)>7.2){const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FISHING · MOVE CLOSER TO THE RIVER';return true}
+ if(window.jarrellFishingBusy)return true;window.jarrellFishingBusy=true;
+ const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FISHING · WAIT FOR A BITE…';
+ synthSfx('pickup');
+ setTimeout(()=>{
+  window.jarrellFishingBusy=false;
+  const roll=Math.random()*100;let reward;
+  if(roll<1)reward={name:'$CLIMB TOKEN',rarity:'MYTHIC',color:'#f7cc63'};
+  else if(roll<5)reward={name:'Abyssal Pearl',rarity:'LEGENDARY',color:'#dca7ff'};
+  else if(roll<20)reward={name:'Frostglass Scale',rarity:'RARE INGREDIENT',color:'#71d9ff'};
+  else if(roll<50)reward={name:'Moonfin / River Herb',rarity:'UNCOMMON INGREDIENT',color:'#8fe0a4'};
+  else reward={name:'River Minnow / Wild Reed',rarity:'COMMON INGREDIENT',color:'#e3e7dc'};
+  const msg='FISHING REWARD · '+reward.rarity+' — '+reward.name;
+  if(stateHud)stateHud.textContent=msg;
+  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3500);
+ },1800+Math.random()*1200);
+ return true;
+}// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 // Hard-packed camp earth: layered irregular ground with a fine dirt/gravel canvas texture.
@@ -829,8 +867,8 @@ window.addEventListener('pointerup',endTouch,{capture:true,passive:true});window
 renderer.domElement.addEventListener('wheel',e=>{camDistance=Math.max(3.5,Math.min(18,camDistance+Math.sign(e.deltaY)*.8));e.preventDefault()},{passive:false});
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE')grab();if(e.code==='Space'){e.preventDefault();jump()}if(e.code==='Escape')togglePause(true)});addEventListener('keyup',e=>keys[e.code]=false);
-document.getElementById('jump').onclick=jump;document.getElementById('grab').onclick=grab;document.getElementById('sprint').onpointerdown=()=>sprinting=true;document.getElementById('sprint').onpointerup=()=>sprinting=false;document.getElementById('sprint').onpointerleave=()=>sprinting=false;document.getElementById('pause').onclick=()=>togglePause(true);
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE'){if(!fishAtRiver())grab()}if(e.code==='Space'){e.preventDefault();jump()}if(e.code==='Escape')togglePause(true)});addEventListener('keyup',e=>keys[e.code]=false);
+document.getElementById('jump').onclick=jump;document.getElementById('grab').onclick=()=>{if(!fishAtRiver())grab()};document.getElementById('sprint').onpointerdown=()=>sprinting=true;document.getElementById('sprint').onpointerup=()=>sprinting=false;document.getElementById('sprint').onpointerleave=()=>sprinting=false;document.getElementById('pause').onclick=()=>togglePause(true);
 function togglePause(p){paused=p;document.getElementById('toast').classList.toggle('show',p);document.getElementById('toastTitle').textContent=p?'PAUSED':'CLIMB ON';document.getElementById('toastText').textContent=p?'Your ascent is paused.':'Back to the mountain.'}
 document.getElementById('campClose').onclick=()=>{document.getElementById('campOverlay').classList.remove('open');paused=false};
 // Hero creator click handlers are registered once in the persistence block below.
