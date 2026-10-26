@@ -402,7 +402,7 @@ for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.
 
 }
 const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
-const player=new THREE.Group();player.position.set(0,currentLevel==='01'?meadowGroundY(0,100)+.9:.65,currentLevel==='01'?100:3);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const player=new THREE.Group();player.position.set(0,currentLevel==='01'?meadowGroundY(0,0)+.9:.65,currentLevel==='01'?0:3);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 // Hard-packed camp earth: layered irregular ground with a fine dirt/gravel canvas texture.
