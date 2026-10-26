@@ -402,7 +402,7 @@ for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.
 
 }
 const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
-const player=new THREE.Group();player.position.y=currentLevel==='01'?meadowGroundY(0,150)+.9:.65;scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
+const player=new THREE.Group();player.position.set(0,currentLevel==='01'?meadowGroundY(0,100)+.9:.65,currentLevel==='01'?100:3);scene.add(player);// Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
 // Hard-packed camp earth: layered irregular ground with a fine dirt/gravel canvas texture.
@@ -499,7 +499,7 @@ for(const leg of [leftLeg,rightLeg]){part(new THREE.CapsuleGeometry(.13,.36,4,8)
 const tool=new THREE.Group();tool.position.set(.29,1.42,.2);player.add(tool);
 part(new THREE.CylinderGeometry(.025,.035,.48,7),rubber,tool,0,0,.02);
 part(new THREE.BoxGeometry(.23,.055,.07),metal,tool,0,.25,-.01);
-player.position.set(0,.16,150);
+player.position.set(0,.16,3);
 // Try the user's ORIGINAL GLB from the game asset folder. The procedural adventurer
 // remains visible as a fallback until the GLB loads and is framed successfully.
 const legacyPlayerParts=[...player.children];
@@ -804,7 +804,7 @@ if(FREE_ROAM_ENV_REVIEW||!blocked){player.position.x=nextX;player.position.z=nex
 const terrainY=FREE_ROAM_ENV_REVIEW?(currentLevel==='01'?Math.max(meadowGroundY(player.position.x,player.position.z),terrainHeightAt(player.position.x,player.position.z+18)):-.25):terrainHeightAt(player.position.x,player.position.z+18);if(FREE_ROAM_ENV_REVIEW){const safeGroundY=terrainY+footClear;if(player.position.y<safeGroundY){player.position.y=safeGroundY;if(vel.y<0)vel.y=0;}}else if(terrainY>-1&&player.position.y<terrainY+footClear){player.position.y=terrainY+footClear;if(vel.y<0)vel.y=0;}
 let grounded=false;for(const p of trailPlatforms){if(Math.abs(player.position.x-p.x)<p.w*.5+.25&&Math.abs(player.position.z-p.z)<p.d*.5+.25&&vel.y<=0&&oldY>=p.top-.22&&player.position.y<=p.top){player.position.y=p.top;vel.y=0;grounded=true;break}}
 if(!FREE_ROAM_ENV_REVIEW&&player.position.y<=0){player.position.y=0;vel.y=0;grounded=true}
-if(player.position.y< -4){player.position.set(0,0,3);vel.set(0,0,0);health=Math.max(0,health-25);{const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FELL · BACK TO TRAILHEAD'}}
+if(player.position.y< -4){player.position.set(0,currentLevel==='01'?meadowGroundY(0,100)+.9:0,currentLevel==='01'?100:3);vel.set(0,0,0);health=Math.max(0,health-25);{const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FELL · BACK TO TRAILHEAD'}}
 if(FREE_ROAM_ENV_REVIEW){player.position.x=Math.max(-420,Math.min(420,player.position.x));player.position.z=Math.max(-470,Math.min(120,player.position.z));}else{player.position.x=Math.max(-42,Math.min(42,player.position.x));player.position.z=Math.max(-380,Math.min(8,player.position.z));if(player.position.z<-355&&player.position.y>1){clearSummit();return}}
 if(quartermaster){const near=player.position.distanceTo(quartermaster.position)<2.7;document.getElementById('campHint').classList.toggle('show',near&&!paused);if(campFireLight)campFireLight.intensity=2.5+Math.sin(performance.now()*.006)*.7;}stamina=Math.max(0,Math.min(100,stamina+7*dt));document.getElementById('staminaBar').style.width=stamina+'%';document.getElementById('healthBar').style.width=(health/500*100)+'%';document.getElementById('healthValue').textContent=Math.round(health)+' / 500';document.getElementById('staminaValue').textContent=Math.round(stamina)+' / 100';document.getElementById('strengthValue').textContent=strength;
 const target=new THREE.Vector3(player.position.x,player.position.y+1.15,player.position.z);const horizontal=Math.cos(camPitch)*camDistance;const desiredCam=new THREE.Vector3(player.position.x+Math.sin(camYaw)*horizontal,player.position.y+1.15+Math.sin(camPitch)*camDistance,player.position.z+Math.cos(camYaw)*horizontal);/* Keep the follow camera above the trailhead pasture, preventing terrain from swallowing the view. */desiredCam.y=Math.max(desiredCam.y,player.position.y+3.1);camera.position.lerp(desiredCam,1-Math.pow(.001,dt));camera.lookAt(target);attackCooldown=Math.max(0,attackCooldown-dt);
