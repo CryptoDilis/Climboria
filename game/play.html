@@ -268,7 +268,14 @@ rockCtx.globalAlpha=1;
 const rockTex=new THREE.CanvasTexture(rockCanvas);rockTex.wrapS=rockTex.wrapT=THREE.RepeatWrapping;
 rockTex.repeat.set(11,15);rockTex.colorSpace=THREE.SRGBColorSpace;
 rockTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?4:12);
-const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.58,roughness:.94,metalness:.015,flatShading:false});
+// Fine, multi-scale rocky relief and weathered alpine strata.
+const rockNormalCanvas=document.createElement('canvas');rockNormalCanvas.width=512;rockNormalCanvas.height=512;
+const rn=rockNormalCanvas.getContext('2d');rn.fillStyle='rgb(128,128,255)';rn.fillRect(0,0,512,512);
+let rnSeed=38191;const rnRand=()=>{rnSeed=(rnSeed*1664525+1013904223)>>>0;return rnSeed/4294967296};
+for(let i=0;i<9000;i++){const x=rnRand()*512,y=rnRand()*512,r=.6+rnRand()*3;rn.globalAlpha=.08+rnRand()*.2;rn.fillStyle=rnRand()<.5?'rgb(105,145,250)':'rgb(151,111,255)';rn.beginPath();rn.ellipse(x,y,r*1.8,r*.7,rnRand()*.8,0,Math.PI*2);rn.fill()}
+rn.globalAlpha=1;
+const rockNormalTex=new THREE.CanvasTexture(rockNormalCanvas);rockNormalTex.wrapS=rockNormalTex.wrapT=THREE.RepeatWrapping;rockNormalTex.repeat.set(13,17);rockNormalTex.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),isMobileGPU?2:8);
+const mountainMat=new THREE.MeshStandardMaterial({vertexColors:true,map:rockTex,bumpMap:rockTex,bumpScale:.34,normalMap:rockNormalTex,normalScale:new THREE.Vector2(.48,.48),roughness:.96,metalness:0,flatShading:false});
 const mountain=new THREE.Mesh(mountainGeo,mountainMat);mountain.position.z=-18;mountain.castShadow=true;mountain.receiveShadow=true;scene.add(mountain);
 // Rohan-inspired foothills: broad, softly rolling green landforms frame the climb before the dramatic high peaks.
 {
