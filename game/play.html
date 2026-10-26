@@ -747,7 +747,6 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
  function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
  function startExpeditionSoundtrack(){
-  if(isJarrellPeakExpedition())return;
   if(!soundtrackAudio){
    soundtrackAudio=new Audio('assets/music/climboria-theme-60s.mp3');
    soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
