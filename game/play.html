@@ -158,8 +158,8 @@ const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 // Cinematic distant mountain layers: muted silhouettes create depth behind the playable massif.
 function addFarRidge(z,baseY,peakScale,color,seed){
  // Procedural volumetric alpine massif: subdivided front/back surfaces with deterministic rocky displacement.
- const profile=[[-390,.02],[-340,.12],[-300,.04],[-258,.30],[-220,.10],[-178,.62],[-145,.18],[-106,.42],[-65,.09],[-24,.72],[8,.22],[48,.48],[88,.12],[132,.78],[170,.25],[211,.56],[252,.13],[292,.43],[335,.04],[390,.02]];
- const seg=5,depthRows=16,base=new THREE.Color(color),verts=[],cols=[],indices=[];
+ const profile=[[-390,.02],[-365,.08],[-340,.18],[-318,.06],[-292,.32],[-270,.14],[-246,.50],[-220,.10],[-198,.24],[-178,.70],[-158,.36],[-145,.18],[-126,.44],[-106,.42],[-84,.16],[-65,.09],[-45,.34],[-24,.78],[-7,.43],[8,.22],[28,.37],[48,.56],[68,.24],[88,.12],[110,.48],[132,.84],[151,.45],[170,.25],[190,.63],[211,.66],[232,.28],[252,.13],[274,.38],[292,.49],[315,.21],[335,.04],[360,.12],[390,.02]];
+ const seg=4,depthRows=20,base=new THREE.Color(color),verts=[],cols=[],indices=[];
  const ridgeY=(x)=>{const q=(x+390)/780*(profile.length-1),i=Math.min(profile.length-2,Math.floor(q)),t=q-i;const smooth=t*t*(3-2*t),p=THREE.MathUtils.lerp(profile[i][1],profile[i+1][1],smooth);return baseY+p*peakScale;};
  for(let iz=0;iz<=depthRows;iz++){
   const v=iz/depthRows;
@@ -183,7 +183,7 @@ function addFarRidge(z,baseY,peakScale,color,seed){
  const cragMat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.8),roughness:1,flatShading:true});
  for(let i=0;i<12;i++){const h=peakScale*(.13+((Math.sin(i*17.7+seed)*.5+.5)*.25)),r=14+((Math.sin(i*8.3+seed)*.5+.5)*20);const geo=new THREE.ConeGeometry(r,h,7,3);const pos=geo.attributes.position;for(let j=0;j<pos.count;j++){const n=Math.sin(j*12.9898+i*78.233)*.5;pos.setX(j,pos.getX(j)*(1+n*.22));pos.setZ(j,pos.getZ(j)*(1+n*.22));}geo.computeVertexNormals();const peak=new THREE.Mesh(geo,cragMat);peak.position.set(-350+i*64,baseY+h*.38,z-58-((i%4)*25));peak.rotation.y=i*.73;peak.castShadow=true;peak.receiveShadow=true;scene.add(peak);}
 }
-addFarRidge(-330,12,205,0x718fa2,-24);addFarRidge(-395,5,255,0x8da9b7,18);
+addFarRidge(-245,10,245,0x607f91,-24);addFarRidge(-315,3,305,0x829eac,18);
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
 const trailPlatforms=[],cliffColliders=[];
 function mountainHeight(x,z){const dz=(z+145)/405,dx=x/285,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*248;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*31*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+385)*.009))*42;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+280)*.021))*26*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
@@ -206,11 +206,11 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
 {
  const skyCanvas=document.createElement('canvas');skyCanvas.width=2;skyCanvas.height=256;
  const sctx=skyCanvas.getContext('2d'),grad=sctx.createLinearGradient(0,0,0,256);
- grad.addColorStop(0,'#4c789c');grad.addColorStop(.48,'#b5cbd0');grad.addColorStop(.78,'#e3d7b8');grad.addColorStop(1,'#71866b');
+ grad.addColorStop(0,'#3e6585');grad.addColorStop(.38,'#8fadb9');grad.addColorStop(.68,'#d2d8d0');grad.addColorStop(.84,'#e7d9bd');grad.addColorStop(1,'#607b65');
  sctx.fillStyle=grad;sctx.fillRect(0,0,2,256);
  const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
  scene.background=skyTex;
- scene.fog=new THREE.FogExp2(0xb8cbd0,.00125);
+ scene.fog=new THREE.FogExp2(0xb8cbd0,.00105);
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
