@@ -409,22 +409,22 @@ let fishingRiver=null,fishingBank=null;
 if(currentLevel==='11'){
  // A broad, shallow river ribbon with a curved shoreline instead of a raised tube.
  const riverMat=new THREE.MeshPhysicalMaterial({color:0x236f86,roughness:.22,metalness:.08,clearcoat:.85,clearcoatRoughness:.16,transparent:true,opacity:.91,side:THREE.DoubleSide});
- const riverPts=[];for(let i=0;i<=48;i++){const t=i/48;riverPts.push(new THREE.Vector3(10+Math.sin(t*4.7)*3.5+Math.sin(t*10)*.6,.015+Math.sin(t*17)*.008,-24+t*52))}
+ const riverPts=[];for(let i=0;i<=180;i++){const t=i/180;riverPts.push(new THREE.Vector3(10+Math.sin(t*8.4)*5.2+Math.sin(t*21)*1.15,.015+Math.sin(t*31)*.008,-360+t*720))}
  const riverCurve=new THREE.CatmullRomCurve3(riverPts);
- const riverShapePts=[];for(let i=0;i<=48;i++){const p=riverCurve.getPoint(i/48);riverShapePts.push(new THREE.Vector2(p.x,p.z))}
+ const riverShapePts=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180);riverShapePts.push(new THREE.Vector2(p.x,p.z))}
  // Create a flat triangulated ribbon around the river centerline; vertices sit just above the ground.
- const verts=[],indices=[];for(let i=0;i<=48;i++){const p=riverCurve.getPoint(i/48),t=i/48,dx=Math.cos(t*4.7)*.25+Math.cos(t*10)*.06,dz=1;const len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=3.4+Math.sin(t*8)*.45;for(const side of [-1,1])verts.push(p.x+nx*w*side,.035+Math.sin(t*25+side)*.012,p.z+nz*w*side);if(i<48){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}}
+ const verts=[],indices=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180),t=i/180,dx=Math.cos(t*8.4)*.42+Math.cos(t*21)*.16,dz=1;const len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=4.2+Math.sin(t*13)*.75;for(const side of [-1,1])verts.push(p.x+nx*w*side,.035+Math.sin(t*45+side)*.012,p.z+nz*w*side);if(i<180){const a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2)}}
  const riverGeo=new THREE.BufferGeometry();riverGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));riverGeo.setIndex(indices);riverGeo.computeVertexNormals();
  fishingRiver=new THREE.Mesh(riverGeo,riverMat);fishingRiver.name='JarrellFishingRiver';fishingRiver.receiveShadow=true;scene.add(fishingRiver);
  const bankMat=new THREE.MeshStandardMaterial({color:0x4c5147,roughness:1});
- for(let i=0;i<42;i++){const t=i/41,p=riverCurve.getPoint(t);for(const side of [-1,1]){const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(.38+(i%5)*.16,1),bankMat);rock.position.set(p.x+side*(3.1+(i%4)*.22),.03,p.z);rock.scale.set(1.2,.55,.8);rock.rotation.set(i*.23,i*.41,i*.17);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock)}}
+ for(let i=0;i<112;i++){const t=i/111,p=riverCurve.getPoint(t);for(const side of [-1,1]){const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(.38+(i%5)*.16,1),bankMat);rock.position.set(p.x+side*(3.1+(i%4)*.22),.03,p.z);rock.scale.set(1.2,.55,.8);rock.rotation.set(i*.23,i*.41,i*.17);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock)}}
  const reedMat=new THREE.MeshStandardMaterial({color:0x71805a,roughness:1});
- for(let i=0;i<24;i++){const t=(i+.35)/24,p=riverCurve.getPoint(t);for(const side of [-1,1]){const reed=new THREE.Mesh(new THREE.ConeGeometry(.09+(i%3)*.025,.65+(i%4)*.16,6),reedMat);reed.position.set(p.x+side*(4.0+(i%3)*.22),.32,p.z);reed.rotation.z=side*.12;scene.add(reed)}}
+ for(let i=0;i<72;i++){const t=(i+.35)/72,p=riverCurve.getPoint(t);for(const side of [-1,1]){const reed=new THREE.Mesh(new THREE.ConeGeometry(.09+(i%3)*.025,.65+(i%4)*.16,6),reedMat);reed.position.set(p.x+side*(4.0+(i%3)*.22),.32,p.z);reed.rotation.z=side*.12;scene.add(reed)}}
  const rippleMat=new THREE.MeshBasicMaterial({color:0xb1edf2,transparent:true,opacity:.24,depthWrite:false});
- for(let i=0;i<18;i++){const p=riverCurve.getPoint((i+.2)/18),r=new THREE.Mesh(new THREE.TorusGeometry(.3+(i%3)*.12,.012,4,20),rippleMat);r.rotation.x=-Math.PI/2;r.position.set(p.x+Math.sin(i*3)*1.15,.075,p.z);r.scale.x=1.8;scene.add(r)}
+ for(let i=0;i<54;i++){const p=riverCurve.getPoint((i+.2)/54),r=new THREE.Mesh(new THREE.TorusGeometry(.3+(i%3)*.12,.012,4,20),rippleMat);r.rotation.x=-Math.PI/2;r.position.set(p.x+Math.sin(i*3)*1.15,.075,p.z);r.scale.x=1.8;scene.add(r)}
  // Natural riverbank gravel, flat stepping stones, and a small lantern-lit fishing landing.
  const gravelMat=new THREE.MeshStandardMaterial({color:0x686653,roughness:1});
- for(let i=0;i<36;i++){const t=(i*17%37)/37,p=riverCurve.getPoint(t),side=i%2?1:-1;const stone=new THREE.Mesh(new THREE.IcosahedronGeometry(.16+(i%4)*.07,0),gravelMat);stone.position.set(p.x+side*(4.4+(i%3)*.25),.04,p.z+Math.sin(i*2)*.6);stone.scale.set(1.4,.35,.8);stone.rotation.y=i*.7;scene.add(stone)}
+ for(let i=0;i<100;i++){const t=(i*37%101)/101,p=riverCurve.getPoint(t),side=i%2?1:-1;const stone=new THREE.Mesh(new THREE.IcosahedronGeometry(.16+(i%4)*.07,0),gravelMat);stone.position.set(p.x+side*(4.4+(i%3)*.25),.04,p.z+Math.sin(i*2)*.6);stone.scale.set(1.4,.35,.8);stone.rotation.y=i*.7;scene.add(stone)}
  // A small warm lantern near the fishing interaction point.
  const lantern=new THREE.Group();lantern.position.set(4,.05,1);scene.add(lantern);
  const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,2.2,8),new THREE.MeshStandardMaterial({color:0x493729,roughness:1}));post.position.y=1.1;lantern.add(post);
