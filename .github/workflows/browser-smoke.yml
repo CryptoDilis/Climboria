@@ -42,7 +42,7 @@ jobs:
             ${{ runner.os }}-playwright-chromium-
 
       - name: Install Playwright browser and system dependencies
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Start local web server
         run: |
