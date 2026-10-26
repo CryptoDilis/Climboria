@@ -407,12 +407,12 @@ const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.
 const player=new THREE.Group();const TRAILHEAD_Z=currentLevel==='11'?-340:0;const TRAILHEAD_X=currentLevel==='11'?-1.1:0;player.position.set(TRAILHEAD_X,currentLevel==='01'?meadowGroundY(0,TRAILHEAD_Z)+.9:currentLevel==='11'?campGroundY(TRAILHEAD_X,TRAILHEAD_Z)+.9:mountainHeight(0,TRAILHEAD_Z+18)+1.1,TRAILHEAD_Z);scene.add(player);
 
 // Jarrell's Peak trailhead: a sheltered riverside landing with a shallow, winding fishing stream.
-let fishingRiver=null,fishingBank=null;
+let fishingRiver=null,fishingBank=null,riverCurve=null,riverFish=[];
 if(currentLevel==='11'){
  // A broad, shallow river ribbon with a curved shoreline instead of a raised tube.
  const riverMat=new THREE.MeshPhysicalMaterial({color:0x247f9a,roughness:.2,metalness:.02,clearcoat:.9,clearcoatRoughness:.14,transparent:true,opacity:.88,side:THREE.DoubleSide});
  const riverPts=[];for(let i=0;i<=180;i++){const t=i/180;riverPts.push(new THREE.Vector3(10+Math.sin(t*2.25)*5.8+Math.sin(t*5.4)*1.15,.015,-360+t*720))}
- const riverCurve=new THREE.CatmullRomCurve3(riverPts);
+ riverCurve=new THREE.CatmullRomCurve3(riverPts);
  const riverShapePts=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180);riverShapePts.push(new THREE.Vector2(p.x,p.z))}
  // Create a flat triangulated ribbon around the river centerline; vertices sit just above the ground.
  const verts=[],indices=[];for(let i=0;i<=180;i++){const t=i/180,p=riverCurve.getPoint(t),dx=Math.cos(t*2.25)*.22+Math.cos(t*5.4)*.12,dz=1,len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=10.5+Math.sin(t*3.8+.3)*1.15+Math.sin(t*8.1)*.42;for(const side of [-1,-.62,.62,1]){verts.push(p.x+nx*w*side,.025,p.z+nz*w*side)}if(i<180){const a=i*4;indices.push(a,a+1,a+4,a+1,a+5,a+4,a+1,a+2,a+5,a+2,a+6,a+5,a+2,a+3,a+6,a+3,a+7,a+6)}}
@@ -440,7 +440,7 @@ if(currentLevel==='11'){
  const glow=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),new THREE.MeshBasicMaterial({color:0xffd48a}));glow.position.y=1.95;lantern.add(glow);
  const lanternLight=new THREE.PointLight(0xffc46b,2.2,12);lanternLight.position.y=1.95;lantern.add(lanternLight);
  // Schools of colorful river fish: simple animated meshes just below the water surface.
- const riverFish=[];const fishMats=[0xe9a34d,0xd8d9c9,0x68b6b0,0xc86c54,0xe4c86a].map(color=>new THREE.MeshStandardMaterial({color,roughness:.42,metalness:.08}));
+ riverFish=[];const fishMats=[0xe9a34d,0xd8d9c9,0x68b6b0,0xc86c54,0xe4c86a].map(color=>new THREE.MeshStandardMaterial({color,roughness:.42,metalness:.08}));
  for(let i=0;i<34;i++){const g=new THREE.Group();const t=(i*29%97)/97,p=riverCurve.getPoint(t),side=Math.sin(i*8.7)*.48;g.position.set(p.x+side,-.11+Math.sin(i*1.7)*.055,p.z);const body=new THREE.Mesh(new THREE.SphereGeometry(.28+(i%4)*.045,10,7),fishMats[i%fishMats.length]);body.scale.set(1.45,.62,.62);g.add(body);const tail=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,5),fishMats[i%fishMats.length]);tail.rotation.z=Math.PI/2;tail.position.x=-.43;g.add(tail);const fin=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,5),fishMats[(i+2)%fishMats.length]);fin.rotation.z=Math.PI;fin.position.y=.16;g.add(fin);g.rotation.y=Math.sin(i*4.3)*Math.PI;scene.add(g);riverFish.push({g,t,speed:.006+(i%5)*.0014,phase:i*1.9,side})}
  const sign=document.createElement('div');sign.id='jarrellFishingHint';sign.textContent='RIVERSIDE CAMP  ·  E TO FISH';sign.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744';document.body.appendChild(sign);
 }
