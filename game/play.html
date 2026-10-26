@@ -199,6 +199,29 @@ const grassBladeMat=addWindShader(new THREE.MeshStandardMaterial({color:0x7d9954
 const meadowGrass=new THREE.InstancedMesh(grassBladeGeo,grassBladeMat,isMobileGPU?850:1800);meadowGrass.frustumCulled=false;const grassDummy=new THREE.Object3D();let grassN=0,grassSeed=918273;const grassRand=()=>{grassSeed=(grassSeed*1664525+1013904223)>>>0;return grassSeed/4294967296};
 for(let i=0;i<(isMobileGPU?2400:5200)&&grassN<meadowGrass.count;i++){const x=(grassRand()-.5)*520,z=grassRand()*170-70;if(Math.abs(x)<24)continue;const gy=-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;grassDummy.position.set(x,gy,z);grassDummy.rotation.set((grassRand()-.5)*.16,grassRand()*Math.PI*2,(grassRand()-.5)*.18);const sc=.45+grassRand()*.8;grassDummy.scale.set(sc,sc,sc);grassDummy.updateMatrix();meadowGrass.setMatrixAt(grassN++,grassDummy.matrix)}
 meadowGrass.count=grassN;meadowGrass.instanceMatrix.needsUpdate=true;scene.add(meadowGrass);
+
+// Alpine foothill dressing: instanced rock clusters add scale and break up the empty grass horizon.
+// Kept away from the trailhead play lane; single draw call per rock material for browser performance.
+{
+ const rockGeo=new THREE.IcosahedronGeometry(1,1);
+ const rockMat=new THREE.MeshStandardMaterial({color:0x777f80,roughness:1,flatShading:true});
+ const rockCount=isMobileGPU?150:320,rocks=new THREE.InstancedMesh(rockGeo,rockMat,rockCount),dummy=new THREE.Object3D();
+ let seed=17431;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<rockCount;i++){
+  const side=rand()<.5?-1:1,x=side*(34+rand()*235),z=-75-rand()*330;
+  const gy=-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
+  const size=1.2+rand()*5.5;dummy.position.set(x,gy+size*.22,z);dummy.rotation.set(rand()*1.2,rand()*Math.PI,rand()*1.2);dummy.scale.set(size*(.8+rand()*.8),size*(.45+rand()*.65),size*(.7+rand()*.9));dummy.updateMatrix();rocks.setMatrixAt(i,dummy.matrix);
+ }
+ rocks.instanceMatrix.needsUpdate=true;rocks.castShadow=true;rocks.receiveShadow=true;scene.add(rocks);
+ const outcropGeo=new THREE.ConeGeometry(1,1,6,2),outcropMat=new THREE.MeshStandardMaterial({color:0x59666d,roughness:1,flatShading:true});
+ const outcropCount=isMobileGPU?28:54,outcrops=new THREE.InstancedMesh(outcropGeo,outcropMat,outcropCount);
+ for(let i=0;i<outcropCount;i++){
+  const side=i%2?-1:1,x=side*(48+(i*37)%190),z=-150-((i*53)%260),h=7+(i%5)*3.4,w=3+(i%4)*2;
+  const gy=-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
+  dummy.position.set(x,gy+h*.42,z);dummy.rotation.set(.08*(i%3),i*1.71,.04*(i%5));dummy.scale.set(w,h,w*(.7+(i%3)*.2));dummy.updateMatrix();outcrops.setMatrixAt(i,dummy.matrix);
+ }
+ outcrops.instanceMatrix.needsUpdate=true;outcrops.castShadow=true;outcrops.receiveShadow=true;scene.add(outcrops);
+}
 terrainHeightAt=mountainHeight;
 const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGPU?340:440);mountainGeo.rotateX(-Math.PI/2);const mp=mountainGeo.attributes.position,terrainColors=[];for(let i=0;i<mp.count;i++){const x=mp.getX(i),z=mp.getZ(i),h=mountainHeight(x,z);mp.setY(i,h);const n=(Math.sin(x*.17+z*.11)+Math.sin(z*.23-x*.09))*.035,ridgeTint=(Math.abs(Math.sin(x*.034+z*.019))*.5+Math.abs(Math.sin(z*.027-x*.031))*.5),c=new THREE.Color();if(h>180)c.setRGB(.78+n,.83+n,.86+n);else if(h>125)c.setRGB(.43+n+ridgeTint*.08,.47+n+ridgeTint*.07,.49+n+ridgeTint*.06);else if(h>48)c.setRGB(.34+n+ridgeTint*.06,.38+n+ridgeTint*.05,.39+n+ridgeTint*.04);else if(h>18)c.setRGB(.31+n,.36+n,.29+n);else c.setRGB(.30+n,.39+n,.27+n);terrainColors.push(c.r,c.g,c.b)}mountainGeo.setAttribute('color',new THREE.Float32BufferAttribute(terrainColors,3));mountainGeo.computeVertexNormals();
 
