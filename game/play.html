@@ -549,7 +549,7 @@ for(const leg of [leftLeg,rightLeg]){part(new THREE.CapsuleGeometry(.13,.36,4,8)
 const tool=new THREE.Group();tool.position.set(.29,1.42,.2);player.add(tool);
 part(new THREE.CylinderGeometry(.025,.035,.48,7),rubber,tool,0,0,.02);
 part(new THREE.BoxGeometry(.23,.055,.07),metal,tool,0,.25,-.01);
-player.position.set(0,.16,3);
+// Keep the level-aware TRAILHEAD_X/TRAILHEAD_Z spawn set above; do not reset Jarrell's Peak to the generic origin.
 // Try the user's ORIGINAL GLB from the game asset folder. The procedural adventurer
 // remains visible as a fallback until the GLB loads and is framed successfully.
 const legacyPlayerParts=[...player.children];
