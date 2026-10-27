@@ -269,22 +269,28 @@ try {
   await selectPage.goto('http://127.0.0.1:4173/game/', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await selectPage.waitForTimeout(500);
   const selectState = await selectPage.evaluate(() => ({
-    cardCount: document.querySelectorAll('.card[data-level]').length,
+    cardCount: document.querySelectorAll('.grid > .card').length,
+    playableWorldCount: document.querySelectorAll('.grid > .card[data-level]').length,
     jarrellDisabled: document.querySelector('.card[data-level="11"]')?.disabled,
     jarrellAriaDisabled: document.querySelector('.card[data-level="11"]')?.getAttribute('aria-disabled'),
     jarrellStatus: document.querySelector('.card[data-level="11"] .status')?.textContent || '',
-    futureCardsEnabled: [...document.querySelectorAll('.card[data-level]')].filter(card => card.dataset.level !== '11' && !card.disabled).map(card => card.dataset.level),
-    futureStatusMissing: [...document.querySelectorAll('.card[data-level]')].filter(card => card.dataset.level !== '11' && !card.querySelector('.status')?.textContent.includes('FUTURE EXPEDITION')).map(card => card.dataset.level)
+    destinations: ['menuArena', 'menuMarketplace', 'menuInventory'].map(id => ({ id, present: !!document.getElementById(id) }))
   }));
-  if (selectState.cardCount !== 11) errors.push('expedition select should show 11 planned expedition cards');
+  if (selectState.cardCount !== 4) errors.push('game menu should show exactly four destinations');
+  if (selectState.playableWorldCount !== 1) errors.push('Jarrell’s Peak must be the only playable world shown in the menu');
   if (selectState.jarrellDisabled !== false || selectState.jarrellAriaDisabled !== 'false') errors.push('Jarrell’s Peak must be enabled as the launch world');
   if (!selectState.jarrellStatus.includes('PLAY NOW')) errors.push('Jarrell’s Peak card must clearly show PLAY NOW');
-  if (selectState.futureCardsEnabled.length) errors.push('future expeditions must remain disabled: ' + selectState.futureCardsEnabled.join(','));
-  if (selectState.futureStatusMissing.length) errors.push('future expedition cards lack a clear future status: ' + selectState.futureStatusMissing.join(','));
+  if (selectState.destinations.some(item => !item.present)) errors.push('Arena, Marketplace, and Inventory menu destinations must all be present');
+  await selectPage.locator('#menuArena').click();
+  if (!await selectPage.locator('#arenaStatusModal').evaluate(el => el.classList.contains('open'))) errors.push('Arena status panel failed to open');
+  if (!await selectPage.locator('#arenaStatusModal').textContent().then(text => text.includes('NOT PLAYABLE YET'))) errors.push('Arena panel must clearly state that the Arena is future work');
+  await selectPage.locator('[data-close="arenaStatusModal"]').click();
   await selectPage.locator('#menuMarketplace').click();
   if (!await selectPage.locator('#levelShopModal').evaluate(el => el.classList.contains('open'))) errors.push('marketplace demo modal failed to open');
   await selectPage.locator('[data-close="levelShopModal"]').click();
-  if (await selectPage.locator('#levelShopModal').evaluate(el => el.classList.contains('open'))) errors.push('marketplace demo modal failed to close');
+  await selectPage.locator('#menuInventory').click();
+  if (!await selectPage.locator('#levelInventoryModal').evaluate(el => el.classList.contains('open'))) errors.push('inventory preview modal failed to open');
+  await selectPage.locator('[data-close="levelInventoryModal"]').click();
   await selectPage.screenshot({ path: '/tmp/jarrell-expedition-select.png', fullPage: true });
   await selectPage.locator('.card[data-level="11"]').click();
   await selectPage.waitForURL(/\/game\/play\.html\?level=11/, { timeout: 60000 });
