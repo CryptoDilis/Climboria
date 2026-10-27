@@ -219,10 +219,33 @@ try {
   });
   if (!deathStoneWorks) errors.push('Death Stone did not start its persistent 90-second cooldown');
 
+  const fishingBefore = await page.evaluate(() => {
+    const inventory = window.jarrellLootInventory || JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]');
+    return Array.isArray(inventory) ? inventory.length : 0;
+  });
   await page.keyboard.press('E');
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(150);
   const fishingStarted = await page.evaluate(() => window.jarrellFishingBusy === true);
-  if (!fishingStarted) errors.push('desktop river fishing interaction did not start at the trailhead');
+  if (!fishingStarted) {
+    errors.push('desktop river fishing interaction did not start at the trailhead');
+  } else {
+    // Starting an animation is not enough: assert the asynchronous catch is saved.
+    await page.waitForFunction(() => window.jarrellFishingBusy === false, { timeout: 7000 }).catch(() => {});
+    const fishingResult = await page.evaluate(before => {
+      let saved = [];
+      try { saved = JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]'); } catch {}
+      const inventory = Array.isArray(saved) ? saved : [];
+      return {
+        count: inventory.length,
+        newFishingItem: inventory.slice(before).some(item => item && item.source === 'fishing' && typeof item.name === 'string' && item.name.length > 0),
+        busy: window.jarrellFishingBusy === true,
+      };
+    }, fishingBefore);
+    if (!fishingResult.newFishingItem || fishingResult.count <= fishingBefore) {
+      errors.push('fishing animation finished without saving a new catch to the inventory: ' + JSON.stringify(fishingResult));
+    }
+    if (fishingResult.busy) errors.push('fishing remained busy after its reward window: ' + JSON.stringify(fishingResult));
+  }
 
   const missingTentAssets = ['tent-detailedopen.glb', 'tent-detailedclosed.glb'].filter(name => !tentAssets.has(name));
   if (missingTentAssets.length) errors.push('camp tent assets failed to load: ' + missingTentAssets.join(', '));
