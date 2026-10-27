@@ -136,7 +136,7 @@ try {
           api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
           api.keys.Space = api.keys.ControlLeft = api.keys.ControlRight = false;
           // Isolate the drop from momentum left by earlier jump/swim checks.
-          api.resetMotion();
+          api.resume();
           api.player.position.set(x, ground + 4.2, z);
           return { x, z, ground, slope, riverDistance };
         }
