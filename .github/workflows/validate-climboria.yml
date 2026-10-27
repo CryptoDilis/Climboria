@@ -76,3 +76,46 @@ jobs:
           print(f"Extracted {len(p.out)} inline script(s).")
           PY
           for file in /tmp/climboria-inline-js/*.js; do node --check "$file"; done
+
+      - name: Audit game HTML IDs and inline script syntax
+        run: |
+          python3 - <<'PY'
+          from collections import Counter
+          from html.parser import HTMLParser
+          from pathlib import Path
+          files = [
+              "game/index.html", "game/play.html", "game/character-lab.html",
+              "game/mountain-prototype.html", "game/open-world-v2.html",
+              "overview/index.html", "terms/index.html",
+          ]
+          class Audit(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids=[]; self.scripts=[]; self.active=False; self.attrs={}; self.buf=[]
+              def handle_starttag(self, tag, attrs):
+                  a=dict(attrs)
+                  if a.get("id"): self.ids.append(a["id"])
+                  if tag=="script": self.active=True; self.attrs=a; self.buf=[]
+              def handle_data(self, data):
+                  if self.active: self.buf.append(data)
+              def handle_endtag(self, tag):
+                  if tag=="script" and self.active:
+                      typ=self.attrs.get("type","").lower()
+                      code="".join(self.buf).strip()
+                      if code and not self.attrs.get("src") and typ not in ("application/json","application/ld+json","importmap"):
+                          self.scripts.append((typ,code))
+                      self.active=False
+          out=Path("/tmp/climboria-game-scripts"); out.mkdir(exist_ok=True)
+          count=0
+          for filename in files:
+              source=Path(filename).read_text(encoding="utf-8")
+              audit=Audit(); audit.feed(source)
+              duplicates=[name for name,n in Counter(audit.ids).items() if n>1]
+              if duplicates: raise SystemExit(f"{filename}: duplicate HTML IDs: {duplicates}")
+              for i,(typ,code) in enumerate(audit.scripts):
+                  suffix="mjs" if typ=="module" else "js"
+                  (out/f"{Path(filename).stem}-{count}-{i}.{suffix}").write_text(code,encoding="utf-8")
+              count += len(audit.scripts)
+              print(f"{filename}: {len(audit.ids)} IDs checked; {len(audit.scripts)} inline scripts extracted.")
+          print(f"Audit passed for {len(files)} game/site HTML files; extracted {count} inline scripts.")
+          PY
+          find /tmp/climboria-game-scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | while IFS= read -r -d '' file; do node --check "$file"; done
