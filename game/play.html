@@ -1221,7 +1221,29 @@ stick.addEventListener('pointerdown',e=>{pointer=e.pointerId;stick.setPointerCap
 
 
 const profileOverlay=document.getElementById('profileOverlay');
-function drawInventory(){const q=new URLSearchParams(location.search);const pn=(()=>{try{return localStorage.getItem('climboria_player_name')}catch(e){window.__climbDiag('LOCALSTORAGE BLOCKED: '+e.message);return null}})()||'CLIMBER';document.getElementById('profileName').textContent=pn;document.getElementById('hudPlayerName').textContent=pn;document.getElementById('profileHealth').textContent=Math.round(health)+' / 500';document.getElementById('profileStamina').textContent=Math.round(stamina)+' / 100';document.getElementById('profileStrength').textContent=strength;const bag=document.getElementById('bagSlots'),storage=document.getElementById('storageSlots');bag.innerHTML='';storage.innerHTML='';for(let i=0;i<25;i++){const s=document.createElement('div');s.className='inv-slot'+(i===0?' filled':'');s.innerHTML=i===0?'<span>⛏</span>Tool':'<span>·</span>'+(i+1);bag.appendChild(s)}for(let i=0;i<15;i++){const s=document.createElement('div');s.className='inv-slot';s.innerHTML='<span>·</span>'+(i+1);storage.appendChild(s)}}
+function drawInventory(){
+ const pn=(()=>{try{return localStorage.getItem('climboria_player_name')}catch(e){window.__climbDiag('LOCALSTORAGE BLOCKED: '+e.message);return null}})()||'CLIMBER';
+ document.getElementById('profileName').textContent=pn;document.getElementById('hudPlayerName').textContent=pn;
+ document.getElementById('profileHealth').textContent=Math.round(health)+' / 500';document.getElementById('profileStamina').textContent=Math.round(stamina)+' / 100';document.getElementById('profileStrength').textContent=strength;
+ const bag=document.getElementById('bagSlots'),storage=document.getElementById('storageSlots');bag.innerHTML='';storage.innerHTML='';
+ let loot=[];try{const saved=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');if(Array.isArray(saved))loot=saved;}catch(e){window.__climbDiag('Loot inventory could not be read: '+e.message);}
+ window.jarrellLootInventory=loot;
+ const rarityColors={common:'#aeb9c6',uncommon:'#69c78a',rare:'#68b9ff',epic:'#bd8cff',legendary:'#ffc95b',mythic:'#ff7b72'};
+ const slots=50;
+ for(let i=0;i<slots;i++){
+  const item=loot[i],s=document.createElement('div');s.className='inv-slot'+(item?' filled':'');
+  if(item){
+   const rarity=String(item.rarity||'common').toLowerCase(),color=rarityColors[rarity]||rarityColors.common;
+   s.style.borderColor=color;s.style.boxShadow='inset 0 0 12px '+color+'22';s.title=item.name+' · '+rarity.toUpperCase()+' · '+String(item.source||'loot').toUpperCase();
+   const glyph=item.source==='fishing'?'🐟':'✦';s.innerHTML='<span>'+glyph+'</span>'+String(item.name||'Loot').replace(/[<>]/g,'').slice(0,18);
+   s.setAttribute('aria-label',item.name+' '+rarity+' '+(item.source||'loot'));
+  }else{s.innerHTML='<span>·</span>'+(i+1);s.setAttribute('aria-label','Empty slot '+(i+1));}
+  bag.appendChild(s);
+ }
+ for(let i=0;i<15;i++){const s=document.createElement('div');s.className='inv-slot';s.innerHTML='<span>·</span>'+(i+1);s.title='Storage slot '+(i+1)+' · storage system not yet implemented';storage.appendChild(s);}
+ const bagHeading=bag.parentElement?.querySelector('h3');if(bagHeading)bagHeading.textContent='EXPEDITION BAG · '+Math.min(loot.length,slots)+' / '+slots+' SLOTS';
+ const foot=document.querySelector('.profile-foot');if(foot)foot.textContent='Jarrell’s Peak loot is saved locally in this browser. Equipment effects, camp storage, and multiplayer inventory syncing are not connected yet.';
+}
 function openInventory(){paused=true;drawInventory();profileOverlay.classList.add('open')}
 function closeInventory(){profileOverlay.classList.remove('open');if(!document.getElementById('toast').classList.contains('show'))paused=false}
 document.getElementById('profileLaunch').addEventListener('click',openInventory);document.getElementById('profileClose').addEventListener('click',closeInventory);profileOverlay.addEventListener('click',e=>{if(e.target===profileOverlay)closeInventory()});
