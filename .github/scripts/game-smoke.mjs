@@ -11,7 +11,7 @@ try {
   const page = await desktop.newPage();
   const tentAssets = new Set();
   const soundtrackRequests = new Set();
-  page.on('request', request => { if (request.url().includes('climboria-theme-60s.mp3')) soundtrackRequests.add('regular-expedition-theme'); });
+  page.on('request', request => { if (request.url().includes('TRACK_01.mp3') || request.url().includes('climboria-theme-60s.mp3')) soundtrackRequests.add('original-track-01'); });
   page.on('pageerror', error => errors.push('desktop pageerror: ' + error.message));
   page.on('console', message => { if (message.type() === 'error' && !message.text().includes('[Climboria diag]')) errors.push('desktop console: ' + message.text()); });
   page.on('response', response => {
@@ -33,7 +33,7 @@ try {
   const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile')}; });
   if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
-  if (!soundtrackRequests.has('regular-expedition-theme')) errors.push('Jarrell’s Peak did not request the shared original Climboria soundtrack');
+  if (!soundtrackRequests.has('original-track-01')) errors.push('Jarrell’s Peak did not request the original TRACK_01 soundtrack');
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
@@ -272,7 +272,7 @@ try {
   const musicPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const musicResponses = [];
   musicPage.on('response', response => {
-    if (response.url().includes('climboria-theme-60s.mp3')) musicResponses.push({ status: response.status(), url: response.url() });
+    if (response.url().includes('TRACK_01.mp3') || response.url().includes('climboria-theme-60s.mp3')) musicResponses.push({ status: response.status(), url: response.url() });
   });
   await musicPage.goto('http://127.0.0.1:4173/game/play.html?level=01&smoke=1', { waitUntil: 'domcontentloaded', timeout: 90000 });
   await musicPage.waitForSelector('#game canvas', { timeout: 45000 });
@@ -281,7 +281,7 @@ try {
   await musicPage.locator('#creatorStart').click();
   await musicPage.waitForTimeout(2200);
   const musicState = await musicPage.evaluate(() => window.__climboriaAudioSmoke?.getMusicState?.() || null);
-  if (!musicResponses.some(item => item.status === 200)) errors.push('user soundtrack TRACK_01 (stored as climboria-theme-60s.mp3) did not load on a regular expedition');
+  if (!musicResponses.some(item => item.status === 200)) errors.push('user soundtrack TRACK_01.mp3 did not load on a regular expedition');
   if (!musicState || musicState.paused || musicState.volume <= 0 || musicState.muted) errors.push('user soundtrack loaded but is not actively playing at audible volume: ' + JSON.stringify(musicState));
   console.log('Regular expedition soundtrack responses:', JSON.stringify(musicResponses));
   console.log('Regular expedition soundtrack state:', JSON.stringify(musicState));
