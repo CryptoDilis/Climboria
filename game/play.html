@@ -412,8 +412,8 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const northEnvelope=Math.exp(-Math.pow((z+700)/310,2)),northRidge=northEnvelope*(8+19*(.35+.65*Math.abs(Math.sin(x*.009+Math.sin(x*.003)*1.7))));
   const westFoothill=Math.exp(-Math.pow((x+500)/230,2))*(5+15*(.35+.65*Math.abs(Math.sin(z*.008+Math.sin(z*.002)*1.4))));
   const eastFoothill=Math.exp(-Math.pow((x-540)/260,2))*(5+17*(.35+.65*Math.abs(Math.sin(z*.007+1.2))));
-  const campBlend=Math.max(0,1-Math.hypot(x+1,z+340)/34),riverDist=Math.abs(x-jarrellRiverX(z)),riverAcross=Math.max(0,1-riverDist/9.5),riverProfile=riverAcross*riverAcross*(3-2*riverAcross),riverLength=Math.max(0,1-Math.abs(z)/430),riverBlend=riverProfile*riverLength,bankLift=Math.exp(-Math.pow((riverDist-6.4)/2.2,2))*.55*riverLength;
-  const baseTerrain=(base+farRange+westRange+eastRange+northRidge+westFoothill+eastFoothill)*(1-campBlend)-.42*campBlend+bankLift-1.55*riverBlend;
+  const campBlend=Math.max(0,1-Math.hypot(x+1,z+340)/18),riverDist=Math.abs(x-jarrellRiverX(z)),riverAcross=Math.max(0,1-riverDist/9.5),riverProfile=riverAcross*riverAcross*(3-2*riverAcross),riverLength=.65+.35*Math.max(0,1-Math.abs(z)/430),riverBlend=riverProfile*riverLength,bankLift=Math.exp(-Math.pow((riverDist-6.4)/2.2,2))*.55*riverLength;
+  const baseTerrain=(base+farRange+westRange+eastRange+northRidge+westFoothill+eastFoothill)*(1-campBlend)-.42*campBlend+bankLift-2.2*riverBlend;
   // Flatten the rice terrace shelf and form a shallow basin for the sanctuary lake.
   const riceRadius=Math.hypot(x-272,z+107),riceBlend=1-Math.max(0,Math.min(1,(riceRadius-28)/22)),riceTerrain=baseTerrain*(1-riceBlend)+8*riceBlend;
   const lakeRadius=Math.hypot((x-365)/1.25,(z-205)/.72),lakeBlend=1-Math.max(0,Math.min(1,(lakeRadius-18)/20));
