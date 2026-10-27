@@ -160,7 +160,8 @@ Jarrell's Peak may be called **gameplay-complete** only when all applicable chec
 - **Implemented — unverified:** health reaching zero respawns the player at the trailhead; the Death Stone return ability has a 90-second cooldown persisted across reloads. Solo behavior is implemented; party teleport awaits a party/multiplayer system.
 - **World scale:** Jarrell's terrain, forest, and cache generation stream as the player explores, with a very distant technical coordinate guard at ±1,000,000 units rather than the earlier nearby boundary. Desktop/mobile performance still needs live testing.
 - **Implemented — unverified:** fishing rewards are recorded in the local loot inventory; the sanctuary lake and rice terrace areas now have shaped terrain basins/shelves, world landmarks are placed relative to terrain height, and wolves are grounded as they roam.
-- **Still required:** browser-test river entry/exit on both banks and at bends, streamed forest/cache creation and cleanup across chunk boundaries, chest persistence/rewards, Death Stone cooldown/respawn, POI visibility, camp-tent loading, fishing, and performance on desktop and mobile. These changes must not be marked tested until those checks are actually performed.
+- **Automated browser smoke test passed:** [GitHub Actions run #825](https://github.com/CryptoDilis/Climboria/actions/runs/40461101547) loaded the desktop and mobile layouts, loaded both camp tent GLBs, verified streamed forest/cache hooks, opened and persisted a treasure cache, checked tree collision blocking, tested river entry/exit at three bends on both banks, tested fishing, and verified the Death Stone cooldown.
+- **Still required:** manual visual playtesting on a real desktop and phone, including terrain/rock collision sliding, long-session chunk streaming, tent/starting-camp visual quality, and sustained mobile performance. Automated smoke coverage does not replace these hands-on checks.
 
 ### Status reporting rule
 
