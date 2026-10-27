@@ -692,6 +692,8 @@ function openNearbyTreasure(){
  for(const chest of jarrellTreasureChests){if(chest.opened)continue;const d=Math.hypot(player.position.x-chest.x,player.position.z-chest.z);if(d<bestDistance){bestDistance=d;target=chest;}}
  if(!target)return false;
  target.opened=true;target.lidPivot.rotation.x=-1.08;target.frontBand.material=target.frontBand.material.clone();target.frontBand.material.emissiveIntensity=.9;
+ if(!Array.isArray(window.jarrellLootInventory)){try{const savedInventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(savedInventory)?savedInventory:[]}catch{window.jarrellLootInventory=[]}}
+ if(typeof window.jarrellClimbPoints!=='number'){try{window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0}catch{window.jarrellClimbPoints=0}}
  try{const ids=JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests')||'[]');const saved=Array.isArray(ids)?ids:[];if(!saved.includes(target.id))saved.push(target.id);localStorage.setItem('climboria_jarrell_looted_chests',JSON.stringify(saved))}catch{}
  const distance=Math.hypot(target.x+3.8,target.z+340),survival=window.jarrellSurvivalSeconds||0,luck=Math.min(1,distance/8000+survival/36000),roll=Math.random();
  const mythic=.005+luck*.015,legendary=.025+luck*.06,rare=.14+luck*.18,uncommon=.34+luck*.06;
@@ -702,7 +704,7 @@ function openNearbyTreasure(){
  else if(roll<mythic+legendary+rare+uncommon)reward={name:'Frostglass Scale',rarity:'UNCOMMON',color:'#8fe0a4'};
  else reward={name:'Iron Ore & Wild Reed',rarity:'COMMON',color:'#e3e7dc'};
  if(reward.points)window.jarrellClimbPoints=(window.jarrellClimbPoints||0)+reward.points;
- const inventory=Array.isArray(window.jarrellLootInventory)?window.jarrellLootInventory:[];inventory.push({name:reward.name,rarity:reward.rarity,source:'cache',distance:Math.round(distance),time:Date.now()});window.jarrellLootInventory=inventory;
+ const inventory=Array.isArray(window.jarrellLootInventory)?window.jarrellLootInventory:[];inventory.push({name:reward.name,rarity:reward.rarity,source:'cache',distance:Math.round(distance),time:Date.now()});window.jarrellLootInventory=inventory;try{localStorage.setItem('climboria_jarrell_loot_inventory',JSON.stringify(inventory));localStorage.setItem('climboria_jarrell_climb_points',String(window.jarrellClimbPoints||0))}catch{}
  const msg='CACHE OPENED · '+reward.rarity+' — '+reward.name+(reward.points?' · TOTAL CLIMB POINTS '+window.jarrellClimbPoints:'');
  const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent=msg;
  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);max-width:90vw;padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3800);
