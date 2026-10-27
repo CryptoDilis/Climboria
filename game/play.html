@@ -253,7 +253,7 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
  sctx.fillStyle=grad;sctx.fillRect(0,0,2,256);
  const skyTex=new THREE.CanvasTexture(skyCanvas);skyTex.colorSpace=THREE.SRGBColorSpace;
  scene.background=skyTex;
- scene.fog=new THREE.FogExp2(currentLevel==='11'?0x303a42:0xb8cbd0,currentLevel==='11'?.00135:.00105);
+ scene.fog=new THREE.FogExp2(currentLevel==='11'?0x52634a:0xb8cbd0,currentLevel==='11'?.00092:.00105);
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -261,7 +261,7 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
  const fill=new THREE.HemisphereLight(currentLevel==='11'?0x91b2c3:0xc5e1f2,currentLevel==='11'?0x3e4935:0x4c4636,currentLevel==='11'?.95:1.05);scene.add(fill);
  const rim=new THREE.DirectionalLight(currentLevel==='11'?0x526b93:0x9bc7e7,currentLevel==='11'?.38:.8);rim.position.set(180,150,-260);scene.add(rim);
  // Sunlit atmospheric cloud wisps are translucent meshes in the distant sky, not gameplay colliders.
- const cloudMat=new THREE.MeshBasicMaterial({color:currentLevel==='11'?0x303b4b:0xf0e9d8,transparent:true,opacity:currentLevel==='11'?.07:.16,depthWrite:false});
+ const cloudMat=new THREE.MeshBasicMaterial({color:currentLevel==='11'?0xc5b995:0xf0e9d8,transparent:true,opacity:currentLevel==='11'?.055:.16,depthWrite:false});
  for(let i=0;i<11;i++){const cloud=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),cloudMat);cloud.scale.set(18+((i*7)%19),1.4+(i%3),5+(i%5)*2);cloud.position.set(-250+i*49,105+(i%4)*17,-380-(i%3)*45);scene.add(cloud)}
  // Filmic vignette and subtle grain are screen-space overlays; no external assets.
  const film=document.createElement('div');film.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 50% 48%,transparent 48%,rgba(7,15,24,.28) 100%),linear-gradient(180deg,rgba(8,18,30,.12),transparent 24%,transparent 78%,rgba(8,15,22,.18)';
