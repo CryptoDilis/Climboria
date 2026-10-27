@@ -1,3 +1,1 @@
-Climboria soundtrack assets.
-
-The shared expedition theme is stored here as `climboria-theme-60s.mp3` and used for all levels except Jarrell's Peak, which retains its existing soundtrack.
+Climboria's original Rohan-inspired soundtrack is stored as `climboria-theme-60s.mp3` (the same audio data previously named `TRACK_01.mp3`). The game uses this shared soundtrack in regular expeditions and Jarrell's Peak; the same playback path is intended for Arena when its mode is available. Music volume and mute are controlled by the in-game audio settings. The older procedural synth score is disabled for gameplay playback.
