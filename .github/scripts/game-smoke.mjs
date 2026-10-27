@@ -195,9 +195,9 @@ try {
     await page.evaluate(side => { const api=window.__climboriaSmoke;api.keys[side>0?'KeyD':'KeyA']=true; }, swimExitStart.side);
     await page.waitForTimeout(2400);
     const swimExit = await page.evaluate(({side,z}) => {
-      const api=window.__climboriaSmoke,p=api.player.position;
+      const api=window.__climboriaSmoke,p=api.player.position,move=api.getMoveVec(),keys={KeyA:api.keys.KeyA,KeyD:api.keys.KeyD};
       api.keys.KeyD=false;api.keys.KeyA=false;
-      return {side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),move:api.getMoveVec(),y:Number(p.y.toFixed(2)),
+      return {side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),move,keys,y:Number(p.y.toFixed(2)),
         groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),x:Number(p.x.toFixed(2)),
         z:Number(p.z.toFixed(2)),bankDistance:Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2))};
     }, swimExitStart);
