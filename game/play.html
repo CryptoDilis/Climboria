@@ -578,7 +578,7 @@ if(currentLevel==='11'){
 });
  const riverPts=[];for(let i=0;i<=180;i++){const t=i/180;riverPts.push(new THREE.Vector3(3+Math.sin(t*4.6)*17+Math.sin(t*9.2)*5.5+Math.sin(t*15.5)*1.4,.015,-360+t*720))}
  riverCurve=new THREE.CatmullRomCurve3(riverPts);
- function nearestRiverPoint(x,z){const centerT=Math.max(0,Math.min(1,(z+360)/720));let bestDistSq=Infinity,bestPoint=null,bestT=centerT;for(let offset=-10;offset<=10;offset++){const t=Math.max(0,Math.min(1,centerT+offset/180)),p=riverCurve.getPoint(t),dx=x-p.x,dz=z-p.z,d2=dx*dx+dz*dz;if(d2<bestDistSq){bestDistSq=d2;bestPoint=p;bestT=t;}}return {point:bestPoint,distanceSq:bestDistSq,t:bestT};}
+ function nearestRiverPoint(x,z){const centerT=Math.max(0,Math.min(1,(z+360)/720));let bestDistSq=Infinity,bestT=centerT;for(let offset=-10;offset<=10;offset++){const t=Math.max(0,Math.min(1,centerT+offset/180)),p=riverCurve.getPoint(t),dx=x-p.x,dz=z-p.z,d2=dx*dx+dz*dz;if(d2<bestDistSq){bestDistSq=d2;bestT=t;}}return {distanceSq:bestDistSq,t:bestT};}
  const riverShapePts=[];for(let i=0;i<=180;i++){const p=riverCurve.getPoint(i/180);riverShapePts.push(new THREE.Vector2(p.x,p.z))}
  // Create a flat triangulated ribbon around the river centerline; vertices sit just above the ground.
  const verts=[],indices=[];for(let i=0;i<=180;i++){const t=i/180,p=riverCurve.getPoint(t),dx=Math.cos(t*4.6)*.109+Math.cos(t*9.2)*.070+Math.cos(t*15.5)*.030,dz=1,len=Math.hypot(dx,dz),nx=dz/len,nz=-dx/len,w=4.6+Math.sin(t*3.8+.3)*.55+Math.sin(t*8.1)*.22;for(const side of [-1,-.62,.62,1]){verts.push(p.x+nx*w*side,.025,p.z+nz*w*side)}if(i<180){const a=i*4;indices.push(a,a+1,a+4,a+1,a+5,a+4,a+1,a+2,a+5,a+2,a+6,a+5,a+2,a+3,a+6,a+3,a+7,a+6)}}
