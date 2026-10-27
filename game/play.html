@@ -133,8 +133,9 @@ void main(){float streak=1.0-smoothstep(.22,.5,abs(gl_PointCoord.x-.5));float ti
 const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
 function smoothWeather(t){return t*t*(3-2*t)}
 function updateWeather(dt){
+ windClock.elapsed+=dt;for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
  if(!weatherEnabled)return;
- weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
+ weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);
  const phaseDuration=600,transition=22;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
