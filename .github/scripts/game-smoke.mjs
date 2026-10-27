@@ -11,6 +11,7 @@ try {
   const page = await desktop.newPage();
   const tentAssets = new Set();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
   page.on('response', response => {
     const match = response.url().match(/tent-detailed(open|closed)\.glb/);
     if (match && response.ok()) tentAssets.add('tent-detailed' + match[1] + '.glb');
@@ -26,7 +27,9 @@ try {
   await page.waitForTimeout(12000);
   await page.locator('#heroNameInput').fill('SmokeTester');
   await page.locator('#creatorStart').click();
-  await page.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
+  await page.waitForTimeout(350);
+  const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile')}; });
+  if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
 
   const desktopState = await page.evaluate(() => {
@@ -162,6 +165,7 @@ try {
   });
   const mobilePage = await mobile.newPage();
   mobilePage.on('pageerror', error => errors.push('mobile pageerror: ' + error.message));
+  mobilePage.on('console', message => { if (message.type() === 'error') errors.push('mobile console: ' + message.text()); });
   await mobilePage.goto('http://127.0.0.1:4173/game/play.html?level=11&smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
@@ -171,7 +175,9 @@ try {
   await mobilePage.waitForTimeout(6000);
   await mobilePage.locator('#heroNameInput').fill('MobileSmoke');
   await mobilePage.locator('#creatorStart').click();
-  await mobilePage.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
+  await mobilePage.waitForTimeout(350);
+  const mobileHeroSetup = await mobilePage.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile')}; });
+  if (mobileHeroSetup.display !== 'none' && !mobileHeroSetup.closed) { await mobilePage.screenshot({ path: '/tmp/jarrell-mobile-hero-error.png' }); console.error('Mobile hero setup diagnostic:', JSON.stringify({hero:mobileHeroSetup,errors})); throw new Error('mobile hero setup did not close'); }
   await mobilePage.waitForTimeout(800);
   const mobileState = await mobilePage.evaluate(() => ({
     canvas: !!document.querySelector('#game canvas'),
