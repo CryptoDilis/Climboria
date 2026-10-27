@@ -1045,7 +1045,7 @@ const audioSettings={music:.28,sfx:.7,muted:false};
 try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
- function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
+ function isJarrellPeakExpedition(){return false} // Use the supplied original TRACK_01 soundtrack in Jarrell’s Peak too; disable the legacy procedural score.
  function startExpeditionSoundtrack(){
   // Jarrell's Peak keeps its original procedural soundtrack; the supplied MP3 is for regular expeditions only.
   if(isJarrellPeakExpedition())return;
