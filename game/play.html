@@ -413,6 +413,71 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const trunkGeo=new THREE.CylinderGeometry(.18,.32,3.3,7),leafGeo1=new THREE.ConeGeometry(1.55,3.4,7),leafGeo2=new THREE.ConeGeometry(1.15,2.7,7);const trunkMat=new THREE.MeshStandardMaterial({color:0x594330,roughness:1}),leafMats=[0x344b35,0x405b3a,0x536b43,0x293f31].map(color=>new THREE.MeshStandardMaterial({color,roughness:.94}));const treeN=720,trunks=new THREE.InstancedMesh(trunkGeo,trunkMat,treeN),crowns=leafMats.map(m=>new THREE.InstancedMesh(leafGeo1,m,treeN)),crowns2=leafMats.map(m=>new THREE.InstancedMesh(leafGeo2,m,treeN));const dummy=new THREE.Object3D(),counts=[0,0,0,0],counts2=[0,0,0,0];let placed=0;
  for(let i=0;i<treeN*3&&placed<treeN;i++){const x=(rnd()-.5)*18000,z=(rnd()-.5)*18000;const riverX=8+Math.sin(((z+360)/720)*4.6)*17+Math.sin(((z+360)/720)*9.2)*5.5+Math.sin(((z+360)/720)*15.5)*1.4;const nearRiver=Math.abs(x-riverX)<25&&z>-370&&z<370;const nearCamp=Math.hypot(x+1,z+340)<31;if(nearRiver||nearCamp)continue;const y=jarrellHeight(x,z);const scale=.72+rnd()*1.15;dummy.position.set(x,y+1.45*scale,z);dummy.rotation.y=rnd()*Math.PI*2;dummy.scale.setScalar(scale);dummy.updateMatrix();trunks.setMatrixAt(placed,dummy.matrix);const k=Math.floor(rnd()*leafMats.length);dummy.position.set(x,y+3.0*scale,z);dummy.scale.set(scale,scale*(.85+rnd()*.45),scale);dummy.updateMatrix();crowns[k].setMatrixAt(counts[k]++,dummy.matrix);dummy.position.set(x,y+4.25*scale,z);dummy.scale.set(scale*.78,scale*.82,scale*.78);dummy.updateMatrix();crowns2[k].setMatrixAt(counts2[k]++,dummy.matrix);placed++}
  trunks.count=placed;trunks.instanceMatrix.needsUpdate=true;trunks.castShadow=true;trunks.receiveShadow=true;scene.add(trunks);for(let k=0;k<leafMats.length;k++){crowns[k].count=counts[k];crowns[k].instanceMatrix.needsUpdate=true;crowns[k].castShadow=true;scene.add(crowns[k]);crowns2[k].count=counts2[k];crowns2[k].instanceMatrix.needsUpdate=true;crowns2[k].castShadow=true;scene.add(crowns2[k])}
+
+ // Jarrell's Peak nature pass — inspired by The Wild Between's efficient instanced scenery.
+ // Keep the existing spawn, river corridor, terrain height field, and endless-world layout unchanged.
+ {
+  const bushGeo=new THREE.IcosahedronGeometry(1,1);
+  const bushMats=[0x263f2c,0x355238,0x4a663b,0x617746].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
+  const bushN=isMobileGPU?420:1050;
+  const bushes=bushMats.map(m=>new THREE.InstancedMesh(bushGeo,m,bushN));
+  const fernGeo=new THREE.ConeGeometry(.24,1.45,5,1);
+  fernGeo.translate(0,.68,0);
+  const fernMats=[0x3d633d,0x527947,0x6e8a4d].map(color=>new THREE.MeshStandardMaterial({color,roughness:1,side:THREE.DoubleSide}));
+  const fernN=isMobileGPU?300:720;
+  const ferns=fernMats.map(m=>new THREE.InstancedMesh(fernGeo,m,fernN*4));
+  const flowerGeo=new THREE.SphereGeometry(.105,6,5);
+  const flowerMats=[0xd7c18a,0xc58e83,0x9db8cb].map(color=>new THREE.MeshStandardMaterial({color,roughness:.8,emissive:color,emissiveIntensity:.08}));
+  const flowerN=isMobileGPU?100:260;
+  const flowers=flowerMats.map(m=>new THREE.InstancedMesh(flowerGeo,m,flowerN));
+  const leafDummy=new THREE.Object3D(),bushCounts=[0,0,0,0],fernCounts=[0,0,0],flowerCounts=[0,0,0];
+  const localRand=()=>rnd();
+  for(let i=0;i<bushN*5&&bushCounts.reduce((a,b)=>a+b,0)<bushN;i++){
+   const x=-3.8+(localRand()-.5)*900,z=-340+(localRand()-.5)*900;
+   const radial=Math.hypot(x+3.8,z+340),lakeDist=Math.hypot((x-88)/1.18,z+340);
+   const riverX=jarrellRiverX(z),riverDist=Math.abs(x-riverX),campDist=Math.hypot(x+1,z+340);
+   if(radial>480||lakeDist<111||campDist<25||riverDist<12)continue;
+   const y=jarrellHeight(x,z),scale=.45+localRand()*1.2,k=Math.floor(localRand()*bushMats.length);
+   leafDummy.position.set(x,y+scale*.45,z);leafDummy.rotation.set(localRand()*.12,localRand()*Math.PI*2,localRand()*.12);leafDummy.scale.set(scale*(.8+localRand()*.6),scale*(.65+localRand()*.55),scale*(.8+localRand()*.6));leafDummy.updateMatrix();
+   if(bushCounts[k]<bushN)bushes[k].setMatrixAt(bushCounts[k]++,leafDummy.matrix);
+  }
+  bushes.forEach((m,k)=>{m.count=bushCounts[k];m.instanceMatrix.needsUpdate=true;m.castShadow=!isMobileGPU;m.receiveShadow=true;scene.add(m)});
+  for(let i=0;i<fernN*8&&fernCounts.reduce((a,b)=>a+b,0)<fernN*4;i++){
+   const x=-3.8+(localRand()-.5)*880,z=-340+(localRand()-.5)*880;
+   const lakeDist=Math.hypot((x-88)/1.18,z+340),riverDist=Math.abs(x-jarrellRiverX(z)),campDist=Math.hypot(x+1,z+340);
+   if(lakeDist<110||campDist<22||riverDist<8)continue;
+   const y=jarrellHeight(x,z),k=Math.floor(localRand()*fernMats.length),scale=.55+localRand()*.9;
+   leafDummy.position.set(x,y+.08,z);leafDummy.rotation.set((localRand()-.5)*.25,localRand()*Math.PI*2,(localRand()-.5)*.25);leafDummy.scale.set(scale,scale,scale);leafDummy.updateMatrix();
+   if(fernCounts[k]<fernN*4)ferns[k].setMatrixAt(fernCounts[k]++,leafDummy.matrix);
+  }
+  ferns.forEach((m,k)=>{m.count=fernCounts[k];m.instanceMatrix.needsUpdate=true;m.castShadow=false;m.receiveShadow=true;scene.add(m)});
+  // Small flower patches and mushroom-like forest details are sparse around the walkable banks.
+  for(let i=0;i<flowerN*7&&flowerCounts.reduce((a,b)=>a+b,0)<flowerN*3;i++){
+   const x=-3.8+(localRand()-.5)*850,z=-340+(localRand()-.5)*850;
+   const lakeDist=Math.hypot((x-88)/1.18,z+340),riverDist=Math.abs(x-jarrellRiverX(z)),campDist=Math.hypot(x+1,z+340);
+   if(lakeDist<112||campDist<24||riverDist<9)continue;
+   const y=jarrellHeight(x,z),k=Math.floor(localRand()*flowerMats.length),scale=.65+localRand()*.9;
+   leafDummy.position.set(x,y+.12*scale,z);leafDummy.rotation.set(0,localRand()*Math.PI*2,0);leafDummy.scale.setScalar(scale);leafDummy.updateMatrix();
+   if(flowerCounts[k]<flowerN)flowers[k].setMatrixAt(flowerCounts[k]++,leafDummy.matrix);
+  }
+  flowers.forEach((m,k)=>{m.count=flowerCounts[k];m.instanceMatrix.needsUpdate=true;m.castShadow=false;scene.add(m)});
+  // Mossy fallen timber adds readable natural detail without blocking the starter clearing.
+  const logMat=new THREE.MeshStandardMaterial({color:0x59442f,roughness:1});
+  const logGeo=new THREE.CylinderGeometry(.22,.32,4.2,7);
+  const logs=new THREE.InstancedMesh(logGeo,logMat,isMobileGPU?24:52),logDummy=new THREE.Object3D();let logCount=0;
+  for(let i=0;i<(isMobileGPU?24:52)*5&&logCount<(isMobileGPU?24:52);i++){
+   const x=-3.8+(localRand()-.5)*880,z=-340+(localRand()-.5)*880;
+   if(Math.hypot(x+1,z+340)<34||Math.abs(x-jarrellRiverX(z))<13)continue;
+   const y=jarrellHeight(x,z),len=.7+localRand()*.7;
+   logDummy.position.set(x,y+.25,z);logDummy.rotation.set((localRand()-.5)*.15,localRand()*Math.PI*2,Math.PI/2+(localRand()-.5)*.18);logDummy.scale.setScalar(len);logDummy.updateMatrix();logs.setMatrixAt(logCount++,logDummy.matrix);
+  }
+  logs.count=logCount;logs.instanceMatrix.needsUpdate=true;logs.castShadow=!isMobileGPU;scene.add(logs);
+  // A light dust/pollen layer catches the warm rim light; fixed points avoid per-frame object churn.
+  const moteCount=isMobileGPU?90:220,motePositions=new Float32Array(moteCount*3);
+  for(let i=0;i<moteCount;i++){motePositions[i*3]=-3.8+(localRand()-.5)*230;motePositions[i*3+1]=2+localRand()*24;motePositions[i*3+2]=-340+(localRand()-.5)*260;}
+  const moteGeo=new THREE.BufferGeometry();moteGeo.setAttribute('position',new THREE.BufferAttribute(motePositions,3));
+  const motes=new THREE.Points(moteGeo,new THREE.PointsMaterial({color:0xd8d7a1,size:isMobileGPU?.12:.18,transparent:true,opacity:.36,depthWrite:false,sizeAttenuation:true}));motes.name='JarrellsPeak_ForestMotes';scene.add(motes);
+ }
  // Jarrell's Peak world landmarks: these are distributed far beyond the riverside trailhead.
  const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);
  const poiMat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
