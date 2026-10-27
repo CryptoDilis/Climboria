@@ -76,3 +76,71 @@ jobs:
           print(f"Extracted {len(p.out)} inline script(s).")
           PY
           for file in /tmp/climboria-inline-js/*.js; do node --check "$file"; done
+      - name: Syntax-check game/play.html scripts
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.active = False
+                  self.attrs = {}
+                  self.buf = []
+                  self.out = []
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script":
+                      self.active = True
+                      self.attrs = dict(attrs)
+                      self.buf = []
+              def handle_data(self, data):
+                  if self.active:
+                      self.buf.append(data)
+              def handle_endtag(self, tag):
+                  if tag == "script" and self.active:
+                      typ = self.attrs.get("type", "").lower()
+                      if not self.attrs.get("src") and typ not in ("application/json", "application/ld+json", "importmap"):
+                          code = "".join(self.buf).strip()
+                          if code:
+                              self.out.append((typ, code))
+                      self.active = False
+          parser = Scripts()
+          parser.feed(Path("game/play.html").read_text(encoding="utf-8"))
+          out = Path("/tmp/climboria-game-js")
+          out.mkdir(exist_ok=True)
+          for i, (typ, code) in enumerate(parser.out):
+              suffix = ".mjs" if typ == "module" else ".js"
+              (out / f"{i}{suffix}").write_text(code, encoding="utf-8")
+          if not parser.out:
+              raise SystemExit("No inline game scripts were found.")
+          print(f"Extracted {len(parser.out)} inline game script(s).")
+          PY
+          for file in /tmp/climboria-game-js/*; do node --check "$file"; done
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-v1
+      - name: Install Playwright Chromium for browser smoke tests
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install chromium
+      - name: Smoke-test Jarrell on desktop and mobile viewports
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/climboria-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null
+          node .github/scripts/game-smoke.mjs
+      - name: Upload Jarrell desktop/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarrell-browser-smoke
+          path: /tmp/jarrell-*.png
+          if-no-files-found: ignore
+          retention-days: 3
