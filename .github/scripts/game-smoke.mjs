@@ -44,6 +44,7 @@ try {
   if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
+  await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
 
   await page.evaluate(() => {
     const api = window.__climboriaSmoke;
@@ -171,6 +172,7 @@ try {
     errors.push('mobile Jarrell controls did not initialize correctly');
   }
   console.log('Mobile smoke state:', JSON.stringify(mobileState));
+  await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
   if (errors.length) {
