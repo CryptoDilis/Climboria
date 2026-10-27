@@ -166,6 +166,51 @@ try {
     }
   }
 
+  // Regression test: swim out of the starting river and reach dry bank.
+  const swimExitStart = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
+    api.player.position.set(centerX,-.35,z);
+    api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
+    const options=[-1,1].map(side=>{
+      const startX=centerX+side*2.2,endX=centerX+side*8.5;
+      const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
+        .some(x=>api.testObstacleCollision(x,z,-.35));
+      const slopeX=(api.terrainHeightAt(endX+.8,z)-api.terrainHeightAt(endX-.8,z))/1.6;
+      const slopeZ=(api.terrainHeightAt(endX,z+.8)-api.terrainHeightAt(endX,z-.8))/1.6;
+      return {z,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
+    }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
+    return options[0]||null;
+  });
+  await page.waitForTimeout(650);
+  if (!swimExitStart) {
+    errors.push('no clear river-bank path found for the swim-exit test');
+  } else {
+    await page.evaluate(({z,side,startX}) => {
+      const api=window.__climboriaSmoke;
+      api.setCamYaw(0);api.player.position.set(startX,-.35,z);
+      api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
+    }, swimExitStart);
+    await page.waitForTimeout(160);
+    await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
+    await page.waitForFunction(({side}) => {
+      const api=window.__climboriaSmoke,p=api?.player?.position;
+      return !!p && Math.abs(p.x-api.riverX(p.z))>=5.2 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
+    }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
+    const swimExit = await page.evaluate(({side,z}) => {
+      const api=window.__climboriaSmoke,p=api.player.position;
+      const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
+        x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
+        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2)),
+        collision:api.lastMovementDebug||null};
+      api.keys.KeyD=false;api.keys.KeyA=false;
+      return result;
+    }, swimExitStart);
+    if (swimExit.swimming || swimExit.bankDistance < 5.2 || swimExit.y < swimExit.groundY) {
+      errors.push('player could not swim onto the river bank: '+JSON.stringify(swimExit));
+      await page.screenshot({path:'/tmp/jarrell-swim-exit-failure.png'});
+    }
+  }
+
   await page.locator('#jarrellDeathStoneBtn').click();
   await page.waitForTimeout(100);
   const deathStoneWorks = await page.evaluate(() => {
@@ -258,51 +303,6 @@ try {
   if (!selectedLevel?.toUpperCase().includes('JARRELL')) errors.push('selecting the launch card did not open Jarrell’s Peak');
   await selectPage.close();
 
-
-  // Regression test: swim out of the starting river and reach dry bank.
-  const swimExitStart = await page.evaluate(() => {
-    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
-    api.player.position.set(centerX,-.35,z);
-    api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
-    const options=[-1,1].map(side=>{
-      const startX=centerX+side*2.2,endX=centerX+side*8.5;
-      const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
-        .some(x=>api.testObstacleCollision(x,z,-.35));
-      const slopeX=(api.terrainHeightAt(endX+.8,z)-api.terrainHeightAt(endX-.8,z))/1.6;
-      const slopeZ=(api.terrainHeightAt(endX,z+.8)-api.terrainHeightAt(endX,z-.8))/1.6;
-      return {z,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
-    }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
-    return options[0]||null;
-  });
-  await page.waitForTimeout(650);
-  if (!swimExitStart) {
-    errors.push('no clear river-bank path found for the swim-exit test');
-  } else {
-    await page.evaluate(({z,side,startX}) => {
-      const api=window.__climboriaSmoke;
-      api.setCamYaw(0);api.player.position.set(startX,-.35,z);
-      api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
-    }, swimExitStart);
-    await page.waitForTimeout(160);
-    await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
-    await page.waitForFunction(({side}) => {
-      const api=window.__climboriaSmoke,p=api?.player?.position;
-      return !!p && Math.abs(p.x-api.riverX(p.z))>=5.2 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
-    }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
-    const swimExit = await page.evaluate(({side,z}) => {
-      const api=window.__climboriaSmoke,p=api.player.position;
-      const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
-        x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
-        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2)),
-        collision:api.lastMovementDebug||null};
-      api.keys.KeyD=false;api.keys.KeyA=false;
-      return result;
-    }, swimExitStart);
-    if (swimExit.swimming || swimExit.bankDistance < 5.2 || swimExit.y < swimExit.groundY) {
-      errors.push('player could not swim onto the river bank: '+JSON.stringify(swimExit));
-      await page.screenshot({path:'/tmp/jarrell-swim-exit-failure.png'});
-    }
-  }
 
   if (errors.length) {
     console.error(errors.join('\n'));
