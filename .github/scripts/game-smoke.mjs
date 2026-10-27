@@ -272,6 +272,20 @@ try {
     if (fishingResult.busy) errors.push('fishing remained busy after its reward window: ' + JSON.stringify(fishingResult));
   }
 
+  // Inventory regression: the loot saved by the fishing interaction must appear in the expedition bag.
+  await page.locator('#profileLaunch').click();
+  const inventoryState = await page.evaluate(() => ({
+    bagSlots: document.querySelectorAll('#bagSlots .inv-slot').length,
+    filledSlots: document.querySelectorAll('#bagSlots .inv-slot.filled').length,
+    heading: document.querySelector('#bagSlots')?.parentElement?.querySelector('h3')?.textContent || '',
+    savedLootCount: (() => { try { const value=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]'); return Array.isArray(value)?value.length:0; } catch { return -1; } })(),
+    bagText: document.querySelector('#bagSlots')?.textContent || '',
+  }));
+  if (inventoryState.bagSlots !== 50) errors.push('expedition bag must render exactly 50 slots: ' + JSON.stringify(inventoryState));
+  if (inventoryState.filledSlots < inventoryState.savedLootCount || inventoryState.filledSlots !== Math.min(50, inventoryState.savedLootCount)) errors.push('saved Jarrell loot did not populate the expedition bag: ' + JSON.stringify(inventoryState));
+  if (!inventoryState.heading.includes(Math.min(50, inventoryState.savedLootCount) + ' / 50')) errors.push('expedition bag heading did not report the real saved item count: ' + JSON.stringify(inventoryState));
+  await page.locator('#profileClose').click();
+
   const missingTentAssets = ['tent-detailedopen.glb', 'tent-detailedclosed.glb'].filter(name => !tentAssets.has(name));
   if (missingTentAssets.length) errors.push('camp tent assets failed to load: ' + missingTentAssets.join(', '));
   console.log('Desktop smoke state:', JSON.stringify(desktopState));
