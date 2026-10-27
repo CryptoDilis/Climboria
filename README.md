@@ -122,6 +122,17 @@ This section is the agreed implementation order and the completion checklist for
 8. **Polish visuals and optimize.** Use appropriate high-quality models and textures, consistent scale, natural lighting/shadows, fog and weather that support visibility, and performance techniques such as instancing, culling, LOD, and cleanup of unloaded chunks. Target both desktop and mobile browsers; do not trade basic playability for effects.
 9. **Test before declaring completion.** Run syntax/build checks and test the deployed browser game on desktop and a mobile-sized viewport. Verify spawn, movement, chunk transitions in every direction, long-distance travel, river and fishing, landmarks, combat/death/respawn, chest discovery/loot, weather/day-night, audio, HUD, and performance. Check browser console for errors and memory/performance degradation. Fix regressions before release.
 
+### Reference repo findings — Simple 3D Open World
+
+Reviewed [yusufmalikul/simple-3d-open-world](https://github.com/yusufmalikul/simple-3d-open-world) (Three.js/Vite). Useful patterns to adapt—not transplant wholesale:
+- Seeded fractal value-noise terrain with one shared height query for visible ground and player grounding.
+- Deterministic instance placement, InstancedMesh, varied per-instance colors, and reusable scatter helpers.
+- Collision resolution against tree/rock radii and movement-step terrain sampling.
+- Water-level state, slower swimming movement, buoyancy bob, jump/ascend and dive/descend inputs.
+- Warm sun/hemisphere lighting, fog, shadow following, mobile touch controls, and procedural ambience.
+- Its repo API response reports no license metadata, so treat its source as reference only until an explicit license is verified. Adapt general techniques independently; do not copy/publish its full implementation.
+
+**Applied to this branch (implemented — unverified):** Jarrell's Peak movement now computes whether a proposed step enters the curved river corridor and skips the steep-terrain blocker for that step, while tightening the existing river swim-detection width to better match the visible water ribbon. This is a targeted fix, not a complete collision system. Test actual entry/exit from both banks, swimming along bends, underwater controls, and shoreline transitions in the browser before marking passed.
 ### Definition of done — Jarrell's Peak
 
 Jarrell's Peak may be called **gameplay-complete** only when all applicable checks below pass in the actual browser game, not merely because code has been committed:
