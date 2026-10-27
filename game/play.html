@@ -478,7 +478,57 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const moteGeo=new THREE.BufferGeometry();moteGeo.setAttribute('position',new THREE.BufferAttribute(motePositions,3));
   const motes=new THREE.Points(moteGeo,new THREE.PointsMaterial({color:0xd8d7a1,size:isMobileGPU?.12:.18,transparent:true,opacity:.36,depthWrite:false,sizeAttenuation:true}));motes.name='JarrellsPeak_ForestMotes';scene.add(motes);
  }
- // Jarrell's Peak world landmarks: these are distributed far beyond the riverside trailhead.
+ // Real Quaternius CC0 nature models, following the reference game's InstancedMesh approach.
+  // Models stay on the reference repo's raw asset host so GLTF binary and texture sidecars resolve relative to each model.
+  // Graceful fallback: the existing procedural forest remains if the remote assets cannot load.
+  {
+   const natureBase='https://raw.githubusercontent.com/anandin/the-wild-between/main/assets/quaternius-nature/';
+   const natureLoader=new GLTFLoader();
+   const natureSpecs=[
+    {name:'CommonTree_3',count:isMobileGPU?18:42,minScale:1.2,maxScale:2.05},
+    {name:'Bush_Common',count:isMobileGPU?26:58,minScale:2.0,maxScale:4.1},
+    {name:'Fern_1',count:isMobileGPU?32:76,minScale:1.15,maxScale:2.15}
+   ];
+   const makeNaturePlacements=spec=>{
+    const out=[];let tries=0;
+    while(out.length<spec.count&&tries<spec.count*16){
+     tries++;
+     const x=-3.8+(rnd()-.5)*980,z=-340+(rnd()-.5)*980;
+     const riverDist=Math.abs(x-jarrellRiverX(z)),campDist=Math.hypot(x+1,z+340),lakeDist=Math.hypot((x-88)/1.18,z+340);
+     if(Math.hypot(x+3.8,z+340)>510||campDist<38||riverDist<(spec.name==='Fern_1'?7:13)||lakeDist<118)continue;
+     out.push({x,z,y:jarrellHeight(x,z),scale:spec.minScale+rnd()*(spec.maxScale-spec.minScale),yaw:rnd()*Math.PI*2});
+    }
+    return out;
+   };
+   const addLoadedNature=(spec,gltf)=>{
+    gltf.scene.updateMatrixWorld(true);
+    const sources=[];
+    gltf.scene.traverse(o=>{if(o.isMesh&&o.geometry&&o.material)sources.push(o)});
+    if(!sources.length)return;
+    const placements=makeNaturePlacements(spec),position=new THREE.Object3D(),placeMatrix=new THREE.Matrix4();
+    for(const source of sources){
+     const instances=new THREE.InstancedMesh(source.geometry,source.material,placements.length);
+     instances.name='JarrellsPeak_CC0_'+spec.name;
+     instances.castShadow=!isMobileGPU&&spec.name==='CommonTree_3';
+     instances.receiveShadow=true;
+     instances.frustumCulled=true;
+     for(let i=0;i<placements.length;i++){
+      const p=placements[i];
+      position.position.set(p.x,p.y,p.z);position.rotation.set(0,p.yaw,0);position.scale.setScalar(p.scale);position.updateMatrix();
+      placeMatrix.multiplyMatrices(position.matrix,source.matrixWorld);
+      instances.setMatrixAt(i,placeMatrix);
+     }
+     instances.instanceMatrix.needsUpdate=true;
+     scene.add(instances);
+    }
+   };
+   natureSpecs.forEach(spec=>{
+    natureLoader.load(natureBase+spec.name+'.gltf',gltf=>addLoadedNature(spec,gltf),undefined,err=>{
+     console.warn('[Jarrell’s Peak] CC0 model unavailable:',spec.name,err);
+    });
+   });
+  }
+  // Jarrell's Peak world landmarks: these are distributed far beyond the riverside trailhead.
  const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);
  const poiMat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
  const darkStone=poiMat(0x343d40),stoneEdge=poiMat(0x596367),oldBone=poiMat(0x9c9278),rustMetal=poiMat(0x55453a),riceGreen=poiMat(0x718d42),sanctuaryWater= new THREE.MeshStandardMaterial({color:0x347f8a,roughness:.2,metalness:.12,transparent:true,opacity:.88});
