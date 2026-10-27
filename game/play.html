@@ -1063,7 +1063,7 @@ try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
 if(new URLSearchParams(location.search).get('smoke')==='1'){window.__climboriaAudioSmoke={getMusicState:()=>({src:soundtrackAudio?.currentSrc||soundtrackAudio?.src||'',paused:soundtrackAudio?.paused??true,volume:soundtrackAudio?.volume??0,readyState:soundtrackAudio?.readyState??0,muted:audioSettings.muted,music:audioSettings.music})};if(window.__climboriaSmoke)window.__climboriaSmoke.getMusicState=window.__climboriaAudioSmoke.getMusicState;}
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
- function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
+ function isJarrellPeakExpedition(){return false} // The user's original TRACK_01 theme is shared by Arena/regular expeditions and Jarrell's Peak.
  function startExpeditionSoundtrack(){
   // Jarrell's Peak keeps its original procedural soundtrack; the supplied MP3 is for regular expeditions only.
   if(isJarrellPeakExpedition())return;
