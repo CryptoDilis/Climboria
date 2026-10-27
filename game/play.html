@@ -668,7 +668,7 @@ if(currentLevel==='11'){
    jarrellTentLoader.load(mirror,addTent,undefined,err2=>console.warn('Jarrell CC0 tent asset failed on both hosts:',err2?.message||err?.message));
   });
  };
- placeJarrellTent(-10,-349,.12,.82,'tent-detailedopen');placeJarrellTent(-10,-334,-.15,.72,'tent-detailedclosed');
+ placeJarrellTent(-2,-352,.12,.82,'tent-detailedopen');placeJarrellTent(-1,-348,-.15,.72,'tent-detailedclosed');
  const campfire=new THREE.Group();campfire.position.set(-.2,campGroundY(-.2,-340)+.08,-340);scene.add(campfire);const fireRing=new THREE.Mesh(new THREE.TorusGeometry(.72,.14,8,18),new THREE.MeshStandardMaterial({color:0x5d5548,roughness:1}));fireRing.rotation.x=Math.PI/2;fireRing.position.y=.12;campfire.add(fireRing);const flame=new THREE.Mesh(new THREE.ConeGeometry(.34,1.05,7),new THREE.MeshBasicMaterial({color:0xff8a36}));flame.position.y=.72;campfire.add(flame);const campGlow=new THREE.PointLight(0xff9b4a,2.3,11);campGlow.position.y=1.2;campfire.add(campGlow);
  const supplyCrateMat=new THREE.MeshStandardMaterial({color:0x68472b,roughness:1});for(const [x,z] of [[2.7,-342],[2.9,-338]]){const crate=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.75),supplyCrateMat),gy=campGroundY(x,z);crate.position.set(x,gy+.34,z);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);jarrellObstacleColliders.push({x,z,r:.58,y0:gy,y1:gy+.8,kind:'crate'})}
  const bankMat=new THREE.MeshStandardMaterial({color:0x4c5147,roughness:1});
