@@ -116,3 +116,18 @@ jobs:
           print(f"Extracted {len(parser.out)} inline game script(s).")
           PY
           for file in /tmp/climboria-game-js/*; do node --check "$file"; done
+      - name: Install Playwright Chromium for browser smoke tests
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Smoke-test Jarrell on desktop and mobile viewports
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/climboria-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null
+          node .github/scripts/game-smoke.mjs
