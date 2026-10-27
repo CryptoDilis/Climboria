@@ -660,7 +660,7 @@ if(currentLevel==='11'){
    tent.scale.setScalar(scale);tent.updateMatrixWorld(true);
    const grounded=new THREE.Box3().setFromObject(tent);
    tent.position.set(x,campGroundY(x,z)-grounded.min.y,z);tent.rotation.y=rot;
-   tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+   tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const sourceMaterials=Array.isArray(o.material)?o.material:[o.material],tunedMaterials=sourceMaterials.map(material=>{const tuned=material.clone();if(tuned.color&&tuned.color.r>.28&&tuned.color.r>tuned.color.g*1.25&&tuned.color.r>tuned.color.b*1.25)tuned.color.set(0x8d8059);tuned.roughness=Math.max(tuned.roughness??0,.9);return tuned});o.material=Array.isArray(o.material)?tunedMaterials:tunedMaterials[0]}});
    tent.name='JarrellsPeak_RealTent';scene.add(tent);const tentGroundY=campGroundY(x,z);jarrellObstacleColliders.push({x,z,r:1.55*scaleFactor,y0:tentGroundY,y1:tentGroundY+2.7*scaleFactor,kind:'tent'});
   };
   jarrellTentLoader.load(jarrellTentBase+variant+'.glb',addTent,undefined,err=>{
