@@ -166,6 +166,39 @@ try {
     }
   }
 
+  // Exercise a real swim-to-bank transition; teleport-only checks cannot catch a shore collision deadlock.
+  await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const z = 80;
+    const centerX = api.riverX(z);
+    api.setCamYaw(0);
+    api.player.position.set(centerX + 2.2, -0.62, z);
+    api.keys.KeyD = false;
+  });
+  await page.waitForTimeout(140);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(1500);
+  await page.keyboard.up('d');
+  await page.waitForTimeout(250);
+  const swimExit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const p = api.player.position;
+    return {
+      swimming: window.jarrellSwimming === true,
+      y: Number(p.y.toFixed(2)),
+      groundY: Number(api.terrainHeightAt(p.x, p.z).toFixed(2)),
+      x: Number(p.x.toFixed(2)),
+      z: Number(p.z.toFixed(2))
+    };
+  });
+  if (swimExit.swimming) errors.push('player remained in swimming state after moving onto the river bank');
+  if (swimExit.y < swimExit.groundY - 0.1) errors.push('player remained below terrain after exiting the river');
+  await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    api.keys.KeyD = false;
+    api.setCamYaw(-0.75);
+  });
+
   await page.locator('#jarrellDeathStoneBtn').click();
   await page.waitForTimeout(100);
   const deathStoneWorks = await page.evaluate(() => {
