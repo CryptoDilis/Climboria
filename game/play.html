@@ -752,7 +752,7 @@ function openNearbyTreasure(){
  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);max-width:90vw;padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3800);
  synthSfx('pickup');return true;
 }
-if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,getCaches:()=>jarrellTreasureChests,openNearbyTreasure};
+if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:jarrellRiverX,terrainHeightAt,nearestRiverPoint:window.nearestRiverPoint};
 // Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
