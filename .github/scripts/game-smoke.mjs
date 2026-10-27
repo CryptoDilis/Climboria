@@ -276,8 +276,11 @@ try {
   await musicPage.locator('#heroNameInput').fill('MusicTester');
   await musicPage.locator('#creatorStart').click();
   await musicPage.waitForTimeout(2200);
+  const musicState = await musicPage.evaluate(() => window.__climboriaSmoke?.getMusicState?.() || null);
   if (!musicResponses.some(item => item.status === 200)) errors.push('user soundtrack TRACK_01 (stored as climboria-theme-60s.mp3) did not load on a regular expedition');
+  if (!musicState || musicState.paused || musicState.volume <= 0 || musicState.muted) errors.push('user soundtrack loaded but is not actively playing at audible volume: ' + JSON.stringify(musicState));
   console.log('Regular expedition soundtrack responses:', JSON.stringify(musicResponses));
+  console.log('Regular expedition soundtrack state:', JSON.stringify(musicState));
   await musicPage.close();
 
   // Regression-test the expedition menu: Jarrell is playable, regular mountains are deferred, and the demo marketplace modal still works.
