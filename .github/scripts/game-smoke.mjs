@@ -45,17 +45,22 @@ try {
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
 
+  await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    api.player.position.set(1200, api.terrainHeightAt(1200, -340) + .22, -340);
+  });
+  await page.waitForTimeout(300);
   const collisionTarget = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
     const candidates = api.obstacles
-      .filter(item => item.kind === 'tree' && !item.chunkKey)
+      .filter(item => item.kind === 'tree' && !!item.chunkKey)
       .map(item => {
-        const distance = Math.hypot(item.x + 3.8, item.z + 340);
+        const distance = Math.hypot(item.x - api.player.position.x, item.z - api.player.position.z);
         const slopeX = (api.terrainHeightAt(item.x + 2, item.z) - api.terrainHeightAt(item.x - 2, item.z)) / 4;
         const slopeZ = (api.terrainHeightAt(item.x, item.z + 2) - api.terrainHeightAt(item.x, item.z - 2)) / 4;
         return { item, distance, slope: Math.hypot(slopeX, slopeZ) };
       })
-      .find(candidate => candidate.distance > 60 && candidate.distance < 180 && candidate.slope < .25);
+      .find(candidate => candidate.distance > 40 && candidate.distance < 180 && candidate.slope < .25);
     if (!candidates) return null;
     const tree = candidates.item;
     const startX = tree.x - (tree.r + .48 + 3.5);
