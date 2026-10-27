@@ -626,8 +626,8 @@ if(currentLevel==='11'){
 }
 function fishAtRiver(){
  if(currentLevel!=='11'||paused)return false;
- const riverNear=riverCurve.getPoint(Math.max(0,Math.min(1,(player.position.z+360)/720))),dx=player.position.x-riverNear.x,dz=player.position.z-riverNear.z;
- if(Math.hypot(dx,dz)>12.5){const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FISHING · MOVE CLOSER TO THE RIVER';return true}
+ let riverNear=null,nearestRiverDist=Infinity;for(let ri=0;ri<=180;ri++){const rp=riverCurve.getPoint(ri/180),rd=Math.hypot(player.position.x-rp.x,player.position.z-rp.z);if(rd<nearestRiverDist){nearestRiverDist=rd;riverNear=rp;}}
+ if(nearestRiverDist>12.5){const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FISHING · MOVE CLOSER TO THE RIVER';return true}
  if(window.jarrellFishingBusy)return true;window.jarrellFishingBusy=true;
  const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='FISHING · WAIT FOR A BITE…';
  synthSfx('pickup');
