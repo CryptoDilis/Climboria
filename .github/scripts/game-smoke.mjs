@@ -201,6 +201,36 @@ try {
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
+  // Regression-test the expedition menu: Jarrell is playable, regular mountains are deferred, and the demo marketplace modal still works.
+  const selectPage = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+  selectPage.on('pageerror', error => errors.push('expedition select pageerror: ' + error.message));
+  await selectPage.goto('http://127.0.0.1:4173/game/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await selectPage.waitForTimeout(500);
+  const selectState = await selectPage.evaluate(() => ({
+    cardCount: document.querySelectorAll('.card[data-level]').length,
+    jarrellDisabled: document.querySelector('.card[data-level="11"]')?.disabled,
+    jarrellAriaDisabled: document.querySelector('.card[data-level="11"]')?.getAttribute('aria-disabled'),
+    jarrellStatus: document.querySelector('.card[data-level="11"] .status')?.textContent || '',
+    futureCardsEnabled: [...document.querySelectorAll('.card[data-level]')].filter(card => card.dataset.level !== '11' && !card.disabled).map(card => card.dataset.level),
+    futureStatusMissing: [...document.querySelectorAll('.card[data-level]')].filter(card => card.dataset.level !== '11' && !card.querySelector('.status')?.textContent.includes('FUTURE EXPEDITION')).map(card => card.dataset.level)
+  }));
+  if (selectState.cardCount !== 11) errors.push('expedition select should show 11 planned expedition cards');
+  if (selectState.jarrellDisabled !== false || selectState.jarrellAriaDisabled !== 'false') errors.push('Jarrell’s Peak must be enabled as the launch world');
+  if (!selectState.jarrellStatus.includes('PLAY NOW')) errors.push('Jarrell’s Peak card must clearly show PLAY NOW');
+  if (selectState.futureCardsEnabled.length) errors.push('future expeditions must remain disabled: ' + selectState.futureCardsEnabled.join(','));
+  if (selectState.futureStatusMissing.length) errors.push('future expedition cards lack a clear future status: ' + selectState.futureStatusMissing.join(','));
+  await selectPage.locator('#menuMarketplace').click();
+  if (!await selectPage.locator('#levelShopModal').evaluate(el => el.classList.contains('open'))) errors.push('marketplace demo modal failed to open');
+  await selectPage.locator('[data-close="levelShopModal"]').click();
+  if (await selectPage.locator('#levelShopModal').evaluate(el => el.classList.contains('open'))) errors.push('marketplace demo modal failed to close');
+  await selectPage.screenshot({ path: '/tmp/jarrell-expedition-select.png', fullPage: true });
+  await selectPage.locator('.card[data-level="11"]').click();
+  await selectPage.waitForURL(/\/game\/play\.html\?level=11/, { timeout: 60000 });
+  await selectPage.waitForTimeout(500);
+  const selectedLevel = await selectPage.locator('#levelName').textContent().catch(() => '');
+  if (!selectedLevel?.toUpperCase().includes('JARRELL')) errors.push('selecting the launch card did not open Jarrell’s Peak');
+  await selectPage.close();
+
   if (errors.length) {
     console.error(errors.join('\n'));
     process.exitCode = 1;
