@@ -675,12 +675,16 @@ function fishAtRiver(){
  setTimeout(()=>{
   window.jarrellFishingBusy=false;
   const roll=Math.random()*100;let reward;
-  if(roll<1)reward={name:'CLIMB POINTS (IN-GAME)',rarity:'MYTHIC REWARD',color:'#f7cc63'};
+  if(roll<1)reward={name:'CLIMB POINTS (IN-GAME)',rarity:'MYTHIC REWARD',color:'#f7cc63',points:5};
   else if(roll<5)reward={name:'Abyssal Pearl',rarity:'LEGENDARY',color:'#dca7ff'};
   else if(roll<20)reward={name:'Frostglass Scale',rarity:'RARE INGREDIENT',color:'#71d9ff'};
   else if(roll<50)reward={name:'Moonfin / River Herb',rarity:'UNCOMMON INGREDIENT',color:'#8fe0a4'};
   else reward={name:'River Minnow / Wild Reed',rarity:'COMMON INGREDIENT',color:'#e3e7dc'};
-  const msg='FISHING REWARD · '+reward.rarity+' — '+reward.name;
+  if(!Array.isArray(window.jarrellLootInventory)){try{const savedInventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(savedInventory)?savedInventory:[]}catch{window.jarrellLootInventory=[]}}
+  if(typeof window.jarrellClimbPoints!=='number'){try{window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0}catch{window.jarrellClimbPoints=0}}
+  if(reward.points)window.jarrellClimbPoints+=reward.points;
+  window.jarrellLootInventory.push({name:reward.name,rarity:reward.rarity,source:'fishing',time:Date.now()});try{localStorage.setItem('climboria_jarrell_loot_inventory',JSON.stringify(window.jarrellLootInventory));localStorage.setItem('climboria_jarrell_climb_points',String(window.jarrellClimbPoints||0))}catch{}
+  const msg='FISHING REWARD · '+reward.rarity+' — '+reward.name+(reward.points?' · TOTAL CLIMB POINTS '+window.jarrellClimbPoints:'');
   if(stateHud)stateHud.textContent=msg;
   const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3500);
  },1800+Math.random()*1200);
