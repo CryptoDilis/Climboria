@@ -192,8 +192,10 @@ try {
       api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
-    await page.evaluate(side => { const api=window.__climboriaSmoke;api.keys[side>0?'KeyD':'KeyA']=true; }, swimExitStart.side);
-    await page.waitForTimeout(2400);
+    for(let hold=0;hold<24;hold++){
+      await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
+      await page.waitForTimeout(100);
+    }
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position,move=api.getMoveVec(),keys={KeyA:api.keys.KeyA,KeyD:api.keys.KeyD};
       api.keys.KeyD=false;api.keys.KeyA=false;
