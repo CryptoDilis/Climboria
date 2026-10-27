@@ -562,6 +562,30 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  // Procedurally placed expedition caches: stable hidden locations, persistent looting, distance-scaled rewards.
  const chestWood=new THREE.MeshStandardMaterial({color:0x654126,roughness:.82}),chestTrim=new THREE.MeshStandardMaterial({color:0xd6b45e,roughness:.45,metalness:.35,emissive:0x6b3f08,emissiveIntensity:.18}),chestLock=new THREE.MeshStandardMaterial({color:0x313c42,roughness:.42,metalness:.65});
  const lootedCacheIds=new Set();window.jarrellLootedCacheIds=lootedCacheIds;try{const saved=JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests')||'[]');if(Array.isArray(saved))saved.forEach(id=>lootedCacheIds.add(id));const inventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(inventory)?inventory:[];window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0}catch{window.jarrellLootInventory=[];window.jarrellClimbPoints=0}
+ const forestChunkMap=new Map();
+ window.spawnJarrellForestForChunk=(cx,cz)=>{
+  const key=cx+','+cz;if(forestChunkMap.has(key))return;
+  const centerX=(cx+.5)*jarrellChunkSize,centerZ=(cz+.5)*jarrellChunkSize;
+  if(Math.hypot(centerX+1,centerZ+340)<950){forestChunkMap.set(key,null);return;}
+  let seed=(Math.imul(cx,83492791)^Math.imul(cz,2971215073)^18821)>>>0;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+  const maxTrees=28,group=new THREE.Group();group.name='JarrellStreamedForest';const trunkMesh=new THREE.InstancedMesh(trunkGeo,trunkMat,maxTrees),leafMaterial=leafMats[Math.floor(rand()*leafMats.length)],crownMesh=new THREE.InstancedMesh(leafGeo1,leafMaterial,maxTrees),crownTopMesh=new THREE.InstancedMesh(leafGeo2,leafMaterial,maxTrees);let count=0,tries=0;
+  while(count<maxTrees&&tries<maxTrees*5){tries++;const x=cx*jarrellChunkSize+(rand()-.5)*(jarrellChunkSize-36),z=cz*jarrellChunkSize+(rand()-.5)*(jarrellChunkSize-36);
+   if(Math.hypot(x+1,z+340)<900||(z>-370&&z<370&&Math.abs(x-jarrellRiverX(z))<14))continue;
+   const y=jarrellHeight(x,z),sx=(jarrellHeight(x+2,z)-jarrellHeight(x-2,z))/4,sz=(jarrellHeight(x,z+2)-jarrellHeight(x,z-2))/4;if(Math.hypot(sx,sz)>.95)continue;
+   const scale=.72+rand()*1.15,yaw=rand()*Math.PI*2;dummy.position.set(x,y+1.45*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.setScalar(scale);dummy.updateMatrix();trunkMesh.setMatrixAt(count,dummy.matrix);
+   dummy.position.set(x,y+3*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.set(scale,scale*(.85+rand()*.45),scale);dummy.updateMatrix();crownMesh.setMatrixAt(count,dummy.matrix);
+   dummy.position.set(x,y+4.25*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.set(scale*.78,scale*.82,scale*.78);dummy.updateMatrix();crownTopMesh.setMatrixAt(count,dummy.matrix);
+   jarrellObstacleColliders.push({x,z,r:.48*scale,y0:y,y1:y+5.1*scale,kind:'tree',chunkKey:key});count++;
+  }
+  if(!count){forestChunkMap.set(key,null);return;}
+  for(const mesh of [trunkMesh,crownMesh,crownTopMesh]){mesh.count=count;mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=false;mesh.receiveShadow=true;group.add(mesh);}
+  scene.add(group);forestChunkMap.set(key,{group});
+ };
+ window.removeJarrellForestChunk=key=>{
+  const entry=forestChunkMap.get(key);if(entry&&entry.group)scene.remove(entry.group);
+  for(let i=jarrellObstacleColliders.length-1;i>=0;i--)if(jarrellObstacleColliders[i].kind==='tree'&&jarrellObstacleColliders[i].chunkKey===key)jarrellObstacleColliders.splice(i,1);
+  forestChunkMap.delete(key);
+ };
  const cacheChunkMap=new Map();
  window.spawnJarrellCacheForChunk=(cx,cz)=>{
   const key=cx+','+cz;if(cacheChunkMap.has(key))return;
