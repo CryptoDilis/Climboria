@@ -491,6 +491,22 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
    if(flowerCounts[k]<flowerN)flowers[k].setMatrixAt(flowerCounts[k]++,leafDummy.matrix);
   }
   flowers.forEach((m,k)=>{m.count=flowerCounts[k];m.instanceMatrix.needsUpdate=true;m.castShadow=false;scene.add(m)});
+  // Riverbank reeds add grounded detail along the long waterway without narrowing the swim lane.
+  const reedGeo=new THREE.ConeGeometry(.095,1.15,5,1);reedGeo.translate(0,.57,0);
+  const reedMats=[0x526b3b,0x78804a,0x9a8b50].map(color=>addWindShader(new THREE.MeshStandardMaterial({color,roughness:.96,side:THREE.DoubleSide}),.035));
+  const reedPatchCount=isMobileGPU?90:220,reeds=reedMats.map(m=>new THREE.InstancedMesh(reedGeo,m,reedPatchCount*3)),reedCounts=[0,0,0];
+  let reedPatches=0;
+  for(let i=0;i<reedPatchCount*7&&reedPatches<reedPatchCount;i++){
+   const z=-350+localRand()*700,side=localRand()<.5?-1:1,riverX=jarrellRiverX(z),x=riverX+side*(5.4+localRand()*4.4);
+   if(Math.hypot(x+1,z+340)<34||Math.abs(z)>355)continue;
+   for(let blade=0;blade<3;blade++){
+    const bx=x+(localRand()-.5)*.75,bz=z+(localRand()-.5)*.75,y=jarrellHeight(bx,bz),k=Math.floor(localRand()*reedMats.length),scale=.55+localRand()*.8;
+    leafDummy.position.set(bx,y+.035,bz);leafDummy.rotation.set(0,localRand()*Math.PI*2,(localRand()-.5)*.24);leafDummy.scale.set(scale*.55,scale,scale*.55);leafDummy.updateMatrix();
+    if(reedCounts[k]<reedPatchCount*3)reeds[k].setMatrixAt(reedCounts[k]++,leafDummy.matrix);
+   }
+   reedPatches++;
+  }
+  reeds.forEach((m,k)=>{m.count=reedCounts[k];m.instanceMatrix.needsUpdate=true;m.castShadow=false;m.receiveShadow=false;scene.add(m)});
   // Mossy fallen timber adds readable natural detail without blocking the starter clearing.
   const logMat=new THREE.MeshStandardMaterial({color:0x59442f,roughness:1});
   const logGeo=new THREE.CylinderGeometry(.22,.32,4.2,7);
