@@ -53,6 +53,25 @@ jobs:
                   raise SystemExit(f"Missing expected homepage control: #{required_id}")
           print("Current homepage structure and hero controls validated.")
           PY
+      - name: Verify token launch copy is clearly marked as a target
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          required = [
+              "PLANNED LAUNCH TARGET",
+              "Planned launch target · subject to readiness",
+              "date may change",
+              "verify launch link and token address on official channels",
+              "TARGET NOV 15, 2026",
+          ]
+          missing = [text for text in required if text not in html]
+          if missing:
+              raise SystemExit(f"Missing transparent launch-status copy: {missing}")
+          if "Official launch announcement</div>" in html:
+              raise SystemExit("Homepage must not imply an unverified token launch is already official.")
+          print("Launch target wording is clearly marked as planned and subject to verification.")
+          PY
       - name: Syntax-check inline JavaScript
         run: |
           python3 - <<'PY'
