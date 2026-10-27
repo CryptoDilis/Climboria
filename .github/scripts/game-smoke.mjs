@@ -171,7 +171,7 @@ try {
   for (const z of [-200, 80, 280]) {
     await page.evaluate(zValue => {
       const api = window.__climboriaSmoke, centerX = api.riverX(zValue);
-      api.player.position.set(centerX, -.35, zValue);api.updateJarrellChunks(centerX,zValue);
+      api.player.position.set(centerX, -.35, zValue);window.updateJarrellChunks(centerX,zValue);
       api.keys.KeyD = false; api.keys.KeyA = false;
     }, z);
     await page.waitForTimeout(420);
