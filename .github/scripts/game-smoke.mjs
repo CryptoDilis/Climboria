@@ -166,29 +166,23 @@ try {
     }
   }
 
-  // Exercise an actual swim-to-bank movement on a bank with a clear collider path.
-  let swimExitStart = null;
-  for (const z of [-200, 80, 280]) {
-    await page.evaluate(zValue => {
-      const api = window.__climboriaSmoke, centerX = api.riverX(zValue);
-      api.player.position.set(centerX, -.35, zValue);window.updateJarrellChunks(centerX,zValue);
-      api.keys.KeyD = false; api.keys.KeyA = false;
-    }, z);
-    await page.waitForTimeout(420);
-    const candidate = await page.evaluate(zValue => {
-      const api = window.__climboriaSmoke, centerX = api.riverX(zValue);
-      const options = [-1,1].map(side => {
-        const startX = centerX + side*2.2, endX = centerX + side*8.5;
-        const pathBlocked = Array.from({length:9},(_,i)=>startX+(endX-startX)*i/8)
-          .some(x=>api.testObstacleCollision(x,zValue,-.35));
-        const slopeX=(api.terrainHeightAt(endX+.8,zValue)-api.terrainHeightAt(endX-.8,zValue))/1.6;
-        const slopeZ=(api.terrainHeightAt(endX,zValue+.8)-api.terrainHeightAt(endX,zValue-.8))/1.6;
-        return {z:zValue,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
-      }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
-      return options[0] || null;
-    }, z);
-    if (candidate) { swimExitStart = candidate; break; }
-  }
+  // Exercise an actual swim-to-bank movement on a clear route beside the starting river.
+  const swimExitStart = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
+    api.player.position.set(centerX,-.35,z);
+    window.updateJarrellChunks(centerX,z);
+    api.keys.KeyD=false;api.keys.KeyA=false;
+    const options=[-1,1].map(side=>{
+      const startX=centerX+side*2.2,endX=centerX+side*8.5;
+      const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
+        .some(x=>api.testObstacleCollision(x,z,-.35));
+      const slopeX=(api.terrainHeightAt(endX+.8,z)-api.terrainHeightAt(endX-.8,z))/1.6;
+      const slopeZ=(api.terrainHeightAt(endX,z+.8)-api.terrainHeightAt(endX,z-.8))/1.6;
+      return {z,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
+    }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
+    return options[0]||null;
+  });
+  await page.waitForTimeout(450);
   if (!swimExitStart) {
     errors.push('no clear river-bank path found for the swim-exit test');
   } else {
