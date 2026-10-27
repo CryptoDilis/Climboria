@@ -188,7 +188,7 @@ const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMa
 const trailPlatforms=[],cliffColliders=[],jarrellObstacleColliders=[],jarrellTreasureChests=[];
 const JARRELL_COLLIDER_CELL=24,jarrellColliderGrid=new Map();
 function indexJarrellObstacle(o){
- const reach=Math.max(.6,o.r||.6),minX=Math.floor((o.x-reach)/JARRELL_COLLIDER_CELL),maxX=Math.floor((o.x+reach)/JARRELL_COLLIDER_CELL),minZ=Math.floor((o.z-reach)/JARRELL_COLLIDER_CELL),maxZ=Math.floor((o.z+reach)/JARRELL_COLLIDER_CELL);
+ const reach=Math.max(.6,(o.r||.6)+.4),minX=Math.floor((o.x-reach)/JARRELL_COLLIDER_CELL),maxX=Math.floor((o.x+reach)/JARRELL_COLLIDER_CELL),minZ=Math.floor((o.z-reach)/JARRELL_COLLIDER_CELL),maxZ=Math.floor((o.z+reach)/JARRELL_COLLIDER_CELL);
  for(let gx=minX;gx<=maxX;gx++)for(let gz=minZ;gz<=maxZ;gz++){const key=gx+','+gz;let cell=jarrellColliderGrid.get(key);if(!cell){cell=[];jarrellColliderGrid.set(key,cell)}cell.push(o)}
 }
 function addJarrellObstacleCollider(o){jarrellObstacleColliders.push(o);indexJarrellObstacle(o);return o}
