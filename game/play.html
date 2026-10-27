@@ -566,8 +566,8 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  let cacheAttempts=0;
  while(jarrellTreasureChests.length<48&&cacheAttempts<1400){
   cacheAttempts++;
-  const angle=cacheRand()*Math.PI*2,distance=120+Math.pow(cacheRand(),.78)*7700,x=Math.sin(angle)*distance,z=TRAILHEAD_Z+Math.cos(angle)*distance;
-  if(Math.abs(x)>8700||Math.abs(z)>8700||Math.hypot(x-TRAILHEAD_X,z-TRAILHEAD_Z)<100)continue;
+  const angle=cacheRand()*Math.PI*2,distance=120+Math.pow(cacheRand(),.78)*7700,x=Math.sin(angle)*distance,z=-340+Math.cos(angle)*distance;
+  if(Math.abs(x)>8700||Math.abs(z)>8700||Math.hypot(x+3.8,z+340)<100)continue;
   if(z>-430&&z<430&&Math.abs(x-jarrellRiverX(z))<22)continue;
   if(Math.hypot(x-365,z-205)<58||Math.hypot(x+265,z+570)<48||Math.hypot(x-272,z+107)<58||Math.hypot(x+120,z+5)<48)continue;
   if(jarrellTreasureChests.some(c=>Math.hypot(x-c.x,z-c.z)<90))continue;
