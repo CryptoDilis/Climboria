@@ -1042,7 +1042,11 @@ function rayInteract(targets,maxDistance=3.2){
 let paused=true,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={},touchMove={x:0,y:0},sprinting=false,levelCleared=false,attackCooldown=0,camYaw=currentLevel==='11'?-.75:.48,camPitch=currentLevel==='11'?.20:.28,camDistance=currentLevel==='11'?7:11,orbiting=false,lastPointer={x:0,y:0};const initialCameraTarget=new THREE.Vector3(player.position.x,player.position.y+1.15,player.position.z),initialCameraHorizontal=Math.cos(camPitch)*camDistance;camera.position.set(player.position.x+Math.sin(camYaw)*initialCameraHorizontal,player.position.y+1.15+Math.sin(camPitch)*camDistance,player.position.z+Math.cos(camYaw)*initialCameraHorizontal);camera.position.y=Math.max(camera.position.y,player.position.y+3.1);if(currentLevel==='11'){let initialGroundClearance=terrainHeightAt(camera.position.x,camera.position.z)+1.8;for(let cameraSample=1;cameraSample<=8;cameraSample++){const f=cameraSample/8,sx=initialCameraTarget.x+(camera.position.x-initialCameraTarget.x)*f,sz=initialCameraTarget.z+(camera.position.z-initialCameraTarget.z)*f;initialGroundClearance=Math.max(initialGroundClearance,terrainHeightAt(sx,sz)+1.2)}camera.position.y=Math.max(camera.position.y,initialGroundClearance)}camera.lookAt(initialCameraTarget);if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1'&&window.__climboriaSmoke)window.__climboriaSmoke.keys=keys;
 // Procedural original audio (Web Audio synthesis; no external copyrighted tracks/assets).
 const audioSettings={music:.28,sfx:.7,muted:false};
-try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
+try{
+ audioSettings.music=Math.max(0,Math.min(1,Number(localStorage.getItem('climboria_music_volume')??.28)));
+ audioSettings.sfx=Math.max(0,Math.min(1,Number(localStorage.getItem('climboria_sfx_volume')??.7)));
+ audioSettings.muted=localStorage.getItem('climboria_audio_muted')==='true';
+}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
  function isJarrellPeakExpedition(){return false} // Use the supplied original TRACK_01 soundtrack in Jarrell’s Peak too; disable the legacy procedural score.
@@ -1137,12 +1141,13 @@ function synthSfx(kind){
 function bindAudioSettings(){
  const panel=document.getElementById('settingsPanel'),music=document.getElementById('musicVolume'),sfx=document.getElementById('sfxVolume'),status=document.getElementById('walletStatus');
  music.value=Math.round(audioSettings.music*100);sfx.value=Math.round(audioSettings.sfx*100);
+ const muteButton=document.getElementById('audioMute');muteButton.textContent=audioSettings.muted?'Unmute all':'Mute all';
  document.getElementById('settingsOpen').onclick=()=>{ensureAudio();panel.classList.toggle('open');refreshWalletStatus()};
  document.getElementById('settingsClose').onclick=()=>panel.classList.remove('open');
  music.oninput=()=>{audioSettings.music=Number(music.value)/100;try{localStorage.setItem('climboria_music_volume',audioSettings.music)}catch{}ensureAudio();applyAudioVolumes()};
  sfx.oninput=()=>{audioSettings.sfx=Number(sfx.value)/100;try{localStorage.setItem('climboria_sfx_volume',audioSettings.sfx)}catch{}};
  document.getElementById('audioTest').onclick=()=>{ensureAudio();synthSfx('hit')};
- document.getElementById('audioMute').onclick=e=>{audioSettings.muted=!audioSettings.muted;e.currentTarget.textContent=audioSettings.muted?'Unmute all':'Mute all';ensureAudio();applyAudioVolumes()};
+ document.getElementById('audioMute').onclick=e=>{audioSettings.muted=!audioSettings.muted;try{localStorage.setItem('climboria_audio_muted',String(audioSettings.muted))}catch{}e.currentTarget.textContent=audioSettings.muted?'Unmute all':'Mute all';ensureAudio();applyAudioVolumes()};
  async function refreshWalletStatus(){const p=window.solana;if(p?.isPhantom){try{const r=await p.connect({onlyIfTrusted:true});status.textContent='Connected: '+r.publicKey.toString().slice(0,4)+'…'+r.publicKey.toString().slice(-4);document.getElementById('walletConnect').textContent='Connected'}catch{status.textContent='Phantom available · not connected'}}else status.textContent='No supported Solana wallet detected · connection optional'}
  document.getElementById('walletConnect').onclick=async()=>{const p=window.solana;if(!p?.isPhantom){status.textContent='Install or enable a Solana wallet extension to connect.';return}try{const r=await p.connect();const key=r.publicKey.toString();status.textContent='Connected: '+key.slice(0,4)+'…'+key.slice(-4);document.getElementById('walletConnect').textContent='Connected'}catch(e){status.textContent='Wallet connection cancelled or failed.'}};
  addEventListener('pointerdown',()=>ensureAudio());addEventListener('keydown',()=>ensureAudio());
