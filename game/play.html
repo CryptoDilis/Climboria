@@ -183,7 +183,7 @@ function addFarRidge(z,baseY,peakScale,color,seed){
  const cragMat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.8),roughness:1,flatShading:true});
  for(let i=0;i<12;i++){const h=peakScale*(.13+((Math.sin(i*17.7+seed)*.5+.5)*.25)),r=14+((Math.sin(i*8.3+seed)*.5+.5)*20);const geo=new THREE.ConeGeometry(r,h,7,3);const pos=geo.attributes.position;for(let j=0;j<pos.count;j++){const n=Math.sin(j*12.9898+i*78.233)*.5;pos.setX(j,pos.getX(j)*(1+n*.22));pos.setZ(j,pos.getZ(j)*(1+n*.22));}geo.computeVertexNormals();const peak=new THREE.Mesh(geo,cragMat);peak.position.set(-350+i*64,baseY+h*.38,z-58-((i%4)*25));peak.rotation.y=i*.73;peak.castShadow=true;peak.receiveShadow=true;scene.add(peak);}
 }
-addFarRidge(-470,8,150,0x607f91,-24);addFarRidge(-535,2,195,0x829eac,18);addFarRidge(-610,-5,225,0x9eb5bd,42);
+addFarRidge(-470,8,150,0x596b50,-24);addFarRidge(-535,2,195,0x78836a,18);addFarRidge(-610,-5,225,0x9a9a7c,42);
 const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMaterial({color:0x8df0a8,emissive:0x1c9b4b,emissiveIntensity:1.5,roughness:.5});
 const trailPlatforms=[],cliffColliders=[],jarrellObstacleColliders=[],jarrellTreasureChests=[];
 const JARRELL_COLLIDER_CELL=24,jarrellColliderGrid=new Map();
