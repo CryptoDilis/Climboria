@@ -107,16 +107,16 @@ try {
       .map(item => ({ item, distanceFromSpawn: Math.hypot(item.x + 3.8, item.z + 340) }))
       .sort((a, b) => a.distanceFromSpawn - b.distanceFromSpawn)[0]?.item;
     if (!tent) return null;
-    const startX = tent.x - (tent.r + .48 + 3.5);
+    const startX = tent.x + (tent.r + .48 + 3.5);
     api.player.position.set(startX, api.terrainHeightAt(startX, tent.z) + .22, tent.z);
-    api.keys.KeyD = true;
+    api.keys.KeyA = true;
     return { x: tent.x, z: tent.z, r: tent.r, startDistance: tent.r + .48 + 3.5 };
   });
   if (!tentTarget) {
     errors.push('no camp tent collider found for movement test');
   } else {
     await page.waitForTimeout(1200);
-    await page.evaluate(() => { window.__climboriaSmoke.keys.KeyD = false; });
+    await page.evaluate(() => { window.__climboriaSmoke.keys.KeyA = false; });
     const tentDistance = await page.evaluate(target => {
       const p = window.__climboriaSmoke.player.position;
       return Math.hypot(p.x - target.x, p.z - target.z);
