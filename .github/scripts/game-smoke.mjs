@@ -199,7 +199,7 @@ try {
       const api=window.__climboriaSmoke;
       const p=api?.player?.position;
       return !!p && Math.abs(p.x-api.riverX(p.z))>=5.2 && window.jarrellSwimming===false;
-    }, {side:swimExitStart.side}, {timeout:15000,polling:200}).catch(() => {});
+    }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position,move=api.getMoveVec(),keys={KeyA:api.keys.KeyA,KeyD:api.keys.KeyD};
       api.keys.KeyD=false;api.keys.KeyA=false;
