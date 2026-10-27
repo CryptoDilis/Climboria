@@ -13,13 +13,23 @@ Jarrell’s Peak is a vast, endless-feeling wilderness expedition focused on exp
 - Chests may contain ingredients, materials, gear, and other eligible rewards across published rarity tiers.
 - There is no safe zone. Death returns the player to the starting point under the implemented and published game rules.
 - Documentation-only work must not change existing gameplay mechanics such as movement, climbing, collision, swimming, fishing, controls, camera, sound, weather, or treasure discovery.
-- The ten previously proposed normal mountains are deferred and are not part of launch. Reconsider additional maps only after the token launch and a budget review.
+- The ten previously proposed normal mountains are removed from the game menu and deferred; they are not launch levels. Reconsider additional maps only after the token launch and a budget review.
+
+## Game menu: four destinations
+
+The current menu should show only these four destinations:
+1. **Jarrell’s Peak** — the only playable launch world.
+2. **Arena** — opens an honest status panel while the separate map remains future work.
+3. **Marketplace** — a demo storefront only; no live trading or real purchases.
+4. **Inventory** — a local preview only; persistent item ownership and equipment are not live.
+
+Do not add the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
 
 ## Future Arena: separate public map
 
 The Arena is a future map, separate from Jarrell’s Peak. It is planned as a large forest battle and event venue with a central platform, a tall sponsor flag, event banners, and an entrance sponsor panel.
 
-- Public access at any time through an ARENA button in the game menu.
+- The four-destination menu includes an ARENA card that currently opens a status panel; access to the actual Arena map is future work.
 - One shared Arena world is the design target, aiming for more than 1,000 concurrent players. This is not a verified capacity until architecture and load tests prove it.
 - With no event running, players may freely brawl and trash-talk in free-for-all play, with no Arena rewards.
 - During an approved Guild Battle, the entire Arena becomes the battlefield for the two participating guilds; other players watch as spectators.

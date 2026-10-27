@@ -6,6 +6,14 @@
 
 Jarrell’s Peak is the sole planned launch mountain: a vast, endless-feeling wilderness for survival, exploration, fishing, swimming, and treasure hunting. It has no summit or final level. Documentation work must not change existing gameplay mechanics.
 
+### Current game-menu scope
+- Show only four destinations: Jarrell’s Peak, Arena, Marketplace, and Inventory.
+- Jarrell’s Peak is the only playable world.
+- Arena opens a status panel; the separate Arena map is future work.
+- Marketplace is a demo storefront, not live trading.
+- Inventory is a local preview, not persistent item ownership.
+- Remove the ten deferred normal mountains from the menu. Keep character creation/editing in the Jarrell entry flow rather than a separate menu destination.
+
 ### Stage 1 — Protect the current game
 - Preserve movement, collision, swimming, fishing, controls, camera, sound, weather, and world interactions.
 - Verify the riverside spawn camp, long river, shoreline, treasure discovery, death/respawn, and desktop/mobile stability.
@@ -31,7 +39,7 @@ Jarrell’s Peak is the sole planned launch mountain: a vast, endless-feeling wi
 - Server-side identity, permissions, delivery, and moderation testing required.
 
 ### Stage 5 — Public Arena (future map)
-- Direct access from the game menu via an ARENA button.
+- Keep an ARENA destination in the four-item menu; it currently opens a status panel. Build the actual Arena world later.
 - Large forest setting, central platform, sponsor flag, event banners, and entrance sponsor panel.
 - Public access at any time.
 - Free-for-all when no event is running; no rewards for casual fights.

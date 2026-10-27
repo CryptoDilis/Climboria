@@ -10,7 +10,11 @@ Climboria is a browser-first climbing, survival, and open-world treasure-hunting
 
 The world centers on a riverside starting camp, a long river, fishing, swimming, forests, cliffs, hidden routes, landmarks, and treasure discovery. Survival and exploration are the core loop. Existing gameplay mechanics are out of scope for documentation-only changes.
 
-The ten previously proposed normal mountains are deferred and are not part of the launch scope. Additional maps may be reconsidered after token launch when a development budget is available.
+The ten previously proposed normal mountains are removed from the game menu and deferred; they are not part of the launch scope. Additional maps may be reconsidered after token launch when a development budget is available.
+
+## 2A. Game menu and feature status
+
+The menu is limited to four destinations: **Jarrell’s Peak** (playable launch world), **Arena** (future-feature status panel; the Arena world is not playable yet), **Marketplace** (demo storefront; no live trading), and **Inventory** (local preview; no persistent ownership). The ten deferred mountains are not displayed in the menu. Character creation/editing is reached through the Jarrell’s Peak entry flow.
 
 ## 3. Top Gainers and rewards
 

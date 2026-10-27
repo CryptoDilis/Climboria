@@ -10,7 +10,16 @@ Jarrell’s Peak is a vast, endless-feeling wilderness adventure focused on expl
 
 The world should include a riverside starting camp, a long river, fishing spots, forest regions, cliffs, caves, rice fields, battlefield remnants, a sanctuary lake/shrine, abandoned places, traps, hidden paths, and discoverable landmarks. Travel distance and survival time may improve the chance of better treasure without guaranteeing rare drops.
 
-The launch scope is Jarrell’s Peak alone. The previously proposed ten normal mountain expeditions are deferred and should not be presented as current launch content. Additional maps may be reconsidered after the token launch when a development budget is available.
+The launch scope is Jarrell’s Peak alone. The previously proposed ten normal mountain expeditions are removed from the game menu and deferred; they are not current launch content. Additional maps may be reconsidered after the token launch when a development budget is available.
+
+## Game menu — four destinations
+
+- **Jarrell’s Peak:** playable launch world.
+- **Arena:** visible menu destination that opens a future-feature status panel; the Arena world itself is not playable yet.
+- **Marketplace:** demo storefront only; live trading, purchases, and fee accounting are not active.
+- **Inventory:** local preview only; persistent item ownership and equipment are not active.
+
+Do not show the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains reachable through the Jarrell’s Peak entry flow. The interface must distinguish playable content from demos and future plans.
 
 ## Existing gameplay protection
 
@@ -41,7 +50,7 @@ Marketplace items and eligible crafted gear are intended to use $CLIMB only.
 
 ## Future Arena map
 
-The Arena is a separate planned public map, entered directly through an ARENA button in the game menu.
+The Arena is a separate planned public map. Its current menu card opens a status panel; entering a playable Arena world is future work.
 
 - Large forest environment, central platform, tall sponsor flag, event banners, and an entrance sponsor panel.
 - One shared world is the design target, with a goal of more than 1,000 concurrent players; this remains unverified until architecture and load testing prove it.
