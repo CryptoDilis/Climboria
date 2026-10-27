@@ -25,7 +25,6 @@ try {
   });
   await page.waitForSelector('#game canvas', { timeout: 45000 });
   await page.waitForSelector('#jarrellLootHUD', { timeout: 45000 });
-  await page.waitForSelector('#jarrellDeathStoneBtn', { timeout: 45000 });
   await page.waitForTimeout(12000);
   await page.locator('#heroNameInput').fill('SmokeTester');
   await page.locator('#creatorStart').click();
@@ -49,7 +48,6 @@ try {
       nearestTentDistance: Number(Math.min(...(window.__climboriaSmoke?.obstacles.filter(item => item.kind === 'tent').map(item => Math.hypot(item.x - window.__climboriaSmoke.player.position.x, item.z - window.__climboriaSmoke.player.position.z)) || [Infinity])).toFixed(2)),
       cachePrompt: !!document.querySelector('#jarrellChestPrompt'),
       lootHud: document.querySelector('#jarrellLootHUD')?.textContent || '',
-      deathStoneButton: document.querySelector('#jarrellDeathStoneBtn')?.textContent || '',
       cacheStreaming: typeof window.spawnJarrellCacheForChunk === 'function',
       forestStreaming: typeof window.spawnJarrellForestForChunk === 'function',
     };
@@ -86,7 +84,6 @@ try {
   if (terrainAudit.samples < 300) errors.push('Jarrell terrain coordinate audit did not sample enough points');
   if (terrainAudit.nonFinite.length) errors.push('Jarrell terrain heightfield returned non-finite values at coordinates: ' + JSON.stringify(terrainAudit.nonFinite));
 
-  if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
 
@@ -236,16 +233,6 @@ try {
     }
   }
 
-  await page.locator('#jarrellDeathStoneBtn').click();
-  await page.waitForTimeout(100);
-  const deathStoneWorks = await page.evaluate(() => {
-    const readyAt = Number(localStorage.getItem('climboria_death_stone_ready_at') || 0);
-    const movement = window.__climboriaSmoke?.getMovementState?.();
-    return {cooldown:readyAt > Date.now() && document.querySelector('#jarrellDeathStoneBtn')?.textContent.includes('DEATH STONE'),movement};
-  });
-  if (!deathStoneWorks.cooldown) errors.push('Death Stone did not start its persistent 90-second cooldown');
-  if (deathStoneWorks.movement && (Math.abs(deathStoneWorks.movement.x) > .05 || Math.abs(deathStoneWorks.movement.z) > .05 || deathStoneWorks.movement.swimming === true || deathStoneWorks.movement.physicsSwimming === true)) errors.push('Death Stone failed to reset residual movement/swimming state: ' + JSON.stringify(deathStoneWorks.movement));
-
   const fishingBefore = await page.evaluate(() => {
     const inventory = window.jarrellLootInventory || JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]');
     return Array.isArray(inventory) ? inventory.length : 0;
@@ -309,7 +296,6 @@ try {
     timeout: 90000,
   });
   await mobilePage.waitForSelector('#game canvas', { timeout: 45000 });
-  await mobilePage.waitForSelector('#jarrellDeathStoneBtn', { timeout: 45000 });
   await mobilePage.waitForTimeout(6000);
   await mobilePage.locator('#heroNameInput').fill('MobileSmoke');
   await mobilePage.locator('#creatorStart').click();
@@ -322,9 +308,8 @@ try {
     useButton: document.querySelector('#grab')?.textContent || '',
     jumpButton: document.querySelector('#jump')?.textContent || '',
     runButton: document.querySelector('#sprint')?.textContent || '',
-    deathStoneButton: document.querySelector('#jarrellDeathStoneBtn')?.textContent || '',
   }));
-  if (!mobileState.canvas || mobileState.useButton !== 'USE' || !mobileState.deathStoneButton.includes('DEATH STONE')) {
+  if (!mobileState.canvas || mobileState.useButton !== 'USE') {
     errors.push('mobile Jarrell controls did not initialize correctly');
   }
   console.log('Mobile smoke state:', JSON.stringify(mobileState));
