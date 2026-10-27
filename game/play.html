@@ -1176,7 +1176,7 @@ const leavingWater=swimming&&!proposedWater;
 const riverWaterPass=currentLevel==='11'&&nextZ>-360&&nextZ<360&&Math.abs(nextX-jarrellRiverX(nextZ))<8.5;
 const obstacleBlocked=hitsCliff(nextX,nextZ)||(hitsJarrellObstacle(nextX,nextZ)&&!riverWaterPass);
 // The river corridor may bypass small props in the water, never cliff colliders or terrain collision.
-if(obstacleBlocked||(!proposedWater&&!leavingWater&&(blockedByHeight||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)))blocked=true;
+if(obstacleBlocked||(!proposedWater&&!leavingWater&&!riverWaterPass&&(blockedByHeight||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)))blocked=true;
 if(window.__climboriaSmoke)window.__climboriaSmoke.lastMovementDebug={paused,levelCleared,swimming,proposedWater,leavingWater,riverWaterPass,obstacleBlocked,blocked,moveX:m.x,moveZ:m.z,currentX:player.position.x,nextX,nextZ};
 if(!blocked){player.position.x=nextX;player.position.z=nextZ;if(player.position.y<=fromH+footClear+1.2&&vel.y<=0){player.position.y=toH+footClear;vel.y=0}}else{const hx=terrainHeightAt(nextX,player.position.z+groundZOffset),hz=terrainHeightAt(player.position.x,nextZ+groundZOffset);if(!hitsCliff(nextX,player.position.z)&&!hitsJarrellObstacle(nextX,player.position.z)&&hx<=player.position.y-footClear+.08&&Math.abs(hx-fromH)<speed*dt*maxWalkSlope+.12)player.position.x=nextX;if(!hitsCliff(player.position.x,nextZ)&&!hitsJarrellObstacle(player.position.x,nextZ)&&hz<=player.position.y-footClear+.08&&Math.abs(hz-fromH)<speed*dt*maxWalkSlope+.12)player.position.z=nextZ}
 // Ground the player against the active level's terrain height field.
