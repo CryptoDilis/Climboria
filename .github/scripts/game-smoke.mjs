@@ -100,6 +100,27 @@ try {
     if (collisionResult < collisionTarget.r + .48 - .18) errors.push('player penetrated a tree collider during movement');
   }
 
+  const tentCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const tent = api.obstacles
+      .filter(item => item.kind === 'tent')
+      .sort((a, b) => Math.hypot(a.x + 3.8, a.z + 340) - Math.hypot(b.x + 3.8, b.z + 340))[0];
+    if (!tent) return { error: 'no camp tent collider indexed', obstacleCount: api.obstacles.length };
+    const ground = api.terrainHeightAt(tent.x, tent.z);
+    return {
+      kind: tent.kind,
+      insideBlocked: api.testObstacleCollision(tent.x, tent.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(tent.x + tent.r + 2, tent.z, ground + .22),
+      radius: tent.r
+    };
+  });
+  if (tentCollision.error) {
+    errors.push(tentCollision.error);
+  } else {
+    if (!tentCollision.insideBlocked) errors.push('camp tent collider is not blocking movement at its center');
+    if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
+  }
+
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
     if (!cache) return null;
