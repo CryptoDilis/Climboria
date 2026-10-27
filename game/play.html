@@ -599,7 +599,7 @@ if(currentLevel==='11'){
    const grounded=new THREE.Box3().setFromObject(tent);
    tent.position.set(x,campGroundY(x,z)-grounded.min.y,z);tent.rotation.y=rot;
    tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-   tent.name='JarrellsPeak_RealTent';scene.add(tent);
+   tent.name='JarrellsPeak_RealTent';scene.add(tent);const tentGroundY=campGroundY(x,z);jarrellObstacleColliders.push({x,z,r:1.55*scaleFactor,y0:tentGroundY,y1:tentGroundY+2.7*scaleFactor,kind:'tent'});
   };
   jarrellTentLoader.load(jarrellTentBase+variant+'.glb',addTent,undefined,err=>{
    const mirror='https://cdn.jsdelivr.net/gh/Hidencod/tge-assets@main/packs/nature-kit/'+variant+'.glb';
