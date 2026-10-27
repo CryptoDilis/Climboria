@@ -522,7 +522,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
      const x=-3.8+(rnd()-.5)*980,z=-340+(rnd()-.5)*980;
      const riverDist=Math.abs(x-jarrellRiverX(z)),campDist=Math.hypot(x+1,z+340),lakeDist=Math.hypot((x-88)/1.18,z+340);
      if(Math.hypot(x+3.8,z+340)>510||campDist<38||riverDist<(spec.name==='Fern_1'?7:13)||lakeDist<118)continue;
-     const scale=spec.minScale+rnd()*(spec.maxScale-spec.minScale),yaw=rnd()*Math.PI*2;out.push({x,z,y:jarrellHeight(x,z),scale,yaw});if(spec.name==='CommonTree_3')jarrellObstacleColliders.push({x,z,r:.42*scale,y0:jarrellHeight(x,z),y1:jarrellHeight(x,z)+7*scale,kind:'tree'});
+     const scale=spec.minScale+rnd()*(spec.maxScale-spec.minScale),yaw=rnd()*Math.PI*2;out.push({x,z,y:jarrellHeight(x,z),scale,yaw});if(spec.name==='CommonTree_3')addJarrellObstacleCollider({x,z,r:.42*scale,y0:jarrellHeight(x,z),y1:jarrellHeight(x,z)+7*scale,kind:'tree'});
     }
     return out;
    };
@@ -558,7 +558,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);
  const poiMat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
  const darkStone=poiMat(0x343d40),stoneEdge=poiMat(0x596367),oldBone=poiMat(0x9c9278),rustMetal=poiMat(0x55453a),riceGreen=poiMat(0x718d42),sanctuaryWater= new THREE.MeshStandardMaterial({color:0x347f8a,roughness:.2,metalness:.12,transparent:true,opacity:.88});
- const place=(geo,mat,x,y,z,sx=1,sy=1,sz=1,rot=0)=>{const m=new THREE.Mesh(geo,mat),groundY=terrainHeightAt(x,z);m.position.set(x,groundY+y,z);m.scale.set(sx,sy,sz);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;worldPOIs.add(m);if(currentLevel==='11'&&((typeof rockGeo!=='undefined'&&geo===rockGeo&&Math.max(sx,sz)>=1.4)||(geo.type==='DodecahedronGeometry'&&sx>=5&&sz>=5)))jarrellObstacleColliders.push({x,z,r:Math.max(sx,sz)*.72,y0:groundY-.2,y1:groundY+y+sy,kind:'rock'});return m};
+ const place=(geo,mat,x,y,z,sx=1,sy=1,sz=1,rot=0)=>{const m=new THREE.Mesh(geo,mat),groundY=terrainHeightAt(x,z);m.position.set(x,groundY+y,z);m.scale.set(sx,sy,sz);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;worldPOIs.add(m);if(currentLevel==='11'&&((typeof rockGeo!=='undefined'&&geo===rockGeo&&Math.max(sx,sz)>=1.4)||(geo.type==='DodecahedronGeometry'&&sx>=5&&sz>=5)))addJarrellObstacleCollider({x,z,r:Math.max(sx,sz)*.72,y0:groundY-.2,y1:groundY+y+sy,kind:'rock'});return m};
  const rockGeo=new THREE.DodecahedronGeometry(1,1),logGeo=new THREE.CylinderGeometry(.12,.18,2.8,7),boneGeo=new THREE.CapsuleGeometry(.12,.48,3,5);
  // Cave mouth and broken stone teeth at the base of the western range.
  const caveX=-265,caveZ=-570,caveY=2;
@@ -591,7 +591,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
    const scale=.72+rand()*1.15,yaw=rand()*Math.PI*2;dummy.position.set(x,y+1.45*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.setScalar(scale);dummy.updateMatrix();trunkMesh.setMatrixAt(count,dummy.matrix);
    dummy.position.set(x,y+3*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.set(scale,scale*(.85+rand()*.45),scale);dummy.updateMatrix();crownMesh.setMatrixAt(count,dummy.matrix);
    dummy.position.set(x,y+4.25*scale,z);dummy.rotation.set(0,yaw,0);dummy.scale.set(scale*.78,scale*.82,scale*.78);dummy.updateMatrix();crownTopMesh.setMatrixAt(count,dummy.matrix);
-   jarrellObstacleColliders.push({x,z,r:.32*scale,y0:y,y1:y+5.1*scale,kind:'tree',chunkKey:key});count++;
+   addJarrellObstacleCollider({x,z,r:.32*scale,y0:y,y1:y+5.1*scale,kind:'tree',chunkKey:key});count++;
   }
   if(!count){forestChunkMap.set(key,null);return;}
   for(const mesh of [trunkMesh,crownMesh,crownTopMesh]){mesh.count=count;mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=false;mesh.receiveShadow=true;group.add(mesh);}
@@ -620,7 +620,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const bandTop=new THREE.Mesh(new THREE.BoxGeometry(1.4,.055,1.03),chestTrim);bandTop.position.y=.71;group.add(bandTop);
   const opened=lootedCacheIds.has(id);if(opened){lidPivot.rotation.x=-1.08;frontBand.material=frontBand.material.clone();frontBand.material.emissiveIntensity=.9;}
   const chest={id,x,z,ground,group,lidPivot,frontBand,opened,distance,chunkKey:key};jarrellTreasureChests.push(chest);cacheChunkMap.set(key,chest);
-  jarrellObstacleColliders.push({x,z,r:.78,y0:ground-.1,y1:ground+1.05,kind:'treasure-chest',chunkKey:key});
+  addJarrellObstacleCollider({x,z,r:.78,y0:ground-.1,y1:ground+1.05,kind:'treasure-chest',chunkKey:key});
  };
  window.removeJarrellCacheChunk=key=>{
   const chest=cacheChunkMap.get(key);if(chest){worldPOIs.remove(chest.group);chest.group.traverse(o=>{if(o.isMesh&&o.geometry)o.geometry.dispose()});if(chest.frontBand.material!==chestTrim)chest.frontBand.material.dispose();for(let i=jarrellTreasureChests.length-1;i>=0;i--)if(jarrellTreasureChests[i]===chest)jarrellTreasureChests.splice(i,1);removeJarrellObstacleChunk(key,'treasure-chest');}
@@ -677,7 +677,7 @@ if(currentLevel==='11'){
    const grounded=new THREE.Box3().setFromObject(tent);
    tent.position.set(x,campGroundY(x,z)-grounded.min.y,z);tent.rotation.y=rot;
    tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const sourceMaterials=Array.isArray(o.material)?o.material:[o.material],tunedMaterials=sourceMaterials.map(material=>{const tuned=material.clone();if(tuned.color&&tuned.color.r>.28&&tuned.color.r>tuned.color.g*1.25&&tuned.color.r>tuned.color.b*1.25)tuned.color.set(0x8d8059);tuned.roughness=Math.max(tuned.roughness??0,.9);return tuned});o.material=Array.isArray(o.material)?tunedMaterials:tunedMaterials[0]}});
-   tent.name='JarrellsPeak_RealTent';scene.add(tent);const tentGroundY=campGroundY(x,z);jarrellObstacleColliders.push({x,z,r:1.55*scaleFactor,y0:tentGroundY,y1:tentGroundY+2.7*scaleFactor,kind:'tent'});
+   tent.name='JarrellsPeak_RealTent';scene.add(tent);const tentGroundY=campGroundY(x,z);addJarrellObstacleCollider({x,z,r:1.55*scaleFactor,y0:tentGroundY,y1:tentGroundY+2.7*scaleFactor,kind:'tent'});
   };
   jarrellTentLoader.load(jarrellTentBase+variant+'.glb',addTent,undefined,err=>{
    const mirror='https://cdn.jsdelivr.net/gh/Hidencod/tge-assets@main/packs/nature-kit/'+variant+'.glb';
@@ -686,7 +686,7 @@ if(currentLevel==='11'){
  };
  placeJarrellTent(-3,-352,.12,.82,'tent-detailedopen');placeJarrellTent(-2,-348,-.15,.72,'tent-detailedclosed');
  const campfire=new THREE.Group();campfire.position.set(-.2,campGroundY(-.2,-340)+.08,-340);scene.add(campfire);const fireRing=new THREE.Mesh(new THREE.TorusGeometry(.72,.14,8,18),new THREE.MeshStandardMaterial({color:0x5d5548,roughness:1}));fireRing.rotation.x=Math.PI/2;fireRing.position.y=.12;campfire.add(fireRing);const firewoodMat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:1});for(const angle of [-.62,.62]){const log=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,1.2,7),firewoodMat);log.rotation.z=Math.PI/2;log.rotation.y=angle;log.position.y=.19;log.castShadow=true;campfire.add(log)}const flameOuter=new THREE.Mesh(new THREE.ConeGeometry(.37,1.05,9),new THREE.MeshBasicMaterial({color:0xf04e1e,transparent:true,opacity:.86,depthWrite:false}));flameOuter.position.set(0,.69,0);campfire.add(flameOuter);const flameMiddle=new THREE.Mesh(new THREE.ConeGeometry(.255,.78,8),new THREE.MeshBasicMaterial({color:0xff9c2e,transparent:true,opacity:.94,depthWrite:false}));flameMiddle.position.set(.035,.58,.025);flameMiddle.rotation.z=.09;campfire.add(flameMiddle);const flameCore=new THREE.Mesh(new THREE.ConeGeometry(.14,.49,7),new THREE.MeshBasicMaterial({color:0xffed9a,transparent:true,opacity:.96,depthWrite:false}));flameCore.position.set(-.035,.43,-.02);flameCore.rotation.z=-.12;campfire.add(flameCore);const flameLickLeft=new THREE.Mesh(new THREE.ConeGeometry(.13,.54,7),new THREE.MeshBasicMaterial({color:0xff6a22,transparent:true,opacity:.88,depthWrite:false}));flameLickLeft.position.set(-.19,.47,.08);flameLickLeft.rotation.z=.28;campfire.add(flameLickLeft);const flameLickRight=new THREE.Mesh(new THREE.ConeGeometry(.115,.43,7),new THREE.MeshBasicMaterial({color:0xffd45b,transparent:true,opacity:.92,depthWrite:false}));flameLickRight.position.set(.18,.4,-.07);flameLickRight.rotation.z=-.32;campfire.add(flameLickRight);campfire.userData.flames=[flameOuter,flameMiddle,flameCore,flameLickLeft,flameLickRight];const campGlow=new THREE.PointLight(0xff9b4a,2.3,11);campGlow.position.y=1.2;campfire.add(campGlow);window.jarrellCampFire=campfire;window.jarrellCampGlow=campGlow;
- const supplyCrateMat=new THREE.MeshStandardMaterial({color:0x68472b,roughness:1});for(const [x,z] of [[-4.5,-341],[-5,-337]]){const crate=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.75),supplyCrateMat),gy=campGroundY(x,z);crate.position.set(x,gy+.34,z);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);jarrellObstacleColliders.push({x,z,r:.58,y0:gy,y1:gy+.8,kind:'crate'})}
+ const supplyCrateMat=new THREE.MeshStandardMaterial({color:0x68472b,roughness:1});for(const [x,z] of [[-4.5,-341],[-5,-337]]){const crate=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.75),supplyCrateMat),gy=campGroundY(x,z);crate.position.set(x,gy+.34,z);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);addJarrellObstacleCollider({x,z,r:.58,y0:gy,y1:gy+.8,kind:'crate'})}
  const bankMat=new THREE.MeshStandardMaterial({color:0x4c5147,roughness:1});
  for(let i=0;i<112;i++){const t=(i+.2)/113,p=riverCurve.getPoint(t),side=i%2?1:-1,dx=Math.cos(t*4.6)*.109+Math.cos(t*9.2)*.070+Math.cos(t*15.5)*.030,norm=Math.hypot(dx,1),offset=side*(5.6+(i%3)*.3),rx=p.x+dx/norm*offset,rz=p.z-dx/norm*offset+Math.sin(i*2.3)*.5;const rock=new THREE.Mesh(new THREE.IcosahedronGeometry(.22+(i%5)*.11,1),bankMat);rock.position.set(rx,terrainHeightAt(rx,rz)+.08,rz);rock.scale.set(1.2,.4,.85);rock.rotation.set(i*.23,i*.41,i*.17);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock)}
  const reedMat=new THREE.MeshStandardMaterial({color:0x71805a,roughness:1});
@@ -705,7 +705,7 @@ if(currentLevel==='11'){
  const deathStoneGround=terrainHeightAt(-10,-340),deathStoneGroup=new THREE.Group();deathStoneGroup.position.set(-10,deathStoneGround,-340);scene.add(deathStoneGroup);
  const deathStoneMat=new THREE.MeshStandardMaterial({color:0x37364b,roughness:.42,metalness:.22,emissive:0x2c2058,emissiveIntensity:.65}),deathStone=new THREE.Mesh(new THREE.DodecahedronGeometry(.82,1),deathStoneMat);deathStone.scale.set(.9,1.65,.78);deathStone.position.y=.88;deathStone.castShadow=true;deathStone.receiveShadow=true;deathStoneGroup.add(deathStone);
  const deathRune=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,7,24),new THREE.MeshStandardMaterial({color:0xb8a7ff,emissive:0x7c63ff,emissiveIntensity:1.2,roughness:.35}));deathRune.rotation.x=Math.PI/2;deathRune.position.y=.2;deathStoneGroup.add(deathRune);
- const deathStoneLight=new THREE.PointLight(0x8c7bff,1.1,8);deathStoneLight.position.y=1.35;deathStoneGroup.add(deathStoneLight);jarrellObstacleColliders.push({x:-10,z:-340,r:.78,y0:deathStoneGround-.1,y1:deathStoneGround+2.2,kind:'death-stone'});
+ const deathStoneLight=new THREE.PointLight(0x8c7bff,1.1,8);deathStoneLight.position.y=1.35;deathStoneGroup.add(deathStoneLight);addJarrellObstacleCollider({x:-10,z:-340,r:.78,y0:deathStoneGround-.1,y1:deathStoneGround+2.2,kind:'death-stone'});
  // Schools of colorful river fish: simple animated meshes just below the water surface.
  riverFish=[];const fishMats=[0xe9a34d,0xd8d9c9,0x68b6b0,0xc86c54,0xe4c86a].map(color=>new THREE.MeshStandardMaterial({color,roughness:.42,metalness:.08}));
  for(let i=0;i<34;i++){const g=new THREE.Group();const t=(i*29%97)/97,p=riverCurve.getPoint(t),side=Math.sin(i*8.7)*.48;g.position.set(p.x+side,-.11+Math.sin(i*1.7)*.055,p.z);const body=new THREE.Mesh(new THREE.SphereGeometry(.28+(i%4)*.045,10,7),fishMats[i%fishMats.length]);body.scale.set(1.45,.62,.62);g.add(body);const tail=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,5),fishMats[i%fishMats.length]);tail.rotation.z=Math.PI/2;tail.position.x=-.43;g.add(tail);const fin=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,5),fishMats[(i+2)%fishMats.length]);fin.rotation.z=Math.PI;fin.position.y=.16;g.add(fin);g.rotation.y=Math.sin(i*4.3)*Math.PI;scene.add(g);riverFish.push({g,t,speed:.006+(i%5)*.0014,phase:i*1.9,side})}
