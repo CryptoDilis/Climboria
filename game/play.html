@@ -586,8 +586,23 @@ if(currentLevel==='11'){
  // Jarrell's Peak starting camp: actual spawn is on this clearing beside the river.
  const campDirt=new THREE.MeshStandardMaterial({color:0x756044,roughness:1}),campCanvas=new THREE.MeshStandardMaterial({color:0x88734f,roughness:.96,side:THREE.DoubleSide}),campWood=new THREE.MeshStandardMaterial({color:0x4b3424,roughness:1});
  const clearingGeo=new THREE.CircleGeometry(9.2,80);clearingGeo.rotateX(-Math.PI/2);const cp=clearingGeo.attributes.position;for(let i=0;i<cp.count;i++){const x=cp.getX(i),z=cp.getZ(i),a=Math.atan2(z,x),edge=1+.075*Math.sin(a*5+.4)+.035*Math.sin(a*9-1.2)+.018*Math.sin(a*15);cp.setX(i,x*edge*1.12);cp.setZ(i,z*edge*.98);cp.setY(i,campGroundY(x-1,z-340)+.035)}clearingGeo.computeVertexNormals();const clearingMat=new THREE.MeshStandardMaterial({color:0x766247,roughness:1,side:THREE.DoubleSide});const campSurface=new THREE.Mesh(clearingGeo,clearingMat);campSurface.position.set(-3,0,-340);campSurface.receiveShadow=true;scene.add(campSurface);
- function addJarrellTent(x,z,rot=0){const g=new THREE.Group();g.position.set(x,campGroundY(x,z)+.08,z);g.rotation.y=rot;scene.add(g);const canvas=new THREE.MeshStandardMaterial({color:0x9c875f,roughness:.96,side:THREE.DoubleSide});const shadowCanvas=new THREE.MeshStandardMaterial({color:0x51432f,roughness:1,side:THREE.DoubleSide});const inner=new THREE.MeshStandardMaterial({color:0x30291f,roughness:1,side:THREE.DoubleSide});function panel(points,material){const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(points,3));geo.setIndex([0,1,2,0,2,3]);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,material);mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh)}panel([-1.45,.03,-1.25,0,1.72,-1.25,0,1.72,1.25,-1.45,.03,1.25],canvas);panel([0,1.72,-1.25,1.45,.03,-1.25,1.45,.03,1.25,0,1.72,1.25],shadowCanvas);const rear=new THREE.Mesh(new THREE.PlaneGeometry(2.85,1.7),canvas);rear.position.set(0,.85,1.23);g.add(rear);const front=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.28),inner);front.position.set(0,.65,-1.265);g.add(front);const ridge=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,2.65,8),campWood);ridge.rotation.x=Math.PI/2;ridge.position.set(0,1.73,0);g.add(ridge);for(const zz of [-1.2,1.2])for(const xx of [-1.43,1.43]){const peg=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.24,6),campWood);peg.position.set(xx,.09,zz);g.add(peg);const line=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.25,5),campWood);line.position.set(xx*1.48,.2,zz*1.25);line.rotation.z=xx>0?-.35:.35;line.rotation.x=zz>0?-.22:.22;g.add(line)}const floor=new THREE.Mesh(new THREE.PlaneGeometry(2.75,2.35),shadowCanvas);floor.rotation.x=-Math.PI/2;floor.position.y=.025;g.add(floor);const entranceGlow=new THREE.PointLight(0xffc77c,.25,2.8);entranceGlow.position.set(0,.8,-1.1);g.add(entranceGlow)}
- addJarrellTent(-5,-343,.12);addJarrellTent(-5,-337,-.15);
+ // Replace the crude hand-built tarp geometry with a real low-poly tent model.
+ // The source is a freely published Quaternius Pirate Kit asset; the procedural cardboard-like panels are removed.
+ const jarrellTentAsset='https://raw.githubusercontent.com/8thwall/studio-physics-playground-example/main/src/assets/models/environment/tent.glb';
+ const jarrellTentLoader=new GLTFLoader();
+ const placeJarrellTent=(x,z,rot=0,scaleFactor=1)=>{
+  jarrellTentLoader.load(jarrellTentAsset,gltf=>{
+   const tent=gltf.scene;tent.updateMatrixWorld(true);
+   const bounds=new THREE.Box3().setFromObject(tent),size=bounds.getSize(new THREE.Vector3());
+   const targetWidth=3.7*scaleFactor,scale=targetWidth/Math.max(size.x,size.z,.001);
+   tent.scale.setScalar(scale);tent.updateMatrixWorld(true);
+   const grounded=new THREE.Box3().setFromObject(tent);
+   tent.position.set(x,campGroundY(x,z)-grounded.min.y,z);tent.rotation.y=rot;
+   tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+   tent.name='JarrellsPeak_RealTent';scene.add(tent);
+  },undefined,err=>console.warn('Jarrell tent asset failed to load:',err?.message||err));
+ };
+ placeJarrellTent(-5,-343,.12,1.05);placeJarrellTent(-5,-337,-.15,.88);
  const campfire=new THREE.Group();campfire.position.set(-.2,campGroundY(-.2,-340)+.08,-340);scene.add(campfire);const fireRing=new THREE.Mesh(new THREE.TorusGeometry(.72,.14,8,18),new THREE.MeshStandardMaterial({color:0x5d5548,roughness:1}));fireRing.rotation.x=Math.PI/2;fireRing.position.y=.12;campfire.add(fireRing);const flame=new THREE.Mesh(new THREE.ConeGeometry(.34,1.05,7),new THREE.MeshBasicMaterial({color:0xff8a36}));flame.position.y=.72;campfire.add(flame);const campGlow=new THREE.PointLight(0xff9b4a,2.3,11);campGlow.position.y=1.2;campfire.add(campGlow);
  const supplyCrateMat=new THREE.MeshStandardMaterial({color:0x68472b,roughness:1});for(const [x,z] of [[2.7,-342],[2.9,-338]]){const crate=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.75),supplyCrateMat);crate.position.set(x,campGroundY(x,z)+.34,z);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate)}
  const bankMat=new THREE.MeshStandardMaterial({color:0x4c5147,roughness:1});
