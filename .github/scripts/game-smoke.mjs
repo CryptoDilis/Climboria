@@ -10,6 +10,8 @@ try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
   const tentAssets = new Set();
+  const soundtrackRequests = new Set();
+  page.on('request', request => { if (request.url().includes('climboria-theme-60s.mp3')) soundtrackRequests.add('regular-expedition-theme'); });
   page.on('pageerror', error => errors.push('desktop pageerror: ' + error.message));
   page.on('console', message => { if (message.type() === 'error' && !message.text().includes('[Climboria diag]')) errors.push('desktop console: ' + message.text()); });
   page.on('response', response => {
@@ -31,6 +33,7 @@ try {
   const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile')}; });
   if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
+  if (soundtrackRequests.has('regular-expedition-theme')) errors.push('Jarrell’s Peak loaded the regular-expedition MP3 instead of retaining its original soundtrack');
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
