@@ -37,6 +37,7 @@ try {
       playerY: Number(window.__climboriaSmoke?.player.position.y.toFixed(2) || 0),
       cameraY: Number(window.__climboriaSmoke?.camera.position.y.toFixed(2) || 0),
       cameraGroundClearance: Number((window.__climboriaSmoke?.camera.position.y - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.camera.position.x, window.__climboriaSmoke?.camera.position.z)).toFixed(2)),
+      levelName: document.querySelector('#levelName')?.textContent || '',
       cachePrompt: !!document.querySelector('#jarrellChestPrompt'),
       lootHud: document.querySelector('#jarrellLootHUD')?.textContent || '',
       deathStoneButton: document.querySelector('#jarrellDeathStoneBtn')?.textContent || '',
@@ -46,6 +47,7 @@ try {
   });
   if (!desktopState.canvasWidth || !desktopState.canvasHeight) errors.push('desktop renderer canvas has zero dimensions');
   if (desktopState.cameraGroundClearance < 0.8) errors.push('desktop follow camera is clipping into Jarrell terrain');
+  if (!desktopState.levelName.toUpperCase().includes("JARRELL'S PEAK")) errors.push('Level 11 HUD does not identify Jarrell’s Peak');
   if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
