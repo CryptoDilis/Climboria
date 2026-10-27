@@ -170,7 +170,6 @@ try {
   const swimExitStart = await page.evaluate(() => {
     const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
     api.player.position.set(centerX,-.35,z);
-    window.updateJarrellChunks(centerX,z);
     api.keys.KeyD=false;api.keys.KeyA=false;
     const options=[-1,1].map(side=>{
       const startX=centerX+side*2.2,endX=centerX+side*8.5;
@@ -182,7 +181,7 @@ try {
     }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
     return options[0]||null;
   });
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(650);
   if (!swimExitStart) {
     errors.push('no clear river-bank path found for the swim-exit test');
   } else {
