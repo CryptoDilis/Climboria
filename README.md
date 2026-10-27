@@ -152,14 +152,15 @@ Jarrell's Peak may be called **gameplay-complete** only when all applicable chec
 
 ### Current Jarrell's Peak environment physics status
 
-- **Implemented — unverified:** local forest tree trunks and major stone landmarks have player collision checks; movement can slide along an obstacle rather than requiring a full stop.
+- **Implemented — unverified:** local and streamed forest tree trunks, supply crates, camp tents, treasure caches, and major stone landmarks have player collision checks; movement can slide along an obstacle rather than requiring a full stop.
 - **Implemented — unverified:** river entry detection samples the rendered river curve more densely, fishing uses nearest-curve distance at bends, and land collision is applied when leaving the water.
 - **Implemented — unverified:** keyboard and mobile controls no longer reuse the sprint key as a swim-dive input; the jump/surface action raises the swimmer and the mobile sprint control dives while swimming.
 - **Implemented — unverified:** the riverside camp uses Kenney Nature Kit's `tent-detailedopen.glb` and `tent-detailedclosed.glb`, catalogued as CC0-1.0. See `game/assets/JARRELL_NATURE_ATTRIBUTION.md`.
 - **Implemented — unverified:** deterministic forest trees and expedition caches spawn/unload with streamed terrain chunks throughout the wilderness; unopened caches can be opened with the interaction control, loot scales with distance and survival time, and looted cache IDs/inventory persist locally. These are prototype in-game items/points, not real $CLIMB token payouts.
-- **World scale:** Jarrell's terrain and cache generation stream as the player explores, with a very distant technical coordinate guard at ±1,000,000 units rather than the earlier nearby boundary. Desktop/mobile performance still needs live testing.
+- **Implemented — unverified:** health reaching zero respawns the player at the trailhead; the Death Stone return ability has a 90-second cooldown persisted across reloads. Solo behavior is implemented; party teleport awaits a party/multiplayer system.
+- **World scale:** Jarrell's terrain, forest, and cache generation stream as the player explores, with a very distant technical coordinate guard at ±1,000,000 units rather than the earlier nearby boundary. Desktop/mobile performance still needs live testing.
 - **Implemented — unverified:** fishing rewards are recorded in the local loot inventory; the sanctuary lake and rice terrace areas now have shaped terrain basins/shelves, world landmarks are placed relative to terrain height, and wolves are grounded as they roam.
-- **Still required:** test river entry/exit on both banks and at bends, tree/rock collision and sliding, camp-tent visibility/loading, fishing interaction, and performance on desktop and mobile browsers. These changes must not be marked tested until those checks are actually performed.
+- **Still required:** browser-test river entry/exit on both banks and at bends, streamed forest/cache creation and cleanup across chunk boundaries, chest persistence/rewards, Death Stone cooldown/respawn, POI visibility, camp-tent loading, fishing, and performance on desktop and mobile. These changes must not be marked tested until those checks are actually performed.
 
 ### Status reporting rule
 
