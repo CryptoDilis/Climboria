@@ -193,7 +193,13 @@ try {
     }, swimExitStart);
     await page.waitForTimeout(160);
     await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
-    await page.waitForTimeout(2400);
+    // Headless SwiftShader can render large terrain frames slowly. Wait for actual
+    // simulated movement rather than assuming 2.4 seconds of wall time is enough.
+    await page.waitForFunction(({side}) => {
+      const api=window.__climboriaSmoke;
+      const p=api?.player?.position;
+      return !!p && Math.abs(p.x-api.riverX(p.z))>=5.2 && window.jarrellSwimming===false;
+    }, {side:swimExitStart.side}, {timeout:15000,polling:200}).catch(() => {});
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position,move=api.getMoveVec(),keys={KeyA:api.keys.KeyA,KeyD:api.keys.KeyD};
       api.keys.KeyD=false;api.keys.KeyA=false;
