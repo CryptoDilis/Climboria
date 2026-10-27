@@ -565,7 +565,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const cacheChunkMap=new Map();
  window.spawnJarrellCacheForChunk=(cx,cz)=>{
   const key=cx+','+cz;if(cacheChunkMap.has(key))return;
-  let seed=(Math.imul(cx,73856093)^Math.imul(cz,19349663)^501337)>>>0;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  let seed=(Math.imul(cx,73856093)^Math.imul(cz,19349663)^501337)>>>0;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
   if(rand()>.22){cacheChunkMap.set(key,null);return;}
   const margin=jarrellChunkSize*.5-22,x=cx*jarrellChunkSize+(rand()-.5)*2*margin,z=cz*jarrellChunkSize+(rand()-.5)*2*margin,distance=Math.hypot(x+3.8,z+340);
   if(distance<100||(z>-430&&z<430&&Math.abs(x-jarrellRiverX(z))<22)||Math.hypot(x-365,z-205)<58||Math.hypot(x+265,z+570)<48||Math.hypot(x-272,z+107)<58||Math.hypot(x+120,z+5)<48){cacheChunkMap.set(key,null);return;}
