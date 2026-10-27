@@ -562,18 +562,16 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  // Procedurally placed expedition caches: stable hidden locations, persistent looting, distance-scaled rewards.
  const chestWood=new THREE.MeshStandardMaterial({color:0x654126,roughness:.82}),chestTrim=new THREE.MeshStandardMaterial({color:0xd6b45e,roughness:.45,metalness:.35,emissive:0x6b3f08,emissiveIntensity:.18}),chestLock=new THREE.MeshStandardMaterial({color:0x313c42,roughness:.42,metalness:.65});
  const lootedCacheIds=new Set();try{const saved=JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests')||'[]');if(Array.isArray(saved))saved.forEach(id=>lootedCacheIds.add(id));const inventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(inventory)?inventory:[];window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0}catch{window.jarrellLootInventory=[];window.jarrellClimbPoints=0}
- let cacheSeed=501337;const cacheRand=()=>{cacheSeed=(cacheSeed*1664525+1013904223)>>>0;return cacheSeed/4294967296};
- let cacheAttempts=0;
- while(jarrellTreasureChests.length<48&&cacheAttempts<1400){
-  cacheAttempts++;
-  const angle=cacheRand()*Math.PI*2,distance=120+Math.pow(cacheRand(),.78)*7700,x=Math.sin(angle)*distance,z=-340+Math.cos(angle)*distance;
-  if(Math.abs(x)>8700||Math.abs(z)>8700||Math.hypot(x+3.8,z+340)<100)continue;
-  if(z>-430&&z<430&&Math.abs(x-jarrellRiverX(z))<22)continue;
-  if(Math.hypot(x-365,z-205)<58||Math.hypot(x+265,z+570)<48||Math.hypot(x-272,z+107)<58||Math.hypot(x+120,z+5)<48)continue;
-  if(jarrellTreasureChests.some(c=>Math.hypot(x-c.x,z-c.z)<90))continue;
+ const cacheChunkMap=new Map();
+ window.spawnJarrellCacheForChunk=(cx,cz)=>{
+  const key=cx+','+cz;if(cacheChunkMap.has(key))return;
+  let seed=(Math.imul(cx,73856093)^Math.imul(cz,19349663)^501337)>>>0;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  if(rand()>.22){cacheChunkMap.set(key,null);return;}
+  const margin=jarrellChunkSize*.5-22,x=cx*jarrellChunkSize+(rand()-.5)*2*margin,z=cz*jarrellChunkSize+(rand()-.5)*2*margin,distance=Math.hypot(x+3.8,z+340);
+  if(distance<100||(z>-430&&z<430&&Math.abs(x-jarrellRiverX(z))<22)||Math.hypot(x-365,z-205)<58||Math.hypot(x+265,z+570)<48||Math.hypot(x-272,z+107)<58||Math.hypot(x+120,z+5)<48){cacheChunkMap.set(key,null);return;}
   const slopeX=(terrainHeightAt(x+2,z)-terrainHeightAt(x-2,z))/4,slopeZ=(terrainHeightAt(x,z+2)-terrainHeightAt(x,z-2))/4;
-  if(Math.hypot(slopeX,slopeZ)>1.08)continue;
-  const id='cache-'+Math.round(x)+'-'+Math.round(z),ground=terrainHeightAt(x,z),group=new THREE.Group();group.name='JarrellTreasureCache';group.position.set(x,ground,z);worldPOIs.add(group);
+  if(Math.hypot(slopeX,slopeZ)>1.08){cacheChunkMap.set(key,null);return;}
+  const id='cache-'+cx+'-'+cz,ground=terrainHeightAt(x,z),group=new THREE.Group();group.name='JarrellTreasureCache';group.position.set(x,ground,z);worldPOIs.add(group);
   const body=new THREE.Mesh(new THREE.BoxGeometry(1.35,.72,1.0),chestWood);body.position.y=.36;body.castShadow=true;body.receiveShadow=true;group.add(body);
   const lidPivot=new THREE.Group();lidPivot.position.set(0,.72,-.43);group.add(lidPivot);
   const lid=new THREE.Mesh(new THREE.BoxGeometry(1.4,.24,1.0),chestWood);lid.position.set(0,.12,.43);lid.castShadow=true;lid.receiveShadow=true;lidPivot.add(lid);
@@ -581,10 +579,13 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const lock=new THREE.Mesh(new THREE.BoxGeometry(.16,.2,.07),chestLock);lock.position.set(0,.42,-.56);group.add(lock);
   const bandTop=new THREE.Mesh(new THREE.BoxGeometry(1.4,.055,1.03),chestTrim);bandTop.position.y=.71;group.add(bandTop);
   const opened=lootedCacheIds.has(id);if(opened){lidPivot.rotation.x=-1.08;frontBand.material=frontBand.material.clone();frontBand.material.emissiveIntensity=.9;}
-  jarrellTreasureChests.push({id,x,z,ground,group,lidPivot,frontBand,opened,distance});
-  jarrellObstacleColliders.push({x,z,r:.78,y0:ground-.1,y1:ground+1.05,kind:'treasure-chest'});
- }
- const chestPrompt=document.createElement('div');chestPrompt.id='jarrellChestPrompt';chestPrompt.textContent='CACHE FOUND · PRESS E TO OPEN';chestPrompt.style.cssText='position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540';document.body.appendChild(chestPrompt);const lootHud=document.createElement('div');lootHud.id='jarrellLootHUD';lootHud.style.cssText='position:fixed;right:14px;top:210px;display:block;max-width:180px;padding:9px 12px;border:1px solid #d6b45e66;border-radius:9px;background:rgba(7,16,24,.84);color:#f5e5b7;font:700 10px/1.65 system-ui;letter-spacing:.8px;text-align:right;white-space:pre-line;z-index:8;pointer-events:none';document.body.appendChild(lootHud);
+  const chest={id,x,z,ground,group,lidPivot,frontBand,opened,distance,chunkKey:key};jarrellTreasureChests.push(chest);cacheChunkMap.set(key,chest);
+  jarrellObstacleColliders.push({x,z,r:.78,y0:ground-.1,y1:ground+1.05,kind:'treasure-chest',chunkKey:key});
+ };
+ window.removeJarrellCacheChunk=key=>{
+  const chest=cacheChunkMap.get(key);if(chest){worldPOIs.remove(chest.group);chest.group.traverse(o=>{if(o.isMesh&&o.geometry)o.geometry.dispose()});if(chest.frontBand.material!==chestTrim)chest.frontBand.material.dispose();for(let i=jarrellTreasureChests.length-1;i>=0;i--)if(jarrellTreasureChests[i]===chest)jarrellTreasureChests.splice(i,1);for(let i=jarrellObstacleColliders.length-1;i>=0;i--)if(jarrellObstacleColliders[i].kind==='treasure-chest'&&jarrellObstacleColliders[i].chunkKey===key)jarrellObstacleColliders.splice(i,1);}
+  cacheChunkMap.delete(key);
+ }; const chestPrompt=document.createElement('div');chestPrompt.id='jarrellChestPrompt';chestPrompt.textContent='CACHE FOUND · PRESS E TO OPEN';chestPrompt.style.cssText='position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540';document.body.appendChild(chestPrompt);const lootHud=document.createElement('div');lootHud.id='jarrellLootHUD';lootHud.style.cssText='position:fixed;right:14px;top:210px;display:block;max-width:180px;padding:9px 12px;border:1px solid #d6b45e66;border-radius:9px;background:rgba(7,16,24,.84);color:#f5e5b7;font:700 10px/1.65 system-ui;letter-spacing:.8px;text-align:right;white-space:pre-line;z-index:8;pointer-events:none';document.body.appendChild(lootHud);
  // Snare traps and sprung spike pits on the routes between regions.
  const trapX=95,trapZ=90;for(let t=0;t<4;t++){const x=trapX+t*7,z=trapZ+(t%2)*6;place(new THREE.CylinderGeometry(2.8,2.8,.15,8),darkStone,x,-.08,z,1,1,1,rnd());for(let j=0;j<8;j++){const a=j/8*Math.PI*2;place(new THREE.ConeGeometry(.24,1.5,5),rustMetal,x+Math.cos(a)*1.8,.55,z+Math.sin(a)*1.8,1,1,1,a)}}
  // Dead trees and fallen timber mark the haunted edge of the battlefield.
