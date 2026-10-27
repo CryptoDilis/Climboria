@@ -11,8 +11,9 @@ The models are instanced in Climboria's Jarrell's Peak environment to reduce dra
 
 The Wild Between's game code is a separate project; Climboria adapts the instanced nature-model technique rather than copying its game implementation.
 
-## Camp tent model
+## Camp tent models
 
-- **Model:** `tent.glb`, loaded from the public [8th Wall Studio Physics Playground example](https://github.com/8thwall/studio-physics-playground-example/tree/main/src/assets/models/environment).
-- **Original asset family:** Quaternius Pirate Kit (identified in the example project's asset attribution).
-- **License note:** The example project credits the Pirate Kit, but this individual file's license/redistribution terms have not been independently verified in the source tree. Confirm the asset's original pack license before shipping; replace it with a verified CC0 model if that cannot be confirmed.
+- **Models:** `tent-detailedopen.glb` and `tent-detailedclosed.glb` from Kenney's Nature Kit.
+- **Source pack:** https://kenney.nl/assets/nature-kit
+- **Runtime model files:** https://github.com/Hidencod/tge-assets/tree/main/packs/nature-kit
+- **License:** The source catalog lists the Nature Kit pack as **CC0-1.0**; the catalog entry for these files is in [`catalog.json`](https://github.com/Hidencod/tge-assets/blob/main/catalog.json). The pack's CC0 license allows use and modification without attribution; credit is retained here for traceability.
