@@ -65,6 +65,28 @@ try {
     if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
   }
 
+  for (const z of [-200, 80, 280]) {
+    const riverCenterX = await page.evaluate(zValue => {
+      const api = window.__climboriaSmoke;
+      const x = api.riverX(zValue);
+      api.player.position.set(x, .22, zValue);
+      return x;
+    }, z);
+    await page.waitForTimeout(140);
+    const enteredWater = await page.evaluate(() => window.jarrellSwimming === true);
+    if (!enteredWater) errors.push('swimming state failed to activate at river bend z=' + z);
+    for (const side of [-1, 1]) {
+      await page.evaluate(({ x, zValue, bankSide }) => {
+        const api = window.__climboriaSmoke;
+        const bankX = x + bankSide * 8;
+        api.player.position.set(bankX, api.terrainHeightAt(bankX, zValue) + .22, zValue);
+      }, { x: riverCenterX, zValue: z, bankSide: side });
+      await page.waitForTimeout(140);
+      const exitedWater = await page.evaluate(() => window.jarrellSwimming === false);
+      if (!exitedWater) errors.push('swimming state failed to clear on river bank z=' + z + ' side=' + side);
+    }
+  }
+
   await page.locator('#jarrellDeathStoneBtn').click();
   await page.waitForTimeout(100);
   const deathStoneWorks = await page.evaluate(() => {
