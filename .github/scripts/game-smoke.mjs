@@ -24,6 +24,9 @@ try {
   await page.waitForSelector('#jarrellLootHUD', { timeout: 45000 });
   await page.waitForSelector('#jarrellDeathStoneBtn', { timeout: 45000 });
   await page.waitForTimeout(12000);
+  await page.locator('#heroNameInput').fill('SmokeTester');
+  await page.locator('#creatorStart').click();
+  await page.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
@@ -77,6 +80,9 @@ try {
   await mobilePage.waitForSelector('#game canvas', { timeout: 45000 });
   await mobilePage.waitForSelector('#jarrellDeathStoneBtn', { timeout: 45000 });
   await mobilePage.waitForTimeout(6000);
+  await mobilePage.locator('#heroNameInput').fill('MobileSmoke');
+  await mobilePage.locator('#creatorStart').click();
+  await mobilePage.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
   const mobileState = await mobilePage.evaluate(() => ({
     canvas: !!document.querySelector('#game canvas'),
     useButton: document.querySelector('#grab')?.textContent || '',
