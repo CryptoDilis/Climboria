@@ -100,6 +100,42 @@ try {
     if (collisionResult < collisionTarget.r + .48 - .18) errors.push('player penetrated a tree collider during movement');
   }
 
+  const tentTarget = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const candidates = api.obstacles
+      .filter(item => item.kind === 'tent')
+      .map(item => {
+        const startX = item.x - (item.r + .48 + 3.5);
+        const distanceFromSpawn = Math.hypot(item.x + 3.8, item.z + 340);
+        const slopeX = (api.terrainHeightAt(startX + 2, item.z) - api.terrainHeightAt(startX - 2, item.z)) / 4;
+        const slopeZ = (api.terrainHeightAt(startX, item.z + 2) - api.terrainHeightAt(startX, item.z - 2)) / 4;
+        const segmentLength = item.x - startX;
+        const clearPath = api.obstacles.every(other => {
+          if (other === item) return true;
+          const fraction = Math.max(0, Math.min(1, (other.x - startX) / segmentLength));
+          const closestX = startX + segmentLength * fraction;
+          return Math.hypot(other.x - closestX, other.z - item.z) > other.r + .7;
+        });
+        return { item, startX, distanceFromSpawn, slope: Math.hypot(slopeX, slopeZ), clearPath };
+      })
+      .find(candidate => candidate.distanceFromSpawn > 4 && candidate.distanceFromSpawn < 20 && candidate.slope < .25 && candidate.clearPath);
+    if (!candidates) return null;
+    api.player.position.set(candidates.startX, api.terrainHeightAt(candidates.startX, candidates.item.z) + .22, candidates.item.z);
+    api.keys.KeyD = true;
+    return { x: candidates.item.x, z: candidates.item.z, r: candidates.item.r };
+  });
+  if (!tentTarget) {
+    errors.push('no clear camp tent collider found for movement test');
+  } else {
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => { window.__climboriaSmoke.keys.KeyD = false; });
+    const tentDistance = await page.evaluate(target => {
+      const p = window.__climboriaSmoke.player.position;
+      return Math.hypot(p.x - target.x, p.z - target.z);
+    }, tentTarget);
+    if (tentDistance < tentTarget.r + .28) errors.push('player penetrated a camp tent collider during movement');
+  }
+
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
     if (!cache) return null;
