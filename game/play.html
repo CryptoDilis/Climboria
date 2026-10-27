@@ -1047,6 +1047,8 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
  function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
  function startExpeditionSoundtrack(){
+  // Jarrell's Peak keeps its original procedural soundtrack; the supplied MP3 is for regular expeditions only.
+  if(isJarrellPeakExpedition())return;
   if(!soundtrackAudio){
    soundtrackAudio=new Audio('assets/music/climboria-theme-60s.mp3');
    soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
@@ -1062,9 +1064,9 @@ function ensureAudio(){
  }
  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
  startExpeditionSoundtrack();
- if(false&&isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
+ if(isJarrellPeakExpedition()&&!musicStarted&&audioCtx.state!=='closed'){
   musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // All mountains use the same official Climboria soundtrack asset; keep expedition ambience and gameplay SFX separate from the shared BGM.
+  // Jarrell's Peak uses its original locally synthesized atmospheric score; regular expeditions use the supplied 60-second Climboria theme.
   const chords=[
    [146.83,220,293.66], // D minor
    [130.81,196,261.63], // C
