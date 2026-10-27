@@ -116,10 +116,15 @@ jobs:
           print(f"Extracted {len(parser.out)} inline game script(s).")
           PY
           for file in /tmp/climboria-game-js/*; do node --check "$file"; done
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-v1
       - name: Install Playwright Chromium for browser smoke tests
         run: |
           npm install --no-save --package-lock=false playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Smoke-test Jarrell on desktop and mobile viewports
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/climboria-http.log 2>&1 &
