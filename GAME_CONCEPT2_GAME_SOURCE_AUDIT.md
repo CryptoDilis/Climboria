@@ -27,3 +27,11 @@
 - **2026-10-23 — Alpine surface art pass:** Added a runtime-generated mineral-grain texture with subtle weathering seams and bump relief to the Level 1 mountain material. It is procedural (no downloaded asset); inspect in-browser for texture scale, visual quality, and mobile GPU cost before treating it as approved final art.
 
 - **2026-10-23 — Forest-mountain dressing:** Added instanced fir-tree bands, understory shrub clusters, and fallen logs on lower Level 1 flanks, outside the route corridor. Procedural scenic pass; visual placement, overlap, and mobile frame-rate still need in-browser/device QA.
+
+
+## Follow-up — 2026-10-27: Jarrell’s Peak gameplay and audio routing
+
+- **Merged gameplay update:** PR #87 was merged to `main` after the Playwright desktop/mobile Jarrell smoke test passed. The change ports instanced wilderness details, spatially indexed obstacle collision, CC0 asset attribution, and a browser regression check.
+- **Verified in automated browser testing:** renderer dimensions, trailhead-to-river distance, riverbed clearance, spawn-to-tent spacing, cache/loot HUD, streamed cache/forest hooks, tree collision, water-state entry/exit, fishing interaction, Death Stone control/cooldown, and mobile USE/JUMP/RUN controls.
+- **Audio routing corrected:** `climboria-theme-60s.mp3` is for regular expeditions. Jarrell’s Peak retains its locally synthesized atmospheric score. The regression test asserts that the regular-expedition MP3 is not requested by Jarrell’s Peak.
+- **Limitations:** CI browser testing is not a physical-device test. It does not prove production multiplayer, persistent inventory, full Death Stone teleport, on-chain rewards, or real wallet/account persistence.
