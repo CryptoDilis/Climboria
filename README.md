@@ -133,6 +133,8 @@ Reviewed [yusufmalikul/simple-3d-open-world](https://github.com/yusufmalikul/sim
 - Its repo API response reports no license metadata, so treat its source as reference only until an explicit license is verified. Adapt general techniques independently; do not copy/publish its full implementation.
 
 **Applied to this branch (implemented — unverified):** Jarrell's Peak movement now computes whether a proposed step enters the curved river corridor and skips the steep-terrain blocker for that step, while tightening the existing river swim-detection width to better match the visible water ribbon. This is a targeted fix, not a complete collision system. Test actual entry/exit from both banks, swimming along bends, underwater controls, and shoreline transitions in the browser before marking passed.
+**Latest collision pass (implemented — awaiting CI/browser result):** Jarrell's Peak obstacle hitboxes are indexed into 24-unit spatial cells. Movement checks only the player's current cell rather than scanning every tree, rock, tent, crate, landmark, and treasure cache on each movement test. Large obstacles are indexed across every cell their radius overlaps; streamed tree/cache colliders are removed from the index when their chunks unload. This is intended to preserve collision coverage while reducing per-frame work on mobile. It is not considered verified until the desktop/mobile smoke test and hands-on collision checks pass.
+
 ### Definition of done — Jarrell's Peak
 
 Jarrell's Peak may be called **gameplay-complete** only when all applicable checks below pass in the actual browser game, not merely because code has been committed:
