@@ -16,7 +16,7 @@ try {
     if (match && response.ok()) tentAssets.add('tent-detailed' + match[1] + '.glb');
   });
 
-  await page.goto('http://127.0.0.1:4173/game/play.html?level=11', {
+  await page.goto('http://127.0.0.1:4173/game/play.html?level=11&smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
@@ -45,10 +45,25 @@ try {
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
 
-  await page.keyboard.press('E');
-  await page.waitForTimeout(100);
-  const fishingStarted = await page.evaluate(() => window.jarrellFishingBusy === true);
-  if (!fishingStarted) errors.push('desktop river fishing interaction did not start at the trailhead');
+  const cacheId = await page.evaluate(() => {
+    const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
+    if (!cache) return null;
+    window.__climboriaSmoke.player.position.set(cache.x + 2, cache.ground + .22, cache.z);
+    return cache.id;
+  });
+  if (!cacheId) {
+    errors.push('no unopened cache spawned in the active terrain chunks');
+  } else {
+    await page.waitForTimeout(120);
+    await page.keyboard.press('E');
+    await page.waitForTimeout(120);
+    const cacheOpened = await page.evaluate(id => {
+      const active = window.__climboriaSmoke?.getCaches().find(item => item.id === id);
+      const saved = JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests') || '[]');
+      return active?.opened === true || (Array.isArray(saved) && saved.includes(id));
+    }, cacheId);
+    if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
+  }
 
   await page.locator('#jarrellDeathStoneBtn').click();
   await page.waitForTimeout(100);
@@ -57,6 +72,11 @@ try {
     return readyAt > Date.now() && document.querySelector('#jarrellDeathStoneBtn')?.textContent.includes('DEATH STONE');
   });
   if (!deathStoneWorks) errors.push('Death Stone did not start its persistent 90-second cooldown');
+
+  await page.keyboard.press('E');
+  await page.waitForTimeout(100);
+  const fishingStarted = await page.evaluate(() => window.jarrellFishingBusy === true);
+  if (!fishingStarted) errors.push('desktop river fishing interaction did not start at the trailhead');
 
   const missingTentAssets = ['tent-detailedopen.glb', 'tent-detailedclosed.glb'].filter(name => !tentAssets.has(name));
   if (missingTentAssets.length) errors.push('camp tent assets failed to load: ' + missingTentAssets.join(', '));
@@ -73,7 +93,7 @@ try {
   });
   const mobilePage = await mobile.newPage();
   mobilePage.on('pageerror', error => errors.push('mobile pageerror: ' + error.message));
-  await mobilePage.goto('http://127.0.0.1:4173/game/play.html?level=11', {
+  await mobilePage.goto('http://127.0.0.1:4173/game/play.html?level=11&smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
