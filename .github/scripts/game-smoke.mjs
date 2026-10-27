@@ -240,9 +240,11 @@ try {
   await page.waitForTimeout(100);
   const deathStoneWorks = await page.evaluate(() => {
     const readyAt = Number(localStorage.getItem('climboria_death_stone_ready_at') || 0);
-    return readyAt > Date.now() && document.querySelector('#jarrellDeathStoneBtn')?.textContent.includes('DEATH STONE');
+    const movement = window.__climboriaSmoke?.getMovementState?.();
+    return {cooldown:readyAt > Date.now() && document.querySelector('#jarrellDeathStoneBtn')?.textContent.includes('DEATH STONE'),movement};
   });
-  if (!deathStoneWorks) errors.push('Death Stone did not start its persistent 90-second cooldown');
+  if (!deathStoneWorks.cooldown) errors.push('Death Stone did not start its persistent 90-second cooldown');
+  if (deathStoneWorks.movement && (Math.abs(deathStoneWorks.movement.x) > .05 || Math.abs(deathStoneWorks.movement.z) > .05 || deathStoneWorks.movement.swimming === true || deathStoneWorks.movement.physicsSwimming === true)) errors.push('Death Stone failed to reset residual movement/swimming state: ' + JSON.stringify(deathStoneWorks.movement));
 
   const fishingBefore = await page.evaluate(() => {
     const inventory = window.jarrellLootInventory || JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]');
