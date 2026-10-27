@@ -27,6 +27,7 @@ try {
   await page.locator('#heroNameInput').fill('SmokeTester');
   await page.locator('#creatorStart').click();
   await page.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
+  await page.waitForTimeout(800);
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
@@ -165,6 +166,7 @@ try {
   await mobilePage.locator('#heroNameInput').fill('MobileSmoke');
   await mobilePage.locator('#creatorStart').click();
   await mobilePage.waitForSelector('#creatorOverlay', { state: 'hidden', timeout: 10000 });
+  await mobilePage.waitForTimeout(800);
   const mobileState = await mobilePage.evaluate(() => ({
     canvas: !!document.querySelector('#game canvas'),
     useButton: document.querySelector('#grab')?.textContent || '',
