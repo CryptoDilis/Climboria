@@ -528,7 +528,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);
  const poiMat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
  const darkStone=poiMat(0x343d40),stoneEdge=poiMat(0x596367),oldBone=poiMat(0x9c9278),rustMetal=poiMat(0x55453a),riceGreen=poiMat(0x718d42),sanctuaryWater= new THREE.MeshStandardMaterial({color:0x347f8a,roughness:.2,metalness:.12,transparent:true,opacity:.88});
- const place=(geo,mat,x,y,z,sx=1,sy=1,sz=1,rot=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;worldPOIs.add(m);return m};
+ const place=(geo,mat,x,y,z,sx=1,sy=1,sz=1,rot=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;worldPOIs.add(m);if(currentLevel==='11'&&((typeof rockGeo!=='undefined'&&geo===rockGeo&&Math.max(sx,sz)>=1.4)||(geo.type==='DodecahedronGeometry'&&sx>=5&&sz>=5)))jarrellObstacleColliders.push({x,z,r:Math.max(sx,sz)*.72,y0:terrainHeightAt(x,z)-.2,y1:y+sy,kind:'rock'});return m};
  const rockGeo=new THREE.DodecahedronGeometry(1,1),logGeo=new THREE.CylinderGeometry(.12,.18,2.8,7),boneGeo=new THREE.CapsuleGeometry(.12,.48,3,5);
  // Cave mouth and broken stone teeth at the base of the western range.
  const caveX=-265,caveZ=-570,caveY=2;
