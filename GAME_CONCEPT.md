@@ -1,51 +1,79 @@
-# Climboria Mountain World — Game Concept Baseline
+# Climboria — Game Concept Baseline
 
-Status: approved direction / design baseline (not yet fully implemented)
-Visual direction: Rohan-inspired high-fantasy landscape; evoke broad green plains, dramatic mountain ridges, forests, and warm cinematic light without copying protected film assets.
+**Status:** approved direction / design baseline. Future features are not represented as implemented.
+**Core principle:** Game First, Speculation Later.
+**Current launch world:** Jarrell’s Peak only.
 
-## Core experience
-- A large, continuous mountain expedition: players traverse on foot, climb difficult routes, and aim for the summit.
-- Target a roughly one-hour-or-longer ascent for a capable solo player, created by real route length, traversal challenges, hazards, and weather—not artificial slow movement.
-- Falling, slipping, and dying are possible. Build fair warnings, recovery, and safe respawn loops.
-- Preserve consistent, reliable mobile and desktop controls; do not redesign controls as part of terrain/visual upgrades without testing.
+## Core experience — Jarrell’s Peak
 
-## Mountain regions and terrain
-Include varied regions:
-- Tall-grass fields and meadows.
-- Ravines, cliffs, exposed ledges, and difficult crossings.
-- Rocky fields, loose rock, and climbable rock faces.
-- Slippery terrain (wet stone, mud, and potentially ice at altitude).
-- Ponds, lakes, and shoreline routes.
-- Gardens, shrubs, wildflowers, and forests.
-- Large trees and broad clearings suitable for multiplayer tent camps.
+Jarrell’s Peak is a vast, endless-feeling wilderness adventure focused on exploration, survival, and treasure hunting. It is not a summit level: there is no summit, final level, or completion point. Its motto is **“Vengeance Is Always an Option.”**
 
-## Wildlife and environmental storytelling
-- Wild animals inhabit appropriate regions; behaviors may include roaming, fleeing, or defensive/aggressive encounters.
-- Skeletons, abandoned remains, old camps, and scattered clues appear in dangerous or forgotten places.
+The world should include a riverside starting camp, a long river, fishing spots, forest regions, cliffs, caves, rice fields, battlefield remnants, a sanctuary lake/shrine, abandoned places, traps, hidden paths, and discoverable landmarks. Travel distance and survival time may improve the chance of better treasure without guaranteeing rare drops.
 
-## Dynamic weather
-- Weather changes on a 10-minute cycle, with gradual transitions rather than abrupt swaps.
-- Possible states: clear/normal, overcast, rain, heavy rain, wind, and severe thunderstorm.
-- Severe storms reduce visibility, make selected surfaces slippery, create strong wind on exposed ridges, and include thunder/lightning effects.
-- Provide readable storm cues and opportunities to seek shelter; tune danger fairly.
+The launch scope is Jarrell’s Peak alone. The previously proposed ten normal mountain expeditions are deferred and should not be presented as current launch content. Additional maps may be reconsidered after the token launch when a development budget is available.
 
-## Safe zones, respawn, and social play
-- Rohan-inspired safe settlements/camps at selected points along the ascent.
-- Safe respawn areas after death, with rest and resupply.
-- A black-market vendor in each designated safe zone.
-- Wide clearings under large trees where groups can gather and place tents; multiplayer capacity and persistence require separate engineering.
+## Existing gameplay protection
 
-## Implementation and performance principles
-- Build and validate one playable region first, then expand toward the full mountain.
-- Use terrain chunks, instancing, distance-based detail/LOD, and controlled effects so the world remains playable on mobile browsers.
-- Treat multiplayer synchronization, tent placement/persistence, safe-zone rules, wildlife AI, and weather networking as separate systems to scope and test.
-- Prioritize a playable, climbable route and stable performance over decorative detail.
+Documentation and website copy changes must not redesign or remove current gameplay. Preserve movement, climbing, collision, swimming, fishing, spawn point, camera, controls, sound, weather, day/night, treasure discovery, and other existing mechanics. Any gameplay changes require a separate explicit decision and testing.
+
+## Survival, loot, and risk
+
+- Jarrell’s Peak has no safe zone, summit, final level, or completion point.
+- Death returns the player to the starting point and follows the implemented, published carried-loot rules.
+- Loot bags may remain at a death location for a limited recovery window and may be looted by other players where the existing risk rules allow it.
+- Chests may contain ingredients, crafting materials, gear, and eligible rewards across disclosed rarity tiers.
+- Better opportunities may be influenced by distance and survival time; exact odds and reward values must be published before reward activation.
+- Death Stone is designed as a rare item with a 1.5% chance per eligible chest loot roll. Solo and team teleport uses require verified coordinates, consent, cooldowns, bounds, and anti-exploit safeguards before production use.
+
+## Leaderboards and rewards
+
+There is no summit ranking and no current badge system. The planned ranking system includes a permanent All-Time Top Gainers board and a separate Weekly Top Gainers board for any funded weekly rewards. Scoring combines eligible $CLIMB earnings, published eligible treasure value, and transparent rarity/difficulty bonuses. Weekly payout timing, if activated and funded, is Friday at 03:00 UTC / 11:00 AM Philippine time. Rewards require a verified funded pool and published eligibility rules; they are not guaranteed.
+
+## Marketplace economy
+
+Marketplace items and eligible crafted gear are intended to use $CLIMB only.
+
+- Buy fee: 2.5%.
+- Sell fee: 2.5%.
+- 5% of actual marketplace fee revenue collected is allocated to the Climboria game funding pool. This is not an additional 5% of trading volume.
+- NFT minting is intended to have no Climboria platform minting fee; players pay network gas.
+- Marketplace, minting, fee collection, custody, reward accounting, and on-chain payouts must be implemented and reviewed before being described as live.
+
+## Future Arena map
+
+The Arena is a separate planned public map, entered directly through an ARENA button in the game menu.
+
+- Large forest environment, central platform, tall sponsor flag, event banners, and an entrance sponsor panel.
+- One shared world is the design target, with a goal of more than 1,000 concurrent players; this remains unverified until architecture and load testing prove it.
+- No event: public free-for-all brawling and competitive banter, with no rewards.
+- Guild Battle: the entire Arena becomes the battlefield for the two approved guilds; other players spectate.
+- Any guild member can request a Guild Battle; each guild’s leader must approve.
+- Weekly Guild Wars and funded rewards are future budget-dependent features.
+- Weapons must fit the climbing theme; the roster, functions, and balancing are deferred for later design.
+
+## Future Chatworld
+
+Both Jarrell’s Peak and the Arena are intended to support Global Chat, Proximity Chat, and Private Messages. Competitive trash talk is allowed within published conduct rules. Mute, block, report, anti-spam, and moderator tools are planned. Server-side identity, permissions, message delivery, moderation, and persistence are required.
+
+## Future wagers and sponsored events
+
+Casual fights remain free. Optional wager matches are planned with voluntary, mutually accepted $CLIMB stakes. The winner receives the total pot minus a 2.5% platform fee; the fee goes to the Climboria game funding pool. Secure escrow, consent, dispute handling, anti-abuse, and compliance review are release prerequisites.
+
+Sponsored tournaments require a fully funded prize pool. Full sponsorship fee and full promised prize pool must be received and verified before any announcement, branding, or event activation. The policy includes admin approval, written agreements, fast-track review for Climboria Launchpad tokens with basic checks, full review for other crypto sponsors, and risk-based review for non-crypto sponsors. Event announcements may appear on X.com, the homepage, game menu, and running announcements in both worlds. Arena branding may include the central flag, entrance panel, and event banners. Exclusivity, duration, auto-renewal, cancellation, refund, and prize-protection terms must be written and approved.
+
+## Token and platform status
+
+Solana is the initial chain focus; Base is a later possibility. $CLIMB is the intended ticker, not proof of a launched token. Launchpad, DEX, swap, live liquidity, marketplace, NFT minting, multiplayer, Chatworld, Arena, wagers, sponsorship management, and token rewards must be clearly marked planned or in development until implemented and verified.
 
 ## Milestone order
-1. Reliable movement and climbing on mobile and desktop.
-2. One complete playable region: terrain, grass, rocks/cliffs, a water feature, a safe camp, and weather cycle.
-3. Add traversal hazards, checkpoints, and summit progression.
-4. Expand biomes, wildlife, remains, safe zones/black markets, and camp/tent systems.
-5. Optimize and test on mobile and desktop; then scope multiplayer persistence and synchronization.
 
-This file is the agreed concept reference. Any future changes should be explicit revisions, not silent redesigns.
+1. Protect and stabilize existing Jarrell’s Peak gameplay without redesigning mechanics as part of documentation work.
+2. Verify starting camp, river, swimming, collision, treasure discovery, respawn, and desktop/mobile behavior.
+3. Align website, overview, whitepaper, roadmap, game concept, and root README with the single-world launch.
+4. Implement and test marketplace economy and secure reward accounting before promising payouts.
+5. Design and build server-authoritative Chatworld and moderation.
+6. Plan the public Arena, shared-world architecture, climbing-themed weapons, and event rules.
+7. Implement sponsorship approval, payment verification, announcement distribution, and prize protection.
+8. Consider Weekly Guild Wars, badges, and additional maps only when budget, implementation, and testing justify them.
+
+This document records agreed direction, not a claim that all systems are live. Silent gameplay redesigns are out of scope.
