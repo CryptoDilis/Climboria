@@ -170,7 +170,7 @@ try {
   const swimExitStart = await page.evaluate(() => {
     const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
     api.player.position.set(centerX,-.35,z);
-    api.keys.KeyD=false;api.keys.KeyA=false;
+    api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
     const options=[-1,1].map(side=>{
       const startX=centerX+side*2.2,endX=centerX+side*8.5;
       const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
@@ -189,7 +189,7 @@ try {
       const api=window.__climboriaSmoke;
       api.setCamYaw(0);
       api.player.position.set(startX,-.35,z);
-      api.keys.KeyD=false;api.keys.KeyA=false;
+      api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
     await page.evaluate(side => { const api=window.__climboriaSmoke;api.keys[side>0?'KeyD':'KeyA']=true; }, swimExitStart.side);
