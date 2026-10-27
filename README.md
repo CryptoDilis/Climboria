@@ -150,6 +150,14 @@ Jarrell's Peak may be called **gameplay-complete** only when all applicable chec
 - [ ] Desktop and mobile-browser smoke tests pass, including controls, rendering, respawn, and core interactions; no blocking console errors remain.
 - [ ] The README accurately distinguishes implemented and tested features from planned, prototype-only, or unverified features. Do not claim real token payouts, multiplayer synchronization, or persistent/on-chain rewards are production-ready unless separately verified.
 
+### Current Jarrell's Peak environment physics status
+
+- **Implemented — unverified:** local forest tree trunks and major stone landmarks have player collision checks; movement can slide along an obstacle rather than requiring a full stop.
+- **Implemented — unverified:** river entry detection samples the rendered river curve more densely, fishing uses nearest-curve distance at bends, and land collision is applied when leaving the water.
+- **Implemented — unverified:** keyboard and mobile controls no longer reuse the sprint key as a swim-dive input; the jump/surface action raises the swimmer and the mobile sprint control dives while swimming.
+- **Implemented — unverified:** the riverside camp uses Kenney Nature Kit's `tent-detailedopen.glb` and `tent-detailedclosed.glb`, catalogued as CC0-1.0. See `game/assets/JARRELL_NATURE_ATTRIBUTION.md`.
+- **Still required:** test river entry/exit on both banks and at bends, tree/rock collision and sliding, camp-tent visibility/loading, fishing interaction, and performance on desktop and mobile browsers. These changes must not be marked tested until those checks are actually performed.
+
 ### Status reporting rule
 
 Track each item as **Not started**, **In progress**, **Implemented — unverified**, or **Tested — passed**. A commit means the code was changed; it does not prove the game works visually or in the browser. Only mark a checklist item as passed after the relevant test has actually been performed. Jarrell's Peak's world/exploration goal can be called complete when all core world, survival, treasure, performance, and desktop/mobile verification checks above pass. Production multiplayer, anti-cheat, and on-chain reward security remain separate release gates if those features are enabled.
