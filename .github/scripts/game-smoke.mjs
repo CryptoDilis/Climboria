@@ -171,16 +171,16 @@ try {
   for (const z of [-200, 80, 280]) {
     await page.evaluate(zValue => {
       const api = window.__climboriaSmoke, centerX = api.riverX(zValue);
-      api.player.position.set(centerX, -.62, zValue);
+      api.player.position.set(centerX, -.35, zValue);api.updateJarrellChunks(centerX,zValue);
       api.keys.KeyD = false; api.keys.KeyA = false;
     }, z);
-    await page.waitForTimeout(220);
+    await page.waitForTimeout(420);
     const candidate = await page.evaluate(zValue => {
       const api = window.__climboriaSmoke, centerX = api.riverX(zValue);
       const options = [-1,1].map(side => {
         const startX = centerX + side*2.2, endX = centerX + side*8.5;
         const pathBlocked = Array.from({length:9},(_,i)=>startX+(endX-startX)*i/8)
-          .some(x=>api.testObstacleCollision(x,zValue,-.62));
+          .some(x=>api.testObstacleCollision(x,zValue,-.35));
         const slopeX=(api.terrainHeightAt(endX+.8,zValue)-api.terrainHeightAt(endX-.8,zValue))/1.6;
         const slopeZ=(api.terrainHeightAt(endX,zValue+.8)-api.terrainHeightAt(endX,zValue-.8))/1.6;
         return {z:zValue,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
@@ -195,7 +195,7 @@ try {
     await page.evaluate(({z,side,startX}) => {
       const api=window.__climboriaSmoke;
       api.setCamYaw(0);
-      api.player.position.set(startX,-.62,z);
+      api.player.position.set(startX,-.35,z);
       api.keys.KeyD=false;api.keys.KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
