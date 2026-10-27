@@ -166,38 +166,39 @@ try {
     }
   }
 
-  // Exercise a real swim-to-bank transition; teleport-only checks cannot catch a shore collision deadlock.
-  await page.evaluate(() => {
+  // Exercise a real swim-to-bank transition on the flatter of the two banks.
+  const swimExitStart = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    const z = 80;
-    const centerX = api.riverX(z);
+    const z = 80, centerX = api.riverX(z);
+    const candidates = [-1, 1].map(side => {
+      const x = centerX + side * 8;
+      const slopeX = (api.terrainHeightAt(x + .8, z) - api.terrainHeightAt(x - .8, z)) / 1.6;
+      const slopeZ = (api.terrainHeightAt(x, z + .8) - api.terrainHeightAt(x, z - .8)) / 1.6;
+      return { side, slope: Math.hypot(slopeX, slopeZ), blocked: api.testObstacleCollision(x, z, api.terrainHeightAt(x,z) + .22) };
+    }).sort((a,b) => Number(a.blocked)-Number(b.blocked) || a.slope-b.slope);
+    const side = candidates[0].side;
     api.setCamYaw(0);
-    api.player.position.set(centerX + 2.2, -0.62, z);
-    api.keys.KeyD = false;
+    api.player.position.set(centerX + side * 2.2, -.62, z);
+    api.keys.KeyD = false; api.keys.KeyA = false;
+    return { side, bankSlope: Number(candidates[0].slope.toFixed(2)), bankBlocked: candidates[0].blocked };
   });
-  await page.waitForTimeout(140);
-  await page.keyboard.down('d');
-  await page.waitForTimeout(1500);
-  await page.keyboard.up('d');
-  await page.waitForTimeout(250);
-  const swimExit = await page.evaluate(() => {
-    const api = window.__climboriaSmoke;
-    const p = api.player.position;
+  await page.waitForTimeout(160);
+  await page.evaluate(side => { const api=window.__climboriaSmoke;api.keys[side>0?'KeyD':'KeyA']=true; }, swimExitStart.side);
+  await page.waitForTimeout(2400);
+  const swimExit = await page.evaluate(side => {
+    const api = window.__climboriaSmoke, p = api.player.position;
+    api.keys.KeyD = false; api.keys.KeyA = false;
     return {
-      swimming: window.jarrellSwimming === true,
-      y: Number(p.y.toFixed(2)),
-      groundY: Number(api.terrainHeightAt(p.x, p.z).toFixed(2)),
-      x: Number(p.x.toFixed(2)),
-      z: Number(p.z.toFixed(2))
+      side, swimming: window.jarrellSwimming === true,
+      y: Number(p.y.toFixed(2)), groundY: Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),
+      x: Number(p.x.toFixed(2)), z: Number(p.z.toFixed(2)),
+      bankDistance: Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2))
     };
-  });
-  if (swimExit.swimming) errors.push('player remained in swimming state after moving onto the river bank');
-  if (swimExit.y < swimExit.groundY - 0.1) errors.push('player remained below terrain after exiting the river');
-  await page.evaluate(() => {
-    const api = window.__climboriaSmoke;
-    api.keys.KeyD = false;
-    api.setCamYaw(-0.75);
-  });
+  }, swimExitStart.side);
+  if (swimExitStart.bankBlocked) errors.push('both candidate swim-exit banks are obstructed at the test point');
+  if (swimExit.swimming || swimExit.bankDistance < 5.2) errors.push('player could not swim onto the river bank: ' + JSON.stringify(swimExit));
+  if (swimExit.y < swimExit.groundY - 0.1) errors.push('player remained below terrain after exiting the river: ' + JSON.stringify(swimExit));
+  await page.evaluate(() => window.__climboriaSmoke.setCamYaw(-0.75));
 
   await page.locator('#jarrellDeathStoneBtn').click();
   await page.waitForTimeout(100);
@@ -254,6 +255,22 @@ try {
   console.log('Mobile smoke state:', JSON.stringify(mobileState));
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
+
+  // Verify the user's original TRACK_01 soundtrack is requested and successfully served on a regular expedition.
+  const musicPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const musicResponses = [];
+  musicPage.on('response', response => {
+    if (response.url().includes('climboria-theme-60s.mp3')) musicResponses.push({ status: response.status(), url: response.url() });
+  });
+  await musicPage.goto('http://127.0.0.1:4173/game/play.html?level=01&smoke=1', { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await musicPage.waitForSelector('#game canvas', { timeout: 45000 });
+  await musicPage.waitForTimeout(4500);
+  await musicPage.locator('#heroNameInput').fill('MusicTester');
+  await musicPage.locator('#creatorStart').click();
+  await musicPage.waitForTimeout(2200);
+  if (!musicResponses.some(item => item.status === 200)) errors.push('user soundtrack TRACK_01 (stored as climboria-theme-60s.mp3) did not load on a regular expedition');
+  console.log('Regular expedition soundtrack responses:', JSON.stringify(musicResponses));
+  await musicPage.close();
 
   // Regression-test the expedition menu: Jarrell is playable, regular mountains are deferred, and the demo marketplace modal still works.
   const selectPage = await browser.newPage({ viewport: { width: 1365, height: 900 } });
