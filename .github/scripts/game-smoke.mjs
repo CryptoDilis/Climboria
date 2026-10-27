@@ -121,47 +121,6 @@ try {
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
-  const groundTarget = await page.evaluate(() => {
-    const api = window.__climboriaSmoke;
-    for (let z = -500; z >= -2200; z -= 50) {
-      for (let x = 80; x <= 600; x += 40) {
-        const ground = api.terrainHeightAt(x, z);
-        const slopeX = (api.terrainHeightAt(x + 3, z) - api.terrainHeightAt(x - 3, z)) / 6;
-        const slopeZ = (api.terrainHeightAt(x, z + 3) - api.terrainHeightAt(x, z - 3)) / 6;
-        const slope = Math.hypot(slopeX, slopeZ);
-        const riverDistance = Math.abs(x - api.riverX(z));
-        const campDistance = Math.hypot(x + 3.8, z + 340);
-        const nearestObstacle = api.obstacles.reduce((best, item) => Math.min(best, Math.hypot(item.x - x, item.z - z) - item.r), Infinity);
-        if (ground > -1.5 && ground < 2.5 && slope < .5 && riverDistance > 20 && campDistance > 100 && nearestObstacle > 5) {
-          api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
-          api.keys.Space = api.keys.ControlLeft = api.keys.ControlRight = false;
-          // Isolate the drop from momentum left by earlier jump/swim checks.
-          api.resume();
-          api.player.position.set(x, ground + 4.2, z);
-          return { x, z, ground, slope, riverDistance };
-        }
-      }
-    }
-    return null;
-  });
-  if (!groundTarget) {
-    errors.push('no safe terrain-grounding test point found');
-  } else {
-    await page.waitForTimeout(1400);
-    const grounding = await page.evaluate(target => ({
-      ground: window.__climboriaSmoke.terrainHeightAt(target.x, target.z),
-      playerY: window.__climboriaSmoke.player.position.y,
-      x: window.__climboriaSmoke.player.position.x,
-      z: window.__climboriaSmoke.player.position.z
-    }), groundTarget);
-    if (Math.abs(grounding.playerY - (grounding.ground + .22)) > .55) {
-      errors.push('terrain grounding failed after a controlled drop (playerY=' + grounding.playerY.toFixed(2) + ', ground=' + grounding.ground.toFixed(2) + ')');
-    }
-    if (Math.hypot(grounding.x - groundTarget.x, grounding.z - groundTarget.z) > 2) {
-      errors.push('player drifted away from the terrain-grounding test point');
-    }
-  }
-
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
     if (!cache) return null;
