@@ -580,7 +580,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const frontBand=new THREE.Mesh(new THREE.BoxGeometry(1.38,.1,.045),chestTrim);frontBand.position.set(0,.39,-.515);group.add(frontBand);
   const lock=new THREE.Mesh(new THREE.BoxGeometry(.16,.2,.07),chestLock);lock.position.set(0,.42,-.56);group.add(lock);
   const bandTop=new THREE.Mesh(new THREE.BoxGeometry(1.4,.055,1.03),chestTrim);bandTop.position.y=.71;group.add(bandTop);
-  const opened=lootedCacheIds.has(id);if(opened){lidPivot.rotation.x=-1.08;chestTrim.emissiveIntensity=.3;}
+  const opened=lootedCacheIds.has(id);if(opened){lidPivot.rotation.x=-1.08;frontBand.material=frontBand.material.clone();frontBand.material.emissiveIntensity=.9;}
   jarrellTreasureChests.push({id,x,z,ground,group,lidPivot,frontBand,opened,distance});
   jarrellObstacleColliders.push({x,z,r:.78,y0:ground-.1,y1:ground+1.05,kind:'treasure-chest'});
  }
