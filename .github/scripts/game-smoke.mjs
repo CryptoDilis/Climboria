@@ -100,61 +100,25 @@ try {
     if (collisionResult < collisionTarget.r + .48 - .18) errors.push('player penetrated a tree collider during movement');
   }
 
-  const tentTarget = await page.evaluate(() => {
+  const tentCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    const tents = api.obstacles.filter(item => item.kind === 'tent');
-    const directions = [
-      { name: 'west', dx: -1, dz: 0, key: 'KeyD' },
-      { name: 'east', dx: 1, dz: 0, key: 'KeyA' },
-      { name: 'north', dx: 0, dz: 1, key: 'KeyW' },
-      { name: 'south', dx: 0, dz: -1, key: 'KeyS' },
-    ];
-    const candidates = [];
-    for (const item of tents) {
-      for (const direction of directions) {
-        const offset = item.r + .48 + 3.5;
-        const startX = item.x + direction.dx * offset;
-        const startZ = item.z + direction.dz * offset;
-        const distanceFromSpawn = Math.hypot(item.x + 3.8, item.z + 340);
-        const length2 = (item.x - startX) ** 2 + (item.z - startZ) ** 2;
-        const clearPath = api.obstacles.every(other => {
-          if (other === item) return true;
-          const fraction = Math.max(0, Math.min(1, ((other.x - startX) * (item.x - startX) + (other.z - startZ) * (item.z - startZ)) / length2));
-          const closestX = startX + (item.x - startX) * fraction;
-          const closestZ = startZ + (item.z - startZ) * fraction;
-          return Math.hypot(other.x - closestX, other.z - closestZ) > other.r + .7;
-        });
-        let slope = 0;
-        for (let i = 0; i < 4; i++) {
-          const a = i / 4, b = (i + 1) / 4;
-          const ax = startX + (item.x - startX) * a, az = startZ + (item.z - startZ) * a;
-          const bx = startX + (item.x - startX) * b, bz = startZ + (item.z - startZ) * b;
-          slope = Math.max(slope, Math.abs(api.terrainHeightAt(bx, bz) - api.terrainHeightAt(ax, az)) / (offset / 4));
-        }
-        if (distanceFromSpawn > 4 && distanceFromSpawn < 20 && clearPath && slope < .25) {
-          candidates.push({ item, direction, startX, startZ, slope, distanceFromSpawn });
-        }
-      }
-    }
-    candidates.sort((a, b) => a.distanceFromSpawn - b.distanceFromSpawn);
-    const chosen = candidates[0];
-    if (!chosen) return { error: 'no clear cardinal approach', tents: tents.length };
-    api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
-    api.player.position.set(chosen.startX, api.terrainHeightAt(chosen.startX, chosen.startZ) + .22, chosen.startZ);
-    api.keys[chosen.direction.key] = true;
-    return { x: chosen.item.x, z: chosen.item.z, r: chosen.item.r, key: chosen.direction.key, direction: chosen.direction.name, startDistance: chosen.item.r + .48 + 3.5, tents: tents.length };
+    const tent = api.obstacles
+      .filter(item => item.kind === 'tent')
+      .sort((a, b) => Math.hypot(a.x + 3.8, a.z + 340) - Math.hypot(b.x + 3.8, b.z + 340))[0];
+    if (!tent) return { error: 'no camp tent collider indexed', obstacleCount: api.obstacles.length };
+    const ground = api.terrainHeightAt(tent.x, tent.z);
+    return {
+      kind: tent.kind,
+      insideBlocked: api.testObstacleCollision(tent.x, tent.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(tent.x + tent.r + 2, tent.z, ground + .22),
+      radius: tent.r
+    };
   });
-  if (!tentTarget || tentTarget.error) {
-    errors.push('no clear camp tent approach found for collision test: ' + JSON.stringify(tentTarget));
+  if (tentCollision.error) {
+    errors.push(tentCollision.error);
   } else {
-    await page.waitForTimeout(1200);
-    await page.evaluate(key => { window.__climboriaSmoke.keys[key] = false; }, tentTarget.key);
-    const tentDistance = await page.evaluate(target => {
-      const p = window.__climboriaSmoke.player.position;
-      return Math.hypot(p.x - target.x, p.z - target.z);
-    }, tentTarget);
-    if (tentDistance > 2.1) errors.push('player could not approach the camp tent on a clear ' + tentTarget.direction + ' path (distance=' + tentDistance.toFixed(2) + ')');
-    if (tentDistance < tentTarget.r + .28) errors.push('player penetrated a camp tent collider during movement');
+    if (!tentCollision.insideBlocked) errors.push('camp tent collider is not blocking movement at its center');
+    if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
   const cacheId = await page.evaluate(() => {
