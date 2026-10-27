@@ -619,7 +619,7 @@ if(currentLevel==='11'){
  const gravelMat=new THREE.MeshStandardMaterial({color:0x686653,roughness:1});
  for(let i=0;i<100;i++){const t=(i*37%101)/101,p=riverCurve.getPoint(t),side=i%2?1:-1,dx=Math.cos(t*2.25)*.22+Math.cos(t*5.4)*.12,norm=Math.hypot(dx,1),off=side*(5.55+(i%3)*.25);const stone=new THREE.Mesh(new THREE.IcosahedronGeometry(.12+(i%4)*.055,0),gravelMat);stone.position.set(p.x+dx/norm*off,.04,p.z-dx/norm*off+Math.sin(i*2)*.6);stone.scale.set(1.4,.25,.8);stone.rotation.y=i*.7;scene.add(stone)}
  // A small warm lantern near the fishing interaction point.
- const lantern=new THREE.Group();lantern.position.set(4,.05,1);scene.add(lantern);
+ const lantern=new THREE.Group();lantern.position.set(1,.05,-331);scene.add(lantern);
  const post=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,2.2,8),new THREE.MeshStandardMaterial({color:0x493729,roughness:1}));post.position.y=1.1;lantern.add(post);
  const glow=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),new THREE.MeshBasicMaterial({color:0xffd48a}));glow.position.y=1.95;lantern.add(glow);
  const lanternLight=new THREE.PointLight(0xffc46b,2.2,12);lanternLight.position.y=1.95;lantern.add(lanternLight);
