@@ -591,7 +591,7 @@ if(currentLevel==='11'){
  const jarrellTentBase='https://raw.githubusercontent.com/Hidencod/tge-assets/main/packs/nature-kit/';
  const jarrellTentLoader=new GLTFLoader();
  const placeJarrellTent=(x,z,rot=0,scaleFactor=1,variant='tent-detailedclosed')=>{
-  jarrellTentLoader.load(jarrellTentBase+variant+'.glb',gltf=>{
+  const addTent=gltf=>{
    const tent=gltf.scene;tent.updateMatrixWorld(true);
    const bounds=new THREE.Box3().setFromObject(tent),size=bounds.getSize(new THREE.Vector3());
    const targetWidth=3.7*scaleFactor,scale=targetWidth/Math.max(size.x,size.z,.001);
@@ -600,7 +600,11 @@ if(currentLevel==='11'){
    tent.position.set(x,campGroundY(x,z)-grounded.min.y,z);tent.rotation.y=rot;
    tent.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
    tent.name='JarrellsPeak_RealTent';scene.add(tent);
-  },undefined,err=>console.warn('Jarrell tent asset failed to load:',err?.message||err));
+  };
+  jarrellTentLoader.load(jarrellTentBase+variant+'.glb',addTent,undefined,err=>{
+   const mirror='https://cdn.jsdelivr.net/gh/Hidencod/tge-assets@main/packs/nature-kit/'+variant+'.glb';
+   jarrellTentLoader.load(mirror,addTent,undefined,err2=>console.warn('Jarrell CC0 tent asset failed on both hosts:',err2?.message||err?.message));
+  });
  };
  placeJarrellTent(-5,-343,.12,1.05,'tent-detailedopen');placeJarrellTent(-5,-337,-.15,.88,'tent-detailedclosed');
  const campfire=new THREE.Group();campfire.position.set(-.2,campGroundY(-.2,-340)+.08,-340);scene.add(campfire);const fireRing=new THREE.Mesh(new THREE.TorusGeometry(.72,.14,8,18),new THREE.MeshStandardMaterial({color:0x5d5548,roughness:1}));fireRing.rotation.x=Math.PI/2;fireRing.position.y=.12;campfire.add(fireRing);const flame=new THREE.Mesh(new THREE.ConeGeometry(.34,1.05,7),new THREE.MeshBasicMaterial({color:0xff8a36}));flame.position.y=.72;campfire.add(flame);const campGlow=new THREE.PointLight(0xff9b4a,2.3,11);campGlow.position.y=1.2;campfire.add(campGlow);
