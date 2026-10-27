@@ -45,6 +45,36 @@ try {
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
 
+  const collisionTarget = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const candidates = api.obstacles
+      .filter(item => item.kind === 'tree' && !item.chunkKey)
+      .map(item => {
+        const distance = Math.hypot(item.x + 3.8, item.z + 340);
+        const slopeX = (api.terrainHeightAt(item.x + 2, item.z) - api.terrainHeightAt(item.x - 2, item.z)) / 4;
+        const slopeZ = (api.terrainHeightAt(item.x, item.z + 2) - api.terrainHeightAt(item.x, item.z - 2)) / 4;
+        return { item, distance, slope: Math.hypot(slopeX, slopeZ) };
+      })
+      .find(candidate => candidate.distance > 60 && candidate.distance < 180 && candidate.slope < .25);
+    if (!candidates) return null;
+    const tree = candidates.item;
+    const startX = tree.x - (tree.r + .48 + 3.5);
+    api.player.position.set(startX, api.terrainHeightAt(startX, tree.z) + .22, tree.z);
+    api.keys.KeyD = true;
+    return { x: tree.x, z: tree.z, r: tree.r };
+  });
+  if (!collisionTarget) {
+    errors.push('no suitable nearby tree collider found for movement test');
+  } else {
+    await page.waitForTimeout(1400);
+    await page.evaluate(() => { window.__climboriaSmoke.keys.KeyD = false; });
+    const collisionResult = await page.evaluate(target => {
+      const p = window.__climboriaSmoke.player.position;
+      return Math.hypot(p.x - target.x, p.z - target.z);
+    }, collisionTarget);
+    if (collisionResult < collisionTarget.r + .48 - .18) errors.push('player penetrated a tree collider during movement');
+  }
+
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
     if (!cache) return null;
