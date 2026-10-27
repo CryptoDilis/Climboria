@@ -1061,6 +1061,7 @@ let paused=true,health=500,stamina=100,strength=3,vel=new THREE.Vector3(),keys={
 const audioSettings={music:.28,sfx:.7,muted:false};
 try{audioSettings.music=Number(localStorage.getItem('climboria_music_volume')??.28);audioSettings.sfx=Number(localStorage.getItem('climboria_sfx_volume')??.7)}catch{}
 let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio=null;
+if(new URLSearchParams(location.search).get('smoke')==='1'&&window.__climboriaSmoke){window.__climboriaSmoke.getMusicState=()=>({src:soundtrackAudio?.currentSrc||soundtrackAudio?.src||'',paused:soundtrackAudio?.paused??true,volume:soundtrackAudio?.volume??0,readyState:soundtrackAudio?.readyState??0,muted:audioSettings.muted,music:audioSettings.music});}
  const expeditionNameForAudio=new URLSearchParams(location.search).get('name')||'Binance Ridge';
  function isJarrellPeakExpedition(){const n=expeditionNameForAudio.toLowerCase().replace(/[^a-z]/g,'');return currentLevel==='11'||n.includes('jarrellspeak')||n.includes('jarrellpeak')}
  function startExpeditionSoundtrack(){
