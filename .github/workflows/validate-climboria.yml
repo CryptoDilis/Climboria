@@ -131,3 +131,11 @@ jobs:
           done
           curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null
           node .github/scripts/game-smoke.mjs
+      - name: Upload Jarrell desktop/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarrell-browser-smoke
+          path: /tmp/jarrell-*.png
+          if-no-files-found: ignore
+          retention-days: 3
