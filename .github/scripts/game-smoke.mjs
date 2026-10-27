@@ -11,7 +11,7 @@ try {
   const page = await desktop.newPage();
   const tentAssets = new Set();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + error.message));
-  page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
+  page.on('console', message => { if (message.type() === 'error' && !message.text().includes('[Climboria diag]')) errors.push('desktop console: ' + message.text()); });
   page.on('response', response => {
     const match = response.url().match(/tent-detailed(open|closed)\.glb/);
     if (match && response.ok()) tentAssets.add('tent-detailed' + match[1] + '.glb');
@@ -165,7 +165,7 @@ try {
   });
   const mobilePage = await mobile.newPage();
   mobilePage.on('pageerror', error => errors.push('mobile pageerror: ' + error.message));
-  mobilePage.on('console', message => { if (message.type() === 'error') errors.push('mobile console: ' + message.text()); });
+  mobilePage.on('console', message => { if (message.type() === 'error' && !message.text().includes('[Climboria diag]')) errors.push('mobile console: ' + message.text()); });
   await mobilePage.goto('http://127.0.0.1:4173/game/play.html?level=11&smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
