@@ -61,6 +61,31 @@ try {
   if (desktopState.riverBedClearance < 0.3) errors.push('Jarrell riverbed is too high for the water surface to read as a visible channel at the trailhead');
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
   if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
+
+  // Deterministic coordinate audit of the streamed Jarrell height field.
+  // Record the steepest sampled point so future collision regressions have exact coordinates.
+  const terrainAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    let samples = 0, nonFinite = [], steepest = { slope: 0, x: 0, z: 0, height: 0 };
+    for (let z = -320; z <= 320; z += 16) {
+      for (let x = -128; x <= 128; x += 16) {
+        const h = api.terrainHeightAt(x, z);
+        const hx = api.terrainHeightAt(x + 1, z), hz = api.terrainHeightAt(x, z + 1);
+        samples++;
+        if (![h, hx, hz].every(Number.isFinite)) {
+          if (nonFinite.length < 12) nonFinite.push({ x, z, h, hx, hz });
+          continue;
+        }
+        const slope = Math.hypot(hx - h, hz - h);
+        if (slope > steepest.slope) steepest = { slope, x, z, height: h };
+      }
+    }
+    return { samples, nonFinite, steepest };
+  });
+  console.log('Jarrell terrain coordinate audit:', JSON.stringify(terrainAudit));
+  if (terrainAudit.samples < 300) errors.push('Jarrell terrain coordinate audit did not sample enough points');
+  if (terrainAudit.nonFinite.length) errors.push('Jarrell terrain heightfield returned non-finite values at coordinates: ' + JSON.stringify(terrainAudit.nonFinite));
+
   if (!desktopState.deathStoneButton.includes('DEATH STONE')) errors.push('desktop Death Stone control did not initialize');
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
