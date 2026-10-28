@@ -24,11 +24,11 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 
 - [ ] Fix all current JavaScript/module-loading errors in `game/play.html`; confirm Three.js and GLTFLoader load in a real browser.
 - [ ] Run JavaScript syntax checks for every inline game/site script.
-- [x] Make **Validate Climboria** pass — verified green on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, run [40689882088](https://github.com/CryptoDilis/Climboria/actions/runs/40689882088).
-- [x] Make **Climboria Browser Smoke Test** pass on desktop and mobile — latest verified green on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, run [40689881937](https://github.com/CryptoDilis/Climboria/actions/runs/40689881937). The browser run reports the Jarrell desktop/mobile smoke test passed, including terrain grounding, swimming surface/dive controls, mobile input release/focus/visibility/pointer-capture cleanup, and tent asset loading.
+- [ ] Make **Validate Climboria** pass on the current release candidate. Historical green run `40689882088` is not evidence that current commits pass; latest observed run `40697399128` failed on commit `9d0aa16a`, and run `40698275078` is the current validation run to verify.
+- [ ] Make **Climboria Browser Smoke Test** pass on desktop and mobile on the current release candidate. Historical green run `40689881937` is not evidence that current commits pass; latest observed run `40697396452` failed on commit `9d0aa16a`, and run `40698275027` is the current smoke run to verify.
 - [ ] Fix the actual smoke-test failures: canvas/scene startup, river swimming and exiting onto the bank, collision, controls/input cleanup, fishing, loot/inventory, tent assets, and menu checks as reported by current logs.
 - [ ] Confirm there are no uncaught browser errors, missing critical assets, or blank 3D scenes.
-- [x] Confirm fresh main workflow runs are green — on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, Browser Smoke Test [40689881937](https://github.com/CryptoDilis/Climboria/actions/runs/40689881937), Validate Climboria [40689882088](https://github.com/CryptoDilis/Climboria/actions/runs/40689882088), and Pages deployment [40689882455](https://github.com/CryptoDilis/Climboria/actions/runs/40689882455) all completed successfully.
+- [ ] Confirm fresh main workflow runs are green on the same commit. On `9d0aa16a`, Browser Smoke Test [40697396452](https://github.com/CryptoDilis/Climboria/actions/runs/40697396452) and Validate Climboria [40697399128](https://github.com/CryptoDilis/Climboria/actions/runs/40697399128) failed; Pages deployment passed. Current candidate `b6a56d16` has new smoke run [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027) and validation run [40698275078](https://github.com/CryptoDilis/Climboria/actions/runs/40698275078) still requiring verification at last check.
 - [ ] Test the deployed game after the same commit passes CI.
 
 ## P1 — World environment and free asset research/integration
@@ -71,6 +71,22 @@ For each asset or code technique: find a trustworthy open-source/GitHub source, 
 - [ ] Bait and fishing loot tables for freshwater versus marine areas; do not show a catch unless the interaction actually succeeds.
 - [ ] Functional interaction prompts and collision/interaction ranges for chests, tents, tools, huts, fish spots, and landmarks.
 - [ ] Reuse suitable open-source interaction, inventory, terrain, navigation, and collision techniques where license and architecture permit; adapt carefully rather than blindly transplanting code.
+
+## P1 — Hero character, realistic animation, and player skins
+
+- [ ] Choose the active hero based on believable human proportions and movement, not appearance alone; avoid a placeholder/prototype fallback.
+- [ ] Research free-to-use character sources (including Mixamo-compatible rigs and CC0/open-license packs); verify commercial-game rights, attribution, redistribution rules, and exact license before integration.
+- [ ] Confirm the chosen model's rig/skeleton and animation format are compatible with the current Three.js/GLTFLoader pipeline; document any retargeting or conversion steps.
+- [ ] Integrate and test a complete baseline animation set: idle, walk, run/sprint, start/stop/turn, jump, fall/land, crouch if used, swim/surface, dive, climb/use tools, fish, and interact with/open treasure chests.
+- [ ] Validate animation blending, foot planting, ground contact, slopes, waterline transitions, camera framing, hitbox/collider dimensions, and respawn; animations must not alter gameplay collision.
+- [ ] Test the hero on desktop and narrow Android/mobile viewports; measure model/texture size, load time, frame rate, and memory. Use LOD/compressed textures where appropriate.
+- [ ] Build a modular cosmetic-skin system separate from gameplay logic: cosmetic-only materials, outfits, headgear, backpacks, gloves, boots, and accessories must not change hitboxes or give unbalanced advantages.
+- [ ] Create original Climboria-themed cosmetic concepts (e.g. Bitcoin-inspired gold/black explorer, Ethereum-inspired violet arcane gear, Solana-inspired gradient techwear, Base-inspired blue expedition kit) without using unauthorized logos or implying official affiliation.
+- [ ] Let players preview and customize permitted colors/accessories; define a constrained customization pipeline so arbitrary player designs cannot inject scripts, oversized assets, or unsafe content.
+- [ ] Define marketplace/NFT metadata and ownership flow before selling: item name, creator, edition/supply, image/preview, rarity rules, chain/network, minting status, and transfer/trade behavior must match the actual implementation.
+- [ ] Do not advertise a skin as an NFT until minting, wallet ownership, marketplace listing/purchase, transfer, royalties/fees, and failure handling are implemented and tested on the intended network.
+- [ ] Confirm intellectual-property rights for every skin design; no unlicensed token logos, third-party characters, brand marks, or copied commercial skins.
+- [ ] Record model/animation source, exact license, attribution, modifications, performance impact, and test evidence in the asset-source research log.
 
 ## P2 — Collision, physics, and controls
 
