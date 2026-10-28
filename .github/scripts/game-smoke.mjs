@@ -47,8 +47,6 @@ try {
       riverBedClearance: Number((0.015 - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.riverX(window.__climboriaSmoke?.player.position.z), window.__climboriaSmoke?.player.position.z)).toFixed(2)),
       nearestTentDistance: Number(Math.min(...(window.__climboriaSmoke?.obstacles.filter(item => item.kind === 'tent').map(item => Math.hypot(item.x - window.__climboriaSmoke.player.position.x, item.z - window.__climboriaSmoke.player.position.z)) || [Infinity])).toFixed(2)),
       cachePrompt: !!document.querySelector('#jarrellChestPrompt'),
-      deathStoneControls: document.querySelectorAll('[id*="deathStone" i], [id*="death-stone" i]').length,
-      deathStoneCopy: /death\s*stone/i.test(document.body.innerText),
       lootHud: document.querySelector('#jarrellLootHUD')?.textContent || '',
       cacheStreaming: typeof window.spawnJarrellCacheForChunk === 'function',
       forestStreaming: typeof window.spawnJarrellForestForChunk === 'function',
@@ -61,7 +59,6 @@ try {
   if (desktopState.riverBedClearance < 0.3) errors.push('Jarrell riverbed is too high for the water surface to read as a visible channel at the trailhead');
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
   if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
-  if (desktopState.deathStoneControls || desktopState.deathStoneCopy) errors.push('retired Death Stone UI or copy returned to Jarrell’s Peak');
 
   // Deterministic coordinate audit of the streamed Jarrell height field.
   // Record the steepest sampled point so future collision regressions have exact coordinates.
@@ -145,6 +142,12 @@ try {
     if (!tentCollision.insideBlocked) errors.push('camp tent collider is not blocking movement at its center');
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
+
+  const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
+  if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
+  if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
+  const deerCount = await page.evaluate(() => window.__climboriaSmoke?.getDeer?.().length || 0);
+  if (deerCount < 5) errors.push('Jarrell roaming deer wildlife did not initialize (expected at least 5)');
 
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);

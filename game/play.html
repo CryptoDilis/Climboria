@@ -198,8 +198,21 @@ function removeJarrellObstacleChunk(key,kind){
 }
 function hitsJarrellObstacleAt(x,z,playerY){
  if(currentLevel!=='11')return false;
- const cell=jarrellColliderGrid.get(Math.floor(x/JARRELL_COLLIDER_CELL)+','+Math.floor(z/JARRELL_COLLIDER_CELL));if(!cell)return false;
- for(const o of cell){const dx=x-o.x,dz=z-o.z;if(Math.abs(dx)>o.r+.4||Math.abs(dz)>o.r+.4)continue;const vertical=playerY+1.75>o.y0&&playerY<o.y1;if(vertical&&dx*dx+dz*dz<(o.r+.4)*(o.r+.4))return true}
+ // Query every grid cell touched by the player's horizontal collision radius.
+ // Looking up only the centre cell caused missed hits at 24 m cell boundaries,
+ // letting the hero clip through trees and rocks while approaching diagonally.
+ const playerRadius=.4,minGX=Math.floor((x-playerRadius)/JARRELL_COLLIDER_CELL),maxGX=Math.floor((x+playerRadius)/JARRELL_COLLIDER_CELL),minGZ=Math.floor((z-playerRadius)/JARRELL_COLLIDER_CELL),maxGZ=Math.floor((z+playerRadius)/JARRELL_COLLIDER_CELL);
+ const seen=new Set();
+ for(let gx=minGX;gx<=maxGX;gx++)for(let gz=minGZ;gz<=maxGZ;gz++){
+  const cell=jarrellColliderGrid.get(gx+','+gz);if(!cell)continue;
+  for(const o of cell){
+   if(seen.has(o))continue;seen.add(o);
+   const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+playerRadius;
+   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
+   const vertical=playerY+1.75>o.y0&&playerY<o.y1;
+   if(vertical&&dx*dx+dz*dz<reach*reach)return true;
+  }
+ }
  return false;
 }
 function mountainHeight(x,z){const dz=(z+145)/405,dx=x/285,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*248;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*31*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+385)*.009))*42;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+280)*.021))*26*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
@@ -555,7 +568,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
    });
   }
   // Jarrell's Peak world landmarks: these are distributed far beyond the riverside trailhead.
- const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);
+ const worldPOIs=new THREE.Group();worldPOIs.name='JarrellsPeak_WorldRegions';scene.add(worldPOIs);window.jarrellWorldPOIs=worldPOIs;
  const poiMat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
  const darkStone=poiMat(0x343d40),stoneEdge=poiMat(0x596367),oldBone=poiMat(0x9c9278),rustMetal=poiMat(0x55453a),riceGreen=poiMat(0x718d42),sanctuaryWater= new THREE.MeshStandardMaterial({color:0x347f8a,roughness:.2,metalness:.12,transparent:true,opacity:.88});
  const place=(geo,mat,x,y,z,sx=1,sy=1,sz=1,rot=0)=>{const m=new THREE.Mesh(geo,mat),groundY=terrainHeightAt(x,z);m.position.set(x,groundY+y,z);m.scale.set(sx,sy,sz);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;worldPOIs.add(m);if(currentLevel==='11'&&((typeof rockGeo!=='undefined'&&geo===rockGeo&&Math.max(sx,sz)>=1.4)||(geo.type==='DodecahedronGeometry'&&sx>=5&&sz>=5)))addJarrellObstacleCollider({x,z,r:Math.max(sx,sz)*.72,y0:groundY-.2,y1:groundY+y+sy,kind:'rock'});return m};
@@ -571,6 +584,32 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  // Battle-scarred field: broken spears, abandoned shields, scattered bones and scorched debris.
  const battleX=-120,battleZ=-5;for(let i=0;i<28;i++){const x=battleX+(rnd()-.5)*65,z=battleZ+(rnd()-.5)*55,y=.1; if(i%3===0){const spear=place(new THREE.CylinderGeometry(.045,.08,2.8,5),rustMetal,x,y+1.3,z,.8,1,.8,rnd()*1.8);spear.rotation.z=(rnd()-.5)*1.8}else if(i%3===1){place(new THREE.CylinderGeometry(.55,.55,.12,8),rustMetal,x,y+.15,z,1,.7,1,rnd()*Math.PI);place(new THREE.BoxGeometry(.12,.12,1.2),oldBone,x,y+.24,z,1,1,1,rnd()*Math.PI)}else{place(boneGeo,oldBone,x,y+.12,z,1,.8,1,rnd()*Math.PI);place(rockGeo,darkStone,x+1,y+.2,z+.7,.5,.3,.8,rnd()*Math.PI)}}
  for(let i=0;i<7;i++){const x=battleX+(rnd()-.5)*55,z=battleZ+(rnd()-.5)*45;place(logGeo,rustMetal,x,.15,z,1,1,1,Math.PI/2+(rnd()-.5));place(new THREE.ConeGeometry(.22,.65,5),darkStone,x+.4,.55,z+.3,1,1,1,rnd()*Math.PI)}
+ // Decayed soldiers: collapsed remains, cracked armour, rusted blades and torn standards.
+ // These are lightweight original procedural meshes, not borrowed character assets.
+ const soldierArmour=poiMat(0x343b3b),oxidizedIron=poiMat(0x4b514a),clothRot=poiMat(0x594b37);
+ const addDecayedSoldier=(x,z,yaw,variant)=>{
+  const gy=terrainHeightAt(x,z),g=new THREE.Group();g.name='Jarrell_DecayedSoldier_Remains';
+  const addPart=(geo,material,px,py,pz,sx=1,sy=1,sz=1,rz=0,ry=0)=>{const m=new THREE.Mesh(geo,material);m.position.set(px,py,pz);m.scale.set(sx,sy,sz);m.rotation.set(0,ry,rz);m.castShadow=!isMobileGPU;m.receiveShadow=true;g.add(m);};
+  // Side-lying body, head, ribs, bent limbs and a damaged helmet.
+  addPart(new THREE.CapsuleGeometry(.22,.62,3,6),soldierArmour,0,.28,0,1.12,.92,.68,Math.PI/2,0);
+  addPart(new THREE.SphereGeometry(.19,7,6),oldBone,.48,.24,.12,.9,.85,.9,0,0);
+  for(let rib=0;rib<4;rib++)addPart(new THREE.TorusGeometry(.19+rib*.012,.035,4,8,Math.PI*1.15),oldBone,-.12,.31,(rib-1.5)*.12,1,.82,.8,Math.PI/2,.15);
+  addPart(new THREE.CylinderGeometry(.07,.1,.62,5),oxidizedIron,-.18,.22,-.45,.8,1,.8,1.05,0);
+  addPart(new THREE.CylinderGeometry(.065,.09,.55,5),oldBone,.18,.18,.46,.85,1,.85,-1.1,0);
+  addPart(new THREE.CylinderGeometry(.07,.09,.7,5),oldBone,-.45,.17,.3,.85,1,.85,-.95,0);
+  addPart(new THREE.DodecahedronGeometry(.17,0),oxidizedIron,.49,.38,.12,1.15,.65,1,0,.35);
+  addPart(new THREE.BoxGeometry(.12,.06,.7),rustMetal,-.58,.1,-.7,1,1,1,-.08,variant*.42);
+  addPart(new THREE.PlaneGeometry(.62,.46),clothRot,-.14,.52,.28,1,1,1,Math.PI/2,yaw*.15);
+  g.position.set(x,gy,z);g.rotation.y=yaw;worldPOIs.add(g);
+ };
+ for(let i=0;i<5;i++)addDecayedSoldier(battleX+(rnd()-.5)*48,battleZ+(rnd()-.5)*38,rnd()*Math.PI*2,i);
+ // A second secluded woodland pond with reeds and a broken stone landing.
+ const pondX=178,pondZ=255,pond=place(new THREE.CircleGeometry(11,40),sanctuaryWater,pondX,.035,pondZ,1.18,1,.78);pond.name='JarrellWoodlandPond';
+ pond.rotation.x=-Math.PI/2;
+ for(let i=0;i<18;i++){const a=i/18*Math.PI*2,rr=10.5+(i%3)*1.4,rx=pondX+Math.cos(a)*rr,rz=pondZ+Math.sin(a)*rr;
+  place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
+ }
+ for(let i=0;i<5;i++)place(rockGeo,stoneEdge,pondX-4+i*1.65,.12,pondZ+11.2, .65,.38,.7,(i%2)*.3);
  // Hidden treasure clearings and spring sanctuary, away from the starter camp.
  const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.rotation.x=-Math.PI/2;
  for(let i=0;i<32;i++){const a=i/32*Math.PI*2,rr=24+(i%3)*2;place(rockGeo,stoneEdge,sanctX+Math.cos(a)*rr,.25,sanctZ+Math.sin(a)*rr,1.1+(i%3)*.4,.8+(i%4)*.4,1.1, a)}
@@ -635,6 +674,33 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  jarrellWildlife=[];
  for(let i=0;i<12;i++){const g=new THREE.Group();const wolfLegs=[];g.name='WildWolf_'+i;const body=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wolfFur);body.scale.set(.95,.48,.43);body.position.y=1.05;g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.42,9,7),wolfFur);head.position.set(0,1.27,.78);head.scale.set(.9,.78,1);g.add(head);const muzzle=new THREE.Mesh(new THREE.ConeGeometry(.22,.6,6),wolfDark);muzzle.rotation.x=Math.PI/2;muzzle.position.set(0,1.16,1.15);g.add(muzzle);for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.ConeGeometry(.15,.42,5),wolfDark);ear.position.set(side*.25,1.62,.75);g.add(ear);const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,6,5),wolfEye);eye.position.set(side*.3,1.34,1.0);g.add(eye);for(const zoff of [-.28,.42]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.62,6),wolfDark);leg.position.set(side*.3,.48,zoff);g.add(leg);wolfLegs.push({mesh:leg,phase:(side===1?0:Math.PI)+(zoff>0?Math.PI:0)})}}const tail=new THREE.Mesh(new THREE.ConeGeometry(.16,.85,6),wolfFur);tail.rotation.x=-Math.PI/2;tail.position.set(0,1.16,-.85);g.add(tail);const wx=(rnd()-.5)*760,wz=-560+rnd()*980;g.position.set(wx,terrainHeightAt(wx,wz)+.05,wz);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:g.position.x,homeZ:g.position.z,phase:rnd()*Math.PI*2,attack:0,speed:1.8+rnd()*1.2,legs:wolfLegs,baseY:1.05};worldPOIs.add(g);jarrellWildlife.push(g)}
 
+ // Gentle forest fauna: deer graze in clearings and flee when the player approaches.
+ // Procedural meshes keep the animals lightweight and independent of external runtime downloads.
+ const jarrellDeer=[];
+ const deerCoat=poiMat(0x98704a),deerLight=poiMat(0xc8ae83),deerHoof=poiMat(0x38322a),deerAntler=poiMat(0x76664e);
+ for(let i=0;i<7;i++){
+  const g=new THREE.Group();g.name='JarrellWildDeer_'+i;
+  const torso=new THREE.Mesh(new THREE.SphereGeometry(.62,9,7),deerCoat);torso.scale.set(1.2,.78,.62);torso.position.y=1.08;g.add(torso);
+  const chest=new THREE.Mesh(new THREE.SphereGeometry(.38,8,6),deerLight);chest.scale.set(.82,1.05,.8);chest.position.set(0,.98,.43);g.add(chest);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.16,.27,.7,7),deerCoat);neck.position.set(0,1.42,.55);neck.rotation.x=-.34;g.add(neck);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.23,8,6),deerCoat);head.scale.set(.82,.88,1.25);head.position.set(0,1.77,.79);g.add(head);
+  const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5),deerLight);muzzle.scale.set(.8,.7,1.15);muzzle.position.set(0,1.69,1.02);g.add(muzzle);
+  for(const side of [-1,1]){
+   const ear=new THREE.Mesh(new THREE.ConeGeometry(.075,.34,5),deerLight);ear.position.set(side*.2,1.91,.73);ear.rotation.z=side*.6;g.add(ear);
+   const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),deerHoof);eye.position.set(side*.19,1.79,.91);g.add(eye);
+   const antlerBase=new THREE.Mesh(new THREE.CylinderGeometry(.025,.045,.24,5),deerAntler);antlerBase.position.set(side*.11,2.0,.77);antlerBase.rotation.z=side*.24;g.add(antlerBase);
+   for(let tine=0;tine<2;tine++){const antler=new THREE.Mesh(new THREE.CylinderGeometry(.012,.026,.22,4),deerAntler);antler.position.set(side*(.17+tine*.07),2.13+tine*.05,.76);antler.rotation.z=side*(.62+tine*.22);g.add(antler)}
+  }
+  const legs=[];
+  for(const side of [-1,1])for(const front of [-1,1]){
+   const leg=new THREE.Mesh(new THREE.CylinderGeometry(.065,.085,.62,5),deerHoof);
+   leg.position.set(side*.29,.48,front*.39);g.add(leg);legs.push({mesh:leg,phase:(side===1?0:Math.PI)+(front>0?Math.PI:0)});
+  }
+  const tail=new THREE.Mesh(new THREE.ConeGeometry(.1,.23,5),deerLight);tail.position.set(0,1.19,-.7);tail.rotation.x=-Math.PI/2;g.add(tail);
+  let x,z,tries=0;do{x=-3.8+(rnd()-.5)*820;z=-340+(rnd()-.5)*820;tries++}while(tries<80&&(Math.hypot(x+1,z+340)<95||Math.abs(x-jarrellRiverX(z))<22||Math.hypot((x-88)/1.18,z+340)<130));
+  g.position.set(x,terrainHeightAt(x,z),z);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:x,homeZ:z,phase:rnd()*Math.PI*2,speed:2.1+rnd()*1.1,legs,baseY:0,flee:0};scene.add(g);jarrellDeer.push(g);
+ }
+ window.jarrellDeer=jarrellDeer;
 }else{const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground)}
 if(currentLevel!=='11'){const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-25);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
 // This expedition uses foot trails, not grip climbing.
@@ -757,7 +823,7 @@ function openNearbyTreasure(){
  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);max-width:90vw;padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3800);
  synthSfx('pickup');return true;
 }
-if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,obstacles:jarrellObstacleColliders,getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,getMoveVec:()=>moveVec(),getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
+if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,obstacles:jarrellObstacleColliders,landmarks:(window.jarrellWorldPOIs?.children||[]).map(o=>o.name),getDeer:()=>window.jarrellDeer||[],getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,getMoveVec:()=>moveVec(),getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
 // Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
@@ -1044,8 +1110,8 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
  function isJarrellPeakExpedition(){return currentLevel==='11'}
   function usesOriginalPlayerTrack(){return isJarrellPeakExpedition()||/arena/i.test(expeditionNameForAudio)}
  function startExpeditionSoundtrack(){
-  // Use the user's original Rohan-inspired MP3 in Jarrell's Peak and Arena.
-   if(!usesOriginalPlayerTrack()&&isJarrellPeakExpedition())return;
+  // Jarrell's Peak keeps its original procedural soundtrack; the supplied MP3 is for regular expeditions only.
+  if(isJarrellPeakExpedition())return;
   if(!soundtrackAudio){
    soundtrackAudio=new Audio('assets/music/climboria-theme-60s.mp3');
    soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
@@ -1054,61 +1120,6 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
   soundtrackAudio.volume=audioSettings.muted?0:Math.max(0,Math.min(1,audioSettings.music));
   if(!audioSettings.muted&&audioSettings.music>0)soundtrackAudio.play().catch(()=>{});
  }
-function ensureAudio(){
- if(!audioCtx){
-  const AC=window.AudioContext||window.webkitAudioContext;if(!AC){console.warn('Web Audio API unavailable');return}
-  audioCtx=new AC();const master=audioCtx.createGain();master.gain.value=audioSettings.muted?0:1;master.connect(audioCtx.destination);audioCtx.masterGain=master;
- }
- if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
- startExpeditionSoundtrack();
- if(isJarrellPeakExpedition()&&!usesOriginalPlayerTrack()&&!musicStarted&&audioCtx.state!=='closed'){
-  musicStarted=true;const ctx=audioCtx,master=ctx.masterGain;
-  // Procedural score is a fallback only when the supplied original track is not selected.
-  const chords=[
-   [146.83,220,293.66], // D minor
-   [130.81,196,261.63], // C
-   [110,164.81,220],    // A minor
-   [123.47,185,246.94] // B diminished-ish color
-  ];
-  const chordBus=ctx.createGain();chordBus.gain.value=.34;chordBus.connect(master);
-  const padFilter=ctx.createBiquadFilter();padFilter.type='lowpass';padFilter.frequency.value=1250;padFilter.connect(chordBus);
-  const pads=[];
-  chords[0].forEach((hz,i)=>{
-   const osc=ctx.createOscillator(),osc2=ctx.createOscillator(),g=ctx.createGain(),vib=ctx.createOscillator(),vg=ctx.createGain();
-   osc.type='sawtooth';osc.frequency.value=hz;osc2.type='triangle';osc2.frequency.value=hz*1.004;
-   vib.frequency.value=.18+i*.04;vg.gain.value=.8;vib.connect(vg);vg.connect(osc.frequency);
-   g.gain.value=.0001;osc.connect(g);osc2.connect(g);g.connect(padFilter);osc.start();osc2.start();vib.start();pads.push({osc,osc2,g});
-  });
-  const bass=ctx.createOscillator(),bassGain=ctx.createGain();bass.type='sine';bass.frequency.value=73.42;bassGain.gain.value=.0001;bass.connect(bassGain);bassGain.connect(master);bass.start();
-  const lead=ctx.createOscillator(),leadGain=ctx.createGain(),leadFilter=ctx.createBiquadFilter();lead.type='triangle';leadFilter.type='lowpass';leadFilter.frequency.value=1800;lead.connect(leadFilter);leadFilter.connect(leadGain);leadGain.connect(master);leadGain.gain.value=.0001;lead.start();
-  const pluck=ctx.createOscillator(),pluckGain=ctx.createGain(),pluckFilter=ctx.createBiquadFilter();pluck.type='triangle';pluckFilter.type='lowpass';pluckFilter.frequency.value=2400;pluck.connect(pluckFilter);pluckFilter.connect(pluckGain);pluckGain.connect(master);pluckGain.gain.value=.0001;pluck.start();
-  // Soft filtered-noise wind bed plus a low cinematic pulse; everything is generated locally.
-  const windSrc=ctx.createBufferSource(),windBuf=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate),windData=windBuf.getChannelData(0);
-  for(let i=0;i<windData.length;i++)windData[i]=(Math.random()*2-1)*.22;
-  windSrc.buffer=windBuf;windSrc.loop=true;const windFilter=ctx.createBiquadFilter();windFilter.type='lowpass';windFilter.frequency.value=430;
-  const windGain=ctx.createGain();windGain.gain.value=.0001;windSrc.connect(windFilter);windFilter.connect(windGain);windGain.connect(master);windSrc.start();
-  const pulse=ctx.createOscillator(),pulseGain=ctx.createGain();pulse.type='sine';pulse.frequency.value=55;pulseGain.gain.value=.0001;pulse.connect(pulseGain);pulseGain.connect(master);pulse.start();
-  audioCtx.fantasyMusic={pads,bass,bassGain,lead,leadGain,pluck,pluckGain,windGain,pulseGain,pulse};
-  const progression=[0,1,2,0,3,2,1,0],motifs=[
-   [0,3,5,7,5,3,2,0],[7,5,3,2,0,2,3,5],[0,2,3,7,9,7,5,3],[5,7,9,12,9,7,5,2]
-  ],scale=[220,246.94,293.66,329.63,392,440,493.88,587.33,659.25,783.99,880,987.77,1174.66];
-  let beat=0,phrase=0,phraseSeed=17;
-  const tick=()=>{
-   if(!audioCtx||audioCtx.state==='closed')return;
-   const now=ctx.currentTime,step=beat%8,ci=progression[Math.floor(beat/8)%progression.length],ch=chords[ci];
-   if(step===0){phraseSeed=(phraseSeed*1664525+1013904223)>>>0;phrase=(phraseSeed>>>28)%motifs.length}
-   pads.forEach((p,i)=>{p.osc.frequency.setTargetAtTime(ch[i],now,.5);p.osc2.frequency.setTargetAtTime(ch[i]*1.003,now,.5);p.g.gain.setTargetAtTime(.027*audioSettings.music,now,.4)});
-   bass.frequency.setTargetAtTime(ch[0]/2,now,.22);bassGain.gain.setTargetAtTime(.09*audioSettings.music,now,.2);
-   const note=motifs[phrase][step],octave=(phrase===3&&step>3)?2:1;
-   lead.frequency.setTargetAtTime(scale[note%scale.length]*octave,now,.07);leadGain.gain.setTargetAtTime((step===0||step===4?.095:.048)*audioSettings.music,now,.06);
-   pluck.frequency.setTargetAtTime(ch[(step+phrase)%3]*((step%2)?2:1),now,.015);pluckGain.gain.setTargetAtTime((step===0||step===4?.045:.018)*audioSettings.music,now,.02);pluckGain.gain.setTargetAtTime(.0001,now+.2,.06);
-   pulse.frequency.setTargetAtTime(step===0?ch[0]/2:step===4?ch[0]*.75:48,now,.04);pulseGain.gain.setTargetAtTime((step===0||step===4?.12:.0001)*audioSettings.music,now,.025);pulseGain.gain.setTargetAtTime(.0001,now+.16,.04);
-   windGain.gain.setTargetAtTime((.018+.012*Math.sin(now*.17))*audioSettings.music,now,.8);
-   beat++;setTimeout(tick,520);
-  };tick();
- }
- applyAudioVolumes();
-}
 function applyAudioVolumes(){
  if(soundtrackAudio){
   soundtrackAudio.volume=audioSettings.muted?0:Math.max(0,Math.min(1,audioSettings.music));
@@ -1153,7 +1164,8 @@ function pickup(){/* World clicks never open NPC dialogue; interaction is proxim
 function moveVec(){let x=(keys.KeyD?1:0)-(keys.KeyA?1:0),z=(keys.KeyW?1:0)-(keys.KeyS?1:0);x+=touchMove.x;z+=touchMove.y;const len=Math.hypot(x,z);if(len>1){x/=len;z/=len}/* Camera-relative: W follows the horizontal direction the camera faces. */const cy=Math.cos(camYaw),sy=Math.sin(camYaw);return{x:x*cy-z*sy,z:-x*sy-z*cy}}
 function drawMiniMap(){const c=document.getElementById('miniMap');if(!c||document.getElementById('mapPanel').hidden)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='#142536';x.fillRect(0,0,c.width,c.height);x.strokeStyle='#526b7d';x.lineWidth=2;x.beginPath();x.moveTo(90,138);x.lineTo(90,18);x.stroke();x.strokeStyle='#8aa1b4';x.beginPath();x.moveTo(55,138);x.lineTo(70,105);x.lineTo(52,78);x.lineTo(88,48);x.lineTo(112,20);x.stroke();for(const p of trailPlatforms){const px=90+p.x*7,py=137-p.z*5.5;x.fillStyle='#9aa8a9';x.fillRect(px-4,py-3,8,6)}const px=90+player.position.x*7,py=137-player.position.y*5.5;x.fillStyle='#ffcf5a';x.beginPath();x.arc(px,Math.max(8,Math.min(142,py)),4,0,Math.PI*2);x.fill();x.strokeStyle='#ffcf5a';x.strokeRect(4,4,c.width-8,c.height-8)}
 let jarrellMoveVX=0,jarrellMoveVZ=0;
-function update(dt){if(paused||levelCleared)return;if(currentLevel==='11'&&window.updateJarrellChunks)window.updateJarrellChunks(player.position.x,player.position.z);if(currentLevel==='11'&&typeof jarrellWildlife!=='undefined'&&jarrellWildlife.length){for(const wolf of jarrellWildlife){const dx=player.position.x-wolf.position.x,dz=player.position.z-wolf.position.z,dist=Math.hypot(dx,dz);wolf.userData.attack=Math.max(0,wolf.userData.attack-dt);if(dist<15){const targetYaw=Math.atan2(dx,dz),yawDelta=Math.atan2(Math.sin(targetYaw-wolf.rotation.y),Math.cos(targetYaw-wolf.rotation.y));wolf.rotation.y+=yawDelta*(1-Math.exp(-dt*7.5));if(dist>2.2){const step=wolf.userData.speed*dt,ux=dx/(dist||1),uz=dz/(dist||1),nx=wolf.position.x+ux*step,nz=wolf.position.z+uz*step,wy=terrainHeightAt(wolf.position.x,wolf.position.z)+.05;if(!hitsJarrellObstacleAt(nx,nz,wy)){wolf.position.x=nx;wolf.position.z=nz}else{const sideA={x:wolf.position.x-uz*step*1.25,z:wolf.position.z+ux*step*1.25},sideB={x:wolf.position.x+uz*step*1.25,z:wolf.position.z-ux*step*1.25};if(!hitsJarrellObstacleAt(sideA.x,sideA.z,wy)){wolf.position.x=sideA.x;wolf.position.z=sideA.z}else if(!hitsJarrellObstacleAt(sideB.x,sideB.z,wy)){wolf.position.x=sideB.x;wolf.position.z=sideB.z}}}else if(wolf.userData.attack<=0){health=Math.max(0,health-12);wolf.userData.attack=1.6;const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='WOLF ATTACK · -12 HP'}}else{wolf.userData.phase+=dt*.35;wolf.position.x=wolf.userData.homeX+Math.sin(wolf.userData.phase)*3.5;wolf.position.z=wolf.userData.homeZ+Math.cos(wolf.userData.phase*.7)*3.5;wolf.rotation.y=Math.sin(wolf.userData.phase)*.6}wolf.position.y=terrainHeightAt(wolf.position.x,wolf.position.z)+.05;const gaitRate=dist<15?8.5:2.2;wolf.userData.phase+=dt*gaitRate;const gait=dist<15?1:.22;wolf.children[0].position.y=wolf.userData.baseY+Math.abs(Math.sin(wolf.userData.phase*2))*.055*gait;for(const legInfo of wolf.userData.legs){legInfo.mesh.rotation.x=Math.sin(wolf.userData.phase+legInfo.phase)*.48*gait}}}if(currentLevel==='11'&&fishingRiver&&fishingRiver.material.uniforms)fishingRiver.material.uniforms.uTime.value+=dt;const m=moveVec();let swimming=false;if(currentLevel==='11'&&typeof riverCurve!=='undefined'){/* Match the actual river ribbon geometry: find the nearest point along its curve, not only the point at the player's Z. */const nearestRiver=window.nearestRiverPoint(player.position.x,player.position.z);let nearestDistSq=nearestRiver.distanceSq;const riverHalfWidth=4.6+Math.sin(nearestRiver.t*3.8+.3)*.55+Math.sin(nearestRiver.t*8.1)*.22,shoreMargin=.35;swimming=nearestDistSq<(riverHalfWidth+shoreMargin)*(riverHalfWidth+shoreMargin)&&player.position.z>-360&&player.position.z<360;}if(currentLevel==='11'&&window.jarrellPhysicsSwimming!==swimming){/* Prevent land gravity or sprint momentum from carrying across the shoreline; entering and leaving water should feel like a clean movement-state transition. */if(window.jarrellPhysicsSwimming!==undefined){vel.y=0;jarrellMoveVX*=.35;jarrellMoveVZ*=.35}window.jarrellPhysicsSwimming=swimming}if(window.jarrellSwimming!==swimming){window.jarrellSwimming=swimming;const swimJumpButton=document.getElementById('jump'),swimDiveButton=document.getElementById('sprint');if(swimJumpButton)swimJumpButton.textContent=swimming?'SURFACE':'JUMP';if(swimDiveButton)swimDiveButton.textContent=swimming?'DIVE':'RUN';const riverHint=document.getElementById('jarrellFishingHint');if(riverHint)riverHint.textContent=swimming?'SWIM · SPACE UP / CTRL DOWN':'RIVERSIDE CAMP · E TO FISH';}if(heroMixer){heroMixer.update(dt);const moving=Math.hypot(m.x,m.z)>.12;const desired=swimming?(heroSwimAction||heroIdleAction||heroWalkAction):vel.y>1.8&&heroJumpAction?heroJumpAction:moving?((sprinting||keys.ShiftLeft)?(heroRunAction||heroWalkAction):(heroWalkAction||heroRunAction)):heroIdleAction;if(desired&&desired!==heroActiveAction){desired.reset().play();if(heroActiveAction)desired.crossFadeFrom(heroActiveAction,.18,true);heroActiveAction=desired;}else if(!moving&&!swimming&&!heroIdleAction&&heroActiveAction){heroMixer.stopAllAction();heroActiveAction=null;}}if(Math.hypot(m.x,m.z)>.2&&performance.now()-lastStepSfx>430){lastStepSfx=performance.now();synthSfx('step')}const speed=(swimming?2.0:(sprinting||keys.ShiftLeft?4.0:2.6))*(currentLevel==='11'?1.6:25);drawMiniMap();const moveAmount=Math.min(1,Math.hypot(m.x,m.z));const gait=moveAmount*(sprinting||keys.ShiftLeft?1.18:1);const stride=performance.now()*.0078*(sprinting||keys.ShiftLeft?1.32:1);const step=Math.sin(stride),opposite=Math.sin(stride+Math.PI),bounce=Math.max(0,Math.cos(stride*2));leftLeg.rotation.x=step*.48*gait;rightLeg.rotation.x=opposite*.48*gait;leftArm.rotation.x=opposite*.34*gait-.035;rightArm.rotation.x=step*.34*gait-.035;leftArm.rotation.z=-.035+step*.035*gait;rightArm.rotation.z=.035+opposite*.035*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=step*.56*gait;climbSkinRightLeg.rotation.x=opposite*.56*gait;climbSkinLeftArm.rotation.x=opposite*.42*gait-.04;climbSkinRightArm.rotation.x=step*.42*gait-.04;climbSkinLeftArm.rotation.z=-.045+step*.025*gait;climbSkinRightArm.rotation.z=.045+opposite*.025*gait;climbSkin.position.y=.012+Math.abs(Math.cos(stride))*.025*gait;climbSkin.rotation.z=Math.sin(stride)*.018*gait;climbSkin.rotation.x=-.025*gait+(sprinting||keys.ShiftLeft?-.035:0)*gait;}if(Math.hypot(m.x,m.z)>.08){const targetFacing=Math.atan2(-m.x,-m.z);if(currentLevel==='11'){/* Samurai-template technique: exponential angular damping gives frame-rate-independent turns without snapping through the long side of the circle. */const turnDelta=Math.atan2(Math.sin(targetFacing-player.rotation.y),Math.cos(targetFacing-player.rotation.y));player.rotation.y+=turnDelta*(1-Math.exp(-dt*11))}else player.rotation.y=targetFacing}
+function update(dt){if(paused||levelCleared)return;if(currentLevel==='11'&&window.updateJarrellChunks)window.updateJarrellChunks(player.position.x,player.position.z);if(currentLevel==='11'&&Array.isArray(window.jarrellDeer)&&window.jarrellDeer.length){for(const deer of window.jarrellDeer){const d=deer.userData,dx=player.position.x-deer.position.x,dz=player.position.z-deer.position.z,dist=Math.hypot(dx,dz);d.flee=Math.max(0,d.flee-dt);if(dist<13)d.flee=2.8;d.phase+=dt*(d.flee>0?7:1.2);let vx=Math.sin(d.phase)*.35,vz=Math.cos(d.phase)*.35;if(d.flee>0){vx=-dx/(dist||1);vz=-dz/(dist||1)}const speed=d.flee>0?d.speed*2.1:d.speed*.28,len=Math.hypot(vx,vz)||1,nx=deer.position.x+vx/len*speed*dt,nz=deer.position.z+vz/len*speed*dt;if(!hitsJarrellObstacleAt(nx,nz,terrainHeightAt(deer.position.x,deer.position.z)+.05)){deer.position.x=nx;deer.position.z=nz;deer.position.y=terrainHeightAt(nx,nz)}if(Math.hypot(vx,vz)>.1)deer.rotation.y=Math.atan2(-vx,-vz);for(const leg of d.legs)leg.mesh.rotation.x=Math.sin(d.phase+leg.phase)*(d.flee>0?.65:.08)}}
+if(currentLevel==='11'&&typeof jarrellWildlife!=='undefined'&&jarrellWildlife.length){for(const wolf of jarrellWildlife){const dx=player.position.x-wolf.position.x,dz=player.position.z-wolf.position.z,dist=Math.hypot(dx,dz);wolf.userData.attack=Math.max(0,wolf.userData.attack-dt);if(dist<15){const targetYaw=Math.atan2(dx,dz),yawDelta=Math.atan2(Math.sin(targetYaw-wolf.rotation.y),Math.cos(targetYaw-wolf.rotation.y));wolf.rotation.y+=yawDelta*(1-Math.exp(-dt*7.5));if(dist>2.2){const step=wolf.userData.speed*dt,ux=dx/(dist||1),uz=dz/(dist||1),nx=wolf.position.x+ux*step,nz=wolf.position.z+uz*step,wy=terrainHeightAt(wolf.position.x,wolf.position.z)+.05;if(!hitsJarrellObstacleAt(nx,nz,wy)){wolf.position.x=nx;wolf.position.z=nz}else{const sideA={x:wolf.position.x-uz*step*1.25,z:wolf.position.z+ux*step*1.25},sideB={x:wolf.position.x+uz*step*1.25,z:wolf.position.z-ux*step*1.25};if(!hitsJarrellObstacleAt(sideA.x,sideA.z,wy)){wolf.position.x=sideA.x;wolf.position.z=sideA.z}else if(!hitsJarrellObstacleAt(sideB.x,sideB.z,wy)){wolf.position.x=sideB.x;wolf.position.z=sideB.z}}}else if(wolf.userData.attack<=0){health=Math.max(0,health-12);wolf.userData.attack=1.6;const stateHud=document.getElementById('state');if(stateHud)stateHud.textContent='WOLF ATTACK · -12 HP'}}else{wolf.userData.phase+=dt*.35;wolf.position.x=wolf.userData.homeX+Math.sin(wolf.userData.phase)*3.5;wolf.position.z=wolf.userData.homeZ+Math.cos(wolf.userData.phase*.7)*3.5;wolf.rotation.y=Math.sin(wolf.userData.phase)*.6}wolf.position.y=terrainHeightAt(wolf.position.x,wolf.position.z)+.05;const gaitRate=dist<15?8.5:2.2;wolf.userData.phase+=dt*gaitRate;const gait=dist<15?1:.22;wolf.children[0].position.y=wolf.userData.baseY+Math.abs(Math.sin(wolf.userData.phase*2))*.055*gait;for(const legInfo of wolf.userData.legs){legInfo.mesh.rotation.x=Math.sin(wolf.userData.phase+legInfo.phase)*.48*gait}}}if(currentLevel==='11'&&fishingRiver&&fishingRiver.material.uniforms)fishingRiver.material.uniforms.uTime.value+=dt;const m=moveVec();let swimming=false;if(currentLevel==='11'&&typeof riverCurve!=='undefined'){/* Match the actual river ribbon geometry: find the nearest point along its curve, not only the point at the player's Z. */const nearestRiver=window.nearestRiverPoint(player.position.x,player.position.z);let nearestDistSq=nearestRiver.distanceSq;const riverHalfWidth=4.6+Math.sin(nearestRiver.t*3.8+.3)*.55+Math.sin(nearestRiver.t*8.1)*.22,shoreMargin=.35;swimming=nearestDistSq<(riverHalfWidth+shoreMargin)*(riverHalfWidth+shoreMargin)&&player.position.z>-360&&player.position.z<360;}if(currentLevel==='11'&&window.jarrellPhysicsSwimming!==swimming){/* Prevent land gravity or sprint momentum from carrying across the shoreline; entering and leaving water should feel like a clean movement-state transition. */if(window.jarrellPhysicsSwimming!==undefined){vel.y=0;jarrellMoveVX*=.35;jarrellMoveVZ*=.35}window.jarrellPhysicsSwimming=swimming}if(window.jarrellSwimming!==swimming){window.jarrellSwimming=swimming;const swimJumpButton=document.getElementById('jump'),swimDiveButton=document.getElementById('sprint');if(swimJumpButton)swimJumpButton.textContent=swimming?'SURFACE':'JUMP';if(swimDiveButton)swimDiveButton.textContent=swimming?'DIVE':'RUN';const riverHint=document.getElementById('jarrellFishingHint');if(riverHint)riverHint.textContent=swimming?'SWIM · SPACE UP / CTRL DOWN':'RIVERSIDE CAMP · E TO FISH';}if(heroMixer){heroMixer.update(dt);const moving=Math.hypot(m.x,m.z)>.12;const desired=swimming?(heroSwimAction||heroIdleAction||heroWalkAction):vel.y>1.8&&heroJumpAction?heroJumpAction:moving?((sprinting||keys.ShiftLeft)?(heroRunAction||heroWalkAction):(heroWalkAction||heroRunAction)):heroIdleAction;if(desired&&desired!==heroActiveAction){desired.reset().play();if(heroActiveAction)desired.crossFadeFrom(heroActiveAction,.18,true);heroActiveAction=desired;}else if(!moving&&!swimming&&!heroIdleAction&&heroActiveAction){heroMixer.stopAllAction();heroActiveAction=null;}}if(Math.hypot(m.x,m.z)>.2&&performance.now()-lastStepSfx>430){lastStepSfx=performance.now();synthSfx('step')}const speed=(swimming?2.0:(sprinting||keys.ShiftLeft?4.0:2.6))*(currentLevel==='11'?1.6:25);drawMiniMap();const moveAmount=Math.min(1,Math.hypot(m.x,m.z));const gait=moveAmount*(sprinting||keys.ShiftLeft?1.18:1);const stride=performance.now()*.0078*(sprinting||keys.ShiftLeft?1.32:1);const step=Math.sin(stride),opposite=Math.sin(stride+Math.PI),bounce=Math.max(0,Math.cos(stride*2));leftLeg.rotation.x=step*.48*gait;rightLeg.rotation.x=opposite*.48*gait;leftArm.rotation.x=opposite*.34*gait-.035;rightArm.rotation.x=step*.34*gait-.035;leftArm.rotation.z=-.035+step*.035*gait;rightArm.rotation.z=.035+opposite*.035*gait;if(climbSkinLeftLeg){climbSkinLeftLeg.rotation.x=step*.56*gait;climbSkinRightLeg.rotation.x=opposite*.56*gait;climbSkinLeftArm.rotation.x=opposite*.42*gait-.04;climbSkinRightArm.rotation.x=step*.42*gait-.04;climbSkinLeftArm.rotation.z=-.045+step*.025*gait;climbSkinRightArm.rotation.z=.045+opposite*.025*gait;climbSkin.position.y=.012+Math.abs(Math.cos(stride))*.025*gait;climbSkin.rotation.z=Math.sin(stride)*.018*gait;climbSkin.rotation.x=-.025*gait+(sprinting||keys.ShiftLeft?-.035:0)*gait;}if(Math.hypot(m.x,m.z)>.08){const targetFacing=Math.atan2(-m.x,-m.z);if(currentLevel==='11'){/* Samurai-template technique: exponential angular damping gives frame-rate-independent turns without snapping through the long side of the circle. */const turnDelta=Math.atan2(Math.sin(targetFacing-player.rotation.y),Math.cos(targetFacing-player.rotation.y));player.rotation.y+=turnDelta*(1-Math.exp(-dt*11))}else player.rotation.y=targetFacing}
 if(swimming){vel.y=0;/* Keep the character's root at the waterline and use a small buoyancy bob. */const swimFeetY=-.62+Math.sin(performance.now()*.0028)*.025;player.position.y+=(swimFeetY-player.position.y)*Math.min(1,dt*4.5);if(keys.Space){player.position.y=Math.min(-.12,player.position.y+dt*.65)}if(keys.ControlLeft||keys.ControlRight){player.position.y=Math.max(-1.05,player.position.y-dt*.4)}const swimCeiling=keys.Space?-.12:-.35;player.position.y=Math.max(-1.05,Math.min(swimCeiling,player.position.y));}else{vel.y-=15*dt}const oldY=player.position.y;let travelX=m.x*speed,travelZ=m.z*speed;if(currentLevel==='11'){const response=1-Math.exp(-dt*(swimming?5.5:8.5));jarrellMoveVX+=(travelX-jarrellMoveVX)*response;jarrellMoveVZ+=(travelZ-jarrellMoveVZ)*response;travelX=jarrellMoveVX;travelZ=jarrellMoveVZ}else{jarrellMoveVX=0;jarrellMoveVZ=0}const nextX=player.position.x+travelX*dt,nextZ=player.position.z+travelZ*dt;const proposedWater=currentLevel==='11'&&typeof riverCurve!=='undefined'&&(()=>{const nearest=window.nearestRiverPoint(nextX,nextZ),halfWidth=4.6+Math.sin(nearest.t*3.8+.3)*.55+Math.sin(nearest.t*8.1)*.22+.35;return nearest.distanceSq<(halfWidth*halfWidth)&&nextZ>-360&&nextZ<360&&terrainHeightAt(nextX,nextZ)<.12})();
 // Solid cliff collision: stop the climber at the cliff face instead of letting them pass through it.
 player.position.y+=vel.y*dt;
