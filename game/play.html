@@ -1304,21 +1304,6 @@ function applySavedHero(hero){
   if(!hero)return;
   // Switch between the uploaded male and female GLB characters.
   syncHeroAppearanceType();
-  // Apply the saved appearance to the live procedural climber, not just the form.
-  if(climbHeroMaterials){
-    const tones={fair:0xf1d0b1,light:0xe5b995,medium:0xc98f68,tan:0xa96f4d,deep:0x70452f};
-    const hairs={blonde:0xe0b64f,brown:0x68432c,black:0x211914,auburn:0x8b3f24,silver:0xb8bdc4};
-    const palettes={gold:{shirt:0x587746,dark:0x354a2b,shorts:0x785536,pack:0x344a39},forest:{shirt:0x3f6746,dark:0x293f2c,shorts:0x66513a,pack:0x263b2c},ice:{shirt:0x477d9b,dark:0x294d63,shorts:0x53616a,pack:0x2d4655},ember:{shirt:0x9a4936,dark:0x602b25,shorts:0x604330,pack:0x49302a}};
-    const tone=tones[hero.skin]||tones.medium,hair=hairs[hero.hairColor]||hairs.blonde,p=palettes[hero.palette]||palettes.gold;
-    climbHeroMaterials.skinMat.color.setHex(tone);
-    climbHeroMaterials.hairMat.color.setHex(hair);
-    climbHeroMaterials.hairLight.color.setHex(new THREE.Color(hair).lerp(new THREE.Color(0xffffff),.28).getHex());
-    climbHeroMaterials.green.color.setHex(p.shirt);climbHeroMaterials.greenDark.color.setHex(p.dark);
-    climbHeroMaterials.shortsMat.color.setHex(p.shorts);climbHeroMaterials.packMat.color.setHex(p.pack);
-    // Short/bob styles tuck the long side locks away; long/ponytail styles keep them visible.
-    const shortHair=['short','bob'].includes(hero.hair);
-    climbHeroHairParts.forEach((part,i)=>{if(part)part.visible=!(shortHair&&i>0);});
-  }
   const hudName=document.getElementById('hudPlayerName');
   const profileName=document.getElementById('profileName');
   if(hudName)hudName.textContent=hero.name;
