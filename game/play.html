@@ -942,12 +942,14 @@ part(new THREE.CylinderGeometry(.025,.035,.48,7),rubber,tool,0,0,.02);
 part(new THREE.BoxGeometry(.23,.055,.07),metal,tool,0,.25,-.01);
 // Keep the level-aware TRAILHEAD_X/TRAILHEAD_Z spawn set above; do not reset Jarrell's Peak to the generic origin.
 // Try the user's ORIGINAL GLB from the game asset folder. The procedural adventurer
-// remains visible as a fallback until the GLB loads and is framed successfully.
+// is retired immediately; only the selected, fully loaded GLB hero may be shown.
 const legacyPlayerParts=[...player.children];
+// Retire the old procedural armor hero immediately; never let it flash while GLB assets load.
+legacyPlayerParts.forEach(o=>{o.visible=false;});
 let climbSkin=null,climbSkinLeftLeg=null,climbSkinRightLeg=null,climbSkinLeftArm=null,climbSkinRightArm=null;
 let climbHeroMaterials=null,climbHeroHairParts=[];
 try{
- climbSkin=new THREE.Group();climbSkin.name='Climboria_Procedural_Fallback';player.add(climbSkin);
+ climbSkin=new THREE.Group();climbSkin.name='Climboria_Retired_Procedural_Hero';climbSkin.visible=false;player.add(climbSkin);
  const skinMat=mat(0xd9a27e),green=mat(0x587746),greenDark=mat(0x354a2b),leather=mat(0x68452d),leatherLite=mat(0x9a7147),hairMat=mat(0xe0b64f),hairLight=mat(0xf2d17a),bootMat=mat(0x3b2b22),metalMat=mat(0xb5c3c8,.4),eyeMat=mat(0x252c32),freckleMat=mat(0x8a5139),shortsMat=mat(0x785536),kneeMat=mat(0x4c5558),packMat=mat(0x344a39),bedrollMat=mat(0xb9a17a);
  climbHeroMaterials={skinMat,green,greenDark,leather,leatherLite,hairMat,hairLight,bootMat,shortsMat,packMat,bedrollMat};
  function skinPart(g,m,p,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;p.add(o);return o}
@@ -973,7 +975,7 @@ try{
  const pick=skinPart(new THREE.CylinderGeometry(.022,.028,.48,7),leather,climbSkin,.27,1.35,.29);pick.rotation.z=-.35;
  const pickHead=skinPart(new THREE.BoxGeometry(.25,.055,.07),metalMat,climbSkin,.34,1.59,.29);pickHead.rotation.z=-.2;
  window.__climbDiag('Procedural player fallback ready; loading original GLB asset…');
-}catch(err){if(climbSkin)climbSkin.visible=false;legacyPlayerParts.forEach(o=>o.visible=true);window.__climbDiag('Fallback skin failed: '+err.message)}
+}catch(err){if(climbSkin)climbSkin.visible=false;legacyPlayerParts.forEach(o=>o.visible=false);window.__climbDiag('Retired fallback skin unavailable: '+err.message)}
 // GLB is an external binary asset (not base64 embedded into this HTML).
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 let heroMixer=null,heroIdleAction=null,heroWalkAction=null,heroRunAction=null,heroJumpAction=null,heroSwimAction=null,heroActiveAction=null;
@@ -1001,7 +1003,7 @@ function syncHeroAppearanceType(){
  const male=savedHeroType()==='man';
  if(heroModelVisual)heroModelVisual.visible=!male;
  if(maleHeroModelVisual)maleHeroModelVisual.visible=male&&!!maleAnimState;
- if(climbSkin)climbSkin.visible=male&&!maleAnimState;
+ if(climbSkin)climbSkin.visible=false;
  legacyPlayerParts.forEach(o=>o.visible=false);
  const state=male?(maleAnimState||femaleAnimState):femaleAnimState;
  if(state){heroMixer=state.mixer;heroIdleAction=state.idle;heroWalkAction=state.walk;heroRunAction=state.run;heroJumpAction=state.jump||null;heroSwimAction=state.swim||null;heroActiveAction=state.active||state.idle;heroSwimPose=state.swimPose||null;}
@@ -1078,13 +1080,14 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   window.__climbAraAnimations={mixer,clips:sourceClips,actions:{idle:idleAction,walk:walkAction,run:runAction,jump:jumpAction,swim:swimAction,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test()}};
   window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+sourceClips.length+' clips; root-motion translations neutralized.');
  }catch(err){
-  if(climbSkin)climbSkin.visible=true;
-  window.__climbDiag('Ara 3D character setup failed; procedural fallback kept: '+(err?.message||err));
+  if(climbSkin)climbSkin.visible=false;
+  legacyPlayerParts.forEach(o=>o.visible=false);
+  window.__climbDiag('Ara 3D character setup failed; legacy hero fallback disabled: '+(err?.message||err));
  }
 },undefined,err=>{
- if(climbSkin)climbSkin.visible=true;
- legacyPlayerParts.forEach(o=>o.visible=true);
- window.__climbDiag('Ara 3D GLB could not load; procedural fallback kept: '+(err?.message||err));
+ if(climbSkin)climbSkin.visible=false;
+ legacyPlayerParts.forEach(o=>o.visible=false);
+ window.__climbDiag('Ara 3D GLB could not load; legacy hero fallback disabled: '+(err?.message||err));
 });
 
 // Load the uploaded male hero separately, preserving the female GLB and its rig.
