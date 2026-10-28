@@ -370,13 +370,18 @@ try {
     let tx=after.x-before.x,tz=after.z-before.z,tl=Math.hypot(tx,tz)||1;
     tx/=tl;tz/=tl;
     const nx=tz,nz=-tx;
+    const riverHalfWidth=window.jarrellRiverHalfWidth?.(nearest.t)||11.5;
+    // Begin just inside the actual shoreline, not 2.2 m from the river center.
+    // The old setup started deep in the channel, so a short smoke window could
+    // never prove a shoreline crossing even when movement was working.
+    const startOffset=Math.max(1,riverHalfWidth-1.5),endOffset=riverHalfWidth+3.5;
     const options=[-1,1].map(side=>{
-      const startX=centerX+nx*side*2.2,startZ=z+nz*side*2.2,endX=centerX+nx*side*15,endZ=z+nz*side*15;
+      const startX=centerX+nx*side*startOffset,startZ=z+nz*side*startOffset,endX=centerX+nx*side*endOffset,endZ=z+nz*side*endOffset;
       const pathBlocked=Array.from({length:13},(_,i)=>({x:startX+(endX-startX)*i/12,z:startZ+(endZ-startZ)*i/12}))
         .some(p=>api.testObstacleCollision(p.x,p.z,-.35));
       const slopeX=(api.terrainHeightAt(endX+.8,endZ)-api.terrainHeightAt(endX-.8,endZ))/1.6;
       const slopeZ=(api.terrainHeightAt(endX,endZ+.8)-api.terrainHeightAt(endX,endZ-.8))/1.6;
-      return {z,side,nx,nz,moveX:nx*side,moveZ:nz*side,centerX,startX,startZ,endX,endZ,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
+      return {z,side,nx,nz,moveX:nx*side,moveZ:nz*side,centerX,startOffset,endOffset,startX,startZ,endX,endZ,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
     }).filter(p=>!p.pathBlocked).sort((a,b)=>a.slope-b.slope);
     return options[0]||null;
   });
