@@ -1,5 +1,9 @@
 name: Climboria Browser Smoke Test
 
+concurrency:
+  group: climboria-browser-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
