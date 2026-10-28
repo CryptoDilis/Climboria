@@ -198,8 +198,21 @@ function removeJarrellObstacleChunk(key,kind){
 }
 function hitsJarrellObstacleAt(x,z,playerY){
  if(currentLevel!=='11')return false;
- const cell=jarrellColliderGrid.get(Math.floor(x/JARRELL_COLLIDER_CELL)+','+Math.floor(z/JARRELL_COLLIDER_CELL));if(!cell)return false;
- for(const o of cell){const dx=x-o.x,dz=z-o.z;if(Math.abs(dx)>o.r+.4||Math.abs(dz)>o.r+.4)continue;const vertical=playerY+1.75>o.y0&&playerY<o.y1;if(vertical&&dx*dx+dz*dz<(o.r+.4)*(o.r+.4))return true}
+ // Query every grid cell touched by the player's horizontal collision radius.
+ // Looking up only the centre cell caused missed hits at 24 m cell boundaries,
+ // letting the hero clip through trees and rocks while approaching diagonally.
+ const playerRadius=.4,minGX=Math.floor((x-playerRadius)/JARRELL_COLLIDER_CELL),maxGX=Math.floor((x+playerRadius)/JARRELL_COLLIDER_CELL),minGZ=Math.floor((z-playerRadius)/JARRELL_COLLIDER_CELL),maxGZ=Math.floor((z+playerRadius)/JARRELL_COLLIDER_CELL);
+ const seen=new Set();
+ for(let gx=minGX;gx<=maxGX;gx++)for(let gz=minGZ;gz<=maxGZ;gz++){
+  const cell=jarrellColliderGrid.get(gx+','+gz);if(!cell)continue;
+  for(const o of cell){
+   if(seen.has(o))continue;seen.add(o);
+   const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+playerRadius;
+   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
+   const vertical=playerY+1.75>o.y0&&playerY<o.y1;
+   if(vertical&&dx*dx+dz*dz<reach*reach)return true;
+  }
+ }
  return false;
 }
 function mountainHeight(x,z){const dz=(z+145)/405,dx=x/285,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*248;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*31*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+385)*.009))*42;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+280)*.021))*26*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
