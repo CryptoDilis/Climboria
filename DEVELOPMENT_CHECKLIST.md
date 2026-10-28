@@ -5,6 +5,7 @@
 - [x] GitHub Pages build and deployment passed: [run 40767529967](https://github.com/CryptoDilis/Climboria/actions/runs/40767529967).
 - [x] The browser smoke regression covers bush blocking and fallen-log midpoint/end-point blocking, including non-blocked positions outside the expected radius.
 - [ ] Manual live-site gameplay review remains outstanding; green automated workflows do not prove every collision or mobile behavior is correct.
+- [x] Browser smoke also checks tree trunk collision across X/Z spatial-grid boundaries and vertical bounds.
 - [ ] Continue with the first unchecked gameplay blocker; diagnose any future workflow failure from its failed step/log before editing, then commit and verify again.
 
 # Climboria — Master Repair & World-Building Checklist
