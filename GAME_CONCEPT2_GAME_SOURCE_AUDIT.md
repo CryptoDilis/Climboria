@@ -6,7 +6,7 @@
 
 ## Current structure observed
 
-- `game/index.html` is the expedition-select screen. It presents 11 mountain cards; Expedition 01 is marked Base Camp, the remaining regular expeditions are locked behind previous-level completion, and Jarrell's Peak is marked high-risk/locked.
+- `game/index.html` is the game menu. It presents four destinations: Jarrell’s Peak (the only playable world), Arena, Marketplace, and Inventory. The previous ten mountain expeditions are not shown in the launch menu.
 - `game/play.html` is the Three.js climbing prototype. The HUD includes player HP/stamina/strength, altitude, a mini-map, expedition-menu link, touch joystick/action buttons, and a settings panel.
 - Settings UI exposes background-music and SFX sliders, wallet connect/status, test-sound, and mute-all controls. This confirms controls are present in markup; it does **not** verify that audio is audible or correctly mixed on devices.
 - The desktop help text currently advertises WASD, Space jump, Shift sprint, LMB interact/pickup, RMB tap attack / hold-drag camera, wheel zoom, and ESC pause. Touch UI exposes movement stick plus Jump, Talk, Run, and Pause.
