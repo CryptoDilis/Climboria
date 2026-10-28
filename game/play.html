@@ -191,7 +191,14 @@ const rock=mat(0x4b5965),darkRock=mat(0x263746),gripMat=new THREE.MeshStandardMa
 const trailPlatforms=[],cliffColliders=[],jarrellObstacleColliders=[],jarrellTreasureChests=[];
 const JARRELL_COLLIDER_CELL=24,jarrellColliderGrid=new Map();
 function indexJarrellObstacle(o){
- const reach=Math.max(.6,(o.r||.6)+.4),minX=Math.floor((o.x-reach)/JARRELL_COLLIDER_CELL),maxX=Math.floor((o.x+reach)/JARRELL_COLLIDER_CELL),minZ=Math.floor((o.z-reach)/JARRELL_COLLIDER_CELL),maxZ=Math.floor((o.z+reach)/JARRELL_COLLIDER_CELL);
+ const reach=Math.max(.6,(o.r||.6)+.4);
+ // Segment colliders (fallen logs) must occupy every grid cell along their full length,
+ // not just the cell around their midpoint, or the log ends become invisible to collision queries.
+ const minWorldX=(o.kind==='log'&&Number.isFinite(o.x1)&&Number.isFinite(o.x2))?Math.min(o.x1,o.x2):o.x;
+ const maxWorldX=(o.kind==='log'&&Number.isFinite(o.x1)&&Number.isFinite(o.x2))?Math.max(o.x1,o.x2):o.x;
+ const minWorldZ=(o.kind==='log'&&Number.isFinite(o.z1)&&Number.isFinite(o.z2))?Math.min(o.z1,o.z2):o.z;
+ const maxWorldZ=(o.kind==='log'&&Number.isFinite(o.z1)&&Number.isFinite(o.z2))?Math.max(o.z1,o.z2):o.z;
+ const minX=Math.floor((minWorldX-reach)/JARRELL_COLLIDER_CELL),maxX=Math.floor((maxWorldX+reach)/JARRELL_COLLIDER_CELL),minZ=Math.floor((minWorldZ-reach)/JARRELL_COLLIDER_CELL),maxZ=Math.floor((maxWorldZ+reach)/JARRELL_COLLIDER_CELL);
  for(let gx=minX;gx<=maxX;gx++)for(let gz=minZ;gz<=maxZ;gz++){const key=gx+','+gz;let cell=jarrellColliderGrid.get(key);if(!cell){cell=[];jarrellColliderGrid.set(key,cell)}cell.push(o)}
 }
 function addJarrellObstacleCollider(o){jarrellObstacleColliders.push(o);indexJarrellObstacle(o);return o}
