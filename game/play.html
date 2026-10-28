@@ -671,37 +671,10 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const trapX=95,trapZ=90;for(let t=0;t<4;t++){const x=trapX+t*7,z=trapZ+(t%2)*6;place(new THREE.CylinderGeometry(2.8,2.8,.15,8),darkStone,x,-.08,z,1,1,1,rnd());for(let j=0;j<8;j++){const a=j/8*Math.PI*2;place(new THREE.ConeGeometry(.24,1.5,5),rustMetal,x+Math.cos(a)*1.8,.55,z+Math.sin(a)*1.8,1,1,1,a)}}
  // Dead trees and fallen timber mark the haunted edge of the battlefield.
  const deadTrunk=poiMat(0x40372e);for(let i=0;i<24;i++){const x=battleX+(rnd()-.5)*100,z=battleZ-35-rnd()*70;const trunk=place(new THREE.CylinderGeometry(.18,.4,5.5,5),deadTrunk,x,2.4,z,1,1,1,(rnd()-.5)*.35);trunk.rotation.z=(rnd()-.5)*.4;for(let b=0;b<3;b++){const branch=place(logGeo,deadTrunk,x+(rnd()-.5)*2,4-rnd()*2,z+(rnd()-.5)*2,.6,.8,.6,(rnd()-.5));branch.rotation.z=(rnd()-.5)*1.1}}
- // Hostile wilderness fauna: wolves roam the woods and lunge at the player when close.
- const wolfFur=poiMat(0x4c514d),wolfDark=poiMat(0x242b2b),wolfEye=new THREE.MeshStandardMaterial({color:0xff9b45,emissive:0x5b2108,roughness:.4});
+ // Removed primitive sphere/cylinder wildlife: these read as rat-like placeholders at gameplay camera distance.
+ // Keep empty arrays/API stable until proper licensed GLB wildlife models are integrated and tested.
  jarrellWildlife=[];
- for(let i=0;i<12;i++){const g=new THREE.Group();const wolfLegs=[];g.name='WildWolf_'+i;const body=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wolfFur);body.scale.set(.95,.48,.43);body.position.y=1.05;g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.42,9,7),wolfFur);head.position.set(0,1.27,.78);head.scale.set(.9,.78,1);g.add(head);const muzzle=new THREE.Mesh(new THREE.ConeGeometry(.22,.6,6),wolfDark);muzzle.rotation.x=Math.PI/2;muzzle.position.set(0,1.16,1.15);g.add(muzzle);for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.ConeGeometry(.15,.42,5),wolfDark);ear.position.set(side*.25,1.62,.75);g.add(ear);const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,6,5),wolfEye);eye.position.set(side*.3,1.34,1.0);g.add(eye);for(const zoff of [-.28,.42]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.62,6),wolfDark);leg.position.set(side*.3,.48,zoff);g.add(leg);wolfLegs.push({mesh:leg,phase:(side===1?0:Math.PI)+(zoff>0?Math.PI:0)})}}const tail=new THREE.Mesh(new THREE.ConeGeometry(.16,.85,6),wolfFur);tail.rotation.x=-Math.PI/2;tail.position.set(0,1.16,-.85);g.add(tail);const wx=(rnd()-.5)*760,wz=-560+rnd()*980;g.position.set(wx,terrainHeightAt(wx,wz)+.05,wz);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:g.position.x,homeZ:g.position.z,phase:rnd()*Math.PI*2,attack:0,speed:1.8+rnd()*1.2,legs:wolfLegs,baseY:1.05};worldPOIs.add(g);jarrellWildlife.push(g)}
-
- // Gentle forest fauna: deer graze in clearings and flee when the player approaches.
- // Procedural meshes keep the animals lightweight and independent of external runtime downloads.
  const jarrellDeer=[];
- const deerCoat=poiMat(0x98704a),deerLight=poiMat(0xc8ae83),deerHoof=poiMat(0x38322a),deerAntler=poiMat(0x76664e);
- for(let i=0;i<7;i++){
-  const g=new THREE.Group();g.name='JarrellWildDeer_'+i;
-  const torso=new THREE.Mesh(new THREE.SphereGeometry(.62,9,7),deerCoat);torso.scale.set(1.2,.78,.62);torso.position.y=1.08;g.add(torso);
-  const chest=new THREE.Mesh(new THREE.SphereGeometry(.38,8,6),deerLight);chest.scale.set(.82,1.05,.8);chest.position.set(0,.98,.43);g.add(chest);
-  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.16,.27,.7,7),deerCoat);neck.position.set(0,1.42,.55);neck.rotation.x=-.34;g.add(neck);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.23,8,6),deerCoat);head.scale.set(.82,.88,1.25);head.position.set(0,1.77,.79);g.add(head);
-  const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5),deerLight);muzzle.scale.set(.8,.7,1.15);muzzle.position.set(0,1.69,1.02);g.add(muzzle);
-  for(const side of [-1,1]){
-   const ear=new THREE.Mesh(new THREE.ConeGeometry(.075,.34,5),deerLight);ear.position.set(side*.2,1.91,.73);ear.rotation.z=side*.6;g.add(ear);
-   const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),deerHoof);eye.position.set(side*.19,1.79,.91);g.add(eye);
-   const antlerBase=new THREE.Mesh(new THREE.CylinderGeometry(.025,.045,.24,5),deerAntler);antlerBase.position.set(side*.11,2.0,.77);antlerBase.rotation.z=side*.24;g.add(antlerBase);
-   for(let tine=0;tine<2;tine++){const antler=new THREE.Mesh(new THREE.CylinderGeometry(.012,.026,.22,4),deerAntler);antler.position.set(side*(.17+tine*.07),2.13+tine*.05,.76);antler.rotation.z=side*(.62+tine*.22);g.add(antler)}
-  }
-  const legs=[];
-  for(const side of [-1,1])for(const front of [-1,1]){
-   const leg=new THREE.Mesh(new THREE.CylinderGeometry(.065,.085,.62,5),deerHoof);
-   leg.position.set(side*.29,.48,front*.39);g.add(leg);legs.push({mesh:leg,phase:(side===1?0:Math.PI)+(front>0?Math.PI:0)});
-  }
-  const tail=new THREE.Mesh(new THREE.ConeGeometry(.1,.23,5),deerLight);tail.position.set(0,1.19,-.7);tail.rotation.x=-Math.PI/2;g.add(tail);
-  let x,z,tries=0;do{x=-3.8+(rnd()-.5)*820;z=-340+(rnd()-.5)*820;tries++}while(tries<80&&(Math.hypot(x+1,z+340)<95||Math.abs(x-jarrellRiverX(z))<22||Math.hypot((x-88)/1.18,z+340)<130));
-  g.position.set(x,terrainHeightAt(x,z),z);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:x,homeZ:z,phase:rnd()*Math.PI*2,speed:2.1+rnd()*1.1,legs,baseY:0,flee:0};scene.add(g);jarrellDeer.push(g);
- }
  window.jarrellDeer=jarrellDeer;
 }else{const ground=new THREE.Mesh(new THREE.PlaneGeometry(180,180),mat(0x293b36));ground.rotation.x=-Math.PI/2;ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground)}
 if(currentLevel!=='11'){const wall=new THREE.Mesh(new THREE.BoxGeometry(12,24,2.8),rock);wall.position.set(0,11.5,-25);wall.castShadow=true;wall.receiveShadow=true;scene.add(wall);
