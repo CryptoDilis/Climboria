@@ -169,6 +169,9 @@ try {
     if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
   }
 
+  const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
+  if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 4.5 || item.width > 6.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
+
   for (const z of [-200, 80, 280]) {
     const riverCenterX = await page.evaluate(zValue => {
       const api = window.__climboriaSmoke;
