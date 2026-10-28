@@ -205,7 +205,7 @@ try {
       api.setMoveInput(null);
       const ground=api.terrainHeightAt(p.x,p.z);
       return {x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
-        ground:Number(ground.toFixed(2)),clearance:Number((p.y-ground).toFixed(2)),collision:api.lastMovementDebug||null};
+        ground:Number(ground.toFixed(2)),clearance:Number((p.y-ground).toFixed(2)),collision:api.lastMovementDebug||null,trace:(api.movementTrace||[]).map(d=>({blocked:d.blocked,blockedByHeight:d.blockedByHeight,penetratingMountain:d.penetratingMountain,obstacleBlocked:d.obstacleBlocked,slope:+d.slope.toFixed(3),rise:+d.rise.toFixed(3),allowedRise:+d.allowedRise.toFixed(3),speed:+d.speed.toFixed(2),travelX:+d.travelX.toFixed(3),travelZ:+d.travelZ.toFixed(3),dt:+d.dt.toFixed(3),x:+d.currentX.toFixed(2),nextX:+d.nextX.toFixed(2),feetY:+d.feetY.toFixed(2),velY:+d.velY.toFixed(2)}))};
     });
     const uphillDistance = Math.hypot(uphillResult.x-uphillTarget.x,uphillResult.z-uphillTarget.z);
     console.log('Jarrell walkable uphill collision regression:',JSON.stringify({target:uphillTarget,result:uphillResult,distance:Number(uphillDistance.toFixed(2))}));
