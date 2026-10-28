@@ -21,7 +21,7 @@ The Wild Between's game code is a separate project; Climboria adapts the instanc
 
 ## Wildlife replacement research — pending integration
 
-The current wolves and deer in `game/play.html` are built from primitive spheres, cones, and cylinders. They are placeholders, not acceptable final wildlife models; do not treat them as shipped-quality assets.
+The original wolves and deer in `game/play.html` were built from primitive spheres, cones, and cylinders. They looked like placeholders and were removed in commit `ce9916f5`; do not restore them as final wildlife.
 
 ### Candidate sources checked
 
