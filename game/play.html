@@ -698,7 +698,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   }
   const tail=new THREE.Mesh(new THREE.ConeGeometry(.1,.23,5),deerLight);tail.position.set(0,1.19,-.7);tail.rotation.x=-Math.PI/2;g.add(tail);
   let x,z,tries=0;do{x=-3.8+(rnd()-.5)*820;z=-340+(rnd()-.5)*820;tries++}while(tries<80&&(Math.hypot(x+1,z+340)<95||Math.abs(x-jarrellRiverX(z))<22||Math.hypot((x-88)/1.18,z+340)<130));
-  g.position.set(x,terrainHeightAt(x,z),z);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:x,homeZ:z,phase:rnd()*Math.PI*2,speed:2.1+rnd()*1.1,legs,baseY:0,flee:0};worldPOIs.add(g);jarrellDeer.push(g);
+  g.position.set(x,terrainHeightAt(x,z),z);g.rotation.y=rnd()*Math.PI*2;g.userData={homeX:x,homeZ:z,phase:rnd()*Math.PI*2,speed:2.1+rnd()*1.1,legs,baseY:0,flee:0};scene.add(g);jarrellDeer.push(g);
  }
  window.jarrellDeer=jarrellDeer;
 
