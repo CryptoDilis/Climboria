@@ -1,3 +1,12 @@
+## Latest workflow verification — 2026-10-29 (bush and fallen-log collision regression)
+
+- [x] Validate Climboria passed for commit `a4bb3bd5d3fad3699014bf9216311537c2cdab4c`: [run 40767529576](https://github.com/CryptoDilis/Climboria/actions/runs/40767529576).
+- [x] Browser Smoke Test passed for the same commit: [run 40767529614](https://github.com/CryptoDilis/Climboria/actions/runs/40767529614).
+- [x] GitHub Pages build and deployment passed: [run 40767529967](https://github.com/CryptoDilis/Climboria/actions/runs/40767529967).
+- [x] The browser smoke regression covers bush blocking and fallen-log midpoint/end-point blocking, including non-blocked positions outside the expected radius.
+- [ ] Manual live-site gameplay review remains outstanding; green automated workflows do not prove every collision or mobile behavior is correct.
+- [ ] Continue with the first unchecked gameplay blocker; diagnose any future workflow failure from its failed step/log before editing, then commit and verify again.
+
 ## Latest workflow diagnosis — 2026-10-29 (weather allocation optimization)
 
 - [x] Inspected Validate Climboria, Browser Smoke Test, and Pages deployment runs for commit `75d2b9b5ac8b3d6d57fa90b906e625b515d27ef4`.
