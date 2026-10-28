@@ -286,7 +286,7 @@ try {
 
   // Regression: approach the river from dry ground and verify the transition enters swimming without a deep fall.
   const swimEntry = await page.evaluate(() => {
-    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z),startX=centerX+8.4;
+    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z),startX=centerX+14.0;
     api.setPaused(false);api.setCamYaw(0);api.getKeys().KeyA=false;api.getKeys().KeyD=false;api.getKeys().KeyW=false;api.getKeys().KeyS=false;
     api.player.position.set(startX,api.terrainHeightAt(startX,z)+.22,z);
     return {z,startX,centerX,groundY:api.terrainHeightAt(startX,z)};
@@ -329,7 +329,7 @@ try {
   console.log('Jarrell swim depth controls:',JSON.stringify({initial:swimDepthInitial,surface:{y:Number(swimSurfaceY.toFixed(2)),debug:swimSurfaceState.debug,swimming:swimSurfaceState.swimming},dive:{y:Number(swimDiveY.toFixed(2)),debug:swimDiveState.debug,swimming:swimDiveState.swimming}}));
 
   const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
-  if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 4.5 || item.width > 6.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
+  if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 9.5 || item.width > 12.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
 
   for (const z of [-200, 80, 280]) {
     const riverCenterX = await page.evaluate(zValue => {
@@ -347,7 +347,7 @@ try {
     for (const side of [-1, 1]) {
       await page.evaluate(({ x, zValue, bankSide }) => {
         const api = window.__climboriaSmoke;
-        const bankX = x + bankSide * 8;
+        const bankX = x + bankSide * 14;
         api.player.position.set(bankX, api.terrainHeightAt(bankX, zValue) + .22, zValue);
       }, { x: riverCenterX, zValue: z, bankSide: side });
       await page.waitForTimeout(140);
@@ -362,7 +362,7 @@ try {
     api.player.position.set(centerX,-.35,z);
     api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     const options=[-1,1].map(side=>{
-      const startX=centerX+side*2.2,endX=centerX+side*8.5;
+      const startX=centerX+side*2.2,endX=centerX+side*15.0;
       const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
         .some(x=>api.testObstacleCollision(x,z,-.35));
       const slopeX=(api.terrainHeightAt(endX+.8,z)-api.terrainHeightAt(endX-.8,z))/1.6;
@@ -384,7 +384,7 @@ try {
     await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
-      return !!p && Math.abs(p.x-api.riverX(p.z))>=5.2 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
+      return !!p && Math.abs(p.x-api.riverX(p.z))>=11.3 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
@@ -395,7 +395,7 @@ try {
       api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
     }, swimExitStart);
-    if (swimExit.swimming || swimExit.bankDistance < 5.2 || swimExit.y < swimExit.groundY) {
+    if (swimExit.swimming || swimExit.bankDistance < 11.3 || swimExit.y < swimExit.groundY) {
       errors.push('player could not swim onto the river bank: '+JSON.stringify(swimExit));
       await page.screenshot({path:'/tmp/jarrell-swim-exit-failure.png'});
     }
