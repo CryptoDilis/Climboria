@@ -52,9 +52,13 @@ For each asset or code technique: find a trustworthy open-source/GitHub source, 
 - [ ] Tent variants and damaged/closed/open states; verify all models load and have sensible collision.
 
 ### Wildlife, fish, and flying creatures
-- [ ] Believable wild animals with realistic proportions and animations—not rat-like placeholders for large wildlife. Choose species appropriate to the biome.
-- [ ] Small numbers of flying animals such as birds and bats; rare fantasy dragon sightings as an optional, uncommon world event, not constant background clutter.
-- [ ] Freshwater fish and marine life suitable for ponds, rivers, and sea areas; use species-appropriate models and behavior.
+- [ ] Replace the current primitive-sphere/cylinder wolf and deer models; they look like crude placeholders. Do not add more procedural primitive animals as a substitute for proper models.
+- [ ] Source a cohesive, realistic/real-world-proportioned wildlife set first. Prefer downloadable GLB/glTF assets with visible previews, compatible commercial-use licenses, clear attribution terms, and explicit source URLs. Do not call low-poly assets “realistic”; use them only if intentionally matching the final art direction.
+- [ ] Add birds in the sky and forest canopy (small flocks, perching, takeoff/landing, simple flight paths); keep counts low and use distance culling.
+- [ ] Add local fauna suitable for a Philippine-inspired wilderness: monkeys/macaques, chickens/roosters near rural camps, snakes near rocks/riverbanks, and small forest birds. Use plausible habitat placement and avoid spawning animals inside props or on steep slopes.
+- [ ] Add other biome-appropriate wildlife where assets and performance allow: wild boar, civet, monitor lizard, frogs, butterflies, bats, deer, and freshwater fish; rare dragon sightings remain an optional uncommon fantasy event.
+- [ ] Give each animal species a simple species-appropriate behavior set: idle, walk/run, turn, forage/rest, flee or approach, and attack only for clearly hostile species. Avoid identical movement patterns across all species.
+- [ ] Replace the primitive models only after confirming model orientation, real-world scale, rig/animation clip names, texture loading, collision bounds, and browser/mobile performance. Keep an unobtrusive fallback if an optional remote asset fails.
 - [ ] Wildlife behavior: idle, roam, flee/approach where suitable, simple navigation, and non-blocking collisions.
 - [ ] Balance animal counts and animation distance/LOD to preserve frame rate on mobile.
 
