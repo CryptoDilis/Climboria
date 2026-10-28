@@ -399,7 +399,7 @@ try {
         Math.sqrt(nearest.distanceSq) >= (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.8 &&
         window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, null, {timeout:60000,polling:250}).catch(() => {});
-    await page.evaluate(() => { window.__climboriaSmoke.setMoveInput(0); });
+    await page.evaluate(() => { window.__climboriaSmoke.setMoveInput(null); });
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
       const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
