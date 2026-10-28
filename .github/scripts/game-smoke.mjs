@@ -264,7 +264,7 @@ try {
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
   const placeholderWildlife = await page.evaluate(() => ({
     deer: window.__climboriaSmoke?.getDeer?.().length || 0,
-    wolves: window.__climboriaSmoke?.worldPOIs?.children?.filter(item => /^WildWolf_/.test(item.name)).length || 0,
+    wolves: (window.__climboriaSmoke?.landmarks || []).filter(name => /^WildWolf_/.test(name)).length,
   }));
   if (placeholderWildlife.deer !== 0 || placeholderWildlife.wolves !== 0) {
     errors.push('Jarrell still spawns primitive placeholder wildlife instead of verified animal models: ' + JSON.stringify(placeholderWildlife));
