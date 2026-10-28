@@ -294,31 +294,50 @@ try {
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    const cellSize = 24, playerRadius = .4;
-    const candidates = api.obstacles.filter(item => item.kind === 'tree' && !!item.chunkKey).map(item => {
-      const bx = Math.round(item.x / cellSize) * cellSize;
-      const bz = Math.round(item.z / cellSize) * cellSize;
-      const xGap = Math.abs(item.x - bx), zGap = Math.abs(item.z - bz);
-      const reach = (item.r || .6) + playerRadius;
-      let x = item.x, z = item.z, crossesBoundary = false;
-      if (xGap < reach && xGap > .03) {
-        x = bx + (item.x < bx ? .12 : -.12);
-        crossesBoundary = Math.abs(x - item.x) < reach;
-      } else if (zGap < reach && zGap > .03) {
-        z = bz + (item.z < bz ? .12 : -.12);
-        crossesBoundary = Math.abs(z - item.z) < reach;
+    const cellSize = 24, playerRadius = .4, checks = { x: null, z: null };
+    const trees = api.obstacles.filter(item => item.kind === 'tree' && !!item.chunkKey);
+    for (const axis of ['x', 'z']) {
+      const candidates = trees.map(item => {
+        const coordinate = item[axis], boundary = Math.round(coordinate / cellSize) * cellSize;
+        const gap = Math.abs(coordinate - boundary), reach = (item.r || .6) + playerRadius;
+        if (gap >= reach || gap <= .03) return null;
+        const point = { x: item.x, z: item.z };
+        point[axis] = boundary + (coordinate < boundary ? .12 : -.12);
+        const distance = Math.hypot(point.x - item.x, point.z - item.z);
+        return distance < reach - .02 ? { item, ...point, distance } : null;
+      }).filter(Boolean);
+      for (const candidate of candidates) {
+        const ground = api.terrainHeightAt(candidate.x, candidate.z);
+        if (api.testObstacleCollision(candidate.x, candidate.z, ground + .22)) {
+          checks[axis] = { hit: true, kind: candidate.item.kind, distance: Number(candidate.distance.toFixed(3)), radius: candidate.item.r };
+          break;
+        }
       }
-      return { item, x, z, crossesBoundary, distance: Math.hypot(x-item.x,z-item.z) };
-    }).filter(c => c.crossesBoundary && c.distance < (c.item.r || .6) + playerRadius - .02);
-    for (const candidate of candidates) {
-      const ground = api.terrainHeightAt(candidate.x, candidate.z);
-      if (api.testObstacleCollision(candidate.x, candidate.z, ground + .22)) {
-        return { hit: true, kind: candidate.item.kind, distance: Number(candidate.distance.toFixed(3)), radius: candidate.item.r };
-      }
+      if (!checks[axis]) checks[axis] = { hit: false, candidates: candidates.length };
     }
-    return { hit: false, candidates: candidates.length };
+    return checks;
   });
-  if (!boundaryCollision.hit) errors.push('tree collider was missed when the player radius crossed a spatial-grid cell boundary: ' + JSON.stringify(boundaryCollision));
+  if (!boundaryCollision.x.hit) errors.push('tree collider was missed across an X-axis spatial-grid boundary: ' + JSON.stringify(boundaryCollision.x));
+  if (!boundaryCollision.z.hit) errors.push('tree collider was missed across a Z-axis spatial-grid boundary: ' + JSON.stringify(boundaryCollision.z));
+
+  // Collision should be height-aware: a collider must block the player's body at ground level,
+  // but should not falsely block a point well above the obstacle's vertical bounds.
+  const verticalCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const tree = api.obstacles.find(item => item.kind === 'tree' && !!item.chunkKey && item.y1 - item.y0 > 3);
+    if (!tree) return { error: 'no tall streamed tree collider found for vertical collision regression' };
+    const ground = api.terrainHeightAt(tree.x, tree.z);
+    return {
+      groundHit: api.testObstacleCollision(tree.x, tree.z, ground + .22),
+      aboveHit: api.testObstacleCollision(tree.x, tree.z, tree.y1 + 2),
+      height: tree.y1 - tree.y0,
+    };
+  });
+  if (verticalCollision.error) errors.push(verticalCollision.error);
+  else {
+    if (!verticalCollision.groundHit) errors.push('tree collider failed to block at ground level: ' + JSON.stringify(verticalCollision));
+    if (verticalCollision.aboveHit) errors.push('tree collider falsely blocked a point above its vertical bounds: ' + JSON.stringify(verticalCollision));
+  }
 
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
