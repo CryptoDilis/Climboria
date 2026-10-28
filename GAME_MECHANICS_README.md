@@ -41,7 +41,7 @@ Still separate release gates:
 ## 5. Change log
 
 - **2026-10-27 — Launch scope aligned:** Jarrell’s Peak is the only planned launch mountain; the ten normal expeditions and their death rules are deferred.
-- **2026-10-28 — Teleport stone deferred:** Removed the premature Death Stone design from the current gameplay reference. Hero quality, terrain, collision, and swimming take priority.
+- **2026-10-28 — Teleport feature deferred:** Removed the premature teleport-item design from the current gameplay reference. Hero quality, terrain, collision, and swimming take priority.
 - **2026-10-28 — Browser QA updated:** Desktop/mobile smoke coverage includes Jarrell’s Peak collision, swimming, fishing, treasure caches, inventory preview, and controls; regular-expedition music is kept separate from Jarrell’s Peak’s atmospheric score.
 
 ---
