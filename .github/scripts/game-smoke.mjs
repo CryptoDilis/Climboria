@@ -63,7 +63,7 @@ try {
       topRight: !!bounds && bounds.top >= 0 && bounds.left > innerWidth * 0.55 && bounds.right <= innerWidth,
       coordinatesBelowCompass: !!panel && !!coordinates && coordinates.getBoundingClientRect().top >= panel.getBoundingClientRect().bottom - 2,
       valuesNumeric: values.every(value => value.trim() !== '' && Number.isFinite(Number(value))),
-      regionValid: /^REGION\\s+-?\\d+\\s+·\\s+-?\\d+$/.test(region.trim()),
+      regionValid: /^REGION\s+-?\d+\s+·\s+-?\d+$/.test(region.trim()),
     };
   });
   if (!desktopNavigation.panel || !desktopNavigation.coordinates || !desktopNavigation.needle) errors.push('desktop compass/coordinate HUD elements are missing: ' + JSON.stringify(desktopNavigation));
@@ -743,7 +743,7 @@ try {
     };
   });
   if (!mobileNavigation.panel || !mobileNavigation.coordinates || !mobileNavigation.topRight || !mobileNavigation.coordinatesBelowCompass || !mobileNavigation.noHorizontalOverflow) errors.push('mobile compass/coordinate HUD layout failed: ' + JSON.stringify(mobileNavigation));
-  if (!mobileNavigation.values.every(value => value.trim() !== '' && Number.isFinite(Number(value))) || !/^REGION\\s+-?\\d+\\s+·\\s+-?\\d+$/.test(mobileNavigation.region.trim())) errors.push('mobile compass coordinates/region values are invalid: ' + JSON.stringify(mobileNavigation));
+  if (!mobileNavigation.values.every(value => value.trim() !== '' && Number.isFinite(Number(value))) || !/^REGION\s+-?\d+\s+·\s+-?\d+$/.test(mobileNavigation.region.trim())) errors.push('mobile compass coordinates/region values are invalid: ' + JSON.stringify(mobileNavigation));
   console.log('Mobile compass/coordinates HUD:', JSON.stringify(mobileNavigation));
 
   const mobileSwimInput = await mobilePage.evaluate(() => {
