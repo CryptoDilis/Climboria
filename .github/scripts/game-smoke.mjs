@@ -499,6 +499,9 @@ try {
   const mobileSwimVisibilityCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke,descriptor=Object.getOwnPropertyDescriptor(Document.prototype,'hidden');api.getKeys().Space=true;api.getKeys().ControlRight=true;Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));if(descriptor)delete document.hidden;return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlRight===false};});
   if(!mobileSwimVisibilityCleanup.surface||!mobileSwimVisibilityCleanup.dive) errors.push('swim controls must release held vertical input when the tab becomes hidden: '+JSON.stringify(mobileSwimVisibilityCleanup));
   console.log('Mobile swim visibility cleanup:',JSON.stringify(mobileSwimVisibilityCleanup));
+  const mobileSwimPointerCaptureCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke,jump=document.getElementById('jump'),sprint=document.getElementById('sprint');api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.sprinting=true;jump.dispatchEvent(new Event('lostpointercapture'));sprint.dispatchEvent(new Event('lostpointercapture'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false,sprint:window.sprinting===false};});
+  if(!mobileSwimPointerCaptureCleanup.surface||!mobileSwimPointerCaptureCleanup.dive||!mobileSwimPointerCaptureCleanup.sprint) errors.push('swim and sprint inputs must release when a touch control loses pointer capture: '+JSON.stringify(mobileSwimPointerCaptureCleanup));
+  console.log('Mobile swim pointer-capture cleanup:',JSON.stringify(mobileSwimPointerCaptureCleanup));
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
