@@ -232,6 +232,23 @@ try {
   }
 
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
+  // Capture a lightweight browser-frame baseline for trend comparisons. This is CI telemetry, not a claim about real-device FPS.
+  const runtimeFrameAudit = await page.evaluate(async () => {
+    const deltas = [];
+    let previous = performance.now();
+    const started = previous;
+    while (performance.now() - started < 2000) {
+      const current = await new Promise(resolve => requestAnimationFrame(resolve));
+      deltas.push(current - previous);
+      previous = current;
+    }
+    const sorted = deltas.slice(1).sort((a, b) => a - b);
+    const average = deltas.length ? deltas.reduce((sum, value) => sum + value, 0) / deltas.length : 0;
+    return { samples: deltas.length, averageFrameMs: Number(average.toFixed(2)), p95FrameMs: Number((sorted[Math.floor(sorted.length * .95)] || 0).toFixed(2)), observedFps: Number((1000 / (average || 1)).toFixed(1)) };
+  });
+  console.log('Jarrell browser frame-time baseline (CI only):', JSON.stringify(runtimeFrameAudit));
+  if (runtimeFrameAudit.samples < 30 || !Number.isFinite(runtimeFrameAudit.averageFrameMs)) errors.push('Jarrell runtime frame-time audit did not collect enough valid samples: ' + JSON.stringify(runtimeFrameAudit));
+
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
 
   await page.evaluate(() => {
