@@ -604,7 +604,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  };
  for(let i=0;i<5;i++)addDecayedSoldier(battleX+(rnd()-.5)*48,battleZ+(rnd()-.5)*38,rnd()*Math.PI*2,i);
  // A second secluded woodland pond with reeds and a broken stone landing.
- const pondX=178,pondZ=255,pond=place(new THREE.CircleGeometry(11,40),sanctuaryWater,pondX,.035,pondZ,1.18,1,.78);
+ const pondX=178,pondZ=255,pond=place(new THREE.CircleGeometry(11,40),sanctuaryWater,pondX,.035,pondZ,1.18,1,.78);pond.name='JarrellWoodlandPond';
  pond.rotation.x=-Math.PI/2;
  for(let i=0;i<18;i++){const a=i/18*Math.PI*2,rr=10.5+(i%3)*1.4,rx=pondX+Math.cos(a)*rr,rz=pondZ+Math.sin(a)*rr;
   place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
@@ -796,7 +796,7 @@ function openNearbyTreasure(){
  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);max-width:90vw;padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3800);
  synthSfx('pickup');return true;
 }
-if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,obstacles:jarrellObstacleColliders,getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,getMoveVec:()=>moveVec(),getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
+if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,obstacles:jarrellObstacleColliders,landmarks:worldPOIs.children.map(o=>o.name),getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,getMoveVec:()=>moveVec(),getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
 // Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
