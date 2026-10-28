@@ -1063,7 +1063,7 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
  function startExpeditionSoundtrack(){
   // Use the user's original Climboria MP3 soundtrack on Jarrell's Peak and regular expeditions; never substitute synthesized background music.
   if(!soundtrackAudio){
-   soundtrackAudio=new Audio('assets/music/climboria-theme-60s.mp3');
+   soundtrackAudio=new Audio('assets/music/TRACK_01.mp3');
    soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
    soundtrackAudio.addEventListener('error',()=>console.warn('Climboria soundtrack could not load:',soundtrackAudio.currentSrc));
   }
