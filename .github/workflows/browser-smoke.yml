@@ -9,7 +9,8 @@ on:
     branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
-      - "favicon.png"
+      - "climboria-favicon.png"
+      - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
@@ -17,7 +18,8 @@ on:
     branches: [main]
     paths:
       - "index.html"
-      - "favicon.png"
+      - "climboria-favicon.png"
+      - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"

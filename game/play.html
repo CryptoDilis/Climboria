@@ -1065,6 +1065,7 @@ let audioCtx=null,musicNodes=[],musicStarted=false,lastStepSfx=0,soundtrackAudio
   if(!soundtrackAudio){
    soundtrackAudio=new Audio('assets/music/TRACK_01.mp3');
    soundtrackAudio.loop=true;soundtrackAudio.preload='auto';
+   window.__climboriaSoundtrackAudio=soundtrackAudio;
    soundtrackAudio.addEventListener('error',()=>console.warn('Climboria soundtrack could not load:',soundtrackAudio.currentSrc));
   }
   soundtrackAudio.volume=audioSettings.muted?0:Math.max(0,Math.min(1,audioSettings.music));

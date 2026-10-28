@@ -38,6 +38,16 @@ try {
   await page.waitForTimeout(800);
   if (!soundtrackRequests.has('original-track-01')) errors.push('Jarrell’s Peak did not request the user’s original TRACK_01 soundtrack');
   if (!soundtrackResponses.some(response => response.status >= 200 && response.status < 300)) errors.push('Jarrell’s Peak original soundtrack did not return a successful HTTP response: ' + JSON.stringify(soundtrackResponses));
+  const soundtrackState = await page.waitForFunction(() => { const a=window.__climboriaSoundtrackAudio; return a && Number.isFinite(a.duration) && a.duration > 0 ? {duration:a.duration,currentTime:a.currentTime,paused:a.paused,readyState:a.readyState,src:a.currentSrc||a.src} : false; }, { timeout: 15000 }).then(h=>h.jsonValue()).catch(()=>null);
+  if (!soundtrackState) errors.push('Original TRACK_01 audio metadata did not load in the browser');
+  else {
+    console.log('Original soundtrack playback diagnostic:', JSON.stringify(soundtrackState));
+    if (soundtrackState.duration < 90) errors.push('Original TRACK_01 duration is shorter than 90 seconds: ' + soundtrackState.duration);
+    if (soundtrackState.paused) errors.push('Original TRACK_01 is paused after the player interaction unlocked audio');
+    await page.waitForTimeout(1200);
+    const advancedTime = await page.evaluate(() => window.__climboriaSoundtrackAudio?.currentTime || 0);
+    if (advancedTime <= soundtrackState.currentTime + 0.2) errors.push('Original TRACK_01 playback time did not advance: ' + JSON.stringify({start:soundtrackState.currentTime,end:advancedTime}));
+  }
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
