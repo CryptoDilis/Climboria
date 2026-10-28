@@ -385,15 +385,13 @@ try {
     }, swimExitStart);
     await page.waitForTimeout(160);
     await page.evaluate(()=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;});
-    // Hold the same movement state consumed by update() for the regression duration.
-    // Browser focus can vary across CI viewport transitions, so keyboard delivery is
-    // tested separately; this check isolates shoreline movement and collision physics.
-    const swimExitKey=swimExitStart.side>0?'KeyD':'KeyA';
-    await page.evaluate((key) => {
+    // Drive the physics regression with the same movement vector used by touch controls.
+    // This avoids keyboard-focus flakiness and keeps the test focused on shoreline collision.
+    await page.evaluate((side) => {
       const api=window.__climboriaSmoke;
       api.getKeys().KeyA=false;api.getKeys().KeyD=false;
-      api.getKeys()[key]=true;
-    }, swimExitKey);
+      api.setMoveInput(side);
+    }, swimExitStart.side);
     await page.waitForFunction(() => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
       const nearest=api?.nearestRiverPoint(p?.x,p?.z);
@@ -401,7 +399,7 @@ try {
         Math.sqrt(nearest.distanceSq) >= (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.8 &&
         window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, null, {timeout:60000,polling:250}).catch(() => {});
-    await page.evaluate((key) => { window.__climboriaSmoke.getKeys()[key]=false; }, swimExitKey);
+    await page.evaluate(() => { window.__climboriaSmoke.setMoveInput(0); });
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
       const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
