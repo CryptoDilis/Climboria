@@ -332,6 +332,7 @@ try {
       const y = playerY(log);
       result.log = {
         insideBlocked: api.testObstacleCollision(mx, mz, y),
+        endpointBlocked: api.testObstacleCollision(log.x1, log.z1, y),
         outsideBlocked: api.testObstacleCollision(mx - sz / length * offset, mz + sx / length * offset, y),
         radius: log.r || .35
       };
@@ -346,6 +347,7 @@ try {
   if (!bushLogCollision.log) errors.push('Jarrell fallen-log collision regression could not find a segment collider');
   else {
     if (!bushLogCollision.log.insideBlocked) errors.push('Jarrell fallen-log segment does not block movement at its midpoint');
+    if (!bushLogCollision.log.endpointBlocked) errors.push('Jarrell fallen-log segment does not block movement near its endpoint');
     if (bushLogCollision.log.outsideBlocked) errors.push('Jarrell fallen-log segment blocks a point beyond its collision radius');
   }
 
