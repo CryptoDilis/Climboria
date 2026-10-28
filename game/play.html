@@ -135,9 +135,10 @@ void main(){float streak=1.0-smoothstep(.22,.5,abs(gl_PointCoord.x-.5));float ti
 `});
 const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
 function smoothWeather(t){return t*t*(3-2*t)}
+const weatherScratch={nightSky:new THREE.Color(0x101a32),nightFog:new THREE.Color(0x18263a),nightSun:new THREE.Color(0x8098d4),daySun:new THREE.Color(0xffdfb0),sky:new THREE.Color(),fog:new THREE.Color()};
 function updateWeather(dt){
  if(!weatherEnabled)return;
- weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;const nightSky=new THREE.Color(0x101a32),nightFog=new THREE.Color(0x18263a),nightSun=new THREE.Color(0x8098d4),daySun=new THREE.Color(0xffdfb0);sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(nightSun).lerp(daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
+ weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(weatherScratch.nightSun).lerp(weatherScratch.daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
  const phaseDuration=600,transition=22;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
@@ -149,9 +150,8 @@ function updateWeather(dt){
  const to=weatherPhases[(weatherClock.phase+1)%phaseCount]||from;
  if(!from||!to)return;
  const blend=local>phaseDuration-transition?smoothWeather((local-(phaseDuration-transition))/transition):0;
- const mixColor=(a,b,t)=>a.clone().lerp(b,t);
- const weatherSky=mixColor(from.sky,to.sky,blend),weatherFog=mixColor(from.fog,to.fog,blend);scene.background=weatherSky.lerp(nightSky,nightBlend*.88);
- if(scene.fog){scene.fog.color.copy(weatherFog).lerp(nightFog,nightBlend*.82);scene.fog.near=THREE.MathUtils.lerp(from.near,to.near,blend);scene.fog.far=THREE.MathUtils.lerp(from.far,to.far,blend)}
+ weatherScratch.sky.copy(from.sky).lerp(to.sky,blend);weatherScratch.fog.copy(from.fog).lerp(to.fog,blend);scene.background.copy(weatherScratch.sky).lerp(weatherScratch.nightSky,nightBlend*.88);
+ if(scene.fog){scene.fog.color.copy(weatherScratch.fog).lerp(weatherScratch.nightFog,nightBlend*.82);scene.fog.near=THREE.MathUtils.lerp(from.near,to.near,blend);scene.fog.far=THREE.MathUtils.lerp(from.far,to.far,blend)}
  sun.intensity=THREE.MathUtils.lerp(from.sun,to.sun,blend)*THREE.MathUtils.lerp(.12,1,daylight);
  rainUniforms.uTime.value+=dt;rainUniforms.uPlayer.value.set(player.position.x,0,player.position.z);
  rainUniforms.uStrength.value=THREE.MathUtils.lerp(from.rain,to.rain,blend);
