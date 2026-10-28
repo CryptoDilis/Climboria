@@ -496,6 +496,9 @@ try {
   const mobileSwimFocusCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.dispatchEvent(new Event('blur'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false};});
   if(!mobileSwimFocusCleanup.surface||!mobileSwimFocusCleanup.dive) errors.push('swim controls must release held vertical input when the browser loses focus: '+JSON.stringify(mobileSwimFocusCleanup));
   console.log('Mobile swim focus cleanup:',JSON.stringify(mobileSwimFocusCleanup));
+  const mobileSwimVisibilityCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().Space=true;api.getKeys().ControlRight=true;document.dispatchEvent(new Event('visibilitychange'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlRight===false};});
+  if(!mobileSwimVisibilityCleanup.surface||!mobileSwimVisibilityCleanup.dive) errors.push('swim controls must release held vertical input when the tab becomes hidden: '+JSON.stringify(mobileSwimVisibilityCleanup));
+  console.log('Mobile swim visibility cleanup:',JSON.stringify(mobileSwimVisibilityCleanup));
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
