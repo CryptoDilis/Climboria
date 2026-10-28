@@ -1204,7 +1204,7 @@ const feetY=player.position.y,penetratingMountain=!proposedWater&&toH>feetY-foot
 const leavingWater=swimming&&!proposedWater;
 /* Keep the shoreline corridor clear while transitioning out of the water. Swimming state can flip before the body clears nearby props. */
 const riverNearestForCollision=currentLevel==='11'&&nextZ>-900&&nextZ<900?window.nearestRiverPoint(nextX,nextZ):null,riverWaterPass=!!riverNearestForCollision&&riverNearestForCollision.distanceSq<Math.pow(window.jarrellRiverHalfWidth(riverNearestForCollision.t)+2.5,2);
-const obstacleBlocked=hitsCliff(nextX,nextZ)||(hitsJarrellObstacle(nextX,nextZ)&&!riverWaterPass);
+const obstacleBlocked=(!riverWaterPass&&hitsCliff(nextX,nextZ))||(hitsJarrellObstacle(nextX,nextZ)&&!riverWaterPass);
 // The river corridor may bypass small props in the water, never cliff colliders or terrain collision.
 if(obstacleBlocked||(!proposedWater&&!leavingWater&&!riverWaterPass&&(blockedByHeight||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)))blocked=true;
 if(window.__climboriaSmoke)window.__climboriaSmoke.lastMovementDebug={paused,levelCleared,swimming,proposedWater,leavingWater,riverWaterPass,obstacleBlocked,blocked,moveX:m.x,moveZ:m.z,currentX:player.position.x,nextX,nextZ};
