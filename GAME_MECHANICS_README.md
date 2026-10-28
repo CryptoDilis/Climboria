@@ -29,7 +29,7 @@ Teleport-stone mechanics are **not part of the current launch build**. Work on a
 
 ## 4. Current verified scope vs. production gates
 
-Automated desktop/mobile browser smoke tests check that Jarrell’s Peak initializes, the riverside spawn and cache HUD appear, streamed cache/forest hooks initialize, tree collision is exercised, water-state entry/exit works, fishing can be used, inventory slots populate from local test loot, and mobile controls initialize. The test also guards against the retired Death Stone UI returning. This is browser automation, not a physical-device test or proof of multiplayer production readiness.
+Automated desktop/mobile browser smoke tests check that Jarrell’s Peak initializes, the riverside spawn and cache HUD appear, streamed cache/forest hooks initialize, tree collision is exercised, water-state entry/exit works, fishing can be used, inventory slots populate from local test loot, and mobile controls initialize. The test also guards against the retired teleport UI returning. This is browser automation, not a physical-device test or proof of multiplayer production readiness.
 
 Still separate release gates:
 - Persistent inventory and dropped-item recovery.
