@@ -146,6 +146,8 @@ try {
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
+  const deerCount = await page.evaluate(() => window.__climboriaSmoke?.getDeer?.().length || 0);
+  if (deerCount < 5) errors.push('Jarrell roaming deer wildlife did not initialize (expected at least 5)');
 
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
