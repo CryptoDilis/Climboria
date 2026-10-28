@@ -124,7 +124,7 @@ These are planned product requirements, not implemented/verified features until 
 ### Restore the user's original music
 
 - [ ] Restore and use the user's original TRACK_01.mp3 soundtrack from the repository's tracked music asset/history where available; preserve the file unchanged and verify its exact audio identity before replacing any other track.
-- [ ] Remove the synthetic/robotic, hoarse-sounding procedural background melody from the active Jarrell's Peak music path; use the agreed original soundtrack if the user wants it on Jarrell's Peak, or keep Jarrell's Peak music silent/ambient-only until the original track is verified. Do not substitute another generated melody.
+- [ ] Verify that Jarrell's Peak plays the user's original MP3 soundtrack and that no synthetic/robotic, hoarse-sounding background melody is active. Do not substitute another generated melody.
 - [ ] Keep background music separate from synthesized sound effects; preserve independent volume/mute controls and ensure no duplicate tracks play simultaneously.
 - [ ] Verify actual playback and audio quality on desktop and Android/mobile, including browser autoplay restrictions, volume sliders, mute/unmute, and track looping. Do not mark complete from code inspection alone.
 
