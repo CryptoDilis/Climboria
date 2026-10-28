@@ -32,7 +32,7 @@ Documentation and website copy changes must not redesign or remove current gamep
 - Loot bags may remain at a death location for a limited recovery window and may be looted by other players where the existing risk rules allow it.
 - Chests may contain ingredients, crafting materials, gear, and eligible rewards across disclosed rarity tiers.
 - Better opportunities may be influenced by distance and survival time; exact odds and reward values must be published before reward activation.
-- Death Stone is designed as a rare item with a 1.5% chance per eligible chest loot roll. Solo and team teleport uses require verified coordinates, consent, cooldowns, bounds, and anti-exploit safeguards before production use.
+- Teleport-stone mechanics are deferred until the hero and Jarrell’s Peak map are in good shape. No teleport stone is part of the current launch scope.
 
 ## Leaderboards and rewards
 
