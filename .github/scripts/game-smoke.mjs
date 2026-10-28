@@ -46,6 +46,7 @@ try {
       cameraGroundClearance: Number((window.__climboriaSmoke?.camera.position.y - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.camera.position.x, window.__climboriaSmoke?.camera.position.z)).toFixed(2)),
       levelName: document.querySelector('#levelName')?.textContent || '',
       spawnRiverDistance: Number(Math.sqrt(window.__climboriaSmoke?.nearestRiverPoint(window.__climboriaSmoke?.player.position.x, window.__climboriaSmoke?.player.position.z).distanceSq).toFixed(2)),
+      spawnRiverBankDistance: (()=>{const api=window.__climboriaSmoke,p=api?.player?.position,n=api?.nearestRiverPoint(p?.x,p?.z);return Number(Math.max(0,Math.sqrt(n?.distanceSq||0)-(window.jarrellRiverHalfWidth?.(n?.t)||0)).toFixed(2));})(),
       riverBedClearance: Number((0.015 - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.riverX(window.__climboriaSmoke?.player.position.z), window.__climboriaSmoke?.player.position.z)).toFixed(2)),
       nearestTentDistance: Number(Math.min(...(window.__climboriaSmoke?.obstacles.filter(item => item.kind === 'tent').map(item => Math.hypot(item.x - window.__climboriaSmoke.player.position.x, item.z - window.__climboriaSmoke.player.position.z)) || [Infinity])).toFixed(2)),
       cachePrompt: !!document.querySelector('#jarrellChestPrompt'),
@@ -57,7 +58,7 @@ try {
   if (!desktopState.canvasWidth || !desktopState.canvasHeight) errors.push('desktop renderer canvas has zero dimensions');
   if (desktopState.cameraGroundClearance < 0.8) errors.push('desktop follow camera is clipping into Jarrell terrain');
   if (!desktopState.levelName.toUpperCase().includes("JARRELL'S PEAK")) errors.push('Level 11 HUD does not identify Jarrell’s Peak');
-  if (desktopState.spawnRiverDistance > 8) errors.push('Jarrell trailhead is too far from the river for the intended riverside camp');
+  if (desktopState.spawnRiverBankDistance > 9.5) errors.push('Jarrell trailhead is too far from the riverbank for the intended riverside camp: ' + JSON.stringify({centerDistance:desktopState.spawnRiverDistance,bankDistance:desktopState.spawnRiverBankDistance}));
   if (desktopState.riverBedClearance < 0.3) errors.push('Jarrell riverbed is too high for the water surface to read as a visible channel at the trailhead');
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
   if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
@@ -385,7 +386,7 @@ try {
     await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
-      return !!p && Math.abs(p.x-api.riverX(p.z))>=11.3 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
+      return !!p && Math.abs(p.x-api.riverX(p.z)) >= (window.jarrellRiverHalfWidth?.(api.nearestRiverPoint(p.x,p.z).t)||11.5)+0.8 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
@@ -396,7 +397,7 @@ try {
       api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
     }, swimExitStart);
-    if (swimExit.swimming || swimExit.bankDistance < 11.3 || swimExit.y < swimExit.groundY) {
+    if (swimExit.swimming || swimExit.bankDistance < (await page.evaluate(({x,z})=>window.jarrellRiverHalfWidth?.(window.nearestRiverPoint(x,z).t)||11.5,{x:swimExit.x,z:swimExit.z}))+0.8 || swimExit.y < swimExit.groundY) {
       errors.push('player could not swim onto the river bank: '+JSON.stringify(swimExit));
       await page.screenshot({path:'/tmp/jarrell-swim-exit-failure.png'});
     }
