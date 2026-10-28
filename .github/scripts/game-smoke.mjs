@@ -315,7 +315,7 @@ try {
     return {x,z};
   });
   await page.waitForTimeout(220);
-  const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y}));
+  const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y,pose:window.jarrellSwimPoseDebug||null}));
   await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
   await page.waitForTimeout(800);
   const swimSurfaceState = await page.evaluate(() => {const api=window.__climboriaSmoke;const state={y:api.player.position.y,debug:window.jarrellSwimVerticalDebug,swimming:window.jarrellSwimming};api.getKeys().Space=false;return state;});const swimSurfaceY=swimSurfaceState.y;
@@ -324,6 +324,7 @@ try {
   const swimDiveState = await page.evaluate(() => {const api=window.__climboriaSmoke;const state={y:api.player.position.y,debug:window.jarrellSwimVerticalDebug,swimming:window.jarrellSwimming};api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;return state;});const swimDiveY=swimDiveState.y;
   await page.evaluate(({x,z}) => {const api=window.__climboriaSmoke;api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;api.player.position.set(x,-.55,z);},swimDepthStart);
   if (!swimDepthInitial.swimming) errors.push('vertical swim control test did not begin in water: '+JSON.stringify(swimDepthInitial));
+  if (swimDepthInitial.pose?.hasModel && swimDepthInitial.pose.tilt > -1.0) errors.push('the visible hero must tilt into a horizontal swimming posture instead of swimming upright: '+JSON.stringify(swimDepthInitial.pose));
   if (swimSurfaceY < swimDepthInitial.y + .15 || swimSurfaceY < -.4) errors.push('surface control failed to raise the swimmer toward the waterline: '+JSON.stringify({initial:swimDepthInitial.y,surface:swimSurfaceY}));
   if (swimDiveY > swimSurfaceY - .12 || swimDiveY < -1.08) errors.push('dive control failed to lower the swimmer within safe depth bounds: '+JSON.stringify({surface:swimSurfaceY,dive:swimDiveY}));
   console.log('Jarrell swim depth controls:',JSON.stringify({initial:swimDepthInitial,surface:{y:Number(swimSurfaceY.toFixed(2)),debug:swimSurfaceState.debug,swimming:swimSurfaceState.swimming},dive:{y:Number(swimDiveY.toFixed(2)),debug:swimDiveState.debug,swimming:swimDiveState.swimming}}));
