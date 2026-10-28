@@ -383,7 +383,7 @@ try {
       api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
-    await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
+    await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys()[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
       return !!p && Math.abs(p.x-api.riverX(p.z)) >= (window.jarrellRiverHalfWidth?.(api.nearestRiverPoint(p.x,p.z).t)||11.5)+0.8 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
