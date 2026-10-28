@@ -100,7 +100,7 @@ A commit means code changed; it does not prove the game works. Keep status expli
 - Endless-feeling wilderness with forests, cliffs, caves, rice fields, battlefield remnants, sanctuary lake/shrine, traps, hidden paths, and grounded landmarks.
 - Death returns the player to the starting camp; no summit, final level, or safe zone.
 - Randomized chest discovery with distance/survival-time influence; undiscovered locations must not be exposed.
-- Teleport-stone mechanics are intentionally deferred until the hero and Jarrell’s Peak map are in good shape. The previously implemented Death Stone/return-to-trailhead feature is not part of the current game concept.
+- Teleport-stone mechanics are deferred until the hero and Jarrell’s Peak map are in good shape; the current priority is character quality, terrain, collisions, and swimming.
 - Actual token payouts, persistent inventory, secure multiplayer, and anti-cheat remain separate production release gates.
 
 The game remains the priority. Crypto participation must not be required for the basic adventure. All sponsorships, marketplace fees, wagers, and rewards need clear rules and funding before launch.
