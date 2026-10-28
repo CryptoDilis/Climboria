@@ -143,6 +143,10 @@ try {
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
+  const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
+  if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
+  if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
+
   const cacheId = await page.evaluate(() => {
     const cache = window.__climboriaSmoke?.getCaches().find(item => !item.opened);
     if (!cache) return null;
