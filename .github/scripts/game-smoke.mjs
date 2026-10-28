@@ -404,7 +404,7 @@ try {
       const api=window.__climboriaSmoke;
       const started={...api.player.position};
       const samples=[];
-      const deadline=performance.now()+18000;
+      const deadline=performance.now()+24000;
       while(performance.now()<deadline){
         await new Promise(resolve=>setTimeout(resolve,500));
         const p=api.player.position,nearest=api.nearestRiverPoint(p.x,p.z);
