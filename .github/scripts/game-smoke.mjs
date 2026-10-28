@@ -143,6 +143,36 @@ try {
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
+  // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
+  // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
+  const boundaryCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const cellSize = 24, playerRadius = .4;
+    const candidates = api.obstacles.filter(item => item.kind === 'tree' && !!item.chunkKey).map(item => {
+      const bx = Math.round(item.x / cellSize) * cellSize;
+      const bz = Math.round(item.z / cellSize) * cellSize;
+      const xGap = Math.abs(item.x - bx), zGap = Math.abs(item.z - bz);
+      const reach = (item.r || .6) + playerRadius;
+      let x = item.x, z = item.z, crossesBoundary = false;
+      if (xGap < reach && xGap > .03) {
+        x = bx + (item.x < bx ? .12 : -.12);
+        crossesBoundary = Math.abs(x - item.x) < reach;
+      } else if (zGap < reach && zGap > .03) {
+        z = bz + (item.z < bz ? .12 : -.12);
+        crossesBoundary = Math.abs(z - item.z) < reach;
+      }
+      return { item, x, z, crossesBoundary, distance: Math.hypot(x-item.x,z-item.z) };
+    }).filter(c => c.crossesBoundary && c.distance < (c.item.r || .6) + playerRadius - .02);
+    for (const candidate of candidates) {
+      const ground = api.terrainHeightAt(candidate.x, candidate.z);
+      if (api.testObstacleCollision(candidate.x, candidate.z, ground + .22)) {
+        return { hit: true, kind: candidate.item.kind, distance: Number(candidate.distance.toFixed(3)), radius: candidate.item.r };
+      }
+    }
+    return { hit: false, candidates: candidates.length };
+  });
+  if (!boundaryCollision.hit) errors.push('tree collider was missed when the player radius crossed a spatial-grid cell boundary: ' + JSON.stringify(boundaryCollision));
+
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
