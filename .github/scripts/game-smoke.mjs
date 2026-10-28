@@ -170,6 +170,49 @@ try {
     console.log('Jarrell multi-point grounding sweep:', JSON.stringify(groundingResults));
   }
 
+  // Regression: walkable slopes should not be blocked by an overly strict fixed step threshold.
+  const uphillTarget = await page.evaluate(() => {
+    const api = window.__climboriaSmoke, candidates = [];
+    for (let z = -320; z <= -100; z += 8) {
+      for (let x = -200; x <= 200; x += 8) {
+        const ground = api.terrainHeightAt(x, z);
+        const gx = (api.terrainHeightAt(x + 1, z) - api.terrainHeightAt(x - 1, z)) / 2;
+        const gz = (api.terrainHeightAt(x, z + 1) - api.terrainHeightAt(x, z - 1)) / 2;
+        const slope = Math.hypot(gx, gz), river = api.nearestRiverPoint(x, z);
+        if (![ground, gx, gz, river?.distanceSq].every(Number.isFinite)) continue;
+        if (slope < .42 || slope > .68 || Math.sqrt(river.distanceSq) < 16) continue;
+        if (api.obstacles.some(o => Math.hypot(o.x - x, o.z - z) < (o.r || 1) + 3)) continue;
+        candidates.push({x,z,ground,gx,gz,slope});
+      }
+    }
+    candidates.sort((a,b) => b.slope-a.slope);
+    const target = candidates[0];
+    if (!target) return null;
+    const length = Math.hypot(target.gx,target.gz) || 1;
+    api.setPaused(false);
+    api.setCamYaw(0);
+    for (const key of ['KeyW','KeyA','KeyS','KeyD']) api.getKeys()[key] = false;
+    api.player.position.set(target.x,target.ground+.22,target.z);
+    api.setMoveVector(target.gx/length,target.gz/length);
+    return {...target,moveX:target.gx/length,moveZ:target.gz/length};
+  });
+  if (!uphillTarget) {
+    errors.push('could not find a clear, walkable uphill slope for the collision regression');
+  } else {
+    await page.waitForTimeout(1100);
+    const uphillResult = await page.evaluate(() => {
+      const api=window.__climboriaSmoke,p=api.player.position;
+      api.setMoveInput(null);
+      const ground=api.terrainHeightAt(p.x,p.z);
+      return {x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
+        ground:Number(ground.toFixed(2)),clearance:Number((p.y-ground).toFixed(2))};
+    });
+    const uphillDistance = Math.hypot(uphillResult.x-uphillTarget.x,uphillResult.z-uphillTarget.z);
+    console.log('Jarrell walkable uphill collision regression:',JSON.stringify({target:uphillTarget,result:uphillResult,distance:Number(uphillDistance.toFixed(2))}));
+    if (uphillDistance < .35) errors.push('player was blocked on a walkable uphill slope: '+JSON.stringify({target:uphillTarget,result:uphillResult,distance:uphillDistance}));
+    if (uphillResult.clearance < .05 || uphillResult.clearance > 1.5) errors.push('player lost ground contact while walking uphill: '+JSON.stringify({target:uphillTarget,result:uphillResult}));
+  }
+
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
 
