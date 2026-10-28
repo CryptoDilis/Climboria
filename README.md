@@ -93,6 +93,13 @@ Solana is the initial chain focus; Base is a later possibility. $CLIMB is the in
 
 A commit means code changed; it does not prove the game works. Keep status explicit: **Not started**, **In progress**, **Implemented — unverified**, or **Tested — passed**. Do not claim multiplayer synchronization, 1,000+ shared-world capacity, secure wagers, persistent inventory, on-chain rewards, sponsorship payments, or moderation tools are production-ready until tested. This documentation update must not change gameplay code.
 
+## Character collision and swimming references
+
+- [Rapier JavaScript character controller guide](https://rapier.rs/docs/user_guides/javascript/character_controller/): use a capsule-like player shape, resolve intended movement against colliders, and respect the controller's corrected translation and grounded state.
+- [larvuz2/capy-swim3d](https://github.com/larvuz2/capy-swim3d): open-source Three.js + Rapier example with capsule collision, ground detection, and separate character animation. Use it as a technique reference, not a drop-in replacement for the existing single-file world.
+- Climboria currently keeps its procedural terrain-height collision and sampled movement checks. Jarrell's Peak adds multi-point footprint support on dry land and a distinct horizontal swim pose; water movement must not be grounded against the riverbed as if it were dry terrain.
+- Regression gates should cover terrain penetration, obstacle blocking/sliding, river entry/exit, vertical swimming, and horizontal swim posture on desktop and mobile before marking the fixes as tested.
+
 ## Jarrell’s Peak river and free asset sources
 
 - The river channel is generated in Three.js and terrain code: approximately 1.8 km of winding river, roughly 21–23 m of rendered water width, and a deeper sculpted riverbed. Collision, swim detection, and the smoke-test dimensions must stay aligned with this geometry.
