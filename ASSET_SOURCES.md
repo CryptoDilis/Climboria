@@ -46,3 +46,22 @@ This file records candidate assets before integration. The source page is author
 | Sparse vegetation ground | Sparse Grass | https://polyhaven.com/a/sparse_grass | CC0; thin tufts over rough soil, useful as a forest-to-dryland transition. |
 
 Use the 1K/2K maps for mobile, pack local texture files, and avoid loading full 8K/8K model downloads at runtime. Official license: https://polyhaven.com/license.
+
+
+## Mountain and cave candidates for Jarrell's Peak — 2026-10-29
+
+| Priority | Asset/source | License and fit | Integration/collision requirements |
+|---|---|---|---|
+| A — terrain landmark prototype | [Innerscene Mountain Peak (GLB)](https://www.innerscene.com/tools/library/3d-parts/mountain-peak-8437c866) | Listed as CC0; ~10.6 MB GLB; approximately 3.6 km × 3.6 km footprint with ridges, spurs, branching valleys and steep slopes. Good candidate to test as a distant/landmark mountain rather than blindly replacing the whole world. | Download and inspect the actual file, units, material and triangle count. GLB does **not** guarantee Three.js physics/collision is included. Generate a simplified collision mesh or authored collider from the static mesh, retain walkable routes, and test slope/edge/fall behavior before use. Confirm current source page/license again before import. |
+| A — cave passages | [Kenney Modular Cave Kit](https://kenney.nl/assets/modular-cave-kit) | Official Kenney page identifies the pack as CC0 and lists 40 pieces; suitable for modular tunnels and chambers. | Pieces must be assembled into multiple separated cave regions around the map, not stacked into one cave hub. Add collision per passage/wall, open walkable floors, torch lighting, nav/route checks and cave-specific loading. The asset pack itself does not wire up gameplay physics. |
+| B — lightweight cave geometry reference | [Cave and Crystal Caverns](https://3dassets.dev/packs/cave-and-crystal-networks) | CC0 1.0 pack with modular tunnel/bend/junction examples and small stated triangle counts. Stylized geometry may not match the photoreal target without material/art-direction work. | Treat as a prototype/reference option only. Verify visual style and individual files before integration; add collision and lighting in the game. |
+| A — realistic rocky trail dressing | [Verdant Trail Props CC0 pack](https://hydethebooty98.itch.io/verdant-trail-props) | Photoreal CC0 models sourced from Poly Haven; includes rock faces, boulders, mountainside, roots, dead trunks, shrubs and grass. Pack is listed at ~268 MB, so do not import the whole pack blindly. | Select only necessary models; downscale textures, decimate heavy meshes, build LODs and colliders, and distribute assets by biome/region. |
+
+### World layout rules for integration
+
+- Jarrell's Peak must remain an endless-feeling exploration world with no summit or final level; mountain meshes are regional landmarks and traversable terrain, not a level-ending goal.
+- Distribute mountains, cave entrances, ponds, ruins, forest clearings, fields, coastline and treasure regions across separate map zones with believable travel distances and transition terrain. Do not put every feature in one cluster.
+- Replace broad flat ground with a coherent height field: rolling lowlands, ridges, gullies, sloped foothills, ravines, terraces, and distinct mountain masses. Visible terrain and player ground-height/collision queries must use the same height data.
+- A static visual model is not automatically climbable. For every imported mountain, author or derive a collision surface, keep the collision aligned with the visible mesh, and validate reachable slope/path routes plus blocked cliff faces.
+- Cave kits need explicit floor/wall collision, connected walkable passages, entrances that meet exterior terrain, and torches placed in several separate regions. Avoid invisible collision lids across entrances.
+- Asset status remains **candidate / not integrated** until actual local files, license notes, optimized size, collision tests, desktop/mobile loading, and workflow results are recorded.
