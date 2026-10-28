@@ -306,6 +306,28 @@ try {
     await page.screenshot({path:'/tmp/jarrell-swim-entry-failure.png'});
   }
 
+  // Regression: surface and dive controls must move the player vertically while swimming, within safe bounds.
+  const swimDepthStart = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,z=80,x=api.riverX(z);
+    api.setPaused(false);api.keys.KeyA=api.keys.KeyD=api.keys.KeyW=api.keys.KeyS=false;
+    api.keys.Space=api.keys.ControlLeft=api.keys.ControlRight=false;
+    api.player.position.set(x,-.55,z);
+    return {x,z};
+  });
+  await page.waitForTimeout(220);
+  const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y}));
+  await page.evaluate(() => {window.__climboriaSmoke.keys.Space=true;});
+  await page.waitForTimeout(800);
+  const swimSurfaceY = await page.evaluate(() => {const api=window.__climboriaSmoke;api.keys.Space=false;return api.player.position.y;});
+  await page.evaluate(() => {window.__climboriaSmoke.keys.ControlLeft=true;});
+  await page.waitForTimeout(850);
+  const swimDiveY = await page.evaluate(() => {const api=window.__climboriaSmoke;api.keys.ControlLeft=false;api.keys.ControlRight=false;return api.player.position.y;});
+  await page.evaluate(({x,z}) => {const api=window.__climboriaSmoke;api.keys.Space=false;api.keys.ControlLeft=false;api.keys.ControlRight=false;api.player.position.set(x,-.55,z);},swimDepthStart);
+  if (!swimDepthInitial.swimming) errors.push('vertical swim control test did not begin in water: '+JSON.stringify(swimDepthInitial));
+  if (swimSurfaceY < -.28) errors.push('surface control failed to raise the swimmer toward the waterline: '+JSON.stringify({initial:swimDepthInitial.y,surface:swimSurfaceY}));
+  if (swimDiveY > swimSurfaceY - .12 || swimDiveY < -1.08) errors.push('dive control failed to lower the swimmer within safe depth bounds: '+JSON.stringify({surface:swimSurfaceY,dive:swimDiveY}));
+  console.log('Jarrell swim depth controls:',JSON.stringify({initial:swimDepthInitial,surfaceY:Number(swimSurfaceY.toFixed(2)),diveY:Number(swimDiveY.toFixed(2))}));
+
   const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
   if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 4.5 || item.width > 6.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
 
