@@ -105,7 +105,7 @@ try {
     const target = candidates[0];
     if (!target) return null;
     api.setPaused(false);
-    api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+    api.getKeys().KeyW = api.getKeys().KeyA = api.getKeys().KeyS = api.getKeys().KeyD = false;
     api.player.position.set(target.x, target.ground + .22, target.z);
     return target;
   });
@@ -145,7 +145,7 @@ try {
       if (picked.length >= 5) break;
     }
     api.setPaused(false);
-    api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+    api.getKeys().KeyW = api.getKeys().KeyA = api.getKeys().KeyS = api.getKeys().KeyD = false;
     return picked;
   });
   if (groundingSweep.length < 3) {
@@ -155,7 +155,7 @@ try {
     for (const target of groundingSweep) {
       await page.evaluate(target => {
         const api = window.__climboriaSmoke;
-        api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+        api.getKeys().KeyW = api.getKeys().KeyA = api.getKeys().KeyS = api.getKeys().KeyD = false;
         api.player.position.set(target.x, target.ground + .22, target.z);
       }, target);
       await page.waitForTimeout(350);
@@ -192,14 +192,14 @@ try {
     const tree = candidates.item;
     const startX = tree.x - (tree.r + .48 + 3.5);
     api.player.position.set(startX, api.terrainHeightAt(startX, tree.z) + .22, tree.z);
-    api.keys.KeyD = true;
+    api.getKeys().KeyD = true;
     return { x: tree.x, z: tree.z, r: tree.r };
   });
   if (!collisionTarget) {
     errors.push('no suitable nearby tree collider found for movement test');
   } else {
     await page.waitForTimeout(1400);
-    await page.evaluate(() => { window.__climboriaSmoke.keys.KeyD = false; });
+    await page.evaluate(() => { window.__climboriaSmoke.getKeys().KeyD = false; });
     const collisionResult = await page.evaluate(target => {
       const p = window.__climboriaSmoke.player.position;
       return Math.hypot(p.x - target.x, p.z - target.z);
@@ -287,24 +287,46 @@ try {
   // Regression: approach the river from dry ground and verify the transition enters swimming without a deep fall.
   const swimEntry = await page.evaluate(() => {
     const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z),startX=centerX+8.4;
-    api.setPaused(false);api.setCamYaw(0);api.keys.KeyA=false;api.keys.KeyD=false;api.keys.KeyW=false;api.keys.KeyS=false;
+    api.setPaused(false);api.setCamYaw(0);api.getKeys().KeyA=false;api.getKeys().KeyD=false;api.getKeys().KeyW=false;api.getKeys().KeyS=false;
     api.player.position.set(startX,api.terrainHeightAt(startX,z)+.22,z);
     return {z,startX,centerX,groundY:api.terrainHeightAt(startX,z)};
   });
   await page.waitForTimeout(120);
-  await page.evaluate(() => {const api=window.__climboriaSmoke;api.keys.KeyA=true;});
+  await page.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().KeyA=true;});
   await page.waitForFunction(() => window.jarrellSwimming===true, {timeout:8000,polling:100}).catch(() => {});
   await page.waitForTimeout(550);
   const swimEntryResult = await page.evaluate(() => {
     const api=window.__climboriaSmoke,p=api.player.position;
     const result={swimming:window.jarrellSwimming===true,x:Number(p.x.toFixed(2)),y:Number(p.y.toFixed(2)),riverDistance:Number(Math.sqrt(api.nearestRiverPoint(p.x,p.z).distanceSq).toFixed(2)),movement:api.getMovementState()};
-    api.keys.KeyA=false;api.keys.KeyD=false;
+    api.getKeys().KeyA=false;api.getKeys().KeyD=false;
     return result;
   });
   if (!swimEntryResult.swimming || swimEntryResult.y < -0.95 || swimEntryResult.riverDistance > 7.5) {
     errors.push('dry-bank approach did not enter stable river swimming: '+JSON.stringify({start:swimEntry,result:swimEntryResult}));
     await page.screenshot({path:'/tmp/jarrell-swim-entry-failure.png'});
   }
+
+  // Regression: surface and dive controls must move the player vertically while swimming, within safe bounds.
+  const swimDepthStart = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,z=80,x=api.riverX(z);
+    api.setPaused(false);api.getKeys().KeyA=api.getKeys().KeyD=api.getKeys().KeyW=api.getKeys().KeyS=false;
+    api.getKeys().Space=api.getKeys().ControlLeft=api.getKeys().ControlRight=false;
+    api.player.position.set(x,-.55,z);
+    return {x,z};
+  });
+  await page.waitForTimeout(220);
+  const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y}));
+  await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
+  await page.waitForTimeout(800);
+  const swimSurfaceY = await page.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().Space=false;return api.player.position.y;});
+  await page.evaluate(() => {window.__climboriaSmoke.getKeys().ControlLeft=true;});
+  await page.waitForTimeout(850);
+  const swimDiveY = await page.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;return api.player.position.y;});
+  await page.evaluate(({x,z}) => {const api=window.__climboriaSmoke;api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;api.player.position.set(x,-.55,z);},swimDepthStart);
+  if (!swimDepthInitial.swimming) errors.push('vertical swim control test did not begin in water: '+JSON.stringify(swimDepthInitial));
+  if (swimSurfaceY < -.28) errors.push('surface control failed to raise the swimmer toward the waterline: '+JSON.stringify({initial:swimDepthInitial.y,surface:swimSurfaceY}));
+  if (swimDiveY > swimSurfaceY - .12 || swimDiveY < -1.08) errors.push('dive control failed to lower the swimmer within safe depth bounds: '+JSON.stringify({surface:swimSurfaceY,dive:swimDiveY}));
+  console.log('Jarrell swim depth controls:',JSON.stringify({initial:swimDepthInitial,surfaceY:Number(swimSurfaceY.toFixed(2)),diveY:Number(swimDiveY.toFixed(2))}));
 
   const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
   if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 4.5 || item.width > 6.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
@@ -338,7 +360,7 @@ try {
   const swimExitStart = await page.evaluate(() => {
     const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
     api.player.position.set(centerX,-.35,z);
-    api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
+    api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     const options=[-1,1].map(side=>{
       const startX=centerX+side*2.2,endX=centerX+side*8.5;
       const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
@@ -356,7 +378,7 @@ try {
     await page.evaluate(({z,side,startX}) => {
       const api=window.__climboriaSmoke;
       api.setCamYaw(0);api.player.position.set(startX,-.35,z);
-      api.setPaused(false);api.keys.KeyD=false;api.keys.KeyA=false;
+      api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
     await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.keys[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
@@ -370,7 +392,7 @@ try {
         x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
         groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2)),
         collision:api.lastMovementDebug||null};
-      api.keys.KeyD=false;api.keys.KeyA=false;
+      api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
     }, swimExitStart);
     if (swimExit.swimming || swimExit.bankDistance < 5.2 || swimExit.y < swimExit.groundY) {
