@@ -481,6 +481,18 @@ try {
     errors.push('mobile Jarrell controls did not initialize correctly');
   }
   console.log('Mobile smoke state:', JSON.stringify(mobileState));
+  const mobileSwimInput = await mobilePage.evaluate(() => {
+    const api=window.__climboriaSmoke,button=document.querySelector('#jump');
+    window.jarrellSwimming=true;
+    api.getKeys().Space=false;
+    button.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:41,pointerType:'touch'}));
+    const held=api.getKeys().Space===true;
+    button.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:41,pointerType:'touch'}));
+    const released=api.getKeys().Space===false;
+    return {held,released};
+  });
+  if(!mobileSwimInput.held||!mobileSwimInput.released) errors.push('mobile swim surface button must hold Space while pressed and release it on pointerup: '+JSON.stringify(mobileSwimInput));
+  console.log('Mobile swim surface input:',JSON.stringify(mobileSwimInput));
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
