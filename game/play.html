@@ -1233,7 +1233,7 @@ const gradX=(terrainHeightAt(nextX+.65,nextZ+groundZOffset)-terrainHeightAt(next
 const feetY=player.position.y,penetratingMountain=!proposedWater&&toH>feetY-footClear+.08;
 const leavingWater=swimming&&!proposedWater;
 /* Keep the shoreline corridor clear while transitioning out of the water. Swimming state can flip before the body clears nearby props. */
-const riverNearestForCollision=currentLevel==='11'&&nextZ>-360&&nextZ<360?window.nearestRiverPoint(nextX,nextZ):null,riverWaterPass=!!riverNearestForCollision&&riverNearestForCollision.distanceSq<Math.pow(jarrellRiverHalfWidth(riverNearestForCollision.t)+2.5,2);
+const riverNearestForCollision=currentLevel==='11'&&nextZ>-360&&nextZ<360?window.nearestRiverPoint(nextX,nextZ):null,riverWaterPass=!!riverNearestForCollision&&riverNearestForCollision.distanceSq<Math.pow(window.jarrellRiverHalfWidth(riverNearestForCollision.t)+2.5,2);
 const obstacleBlocked=hitsCliff(nextX,nextZ)||(hitsJarrellObstacle(nextX,nextZ)&&!riverWaterPass);
 // The river corridor may bypass small props in the water, never cliff colliders or terrain collision.
 if(obstacleBlocked||(!proposedWater&&!leavingWater&&!riverWaterPass&&(blockedByHeight||penetratingMountain||slope>maxWalkSlope||rise>speed*dt*maxWalkSlope+.12)))blocked=true;
