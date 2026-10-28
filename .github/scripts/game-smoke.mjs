@@ -386,7 +386,7 @@ try {
     await page.waitForTimeout(160);
     await page.evaluate(()=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;});
     // Use real browser keyboard events so the same input path as a player is exercised.
-    const swimExitKey=swimExitStart.side>0?'KeyD':'KeyA';
+    const swimExitKey=swimExitStart.side>0?'d':'a';
     await page.keyboard.down(swimExitKey);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
