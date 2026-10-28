@@ -87,7 +87,7 @@ try {
   const groundingTarget = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
     const candidates = [];
-    for (let z = -280; z <= 260; z += 20) {
+    for (let z = -340; z <= -260; z += 20) {
       for (let x = -120; x <= 120; x += 20) {
         const ground = api.terrainHeightAt(x, z);
         const hx = api.terrainHeightAt(x + 1, z), hz = api.terrainHeightAt(x, z + 1);
