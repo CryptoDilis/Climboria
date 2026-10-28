@@ -493,6 +493,9 @@ try {
   });
   if(!mobileSwimInput.held||!mobileSwimInput.released) errors.push('mobile swim surface button must hold Space while pressed and release it on pointerup: '+JSON.stringify(mobileSwimInput));
   console.log('Mobile swim surface input:',JSON.stringify(mobileSwimInput));
+  const mobileSwimFocusCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke;api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.dispatchEvent(new Event('blur'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false};});
+  if(!mobileSwimFocusCleanup.surface||!mobileSwimFocusCleanup.dive) errors.push('swim controls must release held vertical input when the browser loses focus: '+JSON.stringify(mobileSwimFocusCleanup));
+  console.log('Mobile swim focus cleanup:',JSON.stringify(mobileSwimFocusCleanup));
   await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
   await mobile.close();
 
