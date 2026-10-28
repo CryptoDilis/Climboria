@@ -198,3 +198,14 @@ For each meaningful implementation batch:
 7. Continue with the next unchecked blocker; do not stop after merely listing plans.
 
 **Completion rule:** the requested world is not complete until each agreed feature has an implementation, license/source record where applicable, appropriate tests, and verified performance. Once the Jarrell's Peak scope and performance gate pass, proceed to Arena and then authentication testing.
+
+
+## Visual review and rock asset pass — 2026-10-29
+
+- [x] Reviewed user-provided 37.9-second gameplay recording. Identified repeated conical tree silhouettes, flat/angular monochrome rocks, flat grass coloration and hard shoreline transitions; the camera also becomes dominated by mountain geometry near the end of the recording.
+- [x] Improved procedural rock silhouette variation and shading, and changed Jarrell's Peak tree crowns from cone meshes to irregular broadleaf crowns in commit `56e9fe37e0bbc8f7f298795c40f22e917d831887`; shared riverbank rock geometry to avoid per-rock geometry allocations in commit `1ad4e4cfc7d9c9a5d21e240cb2a71c166464413e`.
+- [x] Recorded photorealistic Poly Haven rock/cliff and PBR texture candidates plus CC0 license notes in [ASSET_SOURCES.md](ASSET_SOURCES.md), commit `e6a2aeb591819b2fcbabe279e05294d6beab5c2e`.
+- [ ] Import optimized local GLB versions of photorealistic rocks; the procedural improvement is only a visual interim pass, not a substitute for scanned assets.
+- [ ] Improve ground PBR texture variation and shoreline blending; add sparse desert biome with dry ground, scattered rocks and drought-tolerant plants.
+- [ ] Verify the late-video camera/terrain obstruction and manually inspect swimming posture/depth in a real browser.
+- [ ] Run and inspect Validate, Browser Smoke Test and Pages deployment for the latest commits before declaring this pass stable.
