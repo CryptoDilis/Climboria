@@ -273,7 +273,7 @@ const mountainGeo=new THREE.PlaneGeometry(520,730,isMobileGPU?240:320,isMobileGP
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- if(sun){sun.color.set(currentLevel==='11'?0xd0b58a:0xffe1b1);sun.intensity=currentLevel==='11'?1.15:2.35;sun.position.set(-180,260,115);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=240;sun.shadow.camera.bottom=-240;sun.shadow.bias=-.00018;sun.shadow.normalBias=.025}
+ if(sun){sun.color.set(currentLevel==='11'?0xd0b58a:0xffe1b1);sun.intensity=currentLevel==='11'?1.15:2.35;sun.position.set(-180,260,115);sun.castShadow=true;sun.shadow.mapSize.set(isMobileGPU?768:(currentLevel==='11'?1024:2048),isMobileGPU?768:(currentLevel==='11'?1024:2048));sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=240;sun.shadow.camera.bottom=-240;sun.shadow.bias=-.00018;sun.shadow.normalBias=.025}
  const fill=new THREE.HemisphereLight(currentLevel==='11'?0x91b2c3:0xc5e1f2,currentLevel==='11'?0x3e4935:0x4c4636,currentLevel==='11'?.95:1.05);scene.add(fill);
  const rim=new THREE.DirectionalLight(currentLevel==='11'?0x526b93:0x9bc7e7,currentLevel==='11'?.38:.8);rim.position.set(180,150,-260);scene.add(rim);
  // Sunlit atmospheric cloud wisps are translucent meshes in the distant sky, not gameplay colliders.
@@ -289,7 +289,7 @@ const rockCanvas=document.createElement('canvas');rockCanvas.width=1024;rockCanv
 const rockCtx=rockCanvas.getContext('2d');
 rockCtx.fillStyle='#c9c7bd';rockCtx.fillRect(0,0,1024,1024);
 let rockSeed=52719;const rockRand=()=>{rockSeed=(rockSeed*1664525+1013904223)>>>0;return rockSeed/4294967296};
-for(let i=0;i<(isMobileGPU?22000:42000);i++){
+for(let i=0;i<(isMobileGPU?6500:14000);i++){
  const x=rockRand()*1024,y=rockRand()*1024,r=.45+rockRand()*3.2;
  rockCtx.globalAlpha=.035+rockRand()*.11;
  rockCtx.fillStyle=rockRand()<.52?'#4b5558':'#fff4df';
