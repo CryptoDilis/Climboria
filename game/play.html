@@ -101,7 +101,8 @@ const hemiLight=new THREE.HemisphereLight(0xe5f2ff,0x53604b,1.65);scene.add(hemi
 const sun=new THREE.DirectionalLight(0xffe7c2,2.5);sun.position.set(-115,185,95);sun.castShadow=true;sun.shadow.mapSize.set(isMobileGPU?768:1536,isMobileGPU?768:1536);sun.shadow.camera.left=-145;sun.shadow.camera.right=145;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-145;sun.shadow.bias=-.00035;sun.shadow.normalBias=.025;scene.add(sun);
 scene.add(sun);
 // Level 1 weather cycle: 10 minutes per phase, with smooth visual transitions.
-const weatherEnabled=new URLSearchParams(location.search).get('level')==='01';
+const weatherLevel=new URLSearchParams(location.search).get('level');
+const weatherEnabled=weatherLevel==='01'||weatherLevel==='11';
 const weatherClock={elapsed:0,phase:0,blend:0};const dayNightClock={elapsed:0};const windClock={elapsed:0};const dayDuration=480;const windMaterials=[];function addWindShader(material,amplitude){material.onBeforeCompile=shader=>{shader.uniforms.uClimbWindTime={value:0};shader.uniforms.uClimbWindAmp={value:amplitude};shader.vertexShader='uniform float uClimbWindTime;uniform float uClimbWindAmp;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat windPhase=position.y*1.7+position.x*.31+position.z*.23+uClimbWindTime;transformed.x+=sin(windPhase)*uClimbWindAmp*position.y;transformed.z+=cos(windPhase*.83)*uClimbWindAmp*.45*position.y;');material.userData.climbWindShader=shader};material.customProgramCacheKey=()=>`climb-wind-${amplitude}`;windMaterials.push(material);return material}
 const weatherPhases=[
  {name:'CLEAR',sky:new THREE.Color(0xb8d0dc),fog:new THREE.Color(0xb8d0dc),near:155,far:470,sun:2.35,hemi:1.55,rain:0},
