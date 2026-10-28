@@ -29,7 +29,7 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 - [x] Resolve the current regression that blocked the swim-exit smoke test: run [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027) passed after the test began near the real shoreline and the observation window was extended. This verifies the current automated scenario only; broader collision/terrain edge cases remain unchecked.
 - [x] Confirm no uncaught browser errors or blank 3D scenes in the automated desktop/mobile smoke scenario; critical camp tent GLBs and gameplay initialization were verified by [40704098148](https://github.com/CryptoDilis/Climboria/actions/runs/40704098148). This is automated coverage, not a full manual live-site audit.
 - [x] Confirm Browser Smoke Test, Validate Climboria, and Pages deployment are green on gameplay commit `b6a56d16`: smoke [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027), validation [40698275078](https://github.com/CryptoDilis/Climboria/actions/runs/40698275078), and deployment [40698275144](https://github.com/CryptoDilis/Climboria/actions/runs/40698275144) all completed successfully. The subsequent checklist-only commit `cb383fca` has validation [40698748741](https://github.com/CryptoDilis/Climboria/actions/runs/40698748741) still to verify; no game code changed in that commit.
-- [ ] Test the deployed game after the same commit passes CI. Manual live-site gameplay review is still outstanding. Latest gameplay commit `85444f15` passed Validate Climboria [run 40733397260](https://github.com/CryptoDilis/Climboria/actions/runs/40733397260), Browser Smoke Test [run 40733397325](https://github.com/CryptoDilis/Climboria/actions/runs/40733397325), and Pages deployment [run 40733395205](https://github.com/CryptoDilis/Climboria/actions/runs/40733395205).
+- [ ] Test the deployed game through manual live-site gameplay review. Latest gameplay commit `85444f15` passed Validate Climboria [run 40733397260](https://github.com/CryptoDilis/Climboria/actions/runs/40733397260), Browser Smoke Test [run 40733397325](https://github.com/CryptoDilis/Climboria/actions/runs/40733397325), and Pages deployment [run 40733395205](https://github.com/CryptoDilis/Climboria/actions/runs/40733395205). The subsequent checklist-only commit `c0ea7e4e` also passed Pages deployment [run 40749242846](https://github.com/CryptoDilis/Climboria/actions/runs/40749242846); manual visual gameplay is still not verified.
 
 ## P1 — World environment and free asset research/integration
 
@@ -96,9 +96,9 @@ For each asset or code technique: find a trustworthy open-source/GitHub source, 
 
 ## P2 — Collision, physics, and controls
 
-- [ ] Terrain ground detection: character stays above ground and does not sink, float, or snag on invisible surfaces.
-- [ ] Reliable collision on slopes, cliff edges, rocks, tree trunks, huts, tents, bridges, cave walls, chests, and props.
-- [ ] Water volumes match visible water; swimming starts/ends consistently; shore transitions work from both sides and along curved river segments. The automated starting-river exit scenario passed on `b6a56d16`; broader river bends and terrain/shore collision cases still need coverage.
+- [ ] Terrain ground detection: automated smoke test checks safe dry-ground settling and a multi-point terrain sweep; manual gameplay must still confirm the character never sinks, floats, or snags on invisible surfaces.
+- [ ] Reliable collision on slopes, cliff edges, rocks, tree trunks, huts, tents, bridges, cave walls, chests, and props. Current automated coverage does not establish all of these collision cases.
+- [ ] Water volumes match visible water; swimming starts/ends consistently; shore transitions work from both sides and along curved river segments. Automated smoke checks river bends and a starting-river exit; broader manual shoreline, riverbed, and prop-collision review remains outstanding.
 - [ ] No collision gaps, invisible walls, or false blocks that prevent reaching the riverbank, camp, or intended routes.
 - [ ] Desktop controls: WASD, jump, sprint, interact/pickup, camera, pause.
 - [ ] Mobile controls: movement, jump, sprint, interaction, camera, swim/dive; all held inputs release on pointer-up, pointer cancellation, lost focus, hidden tab, and lost pointer capture.
