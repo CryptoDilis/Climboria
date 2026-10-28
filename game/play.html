@@ -234,7 +234,7 @@ const grassBladeGeo=new THREE.ConeGeometry(.055,.62,3);grassBladeGeo.translate(0
 const grassBladeMat=addWindShader(new THREE.MeshStandardMaterial({color:0x7d9954,roughness:1,side:THREE.DoubleSide}),.035);
 const meadowGrass=new THREE.InstancedMesh(grassBladeGeo,grassBladeMat,isMobileGPU?850:1800);meadowGrass.frustumCulled=false;const grassDummy=new THREE.Object3D();let grassN=0,grassSeed=918273;const grassRand=()=>{grassSeed=(grassSeed*1664525+1013904223)>>>0;return grassSeed/4294967296};
 for(let i=0;i<(isMobileGPU?2400:5200)&&grassN<meadowGrass.count;i++){const x=(grassRand()-.5)*520,z=grassRand()*170-70;if(Math.abs(x)<24)continue;const gy=-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;grassDummy.position.set(x,gy,z);grassDummy.rotation.set((grassRand()-.5)*.16,grassRand()*Math.PI*2,(grassRand()-.5)*.18);const sc=.45+grassRand()*.8;grassDummy.scale.set(sc,sc,sc);grassDummy.updateMatrix();meadowGrass.setMatrixAt(grassN++,grassDummy.matrix)}
-meadowGrass.count=grassN;meadowGrass.instanceMatrix.needsUpdate=true;scene.add(meadowGrass);
+meadowGrass.count=grassN;meadowGrass.instanceMatrix.needsUpdate=true;meadowGrass.computeBoundingSphere();meadowGrass.frustumCulled=true;scene.add(meadowGrass);
 
 // Alpine foothill dressing: instanced rock clusters add scale and break up the empty grass horizon.
 // Kept away from the trailhead play lane; single draw call per rock material for browser performance.
@@ -561,6 +561,8 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
       instances.setMatrixAt(i,placeMatrix);
      }
      instances.instanceMatrix.needsUpdate=true;
+     instances.computeBoundingSphere();
+     instances.frustumCulled=true; // Cull the complete instanced asset when its computed world bounds leave the camera frustum.
      scene.add(instances);
     }
    };
