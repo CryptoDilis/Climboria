@@ -237,6 +237,28 @@ try {
     if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
   }
 
+  // Regression: approach the river from dry ground and verify the transition enters swimming without a deep fall.
+  const swimEntry = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z),startX=centerX+8.4;
+    api.setPaused(false);api.setCamYaw(0);api.keys.KeyA=false;api.keys.KeyD=false;api.keys.KeyW=false;api.keys.KeyS=false;
+    api.player.position.set(startX,api.terrainHeightAt(startX,z)+.22,z);
+    return {z,startX,centerX,groundY:api.terrainHeightAt(startX,z)};
+  });
+  await page.waitForTimeout(120);
+  await page.evaluate(() => {const api=window.__climboriaSmoke;api.keys.KeyA=true;});
+  await page.waitForFunction(() => window.jarrellSwimming===true, {timeout:8000,polling:100}).catch(() => {});
+  await page.waitForTimeout(550);
+  const swimEntryResult = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,p=api.player.position;
+    const result={swimming:window.jarrellSwimming===true,x:Number(p.x.toFixed(2)),y:Number(p.y.toFixed(2)),riverDistance:Number(Math.sqrt(api.nearestRiverPoint(p.x,p.z).distanceSq).toFixed(2)),movement:api.getMovementState()};
+    api.keys.KeyA=false;api.keys.KeyD=false;
+    return result;
+  });
+  if (!swimEntryResult.swimming || swimEntryResult.y < -0.95 || swimEntryResult.riverDistance > 7.5) {
+    errors.push('dry-bank approach did not enter stable river swimming: '+JSON.stringify({start:swimEntry,result:swimEntryResult}));
+    await page.screenshot({path:'/tmp/jarrell-swim-entry-failure.png'});
+  }
+
   const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
   if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 4.5 || item.width > 6.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
 
