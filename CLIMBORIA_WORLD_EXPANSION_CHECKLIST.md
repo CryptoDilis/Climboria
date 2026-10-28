@@ -209,3 +209,15 @@ For each meaningful implementation batch:
 - [ ] Improve ground PBR texture variation and shoreline blending; add sparse desert biome with dry ground, scattered rocks and drought-tolerant plants.
 - [ ] Verify the late-video camera/terrain obstruction and manually inspect swimming posture/depth in a real browser.
 - [ ] Run and inspect Validate, Browser Smoke Test and Pages deployment for the latest commits before declaring this pass stable.
+
+
+## Terrain + distributed mountain/cave implementation gate — 2026-10-29
+
+- [ ] Evaluate the CC0 Innerscene Mountain Peak GLB as a regional landmark; inspect the real downloaded file and scale before integrating. Source/requirements are recorded in `ASSET_SOURCES.md`.
+- [ ] Import a CC0 modular cave kit and place cave systems in multiple distant regions, not all beside the spawn camp.
+- [ ] Create a shared terrain height-field/collision contract so visible ground, player grounding, slope tests, and spawn placement agree.
+- [ ] Replace broad flat areas with varied rolling hills, ridgelines, saddles, gullies, ravines, sloped foothills and terraces; blend these into the main mountain masses instead of isolated floating props.
+- [ ] Add authored/derived collision for imported mountain and cave meshes. A GLB mesh does not automatically include Three.js physics; verify slope limits, walkable routes, blocked cliff faces, cave floors/walls and entrances.
+- [ ] Spread mountains, caves, ponds, forests, ruins, sanctuary/park, fields, coast/port/wreck, campsites and remote treasure zones across the map with distinct biome transitions and travel routes.
+- [ ] Optimize imported assets before shipping: select only needed models, reduce texture size, decimate heavy meshes, add LOD/culling, and measure mobile load/performance.
+- [ ] Keep the source/license, local file path, actual download size, collision strategy, and browser test evidence in `ASSET_SOURCES.md`.
