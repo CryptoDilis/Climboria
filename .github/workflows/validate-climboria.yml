@@ -7,8 +7,24 @@ concurrency:
 on:
   push:
     branches: [main]
+    paths:
+      - "**/*.html"
+      - "**/*.js"
+      - "**/*.mjs"
+      - "**/*.css"
+      - "game/assets/music/**"
+      - ".github/scripts/**"
+      - ".github/workflows/**"
   pull_request:
     branches: [main]
+    paths:
+      - "**/*.html"
+      - "**/*.js"
+      - "**/*.mjs"
+      - "**/*.css"
+      - "game/assets/music/**"
+      - ".github/scripts/**"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
