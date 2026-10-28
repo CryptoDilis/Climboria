@@ -210,10 +210,16 @@ function hitsJarrellObstacleAt(x,z,playerY){
   const cell=jarrellColliderGrid.get(gx+','+gz);if(!cell)continue;
   for(const o of cell){
    if(seen.has(o))continue;seen.add(o);
-   const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+playerRadius;
-   if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
    const vertical=playerY+1.75>o.y0&&playerY<o.y1;
-   if(vertical&&dx*dx+dz*dz<reach*reach)return true;
+   if(!vertical)continue;
+   if(o.kind==='log'&&Number.isFinite(o.x1)&&Number.isFinite(o.z1)&&Number.isFinite(o.x2)&&Number.isFinite(o.z2)){
+    const sx=o.x2-o.x1,sz=o.z2-o.z1,lenSq=sx*sx+sz*sz,t=lenSq?THREE.MathUtils.clamp(((x-o.x1)*sx+(z-o.z1)*sz)/lenSq,0,1):0,px=o.x1+t*sx,pz=o.z1+t*sz,dx=x-px,dz=z-pz,reach=(o.r||.35)+playerRadius;
+    if(dx*dx+dz*dz<reach*reach)return true;
+   }else{
+    const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+playerRadius;
+    if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
+    if(dx*dx+dz*dz<reach*reach)return true;
+   }
   }
  }
  return false;
@@ -484,6 +490,8 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
    const riverX=jarrellRiverX(z),riverDist=Math.abs(x-riverX),campDist=Math.hypot(x+1,z+340);
    if(radial>480||lakeDist<111||campDist<25||riverDist<12)continue;
    const y=jarrellHeight(x,z),scale=.45+localRand()*1.2,k=Math.floor(localRand()*bushMats.length);
+   // Give the visible understory bushes matching lightweight gameplay colliders.
+   if(currentLevel==='11')addJarrellObstacleCollider({x,z,r:scale*.62,y0:y-.05,y1:y+scale*1.1,kind:'bush'});
    leafDummy.position.set(x,y+scale*.45,z);leafDummy.rotation.set(localRand()*.12,localRand()*Math.PI*2,localRand()*.12);leafDummy.scale.set(scale*(.8+localRand()*.6),scale*(.65+localRand()*.55),scale*(.8+localRand()*.6));leafDummy.updateMatrix();
    if(bushCounts[k]<bushN)bushes[k].setMatrixAt(bushCounts[k]++,leafDummy.matrix);
   }
@@ -514,8 +522,10 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   for(let i=0;i<(isMobileGPU?24:52)*5&&logCount<(isMobileGPU?24:52);i++){
    const x=-3.8+(localRand()-.5)*880,z=-340+(localRand()-.5)*880;
    if(Math.hypot(x+1,z+340)<34||Math.abs(x-jarrellRiverX(z))<13)continue;
-   const y=jarrellHeight(x,z),len=.7+localRand()*.7;
-   logDummy.position.set(x,y+.25,z);logDummy.rotation.set((localRand()-.5)*.15,localRand()*Math.PI*2,Math.PI/2+(localRand()-.5)*.18);logDummy.scale.setScalar(len);logDummy.updateMatrix();logs.setMatrixAt(logCount++,logDummy.matrix);
+   const y=jarrellHeight(x,z),len=.7+localRand()*.7,yaw=localRand()*Math.PI*2;
+   logDummy.position.set(x,y+.25,z);logDummy.rotation.set((localRand()-.5)*.15,yaw,Math.PI/2+(localRand()-.5)*.18);logDummy.scale.setScalar(len);logDummy.updateMatrix();logs.setMatrixAt(logCount++,logDummy.matrix);
+   // A capsule-like horizontal segment prevents walking through the length of a fallen log.
+   if(currentLevel==='11'){const halfLength=2.1*len,axisX=Math.cos(yaw)*halfLength,axisZ=-Math.sin(yaw)*halfLength;addJarrellObstacleCollider({x,z,x1:x-axisX,z1:z-axisZ,x2:x+axisX,z2:z+axisZ,r:.34*len,y0:y-.05,y1:y+.62*len,kind:'log'});}
   }
   logs.count=logCount;logs.instanceMatrix.needsUpdate=true;logs.castShadow=!isMobileGPU;scene.add(logs);
   // Removed decorative floating motes; prioritize grounded scenery and clear sightlines.
