@@ -173,14 +173,14 @@ try {
   // Regression: walkable slopes should not be blocked by an overly strict fixed step threshold.
   const uphillTarget = await page.evaluate(() => {
     const api = window.__climboriaSmoke, candidates = [];
-    for (let z = -320; z <= -100; z += 8) {
-      for (let x = -200; x <= 200; x += 8) {
+    for (let z = -340; z <= -60; z += 8) {
+      for (let x = -240; x <= 240; x += 8) {
         const ground = api.terrainHeightAt(x, z);
         const gx = (api.terrainHeightAt(x + 1, z) - api.terrainHeightAt(x - 1, z)) / 2;
         const gz = (api.terrainHeightAt(x, z + 1) - api.terrainHeightAt(x, z - 1)) / 2;
         const slope = Math.hypot(gx, gz), river = api.nearestRiverPoint(x, z);
         if (![ground, gx, gz, river?.distanceSq].every(Number.isFinite)) continue;
-        if (slope < .42 || slope > .68 || Math.sqrt(river.distanceSq) < 16) continue;
+        if (slope < .28 || slope > .72 || Math.sqrt(river.distanceSq) < 16) continue;
         if (api.obstacles.some(o => Math.hypot(o.x - x, o.z - z) < (o.r || 1) + 3)) continue;
         candidates.push({x,z,ground,gx,gz,slope});
       }
