@@ -4,6 +4,8 @@ Climboria is a browser-first climbing, survival, and open-world treasure-hunting
 
 > This README records agreed design direction and economy rules; it does not claim every feature is production-ready.
 
+> **Development continuity:** The persistent repair, workflow, collision, and free/open-source asset integration plan lives in [DEVELOPMENT_CHECKLIST.md](./DEVELOPMENT_CHECKLIST.md). Carry it forward across sessions and update it based on verified results.
+
 ## Launch scope: Jarrell’s Peak only
 
 Jarrell’s Peak is a vast, endless-feeling wilderness expedition focused on exploration, survival, and treasure hunting. It has **no summit, no final level, and no completion point**. Its motto is **“Vengeance Is Always an Option.”**
