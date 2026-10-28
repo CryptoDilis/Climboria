@@ -351,6 +351,28 @@ try {
     if (bushLogCollision.log.outsideBlocked) errors.push('Jarrell fallen-log segment blocks a point beyond its collision radius');
   }
 
+  // Regression: large Jarrell stone obstacles must block at ground height, reject points outside their radius, and respect vertical clearance.
+  const rockCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const rock = api.obstacles.filter(item => item.kind === 'rock')
+      .sort((a, b) => Math.hypot(a.x - api.player.position.x, a.z - api.player.position.z) - Math.hypot(b.x - api.player.position.x, b.z - api.player.position.z))[0];
+    if (!rock) return { error: 'no large rock collider indexed', obstacleCount: api.obstacles.length };
+    const groundY = Number.isFinite(rock.y0) ? rock.y0 : api.terrainHeightAt(rock.x, rock.z);
+    const result = {
+      radius: rock.r || .6,
+      insideBlocked: api.testObstacleCollision(rock.x, rock.z, groundY + .22),
+      outsideBlocked: api.testObstacleCollision(rock.x + (rock.r || .6) + 1.1, rock.z, groundY + .22),
+      aboveBlocked: api.testObstacleCollision(rock.x, rock.z, rock.y1 + 2.2),
+    };
+    return result;
+  });
+  if (rockCollision.error) errors.push(rockCollision.error);
+  else {
+    if (!rockCollision.insideBlocked) errors.push('large Jarrell rock collider does not block at ground height');
+    if (rockCollision.outsideBlocked) errors.push('large Jarrell rock collider blocks a point outside its radius');
+    if (rockCollision.aboveBlocked) errors.push('large Jarrell rock collider blocks movement above its vertical bounds');
+  }
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
