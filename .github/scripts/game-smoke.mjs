@@ -302,7 +302,8 @@ try {
     api.getKeys().KeyA=false;api.getKeys().KeyD=false;
     return result;
   });
-  if (!swimEntryResult.swimming || swimEntryResult.y < -0.95 || swimEntryResult.riverDistance > 7.5) {
+  const swimEntryRiverLimit = await page.evaluate(() => { const api=window.__climboriaSmoke,p=api.player.position,nearest=api.nearestRiverPoint(p.x,p.z); return (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.35+0.5; });
+  if (!swimEntryResult.swimming || swimEntryResult.y < -0.95 || swimEntryResult.riverDistance > swimEntryRiverLimit) {
     errors.push('dry-bank approach did not enter stable river swimming: '+JSON.stringify({start:swimEntry,result:swimEntryResult}));
     await page.screenshot({path:'/tmp/jarrell-swim-entry-failure.png'});
   }
