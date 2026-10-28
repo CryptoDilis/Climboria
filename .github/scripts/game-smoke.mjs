@@ -384,14 +384,15 @@ try {
       api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
-    await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;api.getKeys()[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
-    // Keep the synthetic key held during the long browser test; focus/visibility cleanup may release it.
-    const swimExitHold = setInterval(()=>page.evaluate(side=>{const api=window.__climboriaSmoke;if(api&&!api.isPaused())api.getKeys()[side>0?'KeyD':'KeyA']=true;},swimExitStart.side).catch(()=>{}),250);
+    await page.evaluate(()=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;});
+    // Use real browser keyboard events so the same input path as a player is exercised.
+    const swimExitKey=swimExitStart.side>0?'KeyD':'KeyA';
+    await page.keyboard.down(swimExitKey);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
       const nearest=api?.nearestRiverPoint(p?.x,p?.z);return !!p && !!nearest && Math.sqrt(nearest.distanceSq) >= (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.8 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
-    clearInterval(swimExitHold);
+    await page.keyboard.up(swimExitKey);
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
       const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
