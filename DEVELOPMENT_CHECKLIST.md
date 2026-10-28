@@ -25,10 +25,10 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 - [ ] Fix all current JavaScript/module-loading errors in `game/play.html`; confirm Three.js and GLTFLoader load in a real browser.
 - [ ] Run JavaScript syntax checks for every inline game/site script.
 - [ ] Make **Validate Climboria** pass.
-- [ ] Make **Climboria Browser Smoke Test** pass on desktop and mobile.
+- [x] Make **Climboria Browser Smoke Test** pass on desktop and mobile — verified green on commit `852e401ae90765af1ca7dcc880526cb99758fb73`, run [40683218046](https://github.com/CryptoDilis/Climboria/actions/runs/40683218046).
 - [ ] Fix the actual smoke-test failures: canvas/scene startup, river swimming and exiting onto the bank, collision, controls/input cleanup, fishing, loot/inventory, tent assets, and menu checks as reported by current logs.
 - [ ] Confirm there are no uncaught browser errors, missing critical assets, or blank 3D scenes.
-- [ ] Confirm fresh main workflow runs are green. Page Deployment alone is not sufficient.
+- [ ] Confirm fresh main workflow runs are green. Page Deployment alone is not sufficient. Browser Smoke Test is green on `852e401`; Validate Climboria run [40683218012](https://github.com/CryptoDilis/Climboria/actions/runs/40683218012) was still running at last check.
 - [ ] Test the deployed game after the same commit passes CI.
 
 ## P1 — World environment and free asset research/integration
