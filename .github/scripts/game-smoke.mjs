@@ -373,6 +373,21 @@ try {
     if (rockCollision.aboveBlocked) errors.push('large Jarrell rock collider blocks movement above its vertical bounds');
   }
 
+  // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
+  const waterTerrain = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const centerX = api.riverX(0);
+    const halfWidth = window.jarrellRiverHalfWidth(.5);
+    const riverBed = api.terrainHeightAt(centerX, 0);
+    const sandyShelf = api.terrainHeightAt(centerX + halfWidth + 3, 0);
+    const ocean = window.jarrellOceanBounds;
+    const seaFloor = ocean ? api.terrainHeightAt((ocean.minX + ocean.maxX) / 2, 0) : null;
+    return { riverBed, sandyShelf, seaFloor, seaSurface: ocean?.surfaceY, ocean };
+  });
+  if (!(waterTerrain.riverBed <= -5.5)) errors.push('Jarrell river bed is not deep enough for a swimmer to submerge');
+  if (!(waterTerrain.sandyShelf >= 0 && waterTerrain.sandyShelf <= .25)) errors.push('Jarrell river shore shelf is not shallow and walkable');
+  if (!(Number.isFinite(waterTerrain.seaFloor) && waterTerrain.seaFloor < -10 && waterTerrain.seaSurface > waterTerrain.seaFloor)) errors.push('Jarrell sea basin is missing or not deep below its water surface');
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
