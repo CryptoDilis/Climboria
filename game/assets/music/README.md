@@ -1,3 +1,3 @@
 Climboria soundtrack assets.
 
-The user's original soundtrack is `TRACK_01.mp3` (approximately 1 minute 35 seconds, originally supplied with that filename). Use this full original track across all expeditions, including Jarrell's Peak. Do not replace it with a shortened 60-second edit or procedurally synthesized background melody. Web Audio remains available for gameplay sound effects.
+`TRACK_01.mp3` is the single canonical original soundtrack (approximately 1 minute 35 seconds). It is used across all expeditions, including Jarrell's Peak. Do not add alternate/shortened soundtrack copies or synthesize replacement background music. Web Audio remains available for gameplay sound effects.
