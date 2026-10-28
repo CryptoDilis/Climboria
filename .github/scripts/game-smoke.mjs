@@ -397,10 +397,11 @@ try {
   if (swimDiveY > swimSurfaceY - .12 || swimDiveY < -1.08) errors.push('dive control failed to lower the swimmer within safe depth bounds: '+JSON.stringify({surface:swimSurfaceY,dive:swimDiveY}));
   console.log('Jarrell swim depth controls:',JSON.stringify({initial:swimDepthInitial,surface:{y:Number(swimSurfaceY.toFixed(2)),debug:swimSurfaceState.debug,swimming:swimSurfaceState.swimming},dive:{y:Number(swimDiveY.toFixed(2)),debug:swimDiveState.debug,swimming:swimDiveState.swimming}}));
 
-  const riverWidthAudit = await page.evaluate(() => [-200, 80, 280].map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }));
+  const riverTestZs = [-700, -520, -360, -200, 0, 80, 280, 480, 700];
+  const riverWidthAudit = await page.evaluate(zValues => zValues.map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }), riverTestZs);
   if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 9.5 || item.width > 12.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
 
-  for (const z of [-200, 80, 280]) {
+  for (const z of riverTestZs) {
     const riverCenterX = await page.evaluate(zValue => {
       const api = window.__climboriaSmoke;
       const x = api.riverX(zValue);
