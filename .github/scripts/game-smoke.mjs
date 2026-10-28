@@ -186,8 +186,8 @@ try {
   // Regression: walkable slopes should not be blocked by an overly strict fixed step threshold.
   const uphillTarget = await page.evaluate(() => {
     const api = window.__climboriaSmoke, candidates = [];
-    for (let z = -340; z <= -60; z += 8) {
-      for (let x = -240; x <= 240; x += 8) {
+    for (let z = -800; z <= 1700; z += 20) {
+      for (let x = -3200; x <= 3600; x += 24) {
         const ground = api.terrainHeightAt(x, z);
         const gx = (api.terrainHeightAt(x + 1, z) - api.terrainHeightAt(x - 1, z)) / 2;
         const gz = (api.terrainHeightAt(x, z + 1) - api.terrainHeightAt(x, z - 1)) / 2;
@@ -516,7 +516,7 @@ try {
 
   const riverTestZs = [-700, -520, -360, -200, 0, 80, 280, 480, 700];
   const riverWidthAudit = await page.evaluate(zValues => zValues.map(z => { const x=window.__climboriaSmoke.riverX(z),nearest=window.nearestRiverPoint(x,z),width=window.jarrellRiverHalfWidth?.(nearest.t); return {z,width}; }), riverTestZs);
-  if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 9.5 || item.width > 12.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
+  if (riverWidthAudit.some(item => !Number.isFinite(item.width) || item.width < 13.5 || item.width > 16.5)) errors.push('Jarrell river collision/swimming width is missing or inconsistent with the rendered water ribbon: ' + JSON.stringify(riverWidthAudit));
 
   for (const z of riverTestZs) {
     const riverCenterX = await page.evaluate(zValue => {
@@ -534,7 +534,10 @@ try {
     for (const side of [-1, 1]) {
       await page.evaluate(({ x, zValue, bankSide }) => {
         const api = window.__climboriaSmoke;
-        const bankX = x + bankSide * 14;
+        const nearest = api.nearestRiverPoint(x, zValue);
+        const halfWidth = window.jarrellRiverHalfWidth?.(nearest.t) || 14.5;
+        const bankOffset = halfWidth + 3.5;
+        const bankX = x + bankSide * bankOffset;
         api.player.position.set(bankX, api.terrainHeightAt(bankX, zValue) + .22, zValue);
       }, { x: riverCenterX, zValue: z, bankSide: side });
       await page.waitForTimeout(140);
