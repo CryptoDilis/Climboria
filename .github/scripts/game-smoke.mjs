@@ -132,7 +132,7 @@ try {
       const ground = api.terrainHeightAt(p.x, p.z);
       return { x:Number(p.x.toFixed(2)), z:Number(p.z.toFixed(2)), y:Number(p.y.toFixed(2)), ground:Number(ground.toFixed(2)), clearance:Number((p.y-ground).toFixed(2)), paused:api.isPaused() };
     });
-    if (groundedState.y < groundedState.ground - .05 || groundedState.clearance > 2.0) {
+    if (groundedState.clearance < .05 || groundedState.clearance > 2.0) {
       errors.push('hero failed to settle on safe dry terrain without sinking or floating: ' + JSON.stringify(groundedState));
     }
   }
