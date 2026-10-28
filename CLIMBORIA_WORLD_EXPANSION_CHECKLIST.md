@@ -221,3 +221,11 @@ For each meaningful implementation batch:
 - [ ] Spread mountains, caves, ponds, forests, ruins, sanctuary/park, fields, coast/port/wreck, campsites and remote treasure zones across the map with distinct biome transitions and travel routes.
 - [ ] Optimize imported assets before shipping: select only needed models, reduce texture size, decimate heavy meshes, add LOD/culling, and measure mobile load/performance.
 - [ ] Keep the source/license, local file path, actual download size, collision strategy, and browser test evidence in `ASSET_SOURCES.md`.
+
+
+## Terrain pass in progress — commit `67bf54a4a1fc71846f9dacd7827fb10934ffc729`
+
+- [x] Added separate central highlands, northwest ridges, southwest foothills, eastern ridge chain and winding gullies to Jarrell's shared height function. These affect streamed terrain meshes and player grounding through the same `jarrellHeight` function rather than adding decorative floating mountains.
+- [ ] Verify Validate and Browser Smoke Test on this commit; inspect slope, spawn, riverbank and grounding results before accepting the new terrain.
+- [ ] Tune ridgeline height and valley depth based on actual gameplay screenshots/desktop and mobile checks.
+- [ ] Import actual CC0 mountain/cave assets only after local download, optimization, collision setup and tests; asset source plan is in `ASSET_SOURCES.md`.
