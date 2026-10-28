@@ -24,11 +24,11 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 
 - [ ] Fix all current JavaScript/module-loading errors in `game/play.html`; confirm Three.js and GLTFLoader load in a real browser.
 - [ ] Run JavaScript syntax checks for every inline game/site script.
-- [ ] Make **Validate Climboria** pass.
-- [x] Make **Climboria Browser Smoke Test** pass on desktop and mobile — verified green on commit `852e401ae90765af1ca7dcc880526cb99758fb73`, run [40683218046](https://github.com/CryptoDilis/Climboria/actions/runs/40683218046).
+- [x] Make **Validate Climboria** pass — verified green on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, run [40689882088](https://github.com/CryptoDilis/Climboria/actions/runs/40689882088).
+- [x] Make **Climboria Browser Smoke Test** pass on desktop and mobile — latest verified green on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, run [40689881937](https://github.com/CryptoDilis/Climboria/actions/runs/40689881937). The browser run reports the Jarrell desktop/mobile smoke test passed, including terrain grounding, swimming surface/dive controls, mobile input release/focus/visibility/pointer-capture cleanup, and tent asset loading.
 - [ ] Fix the actual smoke-test failures: canvas/scene startup, river swimming and exiting onto the bank, collision, controls/input cleanup, fishing, loot/inventory, tent assets, and menu checks as reported by current logs.
 - [ ] Confirm there are no uncaught browser errors, missing critical assets, or blank 3D scenes.
-- [ ] Confirm fresh main workflow runs are green. Page Deployment alone is not sufficient. Browser Smoke Test is green on `852e401`; Validate Climboria run [40683218012](https://github.com/CryptoDilis/Climboria/actions/runs/40683218012) was still running at last check.
+- [x] Confirm fresh main workflow runs are green — on commit `a19501c8cc0c7d4b09710aa0e1851c678a81f07d`, Browser Smoke Test [40689881937](https://github.com/CryptoDilis/Climboria/actions/runs/40689881937), Validate Climboria [40689882088](https://github.com/CryptoDilis/Climboria/actions/runs/40689882088), and Pages deployment [40689882455](https://github.com/CryptoDilis/Climboria/actions/runs/40689882455) all completed successfully.
 - [ ] Test the deployed game after the same commit passes CI.
 
 ## P1 — World environment and free asset research/integration
