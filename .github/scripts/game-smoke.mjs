@@ -49,6 +49,29 @@ try {
     if (advancedTime <= soundtrackState.currentTime + 0.2) errors.push('Original TRACK_01 playback time did not advance: ' + JSON.stringify({start:soundtrackState.currentTime,end:advancedTime}));
   }
 
+  const desktopNavigation = await page.evaluate(() => {
+    const panel = document.querySelector('#navigationPanel');
+    const coordinates = document.querySelector('#coordinatePanel');
+    const needle = document.querySelector('#compassNeedle');
+    const heading = document.querySelector('#compassHeading')?.textContent || '';
+    const values = ['coordX','coordY','coordZ'].map(id => document.getElementById(id)?.textContent || '');
+    const region = document.querySelector('#regionNumber')?.textContent || '';
+    const bounds = panel?.getBoundingClientRect();
+    return {
+      panel: !!panel, coordinates: !!coordinates, needle: !!needle,
+      heading, values, region,
+      topRight: !!bounds && bounds.top >= 0 && bounds.left > innerWidth * 0.55 && bounds.right <= innerWidth,
+      coordinatesBelowCompass: !!panel && !!coordinates && coordinates.getBoundingClientRect().top >= panel.getBoundingClientRect().bottom - 2,
+      valuesNumeric: values.every(value => value.trim() !== '' && Number.isFinite(Number(value))),
+      regionValid: /^REGION\\s+-?\\d+\\s+·\\s+-?\\d+$/.test(region.trim()),
+    };
+  });
+  if (!desktopNavigation.panel || !desktopNavigation.coordinates || !desktopNavigation.needle) errors.push('desktop compass/coordinate HUD elements are missing: ' + JSON.stringify(desktopNavigation));
+  if (!desktopNavigation.topRight) errors.push('desktop compass is not positioned within the upper-right viewport: ' + JSON.stringify(desktopNavigation));
+  if (!desktopNavigation.coordinatesBelowCompass) errors.push('desktop coordinates are not displayed below the compass: ' + JSON.stringify(desktopNavigation));
+  if (!desktopNavigation.valuesNumeric || !desktopNavigation.regionValid || !/\\d{3}°/.test(desktopNavigation.heading)) errors.push('desktop compass heading or live coordinate values are invalid: ' + JSON.stringify(desktopNavigation));
+  console.log('Desktop compass/coordinates HUD:', JSON.stringify(desktopNavigation));
+
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
     return {
@@ -704,6 +727,25 @@ try {
     errors.push('mobile Jarrell controls did not initialize correctly');
   }
   console.log('Mobile smoke state:', JSON.stringify(mobileState));
+
+  const mobileNavigation = await mobilePage.evaluate(() => {
+    const panel = document.querySelector('#navigationPanel');
+    const coordinates = document.querySelector('#coordinatePanel');
+    const bounds = panel?.getBoundingClientRect();
+    const coordBounds = coordinates?.getBoundingClientRect();
+    return {
+      panel: !!panel, coordinates: !!coordinates,
+      topRight: !!bounds && bounds.top >= 0 && bounds.right <= innerWidth && bounds.left > innerWidth * 0.45,
+      coordinatesBelowCompass: !!bounds && !!coordBounds && coordBounds.top >= bounds.bottom - 2,
+      noHorizontalOverflow: document.documentElement.scrollWidth <= innerWidth + 2,
+      values: ['coordX','coordY','coordZ'].map(id => document.getElementById(id)?.textContent || ''),
+      region: document.querySelector('#regionNumber')?.textContent || '',
+    };
+  });
+  if (!mobileNavigation.panel || !mobileNavigation.coordinates || !mobileNavigation.topRight || !mobileNavigation.coordinatesBelowCompass || !mobileNavigation.noHorizontalOverflow) errors.push('mobile compass/coordinate HUD layout failed: ' + JSON.stringify(mobileNavigation));
+  if (!mobileNavigation.values.every(value => value.trim() !== '' && Number.isFinite(Number(value))) || !/^REGION\\s+-?\\d+\\s+·\\s+-?\\d+$/.test(mobileNavigation.region.trim())) errors.push('mobile compass coordinates/region values are invalid: ' + JSON.stringify(mobileNavigation));
+  console.log('Mobile compass/coordinates HUD:', JSON.stringify(mobileNavigation));
+
   const mobileSwimInput = await mobilePage.evaluate(() => {
     const api=window.__climboriaSmoke,button=document.querySelector('#jump');
     window.jarrellSwimming=true;
