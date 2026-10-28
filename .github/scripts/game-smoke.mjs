@@ -199,7 +199,12 @@ try {
   if (!uphillTarget) {
     errors.push('could not find a clear, walkable uphill slope for the collision regression');
   } else {
-    await page.waitForTimeout(1100);
+    await page.bringToFront();
+    await page.evaluate(() => { window.__climboriaSmoke.setPaused(false); });
+    await page.waitForFunction(target => {
+      const p=window.__climboriaSmoke.player.position;
+      return Math.hypot(p.x-target.x,p.z-target.z) >= .35;
+    }, uphillTarget, { timeout: 6000 }).catch(() => {});
     const uphillResult = await page.evaluate(() => {
       const api=window.__climboriaSmoke,p=api.player.position;
       api.setMoveInput(null);
