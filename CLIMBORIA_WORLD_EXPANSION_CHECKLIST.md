@@ -1,3 +1,12 @@
+## Latest workflow diagnosis — 2026-10-29 (frame-time telemetry)
+
+- [x] Diagnosed the failures in Validate Climboria run 40762241130 and Browser Smoke Test run 40762241362: the CI browser produced only 3 requestAnimationFrame samples during the 2-second collection window, so the new hard requirement of 30 samples failed despite valid timing data.
+- [x] Fixed the smoke-test policy in commit `ccadcbb6ea3db511d0b89a74877c524db4c0c0c1`: zero valid samples or non-finite average frame time remains a failure; low sample counts are logged as a performance warning instead of failing gameplay smoke tests.
+- [x] Validate Climboria passed after the fix: [run 40764550416](https://github.com/CryptoDilis/Climboria/actions/runs/40764550416).
+- [x] Browser Smoke Test passed after the fix: [run 40764550600](https://github.com/CryptoDilis/Climboria/actions/runs/40764550600).
+- [x] GitHub Pages build and deployment passed: [run 40764550054](https://github.com/CryptoDilis/Climboria/actions/runs/40764550054).
+- [ ] Real-device FPS/frame-time/memory baseline remains outstanding. CI telemetry sample scarcity is not evidence of the actual game's FPS on desktop or Android; capture and assess a repeatable browser/device benchmark before claiming performance improvement.
+
 ## Latest workflow diagnosis — 2026-10-29
 
 - [x] After commit `8cdc5955b55c4eaeb9595bd85e1a335d9d3d370b`, Validate Climboria passed: [run 40761100382](https://github.com/CryptoDilis/Climboria/actions/runs/40761100382), including JavaScript syntax checks and Jarrell desktop/mobile gameplay smoke tests.
