@@ -308,6 +308,47 @@ try {
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
+  // Regression: Jarrell bushes and fallen logs must block movement, without creating oversized invisible walls.
+  const bushLogCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const playerY = item => (Number.isFinite(item.y0) ? item.y0 : api.terrainHeightAt(item.x, item.z)) + .22;
+    const bush = api.obstacles.filter(item => item.kind === 'bush')
+      .sort((a, b) => Math.hypot(a.x - api.player.position.x, a.z - api.player.position.z) - Math.hypot(b.x - api.player.position.x, b.z - api.player.position.z))[0];
+    const log = api.obstacles.filter(item => item.kind === 'log' && [item.x1,item.z1,item.x2,item.z2].every(Number.isFinite))
+      .sort((a, b) => Math.hypot(a.x - api.player.position.x, a.z - api.player.position.z) - Math.hypot(b.x - api.player.position.x, b.z - api.player.position.z))[0];
+    const result = { bush: null, log: null };
+    if (bush) {
+      const y = playerY(bush), radius = (bush.r || .6) + .4;
+      result.bush = {
+        insideBlocked: api.testObstacleCollision(bush.x, bush.z, y),
+        outsideBlocked: api.testObstacleCollision(bush.x + radius + 1.1, bush.z, y),
+        radius: bush.r || .6
+      };
+    }
+    if (log) {
+      const sx = log.x2 - log.x1, sz = log.z2 - log.z1, length = Math.hypot(sx, sz) || 1;
+      const mx = (log.x1 + log.x2) / 2, mz = (log.z1 + log.z2) / 2;
+      const offset = (log.r || .35) + .4 + 1.1;
+      const y = playerY(log);
+      result.log = {
+        insideBlocked: api.testObstacleCollision(mx, mz, y),
+        outsideBlocked: api.testObstacleCollision(mx - sz / length * offset, mz + sx / length * offset, y),
+        radius: log.r || .35
+      };
+    }
+    return result;
+  });
+  if (!bushLogCollision.bush) errors.push('Jarrell bush collision regression could not find an indexed bush collider');
+  else {
+    if (!bushLogCollision.bush.insideBlocked) errors.push('Jarrell bush collider does not block movement at its center');
+    if (bushLogCollision.bush.outsideBlocked) errors.push('Jarrell bush collider blocks a point outside its radius');
+  }
+  if (!bushLogCollision.log) errors.push('Jarrell fallen-log collision regression could not find a segment collider');
+  else {
+    if (!bushLogCollision.log.insideBlocked) errors.push('Jarrell fallen-log segment does not block movement at its midpoint');
+    if (bushLogCollision.log.outsideBlocked) errors.push('Jarrell fallen-log segment blocks a point beyond its collision radius');
+  }
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
