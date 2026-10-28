@@ -24,11 +24,11 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 
 - [ ] Fix all current JavaScript/module-loading errors in `game/play.html`; confirm Three.js and GLTFLoader load in a real browser.
 - [ ] Run JavaScript syntax checks for every inline game/site script.
-- [ ] Make **Validate Climboria** pass on the current release candidate. Historical green run `40689882088` is not evidence that current commits pass; latest observed run `40697399128` failed on commit `9d0aa16a`, and run `40698275078` is the current validation run to verify.
-- [ ] Make **Climboria Browser Smoke Test** pass on desktop and mobile on the current release candidate. Historical green run `40689881937` is not evidence that current commits pass; latest observed run `40697396452` failed on commit `9d0aa16a`, and run `40698275027` is the current smoke run to verify.
-- [ ] Fix the actual smoke-test failures: canvas/scene startup, river swimming and exiting onto the bank, collision, controls/input cleanup, fishing, loot/inventory, tent assets, and menu checks as reported by current logs.
+- [x] Make **Validate Climboria** pass on gameplay commit `b6a56d16`; run [40698275078](https://github.com/CryptoDilis/Climboria/actions/runs/40698275078) completed successfully (job `validate`, conclusion `success`). Recheck after future gameplay changes.
+- [x] Make **Climboria Browser Smoke Test** pass on gameplay commit `b6a56d16`; run [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027) completed successfully (job `browser-smoke`, conclusion `success`). Recheck after future gameplay changes.
+- [x] Resolve the current regression that blocked the swim-exit smoke test: run [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027) passed after the test began near the real shoreline and the observation window was extended. This verifies the current automated scenario only; broader collision/terrain edge cases remain unchecked.
 - [ ] Confirm there are no uncaught browser errors, missing critical assets, or blank 3D scenes.
-- [ ] Confirm fresh main workflow runs are green on the same commit. On `9d0aa16a`, Browser Smoke Test [40697396452](https://github.com/CryptoDilis/Climboria/actions/runs/40697396452) and Validate Climboria [40697399128](https://github.com/CryptoDilis/Climboria/actions/runs/40697399128) failed; Pages deployment passed. Current candidate `b6a56d16` has new smoke run [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027) and validation run [40698275078](https://github.com/CryptoDilis/Climboria/actions/runs/40698275078) still requiring verification at last check.
+- [x] Confirm Browser Smoke Test, Validate Climboria, and Pages deployment are green on gameplay commit `b6a56d16`: smoke [40698275027](https://github.com/CryptoDilis/Climboria/actions/runs/40698275027), validation [40698275078](https://github.com/CryptoDilis/Climboria/actions/runs/40698275078), and deployment [40698275144](https://github.com/CryptoDilis/Climboria/actions/runs/40698275144) all completed successfully. The subsequent checklist-only commit `cb383fca` has validation [40698748741](https://github.com/CryptoDilis/Climboria/actions/runs/40698748741) still to verify; no game code changed in that commit.
 - [ ] Test the deployed game after the same commit passes CI.
 
 ## P1 — World environment and free asset research/integration
@@ -92,7 +92,7 @@ For each asset or code technique: find a trustworthy open-source/GitHub source, 
 
 - [ ] Terrain ground detection: character stays above ground and does not sink, float, or snag on invisible surfaces.
 - [ ] Reliable collision on slopes, cliff edges, rocks, tree trunks, huts, tents, bridges, cave walls, chests, and props.
-- [ ] Water volumes match visible water; swimming starts/ends consistently; shore transitions work from both sides and along curved river segments.
+- [ ] Water volumes match visible water; swimming starts/ends consistently; shore transitions work from both sides and along curved river segments. The automated starting-river exit scenario passed on `b6a56d16`; broader river bends and terrain/shore collision cases still need coverage.
 - [ ] No collision gaps, invisible walls, or false blocks that prevent reaching the riverbank, camp, or intended routes.
 - [ ] Desktop controls: WASD, jump, sprint, interact/pickup, camera, pause.
 - [ ] Mobile controls: movement, jump, sprint, interaction, camera, swim/dive; all held inputs release on pointer-up, pointer cancellation, lost focus, hidden tab, and lost pointer capture.
