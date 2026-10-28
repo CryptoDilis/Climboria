@@ -395,21 +395,29 @@ try {
       api.getKeys().KeyA=false;api.getKeys().KeyD=false;
       api.setMoveVector(moveX,moveZ);
     }, swimExitStart);
-    await page.waitForFunction(() => {
-      const api=window.__climboriaSmoke,p=api?.player?.position;
-      const nearest=api?.nearestRiverPoint(p?.x,p?.z);
-      return !!p && !!nearest &&
-        Math.sqrt(nearest.distanceSq) >= (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.8 &&
-        window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
-    }, null, {timeout:60000,polling:250}).catch(() => {});
-    await page.evaluate(() => { window.__climboriaSmoke.setMoveInput(null); });
-    const swimExit = await page.evaluate(({side,z}) => {
-      const api=window.__climboriaSmoke,p=api.player.position;
-      const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
+    const swimExit = await page.evaluate(async ({side,z}) => {
+      const api=window.__climboriaSmoke;
+      const started={...api.player.position};
+      const samples=[];
+      const deadline=performance.now()+18000;
+      while(performance.now()<deadline){
+        await new Promise(resolve=>setTimeout(resolve,500));
+        const p=api.player.position,nearest=api.nearestRiverPoint(p.x,p.z);
+        const width=window.jarrellRiverHalfWidth?.(nearest.t)||11.5;
+        samples.push({x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
+          bankDistance:Number(Math.sqrt(nearest.distanceSq).toFixed(2)),width:Number(width.toFixed(2)),
+          swimming:window.jarrellSwimming===true,move:api.getMoveVec(),movement:api.getMovementState(),
+          collision:api.lastMovementDebug||null});
+        if(Math.sqrt(nearest.distanceSq)>=width+0.8&&window.jarrellSwimming===false&&p.y>=api.terrainHeightAt(p.x,p.z))break;
+      }
+      const p=api.player.position,nearest=api.nearestRiverPoint(p.x,p.z);
+      const width=window.jarrellRiverHalfWidth?.(nearest.t)||11.5;
+      const result={side,paused:api.isPaused(),start:{x:Number(started.x.toFixed(2)),z:Number(started.z.toFixed(2))},
         x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
-        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.sqrt(api.nearestRiverPoint(p.x,p.z).distanceSq).toFixed(2)),
-        collision:api.lastMovementDebug||null};
-      api.getKeys().KeyD=false;api.getKeys().KeyA=false;
+        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.sqrt(nearest.distanceSq).toFixed(2)),
+        riverHalfWidth:Number(width.toFixed(2)),swimming:window.jarrellSwimming===true,
+        move:api.getMoveVec(),movement:api.getMovementState(),collision:api.lastMovementDebug||null,samples};
+      api.setMoveInput(null);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
     }, swimExitStart);
     if (swimExit.swimming || swimExit.bankDistance < (await page.evaluate(({x,z})=>window.jarrellRiverHalfWidth?.(window.nearestRiverPoint(x,z).t)||11.5,{x:swimExit.x,z:swimExit.z}))+0.8 || swimExit.y < swimExit.groundY) {
