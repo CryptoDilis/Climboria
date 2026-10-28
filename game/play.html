@@ -473,9 +473,16 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const southRange=Math.exp(-Math.pow((z-1450)/560,2))*(10+26*(.35+.65*Math.abs(Math.sin(x*.006+Math.sin(x*.002)*1.5))));
   const southwestRange=Math.exp(-Math.pow((x+1850)/520,2))*(9+25*(.35+.65*Math.abs(Math.sin(z*.006+Math.sin(z*.002)*1.3))));
   const southeastRange=Math.exp(-Math.pow((x-3000)/680,2))*(12+30*(.35+.65*Math.abs(Math.sin(z*.005+Math.sin(z*.0017)*1.6))));
+  // Additional separated ridgelines and foothills break up the broad rolling ground.
+  // These are part of the same height field used by streamed meshes and player grounding.
+  const centralHighlands=Math.exp(-Math.pow((x-1450)/1450,2)-Math.pow((z-520)/1800,2))*(9+23*(.28+.72*Math.abs(Math.sin(x*.0034+z*.0026+Math.sin(z*.0012)))));
+  const northwestRidges=Math.exp(-Math.pow((x+2750)/1050,2)-Math.pow((z+1850)/1500,2))*(8+26*(.3+.7*Math.abs(Math.sin(z*.0048+Math.sin(x*.0018)))));
+  const southwestFoothills=Math.exp(-Math.pow((x+1150)/950,2)-Math.pow((z-2300)/1250,2))*(6+18*(.25+.75*Math.abs(Math.sin(x*.0041-z*.0032))));
+  const easternRidgeChain=Math.exp(-Math.pow((x-4400)/1250,2)-Math.pow((z+1200)/2400,2))*(10+24*(.3+.7*Math.abs(Math.sin(z*.0037+Math.sin(z*.0011)))));
+  const ridgeGullies=-(Math.exp(-Math.pow((x-620-Math.sin(z*.0017)*240)/155,2))*7+Math.exp(-Math.pow((x+2100-Math.sin(z*.0012)*180)/125,2))*5);
   const coastT=Math.max(0,Math.min(1,(x-900)/400)),coastBlend=coastT*coastT*(3-2*coastT);
   const campBlend=Math.max(0,1-Math.hypot(x+1,z+340)/18),riverDist=Math.abs(x-jarrellRiverX(z)),riverLength=Math.max(0,Math.min(1,(960-Math.abs(z))/60)),bankLift=Math.exp(-Math.pow((riverDist-18)/6,2))*.18*riverLength;
-  const rawTerrain=((base+farRange+westRange+eastRange+northRidge+westFoothill+eastFoothill+southRange+southwestRange+southeastRange)*(1-campBlend)-.42*campBlend+bankLift)*(1-coastBlend)-18*coastBlend;
+  const rawTerrain=((base+farRange+westRange+eastRange+northRidge+westFoothill+eastFoothill+southRange+southwestRange+southeastRange+centralHighlands+northwestRidges+southwestFoothills+easternRidgeChain+ridgeGullies)*(1-campBlend)-.42*campBlend+bankLift)*(1-coastBlend)-18*coastBlend;
   const riverT=Math.max(0,Math.min(1,(z+900)/1800)),riverHalf=jarrellRiverHalfWidth(riverT),riverBed=-5.8+5.8*Math.pow(Math.min(1,riverDist/riverHalf),2);
   let baseTerrain=rawTerrain;
   if(riverLength>0&&riverDist<riverHalf+73){if(riverDist<=riverHalf)baseTerrain=riverBed;else if(riverDist<=riverHalf+8)baseTerrain=.06;else{const q=Math.max(0,Math.min(1,(riverDist-riverHalf-8)/65)),blend=q*q*(3-2*q);baseTerrain=.06*(1-blend)+rawTerrain*blend;}}
