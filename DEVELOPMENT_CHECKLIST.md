@@ -190,3 +190,14 @@ For every integrated asset or borrowed technique, record:
 - Performance impact and verification status
 
 **Acceptance standard:** a beautiful asset that breaks collision, loading, mobile performance, or the license rules is not ready to ship. Stability first, then quality and variety.
+
+
+## Visual review and realistic environment asset pass — 2026-10-29
+
+- [x] Reviewed the supplied gameplay video and identified the highest-impact visual gaps: repeated cone-shaped trees, toy-like angular rocks, uniform grass and abrupt shoreline transitions.
+- [x] Added a first-pass procedural rock/canopy silhouette improvement in commits `56e9fe37e0bbc8f7f298795c40f22e917d831887` and `1ad4e4cfc7d9c9a5d21e240cb2a71c166464413e`.
+- [x] Added a source/license/optimization register for photorealistic Poly Haven rocks and PBR surfaces in `ASSET_SOURCES.md` (commit `e6a2aeb591819b2fcbabe279e05294d6beab5c2e`).
+- [ ] Integrate optimized photorealistic rock GLBs and textures; do not count the current procedural meshes as completion of this item.
+- [ ] Ground texture/shoreline blending and a sparse desert biome remain outstanding.
+- [ ] Inspect camera behavior near large terrain and verify swimming in a real browser/device.
+- [ ] Verify all workflows for the latest commit chain before continuing beyond this visual pass.
