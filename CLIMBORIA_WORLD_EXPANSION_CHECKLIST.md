@@ -1,3 +1,12 @@
+## Latest workflow diagnosis — 2026-10-29 (weather allocation optimization)
+
+- [x] Inspected Validate Climboria, Browser Smoke Test, and Pages deployment runs for commit `75d2b9b5ac8b3d6d57fa90b906e625b515d27ef4`.
+- [x] Validate Climboria passed, including JavaScript syntax checks and Jarrell desktop/mobile gameplay smoke tests: [run 40765986048](https://github.com/CryptoDilis/Climboria/actions/runs/40765986048).
+- [x] Browser Smoke Test passed, including desktop/mobile Jarrell gameplay smoke tests: [run 40765985927](https://github.com/CryptoDilis/Climboria/actions/runs/40765985927).
+- [x] GitHub Pages build and deployment passed: [run 40765985291](https://github.com/CryptoDilis/Climboria/actions/runs/40765985291).
+- [x] Commit `75d2b9b5ac8b3d6d57fa90b906e625b515d27ef4` reuses preallocated Three.js weather colors to reduce per-frame object allocation.
+- [ ] Actual FPS/frame-time/memory improvement remains unmeasured; green CI runs validate code and smoke scenarios, not a quantified performance gain.
+
 ## Latest workflow diagnosis — 2026-10-29 (frame-time telemetry)
 
 - [x] Diagnosed the failures in Validate Climboria run 40762241130 and Browser Smoke Test run 40762241362: the CI browser produced only 3 requestAnimationFrame samples during the 2-second collection window, so the new hard requirement of 30 samples failed despite valid timing data.
@@ -26,6 +35,26 @@
 - [x] Confirmed a later main-branch commit corrected the swimming pose: latest inspected run logs show `tilt: -1.35`, and the swim depth controls plus mobile input cleanup checks complete.
 - [x] Verified latest inspected main-branch runs are green: [Validate Climboria run 40755094053](https://github.com/CryptoDilis/Climboria/actions/runs/40755094053) and [Browser Smoke Test run 40755093895](https://github.com/CryptoDilis/Climboria/actions/runs/40755093895). These verify the automated scenarios only; they do not replace manual live-site playtesting.
 - [ ] Keep checking the newest relevant workflow run after each code change. Diagnose the exact failed step and logs first; fix the cause, commit, then verify. Do not blindly rerun failures or loosen valid assertions.
+
+## Newly specified gameplay requirements — 2026-10-29
+
+### P0 — Swimming and collision correctness
+- [ ] Swimming must use a convincing horizontal face-down body pose, with correct buoyancy/depth, responsive movement, and clear transition between walking, entering water, swimming, and exiting onto shore.
+- [ ] Add and verify solid player collision for bushes, fallen logs, tree trunks, large roots, rocks, cliffs, mountain faces, cave walls, and built structures; the hero must not clip or pass through them.
+- [ ] Keep decorative foliage selectively non-blocking only when intentional; tree trunks, major logs, terrain, and mountain geometry must remain solid.
+- [ ] Test collision and swimming at varied slopes, shore edges, cave entrances, mobile controls, and respawn—not only in one scripted smoke scenario.
+
+### P1 — Cave lighting, mountain paths, and campsite scale
+- [ ] Caves should feel dim and atmospheric, with warm wooden wall torches at readable intervals; retain dark corners without making navigation impossible. Torch flame/glow must be optimized for mobile.
+- [ ] Build visible, continuous dirt/earth hiking paths winding up mountains (natural switchbacks and worn soil edges, with the requested Olympic-style trail feel); keep the path visually distinct from grass/rock and physically walkable.
+- [ ] Enlarge the campsite tent so its overall silhouette is slightly taller/larger than the hero, with believable proportions and visible entrance; add more camp details such as bedrolls, crates, firewood, cooking gear, stools, lanterns, and supply bags without cluttering traversal.
+- [ ] Ensure the tent and camp props are correctly grounded and collision-tested; the hero must not sink into, pass through, or get trapped by them.
+
+### P1 — Starting/respawn camp and patrols
+- [ ] Redesign the starting/respawn area as a polished medieval-fantasy frontier camp with a castle-era black-market merchant cart/stall, a clearly identifiable merchant NPC, readable interaction prompt, and a small but coherent trading area.
+- [ ] Keep black-market trading clearly a game-world interaction/demo until the real inventory/currency transaction system is implemented; never imply a purchase succeeded when it did not.
+- [ ] Add Climboria soldiers patrolling around appropriate camp/road/ruin routes, with looping patrol paths, turning/idle pauses, collision that does not trap the player, and safe fallback if character assets fail to load.
+- [ ] Check patrol navigation against bushes, logs, trees, mountains, cave entrances, and market props; avoid soldiers walking through obstacles or crowding the spawn point.
 
 ## P0 — Finish the current playable world before expanding further
 
