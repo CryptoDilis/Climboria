@@ -23,36 +23,26 @@ Jarrell’s Peak has no safe zone, summit, or final level. The current prototype
 4. The dropped item has a 90-second decay timer; if not recovered before expiry, it disappears.
 5. These loot-loss and recovery rules need persistent inventory, reliable item ownership, and anti-exploit checks before production use.
 
-## 3. Death Stones (Jarrell’s Peak)
+## 3. Deferred teleport-stone mechanics
 
-The design includes two single-use Death Stone types. The current browser smoke test verifies that the Death Stone control initializes and starts a persistent 90-second cooldown. It does **not** prove that the full solo or party teleport/recovery flow is production-ready.
-
-### Solo Death Stone
-- Intended to teleport the individual user back to their own recorded death spot.
-- One use.
-- Requires a reliable saved death location and valid destination.
-
-### Party Death Stone
-- Intended to teleport every eligible party member to the exact death spot of the party member being recovered, regardless of their current location.
-- One use.
-- Exact destination is part of the intended risk; any hazards at the location remain hazards.
-- Requires server-authoritative party membership, consent/eligibility rules, cooldown enforcement, and teleport validation.
+Teleport-stone mechanics are **not part of the current launch build**. Work on any future stone item is deferred until the hero, terrain, collision, and swimming experience are in good shape. Do not present a teleport-stone item, button, cooldown, or solo/party teleport flow as implemented.
 
 ## 4. Current verified scope vs. production gates
 
-Recent automated desktop/mobile browser smoke tests verify that the Jarrell’s Peak page initializes its renderer, riverside spawn metrics, cache HUD, Death Stone control, streamed cache/forest hooks, tree collision test, water-state transitions, fishing interaction, and mobile controls. This is browser automation, not a physical-device test or proof of multiplayer production readiness.
+Automated desktop/mobile browser smoke tests check that Jarrell’s Peak initializes, the riverside spawn and cache HUD appear, streamed cache/forest hooks initialize, tree collision is exercised, water-state entry/exit works, fishing can be used, inventory slots populate from local test loot, and mobile controls initialize. The test also guards against the retired Death Stone UI returning. This is browser automation, not a physical-device test or proof of multiplayer production readiness.
 
 Still separate release gates:
 - Persistent inventory and dropped-item recovery.
-- Reliable solo/party Death Stone teleport.
 - Server-authoritative multiplayer, inventory, rewards, and anti-cheat.
 - Published loot odds and funded $CLIMB reward rules.
 - Physical-device audio, touch controls, camera, and performance checks.
+- Any future teleport-stone design and implementation, after hero/map quality work.
 
 ## 5. Change log
 
 - **2026-10-27 — Launch scope aligned:** Jarrell’s Peak is the only planned launch mountain; the ten normal expeditions and their death rules are deferred.
-- **2026-10-27 — Browser QA expanded:** Desktop/mobile smoke coverage added for Jarrell’s Peak collision, swimming state, fishing, treasure caches, Death Stone control/cooldown, and controls. Audio routing is intended to keep the original Jarrell’s Peak score separate from the regular-expedition MP3.
+- **2026-10-28 — Teleport stone deferred:** Removed the premature Death Stone design from the current gameplay reference. Hero quality, terrain, collision, and swimming take priority.
+- **2026-10-28 — Browser QA updated:** Desktop/mobile smoke coverage includes Jarrell’s Peak collision, swimming, fishing, treasure caches, inventory preview, and controls; regular-expedition music is kept separate from Jarrell’s Peak’s atmospheric score.
 
 ---
 *Living reference: update the status when code and validation actually change.*
