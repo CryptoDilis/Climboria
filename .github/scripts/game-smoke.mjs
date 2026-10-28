@@ -32,7 +32,7 @@ try {
   const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile')}; });
   if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
-  if (!soundtrackRequests.has('original-track-01')) errors.push('Jarrell’s Peak did not request the original TRACK_01 soundtrack');
+  if (soundtrackRequests.has('original-track-01')) errors.push('Jarrell’s Peak must not play the regular-expedition soundtrack');
 
   const desktopState = await page.evaluate(() => {
     const canvas = document.querySelector('#game canvas');
