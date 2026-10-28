@@ -106,7 +106,28 @@ For each asset or code technique: find a trustworthy open-source/GitHub source, 
 - [ ] Automated tests use the actual curved river centerline/terrain geometry; do not loosen assertions just to pass.
 - [ ] Add reproducible tests for terrain collision, river entry/exit, props, caves, and mobile control cleanup.
 
+## P2 — Multiplayer communication and social systems
+
+These are planned product requirements, not implemented/verified features until each channel is functional and tested with multiple real clients.
+
+- [ ] **World chat** — shared public chat for players in the world, with message ordering, reconnect handling, rate limits, and basic moderation/reporting.
+- [ ] **Nearby chat** — proximity-based messages visible only to players within a defined distance; verify range boundaries and that distant players cannot read messages.
+- [ ] **Private chat** — direct messages between two players, clear recipient identity, block/report controls, and safe handling of reconnects.
+- [ ] **Party chat** — messages delivered only to current party members; verify joining/leaving and party disband behavior.
+- [ ] **Guild chat** — messages delivered only to current guild members; verify membership changes, roles, and permissions.
+- [ ] Build the real multiplayer messaging transport/backend and authenticated player identity; do not present local-only UI or simulated messages as online chat.
+- [ ] Add timestamps, unread indicators, channel switching, mobile-friendly chat UI, mute/block/report, spam/rate limiting, and message-length limits.
+- [ ] Test two or more independent browser sessions for delivery, isolation between channels, reconnects, and abuse controls; document backend/service costs and free-tier limits before choosing a provider.
+
 ## P3 — Visual quality, audio, and performance
+
+### Restore the user's original music
+
+- [ ] Restore and use the user's original TRACK_01.mp3 soundtrack from the repository's tracked music asset/history where available; preserve the file unchanged and verify its exact audio identity before replacing any other track.
+- [ ] Remove the synthetic/robotic, hoarse-sounding procedural background melody from the active Jarrell's Peak music path; use the agreed original soundtrack if the user wants it on Jarrell's Peak, or keep Jarrell's Peak music silent/ambient-only until the original track is verified. Do not substitute another generated melody.
+- [ ] Keep background music separate from synthesized sound effects; preserve independent volume/mute controls and ensure no duplicate tracks play simultaneously.
+- [ ] Verify actual playback and audio quality on desktop and Android/mobile, including browser autoplay restrictions, volume sliders, mute/unmute, and track looping. Do not mark complete from code inspection alone.
+
 
 - [ ] Cohesive premium art direction: believable scale, lighting, terrain materials, vegetation, structures, water, fog, and sky.
 - [ ] Realistic ambient weather, forest, wind, river, waterfall, cave, wildlife, footsteps, swimming, fishing, chest, and interaction sounds.
