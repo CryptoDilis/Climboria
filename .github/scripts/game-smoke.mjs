@@ -364,34 +364,37 @@ try {
     const api=window.__climboriaSmoke,initialZ=80,nearest=api.nearestRiverPoint(api.riverX(initialZ),initialZ),z=nearest.z,centerX=nearest.x;
     api.player.position.set(centerX,-.35,z);
     api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
+    // Use the local river-bank normal, not the world X axis: the river curves, so X-only
+    // movement can run along the channel forever and falsely report a shoreline failure.
+    const before=api.nearestRiverPoint(centerX,z-2),after=api.nearestRiverPoint(centerX,z+2);
+    let tx=after.x-before.x,tz=after.z-before.z,tl=Math.hypot(tx,tz)||1;
+    tx/=tl;tz/=tl;
+    const nx=tz,nz=-tx;
     const options=[-1,1].map(side=>{
-      const startX=centerX+side*2.2,endX=centerX+side*15.0;
-      const pathBlocked=Array.from({length:13},(_,i)=>startX+(endX-startX)*i/12)
-        .some(x=>api.testObstacleCollision(x,z,-.35));
-      const slopeX=(api.terrainHeightAt(endX+.8,z)-api.terrainHeightAt(endX-.8,z))/1.6;
-      const slopeZ=(api.terrainHeightAt(endX,z+.8)-api.terrainHeightAt(endX,z-.8))/1.6;
-      return {z,side,centerX,startX,endX,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
-    }).filter(c=>!c.pathBlocked).sort((a,b)=>a.slope-b.slope);
+      const startX=centerX+nx*side*2.2,startZ=z+nz*side*2.2,endX=centerX+nx*side*15,endZ=z+nz*side*15;
+      const pathBlocked=Array.from({length:13},(_,i)=>({x:startX+(endX-startX)*i/12,z:startZ+(endZ-startZ)*i/12}))
+        .some(p=>api.testObstacleCollision(p.x,p.z,-.35));
+      const slopeX=(api.terrainHeightAt(endX+.8,endZ)-api.terrainHeightAt(endX-.8,endZ))/1.6;
+      const slopeZ=(api.terrainHeightAt(endX,endZ+.8)-api.terrainHeightAt(endX,endZ-.8))/1.6;
+      return {z,side,nx,nz,moveX:nx*side,moveZ:nz*side,centerX,startX,startZ,endX,endZ,pathBlocked,slope:Math.hypot(slopeX,slopeZ)};
+    }).filter(p=>!p.pathBlocked).sort((a,b)=>a.slope-b.slope);
     return options[0]||null;
   });
   await page.waitForTimeout(650);
   if (!swimExitStart) {
     errors.push('no clear river-bank path found for the swim-exit test');
   } else {
-    await page.evaluate(({z,side,startX}) => {
+    await page.evaluate(({startX,startZ,z}) => {
       const api=window.__climboriaSmoke;
-      api.setCamYaw(0);api.player.position.set(startX,-.35,z);
-      api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
+      api.setCamYaw(0);api.player.position.set(startX,-.35,startZ);
+      api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;
     }, swimExitStart);
     await page.waitForTimeout(160);
-    await page.evaluate(()=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys().KeyA=false;api.getKeys().KeyD=false;});
-    // Drive the physics regression with the same movement vector used by touch controls.
-    // This avoids keyboard-focus flakiness and keeps the test focused on shoreline collision.
-    await page.evaluate((side) => {
+    await page.evaluate(({moveX,moveZ}) => {
       const api=window.__climboriaSmoke;
       api.getKeys().KeyA=false;api.getKeys().KeyD=false;
-      api.setMoveInput(side);
-    }, swimExitStart.side);
+      api.setMoveVector(moveX,moveZ);
+    }, swimExitStart);
     await page.waitForFunction(() => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
       const nearest=api?.nearestRiverPoint(p?.x,p?.z);
