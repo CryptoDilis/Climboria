@@ -229,3 +229,12 @@ For each meaningful implementation batch:
 - [ ] Verify Validate and Browser Smoke Test on this commit; inspect slope, spawn, riverbank and grounding results before accepting the new terrain.
 - [ ] Tune ridgeline height and valley depth based on actual gameplay screenshots/desktop and mobile checks.
 - [ ] Import actual CC0 mountain/cave assets only after local download, optimization, collision setup and tests; asset source plan is in `ASSET_SOURCES.md`.
+
+
+## User-requested carry-forward additions — 2026-10-29 (append-only; do not remove older items)
+
+- [ ] World chat remains a required Jarrell’s Peak feature: persistent world/channel chat with a readable mobile panel, rate limits, mute/report controls, and a defined real-time backend. Do not mark complete for a local mock.
+- [x] Added upper-right compass HUD with cardinal directions and heading in commit `d64467cbae644f803a57438c5c0607d9561e9df9`; workflow/browser verification remains pending.
+- [x] Added live X/Y/Z coordinates and current 1000-unit grid region number directly beneath the compass in the same commit; verify region boundaries and actual player-grounding values.
+- [ ] Verify compass/coordinates placement, legibility and responsive layout on desktop and mobile.
+- [ ] Preserve this checklist and every prior requirement. Add new items as dated append-only sections; do not remove prior tasks unless the user explicitly requests removal.
