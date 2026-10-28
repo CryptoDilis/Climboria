@@ -201,3 +201,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Ground texture/shoreline blending and a sparse desert biome remain outstanding.
 - [ ] Inspect camera behavior near large terrain and verify swimming in a real browser/device.
 - [ ] Verify all workflows for the latest commit chain before continuing beyond this visual pass.
+
+
+## Terrain and free mountain/cave asset carry-forward — 2026-10-29
+
+- [ ] Current workflow runs for commit `076e7a6` are still in progress at the desktop/mobile Jarrell gameplay smoke step; do not call them green until they finish. The earlier broad terrain-slope scan was reduced in commit `076e7a680dcdb066477ca30c5deec7d195fe2125`, but this has not yet been verified as a completed run.
+- [ ] Evaluate the CC0 Innerscene Mountain Peak GLB and official Kenney Modular Cave Kit; source and collision caveats recorded in `ASSET_SOURCES.md`.
+- [ ] Build non-flat, connected terrain using shared visible height data and player grounding/collision, with hills/ridges/gullies/valleys/terraces instead of a mostly level floor.
+- [ ] Distribute mountains and cave systems across separate world regions. Imported visual meshes need explicit collision and walkability tests; a free GLB is not automatically climbable.
+- [ ] Integrate optimized local assets and test desktop/mobile loading, collisions, and performance before checking off asset integration.
