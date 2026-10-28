@@ -83,6 +83,44 @@ try {
   console.log('Jarrell terrain coordinate audit:', JSON.stringify(terrainAudit));
   if (terrainAudit.samples < 300) errors.push('Jarrell terrain coordinate audit did not sample enough points');
   if (terrainAudit.nonFinite.length) errors.push('Jarrell terrain heightfield returned non-finite values at coordinates: ' + JSON.stringify(terrainAudit.nonFinite));
+  // Regression: after placing the hero on safe dry ground, gravity/grounding must not leave the feet below the terrain.
+  const groundingTarget = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const candidates = [];
+    for (let z = -340; z <= -260; z += 20) {
+      for (let x = -120; x <= 120; x += 20) {
+        const ground = api.terrainHeightAt(x, z);
+        const hx = api.terrainHeightAt(x + 1, z), hz = api.terrainHeightAt(x, z + 1);
+        const slope = Math.hypot(hx - ground, hz - ground);
+        const river = api.nearestRiverPoint(x, z);
+        if (![ground, hx, hz, river?.distanceSq].every(Number.isFinite)) continue;
+        if (slope > .12 || Math.sqrt(river.distanceSq) < 16) continue;
+        if (api.obstacles.some(o => Math.hypot(o.x - x, o.z - z) < (o.r || 1) + 3)) continue;
+        candidates.push({ x, z, ground, slope });
+      }
+    }
+    candidates.sort((a,b) => a.slope - b.slope || Math.abs(a.x) - Math.abs(b.x));
+    const target = candidates[0];
+    if (!target) return null;
+    api.setPaused(false);
+    api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+    api.player.position.set(target.x, target.ground + .22, target.z);
+    return target;
+  });
+  if (!groundingTarget) {
+    errors.push('could not find a safe, dry, low-slope terrain point for the grounding regression');
+  } else {
+    await page.waitForTimeout(700);
+    const groundedState = await page.evaluate(() => {
+      const api = window.__climboriaSmoke, p = api.player.position;
+      const ground = api.terrainHeightAt(p.x, p.z);
+      return { x:Number(p.x.toFixed(2)), z:Number(p.z.toFixed(2)), y:Number(p.y.toFixed(2)), ground:Number(ground.toFixed(2)), clearance:Number((p.y-ground).toFixed(2)), paused:api.isPaused() };
+    });
+    if (groundedState.y < groundedState.ground - .05 || groundedState.clearance > 2.0) {
+      errors.push('hero failed to settle on safe dry terrain without sinking or floating: ' + JSON.stringify(groundedState));
+    }
+  }
+
 
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
