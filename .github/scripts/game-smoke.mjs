@@ -123,6 +123,51 @@ try {
     }
   }
 
+  // Sweep several distinct dry terrain points to catch grounding regressions hidden by a single flat spawn sample.
+  const groundingSweep = await page.evaluate(() => {
+    const api = window.__climboriaSmoke, candidates = [];
+    for (let z = -320; z <= -100; z += 20) {
+      for (let x = -220; x <= 220; x += 20) {
+        const ground = api.terrainHeightAt(x, z);
+        const hx = api.terrainHeightAt(x + 1, z), hz = api.terrainHeightAt(x, z + 1);
+        const slope = Math.hypot(hx - ground, hz - ground);
+        const river = api.nearestRiverPoint(x, z);
+        if (![ground, hx, hz, river?.distanceSq].every(Number.isFinite)) continue;
+        if (slope > .28 || Math.sqrt(river.distanceSq) < 14) continue;
+        if (api.obstacles.some(o => Math.hypot(o.x - x, o.z - z) < (o.r || 1) + 3)) continue;
+        candidates.push({ x, z, ground, slope });
+      }
+    }
+    candidates.sort((a,b) => b.slope - a.slope || Math.abs(a.x) - Math.abs(b.x));
+    const picked = [];
+    for (const candidate of candidates) {
+      if (picked.every(p => Math.hypot(p.x-candidate.x,p.z-candidate.z) >= 35)) picked.push(candidate);
+      if (picked.length >= 5) break;
+    }
+    api.setPaused(false);
+    api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+    return picked;
+  });
+  if (groundingSweep.length < 3) {
+    errors.push('could not find enough distinct dry terrain points for the grounding sweep: ' + JSON.stringify(groundingSweep));
+  } else {
+    const groundingResults = [];
+    for (const target of groundingSweep) {
+      await page.evaluate(target => {
+        const api = window.__climboriaSmoke;
+        api.keys.KeyW = api.keys.KeyA = api.keys.KeyS = api.keys.KeyD = false;
+        api.player.position.set(target.x, target.ground + .22, target.z);
+      }, target);
+      await page.waitForTimeout(350);
+      const state = await page.evaluate(() => {
+        const api = window.__climboriaSmoke, p = api.player.position, ground = api.terrainHeightAt(p.x,p.z);
+        return {x:Number(p.x.toFixed(1)),z:Number(p.z.toFixed(1)),y:Number(p.y.toFixed(2)),ground:Number(ground.toFixed(2)),clearance:Number((p.y-ground).toFixed(2))};
+      });
+      groundingResults.push(state);
+      if (state.clearance < .05 || state.clearance > 2.0) errors.push('hero sank into or floated above varied dry terrain: ' + JSON.stringify(state));
+    }
+    console.log('Jarrell multi-point grounding sweep:', JSON.stringify(groundingResults));
+  }
 
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
