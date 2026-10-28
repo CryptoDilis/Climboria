@@ -360,7 +360,7 @@ try {
 
   // Regression test: swim out of the starting river and reach dry bank.
   const swimExitStart = await page.evaluate(() => {
-    const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z);
+    const api=window.__climboriaSmoke,initialZ=80,nearest=api.nearestRiverPoint(api.riverX(initialZ),initialZ),z=nearest.z,centerX=nearest.x;
     api.player.position.set(centerX,-.35,z);
     api.setPaused(false);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
     const options=[-1,1].map(side=>{
@@ -386,13 +386,13 @@ try {
     await page.evaluate(side=>{const api=window.__climboriaSmoke;api.setPaused(false);api.getKeys()[side>0?'KeyD':'KeyA']=true;},swimExitStart.side);
     await page.waitForFunction(({side}) => {
       const api=window.__climboriaSmoke,p=api?.player?.position;
-      return !!p && Math.abs(p.x-api.riverX(p.z)) >= (window.jarrellRiverHalfWidth?.(api.nearestRiverPoint(p.x,p.z).t)||11.5)+0.8 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
+      const nearest=api?.nearestRiverPoint(p?.x,p?.z);return !!p && !!nearest && Math.sqrt(nearest.distanceSq) >= (window.jarrellRiverHalfWidth?.(nearest.t)||11.5)+0.8 && window.jarrellSwimming===false && p.y>=api.terrainHeightAt(p.x,p.z);
     }, {side:swimExitStart.side}, {timeout:60000,polling:250}).catch(() => {});
     const swimExit = await page.evaluate(({side,z}) => {
       const api=window.__climboriaSmoke,p=api.player.position;
       const result={side,swimming:window.jarrellSwimming===true,paused:api.isPaused(),
         x:Number(p.x.toFixed(2)),z:Number(p.z.toFixed(2)),y:Number(p.y.toFixed(2)),
-        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.abs(p.x-api.riverX(p.z)).toFixed(2)),
+        groundY:Number(api.terrainHeightAt(p.x,p.z).toFixed(2)),bankDistance:Number(Math.sqrt(api.nearestRiverPoint(p.x,p.z).distanceSq).toFixed(2)),
         collision:api.lastMovementDebug||null};
       api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
