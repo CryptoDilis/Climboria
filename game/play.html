@@ -734,6 +734,12 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  }
  window.jarrellSakuraPark={group:parkGroup,center:{x:parkX,z:parkZ},trees:7,benches:3,swings:2,hammocks:2};
  // Hidden treasure clearings and spring sanctuary, away from the starter camp.
+ // Moonpool: a third secluded freshwater basin with a broken slate rim and reeds.
+ const moonX=300,moonZ=278,moonpool=place(new THREE.CircleGeometry(8.5,48),sanctuaryWater,moonX,.045,moonZ,1.22,1,.86);moonpool.rotation.x=-Math.PI/2;moonpool.name='JarrellMoonpool';
+ const moonReedMat=new THREE.MeshStandardMaterial({color:0x657c52,roughness:1});
+ for(let i=0;i<22;i++){const a=i/22*Math.PI*2,r=8.4+(i%4)*.75,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r;place(new THREE.ConeGeometry(.075,.48+(i%5)*.12,5),moonReedMat,rx,.2,rz,.9,1,.9,a);}
+ for(let i=0;i<13;i++){const a=i/13*Math.PI*2,r=9.4+(i%3)*.65,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r;place(rockGeo,stoneEdge,rx,terrainHeightAt(rx,rz)+.12,rz,.55+(i%3)*.12,.35+(i%2)*.12,.62,a*.4);}
+ for(let i=0;i<6;i++){const ripple=new THREE.Mesh(new THREE.TorusGeometry(.35+i*.12,.018,5,24),new THREE.MeshBasicMaterial({color:0xb1edf2,transparent:true,opacity:.18,depthWrite:false}));ripple.rotation.x=-Math.PI/2;ripple.position.set(moonX+Math.sin(i*2.2)*2,.085,moonZ+Math.cos(i*1.7)*1.8);ripple.scale.set(1.5,1,1);worldPOIs.add(ripple);}
  const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.rotation.x=-Math.PI/2;
  for(let i=0;i<32;i++){const a=i/32*Math.PI*2,rr=24+(i%3)*2;place(rockGeo,stoneEdge,sanctX+Math.cos(a)*rr,.25,sanctZ+Math.sin(a)*rr,1.1+(i%3)*.4,.8+(i%4)*.4,1.1, a)}
  const shrine=place(new THREE.BoxGeometry(2.4,5,2.4),poiMat(0x77766b),sanctX,2.4,sanctZ,1,1,1,.3);addJarrellObstacleCollider({x:sanctX,z:sanctZ,r:1.75,y0:terrainHeightAt(sanctX,sanctZ),y1:terrainHeightAt(sanctX,sanctZ)+5.2,kind:'shrine'});shrine.name='JarrellSanctuaryShrine';place(new THREE.ConeGeometry(2.1,2.2,5),poiMat(0x4c5550),sanctX,5.7,sanctZ,1,1,1,.3);
