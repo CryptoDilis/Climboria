@@ -382,6 +382,40 @@ try {
     if (collisionResult < collisionTarget.r + .48 - .18) errors.push('player penetrated a tree collider during movement');
   }
 
+  // Regression: exposed tree-root flares must block at ground level without becoming oversized invisible walls.
+  const rootCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const roots = api.obstacles.filter(item => item.kind === 'root');
+    if (!roots.length) return { error: 'no exposed tree-root collider indexed' };
+    const candidates = roots.map(item => {
+      const ground = Number.isFinite(item.y0) ? item.y0 : api.terrainHeightAt(item.x, item.z);
+      return {
+        item, ground,
+        insideBlocked: api.testObstacleCollision(item.x, item.z, ground + .22),
+        outsideBlocked: api.testObstacleCollision(item.x + item.r + 1.1, item.z, ground + .22),
+        aboveBlocked: api.testObstacleCollision(item.x, item.z, item.y1 + .5),
+      };
+    });
+    const candidate = candidates.find(item => item.insideBlocked && !item.outsideBlocked && !item.aboveBlocked);
+    return candidate ? {
+      insideBlocked: candidate.insideBlocked,
+      outsideBlocked: candidate.outsideBlocked,
+      aboveBlocked: candidate.aboveBlocked,
+      radius: candidate.item.r,
+      totalRoots: roots.length,
+    } : {
+      error: 'no tree-root collider passed inside/outside/vertical bounds checks',
+      totalRoots: roots.length,
+      sample: candidates.slice(0, 5).map(item => ({insideBlocked:item.insideBlocked,outsideBlocked:item.outsideBlocked,aboveBlocked:item.aboveBlocked,radius:item.item.r}))
+    };
+  });
+  if (rootCollision.error) errors.push(rootCollision.error);
+  else {
+    if (!rootCollision.insideBlocked) errors.push('tree-root collider does not block at ground level');
+    if (rootCollision.outsideBlocked) errors.push('tree-root collider blocks outside its intended radius');
+    if (rootCollision.aboveBlocked) errors.push('tree-root collider blocks above its vertical bounds');
+  }
+
   const tentCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
     const tent = api.obstacles
