@@ -803,6 +803,13 @@ if(currentLevel==='11'){
  };
  placeJarrellTent(-3,-352,.12,.82,'tent-detailedopen');placeJarrellTent(-2,-348,-.15,.72,'tent-detailedclosed');
  const campfire=new THREE.Group();campfire.position.set(-.2,campGroundY(-.2,-340)+.08,-340);scene.add(campfire);const fireRing=new THREE.Mesh(new THREE.TorusGeometry(.72,.14,8,18),new THREE.MeshStandardMaterial({color:0x5d5548,roughness:1}));fireRing.rotation.x=Math.PI/2;fireRing.position.y=.12;campfire.add(fireRing);const firewoodMat=new THREE.MeshStandardMaterial({color:0x4a3020,roughness:1});for(const angle of [-.62,.62]){const log=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,1.2,7),firewoodMat);log.rotation.z=Math.PI/2;log.rotation.y=angle;log.position.y=.19;log.castShadow=true;campfire.add(log)}const flameOuter=new THREE.Mesh(new THREE.ConeGeometry(.37,1.05,9),new THREE.MeshBasicMaterial({color:0xf04e1e,transparent:true,opacity:.86,depthWrite:false}));flameOuter.position.set(0,.69,0);campfire.add(flameOuter);const flameMiddle=new THREE.Mesh(new THREE.ConeGeometry(.255,.78,8),new THREE.MeshBasicMaterial({color:0xff9c2e,transparent:true,opacity:.94,depthWrite:false}));flameMiddle.position.set(.035,.58,.025);flameMiddle.rotation.z=.09;campfire.add(flameMiddle);const flameCore=new THREE.Mesh(new THREE.ConeGeometry(.14,.49,7),new THREE.MeshBasicMaterial({color:0xffed9a,transparent:true,opacity:.96,depthWrite:false}));flameCore.position.set(-.035,.43,-.02);flameCore.rotation.z=-.12;campfire.add(flameCore);const flameLickLeft=new THREE.Mesh(new THREE.ConeGeometry(.13,.54,7),new THREE.MeshBasicMaterial({color:0xff6a22,transparent:true,opacity:.88,depthWrite:false}));flameLickLeft.position.set(-.19,.47,.08);flameLickLeft.rotation.z=.28;campfire.add(flameLickLeft);const flameLickRight=new THREE.Mesh(new THREE.ConeGeometry(.115,.43,7),new THREE.MeshBasicMaterial({color:0xffd45b,transparent:true,opacity:.92,depthWrite:false}));flameLickRight.position.set(.18,.4,-.07);flameLickRight.rotation.z=-.32;campfire.add(flameLickRight);campfire.userData.flames=[flameOuter,flameMiddle,flameCore,flameLickLeft,flameLickRight];const campGlow=new THREE.PointLight(0xff9b4a,2.3,11);campGlow.position.y=1.2;campfire.add(campGlow);window.jarrellCampFire=campfire;window.jarrellCampGlow=campGlow;
+ // Register campsite cart and forge collision at Jarrell world initialization, independent of delayed prop construction.
+ // These fixed campsite coordinates match the visible wagon/forge groups and prevent a timing gap in collision setup.
+ if(currentLevel==='11'){
+  const cartGroundY=terrainHeightAt(-6.1,3.7),forgeGroundY=terrainHeightAt(5.2,3.4);
+  addJarrellObstacleCollider({x:-6.1,z:3.7,r:1.85,y0:cartGroundY,y1:cartGroundY+1.9,kind:'cart'});
+  addJarrellObstacleCollider({x:5.2,z:3.4,r:1.2,y0:forgeGroundY,y1:forgeGroundY+1.65,kind:'forge'});
+ }
  const supplyCrateMat=new THREE.MeshStandardMaterial({color:0x68472b,roughness:1});for(const [x,z] of [[-4.5,-341],[-5,-337]]){const crate=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.75),supplyCrateMat),gy=campGroundY(x,z);crate.position.set(x,gy+.34,z);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);addJarrellObstacleCollider({x,z,r:.58,y0:gy,y1:gy+.8,kind:'crate'})}
  // Optional CC0 riverbank rock dressing from Kenney's Nature Kit, mirrored in a public GitHub asset library.
  // Keep procedural stones as the guaranteed fallback; a failed optional asset request never blocks the world.
@@ -950,9 +957,6 @@ quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(qu
  function campProp(g,m,x,y,z,par=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;par.add(o);return o}
  // Handcart with timber bed, handles, axle and two chunky wheels.
  const cart=new THREE.Group();cart.position.set(-6.1,0,3.7);cart.rotation.y=-.35;cart.scale.setScalar(1.18);scene.add(cart);
-  // The visible handcart is a solid campsite obstacle, not decorative scenery only.
-  const cartGroundY=terrainHeightAt(cart.position.x,cart.position.z);
-  if(currentLevel==='11')addJarrellObstacleCollider({x:cart.position.x,z:cart.position.z,r:1.85,y0:cartGroundY,y1:cartGroundY+1.9,kind:'cart'});
  campProp(new THREE.BoxGeometry(2.35,.22,1.35),cartWood,0,.75,0,cart);
  campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,-.62,cart);
  campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,.62,cart);
@@ -962,9 +966,6 @@ quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(qu
  campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-1.55,.45,0,cart);campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-2.25,.45,0,cart);
  // Forge anvil, stone hearth and warm ember bowl.
  const forge=new THREE.Group();forge.position.set(5.2,-.12,3.4);forge.scale.setScalar(1.2);scene.add(forge);
-  // The forge stone base and anvil must block the player within their actual vertical range.
-  const forgeGroundY=terrainHeightAt(forge.position.x,forge.position.z);
-  if(currentLevel==='11')addJarrellObstacleCollider({x:forge.position.x,z:forge.position.z,r:1.2,y0:forgeGroundY,y1:forgeGroundY+1.65,kind:'forge'});
  campProp(new THREE.BoxGeometry(1.5,.65,1.25),rock,0,.34,0,forge);
  campProp(new THREE.BoxGeometry(.75,.22,.42),cartIron,0,.82,0,forge);
  campProp(new THREE.CylinderGeometry(.42,.55,.45,8),cartIron,.0,.93,.65,forge);
