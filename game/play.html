@@ -990,18 +990,20 @@ let femaleAnimState=null,maleAnimState=null;
 let heroSwimPose=null;
 function makeProceduralSwimPose(boneMap){
  const find=names=>names.map(n=>boneMap.get(n.toLowerCase())).find(Boolean)||null;
+ // Stagger the shoulder, elbow and leg cycles so the fallback reads as a crawl
+ // stroke with a light flutter kick instead of all limbs rocking in lockstep.
  const entries=[
-  {bone:find(['mixamorigleftarm','leftarm','left_arm']),axis:'x',amp:1.05,phase:0},
-  {bone:find(['mixamorigrightarm','rightarm','right_arm']),axis:'x',amp:1.05,phase:Math.PI},
-  {bone:find(['mixamorigleftforearm','leftforearm','left_forearm']),axis:'z',amp:.62,phase:Math.PI*.35},
-  {bone:find(['mixamorigrightforearm','rightforearm','right_forearm']),axis:'z',amp:-.62,phase:Math.PI*1.35},
-  {bone:find(['mixamorigleftupleg','leftupleg','leftthigh','left_up_leg']),axis:'x',amp:.42,phase:Math.PI},
-  {bone:find(['mixamorigrightupleg','rightupleg','rightthigh','right_up_leg']),axis:'x',amp:.42,phase:0},
-  {bone:find(['mixamorigleftleg','leftleg','leftshin','left_leg']),axis:'x',amp:.32,phase:0},
-  {bone:find(['mixamorigrightleg','rightleg','rightshin','right_leg']),axis:'x',amp:.32,phase:Math.PI}
+  {bone:find(['mixamorigleftarm','leftarm','left_arm']),axis:'x',amp:1.12,phase:0,rate:3.0},
+  {bone:find(['mixamorigrightarm','rightarm','right_arm']),axis:'x',amp:1.12,phase:Math.PI,rate:3.0},
+  {bone:find(['mixamorigleftforearm','leftforearm','left_forearm']),axis:'z',amp:.72,phase:Math.PI*.42,rate:3.0},
+  {bone:find(['mixamorigrightforearm','rightforearm','right_forearm']),axis:'z',amp:-.72,phase:Math.PI*1.42,rate:3.0},
+  {bone:find(['mixamorigleftupleg','leftupleg','leftthigh','left_up_leg']),axis:'x',amp:.34,phase:Math.PI,rate:5.1},
+  {bone:find(['mixamorigrightupleg','rightupleg','rightthigh','right_up_leg']),axis:'x',amp:.34,phase:0,rate:5.1},
+  {bone:find(['mixamorigleftleg','leftleg','leftshin','left_leg']),axis:'x',amp:.27,phase:.65,rate:5.1},
+  {bone:find(['mixamorigrightleg','rightleg','rightshin','right_leg']),axis:'x',amp:.27,phase:Math.PI+.65,rate:5.1}
  ].filter(e=>e.bone).map(e=>({...e,base:e.bone.rotation.clone()}));
  const available=entries.filter(e=>/arm/i.test(e.bone.name)).length>=2;
- return {available,restore(){for(const e of entries)e.bone.rotation.copy(e.base);},apply(time){if(!available)return;for(const e of entries){e.bone.rotation.copy(e.base);e.bone.rotation[e.axis]+=e.amp*Math.sin(time*3.4+e.phase);}},test(){if(!available)return false;const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const changed=entries.some((e,i)=>Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)>.08);entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return changed;}};
+ return {available,restore(){for(const e of entries)e.bone.rotation.copy(e.base);},apply(time){if(!available)return;for(const e of entries){e.bone.rotation.copy(e.base);e.bone.rotation[e.axis]+=e.amp*Math.sin(time*e.rate+e.phase);}},test(){if(!available)return false;const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const changed=entries.some((e,i)=>Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)>.08);entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return changed;}};
 }
 
 function savedHeroType(){try{const h=JSON.parse(localStorage.getItem('climboria_hero_profile')||'null');return h?.type||'woman'}catch{return 'woman'}}
