@@ -485,11 +485,19 @@ try {
     const handle = api.obstacles.find(item => item.kind === 'cartHandle');
     if (!handle) return { error: 'no campsite cart-handle collider indexed' };
     const ground = Number.isFinite(handle.y0) ? handle.y0 : api.terrainHeightAt(handle.x, handle.z);
+    const cart = api.obstacles.find(item => item.kind === 'cart');
+    const awayX = handle.x - (cart ? cart.x : -6.1);
+    const awayZ = handle.z - (cart ? cart.z : 3.7);
+    const awayLength = Math.hypot(awayX, awayZ) || 1;
+    // Probe beyond the handle tip, moving away from the cart body so the main cart collider cannot
+    // make this negative-boundary assertion fail just because the two colliders overlap.
+    const outsideX = handle.x + awayX / awayLength * (handle.r + 1.1);
+    const outsideZ = handle.z + awayZ / awayLength * (handle.r + 1.1);
     return {
       insideBlocked: api.testObstacleCollision(handle.x, handle.z, ground + .22),
-      outsideBlocked: api.testObstacleCollision(handle.x + handle.r + 1.1, handle.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(outsideX, outsideZ, ground + .22),
       aboveBlocked: api.testObstacleCollision(handle.x, handle.z, handle.y1 + 1),
-      x: handle.x, z: handle.z, radius: handle.r,
+      x: handle.x, z: handle.z, radius: handle.r, outsideX, outsideZ,
     };
   });
   if (cartHandleCollision.error) errors.push(cartHandleCollision.error);
