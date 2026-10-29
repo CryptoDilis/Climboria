@@ -1,3 +1,13 @@
+## 2026-10-30 — swim PR review and asset compatibility audit
+
+- [x] Reviewed [PR #115](https://github.com/CryptoDilis/Climboria/pull/115): it remains open at head `9a12222f65b9b402cd15640532fb7ba54b1ff09e`. Its two-file diff is limited to swimming vertical bounds and the matching river-waterline assertion; no unrelated files are changed.
+- [x] Confirmed Browser Smoke Test passed [run 40963257488](https://github.com/CryptoDilis/Climboria/actions/runs/40963257488) and Validate passed [run 40963257491](https://github.com/CryptoDilis/Climboria/actions/runs/40963257491) on that exact head. PR #115 was not merged.
+- [x] Audited `anandin/the-wild-between`, `ZyFou/ProceduralTerrains`, and `yusufmalikul/simple-3d-open-world`; recorded exact license boundaries and Three.js/build compatibility in `ASSET_SOURCES.md`. No external repository files were imported.
+- [x] Confirmed existing root, cart, forge, cart-handle, crate, and sanctuary-shrine bounded-collider assertions are present in the smoke suite and included in the successful PR-head Browser Smoke Test/Validate runs. This is sampled regression coverage, not proof of every route or structure.
+- [ ] Manual live-site gameplay review remains outstanding. The fix in PR #115 has not been deployed; the last Pages deployment passed on base commit `f97d320` only.
+- [ ] First environment prototype: generate or export realistic mountain relief, then compare mesh/heightmap samples to `terrainHeightAt` and collision before world integration. Do not add the ProceduralTerrains runtime dependency until its Three.js `~0.185.1` requirement is tested against Climboria's `0.180.0` renderer.
+- [ ] After the terrain prototype, proceed in measured increments through forest vegetation, ponds/shore transitions, sanctuary and caves, campsite props, wildlife, cinematic lighting, and desktop/mobile performance.
+
 ## Latest workflow verification — 2026-10-29 (cave-mouth collision regression)
 
 - [x] Browser Smoke Test passed on gameplay/test commit `c92a299e6fef9ced988c799528572f2da7ff27af`: [run 40888314086](https://github.com/CryptoDilis/Climboria/actions/runs/40888314086).
@@ -6,9 +16,12 @@
 - [x] Cave-mouth regression confirmed the real stone tooth blocks at ground level, the central entrance stays clear, and a distant approach is not falsely blocked.
 - [x] Cave torch and approach trail checks passed: two warm-lit torches; twelve visible low-profile pavers with continuous spacing.
 - [x] Desktop/mobile smoke passed, including swimming controls and respawn checks.
+- [x] Follow-up audit confirmed that root inside/outside/vertical-bound checks and actual campsite cart, forge, cart-handle, supply-crate, and sanctuary-shrine checks are present in `.github/scripts/game-smoke.mjs`; Browser Smoke Test and Validate passed on PR head `9a12222` ([Browser Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/40963257488), [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/40963257491)). This verifies those sampled colliders only, not all structures or all traversal paths.
 - [ ] CI frame-time baseline is warning-only because only three samples were captured; its sub-1 FPS figure is not a reliable real-device performance measurement.
 - [ ] Manual live-site gameplay review remains outstanding for movement feel, collision, swim pose/waterline, and river exit.
-- [ ] Continue with the next collision blocker: explicitly verify exposed roots and built structures/cart geometry against actual world geometry; do not claim broad collision coverage from passing CI alone.
+- [ ] Remaining collision audit: verify cave walls/entrances, additional built structures and real traversal routes; do not claim broad collision coverage from sampled collider tests alone.
+- [ ] Next environment prototype: use the asset-source audit in `ASSET_SOURCES.md` to test a realistic mountain heightmap or static mesh export against the existing terrain and collision heightfield. Keep the runtime dependency unchanged until Three.js compatibility and mobile cost are demonstrated.
+- [ ] After the terrain prototype, prioritize realistic forest vegetation, ponds/shore transitions, sanctuary and cave scenery, campsite detail, wildlife, cinematic lighting and measured world performance in small tested increments.
 
 ## Latest workflow verification — 2026-10-29 (live-site smoke and selector fix)
 
