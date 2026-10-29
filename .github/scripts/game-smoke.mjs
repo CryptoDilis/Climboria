@@ -465,6 +465,20 @@ try {
     if (caveWallCollision.distantApproachBlocked) errors.push('western cave wall collider blocks a distant approach point: ' + JSON.stringify(caveWallCollision));
   }
   console.log('Jarrell cave-wall collision regression:', JSON.stringify(caveWallCollision));
+  // Regression: the western cave entrance must keep both warm torches and local lights in the scene.
+  const caveTorchAudit = await page.evaluate(() => {
+    const torches = window.jarrellCaveTorches || [];
+    return {
+      count: torches.length,
+      complete: torches.every(t => t.flame?.isMesh && t.ember?.isMesh && t.light?.isPointLight),
+      warmLights: torches.every(t => t.light?.color?.r > t.light?.color?.b),
+      separated: torches.length === 2 && Math.abs(torches[0].flame.getWorldPosition(new THREE.Vector3()).x - torches[1].flame.getWorldPosition(new THREE.Vector3()).x) > 10
+    };
+  });
+  if (caveTorchAudit.count !== 2 || !caveTorchAudit.complete || !caveTorchAudit.warmLights || !caveTorchAudit.separated) {
+    errors.push('western cave entrance should have two separated warm-lit torches with flame and ember meshes: ' + JSON.stringify(caveTorchAudit));
+  }
+  console.log('Jarrell cave torch regression:', JSON.stringify(caveTorchAudit));
 
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
