@@ -234,9 +234,11 @@ For each meaningful implementation batch:
 ## Terrain pass in progress — commit `67bf54a4a1fc71846f9dacd7827fb10934ffc729`
 
 - [x] Added separate central highlands, northwest ridges, southwest foothills, eastern ridge chain and winding gullies to Jarrell's shared height function. These affect streamed terrain meshes and player grounding through the same `jarrellHeight` function rather than adding decorative floating mountains.
-- [ ] Verify Validate and Browser Smoke Test on this commit; inspect slope, spawn, riverbank and grounding results before accepting the new terrain.
+- [x] Validate and Browser Smoke Test passed on descendant `6e76c16`: [Validate run 40965832909](https://github.com/CryptoDilis/Climboria/actions/runs/40965832909), [Browser Smoke Test run 40965832851](https://github.com/CryptoDilis/Climboria/actions/runs/40965832851). The terrain audit checked 697 coordinates with no non-finite heights; desktop grounding remained `0.27–0.28` above the shared height field across five samples.
 - [ ] Tune ridgeline height and valley depth based on actual gameplay screenshots/desktop and mobile checks.
 - [ ] Import actual CC0 mountain/cave assets only after local download, optimization, collision setup and tests; asset source plan is in `ASSET_SOURCES.md`.
+
+- [ ] The same browser logs report only four CI frame-time samples (average `609.92 ms`, p95 `849.8 ms`, observed `1.6 FPS`); this is a severe warning but an unreliable device-performance measure at this sample count. Repeat on a normal desktop and mobile device before optimizing or declaring world performance acceptable.
 
 
 ## User-requested carry-forward additions — 2026-10-29 (append-only; do not remove older items)
