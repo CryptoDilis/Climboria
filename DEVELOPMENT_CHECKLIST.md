@@ -438,3 +438,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Verify the latest shrine-collision code and regression test on Validate Climboria, Browser Smoke Test, and Pages; do not mark complete until all three runs are green.
 - [ ] Continue collision audit for exposed roots and remaining built structures/cart geometry using actual mesh placement and spawn-safe tests.
 - [ ] Manual live-site gameplay review remains outstanding for click-to-move, collision feel, swimming pose/waterline, and river exit.
+
+## 2026-10-30 — pond and sanctuary waterline verification (issue #114)
+
+- [x] Traced the elevated-water swimming regression to the final grounding pass in `game/play.html`: it clamped swimmers to fixed world Y values (`-1.05` through `.12`) after the earlier surface-relative swimming update. Replaced those bounds with `jarrellWaterSurfaceAt(player.position.x, player.position.z)` offsets, preserving the river’s `0.025` surface while supporting elevated ponds.
+- [x] Corrected pond, moonpool, sanctuary lake, and rice-paddy mesh offsets to account for `place()` adding the sampled terrain height. The three basin mesh heights now match their declared surfaces; the rice terrace and shrine remain grounded.
+- [x] Added smoke checks for pond water bounds/depth, actual mesh surfaces, paddy elevation, shrine base, and woodland-pond idle/Space/Ctrl/recovery behavior. Preserved the earlier river swim, surface/dive, swim exit, terrain collision, and respawn checks.
+- [x] Diagnosed both failed CI attempts from actual logs: first the pond test ran after closing its desktop page; then it exposed the fixed-world-Y clamp. The test now runs on the active page, and the clamp fix addresses the gameplay root cause.
+- [x] Browser Smoke Test [run 40972540070](https://github.com/CryptoDilis/Climboria/actions/runs/40972540070) and Validate [run 40972540160](https://github.com/CryptoDilis/Climboria/actions/runs/40972540160) passed on exact commit `00fa18e` (`00fa18e`). Pond samples: surfaces/meshes `21.5/21.5`, `29.9/29.9`, `9.95/9.95`; floors `20.3`, `28.7`, `8.75`; all three centers active and tested outside bounds dry. Woodland swim output: idle `21.28` at surface `21.5`, Space `21.595`, Ctrl `20.45`, recovery `21.31`. Existing river swim output remained idle near `-0.17`, Space up to `.12`, and Ctrl to `-1.03`.
+- [ ] No Pages deployment ran for this feature branch; do not claim it is deployed. Manual visual review and ordinary desktop/mobile performance remain open.
+- [ ] Next checklist increment: review realistic mountain relief in the live scene against the already passing ridge mesh/collision samples; then address forest visual variety and native-device performance. No third-party asset is integrated.

@@ -274,3 +274,10 @@ For each meaningful implementation batch:
 - [x] Fixed the region and compass-heading test regex escaping errors; the subsequent validation and browser runs are green.
 - [ ] Visual-check compass orientation and live coordinate/region updates in actual gameplay, including water/airborne states and region boundaries.
 - [ ] Continue manual camera/terrain obstruction, mountain collision, swimming, and performance verification; automated green runs are not a substitute for those checks.
+
+## Pond and sanctuary waterline increment — 2026-10-30
+
+- [x] Aligned the woodland pond, moonpool, sanctuary lake, and rice-paddy sheets to their local terrain/surface heights; carved shallow basins under the three open-water meshes.
+- [x] Fixed the final swimming clamp to follow the active water surface so Space/Ctrl/idle movement works in elevated ponds as well as the existing river.
+- [x] Browser Smoke Test [run 40972540070](https://github.com/CryptoDilis/Climboria/actions/runs/40972540070) and Validate [run 40972540160](https://github.com/CryptoDilis/Climboria/actions/runs/40972540160) passed on `00fa18e`. Assertions cover all three water meshes and bounds, basin depths, rice-paddy height, shrine grounding, elevated-pond swimming, and retained river swimming/collision/respawn coverage.
+- [ ] Shoreline visuals, freshwater fishing interactions, scene review, and desktop/mobile performance remain open. No third-party asset files were added.

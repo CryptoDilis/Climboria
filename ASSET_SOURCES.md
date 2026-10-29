@@ -82,3 +82,9 @@ These repositories were reviewed as asset or implementation candidates. A reposi
 2. Select individual licensed vegetation/rock models only after file-level format, size, attribution and performance checks; keep stylized CC0 vegetation for distant filler if it fits art direction.
 3. Extend the same prototype gates to pond/shore geometry, sanctuary/cave/campsite prop collision, wildlife rigs/animation, cinematic lighting and mobile frame-time budgets.
 4. Keep all candidates in this register as **not integrated** until the actual local file, exact license, dimensions, file size, loading, collision and desktop/mobile evidence are recorded.
+
+## Integration register update — 2026-10-30
+
+- Pond basins, water sheets, rice-paddy vegetation, and the sanctuary shrine in the latest increment use existing/generated Three.js geometry and materials. No external model, texture, source code, or asset from the candidate repositories was copied or integrated, so the per-file license register above remains unchanged.
+- Browser Smoke Test [run 40972540070](https://github.com/CryptoDilis/Climboria/actions/runs/40972540070) and Validate [run 40972540160](https://github.com/CryptoDilis/Climboria/actions/runs/40972540160) passed on `00fa18e`; these checks establish gameplay placement and regression coverage, not asset-license clearance or a Pages deployment.
+- Next integration gate remains the mountain relief prototype: inspect mesh/collision alignment, file size, format, performance, and the exact license before any external asset is added.
