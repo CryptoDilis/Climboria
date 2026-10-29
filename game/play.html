@@ -138,9 +138,20 @@ void main(){float streak=1.0-smoothstep(.22,.5,abs(gl_PointCoord.x-.5));float ti
 const rain=new THREE.Points(rainGeo,rainMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
 function smoothWeather(t){return t*t*(3-2*t)}
 const weatherScratch={nightSky:new THREE.Color(0x101a32),nightFog:new THREE.Color(0x18263a),nightSun:new THREE.Color(0x8098d4),daySun:new THREE.Color(0xffdfb0),sky:new THREE.Color(),fog:new THREE.Color()};
-function updateWeather(dt){
+ // Jarrell's Peak night sky: lightweight procedural stars and a soft moon glow.
+ const nightSkyGroup=new THREE.Group();nightSkyGroup.name='JarrellNightSky';nightSkyGroup.frustumCulled=false;scene.add(nightSkyGroup);
+ const starCount=isMobileGPU?420:900,starPositions=new Float32Array(starCount*3),starSizes=new Float32Array(starCount);let starSeed=76129;const starRand=()=>{starSeed=(starSeed*1664525+1013904223)>>>0;return starSeed/4294967296};
+ for(let i=0;i<starCount;i++){const a=starRand()*Math.PI*2,z=starRand()*2-1,r=Math.sqrt(Math.max(0,1-z*z))*390;starPositions[i*3]=Math.cos(a)*r;starPositions[i*3+1]=z*390;starPositions[i*3+2]=Math.sin(a)*r;starSizes[i]=1.1+starRand()*1.7;}
+ const starGeo=new THREE.BufferGeometry();starGeo.setAttribute('position',new THREE.BufferAttribute(starPositions,3));starGeo.setAttribute('size',new THREE.BufferAttribute(starSizes,1));
+ const starMat=new THREE.PointsMaterial({color:0xe8f2ff,size:1.35,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false,depthTest:false});
+ const stars=new THREE.Points(starGeo,starMat);stars.frustumCulled=false;nightSkyGroup.add(stars);
+ const moonGroup=new THREE.Group();moonGroup.name='JarrellMoon';nightSkyGroup.add(moonGroup);
+ const moonDisc=new THREE.Mesh(new THREE.SphereGeometry(8,24,16),new THREE.MeshBasicMaterial({color:0xfff1c9,transparent:true,opacity:0,depthWrite:false,depthTest:false}));moonGroup.add(moonDisc);
+ const moonHalo=new THREE.Mesh(new THREE.SphereGeometry(12,24,16),new THREE.MeshBasicMaterial({color:0x9dbfff,transparent:true,opacity:0,depthWrite:false,depthTest:false}));moonHalo.scale.set(1,1,.16);moonGroup.add(moonHalo);
+ const moonLight=new THREE.PointLight(0xb9d4ff,0,260,1.65);moonGroup.add(moonLight);
+ function updateWeather(dt){
  if(!weatherEnabled)return;
- weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(weatherScratch.nightSun).lerp(weatherScratch.daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.22,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.08,.18,daylight);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
+ weatherClock.elapsed+=dt;dayNightClock.elapsed+=dt;windClock.elapsed+=dt;const dayT=(dayNightClock.elapsed%dayDuration)/dayDuration;const sunAngle=dayT*Math.PI*2-Math.PI*.5;const daylight=THREE.MathUtils.smoothstep(Math.sin(sunAngle),-.22,.18);const nightBlend=1-daylight;sun.position.set(Math.cos(sunAngle)*170,Math.max(-28,Math.sin(sunAngle)*210),95);sun.color.copy(weatherScratch.nightSun).lerp(weatherScratch.daySun,daylight);hemiLight.intensity=THREE.MathUtils.lerp(.42,1.25,daylight);fillLight.intensity=THREE.MathUtils.lerp(.16,.18,daylight);starMat.opacity=nightBlend*.92;moonDisc.material.opacity=nightBlend;moonHalo.material.opacity=nightBlend*.12;moonLight.intensity=nightBlend*1.7;nightSkyGroup.position.set(camera.position.x,camera.position.y,camera.position.z);moonGroup.position.set(125,118,-320);for(const m of windMaterials){const sh=m.userData.climbWindShader;if(sh)sh.uniforms.uClimbWindTime.value=windClock.elapsed;}
  const phaseDuration=600,transition=22;
  const phaseCount=weatherPhases.length;
  if(!phaseCount)return;
