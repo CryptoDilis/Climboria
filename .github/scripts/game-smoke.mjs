@@ -742,6 +742,30 @@ try {
   if (!(waterTerrain.sandyShelf >= 0 && waterTerrain.sandyShelf <= .25)) errors.push('Jarrell river shore shelf is not shallow and walkable');
   if (!(Number.isFinite(waterTerrain.seaFloor) && waterTerrain.seaFloor < -10 && waterTerrain.seaSurface > waterTerrain.seaFloor)) errors.push('Jarrell sea basin is missing or not deep below its water surface');
 
+  // Regression: the finite sea must not drag dry terrain under the ocean floor or mark exposed ridges as swim space.
+  const terrainRegions = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    return {
+      centralHighlands: api.terrainHeightAt(650, 520),
+      easternRidge: api.terrainHeightAt(4400, -1200),
+      dryEast: api.terrainHeightAt(3200, 0),
+      dryNorth: api.terrainHeightAt(1640, 1700),
+      centralMesh: api.sampleTerrainMeshAt(650, 520),
+      easternMesh: api.sampleTerrainMeshAt(4400, -1200),
+      waterAtSea: api.isOceanWaterAt(1640, 0),
+      waterAtHighland: api.isOceanWaterAt(650, 520)
+    };
+  });
+  if (!(terrainRegions.centralHighlands > 2)) errors.push('Jarrell central highlands are hidden below the sea floor: ' + JSON.stringify(terrainRegions.centralHighlands));
+  if (!(terrainRegions.easternRidge > 2)) errors.push('Jarrell eastern ridge is hidden below the sea floor: ' + JSON.stringify(terrainRegions.easternRidge));
+  if (!(terrainRegions.dryEast > -10 && terrainRegions.dryNorth > -10)) errors.push('Jarrell terrain outside the finite sea patch remains at sea-floor depth: ' + JSON.stringify({ dryEast: terrainRegions.dryEast, dryNorth: terrainRegions.dryNorth }));
+  for (const region of ['centralMesh', 'easternMesh']) {
+    const sample = terrainRegions[region];
+    if (!sample || !Number.isFinite(sample.meshHeight) || Math.abs(sample.meshHeight - sample.collisionHeight) > 1e-5) errors.push('Jarrell ' + region + ' mesh vertex differs from collision height: ' + JSON.stringify(sample));
+  }
+  if (!terrainRegions.waterAtSea || terrainRegions.waterAtHighland) errors.push('Jarrell sea swimming bounds do not distinguish submerged floor from exposed highlands: ' + JSON.stringify({ waterAtSea: terrainRegions.waterAtSea, waterAtHighland: terrainRegions.waterAtHighland }));
+  console.log('Jarrell bounded sea and ridge regression:', JSON.stringify(terrainRegions));
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
