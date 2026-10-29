@@ -421,6 +421,30 @@ try {
     if (crateCollision.outsideBlocked) errors.push('campsite supply crate collider blocks a point outside its radius');
   }
 
+  // Regression: the visible campsite cart and forge must be solid, bounded obstacles.
+  for (const kind of ['cart','forge']) {
+    const structureCollision = await page.evaluate(kind => {
+      const api = window.__climboriaSmoke;
+      const item = api.obstacles.find(obstacle => obstacle.kind === kind);
+      if (!item) return { error: 'no campsite ' + kind + ' collider indexed' };
+      const ground = Number.isFinite(item.y0) ? item.y0 : api.terrainHeightAt(item.x, item.z);
+      return {
+        insideBlocked: api.testObstacleCollision(item.x, item.z, ground + .22),
+        outsideBlocked: api.testObstacleCollision(item.x + item.r + 1.1, item.z, ground + .22),
+        aboveBlocked: api.testObstacleCollision(item.x, item.z, item.y1 + 1),
+        radius: item.r,
+        y0: item.y0,
+        y1: item.y1,
+      };
+    }, kind);
+    if (structureCollision.error) errors.push(structureCollision.error);
+    else {
+      if (!structureCollision.insideBlocked) errors.push('campsite ' + kind + ' collider does not block at its center');
+      if (structureCollision.outsideBlocked) errors.push('campsite ' + kind + ' collider blocks outside its radius');
+      if (structureCollision.aboveBlocked) errors.push('campsite ' + kind + ' collider blocks above its vertical bounds');
+    }
+  }
+
   // Regression: the sanctuary shrine is a real blocking structure, not just visible scenery.
   const shrineCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
