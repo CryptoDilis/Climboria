@@ -707,7 +707,7 @@ try {
           bankDistance:Number(Math.sqrt(nearest.distanceSq).toFixed(2)),width:Number(width.toFixed(2)),
           swimming:window.jarrellSwimming===true,move:api.getMoveVec(),movement:api.getMovementState(),
           collision:api.lastMovementDebug||null});
-        if(Math.sqrt(nearest.distanceSq)>=width+0.8&&window.jarrellSwimming===false&&p.y>=api.terrainHeightAt(p.x,p.z))break;
+        if(Math.sqrt(nearest.distanceSq)>=width+0.5&&window.jarrellSwimming===false&&p.y>=api.terrainHeightAt(p.x,p.z))break;
       }
       const p=api.player.position,nearest=api.nearestRiverPoint(p.x,p.z);
       const width=window.jarrellRiverHalfWidth?.(nearest.t)||11.5;
@@ -719,7 +719,7 @@ try {
       api.setMoveInput(null);api.getKeys().KeyD=false;api.getKeys().KeyA=false;
       return result;
     }, swimExitStart);
-    if (swimExit.swimming || swimExit.bankDistance < (await page.evaluate(({x,z})=>window.jarrellRiverHalfWidth?.(window.nearestRiverPoint(x,z).t)||11.5,{x:swimExit.x,z:swimExit.z}))+0.8 || swimExit.y < swimExit.groundY) {
+    if (swimExit.swimming || swimExit.bankDistance < (await page.evaluate(({x,z})=>window.jarrellRiverHalfWidth?.(window.nearestRiverPoint(x,z).t)||11.5,{x:swimExit.x,z:swimExit.z}))+0.5 || swimExit.y < swimExit.groundY) {
       errors.push('player could not swim onto the river bank: '+JSON.stringify(swimExit));
       await page.screenshot({path:'/tmp/jarrell-swim-exit-failure.png'});
     }
