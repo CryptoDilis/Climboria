@@ -700,6 +700,39 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
  }
  for(let i=0;i<5;i++)place(rockGeo,stoneEdge,pondX-4+i*1.65,.12,pondZ+11.2, .65,.38,.7,(i%2)*.3);
+ // Sakura refuge: a quiet hangout park with blossom canopies, long benches, swings and hammocks.
+ const parkX=215,parkZ=320,parkGround=terrainHeightAt(parkX,parkZ);
+ const sakuraBark=new THREE.MeshStandardMaterial({color:0x554038,roughness:.94}),sakuraPink=new THREE.MeshStandardMaterial({color:0xf0a9c8,roughness:.78}),sakuraLight=new THREE.MeshStandardMaterial({color:0xffd6e5,roughness:.8}),parkWood=new THREE.MeshStandardMaterial({color:0x76533a,roughness:.9}),parkIron=new THREE.MeshStandardMaterial({color:0x333d46,metalness:.48,roughness:.55}),hammockCloth=new THREE.MeshStandardMaterial({color:0x8fbfc2,roughness:.88,side:THREE.DoubleSide});
+ const parkGroup=new THREE.Group();parkGroup.name='JarrellSakuraHangoutPark';parkGroup.position.set(parkX,parkGround,parkZ);worldPOIs.add(parkGroup);
+ const parkPath=new THREE.Mesh(new THREE.CircleGeometry(15,48),poiMat(0x77786d,.96));parkPath.rotation.x=-Math.PI/2;parkPath.position.y=.035;parkPath.scale.set(1.28,1,.88);parkPath.receiveShadow=true;parkGroup.add(parkPath);
+ for(let i=0;i<7;i++){const a=i/7*Math.PI*2,x=Math.cos(a)*13,z=Math.sin(a)*10.5,tree=new THREE.Group();tree.position.set(x,terrainHeightAt(parkX+x,parkZ+z)-parkGround,z);tree.rotation.y=a*.4;parkGroup.add(tree);
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,4.8,7),sakuraBark);trunk.position.y=2.4;trunk.castShadow=true;tree.add(trunk);
+  const branchGeo=new THREE.CylinderGeometry(.07,.12,2.0,6);for(let b=0;b<3;b++){const branch=new THREE.Mesh(branchGeo,sakuraBark);branch.position.set(Math.cos(b*2.1)*.65,3.6+(.25*b),Math.sin(b*2.1)*.65);branch.rotation.z=(b-1)*.48;branch.rotation.x=Math.sin(b*2.1)*.42;tree.add(branch);}
+  for(let k=0;k<9;k++){const a2=k*2.399,rad=.45+(k%3)*.34,blossom=new THREE.Mesh(new THREE.IcosahedronGeometry(.85+(k%2)*.18,1),k%3===0?sakuraLight:sakuraPink);blossom.position.set(Math.cos(a2)*rad,4.15+(k%4)*.28,Math.sin(a2)*rad);blossom.scale.set(1,.78,1);blossom.castShadow=!isMobileGPU;tree.add(blossom);}
+  addJarrellObstacleCollider({x:parkX+x,z:parkZ+z,r:.62,y0:parkGround-.1,y1:parkGround+5.8,kind:'sakura-tree'});
+ }
+ // Three long timber benches face the open clearing.
+ for(let i=0;i<3;i++){const x=(i-1)*6,z=4,bench=new THREE.Group();bench.position.set(x,terrainHeightAt(parkX+x,parkZ+z)-parkGround,z);parkGroup.add(bench);
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(4.2,.18,.72),parkWood);seat.position.y=.72;bench.add(seat);
+  const back=new THREE.Mesh(new THREE.BoxGeometry(4.2,.95,.16),parkWood);back.position.set(0,1.18,.32);bench.add(back);
+  for(const lx of [-1.65,1.65]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.16,.72,.58),parkIron);leg.position.set(lx,.36,0);bench.add(leg);}
+  addJarrellObstacleCollider({x:parkX+x,z:parkZ+z,r:2.15,y0:parkGround,y1:parkGround+1.55,kind:'park-bench'});
+ }
+ // Two sturdy swings with hanging chains and broad wooden seats.
+ for(let i=0;i<2;i++){const x=i===0?-8:8,z=-5,frame=new THREE.Group();frame.position.set(x,terrainHeightAt(parkX+x,parkZ+z)-parkGround,z);parkGroup.add(frame);
+  for(const side of [-1,1]){const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,3.7,7),parkIron);post.position.set(side*1.15,1.85,0);frame.add(post);const foot=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,2.8,6),parkIron);foot.rotation.z=side*.55;foot.position.set(side*.58,1.8,0);frame.add(foot);
+   const chain=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.55,5),parkIron);chain.position.set(side*.72,1.28,0);frame.add(chain);}
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,2.65,8),parkWood);beam.rotation.z=Math.PI/2;beam.position.y=3.65;frame.add(beam);const seat=new THREE.Mesh(new THREE.BoxGeometry(1.25,.14,.48),parkWood);seat.position.set(0,.48,0);frame.add(seat);
+  addJarrellObstacleCollider({x:parkX+x,z:parkZ+z,r:1.7,y0:parkGround,y1:parkGround+3.9,kind:'park-swing'});
+ }
+ // Canvas hammocks between low timber posts, with a gentle sag in the fabric.
+ for(let i=0;i<2;i++){const x=i===0?-5:5,z=9,rig=new THREE.Group();rig.position.set(x,terrainHeightAt(parkX+x,parkZ+z)-parkGround,z);parkGroup.add(rig);
+  for(const side of [-1,1]){const post=new THREE.Mesh(new THREE.CylinderGeometry(.1,.14,1.8,7),parkWood);post.position.set(side*2.1,.9,0);rig.add(post);}
+  const fabric=new THREE.Mesh(new THREE.PlaneGeometry(3.9,.95,12,4),hammockCloth);fabric.rotation.x=-Math.PI/2;fabric.position.y=.92;const pos=fabric.geometry.attributes.position;for(let v=0;v<pos.count;v++){const px=pos.getX(v);pos.setY(v,-.3*(1-Math.pow(Math.abs(px)/1.95,2)));}fabric.geometry.computeVertexNormals();rig.add(fabric);
+  for(const side of [-1,1]){const rope=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.55,5),parkIron);rope.position.set(side*1.92,1.22,0);rig.add(rope);}
+  addJarrellObstacleCollider({x:parkX+x,z:parkZ+z,r:2.25,y0:parkGround,y1:parkGround+1.9,kind:'park-hammock'});
+ }
+ window.jarrellSakuraPark={group:parkGroup,center:{x:parkX,z:parkZ},trees:7,benches:3,swings:2,hammocks:2};
  // Hidden treasure clearings and spring sanctuary, away from the starter camp.
  const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.rotation.x=-Math.PI/2;
  for(let i=0;i<32;i++){const a=i/32*Math.PI*2,rr=24+(i%3)*2;place(rockGeo,stoneEdge,sanctX+Math.cos(a)*rr,.25,sanctZ+Math.sin(a)*rr,1.1+(i%3)*.4,.8+(i%4)*.4,1.1, a)}
