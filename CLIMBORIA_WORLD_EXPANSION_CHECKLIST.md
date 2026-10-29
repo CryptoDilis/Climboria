@@ -1,3 +1,11 @@
+## Latest verification carry-forward — 2026-10-29
+
+- [x] Validate Climboria passed for gameplay commit `8d4a5e1fdc486eaf8c560cd2d33352b3ebcb5c6c`: [run 40875751783](https://github.com/CryptoDilis/Climboria/actions/runs/40875751783).
+- [x] Climboria Browser Smoke Test passed for the same gameplay commit: [run 40875751854](https://github.com/CryptoDilis/Climboria/actions/runs/40875751854).
+- [x] GitHub Pages deployment passed for checklist commit `ebce28bb99856e9d5f6522d60f725a7a365af8d6`: [run 40875852184](https://github.com/CryptoDilis/Climboria/actions/runs/40875852184).
+- [ ] Add direct automated coverage for the new left-click movement target and direction; existing green workflows are not a dedicated assertion of click-to-move behavior.
+- [ ] Continue outstanding swim pose/waterline/river exit and terrain/object collision verification; desktop/mobile automated smoke tests do not replace manual playtesting.
+
 ## Latest workflow verification — 2026-10-29 (bush and fallen-log collision regression)
 
 - [x] Validate Climboria passed for commit `a4bb3bd5d3fad3699014bf9216311537c2cdab4c`: [run 40767529576](https://github.com/CryptoDilis/Climboria/actions/runs/40767529576).
