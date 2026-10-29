@@ -26,7 +26,10 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas', { timeout: 45000 });
-  await page.waitForSelector('#jarrellLootHUD', { timeout: 45000 });
+  await page.waitForSelector('#jarrellChestPrompt', { state: 'attached', timeout: 45000 });
+  await page.waitForSelector('#jarrellFishingHint', { state: 'attached', timeout: 45000 });
+  const persistentLootHud = await page.locator('#jarrellLootHUD').count();
+  if (persistentLootHud !== 0) errors.push('permanent CACHE LOOT / CLIMB POINTS HUD should not be rendered');
   await page.waitForTimeout(12000);
   await page.locator('#heroNameInput').fill('SmokeTester');
   await page.locator('#creatorStart').click();
@@ -101,12 +104,13 @@ try {
       riverBedClearance: Number((0.015 - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.riverX(window.__climboriaSmoke?.player.position.z), window.__climboriaSmoke?.player.position.z)).toFixed(2)),
       nearestTentDistance: Number(Math.min(...(window.__climboriaSmoke?.obstacles.filter(item => item.kind === 'tent').map(item => Math.hypot(item.x - window.__climboriaSmoke.player.position.x, item.z - window.__climboriaSmoke.player.position.z)) || [Infinity])).toFixed(2)),
       cachePrompt: !!document.querySelector('#jarrellChestPrompt'),
-      lootHud: document.querySelector('#jarrellLootHUD')?.textContent || '',
+      lootHud: !!document.querySelector('#jarrellLootHUD'),
       cacheStreaming: typeof window.spawnJarrellCacheForChunk === 'function',
       forestStreaming: typeof window.spawnJarrellForestForChunk === 'function',
     };
   });
   if (!desktopState.canvasWidth || !desktopState.canvasHeight) errors.push('desktop renderer canvas has zero dimensions');
+  if (desktopState.lootHud) errors.push('permanent CACHE LOOT / CLIMB POINTS HUD is still present');
   if (desktopState.cameraGroundClearance < 0.8) errors.push('desktop follow camera is clipping into Jarrell terrain');
   if (desktopState.cameraRayMinClearance < 0.2) errors.push('desktop follow-camera sightline passes through Jarrell terrain: ' + desktopState.cameraRayMinClearance);
   if (!desktopState.levelName.toUpperCase().includes("JARRELL'S PEAK")) errors.push('Level 11 HUD does not identify Jarrell’s Peak');
