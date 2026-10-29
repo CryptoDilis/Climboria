@@ -771,6 +771,32 @@ try {
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
+
+  const sakuraParkCheck = await page.evaluate(() => {
+    const park = window.jarrellSakuraPark;
+    const api = window.__climboriaSmoke;
+    const tree = api?.obstacles?.find(item => item.kind === 'sakura-tree');
+    const bench = api?.obstacles?.find(item => item.kind === 'park-bench');
+    const check = item => item ? {
+      insideBlocked: api.testObstacleCollider(item, item.x, item.z, item.y0 + .22),
+      outsideBlocked: api.testObstacleCollider(item, item.x + (item.r || 1) + 1.1, item.z, item.y0 + .22),
+    } : null;
+    return {
+      counts: park ? { trees: park.trees, benches: park.benches, swings: park.swings, hammocks: park.hammocks } : null,
+      tree: check(tree),
+      bench: check(bench),
+    };
+  });
+  if (!sakuraParkCheck.counts || sakuraParkCheck.counts.trees !== 7 || sakuraParkCheck.counts.benches !== 3 || sakuraParkCheck.counts.swings !== 2 || sakuraParkCheck.counts.hammocks !== 2) {
+    errors.push('Sakura Hangout Park did not initialize all expected features: ' + JSON.stringify(sakuraParkCheck));
+  }
+  for (const [kind, collider] of [['tree', sakuraParkCheck.tree], ['bench', sakuraParkCheck.bench]]) {
+    if (!collider) errors.push('Sakura Hangout Park ' + kind + ' collider was not indexed');
+    else {
+      if (!collider.insideBlocked) errors.push('Sakura Hangout Park ' + kind + ' collider does not block at its center');
+      if (collider.outsideBlocked) errors.push('Sakura Hangout Park ' + kind + ' collider blocks outside its radius');
+    }
+  }
   const placeholderWildlife = await page.evaluate(() => ({
     deer: window.__climboriaSmoke?.getDeer?.().length || 0,
     wolves: (window.__climboriaSmoke?.landmarks || []).filter(name => /^WildWolf_/.test(name)).length,
