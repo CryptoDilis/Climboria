@@ -588,7 +588,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
      const x=-3.8+(rnd()-.5)*980,z=-340+(rnd()-.5)*980;
      const riverDist=Math.abs(x-jarrellRiverX(z)),campDist=Math.hypot(x+1,z+340),lakeDist=Math.hypot((x-88)/1.18,z+340);
      if(Math.hypot(x+3.8,z+340)>510||campDist<38||riverDist<(spec.name==='Fern_1'?7:13)||lakeDist<118)continue;
-     const scale=spec.minScale+rnd()*(spec.maxScale-spec.minScale),yaw=rnd()*Math.PI*2;out.push({x,z,y:jarrellHeight(x,z),scale,yaw});if(spec.name==='CommonTree_3')addJarrellObstacleCollider({x,z,r:.42*scale,y0:jarrellHeight(x,z),y1:jarrellHeight(x,z)+7*scale,kind:'tree'});
+     const scale=spec.minScale+rnd()*(spec.maxScale-spec.minScale),yaw=rnd()*Math.PI*2,y=jarrellHeight(x,z);out.push({x,z,y,scale,yaw});if(spec.name==='CommonTree_3')addJarrellObstacleCollider({x,z,r:.42*scale,y0:y,y1:y+7*scale,kind:'tree'});else if(spec.name==='Bush_Common')addJarrellObstacleCollider({x,z,r:.38*scale,y0:y-.05,y1:y+1.1*scale,kind:'bush'});
     }
     return out;
    };
