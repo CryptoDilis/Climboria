@@ -304,14 +304,14 @@ try {
 
   await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    // Explicitly seed a deterministic streamed-forest test area. A teleport does not
-    // guarantee the render loop has crossed a chunk boundary before collider assertions.
-    // Keep the fixture beyond the intentional 950 m campsite forest exclusion radius.
-    const testX = 1200, testZ = 1200, chunkSize = 256;
+    // Explicitly seed a deterministic streamed-forest test area. A single chunk can
+    // legitimately produce no trees when its terrain is too steep, so seed a small
+    // 5x5 region on the far side of the campsite exclusion radius.
+    const testX = 0, testZ = 1400, chunkSize = 256;
     api.player.position.set(testX, api.terrainHeightAt(testX, testZ) + .22, testZ);
     const cx = Math.floor(testX / chunkSize), cz = Math.floor(testZ / chunkSize);
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dz = -1; dz <= 1; dz++) {
+    for (let dx = -2; dx <= 2; dx++) {
+      for (let dz = -2; dz <= 2; dz++) {
         window.spawnJarrellForestForChunk?.(cx + dx, cz + dz);
       }
     }
