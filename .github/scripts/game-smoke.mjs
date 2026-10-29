@@ -872,7 +872,7 @@ try {
     api.player.position.set(x,-.55,z);
     return {x,z};
   });
-  await page.waitForTimeout(220);
+  await page.waitForTimeout(900);
   const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y,pose:window.jarrellSwimPoseDebug||null}));
   await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
   await page.waitForTimeout(800);
