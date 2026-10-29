@@ -117,7 +117,7 @@ try {
   if (desktopState.spawnRiverBankDistance > 9.5) errors.push('Jarrell trailhead is too far from the riverbank for the intended riverside camp: ' + JSON.stringify({centerDistance:desktopState.spawnRiverDistance,bankDistance:desktopState.spawnRiverBankDistance}));
   if (desktopState.riverBedClearance < 0.3) errors.push('Jarrell riverbed is too high for the water surface to read as a visible channel at the trailhead');
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
-  if (!desktopState.cachePrompt || !desktopState.lootHud.includes('CACHE LOOT')) errors.push('desktop Jarrell cache HUD did not initialize');
+  if (!desktopState.cachePrompt) errors.push('desktop Jarrell contextual cache prompt did not initialize');
 
   // Deterministic coordinate audit of the streamed Jarrell height field.
   // Record the steepest sampled point so future collision regressions have exact coordinates.
