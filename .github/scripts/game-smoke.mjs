@@ -441,6 +441,31 @@ try {
     if (rockCollision.aboveBlocked) errors.push('large Jarrell rock collider blocks movement above its vertical bounds');
   }
 
+  // Regression: the western cave's main stone mouth must block the player at ground level,
+  // while a point well outside the cave collider remains traversable.
+  const caveWallCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const cave = api.obstacles
+      .filter(item => item.kind === 'rock')
+      .sort((a, b) => Math.hypot(a.x + 265, a.z + 570) - Math.hypot(b.x + 265, b.z + 570))[0];
+    if (!cave || Math.hypot(cave.x + 265, cave.z + 570) > 8) {
+      return { error: 'western cave main-wall collider was not indexed near its documented entrance' };
+    }
+    const y = api.terrainHeightAt(cave.x, cave.z) + .22;
+    return {
+      cavePosition: { x: cave.x, z: cave.z },
+      radius: cave.r || .6,
+      insideBlocked: api.testObstacleCollision(cave.x, cave.z, y),
+      distantApproachBlocked: api.testObstacleCollision(cave.x + 34, cave.z, y),
+    };
+  });
+  if (caveWallCollision.error) errors.push(caveWallCollision.error);
+  else {
+    if (!caveWallCollision.insideBlocked) errors.push('western cave stone mouth does not block the player at ground level: ' + JSON.stringify(caveWallCollision));
+    if (caveWallCollision.distantApproachBlocked) errors.push('western cave wall collider blocks a distant approach point: ' + JSON.stringify(caveWallCollision));
+  }
+  console.log('Jarrell cave-wall collision regression:', JSON.stringify(caveWallCollision));
+
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
