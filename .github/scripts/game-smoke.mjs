@@ -529,6 +529,25 @@ try {
     if (shrineCollision.aboveBlocked) errors.push('sanctuary shrine collider blocks above its vertical bounds');
   }
 
+  // Regression: cave entrance torches should block their physical shafts without creating invisible walls.
+  const caveTorchCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const torch = api.obstacles.find(item => item.kind === 'caveTorch');
+    if (!torch) return { error: 'no cave entrance torch collider indexed' };
+    const ground = Number.isFinite(torch.y0) ? torch.y0 : api.terrainHeightAt(torch.x, torch.z);
+    return {
+      insideBlocked: api.testObstacleCollision(torch.x, torch.z, ground + .35),
+      outsideBlocked: api.testObstacleCollision(torch.x + torch.r + 1, torch.z, ground + .35),
+      aboveBlocked: api.testObstacleCollision(torch.x, torch.z, torch.y1 + 1),
+    };
+  });
+  if (caveTorchCollision.error) errors.push(caveTorchCollision.error);
+  else {
+    if (!caveTorchCollision.insideBlocked) errors.push('cave entrance torch does not block at shaft height');
+    if (caveTorchCollision.outsideBlocked) errors.push('cave entrance torch collider blocks outside its radius');
+    if (caveTorchCollision.aboveBlocked) errors.push('cave entrance torch collider blocks above its vertical bounds');
+  }
+
   // Regression: the cave mouth must keep a traversable center while its broken stone teeth block at their actual bounds.
   const caveMouthCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
