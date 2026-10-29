@@ -80,6 +80,21 @@ try {
       playerY: Number(window.__climboriaSmoke?.player.position.y.toFixed(2) || 0),
       cameraY: Number(window.__climboriaSmoke?.camera.position.y.toFixed(2) || 0),
       cameraGroundClearance: Number((window.__climboriaSmoke?.camera.position.y - window.__climboriaSmoke?.terrainHeightAt(window.__climboriaSmoke?.camera.position.x, window.__climboriaSmoke?.camera.position.z)).toFixed(2)),
+      cameraRayMinClearance: (() => {
+        const api = window.__climboriaSmoke;
+        if (!api?.player?.position || !api?.camera?.position || !api?.terrainHeightAt) return -Infinity;
+        const p = api.player.position, c = api.camera.position;
+        const targetY = p.y + 1.15;
+        let min = Infinity;
+        for (let i = 1; i <= 16; i++) {
+          const f = i / 16;
+          const x = p.x + (c.x - p.x) * f;
+          const z = p.z + (c.z - p.z) * f;
+          const y = targetY + (c.y - targetY) * f;
+          min = Math.min(min, y - api.terrainHeightAt(x, z));
+        }
+        return Number(min.toFixed(2));
+      })(),
       levelName: document.querySelector('#levelName')?.textContent || '',
       spawnRiverDistance: Number(Math.sqrt(window.__climboriaSmoke?.nearestRiverPoint(window.__climboriaSmoke?.player.position.x, window.__climboriaSmoke?.player.position.z).distanceSq).toFixed(2)),
       spawnRiverBankDistance: (()=>{const api=window.__climboriaSmoke,p=api?.player?.position,n=api?.nearestRiverPoint(p?.x,p?.z);return Number(Math.max(0,Math.sqrt(n?.distanceSq||0)-(window.jarrellRiverHalfWidth?.(n?.t)||0)).toFixed(2));})(),
@@ -93,6 +108,7 @@ try {
   });
   if (!desktopState.canvasWidth || !desktopState.canvasHeight) errors.push('desktop renderer canvas has zero dimensions');
   if (desktopState.cameraGroundClearance < 0.8) errors.push('desktop follow camera is clipping into Jarrell terrain');
+  if (desktopState.cameraRayMinClearance < 0.2) errors.push('desktop follow-camera sightline passes through Jarrell terrain: ' + desktopState.cameraRayMinClearance);
   if (!desktopState.levelName.toUpperCase().includes("JARRELL'S PEAK")) errors.push('Level 11 HUD does not identify Jarrell’s Peak');
   if (desktopState.spawnRiverBankDistance > 9.5) errors.push('Jarrell trailhead is too far from the riverbank for the intended riverside camp: ' + JSON.stringify({centerDistance:desktopState.spawnRiverDistance,bankDistance:desktopState.spawnRiverBankDistance}));
   if (desktopState.riverBedClearance < 0.3) errors.push('Jarrell riverbed is too high for the water surface to read as a visible channel at the trailhead');
