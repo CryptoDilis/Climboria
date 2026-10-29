@@ -120,6 +120,8 @@ try {
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
   if (!desktopState.cachePrompt) errors.push('desktop Jarrell contextual cache prompt did not initialize');
 
+  // Capture the actual trailhead view before collision tests teleport the player to remote terrain samples.
+
   // Deterministic coordinate audit of the streamed Jarrell height field.
   // Record the steepest sampled point so future collision regressions have exact coordinates.
   const terrainAudit = await page.evaluate(() => {
