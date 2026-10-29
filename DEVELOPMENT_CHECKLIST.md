@@ -124,6 +124,13 @@
 - [ ] Death Stone implementation remains gated on agreed types, prices, per-type functions, fishing/chest rarity values, and authoritative reward rules. Existing code still has no grant/UI/teleport; ordinary respawn remains independent. Historical exact-location/team-return notes and the removed 1.5% eligible-chest draft are not enough to define the new economy.
 - [ ] Continue with small tested mountain/forest/pond/sanctuary increments; no third-party assets have been imported. Candidate licenses, compatibility, and integration gates remain in `ASSET_SOURCES.md`.
 
+## 2026-10-30 — streamed forest grounding baseline
+
+- [x] Audited the existing forest implementation: streamed trees are instanced in 256-unit chunks, filtered above slope `0.95`, positioned from `jarrellHeight`, and paired with trunk/root colliders.
+- [x] Added a smoke-only forest audit that generates a temporary deterministic chunk, checks trunk bases plus tree/root collider heights against shared terrain, and removes the temporary chunk afterward.
+- [x] Browser Smoke Test [run 40969658651](https://github.com/CryptoDilis/Climboria/actions/runs/40969658651) and Validate [run 40969658660](https://github.com/CryptoDilis/Climboria/actions/runs/40969658660) passed on `fe660eb6e04045989e62b6c2bfdc11752236d73c`. Logs verify 28 trunk instances, 28 tree colliders, 28 root colliders, zero collider-height error, and maximum trunk-base error `0.000012`.
+- [ ] This verifies placement/collision consistency only. Forest species/visual variety, manual scene review, and ordinary desktop/mobile performance remain open. No asset was imported; follow per-file license and compatibility gates in `ASSET_SOURCES.md`.
+
 > **Carry-forward project checklist.** Use this document as the persistent source of truth across new chats and development sessions. Continue from the first unchecked blocker; do not restart planning from scratch. Keep working on the repository, verify changes, and report actual results—not assumptions.
 
 ## Product goal

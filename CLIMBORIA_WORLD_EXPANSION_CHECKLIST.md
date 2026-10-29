@@ -248,6 +248,13 @@ For each meaningful implementation batch:
 - [x] Final Browser Smoke Test [run 40968706385](https://github.com/CryptoDilis/Climboria/actions/runs/40968706385) and Validate [run 40968706386](https://github.com/CryptoDilis/Climboria/actions/runs/40968706386) passed on `61e2adf46de238a47a59f23442bfb6eecbf95f42`. Smoke output: central highlands `49.49`, eastern ridge `33.58`, sea floor `-18`; mesh and collision samples match within `0.00001`.
 - [ ] Scene review and normal desktop/mobile performance measurements remain open. No Pages deployment ran for the feature branch; no asset import is claimed.
 
+## Streamed forest grounding baseline — 2026-10-30
+
+- [x] Existing streamed forest uses instanced trunk/canopy meshes, samples the shared Jarrell height field, skips steep placements, and creates separate trunk/root colliders.
+- [x] Smoke audit on deterministic chunk `(4, 4)` passed with 28 rendered trunks, 28 tree colliders, 28 root colliders, zero collider-ground error, and `0.000012` maximum trunk-base error. Temporary test chunk was removed after the audit.
+- [x] Browser Smoke Test [run 40969658651](https://github.com/CryptoDilis/Climboria/actions/runs/40969658651) and Validate [run 40969658660](https://github.com/CryptoDilis/Climboria/actions/runs/40969658660) passed on `fe660eb6e04045989e62b6c2bfdc11752236d73c`.
+- [ ] Varied realistic species, forest art review, and device performance remain unchecked. No external vegetation assets were integrated.
+
 
 ## User-requested carry-forward additions — 2026-10-29 (append-only; do not remove older items)
 
