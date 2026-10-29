@@ -238,3 +238,14 @@ For each meaningful implementation batch:
 - [x] Added live X/Y/Z coordinates and current 1000-unit grid region number directly beneath the compass in the same commit; verify region boundaries and actual player-grounding values.
 - [ ] Verify compass/coordinates placement, legibility and responsive layout on desktop and mobile.
 - [ ] Preserve this checklist and every prior requirement. Add new items as dated append-only sections; do not remove prior tasks unless the user explicitly requests removal.
+
+
+## Workflow verification — 2026-10-29 (HUD smoke-test repairs)
+
+- [x] Validate Climboria passed on `2c41c0a17334b49e1da33a25d6398d6cd9d8a4b6`: [run 40806645023](https://github.com/CryptoDilis/Climboria/actions/runs/40806645023).
+- [x] Desktop/mobile browser smoke tests passed on the same commit: [run 40806644929](https://github.com/CryptoDilis/Climboria/actions/runs/40806644929).
+- [x] Pages build/deployment passed: [run 40806644779](https://github.com/CryptoDilis/Climboria/actions/runs/40806644779).
+- [x] Live-site scheduled smoke test passed: [run 40825462789](https://github.com/CryptoDilis/Climboria/actions/runs/40825462789).
+- [x] Fixed the region and compass-heading test regex escaping errors; the subsequent validation and browser runs are green.
+- [ ] Visual-check compass orientation and live coordinate/region updates in actual gameplay, including water/airborne states and region boundaries.
+- [ ] Continue manual camera/terrain obstruction, mountain collision, swimming, and performance verification; automated green runs are not a substitute for those checks.
