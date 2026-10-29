@@ -97,6 +97,17 @@
 
 # Climboria — Master Repair & World-Building Checklist
 
+## 2026-10-30 — survival systems phase started
+
+- [x] Rechecked the working branch: `codex/asset-license-compat-audit`, based on the verified swimming-fix head `9a12222`. PR #115 remains open and unmerged; Browser Smoke Test (run `40963257488`) and Validate (run `40963257491`) both passed on that PR head. Those checks do not cover later local commits.
+- [x] Audited the current survival loop: stamina was regenerated at `7/sec` every frame, with no sprint or underwater drain. Swimming can dive to `-1.05`, while ordinary waterline swimming stays near `-0.18`.
+- [ ] Implemented the first survival increment in `game/play.html`: configurable sprint/underwater stamina drain, recovery after surfacing/resting, reduced run speed at zero stamina, and health damage only for the time spent underwater after stamina empties. Standalone survival logic checks, inline-script syntax checks, and `git diff --check` pass; browser smoke and current-branch GitHub workflows are still pending.
+- [x] Enabled Browser Smoke Test and Validate for `codex/**` pushes so the dedicated development branch can receive these checks without stacking another PR over the still-open swimming PR.
+- [ ] Verify sprint drain, recovery, underwater exhaustion timing, health damage, and surface recovery in Browser Smoke Test and Validate. Keep the swimming, shore-exit, collision, and respawn assertions intact.
+- [x] Searched current code and prior commits for Death Stones. Current gameplay has no stone grant, inventory state, button, or teleport; the smoke suite guards against retired teleport UI. Commit `9075cf8` recorded a 1.5% eligible-chest chance, marketplace trading, solo return to exact death location, and a proposed team teleport. Later commits removed the implementation and `GAME_MECHANICS_README.md` explicitly deferred teleport mechanics. The new master command supersedes that deferral, but this audit did not find agreed item types/prices, fishing odds, or type-specific functionality.
+- [ ] Before restoring Death Stones, reconcile the historical exact-location/team-return draft with the new configurable-by-type requirement. Keep pricing, types, and fishing odds unset until found in project records or specified; maintain ordinary respawn independently.
+- [ ] After survival verification and the Death Stone design audit, resume the mountain relief prototype and continue through the documented world-building priorities.
+
 > **Carry-forward project checklist.** Use this document as the persistent source of truth across new chats and development sessions. Continue from the first unchecked blocker; do not restart planning from scratch. Keep working on the repository, verify changes, and report actual results—not assumptions.
 
 ## Product goal

@@ -152,6 +152,29 @@ try {
   if (desktopState.nearestTentDistance < 5.5) errors.push('a camp tent is crowding the player spawn');
   if (!desktopState.cachePrompt) errors.push('desktop Jarrell contextual cache prompt did not initialize');
 
+  // Survival regressions: sprinting consumes stamina, rest regenerates it, and underwater damage starts only after exhaustion.
+  const survivalAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke, original = api.getSurvivalState();
+    api.setSurvivalState({ health: 500, stamina: 50 });
+    const sprint = api.tickSurvival(1, { sprinting: true });
+    api.setSurvivalState({ health: 500, stamina: 0 });
+    const emptySprint = api.tickSurvival(1, { sprinting: true });
+    api.setSurvivalState({ health: 200, stamina: 6 });
+    const exhaustionFrame = api.tickSurvival(1, { underwater: true });
+    api.setSurvivalState({ health: 200, stamina: 0 });
+    const exhaustedFrame = api.tickSurvival(1, { underwater: true });
+    api.setSurvivalState({ health: 200, stamina: 0 });
+    const surfacedFrame = api.tickSurvival(1, { underwater: false });
+    api.setSurvivalState(original);
+    return { sprint, emptySprint, exhaustionFrame, exhaustedFrame, surfacedFrame };
+  });
+  if (survivalAudit.sprint.stamina !== 32 || survivalAudit.sprint.health !== 500) errors.push('sprinting must drain stamina at the configured rate without damaging health: ' + JSON.stringify(survivalAudit.sprint));
+  if (survivalAudit.emptySprint.stamina !== 0 || survivalAudit.emptySprint.sprinting) errors.push('sprinting must stay disabled at zero stamina instead of immediately restoring itself: ' + JSON.stringify(survivalAudit.emptySprint));
+  if (survivalAudit.exhaustionFrame.stamina !== 0 || Math.abs(survivalAudit.exhaustionFrame.health - 196) > .01) errors.push('underwater health damage must start only for the part of a frame after stamina is exhausted: ' + JSON.stringify(survivalAudit.exhaustionFrame));
+  if (survivalAudit.exhaustedFrame.health !== 192) errors.push('zero-stamina underwater exposure must cause controlled health damage: ' + JSON.stringify(survivalAudit.exhaustedFrame));
+  if (survivalAudit.surfacedFrame.health !== 200 || survivalAudit.surfacedFrame.stamina !== 7) errors.push('surface safety must stop underwater damage and restore stamina: ' + JSON.stringify(survivalAudit.surfacedFrame));
+  console.log('Jarrell survival drain/regeneration regression:', JSON.stringify(survivalAudit));
+
   // Capture the actual trailhead view before collision tests teleport the player to remote terrain samples.
 
   // Deterministic coordinate audit of the streamed Jarrell height field.

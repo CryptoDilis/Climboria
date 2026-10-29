@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
+    branches: [main, 'codex/**', fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
       - "climboria-favicon.png"
