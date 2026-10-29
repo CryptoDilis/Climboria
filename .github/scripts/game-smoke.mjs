@@ -784,6 +784,39 @@ try {
   if (!inventoryState.heading.includes(Math.min(50, inventoryState.savedLootCount) + ' / 50')) errors.push('expedition bag heading did not report the real saved item count: ' + JSON.stringify(inventoryState));
   await page.locator('#profileClose').click();
 
+  // Regression: falling below the world must reset position, velocity/swim state, and survival timer at the Jarrell trailhead.
+  const respawnStart = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    api.setPaused(false);
+    api.setMoveInput(null);
+    api.getKeys().KeyA = api.getKeys().KeyD = api.getKeys().KeyW = api.getKeys().KeyS = false;
+    return { x: api.player.position.x, z: api.player.position.z };
+  });
+  await page.evaluate(() => { window.__climboriaSmoke.player.position.y = -5; });
+  await page.waitForFunction(() => {
+    const api = window.__climboriaSmoke;
+    const p = api.player.position;
+    return p.y > -3.5 && document.getElementById('state')?.textContent.includes('FELL');
+  }, { timeout: 5000 }).catch(() => {});
+  const respawnAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke, p = api.player.position;
+    return {
+      x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)), z: Number(p.z.toFixed(2)),
+      state: document.getElementById('state')?.textContent || '',
+      swimming: window.jarrellSwimming === true,
+      physicsSwimming: window.jarrellPhysicsSwimming === true,
+      survivalSeconds: window.jarrellSurvivalSeconds,
+      move: api.getMovementState(),
+    };
+  });
+  if (!respawnAudit.state.includes('FELL') || respawnAudit.y <= -3.5 ||
+      Math.hypot(respawnAudit.x - respawnStart.x, respawnAudit.z - respawnStart.z) < 5 ||
+      respawnAudit.swimming || respawnAudit.physicsSwimming ||
+      (Number.isFinite(respawnAudit.survivalSeconds) && respawnAudit.survivalSeconds > 0.2)) {
+    errors.push('falling below the world did not cleanly respawn at the Jarrell trailhead: ' + JSON.stringify({start:respawnStart,result:respawnAudit}));
+  }
+  console.log('Jarrell fall/respawn regression:', JSON.stringify({start:respawnStart,result:respawnAudit}));
+
   const missingTentAssets = ['tent-detailedopen.glb', 'tent-detailedclosed.glb'].filter(name => !tentAssets.has(name));
   if (missingTentAssets.length) errors.push('camp tent assets failed to load: ' + missingTentAssets.join(', '));
   console.log('Desktop smoke state:', JSON.stringify(desktopState));
