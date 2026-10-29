@@ -790,26 +790,27 @@ try {
     api.setPaused(false);
     api.setMoveInput(null);
     api.getKeys().KeyA = api.getKeys().KeyD = api.getKeys().KeyW = api.getKeys().KeyS = false;
+    api.lastFallRespawn = null;
+    // Start away from the trailhead so the test verifies a real teleport, not a spawn already at camp.
+    api.player.position.x += 20;
+    api.player.position.z += 20;
     return { x: api.player.position.x, z: api.player.position.z };
   });
   await page.evaluate(() => { window.__climboriaSmoke.player.position.y = -5; });
-  await page.waitForFunction(() => {
-    const api = window.__climboriaSmoke;
-    const p = api.player.position;
-    return p.y > -3.5 && document.getElementById('state')?.textContent.includes('FELL');
-  }, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => Boolean(window.__climboriaSmoke?.lastFallRespawn), { timeout: 5000 }).catch(() => {});
   const respawnAudit = await page.evaluate(() => {
     const api = window.__climboriaSmoke, p = api.player.position;
     return {
       x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)), z: Number(p.z.toFixed(2)),
       state: document.getElementById('state')?.textContent || '',
+      fallEvent: api.lastFallRespawn || null,
       swimming: window.jarrellSwimming === true,
       physicsSwimming: window.jarrellPhysicsSwimming === true,
       survivalSeconds: window.jarrellSurvivalSeconds,
       move: api.getMovementState(),
     };
   });
-  if (!respawnAudit.state.includes('FELL') || respawnAudit.y <= -3.5 ||
+  if (!respawnAudit.fallEvent || respawnAudit.y <= -3.5 ||
       Math.hypot(respawnAudit.x - respawnStart.x, respawnAudit.z - respawnStart.z) < 5 ||
       respawnAudit.swimming || respawnAudit.physicsSwimming ||
       (Number.isFinite(respawnAudit.survivalSeconds) && respawnAudit.survivalSeconds > 0.2)) {
