@@ -42,10 +42,11 @@ jobs:
           node-version: 22
 
       - name: Install Playwright
+        timeout-minutes: 10
         run: |
           npm init -y
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
+          timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
+          timeout --signal=TERM --kill-after=20s 7m npx playwright install --with-deps chromium
 
       - name: Start local web server
         run: |
