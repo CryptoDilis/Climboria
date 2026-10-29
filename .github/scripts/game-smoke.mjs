@@ -443,6 +443,33 @@ try {
     if (shrineCollision.aboveBlocked) errors.push('sanctuary shrine collider blocks above its vertical bounds');
   }
 
+  // Regression: the cave mouth must keep a traversable center while its broken stone teeth block at their actual bounds.
+  const caveMouthCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const cave = { x: -265, z: -570 };
+    const flank = api.obstacles
+      .filter(item => item.kind === 'rock')
+      .map(item => ({ item, distance: Math.hypot(item.x - cave.x, item.z - cave.z) }))
+      .filter(entry => entry.distance >= 8 && entry.distance <= 19)
+      .sort((a, b) => a.distance - b.distance)[0]?.item;
+    if (!flank) return { error: 'no cave-mouth stone collider found near the western cave entrance' };
+    const ground = Number.isFinite(flank.y0) ? flank.y0 : api.terrainHeightAt(flank.x, flank.z);
+    const openingY = api.terrainHeightAt(cave.x, cave.z) + .22;
+    return {
+      flankBlocked: api.testObstacleCollision(flank.x, flank.z, ground + .22),
+      flankOutsideClear: !api.testObstacleCollision(flank.x + flank.r + 1.2, flank.z, ground + .22),
+      openingClear: !api.testObstacleCollision(cave.x, cave.z, openingY),
+      flankRadius: flank.r,
+      flankDistance: Math.hypot(flank.x - cave.x, flank.z - cave.z),
+    };
+  });
+  if (caveMouthCollision.error) errors.push(caveMouthCollision.error);
+  else {
+    if (!caveMouthCollision.flankBlocked) errors.push('cave-mouth stone tooth does not block at ground level');
+    if (!caveMouthCollision.flankOutsideClear) errors.push('cave-mouth stone tooth collider blocks outside its radius');
+    if (!caveMouthCollision.openingClear) errors.push('cave-mouth collider blocks the intended central entrance');
+  }
+
   // Regression: Jarrell bushes and fallen logs must block movement, without creating oversized invisible walls.
   const bushLogCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
