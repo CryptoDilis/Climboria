@@ -275,3 +275,8 @@ For every integrated asset or borrowed technique, record:
 - [x] Added automated regression coverage for campsite supply-crate collision (center must block; point outside radius must remain clear), commit `3643916f`.
 - [ ] Verify Validate, Browser Smoke Test, and Pages deployment after `3643916f` completes.
 - [ ] Next collision pass: cave entrance/wall and quartermaster cart/forge props; inspect actual geometry and spawn clearance before adding colliders so the cave/cart do not become invisible walls.
+
+
+## 2026-10-29 — compact navigation HUD
+- [x] Combined current location (live X/Y/Z coordinates and region grid) into the compass card so navigation reads as one compact upper-right HUD instead of separate cards; commit `eec29c80`.
+- [ ] Verify combined compass/location card spacing and legibility on desktop and mobile after workflow checks.
