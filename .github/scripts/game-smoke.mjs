@@ -41,6 +41,36 @@ try {
   if (!desktopHeroSetup.swimPoseMovesBones) errors.push('Jarrell swimming animation fallback exists but does not move the adventurer rig bones');
   if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
+
+  // Regression: a desktop left-click on the world must set a destination and steer the hero toward it.
+  const clickMoveResult = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke;
+    const canvas = document.querySelector('#game canvas');
+    if (!api || !canvas) return { error: 'smoke API or game canvas missing' };
+    api.setPaused(false);
+    for (const key of ['KeyW','KeyA','KeyS','KeyD']) api.getKeys()[key] = false;
+    const rect = canvas.getBoundingClientRect();
+    const start = { x: api.player.position.x, z: api.player.position.z };
+    // Aim at a ground point in the visible lower half of the viewport, away from the hero center.
+    const x = Math.min(rect.right - 12, rect.left + rect.width * .62);
+    const y = Math.min(rect.bottom - 12, rect.top + rect.height * .68);
+    canvas.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, cancelable: true, pointerId: 77, pointerType: 'mouse',
+      button: 0, clientX: x, clientY: y
+    }));
+    const target = api.getClickMoveTarget?.();
+    if (!target) return { error: 'left-click did not create a movement destination', start, click: {x,y} };
+    const dx = target.x - start.x, dz = target.z - start.z, length = Math.hypot(dx,dz) || 1;
+    const move = api.getMoveVec();
+    const alignment = (move.x * dx + move.z * dz) / length;
+    const result = { start, target, move, alignment };
+    api.clearClickMoveTarget?.();
+    return result;
+  });
+  if (clickMoveResult.error) errors.push('click-to-move regression failed: ' + JSON.stringify(clickMoveResult));
+  else if (!Number.isFinite(clickMoveResult.alignment) || clickMoveResult.alignment < .85) errors.push('left-click destination did not steer the hero toward the target: ' + JSON.stringify(clickMoveResult));
+  console.log('Desktop click-to-move regression:', JSON.stringify(clickMoveResult));
+
   if (!soundtrackRequests.has('original-track-01')) errors.push('Jarrell’s Peak did not request the user’s original TRACK_01 soundtrack');
   if (!soundtrackResponses.some(response => response.status >= 200 && response.status < 300)) errors.push('Jarrell’s Peak original soundtrack did not return a successful HTTP response: ' + JSON.stringify(soundtrackResponses));
   const soundtrackState = await page.waitForFunction(() => { const a=window.__climboriaSoundtrackAudio; return a && Number.isFinite(a.duration) && a.duration > 0 ? {duration:a.duration,currentTime:a.currentTime,paused:a.paused,readyState:a.readyState,src:a.currentSrc||a.src} : false; }, { timeout: 15000 }).then(h=>h.jsonValue()).catch(()=>null);
