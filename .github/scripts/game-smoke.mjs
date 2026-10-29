@@ -34,6 +34,8 @@ try {
   await page.locator('#heroNameInput').fill('SmokeTester');
   await page.locator('#creatorStart').click();
   await page.waitForTimeout(350);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
   const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile'),swimAnimationAvailable:!!(window.__climbAraAnimations?.actions?.swim||window.__climbAraAnimations?.actions?.proceduralSwim),swimAnimationMode:window.__climbAraAnimations?.actions?.swim?'clip':(window.__climbAraAnimations?.actions?.proceduralSwim?'procedural':'missing'),swimPoseMovesBones:!!window.__climbAraAnimations?.actions?.swim||!!window.__climbAraAnimations?.actions?.proceduralSwimTest?.(),characterDiagnostic:window.__climbDiagLast||''}; });
   if (!desktopHeroSetup.swimAnimationAvailable) errors.push('Jarrell swimming has neither a dedicated swim clip nor a compatible procedural swim pose on the loaded adventurer rig');
   if (!desktopHeroSetup.swimPoseMovesBones) errors.push('Jarrell swimming animation fallback exists but does not move the adventurer rig bones');
@@ -302,7 +304,8 @@ try {
   if (runtimeFrameAudit.samples < 1 || !Number.isFinite(runtimeFrameAudit.averageFrameMs)) errors.push('Jarrell runtime frame-time audit returned no valid measurements: ' + JSON.stringify(runtimeFrameAudit));
   if (runtimeFrameAudit.samples < 30) console.warn('Frame-time telemetry has a low sample count in this CI environment; keep the result as a performance warning, not a gameplay smoke-test failure.');
 
-  await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
+  // Keep the screenshot as a true trailhead baseline; later regressions deliberately teleport the player across the world.
+
 
   await page.evaluate(() => {
     const api = window.__climboriaSmoke;
