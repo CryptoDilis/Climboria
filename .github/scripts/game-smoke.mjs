@@ -357,6 +357,24 @@ try {
     if (tentCollision.outsideBlocked) errors.push('camp tent collider blocks a point outside its radius');
   }
 
+  // Regression: supply crates at the Jarrell campsite must block the body, but not create oversized invisible walls.
+  const crateCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const crate = api.obstacles.find(item => item.kind === 'crate');
+    if (!crate) return { error: 'no campsite supply-crate collider indexed' };
+    const ground = Number.isFinite(crate.y0) ? crate.y0 : api.terrainHeightAt(crate.x, crate.z);
+    return {
+      insideBlocked: api.testObstacleCollision(crate.x, crate.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(crate.x + (crate.r || .6) + 1.1, crate.z, ground + .22),
+      radius: crate.r || .6,
+    };
+  });
+  if (crateCollision.error) errors.push(crateCollision.error);
+  else {
+    if (!crateCollision.insideBlocked) errors.push('campsite supply crate collider does not block at its center');
+    if (crateCollision.outsideBlocked) errors.push('campsite supply crate collider blocks a point outside its radius');
+  }
+
   // Regression: Jarrell bushes and fallen logs must block movement, without creating oversized invisible walls.
   const bushLogCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
