@@ -479,6 +479,26 @@ try {
     }
   }
 
+  // Regression: handcart handles extend past the main cart body and must remain collision-covered.
+  const cartHandleCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const handle = api.obstacles.find(item => item.kind === 'cartHandle');
+    if (!handle) return { error: 'no campsite cart-handle collider indexed' };
+    const ground = Number.isFinite(handle.y0) ? handle.y0 : api.terrainHeightAt(handle.x, handle.z);
+    return {
+      insideBlocked: api.testObstacleCollision(handle.x, handle.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(handle.x + handle.r + 1.1, handle.z, ground + .22),
+      aboveBlocked: api.testObstacleCollision(handle.x, handle.z, handle.y1 + 1),
+      x: handle.x, z: handle.z, radius: handle.r,
+    };
+  });
+  if (cartHandleCollision.error) errors.push(cartHandleCollision.error);
+  else {
+    if (!cartHandleCollision.insideBlocked) errors.push('campsite cart handles do not block at ground level');
+    if (cartHandleCollision.outsideBlocked) errors.push('campsite cart-handle collider blocks outside its radius');
+    if (cartHandleCollision.aboveBlocked) errors.push('campsite cart-handle collider blocks above its vertical bounds');
+  }
+
   // Regression: the sanctuary shrine is a real blocking structure, not just visible scenery.
   const shrineCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
