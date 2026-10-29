@@ -535,15 +535,19 @@ try {
     const torch = api.obstacles.find(item => item.kind === 'caveTorch');
     if (!torch) return { error: 'no cave entrance torch collider indexed' };
     const ground = Number.isFinite(torch.y0) ? torch.y0 : api.terrainHeightAt(torch.x, torch.z);
+    // Test this collider in isolation: neighboring cave-wall rocks intentionally overlap these
+    // probes, so the world-wide query falsely reports the torch blocking outside/above its bounds.
     return {
-      insideBlocked: api.testObstacleCollision(torch.x, torch.z, ground + .35),
-      outsideBlocked: api.testObstacleCollision(torch.x + torch.r + 1, torch.z, ground + .35),
-      aboveBlocked: api.testObstacleCollision(torch.x, torch.z, torch.y1 + 1),
+      insideBlocked: api.testObstacleCollider(torch, torch.x, torch.z, ground + .35),
+      outsideBlocked: api.testObstacleCollider(torch, torch.x + torch.r + 1, torch.z, ground + .35),
+      aboveBlocked: api.testObstacleCollider(torch, torch.x, torch.z, torch.y1 + 1),
+      worldCenterBlocked: api.testObstacleCollision(torch.x, torch.z, ground + .35),
+      radius: torch.r, y0: torch.y0, y1: torch.y1,
     };
   });
   if (caveTorchCollision.error) errors.push(caveTorchCollision.error);
   else {
-    if (!caveTorchCollision.insideBlocked) errors.push('cave entrance torch does not block at shaft height');
+    if (!caveTorchCollision.insideBlocked || !caveTorchCollision.worldCenterBlocked) errors.push('cave entrance torch does not block at shaft height');
     if (caveTorchCollision.outsideBlocked) errors.push('cave entrance torch collider blocks outside its radius');
     if (caveTorchCollision.aboveBlocked) errors.push('cave entrance torch collider blocks above its vertical bounds');
   }
