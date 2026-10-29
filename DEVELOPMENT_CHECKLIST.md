@@ -249,3 +249,10 @@ For every integrated asset or borrowed technique, record:
 - [x] Inspected the latest job summaries; all three workflows completed successfully with no failed steps.
 - [ ] Manual camera sightline and compass/coordinate visual validation remains open; automated tests do not prove visual quality across devices.
 - [ ] Continue the next gameplay blocker: complete the remaining environment collision coverage, then test actual terrain/water transitions and benchmark desktop/mobile performance.
+
+
+## Follow-up verification — 2026-10-29 (checklist documentation deployment)
+
+- [x] The checklist-record commit `d43654106fe083a6698ed1ad1cd1ceab1eb5163e` deployed successfully: [Pages run 40826931236](https://github.com/CryptoDilis/Climboria/actions/runs/40826931236).
+- [x] Confirmed all jobs for that deployment (build, deploy, report-build-status) completed successfully with no failed steps.
+- [ ] Next collision acceptance work remains: add/verify specific regressions for cave walls, carts/buildings and root/rock boundaries; current smoke tests already cover tents, trees, bushes, fallen logs and large rocks.
