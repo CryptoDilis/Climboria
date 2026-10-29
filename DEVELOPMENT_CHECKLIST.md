@@ -1,3 +1,11 @@
+## Latest workflow verification — 2026-10-29 (cave approach trail regression)
+
+- [x] Previous gameplay commit `5ad57180b911aa4f06690d59f7339d97343d5bb8` passed Validate Climboria [run 40835399036](https://github.com/CryptoDilis/Climboria/actions/runs/40835399036), Browser Smoke Test [run 40835398837](https://github.com/CryptoDilis/Climboria/actions/runs/40835398837), and Pages deployment [run 40835398503](https://github.com/CryptoDilis/Climboria/actions/runs/40835398503).
+- [x] Added a named array for the twelve low-profile cave approach pavers so the browser smoke test can inspect the actual scene meshes.
+- [x] Added a browser regression audit for paver count, mesh visibility/type, and low profile. Verification for the new commit is pending; do not mark this regression green until its run passes.
+- [ ] Manual live-site gameplay review remains outstanding; automated tests do not prove all collision or swimming behavior.
+- [ ] Continue with the first unchecked gameplay blocker: swimming buoyancy/pose and reliable riverbank exit, then expand collision coverage based on the actual world geometry.
+
 ## Latest workflow verification — 2026-10-29 (bush and fallen-log collision regression)
 
 - [x] Validate Climboria passed for commit `a4bb3bd5d3fad3699014bf9216311537c2cdab4c`: [run 40767529576](https://github.com/CryptoDilis/Climboria/actions/runs/40767529576).
