@@ -56,7 +56,8 @@ try {
     const panel = document.querySelector('#navigationPanel');
     const coordinates = document.querySelector('#coordinatePanel');
     const needle = document.querySelector('#compassNeedle');
-    const heading = document.querySelector('#compassHeading')?.textContent || '';
+    const headingElement = document.querySelector('#compassHeading');
+    const heading = headingElement?.textContent || '';
     const values = ['coordX','coordY','coordZ'].map(id => document.getElementById(id)?.textContent || '');
     const region = document.querySelector('#regionNumber')?.textContent || '';
     const bounds = panel?.getBoundingClientRect();
@@ -64,7 +65,7 @@ try {
       panel: !!panel, coordinates: !!coordinates, needle: !!needle,
       heading, values, region,
       topRight: !!bounds && bounds.top >= 0 && bounds.left > innerWidth * 0.55 && bounds.right <= innerWidth,
-      coordinatesBelowCompass: !!panel && !!coordinates && coordinates.getBoundingClientRect().top >= panel.getBoundingClientRect().bottom - 2,
+      coordinatesBelowCompass: !!headingElement && !!coordinates && coordinates.getBoundingClientRect().top >= headingElement.getBoundingClientRect().bottom - 2,
       valuesNumeric: values.every(value => value.trim() !== '' && Number.isFinite(Number(value))),
       regionValid: /^REGION\s+-?\d+\s+·\s+-?\d+$/.test(region.trim()),
     };
@@ -770,11 +771,12 @@ try {
     const panel = document.querySelector('#navigationPanel');
     const coordinates = document.querySelector('#coordinatePanel');
     const bounds = panel?.getBoundingClientRect();
+    const heading = document.querySelector('#compassHeading')?.getBoundingClientRect();
     const coordBounds = coordinates?.getBoundingClientRect();
     return {
       panel: !!panel, coordinates: !!coordinates,
       topRight: !!bounds && bounds.top >= 0 && bounds.right <= innerWidth && bounds.left > innerWidth * 0.45,
-      coordinatesBelowCompass: !!bounds && !!coordBounds && coordBounds.top >= bounds.bottom - 2,
+      coordinatesBelowCompass: !!heading && !!coordBounds && coordBounds.top >= heading.bottom - 2,
       noHorizontalOverflow: document.documentElement.scrollWidth <= innerWidth + 2,
       values: ['coordX','coordY','coordZ'].map(id => document.getElementById(id)?.textContent || ''),
       region: document.querySelector('#regionNumber')?.textContent || '',
