@@ -950,6 +950,9 @@ quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(qu
  function campProp(g,m,x,y,z,par=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;par.add(o);return o}
  // Handcart with timber bed, handles, axle and two chunky wheels.
  const cart=new THREE.Group();cart.position.set(-6.1,0,3.7);cart.rotation.y=-.35;cart.scale.setScalar(1.18);scene.add(cart);
+  // The visible handcart is a solid campsite obstacle, not decorative scenery only.
+  const cartGroundY=terrainHeightAt(cart.position.x,cart.position.z);
+  if(currentLevel==='11')addJarrellObstacleCollider({x:cart.position.x,z:cart.position.z,r:1.85,y0:cartGroundY,y1:cartGroundY+1.9,kind:'cart'});
  campProp(new THREE.BoxGeometry(2.35,.22,1.35),cartWood,0,.75,0,cart);
  campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,-.62,cart);
  campProp(new THREE.BoxGeometry(2.1,.55,.12),cartWood,0,1.05,.62,cart);
@@ -959,6 +962,9 @@ quartermaster=new THREE.Group();quartermaster.position.set(2,0,2.1);scene.add(qu
  campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-1.55,.45,0,cart);campProp(new THREE.BoxGeometry(.12,.12,1.5),cartWood,-2.25,.45,0,cart);
  // Forge anvil, stone hearth and warm ember bowl.
  const forge=new THREE.Group();forge.position.set(5.2,-.12,3.4);forge.scale.setScalar(1.2);scene.add(forge);
+  // The forge stone base and anvil must block the player within their actual vertical range.
+  const forgeGroundY=terrainHeightAt(forge.position.x,forge.position.z);
+  if(currentLevel==='11')addJarrellObstacleCollider({x:forge.position.x,z:forge.position.z,r:1.2,y0:forgeGroundY,y1:forgeGroundY+1.65,kind:'forge'});
  campProp(new THREE.BoxGeometry(1.5,.65,1.25),rock,0,.34,0,forge);
  campProp(new THREE.BoxGeometry(.75,.22,.42),cartIron,0,.82,0,forge);
  campProp(new THREE.CylinderGeometry(.42,.55,.45,8),cartIron,.0,.93,.65,forge);
