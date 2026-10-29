@@ -472,7 +472,7 @@ try {
       count: torches.length,
       complete: torches.every(t => t.flame?.isMesh && t.ember?.isMesh && t.light?.isPointLight),
       warmLights: torches.every(t => t.light?.color?.r > t.light?.color?.b),
-      separated: torches.length === 2 && Math.abs(torches[0].flame.getWorldPosition(new THREE.Vector3()).x - torches[1].flame.getWorldPosition(new THREE.Vector3()).x) > 10
+      separated: torches.length === 2 && Math.abs(torches[0].flame.parent.position.x - torches[1].flame.parent.position.x) > 10
     };
   });
   if (caveTorchAudit.count !== 2 || !caveTorchAudit.complete || !caveTorchAudit.warmLights || !caveTorchAudit.separated) {
