@@ -421,6 +421,28 @@ try {
     if (crateCollision.outsideBlocked) errors.push('campsite supply crate collider blocks a point outside its radius');
   }
 
+  // Regression: the sanctuary shrine is a real blocking structure, not just visible scenery.
+  const shrineCollision = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const shrine = api.obstacles.find(item => item.kind === 'shrine');
+    if (!shrine) return { error: 'no Jarrell sanctuary shrine collider indexed' };
+    const ground = api.terrainHeightAt(shrine.x, shrine.z);
+    return {
+      insideBlocked: api.testObstacleCollision(shrine.x, shrine.z, ground + .22),
+      outsideBlocked: api.testObstacleCollision(shrine.x + shrine.r + 2, shrine.z, ground + .22),
+      aboveBlocked: api.testObstacleCollision(shrine.x, shrine.z, shrine.y1 + 1),
+      radius: shrine.r,
+      y0: shrine.y0,
+      y1: shrine.y1,
+    };
+  });
+  if (shrineCollision.error) errors.push(shrineCollision.error);
+  else {
+    if (!shrineCollision.insideBlocked) errors.push('sanctuary shrine collider does not block at ground level');
+    if (shrineCollision.outsideBlocked) errors.push('sanctuary shrine collider blocks a point outside its radius');
+    if (shrineCollision.aboveBlocked) errors.push('sanctuary shrine collider blocks above its vertical bounds');
+  }
+
   // Regression: Jarrell bushes and fallen logs must block movement, without creating oversized invisible walls.
   const bushLogCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
