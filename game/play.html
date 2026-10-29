@@ -638,7 +638,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  // Scenery only; the existing stone-mouth colliders remain authoritative.
  const caveTorches=[];
  for(const side of [-1,1]){
-  const tx=caveX+side*9,tz=caveZ+10,torch=new THREE.Group();torch.name='Jarrell_Cave_Torch';torch.position.set(tx,terrainHeightAt(tx,tz),tz);torch.rotation.y=side*.16;worldPOIs.add(torch);
+  const tx=caveX+side*9,tz=caveZ+10,torch=new THREE.Group();torch.name='Jarrell_Cave_Torch';const torchGroundY=terrainHeightAt(tx,tz);torch.position.set(tx,torchGroundY,tz);torch.rotation.y=side*.16;worldPOIs.add(torch);if(currentLevel==='11')addJarrellObstacleCollider({x:tx,z:tz,r:.28,y0:torchGroundY,y1:torchGroundY+1.82,kind:'caveTorch'});
   const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.075,.12,1.65,7),new THREE.MeshStandardMaterial({color:0x49362a,roughness:.95}));shaft.position.y=.82;shaft.castShadow=!isMobileGPU;torch.add(shaft);
   const iron=new THREE.Mesh(new THREE.CylinderGeometry(.16,.13,.18,7),new THREE.MeshStandardMaterial({color:0x45413b,metalness:.35,roughness:.7}));iron.position.y=1.58;torch.add(iron);
   const flame=new THREE.Mesh(new THREE.ConeGeometry(.19,.52,7),new THREE.MeshBasicMaterial({color:0xffa344}));flame.position.set(0,1.94,0);flame.rotation.z=side*.08;torch.add(flame);
