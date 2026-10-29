@@ -304,7 +304,16 @@ try {
 
   await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    api.player.position.set(1200, api.terrainHeightAt(1200, -340) + .22, -340);
+    // Explicitly seed a deterministic streamed-forest test area. A teleport does not
+    // guarantee the render loop has crossed a chunk boundary before collider assertions.
+    const testX = 1200, testZ = -340, chunkSize = 256;
+    api.player.position.set(testX, api.terrainHeightAt(testX, testZ) + .22, testZ);
+    const cx = Math.floor(testX / chunkSize), cz = Math.floor(testZ / chunkSize);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        window.spawnJarrellForestForChunk?.(cx + dx, cz + dz);
+      }
+    }
   });
   await page.waitForTimeout(300);
   const collisionTarget = await page.evaluate(() => {
