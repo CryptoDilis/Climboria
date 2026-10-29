@@ -240,6 +240,14 @@ For each meaningful implementation batch:
 
 - [ ] The same browser logs report only four CI frame-time samples (average `609.92 ms`, p95 `849.8 ms`, observed `1.6 FPS`); this is a severe warning but an unreliable device-performance measure at this sample count. Repeat on a normal desktop and mobile device before optimizing or declaring world performance acceptable.
 
+## Finite sea and ridge regression — 2026-10-30
+
+- [x] Root cause: `jarrellHeight` applied an X-only coast blend, so every point east of X=1300 stayed at sea-floor height `-18`, even outside the finite rendered ocean and across the central/eastern ridge regions.
+- [x] Commit `750962d` bounds the coast transition to the rendered sea patch, places central highlands on the landward side, and makes ocean swimming depend on the local terrain being below the water surface.
+- [x] Added actual streamed-chunk mesh-vertex versus grounding-height comparisons for the central/eastern ridge samples, plus dry-edge and sea-depth assertions. First-run temporal-dead-zone and sampler-scope failures were read from Actions logs and corrected in `a61e244` and `61e2adf`.
+- [x] Final Browser Smoke Test [run 40968706385](https://github.com/CryptoDilis/Climboria/actions/runs/40968706385) and Validate [run 40968706386](https://github.com/CryptoDilis/Climboria/actions/runs/40968706386) passed on `61e2adf46de238a47a59f23442bfb6eecbf95f42`. Smoke output: central highlands `49.49`, eastern ridge `33.58`, sea floor `-18`; mesh and collision samples match within `0.00001`.
+- [ ] Scene review and normal desktop/mobile performance measurements remain open. No Pages deployment ran for the feature branch; no asset import is claimed.
+
 
 ## User-requested carry-forward additions — 2026-10-29 (append-only; do not remove older items)
 
