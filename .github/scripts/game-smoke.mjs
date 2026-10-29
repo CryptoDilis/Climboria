@@ -35,10 +35,10 @@ try {
   await page.locator('#creatorStart').click();
   await page.waitForTimeout(350);
   await page.waitForTimeout(900);
+  await page.waitForFunction(() => window.__climbAraAnimations?.actions?.proceduralSwimAudit && window.__climbMaleAnimations?.actions?.proceduralSwimAudit, { timeout: 20000 }).catch(() => {});
   await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
-  const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile'),swimAnimationAvailable:!!(window.__climbAraAnimations?.actions?.swim||window.__climbAraAnimations?.actions?.proceduralSwim),swimAnimationMode:window.__climbAraAnimations?.actions?.swim?'clip':(window.__climbAraAnimations?.actions?.proceduralSwim?'procedural':'missing'),swimPoseMovesBones:!!window.__climbAraAnimations?.actions?.swim||!!window.__climbAraAnimations?.actions?.proceduralSwimTest?.(),characterDiagnostic:window.__climbDiagLast||''}; });
-  if (!desktopHeroSetup.swimAnimationAvailable) errors.push('Jarrell swimming has neither a dedicated swim clip nor a compatible procedural swim pose on the loaded adventurer rig');
-  if (!desktopHeroSetup.swimPoseMovesBones) errors.push('Jarrell swimming animation fallback exists but does not move the adventurer rig bones');
+  const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');const audit=actions=>actions?.proceduralSwimAudit?.()||null;return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile'),femaleSwim:!!(window.__climbAraAnimations?.actions?.swim||window.__climbAraAnimations?.actions?.proceduralSwim),femalePose:audit(window.__climbAraAnimations?.actions),maleSwim:!!(window.__climbMaleAnimations?.actions?.swim||window.__climbMaleAnimations?.actions?.proceduralSwim),malePose:audit(window.__climbMaleAnimations?.actions),characterDiagnostic:window.__climbDiagLast||''}; });
+  for(const [type,available,pose] of [['female',desktopHeroSetup.femaleSwim,desktopHeroSetup.femalePose],['male',desktopHeroSetup.maleSwim,desktopHeroSetup.malePose]]){if(!available)errors.push(`${type} swimmer has neither a dedicated swim clip nor a procedural swim pose`);if(!pose||!pose.available||Object.values(pose.groups).some(group=>group.mapped<2||group.moved<2))errors.push(`${type} procedural swim pose does not animate both arms, forearms, and legs: ${JSON.stringify(pose)}`)}
   if (desktopHeroSetup.display !== 'none' && !desktopHeroSetup.closed) { await page.screenshot({ path: '/tmp/jarrell-desktop-hero-error.png' }); console.error('Desktop hero setup diagnostic:', JSON.stringify({hero:desktopHeroSetup,errors})); throw new Error('desktop hero setup did not close'); }
   await page.waitForTimeout(800);
 
@@ -1066,25 +1066,31 @@ try {
     }
   }
 
-  // Regression: the woodland pond must enter swimming at its elevated waterline and preserve Space/Ctrl movement relative to that surface.
-  const pondSwimStart=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,pond=api.pondBounds[0],original={x:p.x,y:p.y,z:p.z};api.setPaused(false);api.setMoveInput(null);api.clearClickMoveTarget();api.getKeys().KeyA=api.getKeys().KeyD=api.getKeys().KeyW=api.getKeys().KeyS=false;api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;api.getKeys().ShiftLeft=false;window.sprinting=false;p.set(pond.x,api.terrainHeightAt(pond.x,pond.z)+.22,pond.z);return{original,pond:{x:pond.x,z:pond.z,surfaceY:pond.surfaceY,groundY:api.terrainHeightAt(pond.x,pond.z)}}});
-  await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});
-  await page.waitForTimeout(250);
-  const pondIdle=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);return{swimming:window.jarrellSwimming===true,y:p.y,surface,vertical:window.jarrellSwimVerticalDebug}});
-  if(!pondIdle.swimming||Math.abs(pondIdle.y-(pondIdle.surface-.205))>.06)errors.push('woodland pond swimming did not settle near its elevated waterline: '+JSON.stringify(pondIdle));
-  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().Space=true});
-  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y>api.waterSurfaceAt(p.x,p.z)},{timeout:8000,polling:100}).catch(()=>{});
-  const pondSurface=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;api.getKeys().Space=false;return{y:p.y,surface:api.waterSurfaceAt(p.x,p.z)}});
-  if(!(pondSurface.y>pondSurface.surface&&pondSurface.y<=pondSurface.surface+.12))errors.push('Space did not surface the swimmer relative to the woodland pond: '+JSON.stringify(pondSurface));
-  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().ControlLeft=true});
-  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y<=api.waterSurfaceAt(p.x,p.z)-.95},{timeout:8000,polling:100}).catch(()=>{});
-  const pondDive=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);api.getKeys().ControlLeft=false;return{y:p.y,surface}});
-  if(pondDive.y>pondDive.surface-.95||pondDive.y<pondDive.surface-1.08)errors.push('Ctrl did not dive to the intended depth relative to the woodland pond: '+JSON.stringify(pondDive));
-  await page.waitForTimeout(250);
-  const pondIdleRecovery=await page.evaluate(({original})=>{const api=window.__climboriaSmoke,p=api.player.position;const result={y:p.y,surface:api.waterSurfaceAt(p.x,p.z)};p.set(original.x,original.y,original.z);return result},pondSwimStart);
-  if(Math.abs(pondIdleRecovery.y-(pondIdleRecovery.surface-.205))>.06)errors.push('woodland pond idle swim did not return to its elevated waterline: '+JSON.stringify(pondIdleRecovery));
-  await page.waitForTimeout(150);
-  console.log('Jarrell elevated pond swimming regression:',JSON.stringify({start:pondSwimStart.pond,idle:pondIdle,surface:pondSurface,dive:pondDive,recovery:pondIdleRecovery}));
+  // Exercise each loaded GLB independently through pond entry, surface swim, dive, land exit, and pose restore.
+  const pondSwimResults=[];
+  for(const type of ['woman','man']){
+    const start=await page.evaluate(type=>{const api=window.__climboriaSmoke,p=api.player.position,pond=api.pondBounds[0],profile=JSON.parse(localStorage.getItem('climboria_hero_profile')||'{}');api.setPaused(false);api.setMoveInput(null);api.setMoveVector(null,0);api.clearClickMoveTarget();for(const k of ['KeyA','KeyD','KeyW','KeyS','Space','ControlLeft','ControlRight','ShiftLeft'])api.getKeys()[k]=false;window.sprinting=false;api.setHeroTypeForSmoke(type);const original={x:p.x,y:p.y,z:p.z,profileType:profile.type||'woman'};p.set(pond.x,api.terrainHeightAt(pond.x,pond.z)+.22,pond.z);return{original,pond:{x:pond.x,z:pond.z,surfaceY:pond.surfaceY},rootId:api.player.uuid};},type);
+    await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});await page.waitForTimeout(250);
+    const idle=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;return{swimming:window.jarrellSwimming===true,y:p.y,surface:api.waterSurfaceAt(p.x,p.z),visual:api.getHeroVisualForSmoke(),poseDebug:window.jarrellSwimPoseDebug}});
+    const expectedName=type==='man'?'Climboria_Male_Adventurer':'Climboria_Ara3D_Adventurer';
+    if(!idle.swimming||Math.abs(idle.y-(idle.surface-.205))>.06)errors.push(`${type} pond swim did not settle at surface: ${JSON.stringify(idle)}`);
+    if(idle.visual.rootId!==start.rootId||!idle.visual.visible||idle.poseDebug?.modelName!==expectedName||Math.abs(idle.poseDebug?.tilt-1.42)>.02||idle.poseDebug?.pivotY<.20||idle.poseDebug?.pivotY>.28)errors.push(`${type} swim body orientation/pivot/collision root failed: ${JSON.stringify(idle.poseDebug)}`);
+    if(!idle.visual.pose?.available||Object.values(idle.visual.pose.groups).some(group=>group.mapped<2||group.moved<2))errors.push(`${type} swim limb pose failed: ${JSON.stringify(idle.visual.pose)}`);
+    await page.evaluate(()=>{window.__climboriaSmoke.getKeys().Space=true});await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y>api.waterSurfaceAt(p.x,p.z)},{timeout:8000,polling:100}).catch(()=>{});
+    const surface=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;api.getKeys().Space=false;return{y:p.y,surface:api.waterSurfaceAt(p.x,p.z)}});
+    if(!(surface.y>surface.surface&&surface.y<=surface.surface+.12))errors.push(`${type} Space surface swim exceeded water bounds: ${JSON.stringify(surface)}`);
+    await page.evaluate(()=>window.__climboriaSmoke.getKeys().ControlLeft=true);await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y<=api.waterSurfaceAt(p.x,p.z)-.95},{timeout:8000,polling:100}).catch(()=>{});
+    const dive=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);api.getKeys().ControlLeft=false;return{y:p.y,surface}});
+    if(dive.y>dive.surface-.95||dive.y<dive.surface-1.08)errors.push(`${type} Ctrl dive exceeded water bounds: ${JSON.stringify(dive)}`);
+    await page.waitForTimeout(200);await page.evaluate(()=>window.__climboriaSmoke.setMoveVector(0,1));
+    await page.waitForFunction(()=>window.jarrellSwimming===false&&window.jarrellSwimPoseDebug?.motionState==='walking',{timeout:10000,polling:100}).catch(()=>{});await page.evaluate(()=>window.__climboriaSmoke.setMoveVector(null,0));await page.waitForTimeout(180);
+    const exit=await page.evaluate(()=>({swimming:window.jarrellSwimming===true,visual:window.__climboriaSmoke.getHeroVisualForSmoke(),poseDebug:window.jarrellSwimPoseDebug,y:window.__climboriaSmoke.player.position.y}));
+    if(exit.swimming||Math.abs(exit.visual.rotationX)>.02||Math.abs(exit.visual.rotationZ)>.05||Math.abs(exit.visual.pivotY-.99)>.01||exit.poseDebug?.proceduralSwimApplied)errors.push(`${type} water-to-land transition did not restore model transforms: ${JSON.stringify(exit)}`);
+    if(exit.visual.rootId!==start.rootId)errors.push(`${type} swim transition replaced the collision root`);
+    await page.evaluate(({original})=>{const api=window.__climboriaSmoke;api.player.position.set(original.x,original.y,original.z);api.setHeroTypeForSmoke(original.profileType);api.setMoveVector(null,0);},start);
+    pondSwimResults.push({type,idle,surface,dive,exit});
+  }
+  console.log('Dual GLB pond swimming regression:',JSON.stringify(pondSwimResults));
 
   const fishingBefore = await page.evaluate(() => {
     const inventory = window.jarrellLootInventory || JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]');

@@ -449,3 +449,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Latest Pages build/deployment on `main` passed [run 40951970729](https://github.com/CryptoDilis/Climboria/actions/runs/40951970729) on base `f97d3203a4d45a3e881e531222271e169bdc34b5`.
 - [ ] No Pages deployment ran for this feature branch, so these pond/swimming changes are not verified as deployed. Manual visual review and ordinary desktop/mobile performance remain open.
 - [ ] Next checklist increment: review realistic mountain relief in the live scene against the already passing ridge mesh/collision samples; then address forest visual variety and native-device performance. No third-party asset is integrated.
+
+## 2026-10-30 — swimming pose rig audit
+- [x] Traced water detection and surface-relative movement through animation selection, pose restore/apply, visual pivot, and water/land state transitions. The collision root remains a separate parent of both visual rigs.
+- [x] Audited the male and female GLB rigs independently: both provide Mixamo arm, forearm, upper-leg, and lower-leg bones; neither has a dedicated swim clip, so the procedural pose is the intended fallback.
+- [x] Fixed the confirmed male-only presentation regression by applying the established prone body rotation and visual pivot to the active character group. Preserved the pond/river surface-relative buoyancy and bounds.
+- [x] Expanded browser smoke coverage to independently check both rigs' limb pose, waterline, surfacing, diving, swim-to-land walking, pose restoration, and collision-root identity. Existing fall/respawn and river-exit coverage remains in place.
+- [ ] Run local gameplay smoke and verify Browser Smoke Test and Validate on the feature branch; diagnose any failures from run logs and rerun.
+- [ ] Review final diff and commit only after verification. Do not merge. Visual review of the character models remains pending; no character appearance change was made.
