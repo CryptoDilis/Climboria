@@ -69,7 +69,7 @@ try {
   if (!desktopNavigation.panel || !desktopNavigation.coordinates || !desktopNavigation.needle) errors.push('desktop compass/coordinate HUD elements are missing: ' + JSON.stringify(desktopNavigation));
   if (!desktopNavigation.topRight) errors.push('desktop compass is not positioned within the upper-right viewport: ' + JSON.stringify(desktopNavigation));
   if (!desktopNavigation.coordinatesBelowCompass) errors.push('desktop coordinates are not displayed below the compass: ' + JSON.stringify(desktopNavigation));
-  if (!desktopNavigation.valuesNumeric || !desktopNavigation.regionValid || !/\\d{3}°/.test(desktopNavigation.heading)) errors.push('desktop compass heading or live coordinate values are invalid: ' + JSON.stringify(desktopNavigation));
+  if (!desktopNavigation.valuesNumeric || !desktopNavigation.regionValid || !/\d{3}°/.test(desktopNavigation.heading)) errors.push('desktop compass heading or live coordinate values are invalid: ' + JSON.stringify(desktopNavigation));
   console.log('Desktop compass/coordinates HUD:', JSON.stringify(desktopNavigation));
 
   const desktopState = await page.evaluate(() => {
