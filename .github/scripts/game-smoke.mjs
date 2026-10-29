@@ -535,27 +535,31 @@ try {
     if (rockCollision.aboveBlocked) errors.push('large Jarrell rock collider blocks movement above its vertical bounds');
   }
 
-  // Regression: the western cave's main stone mouth must block the player at ground level,
-  // while a point well outside the cave collider remains traversable.
+  // Regression: a real stone tooth at the western cave mouth must block at ground level,
+  // while the documented central opening and a distant approach remain traversable.
   const caveWallCollision = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
     const cave = api.obstacles
       .filter(item => item.kind === 'rock')
-      .sort((a, b) => Math.hypot(a.x + 265, a.z + 570) - Math.hypot(b.x + 265, b.z + 570))[0];
-    if (!cave || Math.hypot(cave.x + 265, cave.z + 570) > 8) {
-      return { error: 'western cave main-wall collider was not indexed near its documented entrance' };
+      .map(item => ({ item, distance: Math.hypot(item.x + 265, item.z + 570) }))
+      .filter(entry => entry.distance >= 8 && entry.distance <= 19)
+      .sort((a, b) => a.distance - b.distance)[0]?.item;
+    if (!cave) {
+      return { error: 'western cave stone-mouth collider was not indexed around its documented entrance' };
     }
     const y = api.terrainHeightAt(cave.x, cave.z) + .22;
     return {
       cavePosition: { x: cave.x, z: cave.z },
       radius: cave.r || .6,
       insideBlocked: api.testObstacleCollision(cave.x, cave.z, y),
+      openingClear: !api.testObstacleCollision(-265, -570, api.terrainHeightAt(-265, -570) + .22),
       distantApproachBlocked: api.testObstacleCollision(cave.x + 34, cave.z, y),
     };
   });
   if (caveWallCollision.error) errors.push(caveWallCollision.error);
   else {
     if (!caveWallCollision.insideBlocked) errors.push('western cave stone mouth does not block the player at ground level: ' + JSON.stringify(caveWallCollision));
+    if (!caveWallCollision.openingClear) errors.push('western cave stone-mouth colliders block the central entrance: ' + JSON.stringify(caveWallCollision));
     if (caveWallCollision.distantApproachBlocked) errors.push('western cave wall collider blocks a distant approach point: ' + JSON.stringify(caveWallCollision));
   }
   console.log('Jarrell cave-wall collision regression:', JSON.stringify(caveWallCollision));
