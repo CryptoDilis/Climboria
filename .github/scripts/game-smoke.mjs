@@ -766,6 +766,16 @@ try {
   if (!terrainRegions.waterAtSea || terrainRegions.waterAtHighland) errors.push('Jarrell sea swimming bounds do not distinguish submerged floor from exposed highlands: ' + JSON.stringify({ waterAtSea: terrainRegions.waterAtSea, waterAtHighland: terrainRegions.waterAtHighland }));
   console.log('Jarrell bounded sea and ridge regression:', JSON.stringify(terrainRegions));
 
+  // Regression: streamed forest trunks and tree/root colliders must remain grounded to the shared terrain height field.
+  const forestGrounding = await page.evaluate(() => window.__climboriaSmoke.auditForestChunk(4, 4));
+  if (forestGrounding.meshCount < 1 || forestGrounding.treeColliders !== forestGrounding.meshCount || forestGrounding.rootColliders !== forestGrounding.meshCount) {
+    errors.push('streamed forest meshes and tree/root colliders are out of sync: ' + JSON.stringify(forestGrounding));
+  }
+  if (forestGrounding.maxTreeGroundError > .001 || forestGrounding.maxTrunkBaseError > .001) {
+    errors.push('streamed forest trunks or colliders drift from shared terrain height: ' + JSON.stringify(forestGrounding));
+  }
+  console.log('Jarrell streamed forest grounding regression:', JSON.stringify(forestGrounding));
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
