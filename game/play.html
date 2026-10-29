@@ -208,6 +208,16 @@ function removeJarrellObstacleChunk(key,kind){
  for(let i=jarrellObstacleColliders.length-1;i>=0;i--){const o=jarrellObstacleColliders[i];if(o.chunkKey===key&&(!kind||o.kind===kind))jarrellObstacleColliders.splice(i,1)}
  jarrellColliderGrid.clear();for(const o of jarrellObstacleColliders)indexJarrellObstacle(o);
 }
+function jarrellObstacleBlocksAt(o,x,z,playerY){
+ const vertical=playerY+1.75>o.y0&&playerY<o.y1;
+ if(!vertical)return false;
+ if(o.kind==='log'&&Number.isFinite(o.x1)&&Number.isFinite(o.z1)&&Number.isFinite(o.x2)&&Number.isFinite(o.z2)){
+  const sx=o.x2-o.x1,sz=o.z2-o.z1,lenSq=sx*sx+sz*sz,t=lenSq?THREE.MathUtils.clamp(((x-o.x1)*sx+(z-o.z1)*sz)/lenSq,0,1):0,px=o.x1+t*sx,pz=o.z1+t*sz,dx=x-px,dz=z-pz,reach=(o.r||.35)+.4;
+  return dx*dx+dz*dz<reach*reach;
+ }
+ const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+.4;
+ return Math.abs(dx)<=reach&&Math.abs(dz)<=reach&&dx*dx+dz*dz<reach*reach;
+}
 function hitsJarrellObstacleAt(x,z,playerY){
  if(currentLevel!=='11')return false;
  // Query every grid cell touched by the player's horizontal collision radius.
@@ -219,16 +229,7 @@ function hitsJarrellObstacleAt(x,z,playerY){
   const cell=jarrellColliderGrid.get(gx+','+gz);if(!cell)continue;
   for(const o of cell){
    if(seen.has(o))continue;seen.add(o);
-   const vertical=playerY+1.75>o.y0&&playerY<o.y1;
-   if(!vertical)continue;
-   if(o.kind==='log'&&Number.isFinite(o.x1)&&Number.isFinite(o.z1)&&Number.isFinite(o.x2)&&Number.isFinite(o.z2)){
-    const sx=o.x2-o.x1,sz=o.z2-o.z1,lenSq=sx*sx+sz*sz,t=lenSq?THREE.MathUtils.clamp(((x-o.x1)*sx+(z-o.z1)*sz)/lenSq,0,1):0,px=o.x1+t*sx,pz=o.z1+t*sz,dx=x-px,dz=z-pz,reach=(o.r||.35)+playerRadius;
-    if(dx*dx+dz*dz<reach*reach)return true;
-   }else{
-    const dx=x-o.x,dz=z-o.z,reach=(o.r||.6)+playerRadius;
-    if(Math.abs(dx)>reach||Math.abs(dz)>reach)continue;
-    if(dx*dx+dz*dz<reach*reach)return true;
-   }
+   if(jarrellObstacleBlocksAt(o,x,z,playerY))return true;
   }
  }
  return false;
@@ -905,7 +906,7 @@ function openNearbyTreasure(){
  const toast=document.createElement('div');toast.textContent=msg;toast.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);max-width:90vw;padding:14px 20px;border:1px solid '+reward.color+';border-radius:10px;background:rgba(5,13,22,.94);color:'+reward.color+';font:800 12px system-ui;letter-spacing:1px;text-align:center;z-index:50;box-shadow:0 0 28px '+reward.color+'44';document.body.appendChild(toast);setTimeout(()=>toast.remove(),3800);
  synthSfx('pickup');return true;
 }
-if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,getKeys:()=>keys,obstacles:jarrellObstacleColliders,landmarks:(window.jarrellWorldPOIs?.children||[]).map(o=>o.name),getDeer:()=>window.jarrellDeer||[],getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,setMoveInput:value=>{smokeMoveInput=value===null?null:{x:Math.max(-1,Math.min(1,Number(value)||0)),z:0};},setMoveVector:(x,z)=>{smokeMoveInput=x===null?null:{x:Math.max(-1,Math.min(1,Number(x)||0)),z:Math.max(-1,Math.min(1,Number(z)||0))};},getMoveVec:()=>moveVec(),getClickMoveTarget:()=>clickMoveTarget?{x:clickMoveTarget.x,z:clickMoveTarget.z}:null,clearClickMoveTarget:()=>{clickMoveTarget=null;},getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
+if(currentLevel==='11'&&new URLSearchParams(location.search).get('smoke')==='1')window.__climboriaSmoke={player,camera,getKeys:()=>keys,obstacles:jarrellObstacleColliders,landmarks:(window.jarrellWorldPOIs?.children||[]).map(o=>o.name),getDeer:()=>window.jarrellDeer||[],getCaches:()=>jarrellTreasureChests,openNearbyTreasure,riverX:window.jarrellRiverX,terrainHeightAt:window.jarrellTerrainHeightAt,nearestRiverPoint:window.nearestRiverPoint,testObstacleCollision:(x,z,y)=>hitsJarrellObstacleAt(x,z,y),testObstacleCollider:(o,x,z,y)=>jarrellObstacleBlocksAt(o,x,z,y),setCamYaw:value=>{camYaw=value;},setPaused:value=>{paused=!!value;},isPaused:()=>paused,setMoveInput:value=>{smokeMoveInput=value===null?null:{x:Math.max(-1,Math.min(1,Number(value)||0)),z:0};},setMoveVector:(x,z)=>{smokeMoveInput=x===null?null:{x:Math.max(-1,Math.min(1,Number(x)||0)),z:Math.max(-1,Math.min(1,Number(z)||0))};},getMoveVec:()=>moveVec(),getClickMoveTarget:()=>clickMoveTarget?{x:clickMoveTarget.x,z:clickMoveTarget.z}:null,clearClickMoveTarget:()=>{clickMoveTarget=null;},getMovementState:()=>({x:jarrellMoveVX,z:jarrellMoveVZ,swimming:window.jarrellSwimming,physicsSwimming:window.jarrellPhysicsSwimming})};
 // Level 1 base camp: tents, fire, supply crates and a quartermaster NPC.
 let quartermaster=null,campFireLight=null;
 if(currentLevel==='01'){
