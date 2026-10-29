@@ -95,7 +95,10 @@ jobs:
           JS
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
-        run: node .github/scripts/game-smoke.mjs
+        timeout-minutes: 21
+        run: |
+          echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
+          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
 
       - name: Upload browser screenshots
         if: always()
