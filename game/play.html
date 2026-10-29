@@ -908,19 +908,38 @@ const canvasMat=mat(0x9a7547),tentMat=mat(0x425c63),wood=mat(0x4b3424);
 function campMesh(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 const campGround=campMesh(new THREE.CylinderGeometry(6.1,6.35,.26,32),dirt,0,.02,5.5);campGround.scale.set(1.15,1,0.92);
 const earthRim=campMesh(new THREE.CylinderGeometry(6.28,6.5,.18,32),mat(0x55442f),0,-.12,5.5);earthRim.scale.set(1.15,1,.92);
-// Canvas A-frame expedition tent moved to the camp's outer left edge, clear of the fire and NPC.
+// Realistic A-frame expedition tent: ridge runs lengthwise, with two complete sloped roof panels and closed triangular ends.
 const tentGroup=new THREE.Group();tentGroup.position.set(-5.1,.05,3.8);tentGroup.rotation.y=-.18;scene.add(tentGroup);
 const tentCloth=new THREE.MeshStandardMaterial({color:0x88734f,roughness:.96,side:THREE.DoubleSide});
+const tentRoofAlt=new THREE.MeshStandardMaterial({color:0x766343,roughness:1,side:THREE.DoubleSide});
 const tentSide=new THREE.MeshStandardMaterial({color:0x554936,roughness:1,side:THREE.DoubleSide});
 function tentPart(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;tentGroup.add(o);return o}
-const tentRidge=tentPart(new THREE.CylinderGeometry(.055,.055,3.2,8),wood,0,2.15,0);tentRidge.rotation.z=Math.PI/2;
-for(const x of [-1.45,1.45]){const pole=tentPart(new THREE.CylinderGeometry(.045,.06,2.25,7),wood,x,1.1,0);pole.rotation.z=x<0?-.72:.72}
-const tentFront=tentPart(new THREE.BufferGeometry(),tentCloth,0,0,0);
-const tentVerts=new Float32Array([-1.55,0,-1.25,1.55,0,-1.25,0,2.15,-1.25,-1.55,0,1.25,1.55,0,1.25,0,2.15,1.25]);tentFront.geometry.setAttribute('position',new THREE.BufferAttribute(tentVerts,3));tentFront.geometry.setIndex([0,1,2,3,5,4]);tentFront.geometry.computeVertexNormals();
-const flap=tentPart(new THREE.PlaneGeometry(1.35,1.72),tentSide,0,.91,-1.27);flap.rotation.x=0;flap.position.z=-1.255;
-const tentBack=tentPart(new THREE.BufferGeometry(),tentCloth,0,0,0);const backVerts=new Float32Array([-1.55,0,-1.25,1.55,0,-1.25,0,2.15,-1.25]);tentBack.geometry.setAttribute('position',new THREE.BufferAttribute(backVerts,3));tentBack.geometry.setIndex([0,1,2]);tentBack.geometry.computeVertexNormals();tentBack.position.z=2.5;
+function tentPanel(vertices,indices,material){
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();return tentPart(g,material,0,0,0);
+}
+// Ridge pole follows the tent's long axis (Z), not across its width.
+const tentRidge=tentPart(new THREE.CylinderGeometry(.055,.055,2.55,8),wood,0,2.12,0);tentRidge.rotation.x=Math.PI/2;
+for(const z of [-1.18,1.18]){const pole=tentPart(new THREE.CylinderGeometry(.045,.06,2.18,7),wood,0,1.06,z);}
+// Two continuous roof slopes, from the ridge to each ground-level eave.
+tentPanel([-1.55,0,-1.25,0,2.15,-1.25,0,2.15,1.25,-1.55,0,1.25],[0,1,2,0,2,3],tentCloth);
+tentPanel([0,2.15,-1.25,1.55,0,-1.25,1.55,0,1.25,0,2.15,1.25],[0,1,2,0,2,3],tentRoofAlt);
+// Closed triangular end walls at both ends, leaving a properly framed entrance flap at the front.
+tentPanel([-1.55,0,-1.25,1.55,0,-1.25,0,2.15,-1.25],[0,1,2],tentSide);
+tentPanel([-1.55,0,1.25,0,2.15,1.25,1.55,0,1.25],[0,1,2],tentCloth);
+// Dark entrance opening and folded-back fabric flap on the near end.
+const entrance=tentPart(new THREE.BufferGeometry(),tentSide,0,0,0);
+entrance.geometry.setAttribute('position',new THREE.Float32BufferAttribute([-.62,.02,-1.263,.62,.02,-1.263,.0,1.45,-1.263],3));
+entrance.geometry.setIndex([0,1,2]);entrance.geometry.computeVertexNormals();
+const flap=tentPart(new THREE.PlaneGeometry(.62,1.25),tentCloth,-.78,.66,-1.275);flap.rotation.y=-.18;flap.rotation.z=-.12;
 const tentFloor=tentPart(new THREE.PlaneGeometry(2.9,2.4),tentSide,0,.035,0);tentFloor.rotation.x=-Math.PI/2;
-for(const x of [-1.35,1.35]){const rope=tentPart(new THREE.CylinderGeometry(.018,.018,1.45,5),mat(0xb7a27b),x*1.55,.45,-1.1);rope.rotation.z=x<0?-.8:.8}
+// Guy lines anchor the eaves outward and forward/back, with small visible stakes.
+for(const side of [-1,1])for(const z of [-.9,.9]){
+ const anchorX=side*2.05,anchorZ=z*1.55;
+ const dx=anchorX-side*1.35,dz=anchorZ-z*.65,len=Math.hypot(dx,1.05,dz);
+ const rope=tentPart(new THREE.CylinderGeometry(.012,.012,len,5),mat(0xb7a27b),(anchorX+side*1.35)/2,.48,(anchorZ+z*.65)/2);
+ rope.rotation.set(Math.atan2(dz,1.05),0,Math.atan2(dx,1.05));
+ tentPart(new THREE.ConeGeometry(.055,.18,5),wood,anchorX,.09,anchorZ);
+}
 campMesh(new THREE.BoxGeometry(1.4,.65,.8),wood,3.3,.4,6.3);campMesh(new THREE.BoxGeometry(1.1,.55,.7),wood,4.2,.35,5.3);
 const stones=campMesh(new THREE.TorusGeometry(.65,.12,6,12),rock,0,.18,7.8);stones.rotation.x=Math.PI/2;
 for(let i=0;i<5;i++){const flame=campMesh(new THREE.ConeGeometry(.16+i*.025,.65+i*.12,5),mat(i%2?0xff8a35:0xffc85a),Math.sin(i*2)*.2,.55+i*.04,7.8+Math.cos(i*2)*.2);flame.material.emissive=new THREE.Color(0xff5b12);flame.material.emissiveIntensity=1.3}
