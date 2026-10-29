@@ -479,6 +479,19 @@ try {
     errors.push('western cave entrance should have two separated warm-lit torches with flame and ember meshes: ' + JSON.stringify(caveTorchAudit));
   }
   console.log('Jarrell cave torch regression:', JSON.stringify(caveTorchAudit));
+  // Regression: the cave approach should retain its full low-profile paver trail.
+  const caveTrailAudit = await page.evaluate(() => {
+    const stones = window.jarrellCaveTrailStones || [];
+    return {
+      count: stones.length,
+      allVisibleMeshes: stones.every(stone => stone?.isMesh && stone.visible && stone.geometry?.type === 'BoxGeometry'),
+      lowProfile: stones.every(stone => stone.scale.y <= .1)
+    };
+  });
+  if (caveTrailAudit.count !== 12 || !caveTrailAudit.allVisibleMeshes || !caveTrailAudit.lowProfile) {
+    errors.push('western cave approach should have twelve visible, low-profile stone pavers: ' + JSON.stringify(caveTrailAudit));
+  }
+  console.log('Jarrell cave approach trail regression:', JSON.stringify(caveTrailAudit));
 
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
