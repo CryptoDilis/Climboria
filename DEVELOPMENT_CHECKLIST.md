@@ -319,3 +319,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Confirmed all three required workflows green on the same commit; no failure diagnosis or corrective fix was needed.
 - [ ] Next implementation: expand collision regression coverage for the actual quartermaster cart/forge and cave entrance geometry. Inspect the live colliders and spawn clearance before asserting blocks, to avoid invisible-wall regressions.
 - [ ] Continue manual visual validation of swimming stroke, waterline, and river exits for both hero appearances on desktop/mobile.
+
+
+## 2026-10-29 — latest workflow verification and collision audit
+- [x] Latest Pages deployment for commit `3b00611c` completed successfully: [run 40873779446](https://github.com/CryptoDilis/Climboria/actions/runs/40873779446).
+- [x] Confirmed Validate Climboria and Browser Smoke Test passed on the swimming-stroke gameplay commit `c95aa1fb`: [Validate](https://github.com/CryptoDilis/Climboria/actions/runs/40872707617) · [Browser Smoke](https://github.com/CryptoDilis/Climboria/actions/runs/40872707656).
+- [x] Audited the quartermaster cart/forge meshes: they are level-01 scene props, while the Jarrell obstacle grid and its smoke API are level-11-only; do not reuse that grid blindly for level 01.
+- [ ] Trace level-01 movement, terrain, and collision handling before implementing cart/forge blockers and regression tests.
+- [ ] Continue visual checks of swimming stroke, waterline, and river exits for both hero appearances on desktop/mobile.
