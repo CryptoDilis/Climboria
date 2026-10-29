@@ -2,9 +2,11 @@
 
 - [x] Previous gameplay commit `5ad57180b911aa4f06690d59f7339d97343d5bb8` passed Validate Climboria [run 40835399036](https://github.com/CryptoDilis/Climboria/actions/runs/40835399036), Browser Smoke Test [run 40835398837](https://github.com/CryptoDilis/Climboria/actions/runs/40835398837), and Pages deployment [run 40835398503](https://github.com/CryptoDilis/Climboria/actions/runs/40835398503).
 - [x] Added a named array for the twelve low-profile cave approach pavers so the browser smoke test can inspect the actual scene meshes.
-- [x] Added a browser regression audit for paver count, mesh visibility/type, and low profile. Verification for the new commit is pending; do not mark this regression green until its run passes.
+- [x] Added a browser regression audit for paver count, mesh visibility/type, and low profile; Browser Smoke Test passed on commit `644c7f9b` [run 40836380834](https://github.com/CryptoDilis/Climboria/actions/runs/40836380834).
+- [x] Validate Climboria passed on commit `644c7f9b` [run 40836380866](https://github.com/CryptoDilis/Climboria/actions/runs/40836380866).
+- [x] GitHub Pages deployment passed for checklist commit `d2621ce0` [run 40836402781](https://github.com/CryptoDilis/Climboria/actions/runs/40836402781).
 - [ ] Manual live-site gameplay review remains outstanding; automated tests do not prove all collision or swimming behavior.
-- [ ] Continue with the first unchecked gameplay blocker: swimming buoyancy/pose and reliable riverbank exit, then expand collision coverage based on the actual world geometry.
+- [ ] Continue with swimming buoyancy/pose and reliable riverbank exit, then expand collision coverage based on actual world geometry.
 
 ## Latest workflow verification — 2026-10-29 (bush and fallen-log collision regression)
 
