@@ -771,6 +771,7 @@ try {
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
+  if (!wildernessLandmarks.includes('JarrellMoonpool')) errors.push('Jarrell Moonpool landmark did not initialize');
 
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
