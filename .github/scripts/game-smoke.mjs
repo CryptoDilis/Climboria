@@ -482,14 +482,18 @@ try {
   // Regression: the cave approach should retain its full low-profile paver trail.
   const caveTrailAudit = await page.evaluate(() => {
     const stones = window.jarrellCaveTrailStones || [];
+    const positions = stones.map(stone => ({x:stone.position.x,z:stone.position.z}));
+    const gaps = positions.slice(1).map((p,i) => Math.hypot(p.x-positions[i].x,p.z-positions[i].z));
     return {
       count: stones.length,
       allVisibleMeshes: stones.every(stone => stone?.isMesh && stone.visible && stone.geometry?.type === 'BoxGeometry'),
-      lowProfile: stones.every(stone => stone.scale.y <= .1)
+      lowProfile: stones.every(stone => stone.scale.y <= .1),
+      span: positions.length > 1 ? Math.hypot(positions.at(-1).x-positions[0].x,positions.at(-1).z-positions[0].z) : 0,
+      maxGap: gaps.length ? Math.max(...gaps) : Infinity
     };
   });
-  if (caveTrailAudit.count !== 12 || !caveTrailAudit.allVisibleMeshes || !caveTrailAudit.lowProfile) {
-    errors.push('western cave approach should have twelve visible, low-profile stone pavers: ' + JSON.stringify(caveTrailAudit));
+  if (caveTrailAudit.count !== 12 || !caveTrailAudit.allVisibleMeshes || !caveTrailAudit.lowProfile || caveTrailAudit.span < 20 || caveTrailAudit.maxGap > 3.5) {
+    errors.push('western cave approach should have twelve visible, low-profile, continuously spaced stone pavers: ' + JSON.stringify(caveTrailAudit));
   }
   console.log('Jarrell cave approach trail regression:', JSON.stringify(caveTrailAudit));
 
