@@ -1066,6 +1066,26 @@ try {
     }
   }
 
+  // Regression: the woodland pond must enter swimming at its elevated waterline and preserve Space/Ctrl movement relative to that surface.
+  const pondSwimStart=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,pond=api.pondBounds[0],original={x:p.x,y:p.y,z:p.z};api.setPaused(false);api.setMoveInput(null);api.clearClickMoveTarget();api.getKeys().KeyA=api.getKeys().KeyD=api.getKeys().KeyW=api.getKeys().KeyS=false;api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;api.getKeys().ShiftLeft=false;window.sprinting=false;p.set(pond.x,api.terrainHeightAt(pond.x,pond.z)+.22,pond.z);return{original,pond:{x:pond.x,z:pond.z,surfaceY:pond.surfaceY,groundY:api.terrainHeightAt(pond.x,pond.z)}}});
+  await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});
+  await page.waitForTimeout(250);
+  const pondIdle=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);return{swimming:window.jarrellSwimming===true,y:p.y,surface,vertical:window.jarrellSwimVerticalDebug}});
+  if(!pondIdle.swimming||Math.abs(pondIdle.y-(pondIdle.surface-.205))>.06)errors.push('woodland pond swimming did not settle near its elevated waterline: '+JSON.stringify(pondIdle));
+  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().Space=true});
+  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y>api.waterSurfaceAt(p.x,p.z)},{timeout:8000,polling:100}).catch(()=>{});
+  const pondSurface=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;api.getKeys().Space=false;return{y:p.y,surface:api.waterSurfaceAt(p.x,p.z)}});
+  if(!(pondSurface.y>pondSurface.surface&&pondSurface.y<=pondSurface.surface+.12))errors.push('Space did not surface the swimmer relative to the woodland pond: '+JSON.stringify(pondSurface));
+  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().ControlLeft=true});
+  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y<=api.waterSurfaceAt(p.x,p.z)-.95},{timeout:8000,polling:100}).catch(()=>{});
+  const pondDive=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);api.getKeys().ControlLeft=false;return{y:p.y,surface}});
+  if(pondDive.y>pondDive.surface-.95||pondDive.y<pondDive.surface-1.08)errors.push('Ctrl did not dive to the intended depth relative to the woodland pond: '+JSON.stringify(pondDive));
+  await page.waitForTimeout(250);
+  const pondIdleRecovery=await page.evaluate(({original})=>{const api=window.__climboriaSmoke,p=api.player.position;const result={y:p.y,surface:api.waterSurfaceAt(p.x,p.z)};p.set(original.x,original.y,original.z);return result},pondSwimStart);
+  if(Math.abs(pondIdleRecovery.y-(pondIdleRecovery.surface-.205))>.06)errors.push('woodland pond idle swim did not return to its elevated waterline: '+JSON.stringify(pondIdleRecovery));
+  await page.waitForTimeout(150);
+  console.log('Jarrell elevated pond swimming regression:',JSON.stringify({start:pondSwimStart.pond,idle:pondIdle,surface:pondSurface,dive:pondDive,recovery:pondIdleRecovery}));
+
   const fishingBefore = await page.evaluate(() => {
     const inventory = window.jarrellLootInventory || JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory') || '[]');
     return Array.isArray(inventory) ? inventory.length : 0;
@@ -1259,27 +1279,6 @@ try {
   const selectedLevel = await selectPage.locator('#levelName').textContent().catch(() => '');
   if (!selectedLevel?.toUpperCase().includes('JARRELL')) errors.push('selecting the launch card did not open Jarrell’s Peak');
   await selectPage.close();
-
-  // Regression: the woodland pond must enter swimming at its elevated waterline and preserve Space/Ctrl movement relative to that surface.
-  const pondSwimStart=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,pond=api.pondBounds[0],original={x:p.x,y:p.y,z:p.z};api.setPaused(false);api.setMoveInput(null);api.clearClickMoveTarget();api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;api.getKeys().ShiftLeft=false;window.sprinting=false;p.set(pond.x,api.terrainHeightAt(pond.x,pond.z)+.22,pond.z);return{original,pond:{x:pond.x,z:pond.z,surfaceY:pond.surfaceY,groundY:api.terrainHeightAt(pond.x,pond.z)}}});
-  await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});
-  await page.waitForTimeout(250);
-  const pondIdle=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);return{swimming:window.jarrellSwimming===true,y:p.y,surface,vertical:window.jarrellSwimVerticalDebug}});
-  if(!pondIdle.swimming||Math.abs(pondIdle.y-(pondIdle.surface-.205))>.06)errors.push('woodland pond swimming did not settle near its elevated waterline: '+JSON.stringify(pondIdle));
-  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().Space=true});
-  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y>api.waterSurfaceAt(p.x,p.z)},{timeout:8000,polling:100}).catch(()=>{});
-  const pondSurface=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;api.getKeys().Space=false;return{y:p.y,surface:api.waterSurfaceAt(p.x,p.z)}});
-  if(!(pondSurface.y>pondSurface.surface&&pondSurface.y<=pondSurface.surface+.12))errors.push('Space did not surface the swimmer relative to the woodland pond: '+JSON.stringify(pondSurface));
-  await page.evaluate(()=>{window.__climboriaSmoke.getKeys().ControlLeft=true});
-  await page.waitForFunction(()=>{const api=window.__climboriaSmoke,p=api.player.position;return p.y<=api.waterSurfaceAt(p.x,p.z)-.95},{timeout:8000,polling:100}).catch(()=>{});
-  const pondDive=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position,surface=api.waterSurfaceAt(p.x,p.z);api.getKeys().ControlLeft=false;return{y:p.y,surface}});
-  if(pondDive.y>pondDive.surface-.95||pondDive.y<pondDive.surface-1.08)errors.push('Ctrl did not dive to the intended depth relative to the woodland pond: '+JSON.stringify(pondDive));
-  await page.waitForTimeout(250);
-  const pondIdleRecovery=await page.evaluate(({original})=>{const api=window.__climboriaSmoke,p=api.player.position;const result={y:p.y,surface:api.waterSurfaceAt(p.x,p.z)};p.set(original.x,original.y,original.z);return result},pondSwimStart);
-  if(Math.abs(pondIdleRecovery.y-(pondIdleRecovery.surface-.205))>.06)errors.push('woodland pond idle swim did not return to its elevated waterline: '+JSON.stringify(pondIdleRecovery));
-  await page.waitForTimeout(150);
-  console.log('Jarrell elevated pond swimming regression:',JSON.stringify({start:pondSwimStart.pond,idle:pondIdle,surface:pondSurface,dive:pondDive,recovery:pondIdleRecovery}));
-
 
   if (errors.length) {
     console.error(errors.join('\n'));
