@@ -607,6 +607,21 @@ try {
     if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
   }
 
+  // Animation diagnosis: wait briefly for the character GLBs and expose the actual selected swim clip.
+  await page.waitForFunction(() => !!(window.__climbAraAnimations || window.__climbMaleAnimations), {timeout:12000}).catch(() => {});
+  const swimAnimationAudit = await page.evaluate(() => {
+    const woman=window.__climbAraAnimations,man=window.__climbMaleAnimations;
+    const active=(localStorage.getItem('climboria_hero_profile')||'').includes('"man"')?man:woman;
+    return {
+      woman:woman?{selected:woman.selected||null,proceduralSwim:!!woman.actions?.proceduralSwim,clipNames:(woman.clips||[]).map(c=>c.name)}:null,
+      man:man?{selected:man.selected||null,proceduralSwim:!!man.actions?.proceduralSwim,clipNames:(man.clips||[]).map(c=>c.name)}:null,
+      activeLoaded:!!active,
+    };
+  });
+  console.log('Swim animation clip audit:',JSON.stringify(swimAnimationAudit));
+  if (swimAnimationAudit.woman && !('swim' in (swimAnimationAudit.woman.selected||{}))) errors.push('female hero animation diagnostics must expose the selected swim clip (or null) explicitly');
+  if (swimAnimationAudit.man && !('swim' in (swimAnimationAudit.man.selected||{}))) errors.push('male hero animation diagnostics must expose the selected swim clip (or null) explicitly');
+
   // Regression: approach the river from dry ground and verify the transition enters swimming without a deep fall.
   const swimEntry = await page.evaluate(() => {
     const api=window.__climboriaSmoke,z=80,centerX=api.riverX(z),startX=centerX+14.0;
