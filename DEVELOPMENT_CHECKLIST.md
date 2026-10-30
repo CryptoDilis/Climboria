@@ -463,3 +463,8 @@ For every integrated asset or borrowed technique, record:
 - [x] Separated temporary rig capability probes from runtime animation auditing. Runtime measurements now accumulate observed per-bone rotation deltas only when the procedural pose is applied in the animation loop, against each frame's post-mixer pose. Audit counters reset for each character swim pass.
 - [x] Verified corrected diagnostics and runtime pose assertions on exact branch head `86f79d4c145b87c20fa6675571d3c30f269d0cad`: Browser Smoke Test passed [run 40977678327](https://github.com/CryptoDilis/Climboria/actions/runs/40977678327) and Validate Climboria passed [run 40977678247](https://github.com/CryptoDilis/Climboria/actions/runs/40977678247). Both runs report success on the exact same SHA. Manual visual review remains required.
 - [ ] Manual visual review of male and female swim pose remains required before character animation can be marked finished. Do not merge or deploy.
+
+## 2026-10-30 — swimming screenshot evidence capture
+- [x] Added Playwright captures for female and male idle, forward, surfacing, diving, and water-exit states at desktop viewport, plus each character's idle swim at a mobile viewport. Browser Smoke Test uploads these images as an artifact; the script requires all 12 captures.
+- [ ] Inspect the actual screenshot artifact for orientation, limb quality, waterline, clipping, exit pose, and desktop/mobile layout. Keep visual acceptance unchecked until the images are reviewed.
+- [ ] Run Browser Smoke Test and Validate on the screenshot-capture commit, inspect job logs and artifact contents, then record the exact SHA and run IDs.

@@ -109,5 +109,6 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
+            climboria-swim-review-*.png
           if-no-files-found: warn
           retention-days: 7
