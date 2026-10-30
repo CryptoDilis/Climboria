@@ -1073,7 +1073,7 @@ try {
   for(const type of ['woman','man']){
     const start=await page.evaluate(type=>{const api=window.__climboriaSmoke,p=api.player.position,pond=api.pondBounds[0],profile=JSON.parse(localStorage.getItem('climboria_hero_profile')||'{}');api.setPaused(false);api.setMoveInput(null);api.setMoveVector(null,0);api.clearClickMoveTarget();for(const k of ['KeyA','KeyD','KeyW','KeyS','Space','ControlLeft','ControlRight','ShiftLeft'])api.getKeys()[k]=false;window.sprinting=false;api.setHeroTypeForSmoke(type);api.resetHeroSwimAuditForSmoke();const original={x:p.x,y:p.y,z:p.z,profileType:profile.type||'woman'};const visualBefore=api.getHeroVisualForSmoke();p.set(pond.x,api.terrainHeightAt(pond.x,pond.z)+.22,pond.z);return{original,pond:{x:pond.x,z:pond.z,surfaceY:pond.surfaceY},rootId:api.player.uuid,visualBefore};},type);
     if(start.visualBefore.rootId!==start.rootId)errors.push(`${type} collision-root diagnostic did not match before water entry: ${JSON.stringify(start)}`);
-    await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});await page.waitForTimeout(250);
+    await page.waitForFunction(()=>window.jarrellSwimming===true,{timeout:8000,polling:100}).catch(()=>{});await page.waitForTimeout(1100); // Allow both alternating flutter-kick legs to pass through measurable stroke phases.
     const idle=await page.evaluate(()=>{const api=window.__climboriaSmoke,p=api.player.position;return{swimming:window.jarrellSwimming===true,y:p.y,surface:api.waterSurfaceAt(p.x,p.z),visual:api.getHeroVisualForSmoke(),poseDebug:window.jarrellSwimPoseDebug}});
     const expectedName=type==='man'?'Climboria_Male_Adventurer':'Climboria_Ara3D_Adventurer';
     await captureSwimReview(type,'idle','desktop');
