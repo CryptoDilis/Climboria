@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Climboria — 3D Physics Slice</title>
+<style>
+:root{color-scheme:dark;--gold:#f5bd45;--panel:rgba(8,13,24,.78)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b2b;font-family:Inter,system-ui,sans-serif;color:#fff}
+#view{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;inset:0;pointer-events:none;padding:clamp(12px,3vw,28px);display:flex;flex-direction:column;justify-content:space-between}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.brand{font-weight:900;letter-spacing:.16em;color:#ffe1a0;text-shadow:0 2px 12px #000;font-size:clamp(12px,2vw,16px)}
+.pill{background:var(--panel);border:1px solid #ffffff24;border-radius:14px;padding:10px 13px;backdrop-filter:blur(10px);font-size:12px;line-height:1.5;max-width:min(46vw,330px)}
+.bottom{display:flex;justify-content:space-between;align-items:end;gap:12px}
+.hint{max-width:400px;color:#e7eaf0;font-size:12px;line-height:1.6;text-shadow:0 2px 8px #000}
+.status{color:var(--gold);font-weight:800;letter-spacing:.08em}
+.touch{pointer-events:auto;display:none;gap:8px;align-items:end}
+.pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px}
+.touch button{border:1px solid #ffffff50;background:#101b2bc9;color:#fff;border-radius:12px;font-size:18px;touch-action:none;user-select:none}
+.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
+.jump{width:70px;height:70px;border-radius:50%!important;color:var(--gold)!important;font-size:12px!important;font-weight:900}
+@media(max-width:700px){.touch{display:flex}.hint{max-width:45vw;font-size:11px}.pill{font-size:11px;padding:8px 10px}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="hud">
+ <div class="top">
+  <div class="brand">CLIMBORIA <span style="opacity:.55;font-weight:500">/ PHYSICS SLICE</span></div>
+  <div class="pill"><div class="status" id="state">INITIALIZING</div><div id="readout">Loading 3D + physics…</div></div>
+ </div>
+ <div class="bottom">
+  <div class="hint"><b>Prototype controls</b><br>WASD / arrows to move · Space to jump · drag to orbit camera<br><span style="opacity:.7">Grey geometry and capsule are temporary placeholders—not final art.</span></div>
+  <div class="touch">
+   <div class="pad">
+    <button class="up" data-key="w">▲</button><button class="left" data-key="a">◀</button><button class="down" data-key="s">▼</button><button class="right" data-key="d">▶</button>
+   </div>
+   <button class="jump" data-key="space">JUMP</button>
+  </div>
+ </div>
+</div>
+<script type="module">
+import * as THREE from "https://esm.sh/three@0.180.0";
+import RAPIER from "https://esm.sh/@dimforge/rapier3d-compat@0.17.3";
+await RAPIER.init();
+
+const host=document.querySelector("#view");
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9bb7c8);
+scene.fog=new THREE.Fog(0x9bb7c8,34,145);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+host.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xcfe7ff,0x3a3028,2.0));
+const sun=new THREE.DirectionalLight(0xffe3b0,3.0);sun.position.set(-18,32,12);sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-42;sun.shadow.camera.right=42;sun.shadow.camera.top=42;sun.shadow.camera.bottom=-42;sun.shadow.bias=-.00025;scene.add(sun);
+
+const world=new RAPIER.World({x:0,y:-9.81,z:0});
+world.timestep=1/60;
+const mats={
+ ground:new THREE.MeshStandardMaterial({color:0x596454,roughness:1}),
+ stone:new THREE.MeshStandardMaterial({color:0x777a78,roughness:.92}),
+ darkStone:new THREE.MeshStandardMaterial({color:0x454b50,roughness:1}),
+ snow:new THREE.MeshStandardMaterial({color:0xd7e2e7,roughness:.8}),
+ player:new THREE.MeshStandardMaterial({color:0xd99b3b,roughness:.65}),
+ visor:new THREE.MeshStandardMaterial({color:0x202b38,metalness:.3,roughness:.35})
+};
+function addBox(name,pos,size,material,collide=true,rot=[0,0,0]){
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),material);mesh.name=name;mesh.position.set(...pos);mesh.rotation.set(...rot);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
+ if(collide){const rb=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(...pos));world.createCollider(RAPIER.ColliderDesc.cuboid(size[0]/2,size[1]/2,size[2]/2),rb);}
+ return mesh;
+}
+function addPeak(x,z,height,width,material){
+ const geo=new THREE.ConeGeometry(width,height,7,2);geo.rotateY(Math.random()*Math.PI);const mesh=new THREE.Mesh(geo,material);mesh.position.set(x,height/2-1,z);mesh.castShadow=true;scene.add(mesh);
+}
+// Main walkable floor and trail slabs
+addBox("base",( [0,-.55,0] ),[48,1,48],mats.ground);
+addBox("trail-ledge-1",[-2,.35,-5],[5,.7,4],mats.stone);
+addBox("trail-ledge-2",[2,1.05,-9],[4,.7,4],mats.darkStone);
+addBox("trail-ledge-3",[-1,1.8,-13],[5,.7,4],mats.stone);
+addBox("trail-ledge-4",[3,2.55,-17],[5,.7,4],mats.darkStone);
+addBox("jump-platform",[7,3.15,-19],[4,.6,4],mats.stone);
+addBox("rock-obstacle",[-5,1.2,-3],[2.5,2.4,2.5],mats.darkStone);
+addBox("rock-obstacle-2",[6,.8,-7],[2,1.6,2],mats.stone);
+addBox("boulder",[1,.6,2],[2.4,1.2,2.4],mats.darkStone);
+// Background mountain silhouettes (decorative; distant peaks do not have collision)
+for(let i=0;i<22;i++){const x=(Math.random()-.5)*145,z=-42-Math.random()*80,h=18+Math.random()*42,w=12+Math.random()*20;addPeak(x,z,h,w,i%4===0?mats.snow:mats.darkStone);}
+const groundGrid=new THREE.GridHelper(48,48,0x9eaa91,0x74816e);groundGrid.position.y=-.045;groundGrid.material.transparent=true;groundGrid.material.opacity=.12;scene.add(groundGrid);
+
+// Capsule physics body; the mesh is intentionally a placeholder until we add a licensed rigged character.
+const start={x:0,y:1.2,z:5};
+const playerBody=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(start.x,start.y,start.z).setLinearDamping(1.2).setAngularDamping(8).lockRotations());
+const playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.32).setFriction(.9).setRestitution(0),playerBody);
+const player=new THREE.Group();
+const bodyMesh=new THREE.Mesh(new THREE.CapsuleGeometry(.32,.75,5,10),mats.player);bodyMesh.position.y=.05;bodyMesh.castShadow=true;player.add(bodyMesh);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.23,12,10),mats.visor);head.position.set(0,.78,0);head.castShadow=true;player.add(head);
+const pack=new THREE.Mesh(new THREE.BoxGeometry(.38,.48,.18),mats.darkStone);pack.position.set(0,.1,-.32);pack.castShadow=true;player.add(pack);scene.add(player);
+
+const keys=new Set();let yaw=0,pitch=.22,dragging=false,lastX=0,lastY=0;
+addEventListener("keydown",e=>{const k=e.key.toLowerCase();if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(k))e.preventDefault();keys.add(k===" "?"space":k);});
+addEventListener("keyup",e=>keys.delete(e.key.toLowerCase()===" "?"space":e.key.toLowerCase()));
+document.querySelectorAll("[data-key]").forEach(btn=>{
+ const k=btn.dataset.key;const down=e=>{e.preventDefault();keys.add(k);};const up=e=>{e.preventDefault();keys.delete(k);};
+ btn.addEventListener("pointerdown",down);btn.addEventListener("pointerup",up);btn.addEventListener("pointercancel",up);btn.addEventListener("pointerleave",up);
+});
+renderer.domElement.addEventListener("pointerdown",e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener("pointerup",()=>dragging=false);
+renderer.domElement.addEventListener("pointermove",e=>{if(!dragging)return;yaw-= (e.clientX-lastX)*.004;pitch=Math.max(-.05,Math.min(.72,pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY;});
+let grounded=false;
+const ray=new RAPIER.Ray({x:start.x,y:start.y-.2,z:start.z},{x:0,y:-1,z:0});
+function checkGrounded(){const p=playerBody.translation();const r=new RAPIER.Ray({x:p.x,y:p.y-.7,z:p.z},{x:0,y:-1,z:0});const hit=world.castRay(r,.45,true,undefined,undefined,undefined,playerBody);return !!hit;}
+const clock=new THREE.Clock();let accumulator=0,frames=0,fps=0,fpsTimer=0;
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.05);accumulator+=dt;
+ while(accumulator>=1/60){world.step();accumulator-=1/60;}
+ const p=playerBody.translation();grounded=checkGrounded();
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+ const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ let move=new THREE.Vector3();
+ if(keys.has("w")||keys.has("arrowup"))move.add(forward);
+ if(keys.has("s")||keys.has("arrowdown"))move.sub(forward);
+ if(keys.has("d")||keys.has("arrowright"))move.add(right);
+ if(keys.has("a")||keys.has("arrowleft"))move.sub(right);
+ if(move.lengthSq()>0)move.normalize();
+ const vel=playerBody.linvel();const speed=5.2;
+ playerBody.setLinvel({x:move.x*speed,y:vel.y,z:move.z*speed},true);
+ if(keys.has("space")&&grounded){playerBody.applyImpulse({x:0,y:5.3,z:0},true);keys.delete("space");}
+ player.position.set(p.x,p.y-.05,p.z);
+ if(move.lengthSq()>.02)player.rotation.y=Math.atan2(move.x,move.z);
+ const target=new THREE.Vector3(p.x,p.y+.55,p.z);
+ const camOffset=new THREE.Vector3(Math.sin(yaw)*7,2.8+pitch*4,Math.cos(yaw)*7);
+ camera.position.copy(target).add(camOffset);camera.lookAt(target);
+ frames++;fpsTimer+=dt;if(fpsTimer>=.5){fps= Math.round(frames/fpsTimer);frames=0;fpsTimer=0;document.querySelector("#state").textContent=grounded?"ON FOOT":"AIRBORNE";document.querySelector("#readout").textContent="FPS "+fps+" · position "+p.x.toFixed(1)+", "+p.y.toFixed(1)+", "+p.z.toFixed(1);}
+ renderer.render(scene,camera);
+}
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));});
+document.querySelector("#state").textContent="READY";
+animate();
+</script>
+</body>
+</html>
