@@ -1064,36 +1064,24 @@ let femaleAnimState=null,maleAnimState=null;
 let heroSwimPose=null;
 function makeProceduralSwimPose(boneMap){
  const normalizeBoneName=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
- const normalizedBones=[...boneMap.entries()].map(([name,bone])=>({name:String(name||bone.name||''),key:normalizeBoneName(name),bone}));
- const sideOf=key=>{
-  if(/left/.test(key)||/^bip001l/.test(key)||/^l(?:upperarm|lowerarm|forearm|arm|thigh|upleg|upperleg|calf|shin|leg)/.test(key)||/(?:upperarm|lowerarm|forearm|arm|thigh|upleg|upperleg|calf|shin|leg)l$/.test(key))return 'left';
-  if(/right/.test(key)||/^bip001r/.test(key)||/^r(?:upperarm|lowerarm|forearm|arm|thigh|upleg|upperleg|calf|shin|leg)/.test(key)||/(?:upperarm|lowerarm|forearm|arm|thigh|upleg|upperleg|calf|shin|leg)r$/.test(key))return 'right';
-  return '';
- };
- const find=(side,part)=>{
-  const matches=normalizedBones.filter(item=>{
-   if(sideOf(item.key)!==side)return false;
-   if(part==='upperArm')return /upperarm|armupper|(?:^|bip001)[lr]?arm$/.test(item.key)||(/arm/.test(item.key)&&!/forearm|lowerarm|hand|twist/.test(item.key));
-   if(part==='forearm')return /forearm|lowerarm|armlower/.test(item.key);
-   if(part==='thigh')return /upleg|upperleg|thigh/.test(item.key);
-   if(part==='shin')return /lowerleg|shin|calf/.test(item.key)||(/leg/.test(item.key)&&!/upleg|upperleg|thigh|foot|toe/.test(item.key));
-   return false;
-  });
-  const score=item=>(item.key.includes('mixamorig')?0:0)+(item.key.includes('bip001')?1:0)+(item.key.length/1000);
-  matches.sort((a,b)=>score(a)-score(b));
-  return matches[0]?.bone||null;
+ const normalizedBones=[...boneMap.entries()].map(([name,bone])=>({key:normalizeBoneName(name),bone}));
+ const find=names=>{
+  const aliases=names.map(normalizeBoneName);
+  for(const alias of aliases){const exact=normalizedBones.find(item=>item.key===alias);if(exact)return exact.bone;}
+  for(const alias of aliases){const suffix=normalizedBones.find(item=>item.key.endsWith(alias));if(suffix)return suffix.bone;}
+  return null;
  };
  // Stagger the shoulder, elbow and leg cycles so the fallback reads as a crawl
  // stroke with a light flutter kick instead of all limbs rocking in lockstep.
  const entries=[
-  {bone:find('left','upperArm'),axis:'x',amp:1.12,phase:0,rate:3.0},
-  {bone:find('right','upperArm'),axis:'x',amp:1.12,phase:Math.PI,rate:3.0},
-  {bone:find('left','forearm'),axis:'z',amp:.72,phase:Math.PI*.42,rate:3.0},
-  {bone:find('right','forearm'),axis:'z',amp:-.72,phase:Math.PI*1.42,rate:3.0},
-  {bone:find('left','thigh'),axis:'x',amp:.34,phase:Math.PI,rate:5.1},
-  {bone:find('right','thigh'),axis:'x',amp:.34,phase:0,rate:5.1},
-  {bone:find('left','shin'),axis:'x',amp:.27,phase:.65,rate:5.1},
-  {bone:find('right','shin'),axis:'x',amp:.27,phase:Math.PI+.65,rate:5.1}
+  {bone:find(['mixamorigleftarm','leftarm','left_arm']),axis:'x',amp:1.12,phase:0,rate:3.0},
+  {bone:find(['mixamorigrightarm','rightarm','right_arm']),axis:'x',amp:1.12,phase:Math.PI,rate:3.0},
+  {bone:find(['mixamorigleftforearm','leftforearm','left_forearm']),axis:'z',amp:.72,phase:Math.PI*.42,rate:3.0},
+  {bone:find(['mixamorigrightforearm','rightforearm','right_forearm']),axis:'z',amp:-.72,phase:Math.PI*1.42,rate:3.0},
+  {bone:find(['mixamorigleftupleg','leftupleg','leftthigh','left_up_leg']),axis:'x',amp:.34,phase:Math.PI,rate:5.1},
+  {bone:find(['mixamorigrightupleg','rightupleg','rightthigh','right_up_leg']),axis:'x',amp:.34,phase:0,rate:5.1},
+  {bone:find(['mixamorigleftleg','leftleg','leftshin','left_leg']),axis:'x',amp:.27,phase:.65,rate:5.1},
+  {bone:find(['mixamorigrightleg','rightleg','rightshin','right_leg']),axis:'x',amp:.27,phase:Math.PI+.65,rate:5.1}
  ].filter(e=>e.bone).map(e=>({...e,base:e.bone.rotation.clone()}));
  const available=entries.filter(e=>/arm/i.test(e.bone.name)).length>=2;
  return {available,restore(){for(const e of entries)e.bone.rotation.copy(e.base);},apply(time){if(!available)return;for(const e of entries){e.bone.rotation.copy(e.base);e.bone.rotation[e.axis]+=e.amp*Math.sin(time*e.rate+e.phase);}},boneAudit(){return {arms:entries.filter(e=>/arm/i.test(e.bone.name)).map(e=>e.bone.name),legs:entries.filter(e=>/(upleg|thigh|leg|shin)/i.test(e.bone.name)).map(e=>e.bone.name)};},test(){if(!available)return false;const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const changed=entries.some((e,i)=>Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)>.08);entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return changed;},testLimbs(){const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const moved=entries.map((e,i)=>({entry:e,delta:Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)}));entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return {arms:moved.some(v=>/arm/i.test(v.entry.bone.name)&&v.delta>.08),legs:moved.some(v=>/(upleg|thigh|leg|shin)/i.test(v.entry.bone.name)&&v.delta>.04)};}};
@@ -1213,7 +1201,7 @@ new GLTFLoader().load(maleHeroAssetUrl,gltf=>{
   const mixer=new THREE.AnimationMixer(model),idle=mixer.clipAction(strip(idleSrc)),walk=mixer.clipAction(strip(walkSrc)),run=runSrc?mixer.clipAction(strip(runSrc)):walk,jump=jumpSrc?mixer.clipAction(strip(jumpSrc)):null,swim=swimSrc?mixer.clipAction(strip(swimSrc)):null;
   idle.setLoop(THREE.LoopRepeat,Infinity).play();if(jump){jump.setLoop(THREE.LoopOnce,1);jump.clampWhenFinished=true;}if(swim)swim.setLoop(THREE.LoopRepeat,Infinity);const swimPose=makeProceduralSwimPose(maleBoneMap);maleAnimState={mixer,idle,walk,run,jump,swim,swimPose,active:idle};
   syncHeroAppearanceType();
-  window.__climbMaleAnimations={mixer,clips,selected:{idle:idleSrc?.name||null,walk:walkSrc?.name||null,run:runSrc?.name||null,jump:jumpSrc?.name||null,swim:swimSrc?.name||null},actions:{idle,walk,run,jump,swim,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test()}};
+  window.__climbMaleAnimations={mixer,clips,selected:{idle:idleSrc?.name||null,walk:walkSrc?.name||null,run:runSrc?.name||null,jump:jumpSrc?.name||null,swim:swimSrc?.name||null},actions:{idle,walk,run,jump,swim,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test(),proceduralSwimBoneAudit:()=>swimPose.boneAudit(),proceduralSwimLimbTest:()=>swimPose.testLimbs()}};
   window.__climbDiag('Male GLB loaded: '+bones.length+' bones, '+clips.length+' animation clips.');
  }catch(err){if(maleHeroModelVisual)maleHeroModelVisual.visible=false;window.__climbDiag('Male GLB setup failed; using procedural fallback: '+(err?.message||err));}
 },undefined,err=>window.__climbDiag('Male GLB failed to load: '+(err?.message||err)));
