@@ -906,7 +906,7 @@ try {
     if (!enteredWater) errors.push('swimming state failed to activate at river bend z=' + z);
     await page.waitForTimeout(450);
     const immersion = await page.evaluate(() => window.__climboriaSmoke.player.position.y);
-    if (enteredWater && immersion > -0.3) errors.push('player root did not settle below the river surface at z=' + z + ' (y=' + immersion.toFixed(2) + ')');
+    if (enteredWater && (immersion < -.34 || immersion > -.10)) errors.push('player root did not settle near the river waterline at z=' + z + ' (y=' + immersion.toFixed(2) + ')');
     for (const side of [-1, 1]) {
       await page.evaluate(({ x, zValue, bankSide }) => {
         const api = window.__climboriaSmoke;
