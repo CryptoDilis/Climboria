@@ -1187,6 +1187,39 @@ try {
   }
   console.log('Jarrell fall/respawn regression:', JSON.stringify({start:respawnStart,result:respawnAudit}));
 
+  // Visual/geometry gate: inspect separated distant ridges, not just the trailhead.
+  // The screenshot artifact lets reviewers compare the rendered landform with its sampled collision surface.
+  const distantRidgeTargets = [
+    { name: 'central-highlands', x: 640, z: 520 },
+    { name: 'eastern-ridge', x: 4400, z: -1200 },
+    { name: 'northwest-ridges', x: -2750, z: -1850 },
+  ];
+  for (const target of distantRidgeTargets) {
+    const ridgeAudit = await page.evaluate(({ x, z }) => {
+      const api = window.__climboriaSmoke;
+      api.setPaused(true);
+      const ground = api.terrainHeightAt(x, z);
+      api.player.position.set(x, ground + 2, z);
+      window.updateJarrellChunks?.(x, z);
+      const mesh = api.sampleTerrainMeshAt(x, z);
+      api.camera.position.set(x + 42, ground + 34, z + 54);
+      api.camera.lookAt(x, ground, z);
+      return {
+        x, z, ground,
+        meshHeight: mesh?.meshHeight,
+        collisionHeight: mesh?.collisionHeight,
+        meshDelta: mesh ? Math.abs(mesh.meshHeight - mesh.collisionHeight) : Infinity,
+      };
+    }, target);
+    if (![ridgeAudit.ground, ridgeAudit.meshHeight, ridgeAudit.collisionHeight, ridgeAudit.meshDelta].every(Number.isFinite) || ridgeAudit.meshDelta > 0.001) {
+      errors.push('distant ridge mesh/collision alignment failed: ' + JSON.stringify({ target, ridgeAudit }));
+    }
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: '/tmp/jarrell-ridge-' + target.name + '.png' });
+    console.log('Jarrell distant ridge visual/collision audit:', JSON.stringify({ target, ridgeAudit }));
+  }
+  await page.evaluate(() => window.__climboriaSmoke.setPaused(false));
+
   const missingTentAssets = ['tent-detailedopen.glb', 'tent-detailedclosed.glb'].filter(name => !tentAssets.has(name));
   if (missingTentAssets.length) errors.push('camp tent assets failed to load: ' + missingTentAssets.join(', '));
   console.log('Desktop smoke state:', JSON.stringify(desktopState));
