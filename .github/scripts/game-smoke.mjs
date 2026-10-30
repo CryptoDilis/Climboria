@@ -798,6 +798,33 @@ try {
       if (collider.outsideBlocked) errors.push('Sakura Hangout Park ' + kind + ' collider blocks outside its radius');
     }
   }
+
+  // Regression: test real structure/root colliders that players can encounter at camp and in the active forest chunks.
+  const structureCollisionAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const kinds = ['root', 'tent', 'cart', 'cartHandle', 'forge'];
+    return Object.fromEntries(kinds.map(kind => {
+      const item = api?.obstacles?.find(obstacle => obstacle.kind === kind);
+      if (!item) return [kind, { found: false }];
+      const y = item.y0 + Math.min(.22, Math.max(.05, (item.y1 - item.y0) * .2));
+      return [kind, {
+        found: true,
+        insideBlocked: api.testObstacleCollider(item, item.x, item.z, y),
+        outsideBlocked: api.testObstacleCollider(item, item.x + (item.r || .6) + 1.1, item.z, y),
+        aboveBlocked: api.testObstacleCollider(item, item.x, item.z, item.y1 + 2),
+        height: item.y1 - item.y0,
+      }];
+    }));
+  });
+  for (const [kind, audit] of Object.entries(structureCollisionAudit)) {
+    if (!audit.found) errors.push('Jarrell ' + kind + ' collider was not registered in the active world');
+    else {
+      if (!audit.insideBlocked) errors.push('Jarrell ' + kind + ' collider failed to block at its center: ' + JSON.stringify(audit));
+      if (audit.outsideBlocked) errors.push('Jarrell ' + kind + ' collider blocks outside its radius: ' + JSON.stringify(audit));
+      if (audit.aboveBlocked) errors.push('Jarrell ' + kind + ' collider falsely blocks above its vertical bounds: ' + JSON.stringify(audit));
+    }
+  }
+  console.log('Jarrell structure/root collision audit:', JSON.stringify(structureCollisionAudit));
   const placeholderWildlife = await page.evaluate(() => ({
     deer: window.__climboriaSmoke?.getDeer?.().length || 0,
     wolves: (window.__climboriaSmoke?.landmarks || []).filter(name => /^WildWolf_/.test(name)).length,
