@@ -859,8 +859,8 @@ try {
     const woman=window.__climbAraAnimations,man=window.__climbMaleAnimations;
     const active=(localStorage.getItem('climboria_hero_profile')||'').includes('"man"')?man:woman;
     return {
-      woman:woman?{selected:woman.selected||null,proceduralSwim:!!woman.actions?.proceduralSwim,proceduralSwimMovesBones:!!woman.actions?.proceduralSwimTest?.(),clipNames:(woman.clips||[]).map(c=>c.name)}:null,
-      man:man?{selected:man.selected||null,proceduralSwim:!!man.actions?.proceduralSwim,proceduralSwimMovesBones:!!man.actions?.proceduralSwimTest?.(),clipNames:(man.clips||[]).map(c=>c.name)}:null,
+      woman:woman?{selected:woman.selected||null,proceduralSwim:!!woman.actions?.proceduralSwim,proceduralSwimMovesBones:!!woman.actions?.proceduralSwimTest?.(),limbAudit:woman.actions?.proceduralSwimBoneAudit?.()||null,limbMovement:woman.actions?.proceduralSwimLimbTest?.()||null,clipNames:(woman.clips||[]).map(c=>c.name)}:null,
+      man:man?{selected:man.selected||null,proceduralSwim:!!man.actions?.proceduralSwim,proceduralSwimMovesBones:!!man.actions?.proceduralSwimTest?.(),limbAudit:man.actions?.proceduralSwimBoneAudit?.()||null,limbMovement:man.actions?.proceduralSwimLimbTest?.()||null,clipNames:(man.clips||[]).map(c=>c.name)}:null,
       activeLoaded:!!active,
     };
   });
@@ -868,7 +868,7 @@ try {
   if (swimAnimationAudit.woman && !('swim' in (swimAnimationAudit.woman.selected||{}))) errors.push('female hero animation diagnostics must expose the selected swim clip (or null) explicitly');
   if (swimAnimationAudit.man && !('swim' in (swimAnimationAudit.man.selected||{}))) errors.push('male hero animation diagnostics must expose the selected swim clip (or null) explicitly');
   for (const [label,rig] of [['female',swimAnimationAudit.woman],['male',swimAnimationAudit.man]]) {
-    if (rig && !rig.selected?.swim && (!rig.proceduralSwim || !rig.proceduralSwimMovesBones)) errors.push(label+' hero rig has no swim clip and its procedural fallback does not animate the arm bones: '+JSON.stringify(rig));
+    if (rig && !rig.selected?.swim && (!rig.proceduralSwim || !rig.proceduralSwimMovesBones || !rig.limbMovement?.arms || !rig.limbMovement?.legs)) errors.push(label+' hero rig has no swim clip and its procedural fallback does not animate both arms and legs: '+JSON.stringify(rig));
   }
 
   // Regression: approach the river from dry ground and verify the transition enters swimming without a deep fall.

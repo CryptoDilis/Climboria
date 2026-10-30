@@ -1063,7 +1063,14 @@ let heroModelVisual=null,maleHeroModelVisual=null;
 let femaleAnimState=null,maleAnimState=null;
 let heroSwimPose=null;
 function makeProceduralSwimPose(boneMap){
- const find=names=>names.map(n=>boneMap.get(n.toLowerCase())).find(Boolean)||null;
+ const normalizeBoneName=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const normalizedBones=[...boneMap.entries()].map(([name,bone])=>({key:normalizeBoneName(name),bone}));
+ const find=names=>{
+  const aliases=names.map(normalizeBoneName);
+  for(const alias of aliases){const exact=normalizedBones.find(item=>item.key===alias);if(exact)return exact.bone;}
+  for(const alias of aliases){const suffix=normalizedBones.find(item=>item.key.endsWith(alias));if(suffix)return suffix.bone;}
+  return null;
+ };
  // Stagger the shoulder, elbow and leg cycles so the fallback reads as a crawl
  // stroke with a light flutter kick instead of all limbs rocking in lockstep.
  const entries=[
@@ -1077,7 +1084,7 @@ function makeProceduralSwimPose(boneMap){
   {bone:find(['mixamorigrightleg','rightleg','rightshin','right_leg']),axis:'x',amp:.27,phase:Math.PI+.65,rate:5.1}
  ].filter(e=>e.bone).map(e=>({...e,base:e.bone.rotation.clone()}));
  const available=entries.filter(e=>/arm/i.test(e.bone.name)).length>=2;
- return {available,restore(){for(const e of entries)e.bone.rotation.copy(e.base);},apply(time){if(!available)return;for(const e of entries){e.bone.rotation.copy(e.base);e.bone.rotation[e.axis]+=e.amp*Math.sin(time*e.rate+e.phase);}},test(){if(!available)return false;const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const changed=entries.some((e,i)=>Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)>.08);entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return changed;}};
+ return {available,restore(){for(const e of entries)e.bone.rotation.copy(e.base);},apply(time){if(!available)return;for(const e of entries){e.bone.rotation.copy(e.base);e.bone.rotation[e.axis]+=e.amp*Math.sin(time*e.rate+e.phase);}},boneAudit(){return {arms:entries.filter(e=>/arm/i.test(e.bone.name)).map(e=>e.bone.name),legs:entries.filter(e=>/(upleg|thigh|leg|shin)/i.test(e.bone.name)).map(e=>e.bone.name)};},test(){if(!available)return false;const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const changed=entries.some((e,i)=>Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)>.08);entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return changed;},testLimbs(){const before=entries.map(e=>e.bone.rotation.clone());this.apply(.7);const moved=entries.map((e,i)=>({entry:e,delta:Math.abs(e.bone.rotation.x-before[i].x)+Math.abs(e.bone.rotation.y-before[i].y)+Math.abs(e.bone.rotation.z-before[i].z)}));entries.forEach((e,i)=>e.bone.rotation.copy(before[i]));return {arms:moved.some(v=>/arm/i.test(v.entry.bone.name)&&v.delta>.08),legs:moved.some(v=>/(upleg|thigh|leg|shin)/i.test(v.entry.bone.name)&&v.delta>.04)};}};
 }
 
 function savedHeroType(){try{const h=JSON.parse(localStorage.getItem('climboria_hero_profile')||'null');return h?.type||'woman'}catch{return 'woman'}}
@@ -1165,7 +1172,7 @@ new GLTFLoader().load(heroAssetUrl,gltf=>{
   const swimPose=makeProceduralSwimPose(boneByName);femaleAnimState={mixer,idle:idleAction,walk:walkAction,run:runAction,jump:jumpAction,swim:swimAction,swimPose,active:idleAction};
   syncHeroAppearanceType();
   // Keep extra clips available for future jump/climb integration without mixing another rig.
-  window.__climbAraAnimations={mixer,clips:sourceClips,selected:{idle:idleSource?.name||null,walk:walkSource?.name||null,run:runSource?.name||null,jump:jumpSource?.name||null,swim:swimSource?.name||null},actions:{idle:idleAction,walk:walkAction,run:runAction,jump:jumpAction,swim:swimAction,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test()}};
+  window.__climbAraAnimations={mixer,clips:sourceClips,selected:{idle:idleSource?.name||null,walk:walkSource?.name||null,run:runSource?.name||null,jump:jumpSource?.name||null,swim:swimSource?.name||null},actions:{idle:idleAction,walk:walkAction,run:runAction,jump:jumpAction,swim:swimAction,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test(),proceduralSwimBoneAudit:()=>swimPose.boneAudit(),proceduralSwimLimbTest:()=>swimPose.testLimbs()}};
   window.__climbDiag('Ara 3D Adventurer loaded: '+namedBones.size+' bones, '+sourceClips.length+' clips; root-motion translations neutralized.');
  }catch(err){
   window.__climbDiag('Ara 3D character setup failed; no legacy hero fallback: '+(err?.message||err));
@@ -1194,7 +1201,7 @@ new GLTFLoader().load(maleHeroAssetUrl,gltf=>{
   const mixer=new THREE.AnimationMixer(model),idle=mixer.clipAction(strip(idleSrc)),walk=mixer.clipAction(strip(walkSrc)),run=runSrc?mixer.clipAction(strip(runSrc)):walk,jump=jumpSrc?mixer.clipAction(strip(jumpSrc)):null,swim=swimSrc?mixer.clipAction(strip(swimSrc)):null;
   idle.setLoop(THREE.LoopRepeat,Infinity).play();if(jump){jump.setLoop(THREE.LoopOnce,1);jump.clampWhenFinished=true;}if(swim)swim.setLoop(THREE.LoopRepeat,Infinity);const swimPose=makeProceduralSwimPose(maleBoneMap);maleAnimState={mixer,idle,walk,run,jump,swim,swimPose,active:idle};
   syncHeroAppearanceType();
-  window.__climbMaleAnimations={mixer,clips,selected:{idle:idleSrc?.name||null,walk:walkSrc?.name||null,run:runSrc?.name||null,jump:jumpSrc?.name||null,swim:swimSrc?.name||null},actions:{idle,walk,run,jump,swim,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test()}};
+  window.__climbMaleAnimations={mixer,clips,selected:{idle:idleSrc?.name||null,walk:walkSrc?.name||null,run:runSrc?.name||null,jump:jumpSrc?.name||null,swim:swimSrc?.name||null},actions:{idle,walk,run,jump,swim,proceduralSwim:swimPose.available,proceduralSwimTest:()=>swimPose.test(),proceduralSwimBoneAudit:()=>swimPose.boneAudit(),proceduralSwimLimbTest:()=>swimPose.testLimbs()}};
   window.__climbDiag('Male GLB loaded: '+bones.length+' bones, '+clips.length+' animation clips.');
  }catch(err){if(maleHeroModelVisual)maleHeroModelVisual.visible=false;window.__climbDiag('Male GLB setup failed; using procedural fallback: '+(err?.message||err));}
 },undefined,err=>window.__climbDiag('Male GLB failed to load: '+(err?.message||err)));
