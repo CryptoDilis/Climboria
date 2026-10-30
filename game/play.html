@@ -1063,7 +1063,14 @@ let heroModelVisual=null,maleHeroModelVisual=null;
 let femaleAnimState=null,maleAnimState=null;
 let heroSwimPose=null;
 function makeProceduralSwimPose(boneMap){
- const find=names=>names.map(n=>boneMap.get(n.toLowerCase())).find(Boolean)||null;
+ const normalizeBoneName=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const normalizedBones=[...boneMap.entries()].map(([name,bone])=>({key:normalizeBoneName(name),bone}));
+ const find=names=>{
+  const aliases=names.map(normalizeBoneName);
+  for(const alias of aliases){const exact=normalizedBones.find(item=>item.key===alias);if(exact)return exact.bone;}
+  for(const alias of aliases){const suffix=normalizedBones.find(item=>item.key.endsWith(alias));if(suffix)return suffix.bone;}
+  return null;
+ };
  // Stagger the shoulder, elbow and leg cycles so the fallback reads as a crawl
  // stroke with a light flutter kick instead of all limbs rocking in lockstep.
  const entries=[
