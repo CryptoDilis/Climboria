@@ -315,6 +315,7 @@ try {
     console.log('Jarrell walkable uphill collision regression:',JSON.stringify({target:uphillTarget,result:uphillResult,distance:Number(uphillDistance.toFixed(2))}));
     if (uphillDistance < .35) errors.push('player was blocked on a walkable uphill slope: '+JSON.stringify({target:uphillTarget,result:uphillResult,distance:uphillDistance}));
     if (uphillResult.clearance < .05 || uphillResult.clearance > 1.5) errors.push('player lost ground contact while walking uphill: '+JSON.stringify({target:uphillTarget,result:uphillResult}));
+    if (uphillResult.ground - uphillTarget.ground < .2) errors.push('player moved without gaining height on a walkable uphill slope: '+JSON.stringify({target:uphillTarget,result:uphillResult}));
   }
 
   if (!desktopState.cacheStreaming || !desktopState.forestStreaming) errors.push('streamed cache/forest hooks did not initialize');
@@ -813,45 +814,6 @@ try {
     errors.push('movement-driven mountain collision/traversal failed: '+JSON.stringify(mountainTraversalAudit));
   }
   console.log('Jarrell movement-driven mountain traversal regression:',JSON.stringify(mountainTraversalAudit));
-
-  // Regression: walkable natural slopes must support real uphill movement while steep terrain remains blocking.
-  const slopeTraversalAudit = await page.evaluate(async () => {
-    const api=window.__climboriaSmoke;
-    const original={x:api.player.position.x,y:api.player.position.y,z:api.player.position.z,paused:api.isPaused()};
-    const directions=[[1,0],[-1,0],[0,1],[0,-1],[.707,.707],[-.707,.707],[.707,-.707],[-.707,-.707]];
-    let candidate=null;
-    const blocked=(x,z,y)=>api.testMountainCollision(x,z,y)||api.testObstacleCollision(x,z,y);
-    // Search nearby real heightfield terrain for a continuous, moderately sloped, unobstructed uphill path.
-    for(let radius=24;radius<=240&&!candidate;radius+=12){
-      for(let angle=0;angle<Math.PI*2&&!candidate;angle+=Math.PI/8){
-        const sx=original.x+Math.cos(angle)*radius,sz=original.z+Math.sin(angle)*radius;
-        const startH=api.terrainHeightAt(sx,sz);
-        if(blocked(sx,sz,startH+.22))continue;
-        for(const [dx,dz] of directions){
-          const samples=[];let previous=startH,valid=true;
-          for(let distance=1;distance<=10;distance+=1){
-            const x=sx+dx*distance,z=sz+dz*distance,h=api.terrainHeightAt(x,z);
-            if(h<previous-.025||h-startH>distance*.68||blocked(x,z,h+.22)){valid=false;break;}
-            samples.push({x,z,h});previous=h;
-          }
-          const rise=previous-startH;
-          if(valid&&rise>=1.1&&rise<=5.8){candidate={sx,sz,startH,dx,dz,rise,samples};break;}
-        }
-      }
-    }
-    if(!candidate)return {error:'no nearby continuous walkable uphill slope found',origin:{x:original.x,z:original.z}};
-    api.setMoveVector(null,null);api.setPaused(true);
-    api.setPlayerPosition(candidate.sx,candidate.startH+.22,candidate.sz);
-    api.setPaused(false);api.setMoveVector(candidate.dx,candidate.dz);
-    await new Promise(resolve=>setTimeout(resolve,2600));
-    const finish={x:api.player.position.x,y:api.player.position.y,z:api.player.position.z};
-    api.setMoveVector(null,null);api.setPaused(true);
-    api.setPlayerPosition(original.x,original.y,original.z);api.setPaused(original.paused);
-    const distance=(finish.x-candidate.sx)*candidate.dx+(finish.z-candidate.sz)*candidate.dz;
-    return {start:{x:candidate.sx,z:candidate.sz,y:candidate.startH},finish,expectedRise:candidate.rise,progress:distance,groundRise:finish.y-(candidate.startH+.22),uphillProgress:distance>=2.2&&finish.y>candidate.startH+.45,plannedPathSamples:candidate.samples.length};
-  });
-  if(slopeTraversalAudit.error||!slopeTraversalAudit.uphillProgress)errors.push('walkable natural slope did not support movement-driven uphill traversal: '+JSON.stringify(slopeTraversalAudit));
-  console.log('Jarrell movement-driven walkable slope traversal regression:',JSON.stringify(slopeTraversalAudit));
 
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
