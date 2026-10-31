@@ -35,7 +35,7 @@ try {
   await page.locator('#creatorStart').click();
   await page.waitForTimeout(350);
   await page.waitForTimeout(900);
-  await page.screenshot({ path: '/tmp/jarrell-desktop.png' });
+  await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
   const desktopHeroSetup = await page.evaluate(() => { const overlay=document.querySelector('#creatorOverlay');return {display:overlay?getComputedStyle(overlay).display:'missing',closed:overlay?.classList.contains('closed')||false,error:document.querySelector('#creatorError')?.textContent||'',saved:!!localStorage.getItem('climboria_hero_profile'),swimAnimationAvailable:!!(window.__climbAraAnimations?.actions?.swim||window.__climbAraAnimations?.actions?.proceduralSwim),swimAnimationMode:window.__climbAraAnimations?.actions?.swim?'clip':(window.__climbAraAnimations?.actions?.proceduralSwim?'procedural':'missing'),swimPoseMovesBones:!!window.__climbAraAnimations?.actions?.swim||!!window.__climbAraAnimations?.actions?.proceduralSwimTest?.(),characterDiagnostic:window.__climbDiagLast||''}; });
   if (!desktopHeroSetup.swimAnimationAvailable) errors.push('Jarrell swimming has neither a dedicated swim clip nor a compatible procedural swim pose on the loaded adventurer rig');
   if (!desktopHeroSetup.swimPoseMovesBones) errors.push('Jarrell swimming animation fallback exists but does not move the adventurer rig bones');
@@ -1373,7 +1373,7 @@ try {
   const mobileSwimPointerCaptureCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke,jump=document.getElementById('jump'),sprint=document.getElementById('sprint');api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.sprinting=true;jump.dispatchEvent(new Event('lostpointercapture'));sprint.dispatchEvent(new Event('lostpointercapture'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false,sprint:window.sprinting===false};});
   if(!mobileSwimPointerCaptureCleanup.surface||!mobileSwimPointerCaptureCleanup.dive||!mobileSwimPointerCaptureCleanup.sprint) errors.push('swim and sprint inputs must release when a touch control loses pointer capture: '+JSON.stringify(mobileSwimPointerCaptureCleanup));
   console.log('Mobile swim pointer-capture cleanup:',JSON.stringify(mobileSwimPointerCaptureCleanup));
-  await mobilePage.screenshot({ path: '/tmp/jarrell-mobile.png' });
+  await mobilePage.screenshot({ path: 'climboria-mobile-gameplay.png' });
   await mobile.close();
 
   // Regression-test the expedition menu: Jarrell is playable, regular mountains are deferred, and the demo marketplace modal still works.
