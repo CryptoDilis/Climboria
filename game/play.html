@@ -249,6 +249,13 @@ function hitsJarrellObstacleAt(x,z,playerY){
 function mountainHeight(x,z){const dz=(z+145)/405,dx=x/285,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*248;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*31*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+385)*.009))*42;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+280)*.021))*26*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
 let terrainHeightAt=mountainHeight;
 const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
+// Mount Jarrell HUD before terrain, chunk, and asset initialization can fail or delay the game.
+if(currentLevel==='11'){
+ const mountJarrellPrompt=(id,text,css)=>{if(document.getElementById(id))return;const node=document.createElement('div');node.id=id;node.textContent=text;node.style.cssText=css;document.body.appendChild(node);};
+ mountJarrellPrompt('jarrellChestPrompt','CACHE FOUND · PRESS E / USE TO OPEN','position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540');
+ mountJarrellPrompt('jarrellFishingHint','RIVERSIDE CAMP · E TO FISH','position:fixed;left:50%;bottom:92px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744');
+}
+
 // Declare live world-state before the render/update loop can run. Keep wildlife empty until verified, licensed animal models are integrated; never respawn the retired primitive placeholders.
 let fishingRiver=null,fishingBank=null,riverCurve=null,riverFish=[];let jarrellWildlife=[];
 // Shared ground-height helper is declared before player spawn; Jarrell's Peak camp uses the same terrain profile.
