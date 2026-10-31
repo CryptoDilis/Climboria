@@ -1,3 +1,15 @@
+## 2026-10-31 — river/swim regression coverage audit; latest workflows green
+
+- [x] Audited the current browser smoke test rather than assuming river exit was untested.
+- [x] Confirmed automated dry-bank river entry is exercised and must enter stable swimming without a deep fall.
+- [x] Confirmed swimming activation and waterline are checked at nine river positions: -700, -520, -360, -200, 0, 80, 280, 480, and 700.
+- [x] Confirmed both banks are checked for swimming-state exit at each of those nine river positions.
+- [x] Confirmed a separate movement-driven swim-exit scenario follows the local river-bank normal and requires the player to reach dry, grounded terrain within a 24-second observation window.
+- [x] Confirmed the active swim pose is exercised for both selectable hero appearances, including pitch direction, pivot height, and arm/leg movement assertions.
+- [ ] Manual visual acceptance remains open: face-down orientation, natural-looking strokes, and waterline on actual Android and desktop browsers.
+- [ ] Manual traversal/collision acceptance remains open across mountain faces, cave walls, roots, rocks, structures, and shoreline props.
+- [ ] Do not claim visual or physical completion from automated smoke coverage alone.
+
 ## 2026-10-31 — latest swimming regression hardening; all workflows green
 
 - [x] Latest gameplay/test commit: `7cc7a39ef792d23a76bc42846ab585228b7c4bf8` — reject incomplete GLB swim clips and require procedural fallback to animate both arms and legs.
