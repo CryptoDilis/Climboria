@@ -1034,6 +1034,65 @@ try {
 
 
 
+  // Movement-driven traversal: approach each freshwater basin through a verified shoreline gap,
+  // confirm swimming activates, then walk back out through the same gap and confirm it clears.
+  const freshwaterGapTraversalAudit = await page.evaluate(async () => {
+    const api=window.__climboriaSmoke,results=[];
+    const configs=[
+      {id:'woodland-pond',kind:'freshwater-landing-rock',closed:false},
+      {id:'moonpool',kind:'freshwater-rim-rock',closed:true},
+      {id:'sanctuary-lake',kind:'freshwater-sanctuary-rim-rock',closed:true}
+    ];
+    api.setPaused(false);
+    for(const config of configs){
+      const body=api.freshwaterBodies.find(item=>item.id===config.id);
+      const stones=api.obstacles.filter(item=>item.kind===config.kind)
+        .map(item=>({...item,angle:Math.atan2(item.z-body.z,item.x-body.x)}))
+        .sort((a,b)=>a.angle-b.angle);
+      const pairCount=config.closed?stones.length:Math.max(0,stones.length-1);
+      const candidates=Array.from({length:pairCount},(_,index)=>{
+        const a=stones[index],b=stones[(index+1)%stones.length];
+        const x=(a.x+b.x)/2,z=(a.z+b.z)/2;
+        const dx=x-body.x,dz=z-body.z,length=Math.hypot(dx,dz)||1;
+        const ux=dx/length,uz=dz/length;
+        const inner={x:body.x+ux*Math.min(body.rx*.78, length),z:body.z+uz*Math.min(body.rz*.78,length)};
+        const y=api.terrainHeightAt(x,z)+.22;
+        const blocked=stones.some(item=>api.testObstacleCollider(item,x,z,y));
+        return {x,z,ux,uz,inner,blocked,angle:Math.atan2(dz,dx)};
+      }).filter(item=>!item.blocked);
+      const gap=candidates.find(item=>api.freshwaterAt(item.inner.x,item.inner.z));
+      if(!gap){results.push({id:config.id,error:'no clear shoreline gap leads into the registered water footprint',candidateCount:candidates.length});continue;}
+      const start={x:body.x+gap.ux*(Math.max(body.rx,body.rz)+3.2),z:body.z+gap.uz*(Math.max(body.rx,body.rz)+3.2)};
+      api.setMoveVector(null,null);
+      api.setPlayerPosition(start.x,api.terrainHeightAt(start.x,start.z)+.22,start.z);
+      await new Promise(resolve=>setTimeout(resolve,180));
+      const startState=window.jarrellSwimming===true;
+      api.setMoveVector(-gap.ux,-gap.uz);
+      await new Promise(resolve=>setTimeout(resolve,1900));
+      api.setMoveVector(null,null);
+      const entered=window.jarrellSwimming===true;
+      const entryPosition={x:api.player.position.x,z:api.player.position.z};
+      api.setMoveVector(gap.ux,gap.uz);
+      await new Promise(resolve=>setTimeout(resolve,2600));
+      api.setMoveVector(null,null);
+      const exited=window.jarrellSwimming!==true;
+      const exitPosition={x:api.player.position.x,z:api.player.position.z};
+      results.push({id:config.id,gap:{x:Number(gap.x.toFixed(2)),z:Number(gap.z.toFixed(2)),angle:Number(gap.angle.toFixed(3))},startState,entered,exited,start,entryPosition,exitPosition,entryDistance:Number(Math.hypot(entryPosition.x-start.x,entryPosition.z-start.z).toFixed(2)),exitDistance:Number(Math.hypot(exitPosition.x-entryPosition.x,exitPosition.z-entryPosition.z).toFixed(2))});
+    }
+    api.setMoveVector(null,null);
+    return results;
+  });
+  for(const item of freshwaterGapTraversalAudit){
+    if(item.error)errors.push('freshwater shoreline gap traversal unavailable at '+item.id+': '+JSON.stringify(item));
+    else {
+      if(item.startState)errors.push('player unexpectedly starts in swimming state outside '+item.id+': '+JSON.stringify(item));
+      if(!item.entered)errors.push('player did not enter '+item.id+' through a real shoreline gap: '+JSON.stringify(item));
+      if(!item.exited)errors.push('player did not exit '+item.id+' back through its shoreline gap: '+JSON.stringify(item));
+      if(item.entryDistance<.5||item.exitDistance<.5)errors.push('freshwater gap traversal did not produce sufficient player movement: '+JSON.stringify(item));
+    }
+  }
+  console.log('Jarrell movement-driven freshwater gap traversal:',JSON.stringify(freshwaterGapTraversalAudit));
+
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
     const api = window.__climboriaSmoke;
