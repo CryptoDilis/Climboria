@@ -778,20 +778,25 @@ try {
     const api = window.__climboriaSmoke;
     const tree = api?.obstacles?.find(item => item.kind === 'sakura-tree');
     const bench = api?.obstacles?.find(item => item.kind === 'park-bench');
+    const swing = api?.obstacles?.find(item => item.kind === 'park-swing');
+    const hammock = api?.obstacles?.find(item => item.kind === 'park-hammock');
     const check = item => item ? {
       insideBlocked: api.testObstacleCollider(item, item.x, item.z, item.y0 + .22),
       outsideBlocked: api.testObstacleCollider(item, item.x + (item.r || 1) + 1.1, item.z, item.y0 + .22),
+      aboveBlocked: api.testObstacleCollider(item, item.x, item.z, item.y1 + .5),
     } : null;
     return {
       counts: park ? { trees: park.trees, benches: park.benches, swings: park.swings, hammocks: park.hammocks } : null,
       tree: check(tree),
       bench: check(bench),
+      swing: check(swing),
+      hammock: check(hammock),
     };
   });
   if (!sakuraParkCheck.counts || sakuraParkCheck.counts.trees !== 7 || sakuraParkCheck.counts.benches !== 3 || sakuraParkCheck.counts.swings !== 2 || sakuraParkCheck.counts.hammocks !== 2) {
     errors.push('Sakura Hangout Park did not initialize all expected features: ' + JSON.stringify(sakuraParkCheck));
   }
-  for (const [kind, collider] of [['tree', sakuraParkCheck.tree], ['bench', sakuraParkCheck.bench]]) {
+  for (const [kind, collider] of [['tree', sakuraParkCheck.tree], ['bench', sakuraParkCheck.bench], ['swing', sakuraParkCheck.swing], ['hammock', sakuraParkCheck.hammock]]) {
     if (!collider) errors.push('Sakura Hangout Park ' + kind + ' collider was not indexed');
     else {
       if (!collider.insideBlocked) errors.push('Sakura Hangout Park ' + kind + ' collider does not block at its center');
