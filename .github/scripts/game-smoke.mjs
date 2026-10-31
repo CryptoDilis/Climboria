@@ -960,14 +960,15 @@ try {
   console.log('Jarrell freshwater movement transitions:',JSON.stringify(freshwaterMovementAudit));
 
   const freshwaterStoneCollisionAudit = await page.evaluate(() => {
-    const api=window.__climboriaSmoke,stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock');
-    const woodland=stones.filter(item=>item.kind==='freshwater-landing-rock'),moonpool=stones.filter(item=>item.kind==='freshwater-rim-rock');
+    const api=window.__climboriaSmoke,stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock'||item.kind==='freshwater-sanctuary-rim-rock');
+    const woodland=stones.filter(item=>item.kind==='freshwater-landing-rock'),moonpool=stones.filter(item=>item.kind==='freshwater-rim-rock'),sanctuary=stones.filter(item=>item.kind==='freshwater-sanctuary-rim-rock');
     const sample=items=>items.map(item=>({kind:item.kind,x:item.x,z:item.z,r:item.r,y0:item.y0,y1:item.y1,inside:api.testObstacleCollider(item,item.x,item.z,item.y0+.22),outside:!api.testObstacleCollider(item,item.x+item.r+1.1,item.z,item.y0+.22)}));
-    return {woodland:sample(woodland),moonpool:sample(moonpool),reedColliders:api.obstacles.filter(item=>/reed/i.test(item.kind)).length};
+    return {woodland:sample(woodland),moonpool:sample(moonpool),sanctuary:sample(sanctuary),reedColliders:api.obstacles.filter(item=>/reed/i.test(item.kind)).length};
   });
   if(freshwaterStoneCollisionAudit.woodland.length!==5)errors.push('woodland pond landing stones do not all have colliders: '+JSON.stringify(freshwaterStoneCollisionAudit));
   if(freshwaterStoneCollisionAudit.moonpool.length!==13)errors.push('Moonpool rim stones do not all have colliders: '+JSON.stringify(freshwaterStoneCollisionAudit));
-  if([...freshwaterStoneCollisionAudit.woodland,...freshwaterStoneCollisionAudit.moonpool].some(item=>!item.inside||!item.outside))errors.push('freshwater stone collision boundary regression: '+JSON.stringify(freshwaterStoneCollisionAudit));
+  if(freshwaterStoneCollisionAudit.sanctuary.length!==32)errors.push('Sanctuary Lake rim stones do not all have colliders: '+JSON.stringify(freshwaterStoneCollisionAudit));
+  if([...freshwaterStoneCollisionAudit.woodland,...freshwaterStoneCollisionAudit.moonpool,...freshwaterStoneCollisionAudit.sanctuary].some(item=>!item.inside||!item.outside))errors.push('freshwater stone collision boundary regression: '+JSON.stringify(freshwaterStoneCollisionAudit));
   if(freshwaterStoneCollisionAudit.reedColliders!==0)errors.push('decorative reeds should remain non-blocking: '+JSON.stringify(freshwaterStoneCollisionAudit));
   console.log('Jarrell freshwater stone collision audit:',JSON.stringify(freshwaterStoneCollisionAudit));
   
@@ -977,7 +978,7 @@ try {
     const stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock');
     api.setPaused(false);
     for(const item of stones){
-      const body=item.kind==='freshwater-landing-rock'?api.freshwaterBodies.find(b=>b.id==='woodland-pond'):api.freshwaterBodies.find(b=>b.id==='moonpool');
+      const body=api.freshwaterBodies.find(b=>b.id===(item.kind==='freshwater-landing-rock'?'woodland-pond':item.kind==='freshwater-rim-rock'?'moonpool':'sanctuary-lake'));
       const dx=item.x-body.x,dz=item.z-body.z,length=Math.hypot(dx,dz)||1,ux=dx/length,uz=dz/length;
       const startX=item.x+ux*(item.r+3.2),startZ=item.z+uz*(item.r+3.2);
       const startGround=api.terrainHeightAt(startX,startZ);
