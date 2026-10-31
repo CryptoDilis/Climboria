@@ -962,6 +962,27 @@ try {
     return {x,z};
   });
   await page.waitForTimeout(900);
+  // Exercise the live swimming pose for each selectable hero rig, not just whichever profile happens to be saved.
+  const originalSwimAppearance = await page.evaluate(() => window.jarrellSwimPoseDebug?.appearance || (JSON.parse(localStorage.getItem('climboria_hero_profile')||'{}').type==='man'?'man':'woman'));
+  const swimAppearanceAudit = [];
+  for (const appearance of ['woman','man']) {
+    const switched = await page.evaluate(type => window.__climboriaSmoke.setHeroAppearance(type), appearance);
+    if (!switched) { errors.push(appearance+' hero appearance could not be activated for the in-water swim regression'); continue; }
+    await page.waitForFunction(type => window.jarrellSwimPoseDebug?.appearance===type, appearance, {timeout:5000,polling:100}).catch(() => {});
+    await page.waitForTimeout(250);
+    const pose = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,pose:window.jarrellSwimPoseDebug||null}));
+    swimAppearanceAudit.push({appearance,...pose});
+    const expectedSign = appearance==='man'?-1:1;
+    if (!pose.swimming) errors.push(appearance+' hero stopped swimming during appearance-switch regression: '+JSON.stringify(pose));
+    if (!pose.pose?.hasModel || pose.pose.appearance!==appearance) errors.push(appearance+' hero is not the visible active model during swimming: '+JSON.stringify(pose));
+    if (!Number.isFinite(pose.pose?.tilt) || pose.pose.tilt*expectedSign<1.0) errors.push(appearance+' hero swim pitch has the wrong orientation for its rig: '+JSON.stringify(pose));
+    if (pose.pose?.hasModel && !pose.pose.hasSwimClip && (!pose.pose.proceduralSwimAvailable || !pose.pose.proceduralSwimApplied)) errors.push(appearance+' hero has no active swim clip or applied procedural swim stroke: '+JSON.stringify(pose));
+    if (pose.pose?.hasModel && !(pose.pose.pivotY>=.15 && pose.pose.pivotY<=.35)) errors.push(appearance+' hero swim pivot is outside the waterline range: '+JSON.stringify(pose));
+  }
+  await page.evaluate(type => window.__climboriaSmoke.setHeroAppearance(type), originalSwimAppearance);
+  await page.waitForFunction(type => window.jarrellSwimPoseDebug?.appearance===type, originalSwimAppearance, {timeout:5000,polling:100}).catch(() => {});
+  await page.waitForTimeout(200);
+  console.log('Per-appearance active swim pose audit:',JSON.stringify(swimAppearanceAudit));
   const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y,pose:window.jarrellSwimPoseDebug||null}));
   await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
   await page.waitForTimeout(800);
