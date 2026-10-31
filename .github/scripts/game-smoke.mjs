@@ -778,6 +778,42 @@ try {
   }
   console.log('Jarrell mountain massif collision regression:',JSON.stringify(mountainCollisionAudit));
 
+  // Regression: actual player movement must stop at the mountain massif and still allow tangential sliding.
+  const mountainTraversalAudit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke, massif = api?.mountainBlockers?.find(item => item.kind === 'mountainMassif');
+    if (!massif) return { error:'no mountain massif blocker registered' };
+    const original = { x:api.player.position.x, y:api.player.position.y, z:api.player.position.z, paused:api.isPaused() };
+    const startX = massif.x + massif.rx + 2.2, startZ = massif.z;
+    const ground = api.terrainHeightAt(startX,startZ);
+    const startY = Math.max(ground + .22,massif.y0 + .25);
+    if (!(startY + 1.7 > massif.y0 && startY < massif.y1)) return { error:'could not place player in the massif vertical collision band', startY, y0:massif.y0, y1:massif.y1 };
+    api.setMoveVector(null,null);
+    api.setPaused(true);
+    api.setPlayerPosition(startX,startY,startZ);
+    api.setPaused(false);
+    api.setMoveVector(-1,0);
+    await new Promise(resolve=>setTimeout(resolve,1500));
+    const contact = { x:api.player.position.x, z:api.player.position.z };
+    api.setMoveVector(0,1);
+    await new Promise(resolve=>setTimeout(resolve,1000));
+    const slid = { x:api.player.position.x, z:api.player.position.z };
+    api.setMoveVector(null,null);
+    api.setPaused(true);
+    api.setPlayerPosition(original.x,original.y,original.z);
+    api.setPaused(original.paused);
+    return {
+      start:{x:startX,z:startZ,y:startY}, contact, slid,
+      stoppedAtFace:contact.x >= massif.x + massif.rx - .55 && contact.x < startX - .15,
+      didNotPenetrate:!api.testMountainCollider(massif,contact.x,contact.z,startY),
+      slidAlongFace:Math.abs(slid.z-contact.z) > .3 && slid.x >= massif.x + massif.rx - .55,
+      movementSamples:api.movementTrace?.length||0
+    };
+  });
+  if (mountainTraversalAudit.error || !mountainTraversalAudit.stoppedAtFace || !mountainTraversalAudit.didNotPenetrate || !mountainTraversalAudit.slidAlongFace) {
+    errors.push('movement-driven mountain collision/traversal failed: '+JSON.stringify(mountainTraversalAudit));
+  }
+  console.log('Jarrell movement-driven mountain traversal regression:',JSON.stringify(mountainTraversalAudit));
+
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
