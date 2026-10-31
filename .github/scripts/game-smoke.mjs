@@ -738,6 +738,26 @@ try {
   }
   console.log('Jarrell cave interior lighting regression:', JSON.stringify(caveLightingAudit));
 
+  // Regression: cave vipers must remain active hazards and deal damage when the player enters bite range.
+  const caveViperAudit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke;
+    const snakes = api?.caveSnakes || [];
+    if (snakes.length !== 3) return { count:snakes.length, error:'expected three active cave vipers' };
+    const snake = snakes[0];
+    const ground = api.terrainHeightAt(snake.position.x,snake.position.z);
+    api.setPlayerPosition(snake.position.x,ground+.9,snake.position.z);
+    const before = api.getHealth();
+    api.setPaused(false);
+    await new Promise(resolve=>setTimeout(resolve,450));
+    const after = api.getHealth();
+    api.setPaused(true);
+    return {count:snakes.length,before,after,damaged:after<before,damage:before-after,position:{x:snake.position.x,z:snake.position.z}};
+  });
+  if (caveViperAudit.error || caveViperAudit.count !== 3 || !caveViperAudit.damaged || caveViperAudit.damage !== 8) {
+    errors.push('cave vipers must apply one 8 HP bite when the player enters contact range: ' + JSON.stringify(caveViperAudit));
+  }
+  console.log('Jarrell cave viper damage regression:', JSON.stringify(caveViperAudit));
+
   // Regression: scenic mountain massifs and foreground crags must be solid, with bounded vertical and side clearance.
   const mountainCollisionAudit = await page.evaluate(() => {
     const api = window.__climboriaSmoke, blockers = api?.mountainBlockers || [];
