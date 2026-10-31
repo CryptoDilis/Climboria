@@ -842,7 +842,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  window.removeJarrellCacheChunk=key=>{
   const chest=cacheChunkMap.get(key);if(chest){worldPOIs.remove(chest.group);chest.group.traverse(o=>{if(o.isMesh&&o.geometry)o.geometry.dispose()});if(chest.frontBand.material!==chestTrim)chest.frontBand.material.dispose();for(let i=jarrellTreasureChests.length-1;i>=0;i--)if(jarrellTreasureChests[i]===chest)jarrellTreasureChests.splice(i,1);removeJarrellObstacleChunk(key,'treasure-chest');}
   cacheChunkMap.delete(key);
- }; const chestPrompt=document.createElement('div');chestPrompt.id='jarrellChestPrompt';chestPrompt.textContent='CACHE FOUND · PRESS E / USE TO OPEN';chestPrompt.style.cssText='position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540';document.body.appendChild(chestPrompt);
+ }; if(!document.getElementById('jarrellChestPrompt')){const chestPrompt=document.createElement('div');chestPrompt.id='jarrellChestPrompt';chestPrompt.textContent='CACHE FOUND · PRESS E / USE TO OPEN';chestPrompt.style.cssText='position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540';document.body.appendChild(chestPrompt);}
  // Snare traps and sprung spike pits on the routes between regions.
  const trapX=95,trapZ=90;for(let t=0;t<4;t++){const x=trapX+t*7,z=trapZ+(t%2)*6;place(new THREE.CylinderGeometry(2.8,2.8,.15,8),darkStone,x,-.08,z,1,1,1,rnd());for(let j=0;j<8;j++){const a=j/8*Math.PI*2;place(new THREE.ConeGeometry(.24,1.5,5),rustMetal,x+Math.cos(a)*1.8,.55,z+Math.sin(a)*1.8,1,1,1,a)}}
  // Dead trees and fallen timber mark the haunted edge of the battlefield.
@@ -862,6 +862,19 @@ for(let i=0;i<22;i++)addRidge((Math.random()-.5)*65,-18-Math.random()*42,3+Math.
 const meadowGroundY=(x,z)=>-.55+Math.sin(x*.014+z*.009)*1.15+Math.sin(z*.025-x*.018)*.55+Math.sin(x*.006-z*.008)*1.2;
 const player=new THREE.Group();const TRAILHEAD_Z=currentLevel==='11'?-340:0;const TRAILHEAD_X=currentLevel==='11'?.8:0;player.position.set(TRAILHEAD_X,currentLevel==='01'?meadowGroundY(0,TRAILHEAD_Z)+.9:currentLevel==='11'?campGroundY(TRAILHEAD_X,TRAILHEAD_Z)+.9:mountainHeight(0,TRAILHEAD_Z+18)+1.1,TRAILHEAD_Z);scene.add(player);if(currentLevel==='11'&&window.updateJarrellChunks)window.updateJarrellChunks(player.position.x,player.position.z);
 
+// Create the Jarrell interaction prompts before expensive world/asset setup so the HUD is always mounted during initialization.
+if(currentLevel==='11'){
+ if(!document.getElementById('jarrellChestPrompt')){
+  const prompt=document.createElement('div');prompt.id='jarrellChestPrompt';prompt.textContent='CACHE FOUND · PRESS E / USE TO OPEN';
+  prompt.style.cssText='position:fixed;left:50%;bottom:142px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #d6b45e;border-radius:8px;background:rgba(7,16,24,.9);color:#f5e5b7;font:700 11px system-ui;letter-spacing:1.3px;z-index:9;pointer-events:none;box-shadow:0 0 24px #b8893540';
+  document.body.appendChild(prompt);
+ }
+ if(!document.getElementById('jarrellFishingHint')){
+  const hint=document.createElement('div');hint.id='jarrellFishingHint';hint.textContent='RIVERSIDE CAMP · E TO FISH';
+  hint.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744';
+  document.body.appendChild(hint);
+ }
+}
 // Jarrell's Peak trailhead: a sheltered riverside landing with a shallow, winding fishing stream.
 
 if(currentLevel==='11'){
@@ -954,7 +967,7 @@ if(currentLevel==='11'){
  // Schools of colorful river fish: simple animated meshes just below the water surface.
  riverFish=[];const fishMats=[0xe9a34d,0xd8d9c9,0x68b6b0,0xc86c54,0xe4c86a].map(color=>new THREE.MeshStandardMaterial({color,roughness:.42,metalness:.08}));
  for(let i=0;i<34;i++){const g=new THREE.Group();const t=(i*29%97)/97,p=riverCurve.getPoint(t),side=Math.sin(i*8.7)*.48;g.position.set(p.x+side,-1.35+Math.sin(i*1.7)*.22,p.z);const body=new THREE.Mesh(new THREE.SphereGeometry(.28+(i%4)*.045,10,7),fishMats[i%fishMats.length]);body.scale.set(1.45,.62,.62);g.add(body);const tail=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,5),fishMats[i%fishMats.length]);tail.rotation.z=Math.PI/2;tail.position.x=-.43;g.add(tail);const fin=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,5),fishMats[(i+2)%fishMats.length]);fin.rotation.z=Math.PI;fin.position.y=.16;g.add(fin);g.rotation.y=Math.sin(i*4.3)*Math.PI;scene.add(g);riverFish.push({g,t,speed:.0012+(i%5)*.00028,phase:i*1.9,side})}
- const sign=document.createElement('div');sign.id='jarrellFishingHint';sign.textContent='RIVERSIDE CAMP · E TO FISH';sign.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744';document.body.appendChild(sign);const interactButton=document.getElementById('grab');if(interactButton)interactButton.textContent='USE';
+ if(!document.getElementById('jarrellFishingHint')){const sign=document.createElement('div');sign.id='jarrellFishingHint';sign.textContent='RIVERSIDE CAMP · E TO FISH';sign.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);display:none;padding:10px 16px;border:1px solid #69b8c5;border-radius:8px;background:rgba(7,20,28,.86);color:#d8f5f4;font:700 11px system-ui;letter-spacing:1.4px;z-index:8;pointer-events:none;box-shadow:0 0 24px #1e778744';document.body.appendChild(sign);}const interactButton=document.getElementById('grab');if(interactButton)interactButton.textContent='USE';
 }
 function fishAtRiver(){
  if(currentLevel!=='11'||paused)return false;
