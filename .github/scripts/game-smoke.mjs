@@ -990,7 +990,7 @@ try {
     const pose=window.jarrellSwimPoseDebug;
     return !!(pose?.swimming && pose.hasModel && pose.proceduralSwimApplied &&
       pose.proceduralSwimLimbAudit?.arms && pose.proceduralSwimLimbAudit?.legs);
-  }, {timeout:5000,polling:100}).catch(() => {});
+  }, undefined, {timeout:5000,polling:100}).catch(() => {});
   const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y,pose:window.jarrellSwimPoseDebug||null}));
   await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
   await page.waitForTimeout(800);
