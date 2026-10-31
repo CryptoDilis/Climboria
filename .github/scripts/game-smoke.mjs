@@ -736,6 +736,25 @@ try {
   }
   console.log('Jarrell cave interior lighting regression:', JSON.stringify(caveLightingAudit));
 
+  // Regression: scenic mountain massifs and foreground crags must be solid, with bounded vertical and side clearance.
+  const mountainCollisionAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke, blockers = api?.mountainBlockers || [];
+    const massif = blockers.find(item => item.kind === 'mountainMassif');
+    if (!massif) return { count:blockers.length, error:'no mountain massif blocker registered' };
+    const y = massif.y0 + .5;
+    return {
+      count:blockers.length,
+      kind:massif.kind,
+      centerBlocked:api.testMountainCollision(massif.x,massif.z,y),
+      outsideClear:!api.testMountainCollision(massif.x+massif.rx+8,massif.z,y),
+      aboveClear:!api.testMountainCollision(massif.x,massif.z,massif.y1+2)
+    };
+  });
+  if (mountainCollisionAudit.error || mountainCollisionAudit.count < 3 || !mountainCollisionAudit.centerBlocked || !mountainCollisionAudit.outsideClear || !mountainCollisionAudit.aboveClear) {
+    errors.push('mountain massif collision is missing or incorrectly bounded: '+JSON.stringify(mountainCollisionAudit));
+  }
+  console.log('Jarrell mountain massif collision regression:',JSON.stringify(mountainCollisionAudit));
+
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
