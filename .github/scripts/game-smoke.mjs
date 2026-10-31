@@ -1067,6 +1067,46 @@ try {
   }
   console.log('Jarrell open-sea swim bounds:', JSON.stringify(oceanSwimAudit));
 
+  // Movement regression: start just inside the west sea edge and walk/swim onto the sloped coast.
+  // This proves an actual player transition, not just a teleported out-of-bounds state.
+  const oceanShoreExit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke, bounds = window.jarrellOceanBounds;
+    if (!bounds) return { available: false };
+    const startX = bounds.minX + 20, z = 0;
+    api.setPaused(false);
+    api.setMoveVector(null, null);
+    api.getKeys().KeyA = false; api.getKeys().KeyD = false;
+    api.player.position.set(startX, bounds.surfaceY - .18, z);
+    await new Promise(resolve => setTimeout(resolve, 180));
+    const enteredFromSea = window.jarrellSwimming === true;
+    api.setMoveVector(-1, 0);
+    const samples = [];
+    const deadline = performance.now() + 12000;
+    while (performance.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 250));
+      const p = api.player.position;
+      samples.push({ x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)), swimming: window.jarrellSwimming === true });
+      if (p.x < bounds.minX - 1 && window.jarrellSwimming === false) break;
+    }
+    api.setMoveVector(null, null);
+    const p = api.player.position, ground = api.terrainHeightAt(p.x, z);
+    return {
+      available: true, enteredFromSea,
+      exitedWest: p.x < bounds.minX - 1 && window.jarrellSwimming === false,
+      x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)),
+      groundY: Number(ground.toFixed(2)),
+      grounded: p.y >= ground + .05 && p.y <= ground + .85,
+      samples: samples.slice(-12)
+    };
+  });
+  if (!oceanShoreExit.available) errors.push('Jarrell ocean west-shore movement test is unavailable');
+  else {
+    if (!oceanShoreExit.enteredFromSea) errors.push('player did not enter swimming state just inside the west sea shore');
+    if (!oceanShoreExit.exitedWest) errors.push('player could not move from open sea onto the west shore: ' + JSON.stringify(oceanShoreExit));
+    if (oceanShoreExit.exitedWest && !oceanShoreExit.grounded) errors.push('player left the sea but did not settle on the west shore terrain: ' + JSON.stringify(oceanShoreExit));
+  }
+  console.log('Jarrell movement-driven ocean shore exit:', JSON.stringify(oceanShoreExit));
+
   // Regression test: swim out of the starting river and reach dry bank.
   const swimExitStart = await page.evaluate(() => {
     const api=window.__climboriaSmoke,initialZ=80,nearest=api.nearestRiverPoint(api.riverX(initialZ),initialZ),z=nearest.z,centerX=nearest.x;
