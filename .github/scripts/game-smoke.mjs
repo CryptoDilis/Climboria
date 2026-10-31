@@ -920,7 +920,7 @@ try {
     const api = window.__climboriaSmoke;
     return (api?.freshwaterBodies || []).map(body => ({id:body.id, profile:api.getFreshwaterSwimProfile(body.x,body.z)}));
   });
-  if (freshwaterSurfaceAudit.some(item => !item.profile || Math.abs(item.profile.profile?.surfaceY-item.profile?.surfaceY)>0.0001)) errors.push('freshwater swim profile did not resolve the registered water surface: '+JSON.stringify(freshwaterSurfaceAudit));
+  if (freshwaterSurfaceAudit.some(item => !item.profile || !Number.isFinite(item.profile.surfaceY) || Math.abs(item.profile.surfaceY-(item.id==='woodland-pond'?.035:item.id==='moonpool'?.045:.05))>0.0001)) errors.push('freshwater swim profile did not resolve the registered water surface: '+JSON.stringify(freshwaterSurfaceAudit));
   if (freshwaterSurfaceAudit.some(item => !Number.isFinite(item.profile?.rootSurfaceY) || !Number.isFinite(item.profile?.lowerLimit) || !Number.isFinite(item.profile?.upperLimit) || item.profile.lowerLimit>=item.profile.rootSurfaceY || item.profile.upperLimit<=item.profile.rootSurfaceY)) errors.push('freshwater vertical swim limits are invalid: '+JSON.stringify(freshwaterSurfaceAudit));
 
   const sakuraParkCheck = await page.evaluate(() => {
