@@ -1,3 +1,12 @@
+## 2026-11-01 — persistent handoff checkpoint
+
+- [x] Latest pre-checkpoint gameplay commit `aa0cdf786b32064ce737810f4d0265290be98d01` passed Browser Smoke Test [41242000621](https://github.com/CryptoDilis/Climboria/actions/runs/41242000621), Validate [41242000768](https://github.com/CryptoDilis/Climboria/actions/runs/41242000768), and Pages deployment [41242000935](https://github.com/CryptoDilis/Climboria/actions/runs/41242000935).
+- [x] Session handoff rule: completed world tasks must be checked off here with code commit and test evidence; also update `DEVELOPMENT_CHECKLIST.md` with the current handoff and next task.
+- [ ] Manual Android/desktop review remains open for swimming pose/strokes, waterline, cave navigation/lighting/traps/snakes, terrain and prop collisions, and touch controls.
+- [ ] Next world implementation task: add multiple ponds in distinct regions, each with shoreline, depth, player collision, and freshwater fishing only if the fishing interaction is genuinely supported. Add desktop/mobile regression coverage before checking this item off.
+
+---
+
 ## 2026-11-01 — desktop click-to-move regression confirmed
 
 - [x] Verified the dedicated Playwright desktop left-click regression already present in `.github/scripts/game-smoke.mjs`: clicking a world ground point creates a movement destination and the live movement vector points toward it.
