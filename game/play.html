@@ -680,6 +680,24 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   paver.receiveShadow=true;caveTrailStones.push(paver);
  }
  window.jarrellCaveTrailStones=caveTrailStones;
+ // First navigable cave passage: a short, roofed stone tunnel beyond the western mouth.
+ // The corridor follows sampled terrain height; side-wall colliders leave a clear central walking lane.
+ const caveInterior={x:caveX,zStart:caveZ-8,zEnd:caveZ-44,width:7.2,height:5.2,segments:[]};
+ const caveWallMat=poiMat(0x303638,.98),caveFloorMat=poiMat(0x4a5050,.98),caveRoofMat=poiMat(0x272d30,1);
+ const caveWallGeo=new THREE.BoxGeometry(.9,5.2,9.4),caveFloorGeo=new THREE.BoxGeometry(7.2,.32,9.4),caveRoofGeo=new THREE.BoxGeometry(9,.8,9.4);
+ for(let i=0;i<4;i++){
+  const z=caveInterior.zStart-i*9,ground=terrainHeightAt(caveX,z),leftX=caveX-4.15,rightX=caveX+4.15;
+  const left=new THREE.Mesh(caveWallGeo,caveWallMat),right=new THREE.Mesh(caveWallGeo,caveWallMat),floor=new THREE.Mesh(caveFloorGeo,caveFloorMat),roof=new THREE.Mesh(caveRoofGeo,caveRoofMat);
+  left.position.set(leftX,ground+2.6,z);right.position.set(rightX,ground+2.6,z);floor.position.set(caveX,ground+.02,z);roof.position.set(caveX,ground+5.05,z);
+  for(const mesh of [left,right,floor,roof]){mesh.castShadow=!isMobileGPU;mesh.receiveShadow=true;worldPOIs.add(mesh)}
+  if(currentLevel==='11'){
+   addJarrellObstacleCollider({x:leftX,z,r:1.35,y0:ground-.1,y1:ground+5.3,kind:'caveWall'});
+   addJarrellObstacleCollider({x:rightX,z,r:1.35,y0:ground-.1,y1:ground+5.3,kind:'caveWall'});
+  }
+  caveInterior.segments.push({z,ground,left,right,floor,roof});
+ }
+ window.jarrellCaveInterior=caveInterior;
+ window.jarrellCaveInteriorMeshes=caveInterior.segments.flatMap(segment=>[segment.left,segment.right,segment.floor,segment.roof]);
  // Rice terraces: shallow flooded paddies, berms and repeated rice tufts on the eastern lowland.
  const riceX=265,riceZ=-120;for(let p=0;p<5;p++){const px=riceX+(p%2)*13,pz=riceZ+Math.floor(p/2)*13;const paddy=place(new THREE.PlaneGeometry(11,10),sanctuaryWater,px,.05,pz,1,1,1);paddy.rotation.x=-Math.PI/2;for(let j=0;j<32;j++){const rx=px+(rnd()-.5)*9.5,rz=pz+(rnd()-.5)*8.5;place(new THREE.ConeGeometry(.11,.8+(j%4)*.14,4),riceGreen,rx,.12,rz,.8,1,.8,rnd()*Math.PI)}for(let e=0;e<4;e++)place(new THREE.BoxGeometry(11.5,.45,.65),poiMat(0x796847),px,-.05,pz+(e%2?5:-5),1,1,1,(e%2)*Math.PI/2)}
  // Battle-scarred field: broken spears, abandoned shields, scattered bones and scorched debris.
