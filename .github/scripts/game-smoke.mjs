@@ -923,6 +923,42 @@ try {
   if (freshwaterSurfaceAudit.some(item => !item.profile || !Number.isFinite(item.profile.surfaceY) || Math.abs(item.profile.surfaceY-(item.id==='woodland-pond'?.035:item.id==='moonpool'?.045:.05))>0.0001)) errors.push('freshwater swim profile did not resolve the registered water surface: '+JSON.stringify(freshwaterSurfaceAudit));
   if (freshwaterSurfaceAudit.some(item => !Number.isFinite(item.profile?.rootSurfaceY) || !Number.isFinite(item.profile?.lowerLimit) || !Number.isFinite(item.profile?.upperLimit) || item.profile.lowerLimit>=item.profile.rootSurfaceY || item.profile.upperLimit<=item.profile.rootSurfaceY)) errors.push('freshwater vertical swim limits are invalid: '+JSON.stringify(freshwaterSurfaceAudit));
 
+  // Exercise real water-state entry, surface/dive response, and exit at every freshwater basin.
+  const freshwaterMovementAudit = await page.evaluate(async () => {
+    const api=window.__climboriaSmoke,results=[];api.setPaused(false);
+    for(const body of api.freshwaterBodies){
+      api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+      api.setPlayerPosition(body.x,body.surfaceY-.205,body.z);
+      await new Promise(resolve=>setTimeout(resolve,220));
+      const entered=window.jarrellSwimming===true,idleY=api.player.position.y,debug=window.jarrellSwimVerticalDebug||null;
+      api.getKeys().Space=true;await new Promise(resolve=>setTimeout(resolve,260));const surfacedY=api.player.position.y;
+      api.getKeys().Space=false;api.getKeys().ControlLeft=true;await new Promise(resolve=>setTimeout(resolve,260));const divedY=api.player.position.y;
+      results.push({id:body.id,entered,idleY:Number(idleY.toFixed(3)),surfaceY:Number(surfacedY.toFixed(3)),diveY:Number(divedY.toFixed(3)),debug});
+    }
+    api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+    let dry=null;
+    for(let z=-700;z<=700&&!dry;z+=100)for(let x=-700;x<=700&&!dry;x+=100){
+      if(api.freshwaterAt(x,z))continue;
+      const river=api.nearestRiverPoint(x,z),ocean=window.jarrellOceanBounds;
+      if(Math.sqrt(river.distanceSq)<35)continue;
+      if(ocean&&x>=ocean.minX&&x<=ocean.maxX&&z>=ocean.minZ&&z<=ocean.maxZ)continue;
+      dry={x,z};
+    }
+    dry=dry||{x:-700,z:700};api.setPlayerPosition(dry.x,api.terrainHeightAt(dry.x,dry.z)+.22,dry.z);
+    await new Promise(resolve=>setTimeout(resolve,220));
+    return {results,exit:{dry,swimming:window.jarrellSwimming===true}};
+  });
+  for(const item of freshwaterMovementAudit.results){
+    if(!item.entered)errors.push('player did not enter swimming state at freshwater basin '+item.id+': '+JSON.stringify(item));
+    if(!item.debug||item.debug.activeFreshwater!==item.id)errors.push('freshwater swim controller did not select '+item.id+': '+JSON.stringify(item));
+    if(item.entered&&item.debug&&item.idleY<item.debug.surfaceTargetY-.08)errors.push('freshwater idle swimmer sank below the pond waterline at '+item.id+': '+JSON.stringify(item));
+    if(item.surfaceY<item.idleY+.08)errors.push('freshwater surface control did not raise the swimmer at '+item.id+': '+JSON.stringify(item));
+    if(item.diveY>item.surfaceY-.08)errors.push('freshwater dive control did not lower the swimmer at '+item.id+': '+JSON.stringify(item));
+    if(item.debug&&item.diveY<item.debug.lowerLimit-.03)errors.push('freshwater dive exceeded the lower bound at '+item.id+': '+JSON.stringify(item));
+  }
+  if(freshwaterMovementAudit.exit.swimming)errors.push('freshwater swimming state did not clear after moving to dry land: '+JSON.stringify(freshwaterMovementAudit.exit));
+  console.log('Jarrell freshwater movement transitions:',JSON.stringify(freshwaterMovementAudit));
+
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
     const api = window.__climboriaSmoke;
