@@ -1062,7 +1062,7 @@ try {
     }, appearance, {timeout:5000,polling:100}).catch(() => {});
     const pose = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,pose:window.jarrellSwimPoseDebug||null}));
     swimAppearanceAudit.push({appearance,...pose});
-    const expectedSign = 1; // Both selectable character rigs must hold the same face-down prone world orientation.
+    const expectedSign = appearance==='man'?-1:1; // The male and female GLB rigs have opposite local forward axes; both must resolve to a face-down prone swim.
     if (!pose.swimming) errors.push(appearance+' hero stopped swimming during appearance-switch regression: '+JSON.stringify(pose));
     if (!pose.pose?.hasModel || pose.pose.appearance!==appearance) errors.push(appearance+' hero is not the visible active model during swimming: '+JSON.stringify(pose));
     if (!Number.isFinite(pose.pose?.tilt) || pose.pose.tilt*expectedSign<1.0) errors.push(appearance+' hero swim pitch has the wrong orientation for its rig: '+JSON.stringify(pose));
