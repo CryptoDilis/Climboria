@@ -770,7 +770,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  for(let i=0;i<18;i++){const a=i/18*Math.PI*2,rr=10.5+(i%3)*1.4,rx=pondX+Math.cos(a)*rr,rz=pondZ+Math.sin(a)*rr;
   place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
  }
- const woodlandLandingStones=[];for(let i=0;i<5;i++){const x=pondX-4+i*1.65,z=pondZ+11.2,ground=terrainHeightAt(x,z);place(rockGeo,stoneEdge,x,.12,z,.65,.38,.7,(i%2)*.3);woodlandLandingStones.push(addJarrellObstacleCollider({x,z,r:.55,y0:ground-.05,y1:ground+.5,kind:'freshwater-landing-rock'}))}
+ const woodlandLandingStones=[];for(let i=0;i<5;i++){const x=pondX-4.6+i*2.3,z=pondZ+11.2,ground=terrainHeightAt(x,z);place(rockGeo,stoneEdge,x,.12,z,.65,.38,.7,(i%2)*.3);woodlandLandingStones.push(addJarrellObstacleCollider({x,z,r:.55,y0:ground-.05,y1:ground+.5,kind:'freshwater-landing-rock'}))}
  // Sakura refuge: a quiet hangout park with blossom canopies, long benches, swings and hammocks.
  const parkX=215,parkZ=320,parkGround=terrainHeightAt(parkX,parkZ);
  const sakuraBark=new THREE.MeshStandardMaterial({color:0x554038,roughness:.94}),sakuraPink=new THREE.MeshStandardMaterial({color:0xf0a9c8,roughness:.78}),sakuraLight=new THREE.MeshStandardMaterial({color:0xffd6e5,roughness:.8}),parkWood=new THREE.MeshStandardMaterial({color:0x76533a,roughness:.9}),parkIron=new THREE.MeshStandardMaterial({color:0x333d46,metalness:.48,roughness:.55}),hammockCloth=new THREE.MeshStandardMaterial({color:0x8fbfc2,roughness:.88,side:THREE.DoubleSide});
