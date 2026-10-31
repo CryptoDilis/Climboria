@@ -970,6 +970,36 @@ try {
   if([...freshwaterStoneCollisionAudit.woodland,...freshwaterStoneCollisionAudit.moonpool].some(item=>!item.inside||!item.outside))errors.push('freshwater stone collision boundary regression: '+JSON.stringify(freshwaterStoneCollisionAudit));
   if(freshwaterStoneCollisionAudit.reedColliders!==0)errors.push('decorative reeds should remain non-blocking: '+JSON.stringify(freshwaterStoneCollisionAudit));
   console.log('Jarrell freshwater stone collision audit:',JSON.stringify(freshwaterStoneCollisionAudit));
+  
+  // Exercise actual player movement into each shoreline stone, not only the isolated collider predicate.
+  const freshwaterShoreMovementAudit = await page.evaluate(async () => {
+    const api=window.__climboriaSmoke,results=[];
+    const stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock');
+    api.setPaused(false);
+    for(const item of stones){
+      const body=item.kind==='freshwater-landing-rock'?api.freshwaterBodies.find(b=>b.id==='woodland-pond'):api.freshwaterBodies.find(b=>b.id==='moonpool');
+      const dx=item.x-body.x,dz=item.z-body.z,length=Math.hypot(dx,dz)||1,ux=dx/length,uz=dz/length;
+      const startX=item.x+ux*(item.r+3.2),startZ=item.z+uz*(item.r+3.2);
+      const startGround=api.terrainHeightAt(startX,startZ);
+      api.setMoveVector(null,null);
+      api.setPlayerPosition(startX,startGround+.22,startZ);
+      await new Promise(resolve=>setTimeout(resolve,100));
+      const before={x:api.player.position.x,z:api.player.position.z};
+      api.setMoveVector(-ux,-uz);
+      await new Promise(resolve=>setTimeout(resolve,850));
+      api.setMoveVector(null,null);
+      const after={x:api.player.position.x,z:api.player.position.z};
+      const distance=Math.hypot(after.x-item.x,after.z-item.z);
+      results.push({kind:item.kind,x:item.x,z:item.z,r:item.r,startDistance:Number(Math.hypot(before.x-item.x,before.z-item.z).toFixed(2)),endDistance:Number(distance.toFixed(2)),moved:Number(Math.hypot(after.x-before.x,after.z-before.z).toFixed(2)),blockedAtBoundary:distance>=item.r+.25});
+    }
+    return results;
+  });
+  for(const item of freshwaterShoreMovementAudit){
+    if(item.moved<.25)errors.push('player did not move while approaching freshwater shoreline stone: '+JSON.stringify(item));
+    if(!item.blockedAtBoundary)errors.push('player movement penetrated freshwater shoreline stone collider: '+JSON.stringify(item));
+  }
+  console.log('Jarrell freshwater shoreline movement audit:',JSON.stringify(freshwaterShoreMovementAudit));
+
 
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
