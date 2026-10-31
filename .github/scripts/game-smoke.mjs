@@ -916,6 +916,12 @@ try {
   if (freshwaterAudit.ids.join(',') !== 'woodland-pond,moonpool,sanctuary-lake') errors.push('Jarrell freshwater registry is missing or out of order: ' + JSON.stringify(freshwaterAudit));
   if (freshwaterAudit.inside.some(value => !value)) errors.push('freshwater body center failed water-region detection: ' + JSON.stringify(freshwaterAudit));
   if (freshwaterAudit.outside.some(Boolean)) errors.push('freshwater detection leaks beyond pond shoreline bounds: ' + JSON.stringify(freshwaterAudit));
+  const freshwaterSurfaceAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    return (api?.freshwaterBodies || []).map(body => ({id:body.id, profile:api.getFreshwaterSwimProfile(body.x,body.z)}));
+  });
+  if (freshwaterSurfaceAudit.some(item => !item.profile || Math.abs(item.profile.profile?.surfaceY-item.profile?.surfaceY)>0.0001)) errors.push('freshwater swim profile did not resolve the registered water surface: '+JSON.stringify(freshwaterSurfaceAudit));
+  if (freshwaterSurfaceAudit.some(item => !Number.isFinite(item.profile?.rootSurfaceY) || !Number.isFinite(item.profile?.lowerLimit) || !Number.isFinite(item.profile?.upperLimit) || item.profile.lowerLimit>=item.profile.rootSurfaceY || item.profile.upperLimit<=item.profile.rootSurfaceY)) errors.push('freshwater vertical swim limits are invalid: '+JSON.stringify(freshwaterSurfaceAudit));
 
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
