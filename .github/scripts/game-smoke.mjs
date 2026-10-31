@@ -704,6 +704,21 @@ try {
   }
   console.log('Jarrell cave approach trail regression:', JSON.stringify(caveTrailAudit));
 
+  // Regression: the cave mouth must lead into a real, roofed passage with a clear center lane and registered side-wall blockers.
+  const caveInteriorAudit = await page.evaluate(() => {
+    const cave = window.jarrellCaveInterior;
+    const meshes = window.jarrellCaveInteriorMeshes || [];
+    const api = window.__climboriaSmoke;
+    const walls = api?.obstacles?.filter(item => item.kind === 'caveWall') || [];
+    const centerClear = cave ? cave.segments.every(segment => !api.testObstacleCollision(cave.x, segment.z, segment.ground + .22)) : false;
+    const wallBlocked = walls.length === 8 && walls.every(item => api.testObstacleCollision(item.x, item.z, item.y0 + .22));
+    return {segments:cave?.segments?.length||0,width:cave?.width,height:cave?.height,visibleMeshes:meshes.length===16&&meshes.every(mesh=>mesh?.isMesh&&mesh.visible),floorAndRoof:cave?.segments?.every(segment=>segment.floor?.isMesh&&segment.roof?.isMesh)||false,centerClear,wallCount:walls.length,wallBlocked,bounds:cave?{zStart:cave.zStart,zEnd:cave.zEnd}:null};
+  });
+  if (caveInteriorAudit.segments !== 4 || caveInteriorAudit.width < 6.5 || caveInteriorAudit.height < 4.5 || !caveInteriorAudit.visibleMeshes || !caveInteriorAudit.floorAndRoof || !caveInteriorAudit.centerClear || caveInteriorAudit.wallCount !== 8 || !caveInteriorAudit.wallBlocked || !(caveInteriorAudit.bounds?.zStart > caveInteriorAudit.bounds?.zEnd)) {
+    errors.push('western cave interior is not a complete navigable roofed passage with clear center lane and blocking side walls: ' + JSON.stringify(caveInteriorAudit));
+  }
+  console.log('Jarrell cave interior traversal regression:', JSON.stringify(caveInteriorAudit));
+
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
