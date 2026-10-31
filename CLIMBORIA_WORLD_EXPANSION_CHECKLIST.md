@@ -370,3 +370,14 @@ For each meaningful implementation batch:
 - [ ] Validate and Browser Smoke Test for the spacing correction are pending; no green status claimed yet.
 - [ ] After green CI, add movement-driven water entry/exit through the widened Woodland Pond gaps and representative gaps at Moonpool and Sanctuary Lake.
 - [ ] Manual desktop/Android visual review remains outstanding; verify the widened stone row still looks natural and is accessible in actual play.
+
+
+## 2026-11-01 — freshwater movement entry/exit regression verified green
+
+- [x] Latest regression-test commit: `e3a46183179635d3e13696a4c3d44586497686b1`; changed `.github/scripts/game-smoke.mjs` to wait for the real swimming-state exit transition with a bounded deadline.
+- [x] Woodland Pond, Moonpool, and Sanctuary Lake movement-driven entry/exit regression suite passed in Validate [run 41252879416](https://github.com/CryptoDilis/Climboria/actions/runs/41252879416).
+- [x] The full Browser Smoke Test passed [run 41252879249](https://github.com/CryptoDilis/Climboria/actions/runs/41252879249), including Jarrell's Peak desktop and mobile gameplay smoke.
+- [x] Pages build and deployment passed [run 41252878821](https://github.com/CryptoDilis/Climboria/actions/runs/41252878821).
+- [ ] Manual desktop/Android visual and physical acceptance remains open: waterline alignment, swim posture/strokes, actual shoreline feel, and player movement around rocks/gaps.
+- [ ] Keep fishing deferred until all three freshwater bodies are manually accepted for safe, reliable entry and exit.
+- [ ] Next exact task: inspect the newest browser screenshots and manually verify pond traversal; only then implement/test freshwater fishing.
