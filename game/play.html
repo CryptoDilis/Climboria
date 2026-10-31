@@ -770,7 +770,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  for(let i=0;i<18;i++){const a=i/18*Math.PI*2,rr=10.5+(i%3)*1.4,rx=pondX+Math.cos(a)*rr,rz=pondZ+Math.sin(a)*rr;
   place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
  }
- for(let i=0;i<5;i++)place(rockGeo,stoneEdge,pondX-4+i*1.65,.12,pondZ+11.2, .65,.38,.7,(i%2)*.3);
+ const woodlandLandingStones=[];for(let i=0;i<5;i++){const x=pondX-4+i*1.65,z=pondZ+11.2,ground=terrainHeightAt(x,z);place(rockGeo,stoneEdge,x,.12,z,.65,.38,.7,(i%2)*.3);woodlandLandingStones.push(addJarrellObstacleCollider({x,z,r:.55,y0:ground-.05,y1:ground+.5,kind:'freshwater-landing-rock'}))}
  // Sakura refuge: a quiet hangout park with blossom canopies, long benches, swings and hammocks.
  const parkX=215,parkZ=320,parkGround=terrainHeightAt(parkX,parkZ);
  const sakuraBark=new THREE.MeshStandardMaterial({color:0x554038,roughness:.94}),sakuraPink=new THREE.MeshStandardMaterial({color:0xf0a9c8,roughness:.78}),sakuraLight=new THREE.MeshStandardMaterial({color:0xffd6e5,roughness:.8}),parkWood=new THREE.MeshStandardMaterial({color:0x76533a,roughness:.9}),parkIron=new THREE.MeshStandardMaterial({color:0x333d46,metalness:.48,roughness:.55}),hammockCloth=new THREE.MeshStandardMaterial({color:0x8fbfc2,roughness:.88,side:THREE.DoubleSide});
@@ -809,7 +809,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const moonX=300,moonZ=278,moonpool=place(new THREE.CircleGeometry(8.5,48),sanctuaryWater,moonX,.045,moonZ,1.22,1,.86);moonpool.rotation.x=-Math.PI/2;moonpool.name='JarrellMoonpool';
  const moonReedMat=new THREE.MeshStandardMaterial({color:0x657c52,roughness:1});
  for(let i=0;i<22;i++){const a=i/22*Math.PI*2,r=8.4+(i%4)*.75,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r;place(new THREE.ConeGeometry(.075,.48+(i%5)*.12,5),moonReedMat,rx,.2,rz,.9,1,.9,a);}
- for(let i=0;i<13;i++){const a=i/13*Math.PI*2,r=9.4+(i%3)*.65,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r;place(rockGeo,stoneEdge,rx,terrainHeightAt(rx,rz)+.12,rz,.55+(i%3)*.12,.35+(i%2)*.12,.62,a*.4);}
+ const moonpoolRimStones=[];for(let i=0;i<13;i++){const a=i/13*Math.PI*2,r=9.4+(i%3)*.65,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r,ground=terrainHeightAt(rx,rz),sx=.55+(i%3)*.12,sy=.35+(i%2)*.12;place(rockGeo,stoneEdge,rx,ground+.12,rz,sx,sy,.62,a*.4);moonpoolRimStones.push(addJarrellObstacleCollider({x:rx,z:rz,r:.52,y0:ground-.05,y1:ground+.12+sy,kind:'freshwater-rim-rock'}))}
  for(let i=0;i<6;i++){const ripple=new THREE.Mesh(new THREE.TorusGeometry(.35+i*.12,.018,5,24),new THREE.MeshBasicMaterial({color:0xb1edf2,transparent:true,opacity:.18,depthWrite:false}));ripple.rotation.x=-Math.PI/2;ripple.position.set(moonX+Math.sin(i*2.2)*2,.085,moonZ+Math.cos(i*1.7)*1.8);ripple.scale.set(1.5,1,1);worldPOIs.add(ripple);}
  const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.rotation.x=-Math.PI/2;
  // Shared freshwater gameplay registry. Radii follow the visible scaled water discs; the small margin lets the swimmer cross the visual water edge without a state flicker.
