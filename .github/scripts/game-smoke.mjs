@@ -1005,23 +1005,24 @@ try {
   const freshwaterApproachGapAudit = await page.evaluate(() => {
     const api=window.__climboriaSmoke;
     const configs=[
-      {id:'woodland-pond',kind:'freshwater-landing-rock'},
-      {id:'moonpool',kind:'freshwater-rim-rock'},
-      {id:'sanctuary-lake',kind:'freshwater-sanctuary-rim-rock'}
+      {id:'woodland-pond',kind:'freshwater-landing-rock',closed:false},
+      {id:'moonpool',kind:'freshwater-rim-rock',closed:true},
+      {id:'sanctuary-lake',kind:'freshwater-sanctuary-rim-rock',closed:true}
     ];
     return configs.map(config=>{
       const body=api.freshwaterBodies.find(item=>item.id===config.id);
       const stones=api.obstacles.filter(item=>item.kind===config.kind)
-        .map(item=>({...item,angle:Math.atan2(item.z-body.z,item.x-body.x),radial:Math.hypot(item.x-body.x,item.z-body.z)}))
+        .map(item=>({...item,angle:Math.atan2(item.z-body.z,item.x-body.x)}))
         .sort((a,b)=>a.angle-b.angle);
-      const gaps=stones.map((stone,index)=>{
-        const next=stones[(index+1)%stones.length];
-        let delta=next.angle-stone.angle;if(delta<=0)delta+=Math.PI*2;
-        const angle=stone.angle+delta/2,radial=(stone.radial+next.radial)/2;
-        const x=body.x+Math.cos(angle)*radial,z=body.z+Math.sin(angle)*radial;
+      const pairCount=config.closed?stones.length:Math.max(0,stones.length-1);
+      const gaps=Array.from({length:pairCount},(_,index)=>{
+        const stone=stones[index],next=stones[(index+1)%stones.length];
+        // Test the actual Cartesian midpoint between neighboring collider centers.
+        // Woodland Pond is an open landing-stone row, not a closed shoreline ring.
+        const x=(stone.x+next.x)/2,z=(stone.z+next.z)/2;
         const y=api.terrainHeightAt(x,z)+.22;
         const blocked=stones.some(item=>api.testObstacleCollider(item,x,z,y));
-        return {from:stone.angle,to:next.angle,angle,radial,blocked};
+        return {from:stone.angle,to:next.angle,x,z,blocked};
       });
       return {id:config.id,stoneCount:stones.length,gapCount:gaps.length,clearGaps:gaps.filter(gap=>!gap.blocked).length,gaps};
     });
