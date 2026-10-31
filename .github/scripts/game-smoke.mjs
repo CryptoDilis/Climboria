@@ -1082,7 +1082,12 @@ try {
       const entered=window.jarrellSwimming===true;
       const entryPosition={x:api.player.position.x,z:api.player.position.z};
       api.setMoveVector(gap.ux,gap.uz);
-      await new Promise(resolve=>setTimeout(resolve,duration));
+      // The inward leg may carry the player beyond the basin center. Allow a longer
+      // return leg and stop as soon as the real swimming-state transition occurs.
+      const exitDeadline=Date.now()+Math.max(18000,duration*2.5);
+      while(Date.now()<exitDeadline&&window.jarrellSwimming===true){
+        await new Promise(resolve=>setTimeout(resolve,120));
+      }
       api.setMoveVector(null,null);
       const exited=window.jarrellSwimming!==true;
       const exitPosition={x:api.player.position.x,z:api.player.position.z};
