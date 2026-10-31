@@ -1,3 +1,11 @@
+## 2026-10-31 — open-sea swimming regression added; CI verification pending
+
+- [x] Confirmed Jarrell's open sea has explicit bounds and a deep sea-floor terrain check.
+- [x] Identified a coverage gap: automated swimming-state and movement-driven shoreline exit tests covered the river, while ocean coverage only checked sea-floor depth.
+- [x] Added browser smoke assertions for open-sea swimming activation, waterline settling, and clearing the swimming state beyond all four ocean bounds (west/east/north/south).
+- [ ] Browser Smoke Test, Validate Climboria, and Pages deployment for commit `36fb884770723ebe96cce1b43c245538b327be55` — pending.
+- [ ] Manual ocean/coast swimming and shoreline traversal on Android and desktop remain unverified; this automated boundary test does not replace visual/physical acceptance.
+
 ## 2026-10-31 — river/swim regression coverage audit; latest workflows green
 
 - [x] Audited the current browser smoke test rather than assuming river exit was untested.
