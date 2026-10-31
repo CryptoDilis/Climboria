@@ -1034,8 +1034,7 @@ try {
 
 
 
-  // Movement-driven traversal: approach each freshwater basin through a verified shoreline gap,
-  // confirm swimming activates, then walk back out through the same gap and confirm it clears.
+  // Movement-driven traversal: validate the complete approach corridor before moving.
   const freshwaterGapTraversalAudit = await page.evaluate(async () => {
     const api=window.__climboriaSmoke,results=[];
     const configs=[
@@ -1055,34 +1054,39 @@ try {
         const x=(a.x+b.x)/2,z=(a.z+b.z)/2;
         const dx=x-body.x,dz=z-body.z,length=Math.hypot(dx,dz)||1;
         const ux=dx/length,uz=dz/length;
-        // Find the true radial intersection with the elliptical water boundary.
         const boundaryDistance=1/Math.sqrt((ux/body.rx)**2+(uz/body.rz)**2);
-        const innerDistance=boundaryDistance*.78;
+        const innerDistance=boundaryDistance*.94;
         const inner={x:body.x+ux*innerDistance,z:body.z+uz*innerDistance};
-        const y=api.terrainHeightAt(x,z)+.22;
-        const blocked=stones.some(item=>api.testObstacleCollider(item,x,z,y));
-        return {x,z,ux,uz,inner,boundaryDistance,blocked,angle:Math.atan2(dz,dx)};
-      }).filter(item=>!item.blocked);
-      const gap=candidates.find(item=>api.freshwaterAt(item.inner.x,item.inner.z));
-      if(!gap){results.push({id:config.id,error:'no clear shoreline gap leads into the registered water footprint',candidateCount:candidates.length});continue;}
-      // Start just outside the actual ellipse, not beyond its longest axis.
-      const startDistance=gap.boundaryDistance+2.8;
-      const start={x:body.x+gap.ux*startDistance,z:body.z+gap.uz*startDistance};
+        const startDistance=boundaryDistance+1.2;
+        const start={x:body.x+ux*startDistance,z:body.z+uz*startDistance};
+        const routeLength=Math.hypot(inner.x-start.x,inner.z-start.z);
+        let blocked=stones.some(item=>api.testObstacleCollider(item,x,z,api.terrainHeightAt(x,z)+.22));
+        // Check the entire player corridor, not just its midpoint, against all world colliders.
+        const samples=Math.max(4,Math.ceil(routeLength/.35));
+        for(let step=0;step<=samples&&!blocked;step++){
+          const t=step/samples,px=start.x+(inner.x-start.x)*t,pz=start.z+(inner.z-start.z)*t;
+          blocked=api.testObstacleCollision(px,pz,api.terrainHeightAt(px,pz)+.22);
+        }
+        return {x,z,ux,uz,inner,start,boundaryDistance,routeLength,blocked,angle:Math.atan2(dz,dx)};
+      }).filter(item=>!item.blocked&&api.freshwaterAt(item.inner.x,item.inner.z));
+      const gap=candidates.sort((a,b)=>a.routeLength-b.routeLength)[0];
+      if(!gap){results.push({id:config.id,error:'no complete collision-free approach corridor reaches the water',candidateCount:pairCount,stones:stones.length});continue;}
       api.setMoveVector(null,null);
-      api.setPlayerPosition(start.x,api.terrainHeightAt(start.x,start.z)+.22,start.z);
+      api.setPlayerPosition(gap.start.x,api.terrainHeightAt(gap.start.x,gap.start.z)+.22,gap.start.z);
       await new Promise(resolve=>setTimeout(resolve,180));
       const startState=window.jarrellSwimming===true;
+      const duration=Math.max(6500,Math.ceil(gap.routeLength/0.42*1000*2.2));
       api.setMoveVector(-gap.ux,-gap.uz);
-      await new Promise(resolve=>setTimeout(resolve,5600));
+      await new Promise(resolve=>setTimeout(resolve,duration));
       api.setMoveVector(null,null);
       const entered=window.jarrellSwimming===true;
       const entryPosition={x:api.player.position.x,z:api.player.position.z};
       api.setMoveVector(gap.ux,gap.uz);
-      await new Promise(resolve=>setTimeout(resolve,5600));
+      await new Promise(resolve=>setTimeout(resolve,duration));
       api.setMoveVector(null,null);
       const exited=window.jarrellSwimming!==true;
       const exitPosition={x:api.player.position.x,z:api.player.position.z};
-      results.push({id:config.id,gap:{x:Number(gap.x.toFixed(2)),z:Number(gap.z.toFixed(2)),angle:Number(gap.angle.toFixed(3)),boundaryDistance:Number(gap.boundaryDistance.toFixed(2))},startState,entered,exited,start,entryPosition,exitPosition,entryDistance:Number(Math.hypot(entryPosition.x-start.x,entryPosition.z-start.z).toFixed(2)),exitDistance:Number(Math.hypot(exitPosition.x-entryPosition.x,exitPosition.z-entryPosition.z).toFixed(2))});
+      results.push({id:config.id,gap:{x:Number(gap.x.toFixed(2)),z:Number(gap.z.toFixed(2)),angle:Number(gap.angle.toFixed(3)),boundaryDistance:Number(gap.boundaryDistance.toFixed(2)),routeLength:Number(gap.routeLength.toFixed(2))},duration,startState,entered,exited,start:gap.start,entryPosition,exitPosition,entryDistance:Number(Math.hypot(entryPosition.x-gap.start.x,entryPosition.z-gap.start.z).toFixed(2)),exitDistance:Number(Math.hypot(exitPosition.x-entryPosition.x,exitPosition.z-entryPosition.z).toFixed(2))});
     }
     api.setMoveVector(null,null);
     return results;
@@ -1091,7 +1095,7 @@ try {
     if(item.error)errors.push('freshwater shoreline gap traversal unavailable at '+item.id+': '+JSON.stringify(item));
     else {
       if(item.startState)errors.push('player unexpectedly starts in swimming state outside '+item.id+': '+JSON.stringify(item));
-      if(!item.entered)errors.push('player did not enter '+item.id+' through a real shoreline gap: '+JSON.stringify(item));
+      if(!item.entered)errors.push('player did not enter '+item.id+' through a full-corridor-clear shoreline gap: '+JSON.stringify(item));
       if(!item.exited)errors.push('player did not exit '+item.id+' back through its shoreline gap: '+JSON.stringify(item));
       if(item.entryDistance<1||item.exitDistance<1)errors.push('freshwater gap traversal did not produce sufficient player movement: '+JSON.stringify(item));
     }
