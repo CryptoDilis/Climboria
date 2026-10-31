@@ -718,6 +718,23 @@ try {
     errors.push('western cave interior is not a complete navigable roofed passage with clear center lane and blocking side walls: ' + JSON.stringify(caveInteriorAudit));
   }
   console.log('Jarrell cave interior traversal regression:', JSON.stringify(caveInteriorAudit));
+  const caveLightingAudit = await page.evaluate(() => {
+    const torches = window.jarrellCaveInteriorTorches || [];
+    const api = window.__climboriaSmoke;
+    const blockers = api?.obstacles?.filter(item => item.kind === 'caveTorch') || [];
+    const interiorBlockers = blockers.filter(item => item.z < -578 && item.z > -615);
+    return {
+      torchCount: torches.length,
+      visible: torches.length === 4 && torches.every(item => item.torch?.visible && item.flame?.isMesh && item.ember?.isMesh && item.light?.isLight),
+      blockerCount: interiorBlockers.length,
+      blockersWork: interiorBlockers.length === 4 && interiorBlockers.every(item => api.testObstacleCollider(item,item.x,item.z,item.y0+.3)),
+      centerLaneClear: torches.every(item => Math.abs(item.torch.position.x-window.jarrellCaveInterior.x) > 2.5)
+    };
+  });
+  if (caveLightingAudit.torchCount !== 4 || !caveLightingAudit.visible || caveLightingAudit.blockerCount !== 4 || !caveLightingAudit.blockersWork || !caveLightingAudit.centerLaneClear) {
+    errors.push('cave interior needs four visible, collision-aware wall torches with a clear walking lane: ' + JSON.stringify(caveLightingAudit));
+  }
+  console.log('Jarrell cave interior lighting regression:', JSON.stringify(caveLightingAudit));
 
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
