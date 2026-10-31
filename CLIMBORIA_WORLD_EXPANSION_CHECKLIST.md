@@ -1,3 +1,14 @@
+## 2026-11-01 — pond feature audit and next-task correction
+
+- [x] Audited `game/play.html` and `.github/scripts/game-smoke.mjs` before implementing the previously listed pond task.
+- [x] Confirmed existing decorative freshwater features: `JarrellWoodlandPond` (center approx. x=178,z=255; radius 11), `JarrellMoonpool` (x=300,z=278; radius 8.5), and the sanctuary lake (x=365,z=205; radius 23).
+- [x] Confirmed the smoke test currently checks the woodland pond and Moonpool landmark names only; the sanctuary lake has no explicit landmark name and there is no dedicated pond-water volume/collision/fishing regression in the current smoke assertions.
+- [ ] Do not duplicate the three existing decorative water features. Next code task is to turn these into a consistent freshwater gameplay system: named pond registry, shore/depth boundaries, entering/exiting swim-state integration, underwater depth controls, safe shoreline exits, and player collision with solid bank/props. Keep existing river/ocean behavior intact.
+- [ ] Add Playwright desktop and mobile regression coverage for each pond (approach, enter, swim, depth, exit, bank collision); add fishing only if a real fishing interaction/tool already exists or is implemented as part of a separate scoped task.
+- [ ] After code/test work, update both this file and `DEVELOPMENT_CHECKLIST.md` with exact commit SHA, passing workflow run IDs, and the next task. Do not mark manual visual acceptance complete from CI alone.
+
+---
+
 ## 2026-11-01 — persistent handoff checkpoint
 
 - [x] Latest pre-checkpoint gameplay commit `aa0cdf786b32064ce737810f4d0265290be98d01` passed Browser Smoke Test [41242000621](https://github.com/CryptoDilis/Climboria/actions/runs/41242000621), Validate [41242000768](https://github.com/CryptoDilis/Climboria/actions/runs/41242000768), and Pages deployment [41242000935](https://github.com/CryptoDilis/Climboria/actions/runs/41242000935).
