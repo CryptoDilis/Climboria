@@ -1,9 +1,16 @@
+## 2026-11-01 — desktop click-to-move regression confirmed
+
+- [x] Verified the dedicated Playwright desktop left-click regression already present in `.github/scripts/game-smoke.mjs`: clicking a world ground point creates a movement destination and the live movement vector points toward it.
+- [x] Latest green browser smoke run: [run 41238548708](https://github.com/CryptoDilis/Climboria/actions/runs/41238548708), commit `d78ea96fa730335a9610d5eaf9ed05a6e9f833c0`.
+- [x] Recorded output: start `(0.80, -340.00)`, target `(1.467, -338.497)`, movement alignment `0.9999999999999999` (1.0 = directly toward target).
+- [ ] This automated assertion covers desktop mouse click-to-move only; manual desktop/Android acceptance and touch-control review remain open.
+
 ## Latest verification carry-forward — 2026-10-29
 
 - [x] Validate Climboria passed for gameplay commit `8d4a5e1fdc486eaf8c560cd2d33352b3ebcb5c6c`: [run 40875751783](https://github.com/CryptoDilis/Climboria/actions/runs/40875751783).
 - [x] Climboria Browser Smoke Test passed for the same gameplay commit: [run 40875751854](https://github.com/CryptoDilis/Climboria/actions/runs/40875751854).
 - [x] GitHub Pages deployment passed for checklist commit `ebce28bb99856e9d5f6522d60f725a7a365af8d6`: [run 40875852184](https://github.com/CryptoDilis/Climboria/actions/runs/40875852184).
-- [ ] Add direct automated coverage for the new left-click movement target and direction; existing green workflows are not a dedicated assertion of click-to-move behavior.
+- [x] Add direct automated coverage for desktop left-click movement target and direction; verified in browser smoke run 41238548708 with movement alignment 1.0. Manual/touch acceptance remains open.
 - [ ] Continue outstanding swim pose/waterline/river exit and terrain/object collision verification; desktop/mobile automated smoke tests do not replace manual playtesting.
 
 ## Latest workflow verification — 2026-10-29 (bush and fallen-log collision regression)
