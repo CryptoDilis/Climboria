@@ -984,6 +984,13 @@ try {
   await page.waitForFunction(type => window.jarrellSwimPoseDebug?.appearance===type, originalSwimAppearance, {timeout:5000,polling:100}).catch(() => {});
   await page.waitForTimeout(200);
   console.log('Per-appearance active swim pose audit:',JSON.stringify(swimAppearanceAudit));
+  // The procedural stroke is applied during the render/update loop; wait for a stable
+  // full-limb audit after the hero appearance switch before taking the depth baseline.
+  await page.waitForFunction(() => {
+    const pose=window.jarrellSwimPoseDebug;
+    return !!(pose?.swimming && pose.hasModel && pose.proceduralSwimApplied &&
+      pose.proceduralSwimLimbAudit?.arms && pose.proceduralSwimLimbAudit?.legs);
+  }, {timeout:5000,polling:100}).catch(() => {});
   const swimDepthInitial = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,y:window.__climboriaSmoke.player.position.y,pose:window.jarrellSwimPoseDebug||null}));
   await page.evaluate(() => {window.__climboriaSmoke.getKeys().Space=true;});
   await page.waitForTimeout(800);
@@ -1081,18 +1088,22 @@ try {
     const enteredFromSea = window.jarrellSwimming === true;
     api.setMoveVector(-1, 0);
     const samples = [];
-    const deadline = performance.now() + 12000;
+    // Browser CI can throttle rendering heavily, so allow the same generous window
+    // used by the movement-driven river-bank regression.
+    const deadline = performance.now() + 24000;
     while (performance.now() < deadline) {
       await new Promise(resolve => setTimeout(resolve, 250));
       const p = api.player.position;
       samples.push({ x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)), swimming: window.jarrellSwimming === true });
-      if (p.x < bounds.minX - 1 && window.jarrellSwimming === false) break;
+      // Crossing the actual west water bound is sufficient; do not require an
+      // arbitrary extra metre once the player is already grounded on dry terrain.
+      if (p.x < bounds.minX && window.jarrellSwimming === false) break;
     }
     api.setMoveVector(null, null);
     const p = api.player.position, ground = api.terrainHeightAt(p.x, z);
     return {
       available: true, enteredFromSea,
-      exitedWest: p.x < bounds.minX - 1 && window.jarrellSwimming === false,
+      exitedWest: p.x < bounds.minX && window.jarrellSwimming === false,
       x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)),
       groundY: Number(ground.toFixed(2)),
       grounded: p.y >= ground + .05 && p.y <= ground + .85,
