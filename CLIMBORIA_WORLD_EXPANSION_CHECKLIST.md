@@ -308,3 +308,14 @@ For each meaningful implementation batch:
 - [x] Fixed the region and compass-heading test regex escaping errors; the subsequent validation and browser runs are green.
 - [ ] Visual-check compass orientation and live coordinate/region updates in actual gameplay, including water/airborne states and region boundaries.
 - [ ] Continue manual camera/terrain obstruction, mountain collision, swimming, and performance verification; automated green runs are not a substitute for those checks.
+
+
+## 2026-11-01 — freshwater shoreline collision regression repair
+
+- [x] Added and retained 5 Woodland Pond landing-stone colliders and 13 Moonpool rim-stone colliders in gameplay commit `6234d3b647d6689927e0d6b8642ea9f674b54c91`.
+- [x] Browser regression coverage reports 5 woodland stones, 13 Moonpool rim stones, and zero reed colliders. The original test incorrectly used the global obstacle query for an isolated outside-radius assertion; unrelated nearby obstacles caused false positives.
+- [x] Corrected the regression to use the specific collider helper `testObstacleCollider(item, x, z, y)` for both inside and outside samples. Test repair commit: `82a3267e66cf0e0ae12d5f69eef82d74125902c0`.
+- [x] Pages deployment passed on `82a3267e` (run [41245529767](https://github.com/CryptoDilis/Climboria/actions/runs/41245529767)). Validate [41245529793](https://github.com/CryptoDilis/Climboria/actions/runs/41245529793) and Browser Smoke [41245529794](https://github.com/CryptoDilis/Climboria/actions/runs/41245529794) were still running at checkpoint time; recheck after this documentation update.
+- [ ] Next task: validate real movement around all three freshwater shorelines, including collision approach angles, water entry/exit, swimming near rocks, and non-blocking reeds. Automated center/outside collider checks do not prove player movement feels correct.
+- [ ] Preserve desktop and Android visual checks; do not mark shore gameplay accepted until manually inspected.
+- [ ] Add fishing interaction only after shoreline traversal is reliable.
