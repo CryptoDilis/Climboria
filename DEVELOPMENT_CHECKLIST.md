@@ -3,7 +3,10 @@
 - [x] Confirmed Jarrell's open sea has explicit bounds and a deep sea-floor terrain check.
 - [x] Identified a coverage gap: automated swimming-state and movement-driven shoreline exit tests covered the river, while ocean coverage only checked sea-floor depth.
 - [x] Added browser smoke assertions for open-sea swimming activation, waterline settling, and clearing the swimming state beyond all four ocean bounds (west/east/north/south).
-- [ ] Browser Smoke Test, Validate Climboria, and Pages deployment for commit `36fb884770723ebe96cce1b43c245538b327be55` — pending.
+- [x] Browser Smoke Test passed: [run 41211481053](https://github.com/CryptoDilis/Climboria/actions/runs/41211481053); desktop/mobile gameplay smoke completed successfully, including open-sea boundary assertions.
+- [x] Validate Climboria passed: [run 41211481050](https://github.com/CryptoDilis/Climboria/actions/runs/41211481050); syntax checks and desktop/mobile gameplay smoke completed successfully.
+- [x] GitHub Pages build and deployment passed: [run 41211495276](https://github.com/CryptoDilis/Climboria/actions/runs/41211495276); build, status report, and deploy jobs completed successfully.
+- [x] Inspected the workflow job steps for all three runs; no failed steps were reported.
 - [ ] Manual ocean/coast swimming and shoreline traversal on Android and desktop remain unverified; this automated boundary test does not replace visual/physical acceptance.
 
 ## 2026-10-31 — river/swim regression coverage audit; latest workflows green
