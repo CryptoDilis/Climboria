@@ -319,3 +319,15 @@ For each meaningful implementation batch:
 - [ ] Next task: validate real movement around all three freshwater shorelines, including collision approach angles, water entry/exit, swimming near rocks, and non-blocking reeds. Automated center/outside collider checks do not prove player movement feels correct.
 - [ ] Preserve desktop and Android visual checks; do not mark shore gameplay accepted until manually inspected.
 - [ ] Add fishing interaction only after shoreline traversal is reliable.
+
+
+## 2026-11-01 — real player movement tests for pond shoreline stones
+
+- [x] Added real movement-driven collision coverage for every Woodland Pond landing stone (5) and Moonpool rim stone (13), using the browser game's player movement controller rather than only direct collider predicate calls.
+- [x] Regression asserts the player actually moves toward each stone and does not cross into its blocking radius.
+- [x] Browser Smoke Test passed on commit `4effb52a20e8496dc656bda54a17bbf75b27af8f`: [run 41246472175](https://github.com/CryptoDilis/Climboria/actions/runs/41246472175).
+- [x] GitHub Pages deployment passed: [run 41246472274](https://github.com/CryptoDilis/Climboria/actions/runs/41246472274).
+- [ ] Validate run [41246472199](https://github.com/CryptoDilis/Climboria/actions/runs/41246472199) remains in progress; verify its conclusion.
+- [ ] Sanctuary Lake currently has decorative perimeter rocks without the explicit freshwater rim collider coverage used by Moonpool. Audit their placement, establish walkable entry/exit gaps, add collision where appropriate, and add movement regression coverage.
+- [ ] Test actual player water entry/exit and shoreline approach angles at all three freshwater bodies; manually inspect desktop and Android before acceptance.
+- [ ] Defer fishing interaction until shoreline traversal is stable.
