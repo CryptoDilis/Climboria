@@ -747,7 +747,10 @@ try {
     api.setPlayerPosition(trap.x,trap.ground+.9,trap.z);
     const before=api.getHealth();
     api.setPaused(false);
-    await new Promise(resolve=>setTimeout(resolve,420));
+    await page.waitForFunction(() => {
+      const active=window.__climboriaSmoke?.caveTrap;
+      return !!active && active.spikes.every(spike=>spike.scale.y>.5);
+    }, { timeout:2500 });
     const after=api.getHealth();
     const extended=trap.spikes.every(spike=>spike.scale.y>.5);
     const triggers=trap.triggerCount;
