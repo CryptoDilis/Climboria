@@ -959,6 +959,25 @@ try {
   if(freshwaterMovementAudit.exit.swimming)errors.push('freshwater swimming state did not clear after moving to dry land: '+JSON.stringify(freshwaterMovementAudit.exit));
   console.log('Jarrell freshwater movement transitions:',JSON.stringify(freshwaterMovementAudit));
 
+  // Capture visual evidence at each freshwater basin on desktop; CI assertions alone
+  // cannot establish that the rendered shoreline, rocks, waterline and swimmer look right.
+  const desktopFreshwaterSnapshotState = await page.evaluate(() => {
+    const api=window.__climboriaSmoke;
+    return {restore:{x:api.player.position.x,y:api.player.position.y,z:api.player.position.z},
+      bodies:api.freshwaterBodies.map(body=>({id:body.id,x:body.x,z:body.z,surfaceY:body.surfaceY}))};
+  });
+  for(const body of desktopFreshwaterSnapshotState.bodies){
+    await page.evaluate(({x,z,surfaceY})=>{
+      const api=window.__climboriaSmoke;api.setMoveVector(null,null);
+      api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+      api.setPlayerPosition(x,surfaceY-.205,z);
+    },body);
+    await page.waitForTimeout(1100);
+    await page.screenshot({path:`freshwater-desktop-${body.id}.png`});
+  }
+  await page.evaluate(({x,y,z})=>window.__climboriaSmoke.setPlayerPosition(x,y,z),desktopFreshwaterSnapshotState.restore);
+  await page.waitForTimeout(500);
+
   const freshwaterStoneCollisionAudit = await page.evaluate(() => {
     const api=window.__climboriaSmoke,stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock'||item.kind==='freshwater-sanctuary-rim-rock');
     const woodland=stones.filter(item=>item.kind==='freshwater-landing-rock'),moonpool=stones.filter(item=>item.kind==='freshwater-rim-rock'),sanctuary=stones.filter(item=>item.kind==='freshwater-sanctuary-rim-rock');
@@ -1633,6 +1652,23 @@ try {
   const mobileSwimPointerCaptureCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke,jump=document.getElementById('jump'),sprint=document.getElementById('sprint');api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.sprinting=true;jump.dispatchEvent(new Event('lostpointercapture'));sprint.dispatchEvent(new Event('lostpointercapture'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false,sprint:window.sprinting===false};});
   if(!mobileSwimPointerCaptureCleanup.surface||!mobileSwimPointerCaptureCleanup.dive||!mobileSwimPointerCaptureCleanup.sprint) errors.push('swim and sprint inputs must release when a touch control loses pointer capture: '+JSON.stringify(mobileSwimPointerCaptureCleanup));
   console.log('Mobile swim pointer-capture cleanup:',JSON.stringify(mobileSwimPointerCaptureCleanup));
+  // Capture each freshwater basin on the mobile viewport for visual review.
+  const mobileFreshwaterSnapshotState = await mobilePage.evaluate(() => {
+    const api=window.__climboriaSmoke;
+    return {restore:{x:api.player.position.x,y:api.player.position.y,z:api.player.position.z},
+      bodies:api.freshwaterBodies.map(body=>({id:body.id,x:body.x,z:body.z,surfaceY:body.surfaceY}))};
+  });
+  for(const body of mobileFreshwaterSnapshotState.bodies){
+    await mobilePage.evaluate(({x,z,surfaceY})=>{
+      const api=window.__climboriaSmoke;api.setMoveVector(null,null);
+      api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+      api.setPlayerPosition(x,surfaceY-.205,z);
+    },body);
+    await mobilePage.waitForTimeout(1100);
+    await mobilePage.screenshot({path:`freshwater-mobile-${body.id}.png`});
+  }
+  await mobilePage.evaluate(({x,y,z})=>window.__climboriaSmoke.setPlayerPosition(x,y,z),mobileFreshwaterSnapshotState.restore);
+  await mobilePage.waitForTimeout(400);
   await mobilePage.screenshot({ path: 'climboria-mobile-gameplay.png' });
   await mobile.close();
 
