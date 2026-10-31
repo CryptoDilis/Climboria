@@ -96,6 +96,8 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+// Resolve the expedition before any world-generation helpers or colliders can run.
+const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
 const host=document.getElementById('game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xb7c9ce);scene.fog=new THREE.Fog(0xa9c3d0,360,1250);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,520);
 const isMobileGPU=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,isMobileGPU?1.1:1.45));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();window.__climbDiag("WEBGL CONTEXT LOST");});renderer.domElement.addEventListener("webglcontextrestored",()=>window.__climbDiag("WEBGL CONTEXT RESTORED"));
@@ -248,7 +250,7 @@ function hitsJarrellObstacleAt(x,z,playerY){
 }
 function mountainHeight(x,z){const dz=(z+145)/405,dx=x/285,r=Math.sqrt(dx*dx+dz*dz);if(r>1)return -2;const envelope=Math.pow(Math.max(0,1-r),.72),base=envelope*248;const broad=Math.sin(x*.016+z*.012)*Math.sin(z*.015-x*.009)*10;const ridgeA=Math.abs(Math.sin(x*.027+z*.016)),ridgeB=Math.abs(Math.sin(z*.022-x*.025)),ridgeC=Math.abs(Math.sin(x*.049+z*.038));const serrated=(ridgeA*.55+ridgeB*.32+ridgeC*.13)*31*envelope;const spine=Math.pow(Math.max(0,1-Math.abs(dx)*.76),1.7)*Math.max(0,Math.sin((z+385)*.009))*42;const shoulders=Math.pow(Math.max(0,1-Math.abs(dx+.25)*1.9),2)*Math.max(0,Math.sin((z+280)*.021))*26*envelope;return Math.max(-1,base+broad+serrated+spine+shoulders)}
 let terrainHeightAt=mountainHeight;
-const qs=new URLSearchParams(location.search),currentLevel=qs.get('level')||'01';
+
 // Mount Jarrell HUD before terrain, chunk, and asset initialization can fail or delay the game.
 if(currentLevel==='11'){
  const mountJarrellPrompt=(id,text,css)=>{if(document.getElementById(id))return;const node=document.createElement('div');node.id=id;node.textContent=text;node.style.cssText=css;document.body.appendChild(node);};
