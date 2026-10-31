@@ -739,6 +739,26 @@ try {
   }
   console.log('Jarrell cave interior lighting regression:', JSON.stringify(caveLightingAudit));
 
+  // Regression: the cave pressure plate must deploy its spikes and apply one bounded damage hit.
+  const caveTrapAudit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke, trap = api?.caveTrap;
+    if (!trap || trap.spikes?.length !== 8) return { error:'cave spike trap or eight spikes missing' };
+    api.setPaused(true);
+    api.setPlayerPosition(trap.x,trap.ground+.9,trap.z);
+    const before=api.getHealth();
+    api.setPaused(false);
+    await new Promise(resolve=>setTimeout(resolve,420));
+    const after=api.getHealth();
+    const extended=trap.spikes.every(spike=>spike.scale.y>.5);
+    const triggers=trap.triggerCount;
+    api.setPaused(true);
+    return {before,after,damage:before-after,extended,triggers,spikes:trap.spikes.length};
+  });
+  if (caveTrapAudit.error || caveTrapAudit.damage !== 12 || !caveTrapAudit.extended || caveTrapAudit.triggers !== 1) {
+    errors.push('cave pressure-plate trap must extend eight spikes and apply exactly one 12 HP hit: ' + JSON.stringify(caveTrapAudit));
+  }
+  console.log('Jarrell cave spike-trap regression:', JSON.stringify(caveTrapAudit));
+
   // Regression: cave vipers must remain active hazards and deal damage when the player enters bite range.
   const caveViperAudit = await page.evaluate(async () => {
     const api = window.__climboriaSmoke;
