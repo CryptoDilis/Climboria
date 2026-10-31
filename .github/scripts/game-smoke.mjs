@@ -1000,6 +1000,37 @@ try {
     if(!item.blockedAtBoundary)errors.push('player movement penetrated freshwater shoreline stone collider: '+JSON.stringify(item));
   }
   console.log('Jarrell freshwater shoreline movement audit:',JSON.stringify(freshwaterShoreMovementAudit));
+  
+  // Check every angular opening between consecutive rim stones remains physically clear.
+  const freshwaterApproachGapAudit = await page.evaluate(() => {
+    const api=window.__climboriaSmoke;
+    const configs=[
+      {id:'woodland-pond',kind:'freshwater-landing-rock'},
+      {id:'moonpool',kind:'freshwater-rim-rock'},
+      {id:'sanctuary-lake',kind:'freshwater-sanctuary-rim-rock'}
+    ];
+    return configs.map(config=>{
+      const body=api.freshwaterBodies.find(item=>item.id===config.id);
+      const stones=api.obstacles.filter(item=>item.kind===config.kind)
+        .map(item=>({...item,angle:Math.atan2(item.z-body.z,item.x-body.x),radial:Math.hypot(item.x-body.x,item.z-body.z)}))
+        .sort((a,b)=>a.angle-b.angle);
+      const gaps=stones.map((stone,index)=>{
+        const next=stones[(index+1)%stones.length];
+        let delta=next.angle-stone.angle;if(delta<=0)delta+=Math.PI*2;
+        const angle=stone.angle+delta/2,radial=(stone.radial+next.radial)/2;
+        const x=body.x+Math.cos(angle)*radial,z=body.z+Math.sin(angle)*radial;
+        const y=api.terrainHeightAt(x,z)+.22;
+        const blocked=stones.some(item=>api.testObstacleCollider(item,x,z,y));
+        return {from:stone.angle,to:next.angle,angle,radial,blocked};
+      });
+      return {id:config.id,stoneCount:stones.length,gapCount:gaps.length,clearGaps:gaps.filter(gap=>!gap.blocked).length,gaps};
+    });
+  });
+  for(const item of freshwaterApproachGapAudit){
+    if(item.stoneCount<3||item.clearGaps!==item.gapCount)errors.push('freshwater shoreline has a blocked angular access gap: '+JSON.stringify(item));
+  }
+  console.log('Jarrell freshwater approach-gap audit:',JSON.stringify(freshwaterApproachGapAudit));
+
 
 
   const sakuraParkCheck = await page.evaluate(() => {
