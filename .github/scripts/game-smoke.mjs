@@ -921,6 +921,9 @@ try {
   if (!cacheId) {
     errors.push('no unopened cache spawned in the active terrain chunks');
   } else {
+    // The preceding viper damage test deliberately pauses the game; resume before
+    // exercising the real E-key interaction, then restore the paused test state.
+    await page.evaluate(() => window.__climboriaSmoke?.setPaused(false));
     await page.waitForTimeout(120);
     await page.keyboard.press('E');
     await page.waitForTimeout(120);
@@ -929,6 +932,7 @@ try {
       const saved = JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests') || '[]');
       return active?.opened === true || (Array.isArray(saved) && saved.includes(id));
     }, cacheId);
+    await page.evaluate(() => window.__climboriaSmoke?.setPaused(true));
     if (!cacheOpened) errors.push('nearby treasure cache did not open or persist its looted state');
   }
 
@@ -988,8 +992,12 @@ try {
   for (const appearance of ['woman','man']) {
     const switched = await page.evaluate(type => window.__climboriaSmoke.setHeroAppearance(type), appearance);
     if (!switched) { errors.push(appearance+' hero appearance could not be activated for the in-water swim regression'); continue; }
-    await page.waitForFunction(type => window.jarrellSwimPoseDebug?.appearance===type, appearance, {timeout:5000,polling:100}).catch(() => {});
-    await page.waitForTimeout(250);
+    await page.waitForFunction(type => {
+      const pose=window.jarrellSwimPoseDebug;
+      return !!(pose?.swimming && pose.appearance===type && pose.hasModel &&
+        pose.proceduralSwimApplied && pose.proceduralSwimLimbAudit?.arms &&
+        pose.proceduralSwimLimbAudit?.legs);
+    }, appearance, {timeout:5000,polling:100}).catch(() => {});
     const pose = await page.evaluate(() => ({swimming:window.jarrellSwimming===true,pose:window.jarrellSwimPoseDebug||null}));
     swimAppearanceAudit.push({appearance,...pose});
     const expectedSign = appearance==='man'?-1:1;
