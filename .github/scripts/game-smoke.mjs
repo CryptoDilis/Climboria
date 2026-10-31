@@ -279,6 +279,8 @@ try {
         const river = api.nearestRiverPoint(x, z);
         if (!Number.isFinite(river?.distanceSq) || Math.sqrt(river.distanceSq) < 16) continue;
         if (api.obstacles.some(o => Math.hypot(o.x - x, o.z - z) < (o.r || 1) + 3)) continue;
+        // Scenic massif collision is intentionally solid; don't label a point inside that ridge footprint a walkable-slope regression target.
+        if ((api.mountainBlockers || []).some(o => { const dx=(x-o.x)/(o.rx||o.r), dz=(z-o.z)/(o.rz||o.r); return dx*dx+dz*dz < 1; })) continue;
         candidates.push({x,z,ground,gx,gz,slope});
       }
     }
@@ -742,12 +744,13 @@ try {
     const massif = blockers.find(item => item.kind === 'mountainMassif');
     if (!massif) return { count:blockers.length, error:'no mountain massif blocker registered' };
     const y = massif.y0 + .5;
+    const overlappingTop = Math.max(...blockers.filter(item => { const dx=(massif.x-item.x)/(item.rx||item.r), dz=(massif.z-item.z)/(item.rz||item.r); return dx*dx+dz*dz < 1; }).map(item => item.y1));
     return {
       count:blockers.length,
       kind:massif.kind,
-      centerBlocked:api.testMountainCollision(massif.x,massif.z,y),
-      outsideClear:!api.testMountainCollision(massif.x+massif.rx+8,massif.z,y),
-      aboveClear:!api.testMountainCollision(massif.x,massif.z,massif.y1+2)
+      centerBlocked:api.testMountainCollider(massif,massif.x,massif.z,y),
+      outsideClear:!api.testMountainCollider(massif,massif.x+massif.rx+8,massif.z,y),
+      aboveClear:!api.testMountainCollision(massif.x,massif.z,overlappingTop+2)
     };
   });
   if (mountainCollisionAudit.error || mountainCollisionAudit.count < 3 || !mountainCollisionAudit.centerBlocked || !mountainCollisionAudit.outsideClear || !mountainCollisionAudit.aboveClear) {
