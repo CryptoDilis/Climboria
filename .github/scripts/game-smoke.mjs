@@ -722,7 +722,7 @@ try {
     const torches = window.jarrellCaveInteriorTorches || [];
     const api = window.__climboriaSmoke;
     const blockers = api?.obstacles?.filter(item => item.kind === 'caveTorch') || [];
-    const interiorBlockers = blockers.filter(item => item.z < -578 && item.z > -615);
+    const interiorBlockers = blockers.filter(item => item.z <= -578 && item.z > -615);
     return {
       torchCount: torches.length,
       visible: torches.length === 4 && torches.every(item => item.torch?.visible && item.flame?.isMesh && item.ember?.isMesh && item.light?.isLight),
