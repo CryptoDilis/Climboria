@@ -1034,6 +1034,39 @@ try {
     }
   }
 
+  // Regression: the open sea must activate swimming inside its actual bounds and clear it beyond the east/west/north/south shore edges.
+  const oceanSwimAudit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke, bounds = window.jarrellOceanBounds;
+    if (!bounds) return { available: false };
+    const centerX = (bounds.minX + bounds.maxX) / 2, centerZ = (bounds.minZ + bounds.maxZ) / 2;
+    api.setPaused(false);
+    api.player.position.set(centerX, bounds.surfaceY + .2, centerZ);
+    await new Promise(resolve => setTimeout(resolve, 180));
+    const centerSwimming = window.jarrellSwimming === true;
+    const centerY = api.player.position.y;
+    const outside = [
+      { x: bounds.minX - 4, z: centerZ, edge: 'west' },
+      { x: bounds.maxX + 4, z: centerZ, edge: 'east' },
+      { x: centerX, z: bounds.minZ - 4, edge: 'north' },
+      { x: centerX, z: bounds.maxZ + 4, edge: 'south' }
+    ].map(point => {
+      api.player.position.set(point.x, api.terrainHeightAt(point.x, point.z) + .22, point.z);
+      return { edge: point.edge, swimming: null };
+    });
+    for (const point of outside) {
+      await new Promise(resolve => setTimeout(resolve, 120));
+      point.swimming = window.jarrellSwimming === true;
+    }
+    return { available: true, centerSwimming, centerY, surfaceY: bounds.surfaceY, outside };
+  });
+  if (!oceanSwimAudit.available) errors.push('Jarrell open-sea swimming bounds are missing');
+  else {
+    if (!oceanSwimAudit.centerSwimming) errors.push('swimming state failed to activate in the center of Jarrell open sea');
+    if (oceanSwimAudit.centerSwimming && (oceanSwimAudit.centerY < oceanSwimAudit.surfaceY - .34 || oceanSwimAudit.centerY > oceanSwimAudit.surfaceY - .10)) errors.push('open-sea swimmer did not settle near the sea surface: ' + JSON.stringify(oceanSwimAudit));
+    for (const edge of oceanSwimAudit.outside) if (edge.swimming) errors.push('open-sea swimming state remained active beyond the ' + edge.edge + ' shoreline bound');
+  }
+  console.log('Jarrell open-sea swim bounds:', JSON.stringify(oceanSwimAudit));
+
   // Regression test: swim out of the starting river and reach dry bank.
   const swimExitStart = await page.evaluate(() => {
     const api=window.__climboriaSmoke,initialZ=80,nearest=api.nearestRiverPoint(api.riverX(initialZ),initialZ),z=nearest.z,centerX=nearest.x;
