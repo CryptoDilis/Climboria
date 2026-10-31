@@ -962,7 +962,7 @@ try {
   const freshwaterStoneCollisionAudit = await page.evaluate(() => {
     const api=window.__climboriaSmoke,stones=api.obstacles.filter(item=>item.kind==='freshwater-landing-rock'||item.kind==='freshwater-rim-rock');
     const woodland=stones.filter(item=>item.kind==='freshwater-landing-rock'),moonpool=stones.filter(item=>item.kind==='freshwater-rim-rock');
-    const sample=items=>items.map(item=>({kind:item.kind,x:item.x,z:item.z,r:item.r,y0:item.y0,y1:item.y1,inside:api.testObstacleCollision(item.x,item.z,item.y0+.22),outside:!api.testObstacleCollision(item.x+item.r+1.1,item.z,item.y0+.22)}));
+    const sample=items=>items.map(item=>({kind:item.kind,x:item.x,z:item.z,r:item.r,y0:item.y0,y1:item.y1,inside:api.testObstacleCollider(item,item.x,item.z,item.y0+.22),outside:!api.testObstacleCollider(item,item.x+item.r+1.1,item.z,item.y0+.22)}));
     return {woodland:sample(woodland),moonpool:sample(moonpool),reedColliders:api.obstacles.filter(item=>/reed/i.test(item.kind)).length};
   });
   if(freshwaterStoneCollisionAudit.woodland.length!==5)errors.push('woodland pond landing stones do not all have colliders: '+JSON.stringify(freshwaterStoneCollisionAudit));
