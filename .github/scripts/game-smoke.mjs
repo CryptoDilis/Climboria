@@ -908,6 +908,14 @@ try {
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
   if (!wildernessLandmarks.includes('JarrellMoonpool')) errors.push('Jarrell Moonpool landmark did not initialize');
+  const freshwaterAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const bodies = api?.freshwaterBodies || [];
+    return { ids: bodies.map(body => body.id), inside: bodies.map(body => !!api.freshwaterAt(body.x, body.z)), outside: bodies.map(body => !!api.freshwaterAt(body.x + body.rx * 1.2, body.z)) };
+  });
+  if (freshwaterAudit.ids.join(',') !== 'woodland-pond,moonpool,sanctuary-lake') errors.push('Jarrell freshwater registry is missing or out of order: ' + JSON.stringify(freshwaterAudit));
+  if (freshwaterAudit.inside.some(value => !value)) errors.push('freshwater body center failed water-region detection: ' + JSON.stringify(freshwaterAudit));
+  if (freshwaterAudit.outside.some(Boolean)) errors.push('freshwater detection leaks beyond pond shoreline bounds: ' + JSON.stringify(freshwaterAudit));
 
   const sakuraParkCheck = await page.evaluate(() => {
     const park = window.jarrellSakuraPark;
