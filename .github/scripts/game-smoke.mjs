@@ -1441,7 +1441,17 @@ try {
       x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2)),
       groundY: Number(ground.toFixed(2)),
       grounded: p.y >= ground + .05 && p.y <= ground + .85,
-      samples: samples.slice(-12)
+      samples: samples.slice(-12),
+      movementDebug: api.lastMovementDebug || null,
+      shorelineTrace: (api.movementTrace || []).filter(d => d.currentX >= bounds.minX - 20 && d.currentX <= bounds.minX + 30).slice(-24).map(d => ({
+        x: Number(d.currentX.toFixed(2)), nextX: Number(d.nextX.toFixed(2)),
+        swimming: d.swimming, proposedWater: d.proposedWater, leavingWater: d.leavingWater,
+        shorePass: d.oceanWestShorePass, obstacleBlocked: d.obstacleBlocked, blocked: d.blocked,
+        blockedByHeight: d.blockedByHeight, penetratingMountain: d.penetratingMountain,
+        slope: Number(d.slope.toFixed(3)), rise: Number(d.rise.toFixed(3)),
+        feetY: Number(d.feetY.toFixed(3)), fromH: Number(d.fromH.toFixed(3)), toH: Number(d.toH.toFixed(3)),
+        moveX: Number(d.moveX.toFixed(2)), travelX: Number(d.travelX.toFixed(3)), dt: Number(d.dt.toFixed(3))
+      }))
     };
   });
   if (!oceanShoreExit.available) errors.push('Jarrell ocean west-shore movement test is unavailable');
