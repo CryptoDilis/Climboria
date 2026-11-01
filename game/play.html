@@ -66,10 +66,10 @@ body.free #control-dock{opacity:1}
  
  
 /* Device-aware mobile layout: Android desktop-site mode can report a wide CSS viewport. */
-body.mobile-device #rotate-phone-overlay{display:none;position:fixed;inset:0;z-index:5000;box-sizing:border-box;width:100vw;height:100dvh;padding:24px;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;white-space:normal;overflow-wrap:anywhere;background:#080d14;color:#ffe3a3;font:800 clamp(18px,5vw,26px)/1.35 system-ui;letter-spacing:.06em}
+body.mobile-device #rotate-phone-overlay{display:none!important;position:fixed;inset:0;z-index:5000;box-sizing:border-box;width:100vw;height:100dvh;padding:24px;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;white-space:normal;overflow-wrap:anywhere;background:#080d14;color:#ffe3a3;font:800 clamp(18px,5vw,26px)/1.35 system-ui;letter-spacing:.06em}
 body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:28rem;font-size:clamp(12px,3vw,15px);font-weight:500;letter-spacing:0;line-height:1.5;color:#e5dccb}
-@media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
-@media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none}body.mobile-device #hud{display:none!important}
+@media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex!important}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
+@media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none!important}body.mobile-device #hud{display:none!important}
  body.mobile-device #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
  body.mobile-device #player-avatar{width:25px;height:25px;padding:2px}
  body.mobile-device #player-name{font-size:9px;letter-spacing:.06em}
