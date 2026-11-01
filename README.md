@@ -15,7 +15,7 @@ Jarrell’s Peak is a vast, endless-feeling wilderness expedition focused on exp
 - Chests may contain ingredients, materials, gear, and other eligible rewards across published rarity tiers.
 - There is no safe zone. Death returns the player to the starting point under the implemented and published game rules.
 - Documentation-only work must not change existing gameplay mechanics such as movement, climbing, collision, swimming, fishing, controls, camera, sound, weather, or treasure discovery.
-- The ten previously proposed normal mountains are removed from the game menu and deferred; they are not launch levels. Reconsider additional maps only after the token launch and a budget review.
+- Jarrell’s Peak is the sole mountain world in the current game scope. Arena is the only separate planned map. No additional mountain expeditions are part of the roadmap.
 
 ## Game menu: four destinations
 
@@ -25,7 +25,7 @@ The current menu should show only these four destinations:
 3. **Marketplace** — a demo storefront only; no live trading or real purchases.
 4. **Inventory** — a local preview only; persistent item ownership and equipment are not live.
 
-Do not add the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
+Do not add additional mountain destinations or a separate Create Hero menu item. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
 
 ## Future Arena: separate public map
 
