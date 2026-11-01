@@ -926,7 +926,22 @@ const FAC=[],at=(x,z,ry)=>{const g=new T3.Group();g.position.set(x,heightAt(x,z)
 /* shoreline, port, broken ship, fishing spot */
 let shoreX=-900;for(let x=-700;x>-1250;x-=2)if(heightAt(x,0)<-.3){shoreX=x+10;break}
 {const g=at(shoreX,0,Math.PI/2);for(let i=0;i<12;i++)sc(mk(BOX,M('#6b4a2e'),0,.5,-i*1.6+2,g),3,.25,1.4);
- FAC.push({x:shoreX,z:0,type:'fish',label:'Fishing spot'});
+ FAC.push({x:shoreX,z:0,type:'fish',label:'Coastal fishing spot',waterBodyId:'open_sea'});
+// Freshwater fishing points sit on the dry bank beside each basin; the small pier
+// gives players a clear, visible interaction landmark without blocking shore access.
+for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
+ const bankX=body.x+body.radius+2.5,bankZ=body.z;
+ const pier=at(body.x+body.radius-1.5,bankZ,0);pier.position.y=.08;
+ sc(mk(BOX,M('#76502f'),0,0,0,pier),6,.24,3.8);
+ for(const px of [-2.2,2.2])for(const pz of [-1.2,1.2]){
+  const post=mk(CYL,M('#4a3425'),px,-.55,pz,pier);sc(post,.16,1.2,.16);
+  solid(pier.position.x+px,pier.position.z+pz,.42);
+ }
+ const sign=at(bankX,bankZ+3,0);
+ sc(mk(BOX,M('#65452c'),0,1.1,0,sign),.18,2.2,.18);
+ sc(mk(BOX,M('#b88c67'),0,2.1,0,sign),1.3,.8,.14);
+ FAC.push({x:bankX,z:bankZ,type:'fish',label:body.name+' fishing spot',waterBodyId:body.id});
+}
  const sh=new T3.Group();sh.position.set(shoreX-50,0,28);sh.rotation.set(.12,.5,.3);scene.add(sh);sc(mk(BOX,M('#4a3626'),0,0,0,sh),6,3,22);sc(mk(CYL,M('#3a2a1c'),0,6,2,sh),.25,12,.25).rotation.z=.35;}
 /* treasure chests: random respawning, snapped to reachable (non-steep) land */
 const steep=(x,z)=>Math.max(Math.abs(heightAt(x+3,z)-heightAt(x-3,z)),Math.abs(heightAt(x,z+3)-heightAt(x,z-3)))/6>.5;
@@ -941,7 +956,7 @@ chest('cave',l2w(caveG,0,36));chest('summit',[POI.summit.px+5,POI.summit.pz+5]);
 [[-420,-640],[930,-260],[250,-1000],[-600,300]].forEach(a=>chest('remote',null,a,160));
 function interact(){if(P.mode!='walk')return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=90+Math.random()*60;c.g.visible=false;const it=LOOT[Math.floor(Math.random()*LOOT.length)];addInventoryItem(it,1);toast('Chest opened: '+it);emit('chest',{kind:c.kind,item:it,x:c.x,z:c.z});return}
- for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;toast('Line cast…')}else{toast(f.label);emit(f.type,{})}return}}
+ for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 addEventListener('keydown',e=>{if(e.code=='KeyE')interact();if(e.code=='KeyR')wx=(wx+1)%3});
 /* weather: clear / rain / thunderstorm */
@@ -954,7 +969,7 @@ function gameTick(dt,cp){
   if(P.y-1.75<c.h+1.4)for(const o of spikes)if(o.s.position.y>0&&Math.abs(lx-o.s.position.x)<.9&&Math.abs(lz-o.s.position.z)<.9){hurt(25,'Spike trap!');break}}
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const f=['Silverfin','Reed Carp','Old Boot (junk)','Golden Trout'][Math.floor(Math.random()*4)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f})}
+ if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
  hpEl.textContent='';
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
@@ -969,7 +984,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,moveWalk,parkFixtures:parkFixtureSolids,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,moveWalk,parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
