@@ -378,6 +378,7 @@ function renderInventory(){
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 function toggleInventory(){renderInventory();invPanel.style.display=invPanel.style.display==='none'?'block':'none'}
 invToggle.addEventListener('click',toggleInventory);
+addEventListener('keydown',e=>{if(e.code==='KeyI'&&!e.repeat){e.preventDefault();toggleInventory()}});
 if(MOB){document.body.style.touchAction='none';
  [['JUMP','Space',16,120],['RUN','ShiftLeft',16,40],['USE',null,96,80]].forEach(([t,k,r,b])=>{const e=css(document.createElement('div'),`position:fixed;right:${r}px;bottom:calc(${b}px + env(safe-area-inset-bottom));z-index:9;width:62px;height:62px;border-radius:50%;background:#0008;border:2px solid #ffe3a3aa;color:#ffe3a3;font:11px system-ui;display:grid;place-content:center;touch-action:none`);e.textContent=t;
   e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});e.addEventListener('touchend',ev=>{ev.stopPropagation();k&&(keys[k]=false)})});}
