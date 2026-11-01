@@ -788,7 +788,8 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  for(let i=0;i<5;i++)addDecayedSoldier(battleX+(rnd()-.5)*48,battleZ+(rnd()-.5)*38,rnd()*Math.PI*2,i);
  // A second secluded woodland pond with reeds and a broken stone landing.
  const pondX=178,pondZ=255,pond=place(new THREE.CircleGeometry(11,40),sanctuaryWater,pondX,.035,pondZ,1.18,1,.78);pond.name='JarrellWoodlandPond';
- pond.rotation.x=-Math.PI/2;
+ // place() offsets Y from terrain; water surfaces use absolute registered elevations so the basin floor cannot cover them.
+ pond.position.y=.035;pond.rotation.x=-Math.PI/2;
  for(let i=0;i<18;i++){const a=i/18*Math.PI*2,rr=10.5+(i%3)*1.4,rx=pondX+Math.cos(a)*rr,rz=pondZ+Math.sin(a)*rr;
   place(new THREE.ConeGeometry(.09,.65+(i%4)*.16,4),riceGreen,rx,.16,rz,.8,1,.8,a);
  }
@@ -828,12 +829,12 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  window.jarrellSakuraPark={group:parkGroup,center:{x:parkX,z:parkZ},trees:7,benches:3,swings:2,hammocks:2};
  // Hidden treasure clearings and spring sanctuary, away from the starter camp.
  // Moonpool: a third secluded freshwater basin with a broken slate rim and reeds.
- const moonX=300,moonZ=278,moonpool=place(new THREE.CircleGeometry(8.5,48),sanctuaryWater,moonX,.045,moonZ,1.22,1,.86);moonpool.rotation.x=-Math.PI/2;moonpool.name='JarrellMoonpool';
+ const moonX=300,moonZ=278,moonpool=place(new THREE.CircleGeometry(8.5,48),sanctuaryWater,moonX,.045,moonZ,1.22,1,.86);moonpool.position.y=.045;moonpool.rotation.x=-Math.PI/2;moonpool.name='JarrellMoonpool';
  const moonReedMat=new THREE.MeshStandardMaterial({color:0x657c52,roughness:1});
  for(let i=0;i<22;i++){const a=i/22*Math.PI*2,r=8.4+(i%4)*.75,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r;place(new THREE.ConeGeometry(.075,.48+(i%5)*.12,5),moonReedMat,rx,.2,rz,.9,1,.9,a);}
  const moonpoolRimStones=[];for(let i=0;i<13;i++){const a=i/13*Math.PI*2,r=9.4+(i%3)*.65,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r,ground=terrainHeightAt(rx,rz),sx=.55+(i%3)*.12,sy=.35+(i%2)*.12;place(rockGeo,stoneEdge,rx,ground+.12,rz,sx,sy,.62,a*.4);moonpoolRimStones.push(addJarrellObstacleCollider({x:rx,z:rz,r:.52,y0:ground-.05,y1:ground+.12+sy,kind:'freshwater-rim-rock'}))}
  for(let i=0;i<6;i++){const ripple=new THREE.Mesh(new THREE.TorusGeometry(.35+i*.12,.018,5,24),new THREE.MeshBasicMaterial({color:0xb1edf2,transparent:true,opacity:.18,depthWrite:false}));ripple.rotation.x=-Math.PI/2;ripple.position.set(moonX+Math.sin(i*2.2)*2,.085,moonZ+Math.cos(i*1.7)*1.8);ripple.scale.set(1.5,1,1);worldPOIs.add(ripple);}
- const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.rotation.x=-Math.PI/2;
+ const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.position.y=.05;lake.rotation.x=-Math.PI/2;lake.name='JarrellSanctuaryLakeWater';
  // Shared freshwater gameplay registry. Radii follow the visible scaled water discs; the small margin lets the swimmer cross the visual water edge without a state flicker.
  const jarrellFreshwaterBodies=[
   {id:'woodland-pond',name:'JarrellWoodlandPond',x:178,z:255,rx:11*1.18,rz:11*.78,surfaceY:.035},
@@ -853,7 +854,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  }
  window.jarrellFreshwaterSandMeshes=freshwaterSandMeshes;
  const sanctuaryLakeRimStones=[];for(let i=0;i<32;i++){const a=i/32*Math.PI*2,rr=24+(i%3)*2,rx=sanctX+Math.cos(a)*rr,rz=sanctZ+Math.sin(a)*rr,ground=terrainHeightAt(rx,rz),sx=1.1+(i%3)*.4,sy=.8+(i%4)*.4;place(rockGeo,stoneEdge,rx,ground+.25,rz,sx,sy,1.1,a);sanctuaryLakeRimStones.push(addJarrellObstacleCollider({x:rx,z:rz,r:.82+(sx-1.1)*.2,y0:ground-.05,y1:ground+.25+sy,kind:'freshwater-sanctuary-rim-rock'}))}
- const shrine=place(new THREE.BoxGeometry(2.4,5,2.4),poiMat(0x77766b),sanctX,2.4,sanctZ,1,1,1,.3);addJarrellObstacleCollider({x:sanctX,z:sanctZ,r:1.75,y0:terrainHeightAt(sanctX,sanctZ),y1:terrainHeightAt(sanctX,sanctZ)+5.2,kind:'shrine'});shrine.name='JarrellSanctuaryShrine';place(new THREE.ConeGeometry(2.1,2.2,5),poiMat(0x4c5550),sanctX,5.7,sanctZ,1,1,1,.3);
+ const shrineX=sanctX+40,shrineZ=sanctZ,shrineGround=terrainHeightAt(shrineX,shrineZ);const shrine=place(new THREE.BoxGeometry(2.4,5,2.4),poiMat(0x77766b),shrineX,2.4,shrineZ,1,1,1,.3);addJarrellObstacleCollider({x:shrineX,z:shrineZ,r:1.75,y0:shrineGround,y1:shrineGround+5.2,kind:'shrine'});shrine.name='JarrellSanctuaryShrine';place(new THREE.ConeGeometry(2.1,2.2,5),poiMat(0x4c5550),shrineX,5.7,shrineZ,1,1,1,.3);
  // Procedurally placed expedition caches: stable hidden locations, persistent looting, distance-scaled rewards.
  const chestWood=new THREE.MeshStandardMaterial({color:0x654126,roughness:.82}),chestTrim=new THREE.MeshStandardMaterial({color:0xd6b45e,roughness:.45,metalness:.35,emissive:0x6b3f08,emissiveIntensity:.18}),chestLock=new THREE.MeshStandardMaterial({color:0x313c42,roughness:.42,metalness:.65});
  const lootedCacheIds=new Set();window.jarrellLootedCacheIds=lootedCacheIds;try{const saved=JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests')||'[]');if(Array.isArray(saved))saved.forEach(id=>lootedCacheIds.add(id));const inventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(inventory)?inventory:[];window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0;}catch{window.jarrellLootInventory=[];window.jarrellClimbPoints=0;}
