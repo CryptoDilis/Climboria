@@ -534,12 +534,16 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
 const assetChoices={Adventurer:'../assets/expedition-crests/The_Adventurer.glb',Police:'../assets/expedition-crests/The_Police_Officer_Nigeria.glb'};
-let heroLoadError='';
+let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='Adventurer'){
- if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';console.error('[Climboria] '+heroLoadError);return}
+ if(!assetChoices[choice])choice='Adventurer';
+ const requestId=++heroLoadRequest;
+ if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
  new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
-  if(assetHero){scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
+  // Ignore late responses from an earlier character selection; the most recent choice always wins.
+  if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
+  if(assetHero){scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
   assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
@@ -551,7 +555,7 @@ function loadAssetHero(choice='Adventurer'){
   document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
- },undefined,error=>{heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
+ },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
 }
 const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const initialHero=requestedHero==='Police'?'Police':requestedHero==='Adventurer'?'Adventurer':savedHero;loadAssetHero(initialHero);
 const createPanel=document.getElementById('character-create-panel');
