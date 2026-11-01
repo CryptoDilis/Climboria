@@ -10,13 +10,23 @@ try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
-  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
+  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1&hero=Adventurer', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 90000 });
+  const heroAssetAudit = await page.evaluate(() => ({
+    asset: document.documentElement.dataset.climboriaHeroAsset || '',
+    animationNames: (document.documentElement.dataset.climboriaAnimations || '').split('|').filter(Boolean),
+    renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
+  }));
+  const requiredHeroAnimations = ['Running','Walking','Climb_Attempt_and_Fall_3','Swim_Forward','Swim_Idle','swimming_to_edge','Attack','Collect_Object','Dead','Arise'];
+  if (!heroAssetAudit.asset.endsWith('/assets/characters/Climboria_Hero.glb')) errors.push('Climboria Hero GLB loaded from unexpected path: ' + heroAssetAudit.asset);
+  if (heroAssetAudit.animationNames.length !== 19) errors.push('Climboria Hero animation count mismatch: ' + heroAssetAudit.animationNames.length);
+  for (const animation of requiredHeroAnimations) if (!heroAssetAudit.animationNames.includes(animation)) errors.push('Climboria Hero animation missing: ' + animation);
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
