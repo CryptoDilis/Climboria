@@ -935,9 +935,13 @@ try {
   if (freshwaterAudit.outside.some(Boolean)) errors.push('freshwater detection leaks beyond pond shoreline bounds: ' + JSON.stringify(freshwaterAudit));
   const freshwaterSurfaceAudit = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
-    return (api?.freshwaterBodies || []).map(body => ({id:body.id, profile:api.getFreshwaterSwimProfile(body.x,body.z)}));
+    return (api?.freshwaterBodies || []).map(body => {
+      const water=window.jarrellFreshwaterWaterMeshes?.find(item=>item.id===body.id)?.mesh;
+      return {id:body.id,profile:api.getFreshwaterSwimProfile(body.x,body.z),renderedY:water?.position.y,visible:water?.visible===true,waterName:water?.name};
+    });
   });
   if (freshwaterSurfaceAudit.some(item => !item.profile || !Number.isFinite(item.profile.surfaceY) || Math.abs(item.profile.surfaceY-(item.id==='woodland-pond'?.035:item.id==='moonpool'?.045:.05))>0.0001)) errors.push('freshwater swim profile did not resolve the registered water surface: '+JSON.stringify(freshwaterSurfaceAudit));
+  if (freshwaterSurfaceAudit.some(item => !Number.isFinite(item.renderedY) || Math.abs(item.renderedY-item.profile.surfaceY)>.001 || !item.visible)) errors.push('freshwater rendered water mesh is hidden or vertically misaligned with its swim surface: '+JSON.stringify(freshwaterSurfaceAudit));
   if (freshwaterSurfaceAudit.some(item => !Number.isFinite(item.profile?.rootSurfaceY) || !Number.isFinite(item.profile?.lowerLimit) || !Number.isFinite(item.profile?.upperLimit) || item.profile.lowerLimit>=item.profile.rootSurfaceY || item.profile.upperLimit<=item.profile.rootSurfaceY)) errors.push('freshwater vertical swim limits are invalid: '+JSON.stringify(freshwaterSurfaceAudit));
 
   // Exercise real water-state entry, surface/dive response, and exit at every freshwater basin.
