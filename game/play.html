@@ -61,7 +61,7 @@ body.free #control-dock{opacity:1}
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="240" height="240"></canvas><div id="world-map-legend">● You · ◆ Landmark · Gold = explored destinations</div></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="320" height="320"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp</div>
 <div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p></div>
@@ -413,7 +413,7 @@ const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero
 hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
 hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='official-female-climber';
+hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='official-female-climber';\nconst heroLoader=new T3.GLTFLoader();heroLoader.load('../assets/expedition-crests/The_Adventurer.glb',gltf=>{const model=gltf.scene;model.name='ClimboriaAssetHero';const bounds=new T3.Box3().setFromObject(model),size=bounds.getSize(new T3.Vector3()),scale=2.25/Math.max(size.y,.001);model.scale.setScalar(scale);const center=bounds.getCenter(new T3.Vector3());model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});hero.add(model);hero.children.slice(0,-1).forEach(o=>o.visible=false);document.documentElement.dataset.climboriaHero='asset-adventurer';window.__climboriaHeroAssetLoaded=true;},undefined,e=>console.warn('[Climboria] Asset model load failed; procedural fallback kept',e));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -448,23 +448,26 @@ addEventListener('mousemove',e=>{if(P.mode=='cine'||!(locked||drag))return;P.yaw
 /* ---------- gameplay layer (functional systems; visuals marked PLACEHOLDER) ---------- */
 const joy={id:null,x0:0,y0:0,dx:0,dy:0},lk={id:null,x:0,y:0};
 const css=(el,t)=>{el.style.cssText=t;document.body.appendChild(el);return el};
-const hpEl=css(document.createElement('div'),'position:fixed;right:16px;top:calc(16px + env(safe-area-inset-top));z-index:6;font:14px system-ui;color:#ffb3a8;text-shadow:0 1px 6px #000;pointer-events:none');
+const hpEl=css(document.createElement('div'),'display:none');
 const toastEl=css(document.createElement('div'),'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:8;font:16px Georgia;color:#ffe3a3;text-shadow:0 2px 10px #000;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center');
 const toast=t=>{toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>toastEl.style.opacity=0,2600)};
 const emit=(type,detail)=>window.dispatchEvent(new CustomEvent('climboria:'+type,{detail}));
 /* Persistent local player inventory. Server-authoritative multiplayer/rewards are a separate integration. */
 const INVENTORY_KEY='climboria_jarrell_inventory_v1';
 const inventory=(()=>{try{const v=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(x.qty)&&x.qty>0):[]}catch(_){return[]} })();
-const invPanel=css(document.createElement('section'),'position:fixed;right:16px;top:calc(104px + env(safe-area-inset-top));z-index:1002;width:min(320px,calc(100vw - 32px));max-height:55vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
+const invPanel=css(document.createElement('section'),'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;z-index:1002;width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
-const invToggle=css(document.createElement('button'),'position:fixed;right:16px;top:calc(12px + env(safe-area-inset-top));z-index:1001;padding:8px 12px;border:1px solid #ffe3a3aa;border-radius:999px;background:#080d14cc;color:#ffe3a3;font:12px system-ui;cursor:pointer');
-invToggle.id='climboriaInventoryToggle';invToggle.type='button';invToggle.textContent='BAG · I';
-const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
+const invToggle={addEventListener:()=>{}};
+ const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
 function renderInventory(){
  invPanel.replaceChildren();
- const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='FIELD INVENTORY';
+ const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='CHARACTER · EQUIPMENT & INVENTORY';
  const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.style.cssText='border:0;background:transparent;color:#ffe3a3;cursor:pointer';close.addEventListener('click',()=>invPanel.style.display='none');head.append(close);invPanel.append(head);
- if(!inventory.length){const empty=document.createElement('p');empty.textContent='Your pack is empty. Explore and open a treasure chest.';empty.style.opacity='.75';invPanel.append(empty)}
+  const eqTitle=document.createElement('div');eqTitle.textContent='EQUIPMENT SLOTS';eqTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(eqTitle);
+  const equip=document.createElement('div');equip.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:16px';
+  [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
+  const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
+ if(!inventory.length){const empty=document.createElement('p');empty.textContent='Your backpack is empty. Explore Jarrell’s Peak and open a treasure chest.';empty.style.opacity='.75';invPanel.append(empty)}
  for(const item of inventory){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #ffffff1c';const name=document.createElement('span');name.textContent=item.name;const qty=document.createElement('strong');qty.textContent='× '+item.qty;row.append(name,qty);invPanel.append(row)}
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
@@ -475,13 +478,21 @@ const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.ge
 function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap()}
 mapPanel.style.display='block';
 function drawWorldMap(){
- const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);c.fillStyle='#17251c';c.fillRect(0,0,w,h);
- c.strokeStyle='#60745a';c.lineWidth=1;for(let i=0;i<=w;i+=30){c.beginPath();c.moveTo(i,0);c.lineTo(i,h);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(w,i);c.stroke()}
- const marks=[['SANCTUARY',POI.sanct.x,POI.sanct.z],['PARK',POI.park.x,POI.park.z],['CAMP',POI.camp.x,POI.camp.z],['CAVE',POI.cave.x,POI.cave.z],['SUMMIT',POI.summit.px,POI.summit.pz],['SEA',-960,0],['RICE',RICE.x,RICE.z]];
- const sx=x=>w/2+x/2400*w,sy=z=>h/2+z/2400*h;
- c.fillStyle='#d9b36b';for(const [name,x,z] of marks){c.beginPath();c.moveTo(sx(x),sy(z)-5);c.lineTo(sx(x)+5,sy(z));c.lineTo(sx(x),sy(z)+5);c.lineTo(sx(x)-5,sy(z));c.closePath();c.fill()}
- c.fillStyle='#8cff54';c.beginPath();c.arc(sx(P.x),sy(P.z),5,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.stroke()
-}
+  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
+  const n=72,img=c.createImageData(n,n);
+  for(let py=0;py<n;py++)for(let px=0;px<n;px++){
+   const x=(px/n-.5)*2400,z=(py/n-.5)*2400,hh=heightAt(x,z),des=desF(x,z),v=fbm(x*.012,z*.012,2);
+   const col=hh<-.3?[20,65,78]:hh<2?[194,170,119]:des>.5?[174+v*28,132+v*20,75]:hh>180?[126,130,130]:hh>80?[93,112,77]:[63+v*25,99+v*22,54];
+   const k=(py*n+px)*4;img.data[k]=col[0];img.data[k+1]=col[1];img.data[k+2]=col[2];img.data[k+3]=255;
+  }
+  const tmp=document.createElement('canvas');tmp.width=n;tmp.height=n;tmp.getContext('2d').putImageData(img,0,0);c.imageSmoothingEnabled=true;c.drawImage(tmp,0,0,w,h);
+  c.strokeStyle='#d9c18a66';c.lineWidth=2;const route=[[0,-90],[-170,90],[-200,-170],[-760,-520],[640,-620]];
+  c.beginPath();route.forEach(([x,z],i)=>{const px=w/2+x/2400*w,py=h/2+z/2400*h;i?c.lineTo(px,py):c.moveTo(px,py)});c.stroke();
+  const marks=[['SANCTUARY',POI.sanct.x,POI.sanct.z],['PARK',POI.park.x,POI.park.z],['CAMP',POI.camp.x,POI.camp.z],['CAVE',POI.cave.x,POI.cave.z],['SUMMIT',POI.summit.px,POI.summit.pz],['SEA',-960,0],['RICE',RICE.x,RICE.z]];
+  const sx=x=>w/2+x/2400*w,sy=z=>h/2+z/2400*h;
+  c.fillStyle='#f0ca78';for(const [name,x,z] of marks){c.beginPath();c.arc(sx(x),sy(z),3.2,0,Math.PI*2);c.fill()}
+  c.fillStyle='#8cff54';c.beginPath();c.arc(sx(P.x),sy(P.z),5,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.lineWidth=1.5;c.stroke();
+ }
 mapToggle.addEventListener('click',toggleWorldMap);
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
