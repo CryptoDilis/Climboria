@@ -175,11 +175,17 @@ const mTrunk=new T3.MeshLambertMaterial(),mFol=new T3.MeshLambertMaterial(),mRoc
 const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
  list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
+/* Keep generated vegetation and loose rocks clear of all mapped water and its immediate sandy shoreline. */
+function shoreClear(x,z,h){
+ if(h<2.2)return true;
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;if(heightAt(x+Math.cos(a)*4,z+Math.sin(a)*4)<.15)return true}
+ return false;
+}
 function props(cx,cz,out){
  const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),tr=[],ro=[],col=[];
  for(let i=0;i<120;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),p=r(),q=r(),w=r();
-  if(h<.8||h>135||nearPOI(x,z))continue;
+  if(h<.8||h>135||shoreClear(x,z,h)||nearPOI(x,z))continue;
   if(Math.abs(heightAt(x+4,z)-h)>2.2||Math.abs(heightAt(x,z+4)-h)>2.2)continue;
   if(1-ss(190,300,Math.hypot(x-RICE.x,z-RICE.z))>.15)continue;
   const des=desF(x,z),f=fd(x,z),pr=des>.5?.08:f>.52?.85:f>.42?.2:.035;
@@ -189,7 +195,7 @@ function props(cx,cz,out){
  }
  for(let i=0;i<34;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
-  if(h<.2||nearPOI(x,z)||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
+  if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
   col.push({x,z,r:s*.8});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
  }
  const g=new T3.Group();
@@ -466,7 +472,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory};
+window.ENDLESS_WILDS={heightAt,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
