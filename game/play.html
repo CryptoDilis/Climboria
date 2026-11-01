@@ -489,6 +489,13 @@ createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('c
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
+// Mobile browsers can intermittently return an invalid CatmullRom control point during early frames.
+// Use a bounded, allocation-light closed-path interpolator for the cinematic camera instead.
+function cinematicPoint(u){
+ const count=pts.length,scaled=((u%1)+1)%1*count,index=Math.floor(scaled),alpha=scaled-index;
+ const a=pts[index%count],b=pts[(index+1)%count];
+ return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
+}
 let camY=null,lookY=0;
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
@@ -736,7 +743,7 @@ function update(dt){
  skyU.uNight.value=cur.nt;skyU.uT.value=Tm;wU.uT.value=Tm;fmat.opacity=0;
  // movement
  if(P.mode=='cine'){
-  const u=(Tm/420)%1,p=curve.getPointAt(u),a=curve.getPointAt((u+.012)%1),b=curve.getPointAt((u+.03)%1);
+  const u=(Tm/420)%1,p=cinematicPoint(u),a=cinematicPoint((u+.012)%1),b=cinematicPoint((u+.03)%1);
   const gh=Math.max(heightAt(p.x,p.z),heightAt(a.x,a.z),heightAt(b.x,b.z)),ty=gh+30+14*Math.sin(Tm*.2);
   camY=camY==null?ty:camY+(ty-camY)*Math.min(1,dt*1.4);camY=Math.max(camY,heightAt(p.x,p.z)+10);
   const ly=Math.max(heightAt(a.x,a.z)+8,camY-16);lookY+=(ly-lookY)*Math.min(1,dt*1.5);if(!lookY)lookY=ly;
