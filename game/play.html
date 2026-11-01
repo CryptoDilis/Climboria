@@ -360,6 +360,24 @@ const hpEl=css(document.createElement('div'),'position:fixed;right:16px;top:calc
 const toastEl=css(document.createElement('div'),'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:8;font:16px Georgia;color:#ffe3a3;text-shadow:0 2px 10px #000;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center');
 const toast=t=>{toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>toastEl.style.opacity=0,2600)};
 const emit=(type,detail)=>window.dispatchEvent(new CustomEvent('climboria:'+type,{detail}));
+/* Persistent local player inventory. Server-authoritative multiplayer/rewards are a separate integration. */
+const INVENTORY_KEY='climboria_jarrell_inventory_v1';
+const inventory=(()=>{try{const v=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(x.qty)&&x.qty>0):[]}catch(_){return[]} })();
+const invPanel=css(document.createElement('section'),'position:fixed;right:16px;top:58px;z-index:12;width:min(320px,calc(100vw - 32px));max-height:55vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
+invPanel.id='climboriaInventoryPanel';
+const invToggle=css(document.createElement('button'),'position:fixed;right:16px;top:calc(48px + env(safe-area-inset-top));z-index:11;padding:8px 12px;border:1px solid #ffe3a3aa;border-radius:999px;background:#080d14cc;color:#ffe3a3;font:12px system-ui;cursor:pointer');
+invToggle.id='climboriaInventoryToggle';invToggle.type='button';invToggle.textContent='BAG · I';
+const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
+function renderInventory(){
+ invPanel.replaceChildren();
+ const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='FIELD INVENTORY';
+ const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.style.cssText='border:0;background:transparent;color:#ffe3a3;cursor:pointer';close.addEventListener('click',()=>invPanel.style.display='none');head.append(close);invPanel.append(head);
+ if(!inventory.length){const empty=document.createElement('p');empty.textContent='Your pack is empty. Explore and open a treasure chest.';empty.style.opacity='.75';invPanel.append(empty)}
+ for(const item of inventory){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #ffffff1c';const name=document.createElement('span');name.textContent=item.name;const qty=document.createElement('strong');qty.textContent='× '+item.qty;row.append(name,qty);invPanel.append(row)}
+}
+function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+function toggleInventory(){renderInventory();invPanel.style.display=invPanel.style.display==='none'?'block':'none'}
+invToggle.addEventListener('click',toggleInventory);
 if(MOB){document.body.style.touchAction='none';
  [['JUMP','Space',16,120],['RUN','ShiftLeft',16,40],['USE',null,96,80]].forEach(([t,k,r,b])=>{const e=css(document.createElement('div'),`position:fixed;right:${r}px;bottom:calc(${b}px + env(safe-area-inset-bottom));z-index:9;width:62px;height:62px;border-radius:50%;background:#0008;border:2px solid #ffe3a3aa;color:#ffe3a3;font:11px system-ui;display:grid;place-content:center;touch-action:none`);e.textContent=t;
   e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});e.addEventListener('touchend',ev=>{ev.stopPropagation();k&&(keys[k]=false)})});}
@@ -419,7 +437,7 @@ function place(c){let x,z;if(c.fixed){[x,z]=c.fixed}else{const a=Math.random()*6
 chest('cave',l2w(caveG,0,36));chest('summit',[POI.summit.px+5,POI.summit.pz+5]);chest('ruins',[POI.camp.x+12,POI.camp.z-10]);
 [[-420,-640],[930,-260],[250,-1000],[-600,300]].forEach(a=>chest('remote',null,a,160));
 function interact(){if(P.mode!='walk')return;
- for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=90+Math.random()*60;c.g.visible=false;const it=LOOT[Math.floor(Math.random()*LOOT.length)];toast('Chest opened: '+it+' (PLACEHOLDER loot)');emit('chest',{kind:c.kind,item:it,x:c.x,z:c.z});return}
+ for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=90+Math.random()*60;c.g.visible=false;const it=LOOT[Math.floor(Math.random()*LOOT.length)];addInventoryItem(it,1);toast('Chest opened: '+it);emit('chest',{kind:c.kind,item:it,x:c.x,z:c.z});return}
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;toast('Line cast…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
 addEventListener('keydown',e=>{if(e.code=='KeyE')interact();if(e.code=='KeyR')wx=(wx+1)%3});
@@ -438,7 +456,7 @@ function gameTick(dt,cp){
   if(!s.home&&dd>520){const a={};placeAnimal(a,cp.x,cp.z);s.x=a.x;s.z=a.z}
   s.g.position.set(s.x,heightAt(s.x,s.z)+.12,s.z);s.g.rotation.y=s.h;s.seg.forEach((m,i)=>m.position.set(Math.sin(Tm*6-i*.9)*.12,0,-i*.28))}
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const f=['Silverfin','Reed Carp','Old Boot (junk)','Golden Trout'][Math.floor(Math.random()*4)];toast('Caught: '+f);emit('fish',{item:f})}
+ if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const f=['Silverfin','Reed Carp','Old Boot (junk)','Golden Trout'][Math.floor(Math.random()*4)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f})}
  hpEl.textContent=P.mode=='walk'?'♥ '+Math.max(0,Math.round(P.hp))+(P.swim?'  ≈ swimming':''):'';
  // weather
  scene.fog.color.multiplyScalar(1-.35*(wx>0));flash=Math.max(0,flash-dt*3);
@@ -447,7 +465,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,POI,chests,FAC,snakes,chunks,player:P,animals,water};
+window.ENDLESS_WILDS={heightAt,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
