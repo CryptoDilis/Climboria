@@ -84,7 +84,7 @@ try {
     hasTouch: true,
     deviceScaleFactor: 1,
   });
-  mobile.on('pageerror', error => errors.push('mobile pageerror: ' + error.message));
+  mobile.on('pageerror', error => errors.push('mobile pageerror: ' + (error.stack || error.message)));
   await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
