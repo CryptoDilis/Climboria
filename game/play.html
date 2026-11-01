@@ -63,6 +63,39 @@ body.free #control-dock{opacity:1}
 #help{display:none}
 @media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
+ 
+/* Mobile-first landscape gameplay layout: compact HUD, map and touch controls. */
+@media (max-width: 900px) and (orientation: landscape) {
+  #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
+  #player-avatar{width:25px;height:25px;padding:2px}
+  #player-name{font-size:9px;letter-spacing:.06em}
+  #player-rank{font-size:7px;margin-top:1px}
+  #status-card{left:max(7px,env(safe-area-inset-left));top:calc(43px + env(safe-area-inset-top));width:112px;padding:4px 6px;font-size:8px}
+  .stat-track{height:4px;margin-bottom:3px}
+  .stat-label{margin:1px 0 2px}
+  #world-map-panel{right:max(6px,env(safe-area-inset-right))!important;top:calc(5px + env(safe-area-inset-top))!important;width:132px;padding:5px;border-radius:8px}
+  #world-map-panel strong{font-size:8px;letter-spacing:.06em}
+  #world-map{margin-top:4px;border-radius:5px}
+  #world-map-legend{display:none}
+  #world-map-panel.map-expanded{width:min(230px,42vw)}
+  #expedition-settings-toggle{top:calc(7px + env(safe-area-inset-top));right:calc(146px + env(safe-area-inset-right));width:28px;height:28px;font-size:16px;border-radius:7px}
+  #expedition-settings-panel{top:calc(42px + env(safe-area-inset-top));right:calc(7px + env(safe-area-inset-right));width:min(220px,48vw);padding:9px;font-size:10px}
+  #expedition-settings-panel button{padding:7px;margin:5px 0;font-size:10px}
+  #control-dock{display:flex;left:50%;bottom:calc(5px + env(safe-area-inset-bottom));gap:3px;padding:4px 6px;max-width:58vw;font-size:8px}
+  .control-chip{padding:3px 4px}
+  #climboriaInventoryPanel{width:min(480px,84vw)!important;max-height:76dvh!important;padding:9px!important}
+}
+@media (max-width: 900px) and (orientation: portrait) {
+  body::after{content:"ROTATE YOUR PHONE";position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;background:rgba(5,9,14,.96);color:#ffe3a3;font:800 20px/1.5 system-ui;letter-spacing:.12em;white-space:pre;content:"↻  ROTATE YOUR PHONE\\A Climboria gameplay is designed for landscape mode"}
+  #player-card,#status-card,#world-map-panel,#expedition-settings-toggle,#expedition-settings-panel,#control-dock{visibility:hidden}
+}
+@media (max-height: 430px) and (orientation: landscape) {
+  #world-map-panel{width:116px}
+  #expedition-settings-toggle{right:130px}
+  #status-card{width:100px}
+  #control-dock{max-width:52vw}
+}
+
 #player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
@@ -654,7 +687,8 @@ if(MOB){document.body.style.touchAction='none';
   e.addEventListener('touchstart',ev=>{ev.stopPropagation();ev.preventDefault();k?keys[k]=true:interact()},{passive:false});e.addEventListener('touchend',ev=>{ev.stopPropagation();k&&(keys[k]=false)})});}
 const jr=css(document.createElement('div'),'position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid #ffe3a366;display:none;z-index:9;pointer-events:none'),jk=css(document.createElement('div'),'position:fixed;width:44px;height:44px;border-radius:50%;background:#ffe3a355;display:none;z-index:9;pointer-events:none');
 let pinchDistance=0;
-addEventListener('touchstart',e=>{if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
+let landscapeLockRequested=false;
+addEventListener('touchstart',e=>{if(!landscapeLockRequested&&screen.orientation?.lock){landscapeLockRequested=true;screen.orientation.lock('landscape').catch(()=>{});}if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
  if(t.clientX<innerWidth*.45&&joy.id==null){joy.id=t.identifier;joy.x0=t.clientX;joy.y0=t.clientY;jr.style.cssText+=`;display:block;left:${t.clientX-50}px;top:${t.clientY-50}px`;jk.style.display='block'}
  else if(lk.id==null){lk.id=t.identifier;lk.x=t.clientX;lk.y=t.clientY}}},{passive:true});
 addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1],distance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pinchDistance>0&&P.mode==='walk')targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+(pinchDistance-distance)*.035));pinchDistance=distance;return}else pinchDistance=0;for(const t of e.changedTouches){if(t.identifier==joy.id){joy.dx=Math.max(-1,Math.min(1,(t.clientX-joy.x0)/45));joy.dy=Math.max(-1,Math.min(1,(t.clientY-joy.y0)/45));jk.style.left=joy.x0+joy.dx*40-22+'px';jk.style.top=joy.y0+joy.dy*40-22+'px'}
