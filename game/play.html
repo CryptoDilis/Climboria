@@ -629,6 +629,8 @@ function drawWorldMap(){
  for(const [name,x,z] of marks){const mx=sx(x),my=sy(z);c.fillStyle='#ffdf8a';c.beginPath();c.arc(mx,my,5,0,Math.PI*2);c.fill();c.strokeStyle='#171b17';c.lineWidth=2;c.stroke();c.fillStyle='#fff0c9';c.shadowColor='#000';c.shadowBlur=4;c.fillText(name,mx+8,my-7)}
  const px=sx(P.x),py=sy(P.z);c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,8,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();c.shadowBlur=0;
 }
+// Draw the terrain map once on startup; it is cached between explicit map toggles to avoid per-frame rebuilds.
+drawWorldMap();
 mapToggle.addEventListener('click',toggleWorldMap);
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
