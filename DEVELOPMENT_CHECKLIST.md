@@ -917,3 +917,42 @@ For every integrated asset or borrowed technique, record:
 - [x] Added a depth-aware sand-to-silt color blend for underwater terrain vertices without changing water-body geometry or swim depth.
 - [x] Added automated browser diagnostics for shallow open-sea and freshwater color samples versus deep ocean.
 - [ ] Verify all automated workflows and manual live rendering before merge.
+
+
+## 2026-11-02 — cave megadungeon, 100 world chests, aquatic life, shipwreck ports and peaceful beach (NEW REQUIREMENTS; NOT IMPLEMENTED)
+
+### P0 — cave readability and large-scale cave network
+- [ ] Fix the existing cave's near-total darkness: readable player silhouettes, traversable floors, visible hazards and landmarks; use layered low ambient/bounce light plus warm torch/brazier pools and subtle mineral/crystal accents. Preserve a dark, atmospheric mood without making navigation impossible; provide mobile-friendly exposure/contrast.
+- [ ] Rebuild/expand the cave into a very large, long multi-branch network with long tunnel runs, galleries, vertical shafts, chambers, loops, dead ends, alternate routes and a clear landmark/navigation system. It must feel like an explorable underground region, not one short tunnel.
+- [ ] Add a genuine maze with readable route clues, locked/hidden shortcuts and multiple trap rooms. Traps should include pressure plates, spike floors, swinging/rolling hazards, falling rocks and timed gates; add telegraphs, collision, damage, recovery/respawn behavior and fair escape routes.
+- [ ] Add a substantial flooded/underwater cave section with swim/dive routes, air/rest pockets, underwater passages, submerged chambers and hidden loot; connect to existing water-body swimming/depth rules and test entry/exit.
+- [ ] Include a safe underground hangout/rest area beside a scenic subterranean pool (seating, lights, camp/rest spot and social space), separated from combat/trap lanes.
+- [ ] Add hostile Orc inhabitants/guards/patrols in selected cave zones, with clear aggro boundaries, attack telegraphs, hit/collision behavior, loot/reward rules and safe disengagement. Orcs are enemies, not a reversal of the current instruction to keep wildlife/snakes disabled.
+- [ ] Keep cave walls, ceilings, floors, bridges and trap props physically consistent: no walking through walls, falling through floors, invisible blockers, or unfair spawn traps. Add deterministic desktop/mobile smoke coverage and manual traversal review.
+
+### P1 — 100 world treasure chests and reward economy
+- [ ] Place exactly 100 discoverable chests across the full Jarrell's Peak world, distributed across surface biomes, forest, mountain routes, coast/ports, caves/maze, underwater spaces and remote hidden locations. Record stable chest IDs, biome/coordinates, tier and respawn/availability rules; avoid clustering and inaccessible placements.
+- [ ] Use this initial content allocation for the 100 chest base pools (sum = 100): 35 Supply Chests (food, basic consumables, bait and common materials); 25 Ingredient Chests (ore, herbs, fibers, crystals and crafting ingredients); 20 Gear/Crafting Chests (tools, equipment parts, repair/refining materials and recipes); 12 Treasure Chests (higher-tier materials, cosmetics, collectibles and valuable trade goods); 8 Relic Chests (rare ingredients, premium crafting components and special collectibles).
+- [ ] On every chest opening, roll a separate **3% jackpot bonus chance** for an extra high-value reward: a meaningful $CLIMB/token-value reward where token rewards are enabled, rare ingredients, exceptional crafting materials or a rare relic. This is an additional bonus roll, not a guarantee and not a replacement for the chest's base pool. Define server-authoritative/anti-repeat handling, reward caps, cooldowns and anti-exploit protection before connecting real token value.
+- [ ] Ensure rewards are useful and balanced: no guaranteed token income, no pay-to-win chest advantage, duplicate handling, rarity weights, economy sinks and clear item descriptions. Keep rewards and chest probabilities visible to players.
+- [ ] Add deterministic loot-table tests covering all 100 chest records, category counts, 3% jackpot probability configuration, invalid/duplicate claims, respawn and reward bounds. Use seeded simulation to estimate expected reward value before release.
+
+### P1 — water ecosystems, ports and peaceful tropical coast
+- [ ] Populate sea, rivers, ponds and lakes with appropriate fish species and other suitable aquatic life; connect species to bait, fishing locations, time/depth/biome catch tables, inventory and collection/reward systems. Preserve current instruction that land wildlife and snakes remain disabled unless separately re-enabled.
+- [ ] At **each of the eight coastal docks**, create a large, visibly abandoned/broken shipwreck in the nearby water or shoreline view: damaged hull, broken mast, torn sails, weathering, debris and safe exploration/viewing points. Keep dock access, fishing lines and navigation clear; each dock must have its own distinct wreck composition or silhouette.
+- [ ] Create a separate peaceful tropical beach/coast zone inspired by Boracay's atmosphere: broad clean white/pale sand, clear turquoise shallow water, gentle waves, gradual sandy seabed, scenic palms placed only on dry land, calm ambient audio and sunset/sunrise lighting. It should be a relaxing destination, visually distinct from dangerous cave/shipwreck zones; no copying of protected assets or exact real-world resort layouts.
+- [ ] Maintain beach/shoreline collision, underwater visibility, swimming transitions, fishing access and Android performance. Do not place terrestrial plants on water surfaces.
+
+### Free asset shortlist — candidate only; inspect before integration
+- [ ] **3DAssets.dev — Cave and Crystal Caverns:** 94 modular GLB models, 4.1 MB total, 76,614 triangles, CC0 1.0; includes straight/bent/rising/descending tunnels, T/four-way junctions, large and domed chambers, flooded tunnels/chambers, sea-cave mouth, stalactites/stalagmites and mineral formations. Starter-scene GLB: https://cdn.3dassets.dev/assets/21297/v1/model.glb. Pack page: https://3dassets.dev/packs/cave-and-crystal-networks. Use individual modules for streaming/optimization rather than blindly loading the entire starter scene; supply our own collision/navigation/gameplay.
+- [ ] **Kenney Modular Cave Kit:** 40 modular cave tiles, CC0; candidate for additional modular pieces/alternate shapes. Source: https://kenney.nl/assets (locate the Modular Cave Kit pack and verify its live source/license before use). Reference listing: https://gdevelop.io/asset-store/free/modular-cave-kit-v1-0-3d-modular-cave-kit.
+- [ ] **ambientCG / Poly Haven:** source CC0 PBR rock, wet stone, sand, moss and underwater surface materials; select exact assets only after visual/technical inspection. Verify each source asset's license, maps, texture resolution, dependencies and mobile memory cost.
+- [ ] **Quaternius Animated Fish Pack:** candidate for animated aquatic species; confirm exact source pack, format, license and whether its visual style matches the realistic world before use.
+- [ ] No asset is approved for production merely because it is free. Record exact asset names, source URLs, license, file size, texture cost, triangle count, collision method and intended placements before integration.
+
+### Acceptance gate and order
+- [ ] First fix cave visibility and audit existing cave geometry/coordinates; then design the long cave network and trap/underwater/hangout/Orc zones; then integrate selected modular assets and collision/navigation.
+- [ ] Implement and test the 100-chest registry and loot economy before placing all chest instances; ensure all 100 are reachable and have unique stable IDs.
+- [ ] Add fish and aquatic ecosystem systems; then place one distinct wreck per dock and build the peaceful beach zone.
+- [ ] Run Validate, desktop/mobile Browser Smoke and Pages on the exact latest commit; inspect screenshots and test the actual cave/beach on desktop and Android. CI alone does not establish visual acceptance.
+- [ ] **Status:** all requirements above are newly recorded; no cave expansion, Orc AI, 100-chest placement, jackpot rewards, fish population, shipwrecks or Boracay-style beach is claimed implemented.
