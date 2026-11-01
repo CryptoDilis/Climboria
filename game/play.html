@@ -647,8 +647,8 @@ const CAMERA_ZOOM_MIN=2.4,CAMERA_ZOOM_MAX=24;
 let camY=null,lookY=0,cameraDistance=7.2,targetCameraDistance=7.2;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
-let cameraYaw=0,cameraPitch=-.08,playerFacingYaw=0;
-window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get zoom(){return targetCameraDistance},get minZoom(){return CAMERA_ZOOM_MIN},get maxZoom(){return CAMERA_ZOOM_MAX}};
+let cameraYaw=0,cameraPitch=-.08,playerFacingYaw=0,playerHasMovementFacing=false;
+window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get facingYaw(){return playerFacingYaw},get movementFacing(){return playerHasMovementFacing},get zoom(){return targetCameraDistance},get minZoom(){return CAMERA_ZOOM_MIN},get maxZoom(){return CAMERA_ZOOM_MAX}};
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 let climboriaMusicRequested=false;
@@ -677,11 +677,11 @@ document.getElementById('back-to-expedition-menu').addEventListener('click',()=>
 });
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
- P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;playerFacingYaw=0;P.mode='walk';
+ P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;playerFacingYaw=0;playerHasMovementFacing=false;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
- if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=playerFacingYaw+(assetHeroUsesAuthoredAnimations?0:Math.PI);hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
+ if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=playerFacingYaw+(playerHasMovementFacing?Math.PI:0)+(assetHeroUsesAuthoredAnimations?0:Math.PI);hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
  free(true)}
-function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;playerFacingYaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
+function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;playerFacingYaw=yaw;playerHasMovementFacing=false;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
 addEventListener('keydown',e=>{
@@ -1107,7 +1107,7 @@ function update(dt){
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
    if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(P.yaw)*dz-Math.sin(P.yaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(P.yaw)*dx-Math.sin(P.yaw)*dz)/dist));}}
   let gh=groundAt(P.x,P.z),activeWater=waterBodyAt(P.x,P.z),sw=activeWater&&gh<activeWater.surfaceY-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
-  {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;if(Math.hypot(mx,mz)>.0001)playerFacingYaw=Math.atan2(mx,mz);moveWalk(mx,mz);}
+  {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;if(Math.hypot(mx,mz)>.0001){playerFacingYaw=Math.atan2(mx,mz);playerHasMovementFacing=true;}moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
   activeWater=waterBodyAt(P.x,P.z);
   if((P.swim=!!activeWater&&gh<activeWater.surfaceY-.2)){
@@ -1149,7 +1149,7 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=playerFacingYaw+(assetHeroUsesAuthoredAnimations?0:Math.PI);assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=playerFacingYaw+(playerHasMovementFacing?Math.PI:0)+(assetHeroUsesAuthoredAnimations?0:Math.PI);assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
    // that can make the character look like it is bowing.
    const hasClip=P.swim?(assetHeroUsesAuthoredAnimations?chooseAssetAnimation('swim',Math.hypot(fw,rt)):false):chooseAssetAnimation(animState);
