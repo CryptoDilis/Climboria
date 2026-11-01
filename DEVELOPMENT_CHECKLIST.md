@@ -976,3 +976,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Optimize for Redmi 14 5G and desktop: cap visible instances, use deterministic chunk placement, avoid per-frame allocations, and profile frame time.
 - [ ] Visually verify density, wind, biome transitions, clipping, and mobile performance in live gameplay before marking complete.
 - Reference target: premium realistic grass/vegetation quality from the user's visual reference; implement in the actual Three.js game, not as a generated background/image.
+
+
+### Grass implementation progress — 2026-11-02
+- [x] Add per-terrain-chunk InstancedMesh grass batches with deterministic placement.
+- [x] Add shader-driven wind sway with varied blade phase from world position.
+- [x] Restrict grass to suitable grassy biomes and exclude shore/water buffers, POIs, steep slopes, high peaks, and low terrain.
+- [x] Use lower instance counts on mobile than desktop.
+- [ ] Browser/WebGL shader compilation verification on desktop and Android; inspect grass density, terrain clipping, and frame time.
+- [ ] Tune density/LOD after live profiling; current implementation uses chunk-batched density rather than multi-tier LOD.
+- Code commits: 34f80dcbbbebe47dbbcd7a0992f135b0e6b88904; shader newline fix ef330605049479a4d16d6404842d99f97a908fe7.
