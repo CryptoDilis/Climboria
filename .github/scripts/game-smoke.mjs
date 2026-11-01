@@ -840,6 +840,63 @@ try {
   }
   console.log('Jarrell movement-driven mountain traversal regression:',JSON.stringify(mountainTraversalAudit));
 
+  // Diagnostic: approach the visible northern massif from a real walkable approach point.
+  // This distinguishes an oversized mountain collider from an earlier terrain/prop stop.
+  const mountainApproachAudit = await page.evaluate(async () => {
+    const api = window.__climboriaSmoke, original = {
+      x:api.player.position.x, y:api.player.position.y, z:api.player.position.z,
+      paused:api.isPaused()
+    };
+    const start = { x:0, z:-360 };
+    const ground = api.terrainHeightAt(start.x,start.z);
+    api.setMoveVector(null,null);
+    api.setPaused(true);
+    api.setPlayerPosition(start.x,ground+.22,start.z);
+    api.movementTrace = [];
+    api.setPaused(false);
+    api.setMoveVector(0,-1);
+    await new Promise(resolve=>setTimeout(resolve,5000));
+    api.setMoveVector(null,null);
+    api.setPaused(true);
+    const p = api.player.position;
+    const trace = api.movementTrace || [];
+    const blocked = trace.filter(d=>d.blocked);
+    const result = {
+      start:{...start,y:Number((ground+.22).toFixed(2))},
+      end:{x:Number(p.x.toFixed(2)),y:Number(p.y.toFixed(2)),z:Number(p.z.toFixed(2))},
+      forwardProgress:Number((start.z-p.z).toFixed(2)),
+      nearestBlock:blocked.length?{
+        z:Number(blocked[0].currentX===undefined?NaN:blocked[0].nextZ.toFixed(2)),
+        blockedByHeight:blocked[0].blockedByHeight,
+        penetratingMountain:blocked[0].penetratingMountain,
+        obstacleBlocked:blocked[0].obstacleBlocked,
+        slope:Number(blocked[0].slope.toFixed(3)),
+        rise:Number(blocked[0].rise.toFixed(3)),
+        fromH:Number(blocked[0].fromH.toFixed(2)),
+        toH:Number(blocked[0].toH.toFixed(2))
+      }:null,
+      lastMovement:trace.length?{
+        blocked:trace[trace.length-1].blocked,
+        blockedByHeight:trace[trace.length-1].blockedByHeight,
+        penetratingMountain:trace[trace.length-1].penetratingMountain,
+        obstacleBlocked:trace[trace.length-1].obstacleBlocked,
+        slope:Number(trace[trace.length-1].slope.toFixed(3)),
+        nextZ:Number(trace[trace.length-1].nextZ.toFixed(2))
+      }:null,
+      mountainFronts:api.mountainBlockers.filter(b=>b.kind==='mountainMassif').map(b=>({
+        centerZ:b.z,frontZ:Number((b.z+b.rz).toFixed(2)),leftX:Number((b.x-b.rx).toFixed(1)),rightX:Number((b.x+b.rx).toFixed(1))
+      }))
+    };
+    api.setMoveVector(null,null);
+    api.setPlayerPosition(original.x,original.y,original.z);
+    api.setPaused(original.paused);
+    return result;
+  });
+  console.log('Jarrell trailhead-to-mountain approach diagnostic:',JSON.stringify(mountainApproachAudit));
+  if (mountainApproachAudit.forwardProgress < 2) {
+    console.warn('Mountain approach made little forward progress; inspect first blocked movement and terrain/prop diagnostics above.');
+  }
+
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
   const waterTerrain = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
