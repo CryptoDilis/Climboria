@@ -27,6 +27,7 @@ try {
   if (!heroAssetAudit.asset.includes('assets/characters/Climboria_Hero.glb')) errors.push('Climboria Hero GLB loaded from unexpected path: ' + heroAssetAudit.asset);
   if (heroAssetAudit.animationNames.length !== 19) errors.push('Climboria Hero animation count mismatch: ' + heroAssetAudit.animationNames.length);
   for (const animation of requiredHeroAnimations) if (!heroAssetAudit.animationNames.includes(animation)) errors.push('Climboria Hero animation missing: ' + animation);
+  if (heroAssetAudit.renderer !== 'glb') errors.push('Selected Climboria hero did not initialize with the original GLB renderer: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
@@ -162,6 +163,8 @@ try {
   await page.keyboard.up('w');
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
+  const desktopHeroStability=await page.evaluate(()=>({asset:document.documentElement.dataset.climboriaHeroAsset||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',visible:window.__climboriaCameraOrbit?.heroUsesGlb===true}));
+  if(!desktopHeroStability.asset.includes('assets/characters/Climboria_Hero.glb')||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.visible) errors.push('Desktop movement caused the selected GLB hero to fall back or disappear: '+JSON.stringify(desktopHeroStability));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
@@ -312,6 +315,8 @@ try {
   await mobile.keyboard.up('w');
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
+  const mobileHeroStability=await mobile.evaluate(()=>({asset:document.documentElement.dataset.climboriaHeroAsset||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',visible:window.__climboriaCameraOrbit?.heroUsesGlb===true}));
+  if(!mobileHeroStability.asset.includes('assets/characters/Climboria_Hero.glb')||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.visible) errors.push('Mobile movement caused the selected GLB hero to fall back or disappear: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
