@@ -869,3 +869,12 @@ For every integrated asset or borrowed technique, record:
 
 - [x] Replace procedural low-poly 2D/primitive forest tree stand-ins with CC0 3DAssets.dev GLB canopy models (Jungle Canopy Tree + Buttress Root Tree); preserve 3D undergrowth/log dressing and rock placement.
 - [ ] Manually verify tree scale, ground contact, canopy density, collision clearance, CDN loading and mobile frame-time on desktop and Redmi 14 5G.
+
+
+## 2026-11-02 — mountain approach collision audit (diagnostic increment)
+
+- [ ] Expose the existing movement collision predicate and its configured slope/player/step limits to the browser smoke harness; no gameplay collision values are changed in this diagnostic pass.
+- [ ] Add eight deterministic radial approach probes toward the summit, starting 150 world units away and measuring progress toward an 85-unit perimeter; record the exact first blocked coordinate/terrain height for each bearing.
+- [ ] Use the probe results to identify whether the reported early blocker comes from terrain slope/step limits or authored circular prop colliders; then make a narrowly targeted fix and add a regression assertion for the corrected approach.
+- [ ] Do not loosen all mountain collision globally or remove legitimate rock/tree/structure collision without evidence.
+- [ ] Manual desktop and Redmi 14 5G approach/climb acceptance remains open.

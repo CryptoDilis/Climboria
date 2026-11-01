@@ -72,6 +72,21 @@ try {
         return {id:b.id,entered,exited};
       }) : [],
       seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
+      mountainApproachAudit: (()=>{
+        if(!w?.POI?.summit||typeof w.blocked!=='function')return null;
+        const peak=w.POI.summit,results=[];
+        for(let deg=0;deg<360;deg+=45){
+          const a=deg*Math.PI/180,outer=150,inner=85;
+          let x=peak.px+Math.cos(a)*outer,z=peak.pz+Math.sin(a)*outer,blockedAt=null,steps=0;
+          while(Math.hypot(x-peak.px,z-peak.pz)>inner){
+            const dx=-Math.cos(a)*.32,dz=-Math.sin(a)*.32,nx=x+dx,nz=z+dz,feet=w.groundAt(x,z)+.01;
+            if(w.blocked(nx,nz,x,z,feet)){blockedAt={x:+x.toFixed(2),z:+z.toFixed(2),height:+w.groundAt(x,z).toFixed(2)};break;}
+            x=nx;z=nz;steps++;
+          }
+          results.push({bearing:deg,progress:Math.round(steps*.32),blockedAt});
+        }
+        return {peak:{x:peak.px,z:peak.pz,height:peak.h},limits:w.collisionLimits,approaches:results};
+      })(),
       chunkCount: w?.chunks?.size ?? 0,
     };
   });
