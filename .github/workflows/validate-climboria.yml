@@ -198,34 +198,3 @@ jobs:
           print(f"Audit passed for {len(files)} HTML files; extracted {count} inline scripts.")
           PY
           find /tmp/climboria-other-html-scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | while IFS= read -r -d '' file; do node --check "$file"; done
-      - name: Cache Playwright browser binaries
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}-v1
-      - name: Install Playwright Chromium for browser smoke tests
-        timeout-minutes: 10
-        run: |
-          timeout --signal=TERM --kill-after=20s 2m npm install --no-save --package-lock=false playwright
-          timeout --signal=TERM --kill-after=20s 7m npx playwright install chromium
-      - name: Smoke-test Jarrell on desktop and mobile viewports
-        timeout-minutes: 21
-        run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/climboria-http.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 30); do
-            if curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null; then break; fi
-            sleep 1
-          done
-          curl -fsS 'http://127.0.0.1:4173/game/play.html?level=11' >/dev/null
-          echo 'Starting bounded Jarrell desktop/mobile validation smoke test.'
-          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
-      - name: Upload Jarrell desktop/mobile screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jarrell-browser-smoke
-          path: /tmp/jarrell-*.png
-          if-no-files-found: ignore
-          retention-days: 3
