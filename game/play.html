@@ -384,8 +384,8 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>keys[e.code]=false);
 const cv=renderer.domElement;
-document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();try{cv.requestPointerLock()}catch(_){}});
-cv.addEventListener('mousedown',()=>{drag=true;if(P.mode!='cine'){try{cv.requestPointerLock()}catch(_){}}});
+document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · drag to look · I inventory · M map'});
+cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
 addEventListener('mousemove',e=>{if(P.mode=='cine'||!(locked||drag))return;P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.5,Math.min(1.5,P.pitch-e.movementY*.0022))});
