@@ -66,13 +66,13 @@ jobs:
               await game.waitForSelector('#levelName', { timeout: 30000 });
               await game.waitForTimeout(8000);
               const state = await game.evaluate(() => ({
-                canvas: !!document.querySelector('#game canvas'),
-                canvasWidth: document.querySelector('#game canvas')?.width || 0,
-                canvasHeight: document.querySelector('#game canvas')?.height || 0,
-                level: document.querySelector('#levelName')?.textContent || '',
-                playerHud: !!document.querySelector('#hudPlayerName'),
-                healthHud: !!document.querySelector('#healthValue'),
-                staminaHud: !!document.querySelector('#staminaValue'),
+                canvas: [...document.querySelectorAll('canvas')].some(canvas => canvas.id !== 'world-map'),
+                canvasWidth: [...document.querySelectorAll('canvas')].find(canvas => canvas.id !== 'world-map')?.width || 0,
+                canvasHeight: [...document.querySelectorAll('canvas')].find(canvas => canvas.id !== 'world-map')?.height || 0,
+                level: document.querySelector('#zone')?.textContent || '',
+                playerHud: !!document.querySelector('#player-name'),
+                healthHud: !!document.querySelector('#health-value'),
+                staminaHud: !!document.querySelector('#stamina-value'),
                 soundtrack: !!window.__climboriaSoundtrackAudio
               }));
               if (!state.canvas || state.canvasWidth < 100 || state.canvasHeight < 100 || !state.playerHud || !state.healthHud || !state.staminaHud) throw new Error('Live Jarrell scene did not initialize: ' + JSON.stringify(state));
