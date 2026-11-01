@@ -66,6 +66,7 @@ body.free #control-dock{opacity:1}
  
 /* Mobile-first landscape gameplay layout: compact HUD, map and touch controls. */
 @media (max-width: 900px) and (orientation: landscape) {
+  #hud{display:none!important}
   #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
   #player-avatar{width:25px;height:25px;padding:2px}
   #player-name{font-size:9px;letter-spacing:.06em}
@@ -86,8 +87,8 @@ body.free #control-dock{opacity:1}
   #climboriaInventoryPanel{width:min(480px,84vw)!important;max-height:76dvh!important;padding:9px!important}
 }
 @media (max-width: 900px) and (orientation: portrait) {
-  body::after{content:"ROTATE YOUR PHONE";position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;background:rgba(5,9,14,.96);color:#ffe3a3;font:800 20px/1.5 system-ui;letter-spacing:.12em;white-space:pre;content:"↻  ROTATE YOUR PHONE\\A Climboria gameplay is designed for landscape mode"}
-  #player-card,#status-card,#world-map-panel,#expedition-settings-toggle,#expedition-settings-panel,#control-dock{visibility:hidden}
+  #rotate-phone-overlay{display:flex}
+  #player-card,#status-card,#world-map-panel,#expedition-settings-toggle,#expedition-settings-panel,#control-dock,#hud{visibility:hidden}
 }
 @media (max-height: 430px) and (orientation: landscape) {
   #world-map-panel{width:116px}
@@ -102,7 +103,7 @@ body.free #control-dock{opacity:1}
 </style>
 </head>
 <body>
-<div class="vig"></div><div class="bar" id="bt"></div><div class="bar" id="bb"></div>
+<div class="vig"></div><div class="bar" id="bt"></div><div class="bar" id="bb"></div><div id="rotate-phone-overlay" style="display:none;position:fixed;inset:0;z-index:3000;align-items:center;justify-content:center;text-align:center;padding:28px;box-sizing:border-box;background:rgba(5,9,14,.97);color:#ffe3a3;font:800 20px/1.5 system-ui;letter-spacing:.08em">↻<br>ROTATE YOUR PHONE<br><span style="font-size:13px;font-weight:500;letter-spacing:0">Climboria gameplay works best in landscape mode.</span></div>
 <div id="hud"><div id="zone"></div><div id="sub"></div></div>
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
@@ -527,12 +528,12 @@ function loadAssetHero(choice='Adventurer'){
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
  },undefined,error=>{heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
 }
-const requestedHero=new URLSearchParams(location.search).get('hero');loadAssetHero(requestedHero==='Police'?'Police':'Adventurer');
+const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const initialHero=requestedHero==='Police'?'Police':requestedHero==='Adventurer'?'Adventurer':savedHero;loadAssetHero(initialHero);
 const createPanel=document.getElementById('character-create-panel');
 document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
 document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
 if(new URLSearchParams(location.search).get('create')==='1')createPanel.style.display='block';
-createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;document.getElementById('character-load-status').textContent='Loading '+(choice==='Police'?'Police Officer':'Adventurer')+'…';loadAssetHero(choice)}));
+createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+(choice==='Police'?'Police Officer':'Adventurer')+'…';loadAssetHero(choice)}));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -595,7 +596,8 @@ addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.mo
 const cv=renderer.domElement;
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
-document.getElementById('title').addEventListener('click',e=>{if(e.target.closest('#character-create,#character-create-panel'))return;if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
+async function requestLandscapeMode(){if(!MOB)return;try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:'hide'});if(screen.orientation?.lock)await screen.orientation.lock('landscape')}catch(error){console.info('[Climboria] Landscape lock unavailable; rotate prompt remains visible',error)}}
+document.getElementById('title').addEventListener('click',e=>{if(e.target.closest('#character-create,#character-create-panel'))return;if(!ready)return;requestLandscapeMode();takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
