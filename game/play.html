@@ -419,6 +419,8 @@ const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-3
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
 let camY=null,lookY=0;
 const free=on=>document.body.classList.toggle('free',on);
+const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;
+function startClimboriaMusic(){if(climboriaMusic.paused)climboriaMusic.play().catch(()=>{});}
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=heightAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
@@ -635,9 +637,8 @@ function update(dt){
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
    if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(P.yaw)*dz-Math.sin(P.yaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(P.yaw)*dx-Math.sin(P.yaw)*dz)/dist));}}
   const gh=heightAt(P.x,P.z),sw=P.mode=='walk'&&gh<-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
-  {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;if(P.mode=='walk')moveWalk(mx,mz);else{P.x+=mx;P.z+=mz}}
-  if(P.mode=='fly'){P.y+=((keys.KeyE||keys.Space?1:0)-(keys.KeyQ?1:0))*sp*.7*dt;P.y=Math.max(P.y,heightAt(P.x,P.z)+2)}
-  else if((P.swim=gh<-1.4)){P.vy=0;P.y+=(.55+Math.sin(Tm*1.6)*.08+(keys.Space?.3:0)-P.y)*Math.min(1,dt*5)}
+  {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
+  if((P.swim=gh<-1.4)){P.vy=0;P.y+=(.55+Math.sin(Tm*1.6)*.08+(keys.Space?.3:0)-P.y)*Math.min(1,dt*5)}
   else{const g=gh+1.75;if(keys.Space&&Math.abs(P.y-g)<.05&&P.vy==0)P.vy=11;P.vy-=30*dt;P.y+=P.vy*dt;if(P.y<g){P.y=g;P.vy=0}}
   // Third-person follow camera keeps the explorer visible in the world.
   const back=7.2;
