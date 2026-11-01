@@ -363,27 +363,40 @@ const fmat=new T3.PointsMaterial({color:L('#ffe9a8'),size:.9,transparent:true,op
 const flies=new T3.Points(fgeo,fmat);flies.frustumCulled=false;scene.add(flies);
 /* ---------- player / camera ---------- */
 const P={x:0,y:30,z:60,vy:0,yaw:Math.PI,pitch:0,mode:'cine'};
-/* Third-person explorer avatar: visible character, not a first-person camera placeholder. */
+/* Climboria explorer avatar — block-proportioned adventure character, Roblox-like silhouette, not primitive dummy. */
 const hero=new T3.Group();hero.name='ClimboriaExplorer';
-const heroMat=(color,roughness=.88)=>new T3.MeshStandardMaterial({color,roughness});
-const hBody=heroMat(0x263746),hTrim=heroMat(0xc49a52),hSkin=heroMat(0xc99669),hBoot=heroMat(0x171b20),hPack=heroMat(0x6c4930);
-const hSphere=new T3.SphereGeometry(1,12,10),hBox=new T3.BoxGeometry(1,1,1);
-function heroPart(geo,mat,x,y,z,sx,sy,sz){const m=new T3.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;hero.add(m);return m}
-heroPart(hBox,hBody,0,1.12,0,.62,.82,.34);
-heroPart(hSphere,hSkin,0,1.78,0,.25,.27,.25);
-heroPart(hBox,hPack,0,1.2,.27,.42,.55,.2);
-heroPart(hBox,hTrim,0,1.48,.02,.66,.12,.38);
-const hLegL=heroPart(hBox,hBody,-.18,.53,0,.22,.58,.25),hLegR=heroPart(hBox,hBody,.18,.53,0,.22,.58,.25);
-const hArmL=heroPart(hBox,hBody,-.43,1.16,0,.19,.62,.22),hArmR=heroPart(hBox,hBody,.43,1.16,0,.19,.62,.22);
-heroPart(hBox,hBoot,-.18,.16,.04,.27,.22,.38);heroPart(hBox,hBoot,.18,.16,.04,.27,.22,.38);
+const hm=(color,roughness=.82,metalness=0)=>new T3.MeshStandardMaterial({color,roughness,metalness});
+const jacket=hm(0x26394a),jacketDark=hm(0x172635),pants=hm(0x786044),pantsDark=hm(0x493b2d),skin=hm(0xb87950),glove=hm(0x242a30),boot=hm(0x1c2025),gold=hm(0xc89a4d,.42,.28),pack=hm(0x60452f),helmet=hm(0xd69a35,.5),hair=hm(0x30231e),white=hm(0xf0e8d8),eye=hm(0x17191b);
+const hBox=new T3.BoxGeometry(1,1,1),hSphere=new T3.SphereGeometry(1,16,12),hCyl=new T3.CylinderGeometry(1,1,1,12);
+function hp(geo,mat,x,y,z,sx,sy,sz){const m=new T3.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;hero.add(m);return m}
+const torso=hp(hBox,jacket,0,1.27,0,.66,.78,.34);
+hp(hBox,jacketDark,0,1.02,-.015,.68,.24,.36); // jacket hem
+hp(hBox,gold,0,1.53,-.185,.42,.075,.035); // chest insignia
+hp(hBox,pack,0,1.31,.235,.43,.55,.2); // climbing pack
+hp(hBox,gold,-.235,1.34,.13,.055,.48,.055);hp(hBox,gold,.235,1.34,.13,.055,.48,.055); // harness straps
+hp(hBox,skin,0,1.79,0,.39,.43,.36); // block-proportioned head
+hp(hBox,hair,0,2.005,.015,.4,.13,.37);
+hp(hBox,helmet,0,2.09,0,.48,.16,.43);hp(hBox,helmet,0,2.015,-.12,.55,.055,.24);
+hp(hBox,eye,-.095,1.81,-.184,.045,.055,.018);hp(hBox,eye,.095,1.81,-.184,.045,.055,.018);
+hp(hBox,white,0,1.72,-.185,.105,.025,.02);
+const armL=hp(hBox,jacket,-.43,1.25,0,.23,.58,.25),armR=hp(hBox,jacket,.43,1.25,0,.23,.58,.25);
+hp(hBox,glove,-.43,.91,-.01,.22,.16,.24);hp(hBox,glove,.43,.91,-.01,.22,.16,.24);
+const legL=hp(hBox,pants,-.18,.57,0,.25,.62,.29),legR=hp(hBox,pants,.18,.57,0,.25,.62,.29);
+hp(hBox,pantsDark,-.18,.76,-.015,.26,.12,.3);hp(hBox,pantsDark,.18,.76,-.015,.26,.12,.3);
+hp(hBox,boot,-.18,.19,-.025,.29,.24,.38);hp(hBox,boot,.18,.19,-.025,.29,.24,.38);
+hp(hBox,gold,-.18,.12,-.21,.25,.045,.025);hp(hBox,gold,.18,.12,-.21,.25,.045,.025);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='true';
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
 let camY=null,lookY=0;
 const free=on=>document.body.classList.toggle('free',on);
-function takeOver(){if(P.mode!='cine')return;const d=new T3.Vector3();cam.getWorldDirection(d);P.x=cam.position.x;P.y=cam.position.y;P.z=cam.position.z;
- P.yaw=Math.atan2(-d.x,-d.z);P.pitch=Math.asin(d.y);P.mode='fly';free(true)}
+function takeOver(){if(P.mode!='cine')return;
+ // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
+ P.x=0;P.z=-30;P.y=heightAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
+ cam.position.set(P.x,P.y+2.8,P.z+7.2);cam.lookAt(P.x,P.y+.9,P.z-3);
+ hero.visible=true;hero.position.set(P.x,heightAt(P.x,P.z),P.z);hero.rotation.y=Math.PI;
+ free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;P.pitch=-.05;P.vy=0;P.mode='walk';P.y=heightAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
@@ -584,12 +597,12 @@ function update(dt){
   else{const g=gh+1.75;if(keys.Space&&Math.abs(P.y-g)<.05&&P.vy==0)P.vy=11;P.vy-=30*dt;P.y+=P.vy*dt;if(P.y<g){P.y=g;P.vy=0}}
   // Third-person follow camera keeps the explorer visible in the world.
   const back= P.mode==='fly'?8:7.2;
-  cam.position.set(P.x+Math.sin(P.yaw)*back,P.y+2.8+Math.max(0,P.pitch*2),P.z+Math.cos(P.yaw)*back);
+  cam.position.set(P.x+Math.sin(P.yaw)*back,P.y+2.45+Math.max(0,P.pitch*1.6),P.z+Math.cos(P.yaw)*back);
   cam.lookAt(P.x,P.y+.85,P.z);
   hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;
   const walking=Math.abs(fw)+Math.abs(rt)>.08&&P.mode==='walk';
-  const stride=walking?Math.sin(Tm*10)*.42:Math.sin(Tm*2)*.025;
-  hLegL.rotation.x=stride;hLegR.rotation.x=-stride;hArmL.rotation.x=-stride*.7;hArmR.rotation.x=stride*.7;
+  const stride=walking?Math.sin(Tm*10)*.48:Math.sin(Tm*2)*.018;
+  legL.rotation.x=stride;legR.rotation.x=-stride;armL.rotation.x=-stride*.72;armR.rotation.x=stride*.72;
  }
  const cp=cam.position;gameTick(dt,cp);
  updateChunks(cp.x,cp.z,ready?2:0);
