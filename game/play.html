@@ -339,8 +339,8 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
  grassGeo.setIndex([0,1,2]);grassGeo.computeVertexNormals();
  const grassMat=new T3.MeshLambertMaterial({color:0xffffff,vertexColors:true,side:T3.DoubleSide});
  grassMat.onBeforeCompile=sh=>{sh.uniforms.uGrassTime={value:0};grassMat.userData.shader=sh;
-  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\\nuniform float uGrassTime;');
-  sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\\nfloat grassBend=uv.y*uv.y*(sin(uGrassTime*1.7+instanceMatrix[3][0]*0.035+instanceMatrix[3][2]*0.027)*0.12+sin(uGrassTime*0.8+instanceMatrix[3][0]*0.012)*0.045);\\ntransformed.x += grassBend;');
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float uGrassTime;');
+  sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat grassBend=uv.y*uv.y*(sin(uGrassTime*1.7+instanceMatrix[3][0]*0.035+instanceMatrix[3][2]*0.027)*0.12+sin(uGrassTime*0.8+instanceMatrix[3][0]*0.012)*0.045);\ntransformed.x += grassBend;');
  };
  grassMat.customProgramCacheKey=()=>'climboria-grass-wind-v1';
  function makeGrass(cx,cz,out){
