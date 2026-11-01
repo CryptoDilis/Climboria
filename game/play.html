@@ -396,9 +396,30 @@ function glow(color,i,d,x,y,z,p){const l=new T3.PointLight(L(color),i,d,2);l.pos
 let crystal;{
  const p=POI.sanct,g=new T3.Group();g.position.set(p.x,p.h,p.z);scene.add(g);
  [[30,.5],[25,1],[20,1.5]].forEach(([r,h])=>sc(mk(CYL,M('#a29c8c'),0,h/2,0,g),r,h,r));
+ const flagCountries=['Philippines','United States','Japan','South Korea','Canada','United Kingdom','Australia','Brazil','Germany','France','India','Indonesia'];
+ function nationalFlag(country){
+  const c=document.createElement('canvas');c.width=192;c.height=128;const x=c.getContext('2d');
+  const stripes=(a,v=false)=>a.forEach((z,i)=>{x.fillStyle=z;x.fillRect(v?i*192/a.length:0,v?0:i*128/a.length,v?193:192,v?128:129)});
+  if(country==='Philippines'){stripes(['#0038a8','#ce1126']);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(76,64);x.lineTo(0,128);x.fill();x.fillStyle='#fcd116';x.beginPath();x.arc(25,64,10,0,7);x.fill();for(let i=0;i<3;i++){let a=i*2.094;x.beginPath();x.arc(48+0*Math.cos(a),64+0*Math.sin(a),3,0,7);x.fill()}}
+  else if(country==='Japan'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#bc002d';x.beginPath();x.arc(96,64,29,0,7);x.fill()}
+  else if(country==='South Korea'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#cd2e3a';x.beginPath();x.arc(96,64,28,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(96,64,28,0,Math.PI);x.fill()}
+  else if(country==='United States'){stripes(['#b22234','#fff','#b22234','#fff','#b22234','#fff','#b22234']);x.fillStyle='#3c3b6e';x.fillRect(0,0,82,69)}
+  else if(country==='Canada'){stripes(['#d80621','#fff','#d80621'],true);x.fillStyle='#d80621';x.fillRect(89,38,14,55)}
+  else if(country==='United Kingdom'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.strokeStyle='#fff';x.lineWidth=25;x.beginPath();x.moveTo(0,0);x.lineTo(192,128);x.moveTo(192,0);x.lineTo(0,128);x.stroke();x.fillStyle='#c8102e';x.fillRect(82,0,28,128);x.fillRect(0,50,192,28)}
+  else if(country==='Australia'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.fillStyle='#fff';[[135,30],[158,73],[111,92],[174,106],[128,112]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,5,0,7);x.fill()})}
+  else if(country==='Brazil'){x.fillStyle='#009739';x.fillRect(0,0,192,128);x.fillStyle='#ffdf00';x.beginPath();x.moveTo(96,17);x.lineTo(174,64);x.lineTo(96,111);x.lineTo(18,64);x.fill();x.fillStyle='#002776';x.beginPath();x.arc(96,64,27,0,7);x.fill()}
+  else if(country==='Germany')stripes(['#000','#dd0000','#ffce00']);
+  else if(country==='France')stripes(['#0055a4','#fff','#ef4135'],true);
+  else if(country==='India')stripes(['#ff9933','#fff','#138808']);
+  else stripes(['#ce1126','#fff']);
+  const t=new T3.CanvasTexture(c);return new T3.MeshBasicMaterial({map:t,side:T3.DoubleSide});
+ }
  for(let i=0;i<12;i++){const a=i/12*6.283,rr=22,pg=new T3.Group();pg.position.set(Math.sin(a)*rr,1.5,Math.cos(a)*rr);g.add(pg);
   const H=i%5==3?4:9;sc(mk(CYL,M('#c9c3b2'),0,H/2,0,pg),1.1,H,1.1);sc(mk(BOX,M('#b5af9f'),0,H+.3,0,pg),2.6,.6,2.6);
-  if(i%5!=3)sc(mk(SPH,M('#7fe9ff',1),0,H+1.2,0,pg),.5,.5,.5)}
+  if(i%5!=3)sc(mk(SPH,M('#7fe9ff',1),0,H+1.2,0,pg),.5,.5,.5) 
+  const poleH=3.2,pole=mk(CYL,M('#8b8170'),.12,H+.3+poleH/2,0,pg);sc(pole,.055,poleH,.055);
+  const fm=mk(new T3.PlaneGeometry(2.25,1.5),nationalFlag(flagCountries[i]),1.27,H+.3+poleH-.12,0,pg);fm.rotation.y=-.12
+ }
  crystal=sc(mk(new T3.OctahedronGeometry(1),M('#7fe9ff',1),0,6,0,g),2,3,2);
  glow('#7fe9ff',2.5,90,0,7,0,g);
  const bm=new T3.Mesh(new T3.CylinderGeometry(1.2,2.4,120,16,1,true),new T3.MeshBasicMaterial({color:L('#7fe9ff'),transparent:true,opacity:.22,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=60;g.add(bm);
@@ -494,8 +515,7 @@ const flag=(()=>{const s=POI.summit,g=new T3.Group();g.position.set(s.px,s.h,s.p
  sc(mk(DOD,M('#6c655a'),0,1,0,g),4,3,4);sc(mk(CYL,M('#d8d2c2'),0,9,0,g),.2,16,.2);
  const fg=new T3.PlaneGeometry(6,3.4,10,1);const f=new T3.Mesh(fg,new T3.MeshBasicMaterial({color:L('#e0a21c'),side:T3.DoubleSide}));f.position.set(3.2,15,0);g.add(f);
  const r=rng(3);for(let i=0;i<8;i++){const a=i/8*6.283,k=sc(mk(DOD,M('#5a554c'),Math.sin(a)*9,.8,Math.cos(a)*9,g),1.4+r()*.8,2+r()*1.2,1.4+r()*.8);k.rotation.y=r()*3}
- glow('#ffd27a',3,150,0,12,0,g);
- const bm=new T3.Mesh(new T3.CylinderGeometry(1.4,2.6,300,16,1,true),new T3.MeshBasicMaterial({color:L('#ffd27a'),transparent:true,opacity:.3,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=150;g.add(bm);
+ // No artificial summit beam; retain natural environmental lighting.
  return f})();
 /* ---------- animals ---------- */
 const animals=[];
@@ -678,7 +698,7 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
- if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+(assetHeroUsesAuthoredAnimations?0:Math.PI);hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
+ if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
@@ -1148,7 +1168,7 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+(assetHeroUsesAuthoredAnimations?0:Math.PI);assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
    // that can make the character look like it is bowing.
    const hasClip=P.swim?(assetHeroUsesAuthoredAnimations?chooseAssetAnimation('swim',Math.hypot(fw,rt)):false):chooseAssetAnimation(animState);
