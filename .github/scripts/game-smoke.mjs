@@ -840,61 +840,44 @@ try {
   }
   console.log('Jarrell movement-driven mountain traversal regression:',JSON.stringify(mountainTraversalAudit));
 
-  // Diagnostic: approach the visible northern massif from a real walkable approach point.
-  // This distinguishes an oversized mountain collider from an earlier terrain/prop stop.
-  const mountainApproachAudit = await page.evaluate(async () => {
-    const api = window.__climboriaSmoke, original = {
-      x:api.player.position.x, y:api.player.position.y, z:api.player.position.z,
-      paused:api.isPaused()
+  // Deterministic trailhead-to-massif corridor audit. The previous timed input test
+  // used a camera-relative vector and did not reliably move toward the ridge in CI.
+  // Sample the actual collision predicates along the world-space route instead.
+  const mountainApproachAudit = await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const x = 0, startZ = -360, endZ = -470, step = 1;
+    const samples = [];
+    for (let z = startZ; z >= endZ; z -= step) {
+      const ground = api.terrainHeightAt(x, z);
+      const feetY = ground + .22;
+      const mountain = api.testMountainCollision(x, z, feetY);
+      const prop = api.testObstacleCollision(x, z, feetY);
+      const gx = (api.terrainHeightAt(x + .65, z) - api.terrainHeightAt(x - .65, z)) / 1.3;
+      const gz = (api.terrainHeightAt(x, z + .65) - api.terrainHeightAt(x, z - .65)) / 1.3;
+      const slope = Math.hypot(gx, gz);
+      samples.push({ z, ground:Number(ground.toFixed(2)), slope:Number(slope.toFixed(3)), mountain, prop });
+    }
+    const firstMountain = samples.find(s => s.mountain) || null;
+    const firstProp = samples.find(s => s.prop) || null;
+    const firstSteep = samples.find(s => s.slope > .72) || null;
+    const blockers = api.mountainBlockers.filter(b => b.kind === 'mountainMassif').map(b => ({
+      centerZ:b.z, frontZ:Number((b.z+b.rz).toFixed(2)),
+      leftX:Number((b.x-b.rx).toFixed(1)), rightX:Number((b.x+b.rx).toFixed(1)),
+      testAtRoute:api.testMountainCollider(b,x,api.terrainHeightAt(x,b.z+b.rz)+.22)
+    }));
+    return {
+      route:{x,startZ,endZ,step},
+      firstMountain:firstMountain?{z:firstMountain.z,ground:firstMountain.ground,slope:firstMountain.slope}:null,
+      firstProp:firstProp?{z:firstProp.z,ground:firstProp.ground}:null,
+      firstSteep:firstSteep?{z:firstSteep.z,slope:firstSteep.slope}:null,
+      mountainBlockers:blockers,
+      sampleCount:samples.length
     };
-    const start = { x:0, z:-360 };
-    const ground = api.terrainHeightAt(start.x,start.z);
-    api.setMoveVector(null,null);
-    api.setPaused(true);
-    api.setPlayerPosition(start.x,ground+.22,start.z);
-    api.movementTrace = [];
-    api.setPaused(false);
-    api.setMoveVector(0,-1);
-    await new Promise(resolve=>setTimeout(resolve,5000));
-    api.setMoveVector(null,null);
-    api.setPaused(true);
-    const p = api.player.position;
-    const trace = api.movementTrace || [];
-    const blocked = trace.filter(d=>d.blocked);
-    const result = {
-      start:{...start,y:Number((ground+.22).toFixed(2))},
-      end:{x:Number(p.x.toFixed(2)),y:Number(p.y.toFixed(2)),z:Number(p.z.toFixed(2))},
-      forwardProgress:Number((start.z-p.z).toFixed(2)),
-      nearestBlock:blocked.length?{
-        z:Number(blocked[0].currentX===undefined?NaN:blocked[0].nextZ.toFixed(2)),
-        blockedByHeight:blocked[0].blockedByHeight,
-        penetratingMountain:blocked[0].penetratingMountain,
-        obstacleBlocked:blocked[0].obstacleBlocked,
-        slope:Number(blocked[0].slope.toFixed(3)),
-        rise:Number(blocked[0].rise.toFixed(3)),
-        fromH:Number(blocked[0].fromH.toFixed(2)),
-        toH:Number(blocked[0].toH.toFixed(2))
-      }:null,
-      lastMovement:trace.length?{
-        blocked:trace[trace.length-1].blocked,
-        blockedByHeight:trace[trace.length-1].blockedByHeight,
-        penetratingMountain:trace[trace.length-1].penetratingMountain,
-        obstacleBlocked:trace[trace.length-1].obstacleBlocked,
-        slope:Number(trace[trace.length-1].slope.toFixed(3)),
-        nextZ:Number(trace[trace.length-1].nextZ.toFixed(2))
-      }:null,
-      mountainFronts:api.mountainBlockers.filter(b=>b.kind==='mountainMassif').map(b=>({
-        centerZ:b.z,frontZ:Number((b.z+b.rz).toFixed(2)),leftX:Number((b.x-b.rx).toFixed(1)),rightX:Number((b.x+b.rx).toFixed(1))
-      }))
-    };
-    api.setMoveVector(null,null);
-    api.setPlayerPosition(original.x,original.y,original.z);
-    api.setPaused(original.paused);
-    return result;
   });
-  console.log('Jarrell trailhead-to-mountain approach diagnostic:',JSON.stringify(mountainApproachAudit));
-  if (mountainApproachAudit.forwardProgress < 2) {
-    console.warn('Mountain approach made little forward progress; inspect first blocked movement and terrain/prop diagnostics above.');
+  console.log('Jarrell trailhead-to-mountain corridor audit:',JSON.stringify(mountainApproachAudit));
+  if (!mountainApproachAudit.firstMountain) errors.push('trailhead corridor did not intersect the expected northern mountain massif collider');
+  if (mountainApproachAudit.firstMountain && mountainApproachAudit.firstMountain.z > -420) {
+    errors.push('northern massif collider blocks the trailhead corridor unusually far from the visible ridge: ' + JSON.stringify(mountainApproachAudit));
   }
 
   // Regression: Jarrell's river must be deeper than a character, with a shallow walkable shore shelf and a sea basin below water level.
