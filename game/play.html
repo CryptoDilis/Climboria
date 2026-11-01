@@ -249,7 +249,7 @@ function props(cx,cz,out){
   if(h<.8||h>135||shoreClear(x,z,h)||nearPOI(x,z))continue;
   if(Math.abs(heightAt(x+4,z)-h)>2.2||Math.abs(heightAt(x,z+4)-h)>2.2)continue;
   if(1-ss(190,300,Math.hypot(x-RICE.x,z-RICE.z))>.15)continue;
-  const des=desF(x,z),f=fd(x,z),pr=des>.5?.08:f>.52?.85:f>.42?.2:.035;
+  const des=desF(x,z),f=fd(x,z),pr=(des>.5?.045:f>.52?.48:f>.42?.12:.02);
   if(p>pr)continue;
   const H=(des>.5?5:8+q*9)*(f>.55?1.25:1),kind=1;
   tr.push({x,h,z,H,kind,rot:w*6.28,v:q});col.push({x,z,r:(H*.035+.15)*.8+.25});
