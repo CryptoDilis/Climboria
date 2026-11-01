@@ -46,6 +46,7 @@ try {
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
       shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
       waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
+      parkFixtureCount: w?.parkFixtures?.length ?? 0,
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
       freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
       riverQuery: w?.waterBodyAt(201,0)?.id === 'long_river',
@@ -76,6 +77,7 @@ try {
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
+  if (world.parkFixtureCount < 10) errors.push('Sakura Park swings/hammocks fixtures or collision records missing: '+world.parkFixtureCount);
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
   if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));

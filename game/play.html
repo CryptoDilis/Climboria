@@ -405,6 +405,7 @@ let crystal;{
  const bm=new T3.Mesh(new T3.CylinderGeometry(1.2,2.4,120,16,1,true),new T3.MeshBasicMaterial({color:L('#7fe9ff'),transparent:true,opacity:.22,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=60;g.add(bm);
 }
 /* Park */
+const parkFixtureSolids=[];
 {
  const p=POI.park,g=new T3.Group();g.position.set(p.x,p.h,p.z);scene.add(g);
  sc(mk(CYL,M('#7fae48'),0,.15,0,g),58,.3,58);
@@ -417,6 +418,39 @@ let crystal;{
   sc(mk(BOX,M('#6b4a2e'),0,.8,0,bg),3,.2,.9);sc(mk(BOX,M('#6b4a2e'),0,1.4,-.4,bg),3,.8,.15)}
  for(let i=0;i<8;i++){const a=i/8*6.283,lg=new T3.Group();lg.position.set(Math.sin(a)*40,0,Math.cos(a)*40);g.add(lg);
   sc(mk(CYL,M('#2b2b30'),0,2.5,0,lg),.12,5,.12);sc(mk(SPH,M('#ffe2a0',1),0,5.2,0,lg),.4,.4,.4)}
+ // Two timber swing frames with hanging chains and seats at the quiet edge of the grove.
+ for(const [sx,sz] of [[-18,-52],[18,-52]]){
+  const swing=new T3.Group();swing.position.set(sx,0,sz);g.add(swing);
+  for(const px of [-1.8,1.8]){
+   sc(mk(CYL,M('#65452c'),px,1.65,0,swing),.16,3.3,.16);
+   parkFixtureSolids.push({x:p.x+sx+px,z:p.z+sz,r:.55});
+  }
+  sc(mk(BOX,M('#65452c'),0,3.2,0,swing),4,.22,.24);
+  for(const px of [-.65,.65]){
+   const chain=mk(CYL,M('#b8a37b'),px,2.15,0,swing);sc(chain,.035,2.1,.035);
+  }
+  sc(mk(BOX,M('#8b603b'),0,1.1,0,swing),1.65,.18,.62);
+  parkFixtureSolids.push({x:p.x+sx,z:p.z+sz,r:.9});
+ }
+ // Two cloth hammocks, gently sagging between sturdy timber supports.
+ for(const [hx,hz,rot] of [[-42,22,-.35],[42,22,.35]]){
+  const hammock=new T3.Group();hammock.position.set(hx,0,hz);hammock.rotation.y=rot;g.add(hammock);
+  for(const px of [-4,4]){
+   sc(mk(CYL,M('#65452c'),px,1.15,0,hammock),.17,2.3,.17);
+   parkFixtureSolids.push({x:p.x+hx+px*Math.cos(rot),z:p.z+hz-px*Math.sin(rot),r:.58});
+  }
+  const positions=[],indices=[],cols=13,rows=5;
+  for(let ix=0;ix<=cols;ix++)for(let iz=0;iz<=rows;iz++){
+   const u=ix/cols,v=iz/rows;
+   positions.push(-4+u*8,1.65-.82*Math.sin(u*Math.PI),-.72+v*1.44);
+  }
+  for(let ix=0;ix<cols;ix++)for(let iz=0;iz<rows;iz++){
+   const a=ix*(rows+1)+iz,b=a+rows+1;indices.push(a,b,a+1,b,b+1,a+1);
+  }
+  const clothGeo=new T3.BufferGeometry();clothGeo.setAttribute('position',new T3.Float32BufferAttribute(positions,3));clothGeo.setIndex(indices);clothGeo.computeVertexNormals();
+  hammock.add(new T3.Mesh(clothGeo,new T3.MeshLambertMaterial({color:L('#b88c67'),side:T3.DoubleSide})));
+  for(const px of [-4,4]){const rope=mk(CYL,M('#b8a37b'),px,1.7,0,hammock);sc(rope,.035,.9,.035);rope.rotation.z=Math.PI/2}
+ }
 }
 /* Rice huts */
 {const r=rng(9);for(let i=0;i<5;i++){const a=r()*6.283,d=50+r()*130,x=RICE.x+Math.sin(a)*d,z=RICE.z+Math.cos(a)*d,h=heightAt(x,z);
@@ -788,6 +822,7 @@ addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=2.8;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
+parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function blocked(nx,nz,ox,oz,feet){
@@ -934,7 +969,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,moveWalk,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,moveWalk,parkFixtures:parkFixtureSolids,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
