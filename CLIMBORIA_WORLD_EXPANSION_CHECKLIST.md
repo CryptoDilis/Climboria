@@ -472,3 +472,11 @@ For each meaningful implementation batch:
 - [ ] Use the probe results to identify whether the reported early blocker comes from terrain slope/step limits or authored circular prop colliders; then make a narrowly targeted fix and add a regression assertion for the corrected approach.
 - [ ] Do not loosen all mountain collision globally or remove legitimate rock/tree/structure collision without evidence.
 - [ ] Manual desktop and Redmi 14 5G approach/climb acceptance remains open.
+
+
+## 2026-11-02 — spawn-to-summit route collision probe
+
+- [ ] Add a deterministic collision trace along the actual starting-area-to-summit route; the earlier eight radial probes only checked the final 65 m approach ring and did not test the long approach from spawn.
+- [ ] Record the first blocked segment, terrain heights and percentage of route completed; compare the trace with authored tree/rock/structure colliders before changing movement limits.
+- [ ] Fix only the demonstrated obstruction and keep legitimate collision intact.
+- [ ] Manual desktop and Redmi 14 5G mountain approach acceptance remains open.

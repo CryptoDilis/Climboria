@@ -87,6 +87,20 @@ try {
         }
         return {peak:{x:peak.px,z:peak.pz,height:peak.h},limits:w.collisionLimits,approaches:results};
       })(),
+      mountainSpawnRouteAudit: (()=>{
+        if(!w?.POI?.summit||typeof w.blocked!=='function')return null;
+        const start={x:0,z:-30},target={x:w.POI.summit.px,z:w.POI.summit.pz};
+        const distance=Math.hypot(target.x-start.x,target.z-start.z),steps=Math.ceil(distance/1.0);
+        let x=start.x,z=start.z,blockedAt=null,progress=0;
+        for(let i=1;i<=steps;i++){
+          const t=i/steps,nx=start.x+(target.x-start.x)*t,nz=start.z+(target.z-start.z)*t;
+          if(w.blocked(nx,nz,x,z,w.groundAt(x,z)+.01)){
+            blockedAt={step:i,percent:+(100*(i-1)/steps).toFixed(1),x:+x.toFixed(1),z:+z.toFixed(1),height:+w.groundAt(x,z).toFixed(1),nextHeight:+w.groundAt(nx,nz).toFixed(1)};break;
+          }
+          x=nx;z=nz;progress=i;
+        }
+        return {start,target,distance:+distance.toFixed(1),progress:Math.round(progress/steps*100),blockedAt};
+      })(),
       chunkCount: w?.chunks?.size ?? 0,
     };
   });
