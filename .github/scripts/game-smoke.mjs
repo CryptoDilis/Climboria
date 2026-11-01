@@ -1787,8 +1787,28 @@ try {
     console.log('Freshwater mobile screenshot frame:',body.id,JSON.stringify(framed));
     await mobilePage.screenshot({path:`freshwater-mobile-${body.id}.png`});
   }
-  await mobilePage.evaluate(({x,y,z})=>{const api=window.__climboriaSmoke;api.setPlayerPosition(x,y,z);api.setPaused(false);},mobileFreshwaterSnapshotState.restore);
-  await mobilePage.waitForTimeout(400);
+  // The final mobile gameplay screenshot must show the real trailhead, not the last diagnostic freshwater basin.
+  // Restore the canonical spawn, clear movement, and let the normal follow-camera/update loop settle.
+  await mobilePage.evaluate(() => {
+    const api=window.__climboriaSmoke,x=.8,z=-340,y=api.terrainHeightAt(x,z)+.9;
+    api.setMoveVector(null,null);
+    api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+    api.setPlayerPosition(x,y,z);
+    api.setCamYaw(0);
+    api.setPaused(false);
+  });
+  await mobilePage.waitForTimeout(650);
+  const mobileGameplayCaptureAudit=await mobilePage.evaluate(()=>{
+    const api=window.__climboriaSmoke,p=api.player.position,state=api.getMovementState();
+    return {x:Math.round(p.x),z:Math.round(p.z),swimming:!!state.swimming||!!state.physicsSwimming,
+      water:!!window.jarrellIsWaterSurface?.(p.x,p.z),
+      hudX:Number(document.getElementById('coordX')?.textContent),hudZ:Number(document.getElementById('coordZ')?.textContent)};
+  });
+  if(mobileGameplayCaptureAudit.x!==1||mobileGameplayCaptureAudit.z!==-340||mobileGameplayCaptureAudit.swimming||mobileGameplayCaptureAudit.water||
+     mobileGameplayCaptureAudit.hudX!==1||mobileGameplayCaptureAudit.hudZ!==-340){
+    errors.push('final mobile gameplay screenshot did not restore the dry Jarrell trailhead: '+JSON.stringify(mobileGameplayCaptureAudit));
+  }
+  console.log('Mobile trailhead gameplay capture audit:',JSON.stringify(mobileGameplayCaptureAudit));
   await mobilePage.screenshot({ path: 'climboria-mobile-gameplay.png' });
   await mobile.close();
 
