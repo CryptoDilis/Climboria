@@ -402,3 +402,17 @@ For each meaningful implementation batch:
 - [ ] Manual desktop/Android visual and physical acceptance remains open: waterline alignment, swim posture/strokes, actual shoreline feel, and player movement around rocks/gaps.
 - [ ] Keep fishing deferred until all three freshwater bodies are manually accepted for safe, reliable entry and exit.
 - [ ] Next exact task: inspect the newest browser screenshots and manually verify pond traversal; only then implement/test freshwater fishing.
+
+
+## 2026-11-01 — automated verification update (main commit 488375cfc5e8885e194574e1c2cfe63f4ccc7483)
+
+- [x] Desktop/mobile gameplay smoke passed: [run 41290710942](https://github.com/CryptoDilis/Climboria/actions/runs/41290710942).
+- [x] Mountain movement audit passed: intended uphill slope traversal, mountain-face collision without penetration, and tangential sliding.
+- [x] Water-edge cleanup audit passed for ocean, river, Woodland Pond, Moonpool, and Sanctuary Lake; all required water samples were recognized and no loaded terrestrial nature instances intersected water (94 meshes inspected).
+- [x] Sandy beach/underwater-bed assertions passed for sea, river, and all three freshwater bodies.
+- [x] Swimming checks passed for procedural arm/leg motion, depth controls, mobile touch-input release, and movement-driven ocean exit.
+- [x] Cave wall/traversal, spike trap, viper damage, mountain massif collision, and respawn assertions passed.
+- [ ] **Not visually accepted yet:** inspect uploaded screenshots and perform real-device desktop/Android review of mountain approach, waterline, sand transitions, swim posture, cave readability, and touch controls.
+- [ ] The passing tests cover current sampled geometry and loaded instances only; they do not complete the requested world-scale expansion.
+- [ ] Still open: multiple scattered mountain ranges; large forest and desert biomes; enlarged Sakura park; aquatic life and functional fishing; eight coastal docks; river fishing/benches; larger freshwater regions; and overall world scale.
+- [ ] Next action: visual review of artifact [13076803732](https://api.github.com/repos/CryptoDilis/Climboria/actions/artifacts/13076803732), then implement the next unfinished world-expansion item without removing any master-list requirement.
