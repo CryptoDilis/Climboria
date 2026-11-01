@@ -844,6 +844,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const chestWood=new THREE.MeshStandardMaterial({color:0x654126,roughness:.82}),chestTrim=new THREE.MeshStandardMaterial({color:0xd6b45e,roughness:.45,metalness:.35,emissive:0x6b3f08,emissiveIntensity:.18}),chestLock=new THREE.MeshStandardMaterial({color:0x313c42,roughness:.42,metalness:.65});
  const lootedCacheIds=new Set();window.jarrellLootedCacheIds=lootedCacheIds;try{const saved=JSON.parse(localStorage.getItem('climboria_jarrell_looted_chests')||'[]');if(Array.isArray(saved))saved.forEach(id=>lootedCacheIds.add(id));const inventory=JSON.parse(localStorage.getItem('climboria_jarrell_loot_inventory')||'[]');window.jarrellLootInventory=Array.isArray(inventory)?inventory:[];window.jarrellClimbPoints=Number(localStorage.getItem('climboria_jarrell_climb_points')||0)||0;}catch{window.jarrellLootInventory=[];window.jarrellClimbPoints=0;}
  const isJarrellWaterSurface=(x,z)=>{const ocean=window.jarrellOceanBounds;if(ocean&&x>=ocean.minX-2&&x<=ocean.maxX+2&&z>=ocean.minZ-2&&z<=ocean.maxZ+2)return true;if(window.jarrellFreshwaterAt?.(x,z))return true;if(z>-900&&z<900){const t=Math.max(0,Math.min(1,(z+900)/1800)),half=jarrellRiverHalfWidth(t);if(Math.abs(x-jarrellRiverX(z))<half+2)return true;}return false;};
+ window.jarrellIsWaterSurface=isJarrellWaterSurface;
  const forestChunkMap=new Map();
  window.spawnJarrellForestForChunk=(cx,cz)=>{
   const key=cx+','+cz;if(forestChunkMap.has(key))return;
