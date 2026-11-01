@@ -520,7 +520,7 @@ function cacheAssetRig(root){
 }
 function chooseAssetAnimation(state){
  if(!assetMixer||!assetActions.length)return false;
- const patterns=state==='swim'?/swim|swimming|float|paddle/i:state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:/idle|stand|breath/i;
+ const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:/idle|stand|breath/i;
  let clip=assetActions.find(a=>patterns.test(a.name));
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
@@ -535,7 +535,7 @@ function animateAssetFallback(t,state,speed){
  const phase=t*(state==='run'?13:9);
  for(const item of assetRig.legs){const b=item.bone;if(swimming){b.rotation.x=item.base+Math.sin(phase+item.side)*.28}else b.rotation.x=item.base+Math.sin(phase)*amp*item.side}
  for(const item of assetRig.arms){const b=item.bone;if(swimming){b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16}else b.rotation.x=item.base-(moving?Math.sin(phase)*amp*.65*item.side:0)}
- if(assetRig.spine){assetRig.spine.rotation.x=swimming?-.42:0}
+ if(assetRig.spine){assetRig.spine.rotation.x=0}
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
 const assetChoices={Adventurer:'../assets/expedition-crests/The_Adventurer.glb',Police:'../assets/expedition-crests/The_Police_Officer_Nigeria.glb'};
@@ -973,8 +973,11 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
-   const hasClip=chooseAssetAnimation(animState);
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
+   // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
+   // that can make the character look like it is bowing.
+   const hasClip=P.swim?false:chooseAssetAnimation(animState);
+   if(P.swim&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim'}
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
   }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
