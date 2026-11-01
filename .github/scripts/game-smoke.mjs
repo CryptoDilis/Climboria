@@ -142,6 +142,22 @@ try {
     deviceScaleFactor: 1,
   });
   mobile.on('pageerror', error => errors.push('mobile pageerror: ' + (error.stack || error.message)));
+  await mobile.addInitScript(() => {
+    window.__climboriaFullscreenRequests = [];
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: function(options) {
+        window.__climboriaFullscreenRequests.push({ target: this.tagName, options });
+        return Promise.resolve();
+      }
+    });
+    try {
+      Object.defineProperty(screen, 'orientation', {
+        configurable: true,
+        value: { lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } }
+      });
+    } catch (_) {}
+  });
   await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
@@ -167,6 +183,13 @@ try {
   }));
   if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
     errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
+  }
+  await mobile.locator('canvas').first().dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true, button: 0 });
+  await mobile.waitForTimeout(50);
+  const immersiveRequests = await mobile.evaluate(() => window.__climboriaFullscreenRequests || []);
+  if (!immersiveRequests.some(x => x.target === 'HTML' && x.options?.navigationUI === 'hide') ||
+      !immersiveRequests.some(x => x.orientation === 'landscape')) {
+    errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
   await mobile.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
