@@ -88,7 +88,7 @@ const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-perfor
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1.25:1.75));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 document.body.prepend(renderer.domElement);
-const scene=new T3.Scene();scene.fog=new T3.FogExp2(0xffffff,.0022);
+const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
 const cam=new T3.PerspectiveCamera(68,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
@@ -536,12 +536,24 @@ function update(dt){
   subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
 }
 /* ---------- boot ---------- */
-cam.position.set(0,40,60);
+cam.position.set(0,40,60);cam.lookAt(0,8,-90);
 (function boot(){
  const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
  if(left>0){requestAnimationFrame(boot);return}
  ready=true;window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='CLIMBORIA · Click to explore';
- last=performance.now();requestAnimationFrame(function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);renderer.render(scene,cam);requestAnimationFrame(loop)});
+ last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
+ requestAnimationFrame(function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  try{update(dt)}catch(err){
+   const msg=err&&err.stack?err.stack:String(err);
+   if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push(msg);
+   console.error('[Climboria frame update]',err);
+   // Keep rendering even if a non-rendering gameplay subsystem throws.
+  }
+  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length}
+  catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
+  requestAnimationFrame(loop)
+ });
 })();
 })();
 </script>
