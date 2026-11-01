@@ -63,6 +63,22 @@ try {
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   await page.locator('#title').click();
+  const hudUi = await page.evaluate(() => ({
+    playerName: !!document.querySelector('#player-name'),
+    statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
+    bag: !!document.querySelector('#climboriaInventoryToggle'),
+    worldMap: !!document.querySelector('#world-map-toggle') && !!document.querySelector('#world-map'),
+    controlDock: !!document.querySelector('#control-dock'),
+    controlsText: document.querySelector('#control-dock')?.innerText || '',
+  }));
+  if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.controlDock) errors.push('Adventure HUD/inventory/map/controls UI missing: ' + JSON.stringify(hudUi));
+  if (!['W A S D','SHIFT','SPACE','MOUSE','INTERACT','INVENTORY'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
+  await page.locator('#world-map-toggle').click();
+  if (await page.locator('#world-map-panel').isHidden()) errors.push('World map panel did not open');
+  await page.locator('#world-map-toggle').click();
+  await page.locator('#climboriaInventoryToggle').click();
+  if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
+  await page.locator('#climboriaInventoryToggle').click();
   await page.keyboard.press('f');
   await page.keyboard.press('3');
   const controls = await page.evaluate(() => ({
@@ -110,11 +126,14 @@ try {
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
       controls: ['JUMP','RUN','USE'].every(label => text.includes(label)),
+      playerName: !!document.querySelector('#player-name'),
+      worldMap: !!document.querySelector('#world-map-toggle'),
+      bag: !!document.querySelector('#climboriaInventoryToggle'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
     };
   });
-  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/control initialization failed: ' + JSON.stringify(mobileState));
+  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || !mobileState.playerName || !mobileState.worldMap || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/control initialization failed: ' + JSON.stringify(mobileState));
   if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
