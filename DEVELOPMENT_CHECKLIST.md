@@ -925,3 +925,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Added a depth-aware sand-to-silt color blend for underwater terrain vertices without changing water-body geometry or swim depth.
 - [x] Added automated browser diagnostics for shallow open-sea and freshwater color samples versus deep ocean.
 - [ ] Verify all automated workflows and manual live rendering before merge.
+
+
+### Implementation commit — 2026-11-02
+- [x] Added national flag meshes to all 12 existing Sanctuary pillars; Philippines flag is included, with 11 additional national flags.
+- [x] Removed the artificial vertical beam and summit glow from Jarrell's Peak; natural environmental lighting remains.
+- [x] Aligned the selected GLB hero's facing offset with the fallback hero so the player's initial third-person view shows the hero's back. Camera orbit continues to use the independent cameraYaw value.
+- [ ] Browser/desktop/Android visual verification and workflow validation still required before closing this task.
+- Code commit: `8f80db9189b37b78ddfc8f281ca72be69b6dd79a`.
