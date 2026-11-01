@@ -21,7 +21,7 @@ try {
   const world = await page.evaluate(() => {
     const w = window.__climboriaJarrellsPeak;
     const p = w?.player;
-    const samples = [[0,0],[0,-90],[-170,90],[-760,-520],[-900,0],[560,330],[640,-620]];
+    const samples = [[0,0],[0,-90],[-170,90],[-760,-520],[-1200,0],[560,330],[640,-620]];
     return {
       title: document.title,
       heading: document.querySelector('#title h1')?.textContent?.trim() || '',
@@ -36,8 +36,8 @@ try {
       animals: w?.animals?.length ?? 0,
       facilities: w?.FAC?.map(f => f.type) ?? [],
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
-      shorelineClearance: !!w?.shoreClear && [[-960,0],[-960,24],[-960,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
-      seaHeights: [[-960,0],[-960,24],[-960,-24]].map(([x,z])=>w?.heightAt(x,z)),
+      shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
+      seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
       chunkCount: w?.chunks?.size ?? 0,
     };
   });
