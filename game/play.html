@@ -335,11 +335,14 @@ function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.Insta
  list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
 function shoreClear(x,z,h){
- if(h<3.2||waterBodyAt(x,z))return true;
  const radius=18;
+ // Use the mapped basin footprint as well as the submerged-water query:
+ // the visible bank can be above water while still inside the sandy apron.
+ const nearFreshwater=(px,pz)=>WATER_BODIES.some(b=>b.kind==='freshwater'&&Math.hypot(px-b.x,pz-b.z)<b.radius+radius);
+ if(h<3.2||waterBodyAt(x,z)||nearFreshwater(x,z))return true;
  for(let i=0;i<24;i++){
   const a=i*Math.PI/12,sx=x+Math.cos(a)*radius,sz=z+Math.sin(a)*radius;
-  if(waterBodyAt(sx,sz)||heightAt(sx,sz)<.2)return true;
+  if(waterBodyAt(sx,sz)||nearFreshwater(sx,sz)||heightAt(sx,sz)<.2)return true;
  }
  return false;
 }
