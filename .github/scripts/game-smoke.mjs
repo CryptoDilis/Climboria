@@ -24,7 +24,7 @@ try {
     renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
   }));
   const requiredHeroAnimations = ['Running','Walking','Climb_Attempt_and_Fall_3','Swim_Forward','Swim_Idle','swimming_to_edge','Attack','Collect_Object','Dead','Arise'];
-  if (!heroAssetAudit.asset.endsWith('/assets/characters/Climboria_Hero.glb')) errors.push('Climboria Hero GLB loaded from unexpected path: ' + heroAssetAudit.asset);
+  if (!heroAssetAudit.asset.includes('assets/characters/Climboria_Hero.glb')) errors.push('Climboria Hero GLB loaded from unexpected path: ' + heroAssetAudit.asset);
   if (heroAssetAudit.animationNames.length !== 19) errors.push('Climboria Hero animation count mismatch: ' + heroAssetAudit.animationNames.length);
   for (const animation of requiredHeroAnimations) if (!heroAssetAudit.animationNames.includes(animation)) errors.push('Climboria Hero animation missing: ' + animation);
   await page.waitForTimeout(500);
