@@ -281,6 +281,8 @@ try {
   }
   await mobile.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  await mobile.keyboard.press('w');
+  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw};
     const target=document.body;
