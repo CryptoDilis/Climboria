@@ -47,8 +47,8 @@ body.free #status-card{opacity:1}
 #stamina-fill{background:#c9a34d}
 #world-map-toggle{display:none}
 #world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
-#expedition-settings-toggle{position:fixed;z-index:1100;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
-#expedition-settings-panel{position:fixed;z-index:1101;top:58px;right:250px;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #d8b46b99;border-radius:12px;background:#080d14f2;color:#f4ecd8;box-shadow:0 12px 40px #000b;font:12px system-ui}
+#expedition-settings-toggle{position:fixed;display:grid;place-items:center;pointer-events:auto;z-index:1205;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
+#expedition-settings-panel{position:fixed;pointer-events:auto;z-index:1206;top:58px;right:250px;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #d8b46b99;border-radius:12px;background:#080d14f2;color:#f4ecd8;box-shadow:0 12px 40px #000b;font:12px system-ui}
 #expedition-settings-panel strong{display:block;color:#ffe3a3;letter-spacing:.12em;margin-bottom:12px}
 #expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
 #expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
@@ -522,6 +522,8 @@ const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
 addEventListener('keydown',e=>{
  if(e.code=='Space')e.preventDefault();
+ // Direct player input always takes priority over a queued Dota-style click destination.
+ if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))P.moveTarget=null;
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
@@ -530,6 +532,7 @@ addEventListener('keydown',e=>{
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
 addEventListener('keyup',e=>keys[e.code]=false);
+addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
 document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=heightAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
@@ -774,7 +777,7 @@ function update(dt){
   cam.position.set(P.x+Math.sin(P.yaw)*back,P.y+2.45+Math.max(0,P.pitch*1.6),P.z+Math.cos(P.yaw)*back);
   cam.lookAt(P.x,P.y+.85,P.z);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75,P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim?-Math.PI/2:0;
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75,P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=0;
    const hasClip=chooseAssetAnimation(animState);
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
