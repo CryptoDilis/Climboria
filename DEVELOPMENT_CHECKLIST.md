@@ -1,3 +1,12 @@
+## 2026-11-02 — hero movement-facing implementation (verification open)
+
+- [x] Decoupled movement input vectors from hero heading by using the independent camera orbit as the movement basis; camera orbit alone still does not rotate the character.
+- [x] Added smooth hero heading updates from the actual world-space movement vector, so walking, strafing, and click-to-move turn the selected character naturally while preserving the existing GLB and its 180-degree back-facing offset.
+- [x] Added a desktop browser-smoke assertion that moves after camera orbit and verifies the player heading turns toward the movement direction.
+- [ ] Run and inspect the push-triggered Browser Smoke and Validate workflows; this connector cannot enumerate push-triggered runs, so no green status is claimed.
+- [ ] Verify actual rendered back-facing orientation and natural turning on desktop and Android landscape; no visual/device acceptance is claimed.
+- Code commits: `b3b9946` (movement-facing behavior), `7c72325` (movement regression assertion).
+
 ## 2026-11-02 — hero-facing regression coverage update
 
 - [x] Exposed read-only hero heading/GLB visibility diagnostics alongside the independent camera-orbit state; no gameplay-facing controls or hero appearance were changed.
