@@ -45,6 +45,9 @@ try {
       facilities: w?.FAC?.map(f => f.type) ?? [],
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
       shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
+      waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
+      freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
+      freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
       seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
       chunkCount: w?.chunks?.size ?? 0,
     };
@@ -60,6 +63,7 @@ try {
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
+  if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   await page.keyboard.press('w');

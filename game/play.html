@@ -157,6 +157,16 @@ const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.i
 /* ---------- world definition ---------- */
 const POI={sanct:{x:0,z:-90,r:60},park:{x:-170,z:90,r:75},camp:{x:-200,z:-170,r:50},cave:{x:-760,z:-520,r:34},summit:{x:640,z:-620,r:0}};
 const RICE={x:560,z:330};
+// Explicit water bodies share the rendered water plane (Y=0). Freshwater basins
+// are carved into terrain below; their query bounds drive swimming and tests.
+const WATER_BODIES=[
+ {id:'woodland_pond',name:'Woodland Pond',kind:'freshwater',x:-360,z:230,radius:48,surfaceY:0,depth:3.2},
+ {id:'moonpool',name:'Moonpool',kind:'freshwater',x:390,z:-260,radius:42,surfaceY:0,depth:3.2},
+ {id:'sanctuary_lake',name:'Sanctuary Lake',kind:'freshwater',x:190,z:80,radius:56,surfaceY:0,depth:3.2},
+ {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
+ {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
+];
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>Math.max(m,1-ss(b.radius*.62,b.radius,Math.hypot(x-b.x,z-b.z))),0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -175,6 +185,8 @@ function rawH(x,z){
  if(rw>0)h=mix(h,Math.round(h/1.6)*1.6,rw);
  const W=13+7*Math.sin(z*.003),rc=(1-ss(W,W*3.2,rv))*(1-mN)*(1-sea);
  h=mix(h,-3.2,Math.pow(rc,.8));
+ const lake=freshwaterMask(x,z);
+ h=mix(h,-3.2,Math.pow(lake,.8));
  return mix(h,-26,sea);
 }
 ['sanct','park','camp','cave'].forEach(k=>{const p=POI[k];p.h=Math.max(rawH(p.x,p.z),k=='cave'?-99:4)});
@@ -183,6 +195,18 @@ function heightAt(x,z){let h=rawH(x,z);for(const k of FLAT){const p=POI[k],d=Mat
 // Match the rendered terrain's 5-unit triangle grid exactly. Sampling the smooth
 // procedural function between vertices can place the hero below the visible mesh.
 const TERRAIN_STEP=5;
+function waterBodyAt(x,z){
+ const sea=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
+ if(sea>.5)return WATER_BODIES.find(b=>b.id==='open_sea');
+ const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
+ const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
+ if(river>.18)return WATER_BODIES.find(b=>b.id==='long_river');
+ for(const body of WATER_BODIES){
+  if(body.kind!=='freshwater')continue;
+  if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
+ }
+ return null;
+}
 function groundAt(x,z){
  const gx=x/TERRAIN_STEP,gz=z/TERRAIN_STEP,ix=Math.floor(gx),iz=Math.floor(gz);
  const u=gx-ix,v=gz-iz;
@@ -909,7 +933,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -936,15 +960,18 @@ function update(dt){
   const sp=keys.ShiftLeft?22:9,sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
    if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(P.yaw)*dz-Math.sin(P.yaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(P.yaw)*dx-Math.sin(P.yaw)*dz)/dist));}}
-  let gh=groundAt(P.x,P.z),sw=gh<-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
+  let gh=groundAt(P.x,P.z),activeWater=waterBodyAt(P.x,P.z),sw=activeWater&&gh<activeWater.surfaceY-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
-  if((P.swim=gh<-1.4)){
+  activeWater=waterBodyAt(P.x,P.z);
+  if((P.swim=!!activeWater&&gh<activeWater.surfaceY-.2)){
    P.vy=0;
-   // Keep the character's feet at the water surface; the GLB body is rotated prone below.
-   const swimSurface=1.72;
+   P.waterBodyId=activeWater.id;
+   // Player origin stays 1.72m above the queried water surface; feet meet the waterline.
+   const swimSurface=activeWater.surfaceY+1.72;
    P.y+=(swimSurface+.045*Math.sin(Tm*2.2)+(keys.Space?.18:0)-P.y)*Math.min(1,dt*7);
   }else{
+   P.waterBodyId=null;
    const g=gh+1.75;
    if(keys.Space&&Math.abs(P.y-g)<.12&&P.vy<=0)P.vy=11;
    P.vy-=30*dt;P.y+=P.vy*dt;
