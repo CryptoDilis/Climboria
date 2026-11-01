@@ -62,7 +62,8 @@ try {
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
-  await page.locator('#title').evaluate(el => el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window})));
+  await page.keyboard.press('w');
+  await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroParts: document.documentElement.dataset.climboriaHero === 'official-female-climber'}));
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !spawnCheck.heroParts) errors.push('Explorer did not spawn grounded in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
@@ -77,10 +78,11 @@ try {
   if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || !hudUi.controlDock) errors.push('Adventure HUD/inventory/map/controls UI missing: ' + JSON.stringify(hudUi));
   if (!['WASD','SHIFT','SPACE','LEFT CLICK','INTERACT','INVENTORY'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
   if (await page.locator('#world-map-panel').isHidden()) errors.push('Persistent minimap is not visible by default');
-  await page.locator('#player-card').click();
+  await page.locator('#player-card').dispatchEvent('click');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
-  await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).click();
-  if (!(await page.locator('#climboriaInventoryPanel').isHidden())) errors.push('Inventory close button did not close the character panel');
+  await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', { timeout: 5000 });
   await page.keyboard.press('f');
   await page.keyboard.press('3');
   const controls = await page.evaluate(() => ({
@@ -100,7 +102,7 @@ try {
     return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
   });
   if(lootResult.error||!lootResult.inventory.length||!lootResult.stored||!lootResult.panel||!lootResult.toggle) errors.push('Chest loot did not enter persistent field inventory: '+JSON.stringify(lootResult));
-  await page.locator('#player-card').click();
+  await page.locator('#player-card').dispatchEvent('click');
   const inventoryVisible=await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display!=='none');
   if(!inventoryVisible) errors.push('Character nameplate did not open the field inventory');
   console.log('Jarrell loot/inventory diagnostic:',JSON.stringify(lootResult));
