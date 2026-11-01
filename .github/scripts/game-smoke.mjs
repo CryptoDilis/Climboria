@@ -148,6 +148,26 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
+  const portraitGate = await mobile.evaluate(() => ({
+    visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
+    text: document.querySelector('#rotate-phone-overlay')?.innerText || '',
+    controlsHidden: [...document.querySelectorAll('#player-card,#status-card,#world-map-panel,#expedition-settings-toggle')].every(el => getComputedStyle(el).visibility === 'hidden'),
+  }));
+  if (!portraitGate.visible || !portraitGate.text.includes('ROTATE YOUR PHONE') || !portraitGate.controlsHidden) {
+    errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
+  }
+  await mobile.setViewportSize({ width: 844, height: 390 });
+  await mobile.waitForTimeout(250);
+  const landscapeGate = await mobile.evaluate(() => ({
+    hidden: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none',
+    mapVisible: getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
+    playerVisible: getComputedStyle(document.querySelector('#player-card')).visibility !== 'hidden',
+    statusVisible: getComputedStyle(document.querySelector('#status-card')).visibility !== 'hidden',
+    viewport: { width: innerWidth, height: innerHeight },
+  }));
+  if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
+    errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
+  }
   await mobile.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   const mobileState = await mobile.evaluate(() => {
