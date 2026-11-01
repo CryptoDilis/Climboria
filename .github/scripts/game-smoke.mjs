@@ -895,11 +895,17 @@ try {
   if (!(waterTerrain.sandyShelf >= 0 && waterTerrain.sandyShelf <= .25)) errors.push('Jarrell river shore shelf is not shallow and walkable');
   if (!(Number.isFinite(waterTerrain.seaFloor) && waterTerrain.seaFloor < -10 && waterTerrain.seaSurface > waterTerrain.seaFloor)) errors.push('Jarrell sea basin is missing or not deep below its water surface');
 
-  // Move the streamed world into a forest region before auditing tree colliders.
-  // The trailhead intentionally has a 900 m vegetation-free safety radius, so
-  // testing only the initial spawn chunk produces zero trees and false failures.
-  await page.evaluate(() => window.updateJarrellChunks?.(0, 700));
-  await page.waitForTimeout(250);
+  // Move the actual player as well as the streamed-world origin before auditing tree colliders.
+  // The animation loop continuously streams around player.position; changing only the chunk
+  // origin lets the next frame restore the spawn chunk and remove the trees before the audit.
+  // Use a flat inland region beyond the trailhead's 900 m vegetation-free safety radius.
+  await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const x = 0, z = 2500, y = api.terrainHeightAt(x, z) + .28;
+    api.player.position.set(x, y, z);
+    window.updateJarrellChunks?.(x, z);
+  });
+  await page.waitForTimeout(350);
 
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
@@ -949,6 +955,15 @@ try {
     if (!verticalCollision.groundHit) errors.push('tree collider failed to block at ground level: ' + JSON.stringify(verticalCollision));
     if (verticalCollision.aboveHit) errors.push('tree collider falsely blocked a point above its vertical bounds: ' + JSON.stringify(verticalCollision));
   }
+
+  // Restore the real trailhead position so later gameplay audits start from the expected camp.
+  await page.evaluate(() => {
+    const api = window.__climboriaSmoke;
+    const x = .8, z = -340, y = api.terrainHeightAt(x, z) + .28;
+    api.player.position.set(x, y, z);
+    window.updateJarrellChunks?.(x, z);
+  });
+  await page.waitForTimeout(150);
 
   const wildernessLandmarks = await page.evaluate(() => window.__climboriaSmoke?.landmarks || []);
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
