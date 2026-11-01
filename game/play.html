@@ -27,23 +27,23 @@ body.free #title{opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
 
 /* Persistent adventure HUD */
-#player-card{position:fixed;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
+#player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
 body.free #player-card{opacity:1}
 #player-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#d9b36b,#73502b);color:#17120a;font-weight:900;font-size:17px}
 #player-name{font-weight:800;letter-spacing:.1em;color:#ffe3a3;font-size:12px}
 #player-rank{font-size:10px;color:#b9c1c8;margin-top:3px}
-#status-card{position:fixed;left:max(16px,env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));z-index:10;width:190px;padding:8px 11px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
+#status-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));z-index:10;width:190px;padding:8px 11px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
 body.free #status-card{opacity:1}
 .stat-label{display:flex;justify-content:space-between;margin:2px 0 4px;color:#e9dfca}
 .stat-track{height:6px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:7px}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
-#world-map-toggle{position:fixed;right:16px;top:calc(58px + env(safe-area-inset-top));z-index:12;padding:9px 13px;border:1px solid #d8b46b99;border-radius:999px;background:#080d14eF;color:#ffe3a3;font:11px system-ui;letter-spacing:.08em;cursor:pointer}
-#world-map-panel{position:fixed;right:16px;top:calc(104px + env(safe-area-inset-top));z-index:12;width:min(270px,calc(100vw - 32px));padding:12px;border:1px solid #d8b46b99;border-radius:13px;background:#080d14f2;box-shadow:0 12px 40px #000b;display:none}
+#world-map-toggle{position:fixed;pointer-events:auto!important;z-index:1000!important;right:16px;top:calc(58px + env(safe-area-inset-top));z-index:12;padding:9px 13px;border:1px solid #d8b46b99;border-radius:999px;background:#080d14eF;color:#ffe3a3;font:11px system-ui;letter-spacing:.08em;cursor:pointer}
+#world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:16px;top:calc(104px + env(safe-area-inset-top));z-index:12;width:min(270px,calc(100vw - 32px));padding:12px;border:1px solid #d8b46b99;border-radius:13px;background:#080d14f2;box-shadow:0 12px 40px #000b;display:none}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
-#control-dock{position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:8;display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:min(780px,94vw);padding:8px 11px;border:1px solid #d8b46b55;border-radius:12px;background:#080d14d9;backdrop-filter:blur(10px);font:10px/1.3 system-ui;color:#eee5d4;opacity:0;pointer-events:none;transition:opacity .5s}
+#control-dock{position:fixed;z-index:100!important;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:8;display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:min(780px,94vw);padding:8px 11px;border:1px solid #d8b46b55;border-radius:12px;background:#080d14d9;backdrop-filter:blur(10px);font:10px/1.3 system-ui;color:#eee5d4;opacity:0;pointer-events:none;transition:opacity .5s}
 body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
@@ -116,7 +116,7 @@ function biome(x,z,h){
 const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1.25:1.75));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';document.body.prepend(renderer.domElement);
+renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';renderer.domElement.style.isolation='isolate';document.body.prepend(renderer.domElement);
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
 const cam=new T3.PerspectiveCamera(68,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
