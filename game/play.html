@@ -8,8 +8,8 @@
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#05070d;overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#f4ecd8}
-canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
+html,body{margin:0;height:100%;min-height:100dvh;background:#05070d;overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#f4ecd8}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;height:100dvh}
 .vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55))}
 .bar{position:fixed;left:0;right:0;height:11vh;background:#000;pointer-events:none;transition:transform 1.2s ease;z-index:5}
 #bt{top:0}#bb{bottom:0}
@@ -177,8 +177,10 @@ function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.Insta
  list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
 /* Keep generated vegetation and loose rocks clear of all mapped water and its immediate sandy shoreline. */
 function shoreClear(x,z,h){
- if(h<2.2)return true;
- for(let i=0;i<8;i++){const a=i*Math.PI/4;if(heightAt(x+Math.cos(a)*4,z+Math.sin(a)*4)<.15)return true}
+ // Keep vegetation and loose rocks well back from the full waterline, not just the wet vertex.
+ if(h<1.8)return true;
+ const radius=10;
+ for(let i=0;i<16;i++){const a=i*Math.PI/8;if(heightAt(x+Math.cos(a)*radius,z+Math.sin(a)*radius)<.2)return true}
  return false;
 }
 function props(cx,cz,out){
