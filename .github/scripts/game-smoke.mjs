@@ -1767,7 +1767,8 @@ try {
     await mobilePage.waitForTimeout(650);
     await mobilePage.evaluate(async ({x,z,surfaceY})=>{const api=window.__climboriaSmoke,y=surfaceY-.205;api.setPaused(true);api.camera.position.set(x-4.7,y+4.0,z+5.1);api.camera.lookAt(x,y+.95,z);api.syncNavigationHud?.();api.renderFrame?.();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));api.syncNavigationHud?.();api.renderFrame?.();},{...body});
     await mobilePage.waitForTimeout(120);
-    const framed=await mobilePage.evaluate(()=>{const a=window.__climboriaSmoke;return {player:{x:a.player.position.x,y:a.player.position.y,z:a.player.position.z},camera:{x:a.camera.position.x,y:a.camera.position.y,z:a.camera.position.z}}});
+    const framed=await mobilePage.evaluate(()=>{const a=window.__climboriaSmoke;return {player:{x:a.player.position.x,y:a.player.position.y,z:a.player.position.z},camera:{x:a.camera.position.x,y:a.camera.position.y,z:a.camera.position.z},hud:{x:Number(document.getElementById('coordX')?.textContent),z:Number(document.getElementById('coordZ')?.textContent)}}});
+    if(framed.hud.x!==Math.round(body.x)||framed.hud.z!==Math.round(body.z))errors.push('mobile freshwater screenshot HUD did not sync to '+body.id+': '+JSON.stringify(framed));
     console.log('Freshwater mobile screenshot frame:',body.id,JSON.stringify(framed));
     await mobilePage.screenshot({path:`freshwater-mobile-${body.id}.png`});
   }
