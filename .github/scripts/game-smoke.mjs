@@ -64,14 +64,15 @@ try {
 
   await page.keyboard.press('w');
   await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
-  const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroParts: document.documentElement.dataset.climboriaHero === 'official-female-climber'}));
-  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !spawnCheck.heroParts) errors.push('Explorer did not spawn grounded in walk mode: ' + JSON.stringify(spawnCheck));
+  await page.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
+  const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
     bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
+    hero: ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero),
     controlDock: !!document.querySelector('#control-dock'),
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
@@ -81,6 +82,8 @@ try {
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
+  const bagSlots = await page.locator('#climboriaInventoryPanel').locator('div').filter({has: page.locator('small')}).count().catch(()=>0);
+  if (!(await page.locator('#climboriaInventoryPanel').getByText('BACKPACK · 50 SLOTS').count())) errors.push('50-slot backpack heading missing');
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', { timeout: 5000 });
   await page.keyboard.press('f');
@@ -121,6 +124,7 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
+  await mobile.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
@@ -132,7 +136,7 @@ try {
       controls: ['JUMP','RUN','USE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-      hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
+      hero: ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero),
       bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
