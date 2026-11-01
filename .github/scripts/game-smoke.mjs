@@ -98,8 +98,10 @@ try {
   if(!await menu.locator('#hero-select-modal').evaluate(el=>el.classList.contains('open'))) errors.push('Character selection modal did not open');
   await menu.locator('[data-hero-choice="Police"]').click();
   if(!await menu.locator('[data-hero-choice="Police"]').evaluate(el=>el.classList.contains('selected'))) errors.push('Police selection did not update');
-  await menu.locator('#hero-select-enter').click();
-  await menu.waitForURL(/play\\.html\\?level=11&hero=Police/);
+  await Promise.all([
+    menu.waitForURL(/play\.html\?level=11&hero=Police/, { timeout: 15000 }),
+    menu.locator('#hero-select-enter').click(),
+  ]);
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
