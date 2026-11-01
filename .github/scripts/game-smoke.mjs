@@ -45,6 +45,8 @@ try {
       facilities: w?.FAC?.map(f => f.type) ?? [],
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
       shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
+      freshwaterBankClearance: !!w?.shoreClear && w.waterBodies.filter(b=>b.kind==='freshwater').every(b=>w.shoreClear(b.x+b.radius+8,b.z,w.heightAt(b.x+b.radius+8,b.z))),
+      riverBankClearance: !!w?.shoreClear && (()=>{const z=0,x=160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2)+48;return w.shoreClear(x,z,w.heightAt(x,z))})(),
       waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
       swimProfiles: w?.waterBodies?.map(b=>({id:b.id,maxDepth:w.maxSwimDepth(b),targetAtMax:w.swimTargetY(b,w.maxSwimDepth(b)),bedClearance:w.swimTargetY(b,w.maxSwimDepth(b))-1.75-(b.surfaceY-b.depth)})) ?? [],
       parkFixtureCount: w?.parkFixtures?.length ?? 0,
@@ -117,6 +119,7 @@ try {
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
+  if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));
   if (!world.seabedColorAudit?.shallow || world.seabedColorAudit.shallow.color[0] <= world.seabedColorAudit.deep[0] || world.seabedColorAudit.freshwater[0] <= world.seabedColorAudit.deep[0]) errors.push('Shallow sea/freshwater seabeds are not visibly sand-tinted relative to deep ocean: '+JSON.stringify(world.seabedColorAudit));
   if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
   if (world.swimProfiles.length !== 5 || world.swimProfiles.some(p=>!Number.isFinite(p.maxDepth)||p.maxDepth<=0||p.bedClearance<.35)) errors.push('Per-water-body dive limits/bed clearance invalid: '+JSON.stringify(world.swimProfiles));
