@@ -442,7 +442,7 @@ hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='loading-free-glb';
 /* Load the repository's rigged Police Officer / Adventurer GLBs; movement remains driven by the existing terrain physics controller. */
-let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='';
+let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0;
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
  root.traverse(o=>{
@@ -484,7 +484,7 @@ function loadAssetHero(choice='Adventurer'){
   assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
-  const scaledBox=new T3.Box3().setFromObject(assetHero);assetHero.position.y-=scaledBox.min.y;
+  const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
   assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
@@ -510,7 +510,7 @@ function cinematicPoint(u){
  const a=pts[index%count],b=pts[(index+1)%count];
  return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
 }
-let camY=null,lookY=0;
+let camY=null,lookY=0,cameraDistance=7.2,targetCameraDistance=7.2;
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 function startClimboriaMusic(){if(climboriaMusic.paused)climboriaMusic.play().catch(()=>{});}
@@ -528,8 +528,8 @@ document.getElementById('back-to-expedition-menu').addEventListener('click',()=>
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
- cam.position.set(P.x,P.y+2.8,P.z+7.2);cam.lookAt(P.x,P.y+.9,P.z-3);
- if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
+ cam.position.set(P.x,P.y+2.8,P.z+targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z-3);
+ if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;P.pitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
@@ -548,6 +548,8 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
+// Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
+cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
 document.getElementById('title').addEventListener('click',e=>{if(e.target.closest('#character-create,#character-create-panel'))return;if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
@@ -790,11 +792,12 @@ function update(dt){
    if(P.vy<=0&&P.y-1.75<gh-.35){P.y=gh+1.75;P.vy=0}
   }
   // Third-person follow camera keeps the explorer visible in the world.
-  const back=7.2;
+  cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);
+  const back=cameraDistance;
   cam.position.set(P.x+Math.sin(P.yaw)*back,P.y+2.45+Math.max(0,P.pitch*1.6),P.z+Math.cos(P.yaw)*back);
   cam.lookAt(P.x,P.y+.85,P.z);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75,P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    const hasClip=chooseAssetAnimation(animState);
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
