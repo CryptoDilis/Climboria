@@ -46,7 +46,7 @@ jobs:
         run: |
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
-          timeout --signal=TERM --kill-after=20s 7m npx playwright install --with-deps chromium
+          timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
 
       - name: Start local web server
         run: |
