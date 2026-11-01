@@ -1,3 +1,15 @@
+## 2026-11-02 — Section 10: deterministic spawn-to-summit collision trace (verification open)
+
+- [x] Exposed the authored fixed-solid collision list through the read-only world diagnostics API; gameplay collision behavior and collider radii are unchanged.
+- [x] Upgraded the Browser Smoke route trace to sample at the movement controller's 0.32-unit resolution from the sanctuary spawn to the computed summit peak.
+- [x] Trace records route distance, step count, percentage reached, terrain height range, maximum sampled grade, first blocked segment, collision reason, and nearest fixed colliders when a fixed solid is responsible.
+- [x] Added a smoke assertion that rejects missing/incomplete route traces or missing blocker diagnostics; legitimate terrain/collider obstruction is recorded, not misclassified as a test failure.
+- [ ] Run Validate and Browser Smoke on this exact commit and inspect the route trace before changing any collision radii or movement limits.
+- [ ] Manual desktop and Redmi 14 5G landscape traversal remains open; CI does not establish visual collision alignment.
+- Code commits: `64a5449` (collision diagnostics API), `3e58eb9` (movement-resolution route trace), `e6a8d3b` (trace assertions).
+
+---
+
 ## 2026-11-02 — selected GLB stability regression coverage (verification open)
 
 - [x] Browser smoke now fails if the original Climboria Hero GLB is not the active renderer at initialization.
