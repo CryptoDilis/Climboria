@@ -145,6 +145,15 @@ try {
   await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
   await page.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
+  const desktopOrbit = await page.evaluate(() => {
+    const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw};
+    window.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));
+    window.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:280,clientY:200,movementX:80,movementY:0}));
+    window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:2}));
+    return {before,after:{camera:api?.yaw,player:api?.playerYaw}};
+  });
+  if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
+
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
@@ -272,6 +281,17 @@ try {
   }
   await mobile.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  const mobileOrbit = await mobile.evaluate(() => {
+    const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw};
+    const target=document.body;
+    const a=new Touch({identifier:91,target,clientX:700,clientY:180});
+    const b=new Touch({identifier:91,target,clientX:620,clientY:180});
+    window.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,changedTouches:[a],touches:[a]}));
+    window.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,changedTouches:[b],touches:[b]}));
+    window.dispatchEvent(new TouchEvent('touchend',{bubbles:true,changedTouches:[b],touches:[]}));
+    return {before,after:{camera:api?.yaw,player:api?.playerYaw}};
+  });
+  if(!mobileOrbit.before||Math.abs(mobileOrbit.after.camera-mobileOrbit.before.camera)<.05||Math.abs(mobileOrbit.after.player-mobileOrbit.before.player)>.001) errors.push('Mobile camera drag rotated the hero or failed to rotate independently: '+JSON.stringify(mobileOrbit));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
