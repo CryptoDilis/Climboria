@@ -1,3 +1,11 @@
+## 2026-11-02 — CC0 rainforest dressing density and placement regression
+
+- [x] Expanded the existing CC0 rainforest placement plan from 8/24/8 to 16 buttress trees, 42 undergrowth patches, and 14 fallen logs (72 planned GLB instances total); shared source models remain cached and cloned.
+- [x] Exposed the deterministic forest placement plan through the smoke-only world diagnostics API and added Playwright checks for minimum counts, finite terrain coordinates, forest height bounds, and shore-clearance validation for every planned placement.
+- [x] Asset provenance checked against 3DAssets.dev: Buttress Root Tree (5.0k tris), Undergrowth Patch (1.7k tris), Fallen Log (1.8k tris); all listed as CC0 1.0 Universal, commercial use permitted, no attribution required. GLBs remain CDN-loaded; no decoder required.
+- [ ] Actual CDN fetch/load success, visual forest continuity, collision feel around trunks/logs, and desktop/Android frame-time acceptance remain manual checks; CI only validates placement planning and game boot.
+- [ ] Next task: audit mountain collider approach corridors and add repeatable movement regressions for the major rocky massifs before further biome expansion.
+
 ## 2026-11-01 — Jarrell's Peak world-scale expansion requirements (new scope; not implemented)
 
 - [ ] **Mountain access/collision audit:** inspect every major mountain and rocky massif collider against the rendered terrain; fix invisible blockers and excessive collision radii so players can approach, traverse intended paths, and climb intended faces without clipping through solid rock.
