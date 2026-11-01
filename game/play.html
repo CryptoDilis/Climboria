@@ -399,19 +399,33 @@ addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifie
 const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=null;joy.dx=joy.dy=0;jr.style.display=jk.style.display='none'}if(t.identifier==lk.id)lk.id=null}};
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 /* collision: slope limit + step height + tree/rock/structure circles (chunk colliders unload with their chunk) */
-const solids=[],SLOPE=1.7;
+const solids=[],SLOPE=2.6,PLAYER_RADIUS=.34,MAX_STEP_UP=2.1;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function blocked(nx,nz,ox,oz,feet){
  const oh=heightAt(ox,oz),nh=heightAt(nx,nz),d=Math.hypot(nx-ox,nz-oz)||1e-3;
- if(feet-oh<.4&&(nh-oh)/d>SLOPE)return true;if(nh-feet>1.4)return true;
- for(const o of solids)if(Math.hypot(nx-o.x,nz-o.z)<o.r+.45)return true;
+ const grounded=feet-oh<.42;
+ // Terrain is a continuous heightfield: reject genuinely cliff-like faces, not ordinary mountain approaches.
+ if(grounded&&(nh-oh)/d>SLOPE)return true;
+ if(grounded&&nh-feet>MAX_STEP_UP)return true;
+ for(const o of solids)if(Math.hypot(nx-o.x,nz-o.z)<o.r+PLAYER_RADIUS)return true;
  const ccx=Math.floor(nx/CS),ccz=Math.floor(nz/CS);
- for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const c=chunks.get((ccx+i)+','+(ccz+j));if(c)for(const o of c.col)if(Math.hypot(nx-o.x,nz-o.z)<o.r+.45)return true}
+ for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const c=chunks.get((ccx+i)+','+(ccz+j));if(c)for(const o of c.col)if(Math.hypot(nx-o.x,nz-o.z)<o.r+PLAYER_RADIUS)return true}
  return false}
-function moveWalk(mx,mz){const f=P.y-1.75;if(!blocked(P.x+mx,P.z,P.x,P.z,f))P.x+=mx;if(!blocked(P.x,P.z+mz,P.x,P.z,f))P.z+=mz}
+function moveWalk(mx,mz){
+ const moveAxis=(nx,nz)=>{
+  const ox=P.x,oz=P.z,oldGround=heightAt(ox,oz),feet=P.y-1.75;
+  const grounded=Math.abs(feet-oldGround)<.28&&P.vy<=0;
+  if(blocked(nx,nz,ox,oz,feet))return;
+  P.x=nx;P.z=nz;
+  // Keep grounded players attached to the terrain so slopes and low ledges are traversable.
+  if(grounded){P.y=heightAt(nx,nz)+1.75;P.vy=0}
+ };
+ moveAxis(P.x+mx,P.z);
+ moveAxis(P.x,P.z+mz);
+}
 /* health, respawn */
 P.hp=100;P.inv=0;
 function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp-=n;P.inv=.6;toast(why);
