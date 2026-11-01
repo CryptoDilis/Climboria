@@ -46,6 +46,7 @@ try {
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
       shorelineClearance: !!w?.shoreClear && [[-1200,0],[-1200,24],[-1200,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
       waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
+      swimProfiles: w?.waterBodies?.map(b=>({id:b.id,maxDepth:w.maxSwimDepth(b),targetAtMax:w.swimTargetY(b,w.maxSwimDepth(b)),bedClearance:w.swimTargetY(b,w.maxSwimDepth(b))-1.75-(b.surfaceY-b.depth)})) ?? [],
       parkFixtureCount: w?.parkFixtures?.length ?? 0,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
@@ -85,6 +86,7 @@ try {
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
+  if (world.swimProfiles.length !== 5 || world.swimProfiles.some(p=>!Number.isFinite(p.maxDepth)||p.maxDepth<=0||p.bedClearance<.35)) errors.push('Per-water-body dive limits/bed clearance invalid: '+JSON.stringify(world.swimProfiles));
   if (world.parkFixtureCount < 10) errors.push('Sakura Park swings/hammocks fixtures or collision records missing: '+world.parkFixtureCount);
   if (world.fishingSpots.length !== 4 || world.fishingInteractions.length !== 4 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all four spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
@@ -229,7 +231,7 @@ try {
       ready: window.__climboriaGameReady === true,
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
-      controls: ['JUMP','RUN','USE'].every(label => text.includes(label)),
+      controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
       hero: ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero),
