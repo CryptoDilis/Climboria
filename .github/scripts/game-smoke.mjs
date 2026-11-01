@@ -61,6 +61,18 @@ try {
   if (controls.mode !== 'walk' || !Number.isFinite(controls.x) || !Number.isFinite(controls.z)) {
     errors.push('Desktop explore/teleport controls failed: ' + JSON.stringify(controls));
   }
+  const lootResult = await page.evaluate(() => {
+    const w=window.__climboriaJarrellsPeak, chest=w?.chests?.find(c=>!c.open);
+    if(!w||!chest) return {error:'no unopened chest available'};
+    w.player.mode='walk';w.player.x=chest.x;w.player.z=chest.z;w.player.y=w.heightAt(chest.x,chest.z)+1.75;
+    w.interact();
+    return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#climboriaInventoryToggle')};
+  });
+  if(lootResult.error||!lootResult.inventory.length||!lootResult.stored||!lootResult.panel||!lootResult.toggle) errors.push('Chest loot did not enter persistent field inventory: '+JSON.stringify(lootResult));
+  await page.keyboard.press('i');
+  const inventoryVisible=await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display!=='none');
+  if(!inventoryVisible) errors.push('Inventory hotkey did not open the field inventory');
+  console.log('Jarrell loot/inventory diagnostic:',JSON.stringify(lootResult));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
   const mobile = await browser.newPage({
