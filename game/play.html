@@ -49,16 +49,20 @@ body.free #control-dock{opacity:1}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
 @media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:auto;bottom:calc(150px + env(safe-area-inset-bottom));right:10px;width:132px;padding:6px}#world-map-panel.map-expanded{width:min(260px,calc(100vw - 20px))}#world-map-legend{font-size:8px}#control-dock{display:none}}
+
+#player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
+#player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
+#climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
 </style>
 </head>
 <body>
 <div class="vig"></div><div class="bar" id="bt"></div><div class="bar" id="bb"></div>
 <div id="hud"><div id="zone"></div><div id="sub"></div></div>
-<div id="player-card"><div id="player-avatar">C</div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
-<div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">100%</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">100%</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div></div>
+<div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
+<div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="240" height="240"></canvas><div id="world-map-legend">● You · ◆ Landmark · Gold = explored destinations</div></section>
-<div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>F</b> Fly / Walk</span></div>
+<div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp</div>
 <div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -221,7 +225,7 @@ function props(cx,cz,out){
   if(1-ss(190,300,Math.hypot(x-RICE.x,z-RICE.z))>.15)continue;
   const des=desF(x,z),f=fd(x,z),pr=des>.5?.08:f>.52?.85:f>.42?.2:.035;
   if(p>pr)continue;
-  const H=(des>.5?5:8+q*9)*(f>.55?1.25:1),kind=des>.5?2:(h>50||w<.4)?0:1;
+  const H=(des>.5?5:8+q*9)*(f>.55?1.25:1),kind=1;
   tr.push({x,h,z,H,kind,rot:w*6.28,v:q});col.push({x,z,r:(H*.035+.15)*.8+.25});
  }
  for(let i=0;i<34;i++){
@@ -415,7 +419,7 @@ const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-3
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
 let camY=null,lookY=0;
 const free=on=>document.body.classList.toggle('free',on);
-function takeOver(){if(P.mode!='cine')return;
+function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=heightAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
  cam.position.set(P.x,P.y+2.8,P.z+7.2);cam.lookAt(P.x,P.y+.9,P.z-3);
@@ -428,14 +432,14 @@ addEventListener('keydown',e=>{
  if(e.code=='Space')e.preventDefault();
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
- if(e.code=='KeyF'){takeOver();P.mode=P.mode=='fly'?'walk':'fly';if(P.mode=='walk')P.y=Math.max(P.y,heightAt(P.x,P.z)+1.75)}
+ if(e.code=='KeyF'){takeOver();P.mode='walk';P.y=Math.max(P.y,heightAt(P.x,P.z)+1.75)}
  if(e.code=='KeyT')todI=(todI+1)%TOD.length;
  if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();document.getElementById('tmsg').textContent='Click to explore'}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
 addEventListener('keyup',e=>keys[e.code]=false);
 const cv=renderer.domElement;
-document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · drag to look · I inventory · M map'});
+document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
@@ -465,7 +469,7 @@ function renderInventory(){
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
-invToggle.addEventListener('click',toggleInventory);
+document.getElementById('player-card').addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
 function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap()}
@@ -522,9 +526,9 @@ function moveWalk(mx,mz){
  moveAxis(P.x,P.z+mz);
 }
 /* health, respawn */
-P.hp=100;P.inv=0;
-function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp-=n;P.inv=.6;toast(why);
- if(P.hp<=0){P.hp=100;toast('You died — respawned at the Sanctuary');emit('death',{});tp(0,-30,0)}}
+P.hp=500;P.maxHp=500;P.stamina=200;P.maxStamina=200;P.strength=5;P.inv=0;
+function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp=Math.max(0,P.hp-n);P.inv=.6;toast(why);
+ if(P.hp<=0){P.hp=P.maxHp;toast('You died — respawned at the Sanctuary');emit('death',{});tp(0,-30,0)}}
 /* snakes (functional): chase + bite; cave snakes leashed to the trap room */
 const snakes=[],SG=new T3.SphereGeometry(1,8,6),SM=new T3.MeshLambertMaterial({color:L('#4f6b2a')});
 function snake(x,z,home){const g=new T3.Group(),seg=[];for(let i=0;i<7;i++){const m=new T3.Mesh(SG,SM);m.scale.set(.16-i*.012,.14,.16-i*.012);g.add(m);seg.push(m)}scene.add(g);snakes.push({g,seg,x,z,h:Math.random()*6,cd:0,home})}
@@ -575,10 +579,10 @@ function gameTick(dt,cp){
   s.g.position.set(s.x,heightAt(s.x,s.z)+.12,s.z);s.g.rotation.y=s.h;s.seg.forEach((m,i)=>m.position.set(Math.sin(Tm*6-i*.9)*.12,0,-i*.28))}
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const f=['Silverfin','Reed Carp','Old Boot (junk)','Golden Trout'][Math.floor(Math.random()*4)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f})}
- hpEl.textContent=P.mode=='walk'?'♥ '+Math.max(0,Math.round(P.hp))+(P.swim?'  ≈ swimming':''):'';
- const hp=Math.max(0,Math.min(100,Math.round(P.hp??100))),st=Math.max(0,Math.min(100,Math.round(P.stamina??100)));
- document.getElementById('health-value').textContent=hp+'%';document.getElementById('health-fill').style.width=hp+'%';
- document.getElementById('stamina-value').textContent=st+'%';document.getElementById('stamina-fill').style.width=st+'%';
+ hpEl.textContent='';
+ const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
+ document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
+ document.getElementById('stamina-value').textContent=st;document.getElementById('stamina-fill').style.width=(st/P.maxStamina*100)+'%';document.getElementById('strength-value').textContent=P.strength;document.getElementById('strength-fill').style.width=(P.strength*5)+'%';
  if(document.body.classList.contains('free'))drawWorldMap();
 
  // weather
