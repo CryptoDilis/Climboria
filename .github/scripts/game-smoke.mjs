@@ -9,14 +9,18 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
-  page.on('pageerror', error => errors.push('desktop pageerror: ' + error.message));
+  page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1800);
+
+  const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
+  if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
+  if (renderState?.errors?.length) errors.push('3D/game frame errors: ' + JSON.stringify(renderState.errors));
 
   const world = await page.evaluate(() => {
     const w = window.__climboriaJarrellsPeak;
@@ -28,6 +32,9 @@ try {
       canvas: !!document.querySelector('canvas'),
       ready: document.documentElement.dataset.climboriaReady === 'true',
       api: !!w,
+      renderFrames: window.__climboriaRenderState?.frames ?? 0,
+      renderErrors: window.__climboriaRenderState?.errors ?? [],
+      sceneObjects: window.__climboriaRenderState?.objects ?? 0,
       player: !!p,
       mode: p?.mode,
       poi: w ? Object.keys(w.POI) : [],
@@ -42,6 +49,8 @@ try {
     };
   });
   if (!world.canvas || !world.ready || !world.api || !world.player) errors.push('Jarrell world failed to boot: ' + JSON.stringify(world));
+  if (world.renderFrames < 2 || world.sceneObjects < 10) errors.push('3D scene is not visibly rendering: ' + JSON.stringify(world));
+  if (world.renderErrors.length) errors.push('3D frame loop reported errors: ' + JSON.stringify(world.renderErrors));
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
   for (const poi of ['sanct','park','camp','cave','summit']) if (!world.poi.includes(poi)) errors.push('Missing world landmark: ' + poi);
   if (world.chests < 7) errors.push('Expected at least seven respawning treasure chests, got ' + world.chests);
@@ -96,12 +105,15 @@ try {
     return {
       canvas: !!document.querySelector('canvas'),
       ready: window.__climboriaGameReady === true,
+      renderFrames: window.__climboriaRenderState?.frames ?? 0,
+      renderErrors: window.__climboriaRenderState?.errors ?? [],
       controls: ['JUMP','RUN','USE'].every(label => text.includes(label)),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
     };
   });
-  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls) errors.push('Mobile gameplay/control initialization failed: ' + JSON.stringify(mobileState));
+  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/control initialization failed: ' + JSON.stringify(mobileState));
+  if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
