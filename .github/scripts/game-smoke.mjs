@@ -784,25 +784,38 @@ try {
   }
   console.log('Jarrell cave viper damage regression:', JSON.stringify(caveViperAudit));
 
-  // Regression: scenic mountain massifs and foreground crags must be solid, with bounded vertical and side clearance.
+  // Regression: audit every registered massif and foreground crag, not just the first ridge.
+  // Each collider must block its own solid center while allowing bounded side and vertical clearance.
   const mountainCollisionAudit = await page.evaluate(() => {
     const api = window.__climboriaSmoke, blockers = api?.mountainBlockers || [];
-    const massif = blockers.find(item => item.kind === 'mountainMassif');
-    if (!massif) return { count:blockers.length, error:'no mountain massif blocker registered' };
-    const y = massif.y0 + .5;
-    const overlappingTop = Math.max(...blockers.filter(item => { const dx=(massif.x-item.x)/(item.rx||item.r), dz=(massif.z-item.z)/(item.rz||item.r); return dx*dx+dz*dz < 1; }).map(item => item.y1));
+    const mountains = blockers.filter(item => item.kind === 'mountainMassif' || item.kind === 'mountainCrag');
+    if (!mountains.length) return { count:blockers.length, mountains:[], error:'no mountain massif/crag blockers registered' };
+    const results = mountains.map(item => {
+      const rx=item.rx||item.r, rz=item.rz||item.r, y=item.y0+.5;
+      const overlappingTop = Math.max(item.y1,...blockers.filter(other => {
+        if(other===item)return false;
+        const dx=(item.x-other.x)/(other.rx||other.r),dz=(item.z-other.z)/(other.rz||other.r);
+        return dx*dx+dz*dz<1;
+      }).map(other=>other.y1));
+      return {
+        kind:item.kind,x:Number(item.x.toFixed(1)),z:Number(item.z.toFixed(1)),
+        centerBlocked:api.testMountainCollider(item,item.x,item.z,y),
+        outsideClear:!api.testMountainCollider(item,item.x+rx+8,item.z,y),
+        aboveClear:!api.testMountainCollision(item.x,item.z,overlappingTop+2)
+      };
+    });
     return {
-      count:blockers.length,
-      kind:massif.kind,
-      centerBlocked:api.testMountainCollider(massif,massif.x,massif.z,y),
-      outsideClear:!api.testMountainCollider(massif,massif.x+massif.rx+8,massif.z,y),
-      aboveClear:!api.testMountainCollision(massif.x,massif.z,overlappingTop+2)
+      count:blockers.length,mountainCount:mountains.length,
+      massifCount:mountains.filter(item=>item.kind==='mountainMassif').length,
+      cragCount:mountains.filter(item=>item.kind==='mountainCrag').length,
+      failed:results.filter(item=>!item.centerBlocked||!item.outsideClear||!item.aboveClear),
+      results
     };
   });
-  if (mountainCollisionAudit.error || mountainCollisionAudit.count < 3 || !mountainCollisionAudit.centerBlocked || !mountainCollisionAudit.outsideClear || !mountainCollisionAudit.aboveClear) {
-    errors.push('mountain massif collision is missing or incorrectly bounded: '+JSON.stringify(mountainCollisionAudit));
+  if (mountainCollisionAudit.error || mountainCollisionAudit.massifCount < 3 || mountainCollisionAudit.cragCount < 12 || mountainCollisionAudit.failed.length) {
+    errors.push('one or more mountain massif/crag colliders are missing or incorrectly bounded: '+JSON.stringify(mountainCollisionAudit));
   }
-  console.log('Jarrell mountain massif collision regression:',JSON.stringify(mountainCollisionAudit));
+  console.log('Jarrell all-mountain collider audit:',JSON.stringify(mountainCollisionAudit));
 
   // Regression: actual player movement must stop at the mountain massif and still allow tangential sliding.
   const mountainTraversalAudit = await page.evaluate(async () => {
