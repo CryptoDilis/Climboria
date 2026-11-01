@@ -1152,10 +1152,11 @@ function update(dt){
   cam.position.set(p.x,camY,p.z);cam.lookAt(a.x,lookY,a.z);cam.rotateZ(Math.sin(Tm*.13)*.03);hero.visible=false;if(assetHero)assetHero.visible=false;
   P.x=p.x;P.z=p.z;
  }else{
-  const sp=keys.ShiftLeft?22:9,sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
+  const sp=keys.ShiftLeft?22:9,sy=Math.sin(cameraYaw),cy=Math.cos(cameraYaw);
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
-   if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(P.yaw)*dz-Math.sin(P.yaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(P.yaw)*dx-Math.sin(P.yaw)*dz)/dist));}}
+   if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(cameraYaw)*dz-Math.sin(cameraYaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(cameraYaw)*dx-Math.sin(cameraYaw)*dz)/dist));}}
   let gh=groundAt(P.x,P.z),activeWater=waterBodyAt(P.x,P.z),sw=activeWater&&gh<activeWater.surfaceY-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
+  if(Math.hypot(fw,rt)>.08){const moveX=(-sy*fw+cy*rt)/l,moveZ=(-cy*fw-sy*rt)/l,targetYaw=Math.atan2(-moveX,-moveZ),yawDelta=Math.atan2(Math.sin(targetYaw-P.yaw),Math.cos(targetYaw-P.yaw));P.yaw+=yawDelta*Math.min(1,dt*12);}
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
   activeWater=waterBodyAt(P.x,P.z);
