@@ -902,3 +902,10 @@ For every integrated asset or borrowed technique, record:
 - [x] Added smoke coverage for the eight coastal docks and all eleven fishing interactions (eight marine docks and three freshwater piers).
 - [ ] Verify all dock placement assertions and the complete Validate / Browser Smoke / Pages workflow set before merge.
 - [ ] Manual desktop and Redmi 14 5G acceptance remains open for the dock approach, deck height, shoreline transitions, and fishing feedback.
+
+
+## 2026-11-02 — Jarrell’s Peak shallow seabed shading (in progress)
+
+- [x] Added a depth-aware sand-to-silt color blend for underwater terrain vertices without changing water-body geometry or swim depth.
+- [x] Added automated browser diagnostics for shallow open-sea and freshwater color samples versus deep ocean.
+- [ ] Verify all automated workflows and manual live rendering before merge.

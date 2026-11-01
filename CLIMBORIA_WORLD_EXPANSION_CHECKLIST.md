@@ -497,3 +497,11 @@ For each meaningful implementation batch:
 - [x] Added browser smoke assertions for eight dock records, dry approaches, open-sea endpoints, and all eleven fishing interaction points (eight coastal plus three freshwater).
 - [ ] Await Validate, Browser Smoke, and Pages results; if any dock candidate fails its land/water checks, correct placement before merge.
 - [ ] Manual desktop and Redmi 14 5G inspection remains open for dock visual quality, shoreline access, collision feel, and fishing interaction readability.
+
+
+## 2026-11-02 — shallow seabed sand gradient (in progress)
+
+- [x] Blend shallow underwater terrain toward the existing warm sand palette, transitioning progressively toward muted silt at greater depth.
+- [x] Expose terrain vertex color sampling through the world diagnostics API and add browser smoke checks comparing shallow open-sea and freshwater seabeds against deep ocean coloration.
+- [ ] Await Validate, Browser Smoke, and Pages workflows; inspect diagnostic values and correct any regression before merge.
+- [ ] Manual desktop and Redmi 14 5G visual review remains open for sand visibility, waterline blending, and color appearance under the live water surface.

@@ -317,7 +317,8 @@ function colorAt(x,z,h,ny){
  const rk=Math.max(1-ss(.62,.86,ny),ss(90,170,h+t*30));if(rk>0)c=mc(c,mc(RK1,RK2,t2),rk);
  const sn=ss(240,290,h+t*25)*ss(.5,.8,ny);if(sn>0)c=mc(c,SN,sn);
  const bch=1-ss(.3,2.4,h);if(bch>0)c=mc(c,SAND,bch*.9);
- const u=ss(0,-5,h);if(u>0)c=mc(c,UB,u);
+ // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
+ const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
  return c;
 }
 const D=new T3.Object3D();
@@ -1055,7 +1056,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
