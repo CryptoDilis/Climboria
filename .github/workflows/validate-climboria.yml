@@ -164,7 +164,7 @@ jobs:
           from pathlib import Path
           files = [
               "game/index.html", "game/character-lab.html",
-              "game/mountain-prototype.html", "game/open-world-v2.html",
+              "game/open-world-v2.html",
               "overview/index.html", "terms/index.html",
           ]
           class Audit(HTMLParser):
