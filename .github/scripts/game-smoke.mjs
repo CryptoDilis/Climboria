@@ -55,7 +55,7 @@ try {
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
   for (const poi of ['sanct','park','camp','cave','summit']) if (!world.poi.includes(poi)) errors.push('Missing world landmark: ' + poi);
   if (world.chests < 7) errors.push('Expected at least seven respawning treasure chests, got ' + world.chests);
-  if (world.snakes < 5) errors.push('Expected cave/wilderness snakes, got ' + world.snakes);
+  if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
@@ -216,7 +216,7 @@ try {
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
-  console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, traps, chests, facilities, desktop controls, and mobile controls (placeholder wildlife disabled).');
+  console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).');
 } finally {
   await browser.close();
 }
