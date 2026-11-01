@@ -806,7 +806,7 @@ addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=
 const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=null;joy.dx=joy.dy=0;jr.style.display=jk.style.display='none'}if(t.identifier==lk.id)lk.id=null}};
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 /* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
-const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=2.8;
+const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
@@ -869,6 +869,7 @@ parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function blocked(nx,nz,ox,oz,feet){
+ window.__climboriaLastCollision=null;
  const dirX=nx-ox,dirZ=nz-oz,segLen=Math.hypot(dirX,dirZ);
  if(segLen<1e-6)return false;
  const r=PLAYER_RADIUS,ts=[0,.5,1];
@@ -888,12 +889,12 @@ function blocked(nx,nz,ox,oz,feet){
   return true;
  }
  // Swept checks against fixed and streamed circular colliders.
- for(const o of solids)if(sweptCircleCollides(o.x,o.z,o.r))return true;
+ for(const o of solids)if(sweptCircleCollides(o.x,o.z,o.r)){window.__climboriaLastCollision={type:'fixed-solid',x:o.x,z:o.z,r:o.r};return true;}
  for(const t of ts){
   const cx=ox+dirX*t,cz=oz+dirZ*t,ccx=Math.floor(cx/CS),ccz=Math.floor(cz/CS);
   for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){
    const c=chunks.get((ccx+i)+','+(ccz+j));
-   if(c)for(const col of c.col)if(sweptCircleCollides(col.x,col.z,col.r))return true;
+   if(c)for(const col of c.col)if(sweptCircleCollides(col.x,col.z,col.r)){window.__climboriaLastCollision={type:'streamed-solid',x:col.x,z:col.z,r:col.r,chunk:(ccx+i)+','+(ccz+j)};return true;}
   }
  }
  const oldCenterH=groundAt(ox,oz);
@@ -904,8 +905,8 @@ function blocked(nx,nz,ox,oz,feet){
   const t=ts[i],prevT=ts[i-1],segD=segLen*(t-prevT);
   if(segD<1e-6)continue;
   const cx=ox+dirX*t,cz=oz+dirZ*t,currH=groundAt(cx,cz);
-  if(currH-feet>MAX_STEP_UP)return true;
-  if((currH-prevH)/segD>SLOPE)return true;
+  if(currH-feet>MAX_STEP_UP){window.__climboriaLastCollision={type:'step-up',terrain:currH,feet,limit:MAX_STEP_UP};return true;}
+  if((currH-prevH)/segD>SLOPE){window.__climboriaLastCollision={type:'center-slope',fromHeight:prevH,toHeight:currH,distance:segD,grade:(currH-prevH)/segD,limit:SLOPE};return true;}
   prevH=currH;
  }
  const offsets=[];
@@ -924,10 +925,10 @@ function blocked(nx,nz,ox,oz,feet){
    const newHeightFail=newHeightClear<0,newSlopeFail=newSlopeClear<0;
    const heightDeeper=newHeightClear<oldHeightClear,slopeDeeper=newSlopeClear<oldSlopeClear;
    // Any newly failing constraint blocks movement, even if another constraint was already failing.
-   if((!oldHeightFail&&newHeightFail)||(!oldSlopeFail&&newSlopeFail))return true;
+   if((!oldHeightFail&&newHeightFail)||(!oldSlopeFail&&newSlopeFail)){window.__climboriaLastCollision={type:!oldHeightFail&&newHeightFail?'edge-step-up':'edge-slope',offset:off,oldHeight:oldH,newHeight:newH,centerH,feet,oldHeightClear,newHeightClear,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE,stepLimit:MAX_STEP_UP};return true;}
    // An existing failure blocks only when that same constraint gets worse.
-   if(oldHeightFail&&newHeightFail&&heightDeeper)return true;
-   if(oldSlopeFail&&newSlopeFail&&slopeDeeper)return true;
+   if(oldHeightFail&&newHeightFail&&heightDeeper){window.__climboriaLastCollision={type:'edge-step-up-worsens',offset:off,oldHeight:oldH,newHeight:newH,feet,oldHeightClear,newHeightClear,stepLimit:MAX_STEP_UP};return true;}
+   if(oldSlopeFail&&newSlopeFail&&slopeDeeper){window.__climboriaLastCollision={type:'edge-slope-worsens',offset:off,oldHeight:oldH,newHeight:newH,oldCenterHeight:oldCenterH2,centerH,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE};return true;}
   }
  }
  return false;

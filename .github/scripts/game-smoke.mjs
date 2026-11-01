@@ -95,7 +95,7 @@ try {
         for(let i=1;i<=steps;i++){
           const t=i/steps,nx=start.x+(target.x-start.x)*t,nz=start.z+(target.z-start.z)*t;
           if(w.blocked(nx,nz,x,z,w.groundAt(x,z)+.01)){
-            blockedAt={step:i,percent:+(100*(i-1)/steps).toFixed(1),x:+x.toFixed(1),z:+z.toFixed(1),height:+w.groundAt(x,z).toFixed(1),nextHeight:+w.groundAt(nx,nz).toFixed(1)};break;
+            blockedAt={step:i,percent:+(100*(i-1)/steps).toFixed(1),x:+x.toFixed(1),z:+z.toFixed(1),height:+w.groundAt(x,z).toFixed(1),nextHeight:+w.groundAt(nx,nz).toFixed(1),reason:window.__climboriaLastCollision};break;
           }
           x=nx;z=nz;progress=i;
         }

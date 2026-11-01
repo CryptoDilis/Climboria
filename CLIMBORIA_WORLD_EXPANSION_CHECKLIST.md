@@ -480,3 +480,11 @@ For each meaningful implementation batch:
 - [ ] Record the first blocked segment, terrain heights and percentage of route completed; compare the trace with authored tree/rock/structure colliders before changing movement limits.
 - [ ] Fix only the demonstrated obstruction and keep legitimate collision intact.
 - [ ] Manual desktop and Redmi 14 5G mountain approach acceptance remains open.
+
+
+## 2026-11-02 — classify the first mountain-route collision
+
+- [ ] Record the exact collision class at the first spawn-to-summit blocker: fixed prop, streamed chunk collider, center slope, edge slope, or step-up.
+- [ ] Use the measured blocker coordinates and collider/terrain data to make a narrowly targeted correction; retain legitimate environmental collision.
+- [ ] Add a regression assertion for the corrected route and rerun desktop/mobile browser smoke plus Validate.
+- [ ] Manual desktop and Redmi 14 5G mountain approach acceptance remains open.
