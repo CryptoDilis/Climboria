@@ -908,6 +908,23 @@ try {
   if (!wildernessLandmarks.some(name => name === 'Jarrell_DecayedSoldier_Remains')) errors.push('Jarrell battlefield does not contain the new decayed soldier remains');
   if (!wildernessLandmarks.includes('JarrellWoodlandPond')) errors.push('Jarrell woodland pond landmark did not initialize');
   if (!wildernessLandmarks.includes('JarrellMoonpool')) errors.push('Jarrell Moonpool landmark did not initialize');
+  const waterVegetationAudit = await page.evaluate(() => {
+    const api=window.__climboriaSmoke,water=window.jarrellIsWaterSurface;
+    if(typeof water!=='function')return {available:false};
+    const riverX=api.riverX(0),ocean=window.jarrellOceanBounds;
+    const samples=[
+      {id:'open-sea',x:(ocean.minX+ocean.maxX)/2,z:0,expected:true},
+      {id:'river',x:riverX,z:0,expected:true},
+      ...api.freshwaterBodies.map(body=>({id:body.id,x:body.x,z:body.z,expected:true})),
+      {id:'dry-camp',x:0,z:-340,expected:false},
+      {id:'dry-west-bank',x:riverX-35,z:0,expected:false},
+      {id:'dry-inland',x:700,z:500,expected:false}
+    ];
+    return {available:true,samples:samples.map(sample=>({...sample,actual:water(sample.x,sample.z)}))};
+  });
+  if(!waterVegetationAudit.available||waterVegetationAudit.samples.some(sample=>sample.actual!==sample.expected)) errors.push('Jarrell water-surface vegetation exclusion failed: '+JSON.stringify(waterVegetationAudit));
+  console.log('Jarrell water-surface vegetation exclusion:',JSON.stringify(waterVegetationAudit));
+
   const freshwaterAudit = await page.evaluate(() => {
     const api = window.__climboriaSmoke;
     const bodies = api?.freshwaterBodies || [];
