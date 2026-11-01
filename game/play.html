@@ -835,6 +835,7 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  const moonpoolRimStones=[];for(let i=0;i<13;i++){const a=i/13*Math.PI*2,r=9.4+(i%3)*.65,rx=moonX+Math.cos(a)*r,rz=moonZ+Math.sin(a)*r,ground=terrainHeightAt(rx,rz),sx=.55+(i%3)*.12,sy=.35+(i%2)*.12;place(rockGeo,stoneEdge,rx,ground+.12,rz,sx,sy,.62,a*.4);moonpoolRimStones.push(addJarrellObstacleCollider({x:rx,z:rz,r:.52,y0:ground-.05,y1:ground+.12+sy,kind:'freshwater-rim-rock'}))}
  for(let i=0;i<6;i++){const ripple=new THREE.Mesh(new THREE.TorusGeometry(.35+i*.12,.018,5,24),new THREE.MeshBasicMaterial({color:0xb1edf2,transparent:true,opacity:.18,depthWrite:false}));ripple.rotation.x=-Math.PI/2;ripple.position.set(moonX+Math.sin(i*2.2)*2,.085,moonZ+Math.cos(i*1.7)*1.8);ripple.scale.set(1.5,1,1);worldPOIs.add(ripple);}
  const sanctX=365,sanctZ=205;const lake=place(new THREE.CircleGeometry(23,64),sanctuaryWater,sanctX,.05,sanctZ,1.25,1,.72);lake.position.y=.05;lake.rotation.x=-Math.PI/2;lake.name='JarrellSanctuaryLakeWater';
+ window.jarrellFreshwaterWaterMeshes=[{id:'woodland-pond',mesh:pond},{id:'moonpool',mesh:moonpool},{id:'sanctuary-lake',mesh:lake}];
  // Shared freshwater gameplay registry. Radii follow the visible scaled water discs; the small margin lets the swimmer cross the visual water edge without a state flicker.
  const jarrellFreshwaterBodies=[
   {id:'woodland-pond',name:'JarrellWoodlandPond',x:178,z:255,rx:11*1.18,rz:11*.78,surfaceY:.035},
