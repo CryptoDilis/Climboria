@@ -1,3 +1,11 @@
+## 2026-11-02 — hero facing, summit beam removal, and respawn flag pillars (OPEN)
+
+- [ ] Turn the selected GLB hero so the character visibly faces the active player camera during normal gameplay; preserve the selected model, outfit, tattoos, proportions, animations, and movement behavior. Verify on desktop and Android landscape.
+- [ ] Remove the laser-like beam / pointing effect at the Jarrell’s Peak summit. Do not replace it with another beam, marker ray, or artificial spotlight; retain natural mountain lighting and atmosphere.
+- [ ] Add a distinct national flag to every existing pillar in the Sanctuary respawn area. Include the Philippines flag 🇵🇭; use other country flags for the remaining pillars, with correct flag designs, readable proportions, secure mounts, and consistent placement. Preserve the existing pillar count, positions, and respawn-area layout.
+- [ ] Verify flags remain attached to their pillars, render correctly at gameplay camera distance, and do not obstruct player movement, interactions, or respawning.
+- [ ] Run Validate, Browser Smoke, and Pages workflows after implementation; diagnose failures at their root cause and re-run until green. Complete a manual visual check before marking these items done.
+
 ## 2026-11-02 — freshwater and river sandy bank foundation (in progress)
 
 - [x] Expanded terrain vertex coloring with a soft sand apron along all three mapped freshwater basins and the river channel, preserving the existing depth-aware seabed sand-to-silt gradient.
