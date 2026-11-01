@@ -16,7 +16,8 @@ try {
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
-  await page.waitForTimeout(1800);
+  await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
   if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
@@ -100,6 +101,7 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
+  await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
