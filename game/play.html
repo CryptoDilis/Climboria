@@ -510,10 +510,22 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   const riverT=Math.max(0,Math.min(1,(z+900)/1800)),riverHalf=jarrellRiverHalfWidth(riverT),riverBed=-5.8+5.8*Math.pow(Math.min(1,riverDist/riverHalf),2);
   let baseTerrain=rawTerrain;
   if(riverLength>0&&riverDist<riverHalf+73){if(riverDist<=riverHalf)baseTerrain=riverBed;else if(riverDist<=riverHalf+8)baseTerrain=.06;else{const q=Math.max(0,Math.min(1,(riverDist-riverHalf-8)/65)),blend=q*q*(3-2*q);baseTerrain=.06*(1-blend)+rawTerrain*blend;}}
-  // Flatten the rice terrace shelf and form a shallow basin for the sanctuary lake.
+  // Flatten every freshwater basin below its water surface, then blend gradually into the natural bank.
+  // The same height field drives streamed terrain meshes, player grounding, and shoreline placement.
   const riceRadius=Math.hypot(x-272,z+107),riceBlend=1-Math.max(0,Math.min(1,(riceRadius-28)/22)),riceTerrain=baseTerrain*(1-riceBlend)+8*riceBlend;
-  const lakeRadius=Math.hypot((x-365)/1.25,(z-205)/.72),lakeBlend=1-Math.max(0,Math.min(1,(lakeRadius-18)/20));
-  return riceTerrain*(1-lakeBlend)+10*lakeBlend;
+  const freshwaterBasins=[
+   {x:178,z:255,rx:11*1.18,rz:11*.78,surfaceY:.035},
+   {x:300,z:278,rx:8.5*1.22,rz:8.5*.86,surfaceY:.045},
+   {x:365,z:205,rx:23*1.25,rz:23*.72,surfaceY:.05}
+  ];
+  let flattenedTerrain=riceTerrain;
+  for(const basin of freshwaterBasins){
+   const radius=Math.hypot((x-basin.x)/basin.rx,(z-basin.z)/basin.rz);
+   const t=Math.max(0,Math.min(1,(radius-.82)/.68)),smooth=t*t*(3-2*t),blend=1-smooth;
+   const basinFloor=basin.surfaceY-1.25;
+   flattenedTerrain=flattenedTerrain*(1-blend)+basinFloor*blend;
+  }
+  return flattenedTerrain;
 };
   // Collision and grounding must use the same height field as the streamed Jarrell terrain meshes.
   terrainHeightAt=jarrellHeight;window.jarrellRiverX=jarrellRiverX;window.jarrellTerrainHeightAt=terrainHeightAt;
