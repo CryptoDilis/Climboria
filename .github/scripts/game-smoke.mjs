@@ -92,9 +92,9 @@ try {
   await menu.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
   const createLink=menu.locator('a.menu-create');
   if(await createLink.count()!==1||!(await createLink.innerText()).includes('CREATE CHARACTER')) errors.push('Create Character entry is missing from expedition menu');
-  if((await menu.locator('body').innerText()).match(/EXPLORE\\s+4|FOUR DESTINATIONS/i)) errors.push('Expedition menu still advertises four playable destinations');
+  if((await menu.locator('body').innerText()).match(/EXPLORE\s+4|FOUR DESTINATIONS/i)) errors.push('Expedition menu still advertises four playable destinations');
   await createLink.click();
-  await menu.waitForURL(/play\\.html\\?create=1/);
+  await menu.waitForURL(/play\.html\?create=1/);
   await menu.waitForFunction(()=>getComputedStyle(document.querySelector('#character-create-panel')).display!=='none',{timeout:10000});
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
