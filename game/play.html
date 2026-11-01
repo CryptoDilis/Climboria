@@ -822,6 +822,57 @@ addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=2.8;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
+/* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
+   The existing streamed/instanced procedural forest remains the lightweight fallback.
+   These few hero props are loaded once, cloned, and placed only on valid forest ground.
+   Models are static GLBs; gameplay collision is authored below because the files contain none.
+*/
+const cc0ForestDefinitions={
+ buttress:{url:'https://cdn.3dassets.dev/assets/36137/v1/model.glb',collider:2.15,scale:.92},
+ undergrowth:{url:'https://cdn.3dassets.dev/assets/36145/v1/model.glb',collider:0,scale:1},
+ fallenLog:{url:'https://cdn.3dassets.dev/assets/36143/v1/model.glb',collider:1.15,scale:.9}
+};
+const cc0ForestLoaded=new Map();
+function findCC0ForestSpots(count,minSpacing,excluded=[]){
+ const found=[],blockedSpots=excluded.slice();
+ for(let ring=105;ring<=1450&&found.length<count;ring+=38){
+  for(let deg=0;deg<360&&found.length<count;deg+=18){
+   const a=deg*Math.PI/180,x=Math.sin(a)*ring,z=60+Math.cos(a)*ring,h=heightAt(x,z);
+   if(h<2||h>132||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z))continue;
+   if(Math.abs(heightAt(x+5,z)-h)>2.2||Math.abs(heightAt(x,z+5)-h)>2.2)continue;
+   if(blockedSpots.some(p=>Math.hypot(p.x-x,p.z-z)<minSpacing))continue;
+   const spot={x,z,h};found.push(spot);blockedSpots.push(spot);
+  }
+ }
+ return found;
+}
+const cc0TreeSpots=findCC0ForestSpots(2,72);
+const cc0GroundSpots=findCC0ForestSpots(7,12,cc0TreeSpots);
+const cc0LogSpots=findCC0ForestSpots(2,26,[...cc0TreeSpots,...cc0GroundSpots]);
+function placeCC0ForestModel(key,spot,index){
+ const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
+ const root=asset.clone(true),def=cc0ForestDefinitions[key];
+ root.name='Climboria_CC0_'+key+'_'+index;
+ root.position.set(spot.x,spot.h,spot.z);
+ root.rotation.y=((index*1.61803398875)%1)*Math.PI*2;
+ root.scale.setScalar(def.scale);
+ root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
+ scene.add(root);
+ if(def.collider>0)solid(spot.x,spot.z,def.collider);
+}
+function loadCC0ForestModel(key,spots){
+ const def=cc0ForestDefinitions[key];
+ new T3.GLTFLoader().load(def.url,gltf=>{
+  const base=gltf.scene;
+  base.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=true}});
+  cc0ForestLoaded.set(key,base);
+  spots.forEach((spot,i)=>placeCC0ForestModel(key,spot,i));
+ },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; procedural vegetation remains active:',key,error));
+}
+loadCC0ForestModel('buttress',cc0TreeSpots);
+loadCC0ForestModel('undergrowth',cc0GroundSpots);
+loadCC0ForestModel('fallenLog',cc0LogSpots);
+
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
