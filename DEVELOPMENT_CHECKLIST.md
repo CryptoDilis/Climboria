@@ -1,3 +1,11 @@
+## 2026-11-02 — mobile movement-facing regression coverage (verification open)
+
+- [x] Extended the mobile landscape browser smoke path to verify that movement changes hero heading toward the camera-relative movement vector after independent camera orbit.
+- [x] Kept the existing assertions that camera drag changes camera yaw without rotating the player in place and that the selected GLB remains back-facing.
+- [ ] Execute Browser Smoke and Validate on this exact HEAD and inspect all failed steps; combined commit status currently reports no status records, which is not proof of a passing workflow.
+- [ ] Manual Android landscape visual acceptance remains open.
+- Code commit: `9ce647b`.
+
 ## 2026-11-02 — hero movement-facing implementation (verification open)
 
 - [x] Decoupled movement input vectors from hero heading by using the independent camera orbit as the movement basis; camera orbit alone still does not rotate the character.
