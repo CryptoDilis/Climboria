@@ -765,27 +765,83 @@ const solid=(x,z,r)=>solids.push({x,z,r});
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function blocked(nx,nz,ox,oz,feet){
- const oh=groundAt(ox,oz),nh=groundAt(nx,nz),d=Math.hypot(nx-ox,nz-oz)||1e-3;
- const grounded=feet-oh<.42;
- // Terrain is a continuous heightfield: reject genuinely cliff-like faces, not ordinary mountain approaches.
- if(grounded&&(nh-oh)/d>SLOPE)return true;
- if(grounded&&nh-feet>MAX_STEP_UP)return true;
- for(const o of solids)if(Math.hypot(nx-o.x,nz-o.z)<o.r+PLAYER_RADIUS)return true;
- const ccx=Math.floor(nx/CS),ccz=Math.floor(nz/CS);
- for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const c=chunks.get((ccx+i)+','+(ccz+j));if(c)for(const o of c.col)if(Math.hypot(nx-o.x,nz-o.z)<o.r+PLAYER_RADIUS)return true}
- return false}
+ const dirX=nx-ox,dirZ=nz-oz,segLen=Math.hypot(dirX,dirZ);
+ if(segLen<1e-6)return false;
+ const r=PLAYER_RADIUS,ts=[0,.5,1];
+ function sweptCircleCollides(cx,cz,cr){
+  const vx=cx-ox,vz=cz-oz;
+  let t=(vx*dirX+vz*dirZ)/(segLen*segLen);
+  t=Math.max(0,Math.min(1,t));
+  const closestX=ox+dirX*t,closestZ=oz+dirZ*t;
+  const dist=Math.hypot(closestX-cx,closestZ-cz),minDist=cr+r;
+  if(dist>=minDist)return false;
+  const oldDist=Math.hypot(ox-cx,oz-cz);
+  if(oldDist<minDist){
+   const awayDot=(ox-cx)*dirX+(oz-cz)*dirZ;
+   if(awayDot>0)return false;
+   return true;
+  }
+  return true;
+ }
+ // Swept checks against fixed and streamed circular colliders.
+ for(const o of solids)if(sweptCircleCollides(o.x,o.z,o.r))return true;
+ for(const t of ts){
+  const cx=ox+dirX*t,cz=oz+dirZ*t,ccx=Math.floor(cx/CS),ccz=Math.floor(cz/CS);
+  for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){
+   const c=chunks.get((ccx+i)+','+(ccz+j));
+   if(c)for(const col of c.col)if(sweptCircleCollides(col.x,col.z,col.r))return true;
+  }
+ }
+ const oldCenterH=groundAt(ox,oz);
+ const grounded=P.vy<=0&&feet<=oldCenterH+.55;
+ if(!grounded)return false;
+ let prevH=oldCenterH;
+ for(let i=1;i<ts.length;i++){
+  const t=ts[i],prevT=ts[i-1],segD=segLen*(t-prevT);
+  if(segD<1e-6)continue;
+  const cx=ox+dirX*t,cz=oz+dirZ*t,currH=groundAt(cx,cz);
+  if(currH-feet>MAX_STEP_UP)return true;
+  if((currH-prevH)/segD>SLOPE)return true;
+  prevH=currH;
+ }
+ const offsets=[];
+ for(let a=0;a<360;a+=45){const rad=a*Math.PI/180;offsets.push({dx:Math.cos(rad)*r,dz:Math.sin(rad)*r});}
+ for(let i=1;i<ts.length;i++){
+  const t=ts[i],prevT=ts[i-1];
+  const cx=ox+dirX*t,cz=oz+dirZ*t,oldCx=ox+dirX*prevT,oldCz=oz+dirZ*prevT;
+  const centerH=groundAt(cx,cz),oldCenterH2=groundAt(oldCx,oldCz);
+  for(const off of offsets){
+   const newH=groundAt(cx+off.dx,cz+off.dz),oldH=groundAt(oldCx+off.dx,oldCz+off.dz);
+   const oldHeightClear=MAX_STEP_UP-(oldH-feet);
+   const oldSlopeClear=SLOPE-(oldH-oldCenterH2)/r;
+   const newHeightClear=MAX_STEP_UP-(newH-feet);
+   const newSlopeClear=SLOPE-(newH-centerH)/r;
+   const oldHeightFail=oldHeightClear<0,oldSlopeFail=oldSlopeClear<0;
+   const newHeightFail=newHeightClear<0,newSlopeFail=newSlopeClear<0;
+   const heightDeeper=newHeightClear<oldHeightClear,slopeDeeper=newSlopeClear<oldSlopeClear;
+   // Any newly failing constraint blocks movement, even if another constraint was already failing.
+   if((!oldHeightFail&&newHeightFail)||(!oldSlopeFail&&newSlopeFail))return true;
+   // An existing failure blocks only when that same constraint gets worse.
+   if(oldHeightFail&&newHeightFail&&heightDeeper)return true;
+   if(oldSlopeFail&&newSlopeFail&&slopeDeeper)return true;
+  }
+ }
+ return false;
+}
 function moveWalk(mx,mz){
  const moveAxis=(dx,dz)=>{
-  const distance=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(distance/.32)),sx=dx/steps,sz=dz/steps;
+  const distance=Math.hypot(dx,dz);
+  if(distance<1e-6)return;
+  const steps=Math.max(1,Math.ceil(distance/.32)),sx=dx/steps,sz=dz/steps;
   for(let step=0;step<steps;step++){
-   const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldGround=groundAt(ox,oz),nextGround=groundAt(nx,nz);
-   const feet=P.y-1.75,grounded=P.vy<=0&&feet<=oldGround+.55;
+   const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldCenter=groundAt(ox,oz),feet=P.y-1.75;
+   const grounded=P.vy<=0&&feet<=oldCenter+.55;
    if(blocked(nx,nz,ox,oz,feet))break;
-   // Prevent tunnelling through the terrain and keep the capsule's feet riding the heightfield.
-   if(grounded&&nextGround-oldGround>Math.max(.9,SLOPE*Math.hypot(sx,sz)))break;
-   if(grounded&&nextGround-feet>MAX_STEP_UP)break;
    P.x=nx;P.z=nz;
-   if(grounded){P.y=nextGround+1.75;P.vy=0}
+   if(grounded){
+    const newCenter=groundAt(nx,nz);
+    if(newCenter>=oldCenter){P.y=newCenter+1.75;P.vy=0;}
+   }
   }
  };
  moveAxis(mx,0);moveAxis(0,mz);
