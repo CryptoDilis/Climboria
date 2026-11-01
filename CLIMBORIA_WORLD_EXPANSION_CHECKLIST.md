@@ -416,3 +416,14 @@ For each meaningful implementation batch:
 - [ ] The passing tests cover current sampled geometry and loaded instances only; they do not complete the requested world-scale expansion.
 - [ ] Still open: multiple scattered mountain ranges; large forest and desert biomes; enlarged Sakura park; aquatic life and functional fishing; eight coastal docks; river fishing/benches; larger freshwater regions; and overall world scale.
 - [ ] Next action: visual review of artifact [13076803732](https://api.github.com/repos/CryptoDilis/Climboria/actions/artifacts/13076803732), then implement the next unfinished world-expansion item without removing any master-list requirement.
+
+
+## 2026-11-02 — current-source correction: freshwater system is not present
+
+- [x] Audited `game/play.html` and `.github/scripts/game-smoke.mjs` on main commit `3e39005`.
+- [x] Current playable source has procedural ocean/river terrain and one coastal fishing interaction. It does not currently expose the previously recorded Woodland Pond, Moonpool, or Sanctuary Lake as runtime freshwater bodies, and the current smoke harness does not test them.
+- [x] Treat older checklist entries that describe those three named ponds and their passed tests as historical records only; they do not establish current-main implementation.
+- [ ] Implement explicit river/ocean/freshwater body data and per-body water surface/depth queries.
+- [ ] Connect swimming, dive, shore entry/exit, and collision to each body's actual water surface and bounds.
+- [ ] Add deterministic desktop/mobile movement regressions for each freshwater body before adding freshwater fishing.
+- [ ] Keep fishing expansion deferred until freshwater traversal is stable. Manual desktop and Android visual acceptance remains open.
