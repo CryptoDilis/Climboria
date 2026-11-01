@@ -1679,6 +1679,10 @@ try {
   const mobileSwimPointerCaptureCleanup = await mobilePage.evaluate(() => {const api=window.__climboriaSmoke,jump=document.getElementById('jump'),sprint=document.getElementById('sprint');api.getKeys().Space=true;api.getKeys().ControlLeft=true;window.sprinting=true;jump.dispatchEvent(new Event('lostpointercapture'));sprint.dispatchEvent(new Event('lostpointercapture'));return {surface:api.getKeys().Space===false,dive:api.getKeys().ControlLeft===false,sprint:window.sprinting===false};});
   if(!mobileSwimPointerCaptureCleanup.surface||!mobileSwimPointerCaptureCleanup.dive||!mobileSwimPointerCaptureCleanup.sprint) errors.push('swim and sprint inputs must release when a touch control loses pointer capture: '+JSON.stringify(mobileSwimPointerCaptureCleanup));
   console.log('Mobile swim pointer-capture cleanup:',JSON.stringify(mobileSwimPointerCaptureCleanup));
+  const shorelineAudit = await mobilePage.evaluate(() => window.__climboriaSmoke.shorelineAudit());
+  if(!shorelineAudit.seaBeach||!shorelineAudit.seaBed||!shorelineAudit.riverBanks||!shorelineAudit.riverBed) errors.push('sea/river sand shoreline or underwater bed missing: '+JSON.stringify(shorelineAudit));
+  if(shorelineAudit.freshwater.length!==3||shorelineAudit.freshwater.some(x=>!x.shore||!x.bed||!x.bedBelowSurface)) errors.push('freshwater sandy shores/underwater beds incomplete: '+JSON.stringify(shorelineAudit));
+  console.log('Jarrell shoreline sand audit:',JSON.stringify(shorelineAudit));
   // Capture each freshwater basin on the mobile viewport for visual review.
   const mobileFreshwaterSnapshotState = await mobilePage.evaluate(() => {
     const api=window.__climboriaSmoke;
