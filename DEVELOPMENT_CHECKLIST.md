@@ -1,3 +1,11 @@
+## 2026-11-02 — selected GLB stability regression coverage (verification open)
+
+- [x] Browser smoke now fails if the original Climboria Hero GLB is not the active renderer at initialization.
+- [x] Desktop and mobile smoke paths verify the same GLB asset remains active and visible after movement and camera orbit; fallback/disappearance is reported as a regression.
+- [ ] Run Browser Smoke and Validate on this exact HEAD and inspect logs; the available commit-status endpoint currently returns no status records, not a passing result.
+- [ ] Verify idle/walk/run/jump/swim transitions and rendered feet grounding on desktop and Android landscape; those visual/device checks remain open.
+- Code commit: `2c207a1`.
+
 ## 2026-11-02 — mobile movement-facing regression coverage (verification open)
 
 - [x] Extended the mobile landscape browser smoke path to verify that movement changes hero heading toward the camera-relative movement vector after independent camera orbit.
