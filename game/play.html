@@ -137,7 +137,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 <div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER CREATE</button><p class="menu-hint">Choose your explorer before entering the world</p></div><section id="character-create-panel" aria-label="Character creation" style="display:none"><strong>CHOOSE YOUR CHARACTER</strong><div class="character-options"><button type="button" data-hero="Adventurer">CLIMBORIA HERO</button><button type="button" data-hero="Police">POLICE OFFICER</button><button type="button" data-hero="Scout">3DASSETS SCOUT · TEST</button></div><p id="character-load-status">Select your explorer</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
@@ -251,7 +251,7 @@ const TOD=[
  {n:'Dusk',el:.04,az:4.1,top:'#1f2a5a',hor:'#8a5a78',sun:'#ff8f6a',si:1.3,hi:.42,nt:.2},
  {n:'Moonlit night',el:.5,az:5.2,top:'#050a1c',hor:'#162340',sun:'#8fa9ff',si:.6,hi:.3,nt:1}
 ].map(t=>({...t,top:L(t.top),hor:L(t.hor),sun:L(t.sun)}));
-let todI=0;const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
+let todI=0,wx=0,flash=0,thT=5;const weatherNames=['Clear','Rain','Thunderstorm'];const cur={top:TOD[0].top.clone(),hor:TOD[0].hor.clone(),sun:TOD[0].sun.clone(),si:2.2,hi:.55,nt:0,el:.17,az:2.2};
 const sunDir=new T3.Vector3();
 /* ---------- sky ---------- */
 const skyU={uTop:{value:cur.top},uHor:{value:cur.hor},uSun:{value:sunDir},uSunC:{value:cur.sun},uNight:{value:0},uT:{value:0}};
@@ -710,7 +710,7 @@ addEventListener('keydown',e=>{
  keys[e.code]=true;
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
- if(e.code=='KeyT')todI=(todI+1)%TOD.length;
+ if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'){wx=(wx+1)%weatherNames.length;syncEnvironmentControls()}if(e.code=='KeyE'&&!e.repeat)interact();
  if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();document.getElementById('tmsg').textContent='Click to explore'}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
@@ -1072,11 +1072,12 @@ function interact(){if(P.mode!='walk')return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=90+Math.random()*60;c.g.visible=false;const it=LOOT[Math.floor(Math.random()*LOOT.length)];addInventoryItem(it,1);toast('Chest opened: '+it);emit('chest',{kind:c.kind,item:it,x:c.x,z:c.z});return}
  for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
 P.fish=0;
-addEventListener('keydown',e=>{if(e.code=='KeyE')interact();if(e.code=='KeyR')wx=(wx+1)%3});
 /* weather: clear / rain / thunderstorm */
-let wx=0,flash=0,thT=5;const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
+const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
 const rain=new T3.LineSegments(rgeo,new T3.LineBasicMaterial({color:0x9fb4d0,transparent:true,opacity:.45,fog:false}));rain.frustumCulled=false;rain.visible=false;scene.add(rain);
+function syncEnvironmentControls(){const t=document.getElementById('time-cycle-control'),w=document.getElementById('weather-cycle-control');if(t)t.textContent='TIME OF DAY · '+TOD[todI].n.toUpperCase();if(w)w.textContent='WEATHER · '+weatherNames[wx].toUpperCase()}
+document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});document.getElementById('weather-cycle-control').addEventListener('click',()=>{wx=(wx+1)%weatherNames.length;syncEnvironmentControls()});syncEnvironmentControls();
 function gameTick(dt,cp){
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
@@ -1092,9 +1093,9 @@ function gameTick(dt,cp){
  // Recomputing 240x240 height + multi-octave noise samples every frame stalls gameplay.
 
  // weather
- scene.fog.color.multiplyScalar(1-.35*(wx>0));flash=Math.max(0,flash-dt*3);
+ scene.fog.color.copy(cur.hor);if(wx>0)scene.fog.color.lerp(new T3.Color('#71869a'),.38);flash=Math.max(0,flash-dt*3);
  if(wx==2){thT-=dt;if(thT<0){thT=4+Math.random()*9;flash=1}}
- hemi.intensity=cur.hi*(1-.3*(wx>0))+flash*2.5;rain.visible=wx>0;
+ hemi.intensity=cur.hi*(1-.3*(wx>0))+flash*2.5;sunL.intensity=cur.si*(wx>0?.78:1)+flash*1.2;rain.visible=wx>0;
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
@@ -1195,7 +1196,7 @@ function update(dt){
  // HUD
  hudT-=dt;if(hudT<0){hudT=.25;const h=heightAt(cp.x,cp.z);zoneEl.textContent=biome(cp.x,cp.z,P.mode=='cine'?9:h);
   const cave=POI.cave,tr=Math.hypot(cp.x-cave.x-cave.dir.x*25,cp.z-cave.z-cave.dir.z*25)<22;
-  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
+  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
 }
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
