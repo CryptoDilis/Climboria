@@ -32,7 +32,7 @@ try {
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
   if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
-  const sanctuaryFlags = await page.evaluate(() => window.__climboriaJarrellsPeak?.sanctuaryFlags || []);
+  const sanctuaryFlags = await page.evaluate(() => window.__climboriaJarrellsPeak?.sanctuaryFlags?.map(flag => ({country:flag.country,attached:flag.mesh.parent===flag.pillar&&flag.pole.parent===flag.pillar,width:flag.mesh.geometry.parameters.width,height:flag.mesh.geometry.parameters.height})) || []);
   const expectedSanctuaryFlags = ['Philippines','United States','Japan','South Korea','Canada','United Kingdom','Australia','Brazil','Germany','France','India','Indonesia'];
   if (sanctuaryFlags.length !== 12) errors.push('Sanctuary flag count mismatch: ' + sanctuaryFlags.length);
   if (new Set(sanctuaryFlags.map(flag => flag.country)).size !== expectedSanctuaryFlags.length || expectedSanctuaryFlags.some(country => !sanctuaryFlags.some(flag => flag.country === country))) errors.push('Sanctuary flags do not cover the expected distinct countries: ' + JSON.stringify(sanctuaryFlags.map(flag => flag.country)));
