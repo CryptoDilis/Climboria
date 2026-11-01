@@ -198,13 +198,14 @@ const TERRAIN_STEP=5;
 function waterBodyAt(x,z){
  const sea=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
  if(sea>.5)return WATER_BODIES.find(b=>b.id==='open_sea');
- const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
- const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
- if(river>.18)return WATER_BODIES.find(b=>b.id==='long_river');
+ // Named freshwater basins take precedence where a basin intersects the river channel.
  for(const body of WATER_BODIES){
   if(body.kind!=='freshwater')continue;
   if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
  }
+ const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
+ const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
+ if(river>.18)return WATER_BODIES.find(b=>b.id==='long_river');
  return null;
 }
 function groundAt(x,z){
