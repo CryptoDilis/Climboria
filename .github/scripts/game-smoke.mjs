@@ -48,6 +48,18 @@ try {
       waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
       freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
+      riverQuery: w?.waterBodyAt(201,0)?.id === 'long_river',
+      oceanQuery: w?.waterBodyAt(-1200,0)?.id === 'open_sea',
+      freshwaterMovement: w ? w.waterBodies.filter(b=>b.kind==='freshwater').map(b=>{
+        const p=w.player,ox=p.x,oz=p.z,oy=p.y,ov=p.vy;
+        p.x=b.x-b.radius-8;p.z=b.z;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;
+        w.moveWalk(b.radius+8,0);
+        const entered=w.waterBodyAt(p.x,p.z)?.id===b.id;
+        w.moveWalk(b.radius+12,0);
+        const exited=!w.waterBodyAt(p.x,p.z)&&w.groundAt(p.x,p.z)>-.2;
+        p.x=ox;p.z=oz;p.y=oy;p.vy=ov;
+        return {id:b.id,entered,exited};
+      }) : [],
       seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
       chunkCount: w?.chunks?.size ?? 0,
     };
@@ -64,6 +76,8 @@ try {
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
+  if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
+  if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   await page.keyboard.press('w');
