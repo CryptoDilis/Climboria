@@ -389,7 +389,7 @@ const mats={};const M=(hex,e)=>{const k=hex+(e?'e':'');return mats[k]||(mats[k]=
 const BOX=new T3.BoxGeometry(1,1,1),CYL=new T3.CylinderGeometry(1,1,1,14),SPH=new T3.SphereGeometry(1,14,10),CON=new T3.ConeGeometry(1,1,10),DOD=new T3.DodecahedronGeometry(1,0);
 const mk=(g,m,x,y,z,p)=>{const o=new T3.Mesh(g,m);o.position.set(x,y,z);p&&p.add(o);return o};
 const sc=(o,x,y,z)=>{o.scale.set(x,y,z);return o};
-const lights=[],flames=[];
+const lights=[],flames=[],wavingFlags=[];
 function torch(x,y,z,p){const f=sc(mk(CON,M('#ff9a2e',1),x,y+2.2,z,p),.35,.9,.35);sc(mk(CYL,M('#4a3322'),x,y+1,z,p),.12,2,.12);flames.push(f);return f}
 function glow(color,i,d,x,y,z,p){const l=new T3.PointLight(L(color),i,d,2);l.position.set(x,y,z);(p||scene).add(l);lights.push(l);return l}
 /* Sanctuary */
@@ -400,7 +400,7 @@ let crystal;{
  function nationalFlag(country){
   const c=document.createElement('canvas');c.width=192;c.height=128;const x=c.getContext('2d');
   const stripes=(a,v=false)=>a.forEach((z,i)=>{x.fillStyle=z;x.fillRect(v?i*192/a.length:0,v?0:i*128/a.length,v?193:192,v?128:129)});
-  if(country==='Philippines'){stripes(['#0038a8','#ce1126']);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(76,64);x.lineTo(0,128);x.fill();x.fillStyle='#fcd116';x.beginPath();x.arc(25,64,10,0,7);x.fill();for(let i=0;i<3;i++){let a=i*2.094;x.beginPath();x.arc(48+0*Math.cos(a),64+0*Math.sin(a),3,0,7);x.fill()}}
+  if(country==='Philippines'){stripes(['#0038a8','#ce1126']);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(76,64);x.lineTo(0,128);x.closePath();x.fill();x.fillStyle='#fcd116';x.beginPath();x.arc(25,64,10,0,Math.PI*2);x.fill();const star=(cx,cy,r)=>{x.beginPath();for(let j=0;j<10;j++){const a=-Math.PI/2+j*Math.PI/5,rr=j%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fill()};star(12,15,7);star(12,113,7);star(68,64,7)}
   else if(country==='Japan'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#bc002d';x.beginPath();x.arc(96,64,29,0,7);x.fill()}
   else if(country==='South Korea'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#cd2e3a';x.beginPath();x.arc(96,64,28,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(96,64,28,0,Math.PI);x.fill()}
   else if(country==='United States'){stripes(['#b22234','#fff','#b22234','#fff','#b22234','#fff','#b22234']);x.fillStyle='#3c3b6e';x.fillRect(0,0,82,69)}
@@ -418,7 +418,7 @@ let crystal;{
   const H=i%5==3?4:9;sc(mk(CYL,M('#c9c3b2'),0,H/2,0,pg),1.1,H,1.1);sc(mk(BOX,M('#b5af9f'),0,H+.3,0,pg),2.6,.6,2.6);
   if(i%5!=3)sc(mk(SPH,M('#7fe9ff',1),0,H+1.2,0,pg),.5,.5,.5) 
   const poleH=3.2,pole=mk(CYL,M('#8b8170'),.12,H+.3+poleH/2,0,pg);sc(pole,.055,poleH,.055);
-  const fm=mk(new T3.PlaneGeometry(2.25,1.5),nationalFlag(flagCountries[i]),1.27,H+.3+poleH-.12,0,pg);fm.rotation.y=-.12
+  const fg=new T3.PlaneGeometry(2.25,1.5,18,12),fm=mk(fg,nationalFlag(flagCountries[i]),1.27,H+.3+poleH-.12,0,pg);fm.rotation.y=-.12;wavingFlags.push({geometry:fg,base:fg.attributes.position.array.slice(),phase:i*.73})
  }
  crystal=sc(mk(new T3.OctahedronGeometry(1),M('#7fe9ff',1),0,6,0,g),2,3,2);
  glow('#7fe9ff',2.5,90,0,7,0,g);
@@ -1188,7 +1188,7 @@ function update(dt){
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
- const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;
+ const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});
  // Wild-animal simulation disabled along with placeholder wildlife models.
  // fireflies
  for(let i=0;i<FN;i++){const o=fof[i];fpos[i*3]=cp.x+((o[0]+Tm*.6*Math.sin(o[3])+240)%160)-80;fpos[i*3+1]=Math.max(heightAt(cp.x+o[0],cp.z+o[2]),0)+1+o[1]*.25+Math.sin(Tm+o[3])*1.5;fpos[i*3+2]=cp.z+o[2]}
