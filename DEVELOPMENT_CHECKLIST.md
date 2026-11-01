@@ -954,3 +954,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Check license and adapt a lightweight Three.js cloth-wave implementation from a permissively licensed GitHub source; optimize for mobile.
 - [ ] Run validation, browser smoke, and Pages workflows; diagnose and rerun any failures.
 - Code commit: 2a00315951c1ee0f82c18adb0aebd7f5a72a8e2b
+
+### Sanctuary flag artwork and wind motion — 2026-11-02
+- [x] Replace the inaccurate Philippines flag star placement with the correct three-star triangle layout and sun.
+- [x] Subdivide all 12 Sanctuary flag meshes and add lightweight wind-driven cloth ripples, increasing motion toward the free edge.
+- [x] Keep existing pillar count, placement, flag countries, and hero asset unchanged.
+- [ ] Visual-check flag orientation, cloth normals, and mobile frame rate in the live game.
+- [ ] Review the hero's idle arm/hand pose on the actual GLB and adjust only the pose (never the face, tattoos, outfit, or proportions).
+- Reference research: MIT-licensed Three.js flag cloth simulation — https://github.com/krikienoid/flagwaver (implementation adapted as a lightweight in-place vertex deformation, not a copied asset pack).
+- Code commit: a4c5825fedcfd189b4f6581febe8f0597e73e952
