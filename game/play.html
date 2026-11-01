@@ -46,7 +46,13 @@ body.free #status-card{opacity:1}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
 #world-map-toggle{display:none}
-#world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
+#world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:0!important;top:0!important;margin:0!important;width:240px;box-sizing:border-box;padding:9px;border:1px solid #d8b46b99;border-top:0;border-right:0;border-radius:0 0 0 13px;background:#080d14ed;box-shadow:0 12px 40px #000b;display:block;transition:width .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}
+#expedition-settings-toggle{position:fixed;z-index:1100;top:10px;right:250px;width:40px;height:40px;border:1px solid #d8b46b99;border-radius:10px;background:#080d14ed;color:#ffe3a3;font-size:22px;cursor:pointer;box-shadow:0 8px 24px #0008}
+#expedition-settings-panel{position:fixed;z-index:1101;top:58px;right:250px;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #d8b46b99;border-radius:12px;background:#080d14f2;color:#f4ecd8;box-shadow:0 12px 40px #000b;font:12px system-ui}
+#expedition-settings-panel strong{display:block;color:#ffe3a3;letter-spacing:.12em;margin-bottom:12px}
+#expedition-settings-panel button{display:block;width:100%;padding:10px;margin:8px 0;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:7px;font-weight:800;cursor:pointer}
+#expedition-settings-panel label{display:flex;justify-content:space-between;gap:8px;margin-top:14px;color:#ffe3a3;font-weight:700}
+#climboria-music-volume{width:100%;accent-color:#d8b46b;margin:12px 0}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:3/2}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:3/2;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
@@ -55,7 +61,7 @@ body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
-@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#world-map-legend{font-size:8px}#control-dock{display:none}}
+@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:198px;right:8px;width:36px;height:36px}#expedition-settings-panel{top:242px;right:8px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
 #player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
@@ -68,7 +74,7 @@ body.free #control-dock{opacity:1}
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp</div>
 <div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER CREATE</button><p class="menu-hint">Choose your explorer before entering the world</p></div><section id="character-create-panel" aria-label="Character creation" style="display:none"><strong>CHOOSE YOUR CHARACTER</strong><div class="character-options"><button type="button" data-hero="Adventurer">ADVENTURER</button><button type="button" data-hero="Police">POLICE OFFICER</button></div><p id="character-load-status">Select your explorer</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
@@ -485,8 +491,19 @@ const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-3
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
 let camY=null,lookY=0;
 const free=on=>document.body.classList.toggle('free',on);
-const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;
+const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 function startClimboriaMusic(){if(climboriaMusic.paused)climboriaMusic.play().catch(()=>{});}
+const settingsPanel=document.getElementById('expedition-settings-panel');
+document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block'});
+document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
+const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
+volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
+document.getElementById('back-to-expedition-menu').addEventListener('click',()=>{
+ settingsPanel.style.display='none';P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
+ if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
+ const title=document.getElementById('title');title.style.display='grid';title.style.opacity='1';title.style.pointerEvents='auto';
+ document.getElementById('tmsg').textContent='CLIMBORIA · EXPEDITION MENU';
+});
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=heightAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
