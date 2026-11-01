@@ -912,6 +912,12 @@ try {
   if (!(waterTerrain.sandyShelf >= 0 && waterTerrain.sandyShelf <= .25)) errors.push('Jarrell river shore shelf is not shallow and walkable');
   if (!(Number.isFinite(waterTerrain.seaFloor) && waterTerrain.seaFloor < -10 && waterTerrain.seaSurface > waterTerrain.seaFloor)) errors.push('Jarrell sea basin is missing or not deep below its water surface');
 
+  // Move the streamed world into a forest region before auditing tree colliders.
+  // The trailhead intentionally has a 900 m vegetation-free safety radius, so
+  // testing only the initial spawn chunk produces zero trees and false failures.
+  await page.evaluate(() => window.updateJarrellChunks?.(0, 700));
+  await page.waitForTimeout(250);
+
   // Regression: a player approaching a tree from across a collider-grid boundary must still hit it.
   // The collider grid uses 24 m cells; the player's radius can overlap a neighboring cell.
   const boundaryCollision = await page.evaluate(() => {
