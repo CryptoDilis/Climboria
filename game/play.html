@@ -758,8 +758,8 @@ addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=
  else if(t.identifier==lk.id&&P.mode!='cine'){P.yaw-=(t.clientX-lk.x)*.005;P.pitch=Math.max(-1.5,Math.min(1.5,P.pitch-(t.clientY-lk.y)*.005));lk.x=t.clientX;lk.y=t.clientY}}},{passive:true});
 const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=null;joy.dx=joy.dy=0;jr.style.display=jk.style.display='none'}if(t.identifier==lk.id)lk.id=null}};
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
-/* collision: slope limit + step height + tree/rock/structure circles (chunk colliders unload with their chunk) */
-const solids=[],SLOPE=2.6,PLAYER_RADIUS=.34,MAX_STEP_UP=2.1;
+/* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
+const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=2.8;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
