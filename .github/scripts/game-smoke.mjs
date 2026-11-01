@@ -1763,8 +1763,12 @@ try {
       api.setPlayerPosition(x,y,z);
       api.camera.position.set(x-4.7,y+4.0,z+5.1);
       api.camera.lookAt(x,y+.95,z);
+      // Render the exact diagnostic camera immediately; do not let the mobile follow-camera
+      // or the next animation frame replace the target before the screenshot is captured.
+      api.renderFrame?.();
     },body);
-    await mobilePage.waitForTimeout(250);
+    await mobilePage.waitForTimeout(50);
+    await mobilePage.evaluate(()=>window.__climboriaSmoke?.renderFrame?.());
     const framed=await mobilePage.evaluate(()=>{const a=window.__climboriaSmoke;return {player:{x:a.player.position.x,y:a.player.position.y,z:a.player.position.z},camera:{x:a.camera.position.x,y:a.camera.position.y,z:a.camera.position.z}}});
     console.log('Freshwater mobile screenshot frame:',body.id,JSON.stringify(framed));
     await mobilePage.screenshot({path:`freshwater-mobile-${body.id}.png`});
