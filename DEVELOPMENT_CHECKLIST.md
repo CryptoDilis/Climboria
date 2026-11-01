@@ -1,3 +1,9 @@
+## 2026-11-02 — CC0 rainforest expansion and placement regression correction
+
+- [x] Expanded planned CC0 GLB dressing to 16 buttress trees, 42 undergrowth patches, and 14 fallen logs (72 planned instances); source GLBs remain cached and cloned.
+- [x] Smoke diagnostics now validate deterministic spot counts, finite terrain coordinates, terrain-height agreement within 1 mm, valid ground elevation, and absence of a water-body overlap. This avoids a brittle shoreline-helper assertion while still checking that props are not placed in mapped water.
+- [ ] Visual CDN load, actual model bounds/collision feel, waterline appearance, and desktop/Android frame-time acceptance remain manual checks; no claim of full visual acceptance.
+
 ## 2026-11-01 — user-reported gameplay and mobile launch bug master list (OPEN; do not mark complete from CI alone)
 
 **Authoritative launch scope:** Jarrell's Peak + Arena only. There are no 11 mountains or 10 normal mountain levels in the current game scope. Do not reintroduce that superseded plan.
