@@ -144,7 +144,8 @@ function biome(x,z,h){
 }
 /* ---------- renderer / scene ---------- */
 const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1.25:1.75));renderer.setSize(innerWidth,innerHeight);
+// Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
+renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';renderer.domElement.style.isolation='isolate';document.body.prepend(renderer.domElement);
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
@@ -384,7 +385,7 @@ function animal(k){const g=new T3.Group(),s=[1.15,.9,.8][k],m=M(['#9b6b3c','#6c6
  g.userData.legs=legs;return g}
 function placeAnimal(a,px,pz){for(let t=0;t<20;t++){const an=Math.random()*6.28,d=120+Math.random()*320,x=px+Math.sin(an)*d,z=pz+Math.cos(an)*d,h=heightAt(x,z);
  if(h>1.2&&h<55&&desF(x,z)<.6&&!nearPOI(x,z)){a.x=x;a.z=z;return}}a.x=px+200;a.z=pz}
-for(let i=0;i<28;i++){const k=i%3,g=animal(k),a={g,k,h:Math.random()*6.28,sp:1.5+Math.random()*(k==1?5:3),t:Math.random()*5,ph:Math.random()*6,x:0,z:0};placeAnimal(a,0,0);scene.add(g);animals.push(a)}
+// Wild animals temporarily disabled: remove the low-quality placeholder models until proper assets are ready.
 /* ---------- fireflies ---------- */
 const FN=0,fpos=new Float32Array(0),fof=[];
 
@@ -798,7 +799,7 @@ function update(dt){
   }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
  }
  const cp=cam.position;gameTick(dt,cp);
- updateChunks(cp.x,cp.z,ready?2:0);
+ updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
  // props
@@ -808,15 +809,7 @@ function update(dt){
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;
- // animals
- animals.forEach(a=>{
-  a.t-=dt;if(a.t<0){a.t=2+Math.random()*5;a.h+=(Math.random()-.5)*2.4;a.sp=Math.random()<.3?0:1.5+Math.random()*(a.k==1?5:3)}
-  const nx=a.x+Math.sin(a.h)*a.sp*dt,nz=a.z+Math.cos(a.h)*a.sp*dt,nh=heightAt(nx,nz);
-  if(nh<.5||nh>60)a.h+=Math.PI*.7;else{a.x=nx;a.z=nz}
-  if(Math.hypot(a.x-cp.x,a.z-cp.z)>520)placeAnimal(a,cp.x,cp.z);
-  const h=heightAt(a.x,a.z);a.g.position.set(a.x,h,a.z);a.g.rotation.y=a.h;
-  a.g.userData.legs.forEach((l,i)=>l.rotation.x=a.sp?Math.sin(Tm*a.sp*2.6+(i%3?0:Math.PI))*.6:0);
- });
+ // Wild-animal simulation disabled along with placeholder wildlife models.
  // fireflies
  for(let i=0;i<FN;i++){const o=fof[i];fpos[i*3]=cp.x+((o[0]+Tm*.6*Math.sin(o[3])+240)%160)-80;fpos[i*3+1]=Math.max(heightAt(cp.x+o[0],cp.z+o[2]),0)+1+o[1]*.25+Math.sin(Tm+o[3])*1.5;fpos[i*3+2]=cp.z+o[2]}
  fgeo.attributes.position.needsUpdate=true;
