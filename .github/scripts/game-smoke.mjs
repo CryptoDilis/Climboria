@@ -62,22 +62,22 @@ try {
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
-  await page.locator('#title').click();
+  await page.locator('#title').evaluate(el => el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window})));
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroParts: document.documentElement.dataset.climboriaHero === 'official-female-climber'}));
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !spawnCheck.heroParts) errors.push('Explorer did not spawn grounded in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
-    bag: !!document.querySelector('#climboriaInventoryToggle'),
+    bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
     hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
     controlDock: !!document.querySelector('#control-dock'),
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
   if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || !hudUi.controlDock) errors.push('Adventure HUD/inventory/map/controls UI missing: ' + JSON.stringify(hudUi));
-  if (!['W A S D','SHIFT','SPACE','MOUSE','INTERACT','INVENTORY'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
+  if (!['WASD','SHIFT','SPACE','LEFT CLICK','INTERACT','INVENTORY'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
   if (await page.locator('#world-map-panel').isHidden()) errors.push('Persistent minimap is not visible by default');
-  await page.locator('#climboriaInventoryToggle').click();
+  await page.locator('#player-card').click();
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
   await page.locator('#climboriaInventoryToggle').click();
   await page.keyboard.press('f');
@@ -96,12 +96,12 @@ try {
     if(!w||!chest) return {error:'no unopened chest available'};
     w.player.mode='walk';w.player.x=chest.x;w.player.z=chest.z;w.player.y=w.heightAt(chest.x,chest.z)+1.75;
     w.interact();
-    return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#climboriaInventoryToggle')};
+    return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
   });
   if(lootResult.error||!lootResult.inventory.length||!lootResult.stored||!lootResult.panel||!lootResult.toggle) errors.push('Chest loot did not enter persistent field inventory: '+JSON.stringify(lootResult));
-  await page.keyboard.press('i');
+  await page.locator('#player-card').click();
   const inventoryVisible=await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display!=='none');
-  if(!inventoryVisible) errors.push('Inventory hotkey did not open the field inventory');
+  if(!inventoryVisible) errors.push('Character nameplate did not open the field inventory');
   console.log('Jarrell loot/inventory diagnostic:',JSON.stringify(lootResult));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
