@@ -79,7 +79,8 @@ try {
   if (await page.locator('#world-map-panel').isHidden()) errors.push('Persistent minimap is not visible by default');
   await page.locator('#player-card').click();
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
-  await page.locator('#climboriaInventoryToggle').click();
+  await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).click();
+  if (!(await page.locator('#climboriaInventoryPanel').isHidden())) errors.push('Inventory close button did not close the character panel');
   await page.keyboard.press('f');
   await page.keyboard.press('3');
   const controls = await page.evaluate(() => ({
