@@ -36,6 +36,8 @@ try {
       animals: w?.animals?.length ?? 0,
       facilities: w?.FAC?.map(f => f.type) ?? [],
       terrainFinite: !!w && samples.every(([x,z]) => Number.isFinite(w.heightAt(x,z))),
+      shorelineClearance: !!w?.shoreClear && [[-960,0],[-960,24],[-960,-24]].every(([x,z])=>w.shoreClear(x,z,w.heightAt(x,z))),
+      seaHeights: [[-960,0],[-960,24],[-960,-24]].map(([x,z])=>w?.heightAt(x,z)),
       chunkCount: w?.chunks?.size ?? 0,
     };
   });
@@ -47,6 +49,7 @@ try {
   if (world.animals < 20) errors.push('Expected roaming wildlife, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
+  if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   await page.locator('#title').click();
