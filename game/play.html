@@ -409,7 +409,7 @@ const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero
 hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
 hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='true';
+hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='official-female-climber';
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
