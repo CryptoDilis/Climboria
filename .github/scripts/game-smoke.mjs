@@ -50,6 +50,7 @@ try {
       parkFixtureCount: w?.parkFixtures?.length ?? 0,
       forestAssets: w?.forestAssets ? Object.fromEntries(Object.entries(w.forestAssets.spots).map(([key,spots])=>[key,{count:spots.length,valid:spots.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.h)&&p.h>=1.8&&p.h<=132&&Math.abs(w.heightAt(p.x,p.z)-p.h)<0.001&&!w.waterBodyAt(p.x,p.z))}])) : null,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
+      coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
         const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
@@ -119,7 +120,8 @@ try {
   if (world.swimProfiles.length !== 5 || world.swimProfiles.some(p=>!Number.isFinite(p.maxDepth)||p.maxDepth<=0||p.bedClearance<.35)) errors.push('Per-water-body dive limits/bed clearance invalid: '+JSON.stringify(world.swimProfiles));
   if (world.parkFixtureCount < 10) errors.push('Sakura Park swings/hammocks fixtures or collision records missing: '+world.parkFixtureCount);
   if (!world.forestAssets || world.forestAssets.buttress?.count < 16 || world.forestAssets.canopy?.count < 16 || world.forestAssets.undergrowth?.count < 42 || world.forestAssets.fallenLog?.count < 14 || Object.values(world.forestAssets).some(x=>!x.valid)) errors.push('CC0 rainforest placement regression: '+JSON.stringify(world.forestAssets));
-  if (world.fishingSpots.length !== 4 || world.fishingInteractions.length !== 4 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all four spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
+  if (world.coastalDocks.length !== 8 || world.coastalDocks.some(d=>!d.landClear||!d.waterClear||d.shoreHeight<.15)) errors.push('Expected eight accessible coastal docks with dry approaches and open-sea ends: '+JSON.stringify(world.coastalDocks));
+  if (world.fishingSpots.length !== 11 || world.fishingInteractions.length !== 11 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all eight sea docks and three freshwater spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
   if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
