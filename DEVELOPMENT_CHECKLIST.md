@@ -894,3 +894,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] Use the measured blocker coordinates and collider/terrain data to make a narrowly targeted correction; retain legitimate environmental collision.
 - [ ] Add a regression assertion for the corrected route and rerun desktop/mobile browser smoke plus Validate.
 - [ ] Manual desktop and Redmi 14 5G mountain approach acceptance remains open.
+
+
+## 2026-11-02 — Jarrell’s Peak coastal dock expansion (in progress)
+
+- [x] Added eight deterministic coastal fishing dock candidates along the west shoreline, each selected from the live Open Sea boundary query and paired with a dry-bank approach.
+- [x] Added smoke coverage for the eight coastal docks and all eleven fishing interactions (eight marine docks and three freshwater piers).
+- [ ] Verify all dock placement assertions and the complete Validate / Browser Smoke / Pages workflow set before merge.
+- [ ] Manual desktop and Redmi 14 5G acceptance remains open for the dock approach, deck height, shoreline transitions, and fishing feedback.

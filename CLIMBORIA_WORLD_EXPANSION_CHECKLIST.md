@@ -488,3 +488,12 @@ For each meaningful implementation batch:
 - [ ] Use the measured blocker coordinates and collider/terrain data to make a narrowly targeted correction; retain legitimate environmental collision.
 - [ ] Add a regression assertion for the corrected route and rerun desktop/mobile browser smoke plus Validate.
 - [ ] Manual desktop and Redmi 14 5G mountain approach acceptance remains open.
+
+
+## 2026-11-02 — eight coastal fishing docks (in progress)
+
+- [x] Added deterministic shoreline sampling for eight spaced coastal dock locations; each candidate is checked against the Open Sea query and dry-land bank before placement.
+- [x] Added timber deck and sign landmarks and connected each coastal dock to the existing marine fishing interaction/catch table.
+- [x] Added browser smoke assertions for eight dock records, dry approaches, open-sea endpoints, and all eleven fishing interaction points (eight coastal plus three freshwater).
+- [ ] Await Validate, Browser Smoke, and Pages results; if any dock candidate fails its land/water checks, correct placement before merge.
+- [ ] Manual desktop and Redmi 14 5G inspection remains open for dock visual quality, shoreline access, collision feel, and fishing interaction readability.
