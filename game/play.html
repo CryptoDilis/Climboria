@@ -64,6 +64,31 @@ body.free #control-dock{opacity:1}
 @media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
  
+ 
+/* Device-aware mobile layout: Android desktop-site mode can report a wide CSS viewport. */
+body.mobile-device #rotate-phone-overlay{display:none;position:fixed;inset:0;z-index:5000;box-sizing:border-box;width:100vw;height:100dvh;padding:24px;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;white-space:normal;overflow-wrap:anywhere;background:#080d14;color:#ffe3a3;font:800 clamp(18px,5vw,26px)/1.35 system-ui;letter-spacing:.06em}
+body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:28rem;font-size:clamp(12px,3vw,15px);font-weight:500;letter-spacing:0;line-height:1.5;color:#e5dccb}
+@media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
+@media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none}body.mobile-device #hud{display:none!important}
+ body.mobile-device #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
+ body.mobile-device #player-avatar{width:25px;height:25px;padding:2px}
+ body.mobile-device #player-name{font-size:9px;letter-spacing:.06em}
+ body.mobile-device #player-rank{font-size:7px;margin-top:1px}
+ body.mobile-device #status-card{left:max(7px,env(safe-area-inset-left));top:calc(43px + env(safe-area-inset-top));width:112px;padding:4px 6px;font-size:8px}
+ body.mobile-device .stat-track{height:4px;margin-bottom:3px}
+ body.mobile-device .stat-label{margin:1px 0 2px}
+ body.mobile-device #world-map-panel{right:max(6px,env(safe-area-inset-right))!important;top:calc(5px + env(safe-area-inset-top))!important;width:132px;padding:5px;border-radius:8px}
+ body.mobile-device #world-map-panel strong{font-size:8px;letter-spacing:.06em}
+ body.mobile-device #world-map{margin-top:4px;border-radius:5px}
+ body.mobile-device #world-map-legend{display:none}
+ body.mobile-device #world-map-panel.map-expanded{width:min(230px,42vw)}
+ body.mobile-device #expedition-settings-toggle{top:calc(7px + env(safe-area-inset-top));right:calc(146px + env(safe-area-inset-right));width:28px;height:28px;font-size:16px;border-radius:7px}
+ body.mobile-device #expedition-settings-panel{top:calc(42px + env(safe-area-inset-top));right:calc(7px + env(safe-area-inset-right));width:min(220px,48vw);padding:9px;font-size:10px}
+ body.mobile-device #control-dock{display:flex;left:50%;bottom:calc(5px + env(safe-area-inset-bottom));gap:3px;padding:4px 6px;max-width:58vw;font-size:8px}
+ body.mobile-device .control-chip{padding:3px 4px}
+ body.mobile-device #climboriaInventoryPanel{width:min(480px,84vw)!important;max-height:76dvh!important;padding:9px!important}
+}
+
 /* Mobile-first landscape gameplay layout: compact HUD, map and touch controls. */
 @media (max-width: 900px) and (orientation: landscape) {
   #hud{display:none!important}
@@ -103,7 +128,7 @@ body.free #control-dock{opacity:1}
 </style>
 </head>
 <body>
-<div class="vig"></div><div class="bar" id="bt"></div><div class="bar" id="bb"></div><div id="rotate-phone-overlay" style="display:none;position:fixed;inset:0;z-index:3000;align-items:center;justify-content:center;text-align:center;padding:28px;box-sizing:border-box;background:rgba(5,9,14,.97);color:#ffe3a3;font:800 20px/1.5 system-ui;letter-spacing:.08em">↻<br>ROTATE YOUR PHONE<br><span style="font-size:13px;font-weight:500;letter-spacing:0">Climboria gameplay works best in landscape mode.</span></div>
+<div class="vig"></div><div class="bar" id="bt"></div><div class="bar" id="bb"></div><div id="rotate-phone-overlay" style="display:none;position:fixed;inset:0;z-index:3000;align-items:center;justify-content:center;text-align:center;padding:28px;box-sizing:border-box;background:rgba(5,9,14,.97);color:#ffe3a3;font:800 20px/1.5 system-ui;letter-spacing:.08em">↻<br>ROTATE YOUR PHONE<br><span class="rotate-detail">Climboria gameplay works best in landscape mode. Rotate your phone to continue.</span></div>
 <div id="hud"><div id="zone"></div><div id="sub"></div></div>
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>STRENGTH</span><span id="strength-value">5</span></div><div class="stat-track"><div class="stat-fill" id="strength-fill" style="width:25%;background:#9b83c7"></div></div></div>
@@ -218,7 +243,7 @@ gl_FragColor=vec4(c,1.);
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
 const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
-const MOB='ontouchstart' in window,R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
+const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB)document.body.classList.add('mobile-device'); const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
