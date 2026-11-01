@@ -767,7 +767,7 @@ function update(dt){
   const gh=Math.max(heightAt(p.x,p.z),heightAt(a.x,a.z),heightAt(b.x,b.z)),ty=gh+30+14*Math.sin(Tm*.2);
   camY=camY==null?ty:camY+(ty-camY)*Math.min(1,dt*1.4);camY=Math.max(camY,heightAt(p.x,p.z)+10);
   const ly=Math.max(heightAt(a.x,a.z)+8,camY-16);lookY+=(ly-lookY)*Math.min(1,dt*1.5);if(!lookY)lookY=ly;
-  cam.position.set(p.x,camY,p.z);cam.lookAt(a.x,lookY,a.z);cam.rotateZ(Math.sin(Tm*.13)*.03);hero.visible=false;
+  cam.position.set(p.x,camY,p.z);cam.lookAt(a.x,lookY,a.z);cam.rotateZ(Math.sin(Tm*.13)*.03);hero.visible=false;if(assetHero)assetHero.visible=false;
   P.x=p.x;P.z=p.z;
  }else{
   const sp=keys.ShiftLeft?22:9,sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
