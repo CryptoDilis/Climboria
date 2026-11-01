@@ -32,6 +32,14 @@ try {
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
   if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
+  const sanctuaryFlags = await page.evaluate(() => window.__climboriaJarrellsPeak?.sanctuaryFlags || []);
+  const expectedSanctuaryFlags = ['Philippines','United States','Japan','South Korea','Canada','United Kingdom','Australia','Brazil','Germany','France','India','Indonesia'];
+  if (sanctuaryFlags.length !== 12) errors.push('Sanctuary flag count mismatch: ' + sanctuaryFlags.length);
+  if (new Set(sanctuaryFlags.map(flag => flag.country)).size !== expectedSanctuaryFlags.length || expectedSanctuaryFlags.some(country => !sanctuaryFlags.some(flag => flag.country === country))) errors.push('Sanctuary flags do not cover the expected distinct countries: ' + JSON.stringify(sanctuaryFlags.map(flag => flag.country)));
+  for (const flag of sanctuaryFlags) {
+    if (!flag.attached) errors.push('Sanctuary flag is detached from its pillar: ' + flag.country);
+    if (flag.width < 2 || flag.height < 1.4) errors.push('Sanctuary flag is below readable geometry size: ' + JSON.stringify(flag));
+  }
   if (renderState?.errors?.length) errors.push('3D/game frame errors: ' + JSON.stringify(renderState.errors));
 
   const world = await page.evaluate(() => {
@@ -61,6 +69,7 @@ try {
       waterBodyApi: typeof w?.waterBodyAt === 'function' && Array.isArray(w?.waterBodies),
       swimProfiles: w?.waterBodies?.map(b=>({id:b.id,maxDepth:w.maxSwimDepth(b),targetAtMax:w.swimTargetY(b,w.maxSwimDepth(b)),bedClearance:w.swimTargetY(b,w.maxSwimDepth(b))-1.75-(b.surfaceY-b.depth)})) ?? [],
       parkFixtureCount: w?.parkFixtures?.length ?? 0,
+      sanctuaryFlags: w?.sanctuaryFlags?.map(f=>({country:f.country,attached:f.mesh.parent===f.pillar&&f.pole.parent===f.pillar,width:f.mesh.geometry.parameters.width,height:f.mesh.geometry.parameters.height})) ?? [],
       forestAssets: w?.forestAssets ? Object.fromEntries(Object.entries(w.forestAssets.spots).map(([key,spots])=>[key,{count:spots.length,valid:spots.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.z)&&Number.isFinite(p.h)&&p.h>=1.8&&p.h<=132&&Math.abs(w.heightAt(p.x,p.z)-p.h)<0.001&&!w.waterBodyAt(p.x,p.z))}])) : null,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
