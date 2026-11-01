@@ -400,9 +400,9 @@ const emit=(type,detail)=>window.dispatchEvent(new CustomEvent('climboria:'+type
 /* Persistent local player inventory. Server-authoritative multiplayer/rewards are a separate integration. */
 const INVENTORY_KEY='climboria_jarrell_inventory_v1';
 const inventory=(()=>{try{const v=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(x.qty)&&x.qty>0):[]}catch(_){return[]} })();
-const invPanel=css(document.createElement('section'),'position:fixed;right:16px;top:58px;z-index:12;width:min(320px,calc(100vw - 32px));max-height:55vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
+const invPanel=css(document.createElement('section'),'position:fixed;right:16px;top:calc(104px + env(safe-area-inset-top));z-index:1002;width:min(320px,calc(100vw - 32px));max-height:55vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
-const invToggle=css(document.createElement('button'),'position:fixed;right:16px;top:calc(48px + env(safe-area-inset-top));z-index:11;padding:8px 12px;border:1px solid #ffe3a3aa;border-radius:999px;background:#080d14cc;color:#ffe3a3;font:12px system-ui;cursor:pointer');
+const invToggle=css(document.createElement('button'),'position:fixed;right:16px;top:calc(12px + env(safe-area-inset-top));z-index:1001;padding:8px 12px;border:1px solid #ffe3a3aa;border-radius:999px;background:#080d14cc;color:#ffe3a3;font:12px system-ui;cursor:pointer');
 invToggle.id='climboriaInventoryToggle';invToggle.type='button';invToggle.textContent='BAG · I';
 const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
 function renderInventory(){
@@ -413,11 +413,11 @@ function renderInventory(){
  for(const item of inventory){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #ffffff1c';const name=document.createElement('span');name.textContent=item.name;const qty=document.createElement('strong');qty.textContent='× '+item.qty;row.append(name,qty);invPanel.append(row)}
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
-function toggleInventory(){renderInventory();invPanel.style.display=invPanel.style.display==='none'?'block':'none'}
+function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.style.display='none'}
 invToggle.addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
-function toggleWorldMap(){mapPanel.style.display=mapPanel.style.display==='block'?'none':'block';if(mapPanel.style.display==='block')drawWorldMap()}
+function toggleWorldMap(){const opening=mapPanel.style.display!=='block';mapPanel.style.display=opening?'block':'none';if(opening){invPanel.style.display='none';drawWorldMap()}}
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);c.fillStyle='#17251c';c.fillRect(0,0,w,h);
  c.strokeStyle='#60745a';c.lineWidth=1;for(let i=0;i<=w;i+=30){c.beginPath();c.moveTo(i,0);c.lineTo(i,h);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(w,i);c.stroke()}
