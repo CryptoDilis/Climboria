@@ -64,7 +64,6 @@
 - [x] Adopted a permanent handoff rule: every completed master-checklist task must be recorded in this file and the relevant subsystem checklist, with commit SHA, test evidence, remaining caveats, and the next exact task.
 - [ ] Manual desktop/Android acceptance remains open for male/female swim posture and strokes, waterline, cave readability/trap fairness, terrain/object collision, and touch controls.
 - [ ] Next code task: continue P1 world expansion with multiple ponds in distinct regions; each needs shoreline, depth, collision, and freshwater fishing only where supported. Add regression coverage and update `CLIMBORIA_WORLD_EXPANSION_CHECKLIST.md` plus this log when complete.
-- [ ] Keep README launch-scope truth authoritative: Jarrell's Peak is the only playable launch world; the ten normal mountains are deferred, not current launch levels.
 
 ---
 
@@ -459,7 +458,7 @@ These are planned product requirements, not implemented/verified features until 
 - [ ] Starting camp looks intentional, scenic, and is close to the long river and fishing access.
 - [ ] Jarrell’s Peak remains a large endless-feeling treasure-hunt world, not a summit/level-based mountain.
 - [ ] Treasure exploration, chest interactions, fishing, inventory, swimming, and respawn work together.
-- [ ] Only the four agreed menu destinations are shown; do not restore the ten deferred mountains.
+- [ ] Only the agreed destinations are shown: Jarrell’s Peak and Arena, with Marketplace and Inventory retained only as clearly labeled supporting previews where currently implemented.
 - [ ] No prototype hero fallback or retired procedural hero code is reintroduced; active hero assets load correctly.
 - [ ] Run syntax/validation checks, desktop smoke tests, mobile smoke tests, and manual live-site checks.
 - [ ] Confirm **all required main workflows** are green on the latest relevant commit; record commit SHA and run URLs.
