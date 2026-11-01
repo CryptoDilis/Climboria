@@ -156,6 +156,12 @@ try {
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
   if(!desktopOrbit.heroBackFacing||!desktopOrbit.after.glb) errors.push('Desktop GLB hero is not visibly facing away from the player camera: '+JSON.stringify(desktopOrbit));
+  const headingBeforeMove=await page.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
+  await page.keyboard.down('w');
+  await page.waitForTimeout(350);
+  await page.keyboard.up('w');
+  const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
+  if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
