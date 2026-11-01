@@ -848,9 +848,11 @@ function findCC0ForestSpots(count,minSpacing,excluded=[]){
  }
  return found;
 }
-const cc0TreeSpots=findCC0ForestSpots(2,72);
-const cc0GroundSpots=findCC0ForestSpots(7,12,cc0TreeSpots);
-const cc0LogSpots=findCC0ForestSpots(2,26,[...cc0TreeSpots,...cc0GroundSpots]);
+/* Broader biome dressing: reuse the three cached CC0 GLBs across more valid forest clearings.
+   Shared cloned geometry/materials keep the GPU asset cost bounded; spacing avoids prop piles. */
+const cc0TreeSpots=findCC0ForestSpots(8,58);
+const cc0GroundSpots=findCC0ForestSpots(24,10,cc0TreeSpots);
+const cc0LogSpots=findCC0ForestSpots(8,22,[...cc0TreeSpots,...cc0GroundSpots]);
 function placeCC0ForestModel(key,spot,index){
  const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
  const root=asset.clone(true),def=cc0ForestDefinitions[key];

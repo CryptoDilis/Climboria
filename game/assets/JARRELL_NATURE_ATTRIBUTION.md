@@ -38,8 +38,13 @@ No candidate above is yet integrated as the replacement wildlife. Before changin
 
 These models are CC0 1.0 Universal; attribution is not required. The entries are retained for source traceability.
 
-- **Buttress Root Tree** — 2 instances; 8.788 × 10.733 × 7.947 m; approximately 4,956 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-buttress-root-tree-44607ba7); runtime GLB: https://cdn.3dassets.dev/assets/36137/v1/model.glb.
-- **Undergrowth Patch** — 7 instances; 2.6 × 1.226 × 2.666 m; approximately 1,724 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-undergrowth-patch-dc35043c); runtime GLB: https://cdn.3dassets.dev/assets/36145/v1/model.glb.
-- **Fallen Log** — 2 instances; 6.87 × 1.451 × 1.843 m; approximately 1,794 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-fallen-log-b1bcdf2f); runtime GLB: https://cdn.3dassets.dev/assets/36143/v1/model.glb.
+- **Buttress Root Tree** — 8 instances; 8.788 × 10.733 × 7.947 m; approximately 4,956 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-buttress-root-tree-44607ba7); runtime GLB: https://cdn.3dassets.dev/assets/36137/v1/model.glb.
+- **Undergrowth Patch** — 24 instances; 2.6 × 1.226 × 2.666 m; approximately 1,724 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-undergrowth-patch-dc35043c); runtime GLB: https://cdn.3dassets.dev/assets/36145/v1/model.glb.
+- **Fallen Log** — 8 instances; 6.87 × 1.451 × 1.843 m; approximately 1,794 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-fallen-log-b1bcdf2f); runtime GLB: https://cdn.3dassets.dev/assets/36143/v1/model.glb.
 
 All are static, metre-scale GLBs loaded with the existing Three.js r128 GLTFLoader. The placement code samples valid forest terrain and adds simple authored trunk/log collision circles; the source models themselves contain no collision or navigation data. The procedural instanced vegetation remains active as the fallback if a remote GLB fails to load. Manual visual, collision, mobile-performance, and remote-CDN checks are still required before treating the forest dressing as fully accepted.
+
+
+### Density expansion — 2026-11-02
+
+The same three cached CC0 GLBs are now placed more broadly across eligible forest clearings: 8 buttress-root trees, 24 undergrowth patches, and 8 fallen logs. Placement remains terrain-aware and avoids POIs, water/shore exclusions, desert, steep ground, and overlapping prop footprints. This expands visual coverage without loading additional unique GLB files or multiplying download size. All props remain static and require authored collision; vegetation ground patches intentionally have no blocking collider. Validate visually and on mobile before further density increases.
