@@ -111,5 +111,6 @@ jobs:
             climboria-mobile-home.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
+            freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
