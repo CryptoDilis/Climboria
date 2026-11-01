@@ -117,6 +117,18 @@ function rawH(x,z){
 ['sanct','park','camp','cave'].forEach(k=>{const p=POI[k];p.h=Math.max(rawH(p.x,p.z),k=='cave'?-99:4)});
 const FLAT=['sanct','park','camp','cave'];
 function heightAt(x,z){let h=rawH(x,z);for(const k of FLAT){const p=POI[k],d=Math.hypot(x-p.x,z-p.z);if(d<p.r*1.7)h=mix(h,p.h,1-ss(p.r*.8,p.r*1.7,d))}return h}
+// Match the rendered terrain's 5-unit triangle grid exactly. Sampling the smooth
+// procedural function between vertices can place the hero below the visible mesh.
+const TERRAIN_STEP=5;
+function groundAt(x,z){
+ const gx=x/TERRAIN_STEP,gz=z/TERRAIN_STEP,ix=Math.floor(gx),iz=Math.floor(gz);
+ const u=gx-ix,v=gz-iz;
+ const h00=heightAt(ix*TERRAIN_STEP,iz*TERRAIN_STEP);
+ const h10=heightAt((ix+1)*TERRAIN_STEP,iz*TERRAIN_STEP);
+ const h01=heightAt(ix*TERRAIN_STEP,(iz+1)*TERRAIN_STEP);
+ const h11=heightAt((ix+1)*TERRAIN_STEP,(iz+1)*TERRAIN_STEP);
+ return u+v<=1?h00+(h10-h00)*u+(h01-h00)*v:h11+(h01-h11)*(1-u)+(h10-h11)*(1-v);
+}
 (()=>{let b=-1e9;const s=POI.summit,cx=s.x,cz=s.z;for(let i=-60;i<=60;i+=4)for(let j=-60;j<=60;j+=4){const h=heightAt(cx+i,cz+j);if(h>b){b=h;s.px=cx+i;s.pz=cz+j}}s.h=b})();
 const nearPOI=(x,z)=>FLAT.some(k=>Math.hypot(x-POI[k].x,z-POI[k].z)<POI[k].r*1.1);
 function biome(x,z,h){
@@ -485,6 +497,7 @@ loadAssetHero('Adventurer');
 const createPanel=document.getElementById('character-create-panel');
 document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
 document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
+if(new URLSearchParams(location.search).get('create')==='1')createPanel.style.display='block';
 createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;document.getElementById('character-load-status').textContent='Loading '+(choice==='Police'?'Police Officer':'Adventurer')+'…';loadAssetHero(choice)}));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
@@ -513,11 +526,11 @@ document.getElementById('back-to-expedition-menu').addEventListener('click',()=>
 });
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
- P.x=0;P.z=-30;P.y=heightAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
+ P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.pitch=-.08;P.mode='walk';
  cam.position.set(P.x,P.y+2.8,P.z+7.2);cam.lookAt(P.x,P.y+.9,P.z-3);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75,P.z);assetHero.rotation.y=P.yaw+Math.PI;}else{hero.visible=false;}
  free(true)}
-function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;P.pitch=-.05;P.vy=0;P.mode='walk';P.y=heightAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
+function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;P.pitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
 addEventListener('keydown',e=>{
@@ -535,7 +548,7 @@ addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
 document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
-cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=heightAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
+cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
 addEventListener('mousemove',e=>{if(P.mode=='cine'||!(locked||drag))return;P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.5,Math.min(1.5,P.pitch-e.movementY*.0022))});
@@ -637,7 +650,7 @@ const solid=(x,z,r)=>solids.push({x,z,r});
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function blocked(nx,nz,ox,oz,feet){
- const oh=heightAt(ox,oz),nh=heightAt(nx,nz),d=Math.hypot(nx-ox,nz-oz)||1e-3;
+ const oh=groundAt(ox,oz),nh=groundAt(nx,nz),d=Math.hypot(nx-ox,nz-oz)||1e-3;
  const grounded=feet-oh<.42;
  // Terrain is a continuous heightfield: reject genuinely cliff-like faces, not ordinary mountain approaches.
  if(grounded&&(nh-oh)/d>SLOPE)return true;
@@ -650,7 +663,7 @@ function moveWalk(mx,mz){
  const moveAxis=(dx,dz)=>{
   const distance=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(distance/.32)),sx=dx/steps,sz=dz/steps;
   for(let step=0;step<steps;step++){
-   const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldGround=heightAt(ox,oz),nextGround=heightAt(nx,nz);
+   const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldGround=groundAt(ox,oz),nextGround=groundAt(nx,nz);
    const feet=P.y-1.75,grounded=P.vy<=0&&feet<=oldGround+.55;
    if(blocked(nx,nz,ox,oz,feet))break;
    // Prevent tunnelling through the terrain and keep the capsule's feet riding the heightfield.
@@ -756,9 +769,9 @@ function update(dt){
   const sp=keys.ShiftLeft?22:9,sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
    if(P.moveTarget){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(P.yaw)*dz-Math.sin(P.yaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(P.yaw)*dx-Math.sin(P.yaw)*dz)/dist));}}
-  let gh=heightAt(P.x,P.z),sw=gh<-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
+  let gh=groundAt(P.x,P.z),sw=gh<-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
-  gh=heightAt(P.x,P.z);
+  gh=groundAt(P.x,P.z);
   if((P.swim=gh<-1.4)){
    P.vy=0;
    // Keep the character's feet at the water surface; the GLB body is rotated prone below.
