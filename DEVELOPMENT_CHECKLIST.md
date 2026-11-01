@@ -933,3 +933,13 @@ For every integrated asset or borrowed technique, record:
 - [x] Aligned the selected GLB hero's facing offset with the fallback hero so the player's initial third-person view shows the hero's back. Camera orbit continues to use the independent cameraYaw value.
 - [ ] Browser/desktop/Android visual verification and workflow validation still required before closing this task.
 - Code commit: `8f80db9189b37b78ddfc8f281ca72be69b6dd79a`.
+
+
+### Weather and day/night controls — 2026-11-02
+- [x] Moved the weather and interaction keyboard listener out of the per-frame `gameTick()` function into the single global keydown handler, preventing a new listener from being registered every frame.
+- [x] Added working `R` weather cycling (Clear → Rain → Thunderstorm) and `T` time-of-day cycling (Golden hour → High noon → Dusk → Moonlit night), with key-repeat protection.
+- [x] Added touch-friendly Time of Day and Weather cycle buttons inside Expedition Settings for mobile players.
+- [x] Fixed cumulative fog darkening by restoring fog color from the active time-of-day preset each frame before applying weather tint; rain/storm now also adjusts sunlight and ambient light, and storm lightning remains active.
+- [x] Added current weather name beside the time-of-day label in the gameplay HUD.
+- [ ] Verify all four lighting presets, rain visibility, thunderstorm flashes, and mobile settings buttons in a live browser session; workflow/browser validation still pending.
+- Code commit: `3782787627ec088d1c74276c90731d2422425460`.
