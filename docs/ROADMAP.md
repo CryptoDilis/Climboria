@@ -12,7 +12,7 @@ Jarrell’s Peak is the sole planned launch mountain: a vast, endless-feeling wi
 - Arena opens a status panel; the separate Arena map is future work.
 - Marketplace is a demo storefront, not live trading.
 - Inventory is a local preview, not persistent item ownership.
-- Remove the ten deferred normal mountains from the menu. Keep character creation/editing in the Jarrell entry flow rather than a separate menu destination.
+- Keep the game focused on Jarrell’s Peak and the separate Arena map. Keep character creation/editing in the Jarrell entry flow rather than a separate menu destination.
 
 ### Stage 1 — Protect the current game
 - Preserve movement, collision, swimming, fishing, controls, camera, sound, weather, and world interactions.
