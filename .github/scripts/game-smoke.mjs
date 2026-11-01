@@ -1707,6 +1707,11 @@ try {
     await mobilePage.evaluate(({x,z,surfaceY})=>{
       const api=window.__climboriaSmoke;api.setMoveVector(null,null);
       api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
+      // Freeze the mobile follow-camera/player update just like the desktop capture.
+      // Otherwise the live mobile camera controller overwrites this diagnostic frame
+      // before the screenshot is taken, leaving all three captures at the spawn camp.
+      api.setPaused(true);
+      api.setMoveVector(null,null);
       const y=surfaceY-.205;
       api.setCamYaw(-.75);
       api.setPlayerPosition(x,y,z);
@@ -1718,7 +1723,7 @@ try {
     console.log('Freshwater mobile screenshot frame:',body.id,JSON.stringify(framed));
     await mobilePage.screenshot({path:`freshwater-mobile-${body.id}.png`});
   }
-  await mobilePage.evaluate(({x,y,z})=>window.__climboriaSmoke.setPlayerPosition(x,y,z),mobileFreshwaterSnapshotState.restore);
+  await mobilePage.evaluate(({x,y,z})=>{const api=window.__climboriaSmoke;api.setPlayerPosition(x,y,z);api.setPaused(false);},mobileFreshwaterSnapshotState.restore);
   await mobilePage.waitForTimeout(400);
   await mobilePage.screenshot({ path: 'climboria-mobile-gameplay.png' });
   await mobile.close();
