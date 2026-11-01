@@ -153,6 +153,8 @@ try {
     return {before,after:{camera:api?.yaw,player:api?.playerYaw}};
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
+  const desktopZoom=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit,before=api?.zoom;const canvas=document.querySelector('canvas');canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-500}));return {before,after:api?.zoom,min:api?.minZoom,max:api?.maxZoom};});
+  if(!Number.isFinite(desktopZoom.before)||desktopZoom.after>=desktopZoom.before||desktopZoom.min>2.5||desktopZoom.max<20) errors.push('Desktop camera zoom-in/range regression: '+JSON.stringify(desktopZoom));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
