@@ -61,7 +61,7 @@ body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
-@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:198px}#world-map-legend{font-size:8px}#control-dock{display:none}}
+@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
 #player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
@@ -493,7 +493,7 @@ function loadAssetHero(choice='Adventurer'){
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
  },undefined,error=>{heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
 }
-loadAssetHero('Adventurer');
+const requestedHero=new URLSearchParams(location.search).get('hero');loadAssetHero(requestedHero==='Police'?'Police':'Adventurer');
 const createPanel=document.getElementById('character-create-panel');
 document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
 document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
@@ -514,7 +514,7 @@ const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 function startClimboriaMusic(){if(climboriaMusic.paused)climboriaMusic.play().catch(()=>{});}
 const settingsPanel=document.getElementById('expedition-settings-panel');
-document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block'});
+document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block'});settingsPanel.addEventListener('pointerdown',e=>e.stopPropagation());settingsPanel.addEventListener('click',e=>e.stopPropagation());
 document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
@@ -547,7 +547,7 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
-document.getElementById('title').addEventListener('click',()=>{if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
+document.getElementById('title').addEventListener('click',e=>{if(e.target.closest('#character-create,#character-create-panel'))return;if(!ready)return;takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
