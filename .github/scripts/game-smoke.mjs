@@ -70,7 +70,7 @@ try {
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
     bag: !!document.querySelector('#climboriaInventoryToggle'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    hero: document.documentElement.dataset.climboriaHero === 'true',
+    hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
     controlDock: !!document.querySelector('#control-dock'),
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
@@ -129,7 +129,7 @@ try {
       controls: ['JUMP','RUN','USE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-      hero: document.documentElement.dataset.climboriaHero === 'true',
+      hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
       bag: !!document.querySelector('#climboriaInventoryToggle'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
