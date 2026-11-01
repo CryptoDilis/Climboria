@@ -49,10 +49,10 @@ try {
       parkFixtureCount: w?.parkFixtures?.length ?? 0,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
-        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource;
+        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
         const started=p.fish>0&&p.fishSource===f.waterBodyId;
-        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;
+        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.mode=mode;
         return {waterBodyId:f.waterBodyId,started};
       }) : [],
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
