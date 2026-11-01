@@ -1798,6 +1798,9 @@ try {
     api.setPaused(false);
   });
   await mobilePage.waitForTimeout(650);
+  // The HUD updater is throttled and can retain the last freshwater diagnostic coordinates after teleport.
+  // Force one authoritative navigation-HUD refresh from the restored player position before asserting/capturing.
+  await mobilePage.evaluate(()=>{const api=window.__climboriaSmoke;api.syncNavigationHud?.();api.renderFrame?.();});
   const mobileGameplayCaptureAudit=await mobilePage.evaluate(()=>{
     const api=window.__climboriaSmoke,p=api.player.position,state=api.getMovementState();
     return {x:Math.round(p.x),z:Math.round(p.z),swimming:!!state.swimming||!!state.physicsSwimming,
