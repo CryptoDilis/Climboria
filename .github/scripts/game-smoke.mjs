@@ -85,6 +85,8 @@ try {
   if(!settingsBox||!mapBox||settingsBox.x+settingsBox.width>mapBox.x+2||settingsBox.x+settingsBox.width<mapBox.x-60) errors.push('Settings gear is not positioned beside the minimap: '+JSON.stringify({settingsBox,mapBox}));
   await settingsButton.click();
   if(await page.locator('#expedition-settings-panel').evaluate(el=>getComputedStyle(el).display)==='none') errors.push('Settings gear did not open its panel');
+  await page.locator('#climboria-music-volume').evaluate(el=>{el.value='24';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  if(await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display)!=='none') errors.push('Soundtrack volume interaction unexpectedly opened inventory');
   await page.locator('#expedition-settings-close').click();
   const groundCheck=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player;return {groundFn:typeof w?.groundAt==='function',ground:Number.isFinite(w?.groundAt(p?.x??0,p?.z??0)),feet:p?.y-1.75,terrain:w?.groundAt(p?.x??0,p?.z??0)}});
   if(!groundCheck.groundFn||!groundCheck.ground||!Number.isFinite(groundCheck.feet)) errors.push('Terrain/player ground sampling diagnostic unavailable: '+JSON.stringify(groundCheck));
