@@ -5,6 +5,8 @@
 :root{color-scheme:dark;--bg:#0F141F;--gold:#D4AF37;--border:#1F2937;--gray:#6B7280}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f8fafc;font-family:Inter,system-ui,sans-serif}
 header{height:72px;padding:0 clamp(16px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.menu-create{display:inline-flex;align-items:center;justify-content:center;padding:10px 15px;border:1px solid #d4af37;border-radius:999px;background:linear-gradient(135deg,#3a2b0d,#171b26);color:#ffe8a1;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:1px;box-shadow:0 0 18px #d4af3730}.menu-create:hover{filter:brightness(1.2);transform:translateY(-1px)}
+@media(max-width:760px){header{flex-wrap:wrap;height:auto;min-height:72px;padding:10px 14px}.menu-status{order:3;width:100%;text-align:center}.menu-create{margin-left:auto;padding:9px 11px;font-size:9px}}
 .brand{font:900 20px Cinzel,serif;letter-spacing:2px;color:var(--gold);text-decoration:none}.back{color:#d1d5db;border:1px solid var(--border);border-radius:24px;padding:10px 14px;text-decoration:none;font-size:12px}
 main{max-width:1200px;margin:auto;padding:clamp(24px,4vw,48px) 16px 60px}.kicker{text-align:center;color:var(--gold);font-size:11px;letter-spacing:3px;font-weight:800}
 h1{text-align:center;font:900 clamp(28px,4vw,48px)/1.1 Cinzel,serif;margin:14px 0}.intro{text-align:center;color:#aab3c2;font-size:14px;line-height:1.6;max-width:620px;margin:0 auto 30px}
@@ -83,7 +85,7 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card.jarrell{height:280px}.card.service-card{height:280px}}
 @media(max-width:600px){.topbar{height:auto;min-height:70px;display:flex;flex-wrap:wrap;padding:12px 14px;gap:8px}.menu-status{order:3;width:100%;text-align:center;letter-spacing:1.3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card.jarrell,.card.service-card{height:270px;padding:14px}.card.jarrell h2{font-size:18px;margin-right:40px}.card.jarrell .crest{width:38px;height:38px;right:10px;top:12px}.card.jarrell .jarrell-vow{font-size:9px;letter-spacing:.4px}.card.jarrell .desc,.card.service-card .desc{font-size:12px;min-height:0}.card.service-card h2{font-size:17px}.service-icon{width:44px;height:44px;font-size:24px;margin-bottom:8px}.card.service-card .status,.card.jarrell .status{font-size:9px;padding:6px 7px}.arena-status-content{padding:16px 18px 5px}}
 </style></head><body>
-<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><span class="menu-status">ONE WORLD · FOUR DESTINATIONS</span><a class="back" href="../">← BACK TO HOME</a></header>
+<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><span class="menu-status">ONE PLAYABLE WORLD · THREE FEATURE PREVIEWS</span><a class="menu-create" href="./play.html?create=1">＋ CREATE CHARACTER</a><a class="back" href="../">← BACK TO HOME</a></header>
 <main>
 <div class="kicker">GAME FIRST · SPECULATION LATER</div>
 <h1>CHOOSE YOUR DESTINATION</h1>
