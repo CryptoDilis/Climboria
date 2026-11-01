@@ -806,7 +806,7 @@ addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=
 const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=null;joy.dx=joy.dy=0;jr.style.display=jk.style.display='none'}if(t.identifier==lk.id)lk.id=null}};
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 /* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
-const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=2.8;
+const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
