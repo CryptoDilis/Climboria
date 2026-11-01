@@ -1038,16 +1038,14 @@ try {
       const api=window.__climboriaSmoke;api.setMoveVector(null,null);
       api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
       const y=surfaceY-.205;
-      api.setPaused(true);
-      api.setMoveVector(null,null);
-      api.setPaused(true);
       api.setMoveVector(null,null);
       api.setCamYaw(-.75);
       api.setPlayerPosition(x,y,z);
-      api.camera.position.set(x-4.7,y+4.0,z+5.1);
-      api.camera.lookAt(x,y+.95,z);
+      // Keep the real update loop active so the rendered avatar and follow camera
+      // consume the diagnostic player transform before capturing the basin.
+      api.setPaused(false);
     },body);
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(650);
     const framed=await page.evaluate(()=>{const a=window.__climboriaSmoke;return {player:{x:a.player.position.x,y:a.player.position.y,z:a.player.position.z},camera:{x:a.camera.position.x,y:a.camera.position.y,z:a.camera.position.z}}});
     console.log('Freshwater desktop screenshot frame:',body.id,JSON.stringify(framed));
     await page.screenshot({path:`freshwater-desktop-${body.id}.png`});
@@ -1757,21 +1755,15 @@ try {
     await mobilePage.evaluate(({x,z,surfaceY})=>{
       const api=window.__climboriaSmoke;api.setMoveVector(null,null);
       api.getKeys().Space=false;api.getKeys().ControlLeft=false;api.getKeys().ControlRight=false;
-      // Freeze the mobile follow-camera/player update just like the desktop capture.
-      // Otherwise the live mobile camera controller overwrites this diagnostic frame
-      // before the screenshot is taken, leaving all three captures at the spawn camp.
-      api.setPaused(true);
+      // Keep the actual mobile update loop active so the avatar and follow camera
+      // synchronize to the diagnostic basin position before the screenshot.
       api.setMoveVector(null,null);
       const y=surfaceY-.205;
       api.setCamYaw(-.75);
       api.setPlayerPosition(x,y,z);
-      api.camera.position.set(x-4.7,y+4.0,z+5.1);
-      api.camera.lookAt(x,y+.95,z);
-      // Render the exact diagnostic camera immediately; do not let the mobile follow-camera
-      // or the next animation frame replace the target before the screenshot is captured.
-      api.renderFrame?.();
+      api.setPaused(false);
     },body);
-    await mobilePage.waitForTimeout(50);
+    await mobilePage.waitForTimeout(650);
     await mobilePage.evaluate(()=>window.__climboriaSmoke?.renderFrame?.());
     const framed=await mobilePage.evaluate(()=>{const a=window.__climboriaSmoke;return {player:{x:a.player.position.x,y:a.player.position.y,z:a.player.position.z},camera:{x:a.camera.position.x,y:a.camera.position.y,z:a.camera.position.z}}});
     console.log('Freshwater mobile screenshot frame:',body.id,JSON.stringify(framed));
