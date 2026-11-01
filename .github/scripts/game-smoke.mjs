@@ -322,7 +322,7 @@ try {
   if(!mobileOrbit.heroBackFacing||!mobileOrbit.after.glb) errors.push('Mobile GLB hero is not visibly facing away from the player camera: '+JSON.stringify(mobileOrbit));
   const mobileHeadingBeforeMove=await mobile.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
   await mobile.keyboard.down('w');
-  await mobile.waitForTimeout(350);
+  await mobile.waitForFunction(()=>{const api=window.__climboriaCameraOrbit;if(!api)return false;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return Math.abs(delta)<.08;},{timeout:2000}).catch(()=>{});
   await mobile.keyboard.up('w');
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
