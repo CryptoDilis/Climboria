@@ -103,18 +103,28 @@ try {
         return {peak:{x:peak.px,z:peak.pz,height:peak.h},limits:w.collisionLimits,approaches:results};
       })(),
       mountainSpawnRouteAudit: (()=>{
-        if(!w?.POI?.summit||typeof w.blocked!=='function')return null;
+        if(!w?.POI?.summit||typeof w.blocked!=='function'||!Array.isArray(w.collisionSolids))return null;
         const start={x:0,z:-30},target={x:w.POI.summit.px,z:w.POI.summit.pz};
-        const distance=Math.hypot(target.x-start.x,target.z-start.z),steps=Math.ceil(distance/1.0);
-        let x=start.x,z=start.z,blockedAt=null,progress=0;
-        for(let i=1;i<=steps;i++){
+        const distance=Math.hypot(target.x-start.x,target.z-start.z),stepLength=.32,steps=Math.ceil(distance/stepLength);
+        let x=start.x,z=start.z,blockedAt=null,progress=0,minHeight=Infinity,maxHeight=-Infinity,maxGrade=0;
+        for(let i=0;i<=steps;i++){
           const t=i/steps,nx=start.x+(target.x-start.x)*t,nz=start.z+(target.z-start.z)*t;
-          if(w.blocked(nx,nz,x,z,w.groundAt(x,z)+.01)){
-            blockedAt={step:i,percent:+(100*(i-1)/steps).toFixed(1),x:+x.toFixed(1),z:+z.toFixed(1),height:+w.groundAt(x,z).toFixed(1),nextHeight:+w.groundAt(nx,nz).toFixed(1),reason:window.__climboriaLastCollision};break;
+          const height=w.groundAt(nx,nz);minHeight=Math.min(minHeight,height);maxHeight=Math.max(maxHeight,height);
+          if(i>0){
+            const previousHeight=w.groundAt(x,z),grade=(height-previousHeight)/Math.hypot(nx-x,nz-z);
+            maxGrade=Math.max(maxGrade,Math.abs(grade));
+            if(w.blocked(nx,nz,x,z,previousHeight+.01)){
+              const reason=window.__climboriaLastCollision,nearbyFixed=reason?.type==='fixed-solid'?w.collisionSolids
+                .map(c=>({...c,distance:Math.hypot(c.x-x,c.z-z)}))
+                .sort((a,b)=>a.distance-b.distance).slice(0,3):[];
+              blockedAt={step:i,percent:+(100*(i-1)/steps).toFixed(2),x:+x.toFixed(2),z:+z.toFixed(2),height:+previousHeight.toFixed(2),nextHeight:+height.toFixed(2),grade:+grade.toFixed(3),reason,nearbyFixed};
+              break;
+            }
+            progress=i;
           }
-          x=nx;z=nz;progress=i;
+          x=nx;z=nz;
         }
-        return {start,target,distance:+distance.toFixed(1),progress:Math.round(progress/steps*100),blockedAt};
+        return {start,target,distance:+distance.toFixed(2),stepLength,steps,progressSteps:progress,progress:Math.round(progress/steps*100),terrain:{minHeight:+minHeight.toFixed(2),maxHeight:+maxHeight.toFixed(2),maxAbsoluteGrade:+maxGrade.toFixed(3)},fixedColliderCount:w.collisionSolids.length,blockedAt};
       })(),
       chunkCount: w?.chunks?.size ?? 0,
     };
