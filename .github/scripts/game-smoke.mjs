@@ -1413,7 +1413,7 @@ try {
   const oceanShoreExit = await page.evaluate(async () => {
     const api = window.__climboriaSmoke, bounds = window.jarrellOceanBounds;
     if (!bounds) return { available: false };
-    const startX = bounds.minX + 20, z = 0;
+    const startX = bounds.minX + 8, z = 0;
     api.setPaused(false);
     api.setMoveVector(null, null);
     api.getKeys().KeyA = false; api.getKeys().KeyD = false;
