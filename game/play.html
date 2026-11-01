@@ -521,8 +521,14 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
   let flattenedTerrain=riceTerrain;
   for(const basin of freshwaterBasins){
    const radius=Math.hypot((x-basin.x)/basin.rx,(z-basin.z)/basin.rz);
-   const t=Math.max(0,Math.min(1,(radius-.82)/.68)),smooth=t*t*(3-2*t),blend=1-smooth;
    const basinFloor=basin.surfaceY-1.25;
+   // A fixed narrow normalized blend created an almost vertical terrain wall where
+   // the surrounding procedural high ground met the pond floor. Size the approach
+   // ramp from the actual height difference so the player can walk down to the shore.
+   const transitionWidth=Math.max(18,Math.abs(flattenedTerrain-basinFloor)*2.2);
+   const transitionRadius=.82+transitionWidth/Math.min(basin.rx,basin.rz);
+   const t=Math.max(0,Math.min(1,(radius-.82)/(transitionRadius-.82)));
+   const smooth=t*t*(3-2*t),blend=1-smooth;
    flattenedTerrain=flattenedTerrain*(1-blend)+basinFloor*blend;
   }
   return flattenedTerrain;
