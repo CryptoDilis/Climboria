@@ -480,6 +480,9 @@ if(summit){
 }
 }else{
 // Other expeditions stay on their simple blockout for now; focus art development on Level 1.
+ // Shared sand materials are in the enclosing game scope; freshwater and river builders use separate level blocks.
+ var jarrellSandMat=new THREE.MeshStandardMaterial({color:0xc9ad7b,roughness:1,metalness:0});
+ var jarrellWetSandMat=new THREE.MeshStandardMaterial({color:0x927b59,roughness:1,metalness:0});
 if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0x53634a,roughness:1,side:THREE.DoubleSide,vertexColors:true});
  // Jarrell's Peak environment pass: procedural ground texture and layered forest, with clear sightlines around camp and river.
  const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCanvas.height=256;const gx=groundCanvas.getContext('2d');gx.fillStyle='#66764b';gx.fillRect(0,0,256,256);let seed=78123;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<14000;i++){const v=50+Math.floor(rnd()*65);gx.fillStyle='rgba('+v+','+(v+8)+','+(v-20)+','+(0.08+rnd()*.22)+')';const x=rnd()*256,y=rnd()*256,r=1+rnd()*3;gx.fillRect(x,y,r,r)}const groundTexture=new THREE.CanvasTexture(groundCanvas);groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(42,52);groundTexture.colorSpace=THREE.SRGBColorSpace;terrainMat.map=groundTexture;terrainMat.color.set(0xffffff);terrainMat.needsUpdate=true;
@@ -839,9 +842,6 @@ if(currentLevel==='11'){const terrainMat=new THREE.MeshStandardMaterial({color:0
  ];
  window.jarrellFreshwaterBodies=jarrellFreshwaterBodies;
  window.jarrellFreshwaterAt=(x,z)=>{for(const body of jarrellFreshwaterBodies){const dx=(x-body.x)/body.rx,dz=(z-body.z)/body.rz;if(dx*dx+dz*dz<=1.035)return body;}return null;};
- // Shared untextured sand materials are initialized before freshwater shore meshes.
- const jarrellSandMat=new THREE.MeshStandardMaterial({color:0xc9ad7b,roughness:1,metalness:0});
- const jarrellWetSandMat=new THREE.MeshStandardMaterial({color:0x927b59,roughness:1,metalness:0});
  const freshwaterSandMeshes=[];
  for(const body of jarrellFreshwaterBodies){
   const segments=64,ringVerts=[],ringIndices=[],bedGeo=new THREE.CircleGeometry(1,segments);bedGeo.rotateX(-Math.PI/2);bedGeo.scale(body.rx*.78,1,body.rz*.78);
