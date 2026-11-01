@@ -147,7 +147,7 @@ try {
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw};
-    window.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));
+    document.querySelector('canvas')?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));
     window.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:280,clientY:200,movementX:80,movementY:0}));
     window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:2}));
     return {before,after:{camera:api?.yaw,player:api?.playerYaw}};
