@@ -943,3 +943,14 @@ For every integrated asset or borrowed technique, record:
 - [x] Added current weather name beside the time-of-day label in the gameplay HUD.
 - [ ] Verify all four lighting presets, rain visibility, thunderstorm flashes, and mobile settings buttons in a live browser session; workflow/browser validation still pending.
 - Code commit: `3782787627ec088d1c74276c90731d2422425460`.
+
+
+## 2026-11-02 — mobile settings placement beside field map (OPEN)
+- [x] Move the Expedition Settings gear to the immediate left of the field map on mobile landscape; align it with the map's top edge.
+- [x] Move the settings panel to open beneath the gear without covering the field map.
+- [ ] Verify on actual Android landscape and desktop; confirm map expand/collapse does not create overlap.
+- [ ] Continue hero relaxed-arm pose review without changing the hero's face, tattoos, outfit, proportions, or model.
+- [ ] Replace flat/static pillar flags with accurate national flag artwork and wind-driven cloth motion; Philippines flag must be correct.
+- [ ] Check license and adapt a lightweight Three.js cloth-wave implementation from a permissively licensed GitHub source; optimize for mobile.
+- [ ] Run validation, browser smoke, and Pages workflows; diagnose and rerun any failures.
+- Code commit: 2a00315951c1ee0f82c18adb0aebd7f5a72a8e2b
