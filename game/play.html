@@ -321,8 +321,8 @@ function colorAt(x,z,h,ny){
  return c;
 }
 const D=new T3.Object3D();
-const TRUNK=new T3.CylinderGeometry(.5,.8,1,6).translate(0,.5,0),PINE=new T3.ConeGeometry(1,1,7).translate(0,.5,0),BROAD=new T3.IcosahedronGeometry(1,1),ROCK=new T3.DodecahedronGeometry(1,0);
-const mTrunk=new T3.MeshLambertMaterial(),mFol=new T3.MeshLambertMaterial(),mRock=new T3.MeshLambertMaterial({flatShading:true});
+const ROCK=new T3.DodecahedronGeometry(1,0);
+const mRock=new T3.MeshLambertMaterial({flatShading:true});
 const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
  list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
@@ -335,30 +335,15 @@ function shoreClear(x,z,h){
  return false;
 }
 function props(cx,cz,out){
- const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),tr=[],ro=[],col=[];
- for(let i=0;i<120;i++){
-  const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),p=r(),q=r(),w=r();
-  if(h<.8||h>135||shoreClear(x,z,h)||nearPOI(x,z))continue;
-  if(Math.abs(heightAt(x+4,z)-h)>2.2||Math.abs(heightAt(x,z+4)-h)>2.2)continue;
-  if(1-ss(190,300,Math.hypot(x-RICE.x,z-RICE.z))>.15)continue;
-  const des=desF(x,z),f=fd(x,z),pr=(des>.5?.045:f>.52?.48:f>.42?.12:.02);
-  if(p>pr)continue;
-  const H=(des>.5?5:8+q*9)*(f>.55?1.25:1),kind=1;
-  tr.push({x,h,z,H,kind,rot:w*6.28,v:q});col.push({x,z,r:(H*.035+.15)*.8+.25});
- }
+ const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),ro=[],col=[];
  for(let i=0;i<34;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
   if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
   col.push({x,z,r:s*.8});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
  }
  const g=new T3.Group();
- const tk=inst(TRUNK,mTrunk,tr.map(t=>({...t,c:hsl(.07,.4,.14+.06*t.v)})),t=>{const w=t.H*.035+.15;D.position.set(t.x,t.h-.3,t.z);D.rotation.set(0,t.rot,0);D.scale.set(w,t.H*(t.kind==2?.7:.5),w)});
- const pn=tr.filter(t=>t.kind==0).map(t=>({...t,c:hsl(.33+.04*t.v,.4,.1+.08*t.v)}));
- const bd=tr.filter(t=>t.kind==1).map(t=>({...t,c:hsl(.22+.08*t.v,.5,.16+.1*t.v)}));
- const a=inst(PINE,mFol,pn,t=>{D.position.set(t.x,t.h+t.H*.22,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.H*.3,t.H*.85,t.H*.3)});
- const b=inst(BROAD,mFol,bd,t=>{D.position.set(t.x,t.h+t.H*.62,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.H*.34,t.H*.3,t.H*.34)});
  const rk=inst(ROCK,mRock,ro,t=>{D.position.set(t.x,t.h+t.s*.2,t.z);D.rotation.set(t.rot*.3,t.rot,0);D.scale.set(t.s,t.s*.7,t.s)});
- [tk,a,b,rk].forEach(m=>{if(m){g.add(m);out.push(m)}});scene.add(g);out.push(g);return col;
+ if(rk){g.add(rk);out.push(rk)}scene.add(g);out.push(g);return col;
 }
 function buildChunk(cx,cz){
  const ox=cx*CS,oz=cz*CS,B=N1+2,hg=new Float32Array(B*B);
@@ -831,6 +816,7 @@ const solid=(x,z,r)=>solids.push({x,z,r});
 */
 const cc0ForestDefinitions={
  buttress:{url:'https://cdn.3dassets.dev/assets/36137/v1/model.glb',collider:2.15,scale:.92},
+ canopy:{url:'https://cdn.3dassets.dev/assets/36136/v1/model.glb',collider:2.35,scale:.9},
  undergrowth:{url:'https://cdn.3dassets.dev/assets/36145/v1/model.glb',collider:0,scale:1},
  fallenLog:{url:'https://cdn.3dassets.dev/assets/36143/v1/model.glb',collider:1.15,scale:.9}
 };
@@ -840,7 +826,7 @@ function findCC0ForestSpots(count,minSpacing,excluded=[]){
  for(let ring=105;ring<=1450&&found.length<count;ring+=38){
   for(let deg=0;deg<360&&found.length<count;deg+=18){
    const a=deg*Math.PI/180,x=Math.sin(a)*ring,z=60+Math.cos(a)*ring,h=heightAt(x,z);
-   if(h<2||h>132||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z))continue;
+   if(h<2||h>132||waterBodyAt(x,z)||desF(x,z)>.48||fd(x,z)<.5||shoreClear(x,z,h)||nearPOI(x,z))continue;
    if(Math.abs(heightAt(x+5,z)-h)>2.2||Math.abs(heightAt(x,z+5)-h)>2.2)continue;
    if(blockedSpots.some(p=>Math.hypot(p.x-x,p.z-z)<minSpacing))continue;
    const spot={x,z,h};found.push(spot);blockedSpots.push(spot);
@@ -850,9 +836,10 @@ function findCC0ForestSpots(count,minSpacing,excluded=[]){
 }
 /* Broader biome dressing: reuse the three cached CC0 GLBs across more valid forest clearings.
    Shared cloned geometry/materials keep the GPU asset cost bounded; spacing avoids prop piles. */
-const cc0TreeSpots=findCC0ForestSpots(8,58);
-const cc0GroundSpots=findCC0ForestSpots(24,10,cc0TreeSpots);
-const cc0LogSpots=findCC0ForestSpots(8,22,[...cc0TreeSpots,...cc0GroundSpots]);
+const cc0TreeSpots=findCC0ForestSpots(16,58);
+const cc0CanopySpots=findCC0ForestSpots(16,76,cc0TreeSpots);
+const cc0GroundSpots=findCC0ForestSpots(42,10,cc0TreeSpots);
+const cc0LogSpots=findCC0ForestSpots(14,22,[...cc0TreeSpots,...cc0GroundSpots]);
 function placeCC0ForestModel(key,spot,index){
  const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
  const root=asset.clone(true),def=cc0ForestDefinitions[key];
@@ -874,6 +861,7 @@ function loadCC0ForestModel(key,spots){
  },undefined,error=>console.warn('[Climboria] CC0 forest asset unavailable; procedural vegetation remains active:',key,error));
 }
 loadCC0ForestModel('buttress',cc0TreeSpots);
+loadCC0ForestModel('canopy',cc0CanopySpots);
 loadCC0ForestModel('undergrowth',cc0GroundSpots);
 loadCC0ForestModel('fallenLog',cc0LogSpots);
 
@@ -1039,7 +1027,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');

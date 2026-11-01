@@ -48,3 +48,13 @@ All are static, metre-scale GLBs loaded with the existing Three.js r128 GLTFLoad
 ### Density expansion — 2026-11-02
 
 The same three cached CC0 GLBs are now placed more broadly across eligible forest clearings: 8 buttress-root trees, 24 undergrowth patches, and 8 fallen logs. Placement remains terrain-aware and avoids POIs, water/shore exclusions, desert, steep ground, and overlapping prop footprints. This expands visual coverage without loading additional unique GLB files or multiplying download size. All props remain static and require authored collision; vegetation ground patches intentionally have no blocking collider. Validate visually and on mobile before further density increases.
+
+
+## Real 3D rainforest canopy replacement — 2026-11-02
+
+- **Jungle Canopy Tree** — https://3dassets.dev/assets/jungle-temple-and-stone-city-jungle-canopy-tree-6e668f41
+- Runtime GLB: https://cdn.3dassets.dev/assets/36136/v1/model.glb
+- CC0 1.0 Universal; 5,336 triangles; 163.4 KB; 10.699 × 16.057 × 9.962 m; solid geometry, no alpha cards, no animation, no built-in collision.
+- Integrated as a second rainforest canopy species beside the existing Buttress Root Tree. The generated primitive trunk/cone/icosahedron tree stand-ins are removed; terrain rocks remain procedural.
+- Tree collision is authored as a conservative ground-level circle. Asset spots are terrain-aware, exclude mapped water, shore clearances, POIs, desert and steep ground.
+- The GLB remains CDN-loaded with the existing fallback behaviour; manual CDN, desktop/mobile visual, collision and performance acceptance remain open.
