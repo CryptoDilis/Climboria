@@ -925,10 +925,10 @@ function blocked(nx,nz,ox,oz,feet){
    const newHeightFail=newHeightClear<0,newSlopeFail=newSlopeClear<0;
    const heightDeeper=newHeightClear<oldHeightClear,slopeDeeper=newSlopeClear<oldSlopeClear;
    // Any newly failing constraint blocks movement, even if another constraint was already failing.
-   if((!oldHeightFail&&newHeightFail)||(!oldSlopeFail&&newSlopeFail)){window.__climboriaLastCollision={type:!oldHeightFail&&newHeightFail?'edge-step-up':'edge-slope',offset:off,oldHeight:oldH,newHeight:newH,centerHeight,feet,oldHeightClear,newHeightClear,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE,stepLimit:MAX_STEP_UP};return true;}
+   if((!oldHeightFail&&newHeightFail)||(!oldSlopeFail&&newSlopeFail)){window.__climboriaLastCollision={type:!oldHeightFail&&newHeightFail?'edge-step-up':'edge-slope',offset:off,oldHeight:oldH,newHeight:newH,centerH,feet,oldHeightClear,newHeightClear,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE,stepLimit:MAX_STEP_UP};return true;}
    // An existing failure blocks only when that same constraint gets worse.
    if(oldHeightFail&&newHeightFail&&heightDeeper){window.__climboriaLastCollision={type:'edge-step-up-worsens',offset:off,oldHeight:oldH,newHeight:newH,feet,oldHeightClear,newHeightClear,stepLimit:MAX_STEP_UP};return true;}
-   if(oldSlopeFail&&newSlopeFail&&slopeDeeper){window.__climboriaLastCollision={type:'edge-slope-worsens',offset:off,oldHeight:oldH,newHeight:newH,oldCenterHeight:oldCenterH2,centerHeight,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE};return true;}
+   if(oldSlopeFail&&newSlopeFail&&slopeDeeper){window.__climboriaLastCollision={type:'edge-slope-worsens',offset:off,oldHeight:oldH,newHeight:newH,oldCenterHeight:oldCenterH2,centerH,oldSlopeClear,newSlopeClear,slopeLimit:SLOPE};return true;}
   }
  }
  return false;
