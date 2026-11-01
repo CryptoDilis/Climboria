@@ -38,8 +38,8 @@ body.free #status-card{opacity:1}
 .stat-track{height:6px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:7px}
 .stat-fill{height:100%;width:100%;border-radius:9px;background:#b94c48}
 #stamina-fill{background:#c9a34d}
-#world-map-toggle{position:fixed;pointer-events:auto!important;z-index:1000!important;right:16px;top:calc(58px + env(safe-area-inset-top));z-index:12;padding:9px 13px;border:1px solid #d8b46b99;border-radius:999px;background:#080d14eF;color:#ffe3a3;font:11px system-ui;letter-spacing:.08em;cursor:pointer}
-#world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:16px;top:calc(104px + env(safe-area-inset-top));z-index:12;width:min(270px,calc(100vw - 32px));padding:12px;border:1px solid #d8b46b99;border-radius:13px;background:#080d14f2;box-shadow:0 12px 40px #000b;display:none}
+#world-map-toggle{display:none}
+#world-map-panel{position:fixed;pointer-events:auto!important;z-index:1000!important;right:16px;top:calc(62px + env(safe-area-inset-top));width:190px;padding:9px;border:1px solid #d8b46b99;border-radius:13px;background:#080d14eF;box-shadow:0 12px 40px #000b;display:block;transition:width .2s,top .2s}#world-map-panel.map-expanded{width:min(340px,calc(100vw - 32px))}#world-map-panel strong{font-size:10px}#world-map{width:100%;height:auto;aspect-ratio:1}
 #world-map-panel strong{font:12px system-ui;letter-spacing:.12em;color:#ffe3a3}
 #world-map{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1;background:#17251c;border:1px solid #ffffff25;border-radius:8px;margin-top:9px}
 #world-map-legend{font:10px/1.6 system-ui;color:#c6c0b3;margin-top:7px}
@@ -48,7 +48,7 @@ body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
-@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-toggle{top:auto;bottom:calc(90px + env(safe-area-inset-bottom));right:12px}#world-map-panel{top:auto;bottom:calc(137px + env(safe-area-inset-bottom));right:12px;width:min(240px,calc(100vw - 24px))}#control-dock{display:none}}
+@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:auto;bottom:calc(150px + env(safe-area-inset-bottom));right:10px;width:132px;padding:6px}#world-map-panel.map-expanded{width:min(260px,calc(100vw - 20px))}#world-map-legend{font-size:8px}#control-dock{display:none}}
 </style>
 </head>
 <body>
@@ -363,6 +363,20 @@ const fmat=new T3.PointsMaterial({color:L('#ffe9a8'),size:.9,transparent:true,op
 const flies=new T3.Points(fgeo,fmat);flies.frustumCulled=false;scene.add(flies);
 /* ---------- player / camera ---------- */
 const P={x:0,y:30,z:60,vy:0,yaw:Math.PI,pitch:0,mode:'cine'};
+/* Third-person explorer avatar: visible character, not a first-person camera placeholder. */
+const hero=new T3.Group();hero.name='ClimboriaExplorer';
+const heroMat=(color,roughness=.88)=>new T3.MeshStandardMaterial({color,roughness});
+const hBody=heroMat(0x263746),hTrim=heroMat(0xc49a52),hSkin=heroMat(0xc99669),hBoot=heroMat(0x171b20),hPack=heroMat(0x6c4930);
+const hSphere=new T3.SphereGeometry(1,12,10),hBox=new T3.BoxGeometry(1,1,1);
+function heroPart(geo,mat,x,y,z,sx,sy,sz){const m=new T3.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;hero.add(m);return m}
+heroPart(hBox,hBody,0,1.12,0,.62,.82,.34);
+heroPart(hSphere,hSkin,0,1.78,0,.25,.27,.25);
+heroPart(hBox,hPack,0,1.2,.27,.42,.55,.2);
+heroPart(hBox,hTrim,0,1.48,.02,.66,.12,.38);
+const hLegL=heroPart(hBox,hBody,-.18,.53,0,.22,.58,.25),hLegR=heroPart(hBox,hBody,.18,.53,0,.22,.58,.25);
+const hArmL=heroPart(hBox,hBody,-.43,1.16,0,.19,.62,.22),hArmR=heroPart(hBox,hBody,.43,1.16,0,.19,.62,.22);
+heroPart(hBox,hBoot,-.18,.16,.04,.27,.22,.38);heroPart(hBox,hBoot,.18,.16,.04,.27,.22,.38);
+hero.visible=false;scene.add(hero);
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -413,11 +427,12 @@ function renderInventory(){
  for(const item of inventory){const row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #ffffff1c';const name=document.createElement('span');name.textContent=item.name;const qty=document.createElement('strong');qty.textContent='× '+item.qty;row.append(name,qty);invPanel.append(row)}
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else inventory.push({name,qty});saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
-function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.style.display='none'}
+function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 invToggle.addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
-function toggleWorldMap(){const opening=mapPanel.style.display!=='block';mapPanel.style.display=opening?'block':'none';if(opening){invPanel.style.display='none';drawWorldMap()}}
+function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap()}
+mapPanel.style.display='block';
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);c.fillStyle='#17251c';c.fillRect(0,0,w,h);
  c.strokeStyle='#60745a';c.lineWidth=1;for(let i=0;i<=w;i+=30){c.beginPath();c.moveTo(i,0);c.lineTo(i,h);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(w,i);c.stroke()}
@@ -527,7 +542,7 @@ function gameTick(dt,cp){
  const hp=Math.max(0,Math.min(100,Math.round(P.hp??100))),st=Math.max(0,Math.min(100,Math.round(P.stamina??100)));
  document.getElementById('health-value').textContent=hp+'%';document.getElementById('health-fill').style.width=hp+'%';
  document.getElementById('stamina-value').textContent=st+'%';document.getElementById('stamina-fill').style.width=st+'%';
- if(mapPanel.style.display==='block')drawWorldMap();
+ if(document.body.classList.contains('free'))drawWorldMap();
 
  // weather
  scene.fog.color.multiplyScalar(1-.35*(wx>0));flash=Math.max(0,flash-dt*3);
@@ -557,7 +572,7 @@ function update(dt){
   const gh=Math.max(heightAt(p.x,p.z),heightAt(a.x,a.z),heightAt(b.x,b.z)),ty=gh+30+14*Math.sin(Tm*.2);
   camY=camY==null?ty:camY+(ty-camY)*Math.min(1,dt*1.4);camY=Math.max(camY,heightAt(p.x,p.z)+10);
   const ly=Math.max(heightAt(a.x,a.z)+8,camY-16);lookY+=(ly-lookY)*Math.min(1,dt*1.5);if(!lookY)lookY=ly;
-  cam.position.set(p.x,camY,p.z);cam.lookAt(a.x,lookY,a.z);cam.rotateZ(Math.sin(Tm*.13)*.03);
+  cam.position.set(p.x,camY,p.z);cam.lookAt(a.x,lookY,a.z);cam.rotateZ(Math.sin(Tm*.13)*.03);hero.visible=false;
   P.x=p.x;P.z=p.z;
  }else{
   const sp=P.mode=='fly'?(keys.ShiftLeft?220:70):(keys.ShiftLeft?22:9),sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
@@ -567,7 +582,14 @@ function update(dt){
   if(P.mode=='fly'){P.y+=((keys.KeyE||keys.Space?1:0)-(keys.KeyQ?1:0))*sp*.7*dt;P.y=Math.max(P.y,heightAt(P.x,P.z)+2)}
   else if((P.swim=gh<-1.4)){P.vy=0;P.y+=(.55+Math.sin(Tm*1.6)*.08+(keys.Space?.3:0)-P.y)*Math.min(1,dt*5)}
   else{const g=gh+1.75;if(keys.Space&&Math.abs(P.y-g)<.05&&P.vy==0)P.vy=11;P.vy-=30*dt;P.y+=P.vy*dt;if(P.y<g){P.y=g;P.vy=0}}
-  cam.position.set(P.x,P.y,P.z);cam.rotation.set(P.pitch,P.yaw,0);
+  // Third-person follow camera keeps the explorer visible in the world.
+  const back= P.mode==='fly'?8:7.2;
+  cam.position.set(P.x+Math.sin(P.yaw)*back,P.y+2.8+Math.max(0,P.pitch*2),P.z+Math.cos(P.yaw)*back);
+  cam.lookAt(P.x,P.y+.85,P.z);
+  hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;
+  const walking=Math.abs(fw)+Math.abs(rt)>.08&&P.mode==='walk';
+  const stride=walking?Math.sin(Tm*10)*.42:Math.sin(Tm*2)*.025;
+  hLegL.rotation.x=stride;hLegR.rotation.x=-stride;hArmL.rotation.x=-stride*.7;hArmR.rotation.x=stride*.7;
  }
  const cp=cam.position;gameTick(dt,cp);
  updateChunks(cp.x,cp.z,ready?2:0);
