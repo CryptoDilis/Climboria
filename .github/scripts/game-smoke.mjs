@@ -63,6 +63,8 @@ try {
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   await page.locator('#title').click();
+  const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroParts: document.documentElement.dataset.climboriaHero === 'true'}));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !spawnCheck.heroParts) errors.push('Explorer did not spawn grounded in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
