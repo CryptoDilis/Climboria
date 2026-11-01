@@ -84,7 +84,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
  body.mobile-device #world-map-panel.map-expanded{width:min(250px,48vw)}
  body.mobile-device #world-map-panel.map-expanded #world-map{height:112px}
 
- body.mobile-device #expedition-settings-toggle{top:148px;right:6px;left:auto;width:28px;height:28px;font-size:16px;border-radius:7px}
+ body.mobile-device #expedition-settings-toggle{top:10px;right:250px;left:auto;width:28px;height:28px;font-size:16px;border-radius:7px}
  body.mobile-device #expedition-settings-panel{top:calc(42px + env(safe-area-inset-top));right:calc(7px + env(safe-area-inset-right));width:min(220px,48vw);padding:9px;font-size:10px}
  body.mobile-device #control-dock{display:none!important}
  body.mobile-device .control-chip{padding:3px 4px}
@@ -121,7 +121,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 @media (max-height: 430px) and (orientation: landscape) {
   #world-map-panel{width:164px}
   #world-map{height:70px}
-  #expedition-settings-toggle{right:178px}
+  #expedition-settings-toggle{right:250px}
   #status-card{width:100px}
   #control-dock{display:none!important}
 }
@@ -797,8 +797,7 @@ function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp=Math.max(0,P.hp-n);P
 /* snakes (functional): chase + bite; cave snakes leashed to the trap room */
 const snakes=[],SG=new T3.SphereGeometry(1,8,6),SM=new T3.MeshLambertMaterial({color:L('#4f6b2a')});
 function snake(x,z,home){const g=new T3.Group(),seg=[];for(let i=0;i<7;i++){const m=new T3.Mesh(SG,SM);m.scale.set(.16-i*.012,.14,.16-i*.012);g.add(m);seg.push(m)}scene.add(g);snakes.push({g,seg,x,z,h:Math.random()*6,cd:0,home})}
-for(let i=0;i<5;i++){const[x,z]=l2w(caveG,-8+i*4,12+i*5);snake(x,z,{x,z,r:14})}
-for(let i=0;i<8;i++){const a={};placeAnimal(a,0,0);snake(a.x,a.z,null)}
+// Wildlife disabled: snakes and animal actors are not spawned.
 /* world facilities (functional hooks) */
 const FAC=[],at=(x,z,ry)=>{const g=new T3.Group();g.position.set(x,heightAt(x,z),z);g.rotation.y=ry||0;scene.add(g);return g};
 {const g=at(36,-52,-.6);solid(g.position.x,g.position.z,2.6);sc(mk(BOX,M('#2a1f2e'),0,.6,0,g),3.4,1.2,1.3);const cn=sc(mk(BOX,M('#5a1a22'),0,3,-.2,g),3.8,.2,2.2);cn.rotation.x=.25;
@@ -836,12 +835,7 @@ function gameTick(dt,cp){
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
   if(P.y-1.75<c.h+1.4)for(const o of spikes)if(o.s.position.y>0&&Math.abs(lx-o.s.position.x)<.9&&Math.abs(lz-o.s.position.z)<.9){hurt(25,'Spike trap!');break}}
- for(const s of snakes){const dd=Math.hypot(P.x-s.x,P.z-s.z);let sp=.5;s.cd-=dt;
-  if(live&&dd<14){s.h=Math.atan2(P.x-s.x,P.z-s.z);sp=4.2;if(dd<1.8&&s.cd<=0){hurt(10,'Snake bite!');s.cd=1.3}}
-  else if(s.home&&Math.hypot(s.x-s.home.x,s.z-s.home.z)>s.home.r)s.h=Math.atan2(s.home.x-s.x,s.home.z-s.z);else if(Math.random()<dt*.5)s.h+=(Math.random()-.5)*2;
-  const nx=s.x+Math.sin(s.h)*sp*dt,nz=s.z+Math.cos(s.h)*sp*dt;if(heightAt(nx,nz)>.5){s.x=nx;s.z=nz}else s.h+=2;
-  if(!s.home&&dd>520){const a={};placeAnimal(a,cp.x,cp.z);s.x=a.x;s.z=a.z}
-  s.g.position.set(s.x,heightAt(s.x,s.z)+.12,s.z);s.g.rotation.y=s.h;s.seg.forEach((m,i)=>m.position.set(Math.sin(Tm*6-i*.9)*.12,0,-i*.28))}
+ /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const f=['Silverfin','Reed Carp','Old Boot (junk)','Golden Trout'][Math.floor(Math.random()*4)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f})}
  hpEl.textContent='';
