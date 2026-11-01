@@ -73,6 +73,7 @@ try {
         return {id:b.id,entered,exited};
       }) : [],
       seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
+      seabedColorAudit: (()=>{if(!w?.colorAt)return null;const deep=w.colorAt(-1200,0,w.heightAt(-1200,0),1);let shallow=null;for(let x=-900;x>-1180;x-=2){const h=w.heightAt(x,0);if(h<=-.8&&h>=-7&&w.waterBodyAt(x,0)?.id==='open_sea'){shallow={x,h,color:w.colorAt(x,0,h,1)};break;}}const freshwater=w.colorAt(390,-260,w.heightAt(390,-260),1);return {deep,shallow,freshwater};})(),
       mountainApproachAudit: (()=>{
         if(!w?.POI?.summit||typeof w.blocked!=='function')return null;
         const peak=w.POI.summit,results=[];
@@ -116,6 +117,7 @@ try {
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
+  if (!world.seabedColorAudit?.shallow || world.seabedColorAudit.shallow.color[0] <= world.seabedColorAudit.deep[0] || world.seabedColorAudit.freshwater[0] <= world.seabedColorAudit.deep[0]) errors.push('Shallow sea/freshwater seabeds are not visibly sand-tinted relative to deep ocean: '+JSON.stringify(world.seabedColorAudit));
   if (!world.waterBodyApi || world.freshwaterBodies.length !== 3 || !world.freshwaterCenters) errors.push('Freshwater water-body registry/terrain query failed: '+JSON.stringify({api:world.waterBodyApi,bodies:world.freshwaterBodies,centers:world.freshwaterCenters}));
   if (world.swimProfiles.length !== 5 || world.swimProfiles.some(p=>!Number.isFinite(p.maxDepth)||p.maxDepth<=0||p.bedClearance<.35)) errors.push('Per-water-body dive limits/bed clearance invalid: '+JSON.stringify(world.swimProfiles));
   if (world.parkFixtureCount < 10) errors.push('Sakura Park swings/hammocks fixtures or collision records missing: '+world.parkFixtureCount);
