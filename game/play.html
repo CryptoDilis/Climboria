@@ -376,7 +376,7 @@ heroPart(hBox,hTrim,0,1.48,.02,.66,.12,.38);
 const hLegL=heroPart(hBox,hBody,-.18,.53,0,.22,.58,.25),hLegR=heroPart(hBox,hBody,.18,.53,0,.22,.58,.25);
 const hArmL=heroPart(hBox,hBody,-.43,1.16,0,.19,.62,.22),hArmR=heroPart(hBox,hBody,.43,1.16,0,.19,.62,.22);
 heroPart(hBox,hBoot,-.18,.16,.04,.27,.22,.38);heroPart(hBox,hBoot,.18,.16,.04,.27,.22,.38);
-hero.visible=false;scene.add(hero);
+hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='true';
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
