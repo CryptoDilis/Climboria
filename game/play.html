@@ -850,9 +850,9 @@ function findCC0ForestSpots(count,minSpacing,excluded=[]){
 }
 /* Broader biome dressing: reuse the three cached CC0 GLBs across more valid forest clearings.
    Shared cloned geometry/materials keep the GPU asset cost bounded; spacing avoids prop piles. */
-const cc0TreeSpots=findCC0ForestSpots(8,58);
-const cc0GroundSpots=findCC0ForestSpots(24,10,cc0TreeSpots);
-const cc0LogSpots=findCC0ForestSpots(8,22,[...cc0TreeSpots,...cc0GroundSpots]);
+const cc0TreeSpots=findCC0ForestSpots(16,58);
+const cc0GroundSpots=findCC0ForestSpots(42,10,cc0TreeSpots);
+const cc0LogSpots=findCC0ForestSpots(14,22,[...cc0TreeSpots,...cc0GroundSpots]);
 function placeCC0ForestModel(key,spot,index){
  const asset=cc0ForestLoaded.get(key);if(!asset||!spot)return;
  const root=asset.clone(true),def=cc0ForestDefinitions[key];
@@ -1039,7 +1039,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),forestAssets:{spots:{buttress:cc0TreeSpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
