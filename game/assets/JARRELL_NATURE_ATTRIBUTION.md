@@ -32,3 +32,14 @@ The original wolves and deer in `game/play.html` were built from primitive spher
 ### Integration gate
 
 No candidate above is yet integrated as the replacement wildlife. Before changing the game, preview actual models and verify exact file availability, species, scale, orientation, animation clips, commercial-use license, total transfer size, and mobile rendering. Prefer locally vendored/reliable assets when practical over depending on third-party runtime URLs. Target species: birds, monkeys/macaques, chickens/roosters, snakes, plus believable deer and wolves; add boar, civets, monitor lizards, frogs, bats, butterflies, and suitable freshwater fish only where assets and performance allow. The final target is believable real-world proportions, not primitive placeholder shapes or falsely labeled low-poly “realism.”
+
+
+## 3DAssets.dev rainforest hero props — 2026-11-02
+
+These models are CC0 1.0 Universal; attribution is not required. The entries are retained for source traceability.
+
+- **Buttress Root Tree** — 2 instances; 8.788 × 10.733 × 7.947 m; approximately 4,956 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-buttress-root-tree-44607ba7); runtime GLB: https://cdn.3dassets.dev/assets/36137/v1/model.glb.
+- **Undergrowth Patch** — 7 instances; 2.6 × 1.226 × 2.666 m; approximately 1,724 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-undergrowth-patch-dc35043c); runtime GLB: https://cdn.3dassets.dev/assets/36145/v1/model.glb.
+- **Fallen Log** — 2 instances; 6.87 × 1.451 × 1.843 m; approximately 1,794 triangles; [asset page](https://3dassets.dev/assets/jungle-temple-and-stone-city-fallen-log-b1bcdf2f); runtime GLB: https://cdn.3dassets.dev/assets/36143/v1/model.glb.
+
+All are static, metre-scale GLBs loaded with the existing Three.js r128 GLTFLoader. The placement code samples valid forest terrain and adds simple authored trunk/log collision circles; the source models themselves contain no collision or navigation data. The procedural instanced vegetation remains active as the fallback if a remote GLB fails to load. Manual visual, collision, mobile-performance, and remote-CDN checks are still required before treating the forest dressing as fully accepted.
