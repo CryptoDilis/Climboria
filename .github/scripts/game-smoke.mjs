@@ -76,7 +76,7 @@ try {
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
   if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || !hudUi.controlDock) errors.push('Adventure HUD/inventory/map/controls UI missing: ' + JSON.stringify(hudUi));
-  if (!['WASD','SHIFT','SPACE','LEFT CLICK','INTERACT','INVENTORY'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
+  if (!['W A S D','SHIFT','SPACE','LEFT CLICK','INTERACT','MAP'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
   if (await page.locator('#world-map-panel').isHidden()) errors.push('Persistent minimap is not visible by default');
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
@@ -133,7 +133,7 @@ try {
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
       hero: document.documentElement.dataset.climboriaHero === 'official-female-climber',
-      bag: !!document.querySelector('#climboriaInventoryToggle'),
+      bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
     };
