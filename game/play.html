@@ -733,7 +733,8 @@ function gameTick(dt,cp){
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
  document.getElementById('stamina-value').textContent=st;document.getElementById('stamina-fill').style.width=(st/P.maxStamina*100)+'%';document.getElementById('strength-value').textContent=P.strength;document.getElementById('strength-fill').style.width=(P.strength*5)+'%';
- if(document.body.classList.contains('free'))drawWorldMap();
+ // The terrain map is a static relief image; redraw it only when opened/toggled.
+ // Recomputing 240x240 height + multi-octave noise samples every frame stalls gameplay.
 
  // weather
  scene.fog.color.multiplyScalar(1-.35*(wx>0));flash=Math.max(0,flash-dt*3);
