@@ -671,7 +671,7 @@ function loadAssetHero(choice='Adventurer'){
   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
-  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];
+  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
  },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
