@@ -140,7 +140,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
-<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER CREATE</button><p class="menu-hint">Choose your explorer before entering the world</p></div><section id="character-create-panel" aria-label="Character creation" style="display:none"><strong>CHOOSE YOUR CHARACTER</strong><div class="character-options"><button type="button" data-hero="Adventurer">ADVENTURER</button><button type="button" data-hero="Police">POLICE OFFICER</button><button type="button" data-hero="Scout">3DASSETS SCOUT · TEST</button></div><p id="character-load-status">Select your explorer</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
+<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER CREATE</button><p class="menu-hint">Choose your explorer before entering the world</p></div><section id="character-create-panel" aria-label="Character creation" style="display:none"><strong>CHOOSE YOUR CHARACTER</strong><div class="character-options"><button type="button" data-hero="Adventurer">CLIMBORIA HERO</button><button type="button" data-hero="Police">POLICE OFFICER</button><button type="button" data-hero="Scout">3DASSETS SCOUT · TEST</button></div><p id="character-load-status">Select your explorer</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
@@ -564,7 +564,7 @@ hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='loading-free-glb';
 /* Load the repository's rigged Police Officer / Adventurer GLBs; movement remains driven by the existing terrain physics controller. */
-let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0;
+let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
  root.traverse(o=>{
@@ -576,13 +576,20 @@ function cacheAssetRig(root){
   if(/upperarm|lowerarm|arm|shoulder/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
  });
 }
-function chooseAssetAnimation(state){
+function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
- const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:/idle|stand|breath/i;
- let clip=assetActions.find(a=>patterns.test(a.name));
+ if(state==='idle'){
+  if(assetActive)assetMixer.stopAllAction();
+  assetActive=null;assetAnimState='idle';return true;
+ }
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':'';
+ let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
+ if(!clip){
+  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:/idle|stand|breath/i;
+  clip=assetActions.find(a=>patterns.test(a.name));
+ }
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
- if(!clip&&state==='idle')clip=assetActions[0];
  if(!clip)return false;
  if(assetActive&&assetActive.getClip()===clip)return true;
  if(assetActive)assetActive.fadeOut(.16);
@@ -596,7 +603,7 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.spine){assetRig.spine.rotation.x=0}
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
-const assetChoices={Adventurer:'../assets/expedition-crests/The_Adventurer.glb',Police:'../assets/expedition-crests/The_Police_Officer_Nigeria.glb',Scout:'https://cdn.3dassets.dev/assets/32901/v1/model.glb'};
+const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb',Police:'../assets/expedition-crests/The_Police_Officer_Nigeria.glb',Scout:'https://cdn.3dassets.dev/assets/32901/v1/model.glb'};
 let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='Adventurer'){
  if(!assetChoices[choice])choice='Adventurer';
@@ -606,8 +613,8 @@ function loadAssetHero(choice='Adventurer'){
  new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
   // Ignore late responses from an earlier character selection; the most recent choice always wins.
   if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
-  if(assetHero){scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
-  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';
+  if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
+  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
   const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
   const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
@@ -615,7 +622,7 @@ function loadAssetHero(choice='Adventurer'){
   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
-  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');
+  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
  },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
@@ -625,7 +632,7 @@ const createPanel=document.getElementById('character-create-panel');
 document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
 document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
 if(new URLSearchParams(location.search).get('create')==='1')createPanel.style.display='block';
-createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+(choice==='Police'?'Police Officer':choice==='Scout'?'3DAssets Gorgehold Scout':'Adventurer')+'…';loadAssetHero(choice)}));
+createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+(choice==='Police'?'Police Officer':choice==='Scout'?'3DAssets Gorgehold Scout':'Climboria Hero')+'…';loadAssetHero(choice)}));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -1137,11 +1144,11 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
+  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
    // that can make the character look like it is bowing.
-   const hasClip=P.swim?false:chooseAssetAnimation(animState);
-   if(P.swim&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim'}
+   const hasClip=P.swim?(assetHeroUsesAuthoredAnimations?chooseAssetAnimation('swim',Math.hypot(fw,rt)):false):chooseAssetAnimation(animState);
+   if(P.swim&&!assetHeroUsesAuthoredAnimations&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim'}
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
   }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
