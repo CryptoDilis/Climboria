@@ -19,7 +19,7 @@ The launch scope is Jarrell’s Peak alone. The previously proposed ten normal m
 - **Marketplace:** demo storefront only; live trading, purchases, and fee accounting are not active.
 - **Inventory:** local preview only; persistent item ownership and equipment are not active.
 
-Do not show the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains reachable through the Jarrell’s Peak entry flow. The interface must distinguish playable content from demos and future plans.
+Do not show additional mountain destinations or a separate Create Hero menu item. Character creation/editing remains reachable through the Jarrell’s Peak entry flow. The interface must distinguish playable content from demos and future plans.
 
 ## Existing gameplay protection
 
