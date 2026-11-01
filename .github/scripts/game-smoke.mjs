@@ -1743,10 +1743,10 @@ try {
   if(!shorelineAudit.seaBeach||!shorelineAudit.seaBed||!shorelineAudit.riverBanks||!shorelineAudit.riverBed) errors.push('sea/river sand shoreline or underwater bed missing: '+JSON.stringify(shorelineAudit));
   if(shorelineAudit.freshwater.length!==3||shorelineAudit.freshwater.some(x=>!x.shore||!x.bed||!x.bedBelowSurface)) errors.push('freshwater sandy shores/underwater beds incomplete: '+JSON.stringify(shorelineAudit));
   console.log('Jarrell shoreline sand audit:',JSON.stringify(shorelineAudit));
-  const waterVegetationAudit=await mobilePage.evaluate(()=>window.__climboriaSmoke.waterVegetationAudit());
-  if(waterVegetationAudit.samples.some(sample=>!sample.water)) errors.push('shared water mask missed a required sea/river/freshwater body: '+JSON.stringify(waterVegetationAudit.samples));
-  if(waterVegetationAudit.waterHits.length) errors.push('loaded nature assets were placed in water: '+JSON.stringify(waterVegetationAudit.waterHits.slice(0,12)));
-  console.log('Water vegetation exclusion audit:',JSON.stringify(waterVegetationAudit));
+  const natureInstanceAudit=await mobilePage.evaluate(()=>window.__climboriaSmoke.waterVegetationAudit());
+  if(natureInstanceAudit.samples.some(sample=>!sample.water)) errors.push('shared water mask missed a required sea/river/freshwater body: '+JSON.stringify(natureInstanceAudit.samples));
+  if(natureInstanceAudit.waterHits.length) errors.push('loaded nature assets were placed in water: '+JSON.stringify(natureInstanceAudit.waterHits.slice(0,12)));
+  console.log('Loaded nature instance water audit:',JSON.stringify(natureInstanceAudit));
   // Capture each freshwater basin on the mobile viewport for visual review.
   const mobileFreshwaterSnapshotState = await mobilePage.evaluate(() => {
     const api=window.__climboriaSmoke;
