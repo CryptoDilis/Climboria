@@ -549,3 +549,13 @@ For each meaningful implementation batch:
 - [ ] Use optimized, license-verified free assets or original modular geometry; record exact source, license, attribution, format, and optimization in ASSET_SOURCES.md before integration.
 - [ ] Add deterministic world diagnostics/smoke checks for each ruin's presence, unique site identity, ground alignment, collision bounds, accessible entrance/exit, and route clearance.
 - [ ] Verify visual scale, lighting, weathering, vegetation placement, and performance on desktop and Redmi 14 5G; keep this item open until runtime and manual checks pass.
+
+
+### Castle asset sourcing update — 2026-11-02
+
+- [x] Research CC0 modular castle candidates and record their license/specification/source details in ASSET_SOURCES.md.
+- [ ] Inspect the 3DAssets.dev Medieval Castle Construction GLBs and starter scene; choose only the pieces needed for varied ruined silhouettes.
+- [ ] Compare the complete Innerscene Castle with Keep landmark against the modular kit; note that its source page says it has no interior rooms.
+- [ ] Check style compatibility before considering the Avramania low-poly collection; do not introduce visibly mismatched art styles.
+- [ ] Download selected assets locally, inspect mesh/materials/bounds, optimize for mobile and create authored collision before placement.
+- [ ] Build distinct ruin layouts from selected pieces; verify entrance/exit, walkable floors, route clearance and no player-trapping geometry.
