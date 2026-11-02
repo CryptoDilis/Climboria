@@ -172,6 +172,43 @@ body.free.mobile-device.climboria-landscape #expedition-settings-toggle{
  display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
 }
 
+
+/* Hard bounds for the mobile field-map thumbnail. The canvas has a 720x480
+   drawing buffer; its CSS box must stay compact and never inherit that height. */
+body.mobile-device.climboria-landscape #world-map-panel,
+body.mobile-device #world-map-panel{
+  box-sizing:border-box!important;
+  width:164px!important;
+  height:116px!important;
+  min-height:0!important;
+  max-height:116px!important;
+  overflow:hidden!important;
+  padding:5px!important;
+}
+body.mobile-device.climboria-landscape #world-map,
+body.mobile-device #world-map{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:70px!important;
+  min-height:70px!important;
+  max-height:70px!important;
+  aspect-ratio:auto!important;
+  margin-top:4px!important;
+}
+body.mobile-device.climboria-landscape #world-map-panel.map-expanded,
+body.mobile-device #world-map-panel.map-expanded{
+  width:min(250px,48vw)!important;
+  height:158px!important;
+  max-height:158px!important;
+}
+body.mobile-device.climboria-landscape #world-map-panel.map-expanded #world-map,
+body.mobile-device #world-map-panel.map-expanded #world-map{
+  height:112px!important;
+  min-height:112px!important;
+  max-height:112px!important;
+}
+
 </style>
 </head>
 <body>
