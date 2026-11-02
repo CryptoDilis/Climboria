@@ -168,6 +168,7 @@ try {
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
   if(!desktopOrbit.heroBackFacing||!desktopOrbit.after.glb) errors.push('Desktop GLB hero is not visibly facing away from the player camera: '+JSON.stringify(desktopOrbit));
+  // Negative wheel deltas zoom in; positive deltas zoom out, matching the gameplay handler.
   const desktopZoom=await page.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,canvas=document.querySelector('canvas'),before=api?.targetDistance;
     canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120}));
