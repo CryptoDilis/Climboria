@@ -369,6 +369,19 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
+  // A touch on character-selection controls must not start gameplay behind the modal.
+  await mobile.locator('#character-create').click();
+  await mobile.locator('#character-create-panel [data-hero]').dispatchEvent('touchstart', { bubbles: true });
+  await mobile.locator('#character-create-panel [data-hero]').click();
+  const characterPickerTouch = await mobile.evaluate(() => ({
+    mode: window.__climboriaJarrellsPeak?.player?.mode,
+    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
+    titleInteractive: getComputedStyle(document.querySelector('#title')).pointerEvents !== 'none',
+  }));
+  if (characterPickerTouch.mode !== 'cine' || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
+    errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
+  }
+  await mobile.locator('#character-create-close').click();
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
     text: document.querySelector('#rotate-phone-overlay')?.innerText || '',
