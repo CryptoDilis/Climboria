@@ -13,7 +13,7 @@ import { chromium } from 'playwright';
     if (await creator.count() !== 1 || !(await creator.isVisible())) throw new Error('Mobile Hub Create Hero card is missing or hidden.');
     if (await creator.getAttribute('href') !== './character-lab.html') throw new Error('Mobile Create Hero route is incorrect.');
     await page.locator('.card[data-level="11"]').click();
-    await page.waitForURL(/play\\.html\\?level=11/);
+    await page.waitForURL(/play\.html\?level=11/);
     await page.waitForFunction(() => window.__climboriaGameReady === true
       && document.body.classList.contains('free')
       && window.__climboriaJarrellsPeak?.player?.mode === 'walk'
