@@ -162,30 +162,16 @@ try {
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   // Enter through the visible expedition title overlay used by players, then test keyboard movement.
-  const entryState = await page.evaluate(() => {
-    const title = document.getElementById('title');
-    if (!title || document.documentElement.dataset.climboriaReady !== 'true') {
-      throw new Error('Expedition entry overlay is not ready: ' + JSON.stringify({
-        title: !!title,
-        ready: document.documentElement.dataset.climboriaReady,
-        worldReady: window.__climboriaGameReady
-      }));
-    }
-    title.click();
-    const player = window.__climboriaJarrellsPeak?.player;
-    return {
-      ready: document.documentElement.dataset.climboriaReady,
-      titleDisplay: getComputedStyle(title).display,
-      titlePointerEvents: getComputedStyle(title).pointerEvents,
-      bodyClass: document.body.className,
-      playerMode: player?.mode,
-      musicState: document.documentElement.dataset.climboriaMusic || 'unset'
-    };
-  });
-  if (!entryState.bodyClass.split(/\\s+/).includes('free') || entryState.playerMode !== 'walk') {
-    throw new Error('Expedition overlay click did not enter gameplay: ' + JSON.stringify(entryState));
+  const title = page.locator('#title');
+  if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
+    throw new Error('Expedition entry overlay is not ready');
   }
-  await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', null, { timeout: 10000 });
+  // Use a real browser click path, forced only because cinematic overlays can temporarily disable pointer targeting.
+  await title.click({ force: true });
+  await page.waitForFunction(() => {
+    const player = window.__climboriaJarrellsPeak?.player;
+    return document.body.classList.contains('free') && player?.mode === 'walk';
+  }, null, { timeout: 10000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
