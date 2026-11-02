@@ -28,7 +28,7 @@ body.free [data-mobile-action]{display:grid!important;visibility:visible!importa
 
 @media(prefers-reduced-motion:reduce){.bar,#hud,#help{transition:none}}
 
-/* Keep gameplay-only overlays out of the expedition title/menu. */
+/* Keep gameplay-only overlays hidden until the saved hero takes control. */
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 
@@ -147,7 +147,7 @@ body.mobile-device.climboria-portrait #hud{visibility:hidden!important}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
 
-/* Final state gate: mobile orientation rules must never expose gameplay panels in the title menu. */
+/* Final state gate: gameplay panels appear only after hero takeover. */
 body:not(.free) #world-map-panel,
 body:not(.free).mobile-device.climboria-landscape #world-map-panel,
 body:not(.free) #expedition-settings-toggle,
@@ -943,7 +943,7 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
-// The title overlay is visual-only (the WebGL canvas sits above it); accept the actual player click on the canvas during the cinematic intro.
+// The cinematic intro is skipped; the saved hero is loaded automatically.
 
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
@@ -976,8 +976,6 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
-const titleOverlay=document.getElementById('title');
-function enterExpedition(e){if(e){e.preventDefault();e.stopPropagation()}return false}
 // Enter gameplay synchronously during the user gesture; fullscreen/orientation requests are secondary and must never block the player-state transition.
 
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
