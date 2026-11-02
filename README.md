@@ -1683,3 +1683,165 @@ For every integrated asset or borrowed technique, record:
 - [ ] Cave illumination needs an in-browser visual pass: current code has two torches, one orange point light, and crystal bounce lights; no visual test currently proves that the entire cave remains readable without washing out its dark atmosphere.
 - [ ] Before implementation, expand cave layout as a coherent navigable route with collision solids for walls/floors/traps, explicit underwater swim volume and exit, layered light sources, and deterministic smoke coverage for each branch. Do not claim these features are complete based on the existing 14 crystal clusters.
 - [x] Current verified baseline remains green on commit `6b1db3ec0bd34728358264696f831f36918f28b6`: Validate run 41452445827, Browser Smoke run 41452445961, Pages run 41452443966. Browser screenshots artifact 13146020853.
+
+
+---
+
+# DEX / TOKEN TERMINAL — EXPANDED PRODUCT REQUIREMENTS (2026-11-03)
+
+> This section expands and takes precedence over the shorter DEX feature list above. The target is a Climboria-native token discovery and trading terminal with feature parity in spirit with Pump.fun, DEX Screener, GeckoTerminal and FOMO. Implement original Climboria UX and integrations; do not copy proprietary code, branding, protected visual assets or private APIs.
+>
+> **Status: PLANNED / DESIGN ONLY.** Jarrell's Peak remains P0. This feature inventory is for product design and architecture preparation, not a claim that these features exist or are live.
+
+## A. Climboria DEX product vision
+- [ ] One unified destination for token discovery, project research, charts, market activity, trading, portfolio and launch lifecycle.
+- [ ] Climboria-branded premium interface using the official emblem, dark charcoal/obsidian surfaces, antique bronze/muted gold, compass geometry and mountain/topographic motifs.
+- [ ] Desktop multi-panel terminal and purpose-designed mobile layout.
+- [ ] Clear distinction between on-chain verified facts, third-party indexed data, derived analytics and user-submitted project metadata.
+- [ ] Every metric shows source and/or last updated time where relevant; stale/unavailable data is visibly labelled.
+- [ ] No fabricated chart candles, order book depth, holders, token age, volume, liquidity, market cap, creator identity, quote or transaction status.
+
+## B. Discovery / markets board (Pump.fun + DEX Screener + GeckoTerminal style)
+- [ ] Live new pairs / new pools feed.
+- [ ] New token launches and launchpad discovery feed.
+- [ ] Bonding-curve tokens and graduation/migration status where applicable.
+- [ ] Trending tokens, hot pairs, top gainers, top losers and most active.
+- [ ] Highest volume, highest liquidity, most buys, most sells, most transactions and largest price movement.
+- [ ] Recently created tokens with token age / pair age shown separately and accurately.
+- [ ] Search by token name, ticker, mint/contract address, pool/pair address and project/social handle.
+- [ ] Filters: chain, DEX/venue, quote asset, age, liquidity, volume, market cap/FDV, transaction count, price change and risk flags.
+- [ ] Sortable, configurable columns and saved filter presets.
+- [ ] Token watchlist/favourites, recently viewed and custom lists.
+- [ ] Trending/boosted/promoted labels must be clearly distinguished from organic ranking; disclose paid promotion.
+- [ ] Network-specific discovery: Solana first; add Base/EVM and other chains only after supported data/trading integrations.
+- [ ] Token and pair cards show price, price change, liquidity, volume, FDV/market cap, buys/sells, transaction count and pool age only when reliable source data exists.
+
+## C. Token detail / project research page
+- [ ] Token name, ticker, logo, verified mint/contract address, chain/network and token standard.
+- [ ] Copy contract/mint address and open the correct chain explorer.
+- [ ] Token creation timestamp and token age, with source and timezone; show pair/pool creation age separately.
+- [ ] Price in USD and quote asset, market cap, FDV, liquidity, 24h volume, transaction count, buys/sells and price changes across supported intervals.
+- [ ] Supply data: total, circulating and max supply only when independently sourced/defined; clearly label unknown or unverified fields.
+- [ ] Pool/pair list, venue, pool address, quote asset, liquidity and pool creation time.
+- [ ] Project description, category, tags, logo/banner and roadmap/project details where submitted and verified.
+- [ ] Official website, X/Twitter, Telegram, Discord and other project links.
+- [ ] Creator/deployer profile: creator wallet/address, linked public profile, other launched projects, creation timestamp and public on-chain activity where available.
+- [ ] Creator identity is not inferred from wallet address; distinguish verified team identity from an anonymous wallet.
+- [ ] Creator/team wallet holdings and concentration only where traceable; label heuristics and uncertainty.
+- [ ] Token holder count, top holders, concentration, holder changes and distribution; flag exchange, LP, burn and program wallets when reliably identified.
+- [ ] Contract/mint authority, freeze authority, mint authority, metadata mutability, LP/lock/burn status and token extensions where chain/token standard supports them.
+- [ ] Security/risk panel: honeypot/sell restrictions where detectable, token taxes, authority risks, liquidity risks, concentration, suspicious deployer patterns and third-party risk score with provider/source attribution.
+- [ ] Audit status and links only when a real audit report exists; never display an invented audit badge.
+- [ ] Project information update workflow with verification and abuse reporting.
+
+## D. Advanced charts and technical analysis (GeckoTerminal + FOMO style)
+- [ ] Professional candlestick, line, area and bar charts.
+- [ ] Timeframes from 1 minute through longer intervals only where source history supports them.
+- [ ] OHLCV history sourced from a documented provider or indexed on-chain data.
+- [ ] Volume bars, price/market-cap toggle, liquidity overlay and event markers.
+- [ ] Drawing tools and technical indicators when supported by the selected chart library/licence.
+- [ ] Chart crosshair, zoom, pan, reset, fullscreen and responsive mobile gestures.
+- [ ] Live trade markers for buys/sells, with transaction links and clear event timestamps.
+- [ ] Personal trade markers (user's own entries/exits) only after account/portfolio infrastructure exists.
+- [ ] Graduation, pool migration, liquidity changes and project announcements as annotated events.
+- [ ] Show chart source, pair/venue and last update; handle gaps and low-liquidity candles honestly.
+- [ ] Do not fabricate candles or interpolate misleading prices when the provider has no data.
+
+## E. Trading terminal / order entry
+- [ ] Buy and Sell panels with token amount, quote amount, balance, presets, Max and fee breakdown.
+- [ ] Real-time quote, route/venue, expected output, minimum received, price impact, slippage and quote expiry.
+- [ ] Wallet connect/disconnect and network switch; explicit user signature/confirmation for every on-chain action.
+- [ ] Solana first; Base/EVM later, with chain-specific transaction construction and validation.
+- [ ] Fast buy/sell presets and one-tap trade only after the user has configured and explicitly approved the flow.
+- [ ] Priority fee / transaction speed controls where supported, with clear cost disclosure.
+- [ ] Live trades tape: timestamp, side, price, amount, wallet/trader label only if public and accurately attributed, and transaction link.
+- [ ] **Order book distinction:** bonding curves and AMMs do not inherently have a traditional bid/ask order book. Show curve price/reserves, pool liquidity, swap tape and price impact for those venues. Display genuine bid/ask depth only for a venue with a real order-book feed.
+- [ ] Spot limit orders, stop-loss and take-profit only if supported by a secure on-chain program or reliable execution service; show trigger and execution semantics.
+- [ ] Order status, open orders, partial fills, cancel/replace and expiry only where the execution venue actually supports them.
+- [ ] Transaction simulation/preflight where supported; pending, confirmed, failed, rejected, expired and timed-out states.
+- [ ] Retry logic must not create duplicate transactions or duplicate purchases.
+- [ ] No silent signing, no hidden custody and no seed phrase/private-key collection.
+
+## F. Holder, wallet and trader intelligence (FOMO style)
+- [ ] Holder distribution table with wallet address, balance, percentage and known wallet labels.
+- [ ] Top holder concentration and changes over time.
+- [ ] Public wallet trade history and buy/sell activity.
+- [ ] Trader profile and leaderboard by time range, with methodology and anti-sybil caveats.
+- [ ] PnL, average entry, realized/unrealized PnL and holding time only when enough wallet transaction history exists; show calculation limitations.
+- [ ] Team/creator wallet flags only when supported by evidence; distinguish known labels from inferred clusters.
+- [ ] Live swap feed and optional chart overlays.
+- [ ] Watch/follow public wallets and receive activity alerts, subject to privacy and abuse controls.
+- [ ] No unsupported claims that a wallet belongs to a named person.
+
+## G. Portfolio, watchlists and alerts
+- [ ] Connected-wallet portfolio with token balances and valuation source/timestamp.
+- [ ] Position details, cost basis and PnL only when complete enough to calculate; disclose incomplete history.
+- [ ] Open orders and transaction history.
+- [ ] Watchlists, folders and pinned tokens.
+- [ ] Price, percentage-change, liquidity and volume alerts.
+- [ ] New-pair, graduation, liquidity-change and watched-wallet activity alerts.
+- [ ] In-app notifications first; optional browser/push/email only after account preferences and consent.
+- [ ] Alert deduplication, quiet hours, rate limits and user controls.
+
+## H. Launchpad / Pump.fun-style lifecycle (separate from ordinary DEX swaps)
+- [ ] Define whether Climboria will operate its own token launchpad, integrate an existing launchpad, or both; no decision implied by this checklist.
+- [ ] If own launchpad is approved: token creation form, name, ticker, metadata, image, description, website, X, Telegram, creator wallet and fee recipient.
+- [ ] Explicit token supply, decimals, authority, allocation, creator fee, platform fee and launch parameters before deployment.
+- [ ] Bonding curve design, quote calculation, slippage, curve progress and graduation threshold documented and independently reviewed.
+- [ ] Graduation/migration to a supported AMM pool with verified liquidity handling.
+- [ ] Creator dashboard for launch status, public project details and fee/volume analytics where available.
+- [ ] Anti-spam, impersonation, prohibited content, token impersonation and abuse review.
+- [ ] Clear risk disclosures: permissionless token launches can be scams; platform listing is not endorsement.
+- [ ] Testnet/devnet, transaction simulation, security review and legal/compliance review before any mainnet launch.
+- [ ] Do not advertise token creation as live until a real mint and transaction are confirmed on-chain.
+
+## I. Social and community layer
+- [ ] Project social links: website, X, Telegram, Discord and other verified links.
+- [ ] Creator profile with verified/claimed status and linked projects.
+- [ ] Community posts/updates or project feed, if moderation capacity exists.
+- [ ] Comments/reactions only with spam prevention, moderation, reporting and block/mute tools.
+- [ ] Search on X or open official project links without implying Climboria endorses the project.
+- [ ] Community takeover/ownership-claim workflow with proof of wallet control and anti-impersonation checks.
+
+## J. Admin, moderation, integrity and analytics
+- [ ] Admin review queue for reported projects, suspicious metadata and impersonation.
+- [ ] Clearly label verified project ownership, third-party data and community-submitted data separately.
+- [ ] Paid promotion/boost purchase and status disclosure, if offered; no pay-to-hide risk labels.
+- [ ] API health dashboard, provider quota/rate-limit monitoring, cache age and fallback status.
+- [ ] Data lineage for price, volume, liquidity, holder and security metrics.
+- [ ] Abuse controls, rate limits, bot detection and audit logs.
+- [ ] No private user data or API secrets in client bundles or GitHub commits.
+
+## K. Data providers, licensing and integration strategy
+- [ ] Evaluate Pump.fun documented programs/SDKs and supported public data for launchpad lifecycle; do not assume its bonding curve is a traditional order book.
+- [ ] Evaluate DEX Screener API for pair search, token profiles, pair/token metrics, boosts and paid-order status; check current rate limits, attribution/terms and production suitability.
+- [ ] Evaluate GeckoTerminal/CoinGecko API for pool discovery, OHLCV, liquidity, DEX rankings and token/pool data; check current rate limits, plan and licensing.
+- [ ] Evaluate FOMO as a feature benchmark for chart overlays, holder analysis, trader feed, thesis/social context, watchlists and alerts; do not assume its private backend/API is available.
+- [ ] Evaluate direct Solana RPC/indexer and venue-specific feeds for authoritative on-chain transaction and account state.
+- [ ] Use an internal normalized market-data schema so the UI is not tightly coupled to one provider.
+- [ ] Cache and deduplicate requests; respect provider quotas, attribution, terms and data licensing.
+- [ ] Use multiple sources for critical values where practical; detect stale or conflicting results and show uncertainty.
+- [ ] Define production SLA, rate-limit handling, retries, backoff, circuit breakers and graceful degradation.
+- [ ] Confirm whether charting library is open-source or requires a commercial licence before shipping.
+- [ ] Never scrape private endpoints or bypass provider access controls.
+
+## L. Climboria DEX implementation and acceptance gates
+- [ ] Product requirements and screen-by-screen wireframes approved.
+- [ ] Brand system and responsive high-fidelity designs approved.
+- [ ] Data-provider selection, API terms, quotas and cost model documented.
+- [ ] Solana market-data ingestion and normalized schema tested.
+- [ ] Token discovery, search and token detail pages pass data-integrity tests.
+- [ ] Charts verified against independent source and on-chain trades.
+- [ ] Wallet connection, signing, quote, swap and explorer verification tested on devnet.
+- [ ] Security/risk labels tested for false positives/false negatives and clearly qualified.
+- [ ] Portfolio/PnL math tested against known transaction histories.
+- [ ] Mainnet launch only after security review, confirmed official token identity, liquidity/venue validation and owner approval.
+- [ ] Base/EVM phase only after Solana production flow is stable and independently verified.
+
+## M. Reference feature research (not implementation evidence)
+- Pump.fun: launch lifecycle, bonding-curve trading, creator-fee concepts and graduation/migration to AMM. Reference: https://pump.fun/docs/bonding-curve and https://www.pumpdocs.fun/
+- DEX Screener: token profiles, latest community takeovers, paid-order status, pair search, token pairs, price, transactions, volume, price change, liquidity, FDV/market cap, pair creation time, website/social links and boosts. Reference: https://docs.dexscreener.com/api/reference
+- GeckoTerminal: real-time DEX prices, volume, transactions, liquidity, advanced charts, OHLCV, pool rankings, watchlists and API. Reference: https://www.geckoterminal.com/about-us and https://support.coingecko.com/articles/6867086195-does-geckoterminal-have-an-api
+- FOMO: discovery tables, watchlists, charts, trade overlays, holders, swaps, theses, trader feed, leaderboards, quick buy/sell, alerts and portfolio views. Reference: https://fomo.family/release-notes and https://fomotrading.app/terminal/
+- Research sources and capabilities can change. Re-check official docs and terms immediately before implementation.
+
