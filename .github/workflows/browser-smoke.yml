@@ -53,7 +53,7 @@ jobs:
           from pathlib import Path
           game = Path("game/play.html").read_text(encoding="utf-8")
           mobile = Path(".github/scripts/mobile-reentry-smoke.mjs").read_text(encoding="utf-8")
-          required_game = ["id=" + chr(34) + "player-card" + chr(34), "function activateSelectedHero()", "ready=true;activateSelectedHero()"]
+          required_game = ["id=" + chr(34) + "player-card" + chr(34), "async function initChunks()", "function checkAllReady()", "function takeOver()"]
           required_test = ["#menuCreateHero", "noHeroMenu", "noGenerating"]
           missing = [item for item in required_game if item not in game] + [item for item in required_test if item not in mobile]
           if missing:
