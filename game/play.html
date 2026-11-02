@@ -418,7 +418,7 @@ const mats={};const M=(hex,e)=>{const k=hex+(e?'e':'');return mats[k]||(mats[k]=
 const BOX=new T3.BoxGeometry(1,1,1),CYL=new T3.CylinderGeometry(1,1,1,14),SPH=new T3.SphereGeometry(1,14,10),CON=new T3.ConeGeometry(1,1,10),DOD=new T3.DodecahedronGeometry(1,0);
 const mk=(g,m,x,y,z,p)=>{const o=new T3.Mesh(g,m);o.position.set(x,y,z);p&&p.add(o);return o};
 const sc=(o,x,y,z)=>{o.scale.set(x,y,z);return o};
-const lights=[],flames=[],wavingFlags=[];
+const lights=[],flames=[],wavingFlags=[],sanctuaryFlagMeshes=[];
 function torch(x,y,z,p){const f=sc(mk(CON,M('#ff9a2e',1),x,y+2.2,z,p),.35,.9,.35);sc(mk(CYL,M('#4a3322'),x,y+1,z,p),.12,2,.12);flames.push(f);return f}
 function glow(color,i,d,x,y,z,p){const l=new T3.PointLight(L(color),i,d,2);l.position.set(x,y,z);(p||scene).add(l);lights.push(l);return l}
 /* Sanctuary */
@@ -431,15 +431,15 @@ let crystal;{
   const stripes=(a,v=false)=>a.forEach((z,i)=>{x.fillStyle=z;x.fillRect(v?i*192/a.length:0,v?0:i*128/a.length,v?193:192,v?128:129)});
   if(country==='Philippines'){stripes(['#0038a8','#ce1126']);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(76,64);x.lineTo(0,128);x.closePath();x.fill();x.fillStyle='#fcd116';x.beginPath();x.arc(25,64,10,0,Math.PI*2);x.fill();const star=(cx,cy,r)=>{x.beginPath();for(let j=0;j<10;j++){const a=-Math.PI/2+j*Math.PI/5,rr=j%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fill()};star(12,15,7);star(12,113,7);star(68,64,7)}
   else if(country==='Japan'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#bc002d';x.beginPath();x.arc(96,64,29,0,7);x.fill()}
-  else if(country==='South Korea'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#cd2e3a';x.beginPath();x.arc(96,64,28,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(96,64,28,0,Math.PI);x.fill()}
-  else if(country==='United States'){stripes(['#b22234','#fff','#b22234','#fff','#b22234','#fff','#b22234']);x.fillStyle='#3c3b6e';x.fillRect(0,0,82,69)}
-  else if(country==='Canada'){stripes(['#d80621','#fff','#d80621'],true);x.fillStyle='#d80621';x.fillRect(89,38,14,55)}
-  else if(country==='United Kingdom'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.strokeStyle='#fff';x.lineWidth=25;x.beginPath();x.moveTo(0,0);x.lineTo(192,128);x.moveTo(192,0);x.lineTo(0,128);x.stroke();x.fillStyle='#c8102e';x.fillRect(82,0,28,128);x.fillRect(0,50,192,28)}
-  else if(country==='Australia'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.fillStyle='#fff';[[135,30],[158,73],[111,92],[174,106],[128,112]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,5,0,7);x.fill()})}
+  else if(country==='South Korea'){x.fillStyle='#fff';x.fillRect(0,0,192,128);x.fillStyle='#cd2e3a';x.beginPath();x.arc(96,64,26,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(96,64,26,0,Math.PI);x.fill();x.fillStyle='#cd2e3a';x.beginPath();x.arc(96,51,13,0,7);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(96,77,13,0,7);x.fill();const trigram=(cx,cy,brokenBars)=>{x.save();x.translate(cx,cy);x.rotate(-.42);x.fillStyle='#111';for(let i=0;i<3;i++){const yy=(i-1)*8;if(brokenBars[i]){x.fillRect(-18,yy,14,4);x.fillRect(4,yy,14,4)}else x.fillRect(-18,yy,36,4)}x.restore()};trigram(35,30,[false,false,false]);trigram(157,30,[false,true,false]);trigram(35,98,[true,false,true]);trigram(157,98,[true,true,true])}
+  else if(country==='United States'){stripes(Array.from({length:13},(_,i)=>i%2?'#fff':'#b22234'));x.fillStyle='#3c3b6e';x.fillRect(0,0,82,70);x.fillStyle='#fff';for(let row=0;row<9;row++){const count=row%2?5:6;for(let col=0;col<count;col++){const cx=5+col*13+(row%2?6.5:0),cy=4+row*7.7;x.beginPath();for(let k=0;k<10;k++){const angle=-Math.PI/2+k*Math.PI/5,r=k%2?1.5:3.4;x.lineTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r)}x.closePath();x.fill()}}}
+  else if(country==='Canada'){stripes(['#d80621','#fff','#d80621'],true);x.fillStyle='#d80621';x.beginPath();[[96,31],[102,47],[114,42],[109,55],[124,56],[110,65],[117,78],[102,73],[102,94],[90,94],[90,73],[75,78],[82,65],[68,56],[83,55],[78,42],[90,47]].forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.fill()}
+  else if(country==='United Kingdom'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.strokeStyle='#fff';x.lineWidth=38;x.beginPath();x.moveTo(0,0);x.lineTo(192,128);x.moveTo(192,0);x.lineTo(0,128);x.stroke();x.strokeStyle='#c8102e';x.lineWidth=16;x.beginPath();x.moveTo(0,0);x.lineTo(192,128);x.moveTo(192,0);x.lineTo(0,128);x.stroke();x.fillStyle='#fff';x.fillRect(76,0,40,128);x.fillRect(0,44,192,40);x.fillStyle='#c8102e';x.fillRect(84,0,24,128);x.fillRect(0,52,192,24)}
+  else if(country==='Australia'){x.fillStyle='#012169';x.fillRect(0,0,192,128);x.save();x.beginPath();x.rect(0,0,96,64);x.clip();x.strokeStyle='#fff';x.lineWidth=20;x.beginPath();x.moveTo(0,0);x.lineTo(96,64);x.moveTo(96,0);x.lineTo(0,64);x.stroke();x.strokeStyle='#c8102e';x.lineWidth=8;x.beginPath();x.moveTo(0,0);x.lineTo(96,64);x.moveTo(96,0);x.lineTo(0,64);x.stroke();x.fillStyle='#fff';x.fillRect(39,0,18,64);x.fillRect(0,23,96,18);x.fillStyle='#c8102e';x.fillRect(44,0,8,64);x.fillRect(0,28,96,8);x.restore();const star=(cx,cy,r)=>{x.fillStyle='#fff';x.beginPath();for(let k=0;k<10;k++){const angle=-Math.PI/2+k*Math.PI/5,rr=k%2?r*.42:r;x.lineTo(cx+Math.cos(angle)*rr,cy+Math.sin(angle)*rr)}x.closePath();x.fill()};star(145,29,10);[[109,79],[147,70],[164,89],[140,107],[171,110]].forEach(([a,b])=>star(a,b,6))}
   else if(country==='Brazil'){x.fillStyle='#009739';x.fillRect(0,0,192,128);x.fillStyle='#ffdf00';x.beginPath();x.moveTo(96,17);x.lineTo(174,64);x.lineTo(96,111);x.lineTo(18,64);x.fill();x.fillStyle='#002776';x.beginPath();x.arc(96,64,27,0,7);x.fill()}
   else if(country==='Germany')stripes(['#000','#dd0000','#ffce00']);
   else if(country==='France')stripes(['#0055a4','#fff','#ef4135'],true);
-  else if(country==='India')stripes(['#ff9933','#fff','#138808']);
+  else if(country==='India'){stripes(['#ff9933','#fff','#138808']);x.strokeStyle='#000080';x.lineWidth=2.2;x.beginPath();x.arc(96,64,16,0,Math.PI*2);x.stroke();for(let i=0;i<24;i++){const angle=i*Math.PI/12;x.beginPath();x.moveTo(96,64);x.lineTo(96+Math.cos(angle)*16,64+Math.sin(angle)*16);x.stroke()}}
   else stripes(['#ce1126','#fff']);
   const t=new T3.CanvasTexture(c);return new T3.MeshBasicMaterial({map:t,side:T3.DoubleSide});
  }
@@ -447,7 +447,7 @@ let crystal;{
   const H=i%5==3?4:9;sc(mk(CYL,M('#c9c3b2'),0,H/2,0,pg),1.1,H,1.1);sc(mk(BOX,M('#b5af9f'),0,H+.3,0,pg),2.6,.6,2.6);
   if(i%5!=3)sc(mk(SPH,M('#7fe9ff',1),0,H+1.2,0,pg),.5,.5,.5) 
   const poleH=3.2,pole=mk(CYL,M('#8b8170'),.12,H+.3+poleH/2,0,pg);sc(pole,.055,poleH,.055);
-  const fg=new T3.PlaneGeometry(2.25,1.5,18,12),fm=mk(fg,nationalFlag(flagCountries[i]),1.27,H+.3+poleH-.12,0,pg);fm.rotation.y=-.12;wavingFlags.push({geometry:fg,base:fg.attributes.position.array.slice(),phase:i*.73})
+  const fg=new T3.PlaneGeometry(2.25,1.5,18,12),fm=mk(fg,nationalFlag(flagCountries[i]),1.27,H+.3+poleH-.12,0,pg);fm.rotation.y=-.12;wavingFlags.push({geometry:fg,base:fg.attributes.position.array.slice(),phase:i*.73});sanctuaryFlagMeshes.push({country:flagCountries[i],mesh:fm,pillar:pg,pole})
  }
  crystal=sc(mk(new T3.OctahedronGeometry(1),M('#7fe9ff',1),0,6,0,g),2,3,2);
  glow('#7fe9ff',2.5,90,0,7,0,g);
@@ -1128,7 +1128,7 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
