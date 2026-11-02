@@ -381,12 +381,18 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
+  // Playwright changes the CSS viewport but does not rotate the emulated device.
+  // Re-fire the same browser events used by the game's orientation handler.
+  await mobile.evaluate(() => {
+    window.dispatchEvent(new Event('orientationchange'));
+    window.dispatchEvent(new Event('resize'));
+  });
   await mobile.waitForFunction(() => {
     const overlay=document.querySelector('#rotate-phone-overlay');
     const map=document.querySelector('#world-map-panel');
     const body=document.body;
     return body.classList.contains('climboria-landscape') && getComputedStyle(overlay).display==='none' && getComputedStyle(map).display!=='none' && getComputedStyle(map).visibility!=='hidden';
-  }, { timeout: 5000 });
+  }, undefined, { timeout: 10000 });
   const landscapeGate = await mobile.evaluate(() => ({
     hidden: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none',
     mapVisible: getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
