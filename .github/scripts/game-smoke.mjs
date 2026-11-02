@@ -162,7 +162,17 @@ try {
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
   // Enter through the visible expedition title overlay used by players, then test keyboard movement.
-  await page.locator('#title').dispatchEvent('click');
+  await page.evaluate(() => {
+    const title = document.getElementById('title');
+    if (!title || document.documentElement.dataset.climboriaReady !== 'true') {
+      throw new Error('Expedition entry overlay is not ready: ' + JSON.stringify({
+        title: !!title,
+        ready: document.documentElement.dataset.climboriaReady,
+        worldReady: window.__climboriaGameReady
+      }));
+    }
+    title.click();
+  });
   await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
