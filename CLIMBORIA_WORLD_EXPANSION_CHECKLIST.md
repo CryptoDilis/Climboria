@@ -527,3 +527,12 @@ For each meaningful implementation batch:
 - [ ] Source free cave assets only after verifying license, attribution, file format, polygon/texture cost, scale, and collision suitability; record provenance in ASSET_SOURCES.md.
 - [ ] Add deterministic smoke diagnostics for cave length/branches, lighting visibility, trap collision, underwater clearance, rest areas, and reward odds; perform manual desktop and Redmi 14 5G visual/playability checks.
 - [ ] Do not mark cave expansion complete until assets, runtime behavior, collision, lighting, reward funding, and workflow evidence are all verified.
+
+
+## 2026-11-02 — cave mineral glow pass (implementation in progress)
+
+- [x] Add 14 faceted mineral clusters across the current cave chamber using emerald, sapphire, amethyst, and warm-gold palettes.
+- [x] Add restrained local point lights and subtle animated emissive/vertical shimmer; expose cluster records through world diagnostics.
+- [ ] Browser smoke must confirm all 14 clusters and three facets per cluster; visual readability, wall attachment, lighting balance, and mobile performance remain unverified.
+- [ ] This is cave dressing only: the cave is still the existing compact room, not yet the requested long maze/underwater network. Hostile cave creature remains deferred; global wildlife/snakes stay disabled.
+- Code commits: abbd6522a7dd6f6a919ac7a3bcb7b41b93bc30dc; 57180bfb680aca26ec79917668fba5e636ecd3c7.
