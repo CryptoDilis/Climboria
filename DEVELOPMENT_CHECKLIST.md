@@ -1,3 +1,19 @@
+## 2026-11-03 — restore main hub and saved-hero expedition architecture (verification in progress)
+
+- [x] Inspected recent history and recovered the prior root transition defect: the GLB success callback referenced `record` outside its loader scope, throwing before gameplay entry. It now captures and rechecks the requested hero.
+- [x] Keep homepage PLAY routed to the existing four-card game hub and add Create Hero as a distinct destination.
+- [x] Replace the explorer popup with saved-hero selection inside Jarrell’s Peak’s expedition menu; retain Back to Game Hub and return-to-expedition-menu paths.
+- [x] Add a separate full-body 3D creator for the original `Climboria_Hero.glb`, with rotate/zoom, hero naming, local save/load, and recorded model capability audit.
+- [x] Browser inspection of the original GLB reported one skinned mesh (`Mesh0`), one baked material (`BakedMaterial`), 27 bones, 19 animation clips, and zero morph targets. No independent skin/hair/eye/outfit/accessory materials or mesh variants exist, so no unsupported cosmetic selectors are exposed.
+- [x] Extend browser coverage for homepage → hub → creator → save/reload → saved hero → Sanctuary entry, movement, desktop/mobile menu return, delayed/failed asset loading, model audit, and creator camera drag/zoom.
+- [x] Preserve map content; terrain, mountain, cave, water, environment, collision, and placement code is not changed in this PR.
+- [ ] Fix the current Browser Smoke findings (Enter label remains “PREPARING EXPEDITION…” after boot; visibility assertions run during the title/HUD fade transition), then rerun Browser Smoke and Validate on the same head.
+- [ ] Appearance customization beyond name/save/load remains blocked by the original single baked mesh/material and lack of morph targets. Authoring modular model variants or a separated texture/mesh asset is required before exposing skin, hair, eyes, facial, outfit, or accessory controls.
+- [ ] Manually inspect desktop and a physical Android phone in landscape, including preview framing and full-screen/orientation behavior; browser emulation is not physical-device acceptance.
+- [ ] After checks are green, refresh the PR against current `main`, update this entry with exact run IDs, and complete integration/deployment review.
+
+---
+
 ## 2026-11-02 — first connected cave side room
 
 - [x] Previous torch-cleanup baseline fully passed: Validate `41457459263`, Browser Smoke `41457459268`, Pages deployment `41457544768` (commit `e3d995e5333cd64d29e68a6dabdcb79ec42019a8`).
