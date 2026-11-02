@@ -17,8 +17,18 @@ import { chromium } from 'playwright';
     const creator = page.locator('#menuCreateHero');
     if (await creator.count() !== 1 || !(await creator.isVisible())) throw new Error('Mobile Hub Create Hero card is missing or hidden.');
     if (await creator.getAttribute('href') !== './character-lab.html') throw new Error('Mobile Create Hero route is incorrect.');
-    await page.locator('.card[data-level="11"]').click();
-    await page.waitForURL(/play\.html\?level=11/);
+    await Promise.all([
+      page.waitForURL(/character-lab\.html/),
+      creator.click()
+    ]);
+    if (!page.url().includes('/game/character-lab.html')) throw new Error('Create Hero did not open the existing character lab.');
+    await page.goto('http://127.0.0.1:4173/game/index.html', { waitUntil: 'domcontentloaded' });
+    const jarrell = page.locator('a.card[data-level="11"][href="./play.html?level=11"]');
+    if (await jarrell.count() !== 1 || !(await jarrell.isVisible())) throw new Error('Jarrell’s Peak destination anchor is missing or hidden.');
+    await Promise.all([
+      page.waitForURL(/play\.html\?level=11/),
+      jarrell.click()
+    ]);
     await page.waitForFunction(() => window.__climboriaGameReady === true
       && document.body.classList.contains('free')
       && document.body.classList.contains('climboria-landscape')
