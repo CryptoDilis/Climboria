@@ -177,6 +177,17 @@ try {
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
   if(!desktopOrbit.heroBackFacing||!desktopOrbit.after.glb) errors.push('Desktop GLB hero is not visibly facing away from the player camera: '+JSON.stringify(desktopOrbit));
+  // Negative wheel deltas zoom in; positive deltas zoom out, matching the gameplay handler.
+  const desktopZoom=await page.evaluate(()=>{
+    const api=window.__climboriaCameraOrbit,canvas=document.querySelector('canvas'),before=api?.targetDistance;
+    canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120}));
+    const zoomIn=api?.targetDistance;
+    canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:120}));
+    const zoomOut=api?.targetDistance;
+    return {before,zoomIn,zoomOut};
+  });
+  if(!(desktopZoom.zoomIn<desktopZoom.before&&desktopZoom.zoomOut>desktopZoom.zoomIn))errors.push('Desktop mouse-wheel zoom did not move camera distance in both directions: '+JSON.stringify(desktopZoom));
+
   const headingBeforeMove=await page.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
   await page.keyboard.down('w');
   await page.waitForTimeout(350);
@@ -329,6 +340,22 @@ try {
   });
   if(!mobileOrbit.before||Math.abs(mobileOrbit.after.camera-mobileOrbit.before.camera)<.05||Math.abs(mobileOrbit.after.player-mobileOrbit.before.player)>.001) errors.push('Mobile camera drag rotated the hero or failed to rotate independently: '+JSON.stringify(mobileOrbit));
   if(!mobileOrbit.heroBackFacing||!mobileOrbit.after.glb) errors.push('Mobile GLB hero is not visibly facing away from the player camera: '+JSON.stringify(mobileOrbit));
+  const mobilePinchZoom=await mobile.evaluate(()=>{
+    const api=window.__climboriaCameraOrbit,target=document.body;
+    const touch=(identifier,x,y)=>new Touch({identifier,target,clientX:x,clientY:y});
+    const startA=touch(92,150,180),startB=touch(93,250,180),before=api?.targetDistance;
+    window.dispatchEvent(new TouchEvent('touchstart',{bubbles:true,changedTouches:[startA,startB],touches:[startA,startB]}));
+    const wideA=touch(92,130,180),wideB=touch(93,270,180);
+    window.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,changedTouches:[wideA,wideB],touches:[wideA,wideB]}));
+    const zoomIn=api?.targetDistance;
+    const narrowA=touch(92,190,180),narrowB=touch(93,230,180);
+    window.dispatchEvent(new TouchEvent('touchmove',{bubbles:true,changedTouches:[narrowA,narrowB],touches:[narrowA,narrowB]}));
+    const zoomOut=api?.targetDistance;
+    window.dispatchEvent(new TouchEvent('touchend',{bubbles:true,changedTouches:[narrowA,narrowB],touches:[]}));
+    return {before,zoomIn,zoomOut};
+  });
+  if(!(mobilePinchZoom.zoomIn<mobilePinchZoom.before&&mobilePinchZoom.zoomOut>mobilePinchZoom.zoomIn))errors.push('Mobile two-finger pinch did not zoom camera in and out: '+JSON.stringify(mobilePinchZoom));
+
   const mobileHeadingBeforeMove=await mobile.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
   await mobile.keyboard.down('w');
   await mobile.waitForFunction(()=>{const api=window.__climboriaCameraOrbit;if(!api)return false;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return Math.abs(delta)<.08;},{timeout:2000}).catch(()=>{});
