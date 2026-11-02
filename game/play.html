@@ -561,7 +561,12 @@ const spikes=[],caveGems=[];let caveG;
  sc(mk(SPH,new T3.MeshBasicMaterial({color:0x000000}),0,0,-10,g),10,10,8);
  sc(mk(BOX,M('#5c574d'),0,11.5,-1,g),26,3,6);
  [-12,12].forEach(x=>{sc(mk(DOD,M('#5c574d'),x,4.5,-2,g),5,6,5);torch(x*.8,0,6,g)});
- glow('#ff8a3a',2.6,60,0,5,6,g);
+ // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
+ const caveTorches=[];
+ [-12,12].forEach(x=>caveTorches.push(torch(x,0,6,g)));
+ [[-27,-16],[27,-16],[-27,31],[27,31]].forEach(([x,z])=>caveTorches.push(torch(x,0,z,g)));
+ glow('#ff8a3a',3.4,76,0,5,6,g);
+ [[-25,3,-16],[25,3,-16],[-25,3,31],[25,3,31]].forEach(([x,y,z])=>glow('#ffad55',2.2,38,x,y,z,g));
  for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,-3.2,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
  for(let j=0;j<5;j++)for(let i=0;i<7;i++){
   const s=sc(mk(CON,M('#9a9ca4'),-9+i*3,-2,10+j*5,g),.45,2.6,.45);spikes.push({s,ph:(i+j*1.7)*.55});
@@ -1179,7 +1184,7 @@ function auditCollisionSolids(){
  const percentile=p=>radii.length?radii[Math.min(radii.length-1,Math.floor((radii.length-1)*p))]:null;
  return {count:solids.length,invalid,minRadius:Number.isFinite(minRadius)?minRadius:null,maxRadius,radiusP50:percentile(.5),radiusP90:percentile(.9),large,waterOverlaps};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
