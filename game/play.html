@@ -24,7 +24,7 @@ body.free #help{opacity:.8}
 #title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
 #title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
 #character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
-#character-create-panel{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:22px;background:#080d14f2;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui}
+body.character-panel-open::before{content:"";position:fixed;inset:0;z-index:9998;background:rgba(3,7,12,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:auto}\nbody.character-panel-open #title{opacity:0!important;visibility:hidden!important;pointer-events:none!important}\n#character-create-panel{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:#080d14;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui;overscroll-behavior:contain}
 #character-create-panel strong{letter-spacing:.14em}
 .character-options{display:grid;grid-template-columns:1fr;gap:10px;margin:18px 0}
 .character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
@@ -788,9 +788,9 @@ function loadAssetHero(choice='Adventurer'){
 }
 const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const validHero=v=>Object.prototype.hasOwnProperty.call(assetChoices,v);const initialHero=validHero(requestedHero)?requestedHero:validHero(savedHero)?savedHero:'Adventurer';loadAssetHero(initialHero);
 const createPanel=document.getElementById('character-create-panel');
-document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
-document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
-if(new URLSearchParams(location.search).get('create')==='1')createPanel.style.display='block';
+document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block';document.body.classList.add('character-panel-open')});
+document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none';document.body.classList.remove('character-panel-open')});
+if(new URLSearchParams(location.search).get('create')==='1'){createPanel.style.display='block';document.body.classList.add('character-panel-open')}
 createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+('Climboria Hero')+'…';loadAssetHero(choice)}));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
@@ -836,7 +836,7 @@ document.getElementById('back-to-expedition-menu').addEventListener('click',()=>
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Entering gameplay must dismiss the character picker even if its large GLB request is still pending.
  const characterPanel=document.getElementById('character-create-panel');
- if(characterPanel)characterPanel.style.display='none';
+ if(characterPanel){characterPanel.style.display='none';document.body.classList.remove('character-panel-open')}
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
