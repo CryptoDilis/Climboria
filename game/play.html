@@ -9,7 +9,7 @@
 :root{color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;min-height:100dvh;background:#05070d;overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#f4ecd8}
-canvas{display:block;position:fixed;inset:0;width:100%;height:100%;height:100dvh}
+canvas{display:block;position:fixed;inset:0;width:100vw!important;height:100dvh!important;max-width:none}
 .vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55))}
 .bar{display:none!important}
 #bt{top:0}#bb{bottom:0}
@@ -244,7 +244,7 @@ const cam=new T3.PerspectiveCamera(68,innerWidth/innerHeight,.5,1800);cam.rotati
 const terrainCameraTarget=new T3.Vector3(),terrainCameraDesired=new T3.Vector3(),terrainCameraFinal=new T3.Vector3();
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
-const resizeClimboriaViewport=()=>{const w=Math.max(1,document.documentElement.clientWidth||innerWidth),h=Math.max(1,document.documentElement.clientHeight||innerHeight);renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};addEventListener('resize',resizeClimboriaViewport);window.visualViewport?.addEventListener('resize',resizeClimboriaViewport);
+const resizeClimboriaViewport=()=>{const w=Math.max(1,innerWidth,document.documentElement.clientWidth||0,window.visualViewport?.width||0),h=Math.max(1,innerHeight,document.documentElement.clientHeight||0,window.visualViewport?.height||0);renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();renderer.domElement.style.width='100vw';renderer.domElement.style.height='100dvh'};addEventListener('resize',resizeClimboriaViewport);window.visualViewport?.addEventListener('resize',resizeClimboriaViewport);screen.orientation?.addEventListener?.('change',resizeClimboriaViewport);
 /* ---------- time of day ---------- */
 const TOD=[
  {n:'Golden hour',el:.17,az:2.2,top:'#3d6fa8',hor:'#e8b890',sun:'#ffc880',si:2.2,hi:.55,nt:0},
