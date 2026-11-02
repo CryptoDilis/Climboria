@@ -1,3 +1,14 @@
+## 2026-11-02 — cave torch layout cleanup
+
+- [x] Confirmed the previous cave lighting increment passed all three workflows on `04359cfaf18300d2c9ee687f1b1d507fcd75472c`: Validate run `41456705602`, Browser Smoke run `41456705668`, Pages deployment run `41456705664`.
+- [x] Removed two duplicate torch props that overlapped the two central pillar torches. The cave now has exactly six authored torch fixtures: two central and four perimeter.
+- [x] Tightened browser smoke to require exactly six torch fixtures, at least five cave-local point lights, and finite fixture positions.
+- [ ] Awaiting all workflows for cleanup commits `00a7fed7b6ba1a9d49400d5bac30322a94fa2e0b` and `e3d995e5333cd64d29e68a6dabdcb79ec42019a8`; do not mark green until Validate, Browser Smoke, and Pages all succeed.
+- [ ] Full cave expansion remains open: current cave is a single chamber with traps and a chest; no verified connected maze, branch corridors, underwater route, or hidden reward rooms. Do not reuse older historical tunnel/viper checklist claims as current functionality.
+- [ ] Next implementation: build a bounded multi-room cave using a dedicated walkable floor/ceiling/wall layout and movement collision that is tested against the player's actual grounding and collision path. Do not fake tunnels with decorative meshes or large circular blockers.
+
+---
+
 ## 2026-11-02 — cave lighting increment and source-of-truth audit
 
 - [x] Re-audited current `main` source against the older 2026-11-01 cave passage/viper verification entry. The older entry refers to commit `d78ea96fa730335a9610d5eaf9ed05a6e9f833c0`; those four passage segments, eight side-wall colliders, and three cave vipers are not present in the current `game/play.html`. Treat that entry as historical evidence only, not current feature status.
