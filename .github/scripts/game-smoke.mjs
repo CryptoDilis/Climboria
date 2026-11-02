@@ -171,11 +171,10 @@ try {
   if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
     throw new Error('Expedition entry overlay is not ready');
   }
-  // The canvas is the top hit target over the visual-only title overlay; use a trusted click at its center, matching the actual player surface.
-  const gameCanvas=page.locator('canvas').first();
-  const canvasBox=await gameCanvas.boundingBox();
-  if(!canvasBox) throw new Error('Game canvas has no visible bounding box');
-  await gameCanvas.click({position:{x:Math.floor(canvasBox.width/2),y:Math.floor(canvasBox.height/2)}});
+  // The title overlay intentionally receives the entry gesture; clicking the canvas is intercepted by its visible prompt.
+  const titleBox=await title.boundingBox();
+  if(!titleBox) throw new Error('Expedition title overlay has no visible bounding box');
+  await title.click({position:{x:Math.floor(titleBox.width/2),y:Math.floor(titleBox.height/2)}});
   await page.waitForFunction(() => {
     const player = window.__climboriaJarrellsPeak?.player;
     return document.body.classList.contains('free') && player?.mode === 'walk';
