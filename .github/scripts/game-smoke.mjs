@@ -369,19 +369,7 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
-  // A touch on character-selection controls must not start gameplay behind the modal.
-  await mobile.locator('#character-create').click();
-  await mobile.locator('#character-create-panel [data-hero]').dispatchEvent('touchstart', { bubbles: true });
-  await mobile.locator('#character-create-panel [data-hero]').click();
-  const characterPickerTouch = await mobile.evaluate(() => ({
-    mode: window.__climboriaJarrellsPeak?.player?.mode,
-    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-    titleInteractive: getComputedStyle(document.querySelector('#title')).pointerEvents !== 'none',
-  }));
-  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
-    errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
-  }
-  await mobile.locator('#character-create-close').click();
+  // Keep portrait launch covered by its dedicated gate test; then expose the title UI in landscape.
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
     text: document.querySelector('#rotate-phone-overlay')?.innerText || '',
@@ -394,6 +382,25 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
+  await mobile.evaluate(() => {
+    document.body.classList.remove('free', 'climboria-portrait');
+    document.body.classList.add('climboria-landscape');
+    window.dispatchEvent(new Event('resize'));
+  });
+  await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
+  // Touch on character-selection controls must not start gameplay behind the modal.
+  await mobile.locator('#character-create').click();
+  await mobile.locator('#character-create-panel [data-hero]').dispatchEvent('touchstart', { bubbles: true });
+  await mobile.locator('#character-create-panel [data-hero]').click();
+  const characterPickerTouch = await mobile.evaluate(() => ({
+    gameplayActive: document.body.classList.contains('free'),
+    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
+    titleInteractive: getComputedStyle(document.querySelector('#title')).pointerEvents !== 'none',
+  }));
+  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
+    errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
+  }
+  await mobile.locator('#character-create-close').click();
   // Apply the landscape state directly: Playwright emulates viewport dimensions,
   // not the Android device's physical Screen Orientation API.
   await mobile.evaluate(() => {
