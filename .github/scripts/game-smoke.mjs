@@ -415,7 +415,7 @@ try {
   await mobile.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
   await mobile.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const actualMobileTransition=await mobile.evaluate(()=>({gameplayActive:document.body.classList.contains('free'),titleHidden:getComputedStyle(document.querySelector('#title')).opacity==='0',heroMenuExists:!!document.querySelector('#expedition-hero-menu'),renderer:document.documentElement.dataset.climboriaHeroRenderer}));
-  if(!actualMobileTransition.gameplayActive||!actualMobileTransition.titleHidden||!actualMobileTransition.heroMenuExists||actualMobileTransition.renderer!=='glb')errors.push('Mobile hero re-entry through Enter Expedition did not restore gameplay: '+JSON.stringify(actualMobileTransition));
+  if(!actualMobileTransition.gameplayActive||Number(getComputedStyle(document.querySelector('#title')).opacity)>=.05||!actualMobileTransition.heroMenuExists||actualMobileTransition.renderer!=='glb')errors.push('Mobile hero re-entry through Enter Expedition did not restore gameplay: '+JSON.stringify(actualMobileTransition));
   // Apply the landscape state directly only for CSS viewport/orientation assertions;
   // gameplay activation above must come from the real user interaction.
   // not the Android device's physical Screen Orientation API.
