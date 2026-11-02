@@ -61,12 +61,12 @@ const orbit=new OrbitControls(camera,canvas);orbit.target.set(0,1,0);orbit.enabl
 let root=null,mixer=null,active=null,clock=new THREE.Clock(),record=D.defaultHero(),appearance=D.emptyAppearance(),capabilities=null,modelRevision=0;
 function setStatus(text){status.textContent=text}
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();
-function fit(){if(!root)return;root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),height=Math.max(size.y,.2);root.position.x-=center.x;root.position.z-=center.z;root.position.y-=box.min.y;const distance=height*2.35;camera.position.set(0,height*.72,distance);camera.near=Math.max(.01,height/1000);camera.far=height*100;camera.updateProjectionMatrix();orbit.target.set(0,height*.52,0);orbit.minDistance=height*.75;orbit.maxDistance=height*6;orbit.update()}
+function fit(){if(!root)return;root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),height=Math.max(size.y,.2);document.documentElement.dataset.heroModelHeight=String(size.y);root.position.x-=center.x;root.position.z-=center.z;root.position.y-=box.min.y;const distance=height*2.35;camera.position.set(0,height*.72,distance);camera.near=Math.max(.01,height/1000);camera.far=height*100;camera.updateProjectionMatrix();orbit.target.set(0,height*.52,0);orbit.minDistance=height*.75;orbit.maxDistance=height*6;orbit.update()}
 function addSelect(parent,label,options,value,onChange){
  const wrap=document.createElement('div');wrap.className='dynamic-field';const lab=document.createElement('label');lab.textContent=label;const select=document.createElement('select');options.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;select.append(opt)});select.value=value;select.addEventListener('change',()=>onChange(select.value));wrap.append(lab,select);parent.append(wrap);return select
 }
 function addFieldset(title){const field=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=title;field.append(legend);controlsHost.append(field);return field}
-function installCapabilities(info){
+function installCapabilities(info){document.documentElement.dataset.heroCreatorCapabilities=JSON.stringify(info.capabilities);document.documentElement.dataset.heroCreatorReady='true';
  controlsHost.replaceChildren();const c=info.capabilities,o=info.options;
  const colors=['original','black','brown','auburn','blond','silver','blue','green','hazel'].map(v=>({value:v,label:v==='original'?'Original':v[0].toUpperCase()+v.slice(1)}));
  let visible=0;
@@ -87,7 +87,7 @@ async function loadRecord(next){
  setStatus('Loading '+next.name+'…');saveButton.disabled=true;
  try{
   const gltf=await new GLTFLoader().loadAsync('../assets/characters/'+D.MODEL);
-  if(revision!==modelRevision)return;
+  if(revision!==modelRevision){gltf.scene?.traverse(o=>{if(o.geometry)o.geometry.dispose()});return;}
   if(!gltf.scene?.isObject3D)throw new Error('The hero file does not contain a valid 3D scene');
   if(root){scene.remove(root);root.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
   root=gltf.scene;root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m?.map)m.map.colorSpace=THREE.SRGBColorSpace}});
