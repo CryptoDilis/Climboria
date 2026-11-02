@@ -401,7 +401,27 @@ try {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
   await mobile.locator('#character-create-close').click();
-  // Apply the landscape state directly: Playwright emulates viewport dimensions,
+  const titleMenuState = await mobile.evaluate(() => ({
+    titleVisible: getComputedStyle(document.querySelector('#title')).opacity !== '0',
+    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
+    mobileActionsHidden: [...document.querySelectorAll('[data-mobile-action]')].every(e => getComputedStyle(e).display === 'none'),
+  }));
+  if (!titleMenuState.titleVisible || !titleMenuState.characterPanelHidden || !titleMenuState.mobileActionsHidden) {
+    errors.push('Mobile title menu must show the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
+  }
+  // Exercise the real title-to-gameplay pointer transition, not a manually forced body.free state.
+  await mobile.locator('#title h1').click();
+  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
+  const actualMobileTransition = await mobile.evaluate(() => ({
+    gameplayActive: document.body.classList.contains('free'),
+    titleHidden: getComputedStyle(document.querySelector('#title')).opacity === '0',
+    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
+  }));
+  if (!actualMobileTransition.gameplayActive || !actualMobileTransition.titleHidden || !actualMobileTransition.characterPanelHidden) {
+    errors.push('Actual mobile title-to-gameplay transition left a menu overlay visible: ' + JSON.stringify(actualMobileTransition));
+  }
+  // Apply the landscape state directly only for CSS viewport/orientation assertions;
+  // gameplay activation above must come from the real user interaction.
   // not the Android device's physical Screen Orientation API.
   await mobile.evaluate(() => {
     // This phase validates gameplay HUD, so emulate the same state set by takeOver().
