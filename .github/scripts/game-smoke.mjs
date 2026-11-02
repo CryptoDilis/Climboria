@@ -167,8 +167,8 @@ try {
   if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
     throw new Error('Expedition entry overlay is not ready');
   }
-  // Use a real browser click path, forced only because cinematic overlays can temporarily disable pointer targeting.
-  await title.click({ force: true });
+  // Dispatch the overlay's pointer-press entry event directly; this exercises the same pointerdown handler used by mouse/touch without Playwright's forced-click hit-target ambiguity.
+  await title.dispatchEvent('pointerdown', { pointerType: 'mouse', button: 0, buttons: 1, bubbles: true });
   await page.waitForFunction(() => {
     const player = window.__climboriaJarrellsPeak?.player;
     return document.body.classList.contains('free') && player?.mode === 'walk';
