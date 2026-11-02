@@ -761,7 +761,7 @@ function animateAssetFallback(t,state,speed){
 const assetChoices={ClimboriaHero:'../assets/characters/Climboria_Hero.glb'};
 const heroData=window.ClimboriaHeroData;
 let heroLoadError='',heroLoadRequest=0,heroLoadTimer=null,activeHeroRequest=null;
-let selectedHeroRecord=heroData.defaultHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
+let selectedHeroRecord=heroData.getSelectedHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
 function disposeHeroModel(root){
  if(!root)return;
  root.traverse(o=>{
@@ -842,14 +842,14 @@ function loadAssetHero(heroRecord,onReady){
 }
 function renderSavedHeroes(){
  const host=document.getElementById('saved-hero-list'),list=heroData.readHeroes();
- if(!list.some(h=>h.id===selectedHeroRecord.id))selectedHeroRecord=list[0];
+ if(!list.some(h=>h.id===selectedHeroRecord.id))selectedHeroRecord=heroData.getSelectedHero();
  host.replaceChildren();
  for(const record of list){
   const button=document.createElement('button');button.type='button';button.className='saved-hero-option';button.dataset.heroId=record.id;button.setAttribute('aria-pressed',String(record.id===selectedHeroRecord.id));
   const name=document.createElement('span');name.textContent=record.name;
   const note=document.createElement('small');note.textContent=record.builtIn?'Original Climboria Hero':'Saved on this device';
   button.append(name,note);
-  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;renderSavedHeroes();const playerName=document.getElementById('player-name');if(playerName)playerName.textContent=record.name.toUpperCase();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
+  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;heroData.setSelectedHero(record.id);renderSavedHeroes();const playerName=document.getElementById('player-name');if(playerName)playerName.textContent=record.name.toUpperCase();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
   host.append(button);
  }
 }
