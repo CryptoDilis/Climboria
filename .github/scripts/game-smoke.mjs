@@ -9,6 +9,7 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
+  const soundtrackResponsePromise = page.waitForResponse(response => new URL(response.url()).pathname === '/game/assets/music/TRACK_01.mp3', { timeout: 20000 }).catch(() => null);
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1&hero=Adventurer', {
     waitUntil: 'domcontentloaded',
@@ -18,6 +19,10 @@ try {
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 90000 });
+  const soundtrackResponse = await soundtrackResponsePromise;
+  const soundtrackAsset = await page.evaluate(() => document.documentElement.dataset.climboriaMusicAsset || '');
+  if (!soundtrackAsset.endsWith('/game/assets/music/TRACK_01.mp3')) errors.push('Soundtrack does not resolve to the canonical game asset: ' + soundtrackAsset);
+  if (!soundtrackResponse || soundtrackResponse.status() !== 200) errors.push('Canonical soundtrack asset did not load successfully: ' + JSON.stringify({status:soundtrackResponse?.status(),url:soundtrackResponse?.url()}));
   const heroAssetAudit = await page.evaluate(() => ({
     asset: document.documentElement.dataset.climboriaHeroAsset || '',
     animationNames: (document.documentElement.dataset.climboriaAnimations || '').split('|').filter(Boolean),
