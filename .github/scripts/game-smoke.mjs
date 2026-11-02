@@ -172,6 +172,8 @@ try {
   for (const poi of ['sanct','park','camp','cave','summit']) if (!world.poi.includes(poi)) errors.push('Missing world landmark: ' + poi);
   if (world.chests < 7) errors.push('Expected at least seven respawning treasure chests, got ' + world.chests);
   if (!Array.isArray(world.caveGems) || world.caveGems.length !== 14 || world.caveGems.some(g => !g.cluster || g.children !== 3)) errors.push('Cave mineral crystal clusters missing or malformed: ' + JSON.stringify(world.caveGems));
+  const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
+  if(!cavePassage||cavePassage.wallCount!==7||cavePassage.passageWidth!==8||!cavePassage.clearRoute||!cavePassage.blockedAcrossWall) errors.push('Cave side-room passage/collision audit failed: '+JSON.stringify(cavePassage));
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<5||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave warm-light coverage or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
