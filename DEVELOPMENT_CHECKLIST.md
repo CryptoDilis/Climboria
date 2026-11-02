@@ -1,3 +1,13 @@
+## 2026-11-02 — mountain approach-angle regression assertion (verification pending)
+
+- [x] Browser Smoke now requires all eight 45-degree summit approach probes to be present, ordered, and report finite non-negative traversal progress.
+- [x] The test preserves the individual first-blocker diagnostics instead of treating a blocked direction as an automatic failure; the probe records evidence for review.
+- [ ] Validate and Browser Smoke runs for this assertion are pending.
+- [ ] Review the actual eight approach results and fixed-collider audit output before making any collider geometry changes.
+- [ ] Manual desktop and Redmi 14 5G landscape traversal acceptance remains open.
+
+---
+
 ## 2026-11-02 — fixed collision-solid integrity audit (verification pending)
 
 - [x] Added a read-only audit for authored fixed colliders, reporting invalid coordinates/radii, radius distribution, large colliders, and water-body overlaps without changing gameplay collision behavior.
