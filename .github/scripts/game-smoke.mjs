@@ -207,6 +207,7 @@ try {
   await page.locator('.saved-hero-option').first().click();
   await page.locator('#enter-expedition').click();
   await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:90000});
+  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const desktopEntry=await page.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api.player;return {x:p.x,z:p.z,y:p.y,ground:api.groundAt(p.x,p.z)+1.75,hero:document.documentElement.dataset.climboriaHero,renderer:document.documentElement.dataset.climboriaHeroRenderer,legacyPopup:!!document.querySelector('#character-create-panel'),backdrop:document.body.classList.contains('character-panel-open'),hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
   if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||desktopEntry.hero!=='climboria-hero-default'||desktopEntry.legacyPopup||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop ENTER EXPEDITION must load the selected GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
   await page.locator('#expedition-settings-toggle').click();
@@ -401,6 +402,7 @@ try {
   await mobile.locator('#enter-expedition').dispatchEvent('click');
   await mobile.locator('#enter-expedition').dispatchEvent('click');
   await mobile.waitForFunction(()=>document.body.classList.contains('free')&&document.documentElement.dataset.climboriaHeroRenderer==='glb',undefined,{timeout:90000});
+  await mobile.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const heroEntry=await mobile.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api?.player;return {gameplayActive:document.body.classList.contains('free'),mode:p?.mode,spawnX:p?.x,spawnZ:p?.z,spawnY:p?.y,groundY:p?api.groundAt(p.x,p.z)+1.75:null,hero:document.documentElement.dataset.climboriaHero,heroName:document.documentElement.dataset.climboriaHeroName,renderer:document.documentElement.dataset.climboriaHeroRenderer,titleOpacity:getComputedStyle(document.querySelector('#title')).opacity,legacyPopup:!!document.querySelector('#character-create-panel'),hudVisible:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
   if(!heroEntry.gameplayActive||heroEntry.mode!=='walk'||heroEntry.spawnX!==0||heroEntry.spawnZ!==-30||Math.abs(heroEntry.spawnY-heroEntry.groundY)>.02||heroEntry.hero!=='climboria-hero-default'||heroEntry.renderer!=='glb'||heroEntry.titleOpacity!=='0'||heroEntry.legacyPopup||!heroEntry.hudVisible)errors.push('Rapid mobile Enter must load the selected GLB at Sanctuary and activate gameplay once: '+JSON.stringify(heroEntry));
   // Verify Back to Menu remains reachable from the live expedition settings after hero entry.
@@ -411,6 +413,7 @@ try {
   // Re-enter with the explicit action while reusing the already loaded hero.
   await mobile.locator('#enter-expedition').click();
   await mobile.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
+  await mobile.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const actualMobileTransition=await mobile.evaluate(()=>({gameplayActive:document.body.classList.contains('free'),titleHidden:getComputedStyle(document.querySelector('#title')).opacity==='0',heroMenuExists:!!document.querySelector('#expedition-hero-menu'),renderer:document.documentElement.dataset.climboriaHeroRenderer}));
   if(!actualMobileTransition.gameplayActive||!actualMobileTransition.titleHidden||!actualMobileTransition.heroMenuExists||actualMobileTransition.renderer!=='glb')errors.push('Mobile hero re-entry through Enter Expedition did not restore gameplay: '+JSON.stringify(actualMobileTransition));
   // Apply the landscape state directly only for CSS viewport/orientation assertions;
@@ -592,6 +595,7 @@ try {
   if(!selectedCustomHero.button?.includes('Smoke Explorer')||selectedCustomHero.enterDisabled)errors.push('Saved Create Hero character is unavailable in the Jarrell’s Peak expedition menu: '+JSON.stringify(selectedCustomHero));
   await flowPage.locator('#enter-expedition').click();
   await flowPage.waitForFunction(()=>document.body.classList.contains('free')&&document.documentElement.dataset.climboriaHeroRenderer==='glb',undefined,{timeout:90000});
+  await flowPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const customEntry=await flowPage.evaluate(()=>({id:document.documentElement.dataset.climboriaHero,name:document.documentElement.dataset.climboriaHeroName,mode:window.__climboriaJarrellsPeak?.player?.mode,x:window.__climboriaJarrellsPeak?.player?.x,z:window.__climboriaJarrellsPeak?.player?.z,hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}));
   if(customEntry.id!==savedRecord.id||customEntry.name!=='Smoke Explorer'||customEntry.mode!=='walk'||customEntry.x!==0||customEntry.z!==-30||!customEntry.hud)errors.push('Custom saved hero did not enter playable Jarrell’s Peak at Sanctuary with HUD: '+JSON.stringify(customEntry));
   const customMoveStart=await flowPage.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player;return{x:p.x,z:p.z}});
