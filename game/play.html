@@ -891,7 +891,7 @@ document.getElementById('expedition-settings-close').addEventListener('click',()
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
 document.getElementById('back-to-expedition-menu').addEventListener('click',()=>{
- settingsPanel.style.display='none';P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
+ settingsPanel.style.display='none';heroEntryInProgress=false;P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
  if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
  const title=document.getElementById('title');title.style.display='grid';title.style.opacity='1';title.style.pointerEvents='auto';
  document.getElementById('tmsg').textContent='CLIMBORIA · EXPEDITION MENU';
