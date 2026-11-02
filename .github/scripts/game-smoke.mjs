@@ -171,12 +171,12 @@ try {
   const desktopZoom=await page.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,canvas=document.querySelector('canvas'),before=api?.targetDistance;
     canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120}));
-    const zoomOut=api?.targetDistance;
-    canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:120}));
     const zoomIn=api?.targetDistance;
-    return {before,zoomOut,zoomIn};
+    canvas?.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:120}));
+    const zoomOut=api?.targetDistance;
+    return {before,zoomIn,zoomOut};
   });
-  if(!(desktopZoom.zoomOut>desktopZoom.before&&desktopZoom.zoomIn<desktopZoom.zoomOut))errors.push('Desktop mouse-wheel zoom did not move camera distance in both directions: '+JSON.stringify(desktopZoom));
+  if(!(desktopZoom.zoomIn<desktopZoom.before&&desktopZoom.zoomOut>desktopZoom.zoomIn))errors.push('Desktop mouse-wheel zoom did not move camera distance in both directions: '+JSON.stringify(desktopZoom));
 
   const headingBeforeMove=await page.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
   await page.keyboard.down('w');
