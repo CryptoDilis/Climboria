@@ -25,7 +25,7 @@ The current menu should show only these four destinations:
 3. **Marketplace** — a demo storefront only; no live trading or real purchases.
 4. **Inventory** — a local preview only; persistent item ownership and equipment are not live.
 
-Do not add the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
+Do not add the ten deferred mountains. The game hub has a separate Create Hero destination, while Jarrell’s Peak keeps hero selection in its expedition menu. Keep labels clear so a preview is never mistaken for a production system.
 
 ## Future Arena: separate public map
 
