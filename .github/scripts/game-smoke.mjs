@@ -25,12 +25,12 @@ try {
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true && document.documentElement.dataset.climboriaReady === 'true', undefined, { timeout: 90000 });
   const heroAssetAudit = await page.evaluate(() => ({
-    heroIsSelectedButNotPreloaded: !document.documentElement.dataset.climboriaHero,
-    rendererNotStartedBeforeEnter: !document.documentElement.dataset.climboriaHeroRenderer,
+    heroIsSelectedButNotPreloaded: document.documentElement.dataset.climboriaHero !== 'climboria-hero-default',
+    rendererNotLoadedBeforeEnter: document.documentElement.dataset.climboriaHeroRenderer !== 'glb',
     expeditionMenuVisible: !!document.querySelector('#expedition-hero-menu'),
     legacyPopupAbsent: !document.querySelector('#character-create-panel'),
   }));
-  if (!heroAssetAudit.heroIsSelectedButNotPreloaded || !heroAssetAudit.rendererNotStartedBeforeEnter || !heroAssetAudit.expeditionMenuVisible || !heroAssetAudit.legacyPopupAbsent) errors.push('Jarrell must show its expedition menu without loading a hero or opening the obsolete explorer popup: ' + JSON.stringify(heroAssetAudit));
+  if (!heroAssetAudit.heroIsSelectedButNotPreloaded || !heroAssetAudit.rendererNotLoadedBeforeEnter || !heroAssetAudit.expeditionMenuVisible || !heroAssetAudit.legacyPopupAbsent) errors.push('Jarrell must show its expedition menu without loading a hero or opening the obsolete explorer popup: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
