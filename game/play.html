@@ -311,6 +311,7 @@ function biome(x,z,h){
 }
 /* ---------- renderer / scene ---------- */
 const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.domElement.id='game';
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
