@@ -210,7 +210,7 @@ try {
   if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||!desktopEntry.hero||desktopEntry.legacyPopup||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop ENTER EXPEDITION must load the selected GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
   // The clickable character nameplate must open the complete 100-slot backpack and equipment panel.
   await page.locator('#player-card').click();
-  const inventoryAudit=await page.evaluate(()=>{const panel=document.querySelector('#climboriaInventoryPanel');if(!panel)return null;const title=[...panel.children].find(e=>e.textContent.includes('BACKPACK · 100 SLOTS'));const grid=title?.nextElementSibling;const equipment=[...panel.children].find(e=>e.textContent.includes('EQUIPMENT SLOTS'))?.nextElementSibling;return {visible:getComputedStyle(panel).display!=='none',slotCount:grid?.children.length||0,equipmentCount:equipment?.children.length||0,hasSkin:panel.textContent.includes('SKIN'),hasCapacity:panel.textContent.includes('/ 100 backpack slots used')}}});
+  const inventoryAudit=await page.evaluate(()=>{const panel=document.querySelector('#climboriaInventoryPanel');if(!panel)return null;const title=[...panel.children].find(e=>e.textContent.includes('BACKPACK · 100 SLOTS'));const grid=title?.nextElementSibling;const equipment=[...panel.children].find(e=>e.textContent.includes('EQUIPMENT SLOTS'))?.nextElementSibling;return {visible:getComputedStyle(panel).display!=='none',slotCount:grid?.children.length||0,equipmentCount:equipment?.children.length||0,hasSkin:panel.textContent.includes('SKIN'),hasCapacity:panel.textContent.includes('/ 100 backpack slots used')}});
   if(!inventoryAudit?.visible||inventoryAudit.slotCount!==100||inventoryAudit.equipmentCount!==9||!inventoryAudit.hasSkin||!inventoryAudit.hasCapacity)errors.push('Character nameplate did not open the full 100-slot inventory with equipment and Skin: '+JSON.stringify(inventoryAudit));
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).click();
   await page.locator('#expedition-settings-toggle').click();
@@ -396,6 +396,12 @@ try {
   await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
   // Touch the saved-hero selector, then rapidly activate Enter. Nothing behind the menu may start gameplay.
   await mobile.waitForFunction(()=>window.__climboriaGameReady===true&&!document.querySelector('#enter-expedition').disabled,undefined,{timeout:90000});
+
+  // Mobile landscape field map must remain a compact thumbnail, not a full-height sidebar.
+  await mobile.evaluate(()=>{document.body.classList.add('mobile-device','climboria-landscape','free');document.querySelector('#world-map-panel').classList.remove('map-expanded');});
+  const mobileMapAudit=await mobile.evaluate(()=>{const p=document.querySelector('#world-map-panel'),m=document.querySelector('#world-map'),pr=p.getBoundingClientRect(),mr=m.getBoundingClientRect();return {panelWidth:pr.width,panelHeight:pr.height,mapHeight:mr.height,viewportWidth:innerWidth,viewportHeight:innerHeight};});
+  if(mobileMapAudit.panelWidth>180||mobileMapAudit.panelHeight>130||mobileMapAudit.mapHeight>80)errors.push('Mobile minimap expanded beyond compact bounds: '+JSON.stringify(mobileMapAudit));
+
   const expeditionMenuBefore=await mobile.evaluate(()=>({free:document.body.classList.contains('free'),menu:!!document.querySelector('#expedition-hero-menu'),titleOpacity:Number(getComputedStyle(document.querySelector('#title')).opacity),heroButtons:document.querySelectorAll('.saved-hero-option').length,enterLabel:document.querySelector('#enter-expedition').textContent.trim(),legacyPopup:!!document.querySelector('#character-create-panel')}));
   if(expeditionMenuBefore.free||!expeditionMenuBefore.menu||expeditionMenuBefore.titleOpacity<.95||!expeditionMenuBefore.heroButtons||expeditionMenuBefore.enterLabel!=='ENTER EXPEDITION'||expeditionMenuBefore.legacyPopup)errors.push('Mobile Jarrell launch must show the inline saved-hero expedition menu: '+JSON.stringify(expeditionMenuBefore));
   const mobileHeroChoice=mobile.locator('.saved-hero-option').first();
