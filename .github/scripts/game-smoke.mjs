@@ -403,6 +403,25 @@ try {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
   await mobile.locator('#character-create-close').click();
+  const heroContinue = await mobile.evaluate(() => ({
+    buttonText: document.querySelector('#character-create-close').textContent.trim(),
+    loaded: document.querySelector('#character-create-close').dataset.heroLoaded === 'true',
+    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
+  }));
+  if (heroContinue.buttonText !== 'ENTER JARRELL’S PEAK' || !heroContinue.loaded || !heroContinue.panelVisible) {
+    errors.push('Loaded hero must expose an explicit Enter Jarrell’s Peak action: ' + JSON.stringify(heroContinue));
+  }
+  await mobile.locator('#character-create-close').click();
+  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
+  const heroEntry = await mobile.evaluate(() => ({
+    gameplayActive: document.body.classList.contains('free'),
+    panelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
+    backdropRemoved: !document.body.classList.contains('character-panel-open'),
+    renderer: document.documentElement.dataset.climboriaHeroRenderer,
+  }));
+  if (!heroEntry.gameplayActive || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb') {
+    errors.push('Enter Jarrell’s Peak must close picker and spawn the loaded GLB hero: ' + JSON.stringify(heroEntry));
+  }
   const titleMenuState = await mobile.evaluate(() => ({
     titleVisible: getComputedStyle(document.querySelector('#title')).opacity !== '0',
     characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
