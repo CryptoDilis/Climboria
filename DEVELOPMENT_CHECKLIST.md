@@ -1134,3 +1134,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Pages deployment for the current documentation head is pending; rerun/verify deployment after the latest main commit.
 - [ ] Manual desktop and Redmi 14 5G touch-entry acceptance remains open.
 - Code commit: 61f09594bc9262f9a8b1c9797adac0d98639001d.
+
+
+## 2026-11-02 — expedition entry follow-up diagnosis and fix
+
+- [x] Rechecked latest workflows on `391bebec`: Validate passed (run 41438521135), Pages passed (run 41438521187), Browser Smoke failed (run 41438521131); several nearby Pages runs were cancelled by newer pushes, not failed.
+- [x] Confirmed homepage CTAs, DEX modal, mobile menu, world boot, water/fishing diagnostics, collision audit, and mountain route probe all passed before the Browser Smoke failure.
+- [x] Isolated the remaining failure to the title-overlay expedition-entry transition: the test remained in cinematic mode and timed out waiting for `body.free` plus `player.mode === 'walk'`.
+- [x] Changed the entry handler to transition gameplay synchronously before requesting optional fullscreen/orientation; made the title pointerdown listener capture-phase so optional immersive behavior cannot prevent player takeover.
+- [ ] Verify Browser Smoke, Validate, and Pages on the new commit; do not close this regression until desktop and mobile gameplay smoke both pass.
+- [ ] Manual real-device Android landscape/touch acceptance remains open.
+- Code commit: 45dc262ecef59775d2dc82b47ae5fa20a40311b6.
