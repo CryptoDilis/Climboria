@@ -1123,3 +1123,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await Validate, Browser Smoke, and Pages workflows; fix any regression without weakening existing gameplay assertions.
 - [ ] Manual desktop and Redmi 14 5G review remains open for brightness, cave readability, crystal placement, and performance.
 - Code commits: abbd6522a7dd6f6a919ac7a3bcb7b41b93bc30dc; 57180bfb680aca26ec79917668fba5e636ecd3c7.
+
+
+## 2026-11-02 — expedition title-overlay entry regression repair (verification pending)
+
+- [x] Diagnosed Browser Smoke run 41436996416: homepage/mobile navigation passed and world diagnostics completed, but the expedition-entry wait timed out after the title overlay click.
+- [x] Updated the visible title overlay to enter gameplay on the initial pointer press as well as click; the handler is guarded so the click following pointerdown cannot start the expedition twice.
+- [x] Validate passed for the pointer-entry change: run 41438273705 on code head 61f09594bc9262f9a8b1c9797adac0d98639001d.
+- [ ] Browser Smoke run 41438273619 is still in progress; inspect the expedition-entry and desktop/mobile results before closing this regression.
+- [ ] Pages deployment for the current documentation head is pending; rerun/verify deployment after the latest main commit.
+- [ ] Manual desktop and Redmi 14 5G touch-entry acceptance remains open.
+- Code commit: 61f09594bc9262f9a8b1c9797adac0d98639001d.
