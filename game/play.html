@@ -26,11 +26,6 @@ body.free #help{opacity:.8}
 body.free #title{opacity:0;pointer-events:none}
 
 #title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
-#character-create-panel{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:22px;background:#080d14f2;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui}
-#character-create-panel strong{letter-spacing:.14em}
-.character-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
-.character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
-#character-load-status{color:#b9c1c8;min-height:18px}
 @media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
 
 /* Persistent adventure HUD */
@@ -611,8 +606,8 @@ const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero
 hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
 hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='loading-free-glb';
-/* Load the repository's rigged Police Officer / Adventurer GLBs; movement remains driven by the existing terrain physics controller. */
+hero.visible=true;scene.add(hero);document.documentElement.dataset.climboriaHero='procedural-placeholder';
+/* Character model integration is paused until replacement Meshy GLBs are supplied. */
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
@@ -750,7 +745,7 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
-document.getElementById('title').addEventListener('click',e=>{if(e.target.closest('#character-create,#character-create-panel'))return;if(!ready)return;requestLandscapeMode();takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
+document.getElementById('title').addEventListener('click',e=>{if(!ready)return;requestLandscapeMode();takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'});
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
