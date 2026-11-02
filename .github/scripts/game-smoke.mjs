@@ -412,6 +412,7 @@ try {
       renderFrames: window.__climboriaRenderState?.frames ?? 0,
       renderErrors: window.__climboriaRenderState?.errors ?? [],
       controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
+      mobileActions: [...document.querySelectorAll('[data-mobile-action]')].map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {id:e.dataset.mobileAction,visible:c.display!=='none'&&c.visibility!=='hidden'&&Number(c.opacity)>.8&&r.width>=50&&r.height>=50&&r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1}}),
       playerName: !!document.querySelector('#player-name'),
       playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
       statusVisible: (()=>{const e=document.querySelector('#status-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
@@ -423,7 +424,7 @@ try {
       document: document.documentElement.scrollWidth,
     };
   });
-  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/control initialization failed: ' + JSON.stringify(mobileState));
+  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.mobileActions.length!==4 || mobileState.mobileActions.some(a=>!a.visible) || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/visible-touch-control initialization failed: ' + JSON.stringify(mobileState));
   if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
