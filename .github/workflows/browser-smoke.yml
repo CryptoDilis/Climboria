@@ -14,6 +14,7 @@ on:
       - "game/play.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/mobile-reentry-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -23,6 +24,7 @@ on:
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/mobile-reentry-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   workflow_dispatch:
 
@@ -66,6 +68,10 @@ jobs:
           done
           cat /tmp/climboria-http.log
           exit 1
+
+      - name: Test mobile hero re-entry title and HUD visibility
+        timeout-minutes: 4
+        run: node .github/scripts/mobile-reentry-smoke.mjs
 
       - name: Test homepage CTAs, DEX modal, and mobile navigation
         run: |
@@ -117,6 +123,7 @@ jobs:
             climboria-desktop-home.png
             climboria-mobile-home.png
             climboria-character-creator.png
+            climboria-mobile-menu-reentry.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
             freshwater-*.png
