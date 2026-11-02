@@ -203,32 +203,22 @@ try {
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
-  // Verify the real desktop picker -> GLB -> Enter -> Sanctuary gameplay path first.
-  await page.locator('#character-create').click();
-  const desktopEnter=page.locator('#character-create-enter');
-  await page.waitForFunction(()=>document.querySelector('#character-create-enter')?.dataset.heroLoaded==='true',undefined,{timeout:30000});
-  const desktopEnterState=await page.evaluate(()=>({text:document.querySelector('#character-create-enter').textContent.trim(),back:document.querySelector('#character-create-close').textContent.trim(),panel:getComputedStyle(document.querySelector('#character-create-panel')).display}));
-  if(desktopEnterState.text!=='ENTER JARRELL’S PEAK'||desktopEnterState.back!=='BACK TO MENU'||desktopEnterState.panel==='none')errors.push('Desktop hero load did not expose distinct Enter and Back actions: '+JSON.stringify(desktopEnterState));
-  await desktopEnter.dispatchEvent('click');
-  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
-  const desktopEntry=await page.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api.player;return {x:p.x,z:p.z,y:p.y,ground:api.groundAt(p.x,p.z)+1.75,renderer:document.documentElement.dataset.climboriaHeroRenderer,panel:getComputedStyle(document.querySelector('#character-create-panel')).display,backdrop:document.body.classList.contains('character-panel-open'),hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
-  if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||desktopEntry.panel!=='none'||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop Enter did not spawn the loaded GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
+  // The expedition menu shows saved heroes without a separate explorer popup, then loads on explicit Enter.
+  const initialExpedition=await page.evaluate(()=>({title:document.querySelector('#title h1')?.textContent?.trim(),heroes:[...document.querySelectorAll('.saved-hero-option')].map(b=>b.textContent.trim()),menuVisible:!!document.querySelector('#expedition-hero-menu'),legacyPopup:!!document.querySelector('#character-create-panel'),ready:document.documentElement.dataset.climboriaReady==='true'}));
+  if(initialExpedition.title!=='JARRELL’S PEAK'||!initialExpedition.heroes.length||!initialExpedition.menuVisible||initialExpedition.legacyPopup||!initialExpedition.ready)errors.push('Jarrell’s Peak must open its expedition menu with saved heroes and no explorer popup: '+JSON.stringify(initialExpedition));
+  await page.locator('.saved-hero-option').first().click();
+  await page.locator('#enter-expedition').click();
+  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:90000});
+  const desktopEntry=await page.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api.player;return {x:p.x,z:p.z,y:p.y,ground:api.groundAt(p.x,p.z)+1.75,hero:document.documentElement.dataset.climboriaHero,renderer:document.documentElement.dataset.climboriaHeroRenderer,legacyPopup:!!document.querySelector('#character-create-panel'),backdrop:document.body.classList.contains('character-panel-open'),hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
+  if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||desktopEntry.hero!=='climboria-hero-default'||desktopEntry.legacyPopup||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop ENTER EXPEDITION must load the selected GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
   await page.locator('#expedition-settings-toggle').click();
   await page.locator('#back-to-expedition-menu').click();
-  if(!await page.evaluate(()=>document.body.classList.contains('free')===false&&getComputedStyle(document.querySelector('#title')).opacity!=='0'))errors.push('Desktop Back to Menu did not restore the expedition title.');
-  // Enter through the visible expedition title overlay used by players, then test keyboard movement.
-  const title = page.locator('#title');
-  if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
-    throw new Error('Expedition entry overlay is not ready');
-  }
-  // The title overlay intentionally receives the entry gesture; clicking the canvas is intercepted by its visible prompt.
-  const titleBox=await title.boundingBox();
-  if(!titleBox) throw new Error('Expedition title overlay has no visible bounding box');
-  await title.click({position:{x:Math.floor(titleBox.width/2),y:Math.floor(titleBox.height/2)}});
-  await page.waitForFunction(() => {
-    const player = window.__climboriaJarrellsPeak?.player;
-    return document.body.classList.contains('free') && player?.mode === 'walk';
-  }, null, { timeout: 10000 });
+  const desktopMenu=await page.evaluate(()=>({titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0',free:document.body.classList.contains('free'),enterEnabled:!document.querySelector('#enter-expedition').disabled}));
+  if(!desktopMenu.titleVisible||desktopMenu.free||!desktopMenu.enterEnabled)errors.push('Desktop Back to Expedition Menu must restore the hero selection screen: '+JSON.stringify(desktopMenu));
+  // Re-enter only through the explicit expedition action and test keyboard movement.
+  if(await page.locator('#title').count()!==1||await page.locator('html').getAttribute('data-climboria-ready')!=='true')throw new Error('Expedition menu is not ready');
+  await page.locator('#enter-expedition').click();
+  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
