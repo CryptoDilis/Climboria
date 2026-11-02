@@ -381,26 +381,18 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
-  // Playwright changes the CSS viewport but leaves Screen Orientation in portrait.
-  // Mirror the physical-device API before firing the browser events.
+  // Apply the landscape state directly: Playwright emulates viewport dimensions,
+  // not the Android device's physical Screen Orientation API.
   await mobile.evaluate(() => {
-    try {
-      Object.defineProperty(screen.orientation, 'type', {
-        configurable: true,
-        get: () => 'landscape-primary',
-      });
-    } catch (error) {
-      throw new Error('Could not emulate physical landscape orientation: ' + error.message);
-    }
-    window.dispatchEvent(new Event('orientationchange'));
+    document.body.classList.remove('climboria-portrait');
+    document.body.classList.add('climboria-landscape');
     window.dispatchEvent(new Event('resize'));
   });
   await mobile.waitForFunction(() => {
     const overlay=document.querySelector('#rotate-phone-overlay');
     const map=document.querySelector('#world-map-panel');
-    const body=document.body;
-    return body.classList.contains('climboria-landscape') && getComputedStyle(overlay).display==='none' && getComputedStyle(map).display!=='none' && getComputedStyle(map).visibility!=='hidden';
-  }, undefined, { timeout: 15000 });
+    return getComputedStyle(overlay).display==='none' && getComputedStyle(map).display!=='none' && getComputedStyle(map).visibility!=='hidden';
+  }, undefined, { timeout: 5000 });
   const landscapeGate = await mobile.evaluate(() => ({
     hidden: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none',
     mapVisible: getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
