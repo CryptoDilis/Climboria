@@ -322,7 +322,7 @@ try {
     try {
       Object.defineProperty(screen, 'orientation', {
         configurable: true,
-        value: { lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } }
+        value: { get type() { return innerWidth>innerHeight?'landscape-primary':'portrait-primary'; }, lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } }
       });
     } catch (_) {}
   });
