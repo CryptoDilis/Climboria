@@ -203,9 +203,9 @@ try {
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
-  if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
-  console.log('Procedural placeholder movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
+  console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
+  if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     document.querySelector('canvas')?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));
@@ -216,7 +216,7 @@ try {
     return {before,after,heroBackFacing:Math.abs(angleDelta)<.02};
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
-  if(!desktopOrbit.heroBackFacing) errors.push('Desktop procedural hero is not facing away from the player camera: '+JSON.stringify(desktopOrbit));
+  if(!desktopOrbit.heroBackFacing) errors.push('Desktop Meshy hero is not facing away from the player camera: '+JSON.stringify(desktopOrbit));
   // Negative wheel deltas zoom in; positive deltas zoom out, matching the gameplay handler.
   const desktopZoom=await page.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,canvas=document.querySelector('canvas'),before=api?.targetDistance;
@@ -235,15 +235,15 @@ try {
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
   const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(desktopHeroStability.identity!=='procedural-placeholder'||desktopHeroStability.renderer!=='fallback'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
+  if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
-  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'procedural-placeholder') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'adventurer') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
     bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    hero: document.documentElement.dataset.climboriaHero === 'procedural-placeholder',
+    hero: document.documentElement.dataset.climboriaHero === 'adventurer',
     controlDock: !!document.querySelector('#control-dock'),
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
@@ -359,7 +359,7 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
-  await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder', { timeout: 45000 });
+  await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   await mobile.keyboard.press('w');
   await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
@@ -376,7 +376,7 @@ try {
     return {before,after,heroBackFacing:Math.abs(angleDelta)<.02};
   });
   if(!mobileOrbit.before||Math.abs(mobileOrbit.after.camera-mobileOrbit.before.camera)<.05||Math.abs(mobileOrbit.after.player-mobileOrbit.before.player)>.001) errors.push('Mobile camera drag rotated the hero or failed to rotate independently: '+JSON.stringify(mobileOrbit));
-  if(!mobileOrbit.heroBackFacing) errors.push('Mobile procedural hero is not facing away from the player camera: '+JSON.stringify(mobileOrbit));
+  if(!mobileOrbit.heroBackFacing) errors.push('Mobile Meshy hero is not facing away from the player camera: '+JSON.stringify(mobileOrbit));
   const mobilePinchZoom=await mobile.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,target=document.body;
     const touch=(identifier,x,y)=>new Touch({identifier,target,clientX:x,clientY:y});
@@ -400,7 +400,7 @@ try {
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
   const mobileHeroStability=await mobile.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(mobileHeroStability.identity!=='procedural-placeholder'||mobileHeroStability.renderer!=='fallback'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
+  if(mobileHeroStability.identity!=='adventurer'||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
@@ -411,7 +411,7 @@ try {
       controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-      hero: document.documentElement.dataset.climboriaHero === 'procedural-placeholder',
+      hero: document.documentElement.dataset.climboriaHero === 'adventurer',
       bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
