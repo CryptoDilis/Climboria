@@ -10,24 +10,20 @@ try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
-  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1&hero=Adventurer', {
+  await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 90000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder' && document.documentElement.dataset.climboriaHeroRenderer === 'fallback', { timeout: 90000 });
   const heroAssetAudit = await page.evaluate(() => ({
-    asset: document.documentElement.dataset.climboriaHeroAsset || '',
-    animationNames: (document.documentElement.dataset.climboriaAnimations || '').split('|').filter(Boolean),
+    identity: document.documentElement.dataset.climboriaHero || '',
     renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
+    visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
-  const requiredHeroAnimations = ['Running','Walking','Climb_Attempt_and_Fall_3','Swim_Forward','Swim_Idle','swimming_to_edge','Attack','Collect_Object','Dead','Arise'];
-  if (!heroAssetAudit.asset.includes('assets/characters/Climboria_Hero.glb')) errors.push('Climboria Hero GLB loaded from unexpected path: ' + heroAssetAudit.asset);
-  if (heroAssetAudit.animationNames.length !== 19) errors.push('Climboria Hero animation count mismatch: ' + heroAssetAudit.animationNames.length);
-  for (const animation of requiredHeroAnimations) if (!heroAssetAudit.animationNames.includes(animation)) errors.push('Climboria Hero animation missing: ' + animation);
-  if (heroAssetAudit.renderer !== 'glb') errors.push('Selected Climboria hero did not initialize with the original GLB renderer: ' + JSON.stringify(heroAssetAudit));
+  if (heroAssetAudit.identity !== 'procedural-placeholder' || heroAssetAudit.renderer !== 'fallback' || !heroAssetAudit.visible) errors.push('Temporary procedural hero did not initialize: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
@@ -167,7 +163,7 @@ try {
 
   await page.keyboard.press('w');
   await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
-  await page.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', { timeout: 10000 });
@@ -191,10 +187,10 @@ try {
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
-  if(walkClip!=='Walking')errors.push('GLB walk animation did not select Walking: '+walkClip);
-  if(runClip!=='Running')errors.push('GLB run animation did not select Running: '+runClip);
-  if(swimClip!=='Swim_Forward')errors.push('GLB swim animation did not select Swim_Forward: '+swimClip);
-  console.log('Selected GLB animation transitions:',JSON.stringify({idle:'idle',walk:walkClip,run:runClip,swim:swimClip}));
+  if(walkClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored walk clip: '+walkClip);
+  if(runClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored run clip: '+runClip);
+  if(swimClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored swim clip: '+swimClip);
+  console.log('Procedural placeholder movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
@@ -206,7 +202,7 @@ try {
     return {before,after,heroBackFacing:Math.abs(angleDelta)<.02};
   });
   if(!desktopOrbit.before||Math.abs(desktopOrbit.after.camera-desktopOrbit.before.camera)<.05||Math.abs(desktopOrbit.after.player-desktopOrbit.before.player)>.001) errors.push('Desktop camera orbit rotated the hero or failed to rotate independently: '+JSON.stringify(desktopOrbit));
-  if(!desktopOrbit.heroBackFacing||!desktopOrbit.after.glb) errors.push('Desktop GLB hero is not visibly facing away from the player camera: '+JSON.stringify(desktopOrbit));
+  if(!desktopOrbit.heroBackFacing) errors.push('Desktop procedural hero is not facing away from the player camera: '+JSON.stringify(desktopOrbit));
   // Negative wheel deltas zoom in; positive deltas zoom out, matching the gameplay handler.
   const desktopZoom=await page.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,canvas=document.querySelector('canvas'),before=api?.targetDistance;
@@ -224,16 +220,16 @@ try {
   await page.keyboard.up('w');
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
-  const desktopHeroStability=await page.evaluate(()=>({asset:document.documentElement.dataset.climboriaHeroAsset||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',visible:window.__climboriaCameraOrbit?.heroUsesGlb===true}));
-  if(!desktopHeroStability.asset.includes('assets/characters/Climboria_Hero.glb')||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.visible) errors.push('Desktop movement caused the selected GLB hero to fall back or disappear: '+JSON.stringify(desktopHeroStability));
+  const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
+  if(desktopHeroStability.identity!=='procedural-placeholder'||desktopHeroStability.renderer!=='fallback'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
-  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || !['adventurer','police'].includes(spawnCheck.heroAsset)) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'procedural-placeholder') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
     bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    hero: ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero),
+    hero: document.documentElement.dataset.climboriaHero === 'procedural-placeholder',
     controlDock: !!document.querySelector('#control-dock'),
     controlsText: document.querySelector('#control-dock')?.innerText || '',
   }));
@@ -255,14 +251,11 @@ try {
   await menu.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
   if((await menu.locator('body').innerText()).match(/FOUR CLEAR DESTINATIONS|FOUR DESTINATIONS/i)) errors.push('Expedition menu still advertises four destinations');
   if(await menu.locator('a.menu-create').count()) errors.push('Old oversized header Create Character button is still present');
-  await menu.locator('.card[data-level="11"]').click();
-  if(!await menu.locator('#hero-select-modal').evaluate(el=>el.classList.contains('open'))) errors.push('Character selection modal did not open');
-  await menu.locator('[data-hero-choice="Police"]').click();
-  if(!await menu.locator('[data-hero-choice="Police"]').evaluate(el=>el.classList.contains('selected'))) errors.push('Police selection did not update');
   await Promise.all([
-    menu.waitForURL(/play\.html\?level=11&hero=Police/, { timeout: 15000 }),
-    menu.locator('#hero-select-enter').click(),
+    menu.waitForURL(/play\.html\?level=11(?:&|$)/, { timeout: 15000 }),
+    menu.locator('.card[data-level="11"]').click(),
   ]);
+  if(new URL(menu.url()).searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
@@ -369,7 +362,7 @@ try {
     return {before,after,heroBackFacing:Math.abs(angleDelta)<.02};
   });
   if(!mobileOrbit.before||Math.abs(mobileOrbit.after.camera-mobileOrbit.before.camera)<.05||Math.abs(mobileOrbit.after.player-mobileOrbit.before.player)>.001) errors.push('Mobile camera drag rotated the hero or failed to rotate independently: '+JSON.stringify(mobileOrbit));
-  if(!mobileOrbit.heroBackFacing||!mobileOrbit.after.glb) errors.push('Mobile GLB hero is not visibly facing away from the player camera: '+JSON.stringify(mobileOrbit));
+  if(!mobileOrbit.heroBackFacing) errors.push('Mobile procedural hero is not facing away from the player camera: '+JSON.stringify(mobileOrbit));
   const mobilePinchZoom=await mobile.evaluate(()=>{
     const api=window.__climboriaCameraOrbit,target=document.body;
     const touch=(identifier,x,y)=>new Touch({identifier,target,clientX:x,clientY:y});
@@ -392,8 +385,8 @@ try {
   await mobile.keyboard.up('w');
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
-  const mobileHeroStability=await mobile.evaluate(()=>({asset:document.documentElement.dataset.climboriaHeroAsset||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',visible:window.__climboriaCameraOrbit?.heroUsesGlb===true}));
-  if(!mobileHeroStability.asset.includes('assets/characters/Climboria_Hero.glb')||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.visible) errors.push('Mobile movement caused the selected GLB hero to fall back or disappear: '+JSON.stringify(mobileHeroStability));
+  const mobileHeroStability=await mobile.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
+  if(mobileHeroStability.identity!=='procedural-placeholder'||mobileHeroStability.renderer!=='fallback'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
@@ -404,7 +397,7 @@ try {
       controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-      hero: ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero),
+      hero: document.documentElement.dataset.climboriaHero === 'procedural-placeholder',
       bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
