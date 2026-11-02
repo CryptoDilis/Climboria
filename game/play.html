@@ -522,6 +522,18 @@ const spikes=[];let caveG;
  const p=POI.cave,dx=-p.x,dz=-p.z,dl=Math.hypot(dx,dz),dir={x:dx/dl,z:dz/dl};POI.cave.dir=dir;
  const g=new T3.Group();g.position.set(p.x,p.h,p.z);g.rotation.y=Math.atan2(dir.x,dir.z);scene.add(g);caveG=g;
  const rk=M('#4a463f');
+ // Living mineral seams: faceted clusters with restrained colored bounce light.
+ const caveGems=[];
+ const gemPalette=['#55f0b0','#48c8ff','#a77bff','#ffc65a'];
+ const gemGeo=new T3.OctahedronGeometry(1,0);
+ const gemMats=gemPalette.map(color=>new T3.MeshStandardMaterial({color:L(color),emissive:L(color),emissiveIntensity:1.35,roughness:.24,metalness:.18}));
+ const gemSites=[[-23,5,-17],[-19,8,-15],[22,5,-18],[25,8,-15],[-28,10,-3],[-25,13,-1],[28,9,-2],[31,12,0],[-15,13,-31],[-11,15,-33],[14,13,-34],[18,16,-32],[-20,4,13],[23,4,17]];
+ gemSites.forEach(([x,y,z],i)=>{
+  const color=i%gemPalette.length,cluster=new T3.Group();cluster.position.set(x,y,z);cluster.rotation.y=i*1.71;g.add(cluster);
+  for(let j=0;j<3;j++){const m=new T3.Mesh(gemGeo,gemMats[(color+j)%gemMats.length]);m.position.set((j-1)*.62,j===1?.25:0,(j%2?-.22:.22));m.scale.set(.42+j*.08,.9+(i+j)%3*.22,.42+j*.08);m.rotation.set(.18*j,.4*j,.12*j);m.castShadow=true;cluster.add(m)}
+  caveGems.push({cluster,baseY:y,phase:i*.83});
+  if(i%3===0)glow(gemPalette[color],1.05,19,x,y,z,g);
+ });
  [[-22,12,-20,20],[20,10,-22,19],[0,16,-34,26],[-30,6,-6,10],[30,6,-6,10],[-12,8,-26,14],[14,8,-28,15]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
  sc(mk(SPH,new T3.MeshBasicMaterial({color:0x000000}),0,0,-10,g),10,10,8);
  sc(mk(BOX,M('#5c574d'),0,11.5,-1,g),26,3,6);
@@ -1111,7 +1123,7 @@ function auditCollisionSolids(){
  const percentile=p=>radii.length?radii[Math.min(radii.length-1,Math.floor((radii.length-1)*p))]:null;
  return {count:solids.length,invalid,minRadius:Number.isFinite(minRadius)?minRadius:null,maxRadius,radiusP50:percentile(.5),radiusP90:percentile(.9),large,waterOverlaps};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -1197,6 +1209,7 @@ function update(dt){
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
  // props
  crystal.rotation.y=Tm*.6;crystal.position.y=6+Math.sin(Tm*1.2)*.5;
+ caveGems.forEach(({cluster,baseY,phase})=>{cluster.position.y=baseY+Math.sin(Tm*1.15+phase)*.11;cluster.rotation.y+=.0008;cluster.children.forEach((m,j)=>{m.material.emissiveIntensity=1.15+.32*Math.sin(Tm*2.1+phase+j*.7)})});
  flames.forEach((f,i)=>{f.scale.y=(f.userData.b||(f.userData.b=f.scale.y))*(.85+.25*Math.sin(Tm*13+i*2));});
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
