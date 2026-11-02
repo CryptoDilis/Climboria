@@ -1912,9 +1912,9 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Risk-aware alerts:** alert on changes to a user's saved thesis and risk conditions, not only price movement.
 - [ ] **Strategy Replay / Paper Trading:** test user-defined rules on historical data with realistic fees, slippage and liquidity assumptions before real-money use.
 
-### N8. Additional signature engines — approved for design backlog (DESIGN ONLY)
+### N8. Additional signature engines — OWNER-APPROVED DESIGN BACKLOG (DESIGN ONLY)
 
-These concepts extend the Trade Twin workflow. They are product hypotheses, not claims of historical first-ever invention. Benchmark competing products and prior art before making any uniqueness claim.
+**Owner approval recorded:** The owner explicitly approved these concepts for the Climboria DEX design backlog. These concepts extend the Trade Twin workflow. They are product hypotheses, not claims of historical first-ever invention. Benchmark competing products and prior art before making any uniqueness claim.
 
 - [ ] **Climboria Market Fork Engine:** let a trader compare counterfactual paths for the same market window (enter now, split entries, wait for a defined confirmation/liquidity condition, reduce size, or stay out). Replay each path against timestamped historical data and compare realized hypothetical execution cost, exposure and outcome. Prevent look-ahead bias; label simulations as hindsight analysis, not forecasts.
 - [ ] **Climboria Liquidity Mirage Detector:** distinguish displayed liquidity from realistically executable liquidity. Simulate sells at multiple sizes, measure price impact and route availability, track sudden liquidity withdrawals and pool concentration, and show how much could plausibly be exited under stated assumptions. Never equate TVL with guaranteed exit liquidity.
@@ -1923,7 +1923,7 @@ These concepts extend the Trade Twin workflow. They are product hypotheses, not 
 - [ ] **Climboria MEV & Execution Fairness Receipt:** after a confirmed swap, compare the user's quote and signed transaction with actual execution, block/slot ordering, price movement, priority fee and observable sandwich/front-run indicators where the chain exposes enough data. Explain what is provable versus merely suspected; show whether a different supported route or protection setting might have reduced exposure. Never promise MEV protection that the infrastructure cannot guarantee.
 - [ ] **Climboria Market Dependency Stress Map:** map material dependencies behind a token's apparent market health: major liquidity pools, concentrated LP positions, deployer/treasury-linked wallets, key funding sources, bridge or oracle dependencies where relevant, and correlated assets. Let users stress one dependency (for example, a major LP withdraws) and see which market metrics and exit paths may be affected. Avoid identity claims and clearly mark incomplete graph coverage.
 
-### N9. Climboria Decision Intelligence System (CDIS) — umbrella architecture (DESIGN ONLY)
+### N9. Climboria Decision Intelligence System (CDIS) — OWNER-APPROVED UMBRELLA ARCHITECTURE (DESIGN ONLY)
 
 **Proposed modules:** Discovery Engine → Token X-Ray → Trade Twin → Market Fork → Liquidity Mirage → Trade Integrity Ledger → MEV & Execution Fairness Receipt → Position Lifeline → Market Dependency Stress Map → Decision Receipt & Learning Loop.
 
