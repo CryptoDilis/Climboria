@@ -1,3 +1,13 @@
+## 2026-11-02 — original soundtrack URL repair (automated asset verification passed; playback review open)
+
+- [x] Corrected the `TRACK_01.mp3` URL from `../assets/music/...` to `./assets/music/...`. The gameplay page is `/game/play.html`; the original tracked file is under `/game/assets/music/`, so the former URL requested the wrong root-level path.
+- [x] Added a read-only resolved asset URL diagnostic and a Browser Smoke assertion for the canonical path and successful HTTP response.
+- [x] Validate passed on code/test head `0d4ef19717849d6dee240953bb83366e9ed9342e`: [run 41417458970](https://github.com/CryptoDilis/Climboria/actions/runs/41417458970).
+- [x] Browser Smoke confirmed the canonical MP3 request returned HTTP 200 on the same head: [run 41417458976](https://github.com/CryptoDilis/Climboria/actions/runs/41417458976).
+- [ ] Confirm audible original soundtrack, independent volume/mute behavior, loop/resume, and playback quality after user gesture on desktop and Android. CI checks file serving, not human-audible acceptance.
+
+---
+
 ## 2026-11-02 — selected GLB idle, walk, run, and swim transition coverage (automated verification passed; visual review open)
 
 - [x] Added read-only diagnostics for the active authored hero animation state and clip name.
