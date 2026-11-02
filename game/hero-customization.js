@@ -81,7 +81,7 @@ function apply(root,appearance={},capabilities=inspect(root).capabilities){
    else if(capabilities.eyeColor&&/eye|iris/i.test(n)&&appearance.eyeColor!=='original')tint(m.color,m.userData.climboriaBaseColor,eyes);
    else m.color.copy(m.userData.climboriaBaseColor);
   }
-  if(o.morphTargetDictionary&&o.morphTargetInfluences){for(const [name,index] of Object.entries(o.morphTargetDictionary)){let value=Math.max(0,Math.min(1,Number(appearance.face?.[name])||0));if(capabilities.eyeStyle&&/eye|brow/i.test(name))value=appearance.eyeStyle==='original'?0:appearance.eyeStyle===name?.7:value;o.morphTargetInfluences[index]=value}}
+  if(o.morphTargetDictionary&&o.morphTargetInfluences){for(const [name,index] of Object.entries(o.morphTargetDictionary)){let value=Math.max(0,Math.min(1,Number(appearance.face?.[name])||0));if(capabilities.eyeStyle&&/eye|brow/i.test(name))value=appearance.eyeStyle==='original'?0:appearance.eyeStyle===name?0.7:value;o.morphTargetInfluences[index]=value}}
  });
  if(capabilities.hairStyle){for(const name of inspect(root).options.hairstyleVariants){const o=root.getObjectByName(name);if(o){o.userData=o.userData||{};if(o.userData.climboriaBaseVisible===undefined)o.userData.climboriaBaseVisible=o.visible;o.visible=appearance.hairStyle&&appearance.hairStyle!=='original'?name===appearance.hairStyle:o.userData.climboriaBaseVisible}}}
  if(capabilities.outfit){for(const name of inspect(root).options.outfitVariants){const o=root.getObjectByName(name);if(o){o.userData=o.userData||{};if(o.userData.climboriaBaseVisible===undefined)o.userData.climboriaBaseVisible=o.visible;o.visible=appearance.outfit&&appearance.outfit!=='original'?name===appearance.outfit:o.userData.climboriaBaseVisible}}}
