@@ -99,8 +99,8 @@ async function loadRecord(next){
   console.info('[Climboria hero model capability audit]',JSON.stringify({summary,capabilities:capabilities.capabilities,options:capabilities.options,materials:capabilities.materials,meshes:capabilities.meshes,morphs:capabilities.morphs}));
  }catch(error){if(revision===modelRevision){saveButton.disabled=true;setStatus('Could not load the original Climboria Hero: '+(error?.message||error)+'. Retry after checking the asset connection.');console.error('[Climboria character creator]',error)}}
 }
-savedSelect.addEventListener('change',()=>{const next=D.readHeroes().find(h=>h.id===savedSelect.value);if(next)loadRecord(next)});
-saveButton.addEventListener('click',()=>{try{record=D.saveHero({...record,id:record.builtIn?'':record.id,name:nameInput.value,model:D.MODEL,appearance});record.builtIn=false;refreshSavedList();setStatus('Saved '+record.name+' on this device. Select it in the Jarrell’s Peak expedition menu.')}catch(error){setStatus('Could not save this hero: '+(error?.message||error))}});
+savedSelect.addEventListener('change',()=>{const next=D.readHeroes().find(h=>h.id===savedSelect.value);if(next){D.setSelectedHero(next.id);loadRecord(next)}});
+saveButton.addEventListener('click',()=>{try{record=D.saveHero({...record,id:record.builtIn?'':record.id,name:nameInput.value,model:D.MODEL,appearance});record.builtIn=false;D.setSelectedHero(record.id);refreshSavedList();setStatus('Saved '+record.name+' as your selected hero. It will spawn automatically when you enter Jarrell’s Peak.')}catch(error){setStatus('Could not save this hero: '+(error?.message||error))}});
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(mixer)mixer.update(dt);orbit.update();renderer.render(scene,camera)}loop();
 refreshSavedList();loadRecord(D.defaultHero());
 </script>
