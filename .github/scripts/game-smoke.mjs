@@ -604,11 +604,9 @@ try {
   await flowPage.setViewportSize({width:844,height:390});
   await flowPage.evaluate(()=>{document.body.classList.remove('climboria-portrait');document.body.classList.add('climboria-landscape');window.dispatchEvent(new Event('resize'))});
   await flowPage.waitForFunction(()=>getComputedStyle(document.querySelector('#rotate-phone-overlay')).display==='none',undefined,{timeout:10000});
-  await flowPage.locator('.saved-hero-option').filter({hasText:'Smoke Explorer'}).click();
-  const selectedCustomHero=await flowPage.evaluate(()=>({button:document.querySelector('.saved-hero-option[aria-pressed=true]')?.innerText,enterDisabled:document.querySelector('#enter-expedition').disabled}));
-  if(!selectedCustomHero.button?.includes('Smoke Explorer')||selectedCustomHero.enterDisabled)errors.push('Saved Create Hero character is unavailable in the Jarrell’s Peak expedition menu: '+JSON.stringify(selectedCustomHero));
-  await flowPage.locator('#enter-expedition').click();
-  await flowPage.waitForFunction(()=>document.body.classList.contains('free')&&document.documentElement.dataset.climboriaHeroRenderer==='glb',undefined,{timeout:90000});
+  await flowPage.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk'&&document.documentElement.dataset.climboriaHeroRenderer==='glb',undefined,{timeout:90000});
+  const selectedCustomHero=await flowPage.evaluate(()=>({button:document.querySelector('.saved-hero-option[aria-pressed=true]')?.innerText,selectedId:localStorage.getItem('climboria-selected-hero'),heroId:document.documentElement.dataset.climboriaHero}));
+  if(!selectedCustomHero.button?.includes('Smoke Explorer')||selectedCustomHero.selectedId!==savedRecord.id||selectedCustomHero.heroId!==savedRecord.id)errors.push('Jarrell’s Peak did not automatically load the persisted Create Hero selection: '+JSON.stringify(selectedCustomHero));
   await flowPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5&&Number(getComputedStyle(document.querySelector('#title')).opacity)<.05,undefined,{timeout:5000});
   const customEntry=await flowPage.evaluate(()=>({id:document.documentElement.dataset.climboriaHero,name:document.documentElement.dataset.climboriaHeroName,mode:window.__climboriaJarrellsPeak?.player?.mode,x:window.__climboriaJarrellsPeak?.player?.x,z:window.__climboriaJarrellsPeak?.player?.z,hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}));
   if(customEntry.id!==savedRecord.id||customEntry.name!=='Smoke Explorer'||customEntry.mode!=='walk'||customEntry.x!==0||customEntry.z!==-30||!customEntry.hud)errors.push('Custom saved hero did not enter playable Jarrell’s Peak at Sanctuary with HUD: '+JSON.stringify(customEntry));
@@ -632,7 +630,7 @@ try {
   });
   await loadPage.goto('http://127.0.0.1:4173/game/play.html?smoke=hero-load-races',{waitUntil:'domcontentloaded',timeout:90000});
   await loadPage.waitForFunction(()=>window.__climboriaGameReady===true&&document.querySelector('#enter-expedition'),undefined,{timeout:90000});
-  await loadPage.locator('#enter-expedition').click();
+  await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='loading',undefined,{timeout:30000});
   const slowLoadState=await loadPage.evaluate(()=>({state:document.documentElement.dataset.climboriaHero,buttonDisabled:document.querySelector('#enter-expedition').disabled,buttonText:document.querySelector('#enter-expedition').textContent.trim(),status:document.querySelector('#expedition-status').textContent,free:document.body.classList.contains('free')}));
   if(slowLoadState.state!=='loading'||!slowLoadState.buttonDisabled||slowLoadState.buttonText!=='LOADING HERO…'||slowLoadState.status.includes('ready')||slowLoadState.free)errors.push('Slow GLB response must remain visibly loading with Enter disabled and gameplay inactive: '+JSON.stringify(slowLoadState));
   releaseSlowHero();
@@ -640,7 +638,6 @@ try {
   heroRequestMode='fail';
   await loadPage.reload({waitUntil:'domcontentloaded',timeout:90000});
   await loadPage.waitForFunction(()=>window.__climboriaGameReady===true&&document.querySelector('#enter-expedition'),undefined,{timeout:90000});
-  await loadPage.locator('#enter-expedition').click();
   await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='load-error',undefined,{timeout:30000});
   const failedLoadState=await loadPage.evaluate(()=>({state:document.documentElement.dataset.climboriaHero,buttonText:document.querySelector('#enter-expedition').textContent.trim(),buttonDisabled:document.querySelector('#enter-expedition').disabled,status:document.querySelector('#expedition-status').textContent,free:document.body.classList.contains('free')}));
   if(failedLoadState.buttonText!=='RETRY ENTER EXPEDITION'||failedLoadState.buttonDisabled||!failedLoadState.status.toLowerCase().includes('could not be loaded')||failedLoadState.free)errors.push('Failed GLB request must expose a usable retry, error message, and no playable transition: '+JSON.stringify(failedLoadState));
