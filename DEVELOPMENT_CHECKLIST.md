@@ -1156,3 +1156,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Validate run 41441203816 passed.
 - [ ] Browser Smoke run 41441203819 still running at checklist update; confirm desktop and mobile entry before closing.
 - [ ] Pages run 41441202765 queued at checklist update; confirm deployment result.
+
+
+## 2026-11-02 — mobile landscape viewport width regression (fix committed; verification pending)
+
+- [x] Diagnosed the split-screen symptom: the resize handler preferred `document.documentElement.clientWidth` over the actual window/visual viewport width, allowing a stale narrow layout width to shrink the WebGL canvas after orientation/fullscreen changes.
+- [x] Updated `game/play.html` to size the renderer from the maximum current window, document, and visual viewport dimensions; synchronized the camera aspect ratio and canvas CSS to the full landscape viewport; re-run sizing on screen-orientation changes.
+- [ ] Validate Climboria, Browser Smoke, and Pages workflows on commit `dee158e5b2b73d571618f4cf32b960d9769dd3ec`; inspect logs and repair any failures.
+- [ ] Confirm on the Redmi 14 5G in landscape that the 3D world fills the entire screen, the right-side black region is gone, and DIVE / USE / JUMP-SURFACE / RUN controls remain visible and correctly positioned. Desktop layout must remain unchanged.
