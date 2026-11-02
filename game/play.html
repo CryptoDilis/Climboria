@@ -24,7 +24,9 @@ body.free #help{opacity:.8}
 #title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
 #title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
 #character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
-body.character-panel-open::before{content:"";position:fixed;inset:0;z-index:9998;background:rgba(3,7,12,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:auto}\nbody.character-panel-open #title{opacity:0!important;visibility:hidden!important;pointer-events:none!important}\n#character-create-panel{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:#080d14;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui;overscroll-behavior:contain}
+body.character-panel-open::before{content:"";position:fixed;inset:0;z-index:9998;background:rgba(3,7,12,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:auto}
+body.character-panel-open #title{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#character-create-panel{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:#080d14;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui;overscroll-behavior:contain}
 #character-create-panel strong{letter-spacing:.14em}
 .character-options{display:grid;grid-template-columns:1fr;gap:10px;margin:18px 0}
 .character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
