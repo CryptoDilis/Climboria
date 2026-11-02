@@ -844,7 +844,7 @@ function renderSavedHeroes(){
  if(!list.some(h=>h.id===selectedHeroRecord.id))selectedHeroRecord=list[0];
  host.replaceChildren();
  for(const record of list){
-  const button=document.createElement('button');button.type='button';button.className='saved-hero-option';button.setAttribute('aria-pressed',String(record.id===selectedHeroRecord.id));
+  const button=document.createElement('button');button.type='button';button.className='saved-hero-option';button.dataset.heroId=record.id;button.setAttribute('aria-pressed',String(record.id===selectedHeroRecord.id));
   const name=document.createElement('span');name.textContent=record.name;
   const note=document.createElement('small');note.textContent=record.builtIn?'Original Climboria Hero':'Saved on this device';
   button.append(name,note);
@@ -863,7 +863,7 @@ function activateSelectedHero(){
  loadAssetHero(selectedHeroRecord,success=>{
   heroEntryBusy=false;
   if(!success){const enter=document.getElementById('enter-expedition');if(enter)enter.disabled=false;return}
-  if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=selectedHeroRecord.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
+  if(record.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}document.getElementById('expedition-status').textContent='Selected hero changed. Tap Enter Expedition to load the new selection.';return}if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=record.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
  });
 }
 renderSavedHeroes();
