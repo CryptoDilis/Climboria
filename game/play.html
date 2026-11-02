@@ -849,7 +849,7 @@ function renderSavedHeroes(){
   const name=document.createElement('span');name.textContent=record.name;
   const note=document.createElement('small');note.textContent=record.builtIn?'Original Climboria Hero':'Saved on this device';
   button.append(name,note);
-  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;renderSavedHeroes();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
+  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;renderSavedHeroes();const playerName=document.getElementById('player-name');if(playerName)playerName.textContent=record.name.toUpperCase();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
   host.append(button);
  }
 }
@@ -860,13 +860,13 @@ function activateSelectedHero(){
  const button=document.getElementById('enter-expedition');if(button){button.disabled=true;button.textContent='LOADING HERO…'}
  requestLandscapeMode();
  if(assetHero&&loadedHeroId===requestedHero.id){
-  heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
+  const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
  }
  loadAssetHero(requestedHero,success=>{
   heroEntryBusy=false;
   if(!success){const enter=document.getElementById('enter-expedition');if(enter)enter.disabled=false;return}
   if(requestedHero.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}document.getElementById('expedition-status').textContent='Selected hero changed. Tap Enter Expedition to load the new selection.';return}
-  if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=requestedHero.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
+  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=requestedHero.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
  });
 }
 renderSavedHeroes();
@@ -997,15 +997,15 @@ function renderInventory(){
  const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.style.cssText='border:0;background:transparent;color:#ffe3a3;cursor:pointer';close.addEventListener('click',()=>invPanel.style.display='none');head.append(close);invPanel.append(head);
   const eqTitle=document.createElement('div');eqTitle.textContent='EQUIPMENT SLOTS';eqTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(eqTitle);
   const equip=document.createElement('div');equip.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:16px';
-  [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
-  const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK · 50 SLOTS';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
+  [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon'],['SKIN','Skin']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
+  const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK · 100 SLOTS';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
   const bag=document.createElement('div');bag.style.cssText='display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px';
-  const slots=Array.from({length:50},()=>null);
-  inventory.slice(0,50).forEach((item,i)=>slots[i]=item);
+  const slots=Array.from({length:100},()=>null);
+  inventory.slice(0,100).forEach((item,i)=>slots[i]=item);
   slots.forEach((item,i)=>{const cell=document.createElement('div');cell.style.cssText='aspect-ratio:1;min-width:0;border:1px solid #9b7b4c88;border-radius:6px;background:linear-gradient(145deg,#17232b,#090e13);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;overflow:hidden';const num=document.createElement('small');num.textContent=String(i+1).padStart(2,'0');num.style.cssText='font-size:8px;color:#8f9aa2;align-self:flex-start';cell.append(num);if(item){const name=document.createElement('span');name.textContent=item.name;name.title=item.name;name.style.cssText='font-size:9px;color:#f4ecd8;text-align:center;overflow-wrap:anywhere;line-height:1.1';const qty=document.createElement('b');qty.textContent='×'+item.qty;qty.style.cssText='font-size:9px;color:#e8c77f';cell.append(name,qty)}else{const empty=document.createElement('span');empty.textContent='—';empty.style.cssText='font-size:12px;color:#53606a';cell.append(empty)}bag.append(cell)});invPanel.append(bag);
-  const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
+  const note=document.createElement('p');note.textContent=inventory.length+' / 100 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
-function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<100)inventory.push({name,qty});else{toast('Backpack full · 100/100 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
@@ -1471,7 +1471,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
 (function boot(){
  const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
  if(left>0){requestAnimationFrame(boot);return}
- ready=true;const expeditionEnterButton=document.getElementById('enter-expedition');expeditionEnterButton.disabled=false;expeditionEnterButton.textContent='ENTER EXPEDITION';document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO';document.getElementById('expedition-status').textContent='Jarrell’s Peak is ready. Choose a saved hero and enter.';
+ ready=true;const expeditionEnterButton=document.getElementById('enter-expedition');expeditionEnterButton.disabled=false;expeditionEnterButton.textContent='LOADING YOUR HERO…';document.getElementById('tmsg').textContent='LOADING YOUR HERO · ENTERING JARRELL’S PEAK';document.getElementById('expedition-status').textContent='World ready. Loading your saved hero and spawning at Sanctuary…';activateSelectedHero();
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
