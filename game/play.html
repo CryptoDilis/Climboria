@@ -24,13 +24,6 @@ body.free #help{opacity:.8}
 #title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
 #title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
 #character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
-body.character-panel-open::before{content:"";position:fixed;inset:0;z-index:9998;background:rgba(3,7,12,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:auto}
-body.character-panel-open #title{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-#character-create-panel{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:#080d14;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui;overscroll-behavior:contain}
-#character-create-panel strong{letter-spacing:.14em}
-.character-options{display:grid;grid-template-columns:1fr;gap:10px;margin:18px 0}
-.character-options button,#character-create-enter,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}#character-create-enter:disabled{opacity:.62;cursor:wait}
-#character-load-status{color:#b9c1c8;min-height:18px}
 
 #expedition-hero-menu{width:min(520px,calc(100vw - 36px));margin:18px auto 0;padding:16px;border:1px solid #d8b46b77;border-radius:13px;background:#080d14eF;box-shadow:0 12px 36px #0008;text-align:left;cursor:default}#expedition-hero-menu>strong{display:block;color:#ffe3a3;font:800 11px system-ui;letter-spacing:.15em;margin-bottom:10px}.saved-hero-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.saved-hero-option{min-height:52px;padding:10px;border:1px solid #6e7883;border-radius:8px;background:#111a23;color:#f4ecd8;text-align:left;font:700 11px system-ui;letter-spacing:.03em}.saved-hero-option[aria-pressed=true]{border-color:#f1d38b;background:#302717;color:#ffe3a3;box-shadow:inset 0 0 0 1px #d8b46b55}.saved-hero-option small{display:block;margin-top:3px;color:#b9c1c8;font-size:9px;font-weight:500}.saved-hero-option:disabled{opacity:.6;cursor:wait}#enter-expedition{display:block;width:min(280px,100%);margin:12px auto 0;padding:12px 16px;border:1px solid #f1d38b;background:linear-gradient(120deg,#30270f,#171b26 65%);color:#ffe3a3;border-radius:8px;font:800 11px system-ui;letter-spacing:.13em;cursor:pointer}#enter-expedition:disabled{opacity:.55;cursor:wait}#expedition-status{min-height:18px;margin:9px 0 0;color:#b9c1c8;font:11px/1.5 system-ui;text-align:center}#back-to-game-hub{display:block;width:max-content;margin:9px auto 0;color:#e5c980;font:700 10px system-ui;letter-spacing:.08em;text-decoration:none}#back-to-game-hub:hover{color:#fff0be}
 body.free #title{opacity:0;pointer-events:none}
@@ -912,16 +905,12 @@ document.getElementById('expedition-settings-close').addEventListener('click',()
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
 document.getElementById('back-to-expedition-menu').addEventListener('click',()=>{
- settingsPanel.style.display='none';heroEntryInProgress=false;P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
+ settingsPanel.style.display='none';heroEntryAllowed=false;heroEntryBusy=false;P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
  if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
  const title=document.getElementById('title');title.style.display='grid';title.style.opacity='1';title.style.pointerEvents='auto';
  document.getElementById('tmsg').textContent='CLIMBORIA · EXPEDITION MENU';
 });
-function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
- // Entering gameplay must dismiss the character picker even if its large GLB request is still pending.
- const characterPanel=document.getElementById('character-create-panel');
- if(characterPanel){characterPanel.style.display='none';document.body.classList.remove('character-panel-open')}
- // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
+function takeOver(){if(P.mode!=='cine'||!heroEntryAllowed||!assetHero||loadedHeroId!==selectedHeroRecord.id)return;heroEntryAllowed=false;heroEntryBusy=false;startClimboriaMusic();for(const key of Object.keys(keys))keys[key]=false;P.moveTarget=null; // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';document.documentElement.dataset.climboriaHeroAnimation=animState;document.documentElement.dataset.climboriaHeroClip='procedural-'+animState;}
@@ -944,7 +933,7 @@ addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
 // The title overlay is visual-only (the WebGL canvas sits above it); accept the actual player click on the canvas during the cinematic intro.
-cv.addEventListener('pointerdown',e=>{if(P.mode==='cine'&&ready)enterExpedition(e)});
+
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
 function requestLandscapeMode(){
@@ -977,10 +966,9 @@ document.addEventListener('fullscreenchange',()=>{
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
 const titleOverlay=document.getElementById('title');
-function enterExpedition(e){if(e?.target?.closest?.('button,a,input,select,textarea,[role="button"]'))return;if(!ready||P.mode!=='cine')return;if(e){e.preventDefault();e.stopPropagation()}takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map';requestLandscapeMode()}
+function enterExpedition(e){if(e){e.preventDefault();e.stopPropagation()}return false}
 // Enter gameplay synchronously during the user gesture; fullscreen/orientation requests are secondary and must never block the player-state transition.
-titleOverlay.addEventListener('pointerdown',enterExpedition,{capture:true});
-titleOverlay.addEventListener('click',enterExpedition);
+
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
@@ -1073,7 +1061,7 @@ if(MOB){document.body.style.touchAction='none';
 const jr=css(document.createElement('div'),'position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid #ffe3a366;display:none;z-index:9;pointer-events:none'),jk=css(document.createElement('div'),'position:fixed;width:44px;height:44px;border-radius:50%;background:#ffe3a355;display:none;z-index:9;pointer-events:none');document.body.append(jr,jk);
 let pinchDistance=0;
 let landscapeLockRequested=false;
-addEventListener('touchstart',e=>{if(!landscapeLockRequested&&screen.orientation?.lock){landscapeLockRequested=true;screen.orientation.lock('landscape').catch(()=>{});}const interactiveTarget=e.target?.closest?.('button,a,input,select,textarea,[role="button"],#character-create-panel');if(interactiveTarget)return;if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
+addEventListener('touchstart',e=>{if(!landscapeLockRequested&&screen.orientation?.lock){landscapeLockRequested=true;screen.orientation.lock('landscape').catch(()=>{});}const interactiveTarget=e.target?.closest?.('button,a,input,select,textarea,[role="button"],#expedition-hero-menu');if(interactiveTarget)return;if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
  if(t.clientX<innerWidth*.45&&joy.id==null){joy.id=t.identifier;joy.x0=t.clientX;joy.y0=t.clientY;jr.style.cssText+=`;display:block;left:${t.clientX-50}px;top:${t.clientY-50}px`;jk.style.display='block'}
  else if(lk.id==null){lk.id=t.identifier;lk.x=t.clientX;lk.y=t.clientY}}},{passive:true});
 addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1],distance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pinchDistance>0&&P.mode==='walk')targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+(pinchDistance-distance)*.035));pinchDistance=distance;return}else pinchDistance=0;for(const t of e.changedTouches){if(t.identifier==joy.id){joy.dx=Math.max(-1,Math.min(1,(t.clientX-joy.x0)/45));joy.dy=Math.max(-1,Math.min(1,(t.clientY-joy.y0)/45));jk.style.left=joy.x0+joy.dx*40-22+'px';jk.style.top=joy.y0+joy.dy*40-22+'px'}
@@ -1480,7 +1468,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
 (function boot(){
  const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
  if(left>0){requestAnimationFrame(boot);return}
- ready=true;document.getElementById('tmsg').textContent='CLIMBORIA · Preparing first frame…';
+ ready=true;document.getElementById('enter-expedition').disabled=false;document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO';document.getElementById('expedition-status').textContent='Jarrell’s Peak is ready. Choose a saved hero and enter.';
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -1490,7 +1478,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
    console.error('[Climboria frame update]',err);
    // Keep rendering even if a non-rendering gameplay subsystem throws.
   }
-  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='CLIMBORIA · Click to explore'}}
+  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO'}}
   catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
   requestAnimationFrame(loop)
  });
