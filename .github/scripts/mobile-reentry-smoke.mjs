@@ -130,7 +130,6 @@ try {
   });
   await page.waitForFunction(() => window.__climboriaGameReady === true && !!document.querySelector('#enter-expedition'), undefined, { timeout: 90000 });
   const portrait = await capture(page, 'Mobile portrait expedition menu');
-  if (getComputedStyle) {}
   const portraitVisible = await page.evaluate(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none');
   if (!portraitVisible) errors.push('Portrait mobile entry should show the rotate-phone gate: ' + JSON.stringify(portrait));
 
