@@ -10,12 +10,18 @@ try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
+  page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
-  await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
+  try {
+    await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({ ready: window.__climboriaGameReady ?? false, renderState: window.__climboriaRenderState ?? null, scriptCount: document.scripts.length, gameReady: document.documentElement.dataset.climboriaReady ?? null, hero: document.documentElement.dataset.climboriaHero ?? null, canvas: !!document.querySelector('canvas') }));
+    throw new Error('Game initialization timed out: ' + JSON.stringify(diagnostic) + '; browserErrors=' + JSON.stringify(errors) + '; ' + error.message);
+  }
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await page.waitForFunction(() => {
     const root=document.documentElement.dataset;
