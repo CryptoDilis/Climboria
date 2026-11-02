@@ -541,7 +541,7 @@ function camp(){
 }
 camp();
 /* Cave with spike traps */
-const spikes=[],caveGems=[],caveTorches=[];let caveG;
+const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveG;
 {
  const p=POI.cave,dx=-p.x,dz=-p.z,dl=Math.hypot(dx,dz),dir={x:dx/dl,z:dz/dl};POI.cave.dir=dir;
  const g=new T3.Group();g.position.set(p.x,p.h,p.z);g.rotation.y=Math.atan2(dir.x,dir.z);scene.add(g);caveG=g;
@@ -941,7 +941,7 @@ const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 /* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
-const caveWallSegments=[];
+
 function l2w(g,lx,lz){const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]}
 const solid=(x,z,r)=>solids.push({x,z,r});
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
