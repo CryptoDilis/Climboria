@@ -1276,6 +1276,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] 3% rare-reward chance is not implemented; do not imply cave gems or the existing chest satisfy this reward mechanic.
 - [ ] Manual desktop and Redmi 14 5G visual/gameplay acceptance remains open; automated smoke does not replace real-device testing.
 
+
+## 2026-11-02 — second connected cave annex (automated checks green)
+
+- [x] Extended the existing side chamber with a second north doorway, a six-metre passage, and a separate 10 m × 5 m mineral annex.
+- [x] Added matching swept movement colliders for the new passage and annex walls; smoke audit checks the original passage and annex route remain traversable and wall crossings remain blocked.
+- [x] Kept the original cave chamber, spike field, stalactites, soldiers, crystal clusters, chest, six torches, hero, HUD, and other world systems intact.
+- [x] Verified commit `9a59f81d65e7931a969b3c72f77a7762cc5a66a4`: Validate run 41466992208 passed, Browser Smoke run 41466992432 passed, Pages deployment run 41466993088 passed.
+- [ ] Still open: full-length cave network, branching maze, additional trap types and trigger logic, underwater pool/passages, hidden reward rooms, and 3% rare-reward mechanic.
+- [ ] Manual desktop and Redmi 14 5G visual/gameplay acceptance remains outstanding.
+
 ## 2026-11-02 — cave feature gap audit (implementation queued; no unverified world edits)
 
 - [x] Inspected the actual `game/play.html` cave construction block rather than relying on checklist claims.
