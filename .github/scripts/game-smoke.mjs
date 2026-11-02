@@ -319,12 +319,12 @@ try {
         return Promise.resolve();
       }
     });
+    const mockedOrientation = { get type() { return innerWidth>innerHeight?'landscape-primary':'portrait-primary'; }, lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } };
     try {
-      Object.defineProperty(screen, 'orientation', {
-        configurable: true,
-        value: { get type() { return innerWidth>innerHeight?'landscape-primary':'portrait-primary'; }, lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } }
-      });
-    } catch (_) {}
+      Object.defineProperty(screen, 'orientation', { configurable: true, value: mockedOrientation });
+    } catch (_) {
+      Object.defineProperty(Object.getPrototypeOf(screen), 'orientation', { configurable: true, get: () => mockedOrientation });
+    }
   });
   await mobile.goto('http://127.0.0.1:4173/game/play.html?smoke=mobile', {
     waitUntil: 'domcontentloaded',
@@ -336,6 +336,9 @@ try {
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
     text: document.querySelector('#rotate-phone-overlay')?.innerText || '',
     controlsHidden: [...document.querySelectorAll('#player-card,#status-card,#world-map-panel,#expedition-settings-toggle')].every(el => getComputedStyle(el).visibility === 'hidden'),
+    bodyClass: document.body.className,
+    screenOrientation: screen.orientation?.type || 'unavailable',
+    viewport: { width: innerWidth, height: innerHeight, portraitMedia: matchMedia('(orientation: portrait)').matches },
   }));
   if (!portraitGate.visible || !portraitGate.text.includes('ROTATE YOUR PHONE') || !portraitGate.controlsHidden) {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
