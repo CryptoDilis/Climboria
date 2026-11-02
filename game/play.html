@@ -191,6 +191,9 @@ body.free.mobile-device.climboria-landscape #expedition-settings-toggle{
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 (()=>{
+let chunkReady=false,renderReady=false,heroReady=false;
+window.__climboriaGameReady=false;
+function syncGameReady(){if(chunkReady&&renderReady&&heroReady&&!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';const msg=document.getElementById('tmsg');if(msg)msg.textContent='CLIMBORIA · Click to explore';}}
 const T3=THREE,L=h=>new T3.Color(h).convertSRGBToLinear();
 /* ---------- noise ---------- */
 const hash=(x,y)=>{const h=Math.sin(x*127.1+y*311.7)*43758.5453;return h-Math.floor(h)};
@@ -765,7 +768,7 @@ let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='Adventurer'){
  if(!assetChoices[choice])choice='Adventurer';
  const requestId=++heroLoadRequest;
- if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] '+heroLoadError);return}
+ if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';heroReady=true;syncGameReady();console.error('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
  new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
   // Ignore late responses from an earlier character selection; the most recent choice always wins.
@@ -783,8 +786,9 @@ function loadAssetHero(choice='Adventurer'){
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
   const loadStatus=document.getElementById('character-load-status');
   if(loadStatus)loadStatus.textContent='Climboria Hero loaded successfully';const enterButton=document.getElementById('character-create-close');if(enterButton){enterButton.textContent='ENTER JARRELL’S PEAK';enterButton.dataset.heroLoaded='true';enterButton.setAttribute('aria-label','Enter Jarrell’s Peak with Climboria Hero')}
+  heroReady=true;syncGameReady();
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
- },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';const loadStatus=document.getElementById('character-load-status');if(loadStatus)loadStatus.textContent='Hero failed to load. Check connection and retry.';const enterButton=document.getElementById('character-create-close');if(enterButton){enterButton.textContent='BACK TO MENU';enterButton.dataset.heroLoaded='false';enterButton.removeAttribute('aria-label')}console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
+ },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';const loadStatus=document.getElementById('character-load-status');if(loadStatus)loadStatus.textContent='Hero failed to load. Check connection and retry.';const enterButton=document.getElementById('character-create-close');if(enterButton){enterButton.textContent='BACK TO MENU';enterButton.dataset.heroLoaded='false';enterButton.removeAttribute('aria-label')}heroReady=true;syncGameReady();console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
 }
 const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const validHero=v=>Object.prototype.hasOwnProperty.call(assetChoices,v);const initialHero=validHero(requestedHero)?requestedHero:validHero(savedHero)?savedHero:'Adventurer';loadAssetHero(initialHero);
 const createPanel=document.getElementById('character-create-panel');
@@ -1391,12 +1395,20 @@ function update(dt){
   const cave=POI.cave,tr=Math.hypot(cp.x-cave.x-cave.dir.x*25,cp.z-cave.z-cave.dir.z*25)<22;
   subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
 }
-/* ---------- boot ---------- */
+/* ---------- independent readiness gates ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
-(function boot(){
- const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
- if(left>0){requestAnimationFrame(boot);return}
- ready=true;document.getElementById('tmsg').textContent='CLIMBORIA · Preparing first frame…';
+async function initChunks(){
+ const total=(2*R+1)**2;
+ let left=updateChunks(0,0,6);
+ const msg=document.getElementById('tmsg');
+ while(left>0){
+  if(msg)msg.textContent='Generating world… '+Math.round(100*(1-left/total))+'%';
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  left=updateChunks(0,0,6);
+ }
+ chunkReady=true;ready=true;syncGameReady();
+}
+function startRenderLoop(){
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -1406,11 +1418,22 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
    console.error('[Climboria frame update]',err);
    // Keep rendering even if a non-rendering gameplay subsystem throws.
   }
-  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='CLIMBORIA · Click to explore'}}
-  catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
-  requestAnimationFrame(loop)
+  try{
+   renderer.render(scene,cam);
+   window.__climboriaRenderState.frames=renderer.info.render.frame;
+   window.__climboriaRenderState.objects=scene.children.length;
+   if(!renderReady){renderReady=true;syncGameReady();}
+  }catch(err){
+   const msg=err&&err.stack?err.stack:String(err);
+   if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);
+   console.error('[Climboria renderer]',err);
+  }
+  requestAnimationFrame(loop);
  });
-})();
+}
+window.__climboriaReadiness={get chunkReady(){return chunkReady},get renderReady(){return renderReady},get heroReady(){return heroReady}};
+startRenderLoop();
+initChunks().catch(err=>{console.error('[Climboria chunk initialization]',err);document.documentElement.dataset.climboriaChunkError=String(err);});
 })();
 </script>
 </body>
