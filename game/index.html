@@ -140,5 +140,5 @@ document.getElementById("menuInventory").addEventListener("click",()=>openModal(
 document.getElementById("menuArena").addEventListener("click",()=>openModal("arenaStatusModal"));
 document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>document.getElementById(button.dataset.close)?.classList.remove("open")));
 document.querySelectorAll(".menu-modal").forEach(modal=>{modal.addEventListener("click",event=>{if(event.target===modal)modal.classList.remove("open")});modal.addEventListener("keydown",event=>{if(event.key==="Escape")modal.classList.remove("open")})});
-document.querySelectorAll(".card[data-level]").forEach(card=>card.addEventListener("click",()=>{location.href='./play.html?level='+encodeURIComponent(card.dataset.level)}));
+// Destination cards navigate through their native anchor hrefs.
 </script></body></html>
