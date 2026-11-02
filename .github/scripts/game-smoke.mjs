@@ -410,14 +410,17 @@ try {
       renderErrors: window.__climboriaRenderState?.errors ?? [],
       controls: ['JUMP','RUN','USE','DIVE'].every(label => text.includes(label)),
       playerName: !!document.querySelector('#player-name'),
-      worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
+      playerVisible: (()=>{const e=document.querySelector('#player-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
+      statusVisible: (()=>{const e=document.querySelector('#status-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
+      worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none' && getComputedStyle(document.querySelector('#world-map-panel')).visibility !== 'hidden',
+      settingsVisible: (()=>{const e=document.querySelector('#expedition-settings-toggle'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&c.display!=='none'})(),
       hero: document.documentElement.dataset.climboriaHero === 'adventurer',
       bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
     };
   });
-  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || !mobileState.playerName || !mobileState.worldMap || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/control initialization failed: ' + JSON.stringify(mobileState));
+  if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/control initialization failed: ' + JSON.stringify(mobileState));
   if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
