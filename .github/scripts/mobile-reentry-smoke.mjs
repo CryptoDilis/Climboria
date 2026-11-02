@@ -58,6 +58,7 @@ import { chromium } from 'playwright';
       || !result.landscape || result.portrait
       || !result.noTitle || !result.noHeroMenu || !result.noCreateHero || !result.noEnterButton || !result.noGenerating
       || result.width > result.viewport + 2) throw new Error('Mobile Jarrell auto-entry failed: ' + JSON.stringify(result));
+    await page.screenshot({ path: 'climboria-mobile-gameplay.png' });
     await page.locator('#expedition-settings-toggle').click();
     await page.locator('#expedition-settings-close').click();
     if (errors.length) throw new Error('Mobile JavaScript errors: ' + errors.join(' | '));
