@@ -34,6 +34,12 @@ body.free #title{opacity:0;pointer-events:none}
 #title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
 @media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
 
+/* Keep gameplay-only overlays out of the expedition title/menu. */
+body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+#title{width:100%;max-width:100vw;overflow:hidden}
+#title h1{max-width:calc(100vw - 40px);font-size:clamp(30px,6vw,76px);letter-spacing:clamp(.04em,1.1vw,.18em);white-space:normal;overflow-wrap:anywhere}
+
 /* Persistent adventure HUD */
 #player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
 body.free #player-card{opacity:1}
@@ -861,7 +867,7 @@ document.addEventListener('fullscreenchange',()=>{
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
 const titleOverlay=document.getElementById('title');
-function enterExpedition(e){if(!ready||P.mode!=='cine')return;if(e){e.preventDefault();e.stopPropagation()}takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map';requestLandscapeMode()}
+function enterExpedition(e){if(e?.target?.closest?.('button,a,input,select,textarea,[role="button"]'))return;if(!ready||P.mode!=='cine')return;if(e){e.preventDefault();e.stopPropagation()}takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map';requestLandscapeMode()}
 // Enter gameplay synchronously during the user gesture; fullscreen/orientation requests are secondary and must never block the player-state transition.
 titleOverlay.addEventListener('pointerdown',enterExpedition,{capture:true});
 titleOverlay.addEventListener('click',enterExpedition);
