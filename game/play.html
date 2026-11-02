@@ -698,7 +698,7 @@ let camY=null,lookY=0,cameraDistance=7.2,targetCameraDistance=7.2;
 let cameraYaw=0,cameraPitch=-.08;
 window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance}};
 const free=on=>document.body.classList.toggle('free',on);
-const climboriaMusic=new Audio('../assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
+const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';document.documentElement.dataset.climboriaMusicAsset=climboriaMusic.src;
 let climboriaMusicRequested=false;
 climboriaMusic.addEventListener('error',()=>{document.documentElement.dataset.climboriaMusic='load-error';console.error('[Climboria] Soundtrack failed to load',climboriaMusic.error)});
 climboriaMusic.addEventListener('playing',()=>{document.documentElement.dataset.climboriaMusic='playing'});
