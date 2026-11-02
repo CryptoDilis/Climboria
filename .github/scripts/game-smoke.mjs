@@ -402,7 +402,6 @@ try {
   if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleHidden || !characterPickerTouch.modalAboveHud || !characterPickerTouch.backdropActive) {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
-  await mobile.locator('#character-create-close').click();
   const heroContinue = await mobile.evaluate(() => ({
     buttonText: document.querySelector('#character-create-close').textContent.trim(),
     loaded: document.querySelector('#character-create-close').dataset.heroLoaded === 'true',
