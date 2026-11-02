@@ -2,6 +2,7 @@
 (function(){
 'use strict';
 const STORE='climboria-saved-heroes';
+const SELECTED='climboria-selected-hero';
 const MODEL='Climboria_Hero.glb';
 const TONES={original:'#ffffff',warm:'#f2c5a5',deep:'#bb8064',rich:'#86563e'};
 const COLORS={black:'#2b211f',brown:'#70442c',auburn:'#a64b2a',blond:'#d5b56b',silver:'#c8ccd1',blue:'#6faeff',green:'#55bb83',hazel:'#ad874b'};
@@ -26,6 +27,15 @@ function readHeroes(){
   return[defaultHero(),...unique.values()].slice(0,25);
  }catch(_){return[defaultHero()]}
 }
+function getSelectedHero(){
+ const heroes=readHeroes();
+ try{const id=localStorage.getItem(SELECTED);return heroes.find(h=>h.id===id)||heroes[0]||defaultHero()}catch(_){return heroes[0]||defaultHero()}
+}
+function setSelectedHero(id){
+ const hero=readHeroes().find(h=>h.id===id);
+ if(!hero)return false;
+ try{localStorage.setItem(SELECTED,hero.id);return true}catch(_){return false}
+}
 function saveHero(record){
  const hero=normalize(record);if(!hero)throw new Error('Invalid hero record');
  if(!hero.id)hero.id='hero-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
@@ -33,6 +43,7 @@ function saveHero(record){
  const current=readHeroes().filter(h=>!h.builtIn&&h.id!==hero.id);
  const next=[...current,hero].slice(-24);
  localStorage.setItem(STORE,JSON.stringify(next));
+ localStorage.setItem(SELECTED,hero.id);
  return hero;
 }
 function inspect(root,animations=[]){
@@ -88,5 +99,5 @@ function apply(root,appearance={},capabilities=inspect(root).capabilities){
  if(Array.isArray(appearance.accessories)){const accessories=new Set(appearance.accessories);for(const name of inspect(root).options.accessories){const o=root.getObjectByName(name);if(o)o.visible=accessories.has(name)}}
  return inspect(root);
 }
-window.ClimboriaHeroData={STORE,MODEL,readHeroes,saveHero,normalize,defaultHero,emptyAppearance,inspect,apply,tones:Object.keys(TONES),colors:Object.keys(COLORS)};
+window.ClimboriaHeroData={STORE,MODEL,readHeroes,getSelectedHero,setSelectedHero,saveHero,normalize,defaultHero,emptyAppearance,inspect,apply,tones:Object.keys(TONES),colors:Object.keys(COLORS)};
 })();
