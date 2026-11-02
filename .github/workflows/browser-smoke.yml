@@ -116,6 +116,7 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
+            climboria-character-creator.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
             freshwater-*.png
