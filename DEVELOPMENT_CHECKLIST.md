@@ -1,3 +1,14 @@
+## 2026-11-02 — selected GLB idle, walk, run, and swim transition coverage (automated verification passed; visual review open)
+
+- [x] Added read-only DOM diagnostics for the active authored hero animation state and clip name.
+- [x] Extended Browser Smoke to enter gameplay, verify the selected Adventurer GLB transitions through idle → walk → run → swim, and assert the authored clips `Walking`, `Running`, and `Swim_Forward` activate. The freshwater probe restores the player’s captured position and swim state.
+- [x] Validate passed on code/test head `c26ba2a17e316df7bb6b4f78b1407f032682c4b9`: [run 41365203696](https://github.com/CryptoDilis/Climboria/actions/runs/41365203696).
+- [x] Browser Smoke passed on the same head: [run 41365203720](https://github.com/CryptoDilis/Climboria/actions/runs/41365203720). Logs confirmed `idle`, `Walking`, `Running`, and `Swim_Forward` and reported no gameplay render errors.
+- [ ] Jump/fall/climb and swim pose appearance, foot grounding across terrain, and animation quality still need manual visual review on desktop and Android landscape. The CI transition check does not establish visual acceptance.
+- Code commits: `f8b8e49` (animation diagnostics), `bf6e421` (transition coverage), `c26ba2a` (restore all player swim state after probe).
+
+---
+
 ## 2026-11-02 — GLB renderer and mobile-facing smoke repair
 
 - [x] Fixed renderer-state timing in `game/play.html`: successful loading of the selected GLB now publishes the renderer diagnostic at the same time the visible GLB is attached.
