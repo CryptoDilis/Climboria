@@ -15,12 +15,12 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
-  await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
-  await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
+  await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await page.waitForFunction(() => {
     const root=document.documentElement.dataset;
     return (root.climboriaHero === 'adventurer' && root.climboriaHeroRenderer === 'glb') || root.climboriaHero === 'load-error';
-  }, { timeout: 90000 });
+  }, undefined, { timeout: 90000 });
   const heroAssetAudit = await page.evaluate(() => ({
     identity: document.documentElement.dataset.climboriaHero || '',
     renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
