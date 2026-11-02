@@ -1145,3 +1145,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Verify Browser Smoke, Validate, and Pages on the new commit; do not close this regression until desktop and mobile gameplay smoke both pass.
 - [ ] Manual real-device Android landscape/touch acceptance remains open.
 - Code commit: 45dc262ecef59775d2dc82b47ae5fa20a40311b6.
+
+
+## 2026-11-02 — Browser Smoke expedition-entry test correction
+
+- [x] Rechecked commit `f0fbf5c1`: Validate run 41440866820 passed; Pages run 41440866689 passed; Browser Smoke run 41440866915 failed at `.github/scripts/game-smoke.mjs:172` waiting for `body.free` and player `mode === 'walk'`.
+- [x] Confirmed homepage CTA/DEX/mobile-nav smoke passed and world boot, water/fishing, collision, and mountain route diagnostics passed before the expedition-entry timeout.
+- [x] Identified the test was dispatching a synthetic `pointerdown` event directly. Replaced it with a real Playwright click on the visible title overlay; retained the same gameplay-state assertion and desktop/mobile checks (no assertion weakened).
+- [x] New commit: `9a02a52c7fab1382efc573d9db4c6c7488f56feb`.
+- [x] Validate run 41441203816 passed.
+- [ ] Browser Smoke run 41441203819 still running at checklist update; confirm desktop and mobile entry before closing.
+- [ ] Pages run 41441202765 queued at checklist update; confirm deployment result.
