@@ -34,7 +34,34 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check out game
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fast-fail smoke script syntax and required selectors
+        run: |
+          node --check .github/scripts/mobile-reentry-smoke.mjs
+          node --check .github/scripts/game-smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          game = Path("game/play.html").read_text(encoding="utf-8")
+          mobile = Path(".github/scripts/mobile-reentry-smoke.mjs").read_text(encoding="utf-8")
+          required_game = ["id=" + chr(34) + "title" + chr(34), "id=" + chr(34) + "player-card" + chr(34), "id=" + chr(34) + "back-to-game-hub" + chr(34)]
+          required_test = ["#back-to-game-hub", "Mobile gameplay remains active after settings close"]
+          missing = [item for item in required_game if item not in game] + [item for item in required_test if item not in mobile]
+          if missing:
+              raise SystemExit("Missing gameplay smoke contract: " + repr(missing))
+          print("Fast preflight passed: JavaScript syntax and gameplay selectors.")
+          PY
+
   browser-smoke:
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -46,7 +73,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: climboria-npm-node22-${{ runner.os }}-v1
+
       - name: Cache Playwright browser binaries
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -57,7 +91,11 @@ jobs:
         run: |
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
-          timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
+            timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+          else
+            echo 'Playwright Chromium cache hit; skipping browser download.'
+          fi
 
       - name: Start local web server
         run: |
