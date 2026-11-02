@@ -66,6 +66,20 @@ Eligible marketplace items and crafted gear are intended to use **$CLIMB only**,
 - NFT minting is intended to have no Climboria minting fee; the player pays network gas.
 - Marketplace trading, minting, fee accounting, and reward distribution must be implemented and secured before being called live.
 
+
+## Climboria Signature and Jarrell’s Peak funding
+
+**Climboria Signature is a flagship Climboria product**, not a minor Launchpad option. The website and project materials should present it prominently as the ecosystem’s responsible-launch approach, including transparent project disclosures and the planned creator-lock and sell-limit safeguards. These safeguards remain in development until implemented, reviewed, and tested.
+
+Jarrell’s Peak has a dedicated funding stream:
+- A portion of eligible **Climboria DEX fees** is intended to support Jarrell’s Peak.
+- A portion of eligible **Climboria Launchpad fees** is intended to support Jarrell’s Peak.
+- Other projects may make **optional donations of $1–$1,000 worth of SOL** to support Jarrell’s Peak.
+- SOL is intended to be converted to $CLIMB only through a safe, verified route. If no such route is available, the donation remains in a SOL reserve rather than being converted through an unverified path.
+- Jarrell’s Peak DEX/Launchpad allocations and donations are separate from marketplace fee accounting. Do not silently merge the pools.
+
+**No exact DEX or Launchpad allocation percentage has been finalized.** Publish the exact rates, fee basis, destination addresses, conversion policy, reporting method, and distribution schedule before activation. Until fee collection and distribution are implemented and verified, describe this model as planned—not live, guaranteed, or already funded.
+
 ## Arena wagers and event funding: future features
 
 Casual Arena fights are free and have no prize payout. Optional wager matches are planned with mutually accepted $CLIMB stakes. The winner receives the total pot minus a **2.5% platform fee on the total pot**; that fee goes to the game funding pool. For a 200 $CLIMB pot, the fee is 5 $CLIMB and the winner payout is 195 $CLIMB. Wagers require secure escrow, consent, disconnect/dispute handling, anti-abuse measures, and any necessary compliance review.
