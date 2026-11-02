@@ -1471,7 +1471,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
 (function boot(){
  const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
  if(left>0){requestAnimationFrame(boot);return}
- ready=true;document.getElementById('enter-expedition').disabled=false;document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO';document.getElementById('expedition-status').textContent='Jarrell’s Peak is ready. Choose a saved hero and enter.';
+ ready=true;const expeditionEnterButton=document.getElementById('enter-expedition');expeditionEnterButton.disabled=false;expeditionEnterButton.textContent='ENTER EXPEDITION';document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO';document.getElementById('expedition-status').textContent='Jarrell’s Peak is ready. Choose a saved hero and enter.';
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
