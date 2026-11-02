@@ -910,7 +910,7 @@ volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeC
 document.getElementById('back-to-expedition-menu').addEventListener('click',()=>{
  settingsPanel.style.display='none';heroEntryAllowed=false;heroEntryBusy=false;P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
  if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
- const title=document.getElementById('title');title.style.display='grid';title.style.opacity='1';title.style.pointerEvents='auto';
+ const title=document.getElementById('title');title.style.display='grid';title.style.removeProperty('opacity');title.style.removeProperty('pointer-events');
  document.getElementById('tmsg').textContent='CLIMBORIA · EXPEDITION MENU';
 });
 function takeOver(){if(P.mode!=='cine'||!heroEntryAllowed||!assetHero||loadedHeroId!==selectedHeroRecord.id)return;heroEntryAllowed=false;heroEntryBusy=false;startClimboriaMusic();for(const key of Object.keys(keys))keys[key]=false;P.moveTarget=null; // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
