@@ -22,26 +22,15 @@ body.free #hud{opacity:1}
 #sub{font:12px/1.5 system-ui,sans-serif;opacity:.8;margin-top:2px}
 #help{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;font:11px/1.7 system-ui,sans-serif;opacity:0;transition:opacity 1s;text-shadow:0 1px 6px #000;pointer-events:none;max-width:70vw}
 body.free #help{opacity:.8}
-#title{opacity:0!important;pointer-events:none!important;transition:none!important}
-#title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
-#title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
-#character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
-
-#expedition-hero-menu{width:min(520px,calc(100vw - 36px));margin:18px auto 0;padding:16px;border:1px solid #d8b46b77;border-radius:13px;background:#080d14eF;box-shadow:0 12px 36px #0008;text-align:left;cursor:default}#expedition-hero-menu>strong{display:block;color:#ffe3a3;font:800 11px system-ui;letter-spacing:.15em;margin-bottom:10px}.saved-hero-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.saved-hero-option{min-height:52px;padding:10px;border:1px solid #6e7883;border-radius:8px;background:#111a23;color:#f4ecd8;text-align:left;font:700 11px system-ui;letter-spacing:.03em}.saved-hero-option[aria-pressed=true]{border-color:#f1d38b;background:#302717;color:#ffe3a3;box-shadow:inset 0 0 0 1px #d8b46b55}.saved-hero-option small{display:block;margin-top:3px;color:#b9c1c8;font-size:9px;font-weight:500}.saved-hero-option:disabled{opacity:.6;cursor:wait}#enter-expedition{display:block;width:min(280px,100%);margin:12px auto 0;padding:12px 16px;border:1px solid #f1d38b;background:linear-gradient(120deg,#30270f,#171b26 65%);color:#ffe3a3;border-radius:8px;font:800 11px system-ui;letter-spacing:.13em;cursor:pointer}#enter-expedition:disabled{opacity:.55;cursor:wait}#expedition-status{min-height:18px;margin:9px 0 0;color:#b9c1c8;font:11px/1.5 system-ui;text-align:center}#back-to-game-hub{display:block;width:max-content;margin:9px auto 0;color:#e5c980;font:700 10px system-ui;letter-spacing:.08em;text-decoration:none}#back-to-game-hub:hover{color:#fff0be}
-body.free #title{opacity:0!important;pointer-events:none!important}
-/* Mobile action buttons belong to active gameplay, never the cinematic/title menu. */
+/* Expedition title and hero-picker overlay removed; gameplay HUD is revealed by free(true). */
 body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 
-#title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
-@media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
+@media(prefers-reduced-motion:reduce){.bar,#hud,#help{transition:none}}
 
 /* Keep gameplay-only overlays out of the expedition title/menu. */
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
-#title{width:100%;max-width:100vw;overflow:hidden}
-#title h1{max-width:calc(100vw - 40px);font-size:clamp(30px,6vw,76px);letter-spacing:clamp(.04em,1.1vw,.18em);white-space:normal;overflow-wrap:anywhere}
-#character-create{justify-self:center;width:min(240px,calc(100vw - 40px));}
 
 /* Persistent adventure HUD */
 #player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
@@ -222,7 +211,7 @@ body.mobile-device #world-map-panel.map-expanded #world-map{
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
-<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">EXPEDITION MENU · SELECT YOUR HERO</p><section id="expedition-hero-menu" aria-label="Expedition hero selection"><strong>SELECT YOUR HERO</strong><div id="saved-hero-list" role="group" aria-label="Saved heroes"></div><button id="enter-expedition" type="button" disabled>PREPARING EXPEDITION…</button><p id="expedition-status" role="status" aria-live="polite">Preparing Jarrell’s Peak…</p><a id="back-to-game-hub" href="./">← BACK TO GAME HUB</a></section></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="./hero-customization.js"></script>
@@ -879,19 +868,6 @@ function loadAssetHero(heroRecord,onReady){
  });
  activeHeroRequest=request||null;
 }
-function renderSavedHeroes(){
- const host=document.getElementById('saved-hero-list'),list=heroData.readHeroes();
- if(!list.some(h=>h.id===selectedHeroRecord.id))selectedHeroRecord=heroData.getSelectedHero();
- host.replaceChildren();
- for(const record of list){
-  const button=document.createElement('button');button.type='button';button.className='saved-hero-option';button.dataset.heroId=record.id;button.setAttribute('aria-pressed',String(record.id===selectedHeroRecord.id));
-  const name=document.createElement('span');name.textContent=record.name;
-  const note=document.createElement('small');note.textContent=record.builtIn?'Original Climboria Hero':'Saved on this device';
-  button.append(name,note);
-  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;heroData.setSelectedHero(record.id);renderSavedHeroes();const playerName=document.getElementById('player-name');if(playerName)playerName.textContent=record.name.toUpperCase();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
-  host.append(button);
- }
-}
 function activateSelectedHero(){
  if(heroEntryBusy||P.mode!=='cine'||!ready)return;
  heroEntryBusy=true;
@@ -904,13 +880,11 @@ function activateSelectedHero(){
  loadAssetHero(requestedHero,success=>{
   heroEntryBusy=false;
   if(!success){const enter=document.getElementById('enter-expedition');if(enter)enter.disabled=false;return}
-  if(requestedHero.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}document.getElementById('expedition-status').textContent='Selected hero changed. Tap Enter Expedition to load the new selection.';return}
-  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=requestedHero.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
+  if(requestedHero.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}const status=document.getElementById('expedition-status');if(status)status.textContent='Selected hero changed. Re-enter to load the saved hero.';return}
+  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();if(P.mode==='walk'){const status=document.getElementById('expedition-status');if(status)status.textContent=requestedHero.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
  });
 }
-renderSavedHeroes();
-document.getElementById('enter-expedition').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();activateSelectedHero()});
-document.getElementById('back-to-game-hub').addEventListener('click',e=>{e.stopPropagation()});
+
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -963,7 +937,7 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'){wx=(wx+1)%weatherNames.length;syncEnvironmentControls()}if(e.code=='KeyE'&&!e.repeat)interact();
- if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();document.getElementById('tmsg').textContent='Click to explore'}
+ if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
 addEventListener('keyup',e=>keys[e.code]=false);
@@ -1515,7 +1489,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
    console.error('[Climboria frame update]',err);
    // Keep rendering even if a non-rendering gameplay subsystem throws.
   }
-  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='EXPEDITION MENU · SELECT YOUR HERO'}}
+  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';}}
   catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
   requestAnimationFrame(loop)
  });
