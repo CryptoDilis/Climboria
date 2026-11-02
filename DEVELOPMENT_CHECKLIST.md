@@ -1103,3 +1103,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] Browser/WebGL shader compilation verification on desktop and Android; inspect grass density, terrain clipping, and frame time.
 - [ ] Tune density/LOD after live profiling; current implementation uses chunk-batched density rather than multi-tier LOD.
 - Code commits: 34f80dcbbbebe47dbbcd7a0992f135b0e6b88904; shader newline fix ef330605049479a4d16d6404842d99f97a908fe7.
+
+
+## 2026-11-02 — homepage UI hierarchy and mobile presentation
+
+- [x] Replace the long inline Game menu update paragraph with a four-destination visual summary: Jarrell’s Peak (playable), Arena (future), Marketplace (demo preview), and Inventory (local preview).
+- [x] Preserve the distinction that the ten normal mountains are deferred future content, not launch levels.
+- [x] Replace the dense One clear funding promise paragraph with a concise funding commitment panel; keep DEX/Launchpad allocations and optional project donations directed to Jarrell’s Peak, separate from marketplace accounting.
+- [x] Keep rates, collection addresses, conversion rules, reporting, and distributions explicitly not active until public and verifiable.
+- [x] Add mobile-responsive destination cards and funding panel styles; retain existing dark/gold visual identity.
+- [ ] Verify the new sections in actual desktop and Android/Redmi 14 5G screenshots; source/CSS change alone is not visual acceptance.
+- [ ] Latest previous workflows: Validate run 41435000305 passed; Pages run 41435000817 passed; Browser Smoke run 41435000365 failed during expedition entry. Root diagnostic: world boots and player reports mode walk, but smoke snapshot does not observe the expected body.free class. Fix the state/UI transition without removing the assertion or weakening gameplay checks.
+- Code commit: 20aafe46fb07aac624ed1927406eab30eedb69d1.
