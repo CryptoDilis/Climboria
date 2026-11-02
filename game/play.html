@@ -826,7 +826,7 @@ function loadAssetHero(heroRecord,onReady){
  if(previousRequest&&typeof previousRequest.abort==='function')previousRequest.abort();
  heroLoadError='';document.documentElement.dataset.climboriaHero='loading';
  if(heroTimeout)clearTimeout(heroTimeout);
- heroTimeout=setTimeout(()=>{heroTimeout=null;useProceduralEsmiFallback();setReady();},2000);
+ heroTimeout=setTimeout(()=>{heroTimeout=null;useProceduralEsmiFallback();},2000);
  if(!T3.GLTFLoader){setHeroLoadFailure('GLTFLoader unavailable');useProceduralEsmiFallback();onReady?.(false);return}
   const loader=new T3.GLTFLoader();
  const request=loader.load(assetChoices.ClimboriaHero,gltf=>{
