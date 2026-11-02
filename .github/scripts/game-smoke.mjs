@@ -395,9 +395,11 @@ try {
   const characterPickerTouch = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
     panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-    titleInteractive: getComputedStyle(document.querySelector('#title')).pointerEvents !== 'none',
+    titleHidden: getComputedStyle(document.querySelector('#title')).visibility === 'hidden' && getComputedStyle(document.querySelector('#title')).opacity === '0',
+    modalAboveHud: Number(getComputedStyle(document.querySelector('#character-create-panel')).zIndex) > Number(getComputedStyle(document.querySelector('#player-card')).zIndex),
+    backdropActive: getComputedStyle(document.body, '::before').content !== 'none' && getComputedStyle(document.body, '::before').zIndex === '9998',
   }));
-  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
+  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleHidden || !characterPickerTouch.modalAboveHud || !characterPickerTouch.backdropActive) {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
   await mobile.locator('#character-create-close').click();
