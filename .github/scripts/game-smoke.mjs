@@ -167,8 +167,8 @@ try {
   if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
     throw new Error('Expedition entry overlay is not ready');
   }
-  // Use a real Playwright click on the visible title overlay so pointerdown and click handlers run with a trusted browser input sequence.
-  await title.click();
+  // The canvas is the top hit target over the visual-only title overlay; use a trusted click at its center, matching the actual player surface.
+  await page.locator('canvas').click({position:{x:Math.floor((await page.locator('canvas').boundingBox()).width/2),y:Math.floor((await page.locator('canvas').boundingBox()).height/2)}});
   await page.waitForFunction(() => {
     const player = window.__climboriaJarrellsPeak?.player;
     return document.body.classList.contains('free') && player?.mode === 'walk';
