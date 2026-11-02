@@ -15,7 +15,7 @@ h1{text-align:center;font:900 clamp(28px,4vw,48px)/1.1 Cinzel,serif;margin:14px 
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 @media(min-width:1025px){main{max-width:1320px;padding-inline:32px}.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.card{height:232px;padding:22px}h2{font-size:19px}.desc{font-size:14px}.status{font-size:10px}}
 @media(min-width:1441px){main{max-width:1440px}.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}.card{height:250px}}
-.card{height:220px;min-width:0;position:relative;display:flex;flex-direction:column;text-align:left;padding:20px;border:1px solid var(--border);border-radius:20px;background:#151b27;color:#f8fafc;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}
+.card{height:220px;min-width:0;position:relative;display:flex;flex-direction:column;text-align:left;padding:20px;border:1px solid var(--border);border-radius:20px;background:#151b27;color:#f8fafc;text-decoration:none;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}
 .card.active{border-color:var(--gold);box-shadow:0 0 18px #D4AF3722}.card.active:hover{transform:translateY(-4px);box-shadow:0 0 28px #D4AF3750,0 12px 28px #0007}
 .card.locked{background:rgba(15,20,31,.4);cursor:not-allowed}.card.locked:hover{transform:none;box-shadow:none}
 .card.jarrell{grid-column:span 2;border:2px solid #8e303c;background:linear-gradient(145deg,#17151d,#1b1219 58%,#160f16);box-shadow:inset 0 0 40px #8b1e2b45,0 0 27px #a3263660,0 0 7px #c04a58dd}
@@ -57,7 +57,7 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 .profile-columns{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:18px 20px}.profile-pane{border:1px solid #ffffff16;border-radius:13px;padding:14px;background:#ffffff04}.profile-pane h3{margin:0 0 10px;color:#d9c28b;font:700 12px Cinzel,Georgia,serif;letter-spacing:1px}.statline{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:15px}.statbox{background:#ffffff06;border-radius:9px;padding:9px}.statbox small{display:block;color:#91a3b9;font-size:9px;letter-spacing:.7px}.statbox b{display:block;color:#f1f5fa;font-size:17px;margin-top:4px}.slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.slot{aspect-ratio:1;border:1px solid #ffffff17;border-radius:7px;background:linear-gradient(145deg,#1b2a3d,#0e1725);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#8294aa;font-size:8px;min-width:0}.slot span{font-size:17px}.slot.filled{border-color:#9a804c66;color:#e7d39e}.gear{display:grid;gap:6px}.gear div{padding:8px;border-radius:7px;background:#ffffff05;color:#c5d1df;font-size:10px;display:flex;justify-content:space-between;gap:6px}.gear b{color:#d7c18c}.modal-note{padding:0 20px 18px;color:#71839b;font-size:10px;line-height:1.5}
 @media(max-width:600px){.menu-actions{gap:8px;margin-bottom:22px}.menu-action{padding:10px 13px;font-size:10px}.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 14px 16px}.menu-modal-head{padding:15px}.menu-modal-head h2{font-size:21px}.shop-tabs{padding:12px 14px 0}.profile-columns{grid-template-columns:1fr;padding:12px 14px}.modal-note{padding:0 14px 15px}}
 
-.creator-destination{display:flex;justify-content:center;margin:18px 0 22px}.creator-card{display:flex;align-items:center;gap:12px;width:min(560px,100%);padding:16px 20px;border:1px solid #d8b46b77;border-radius:12px;background:linear-gradient(130deg,#101923,#0a0f17);color:#ffe3a3;text-decoration:none;box-shadow:0 8px 24px #0005;transition:border-color .18s,transform .18s}.creator-card:hover{border-color:#f0d48a;transform:translateY(-2px)}.creator-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:#d8b46b1b;color:#f3d48b;font-size:22px}.creator-card strong,.creator-card small{display:block}.creator-card strong{font-size:11px;letter-spacing:.14em}.creator-card small{margin-top:3px;color:#aab7c5;font-size:11px}.creator-arrow{margin-left:auto;font-size:20px;color:#d8b46b}@media(max-width:600px){.creator-destination{justify-content:stretch}.creator-card{width:100%}}
+
 </style><style>
 /* Hero preview and mobile-friendly menu spacing */
 .hero-preview{display:flex;align-items:center;gap:16px;max-width:760px;margin:0 auto 30px;padding:16px 18px;border:1px solid #b99a4f66;border-radius:18px;background:linear-gradient(110deg,#1b2432,#111722);box-shadow:0 10px 30px #0003}
@@ -89,21 +89,19 @@ h2{font:700 18px/1.18 Cinzel,serif;margin:20px 40px 8px 0;min-height:2.36em;disp
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card.jarrell{height:280px}.card.service-card{height:280px}}
 @media(max-width:600px){.topbar{height:auto;min-height:70px;display:flex;flex-wrap:wrap;padding:12px 14px;gap:8px}.menu-status{order:3;width:100%;text-align:center;letter-spacing:1.3px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card.jarrell,.card.service-card{height:270px;padding:14px}.card.jarrell h2{font-size:18px;margin-right:40px}.card.jarrell .crest{width:38px;height:38px;right:10px;top:12px}.card.jarrell .jarrell-vow{font-size:9px;letter-spacing:.4px}.card.jarrell .desc,.card.service-card .desc{font-size:12px;min-height:0}.card.service-card h2{font-size:17px}.service-icon{width:44px;height:44px;font-size:24px;margin-bottom:8px}.card.service-card .status,.card.jarrell .status{font-size:9px;padding:6px 7px}.arena-status-content{padding:16px 18px 5px}}
 </style></head><body>
-<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><span class="menu-status">ONE PLAYABLE WORLD · THREE FEATURE PREVIEWS</span><a class="back" href="../">← BACK TO HOME</a></header>
+<header class="topbar"><a class="brand" href="../">CLIMBORIA</a><span class="menu-status">ONE PLAYABLE WORLD · THREE FEATURE PREVIEWS</span><div class="top-actions"><a class="menu-create" id="menuCreateHero" href="./character-lab.html">✦ CREATE HERO</a><a class="back" href="../">← BACK TO HOME</a></div></header>
 <main>
 <div class="kicker">GAME FIRST · SPECULATION LATER</div>
 <h1>CHOOSE YOUR DESTINATION</h1>
 <p class="intro">One launch world. Three feature previews. Enter Jarrell’s Peak and explore.</p>
-<section class="creator-destination" aria-label="Character creator"><a class="creator-card" id="menuCreateHero" href="./character-lab.html"><span class="creator-icon" aria-hidden="true">✦</span><span><strong>CREATE HERO</strong><small>Build and save a custom explorer</small></span><span class="creator-arrow" aria-hidden="true">↗</span></a></section>
-
 <section class="grid" aria-label="Jarrell’s Peak, Arena, Marketplace, and Inventory">
-<button class="card active jarrell" data-level="11" aria-disabled="false">
+<a class="card active jarrell" data-level="11" href="./play.html?level=11">
 <img class="crest crest-jarrell" src="../11_jarrells-peak-extreme-risk.png" alt="Jarrell’s Peak emblem" loading="lazy">
 <span class="expedition">LAUNCH WORLD</span><h2>JARRELL'S PEAK</h2>
 <div class="jarrell-vow">VENGEANCE IS ALWAYS AN OPTION</div>
 <p class="desc">An endless high-risk wilderness. Explore the long river, survive the wild, fish, swim, and hunt hidden treasure. No summit. No finish line.</p>
 <span class="difficulty">DIFFICULTY&nbsp; ★★★★★ ★★★★★</span><span class="status">▶ ENTER JARRELL’S PEAK</span>
-</button>
+</a>
 <button class="card service-card arena-card" id="menuArena" data-service="arena" type="button">
 <span class="service-icon" aria-hidden="true">⚔</span><span class="expedition">FUTURE FEATURE</span><h2>ARENA</h2>
 <p class="desc">A separate forest battlefield planned for free-for-all fights, Guild Battles, and sponsored events.</p>
