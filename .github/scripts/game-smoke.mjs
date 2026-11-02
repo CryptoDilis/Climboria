@@ -145,7 +145,7 @@ try {
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
   for (const poi of ['sanct','park','camp','cave','summit']) if (!world.poi.includes(poi)) errors.push('Missing world landmark: ' + poi);
   if (world.chests < 7) errors.push('Expected at least seven respawning treasure chests, got ' + world.chests);
-  if (!Array.isArray(world.caveGems) || world.caveGems.length !== 14 || world.caveGems.some(g => !g.cluster || g.cluster.children.length !== 3)) errors.push('Cave mineral crystal clusters missing or malformed: ' + JSON.stringify(world.caveGems?.length));
+  if (!Array.isArray(world.caveGems) || world.caveGems.length !== 14 || world.caveGems.some(g => !g.cluster || g.children !== 3)) errors.push('Cave mineral crystal clusters missing or malformed: ' + JSON.stringify(world.caveGems));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
