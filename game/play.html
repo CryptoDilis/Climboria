@@ -856,15 +856,17 @@ function renderSavedHeroes(){
 function activateSelectedHero(){
  if(heroEntryBusy||P.mode!=='cine'||!ready)return;
  heroEntryBusy=true;
+ const requestedHero=selectedHeroRecord;
  const button=document.getElementById('enter-expedition');if(button){button.disabled=true;button.textContent='LOADING HERO…'}
  requestLandscapeMode();
- if(assetHero&&loadedHeroId===selectedHeroRecord.id){
+ if(assetHero&&loadedHeroId===requestedHero.id){
   heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
  }
- loadAssetHero(selectedHeroRecord,success=>{
+ loadAssetHero(requestedHero,success=>{
   heroEntryBusy=false;
   if(!success){const enter=document.getElementById('enter-expedition');if(enter)enter.disabled=false;return}
-  if(record.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}document.getElementById('expedition-status').textContent='Selected hero changed. Tap Enter Expedition to load the new selection.';return}if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=record.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
+  if(requestedHero.id!==selectedHeroRecord.id){const enter=document.getElementById('enter-expedition');if(enter){enter.disabled=false;enter.textContent='ENTER EXPEDITION'}document.getElementById('expedition-status').textContent='Selected hero changed. Tap Enter Expedition to load the new selection.';return}
+  if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=requestedHero.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
  });
 }
 renderSavedHeroes();
