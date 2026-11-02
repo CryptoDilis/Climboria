@@ -112,6 +112,32 @@ try {
         }
         return {peak:{x:peak.px,z:peak.pz,height:peak.h},limits:w.collisionLimits,approaches:results};
       })(),
+      mountainMassifAudit: (()=>{
+        if(!w||typeof w.heightAt!=='function'||typeof w.blocked!=='function'||typeof w.groundAt!=='function')return null;
+        const candidates=[];
+        for(let x=-1000;x<=1000;x+=100)for(let z=-1000;z<=1000;z+=100){
+          const h=w.heightAt(x,z);if(h<70)continue;
+          let localPeak=true;
+          for(let dx=-100;dx<=100;dx+=100)for(let dz=-100;dz<=100;dz+=100){if((dx||dz)&&w.heightAt(x+dx,z+dz)>h+.01)localPeak=false;}
+          if(localPeak)candidates.push({x,z,h});
+        }
+        candidates.sort((a,b)=>b.h-a.h);
+        const peaks=[];
+        for(const c of candidates){if(peaks.every(p=>Math.hypot(p.x-c.x,p.z-c.z)>280))peaks.push(c);if(peaks.length===8)break;}
+        return peaks.map(peak=>{
+          const approaches=[];
+          for(let deg=0;deg<360;deg+=45){
+            const a=deg*Math.PI/180;let x=peak.x+Math.cos(a)*130,z=peak.z+Math.sin(a)*130,steps=0,blockedAt=null;
+            while(Math.hypot(x-peak.x,z-peak.z)>55){
+              const nx=x-Math.cos(a)*.5,nz=z-Math.sin(a)*.5;
+              if(w.blocked(nx,nz,x,z,w.groundAt(x,z)+.01)){blockedAt={x:+x.toFixed(1),z:+z.toFixed(1)};break;}
+              x=nx;z=nz;steps++;
+            }
+            approaches.push({bearing:deg,progress:+(steps*.5).toFixed(1),blockedAt});
+          }
+          return {x:peak.x,z:peak.z,height:+peak.h.toFixed(2),openApproaches:approaches.filter(a=>a.progress>=20).length,approaches};
+        });
+      })(),
       mountainSpawnRouteAudit: (()=>{
         if(!w?.POI?.summit||typeof w.blocked!=='function'||!Array.isArray(w.collisionSolids))return null;
         const start={x:0,z:-30},target={x:w.POI.summit.px,z:w.POI.summit.pz};
