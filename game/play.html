@@ -764,8 +764,10 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.spine){assetRig.spine.rotation.x=0}
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
-const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
+const assetChoices={ClimboriaHero:'../assets/characters/Climboria_Hero.glb'};
+const heroData=window.ClimboriaHeroData;
 let heroLoadError='',heroLoadRequest=0,heroLoadTimer=null,activeHeroRequest=null;
+let selectedHeroRecord=heroData.defaultHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
 function disposeHeroModel(root){
  if(!root)return;
  root.traverse(o=>{
@@ -773,90 +775,107 @@ function disposeHeroModel(root){
   if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose())}
  });
 }
-function setHeroLoadFailure(choice,message,error){
+function setHeroLoadFailure(message,error){
  heroLoadError=String(message||'Hero failed to load');
  document.documentElement.dataset.climboriaHero='load-error';
- const loadStatus=document.getElementById('character-load-status');
- if(loadStatus)loadStatus.textContent=error?'Hero failed to load. Check connection and retry.':heroLoadError;
- const enterButton=document.getElementById('character-create-enter');
- if(enterButton){enterButton.textContent='RETRY CLIMBORIA HERO';enterButton.dataset.heroLoaded='false';enterButton.disabled=false;enterButton.setAttribute('aria-label','Retry loading Climboria Hero')}
- console.error('[Climboria] GLB load failed: '+assetChoices[choice],error||heroLoadError);
+ const status=document.getElementById('expedition-status'),button=document.getElementById('enter-expedition');
+ if(status)status.textContent=error?'Hero could not be loaded. Check your connection and try again.':heroLoadError;
+ if(button){button.textContent='RETRY ENTER EXPEDITION';button.disabled=false}
+ console.error('[Climboria] GLB load failed: '+assetChoices.ClimboriaHero,error||heroLoadError);
 }
-function loadAssetHero(choice='Adventurer'){
- if(!assetChoices[choice])choice='Adventurer';
+function loadAssetHero(heroRecord,onReady){
+ const record=heroData.normalize(heroRecord)||heroData.defaultHero();
  if(heroLoadTimer)clearTimeout(heroLoadTimer);
  heroLoadTimer=null;
- const previousRequest=activeHeroRequest;
- activeHeroRequest=null;
+ const previousRequest=activeHeroRequest;activeHeroRequest=null;
  const requestId=++heroLoadRequest;
  if(previousRequest&&typeof previousRequest.abort==='function')previousRequest.abort();
- heroLoadError='';
- document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
- const loadStatus=document.getElementById('character-load-status');
- if(loadStatus)loadStatus.textContent='Loading Climboria Hero…';
- const enterButton=document.getElementById('character-create-enter');
- if(enterButton){enterButton.textContent='LOADING HERO…';enterButton.dataset.heroLoaded='false';enterButton.disabled=true;enterButton.removeAttribute('aria-label')}
- if(!T3.GLTFLoader){setHeroLoadFailure(choice,'GLTFLoader unavailable');return}
+ heroLoadError='';document.documentElement.dataset.climboriaHero='loading';
+ const status=document.getElementById('expedition-status'),button=document.getElementById('enter-expedition');
+ if(status)status.textContent='Loading '+record.name+'…';
+ if(button){button.textContent='LOADING HERO…';button.disabled=true}
+ if(!T3.GLTFLoader){setHeroLoadFailure('GLTFLoader unavailable');onReady?.(false);return}
  heroLoadTimer=setTimeout(()=>{
   if(requestId!==heroLoadRequest)return;
-  const pending=activeHeroRequest;
-  activeHeroRequest=null;heroLoadTimer=null;
-  ++heroLoadRequest;
-  setHeroLoadFailure(choice,'Hero loading timed out. Check your connection and retry.');
+  const pending=activeHeroRequest;activeHeroRequest=null;heroLoadTimer=null;++heroLoadRequest;
+  setHeroLoadFailure('Hero loading timed out. Check your connection and retry.');
   if(pending&&typeof pending.abort==='function')pending.abort();
+  onReady?.(false);
  },45000);
  const loader=new T3.GLTFLoader();
- const request=loader.load(assetChoices[choice],gltf=>{
+ const request=loader.load(assetChoices.ClimboriaHero,gltf=>{
   if(requestId!==heroLoadRequest){disposeHeroModel(gltf?.scene);return}
-  if(heroLoadTimer)clearTimeout(heroLoadTimer);
-  heroLoadTimer=null;activeHeroRequest=null;
-  if(!gltf?.scene?.isObject3D){setHeroLoadFailure(choice,'Loaded hero has no valid scene');return}
-  const candidate=gltf.scene;
+  if(heroLoadTimer)clearTimeout(heroLoadTimer);heroLoadTimer=null;activeHeroRequest=null;
+  const candidate=gltf?.scene;
+  if(!candidate?.isObject3D){setHeroLoadFailure('The loaded hero has no valid scene');onReady?.(false);return}
   const bounds=new T3.Box3().setFromObject(candidate),size=bounds.getSize(new T3.Vector3());
-  if(!Number.isFinite(size.x)||!Number.isFinite(size.y)||!Number.isFinite(size.z)||size.y<.1){
-   disposeHeroModel(candidate);
-   setHeroLoadFailure(choice,'Loaded hero has invalid model bounds');
-   return;
-  }
+  if(!Number.isFinite(size.x)||!Number.isFinite(size.y)||!Number.isFinite(size.z)||size.y<.1){disposeHeroModel(candidate);setHeroLoadFailure('The loaded hero has invalid model bounds');onReady?.(false);return}
+  const previous={hero:assetHero,mixer:assetMixer,actions:assetActions,active:assetActive,state:assetAnimState,rig:assetRig,groundOffset:assetHeroGroundOffset,authored:assetHeroUsesAuthoredAnimations};
   try{
-   if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);disposeHeroModel(assetHero)}
-   assetHero=candidate;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
-   const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
-   const scaledBox=new T3.Box3().setFromObject(assetHero);
-   assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
-   assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-   scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
-   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
-   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
-   if(assetHero.parent!==scene)throw new Error('Loaded hero was not attached to the gameplay scene');
-   document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');
-   document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];
+   const scale=1.9/Math.max(size.y,.001);candidate.scale.setScalar(scale);
+   const scaledBox=new T3.Box3().setFromObject(candidate);const groundOffset=-scaledBox.min.y;
+   candidate.position.y=groundOffset;candidate.name='Climboria_'+record.id+'_PhysicsCharacter';
+   candidate.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+   scene.add(candidate);assetHero=candidate;assetHeroGroundOffset=groundOffset;assetHeroUsesAuthoredAnimations=true;
+   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(candidate):null;
+   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(candidate);
+   chooseAssetAnimation('idle');
+   const inspection=heroData.inspect(candidate,gltf.animations||[]);
+   heroData.apply(candidate,record.appearance,inspection.capabilities);
+   if(candidate.parent!==scene)throw new Error('Loaded hero is not attached to the gameplay scene');
+   if(previous.hero){scene.remove(previous.hero);disposeHeroModel(previous.hero)}
+   loadedHeroId=record.id;document.documentElement.dataset.climboriaHero=record.id;
+   document.documentElement.dataset.climboriaHeroName=record.name;
+   document.documentElement.dataset.climboriaHeroAsset=assetChoices.ClimboriaHero;
    document.documentElement.dataset.climboriaHeroRenderer='glb';
    document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
-   if(loadStatus)loadStatus.textContent='Climboria Hero loaded successfully';
-   if(enterButton){enterButton.textContent='ENTER JARRELL’S PEAK';enterButton.dataset.heroLoaded='true';enterButton.disabled=false;enterButton.setAttribute('aria-label','Enter Jarrell’s Peak with Climboria Hero')}
-   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
+   if(status)status.textContent=record.name+' is loaded and ready for the expedition.';
+   if(button){button.textContent='ENTER EXPEDITION';button.disabled=false}
+   console.info('[Climboria] Hero ready',record.name,inspection.summary,inspection.capabilities);
+   onReady?.(true,record);
   }catch(error){
-   if(assetHero){scene.remove(assetHero);disposeHeroModel(assetHero);assetHero=null}
-   assetMixer=null;assetActions=[];assetActive=null;assetRig={legs:[],arms:[],spine:null,hips:null};hero.visible=true;
-   setHeroLoadFailure(choice,'Could not initialize the loaded hero',error);
+   scene.remove(candidate);disposeHeroModel(candidate);
+   assetHero=previous.hero;assetMixer=previous.mixer;assetActions=previous.actions;assetActive=previous.active;assetAnimState=previous.state;assetRig=previous.rig;assetHeroGroundOffset=previous.groundOffset;assetHeroUsesAuthoredAnimations=previous.authored;
+   if(previous.hero)previous.hero.visible=false;
+   heroEntryBusy=false;setHeroLoadFailure('Could not initialize the selected hero',error);onReady?.(false);
   }
  },undefined,error=>{
   if(requestId!==heroLoadRequest)return;
-  if(heroLoadTimer)clearTimeout(heroLoadTimer);
-  heroLoadTimer=null;activeHeroRequest=null;
-  setHeroLoadFailure(choice,'Hero failed to load. Check connection and retry.',error);
+  if(heroLoadTimer)clearTimeout(heroLoadTimer);heroLoadTimer=null;activeHeroRequest=null;
+  heroEntryBusy=false;setHeroLoadFailure('Hero failed to load. Check your connection and retry.',error);onReady?.(false);
  });
  activeHeroRequest=request||null;
 }
-const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const validHero=v=>Object.prototype.hasOwnProperty.call(assetChoices,v);const initialHero=validHero(requestedHero)?requestedHero:validHero(savedHero)?savedHero:'Adventurer';loadAssetHero(initialHero);
-const createPanel=document.getElementById('character-create-panel');
-document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block';document.body.classList.add('character-panel-open')});
-document.getElementById('character-create-close').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();createPanel.style.display='none';document.body.classList.remove('character-panel-open')});
-let heroEntryInProgress=false;
-document.getElementById('character-create-enter').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const action=e.currentTarget;if(action.disabled||action.dataset.heroLoaded!=='true'||heroEntryInProgress||P.mode!=='cine')return;if(!ready){document.getElementById('character-load-status').textContent='Your hero is ready. The expedition world is still preparing — try again shortly.';return}heroEntryInProgress=true;takeOver();if(P.mode==='walk')document.getElementById('tmsg').textContent='WASD move · explore Jarrell’s Peak';else heroEntryInProgress=false});
-if(new URLSearchParams(location.search).get('create')==='1'){createPanel.style.display='block';document.body.classList.add('character-panel-open')}
-createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+('Climboria Hero')+'…';loadAssetHero(choice)}));
+function renderSavedHeroes(){
+ const host=document.getElementById('saved-hero-list'),list=heroData.readHeroes();
+ if(!list.some(h=>h.id===selectedHeroRecord.id))selectedHeroRecord=list[0];
+ host.replaceChildren();
+ for(const record of list){
+  const button=document.createElement('button');button.type='button';button.className='saved-hero-option';button.setAttribute('aria-pressed',String(record.id===selectedHeroRecord.id));
+  const name=document.createElement('span');name.textContent=record.name;
+  const note=document.createElement('small');note.textContent=record.builtIn?'Original Climboria Hero':'Saved on this device';
+  button.append(name,note);
+  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();selectedHeroRecord=record;renderSavedHeroes();const status=document.getElementById('expedition-status'),enter=document.getElementById('enter-expedition');if(status)status.textContent='Selected '+record.name+'. Enter when you are ready.';if(enter){enter.textContent=loadedHeroId===record.id?'ENTER EXPEDITION':'ENTER EXPEDITION';enter.disabled=!ready}});
+  host.append(button);
+ }
+}
+function activateSelectedHero(){
+ if(heroEntryBusy||P.mode!=='cine'||!ready)return;
+ heroEntryBusy=true;
+ const button=document.getElementById('enter-expedition');if(button){button.disabled=true;button.textContent='LOADING HERO…'}
+ requestLandscapeMode();
+ if(assetHero&&loadedHeroId===selectedHeroRecord.id){
+  heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
+ }
+ loadAssetHero(selectedHeroRecord,success=>{
+  heroEntryBusy=false;
+  if(!success){const enter=document.getElementById('enter-expedition');if(enter)enter.disabled=false;return}
+  if(P.mode==='cine'&&ready){heroEntryAllowed=true;takeOver();if(P.mode==='walk'){document.getElementById('expedition-status').textContent=selectedHeroRecord.name+' entered Jarrell’s Peak.';requestLandscapeMode()}}
+ });
+}
+renderSavedHeroes();
+document.getElementById('enter-expedition').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();activateSelectedHero()});
+document.getElementById('back-to-game-hub').addEventListener('click',e=>{e.stopPropagation()});
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
