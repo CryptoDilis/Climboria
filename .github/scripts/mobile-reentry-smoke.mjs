@@ -31,7 +31,7 @@ async function capture(page, label) {
     const matchingRules = [];
     const visit = rules => {
       for (const rule of rules) {
-        if (rule.cssRules) {
+        if (!rule.selectorText && rule.cssRules) {
           if (rule.type === CSSRule.MEDIA_RULE && !matchMedia(rule.conditionText).matches) continue;
           visit(rule.cssRules);
           continue;
@@ -124,10 +124,23 @@ try {
     }
   });
 
-  await page.goto('http://127.0.0.1:4173/game/play.html?level=11&smoke=mobile-reentry', {
-    waitUntil: 'domcontentloaded',
-    timeout: 90000,
-  });
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.locator('.hero-buttons button').filter({ hasText: /PLAY/ }).first().click();
+  await page.waitForURL(/\\/game\\/?$/, { timeout: 15000, waitUntil: 'commit' });
+  const hub = await page.evaluate(() => ({
+    destinations: [...document.querySelectorAll('.grid .card')].map(card => card.querySelector('h2')?.textContent.trim()),
+    createHeroSeparate: !!document.querySelector('#menuCreateHero'),
+  }));
+  if (hub.destinations.length !== 4 || !hub.createHeroSeparate || !hub.destinations.some(name => name?.includes('JARRELL'))) {
+    errors.push('Homepage PLAY did not open the four-destination hub with separate Create Hero: ' + JSON.stringify(hub));
+  }
+  await page.locator('.card.jarrell').click();
+  try {
+    await page.waitForURL(url => url.pathname.endsWith('/game/play.html') && url.searchParams.get('level') === '11', { timeout: 15000, waitUntil: 'commit' });
+  } catch (error) {
+    const routeState = await page.evaluate(() => ({ href: location.href, card: document.querySelector('.card.jarrell')?.outerHTML.slice(0, 500) }));
+    throw new Error('Mobile hub could not open Jarrell’s Peak: ' + JSON.stringify(routeState) + '; ' + error.message);
+  }
   await page.waitForFunction(() => window.__climboriaGameReady === true && !!document.querySelector('#enter-expedition'), undefined, { timeout: 90000 });
   const portrait = await capture(page, 'Mobile portrait expedition menu');
   const portraitVisible = await page.evaluate(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none');
