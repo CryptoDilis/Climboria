@@ -309,6 +309,8 @@ footer:first-of-type>div{
 @media(max-width:900px){.launch-countdown{top:47%;padding:16px 14px 14px;width:min(440px,calc(100% - 30px));border-radius:16px}.launch-countdown:before{border-radius:12px}.launch-kicker{font-size:8px;letter-spacing:1.8px}.launch-countdown h2{font-size:clamp(19px,5.2vw,25px);margin:8px 0 6px}.launch-meta{font-size:10px}.launch-timer{gap:6px;margin:12px auto 10px}.launch-time-unit{padding:8px 3px 7px;border-radius:8px}.launch-time-unit b{font-size:clamp(20px,6vw,26px)}.launch-time-unit span{font-size:7px;letter-spacing:1px}.launch-foot{font-size:8px;letter-spacing:.8px}.launch-follow{margin-top:10px;padding:8px 14px;font-size:9px}}
 @media(max-height:700px) and (max-width:900px){.launch-countdown{top:45%;padding:11px 12px}.launch-countdown h2{font-size:19px}.launch-timer{margin:8px auto}.launch-time-unit{padding:5px 2px}.launch-follow{margin-top:7px}}
 
+/* Accessible page title without changing the approved hero artwork or layout. */
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 </style>
 </head>
 <body>
@@ -346,6 +348,7 @@ footer:first-of-type>div{
 </div>
 
 <div class="hero">
+  <h1 class="visually-hidden">Climboria — A Physics Climbing Adventure</h1>
   <picture>
     <source media="(max-width: 768px)" srcset="./855294431_1120833350354855_774972947416786858_n.webp">
     <img src="./857289992_1755402102906767_7411463028840030192_n-1.webp" alt="CLIMBORIA Official Hero" loading="eager" fetchpriority="high">
