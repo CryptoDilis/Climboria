@@ -445,6 +445,26 @@ try {
   if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
     errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
   }
+  const mobileActionLayout = await mobile.evaluate(() => {
+    const controls = [...document.querySelectorAll('[data-mobile-action]')].map(el => {
+      const r = el.getBoundingClientRect(), style = getComputedStyle(el);
+      return { action: el.dataset.mobileAction, display: style.display, visibility: style.visibility,
+        left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+    });
+    const overlaps = [];
+    for (let i=0;i<controls.length;i++) for(let j=i+1;j<controls.length;j++) {
+      const a=controls[i],b=controls[j];
+      if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top) overlaps.push([a.action,b.action]);
+    }
+    return { viewport:{width:innerWidth,height:innerHeight}, controls, overlaps };
+  });
+  if (mobileActionLayout.controls.length !== 4 ||
+      mobileActionLayout.controls.some(c => c.display === 'none' || c.visibility !== 'visible' ||
+        c.width < 48 || c.height < 48 || c.left < 0 || c.top < 0 ||
+        c.right > mobileActionLayout.viewport.width || c.bottom > mobileActionLayout.viewport.height) ||
+      mobileActionLayout.overlaps.length) {
+    errors.push('Mobile gameplay action controls are missing, clipped, too small, or overlapping: ' + JSON.stringify(mobileActionLayout));
+  }
   await mobile.locator('canvas').first().dispatchEvent('pointerdown', { pointerType: 'touch', isPrimary: true, button: 0 });
   await mobile.waitForTimeout(50);
   const immersiveRequests = await mobile.evaluate(() => window.__climboriaFullscreenRequests || []);
