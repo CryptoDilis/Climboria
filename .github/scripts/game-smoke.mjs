@@ -206,11 +206,11 @@ try {
   // Verify the real desktop picker -> GLB -> Enter -> Sanctuary gameplay path first.
   await page.locator('#character-create').click();
   const desktopEnter=page.locator('#character-create-enter');
-  await page.waitForFunction(()=>document.querySelector('#character-create-enter')?.dataset.heroLoaded==='true',{timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#character-create-enter')?.dataset.heroLoaded==='true',undefined,{timeout:30000});
   const desktopEnterState=await page.evaluate(()=>({text:document.querySelector('#character-create-enter').textContent.trim(),back:document.querySelector('#character-create-close').textContent.trim(),panel:getComputedStyle(document.querySelector('#character-create-panel')).display}));
   if(desktopEnterState.text!=='ENTER JARRELL’S PEAK'||desktopEnterState.back!=='BACK TO MENU'||desktopEnterState.panel==='none')errors.push('Desktop hero load did not expose distinct Enter and Back actions: '+JSON.stringify(desktopEnterState));
   await desktopEnter.dispatchEvent('click');
-  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',{timeout:10000});
+  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
   const desktopEntry=await page.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api.player;return {x:p.x,z:p.z,y:p.y,ground:api.groundAt(p.x,p.z)+1.75,renderer:document.documentElement.dataset.climboriaHeroRenderer,panel:getComputedStyle(document.querySelector('#character-create-panel')).display,backdrop:document.body.classList.contains('character-panel-open'),hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
   if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||desktopEntry.panel!=='none'||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop Enter did not spawn the loaded GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
   await page.locator('#expedition-settings-toggle').click();
@@ -595,6 +595,36 @@ try {
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
+
+  // Exercise deliberately delayed and failed GLB requests in a real browser page.
+  const loadContext=await browser.newContext({viewport:{width:1280,height:800}});
+  const loadPage=await loadContext.newPage();
+  let heroRequestMode='slow',releaseSlowHero;
+  const slowHeroGate=new Promise(resolve=>{releaseSlowHero=resolve});
+  await loadPage.route('**/assets/characters/Climboria_Hero.glb',async route=>{
+    if(heroRequestMode==='slow'){await slowHeroGate;await route.continue();return}
+    if(heroRequestMode==='fail'){await route.abort('failed');return}
+    await route.continue();
+  });
+  await loadPage.goto('http://127.0.0.1:4173/game/play.html?smoke=hero-load-races',{waitUntil:'domcontentloaded',timeout:90000});
+  await loadPage.waitForFunction(()=>window.__climboriaGameReady===true,undefined,{timeout:90000});
+  const slowLoadState=await loadPage.evaluate(()=>({state:document.documentElement.dataset.climboriaHero,buttonDisabled:document.querySelector('#character-create-enter').disabled,buttonText:document.querySelector('#character-create-enter').textContent.trim(),status:document.querySelector('#character-load-status').textContent}));
+  if(!slowLoadState.state?.startsWith('loading-')||!slowLoadState.buttonDisabled||slowLoadState.buttonText!=='LOADING HERO…'||slowLoadState.status.includes('loaded successfully'))errors.push('Slow GLB response must remain visibly loading with Enter disabled: '+JSON.stringify(slowLoadState));
+  releaseSlowHero();
+  await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='adventurer'&&document.querySelector('#character-create-enter')?.dataset.heroLoaded==='true',undefined,{timeout:90000});
+  heroRequestMode='fail';
+  await loadPage.reload({waitUntil:'domcontentloaded',timeout:90000});
+  await loadPage.waitForFunction(()=>window.__climboriaGameReady===true,undefined,{timeout:90000});
+  await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='load-error',undefined,{timeout:30000});
+  const failedLoadState=await loadPage.evaluate(()=>({state:document.documentElement.dataset.climboriaHero,buttonText:document.querySelector('#character-create-enter').textContent.trim(),buttonDisabled:document.querySelector('#character-create-enter').disabled,status:document.querySelector('#character-load-status').textContent}));
+  if(failedLoadState.buttonText!=='RETRY CLIMBORIA HERO'||failedLoadState.buttonDisabled||!failedLoadState.status.toLowerCase().includes('failed'))errors.push('Failed GLB request must expose a usable retry and failure message: '+JSON.stringify(failedLoadState));
+  await loadPage.locator('#character-create').click();
+  await loadPage.locator('#character-create-enter').click();
+  await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='load-error',undefined,{timeout:10000});
+  await loadPage.locator('#character-create-close').click();
+  const failedBack=await loadPage.evaluate(()=>({panelHidden:getComputedStyle(document.querySelector('#character-create-panel')).display==='none',backdropRemoved:!document.body.classList.contains('character-panel-open'),titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0'}));
+  if(!failedBack.panelHidden||!failedBack.backdropRemoved||!failedBack.titleVisible)errors.push('Back to Menu must work after GLB failure: '+JSON.stringify(failedBack));
+  await loadContext.close();
 
   if (errors.length) throw new Error(errors.join('\n'));
   console.log('PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).');
