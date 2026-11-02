@@ -649,7 +649,7 @@ function animateAssetFallback(t,state,speed){
 }
 // Police and Adventurer GLB selections are disabled pending the new Meshy models.
 // Keep the procedural placeholder active so the world remains playable.
-document.documentElement.dataset.climboriaHero='meshy-replacement-pending';
+document.documentElement.dataset.climboriaHero='procedural-placeholder';
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
