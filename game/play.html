@@ -1128,7 +1128,22 @@ function gameTick(dt,cp){
  if(wx>0){for(let i=0;i<RN;i++){rdy[i]-=45*dt;if(rdy[i]<0)rdy[i]+=50;const x=cp.x+rox[i],z=cp.z+roz[i],y=cp.y-12+rdy[i];rp[i*6]=x;rp[i*6+1]=y;rp[i*6+2]=z;rp[i*6+3]=x;rp[i*6+4]=y+1.2;rp[i*6+5]=z}
   rgeo.attributes.position.needsUpdate=true}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+function auditCollisionSolids(){
+ const invalid=[],large=[],radii=[],waterOverlaps=[];
+ let minRadius=Infinity,maxRadius=0;
+ for(let i=0;i<solids.length;i++){
+  const c=solids[i],finite=Number.isFinite(c.x)&&Number.isFinite(c.z)&&Number.isFinite(c.r),validRadius=finite&&c.r>0;
+  if(!finite||!validRadius){invalid.push({index:i,x:c.x,z:c.z,r:c.r});continue;}
+  minRadius=Math.min(minRadius,c.r);maxRadius=Math.max(maxRadius,c.r);radii.push(c.r);
+  const h=groundAt(c.x,c.z),body=waterBodyAt(c.x,c.z);
+  if(c.r>=8)large.push({index:i,x:+c.x.toFixed(2),z:+c.z.toFixed(2),r:c.r,ground:+h.toFixed(2),waterBody:body?.id||null});
+  if(body)waterOverlaps.push({index:i,x:+c.x.toFixed(2),z:+c.z.toFixed(2),r:c.r,waterBody:body.id});
+ }
+ radii.sort((a,b)=>a-b);
+ const percentile=p=>radii.length?radii[Math.min(radii.length-1,Math.floor((radii.length-1)*p))]:null;
+ return {count:solids.length,invalid,minRadius:Number.isFinite(minRadius)?minRadius:null,maxRadius,radiusP50:percentile(.5),radiusP90:percentile(.9),large,waterOverlaps};
+}
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
