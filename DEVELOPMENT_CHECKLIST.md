@@ -1,3 +1,14 @@
+## 2026-11-02 — desktop wheel and mobile pinch camera zoom (automated verification passed; device review open)
+
+- [x] Exposed read-only current/target camera distance for regression diagnostics; zoom controls remain gameplay-only.
+- [x] Browser Smoke confirms desktop wheel input changes camera distance in both directions and a two-finger mobile pinch sequence zooms in and out.
+- [x] Validate passed on code/test head `a2b86ff4f087d89118ee716c81eb07b2031c5cca`: [run 41365812395](https://github.com/CryptoDilis/Climboria/actions/runs/41365812395).
+- [x] Browser Smoke passed on the same head: [run 41365811943](https://github.com/CryptoDilis/Climboria/actions/runs/41365811943). Initial smoke assertion labels were reversed; the corrected assertion now matches the existing negative-delta zoom-in behavior.
+- [ ] Verify smooth zoom range and pinch behavior on a physical Android phone, including not interfering with movement/look gestures.
+- Code commits: `bd54afe` (camera distance diagnostics), `85a9a69` (zoom assertions), `a2b86ff` (wheel direction assertion correction).
+
+---
+
 ## 2026-11-02 — GLB renderer and mobile-facing smoke repair
 
 - [x] Fixed renderer-state timing in `game/play.html`: successful loading of the selected GLB now publishes the renderer diagnostic at the same time the visible GLB is attached.
