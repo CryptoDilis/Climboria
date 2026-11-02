@@ -67,7 +67,7 @@ function addSelect(parent,label,options,value,onChange){
 }
 function addFieldset(title){const field=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=title;field.append(legend);controlsHost.append(field);return field}
 function installCapabilities(info){document.documentElement.dataset.heroCreatorCapabilities=JSON.stringify(info.capabilities);document.documentElement.dataset.heroCreatorReady='true';
- controlsHost.replaceChildren();const c=info.capabilities,o=info.options;
+ controlsHost.replaceChildren();document.documentElement.dataset.heroCreatorAudit=JSON.stringify({summary:info.summary,meshes:info.meshes,materials:info.materials,bones:info.bones,morphs:info.morphs});const c=info.capabilities,o=info.options;
  const colors=['original','black','brown','auburn','blond','silver','blue','green','hazel'].map(v=>({value:v,label:v==='original'?'Original':v[0].toUpperCase()+v.slice(1)}));
  let visible=0;
  if(c.skinTone){const f=addFieldset('SKIN');addSelect(f,'Skin tone', ['original','warm','deep','rich'].map(v=>({value:v,label:v[0].toUpperCase()+v.slice(1)})),appearance.skinTone,v=>{appearance.skinTone=v;applyAppearance()});visible++}
