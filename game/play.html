@@ -30,6 +30,9 @@ body.free #help{opacity:.8}
 .character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
 #character-load-status{color:#b9c1c8;min-height:18px}
 body.free #title{opacity:0;pointer-events:none}
+/* Mobile action buttons belong to active gameplay, never the cinematic/title menu. */
+body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 
 #title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
 @media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
