@@ -175,19 +175,14 @@ try {
   if (entry.x !== 0 || entry.z !== -30 || entry.mode !== 'walk' || !entry.hero) errors.push('Mobile expedition did not enter with the selected original hero at Sanctuary: ' + JSON.stringify(entry));
 
   await page.locator('#expedition-settings-toggle').click();
-  await page.locator('#back-to-expedition-menu').click();
-  await page.waitForFunction(() => {
-    const title = document.querySelector('#title');
-    const style = getComputedStyle(title);
-    return !document.body.classList.contains('free')
-      && style.display !== 'none'
-      && style.visibility !== 'hidden'
-      && Number(style.opacity) > 0.95
-      && style.pointerEvents !== 'none'
-      && getComputedStyle(document.querySelector('#expedition-hero-menu')).display !== 'none';
-  }, undefined, { timeout: 3000 });
-  state = await capture(page, 'Mobile returned Expedition Menu');
-  if (!menuVisible(state)) errors.push('Mobile return did not restore the visible Expedition Menu title: ' + JSON.stringify(state));
+  await page.locator('#expedition-settings-close').click();
+  await page.waitForFunction(() => document.body.classList.contains('free')
+    && window.__climboriaJarrellsPeak?.player?.mode === 'walk'
+    && Number(getComputedStyle(document.querySelector('#title')).opacity) < 0.05
+    && getComputedStyle(document.querySelector('#player-card')).visibility !== 'hidden'
+    && Number(getComputedStyle(document.querySelector('#player-card')).opacity) > 0.5, undefined, { timeout: 5000 });
+  state = await capture(page, 'Mobile gameplay remains active after settings close');
+  if (!gameplayVisible(state)) errors.push('Closing mobile expedition settings must preserve gameplay and keep the title hidden: ' + JSON.stringify(state));
   const returnedMenu = await page.evaluate(() => ({
     heroMenuVisible: getComputedStyle(document.querySelector('#expedition-hero-menu')).display !== 'none',
     selectedHero: document.querySelector('.saved-hero-option[aria-pressed="true"]')?.textContent.trim() || null,
