@@ -536,3 +536,16 @@ For each meaningful implementation batch:
 - [ ] Browser smoke must confirm all 14 clusters and three facets per cluster; visual readability, wall attachment, lighting balance, and mobile performance remain unverified.
 - [ ] This is cave dressing only: the cave is still the existing compact room, not yet the requested long maze/underwater network. Hostile cave creature remains deferred; global wildlife/snakes stay disabled.
 - Code commits: abbd6522a7dd6f6a919ac7a3bcb7b41b93bc30dc; 57180bfb680aca26ec79917668fba5e636ecd3c7.
+
+
+## 2026-11-02 — scattered ruined castles and fortress landmarks
+
+- [ ] Add multiple ruined castle/fortress landmarks across different parts of Jarrell's Peak world; each site must have its own silhouette, history, and environmental identity rather than repeating one identical prefab.
+- [ ] Place ruins deliberately across varied regions (for example: a forest-edge keep, a rocky highland fortress, a coastal/cliffside stronghold, and an overgrown lowland castle); confirm each location fits the terrain and does not obstruct existing routes, sanctuary, respawn, fishing access, or playable areas.
+- [ ] Give each castle believable damage and age: collapsed towers, broken battlements, breached walls, fallen masonry, weathered stone, overgrowth, rubble, and partially buried foundations; avoid pristine or toy-like buildings.
+- [ ] Make interiors explorable where appropriate: broken gates, courtyards, halls, stair remnants, towers, hidden rooms, and safe exits; do not create dead ends that trap players.
+- [ ] Add distinct exploration rewards/landmarks only through the existing approved reward and funding rules; no unfunded token promises or hidden pay-to-win rewards.
+- [ ] Add grounded collision for stable walls, floors, stairs, and major rubble while keeping obvious openings traversable; validate player approach from multiple angles and prevent invisible walls, snagging, and falling through floors.
+- [ ] Use optimized, license-verified free assets or original modular geometry; record exact source, license, attribution, format, and optimization in ASSET_SOURCES.md before integration.
+- [ ] Add deterministic world diagnostics/smoke checks for each ruin's presence, unique site identity, ground alignment, collision bounds, accessible entrance/exit, and route clearance.
+- [ ] Verify visual scale, lighting, weathering, vegetation placement, and performance on desktop and Redmi 14 5G; keep this item open until runtime and manual checks pass.
