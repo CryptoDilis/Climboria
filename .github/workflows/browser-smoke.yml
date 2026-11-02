@@ -106,9 +106,13 @@ jobs:
           cat /tmp/climboria-http.log
           exit 1
 
-      - name: Test mobile Hub-to-game auto-entry and HUD visibility
-        timeout-minutes: 4
-        run: node .github/scripts/mobile-reentry-smoke.mjs
+      - name: Test mobile Hub-to-game auto-entry and HUD visibility (3 consecutive runs)
+        timeout-minutes: 8
+        run: |
+          for attempt in 1 2 3; do
+            echo "Mobile Hub-to-game smoke run $attempt/3"
+            node .github/scripts/mobile-reentry-smoke.mjs
+          done
 
       - name: Test homepage CTAs, DEX modal, and mobile navigation
         run: |
