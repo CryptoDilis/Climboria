@@ -553,6 +553,23 @@ try {
   if(!Object.values(creatorState.capabilities).some(Boolean)&&await flowPage.locator('#dynamic-controls select,#dynamic-controls input[type=range]').count())errors.push('Create Hero exposed appearance controls that the original GLB cannot apply.');
   for(const [cap,label] of [['skinTone','Skin tone'],['hairStyle','Hairstyle'],['hairColor','Hair color'],['eyeStyle','Eye style'],['eyeColor','Eye color'],['facial','FACIAL SETTINGS'],['outfit','Outfit variant'],['accessories','ACCESSORIES']])if(creatorState.capabilities[cap]&&!creatorState.controls.includes(label))errors.push('Model capability '+cap+' was reported but its editor is missing: '+JSON.stringify(creatorState));
   await flowPage.screenshot({path:'climboria-character-creator.png',fullPage:true});
+  const previewBox=await flowPage.locator('#view').boundingBox();
+  const previewBefore=await flowPage.evaluate(()=>{const p=window.__climboriaHeroPreview,c=p?.camera,o=p?.orbit;return c&&o?{position:c.position.toArray(),distance:c.position.distanceTo(o.target)}:null});
+  if(!previewBox||!previewBefore)errors.push('Create Hero did not expose an active 3D orbit preview for interaction testing.');
+  else {
+    await flowPage.mouse.move(previewBox.x+previewBox.width*.42,previewBox.y+previewBox.height*.38);
+    await flowPage.mouse.down();
+    await flowPage.mouse.move(previewBox.x+previewBox.width*.66,previewBox.y+previewBox.height*.43,{steps:5});
+    await flowPage.mouse.up();
+    await flowPage.waitForTimeout(120);
+    const previewRotated=await flowPage.evaluate(()=>{const p=window.__climboriaHeroPreview,c=p.camera,o=p.orbit;return{position:c.position.toArray(),distance:c.position.distanceTo(o.target)}});
+    await flowPage.mouse.wheel(0,-140);
+    await flowPage.waitForTimeout(160);
+    const previewZoomed=await flowPage.evaluate(()=>{const p=window.__climboriaHeroPreview,c=p.camera,o=p.orbit;return{position:c.position.toArray(),distance:c.position.distanceTo(o.target)}});
+    const rotationDistance=Math.hypot(...previewRotated.position.map((v,i)=>v-previewBefore.position[i]));
+    if(rotationDistance<.08)errors.push('Dragging the full-body 3D preview did not rotate its camera: '+JSON.stringify({previewBefore,previewRotated}));
+    if(Math.abs(previewZoomed.distance-previewRotated.distance)<.02)errors.push('Scrolling the full-body 3D preview did not zoom the camera: '+JSON.stringify({previewRotated,previewZoomed}));
+  }
   await flowPage.locator('#hero-name').fill('Smoke Explorer');
   await flowPage.locator('#save-hero').click();
   const savedRecord=await flowPage.evaluate(()=>{const all=JSON.parse(localStorage.getItem('climboria-saved-heroes')||'[]');return all.find(h=>h.name==='Smoke Explorer')||null});
