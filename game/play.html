@@ -757,9 +757,9 @@ document.addEventListener('fullscreenchange',()=>{
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
 const titleOverlay=document.getElementById('title');
-function enterExpedition(e){if(!ready||P.mode!=='cine')return;if(e)e.preventDefault();requestLandscapeMode();takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map'}
-// Start on the initial pointer press so the visible title overlay responds immediately on desktop and touch browsers.
-titleOverlay.addEventListener('pointerdown',enterExpedition);
+function enterExpedition(e){if(!ready||P.mode!=='cine')return;if(e){e.preventDefault();e.stopPropagation()}takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map';requestLandscapeMode()}
+// Enter gameplay synchronously during the user gesture; fullscreen/orientation requests are secondary and must never block the player-state transition.
+titleOverlay.addEventListener('pointerdown',enterExpedition,{capture:true});
 titleOverlay.addEventListener('click',enterExpedition);
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
