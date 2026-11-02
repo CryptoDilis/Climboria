@@ -241,7 +241,7 @@ try {
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
-  const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
+  const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
@@ -378,7 +378,7 @@ try {
     panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
     titleInteractive: getComputedStyle(document.querySelector('#title')).pointerEvents !== 'none',
   }));
-  if (characterPickerTouch.mode !== 'cine' || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
+  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleInteractive) {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
   await mobile.locator('#character-create-close').click();
