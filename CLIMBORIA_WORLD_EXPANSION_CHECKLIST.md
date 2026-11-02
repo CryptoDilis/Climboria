@@ -513,3 +513,17 @@ For each meaningful implementation batch:
 - [x] Expose terrain vertex color sampling through the world diagnostics API and add browser smoke checks comparing shallow open-sea and freshwater seabeds against deep ocean coloration.
 - [ ] Await Validate, Browser Smoke, and Pages workflows; inspect diagnostic values and correct any regression before merge.
 - [ ] Manual desktop and Redmi 14 5G visual review remains open for sand visibility, waterline blending, and color appearance under the live water surface.
+
+
+## 2026-11-02 — cave expansion requirements (preserved; implementation not yet verified)
+
+- [ ] Expand the existing cave into a long, spacious, explorable underground network with readable sightlines and sufficient ambient/placed lighting; players must be able to see paths, hazards, and landmarks without the cave becoming pitch black.
+- [ ] Add branching maze routes and clearly telegraphed traps; preserve fair navigation, collision, and recovery routes.
+- [ ] Add underwater cave sections with verified water surfaces, depth, swim clearance, entry/exit routes, and collision-safe seabeds.
+- [ ] Add safe rest/hangout pockets inside the cave, separated from trap and combat zones.
+- [ ] Preserve hostile cave encounters as a future/controlled scope item; wildlife and snakes remain disabled until explicitly re-enabled.
+- [ ] Add a rare reward roll with exactly 3% chance only after a funded and auditable reward source exists; reward candidates may include higher-value token rewards and ingredients. Never promise or mint unfunded $CLIMB.
+- [ ] Add treasure/ingredient placement with valid respawn positions, no clipping into terrain/water/rocks, and no exposed hidden reward coordinates.
+- [ ] Source free cave assets only after verifying license, attribution, file format, polygon/texture cost, scale, and collision suitability; record provenance in ASSET_SOURCES.md.
+- [ ] Add deterministic smoke diagnostics for cave length/branches, lighting visibility, trap collision, underwater clearance, rest areas, and reward odds; perform manual desktop and Redmi 14 5G visual/playability checks.
+- [ ] Do not mark cave expansion complete until assets, runtime behavior, collision, lighting, reward funding, and workflow evidence are all verified.
