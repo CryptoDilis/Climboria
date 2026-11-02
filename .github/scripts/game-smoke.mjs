@@ -169,7 +169,7 @@ try {
   const swimOrigin = await page.evaluate(() => {
     const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(body=>body.kind==='freshwater');
     if(!p||!b)return null;
-    const origin={x:p.x,z:p.z,y:p.y,vy:p.vy};
+    const origin={x:p.x,z:p.z,y:p.y,vy:p.vy,swim:p.swim,swimDepth:p.swimDepth,waterBodyId:p.waterBodyId};
     p.x=b.x;p.z=b.z;p.y=w.groundAt(b.x,b.z)+1.75;p.vy=0;
     return origin;
   });
@@ -177,7 +177,7 @@ try {
   await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', { timeout: 10000 });
   const swimClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.up('w');
-  if(swimOrigin)await page.evaluate(origin=>{const p=window.__climboriaJarrellsPeak.player;Object.assign(p,{x:origin.x,z:origin.z,y:origin.y,vy:origin.vy,swim:false})},swimOrigin);
+  if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   if(walkClip!=='Walking')errors.push('GLB walk animation did not select Walking: '+walkClip);
   if(runClip!=='Running')errors.push('GLB run animation did not select Running: '+runClip);
