@@ -23,6 +23,12 @@ body.free #help{opacity:.8}
 #title{position:fixed;inset:0;display:grid;place-content:center;text-align:center;z-index:7;text-shadow:0 2px 24px #000;transition:opacity 1.2s;cursor:pointer;padding:0 20px}
 #title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
 #title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
+#character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
+#character-create-panel{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));padding:22px;background:#080d14f2;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui}
+#character-create-panel strong{letter-spacing:.14em}
+.character-options{display:grid;grid-template-columns:1fr;gap:10px;margin:18px 0}
+.character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
+#character-load-status{color:#b9c1c8;min-height:18px}
 body.free #title{opacity:0;pointer-events:none}
 
 #title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
@@ -135,7 +141,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
-<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><p class="menu-hint">New Meshy explorer models coming soon</p></div>
+<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER</button><p class="menu-hint">Your original Climboria explorer</p></div><section id="character-create-panel" aria-label="Character selection" style="display:none"><strong>YOUR EXPLORER</strong><div class="character-options"><button type="button" data-hero="Adventurer">CLIMBORIA HERO</button></div><p id="character-load-status">Original Meshy hero selected</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
@@ -658,9 +664,36 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.spine){assetRig.spine.rotation.x=0}
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
-// Police and Adventurer GLB selections are disabled pending the new Meshy models.
-// Keep the procedural placeholder active so the world remains playable.
-document.documentElement.dataset.climboriaHero='procedural-placeholder';
+const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
+let heroLoadError='',heroLoadRequest=0;
+function loadAssetHero(choice='Adventurer'){
+ if(!assetChoices[choice])choice='Adventurer';
+ const requestId=++heroLoadRequest;
+ if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] '+heroLoadError);return}
+ document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
+ new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
+  // Ignore late responses from an earlier character selection; the most recent choice always wins.
+  if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
+  if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
+  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
+  const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
+  const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
+  const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
+  assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
+  assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
+  assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
+  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
+  document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
+  console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
+ },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
+}
+const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const validHero=v=>Object.prototype.hasOwnProperty.call(assetChoices,v);const initialHero=validHero(requestedHero)?requestedHero:validHero(savedHero)?savedHero:'Adventurer';loadAssetHero(initialHero);
+const createPanel=document.getElementById('character-create-panel');
+document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block'});
+document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='none'});
+if(new URLSearchParams(location.search).get('create')==='1')createPanel.style.display='block';
+createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+('Climboria Hero')+'…';loadAssetHero(choice)}));
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
