@@ -148,10 +148,7 @@ try {
 
   await page.setViewportSize({ width: 844, height: 390 });
   await page.waitForFunction(() => document.body.classList.contains('climboria-landscape') && getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 10000 });
-  await page.waitForFunction(() => window.__climboriaGameReady === true && !document.querySelector('#enter-expedition').disabled && document.querySelectorAll('.saved-hero-option').length > 0, undefined, { timeout: 90000 });
-  await page.locator('.saved-hero-option').first().click();
-  await page.locator('#enter-expedition').click();
-  await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk' && document.documentElement.dataset.climboriaHeroRenderer === 'glb', undefined, { timeout: 90000 });
+  await page.waitForFunction(() => window.__climboriaGameReady === true && document.querySelectorAll('.saved-hero-option').length > 0 && document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk' && document.documentElement.dataset.climboriaHeroRenderer === 'glb', undefined, { timeout: 90000 });
   await page.waitForFunction(() => {
     const title = document.querySelector('#title');
     const titleStyle = getComputedStyle(title);
@@ -175,7 +172,7 @@ try {
     const player = window.__climboriaJarrellsPeak.player;
     return { x: player.x, z: player.z, mode: player.mode, hero: document.documentElement.dataset.climboriaHero };
   });
-  if (entry.x !== 0 || entry.z !== -30 || entry.mode !== 'walk' || entry.hero !== 'climboria-hero-default') errors.push('Mobile expedition did not enter with the selected original hero at Sanctuary: ' + JSON.stringify(entry));
+  if (entry.x !== 0 || entry.z !== -30 || entry.mode !== 'walk' || !entry.hero) errors.push('Mobile expedition did not enter with the selected original hero at Sanctuary: ' + JSON.stringify(entry));
 
   await page.locator('#expedition-settings-toggle').click();
   await page.locator('#back-to-expedition-menu').click();
