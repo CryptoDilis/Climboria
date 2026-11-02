@@ -58,6 +58,7 @@ try {
       mode: p?.mode,
       poi: w ? Object.keys(w.POI) : [],
       chests: w?.chests?.length ?? 0,
+      caveGems: w?.caveGems?.map(g=>({cluster:!!g.cluster,children:g.cluster?.children?.length??0})) ?? [],
       snakes: w?.snakes?.length ?? 0,
       animals: w?.animals?.length ?? 0,
       facilities: w?.FAC?.map(f => f.type) ?? [],
