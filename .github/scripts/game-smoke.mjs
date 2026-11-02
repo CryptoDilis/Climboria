@@ -203,6 +203,19 @@ try {
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
+  // Verify the real desktop picker -> GLB -> Enter -> Sanctuary gameplay path first.
+  await page.locator('#character-create').click();
+  const desktopEnter=page.locator('#character-create-enter');
+  await page.waitForFunction(()=>document.querySelector('#character-create-enter')?.dataset.heroLoaded==='true',{timeout:30000});
+  const desktopEnterState=await page.evaluate(()=>({text:document.querySelector('#character-create-enter').textContent.trim(),back:document.querySelector('#character-create-close').textContent.trim(),panel:getComputedStyle(document.querySelector('#character-create-panel')).display}));
+  if(desktopEnterState.text!=='ENTER JARRELL’S PEAK'||desktopEnterState.back!=='BACK TO MENU'||desktopEnterState.panel==='none')errors.push('Desktop hero load did not expose distinct Enter and Back actions: '+JSON.stringify(desktopEnterState));
+  await desktopEnter.dispatchEvent('click');
+  await page.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',{timeout:10000});
+  const desktopEntry=await page.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api.player;return {x:p.x,z:p.z,y:p.y,ground:api.groundAt(p.x,p.z)+1.75,renderer:document.documentElement.dataset.climboriaHeroRenderer,panel:getComputedStyle(document.querySelector('#character-create-panel')).display,backdrop:document.body.classList.contains('character-panel-open'),hud:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
+  if(desktopEntry.x!==0||desktopEntry.z!==-30||Math.abs(desktopEntry.y-desktopEntry.ground)>.02||desktopEntry.renderer!=='glb'||desktopEntry.panel!=='none'||desktopEntry.backdrop||!desktopEntry.hud)errors.push('Desktop Enter did not spawn the loaded GLB at Sanctuary with HUD and no modal: '+JSON.stringify(desktopEntry));
+  await page.locator('#expedition-settings-toggle').click();
+  await page.locator('#back-to-expedition-menu').click();
+  if(!await page.evaluate(()=>document.body.classList.contains('free')===false&&getComputedStyle(document.querySelector('#title')).opacity!=='0'))errors.push('Desktop Back to Menu did not restore the expedition title.');
   // Enter through the visible expedition title overlay used by players, then test keyboard movement.
   const title = page.locator('#title');
   if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
@@ -403,23 +416,33 @@ try {
     errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
   }
   const heroContinue = await mobile.evaluate(() => ({
-    buttonText: document.querySelector('#character-create-close').textContent.trim(),
-    loaded: document.querySelector('#character-create-close').dataset.heroLoaded === 'true',
+    buttonText: document.querySelector('#character-create-enter').textContent.trim(),
+    loaded: document.querySelector('#character-create-enter').dataset.heroLoaded === 'true',
+    enabled: !document.querySelector('#character-create-enter').disabled,
+    backLabel: document.querySelector('#character-create-close').textContent.trim(),
     panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
   }));
-  if (heroContinue.buttonText !== 'ENTER JARRELL’S PEAK' || !heroContinue.loaded || !heroContinue.panelVisible) {
-    errors.push('Loaded hero must expose an explicit Enter Jarrell’s Peak action: ' + JSON.stringify(heroContinue));
+  if (heroContinue.buttonText !== 'ENTER JARRELL’S PEAK' || !heroContinue.loaded || !heroContinue.enabled || heroContinue.backLabel !== 'BACK TO MENU' || !heroContinue.panelVisible) {
+    errors.push('Loaded hero must expose distinct enabled Enter and Back actions: ' + JSON.stringify(heroContinue));
   }
-  await mobile.locator('#character-create-close').click();
+  // Dispatch two rapid activations to catch duplicate gameplay initialization and menu-state races.
+  await mobile.locator('#character-create-enter').dispatchEvent('click');
+  await mobile.locator('#character-create-enter').dispatchEvent('click');
   await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
-  const heroEntry = await mobile.evaluate(() => ({
-    gameplayActive: document.body.classList.contains('free'),
-    panelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-    backdropRemoved: !document.body.classList.contains('character-panel-open'),
-    renderer: document.documentElement.dataset.climboriaHeroRenderer,
-  }));
-  if (!heroEntry.gameplayActive || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb') {
-    errors.push('Enter Jarrell’s Peak must close picker and spawn the loaded GLB hero: ' + JSON.stringify(heroEntry));
+  const heroEntry = await mobile.evaluate(() => {
+    const api=window.__climboriaJarrellsPeak,p=api?.player;
+    return {
+      gameplayActive: document.body.classList.contains('free'),
+      mode:p?.mode,spawnX:p?.x,spawnZ:p?.z,spawnY:p?.y,groundY:p?api.groundAt(p.x,p.z)+1.75:null,
+      panelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
+      backdropRemoved: !document.body.classList.contains('character-panel-open'),
+      renderer: document.documentElement.dataset.climboriaHeroRenderer,
+      status:document.querySelector('#character-load-status').textContent,
+      hudVisible:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5,
+    };
+  });
+  if (!heroEntry.gameplayActive || heroEntry.mode!=='walk' || heroEntry.spawnX!==0 || heroEntry.spawnZ!==-30 || Math.abs(heroEntry.spawnY-heroEntry.groundY)>.02 || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb' || !heroEntry.hudVisible || heroEntry.status.includes('still preparing')) {
+    errors.push('Rapid Enter activation must perform one real spawn with GLB and HUD active: ' + JSON.stringify(heroEntry));
   }
   // Verify Back to Menu remains reachable from the live expedition settings after hero entry.
   await mobile.locator('#expedition-settings-toggle').click();
@@ -432,6 +455,16 @@ try {
   if (!titleMenuState.titleVisible || !titleMenuState.characterPanelHidden || !titleMenuState.mobileActionsHidden) {
     errors.push('Back to Menu must restore the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
   }
+  // The picker Back action must return to the title without discarding the loaded hero.
+  await mobile.locator('#character-create').click();
+  await mobile.locator('#character-create-close').click();
+  const pickerBack=await mobile.evaluate(()=>({
+    titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0'&&getComputedStyle(document.querySelector('#title')).visibility!=='hidden',
+    panelHidden:getComputedStyle(document.querySelector('#character-create-panel')).display==='none',
+    backdropRemoved:!document.body.classList.contains('character-panel-open'),
+    hero:document.documentElement.dataset.climboriaHero,
+  }));
+  if(!pickerBack.titleVisible||!pickerBack.panelHidden||!pickerBack.backdropRemoved||pickerBack.hero!=='adventurer')errors.push('Character picker Back to Menu must restore title and preserve the loaded hero: '+JSON.stringify(pickerBack));
   // Re-enter using the actual title interaction, not a forced body.free state.
   await mobile.locator('#title h1').click();
   await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
