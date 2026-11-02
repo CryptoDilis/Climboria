@@ -273,7 +273,7 @@ try {
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
   const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
+  if(desktopHeroStability.identity!=='climboria-hero-default'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the original Climboria GLB to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
   if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'climboria-hero-default') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
@@ -506,7 +506,7 @@ try {
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
   const mobileHeroStability=await mobile.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(mobileHeroStability.identity!=='adventurer'||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
+  if(mobileHeroStability.identity!=='climboria-hero-default'||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the original Climboria GLB to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
@@ -602,7 +602,7 @@ try {
   await loadPage.locator('#enter-expedition').click();
   await loadPage.waitForFunction(()=>document.documentElement.dataset.climboriaHero==='load-error',undefined,{timeout:30000});
   const failedLoadState=await loadPage.evaluate(()=>({state:document.documentElement.dataset.climboriaHero,buttonText:document.querySelector('#enter-expedition').textContent.trim(),buttonDisabled:document.querySelector('#enter-expedition').disabled,status:document.querySelector('#expedition-status').textContent,free:document.body.classList.contains('free')}));
-  if(failedLoadState.buttonText!=='RETRY ENTER EXPEDITION'||failedLoadState.buttonDisabled||!failedLoadState.status.toLowerCase().includes('failed')||failedLoadState.free)errors.push('Failed GLB request must expose a usable retry, error message, and no playable transition: '+JSON.stringify(failedLoadState));
+  if(failedLoadState.buttonText!=='RETRY ENTER EXPEDITION'||failedLoadState.buttonDisabled||!failedLoadState.status.toLowerCase().includes('could not be loaded')||failedLoadState.free)errors.push('Failed GLB request must expose a usable retry, error message, and no playable transition: '+JSON.stringify(failedLoadState));
   await loadPage.locator('#back-to-game-hub').click();
   await loadPage.waitForURL(/\/game\/?$/, {timeout:15000});
   await loadContext.close();
