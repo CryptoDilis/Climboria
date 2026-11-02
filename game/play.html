@@ -565,6 +565,28 @@ const spikes=[],caveGems=[],caveTorches=[];let caveG;
  [-12,12].forEach(x=>caveTorches.push(torch(x,0,6,g)));
  [[-27,-16],[27,-16],[-27,31],[27,31]].forEach(([x,z])=>caveTorches.push(torch(x,0,z,g)));
  glow('#ff8a3a',3.4,76,0,5,6,g);
+ // First connected side chamber: a short walkable branch off the existing chamber.
+ // Every wall has a matching swept player collider; the doorway remains open at the west end.
+ const caveWallMat=M('#514b43'),caveWallHeight=7,caveWallThickness=1.1;
+ function caveWall(x1,z1,x2,z2,label){
+  const midX=(x1+x2)/2,midZ=(z1+z2)/2,len=Math.hypot(x2-x1,z2-z1);
+  const mesh=mk(BOX,caveWallMat,midX,caveWallHeight/2,midZ,g);
+  sc(mesh,len,caveWallHeight,caveWallThickness);
+  mesh.rotation.y=-Math.atan2(z2-z1,x2-x1);
+  const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
+  caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
+ }
+ // 8m-wide passage connects the main chamber to an 18m x 18m side room.
+ caveWall(9,21,22,21,'side-passage-south');
+ caveWall(9,29,22,29,'side-passage-north');
+ caveWall(22,16,40,16,'side-room-south');
+ caveWall(40,16,40,34,'side-room-east');
+ caveWall(40,34,22,34,'side-room-north');
+ caveWall(22,16,22,21,'side-room-west-lower');
+ caveWall(22,29,22,34,'side-room-west-upper');
+ const branchFloor=mk(BOX,M('#625b50'),15,.08,25,g);sc(branchFloor,14,.16,8,g);
+ const chamberFloor=mk(BOX,M('#625b50'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ const chamberGlow=glow('#55d9c8',1.35,30,31,3,25,g);
  [[-25,3,-16],[25,3,-16],[-25,3,31],[25,3,31]].forEach(([x,y,z])=>glow('#ffad55',2.2,38,x,y,z,g));
  for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,-3.2,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
  for(let j=0;j<5;j++)for(let i=0;i<7;i++){
@@ -919,6 +941,7 @@ const tend=e=>{for(const t of e.changedTouches){if(t.identifier==joy.id){joy.id=
 addEventListener('touchend',tend);addEventListener('touchcancel',tend);
 /* collision: allow steep mountain approaches while blocking near-vertical faces, abrupt ledges, and tree/rock/structure circles (chunk colliders unload with their chunk) */
 const solids=[],SLOPE=3.8,PLAYER_RADIUS=.34,MAX_STEP_UP=3.0;
+const caveWallSegments=[];
 const l2w=(g,lx,lz)=>{const r=g.rotation.y,c=Math.cos(r),n=Math.sin(r);return[g.position.x+lx*c+lz*n,g.position.z-lx*n+lz*c]};
 const solid=(x,z,r)=>solids.push({x,z,r});
 /* ---------- CC0 rainforest dressing from 3DAssets.dev ----------
@@ -980,8 +1003,32 @@ loadCC0ForestModel('fallenLog',cc0LogSpots);
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
 [[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
+function caveWallBlocks(nx,nz,ox,oz){
+ const pointSegmentDistance=(px,pz,ax,az,bx,bz)=>{
+  const dx=bx-ax,dz=bz-az,len=dx*dx+dz*dz;
+  const t=len?Math.max(0,Math.min(1,((px-ax)*dx+(pz-az)*dz)/len)):0;
+  return Math.hypot(px-(ax+dx*t),pz-(az+dz*t));
+ };
+ const orient=(ax,az,bx,bz,cx,cz)=>(bx-ax)*(cz-az)-(bz-az)*(cx-ax);
+ const intersects=(a,b,c,d)=>{
+  const o1=orient(a.x,a.z,b.x,b.z,c.x,c.z),o2=orient(a.x,a.z,b.x,b.z,d.x,d.z);
+  const o3=orient(c.x,c.z,d.x,d.z,a.x,a.z),o4=orient(c.x,c.z,d.x,d.z,b.x,b.z);
+  return o1*o2<=0&&o3*o4<=0;
+ };
+ const moveA={x:ox,z:oz},moveB={x:nx,z:nz};
+ for(const wall of caveWallSegments){
+  const a={x:wall.ax,z:wall.az},b={x:wall.bx,z:wall.bz};
+  if(intersects(moveA,moveB,a,b)||
+     Math.min(pointSegmentDistance(ox,oz,a.x,a.z,b.x,b.z),pointSegmentDistance(nx,nz,a.x,a.z,b.x,b.z),
+       pointSegmentDistance(a.x,a.z,ox,oz,nx,nz),pointSegmentDistance(b.x,b.z,ox,oz,nx,nz))<PLAYER_RADIUS+wall.thickness*.5){
+    window.__climboriaLastCollision={type:'cave-wall',label:wall.label};return true;
+  }
+ }
+ return false;
+}
 function blocked(nx,nz,ox,oz,feet){
  window.__climboriaLastCollision=null;
+ if(caveWallBlocks(nx,nz,ox,oz))return true;
  const dirX=nx-ox,dirZ=nz-oz,segLen=Math.hypot(dirX,dirZ);
  if(segLen<1e-6)return false;
  const r=PLAYER_RADIUS,ts=[0,.5,1];
@@ -1183,7 +1230,7 @@ function auditCollisionSolids(){
  const percentile=p=>radii.length?radii[Math.min(radii.length-1,Math.floor((radii.length-1)*p))]:null;
  return {count:solids.length,invalid,minRadius:Number.isFinite(minRadius)?minRadius:null,maxRadius,radiusP50:percentile(.5),radiusP90:percentile(.9),large,waterOverlaps};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,room:{minX:22,maxX:40,minZ:16,maxZ:34},walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22))}),caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
