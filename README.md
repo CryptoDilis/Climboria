@@ -1946,3 +1946,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
 - [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
 - [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
+
+
+### Mobile field-map regression repair — 2026-11-03
+
+- [x] Diagnosed the mobile landscape field map rendering as an oversized sidebar rather than a compact minimap.
+- [x] Added hard CSS bounds for mobile-device layouts: collapsed panel 164×116 CSS px and map canvas 70 px high; expanded map remains explicitly bounded.
+- [x] Diagnosed Browser Smoke run 41535296076 failure: an extra closing brace in the 100-slot inventory assertion caused a JavaScript syntax error before the gameplay smoke suite could execute.
+- [x] Corrected the assertion and added a mobile landscape minimap dimension check.
+- [ ] Await a fresh Browser Smoke run on the repaired branch; do not treat this repair as verified until the run passes.
+- [ ] Recheck physical Redmi 14 5G landscape rendering after the branch is merged/deployed. Desktop layout and the Jarrell’s Peak world/map assets were not changed by this CSS-only map repair.
