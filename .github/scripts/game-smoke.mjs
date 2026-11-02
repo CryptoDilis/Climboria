@@ -391,81 +391,30 @@ try {
     window.dispatchEvent(new Event('resize'));
   });
   await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
-  // Touch on character-selection controls must not start gameplay behind the modal.
-  await mobile.locator('#character-create').click();
-  await mobile.locator('#character-create-panel [data-hero]').dispatchEvent('touchstart', { bubbles: true });
-  await mobile.locator('#character-create-panel [data-hero]').click();
-  const characterPickerTouch = await mobile.evaluate(() => ({
-    gameplayActive: document.body.classList.contains('free'),
-    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-    titleHidden: getComputedStyle(document.querySelector('#title')).visibility === 'hidden' && getComputedStyle(document.querySelector('#title')).opacity === '0',
-    modalAboveHud: Number(getComputedStyle(document.querySelector('#character-create-panel')).zIndex) > Number(getComputedStyle(document.querySelector('#player-card')).zIndex),
-    backdropActive: getComputedStyle(document.body, '::before').content !== 'none' && getComputedStyle(document.body, '::before').zIndex === '9998',
-  }));
-  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleHidden || !characterPickerTouch.modalAboveHud || !characterPickerTouch.backdropActive) {
-    errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
-  }
-  const heroContinue = await mobile.evaluate(() => ({
-    buttonText: document.querySelector('#character-create-enter').textContent.trim(),
-    loaded: document.querySelector('#character-create-enter').dataset.heroLoaded === 'true',
-    enabled: !document.querySelector('#character-create-enter').disabled,
-    backLabel: document.querySelector('#character-create-close').textContent.trim(),
-    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-  }));
-  if (heroContinue.buttonText !== 'ENTER JARRELL’S PEAK' || !heroContinue.loaded || !heroContinue.enabled || heroContinue.backLabel !== 'BACK TO MENU' || !heroContinue.panelVisible) {
-    errors.push('Loaded hero must expose distinct enabled Enter and Back actions: ' + JSON.stringify(heroContinue));
-  }
-  // Dispatch two rapid activations to catch duplicate gameplay initialization and menu-state races.
-  await mobile.locator('#character-create-enter').dispatchEvent('click');
-  await mobile.locator('#character-create-enter').dispatchEvent('click');
-  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
-  const heroEntry = await mobile.evaluate(() => {
-    const api=window.__climboriaJarrellsPeak,p=api?.player;
-    return {
-      gameplayActive: document.body.classList.contains('free'),
-      mode:p?.mode,spawnX:p?.x,spawnZ:p?.z,spawnY:p?.y,groundY:p?api.groundAt(p.x,p.z)+1.75:null,
-      panelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-      backdropRemoved: !document.body.classList.contains('character-panel-open'),
-      renderer: document.documentElement.dataset.climboriaHeroRenderer,
-      status:document.querySelector('#character-load-status').textContent,
-      hudVisible:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5,
-    };
-  });
-  if (!heroEntry.gameplayActive || heroEntry.mode!=='walk' || heroEntry.spawnX!==0 || heroEntry.spawnZ!==-30 || Math.abs(heroEntry.spawnY-heroEntry.groundY)>.02 || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb' || !heroEntry.hudVisible || heroEntry.status.includes('still preparing')) {
-    errors.push('Rapid Enter activation must perform one real spawn with GLB and HUD active: ' + JSON.stringify(heroEntry));
-  }
+  // Touch the saved-hero selector, then rapidly activate Enter. Nothing behind the menu may start gameplay.
+  await mobile.waitForFunction(()=>window.__climboriaGameReady===true&&!document.querySelector('#enter-expedition').disabled,undefined,{timeout:90000});
+  const expeditionMenuBefore=await mobile.evaluate(()=>({free:document.body.classList.contains('free'),menu:!!document.querySelector('#expedition-hero-menu'),titleOpacity:getComputedStyle(document.querySelector('#title')).opacity,heroButtons:document.querySelectorAll('.saved-hero-option').length,enterLabel:document.querySelector('#enter-expedition').textContent.trim(),legacyPopup:!!document.querySelector('#character-create-panel')}));
+  if(expeditionMenuBefore.free||!expeditionMenuBefore.menu||expeditionMenuBefore.titleOpacity==='0'||!expeditionMenuBefore.heroButtons||expeditionMenuBefore.enterLabel!=='ENTER EXPEDITION'||expeditionMenuBefore.legacyPopup)errors.push('Mobile Jarrell launch must show the inline saved-hero expedition menu: '+JSON.stringify(expeditionMenuBefore));
+  const mobileHeroChoice=mobile.locator('.saved-hero-option').first();
+  await mobileHeroChoice.dispatchEvent('touchstart',{bubbles:true});
+  await mobileHeroChoice.click();
+  const heroChoiceTouch=await mobile.evaluate(()=>({free:document.body.classList.contains('free'),pressed:document.querySelector('.saved-hero-option[aria-pressed="true"]')?.textContent.trim(),titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0'}));
+  if(heroChoiceTouch.free||!heroChoiceTouch.pressed||!heroChoiceTouch.titleVisible)errors.push('Touching a saved hero must select it without bypassing Enter Expedition: '+JSON.stringify(heroChoiceTouch));
+  await mobile.locator('#enter-expedition').dispatchEvent('click');
+  await mobile.locator('#enter-expedition').dispatchEvent('click');
+  await mobile.waitForFunction(()=>document.body.classList.contains('free')&&document.documentElement.dataset.climboriaHeroRenderer==='glb',undefined,{timeout:90000});
+  const heroEntry=await mobile.evaluate(()=>{const api=window.__climboriaJarrellsPeak,p=api?.player;return {gameplayActive:document.body.classList.contains('free'),mode:p?.mode,spawnX:p?.x,spawnZ:p?.z,spawnY:p?.y,groundY:p?api.groundAt(p.x,p.z)+1.75:null,hero:document.documentElement.dataset.climboriaHero,heroName:document.documentElement.dataset.climboriaHeroName,renderer:document.documentElement.dataset.climboriaHeroRenderer,titleOpacity:getComputedStyle(document.querySelector('#title')).opacity,legacyPopup:!!document.querySelector('#character-create-panel'),hudVisible:Number(getComputedStyle(document.querySelector('#player-card')).opacity)>.5}});
+  if(!heroEntry.gameplayActive||heroEntry.mode!=='walk'||heroEntry.spawnX!==0||heroEntry.spawnZ!==-30||Math.abs(heroEntry.spawnY-heroEntry.groundY)>.02||heroEntry.hero!=='climboria-hero-default'||heroEntry.renderer!=='glb'||heroEntry.titleOpacity!=='0'||heroEntry.legacyPopup||!heroEntry.hudVisible)errors.push('Rapid mobile Enter must load the selected GLB at Sanctuary and activate gameplay once: '+JSON.stringify(heroEntry));
   // Verify Back to Menu remains reachable from the live expedition settings after hero entry.
   await mobile.locator('#expedition-settings-toggle').click();
   await mobile.locator('#back-to-expedition-menu').click();
-  const titleMenuState = await mobile.evaluate(() => ({
-    titleVisible: getComputedStyle(document.querySelector('#title')).opacity !== '0',
-    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-    mobileActionsHidden: [...document.querySelectorAll('[data-mobile-action]')].every(e => getComputedStyle(e).display === 'none'),
-  }));
-  if (!titleMenuState.titleVisible || !titleMenuState.characterPanelHidden || !titleMenuState.mobileActionsHidden) {
-    errors.push('Back to Menu must restore the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
-  }
-  // The picker Back action must return to the title without discarding the loaded hero.
-  await mobile.locator('#character-create').click();
-  await mobile.locator('#character-create-close').click();
-  const pickerBack=await mobile.evaluate(()=>({
-    titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0'&&getComputedStyle(document.querySelector('#title')).visibility!=='hidden',
-    panelHidden:getComputedStyle(document.querySelector('#character-create-panel')).display==='none',
-    backdropRemoved:!document.body.classList.contains('character-panel-open'),
-    hero:document.documentElement.dataset.climboriaHero,
-  }));
-  if(!pickerBack.titleVisible||!pickerBack.panelHidden||!pickerBack.backdropRemoved||pickerBack.hero!=='adventurer')errors.push('Character picker Back to Menu must restore title and preserve the loaded hero: '+JSON.stringify(pickerBack));
-  // Re-enter using the actual title interaction, not a forced body.free state.
-  await mobile.locator('#title h1').click();
-  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
-  const actualMobileTransition = await mobile.evaluate(() => ({
-    gameplayActive: document.body.classList.contains('free'),
-    titleHidden: getComputedStyle(document.querySelector('#title')).opacity === '0',
-    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-  }));
-  if (!actualMobileTransition.gameplayActive || !actualMobileTransition.titleHidden || !actualMobileTransition.characterPanelHidden) {
-    errors.push('Actual mobile title-to-gameplay transition left a menu overlay visible: ' + JSON.stringify(actualMobileTransition));
-  }
+  const titleMenuState=await mobile.evaluate(()=>({titleVisible:getComputedStyle(document.querySelector('#title')).opacity!=='0',heroMenuVisible:getComputedStyle(document.querySelector('#expedition-hero-menu')).display!=='none',free:document.body.classList.contains('free'),mobileActionsHidden:[...document.querySelectorAll('[data-mobile-action]')].every(e=>getComputedStyle(e).display==='none')}));
+  if(!titleMenuState.titleVisible||!titleMenuState.heroMenuVisible||titleMenuState.free||!titleMenuState.mobileActionsHidden)errors.push('Back to Expedition Menu must restore hero selection and hide gameplay controls: '+JSON.stringify(titleMenuState));
+  // Re-enter with the explicit action while reusing the already loaded hero.
+  await mobile.locator('#enter-expedition').click();
+  await mobile.waitForFunction(()=>document.body.classList.contains('free')&&window.__climboriaJarrellsPeak?.player?.mode==='walk',undefined,{timeout:10000});
+  const actualMobileTransition=await mobile.evaluate(()=>({gameplayActive:document.body.classList.contains('free'),titleHidden:getComputedStyle(document.querySelector('#title')).opacity==='0',heroMenuExists:!!document.querySelector('#expedition-hero-menu'),renderer:document.documentElement.dataset.climboriaHeroRenderer}));
+  if(!actualMobileTransition.gameplayActive||!actualMobileTransition.titleHidden||!actualMobileTransition.heroMenuExists||actualMobileTransition.renderer!=='glb')errors.push('Mobile hero re-entry through Enter Expedition did not restore gameplay: '+JSON.stringify(actualMobileTransition));
   // Apply the landscape state directly only for CSS viewport/orientation assertions;
   // gameplay activation above must come from the real user interaction.
   // not the Android device's physical Screen Orientation API.
