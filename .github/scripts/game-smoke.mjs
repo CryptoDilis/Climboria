@@ -165,6 +165,33 @@ try {
   await page.keyboard.press('w');
   await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
   await page.waitForFunction(() => ['adventurer','police'].includes(document.documentElement.dataset.climboriaHero), { timeout: 45000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  await page.keyboard.down('w');
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', { timeout: 10000 });
+  const walkClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
+  await page.keyboard.down('Shift');
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'run', { timeout: 10000 });
+  const runClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
+  await page.keyboard.up('Shift');
+  await page.keyboard.up('w');
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  const swimOrigin = await page.evaluate(() => {
+    const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(body=>body.kind==='freshwater');
+    if(!p||!b)return null;
+    const origin={x:p.x,z:p.z,y:p.y,vy:p.vy,swim:p.swim,swimDepth:p.swimDepth,waterBodyId:p.waterBodyId};
+    p.x=b.x;p.z=b.z;p.y=w.groundAt(b.x,b.z)+1.75;p.vy=0;
+    return origin;
+  });
+  await page.keyboard.down('w');
+  await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', { timeout: 10000 });
+  const swimClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
+  await page.keyboard.up('w');
+  if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  if(walkClip!=='Walking')errors.push('GLB walk animation did not select Walking: '+walkClip);
+  if(runClip!=='Running')errors.push('GLB run animation did not select Running: '+runClip);
+  if(swimClip!=='Swim_Forward')errors.push('GLB swim animation did not select Swim_Forward: '+swimClip);
+  console.log('Selected GLB animation transitions:',JSON.stringify({idle:'idle',walk:walkClip,run:runClip,swim:swimClip}));
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};

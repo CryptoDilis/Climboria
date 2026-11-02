@@ -629,7 +629,7 @@ function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  if(state==='idle'){
   if(assetActive)assetMixer.stopAllAction();
-  assetActive=null;assetAnimState='idle';return true;
+  assetActive=null;assetAnimState='idle';document.documentElement.dataset.climboriaHeroAnimation='idle';document.documentElement.dataset.climboriaHeroClip='';return true;
  }
  const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
@@ -640,9 +640,9 @@ function chooseAssetAnimation(state,speed=0){
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
  if(!clip)return false;
- if(assetActive&&assetActive.getClip()===clip)return true;
+ if(assetActive&&assetActive.getClip()===clip){assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;}
  if(assetActive)assetActive.fadeOut(.16);
- assetActive=assetMixer.clipAction(clip);assetActive.reset().fadeIn(.16).play();assetAnimState=state;return true;
+ assetActive=assetMixer.clipAction(clip);assetActive.reset().fadeIn(.16).play();assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;
 }
 function animateAssetFallback(t,state,speed){
  const moving=state==='walk'||state==='run',swimming=state==='swim',amp=moving?(state==='run'?.9:.58):0;
@@ -1203,7 +1203,7 @@ function update(dt){
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
    // that can make the character look like it is bowing.
    const hasClip=P.swim?(assetHeroUsesAuthoredAnimations?chooseAssetAnimation('swim',Math.hypot(fw,rt)):false):chooseAssetAnimation(animState);
-   if(P.swim&&!assetHeroUsesAuthoredAnimations&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim'}
+   if(P.swim&&!assetHeroUsesAuthoredAnimations&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim';document.documentElement.dataset.climboriaHeroAnimation='swim';document.documentElement.dataset.climboriaHeroClip='fallback-prone'}
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
   }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
