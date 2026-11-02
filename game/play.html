@@ -1010,10 +1010,13 @@ function caveWallBlocks(nx,nz,ox,oz){
   return Math.hypot(px-(ax+dx*t),pz-(az+dz*t));
  };
  const orient=(ax,az,bx,bz,cx,cz)=>(bx-ax)*(cz-az)-(bz-az)*(cx-ax);
+ const onSegment=(a,b,p)=>p.x>=Math.min(a.x,b.x)-1e-8&&p.x<=Math.max(a.x,b.x)+1e-8&&p.z>=Math.min(a.z,b.z)-1e-8&&p.z<=Math.max(a.z,b.z)+1e-8;
  const intersects=(a,b,c,d)=>{
   const o1=orient(a.x,a.z,b.x,b.z,c.x,c.z),o2=orient(a.x,a.z,b.x,b.z,d.x,d.z);
   const o3=orient(c.x,c.z,d.x,d.z,a.x,a.z),o4=orient(c.x,c.z,d.x,d.z,b.x,b.z);
-  return o1*o2<=0&&o3*o4<=0;
+  if(((o1>0&&o2<0)||(o1<0&&o2>0))&&((o3>0&&o4<0)||(o3<0&&o4>0)))return true;
+  return (Math.abs(o1)<1e-8&&onSegment(a,b,c))||(Math.abs(o2)<1e-8&&onSegment(a,b,d))||
+   (Math.abs(o3)<1e-8&&onSegment(c,d,a))||(Math.abs(o4)<1e-8&&onSegment(c,d,b));
  };
  const moveA={x:ox,z:oz},moveB={x:nx,z:nz};
  for(const wall of caveWallSegments){
