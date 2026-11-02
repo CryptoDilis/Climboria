@@ -96,6 +96,7 @@ try {
       }) : [],
       seaHeights: [[-1200,0],[-1200,24],[-1200,-24]].map(([x,z])=>w?.heightAt(x,z)),
       seabedColorAudit: (()=>{if(!w?.colorAt)return null;const deep=w.colorAt(-1200,0,w.heightAt(-1200,0),1);let shallow=null;for(let x=-900;x>-1180;x-=2){const h=w.heightAt(x,0);if(h<=-.8&&h>=-7&&w.waterBodyAt(x,0)?.id==='open_sea'){shallow={x,h,color:w.colorAt(x,0,h,1)};break;}}const freshwater=w.colorAt(390,-260,w.heightAt(390,-260),1);return {deep,shallow,freshwater};})(),
+      collisionSolidAudit: typeof w?.auditCollisionSolids === 'function' ? w.auditCollisionSolids() : null,
       mountainApproachAudit: (()=>{
         if(!w?.POI?.summit||typeof w.blocked!=='function')return null;
         const peak=w.POI.summit,results=[];
@@ -159,6 +160,7 @@ try {
   if (world.fishingSpots.length !== 11 || world.fishingInteractions.length !== 11 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all eight sea docks and three freshwater spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
   if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
+  if (!world.collisionSolidAudit || world.collisionSolidAudit.count < 1 || world.collisionSolidAudit.invalid.length || !Number.isFinite(world.collisionSolidAudit.maxRadius) || world.collisionSolidAudit.maxRadius <= 0) errors.push('Fixed collision-solid audit found missing, invalid, or non-positive collider data: '+JSON.stringify(world.collisionSolidAudit));
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
