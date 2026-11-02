@@ -1,3 +1,13 @@
+## 2026-11-02 — fixed collision-solid integrity audit (verification pending)
+
+- [x] Added a read-only audit for authored fixed colliders, reporting invalid coordinates/radii, radius distribution, large colliders, and water-body overlaps without changing gameplay collision behavior.
+- [x] Extended Browser Smoke diagnostics to collect the fixed-collider audit and reject missing or invalid collider data.
+- [ ] Validate, Browser Smoke, and Pages workflows for this change are pending; inspect actual run results before marking the automated audit verified.
+- [ ] Large collider and water-overlap records are diagnostic evidence only; inspect the emitted results before changing any collider dimensions or classifying an overlap as a defect.
+- [ ] Manual desktop and Redmi 14 5G landscape collision/terrain visual acceptance remains open.
+
+---
+
 ## 2026-11-02 — selected GLB idle, walk, run, and swim transition coverage (automated verification passed; visual review open)
 
 - [x] Added read-only diagnostics for the active authored hero animation state and clip name.
