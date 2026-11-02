@@ -65,3 +65,13 @@ Use the 1K/2K maps for mobile, pack local texture files, and avoid loading full 
 - A static visual model is not automatically climbable. For every imported mountain, author or derive a collision surface, keep the collision aligned with the visible mesh, and validate reachable slope/path routes plus blocked cliff faces.
 - Cave kits need explicit floor/wall collision, connected walkable passages, entrances that meet exterior terrain, and torches placed in several separate regions. Avoid invisible collision lids across entrances.
 - Asset status remains **candidate / not integrated** until actual local files, license notes, optimized size, collision tests, desktop/mobile loading, and workflow results are recorded.
+
+
+## Expanded cave asset research — 2026-11-02
+
+| Priority | Asset/source | License and verified specifications | Integration requirements |
+|---|---|---|---|
+| A — modular cave network candidate | [Cave and Crystal Caverns — 3DAssets.dev](https://3dassets.dev/packs/cave-and-crystal-networks) | Official pack page states CC0 1.0, 94 self-contained GLB models, 4.1 MB total model payload, 76,614 triangles, metres/+Y up, and Three.js GLTFLoader compatibility without extra decoders. Includes straight/bent/rising/descending tunnels, T/four-way junctions, wide galleries, large chambers, shafts, flooded tunnels/chambers, and mineral formations. The starter scene is a separate 407.1 KB download. | Strong candidate for a connected large cave with maze branches and underwater pockets. Inspect the starter scene and selected individual GLBs locally before integration; author collision/navigation, traps, light sources, water surfaces, safe rest areas, and valid exits. Do not assume the models include gameplay colliders. |
+| B — modular cave kit alternative | [Kenney Modular Cave Kit](https://kenney.nl/assets/modular-cave-kit) | Official Kenney pack previously recorded as CC0 with 40 pieces. | Compare style and actual GLB/GLTF files against the 3DAssets.dev kit before choosing; do not mix incompatible scale/material styles without art-direction review. |
+
+Research evidence: the 3DAssets.dev pack page documents the 94-model count, 4.1 MB model total, CC0 1.0 license, metric units, GLTFLoader compatibility, and flooded tunnel/chamber variants. Source: https://3dassets.dev/packs/cave-and-crystal-networks. This is a verified source/license candidate, **not yet downloaded, integrated, or gameplay-tested**. The pack page also states colliders, navigation, and gameplay scripts must be supplied by the game.
