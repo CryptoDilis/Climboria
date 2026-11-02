@@ -3,7 +3,7 @@
 - [x] Expanded terrain vertex coloring with a soft sand apron along all three mapped freshwater basins and the river channel, preserving the existing depth-aware seabed sand-to-silt gradient.
 - [x] Strengthened the shared terrestrial dressing clearance helper: vegetation/loose rocks are excluded within an 18-unit shoreline buffer, with direct water-body queries at the center and 24 radial samples; low bank ground is also reserved as shoreline.
 - [x] Added desktop browser smoke assertions for each freshwater bank and the river bank; existing ocean, seabed, forest-placement, dock, and fishing checks remain active.
-- [ ] Await Validate, Browser Smoke, and Pages workflows; inspect diagnostics and fix any regression before merge.
+- [x] Validate Climboria passed on gameplay/test lineage through `20da162dc2a874e0b11dcd90e8d31483bb46d5a8` (run `41448808748`); Browser Smoke passed (run `41448808610`) with `freshwaterBankClearance=true`, `riverBankClearance=true`, sand-tinted shallow/freshwater seabeds, all 3 freshwater enter/exit checks passing, 8 dry-to-water coastal docks, and all 11 fishing interactions starting. Pages deployment passed for the follow-up checklist commit (run `41449967979`).
 - [ ] Manual desktop and Redmi 14 5G visual review remains open for river/lake/pond sand blending, shoreline width, and vegetation placement.
 
 ## 2026-11-02 — CC0 rainforest expansion and placement regression correction
@@ -559,3 +559,13 @@ For each meaningful implementation batch:
 - [ ] Check style compatibility before considering the Avramania low-poly collection; do not introduce visibly mismatched art styles.
 - [ ] Download selected assets locally, inspect mesh/materials/bounds, optimize for mobile and create authored collision before placement.
 - [ ] Build distinct ruin layouts from selected pieces; verify entrance/exit, walkable floors, route clearance and no player-trapping geometry.
+
+
+## 2026-11-02 — freshwater foundation verified; expanded mountain collision audit added
+
+- [x] Confirmed the freshwater/river sand apron and terrestrial shoreline clearance implementation in gameplay commit `7eac3a03a1968c914cefd32a0795b351930c92a1`.
+- [x] Read the actual Browser Smoke job log: `freshwaterBankClearance=true`, `riverBankClearance=true`; all three ponds entered/exited; seabed audit showed shallow sea and freshwater vertices sand-tinted relative to deep sea; all eight coastal docks had dry approaches and water-side ends; all eleven dock/pond fishing interactions started.
+- [x] Confirmed the same smoke log reports 87 valid collision solids, no invalid solids or water overlaps; central summit eight-direction approach audit cleared all eight bearings; spawn-to-summit route completed 100% with no blocking collider.
+- [x] Added a broader world-sampled `mountainMassifAudit` diagnostic to `.github/scripts/game-smoke.mjs` to find spatially separated high points and measure eight-direction approaches at each candidate, rather than testing only the central summit.
+- [ ] Inspect the new mountain massif diagnostic in the workflows triggered by commit `3c6b7b4eabdc064d35859843f67cda8dd1525619`; if it reveals inaccessible approaches or unexpected blockers, diagnose and repair the exact terrain/collider cause.
+- [ ] Manual visual acceptance of sand blending, shoreline width, and vegetation on desktop and Redmi 14 5G remains open; CI geometry checks do not certify the visual result.
