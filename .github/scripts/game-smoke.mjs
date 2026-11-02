@@ -9,6 +9,7 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
+  const soundtrackResponsePromise = page.waitForResponse(response => new URL(response.url()).pathname === '/game/assets/music/TRACK_01.mp3', { timeout: 20000 }).catch(() => null);
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
@@ -34,6 +35,8 @@ try {
   }));
   if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
+  const soundtrackResponse = await soundtrackResponsePromise;
+  if (!soundtrackResponse || soundtrackResponse.status() !== 200) errors.push('Canonical TRACK_01.mp3 must load from /game/assets/music with HTTP 200: ' + JSON.stringify({status:soundtrackResponse?.status(),url:soundtrackResponse?.url()}));
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
   if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
