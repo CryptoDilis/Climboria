@@ -958,8 +958,12 @@ const cv=renderer.domElement;
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
 async function tryLandscape(){
  document.documentElement.dataset.climboriaLandscape='attempted';
+ // The test/browser may deny fullscreen and orientation locking. Gameplay's
+ // landscape state is the requested layout state, not proof of OS permission.
  try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen().catch(()=>{})}catch{}
  try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape').catch(()=>{})}catch{}
+ document.body.classList.add('climboria-landscape');
+ document.body.classList.remove('climboria-portrait');
  document.documentElement.dataset.climboriaLandscape='ready';
 }
 function requestLandscapeMode(){
