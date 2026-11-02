@@ -17,13 +17,16 @@ try {
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
   await page.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder' && document.documentElement.dataset.climboriaHeroRenderer === 'fallback', { timeout: 90000 });
+  await page.waitForFunction(() => {
+    const root=document.documentElement.dataset;
+    return (root.climboriaHero === 'adventurer' && root.climboriaHeroRenderer === 'glb') || root.climboriaHero === 'load-error';
+  }, { timeout: 90000 });
   const heroAssetAudit = await page.evaluate(() => ({
     identity: document.documentElement.dataset.climboriaHero || '',
     renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
     visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
-  if (heroAssetAudit.identity !== 'procedural-placeholder' || heroAssetAudit.renderer !== 'fallback' || !heroAssetAudit.visible) errors.push('Temporary procedural hero did not initialize: ' + JSON.stringify(heroAssetAudit));
+  if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
