@@ -126,7 +126,7 @@ try {
 
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.locator('.hero-buttons button').filter({ hasText: /PLAY/ }).first().click();
-  await page.waitForURL(/\\/game\\/?$/, { timeout: 15000, waitUntil: 'commit' });
+  await page.waitForURL(url => url.pathname === '/game/' || url.pathname === '/game', { timeout: 15000, waitUntil: 'commit' });
   const hub = await page.evaluate(() => ({
     destinations: [...document.querySelectorAll('.grid .card')].map(card => card.querySelector('h2')?.textContent.trim()),
     createHeroSeparate: !!document.querySelector('#menuCreateHero'),
