@@ -816,8 +816,6 @@ function setHeroLoadFailure(message,error){
 }
 function loadAssetHero(heroRecord,onReady){
  const record=heroData.normalize(heroRecord)||heroData.defaultHero();
- if(heroLoadTimer)clearTimeout(heroLoadTimer);
- heroLoadTimer=null;
  const previousRequest=activeHeroRequest;activeHeroRequest=null;
  const requestId=++heroLoadRequest;
  if(previousRequest&&typeof previousRequest.abort==='function')previousRequest.abort();
@@ -879,9 +877,10 @@ function activateSelectedHero(){
  }
  loadAssetHero(requestedHero,success=>{
   heroEntryBusy=false;
-  if(!success)return
+  if(!success){useProceduralEsmiFallback();return}
   if(requestedHero.id!==selectedHeroRecord.id)return
-  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();if(P.mode==='walk')requestLandscapeMode()}
+  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();}
+  else if(P.mode==='walk'&&assetHero){hero.visible=false;assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='glb';document.documentElement.dataset.climboriaHero=requestedHero.id;}
  });
 }
 
