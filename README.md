@@ -1845,3 +1845,70 @@ For every integrated asset or borrowed technique, record:
 - FOMO: discovery tables, watchlists, charts, trade overlays, holders, swaps, theses, trader feed, leaderboards, quick buy/sell, alerts and portfolio views. Reference: https://fomo.family/release-notes and https://fomotrading.app/terminal/
 - Research sources and capabilities can change. Re-check official docs and terms immediately before implementation.
 
+
+
+## N. Climboria-exclusive product concept: Trade Twin & Decision Engine (DESIGN ONLY)
+
+**Status:** Proposed signature differentiator; design/specification only. Jarrell's Peak remains the active development priority. No DEX implementation is authorized by this section.
+
+**Product promise:** Do not merely show traders what the market is doing. Help them understand what a proposed trade could cost, how it could fail, how it affects their existing exposure, and whether the original thesis remains valid. The engine is decision support, not a buy/sell oracle and never guarantees profit.
+
+### N1. Core concept — Trade Twin
+- [ ] Build a pre-trade digital twin of the exact proposed transaction and resulting position using current, timestamped market and wallet data.
+- [ ] Simulate the actual supported route/venue, expected output, fees, priority fee, slippage, price impact, quote expiry and minimum received.
+- [ ] Simulate multiple position sizes (for example, the user's entered size plus smaller/larger alternatives) and show how exit liquidity and estimated proceeds change at each size.
+- [ ] Model clearly labeled stress scenarios: market price falls, liquidity decreases, large holder sells, volume collapses, route becomes unavailable, transaction is delayed, and network fees rise.
+- [ ] Show estimated break-even price after fees, downside exposure, and the price/condition at which the user's stated thesis would be invalidated.
+- [ ] Show portfolio-level impact when the user has connected a wallet: concentration, correlated token exposure, available balance and maximum loss under the selected hypothetical scenarios.
+- [ ] Let the user set their own risk budget and maximum position size. The engine must not silently choose or execute a trade.
+- [ ] Show data coverage, assumptions, confidence/uncertainty, source timestamps and unavailable inputs beside every simulation.
+- [ ] Never present scenario outputs as predictions or guaranteed outcomes. Include best/base/stress cases, not a single falsely precise target.
+
+### N2. Trade Plan Card — actionable, user-controlled output
+- [ ] Convert the analysis into a compact Trade Plan Card containing: proposed entry, size alternatives, estimated execution cost, exit-liquidity estimate, break-even, user-defined invalidation condition, and optional take-profit/stop conditions.
+- [ ] Explain each warning in plain language and link it to the underlying evidence (transaction, pool, wallet, authority, metric or source).
+- [ ] Clearly separate observed facts, inferred patterns, model estimates and user assumptions.
+- [ ] Provide three honest outcomes: Proceed to wallet confirmation, Review/adjust the plan, or Do not proceed because a defined hard constraint is violated. Never label a token “safe.”
+- [ ] User must independently review and sign every transaction. No custody, private-key collection, seed phrase collection or automatic trade execution by default.
+
+### N3. Live Thesis Monitor — after entry
+- [ ] Let the user save the reason they entered a position (their thesis) and the conditions that would invalidate it.
+- [ ] Monitor only observable conditions: liquidity changes, abnormal sell pressure, tracked-wallet movements, holder concentration changes, volume/participation changes, authority changes and relevant project events.
+- [ ] Notify when the original thesis materially changes, and explain which evidence changed and when.
+- [ ] Compare current conditions with the saved plan; do not simply send price alerts.
+- [ ] Offer user-configured exit/review reminders, but never execute a sell without explicit authorization and wallet signature.
+
+### N4. Decision Receipt & Learning Loop — the compounding advantage
+- [ ] Save a timestamped, exportable Decision Receipt before the trade: market snapshot, data sources, quote/route, assumptions, scenario estimates, warnings, user's thesis, chosen size and user decision.
+- [ ] After execution, attach the confirmed transaction and compare expected versus actual output, fees, slippage and timing.
+- [ ] Track what the engine got right or wrong across historical receipts; measure calibration and false alarms rather than claiming predictive accuracy from a few examples.
+- [ ] After the position closes, compare the original thesis and scenarios with the observed outcome; let the user add a short reflection.
+- [ ] Build a private personal decision-quality dashboard: plan adherence, execution quality, risk-budget adherence and recurring mistakes. Do not rank users by raw PnL alone.
+- [ ] Make personal trading history private by default; sharing must be explicit and revocable.
+
+### N5. Research and differentiation safeguards
+- [ ] Treat Trade Twin as Climboria's proposed signature integration and user workflow, not a claim that no competitor has any similar simulation, risk or AI feature.
+- [ ] Before implementation, benchmark current products and published research for overlap; document what is genuinely distinct in Climboria's combination, evidence trail, thesis monitoring and feedback loop.
+- [ ] Start with transparent deterministic calculations and explainable rules. Add machine-learning components only after enough high-quality labeled outcomes exist and independent evaluation is possible.
+- [ ] Backtest and paper-trade with out-of-sample data; include fees, slippage, failed transactions, liquidity constraints, survivorship bias and data gaps.
+- [ ] Publish methodology, limitations, model/version, calibration and evaluation windows. Do not market an unvalidated win rate or imply financial advice.
+- [ ] Add adversarial testing for wash trading, bundled wallets, Sybil behavior, spoofed social activity, stale feeds, manipulated liquidity and coordinated exits.
+- [ ] Do not infer real-world identity or criminal intent from wallet clusters; use careful labels such as “potentially related activity” and show evidence/uncertainty.
+- [ ] Obtain security, privacy, provider-terms and applicable legal/compliance review before launch.
+
+### N6. Delivery phases (after Jarrell's Peak is fully polished and DEX work is explicitly prioritized)
+1. **Phase 1 — Trade Twin MVP:** quote/route simulation, fee and slippage breakdown, position-size comparison, exit-liquidity scenarios, break-even and evidence-linked risk warnings.
+2. **Phase 2 — Decision Receipt:** save pre-trade snapshot, attach confirmed transaction, calculate execution quality and provide private trade journal.
+3. **Phase 3 — Live Thesis Monitor:** user-defined invalidation conditions and evidence-backed alerts.
+4. **Phase 4 — Calibrated intelligence:** historical replay, model evaluation, anomaly detection and personalized insights only after sufficient reliable data.
+5. **Release gates:** paper-trading validation, independent math verification, security review, privacy controls, mobile usability, provider reliability and explicit owner approval.
+
+### N7. Other selected DEX additions (design backlog)
+- [ ] **Wallet Relationship & Funding Graph:** visualize shared funders, coordinated timing and wallet behavior as evidence-backed hypotheses, not identity claims.
+- [ ] **Liquidity Exit Simulator:** estimate executable exit proceeds across position sizes and stress cases, not just displayed pool liquidity.
+- [ ] **Launch Fairness Monitor:** analyze early allocation, deployer-linked activity, concentration, bundled-buy patterns and liquidity events with uncertainty labels.
+- [ ] **Social Hype vs. On-chain Reality:** compare social engagement with unique buyers, liquidity, volume and holder growth; flag possible manipulation rather than asserting it.
+- [ ] **Trade Quality Dashboard:** compare quoted vs. realized execution, fees, slippage, route and confirmation time.
+- [ ] **Risk-aware alerts:** alert on changes to a user's saved thesis and risk conditions, not only price movement.
+- [ ] **Strategy Replay / Paper Trading:** test user-defined rules on historical data with realistic fees, slippage and liquidity assumptions before real-money use.
+
