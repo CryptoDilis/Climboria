@@ -422,15 +422,18 @@ try {
   if (!heroEntry.gameplayActive || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb') {
     errors.push('Enter Jarrell’s Peak must close picker and spawn the loaded GLB hero: ' + JSON.stringify(heroEntry));
   }
+  // Verify Back to Menu remains reachable from the live expedition settings after hero entry.
+  await mobile.locator('#expedition-settings-toggle').click();
+  await mobile.locator('#back-to-expedition-menu').click();
   const titleMenuState = await mobile.evaluate(() => ({
     titleVisible: getComputedStyle(document.querySelector('#title')).opacity !== '0',
     characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
     mobileActionsHidden: [...document.querySelectorAll('[data-mobile-action]')].every(e => getComputedStyle(e).display === 'none'),
   }));
   if (!titleMenuState.titleVisible || !titleMenuState.characterPanelHidden || !titleMenuState.mobileActionsHidden) {
-    errors.push('Mobile title menu must show the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
+    errors.push('Back to Menu must restore the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
   }
-  // Exercise the real title-to-gameplay pointer transition, not a manually forced body.free state.
+  // Re-enter using the actual title interaction, not a forced body.free state.
   await mobile.locator('#title h1').click();
   await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
   const actualMobileTransition = await mobile.evaluate(() => ({
