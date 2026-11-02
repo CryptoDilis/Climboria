@@ -384,6 +384,8 @@ try {
   // Apply the landscape state directly: Playwright emulates viewport dimensions,
   // not the Android device's physical Screen Orientation API.
   await mobile.evaluate(() => {
+    // This phase validates gameplay HUD, so emulate the same state set by takeOver().
+    document.body.classList.add('free');
     document.body.classList.remove('climboria-portrait');
     document.body.classList.add('climboria-landscape');
     window.dispatchEvent(new Event('resize'));
