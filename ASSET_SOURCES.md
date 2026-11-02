@@ -75,3 +75,16 @@ Use the 1K/2K maps for mobile, pack local texture files, and avoid loading full 
 | B — modular cave kit alternative | [Kenney Modular Cave Kit](https://kenney.nl/assets/modular-cave-kit) | Official Kenney pack previously recorded as CC0 with 40 pieces. | Compare style and actual GLB/GLTF files against the 3DAssets.dev kit before choosing; do not mix incompatible scale/material styles without art-direction review. |
 
 Research evidence: the 3DAssets.dev pack page documents the 94-model count, 4.1 MB model total, CC0 1.0 license, metric units, GLTFLoader compatibility, and flooded tunnel/chamber variants. Source: https://3dassets.dev/packs/cave-and-crystal-networks. This is a verified source/license candidate, **not yet downloaded, integrated, or gameplay-tested**. The pack page also states colliders, navigation, and gameplay scripts must be supplied by the game.
+
+
+## Ruined castle and fortress asset candidates — 2026-11-02
+
+| Priority | Asset/source | Verified license and specifications | Integration requirements |
+|---|---|---|---|
+| A — modular fortress construction candidate | [Medieval Castle Construction — 3DAssets.dev](https://3dassets.dev/packs/medieval-castle-construction) | CC0 1.0; 149 GLB models, 2.4 MB total, 47,140 triangles, metres/+Y up, Three.js GLTFLoader compatible. Includes limestone curtain walls, corners, gate/entrance, stairs, keep and courtyard assemblies. | Strong lightweight modular candidate. Inspect individual GLBs and starter scene; author believable damage variants, ground placement, collision, accessible interiors/exits and route-clearance tests. Do not treat static geometry as a navmesh or physics setup. |
+| B — complete castle silhouette | [Castle with Keep — Innerscene](https://www.innerscene.com/tools/library/3d-parts/castle-with-keep-1a75a9e1) | CC0; GLB, 17.1 MB; approximately 49.3 × 49.7 × 29.1 m. Detailed outer curtain wall, four round towers, gatehouse and keep. Source explicitly notes no interior rooms. | Use only as a distant/landmark candidate unless an explorable interior is authored. Optimize textures/mesh and inspect model bounds before runtime. |
+| B — broken stone wall detail | [Low-poly Medieval Wall Broken — Innerscene](https://www.innerscene.com/tools/3d-parts/low-poly-medieval-wall-broken-edf52637) | CC0; GLB, 26 KB; approximately 2.0 × 0.512 × 1.81 m. | Useful as a small rubble/breached-wall dressing piece; inspect style match and collision before placement. |
+| B — tower detail | [Low-poly Medieval Tower — Innerscene](https://www.innerscene.com/tools/3d-parts/low-poly-medieval-tower-2097246b) | CC0; GLB, 26 KB; approximately 2.8 × 2.786 × 4.625 m. | Candidate for modular silhouette variation; inspect scale, material style and broken-state suitability. |
+| C — broad medieval kit | [Free Low-Poly Medieval Collection — Avramania](https://avramania.itch.io/free-collection) | CC0; 189 models across nature, village, castle/siege, interiors and dungeon/ruins; GLB and FBX formats; 8.4 MB archive. | Style is explicitly low-poly/flat-shaded. Use only if visual review confirms it fits Climboria; do not mix styles blindly. |
+
+Research evidence: the linked source pages list the stated CC0 terms, formats and specifications. These are candidates only; no castle asset has been downloaded, integrated, collision-tested or visually accepted yet.
