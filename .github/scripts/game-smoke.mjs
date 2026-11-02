@@ -546,9 +546,11 @@ try {
   await flowPage.locator('#menuCreateHero').click();
   await flowPage.waitForURL(/\/game\/character-lab\.html$/, {timeout:15000,waitUntil:'commit'});
   await flowPage.waitForFunction(()=>document.documentElement.dataset.heroCreatorReady==='true'&&Number(document.documentElement.dataset.heroModelHeight)>.5,undefined,{timeout:90000});
-  const creatorState=await flowPage.evaluate(()=>({canvas:!!document.querySelector('#view'),modelHeight:Number(document.documentElement.dataset.heroModelHeight),capabilities:JSON.parse(document.documentElement.dataset.heroCreatorCapabilities||'{}'),controls:document.querySelector('#dynamic-controls').innerText,saveEnabled:!document.querySelector('#save-hero').disabled,orbitHint:document.querySelector('#preview-hint').textContent,stage:(()=>{const r=document.querySelector('#stage').getBoundingClientRect();return{width:r.width,height:r.height}})(),viewport:{width:innerWidth,scrollWidth:document.documentElement.scrollWidth}}));
+  const creatorState=await flowPage.evaluate(()=>({canvas:!!document.querySelector('#view'),modelHeight:Number(document.documentElement.dataset.heroModelHeight),capabilities:JSON.parse(document.documentElement.dataset.heroCreatorCapabilities||'{}'),modelAudit:JSON.parse(document.documentElement.dataset.heroCreatorAudit||'{}'),controls:document.querySelector('#dynamic-controls').innerText,saveEnabled:!document.querySelector('#save-hero').disabled,orbitHint:document.querySelector('#preview-hint').textContent,stage:(()=>{const r=document.querySelector('#stage').getBoundingClientRect();return{width:r.width,height:r.height}})(),viewport:{width:innerWidth,scrollWidth:document.documentElement.scrollWidth}}));
   if(!creatorState.canvas||creatorState.modelHeight<.5||!creatorState.saveEnabled||!creatorState.orbitHint.toLowerCase().includes('rotate')||creatorState.stage.width<250||creatorState.stage.height<300||creatorState.viewport.scrollWidth>creatorState.viewport.width+2)errors.push('Create Hero must show the original full-body 3D GLB preview with rotate/zoom and responsive layout: '+JSON.stringify(creatorState));
-  console.log('Create Hero original GLB capability audit:',JSON.stringify(creatorState));
+  console.log('Create Hero original GLB mesh/material/skeleton audit:',JSON.stringify(creatorState));
+  if(!creatorState.modelAudit.meshes?.length||!creatorState.modelAudit.materials?.length||!creatorState.modelAudit.bones?.length)errors.push('Create Hero must inspect the original GLB mesh, material, and skeleton data: '+JSON.stringify(creatorState.modelAudit));
+  if(!Object.values(creatorState.capabilities).some(Boolean)&&document.querySelectorAll('#dynamic-controls select,#dynamic-controls input[type=range]').length)errors.push('Create Hero exposed appearance controls that the original GLB cannot apply.');
   for(const [cap,label] of [['skinTone','Skin tone'],['hairStyle','Hairstyle'],['hairColor','Hair color'],['eyeStyle','Eye style'],['eyeColor','Eye color'],['facial','FACIAL SETTINGS'],['outfit','Outfit variant'],['accessories','ACCESSORIES']])if(creatorState.capabilities[cap]&&!creatorState.controls.includes(label))errors.push('Model capability '+cap+' was reported but its editor is missing: '+JSON.stringify(creatorState));
   await flowPage.screenshot({path:'climboria-character-creator.png',fullPage:true});
   await flowPage.locator('#hero-name').fill('Smoke Explorer');
@@ -565,6 +567,9 @@ try {
   await flowPage.locator('.card.jarrell').click();
   await flowPage.waitForURL(/\/game\/play\.html\?level=11/, {timeout:15000});
   await flowPage.waitForFunction(()=>window.__climboriaGameReady===true&&document.querySelector('#saved-hero-list'),undefined,{timeout:90000});
+  await flowPage.setViewportSize({width:844,height:390});
+  await flowPage.evaluate(()=>{document.body.classList.remove('climboria-portrait');document.body.classList.add('climboria-landscape');window.dispatchEvent(new Event('resize'))});
+  await flowPage.waitForFunction(()=>getComputedStyle(document.querySelector('#rotate-phone-overlay')).display==='none',undefined,{timeout:10000});
   await flowPage.locator('.saved-hero-option').filter({hasText:'Smoke Explorer'}).click();
   const selectedCustomHero=await flowPage.evaluate(()=>({button:document.querySelector('.saved-hero-option[aria-pressed=true]')?.innerText,enterDisabled:document.querySelector('#enter-expedition').disabled}));
   if(!selectedCustomHero.button?.includes('Smoke Explorer')||selectedCustomHero.enterDisabled)errors.push('Saved Create Hero character is unavailable in the Jarrell’s Peak expedition menu: '+JSON.stringify(selectedCustomHero));
