@@ -183,39 +183,16 @@ try {
     && Number(getComputedStyle(document.querySelector('#player-card')).opacity) > 0.5, undefined, { timeout: 5000 });
   state = await capture(page, 'Mobile gameplay remains active after settings close');
   if (!gameplayVisible(state)) errors.push('Closing mobile expedition settings must preserve gameplay and keep the title hidden: ' + JSON.stringify(state));
-  const returnedMenu = await page.evaluate(() => ({
-    heroMenuVisible: getComputedStyle(document.querySelector('#expedition-hero-menu')).display !== 'none',
-    selectedHero: document.querySelector('.saved-hero-option[aria-pressed="true"]')?.textContent.trim() || null,
-    mobileActionsHidden: [...document.querySelectorAll('[data-mobile-action]')].every(element => getComputedStyle(element).display === 'none'),
-  }));
-  if (!returnedMenu.heroMenuVisible || !returnedMenu.mobileActionsHidden || !returnedMenu.selectedHero) errors.push('Mobile return lost hero selection or left gameplay controls visible: ' + JSON.stringify(returnedMenu));
-
-  await page.locator('#enter-expedition').click();
-  await page.waitForFunction(() => document.body.classList.contains('free') && window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
-  try {
-    await page.waitForFunction(() => {
-      const titleStyle = getComputedStyle(document.querySelector('#title'));
-      const cardStyle = getComputedStyle(document.querySelector('#player-card'));
-      const rect = document.querySelector('#player-card').getBoundingClientRect();
-      return document.documentElement.dataset.climboriaHeroRenderer === 'glb'
-        && titleStyle.display !== 'none'
-        && titleStyle.visibility !== 'hidden'
-        && Number(titleStyle.opacity) < 0.05
-        && titleStyle.pointerEvents === 'none'
-        && cardStyle.display !== 'none'
-        && cardStyle.visibility !== 'hidden'
-        && Number(cardStyle.opacity) > 0.5
-        && cardStyle.pointerEvents === 'auto'
-        && rect.width > 0
-        && rect.height > 0;
-    }, undefined, { timeout: 5000 });
-  } catch (error) {
-    state = await capture(page, 'Mobile re-entry failure point');
-    throw new Error('Mobile re-entry visual state failed: ' + error.message + '; state=' + JSON.stringify(state));
-  }
-  state = await capture(page, 'Mobile re-entry gameplay');
-  if (!gameplayVisible(state)) errors.push('Mobile re-entry did not hide the title and restore the HUD: ' + JSON.stringify(state));
-
+  const hubLink = await page.locator('#back-to-game-hub').count();
+  if (hubLink !== 1) errors.push('Gameplay settings must provide a single Back to Game Hub link without restoring the old title/hero menu.');
+  const hiddenTitle = await page.evaluate(() => {
+    const title = document.querySelector('#title');
+    const style = getComputedStyle(title);
+    return style.display !== 'none' && style.visibility !== 'hidden'
+      && Number(style.opacity) < 0.05 && style.pointerEvents === 'none';
+  });
+  if (!hiddenTitle) errors.push('Jarrell title overlay must remain hidden throughout gameplay.');
+ 
   const movementStart = await page.evaluate(() => ({ x: window.__climboriaJarrellsPeak.player.x, z: window.__climboriaJarrellsPeak.player.z }));
   await page.keyboard.down('w');
   await page.waitForTimeout(500);
