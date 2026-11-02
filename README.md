@@ -1912,3 +1912,25 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Risk-aware alerts:** alert on changes to a user's saved thesis and risk conditions, not only price movement.
 - [ ] **Strategy Replay / Paper Trading:** test user-defined rules on historical data with realistic fees, slippage and liquidity assumptions before real-money use.
 
+### N8. Additional signature engines — approved for design backlog (DESIGN ONLY)
+
+These concepts extend the Trade Twin workflow. They are product hypotheses, not claims of historical first-ever invention. Benchmark competing products and prior art before making any uniqueness claim.
+
+- [ ] **Climboria Market Fork Engine:** let a trader compare counterfactual paths for the same market window (enter now, split entries, wait for a defined confirmation/liquidity condition, reduce size, or stay out). Replay each path against timestamped historical data and compare realized hypothetical execution cost, exposure and outcome. Prevent look-ahead bias; label simulations as hindsight analysis, not forecasts.
+- [ ] **Climboria Liquidity Mirage Detector:** distinguish displayed liquidity from realistically executable liquidity. Simulate sells at multiple sizes, measure price impact and route availability, track sudden liquidity withdrawals and pool concentration, and show how much could plausibly be exited under stated assumptions. Never equate TVL with guaranteed exit liquidity.
+- [ ] **Climboria Position Lifeline:** monitor an open position against the user's saved thesis and user-defined invalidation conditions. Track evidence such as liquidity deterioration, concentrated-holder transfers, creator/deployer-linked movements, unique-buyer participation and sell pressure. Explain evidence and uncertainty; alert only, never auto-sell.
+- [ ] **Climboria Trade Integrity Ledger:** estimate how much reported token activity appears organic versus potentially circular, self-funded, bundled or wash-like. Analyze same-transaction buy/sell loops, wallet clusters, repeated counterparties, funding links and suspicious timing. Publish the methodology, coverage and confidence; do not call a trade fake or accuse a wallet without sufficient evidence. This is especially relevant because recent investigations have highlighted large-scale questionable reported DEX volume; see the research note in the DEX reference list.
+- [ ] **Climboria MEV & Execution Fairness Receipt:** after a confirmed swap, compare the user's quote and signed transaction with actual execution, block/slot ordering, price movement, priority fee and observable sandwich/front-run indicators where the chain exposes enough data. Explain what is provable versus merely suspected; show whether a different supported route or protection setting might have reduced exposure. Never promise MEV protection that the infrastructure cannot guarantee.
+- [ ] **Climboria Market Dependency Stress Map:** map material dependencies behind a token's apparent market health: major liquidity pools, concentrated LP positions, deployer/treasury-linked wallets, key funding sources, bridge or oracle dependencies where relevant, and correlated assets. Let users stress one dependency (for example, a major LP withdraws) and see which market metrics and exit paths may be affected. Avoid identity claims and clearly mark incomplete graph coverage.
+
+### N9. Climboria Decision Intelligence System (CDIS) — umbrella architecture (DESIGN ONLY)
+
+**Proposed modules:** Discovery Engine → Token X-Ray → Trade Twin → Market Fork → Liquidity Mirage → Trade Integrity Ledger → MEV & Execution Fairness Receipt → Position Lifeline → Market Dependency Stress Map → Decision Receipt & Learning Loop.
+
+- [ ] Present one coherent evidence-first workflow rather than a pile of disconnected dashboards.
+- [ ] Every module must separate on-chain facts, off-chain claims, derived metrics, hypotheses and simulations.
+- [ ] Every alert must show the trigger, evidence, timestamp, data coverage, uncertainty and why it matters to the user's saved plan.
+- [ ] No fabricated order-book depth for AMMs, fake volume certainty, unsupported safety labels, guaranteed returns, or black-box buy/sell commands.
+- [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
+- [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
+- [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
