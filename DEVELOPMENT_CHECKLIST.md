@@ -1,3 +1,13 @@
+## 2026-11-02 — legacy hero choices disabled for Meshy replacement
+
+- [x] Removed the Police Officer, Adventurer/Climboria Hero, and temporary Scout character-selection UI from the live game entry screen.
+- [x] Removed legacy Police and Climboria Hero GLB URLs and the old character-selection loader/initialization path from `game/play.html`.
+- [x] Kept the procedural placeholder character visible so the game does not start with an invisible player while replacement models are pending.
+- [ ] Integrate and validate the new Meshy GLBs when supplied, including scale, rig, animations, grounding, and collision.
+- [ ] The old GLB files remain stored under `assets/` as unreferenced source files; they were not permanently deleted.
+
+---
+
 ## 2026-11-02 — mountain approach-angle regression assertion (verification pending)
 
 - [x] Browser Smoke now requires all eight 45-degree summit approach probes to be present, ordered, and report finite non-negative traversal progress.
