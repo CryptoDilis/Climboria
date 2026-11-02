@@ -606,7 +606,7 @@ const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero
 hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
 hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=true;scene.add(hero);document.documentElement.dataset.climboriaHero='procedural-placeholder';
+hero.visible=true;scene.add(hero);document.documentElement.dataset.climboriaHero='procedural-placeholder';document.documentElement.dataset.climboriaHeroRenderer='fallback';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
