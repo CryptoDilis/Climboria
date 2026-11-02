@@ -517,13 +517,12 @@ function camp(){
 }
 camp();
 /* Cave with spike traps */
-const spikes=[];let caveG;
+const spikes=[],caveGems=[];let caveG;
 {
  const p=POI.cave,dx=-p.x,dz=-p.z,dl=Math.hypot(dx,dz),dir={x:dx/dl,z:dz/dl};POI.cave.dir=dir;
  const g=new T3.Group();g.position.set(p.x,p.h,p.z);g.rotation.y=Math.atan2(dir.x,dir.z);scene.add(g);caveG=g;
  const rk=M('#4a463f');
  // Living mineral seams: faceted clusters with restrained colored bounce light.
- const caveGems=[];
  const gemPalette=['#55f0b0','#48c8ff','#a77bff','#ffc65a'];
  const gemGeo=new T3.OctahedronGeometry(1,0);
  const gemMats=gemPalette.map(color=>new T3.MeshStandardMaterial({color:L(color),emissive:L(color),emissiveIntensity:1.35,roughness:.24,metalness:.18}));
