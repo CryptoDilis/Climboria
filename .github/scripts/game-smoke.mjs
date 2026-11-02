@@ -168,12 +168,15 @@ try {
     throw new Error('Expedition entry overlay is not ready');
   }
   // The canvas is the top hit target over the visual-only title overlay; use a trusted click at its center, matching the actual player surface.
-  await page.locator('canvas').click({position:{x:Math.floor((await page.locator('canvas').boundingBox()).width/2),y:Math.floor((await page.locator('canvas').boundingBox()).height/2)}});
+  const gameCanvas=page.locator('canvas').first();
+  const canvasBox=await gameCanvas.boundingBox();
+  if(!canvasBox) throw new Error('Game canvas has no visible bounding box');
+  await gameCanvas.click({position:{x:Math.floor(canvasBox.width/2),y:Math.floor(canvasBox.height/2)}});
   await page.waitForFunction(() => {
     const player = window.__climboriaJarrellsPeak?.player;
     return document.body.classList.contains('free') && player?.mode === 'walk';
   }, null, { timeout: 10000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'procedural-placeholder', { timeout: 45000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', { timeout: 10000 });
@@ -197,9 +200,7 @@ try {
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
-  if(walkClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored walk clip: '+walkClip);
-  if(runClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored run clip: '+runClip);
-  if(swimClip!=='')errors.push('Procedural placeholder unexpectedly reports an authored swim clip: '+swimClip);
+  if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
   console.log('Procedural placeholder movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   const desktopOrbit = await page.evaluate(() => {
