@@ -155,6 +155,23 @@ body.mobile-device.climboria-portrait #hud{visibility:hidden!important}
 #player-card{pointer-events:none}body.free #player-card{pointer-events:auto;cursor:pointer}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
+
+/* Final state gate: mobile orientation rules must never expose gameplay panels in the title menu. */
+body:not(.free) #world-map-panel,
+body:not(.free).mobile-device.climboria-landscape #world-map-panel,
+body:not(.free) #expedition-settings-toggle,
+body:not(.free).mobile-device.climboria-landscape #expedition-settings-toggle{
+ display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+body.free #world-map-panel,
+body.free.mobile-device.climboria-landscape #world-map-panel{
+ display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+body.free #expedition-settings-toggle,
+body.free.mobile-device.climboria-landscape #expedition-settings-toggle{
+ display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+
 </style>
 </head>
 <body>
