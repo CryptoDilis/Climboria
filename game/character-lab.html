@@ -1,64 +1,109 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CLIMBORIA · Character Lab</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CLIMBORIA · Create Hero</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../climboria-favicon.png">
+<link rel="apple-touch-icon" href="../climboria-favicon.png">
 <style>
-:root{color-scheme:dark;--gold:#ffc83d;--panel:#101b2b;--line:#2c4057}*{box-sizing:border-box}
-body{margin:0;background:#08111d;color:#edf3fb;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
-header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:space-between}
-h1{font-size:18px;margin:0;letter-spacing:.08em}header span{color:#a9b8c9;font-size:12px}
-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;padding:14px;max-width:1500px;margin:auto}
-#stage{position:relative;min-height:68vh;background:radial-gradient(ellipse at 50% 35%,#23354a,#070d15 75%);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-canvas{display:block;width:100%;height:100%;min-height:68vh;touch-action:pan-y}
-#hint{position:absolute;left:14px;bottom:14px;background:#07111ddd;padding:9px 12px;border:1px solid #34465a;border-radius:8px;color:#d7e2ef;font-size:12px;max-width:85%}
-aside{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;align-self:start}
-h2{font-size:14px;margin:0 0 10px;color:var(--gold);letter-spacing:.06em}
-p{font-size:13px;color:#bdcad8;margin:8px 0 14px}
-input,select,button{width:100%;padding:11px;border-radius:8px;border:1px solid #40556d;background:#0a1422;color:#f5f8fc;font:inherit;margin:5px 0 10px}
-button{background:var(--gold);color:#121820;border:0;font-weight:800;cursor:pointer}
-button.secondary{background:#1a2a3d;color:#eef5ff;border:1px solid #40556d}
-#status{font-size:12px;color:#a9c6df;overflow-wrap:anywhere;min-height:38px}
-.note{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
-small{color:#8ea2b8}
-@media(max-width:850px){main{grid-template-columns:1fr}#stage,canvas{min-height:56vh}header{align-items:flex-start;flex-direction:column}}
+:root{color-scheme:dark;--gold:#d8b46b;--gold-bright:#ffe3a3;--navy:#080d14;--panel:#101923;--line:#d8b46b55;--text:#f4ecd8;--muted:#b9c1c8}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#05070d;color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{min-height:68px;padding:12px clamp(16px,3vw,36px);display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid #d8b46b33;background:#080d14}
+header h1{margin:0;color:var(--gold-bright);font:700 14px/1.3 system-ui;letter-spacing:.16em}
+header a{color:#f3d48b;text-decoration:none;border:1px solid var(--line);padding:9px 13px;border-radius:8px;font-size:12px;font-weight:700}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:16px;padding:16px;max-width:1600px;margin:auto}
+#stage{position:relative;min-height:min(78vh,900px);height:calc(100vh - 100px);max-height:980px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:radial-gradient(ellipse at 50% 38%,#253447,#090f17 67%,#05070d)}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#preview-label{position:absolute;top:14px;left:16px;color:#ffe3a3;font-size:11px;letter-spacing:.14em;text-shadow:0 2px 10px #000}
+#preview-hint{position:absolute;bottom:14px;left:14px;padding:8px 11px;border:1px solid #d8b46b44;border-radius:8px;background:#080d14dd;color:#cbd5df;font-size:11px}
+aside{align-self:start;max-height:calc(100vh - 100px);overflow:auto;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#121c29,#090e15);padding:18px}
+h2{margin:0 0 10px;color:var(--gold-bright);font-size:12px;letter-spacing:.13em}
+label{display:block;margin:10px 0 4px;color:#d9d2c4;font-size:11px;font-weight:700;letter-spacing:.04em}
+input,select,button{width:100%;min-height:42px;padding:10px 11px;border:1px solid #526173;border-radius:8px;background:#080e16;color:#f4ecd8;font:inherit}
+button{cursor:pointer;background:linear-gradient(120deg,#b8904b,#e0c47b);border:0;color:#16120a;font-weight:900;letter-spacing:.05em}
+button.secondary{background:#172331;color:#f4ecd8;border:1px solid #536276}
+button:disabled{opacity:.5;cursor:wait}
+#capability-message,#status{color:var(--muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+#status{min-height:22px;margin:10px 0}
+fieldset{border:0;border-top:1px solid #ffffff17;padding:12px 0 0;margin:14px 0 0}
+legend{padding:0 8px 0 0;color:#e1c77d;font-size:10px;font-weight:800;letter-spacing:.12em}
+.dynamic-field{margin:8px 0}
+.check-row{display:flex;align-items:center;gap:9px;padding:6px 0;color:#d9d2c4;font-size:12px}
+.check-row input{width:18px;min-height:18px;margin:0;accent-color:#d8b46b}
+.note{margin-top:13px;padding-top:12px;border-top:1px solid #ffffff17;color:#98a7b8;font-size:11px}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:10px}#stage{height:58vh;min-height:350px}aside{max-height:none}}
 </style>
 </head>
 <body>
-<header><h1>CLIMBORIA / CHARACTER LAB</h1><span>SAFE PREVIEW · DOES NOT CHANGE THE LIVE PLAYER</span></header>
+<header><h1>CLIMBORIA / CREATE HERO</h1><a href="./">← BACK TO GAME HUB</a></header>
 <main>
-<section id="stage"><canvas id="view"></canvas><div id="hint">Choose a rigged .glb file to preview it. Drag to orbit · scroll/pinch to zoom.</div></section>
+<section id="stage" aria-label="Full-body three-dimensional hero preview"><canvas id="view"></canvas><div id="preview-label">CLIMBORIA HERO · FULL-BODY PREVIEW</div><div id="preview-hint">Drag to rotate · scroll or pinch to zoom</div></section>
 <aside>
-<h2>1 · LOAD A CHARACTER</h2>
-<p>Export a <b>GLB with skeleton + animations</b> from Ara 3D Gen, then select it here. The file stays in your browser; it is not uploaded.</p>
-<input id="file" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json">
-<h2>2 · ANIMATION TEST</h2>
-<select id="anim" disabled><option>No character loaded</option></select>
-<button id="play" disabled>PLAY / PAUSE</button>
-<button id="fit" class="secondary" disabled>FIT CHARACTER IN VIEW</button>
-<div class="note"><h2>WHAT TO CHECK</h2><p>• Face and skin detail<br>• Hair and clothing quality<br>• Feet touching the ground<br>• Walk/run animation looks natural<br>• No T-pose or broken joints</p></div>
-<div id="status" role="status">Waiting for a GLB file.</div>
-<div class="note"><small>Best starting point: Ara 3D Gen · realistic human · game rig (Mixamo-compatible) · export GLB with idle, walk and run clips. Test medium detail first for browser performance.</small></div>
+<h2>HERO IDENTITY</h2>
+<label for="hero-name">CHARACTER NAME</label><input id="hero-name" maxlength="32" value="Climboria Hero" autocomplete="off">
+<label for="saved-heroes">LOAD A SAVED HERO</label><select id="saved-heroes"></select>
+<div id="dynamic-controls"></div>
+<div id="capability-message" role="note">Loading the original Climboria Hero and checking which appearance options its model supports…</div>
+<button id="save-hero" type="button" disabled>SAVE HERO</button>
+<div id="status" role="status" aria-live="polite">Loading original Climboria Hero…</div>
+<div class="note">Appearance controls are shown only when the loaded model has a matching material, mesh variant, or facial morph target. Your saved hero stays in this browser on this device.</div>
 </aside>
 </main>
+<script src="./hero-customization.js"></script>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.180.0';
 import {GLTFLoader} from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 import {OrbitControls} from 'https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js';
-const canvas=document.querySelector('#view'),stage=document.querySelector('#stage'),status=document.querySelector('#status'),fileInput=document.querySelector('#file'),animSelect=document.querySelector('#anim'),playBtn=document.querySelector('#play'),fitBtn=document.querySelector('#fit');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(38,1,.01,100);camera.position.set(2.6,1.7,4.5);
-scene.add(new THREE.HemisphereLight(0xcfe3ff,0x46382a,2.1));const key=new THREE.DirectionalLight(0xffedcf,3.2);key.position.set(3,5,4);key.castShadow=true;scene.add(key);const rim=new THREE.DirectionalLight(0x6fa7ff,2);rim.position.set(-3,3,-4);scene.add(rim);
-const floor=new THREE.Mesh(new THREE.CircleGeometry(2.5,64),new THREE.MeshStandardMaterial({color:0x172331,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;scene.add(floor);const grid=new THREE.GridHelper(5,20,0x42556a,0x25364a);grid.position.y=-.005;scene.add(grid);
-const controls=new OrbitControls(camera,canvas);controls.target.set(0,1,0);controls.enableDamping=true;controls.minDistance=.5;controls.maxDistance=12;
-let root=null,mixer=null,actions=[],active=null,paused=false,clock=new THREE.Clock(),objectUrl=null;
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(h,1);camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();
-function fit(){if(!root)return;const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());root.position.x-=center.x;root.position.z-=center.z;root.position.y-=box.min.y;const max=Math.max(size.x,size.y,size.z,1);camera.position.set(max*1.25,max*.72,max*2.25);camera.near=Math.max(.01,max/1000);camera.far=max*100;camera.updateProjectionMatrix();controls.target.set(0,size.y*.52,0);controls.minDistance=max*.4;controls.maxDistance=max*8;controls.update()}
-function setStatus(s){status.textContent=s}
-fileInput.addEventListener('change',async()=>{const file=fileInput.files?.[0];if(!file)return;if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(file);if(root)scene.remove(root);root=null;mixer=null;actions=[];active=null;animSelect.innerHTML='';animSelect.disabled=true;playBtn.disabled=true;fitBtn.disabled=true;setStatus('Loading '+file.name+'…');try{const gltf=await new GLTFLoader().loadAsync(objectUrl);root=gltf.scene;root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true}}}});scene.add(root);if(gltf.animations?.length){mixer=new THREE.AnimationMixer(root);actions=gltf.animations.map(clip=>({clip,action:mixer.clipAction(clip)}));for(let i=0;i<actions.length;i++){const opt=document.createElement('option');opt.value=String(i);opt.textContent=actions[i].clip.name||'Animation '+(i+1);animSelect.append(opt)}animSelect.disabled=false;playBtn.disabled=false;active=actions[0];active.action.reset().play();paused=false;playBtn.textContent='PAUSE ANIMATION'}else{animSelect.innerHTML='<option>No embedded animations</option>';animSelect.disabled=true;setStatus('Model loaded, but no animation clips were embedded. Export a rigged + animated GLB to test movement.')}fitBtn.disabled=false;fit();const bones=[];root.traverse(o=>{if(o.isBone)bones.push(o)});setStatus('Loaded: '+file.name+' · '+bones.length+' bones · '+(gltf.animations?.length||0)+' animation(s) · '+(file.size/1024/1024).toFixed(1)+' MB. Check face, feet and movement.')}catch(e){setStatus('Could not load this file: '+(e?.message||e)+'. Try exporting a binary .glb.');console.error(e)}});
-animSelect.addEventListener('change',()=>{if(!mixer)return;const item=actions[Number(animSelect.value)];if(!item)return;if(active)active.action.fadeOut(.2);active=item;active.action.reset().fadeIn(.2).play();paused=false;playBtn.textContent='PAUSE ANIMATION'});
-playBtn.addEventListener('click',()=>{if(!mixer)return;paused=!paused;if(paused){mixer.timeScale=0;playBtn.textContent='RESUME ANIMATION'}else{mixer.timeScale=1;playBtn.textContent='PAUSE ANIMATION'}});
-fitBtn.addEventListener('click',fit);
-function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(mixer&&!paused)mixer.update(dt);controls.update();renderer.render(scene,camera)}loop();
+const D=window.ClimboriaHeroData;
+const canvas=document.querySelector('#view'),stage=document.querySelector('#stage'),status=document.querySelector('#status'),nameInput=document.querySelector('#hero-name'),savedSelect=document.querySelector('#saved-heroes'),controlsHost=document.querySelector('#dynamic-controls'),saveButton=document.querySelector('#save-hero');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(35,1,.01,100);camera.position.set(0,2,6);scene.add(new THREE.HemisphereLight(0xd9e8ff,0x46382a,2.1));const key=new THREE.DirectionalLight(0xffedcf,3.2);key.position.set(3,6,5);key.castShadow=true;scene.add(key);const rim=new THREE.DirectionalLight(0x6fa7ff,1.8);rim.position.set(-4,3,-4);scene.add(rim);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(3,64),new THREE.MeshStandardMaterial({color:0x14202d,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;scene.add(floor);
+const orbit=new OrbitControls(camera,canvas);orbit.target.set(0,1,0);orbit.enableDamping=true;orbit.minDistance=.5;orbit.maxDistance=12;
+let root=null,mixer=null,active=null,clock=new THREE.Clock(),record=D.defaultHero(),appearance=D.emptyAppearance(),capabilities=null,modelRevision=0;
+window.__climboriaHeroPreview={camera,orbit,get model(){return root},get capabilities(){return capabilities}};
+function setStatus(text){status.textContent=text}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();
+function fit(){if(!root)return;root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),height=Math.max(size.y,.2);document.documentElement.dataset.heroModelHeight=String(size.y);root.position.x-=center.x;root.position.z-=center.z;root.position.y-=box.min.y;const distance=height*2.35;camera.position.set(0,height*.72,distance);camera.near=Math.max(.01,height/1000);camera.far=height*100;camera.updateProjectionMatrix();orbit.target.set(0,height*.52,0);orbit.minDistance=height*.75;orbit.maxDistance=height*6;orbit.update()}
+function addSelect(parent,label,options,value,onChange){
+ const wrap=document.createElement('div');wrap.className='dynamic-field';const lab=document.createElement('label');lab.textContent=label;const select=document.createElement('select');options.forEach(o=>{const opt=document.createElement('option');opt.value=o.value;opt.textContent=o.label;select.append(opt)});select.value=value;select.addEventListener('change',()=>onChange(select.value));wrap.append(lab,select);parent.append(wrap);return select
+}
+function addFieldset(title){const field=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=title;field.append(legend);controlsHost.append(field);return field}
+function installCapabilities(info){document.documentElement.dataset.heroCreatorCapabilities=JSON.stringify(info.capabilities);document.documentElement.dataset.heroCreatorReady='true';
+ controlsHost.replaceChildren();document.documentElement.dataset.heroCreatorAudit=JSON.stringify({summary:info.summary,meshes:info.meshes,materials:info.materials,bones:info.bones,morphs:info.morphs});const c=info.capabilities,o=info.options;
+ const colors=['original','black','brown','auburn','blond','silver','blue','green','hazel'].map(v=>({value:v,label:v==='original'?'Original':v[0].toUpperCase()+v.slice(1)}));
+ let visible=0;
+ if(c.skinTone){const f=addFieldset('SKIN');addSelect(f,'Skin tone', ['original','warm','deep','rich'].map(v=>({value:v,label:v[0].toUpperCase()+v.slice(1)})),appearance.skinTone,v=>{appearance.skinTone=v;applyAppearance()});visible++}
+ if(c.hairStyle||c.hairColor){const f=addFieldset('HAIR');if(c.hairStyle)addSelect(f,'Hairstyle',[{value:'original',label:'Original'},...o.hairstyleVariants.map(n=>({value:n,label:n}))],appearance.hairStyle,v=>{appearance.hairStyle=v;applyAppearance()});if(c.hairColor)addSelect(f,'Hair color',colors.slice(0,6),appearance.hairColor,v=>{appearance.hairColor=v;applyAppearance()});visible++}
+ if(c.eyeStyle||c.eyeColor){const f=addFieldset('EYES');if(c.eyeStyle)addSelect(f,'Eye style',[{value:'original',label:'Original'},...o.facialMorphs.filter(n=>/eye|brow/i.test(n)).map(n=>({value:n,label:n}))],appearance.eyeStyle,v=>{appearance.eyeStyle=v;applyAppearance()});if(c.eyeColor)addSelect(f,'Eye color',colors.filter(x=>['original','blue','green','hazel'].includes(x.value)),appearance.eyeColor,v=>{appearance.eyeColor=v;applyAppearance()});visible++}
+ if(c.facial){const f=addFieldset('FACIAL SETTINGS');for(const morph of o.facialMorphs){const row=document.createElement('div');row.className='dynamic-field';const lab=document.createElement('label');lab.textContent=morph;const range=document.createElement('input');range.type='range';range.min='0';range.max='1';range.step='.05';range.value=String(appearance.face[morph]||0);range.addEventListener('input',()=>{appearance.face[morph]=Number(range.value);applyAppearance()});row.append(lab,range);f.append(row)}visible++}
+ if(c.outfit){const f=addFieldset('OUTFIT');addSelect(f,'Outfit variant',[{value:'original',label:'Original'},...o.outfitVariants.map(n=>({value:n,label:n}))],appearance.outfit,v=>{appearance.outfit=v;applyAppearance()});visible++}
+ if(c.accessories){const f=addFieldset('ACCESSORIES'),chosen=new Set(Array.isArray(appearance.accessories)?appearance.accessories:o.accessoryDefaults||[]);for(const name of o.accessories){const row=document.createElement('label');row.className='check-row';const box=document.createElement('input');box.type='checkbox';box.checked=chosen.has(name);box.addEventListener('change',()=>{if(box.checked)chosen.add(name);else chosen.delete(name);appearance.accessories=[...chosen];applyAppearance()});row.append(box,document.createTextNode(name));f.append(row)}visible++}
+ document.querySelector('#capability-message').textContent=visible?'Controls below are verified against the loaded model. Unsupported appearance controls are hidden.':'The original GLB has no independently named skin, hair, eye, outfit, accessory parts, or facial morphs. This version supports a full-body preview, rotation, zoom, hero naming, and save/load; add authored variants to the model before exposing more appearance controls.';
+}
+function applyAppearance(){if(!root)return;D.apply(root,appearance,capabilities)}
+function refreshSavedList(){
+ const list=D.readHeroes(),selectedId=record.id;savedSelect.replaceChildren();for(const hero of list){const o=document.createElement('option');o.value=hero.id;o.textContent=hero.builtIn?'Climboria Hero · Original':hero.name;savedSelect.append(o)}savedSelect.value=list.some(h=>h.id===selectedId)?selectedId:list[0].id
+}
+async function loadRecord(next){
+ const revision=++modelRevision;record=next;appearance={...D.emptyAppearance(),...(next.appearance||{}),face:{...(next.appearance?.face||{})},accessories:[...(next.appearance?.accessories||[])]};nameInput.value=next.name;
+ setStatus('Loading '+next.name+'…');saveButton.disabled=true;
+ try{
+  const gltf=await new GLTFLoader().loadAsync('../assets/characters/'+D.MODEL);
+  if(revision!==modelRevision){gltf.scene?.traverse(o=>{if(o.geometry)o.geometry.dispose()});return;}
+  if(!gltf.scene?.isObject3D)throw new Error('The hero file does not contain a valid 3D scene');
+  if(root){scene.remove(root);root.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
+  root=gltf.scene;root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m?.map)m.map.colorSpace=THREE.SRGBColorSpace}});
+  capabilities=D.inspect(root,gltf.animations||[]);scene.add(root);mixer=gltf.animations?.length?new THREE.AnimationMixer(root):null;active=null;
+  if(mixer&&gltf.animations.length){const idle=gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];active=mixer.clipAction(idle).reset().play()}
+  installCapabilities(capabilities);applyAppearance();fit();saveButton.disabled=false;
+  const summary=capabilities.summary;setStatus('Ready · '+summary.meshCount+' meshes · '+summary.boneCount+' bones · '+summary.animationCount+' animations · full-body model loaded.');
+  console.info('[Climboria hero model capability audit]',JSON.stringify({summary,capabilities:capabilities.capabilities,options:capabilities.options,materials:capabilities.materials,meshes:capabilities.meshes,morphs:capabilities.morphs}));
+ }catch(error){if(revision===modelRevision){saveButton.disabled=true;setStatus('Could not load the original Climboria Hero: '+(error?.message||error)+'. Retry after checking the asset connection.');console.error('[Climboria character creator]',error)}}
+}
+savedSelect.addEventListener('change',()=>{const next=D.readHeroes().find(h=>h.id===savedSelect.value);if(next){D.setSelectedHero(next.id);loadRecord(next)}});
+saveButton.addEventListener('click',()=>{try{record=D.saveHero({...record,id:record.builtIn?'':record.id,name:nameInput.value,model:D.MODEL,appearance});record.builtIn=false;D.setSelectedHero(record.id);refreshSavedList();setStatus('Saved '+record.name+' as your selected hero. It will spawn automatically when you enter Jarrell’s Peak.')}catch(error){setStatus('Could not save this hero: '+(error?.message||error))}});
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);if(mixer)mixer.update(dt);orbit.update();renderer.render(scene,camera)}loop();
+refreshSavedList();loadRecord(D.defaultHero());
 </script>
 </body></html>

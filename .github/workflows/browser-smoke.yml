@@ -12,8 +12,10 @@ on:
       - "climboria-favicon.png"
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
+      - "game/character-lab.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/mobile-reentry-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -22,7 +24,10 @@ on:
       - "climboria-favicon.png"
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
+      - "game/character-lab.html"
+      - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/mobile-reentry-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   workflow_dispatch:
 
@@ -30,7 +35,34 @@ permissions:
   contents: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check out game
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fast-fail smoke script syntax and saved-hero auto-entry contract
+        run: |
+          node --check .github/scripts/mobile-reentry-smoke.mjs
+          node --check .github/scripts/game-smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          game = Path("game/play.html").read_text(encoding="utf-8")
+          mobile = Path(".github/scripts/mobile-reentry-smoke.mjs").read_text(encoding="utf-8")
+          required_game = ["id=" + chr(34) + "player-card" + chr(34), "async function initChunks()", "function checkAllReady()", "function takeOver()"]
+          required_test = ["#menuCreateHero", "noHeroMenu", "noGenerating"]
+          missing = [item for item in required_game if item not in game] + [item for item in required_test if item not in mobile]
+          if missing:
+              raise SystemExit("Missing gameplay smoke contract: " + repr(missing))
+          print("Fast preflight passed: JavaScript syntax and gameplay selectors.")
+          PY
+
   browser-smoke:
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -42,7 +74,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: climboria-npm-node22-${{ runner.os }}-v1
+
       - name: Cache Playwright browser binaries
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -66,6 +105,14 @@ jobs:
           done
           cat /tmp/climboria-http.log
           exit 1
+
+      - name: Test mobile Hub-to-game auto-entry and HUD visibility (3 consecutive runs)
+        timeout-minutes: 8
+        run: |
+          for attempt in 1 2 3; do
+            echo "Mobile Hub-to-game smoke run $attempt/3"
+            node .github/scripts/mobile-reentry-smoke.mjs
+          done
 
       - name: Test homepage CTAs, DEX modal, and mobile navigation
         run: |
@@ -116,6 +163,8 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
+            climboria-character-creator.png
+            climboria-mobile-menu-reentry.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
             freshwater-*.png

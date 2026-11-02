@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CLIMBORIA — Jarrell’s Peak</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../climboria-favicon.png">
+<link rel="apple-touch-icon" href="../climboria-favicon.png">
 <meta name="description" content="Explore the cinematic endless wilderness of Jarrell’s Peak in Climboria." />
 <style>
 :root{color-scheme:dark}
@@ -20,29 +22,15 @@ body.free #hud{opacity:1}
 #sub{font:12px/1.5 system-ui,sans-serif;opacity:.8;margin-top:2px}
 #help{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;font:11px/1.7 system-ui,sans-serif;opacity:0;transition:opacity 1s;text-shadow:0 1px 6px #000;pointer-events:none;max-width:70vw}
 body.free #help{opacity:.8}
-#title{position:fixed;inset:0;display:grid;place-content:center;text-align:center;z-index:7;text-shadow:0 2px 24px #000;transition:opacity 1.2s;cursor:pointer;padding:0 20px}
-#title h1{font-size:clamp(34px,7vw,76px);font-weight:400;letter-spacing:.18em;margin:0;color:#ffe3a3}
-#title p{font:14px system-ui,sans-serif;opacity:.85;margin:14px 0 0}
-#character-create{margin-top:24px;padding:12px 22px;border:1px solid #d8b46b;background:#111923e8;color:#ffe3a3;border-radius:8px;font:700 12px system-ui;letter-spacing:.14em;cursor:pointer}
-body.character-panel-open::before{content:"";position:fixed;inset:0;z-index:9998;background:rgba(3,7,12,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);pointer-events:auto}\nbody.character-panel-open #title{opacity:0!important;visibility:hidden!important;pointer-events:none!important}\n#character-create-panel{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:22px;background:#080d14;border:1px solid #d8b46b;border-radius:14px;box-shadow:0 18px 60px #000c;color:#ffe3a3;text-align:center;font:12px system-ui;overscroll-behavior:contain}
-#character-create-panel strong{letter-spacing:.14em}
-.character-options{display:grid;grid-template-columns:1fr;gap:10px;margin:18px 0}
-.character-options button,#character-create-close{padding:12px 8px;border:1px solid #9b7b4c;background:#18232c;color:#f4ecd8;border-radius:8px;font-weight:800;cursor:pointer}
-#character-load-status{color:#b9c1c8;min-height:18px}
-body.free #title{opacity:0;pointer-events:none}
-/* Mobile action buttons belong to active gameplay, never the cinematic/title menu. */
+/* Expedition title and hero-picker overlay removed; gameplay HUD is revealed by free(true). */
 body:not(.free) [data-mobile-action]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 body.free [data-mobile-action]{display:grid!important;visibility:visible!important;pointer-events:auto!important}
 
-#title .menu-hint{font:11px system-ui;opacity:.7;margin-top:8px}
-@media(prefers-reduced-motion:reduce){.bar,#title,#hud,#help{transition:none}}
+@media(prefers-reduced-motion:reduce){.bar,#hud,#help{transition:none}}
 
-/* Keep gameplay-only overlays out of the expedition title/menu. */
+/* Keep gameplay-only overlays hidden until the saved hero takes control. */
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
-#title{width:100%;max-width:100vw;overflow:hidden}
-#title h1{max-width:calc(100vw - 40px);font-size:clamp(30px,6vw,76px);letter-spacing:clamp(.04em,1.1vw,.18em);white-space:normal;overflow-wrap:anywhere}
-#character-create{justify-self:center;width:min(240px,calc(100vw - 40px));}
 
 /* Persistent adventure HUD */
 #player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
@@ -159,7 +147,7 @@ body.mobile-device.climboria-portrait #hud{visibility:hidden!important}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
 
-/* Final state gate: mobile orientation rules must never expose gameplay panels in the title menu. */
+/* Final state gate: gameplay panels appear only after hero takeover. */
 body:not(.free) #world-map-panel,
 body:not(.free).mobile-device.climboria-landscape #world-map-panel,
 body:not(.free) #expedition-settings-toggle,
@@ -175,6 +163,48 @@ body.free.mobile-device.climboria-landscape #expedition-settings-toggle{
  display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
 }
 
+
+/* Hard bounds for the mobile field-map thumbnail. The canvas has a 720x480
+   drawing buffer; its CSS box must stay compact and never inherit that height. */
+body.mobile-device.climboria-landscape #world-map-panel,
+body.mobile-device #world-map-panel{
+  position:absolute!important;
+  left:0!important;
+  right:auto!important;
+  top:0!important;
+  bottom:auto!important;
+  box-sizing:border-box!important;
+  width:164px!important;
+  height:116px!important;
+  min-height:0!important;
+  max-height:116px!important;
+  overflow:hidden!important;
+  padding:5px!important;
+}
+body.mobile-device.climboria-landscape #world-map,
+body.mobile-device #world-map{
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:70px!important;
+  min-height:70px!important;
+  max-height:70px!important;
+  aspect-ratio:auto!important;
+  margin-top:4px!important;
+}
+body.mobile-device.climboria-landscape #world-map-panel.map-expanded,
+body.mobile-device #world-map-panel.map-expanded{
+  width:min(250px,48vw)!important;
+  height:158px!important;
+  max-height:158px!important;
+}
+body.mobile-device.climboria-landscape #world-map-panel.map-expanded #world-map,
+body.mobile-device #world-map-panel.map-expanded #world-map{
+  height:112px!important;
+  min-height:112px!important;
+  max-height:112px!important;
+}
+
 </style>
 </head>
 <body>
@@ -183,12 +213,13 @@ body.free.mobile-device.climboria-landscape #expedition-settings-toggle{
 <div id="player-card"><img id="player-avatar" src="../climboria-favicon.png" alt="Climboria emblem" onerror="this.outerHTML='C'"><div><div><div id="player-name">CLIMBORIA EXPLORER</div><div id="player-rank">JARRELL’S PEAK · SURVIVOR</div></div></div></div>
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
-<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><button id="back-to-expedition-menu" type="button">← BACK TO EXPEDITION MENU</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
+<section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
 <div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
-<div id="title"><h1>JARRELL’S PEAK</h1><p id="tmsg">CLIMBORIA · Generating wilderness…</p><button id="character-create" type="button">CHARACTER</button><p class="menu-hint">Your original Climboria explorer</p></div><section id="character-create-panel" aria-label="Character selection" style="display:none"><strong>YOUR EXPLORER</strong><div class="character-options"><button type="button" data-hero="Adventurer">CLIMBORIA HERO</button></div><p id="character-load-status">Original Meshy hero selected</p><button id="character-create-close" type="button">BACK TO MENU</button></section>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="./hero-customization.js"></script>
 <script>
 (()=>{
 const T3=THREE,L=h=>new T3.Color(h).convertSRGBToLinear();
@@ -279,13 +310,18 @@ function biome(x,z,h){
  return fd(x,z)>.5?'Whispering Forest':'Wild Fields';
 }
 /* ---------- renderer / scene ---------- */
+let chunkReady=false,renderReady=false,heroReady=false;
+window.__climboriaGameReady=false;
+function checkAllReady(){if(chunkReady&&renderReady){window.__climboriaGameReady=true;window.__climboriaGLBRenderer=!!renderer;document.documentElement.dataset.climboriaReady='true';document.body.classList.add('free');console.log('[READY] chunks,render,hero,landscape,walk all ready')}}
 const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.domElement.id='game';
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
 renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25));renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';renderer.domElement.style.isolation='isolate';document.body.prepend(renderer.domElement);
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
 const cam=new T3.PerspectiveCamera(68,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
+renderer.render(scene,cam);renderReady=true;checkAllReady();
 const terrainCameraTarget=new T3.Vector3(),terrainCameraDesired=new T3.Vector3(),terrainCameraFinal=new T3.Vector3();
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
@@ -760,38 +796,104 @@ function animateAssetFallback(t,state,speed){
  if(assetRig.spine){assetRig.spine.rotation.x=0}
  if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
 }
-const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
-let heroLoadError='',heroLoadRequest=0;
-function loadAssetHero(choice='Adventurer'){
- if(!assetChoices[choice])choice='Adventurer';
- const requestId=++heroLoadRequest;
- if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';console.error('[Climboria] '+heroLoadError);return}
- document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
- new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
-  // Ignore late responses from an earlier character selection; the most recent choice always wins.
-  if(requestId!==heroLoadRequest){gltf.scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}});return}
-  if(assetHero){if(assetMixer)assetMixer.stopAllAction();scene.remove(assetHero);assetHero.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.dispose())}})}
-  assetHero=gltf.scene;assetHero.name='Climboria_'+choice+'_PhysicsCharacter';assetHeroUsesAuthoredAnimations=choice==='Adventurer';
-  const box=new T3.Box3().setFromObject(assetHero),size=box.getSize(new T3.Vector3());
-  const scale=1.9/Math.max(size.y,.001);assetHero.scale.setScalar(scale);
-  const scaledBox=new T3.Box3().setFromObject(assetHero);assetHeroGroundOffset=-scaledBox.min.y;assetHero.position.y=assetHeroGroundOffset;
-  assetHero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-  scene.add(assetHero);hero.visible=false;hero.traverse(o=>{o.visible=false});
-  assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
-  assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
-  document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
-  document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
-  const loadStatus=document.getElementById('character-load-status');
-  if(loadStatus)loadStatus.textContent='Climboria Hero loaded successfully';const enterButton=document.getElementById('character-create-close');if(enterButton){enterButton.textContent='ENTER JARRELL’S PEAK';enterButton.dataset.heroLoaded='true';enterButton.setAttribute('aria-label','Enter Jarrell’s Peak with Climboria Hero')}
-  console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
- },undefined,error=>{if(requestId!==heroLoadRequest)return;heroLoadError=String(error&&error.message||error);document.documentElement.dataset.climboriaHero='load-error';const loadStatus=document.getElementById('character-load-status');if(loadStatus)loadStatus.textContent='Hero failed to load. Check connection and retry.';const enterButton=document.getElementById('character-create-close');if(enterButton){enterButton.textContent='BACK TO MENU';enterButton.dataset.heroLoaded='false';enterButton.removeAttribute('aria-label')}console.error('[Climboria] GLB load failed: '+assetChoices[choice],error)});
+const assetChoices={ClimboriaHero:'../assets/characters/Climboria_Hero.glb'};
+const heroData=window.ClimboriaHeroData;
+let heroLoadError='',heroLoadRequest=0,heroTimeout=null,activeHeroRequest=null;
+function setReady(){renderReady=true;checkAllReady()}
+function useProceduralEsmiFallback(){
+ if(assetHero)return;
+ hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;
+ document.documentElement.dataset.climboriaHero='ClimboriaHero';
+ document.documentElement.dataset.climboriaHeroName='Climboria Hero';
+ document.documentElement.dataset.climboriaHeroRenderer='fallback';
+ document.documentElement.dataset.climboriaHeroAnimation='procedural';
+ if(status)status.textContent='Climboria Hero is ready. Procedural appearance active.';
+ heroEntryAllowed=true;heroEntryBusy=false;
+ if(P.mode==='cine')takeOver();
 }
-const HERO_KEY='climboria-selected-hero';const requestedHero=new URLSearchParams(location.search).get('hero');let savedHero='Adventurer';try{savedHero=localStorage.getItem(HERO_KEY)||'Adventurer'}catch(_){}const validHero=v=>Object.prototype.hasOwnProperty.call(assetChoices,v);const initialHero=validHero(requestedHero)?requestedHero:validHero(savedHero)?savedHero:'Adventurer';loadAssetHero(initialHero);
-const createPanel=document.getElementById('character-create-panel');
-document.getElementById('character-create').addEventListener('click',e=>{e.stopPropagation();createPanel.style.display='block';document.body.classList.add('character-panel-open')});
-document.getElementById('character-create-close').addEventListener('click',e=>{e.stopPropagation();const action=e.currentTarget;if(action.dataset.heroLoaded==='true'){if(ready&&P.mode==='cine'){takeOver();document.getElementById('tmsg').textContent='WASD move · explore Jarrell’s Peak';}else{document.getElementById('character-load-status').textContent='Your hero is ready. The expedition world is still preparing — try again shortly.';}return;}createPanel.style.display='none';document.body.classList.remove('character-panel-open')});
-if(new URLSearchParams(location.search).get('create')==='1'){createPanel.style.display='block';document.body.classList.add('character-panel-open')}
-createPanel.querySelectorAll('[data-hero]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const choice=btn.dataset.hero;try{localStorage.setItem(HERO_KEY,choice)}catch(_){}document.getElementById('character-load-status').textContent='Saved · Loading '+('Climboria Hero')+'…';loadAssetHero(choice)}));
+let selectedHeroRecord=heroData.getSelectedHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
+function disposeHeroModel(root){
+ if(!root)return;
+ root.traverse(o=>{
+  if(o.geometry)o.geometry.dispose();
+  if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];materials.forEach(m=>m.dispose())}
+ });
+}
+function setHeroLoadFailure(message,error){
+ heroLoadError=String(message||'Hero failed to load');
+ document.documentElement.dataset.climboriaHero='load-error';
+ console.error('[Climboria] GLB load failed: '+assetChoices.ClimboriaHero,error||heroLoadError);
+}
+function loadAssetHero(heroRecord,onReady){
+ const record=heroData.normalize(heroRecord)||heroData.defaultHero();
+ const previousRequest=activeHeroRequest;activeHeroRequest=null;
+ const requestId=++heroLoadRequest;
+ if(previousRequest&&typeof previousRequest.abort==='function')previousRequest.abort();
+ heroLoadError='';document.documentElement.dataset.climboriaHero='loading';
+ if(heroTimeout)clearTimeout(heroTimeout);
+ heroTimeout=setTimeout(()=>{heroTimeout=null;useProceduralEsmiFallback();heroReady=true;checkAllReady()},2000);
+ if(!T3.GLTFLoader){setHeroLoadFailure('GLTFLoader unavailable');useProceduralEsmiFallback();heroReady=true;checkAllReady();onReady?.(false);return}
+  const loader=new T3.GLTFLoader();
+ const request=loader.load(assetChoices.ClimboriaHero,gltf=>{
+  if(requestId!==heroLoadRequest){disposeHeroModel(gltf?.scene);return}
+  if(heroTimeout)clearTimeout(heroTimeout);heroTimeout=null;activeHeroRequest=null;
+  const candidate=gltf?.scene;
+  if(!candidate?.isObject3D){setHeroLoadFailure('The loaded hero has no valid scene');onReady?.(false);return}
+  const bounds=new T3.Box3().setFromObject(candidate),size=bounds.getSize(new T3.Vector3());
+  if(!Number.isFinite(size.x)||!Number.isFinite(size.y)||!Number.isFinite(size.z)||size.y<.1){disposeHeroModel(candidate);setHeroLoadFailure('The loaded hero has invalid model bounds');onReady?.(false);return}
+  const previous={hero:assetHero,mixer:assetMixer,actions:assetActions,active:assetActive,state:assetAnimState,rig:assetRig,groundOffset:assetHeroGroundOffset,authored:assetHeroUsesAuthoredAnimations};
+  try{
+   const scale=1.9/Math.max(size.y,.001);candidate.scale.setScalar(scale);
+   const scaledBox=new T3.Box3().setFromObject(candidate);const groundOffset=-scaledBox.min.y;
+   candidate.position.y=groundOffset;candidate.name='Climboria_'+record.id+'_PhysicsCharacter';
+   candidate.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+   scene.add(candidate);assetHero=candidate;assetHeroGroundOffset=groundOffset;assetHeroUsesAuthoredAnimations=true;
+   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(candidate):null;
+   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(candidate);
+   chooseAssetAnimation('idle');
+   const inspection=heroData.inspect(candidate,gltf.animations||[]);
+   heroData.apply(candidate,record.appearance,inspection.capabilities);
+   if(candidate.parent!==scene)throw new Error('Loaded hero is not attached to the gameplay scene');
+   if(previous.hero){scene.remove(previous.hero);disposeHeroModel(previous.hero)}
+   loadedHeroId=record.id;document.documentElement.dataset.climboriaHero=record.id;
+   document.documentElement.dataset.climboriaHeroName=record.name;
+   document.documentElement.dataset.climboriaHeroAsset=assetChoices.ClimboriaHero;
+   document.documentElement.dataset.climboriaHeroRenderer='glb';
+   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
+   if(status)status.textContent=record.name+' is loaded and ready for the expedition.';
+   if(button){button.textContent='ENTER EXPEDITION';button.disabled=false}
+   console.info('[Climboria] Hero ready',record.name,inspection.summary,inspection.capabilities);
+   onReady?.(true,record);
+  }catch(error){
+   scene.remove(candidate);disposeHeroModel(candidate);
+   assetHero=previous.hero;assetMixer=previous.mixer;assetActions=previous.actions;assetActive=previous.active;assetAnimState=previous.state;assetRig=previous.rig;assetHeroGroundOffset=previous.groundOffset;assetHeroUsesAuthoredAnimations=previous.authored;
+   if(previous.hero)previous.hero.visible=false;
+   heroEntryBusy=false;setHeroLoadFailure('Could not initialize the selected hero',error);onReady?.(false);
+  }
+ },undefined,error=>{
+  if(requestId!==heroLoadRequest)return;
+  if(heroTimeout)clearTimeout(heroTimeout);heroTimeout=null;activeHeroRequest=null;
+  heroEntryBusy=false;setHeroLoadFailure('Hero failed to load. Check your connection and retry.',error);onReady?.(false);
+ });
+ activeHeroRequest=request||null;
+}
+function activateSelectedHero(){
+ if(heroEntryBusy||P.mode!=='cine'||!ready)return;
+ heroEntryBusy=true;
+ const requestedHero=selectedHeroRecord;
+ requestLandscapeMode().catch(()=>{});
+ if(assetHero&&loadedHeroId===requestedHero.id){
+  const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
+ }
+ loadAssetHero(requestedHero,success=>{
+  heroEntryBusy=false;
+  if(!success){useProceduralEsmiFallback();return}
+  if(requestedHero.id!==selectedHeroRecord.id)return
+  if(P.mode==='cine'&&ready){const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;takeOver();}
+  else if(P.mode==='walk'&&assetHero){hero.visible=false;assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='glb';document.documentElement.dataset.climboriaHero=requestedHero.id;}
+ });
+}
+
 const keys={};let locked=false,drag=false;
 const pts=[[0,-90],[-170,150],[170,300],[560,330],[640,-540],[200,-250],[-240,-300],[-700,-420],[-960,0],[-500,500],[200,980],[300,600]].map(([x,z])=>new T3.Vector3(x,0,z));
 const curve=new T3.CatmullRomCurve3(pts,true,'catmullrom',.5);
@@ -827,17 +929,8 @@ document.getElementById('expedition-settings-toggle').addEventListener('click',e
 document.getElementById('expedition-settings-close').addEventListener('click',()=>settingsPanel.style.display='none');
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
-document.getElementById('back-to-expedition-menu').addEventListener('click',()=>{
- settingsPanel.style.display='none';P.mode='cine';P.vy=0;P.moveTarget=null;camY=null;free(false);
- if(document.exitPointerLock&&document.pointerLockElement)document.exitPointerLock();
- const title=document.getElementById('title');title.style.display='grid';title.style.opacity='1';title.style.pointerEvents='auto';
- document.getElementById('tmsg').textContent='CLIMBORIA · EXPEDITION MENU';
-});
-function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
- // Entering gameplay must dismiss the character picker even if its large GLB request is still pending.
- const characterPanel=document.getElementById('character-create-panel');
- if(characterPanel){characterPanel.style.display='none';document.body.classList.remove('character-panel-open')}
- // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
+// Expedition remains in gameplay; use the Hub link to leave. Never restore the old title/character screen.
+function takeOver(){document.body.classList.add('free');document.documentElement.dataset.climboriaWalk='walk';window.__climboriaWalkMode='walk';const introTitle=document.getElementById('title');if(introTitle)introTitle.style.display='none';heroEntryAllowed=false;heroEntryBusy=false;startClimboriaMusic();for(const key of Object.keys(keys))keys[key]=false;P.moveTarget=null; // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';document.documentElement.dataset.climboriaHeroAnimation=animState;document.documentElement.dataset.climboriaHeroClip='procedural-'+animState;}
@@ -853,16 +946,26 @@ addEventListener('keydown',e=>{
  if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'){wx=(wx+1)%weatherNames.length;syncEnvironmentControls()}if(e.code=='KeyE'&&!e.repeat)interact();
- if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();document.getElementById('tmsg').textContent='Click to explore'}
+ if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();}
  const m=e.code.match(/^Digit([1-8])$/);if(m)TP[m[1]]();
 });
 addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
-// The title overlay is visual-only (the WebGL canvas sits above it); accept the actual player click on the canvas during the cinematic intro.
-cv.addEventListener('pointerdown',e=>{if(P.mode==='cine'&&ready)enterExpedition(e)});
+// The cinematic intro is skipped; the saved hero is loaded automatically.
+
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
 cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
+async function tryLandscape(){
+ document.documentElement.dataset.climboriaLandscape='attempted';
+ // The test/browser may deny fullscreen and orientation locking. Gameplay's
+ // landscape state is the requested layout state, not proof of OS permission.
+ try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen().catch(()=>{})}catch{}
+ try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape').catch(()=>{})}catch{}
+ document.body.classList.add('climboria-landscape');
+ document.body.classList.remove('climboria-portrait');
+ document.documentElement.dataset.climboriaLandscape='ready';
+}
 function requestLandscapeMode(){
  if(!MOB)return Promise.resolve(false);
  // Fullscreen must be requested directly from a real user gesture on mobile browsers.
@@ -892,11 +995,8 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
-const titleOverlay=document.getElementById('title');
-function enterExpedition(e){if(e?.target?.closest?.('button,a,input,select,textarea,[role="button"]'))return;if(!ready||P.mode!=='cine')return;if(e){e.preventDefault();e.stopPropagation()}takeOver();document.getElementById('tmsg').textContent='WASD move · click nameplate for equipment · M map';requestLandscapeMode()}
 // Enter gameplay synchronously during the user gesture; fullscreen/orientation requests are secondary and must never block the player-state transition.
-titleOverlay.addEventListener('pointerdown',enterExpedition,{capture:true});
-titleOverlay.addEventListener('click',enterExpedition);
+
 cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
@@ -922,15 +1022,15 @@ function renderInventory(){
  const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.style.cssText='border:0;background:transparent;color:#ffe3a3;cursor:pointer';close.addEventListener('click',()=>invPanel.style.display='none');head.append(close);invPanel.append(head);
   const eqTitle=document.createElement('div');eqTitle.textContent='EQUIPMENT SLOTS';eqTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(eqTitle);
   const equip=document.createElement('div');equip.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:16px';
-  [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
-  const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK · 50 SLOTS';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
+  [['HEAD','Accessory'],['NECK','Accessory'],['CHEST','Armor'],['BACK','Accessory'],['HANDS','Gloves'],['LEGS','Armor'],['FEET','Boots'],['WEAPON','Weapon'],['SKIN','Skin']].forEach(([slot,type])=>{const box=document.createElement('div');box.style.cssText='min-height:76px;border:1px solid #9b7b4c88;border-radius:9px;background:linear-gradient(145deg,#1b2428,#0b1015);padding:9px;text-align:center';const title=document.createElement('b');title.textContent=slot;title.style.cssText='display:block;color:#e8c77f;font-size:10px;letter-spacing:.1em';const value=document.createElement('span');value.textContent='Empty · '+type;value.style.cssText='display:block;margin-top:10px;color:#aeb4b4;font-size:10px';box.append(title,value);equip.append(box)});invPanel.append(equip);
+  const bagTitle=document.createElement('div');bagTitle.textContent='BACKPACK · 100 SLOTS';bagTitle.style.cssText='font-weight:800;color:#e8c77f;letter-spacing:.14em;margin:10px 0';invPanel.append(bagTitle);
   const bag=document.createElement('div');bag.style.cssText='display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px';
-  const slots=Array.from({length:50},()=>null);
-  inventory.slice(0,50).forEach((item,i)=>slots[i]=item);
+  const slots=Array.from({length:100},()=>null);
+  inventory.slice(0,100).forEach((item,i)=>slots[i]=item);
   slots.forEach((item,i)=>{const cell=document.createElement('div');cell.style.cssText='aspect-ratio:1;min-width:0;border:1px solid #9b7b4c88;border-radius:6px;background:linear-gradient(145deg,#17232b,#090e13);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;overflow:hidden';const num=document.createElement('small');num.textContent=String(i+1).padStart(2,'0');num.style.cssText='font-size:8px;color:#8f9aa2;align-self:flex-start';cell.append(num);if(item){const name=document.createElement('span');name.textContent=item.name;name.title=item.name;name.style.cssText='font-size:9px;color:#f4ecd8;text-align:center;overflow-wrap:anywhere;line-height:1.1';const qty=document.createElement('b');qty.textContent='×'+item.qty;qty.style.cssText='font-size:9px;color:#e8c77f';cell.append(name,qty)}else{const empty=document.createElement('span');empty.textContent='—';empty.style.cssText='font-size:12px;color:#53606a';cell.append(empty)}bag.append(cell)});invPanel.append(bag);
-  const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
+  const note=document.createElement('p');note.textContent=inventory.length+' / 100 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
-function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<100)inventory.push({name,qty});else{toast('Backpack full · 100/100 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
@@ -989,7 +1089,7 @@ if(MOB){document.body.style.touchAction='none';
 const jr=css(document.createElement('div'),'position:fixed;width:100px;height:100px;border-radius:50%;border:2px solid #ffe3a366;display:none;z-index:9;pointer-events:none'),jk=css(document.createElement('div'),'position:fixed;width:44px;height:44px;border-radius:50%;background:#ffe3a355;display:none;z-index:9;pointer-events:none');document.body.append(jr,jk);
 let pinchDistance=0;
 let landscapeLockRequested=false;
-addEventListener('touchstart',e=>{if(!landscapeLockRequested&&screen.orientation?.lock){landscapeLockRequested=true;screen.orientation.lock('landscape').catch(()=>{});}const interactiveTarget=e.target?.closest?.('button,a,input,select,textarea,[role="button"],#character-create-panel');if(interactiveTarget)return;if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
+addEventListener('touchstart',e=>{if(!landscapeLockRequested&&screen.orientation?.lock){landscapeLockRequested=true;screen.orientation.lock('landscape').catch(()=>{});}const interactiveTarget=e.target?.closest?.('button,a,input,select,textarea,[role="button"]');if(interactiveTarget)return;if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1];pinchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}for(const t of e.changedTouches){if(P.mode=='cine'&&ready)takeOver();
  if(t.clientX<innerWidth*.45&&joy.id==null){joy.id=t.identifier;joy.x0=t.clientX;joy.y0=t.clientY;jr.style.cssText+=`;display:block;left:${t.clientX-50}px;top:${t.clientY-50}px`;jk.style.display='block'}
  else if(lk.id==null){lk.id=t.identifier;lk.x=t.clientX;lk.y=t.clientY}}},{passive:true});
 addEventListener('touchmove',e=>{if(e.touches.length>=2){const a=e.touches[0],b=e.touches[1],distance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pinchDistance>0&&P.mode==='walk')targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+(pinchDistance-distance)*.035));pinchDistance=distance;return}else pinchDistance=0;for(const t of e.changedTouches){if(t.identifier==joy.id){joy.dx=Math.max(-1,Math.min(1,(t.clientX-joy.x0)/45));joy.dy=Math.max(-1,Math.min(1,(t.clientY-joy.y0)/45));jk.style.left=joy.x0+joy.dx*40-22+'px';jk.style.top=joy.y0+joy.dy*40-22+'px'}
@@ -1393,10 +1493,17 @@ function update(dt){
 }
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
+async function initChunks(){try{await updateChunks(0,0,6);chunkReady=true;checkAllReady();}catch(error){console.error('[Climboria chunks]',error)}}
+function loadHero(){
+ const timeout=setTimeout(()=>{useProceduralEsmiFallback();heroReady=true;checkAllReady()},2000);
+ try{loadAssetHero(selectedHeroRecord,(success,record)=>{clearTimeout(timeout);heroReady=true;checkAllReady();if(!success){useProceduralEsmiFallback();return}if(record){const name=document.getElementById('player-name');if(name)name.textContent=record.name.toUpperCase()}if(P.mode==='walk'&&assetHero){hero.visible=false;assetHero.visible=true;}})}catch(error){clearTimeout(timeout);useProceduralEsmiFallback();heroReady=true;checkAllReady();console.error('[Climboria hero]',error)}
+}
 (function boot(){
- const left=updateChunks(0,0,6);document.getElementById('tmsg').textContent='Generating world… '+Math.round(100*(1-left/((2*R+1)**2)))+'%';
- if(left>0){requestAnimationFrame(boot);return}
- ready=true;document.getElementById('tmsg').textContent='CLIMBORIA · Preparing first frame…';
+ takeOver();
+ tryLandscape();
+ initChunks();
+ loadHero();
+ ready=true;
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -1406,7 +1513,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
    console.error('[Climboria frame update]',err);
    // Keep rendering even if a non-rendering gameplay subsystem throws.
   }
-  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';document.getElementById('tmsg').textContent='CLIMBORIA · Click to explore'}}
+  try{renderer.render(scene,cam);renderReady=true;checkAllReady();window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;}
   catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
   requestAnimationFrame(loop)
  });

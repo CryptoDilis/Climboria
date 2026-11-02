@@ -22,8 +22,8 @@
 ### Verified repository snapshot at this update
 
 - Repository: [CryptoDilis/Climboria](https://github.com/CryptoDilis/Climboria), default branch `main`.
-- Latest `main` ref inspected: `a7070fb322bbf2b8ec656f838f366adcee8f1994`.
-- Open draft PR #165: [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165), head `2d6c5b5cd57a3aa654a38fa5ee61e3122579dbfc`. It is **not merged**.
+- Latest `main` ref inspected: `4deca0a1877fdd69310de8d76de92b7989732c67`.
+- Open draft PR #165: [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165), repair integration sync commit `a7bfa17e4ab1de9f1e8f0ab91f2bcf3a12852ab6`. It is **not merged** and is currently diverged from `main`; integration is blocked pending conflict reconciliation and fresh workflow evidence.
 - PR #165 Validate run `41525442780` succeeded on an earlier head `0dd3f4601b75b36e20b7f56ee88ef0d38f419816`. The latest Browser Smoke run `41527544244` was **in progress** at inspection. Therefore PR #165 is not green/accepted yet.
 - The latest development log entry for the connected cave side-room increment records commits `51ade066b9830ae18f54f7f65fa77e3dad35682e`, `016a8d24f87ae40c8f805f16f714893f3d835d9c`, and `f60560f0bac7d13ff7edf3bfcfad7b573bf25131` with Validate, Browser Smoke and Pages deployment still pending in that log. Re-check live Actions before changing status.
 - DEX/Launchpad uploaded HTML static audit exists at [docs/AUDIT-DEX-LAUNCHPAD-UPLOADED-HTML.md](./docs/AUDIT-DEX-LAUNCHPAD-UPLOADED-HTML.md). Verdict: **do not publish as a real mainnet DEX/Launchpad**. The audit found a non-functional token creation alert, incorrect hard-coded token decimal conversions, fabricated fallback quotes, placeholder mint data, misleading live/mainnet labels, and no verified wallet-signing or on-chain flow. No live transaction verification was performed.
@@ -39,6 +39,18 @@
 - Never expose private keys or seed phrases; never request them.
 - Free/open-source assets must have their licence checked and recorded before use.
 - Do not mark a feature complete because its button or mockup exists.
+
+## 0.1 Current PR #165 repair increment — 2026-11-03 (not yet verified)
+
+- [x] Persist the selected hero ID in browser storage; the Character Creator saves/selects the newly saved hero, and Jarrell's Peak reads that saved selection on next entry.
+- [x] Keep the 100-slot backpack grid, 100-slot capacity guard, nine equipment slots including SKIN, and clickable player nameplate → inventory panel.
+- [x] Place the separate Create Hero destination before the destination grid in the hub.
+- [x] Change desktop and mobile browser smoke expectations to verify automatic GLB loading and Sanctuary spawn on first Jarrell's Peak entry, without an extra Enter Expedition click.
+- [x] Add an automated assertion that the nameplate opens 100 visible backpack slots, nine equipment slots, the SKIN slot, and the 100-slot capacity label.
+- [ ] **Not yet verified:** no workflow run is currently associated with the latest PR head `b0821ef4011f0529aa721476fa60221fa891e463`. GitHub App/API content commits have not produced a new Actions run in the observed branch history; the latest successful manual dispatch (`41530721246`) tested old head `56493915c8b2f3793a8c36bfd7c3ccc6e93241a2`, not this repair.
+- [ ] Previous Browser Smoke failure `41527544244` was isolated to a brittle mobile re-entry assertion that treated a transient transition wait timeout as failure even though the captured final DOM showed gameplay active, GLB renderer loaded, title opacity `0.0027`, and HUD visible. The assertion now judges the captured final state instead of failing solely on the wait error. This correction itself still requires a fresh run.
+- [ ] Refresh/reconcile PR against current `main`. The branch had replaced the canonical 228 KB root README with a stale short design-only README and retained an obsolete standalone development checklist. The current repair branch restores the canonical `main` README and redirects `DEVELOPMENT_CHECKLIST.md` to it, preserving the complete master checklist and history. A two-parent sync commit (`a7bfa17e4ab1de9f1e8f0ab91f2bcf3a12852ab6`) now includes latest `main`; GitHub compare reports zero commits behind and PR mergeability is `true` (unstable because fresh checks are still pending).
+- [ ] Run Validate and Browser Smoke on the exact updated head; inspect failures and repeat. Only then consider merging. No live deployment is claimed.
 
 ## 1. Current active master checklist — Jarrell's Peak first
 
@@ -1934,3 +1946,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
 - [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
 - [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
+
+
+### Mobile field-map regression repair — 2026-11-03
+
+- [x] Diagnosed the mobile landscape field map rendering as an oversized sidebar rather than a compact minimap.
+- [x] Added hard CSS bounds for mobile-device layouts: collapsed panel 164×116 CSS px and map canvas 70 px high; expanded map remains explicitly bounded.
+- [x] Diagnosed Browser Smoke run 41535296076 failure: an extra closing brace in the 100-slot inventory assertion caused a JavaScript syntax error before the gameplay smoke suite could execute.
+- [x] Corrected the assertion and added a mobile landscape minimap dimension check.
+- [ ] Await a fresh Browser Smoke run on the repaired branch; do not treat this repair as verified until the run passes.
+- [ ] Recheck physical Redmi 14 5G landscape rendering after the branch is merged/deployed. Desktop layout and the Jarrell’s Peak world/map assets were not changed by this CSS-only map repair.
