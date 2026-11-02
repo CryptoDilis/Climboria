@@ -1,3 +1,15 @@
+## 2026-11-02 — first connected cave side room
+
+- [x] Previous torch-cleanup baseline fully passed: Validate `41457459263`, Browser Smoke `41457459268`, Pages deployment `41457544768` (commit `e3d995e5333cd64d29e68a6dabdcb79ec42019a8`).
+- [x] Added one bounded side chamber connected to the existing cave by an 8m passage, within the cave's flattened terrain footprint.
+- [x] Added seven visible rock wall segments with swept segment collision, plus matching walkable floor slabs and a local chamber light.
+- [x] Added an intersection audit that verifies a clear passage route and a blocked movement across a wall; browser smoke now asserts both.
+- [ ] Await validation, desktop/mobile Browser Smoke, and Pages deployment for commits `51ade066b9830ae18f54f7f65fa77e3dad35682e`, `016a8d24f87ae40c8f805f16f714893f3d835d9c`, and `f60560f0bac7d13ff7edf3bfcfad7b573bf25131`.
+- [ ] Remaining cave scope: full multi-branch maze, underwater route, trapped side chambers, deterministic trap damage/reward logic, hidden reward rooms, and the rare 3% reward. This increment is only the first connected side room; do not label the full cave system complete.
+- [ ] Manually inspect the cave on desktop and Android after CI; automated viewport tests do not replace physical-device visual acceptance.
+
+---
+
 ## 2026-11-02 — cave torch layout cleanup
 
 - [x] Confirmed the previous cave lighting increment passed all three workflows on `04359cfaf18300d2c9ee687f1b1d507fcd75472c`: Validate run `41456705602`, Browser Smoke run `41456705668`, Pages deployment run `41456705664`.
