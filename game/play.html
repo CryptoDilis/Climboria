@@ -788,7 +788,19 @@ function animateAssetFallback(t,state,speed){
 }
 const assetChoices={ClimboriaHero:'../assets/characters/Climboria_Hero.glb'};
 const heroData=window.ClimboriaHeroData;
-let heroLoadError='',heroLoadRequest=0,heroLoadTimer=null,activeHeroRequest=null;
+let heroLoadError='',heroLoadRequest=0,heroTimeout=null,activeHeroRequest=null;
+function setReady(){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true'}
+function useProceduralEsmiFallback(){
+ if(assetHero)return;
+ hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;
+ document.documentElement.dataset.climboriaHero='ClimboriaHero';
+ document.documentElement.dataset.climboriaHeroName='Climboria Hero';
+ document.documentElement.dataset.climboriaHeroRenderer='fallback';
+ document.documentElement.dataset.climboriaHeroAnimation='procedural';
+ if(status)status.textContent='Climboria Hero is ready. Procedural appearance active.';
+ heroEntryAllowed=true;heroEntryBusy=false;
+ if(P.mode==='cine')takeOver();
+}
 let selectedHeroRecord=heroData.getSelectedHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
 function disposeHeroModel(root){
  if(!root)return;
@@ -810,18 +822,13 @@ function loadAssetHero(heroRecord,onReady){
  const requestId=++heroLoadRequest;
  if(previousRequest&&typeof previousRequest.abort==='function')previousRequest.abort();
  heroLoadError='';document.documentElement.dataset.climboriaHero='loading';
- if(!T3.GLTFLoader){setHeroLoadFailure('GLTFLoader unavailable');onReady?.(false);return}
- heroLoadTimer=setTimeout(()=>{
-  if(requestId!==heroLoadRequest)return;
-  const pending=activeHeroRequest;activeHeroRequest=null;heroLoadTimer=null;++heroLoadRequest;
-  setHeroLoadFailure('Hero loading timed out. Check your connection and retry.');
-  if(pending&&typeof pending.abort==='function')pending.abort();
-  onReady?.(false);
- },45000);
- const loader=new T3.GLTFLoader();
+ if(heroTimeout)clearTimeout(heroTimeout);
+ heroTimeout=setTimeout(()=>{heroTimeout=null;useProceduralEsmiFallback();setReady();},2000);
+ if(!T3.GLTFLoader){setHeroLoadFailure('GLTFLoader unavailable');useProceduralEsmiFallback();onReady?.(false);return}
+  const loader=new T3.GLTFLoader();
  const request=loader.load(assetChoices.ClimboriaHero,gltf=>{
   if(requestId!==heroLoadRequest){disposeHeroModel(gltf?.scene);return}
-  if(heroLoadTimer)clearTimeout(heroLoadTimer);heroLoadTimer=null;activeHeroRequest=null;
+  if(heroTimeout)clearTimeout(heroTimeout);heroTimeout=null;activeHeroRequest=null;
   const candidate=gltf?.scene;
   if(!candidate?.isObject3D){setHeroLoadFailure('The loaded hero has no valid scene');onReady?.(false);return}
   const bounds=new T3.Box3().setFromObject(candidate),size=bounds.getSize(new T3.Vector3());
@@ -857,7 +864,7 @@ function loadAssetHero(heroRecord,onReady){
   }
  },undefined,error=>{
   if(requestId!==heroLoadRequest)return;
-  if(heroLoadTimer)clearTimeout(heroLoadTimer);heroLoadTimer=null;activeHeroRequest=null;
+  if(heroTimeout)clearTimeout(heroTimeout);heroTimeout=null;activeHeroRequest=null;
   heroEntryBusy=false;setHeroLoadFailure('Hero failed to load. Check your connection and retry.',error);onReady?.(false);
  });
  activeHeroRequest=request||null;
@@ -866,7 +873,7 @@ function activateSelectedHero(){
  if(heroEntryBusy||P.mode!=='cine'||!ready)return;
  heroEntryBusy=true;
  const requestedHero=selectedHeroRecord;
- requestLandscapeMode();
+ requestLandscapeMode().catch(()=>{});
  if(assetHero&&loadedHeroId===requestedHero.id){
   const name=document.getElementById('player-name');if(name)name.textContent=requestedHero.name.toUpperCase();heroEntryAllowed=true;heroEntryBusy=false;takeOver();if(P.mode==='walk')requestLandscapeMode();return;
  }
@@ -914,7 +921,7 @@ document.getElementById('expedition-settings-close').addEventListener('click',()
 const volumeControl=document.getElementById('climboria-music-volume'),volumeValue=document.getElementById('climboria-volume-value');
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
 // Expedition remains in gameplay; use the Hub link to leave. Never restore the old title/character screen.
-function takeOver(){if(P.mode!=='cine'||!heroEntryAllowed||!assetHero||loadedHeroId!==selectedHeroRecord.id)return;heroEntryAllowed=false;heroEntryBusy=false;startClimboriaMusic();for(const key of Object.keys(keys))keys[key]=false;P.moveTarget=null; // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
+function takeOver(){if(P.mode!=='cine'||!heroEntryAllowed)return;document.body.classList.add('free');heroEntryAllowed=false;heroEntryBusy=false;startClimboriaMusic();for(const key of Object.keys(keys))keys[key]=false;P.moveTarget=null; // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';document.documentElement.dataset.climboriaHeroAnimation=animState;document.documentElement.dataset.climboriaHeroClip='procedural-'+animState;}
@@ -1468,9 +1475,9 @@ function update(dt){
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
 (function boot(){
- const left=updateChunks(0,0,6);
- if(left>0){requestAnimationFrame(boot);return}
- ready=true;activateSelectedHero();
+  const left=updateChunks(0,0,6);
+  ready=true;activateSelectedHero();
+  if(left>0){const continueTerrain=()=>{if(updateChunks(0,0,6)>0)requestAnimationFrame(continueTerrain)};requestAnimationFrame(continueTerrain)}
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -1480,7 +1487,7 @@ cam.position.set(0,40,60);cam.lookAt(0,8,-90);
    console.error('[Climboria frame update]',err);
    // Keep rendering even if a non-rendering gameplay subsystem throws.
   }
-  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady){window.__climboriaGameReady=true;document.documentElement.dataset.climboriaReady='true';}}
+  try{renderer.render(scene,cam);window.__climboriaRenderState.frames=renderer.info.render.frame;window.__climboriaRenderState.objects=scene.children.length;if(!window.__climboriaGameReady)setReady();}
   catch(err){const msg=err&&err.stack?err.stack:String(err);if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);console.error('[Climboria renderer]',err)}
   requestAnimationFrame(loop)
  });
