@@ -1264,6 +1264,18 @@ For every integrated asset or borrowed technique, record:
 - [ ] Physical desktop/Redmi 14 5G review remains required for actual shoreline appearance and mountain approach feel.
 
 
+
+## 2026-11-02 — cave side-room collision recovery and soundtrack path (all automated checks green)
+
+- [x] Added a connected 8 m-wide passage and 18 m × 18 m side chamber to the existing cave; preserved the original chamber, traps, soldiers, crystals, chest, six torch fixtures, and existing hero/world UI.
+- [x] Added seven matching cave wall segments with swept player-movement collision; deterministic cave audit verifies the route remains open and crossing a wall is blocked.
+- [x] Fixed two JavaScript temporal-dead-zone errors discovered by browser smoke: hoisted the cave coordinate transform as a function declaration and initialized the cave wall registry before cave construction.
+- [x] Fixed the game soundtrack URL from `../assets/music/TRACK_01.mp3` to `./assets/music/TRACK_01.mp3`; the asset exists at `game/assets/music/TRACK_01.mp3`.
+- [x] Verified on commit `647135f9242b53d82a1f5db745a54c88e42e4d26`: Validate Climboria run 41464651699 passed; Browser Smoke Test run 41464651478 passed; Pages deployment run 41464651065 passed.
+- [ ] Full cave scope remains open: long multi-section route, branching maze, multiple trap types/trigger logic, underground pool with navigable underwater passage and exit, cave-specific hostile encounters, and meaningful exploration/reward rooms.
+- [ ] 3% rare-reward chance is not implemented; do not imply cave gems or the existing chest satisfy this reward mechanic.
+- [ ] Manual desktop and Redmi 14 5G visual/gameplay acceptance remains open; automated smoke does not replace real-device testing.
+
 ## 2026-11-02 — cave feature gap audit (implementation queued; no unverified world edits)
 
 - [x] Inspected the actual `game/play.html` cave construction block rather than relying on checklist claims.
