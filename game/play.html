@@ -571,13 +571,13 @@ function camp(){
 }
 camp();
 /* Cave with spike traps */
-const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveG;
+const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveG,caveAmbientFill;
 {
  const p=POI.cave,dx=-p.x,dz=-p.z,dl=Math.hypot(dx,dz),dir={x:dx/dl,z:dz/dl};POI.cave.dir=dir;
  const g=new T3.Group();g.position.set(p.x,p.h,p.z);g.rotation.y=Math.atan2(dir.x,dir.z);scene.add(g);caveG=g;
  const rk=M('#4a463f');
  // Broad local fill prevents the cave floor and routes from disappearing between torch pools.
- const caveAmbientFill=new T3.HemisphereLight(L('#c8d8e8'),L('#625548'),.9);g.add(caveAmbientFill);
+ caveAmbientFill=new T3.HemisphereLight(L('#c8d8e8'),L('#625548'),.9);g.add(caveAmbientFill);
  // Living mineral seams: faceted clusters with restrained colored bounce light.
  const gemPalette=['#55f0b0','#48c8ff','#a77bff','#ffc65a'];
  const gemGeo=new T3.OctahedronGeometry(1,0);
