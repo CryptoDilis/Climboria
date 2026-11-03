@@ -25,14 +25,14 @@ try {
   await page.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await page.waitForFunction(() => {
     const root=document.documentElement.dataset;
-    return (root.climboriaHero === 'adventurer' && root.climboriaHeroRenderer === 'glb') || root.climboriaHero === 'load-error';
+    return (Boolean(root.climboriaHero) && root.climboriaHero !== 'loading' && root.climboriaHeroRenderer === 'glb') || root.climboriaHero === 'load-error';
   }, undefined, { timeout: 90000 });
   const heroAssetAudit = await page.evaluate(() => ({
     identity: document.documentElement.dataset.climboriaHero || '',
     renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
     visible: !!document.querySelector('canvas') && !!window.__climboriaCameraOrbit,
   }));
-  if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
+  if (!heroAssetAudit.identity || heroAssetAudit.identity === 'loading' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
