@@ -431,6 +431,26 @@ try {
   if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
     errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
   }
+  const mobileViewportAudit = await mobile.evaluate(() => {
+    const canvas=document.querySelector('canvas');
+    const r=canvas?.getBoundingClientRect();
+    return {
+      viewport:{width:innerWidth,height:innerHeight},
+      canvas:r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null,
+      document:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,clientHeight:document.documentElement.clientHeight,scrollHeight:document.documentElement.scrollHeight},
+      visualViewport:window.visualViewport?{width:visualViewport.width,height:visualViewport.height,offsetLeft:visualViewport.offsetLeft,offsetTop:visualViewport.offsetTop}:null
+    };
+  });
+  if(!mobileViewportAudit.canvas ||
+    Math.abs(mobileViewportAudit.canvas.left)>1 ||
+    Math.abs(mobileViewportAudit.canvas.top)>1 ||
+    mobileViewportAudit.canvas.width<mobileViewportAudit.viewport.width-2 ||
+    mobileViewportAudit.canvas.height<mobileViewportAudit.viewport.height-2 ||
+    mobileViewportAudit.canvas.right<mobileViewportAudit.viewport.width-2 ||
+    mobileViewportAudit.canvas.bottom<mobileViewportAudit.viewport.height-2 ||
+    mobileViewportAudit.document.scrollWidth>mobileViewportAudit.viewport.width+2) {
+    errors.push('Mobile fullscreen canvas does not cover the viewport cleanly (possible black bars or overflow): '+JSON.stringify(mobileViewportAudit));
+  }
   const mobileActionLayout = await mobile.evaluate(() => {
     const controls = [...document.querySelectorAll('[data-mobile-action]')].map(el => {
       const r = el.getBoundingClientRect(), style = getComputedStyle(el);
