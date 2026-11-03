@@ -265,16 +265,15 @@ Climboria is a browser-first climbing, survival, and open-world treasure-hunting
 
 > **Development continuity:** The persistent repair, workflow, collision, and free/open-source asset integration plan lives in [DEVELOPMENT_CHECKLIST.md](./DEVELOPMENT_CHECKLIST.md). Carry it forward across sessions and update it based on verified results.
 
-## Launch scope: Jarrell’s Peak only
+## Current game-world scope: Jarrell’s Peak and Arena
 
-Jarrell’s Peak is a vast, endless-feeling wilderness expedition focused on exploration, survival, and treasure hunting. It has **no summit, no final level, and no completion point**. Its motto is **“Vengeance Is Always an Option.”**
+Jarrell’s Peak is Climboria’s primary open-world wilderness experience, focused on exploration, survival, and treasure hunting. Arena is the separate competitive game mode/map. These are the only two game-world destinations in the current scope. Jarrell’s Peak has no final completion point. Its motto is **“Vengeance Is Always an Option.”**
 
 - A riverside starting camp, long river, fishing, swimming, forests, cliffs, hidden routes, ruins, landmarks, and discoverable treasure locations.
 - Distance and survival time may improve the chance of better loot without guaranteeing rare rewards.
 - Chests may contain ingredients, materials, gear, and other eligible rewards across published rarity tiers.
 - There is no safe zone. Death returns the player to the starting point under the implemented and published game rules.
 - Documentation-only work must not change existing gameplay mechanics such as movement, climbing, collision, swimming, fishing, controls, camera, sound, weather, or treasure discovery.
-- The ten previously proposed normal mountains are removed from the game menu and deferred; they are not launch levels. Reconsider additional maps only after the token launch and a budget review.
 
 ## Game menu: four destinations
 
@@ -284,7 +283,7 @@ The current menu should show only these four destinations:
 3. **Marketplace** — a demo storefront only; no live trading or real purchases.
 4. **Inventory** — a local preview only; persistent item ownership and equipment are not live.
 
-Do not add the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
+Keep Jarrell’s Peak and Arena as the only game-world destinations. Marketplace and Inventory are supporting menu panels, not additional worlds. Character creation/editing remains accessible through the Jarrell’s Peak entry flow. Keep labels clear so a preview is never mistaken for a production system.
 
 ## Future Arena: separate public map
 
@@ -591,7 +590,7 @@ The following is the existing detailed checklist/log imported intact for continu
 
 ## 2026-11-01 — user-reported gameplay and mobile launch bug master list (OPEN; do not mark complete from CI alone)
 
-**Authoritative launch scope:** Jarrell's Peak + Arena only. There are no 11 mountains or 10 normal mountain levels in the current game scope. Do not reintroduce that superseded plan.
+**Authoritative game-world scope:** Jarrell’s Peak and Arena only. Marketplace and Inventory are supporting systems, not additional game worlds.
 
 ### Mobile launch and layout
 - [ ] On opening gameplay on a phone, request landscape/fullscreen as early as browser policy permits; if the browser cannot force orientation before a user gesture, show a correctly sized, readable rotate-phone gate that does not expose a squeezed portrait gameplay screen.
@@ -1094,9 +1093,9 @@ These are planned product requirements, not implemented/verified features until 
 ## P4 — Final product verification
 
 - [ ] Starting camp looks intentional, scenic, and is close to the long river and fishing access.
-- [ ] Jarrell’s Peak remains a large endless-feeling treasure-hunt world, not a summit/level-based mountain.
+- [ ] Jarrell’s Peak remains a large, endless-feeling open-world survival and treasure-hunt experience.
 - [ ] Treasure exploration, chest interactions, fishing, inventory, swimming, and respawn work together.
-- [ ] Only the four agreed menu destinations are shown; do not restore the ten deferred mountains.
+- [ ] Keep the agreed menu structure: Jarrell’s Peak, Arena, Marketplace, and Inventory. Only Jarrell’s Peak and Arena are game-world destinations.
 - [ ] No prototype hero fallback or retired procedural hero code is reintroduced; active hero assets load correctly.
 - [ ] Run syntax/validation checks, desktop smoke tests, mobile smoke tests, and manual live-site checks.
 - [ ] Confirm **all required main workflows** are green on the latest relevant commit; record commit SHA and run URLs.
@@ -1560,7 +1559,6 @@ For every integrated asset or borrowed technique, record:
 ## 2026-11-02 — homepage UI hierarchy and mobile presentation
 
 - [x] Replace the long inline Game menu update paragraph with a four-destination visual summary: Jarrell’s Peak (playable), Arena (future), Marketplace (demo preview), and Inventory (local preview).
-- [x] Preserve the distinction that the ten normal mountains are deferred future content, not launch levels.
 - [x] Replace the dense One clear funding promise paragraph with a concise funding commitment panel; keep DEX/Launchpad allocations and optional project donations directed to Jarrell’s Peak, separate from marketplace accounting.
 - [x] Keep rates, collection addresses, conversion rules, reporting, and distributions explicitly not active until public and verifiable.
 - [x] Add mobile-responsive destination cards and funding panel styles; retain existing dark/gold visual identity.
