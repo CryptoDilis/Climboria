@@ -184,6 +184,8 @@ try {
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
   if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
+  const caveTrapLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapLifecycleAudit?.()??null);
+  if(!caveTrapLifecycle||!caveTrapLifecycle.damageCorrect||caveTrapLifecycle.damageTaken!==25||!caveTrapLifecycle.respawnCorrect) errors.push('Cave live damage/death/Sanctuary respawn lifecycle failed: '+JSON.stringify(caveTrapLifecycle));
   if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.ambientFillIntensity<.9||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
