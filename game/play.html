@@ -1379,7 +1379,7 @@ function update(dt){
  // HUD
  hudT-=dt;if(hudT<0){hudT=.25;const h=heightAt(cp.x,cp.z);zoneEl.textContent=biome(cp.x,cp.z,P.mode=='cine'?9:h);
   const cave=POI.cave,tr=Math.hypot(cp.x-cave.x-cave.dir.x*25,cp.z-cave.z-cave.dir.z*25)<22;
-  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
+  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]}
 }
 /* ---------- direct gameplay boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
