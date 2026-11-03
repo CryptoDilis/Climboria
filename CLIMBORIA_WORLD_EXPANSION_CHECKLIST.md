@@ -1,3 +1,12 @@
+## 2026-11-04 — cave ambient readability adjustment (in validation)
+
+- [x] Raised the cave's broad hemisphere fill from 0.9 to 1.2 so the connected maze, side chambers, and floor remain more readable between torch and mineral-light pools.
+- [x] Tightened the automated cave-lighting regression threshold to require ambient fill of at least 1.15 while retaining checks for six torches, eight local point lights, and finite fixture positions.
+- [ ] Browser Smoke and Validate must pass before merge. Manual desktop/mobile cave visual review remains required; CI lighting values do not prove that every passage is visually readable.
+- [ ] Preserve all existing cave wall/collision boundaries and keep cave snakes disabled pending approval.
+
+---
+
 ## 2026-11-04 — mountain massif access audit and regression gate
 
 - [x] Merged diagnostic instrumentation in PR #188 (commit `6897101e2a2d5a873e6f292461b04077468c6d0a`); Validate passed and Browser Smoke passed (run `41706317202`).
