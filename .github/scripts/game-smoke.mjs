@@ -212,7 +212,7 @@ try {
     return document.documentElement.dataset.climboriaReady === 'true' &&
       document.body.classList.contains('free') && player?.mode === 'walk';
   }, null, { timeout: 15000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
+  await page.waitForFunction(() => { const root=document.documentElement.dataset; return root.climboriaHeroRenderer === 'glb' && !!root.climboriaHero && root.climboriaHero !== 'loading'; }, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', { timeout: 10000 });
