@@ -440,7 +440,7 @@ try {
   await page.waitForTimeout(900);
   const desktopVisualCapture = await page.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
-    camera:{yaw:window.__climboriaCameraOrbit?.yaw,distance:window.__climboriaCameraOrbit?.distance},
+    camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,mobile:window.__climboriaCameraOrbit?.mobile,targetDistance:window.__climboriaCameraOrbit?.targetDistance,distance:window.__climboriaCameraOrbit?.distance,safeBack:window.__climboriaCameraOrbit?.safeBack,actualDistance:window.__climboriaCameraOrbit?.actualDistance,groundClearance:window.__climboriaCameraOrbit?.groundClearance},
     chunks:window.__climboriaJarrellsPeak?.chunks?.size ?? 0,
     frames:window.__climboriaRenderState?.frames ?? 0,
     viewport:{width:innerWidth,height:innerHeight}
@@ -655,7 +655,7 @@ try {
   await mobile.waitForTimeout(900);
   const mobileVisualCapture = await mobile.evaluate(() => ({
     player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
-    camera:{yaw:window.__climboriaCameraOrbit?.yaw,distance:window.__climboriaCameraOrbit?.distance},
+    camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,mobile:window.__climboriaCameraOrbit?.mobile,targetDistance:window.__climboriaCameraOrbit?.targetDistance,distance:window.__climboriaCameraOrbit?.distance,safeBack:window.__climboriaCameraOrbit?.safeBack,actualDistance:window.__climboriaCameraOrbit?.actualDistance,groundClearance:window.__climboriaCameraOrbit?.groundClearance},
     chunks:window.__climboriaJarrellsPeak?.chunks?.size ?? 0,
     frames:window.__climboriaRenderState?.frames ?? 0,
     viewport:{width:innerWidth,height:innerHeight}
