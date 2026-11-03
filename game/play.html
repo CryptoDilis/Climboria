@@ -634,6 +634,29 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveG,caveAmb
  caveWall(25,45,35,45,'annex-room-north');
  const annexFloor=mk(BOX,M('#625b50'),30,.08,42.5,g);sc(annexFloor,10,.16,5,g);
  glow('#a77bff',1.15,24,30,2.5,42.5,g);
+ // Western maze extension: a second connected exploration loop with two chambers.
+ // Every corridor edge is a physical wall and is mirrored by the swept movement collider.
+ caveWall(-30,-11,-42,-11,'west-passage-south');
+ caveWall(-30,-5,-42,-5,'west-passage-north');
+ caveWall(-42,-20,-42,-11,'west-room-east-south');
+ caveWall(-42,-5,-42,5,'west-room-east-north');
+ caveWall(-42,-20,-62,-20,'west-room-north');
+ caveWall(-62,-20,-62,5,'west-room-west');
+ caveWall(-62,5,-42,5,'west-room-south');
+ const westPassageFloor=mk(BOX,M('#625b50'),-36,.08,-8,g);sc(westPassageFloor,12,.16,6,g);
+ const westChamberFloor=mk(BOX,M('#625b50'),-52,.08,-7.5,g);sc(westChamberFloor,20,.16,25,g);
+ // A six-metre north branch leads into a larger second chamber; the doorway stays open.
+ caveWall(-58,-20,-58,-30,'north-maze-passage-west');
+ caveWall(-52,-20,-52,-30,'north-maze-passage-east');
+ caveWall(-68,-30,-58,-30,'north-chamber-south-west');
+ caveWall(-52,-30,-42,-30,'north-chamber-south-east');
+ caveWall(-68,-30,-68,-50,'north-chamber-west');
+ caveWall(-68,-50,-42,-50,'north-chamber-north');
+ caveWall(-42,-50,-42,-30,'north-chamber-east');
+ const northPassageFloor=mk(BOX,M('#625b50'),-55,.08,-25,g);sc(northPassageFloor,6,.16,10,g);
+ const northChamberFloor=mk(BOX,M('#625b50'),-55,.08,-40,g);sc(northChamberFloor,26,.16,20,g);
+ glow('#8fd7c8',1.1,24,-52,2,-7.5,g);
+ glow('#d6b8ff',1.25,28,-55,2,-40,g);
  // Eastward branch adds a second turn and a compact hidden chamber inside the cave terrain footprint.
  caveWall(40,22,48,22,'east-branch-south');
  caveWall(40,28,48,28,'east-branch-north');
@@ -1293,7 +1316,7 @@ function auditCollisionSolids(){
  const percentile=p=>radii.length?radii[Math.min(radii.length-1,Math.floor((radii.length-1)*p))]:null;
  return {count:solids.length,invalid,minRadius:Number.isFinite(minRadius)?minRadius:null,maxRadius,radiusP50:percentile(.5),radiusP90:percentile(.9),large,waterOverlaps};
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,42),...l2w(caveG,26,42)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26))}),caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,42),...l2w(caveG,26,42)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
