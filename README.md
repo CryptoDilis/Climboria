@@ -2049,3 +2049,15 @@ For every integrated asset or borrowed technique, record:
 - [x] Latest PR #175 validation `41660997856` passed on commit `9ada31a2`.
 - [ ] Latest PR #175 desktop/mobile Browser Smoke `41660997756` is still in progress; do not merge before it passes.
 - [x] Main Pages deployment `41660802606` passed after this README's previous update; this new documentation update will trigger a fresh deployment.
+
+
+### 2026-11-03 — PR #175 Browser Smoke diagnosis and rerun
+
+- [x] Main Pages deployment `41661185235` passed on main SHA `3b31dcd4`; main Browser Smoke after PR #174 `41659750658` passed.
+- [x] PR #175 validation on cave trap/elevation correction `41660997856` passed, but Browser Smoke `41660997756` failed at `.github/scripts/game-smoke.mjs:307` after the homepage, mobile navigation and desktop world diagnostics all passed.
+- [x] Failure root cause: the smoke script used `Promise.all([page.waitForURL(...), locator.click()])` for a hub `<button>` whose click handler assigns `location.href`. The click itself waits for the navigation; the competing URL waiter timed out even though the browser had reached `game/play.html?level=11`. This was a test synchronization defect, not evidence of a gameplay exception.
+- [x] Corrected the test on PR #175 commit `95516e99a44047347944341232a30707a8cfa5b1`: click the launch button, await document load, and independently assert pathname `/game/play.html` and query `level=11`, while retaining the no-retired-hero-query assertion.
+- [x] PR #175 Validate `41661810220` passed on commit `95516e99`.
+- [ ] PR #175 Browser Smoke `41661810197` is running the full desktop/mobile gameplay suite. Do not merge until it completes successfully.
+- [ ] Cave trap acceptance remains incomplete: deterministic helper probes are not proof of live trap damage, death and sanctuary respawn. Underwater cave room/swimming hangout, further maze expansion, treasure odds/server authority and physical Redmi 14 5G visual acceptance remain open.
+- [ ] Cave terrain elevation is now explicitly sampled with `heightAt` before positioning the cave group; do not build a water room by reusing the global sea-level water plane. Inspect the local cave water volume, swim query and collision design before implementation.
