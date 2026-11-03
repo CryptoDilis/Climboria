@@ -368,83 +368,27 @@ try {
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
   await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
-  // Keep portrait launch covered by its dedicated gate test; then expose the title UI in landscape.
+  // Mobile Hub-to-game now enters gameplay directly; the character picker belongs in the Hub.
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
     text: document.querySelector('#rotate-phone-overlay')?.innerText || '',
     controlsHidden: [...document.querySelectorAll('#player-card,#status-card,#world-map-panel,#expedition-settings-toggle')].every(el => getComputedStyle(el).visibility === 'hidden'),
-    bodyClass: document.body.className,
-    screenOrientation: screen.orientation?.type || 'unavailable',
-    viewport: { width: innerWidth, height: innerHeight, portraitMedia: matchMedia('(orientation: portrait)').matches },
   }));
   if (!portraitGate.visible || !portraitGate.text.includes('ROTATE YOUR PHONE') || !portraitGate.controlsHidden) {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
-  await mobile.evaluate(() => {
-    document.body.classList.remove('free', 'climboria-portrait');
-    document.body.classList.add('climboria-landscape');
-    window.dispatchEvent(new Event('resize'));
-  });
   await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
-  // Touch on character-selection controls must not start gameplay behind the modal.
-  await mobile.locator('#character-create').click();
-  await mobile.locator('#character-create-panel [data-hero]').dispatchEvent('touchstart', { bubbles: true });
-  await mobile.locator('#character-create-panel [data-hero]').click();
-  const characterPickerTouch = await mobile.evaluate(() => ({
+  const directMobileEntry = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
-    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-    titleHidden: getComputedStyle(document.querySelector('#title')).visibility === 'hidden' && getComputedStyle(document.querySelector('#title')).opacity === '0',
-    modalAboveHud: Number(getComputedStyle(document.querySelector('#character-create-panel')).zIndex) > Number(getComputedStyle(document.querySelector('#player-card')).zIndex),
-    backdropActive: getComputedStyle(document.body, '::before').content !== 'none' && getComputedStyle(document.body, '::before').zIndex === '9998',
+    createHeroInGameplay: !!document.querySelector('#character-create, #character-create-panel, #expedition-hero-menu'),
+    titleVisible: !!document.querySelector('#title') && getComputedStyle(document.querySelector('#title')).display !== 'none' && getComputedStyle(document.querySelector('#title')).visibility !== 'hidden',
+    generatingOverlay: /generating/i.test(document.body.innerText),
   }));
-  if (characterPickerTouch.gameplayActive || !characterPickerTouch.panelVisible || !characterPickerTouch.titleHidden || !characterPickerTouch.modalAboveHud || !characterPickerTouch.backdropActive) {
-    errors.push('Touching character selection unexpectedly entered gameplay behind the picker: ' + JSON.stringify(characterPickerTouch));
+  if (!directMobileEntry.gameplayActive || directMobileEntry.createHeroInGameplay || directMobileEntry.titleVisible || directMobileEntry.generatingOverlay) {
+    errors.push('Mobile Hub-to-game must enter directly with no Create Hero, title, or generating overlay: ' + JSON.stringify(directMobileEntry));
   }
-  const heroContinue = await mobile.evaluate(() => ({
-    buttonText: document.querySelector('#character-create-close').textContent.trim(),
-    loaded: document.querySelector('#character-create-close').dataset.heroLoaded === 'true',
-    panelVisible: getComputedStyle(document.querySelector('#character-create-panel')).display !== 'none',
-  }));
-  if (heroContinue.buttonText !== 'ENTER JARRELL’S PEAK' || !heroContinue.loaded || !heroContinue.panelVisible) {
-    errors.push('Loaded hero must expose an explicit Enter Jarrell’s Peak action: ' + JSON.stringify(heroContinue));
-  }
-  await mobile.locator('#character-create-close').click();
-  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
-  const heroEntry = await mobile.evaluate(() => ({
-    gameplayActive: document.body.classList.contains('free'),
-    panelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-    backdropRemoved: !document.body.classList.contains('character-panel-open'),
-    renderer: document.documentElement.dataset.climboriaHeroRenderer,
-  }));
-  if (!heroEntry.gameplayActive || !heroEntry.panelHidden || !heroEntry.backdropRemoved || heroEntry.renderer !== 'glb') {
-    errors.push('Enter Jarrell’s Peak must close picker and spawn the loaded GLB hero: ' + JSON.stringify(heroEntry));
-  }
-  // Verify Back to Menu remains reachable from the live expedition settings after hero entry.
-  await mobile.locator('#expedition-settings-toggle').click();
-  await mobile.locator('#back-to-expedition-menu').click();
-  const titleMenuState = await mobile.evaluate(() => ({
-    titleVisible: getComputedStyle(document.querySelector('#title')).opacity !== '0',
-    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-    mobileActionsHidden: [...document.querySelectorAll('[data-mobile-action]')].every(e => getComputedStyle(e).display === 'none'),
-  }));
-  if (!titleMenuState.titleVisible || !titleMenuState.characterPanelHidden || !titleMenuState.mobileActionsHidden) {
-    errors.push('Back to Menu must restore the title, hide the character panel, and hide gameplay controls: ' + JSON.stringify(titleMenuState));
-  }
-  // Re-enter using the actual title interaction, not a forced body.free state.
-  await mobile.locator('#title h1').click();
-  await mobile.waitForFunction(() => document.body.classList.contains('free'), undefined, { timeout: 10000 });
-  const actualMobileTransition = await mobile.evaluate(() => ({
-    gameplayActive: document.body.classList.contains('free'),
-    titleHidden: getComputedStyle(document.querySelector('#title')).opacity === '0',
-    characterPanelHidden: getComputedStyle(document.querySelector('#character-create-panel')).display === 'none',
-  }));
-  if (!actualMobileTransition.gameplayActive || !actualMobileTransition.titleHidden || !actualMobileTransition.characterPanelHidden) {
-    errors.push('Actual mobile title-to-gameplay transition left a menu overlay visible: ' + JSON.stringify(actualMobileTransition));
-  }
-  // Apply the landscape state directly only for CSS viewport/orientation assertions;
-  // gameplay activation above must come from the real user interaction.
-  // not the Android device's physical Screen Orientation API.
+  // The game is already active; this phase normalizes the emulated landscape CSS state.
   await mobile.evaluate(() => {
     // This phase validates gameplay HUD, so emulate the same state set by takeOver().
     document.body.classList.add('free');
