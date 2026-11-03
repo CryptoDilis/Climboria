@@ -72,6 +72,9 @@ jobs:
                 return window.__climboriaGameReady===true && document.body.classList.contains('free') && visible('#player-card') && visible('#status-card');
               }, null, { timeout: 60000 });
               await game.waitForTimeout(2000);
+              // A real user gesture must recover playback when autoplay was blocked during takeOver().
+              await game.locator('#expedition-settings-toggle').click({timeout:15000});
+              await game.waitForFunction(() => document.documentElement.dataset.climboriaMusic === 'playing', null, {timeout:15000});
               const state = await game.evaluate(() => {
                 const visible = selector => { const el=document.querySelector(selector); if(!el)return false; const style=getComputedStyle(el),rect=el.getBoundingClientRect(); return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0&&rect.width>0&&rect.height>0; };
                 const sceneCanvas=[...document.querySelectorAll('canvas')].find(canvas=>canvas.id!=='world-map');
@@ -86,10 +89,10 @@ jobs:
                   staminaHud:!!document.querySelector('#stamina-value'),
                   worldMap:visible('#world-map-panel'),
                   settings:visible('#expedition-settings-toggle'),
-                  soundtrack:!!window.__climboriaSoundtrackAudio
+                  soundtrack:document.documentElement.dataset.climboriaMusic||'not-started'
                 };
               });
-              if (!state.ready || !state.gameplayActive || !state.canvas || state.canvasWidth < 100 || state.canvasHeight < 100 || !state.playerHud || !state.healthHud || !state.staminaHud || !state.worldMap || !state.settings) throw new Error('Live Jarrell scene did not initialize: ' + JSON.stringify(state));
+              if (!state.ready || !state.gameplayActive || !state.canvas || state.canvasWidth < 100 || state.canvasHeight < 100 || !state.playerHud || !state.healthHud || !state.staminaHud || !state.worldMap || !state.settings || state.soundtrack !== 'playing') throw new Error('Live Jarrell scene did not initialize: ' + JSON.stringify(state));
               if (errors.length) throw new Error('Uncaught browser errors: ' + errors.join(' | '));
               console.log('PASS live homepage/mobile navigation/Jarrell scene: ' + JSON.stringify(state));
             } finally {

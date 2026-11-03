@@ -820,7 +820,9 @@ const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 let climboriaMusicRequested=false;
 climboriaMusic.addEventListener('error',()=>{document.documentElement.dataset.climboriaMusic='load-error';console.error('[Climboria] Soundtrack failed to load',climboriaMusic.error)});
-climboriaMusic.addEventListener('playing',()=>{document.documentElement.dataset.climboriaMusic='playing'});
+window.__climboriaSoundtrackAudio=climboriaMusic;
+function resumeClimboriaMusicFromGesture(){if(climboriaMusicRequested&&climboriaMusic.paused)startClimboriaMusic()}
+climboriaMusic.addEventListener('playing',()=>{document.documentElement.dataset.climboriaMusic='playing';document.removeEventListener('pointerdown',resumeClimboriaMusicFromGesture,true);document.removeEventListener('keydown',resumeClimboriaMusicFromGesture,true)});
 climboriaMusic.addEventListener('pause',()=>{if(climboriaMusicRequested)document.documentElement.dataset.climboriaMusic='paused'});
 function startClimboriaMusic(){
  climboriaMusicRequested=true;
@@ -830,6 +832,8 @@ function startClimboriaMusic(){
   console.warn('[Climboria] Soundtrack playback needs a fresh user gesture',error);
  });
 }
+document.addEventListener('pointerdown',resumeClimboriaMusicFromGesture,true);
+document.addEventListener('keydown',resumeClimboriaMusicFromGesture,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&climboriaMusicRequested&&climboriaMusic.paused)startClimboriaMusic()});
 const settingsPanel=document.getElementById('expedition-settings-panel');
 document.getElementById('expedition-settings-toggle').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block'});settingsPanel.addEventListener('pointerdown',e=>e.stopPropagation());settingsPanel.addEventListener('click',e=>e.stopPropagation());
