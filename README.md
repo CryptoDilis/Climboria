@@ -2169,3 +2169,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await fresh Browser Smoke and Validate results for commits `8c96b46a2ac7570997859bb309541dcc94c2e61b` and `065b88ff98db511de9b0660e285cdd6d5b9e81b1`. The current GitHub connector exposes PR-triggered runs only; it returned no push-triggered run records/statuses for these main commits, so no green status is claimed.
 - [ ] Follow-up: add an automated open/hide/90–150 second respawn/inventory lifecycle assertion; this change currently verifies spawn visibility and floor alignment only.
 - [ ] Do not enable or advertise the 3% rare token jackpot until a funded, server-authoritative reward service and verifiable payout controls are implemented.
+
+
+### 2026-11-04 — PR #182 geode chest lifecycle verification and 100-chest system specification
+
+- [x] PR #182 head `df37813296f529bd4663308196cd365bf62f68e2`: Validate run `41696728129` passed and desktop/mobile Browser Smoke run `41696728185` passed. Both checks ran against the same PR head SHA.
+- [x] Merged PR #182 as squash commit `263130638b5f0e9b3e94e672f8e137715f24a2c3`. The smoke-only geode audit verifies chest opening, inventory reward quantity (including stacked `qty`), hiding, 90–150 second timer bounds, respawn, and cave-floor alignment. This verifies the current single geode chest lifecycle only; it does not implement the planned 100-chest system.
+- [x] Audited current main chest implementation before expansion: **8 chest instances currently spawn** — one cave chest, one geode chest, one summit chest, one ruins/landmark chest, and four randomized remote chests. Existing chest respawn is 90–150 seconds; randomized remote chests select a new position when placed, while fixed chests return to their fixed coordinates.
+- [ ] New approved design: exactly **100 chests** = 84 randomized world chests + 15 cave chests + 1 permanent summit chest. The current cave and geode chests count toward the 15; existing world landmark chests count toward the 84.
+- [ ] World chest respawn target: 90–150 seconds, newly selected valid location. Cave chest respawn target: 120–240 seconds, newly selected valid cave spawn. Summit chest: fixed location, globally shared 900-second (15-minute) cooldown after a successful claim.
+- [ ] Proposed rarity tables and summit reward-class pool are recorded in `CLIMBORIA_WORLD_EXPANSION_CHECKLIST.md`. These are design probabilities only, not live drop rates.
+- [ ] Summit chest is planned as a contested solo/party/guild objective with one globally locked claim per cycle, shared countdown, winner announcement and reward history. The server-authoritative competition and claim system is not implemented.
+- [ ] NFT and cryptocurrency rewards are disabled until a funded, auditable, server-authoritative reward and delivery service exists. Current inventory/reward handling is browser-local and must not be represented as secure token custody or payouts.
+- [ ] Next implementation gate: design and test deterministic valid spawn zones and category counts before changing production chest spawning. Then add server-backed shared summit cooldown/claim locking before enabling PvP contest rewards.
