@@ -238,7 +238,7 @@ try {
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
-  if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
+  if(spawnCheck.heroAsset!==window.ClimboriaHeroData?.getSelectedHero?.().id)errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
   const desktopOrbit = await page.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     document.querySelector('canvas')?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:2,clientX:200,clientY:200}));
@@ -268,15 +268,15 @@ try {
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
   const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
+  if(desktopHeroStability.identity!==window.ClimboriaHeroData?.getSelectedHero?.().id||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
-  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== 'adventurer') errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== window.ClimboriaHeroData?.getSelectedHero?.().id) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
     bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    hero: document.documentElement.dataset.climboriaHero === 'adventurer',
+    hero: document.documentElement.dataset.climboriaHero === window.ClimboriaHeroData?.getSelectedHero?.().id,
     bottomControlDock: !!document.querySelector('#control-dock'),
   }));
   if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || hudUi.bottomControlDock) errors.push('Adventure HUD/inventory/map/hero state is incorrect or an unwanted bottom control dock is present: ' + JSON.stringify(hudUi));
@@ -436,7 +436,7 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
-  await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
+  await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === window.ClimboriaHeroData?.getSelectedHero?.().id, { timeout: 45000 });
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   await mobile.keyboard.press('w');
   await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
@@ -477,7 +477,7 @@ try {
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
   const mobileHeroStability=await mobile.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
-  if(mobileHeroStability.identity!=='adventurer'||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
+  if(mobileHeroStability.identity!==window.ClimboriaHeroData?.getSelectedHero?.().id||mobileHeroStability.renderer!=='glb'||!mobileHeroStability.cameraApi) errors.push('Mobile movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(mobileHeroStability));
   const mobileState = await mobile.evaluate(() => {
     const text = document.body.innerText;
     return {
@@ -492,7 +492,7 @@ try {
       statusVisible: (()=>{const e=document.querySelector('#status-card'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&Number(c.opacity)>.8})(),
       worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none' && getComputedStyle(document.querySelector('#world-map-panel')).visibility !== 'hidden',
       settingsVisible: (()=>{const e=document.querySelector('#expedition-settings-toggle'),c=e&&getComputedStyle(e);return !!e&&c.visibility!=='hidden'&&c.display!=='none'})(),
-      hero: document.documentElement.dataset.climboriaHero === 'adventurer',
+      hero: document.documentElement.dataset.climboriaHero === window.ClimboriaHeroData?.getSelectedHero?.().id,
       bag: !!document.querySelector('#player-card'),
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,
