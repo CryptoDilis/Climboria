@@ -1285,7 +1285,7 @@ function moveWalk(mx,mz){
   const steps=Math.max(1,Math.ceil(distance/.32)),sx=dx/steps,sz=dz/steps;
   for(let step=0;step<steps;step++){
    const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldCenter=groundAt(ox,oz),feet=P.y-1.75;
-   const grounded=P.vy<=0&&feet<=oldCenter+.55;
+   const grounded=P.vy<=0&&feet<=oldCenter+.08;
    if(blocked(nx,nz,ox,oz,feet))break;
    P.x=nx;P.z=nz;
    if(grounded){
