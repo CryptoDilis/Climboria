@@ -2143,3 +2143,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Next cave priorities after #181: extend connected maze/hidden chambers; improve cave wayfinding and lighting; verify treasure placement and respawn; implement funded, server-authoritative 3% rare-reward logic. No token reward should be promised or minted without a funded, auditable source.
 - [ ] Continue Jarrell's Peak P0 checklist in order: mountain approach/collision acceptance, full world interaction regression, UI/hero/HUD/fullscreen review, desktop and Redmi 14 5G hands-on acceptance. Keep wildlife disabled and preserve the existing map.
 - [ ] Do not claim the entire world is complete from cave geometry smoke alone. Physical device review and remaining world acceptance are separate gates.
+
+## 2026-11-04 — PR #181 geode chamber merged after green PR checks
+
+- [x] PR #181 head commit `f793c3d1fc341e45ef4bcd60a140bf26c38818b0`: Validate Climboria run `41676389523` passed; all listed validation steps completed successfully.
+- [x] PR #181 Browser Smoke run `41676389571` passed; the `browser-smoke` job completed successfully, including homepage CTA/DEX/mobile navigation and the full desktop/mobile Jarrell's Peak gameplay smoke step.
+- [x] Merged PR #181 using the expected head SHA as squash merge `fb3f2d0c36455e3958a5a9bdffc419ce8dc24f4f`. Scope adds the connected geode corridor/chamber, cave floor mapping and deterministic passage/floor/collision assertions. No unrelated map, wildlife, hero, or UI changes were included.
+- [ ] Post-merge main Validate, Browser Smoke and Pages deployment still require fresh run-ID verification. The available commit-run lookup exposes PR-triggered runs only and returned no post-merge push runs for this merge SHA; do not infer deployment success from the green PR checks.
+- [ ] Next P0: continue the connected cave maze/hidden-room expansion and improve wayfinding/lighting; then verify treasure placement/respawn and implement funded, server-authoritative 3% rare-reward logic with anti-exploit safeguards.
+- [ ] Continue Jarrell's Peak acceptance in order: mountain approach/collision, full world-interaction regression, UI/hero/HUD/fullscreen, desktop and physical Redmi 14 5G. Preserve the current map and keep wildlife disabled until owner approval.
