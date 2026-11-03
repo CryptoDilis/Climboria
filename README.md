@@ -1975,3 +1975,16 @@ For every integrated asset or borrowed technique, record:
 - [x] Verified the completed HUD/minimap repair on commit `bbaf2f32d015df5be4d1d735d8d351f81830ec5b` with Browser Smoke run [41564760715](https://github.com/CryptoDilis/Climboria/actions/runs/41564760715): mobile re-entry passed 3/3; automated assertions confirmed the explorer card at upper-left, stats directly beneath it (≤10 px gap), minimap at upper-right with terrain detail and a glowing player marker, settings beside the minimap, hidden debug overlay, and no bottom control dock. Homepage/DEX/mobile navigation and desktop/mobile Jarrell gameplay tests also passed.
 - [ ] Physical-device acceptance remains: verify the same HUD/minimap placement and readability on the Redmi 14 5G in actual landscape. CI mobile emulation is not a substitute for the phone check.
 - [ ] Next P0: continue the unchecked Jarrell's Peak world, collision, cave, terrain, lighting, swimming, and performance items below; preserve the current map and existing UI.
+
+
+## 2026-11-03 — second Node-scope hero assertion repair (verification pending)
+
+- [x] Inspected Browser Smoke run [41635024510](https://github.com/CryptoDilis/Climboria/actions/runs/41635024510) on commit `c7438192749b4da3a36a9f1f56163f0dc15c9d15`.
+- [x] Confirmed preflight passed, mobile Hub-to-game auto-entry/HUD passed 3/3, and homepage CTA/DEX modal/mobile navigation passed.
+- [x] Diagnosed the gameplay smoke failure at `.github/scripts/game-smoke.mjs:271`: a second Node-side assertion referenced browser-global `window.ClimboriaHeroData`, causing `ReferenceError: window is not defined`. The first occurrence at line 241 had already been corrected, but desktop and mobile movement-stability assertions still contained the same scope error.
+- [x] Corrected desktop comparison to use the selected hero ID already returned by `page.evaluate()`; corrected mobile comparison to return and compare `selectedHeroId` inside its browser evaluation result. Assertions remain intact; no test was weakened.
+- [x] Committed as `268c9ca23f15173c32e944fb33ae001b774dfedc` (`Fix remaining Node scope hero smoke assertions`).
+- [ ] **Verification pending:** the GitHub App/API content commit did not trigger Actions; `fetch_commit_workflow_runs` returned no runs for this SHA. The available GitHub Actions controls expose rerun of an existing run/job but no workflow-dispatch action. Do not treat the fix as green or rerun the old run against its old SHA.
+- [ ] Obtain a fresh Validate and Browser Smoke run on exact commit `268c9ca23f15173c32e944fb33ae001b774dfedc`; inspect desktop and mobile gameplay steps and screenshots.
+- [ ] Continue active P0 checklist after the fresh run. The latest smoke diagnostics showed a clear spawn-to-Jarrell summit route and valid main-summit approach probes; distributed massif bearings include several blocked directions but each sampled massif has at least one traversable approach under the current audit. Inspect the intended traversal requirements and first blockers before any collider/terrain change.
+- [ ] Physical desktop and Redmi 14 5G acceptance remains separate from CI.
