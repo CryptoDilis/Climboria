@@ -410,7 +410,7 @@ try {
     const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,moveTarget:p.moveTarget};
     p.mode='walk';p.x=chest.x;p.z=chest.z;p.y=w.heightAt(chest.x,chest.z)+1.75;
     w.interact();
-    const result={inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1')||!!localStorage.getItem('climboria_jarrell_inventory'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
+    const result={inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
     Object.assign(p,saved);
     return result;
   });
