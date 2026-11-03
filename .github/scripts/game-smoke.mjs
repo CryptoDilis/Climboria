@@ -137,7 +137,15 @@ try {
             const a=deg*Math.PI/180;let x=peak.x+Math.cos(a)*130,z=peak.z+Math.sin(a)*130,steps=0,blockedAt=null;
             while(Math.hypot(x-peak.x,z-peak.z)>55){
               const nx=x-Math.cos(a)*.5,nz=z-Math.sin(a)*.5;
-              if(w.blocked(nx,nz,x,z,w.groundAt(x,z)+.01)){blockedAt={x:+x.toFixed(1),z:+z.toFixed(1)};break;}
+              const feet=w.groundAt(x,z)+.01;
+              if(w.blocked(nx,nz,x,z,feet)){
+                const reason=window.__climboriaLastCollision||null;
+                const nearbyFixed=reason?.type==='fixed-solid'&&Array.isArray(w.collisionSolids)
+                  ?w.collisionSolids.map(c=>({...c,distance:Math.hypot(c.x-x,c.z-z)})).sort((a,b)=>a.distance-b.distance).slice(0,3)
+                  :[];
+                blockedAt={x:+x.toFixed(1),z:+z.toFixed(1),feet:+feet.toFixed(2),reason,nearbyFixed};
+                break;
+              }
               x=nx;z=nz;steps++;
             }
             approaches.push({bearing:deg,progress:+(steps*.5).toFixed(1),blockedAt});
