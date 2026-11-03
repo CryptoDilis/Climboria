@@ -285,6 +285,7 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
   const grounded=player.y<=floor+.12&&player.vy<=0;
+  const wasAirborne=player.jumpState==='takeoff'||player.jumpState==='airborne';
   if(surfaceInput&&!player.jumpHeld&&grounded){
    player.vy=11;player.jumpState='takeoff';player.jumpStateTimer=0;
    player.jumpCount=(player.jumpCount||0)+1;
@@ -292,7 +293,7 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.jumpHeld=!!surfaceInput;
   player.vy-=30*dt;player.y+=player.vy*dt;
   if(player.y<floor){
-   const landed=player.vy<0&&player.y<floor;
+   const landed=wasAirborne&&player.vy<0&&player.y<floor;
    player.y=floor;player.vy=0;
    if(landed){player.jumpState='land';player.jumpStateTimer=.2;player.landCount=(player.landCount||0)+1;}
    else if(player.jumpState!=='land')player.jumpState='grounded';
