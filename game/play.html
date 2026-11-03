@@ -772,9 +772,11 @@ function disposeHeroModel(root){
 }
 function setHeroLoadFailure(message,error){
  heroLoadError=String(message||'Hero failed to load');
+ const detail=error?.stack||error?.message||String(error||'');
  document.documentElement.dataset.climboriaHero='load-error';
  document.documentElement.dataset.climboriaHeroError=heroLoadError;
- console.error('[Climboria] GLB load failed: '+assetChoices.ClimboriaHero,error||heroLoadError);
+ document.documentElement.dataset.climboriaHeroErrorDetail=detail.slice(0,1800);
+ console.error('[Climboria] GLB load failed: '+assetChoices.ClimboriaHero,detail||heroLoadError);
 }
 function loadAssetHero(heroRecord,onReady){
  const record=heroData.normalize(heroRecord)||heroData.defaultHero();
