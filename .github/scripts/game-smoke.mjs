@@ -402,11 +402,17 @@ try {
     errors.push('Desktop explore/teleport controls failed: ' + JSON.stringify(controls));
   }
   const lootResult = await page.evaluate(() => {
-    const w=window.__climboriaJarrellsPeak, chest=w?.chests?.find(c=>!c.open);
-    if(!w||!chest) return {error:'no unopened chest available'};
-    w.player.mode='walk';w.player.x=chest.x;w.player.z=chest.z;w.player.y=w.heightAt(chest.x,chest.z)+1.75;
+    const w=window.__climboriaJarrellsPeak, chest=w?.chests?.find(c=>!c.open), p=w?.player;
+    if(!w||!chest||!p) return {error:'no unopened chest or player available'};
+    // Exercise chest interaction at the chest, then restore the explorer's actual
+    // position before capturing gameplay evidence. The prior test left the player
+    // at the chest location, making the screenshot look like a cave/close-up scene.
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,moveTarget:p.moveTarget};
+    p.mode='walk';p.x=chest.x;p.z=chest.z;p.y=w.heightAt(chest.x,chest.z)+1.75;
     w.interact();
-    return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
+    const result={inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1')||!!localStorage.getItem('climboria_jarrell_inventory'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
+    Object.assign(p,saved);
+    return result;
   });
   if(lootResult.error||!lootResult.inventory.length||!lootResult.stored||!lootResult.panel||!lootResult.toggle) errors.push('Chest loot did not enter persistent field inventory: '+JSON.stringify(lootResult));
   await page.locator('#player-card').dispatchEvent('click');
