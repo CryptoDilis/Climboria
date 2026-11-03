@@ -53,7 +53,7 @@ try {
     const samples = [[0,0],[0,-90],[-170,90],[-760,-520],[-1200,0],[560,330],[640,-620]];
     return {
       title: document.title,
-      heading: document.querySelector('#title h1')?.textContent?.trim() || '',
+      heading: document.querySelector('#world-map-panel strong')?.textContent?.trim() || '',
       canvas: !!document.querySelector('canvas'),
       ready: document.documentElement.dataset.climboriaReady === 'true',
       api: !!w,
