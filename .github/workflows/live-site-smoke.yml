@@ -67,19 +67,29 @@ jobs:
                 null,
                 { timeout: 60000 }
               );
-              await game.waitForSelector('#zone', { timeout: 30000 });
-              await game.waitForTimeout(8000);
-              const state = await game.evaluate(() => ({
-                canvas: [...document.querySelectorAll('canvas')].some(canvas => canvas.id !== 'world-map'),
-                canvasWidth: [...document.querySelectorAll('canvas')].find(canvas => canvas.id !== 'world-map')?.width || 0,
-                canvasHeight: [...document.querySelectorAll('canvas')].find(canvas => canvas.id !== 'world-map')?.height || 0,
-                level: document.querySelector('#zone')?.textContent || '',
-                playerHud: !!document.querySelector('#player-name'),
-                healthHud: !!document.querySelector('#health-value'),
-                staminaHud: !!document.querySelector('#stamina-value'),
-                soundtrack: !!window.__climboriaSoundtrackAudio
-              }));
-              if (!state.canvas || state.canvasWidth < 100 || state.canvasHeight < 100 || !state.playerHud || !state.healthHud || !state.staminaHud) throw new Error('Live Jarrell scene did not initialize: ' + JSON.stringify(state));
+              await game.waitForFunction(() => {
+                const visible = selector => { const el=document.querySelector(selector); if(!el)return false; const style=getComputedStyle(el),rect=el.getBoundingClientRect(); return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0&&rect.width>0&&rect.height>0; };
+                return window.__climboriaGameReady===true && document.body.classList.contains('free') && visible('#player-card') && visible('#status-card');
+              }, null, { timeout: 60000 });
+              await game.waitForTimeout(2000);
+              const state = await game.evaluate(() => {
+                const visible = selector => { const el=document.querySelector(selector); if(!el)return false; const style=getComputedStyle(el),rect=el.getBoundingClientRect(); return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0&&rect.width>0&&rect.height>0; };
+                const sceneCanvas=[...document.querySelectorAll('canvas')].find(canvas=>canvas.id!=='world-map');
+                return {
+                  ready:window.__climboriaGameReady===true,
+                  gameplayActive:document.body.classList.contains('free'),
+                  canvas:!!sceneCanvas,
+                  canvasWidth:sceneCanvas?.width||0,
+                  canvasHeight:sceneCanvas?.height||0,
+                  playerHud:visible('#player-card')&&visible('#player-name'),
+                  healthHud:visible('#status-card')&&!!document.querySelector('#health-value'),
+                  staminaHud:!!document.querySelector('#stamina-value'),
+                  worldMap:visible('#world-map-panel'),
+                  settings:visible('#expedition-settings-toggle'),
+                  soundtrack:!!window.__climboriaSoundtrackAudio
+                };
+              });
+              if (!state.ready || !state.gameplayActive || !state.canvas || state.canvasWidth < 100 || state.canvasHeight < 100 || !state.playerHud || !state.healthHud || !state.staminaHud || !state.worldMap || !state.settings) throw new Error('Live Jarrell scene did not initialize: ' + JSON.stringify(state));
               if (errors.length) throw new Error('Uncaught browser errors: ' + errors.join(' | '));
               console.log('PASS live homepage/mobile navigation/Jarrell scene: ' + JSON.stringify(state));
             } finally {
