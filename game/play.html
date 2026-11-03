@@ -987,7 +987,7 @@ function toggleInventory(){renderInventory();const opening=invPanel.style.displa
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
 const mapToggle=document.getElementById('world-map-toggle'),mapPanel=document.getElementById('world-map-panel'),mapCanvas=document.getElementById('world-map'),mapCtx=mapCanvas.getContext('2d');
-function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap()}
+function toggleWorldMap(){mapPanel.classList.toggle('map-expanded');drawWorldMap();worldMapBase=mapCtx.getImageData(0,0,mapCanvas.width,mapCanvas.height);drawWorldMapPlayer()}
 mapPanel.style.display='block';
 function drawWorldMap(){
  const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.clearRect(0,0,w,h);
@@ -1027,10 +1027,18 @@ function drawWorldMap(){
  const marks=[['SANCTUARY',POI.sanct.x,POI.sanct.z],['PARK',POI.park.x,POI.park.z],['CAMP',POI.camp.x,POI.camp.z],['CAVE',POI.cave.x,POI.cave.z],['SUMMIT',POI.summit.px,POI.summit.pz],['SEA',-960,0],['RICE',RICE.x,RICE.z]];
  c.font='bold 13px system-ui';c.textAlign='left';c.textBaseline='middle';
  for(const [name,x,z] of marks){const mx=sx(x),my=sy(z);c.fillStyle='#ffdf8a';c.beginPath();c.arc(mx,my,5,0,Math.PI*2);c.fill();c.strokeStyle='#171b17';c.lineWidth=2;c.stroke();c.fillStyle='#fff0c9';c.shadowColor='#000';c.shadowBlur=4;c.fillText(name,mx+8,my-7)}
- const px=sx(P.x),py=sy(P.z);c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,8,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();c.shadowBlur=0;
 }
-// Draw the terrain map once on startup; it is cached between explicit map toggles to avoid per-frame rebuilds.
-drawWorldMap();
+// Cache the terrain relief separately so only the glowing hero marker is redrawn during gameplay.
+let worldMapBase=null,mapMarkerClock=0;
+function drawWorldMapPlayer(){
+ if(!worldMapBase)return;
+ const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.putImageData(worldMapBase,0,0);
+ const px=Math.max(8,Math.min(w-8,w/2+P.x/3000*w)),py=Math.max(8,Math.min(h-8,h/2+P.z/2000*h));
+ c.save();c.shadowColor='#8cff55';c.shadowBlur=28;c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,13,0,Math.PI*2);c.fill();
+ c.shadowBlur=0;c.strokeStyle='#fff';c.lineWidth=3;c.beginPath();c.arc(px,py,7,0,Math.PI*2);c.stroke();
+ c.fillStyle='#eaffd5';c.beginPath();c.arc(px,py,3,0,Math.PI*2);c.fill();c.restore();
+}
+drawWorldMap();worldMapBase=mapCtx.getImageData(0,0,mapCanvas.width,mapCanvas.height);drawWorldMapPlayer();
 mapToggle.addEventListener('click',toggleWorldMap);
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
@@ -1349,6 +1357,7 @@ const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub'
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
 function update(dt){
  Tm+=dt;
+ mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer()}
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
