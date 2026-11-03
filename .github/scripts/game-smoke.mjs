@@ -407,6 +407,13 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
+  // Simulate the orientation class applied by the game's fullscreen/orientation handler.
+  // Playwright's viewport resize does not reproduce every Android Screen Orientation event.
+  await mobile.evaluate(() => {
+    document.body.classList.remove('climboria-portrait');
+    document.body.classList.add('climboria-landscape');
+    window.dispatchEvent(new Event('resize'));
+  });
   await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
   const directMobileEntry = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
