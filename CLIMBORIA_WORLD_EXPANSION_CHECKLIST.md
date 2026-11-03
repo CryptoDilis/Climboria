@@ -569,3 +569,34 @@ For each meaningful implementation batch:
 - [x] Added a broader world-sampled `mountainMassifAudit` diagnostic to `.github/scripts/game-smoke.mjs` to find spatially separated high points and measure eight-direction approaches at each candidate, rather than testing only the central summit.
 - [ ] Inspect the new mountain massif diagnostic in the workflows triggered by commit `3c6b7b4eabdc064d35859843f67cda8dd1525619`; if it reveals inaccessible approaches or unexpected blockers, diagnose and repair the exact terrain/collider cause.
 - [ ] Manual visual acceptance of sand blending, shoreline width, and vegetation on desktop and Redmi 14 5G remains open; CI geometry checks do not certify the visual result.
+
+
+## 2026-11-04 — 100-chest Jarrell's Peak treasure system (design approved; implementation pending)
+
+### World distribution — exactly 100 chests
+- [ ] Implement exactly **100 total chest spawn records** across Jarrell's Peak: **84 world chests**, **15 cave chests**, and **1 permanent summit chest**. The existing cave chest and geode chest count toward the 15 cave chests; the summit chest counts toward the single summit chest. Existing world landmark chests (such as the ruins chest) count toward the 84 world chests, not as additional chests.
+- [ ] Keep 84 world chests distributed across valid authored zones and randomized eligible spawn points. After a successful opening, respawn them after a randomized **90–150 seconds** at a newly selected valid location.
+- [ ] Keep 15 cave chests inside the connected cave network, including the existing cave and geode chests. Place the remaining cave chests across reachable chambers/branches, including carefully selected hidden/trap/underwater-adjacent locations that remain accessible and safe to claim. Respawn after randomized **120–240 seconds** at a newly selected valid cave spawn point.
+- [ ] Keep exactly one special chest at the summit. It remains at the same permanent location and becomes available again **900 seconds (15 minutes) after a successful claim**. The cooldown is global/shared across all players; approaching or contesting the chest does not start or reset the timer.
+- [ ] Show the summit chest availability/countdown to all players. A successful claim atomically locks the chest, records one winner/reward, and starts the 900-second global cooldown. Simultaneous requests must never grant duplicate claims.
+- [ ] Validate every randomized spawn against terrain height/slope, water boundaries, cave floor/ceiling, collision solids, building interiors, reachability and player clearance. Never spawn a chest inside geometry or in an unreachable pocket. Do not reveal undiscovered hidden chest coordinates in client diagnostics.
+
+### Proposed rarity probabilities (per successful chest opening)
+| Rarity | 84 world chests | 15 cave chests | 1 summit chest |
+|---|---:|---:|---:|
+| Common | 65% | 25% | 5% |
+| Uncommon | 25% | 35% | 15% |
+| Rare | 8% | 25% | 35% |
+| Epic | 1.8% | 12% | 30% |
+| Legendary | 0.2% | 3% | 15% |
+| **Total** | **100%** | **100%** | **100%** |
+
+### Summit reward pool and competition
+- [ ] For the summit chest reward class, use the proposed pool: common ingredients 10%, uncommon ingredients 10%, rare ingredients 20%, epic ingredients 20%, legendary ingredients 20%, NFT 15%, and cryptocurrency 5%. Define and test the interaction between reward class and rarity before implementation so odds are not accidentally multiplied or misleadingly presented.
+- [ ] The summit is a contested objective for solo players, parties and guilds. Add a clearly bounded contest area, shared availability state, winner/claim announcement and reward history. PvP/claim resolution must be server-authoritative; do not imply guild battle systems already exist.
+- [ ] Decide and publish fair eligibility/anti-grief rules for a successful claim. A player or guild must not be able to reserve, lock or reset the chest simply by standing nearby.
+- [ ] Cryptocurrency and NFT rewards remain disabled until funded inventory/pools, wallet ownership checks, server-authoritative claim processing, auditable randomness, replay protection, anti-bot/anti-sybil controls and a verifiable delivery path are deployed. Do not award real tokens/NFTs from client-side Math.random or localStorage.
+- [ ] Ingredient rewards may use the existing local inventory only as a prototype. Production ownership and claim history require a persistent server-side ledger.
+- [ ] Add deterministic smoke tests for total chest count and category split, cave membership/floor alignment, world spawn validity, randomized location changes, timer bounds, summit fixed coordinates, 900-second global cooldown, simultaneous claim locking, reward-table probabilities and client/server failure behavior.
+- [ ] Preserve all existing chests and world landmarks during staged rollout. Do not replace the existing chest implementation until the new 100-chest tests prove no regressions in cave, terrain, water, inventory, mobile performance and gameplay.
+- [ ] Physical desktop and Redmi 14 5G acceptance remains required for chest visibility, interaction range, cave readability, summit contest readability and performance.
