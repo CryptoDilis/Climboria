@@ -2152,3 +2152,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] Post-merge main Validate, Browser Smoke and Pages deployment still require fresh run-ID verification. The available commit-run lookup exposes PR-triggered runs only and returned no post-merge push runs for this merge SHA; do not infer deployment success from the green PR checks.
 - [ ] Next P0: continue the connected cave maze/hidden-room expansion and improve wayfinding/lighting; then verify treasure placement/respawn and implement funded, server-authoritative 3% rare-reward logic with anti-exploit safeguards.
 - [ ] Continue Jarrell's Peak acceptance in order: mountain approach/collision, full world-interaction regression, UI/hero/HUD/fullscreen, desktop and physical Redmi 14 5G. Preserve the current map and keep wildlife disabled until owner approval.
+
+### 2026-11-04 — cave treasure/respawn implementation audit
+
+- [x] Inspected the current chest implementation in `game/play.html`: seven world chests are spawned (three fixed landmarks plus four randomized remote chests); opened chests hide and respawn after a randomized 90–150 second timer.
+- [x] Identified a cave-specific gap: only one fixed cave chest is currently registered at the older cave coordinate; the newly merged geode chamber has no dedicated chest/treasure spawn or chamber-specific smoke assertion.
+- [x] Confirmed current chest rewards are added to the browser's persistent local inventory. This is not a server-authoritative reward ledger and does not implement or secure the requested 3% rare-reward roll.
+- [ ] Next implementation: add a reachable, floor-aligned treasure spawn inside the geode chamber; extend smoke coverage to assert chamber location, open/hide/respawn lifecycle and inventory result. Preserve existing seven chests and test contracts.
+- [ ] Keep any 3% rare reward disabled/unpromised until there is a funded server-authoritative reward service, auditable randomness, anti-repeat/anti-exploit controls and a verified payout path. Do not simulate this with client-side Math.random or localStorage.
