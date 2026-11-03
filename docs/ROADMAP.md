@@ -2,9 +2,9 @@
 
 > Planning reference. Dates and features are targets, not guarantees. A feature is not live until implemented, tested, and officially announced.
 
-## Launch scope — Jarrell’s Peak only
+## Game-world scope — Jarrell’s Peak and Arena
 
-Jarrell’s Peak is the sole planned launch mountain: a vast, endless-feeling wilderness for survival, exploration, fishing, swimming, and treasure hunting. It has no summit or final level. Documentation work must not change existing gameplay mechanics.
+Jarrell’s Peak is the primary open-world experience: a vast wilderness for survival, exploration, fishing, swimming, and treasure hunting. Arena is the separate competitive game mode/map. These are the only two game-world destinations in the current scope. Documentation work must not change existing gameplay mechanics.
 
 ### Current game-menu scope
 - Show only four destinations: Jarrell’s Peak, Arena, Marketplace, and Inventory.
@@ -12,7 +12,7 @@ Jarrell’s Peak is the sole planned launch mountain: a vast, endless-feeling wi
 - Arena opens a status panel; the separate Arena map is future work.
 - Marketplace is a demo storefront, not live trading.
 - Inventory is a local preview, not persistent item ownership.
-- Remove the ten deferred normal mountains from the menu. Keep character creation/editing in the Jarrell entry flow rather than a separate menu destination.
+- Keep Jarrell’s Peak and Arena as the only game-world destinations. Marketplace and Inventory remain supporting menu panels. Keep character creation/editing in the Jarrell entry flow rather than a separate menu destination.
 
 ### Stage 1 — Protect the current game
 - Preserve movement, collision, swimming, fishing, controls, camera, sound, weather, and world interactions.

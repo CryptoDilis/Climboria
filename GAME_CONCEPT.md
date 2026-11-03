@@ -10,7 +10,7 @@ Jarrell’s Peak is a vast, endless-feeling wilderness adventure focused on expl
 
 The world should include a riverside starting camp, a long river, fishing spots, forest regions, cliffs, caves, rice fields, battlefield remnants, a sanctuary lake/shrine, abandoned places, traps, hidden paths, and discoverable landmarks. Travel distance and survival time may improve the chance of better treasure without guaranteeing rare drops.
 
-The launch scope is Jarrell’s Peak alone. The previously proposed ten normal mountain expeditions are removed from the game menu and deferred; they are not current launch content. Additional maps may be reconsidered after the token launch when a development budget is available.
+The current game-world scope is Jarrell’s Peak and Arena only. Jarrell’s Peak is the open-world survival experience; Arena is the separate competitive map/mode.
 
 ## Game menu — four destinations
 
@@ -19,7 +19,7 @@ The launch scope is Jarrell’s Peak alone. The previously proposed ten normal m
 - **Marketplace:** demo storefront only; live trading, purchases, and fee accounting are not active.
 - **Inventory:** local preview only; persistent item ownership and equipment are not active.
 
-Do not show the ten deferred mountains or a separate Create Hero menu item. Character creation/editing remains reachable through the Jarrell’s Peak entry flow. The interface must distinguish playable content from demos and future plans.
+Keep Jarrell’s Peak and Arena as the only game-world destinations. Marketplace and Inventory are supporting menu panels, not additional worlds. Character creation/editing remains reachable through the Jarrell’s Peak entry flow. The interface must distinguish playable content from demos and future plans.
 
 ## Existing gameplay protection
 

@@ -4,17 +4,15 @@
 
 ## 1. Vision
 
-Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. The principle is **Game First, Speculation Later**. The initial world focus is Jarrell’s Peak, an endless-feeling wilderness with no summit, final level, or completion point.
+Climboria is a browser-first climbing, survival, and open-world treasure-hunting project. The principle is **Game First, Speculation Later**. The two game-world destinations are Jarrell’s Peak, the open-world survival experience, and Arena, the separate competitive map.
 
 ## 2. Launch world: Jarrell’s Peak
 
 The world centers on a riverside starting camp, a long river, fishing, swimming, forests, cliffs, hidden routes, landmarks, and treasure discovery. Survival and exploration are the core loop. Existing gameplay mechanics are out of scope for documentation-only changes.
 
-The ten previously proposed normal mountains are removed from the game menu and deferred; they are not part of the launch scope. Additional maps may be reconsidered after token launch when a development budget is available.
-
 ## 2A. Game menu and feature status
 
-The menu is limited to four destinations: **Jarrell’s Peak** (playable launch world), **Arena** (future-feature status panel; the Arena world is not playable yet), **Marketplace** (demo storefront; no live trading), and **Inventory** (local preview; no persistent ownership). The ten deferred mountains are not displayed in the menu. Character creation/editing is reached through the Jarrell’s Peak entry flow.
+The menu has four entries: **Jarrell’s Peak** (playable open world), **Arena** (separate competitive map; currently a future-feature status panel), **Marketplace** (demo storefront; no live trading), and **Inventory** (local preview; no persistent ownership). Only Jarrell’s Peak and Arena are game-world destinations. Character creation/editing is reached through the Jarrell’s Peak entry flow.
 
 ## 3. Top Gainers and rewards
 
