@@ -182,6 +182,8 @@ try {
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
   if(!cavePassage||cavePassage.wallCount!==37||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall||!cavePassage.westRoute||!cavePassage.northMazeRoute||!cavePassage.westBlockedAcrossWall||!cavePassage.northBlockedAcrossWall) errors.push('Cave connected-maze passage/collision audit failed: '+JSON.stringify(cavePassage));
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
+  const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
+  if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
   if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.ambientFillIntensity<.9||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
@@ -301,11 +303,14 @@ try {
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
-  await Promise.all([
-    menu.waitForURL(/play\.html\?level=11(?:&|$)/, { timeout: 15000, waitUntil: 'domcontentloaded' }),
-    menu.locator('.card[data-level="11"]').click(),
-  ]);
-  if(new URL(menu.url()).searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
+  // The launch card performs a full document navigation. Playwright's click()
+  // already waits for that navigation; a concurrent waitForURL can miss the
+  // same-document/fast navigation edge and time out after the target URL loaded.
+  await menu.locator('.card[data-level="11"]').click();
+  await menu.waitForLoadState('domcontentloaded');
+  const launchUrl=new URL(menu.url());
+  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
+  if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', undefined, { timeout: 5000 });
