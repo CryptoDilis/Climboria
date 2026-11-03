@@ -29,11 +29,28 @@ import { chromium } from 'playwright';
       page.waitForURL(/play\.html\?level=11/),
       jarrell.click()
     ]);
-    await page.waitForFunction(() => window.__climboriaGameReady === true
-      && document.body.classList.contains('free')
-      && document.body.classList.contains('climboria-landscape')
-      && window.__climboriaJarrellsPeak?.player?.mode === 'walk'
-      && document.documentElement.dataset.climboriaHeroRenderer === 'glb', undefined, { timeout: 90000 });
+    const failedRequests = [];
+    const badResponses = [];
+    page.on('pageerror', error => errors.push(error.stack || error.message));
+    page.on('requestfailed', request => { if (/Climboria_Hero|GLTFLoader|three\.min\.js/i.test(request.url())) failedRequests.push({url:request.url(),error:request.failure()?.errorText||'request failed'}); });
+    page.on('response', response => { if (/Climboria_Hero|GLTFLoader|three\.min\.js/i.test(response.url()) && response.status() >= 400) badResponses.push({url:response.url(),status:response.status()}); });
+    try {
+      await page.waitForFunction(() => window.__climboriaGameReady === true
+        && document.body.classList.contains('free')
+        && document.body.classList.contains('climboria-landscape')
+        && window.__climboriaJarrellsPeak?.player?.mode === 'walk'
+        && document.documentElement.dataset.climboriaHeroRenderer === 'glb', undefined, { timeout: 90000 });
+    } catch (error) {
+      const diagnostic = await page.evaluate(() => ({
+        ready:window.__climboriaGameReady,readiness:window.__climboriaReadiness||null,
+        bodyClasses:document.body.className,mode:window.__climboriaJarrellsPeak?.player?.mode,
+        hero:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',
+        heroError:document.documentElement.dataset.climboriaHeroError||'',
+        loaderAvailable:typeof THREE!=='undefined'&&!!THREE.GLTFLoader,
+        heroAssetEntries:performance.getEntriesByType('resource').filter(x=>/Climboria_Hero|GLTFLoader|three\.min\.js/i.test(x.name)).map(x=>({name:x.name,duration:x.duration,transferSize:x.transferSize}))
+      }));
+      throw new Error('Mobile gameplay/GLB readiness timed out: '+JSON.stringify({diagnostic,failedRequests,badResponses,pageErrors:errors})+'; '+error.message);
+    }
     const result = await page.evaluate(() => {
       const player = window.__climboriaJarrellsPeak.player;
       const hud = document.querySelector('#player-card');
