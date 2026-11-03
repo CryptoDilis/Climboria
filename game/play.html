@@ -1199,7 +1199,7 @@ function moveWalk(mx,mz){
 /* health, respawn */
 P.hp=500;P.maxHp=500;P.stamina=200;P.maxStamina=200;P.damage=5;P.inv=0;
 const CAVE_SPIKE_DAMAGE=25;
-function caveSpikeContact(lx,lz,feet,spike){return feet<caveG.position.y+1.4&&spike.s.position.y>0&&Math.abs(lx-spike.s.position.x)<.9&&Math.abs(lz-spike.s.position.z)<.9}
+function caveSpikeContact(lx,lz,feetLocal,spike){return feetLocal<spike.s.position.y+1.4&&spike.s.position.y>0&&Math.abs(lx-spike.s.position.x)<.9&&Math.abs(lz-spike.s.position.z)<.9}
 function hurt(n,why){if(P.mode!='walk'||P.inv>0)return;P.hp=Math.max(0,P.hp-n);P.inv=.6;toast(why);
  if(P.hp<=0){P.hp=P.maxHp;toast('You died — respawned at the Sanctuary');emit('death',{});tp(0,-30,0)}}
 /* snakes (functional): chase + bite; cave snakes leashed to the trap room */
@@ -1285,7 +1285,7 @@ document.getElementById('time-cycle-control').addEventListener('click',()=>{todI
 function gameTick(dt,cp){
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
-  for(const o of spikes)if(caveSpikeContact(lx,lz,P.y-1.75,o)){hurt(CAVE_SPIKE_DAMAGE,'Spike trap!');break}}
+  for(const o of spikes)if(caveSpikeContact(lx,lz,P.y-caveG.position.y-1.75,o)){hurt(CAVE_SPIKE_DAMAGE,'Spike trap!');break}}
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
