@@ -6,7 +6,7 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
-## 0. Current project control panel — updated 2026-11-03 (live smoke contract repaired; current main green)
+## 0. Current project control panel — updated 2026-11-03 (soundtrack recovery merged; live playback green)
 
 ### Current priority and sequencing
 
@@ -22,8 +22,9 @@
 ### Verified repository snapshot at this update
 
 - Repository: [CryptoDilis/Climboria](https://github.com/CryptoDilis/Climboria), default branch `main`.
-- Latest verified merge: PR #170 live-site smoke HUD contract `dee1c94625b3e5ff019eb33f4e20aee168b6057f`; PR #169 rainforest placement diagnostics `db59fd36109d6e3e250e6758504da8aa1f3bb008`; PR #168 all-water-body swim diagnostics `65120d7e5647dbb08dd081520fdbb11b31074052`; readiness-fix PR #167 `5aae1b37cdec6240767a79d21cb7a85a21241a14`.
+- Latest verified merge: PR #171 soundtrack recovery `cb7b9863cab6e1182c63bb2fb3742be6e7382b39`; PR #170 live-site smoke HUD contract `dee1c94625b3e5ff019eb33f4e20aee168b6057f`; PR #169 rainforest placement diagnostics `db59fd36109d6e3e250e6758504da8aa1f3bb008`; PR #168 all-water-body swim diagnostics `65120d7e5647dbb08dd081520fdbb11b31074052`; readiness-fix PR #167 `5aae1b37cdec6240767a79d21cb7a85a21241a14`.
 - PR #167 [Fix combined gameplay readiness lifecycle on current main](https://github.com/CryptoDilis/Climboria/pull/167) merged after both required checks passed: Validate run `41646206937` and Browser Smoke run `41646206964` (desktop and mobile gameplay smoke steps succeeded). The change is limited to `game/play.html`; chunk generation remains progressive/non-blocking, and combined readiness now waits for chunk and renderer readiness. It does not modify `waitForFunction`.
+- PR #171 [Resume the approved soundtrack after the first gameplay gesture](https://github.com/CryptoDilis/Climboria/pull/171) merged as `cb7b9863cab6e1182c63bb2fb3742be6e7382b39`. PR Validate `41652748236` and PR Browser Smoke `41652748174` passed. Post-merge Validate `41653566430`, Live Site Smoke `41653566407`, and Pages deployment `41653566488` passed. Live smoke log explicitly reports `soundtrack: "playing"` after a real settings-button gesture, with game ready, active gameplay, visible hero/status HUD, map/settings, and a 1365×900 canvas. Post-merge Browser Smoke `41653566399` was still running when this entry was written; do not treat it as complete until its result is checked.
 - PR #170 [Fix live-site smoke to assert the current gameplay HUD](https://github.com/CryptoDilis/Climboria/pull/170) merged as `dee1c94625b3e5ff019eb33f4e20aee168b6057f`. The scheduled live-site smoke had failed because it waited for the intentionally hidden legacy `#zone` HUD. The test now waits for the actual ready/free gameplay state and visible player/status cards, map and settings control. PR Validate `41652046809`, post-merge Validate `41652151971`, live-site smoke `41652151904`, Pages deployment `41652150568`, and current-main Browser Smoke `41651579697` all passed. The live log confirms the game-ready flag, active gameplay, 1365×900 scene canvas, player/health/stamina HUD, map and settings are visible. Soundtrack object was not present in this live smoke snapshot; investigate audio initialization separately rather than treating it as passed.
 - PR #169 [Diagnose exact CC0 rainforest placement failures](https://github.com/CryptoDilis/Climboria/pull/169) merged as `db59fd36109d6e3e250e6758504da8aa1f3bb008`. Validate run `41650874654` and Browser Smoke run `41650874828` both passed. The desktop/mobile smoke log confirms all rainforest placement groups are valid (16 buttress, 16 canopy, 42 undergrowth, 14 fallen logs; zero invalid placements), all 11 fishing spots start correctly, freshwater entry/exit works, collision audit has 87 valid solids and zero water overlaps, and mobile HUD/controls/hero are visible. This PR changes diagnostics only; it does not change runtime map placement.
 - PR #165 [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165) remains open but is an older, heavily divergent branch. Do not merge it directly. Its previous mobile re-entry failure was traced to a smoke assertion reading `actualMobileTransition.heroMenuExists` instead of `actualMobileTransition.gameplay.heroMenuExists`; reconcile the intended changes onto current `main` and correct the assertion without weakening coverage.
@@ -1989,3 +1990,14 @@ For every integrated asset or borrowed technique, record:
 - [x] Post-merge Validate `41652151971`, live-site smoke `41652151904`, Pages deployment `41652150568`, and current-main Browser Smoke `41651579697` passed.
 - [ ] Live smoke reported `soundtrack:false`; current smoke does not fail on this optional field. Audio initialization/volume and the user's approved soundtrack remain an open manual/technical acceptance item.
 - [ ] Physical Redmi 14 5G visual acceptance remains open.
+
+
+## 2026-11-03 — approved soundtrack gesture recovery merged (PR #171)
+
+- [x] Kept the single approved `game/assets/music/TRACK_01.mp3`; no extra music track was added.
+- [x] Exposed the existing audio element for diagnostics and retry playback after a real pointer/keyboard gesture if browser autoplay was blocked; retry listeners are removed after playback starts.
+- [x] PR #171 Validate `41652748236` and Browser Smoke `41652748174` passed; merged as `cb7b9863cab6e1182c63bb2fb3742be6e7382b39`.
+- [x] Post-merge Validate `41653566430`, Live Site Smoke `41653566407`, and Pages deployment `41653566488` passed.
+- [x] Live smoke log explicitly reported `soundtrack: "playing"` after the settings-button gesture; game-ready state, active gameplay, player/status HUD, map/settings and canvas were also verified.
+- [ ] Post-merge Browser Smoke `41653566399` was still in progress at the time of this update; recheck before marking the full post-merge suite green.
+- [ ] Physical Redmi 14 5G audio/visual acceptance remains open.
