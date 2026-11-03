@@ -1371,39 +1371,39 @@ function initChunks(){
  };
  requestAnimationFrame(buildNext);
 }
-function startRenderLoop(){
- last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
- requestAnimationFrame(function loop(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;
-  try{update(dt)}catch(err){
-   const msg=err&&err.stack?err.stack:String(err);
-   if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push(msg);
-   console.error('[Climboria frame update]',err);
+function animate(now){
+ requestAnimationFrame(animate);
+ now=Number.isFinite(now)?now:performance.now();
+ const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
+ try{update(dt)}catch(err){
+  const msg=err&&err.stack?err.stack:String(err);
+  if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push(msg);
+  console.error('[Climboria frame update]',err);
+ }
+ try{
+  renderer.render(scene,cam);
+  window.__climboriaRenderState.frames=renderer.info.render.frame;
+  window.__climboriaRenderState.objects=scene.children.length;
+  if(!renderReady){
+   renderReady=true;
+   document.body.classList.add('free');
+   window.__climboriaGameReady=true;
+   window.__climboriaGLBRenderer=true;
+   window.__climboriaWalkMode='walk';
+   document.documentElement.dataset.climboriaLandscape='ready';
+   document.documentElement.dataset.climboriaReady='true';
+   takeOver();
   }
-  try{
-   renderer.render(scene,cam);
-   window.__climboriaRenderState.frames=renderer.info.render.frame;
-   window.__climboriaRenderState.objects=scene.children.length;
-   if(!renderReady){
-    renderReady=true;
-    takeOver();
-    document.body.classList.add('free');
-    window.__climboriaGameReady=true;
-    window.__climboriaGLBRenderer=true;
-    window.__climboriaWalkMode='walk';
-    document.documentElement.dataset.climboriaLandscape='ready';
-    document.documentElement.dataset.climboriaReady='true';
-   }
-  }catch(err){
-   const msg=err&&err.stack?err.stack:String(err);
-   if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);
-   console.error('[Climboria renderer]',err);
-  }
-  requestAnimationFrame(loop);
- });
+ }catch(err){
+  const msg=err&&err.stack?err.stack:String(err);
+  if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push('render: '+msg);
+  console.error('[Climboria renderer]',err);
+ }
 }
 window.__climboriaReadiness={get chunkReady(){return chunkReady},get renderReady(){return renderReady},get heroReady(){return heroReady}};
-startRenderLoop();
+window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
+last=performance.now();
+animate();
 initChunks();
 })();
 </script>
