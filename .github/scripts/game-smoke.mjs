@@ -420,8 +420,8 @@ try {
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
   const mobile = await browser.newPage({
-    // Real phone gameplay is landscape; portrait is covered by the rotate overlay.
-    viewport: { width: 844, height: 390 },
+    // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
+    viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
     deviceScaleFactor: 1,
