@@ -815,7 +815,7 @@ function loadAssetHero(heroRecord,onReady){
    document.documentElement.dataset.climboriaHeroRenderer='glb';
    document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
    if(status)status.textContent=record.name+' is loaded and ready for the expedition.';
-   if(button){button.textContent='ENTER EXPEDITION';button.disabled=false}
+   
    console.info('[Climboria] Hero ready',record.name,inspection.summary,inspection.capabilities);
    onReady?.(true,record);
   }catch(error){
