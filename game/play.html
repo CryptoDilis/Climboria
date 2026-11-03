@@ -26,12 +26,12 @@ body.free [data-mobile-action]{display:grid!important;visibility:visible!importa
 body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 /* Persistent adventure HUD */
-#player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
+#player-card{position:fixed;z-index:100!important;left:0;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
 body.free #player-card{opacity:1}
 #player-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#d9b36b,#73502b);color:#17120a;font-weight:900;font-size:17px}
 #player-name{font-weight:800;letter-spacing:.1em;color:#ffe3a3;font-size:12px}
 #player-rank{font-size:10px;color:#b9c1c8;margin-top:3px}
-#status-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));z-index:10;width:190px;padding:8px 11px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
+#status-card{position:fixed;z-index:100!important;left:0;top:55px;z-index:10;width:180px;padding:6px 9px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
 body.free #status-card{opacity:1}
 .stat-label{display:flex;justify-content:space-between;margin:2px 0 4px;color:#e9dfca}
 .stat-track{height:6px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:7px}
@@ -53,7 +53,7 @@ body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
-@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
+@media(max-width:650px){#player-card{top:0!important;left:0!important;padding:6px 8px;border-radius:0 0 9px 0}#status-card{top:52px!important;left:0!important;width:145px;padding:5px 7px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
  
  
@@ -62,11 +62,11 @@ body.mobile-device #rotate-phone-overlay{display:none!important;position:fixed;i
 body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:28rem;font-size:clamp(12px,3vw,15px);font-weight:500;letter-spacing:0;line-height:1.5;color:#e5dccb}
 @media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex!important}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
 @media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none!important}body.mobile-device #hud{display:block!important}
- body.mobile-device #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
+ body.mobile-device #player-card{left:0!important;top:0!important;gap:5px;padding:4px 6px;border-radius:0 0 8px 0}
  body.mobile-device #player-avatar{width:25px;height:25px;padding:2px}
  body.mobile-device #player-name{font-size:9px;letter-spacing:.06em}
  body.mobile-device #player-rank{font-size:7px;margin-top:1px}
- body.mobile-device #status-card{left:max(7px,env(safe-area-inset-left));top:calc(43px + env(safe-area-inset-top));width:112px;padding:4px 6px;font-size:8px}
+ body.mobile-device #status-card{left:0!important;top:48px!important;width:132px!important;padding:3px 6px!important;font-size:8px}
  body.mobile-device .stat-track{height:4px;margin-bottom:3px}
  body.mobile-device .stat-label{margin:1px 0 2px}
  body.mobile-device #world-map-panel{right:0!important;top:0!important;width:164px;height:auto;padding:5px;border-radius:0 0 0 8px}
@@ -835,7 +835,7 @@ function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.8,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.9,P.z);
- if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';document.documentElement.dataset.climboriaHeroAnimation=animState;document.documentElement.dataset.climboriaHeroClip='procedural-'+animState;}
+ if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroAnimation=animState;document.documentElement.dataset.climboriaHeroClip='procedural-'+animState;}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
 const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
@@ -963,10 +963,11 @@ function drawWorldMap(){
  const marks=[['SANCTUARY',POI.sanct.x,POI.sanct.z],['PARK',POI.park.x,POI.park.z],['CAMP',POI.camp.x,POI.camp.z],['CAVE',POI.cave.x,POI.cave.z],['SUMMIT',POI.summit.px,POI.summit.pz],['SEA',-960,0],['RICE',RICE.x,RICE.z]];
  c.font='bold 13px system-ui';c.textAlign='left';c.textBaseline='middle';
  for(const [name,x,z] of marks){const mx=sx(x),my=sy(z);c.fillStyle='#ffdf8a';c.beginPath();c.arc(mx,my,5,0,Math.PI*2);c.fill();c.strokeStyle='#171b17';c.lineWidth=2;c.stroke();c.fillStyle='#fff0c9';c.shadowColor='#000';c.shadowBlur=4;c.fillText(name,mx+8,my-7)}
- const px=sx(P.x),py=sy(P.z);c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,8,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();c.shadowBlur=0;
 }
-// Draw the terrain map once on startup; it is cached between explicit map toggles to avoid per-frame rebuilds.
-drawWorldMap();
+let worldMapBase=null,mapMarkerClock=0;
+function drawWorldMapPlayer(){if(!worldMapBase)return;const c=mapCtx,w=mapCanvas.width,h=mapCanvas.height;c.putImageData(worldMapBase,0,0);const px=Math.max(8,Math.min(w-8,w/2+P.x/3000*w)),py=Math.max(8,Math.min(h-8,h/2+P.z/2000*h));c.save();c.shadowColor='#8cff55';c.shadowBlur=28;c.fillStyle='#a8ff62';c.beginPath();c.arc(px,py,13,0,Math.PI*2);c.fill();c.shadowBlur=0;c.strokeStyle='#fff';c.lineWidth=3;c.beginPath();c.arc(px,py,7,0,Math.PI*2);c.stroke();c.fillStyle='#eaffd5';c.beginPath();c.arc(px,py,3,0,Math.PI*2);c.fill();c.restore();}
+// Cached Climboria terrain and landmarks; refresh only the glowing player marker during play.
+drawWorldMap();worldMapBase=mapCtx.getImageData(0,0,mapCanvas.width,mapCanvas.height);drawWorldMapPlayer();
 mapToggle.addEventListener('click',toggleWorldMap);
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&!e.repeat){e.preventDefault();toggleWorldMap()}});
 
@@ -1356,8 +1357,9 @@ function update(dt){
    if(P.swim&&!assetHeroUsesAuthoredAnimations&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim';document.documentElement.dataset.climboriaHeroAnimation='swim';document.documentElement.dataset.climboriaHeroClip='fallback-prone'}
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
-  }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
+  }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
+ mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
  const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
