@@ -1332,8 +1332,9 @@ const chests=[];
 function chest(kind,fixed,anchor,rad){const g=new T3.Group();sc(mk(BOX,M('#6b4a2e'),0,.4,0,g),1.4,.8,.9);sc(mk(BOX,M('#7a5a38'),0,.95,0,g),1.4,.3,.9);sc(mk(BOX,M('#d8a83a'),0,.6,.46,g),.2,.9,.05);sc(mk(SPH,M('#ffd27a',1),0,1.8,0,g),.12,.12,.12);scene.add(g);
  const c={g,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0};chests.push(c);place(c)}
 function place(c){let x,z;if(c.fixed){[x,z]=c.fixed}else{const a=Math.random()*6.28,d=Math.random()*c.rad;[x,z]=snap(c.anchor[0]+Math.cos(a)*d,c.anchor[1]+Math.sin(a)*d)}
- c.x=x;c.z=z;c.g.position.set(x,heightAt(x,z),z);c.g.rotation.y=Math.random()*6;c.g.visible=true;c.open=false}
-chest('cave',l2w(caveG,0,36));chest('summit',[POI.summit.px+5,POI.summit.pz+5]);chest('ruins',[POI.camp.x+12,POI.camp.z-10]);
+ c.x=x;c.z=z;c.g.position.set(x,c.kind==='geode'?caveG.position.y+.08:heightAt(x,z),z);c.g.rotation.y=Math.random()*6;c.g.visible=true;c.open=false}
+chest('cave',l2w(caveG,0,36));
+chest('geode',l2w(caveG,54,42));chest('summit',[POI.summit.px+5,POI.summit.pz+5]);chest('ruins',[POI.camp.x+12,POI.camp.z-10]);
 [[-420,-640],[930,-260],[250,-1000],[-600,300]].forEach(a=>chest('remote',null,a,160));
 function interact(){if(P.mode!='walk')return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=90+Math.random()*60;c.g.visible=false;const it=LOOT[Math.floor(Math.random()*LOOT.length)];addInventoryItem(it,1);toast('Chest opened: '+it);emit('chest',{kind:c.kind,item:it,x:c.x,z:c.z});return}
