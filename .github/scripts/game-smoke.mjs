@@ -303,11 +303,14 @@ try {
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
-  await Promise.all([
-    menu.waitForURL(/play\.html\?level=11(?:&|$)/, { timeout: 15000, waitUntil: 'domcontentloaded' }),
-    menu.locator('.card[data-level="11"]').click(),
-  ]);
-  if(new URL(menu.url()).searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
+  // The launch card performs a full document navigation. Playwright's click()
+  // already waits for that navigation; a concurrent waitForURL can miss the
+  // same-document/fast navigation edge and time out after the target URL loaded.
+  await menu.locator('.card[data-level="11"]').click();
+  await menu.waitForLoadState('domcontentloaded');
+  const launchUrl=new URL(menu.url());
+  if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
+  if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', undefined, { timeout: 5000 });
