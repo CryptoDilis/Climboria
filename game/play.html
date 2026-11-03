@@ -1429,7 +1429,7 @@ function update(dt){
    if(P.swim&&!assetHeroUsesAuthoredAnimations&&assetActive){assetActive.fadeOut(.12);assetActive=null;assetAnimState='swim';document.documentElement.dataset.climboriaHeroAnimation='swim';document.documentElement.dataset.climboriaHeroClip='fallback-prone'}
    if(assetMixer){assetMixer.update(dt);if(!hasClip)animateAssetFallback(Tm,animState,Math.hypot(fw,rt))}
    else animateAssetFallback(Tm,animState,Math.hypot(fw,rt));
-  }else{hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;document.documentElement.dataset.climboriaHeroRenderer='fallback';}
+  }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='unavailable';}
  }
  const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
  updateChunks(cp.x,cp.z,ready?1:0);
