@@ -2009,3 +2009,7 @@ For every integrated asset or borrowed technique, record:
 - [x] Smoke-test correction commit: `2d6f1e4f33da613a292e42b8922d9bdcd4fcca48`.
 - [ ] Fresh Validate and Browser Smoke on the latest branch head are required. Do not call this repair green until the exact latest head completes both workflows.
 - [ ] After the inventory gate passes, continue the remaining P0 Jarrell's Peak checklist in order. Physical desktop and Redmi 14 5G acceptance remains separate from browser emulation.
+
+
+- [x] Follow-up preflight diagnosis: run [41638785327](https://github.com/CryptoDilis/Climboria/actions/runs/41638785327) stopped before browser smoke because the newly added capacity-label regular expression was over-escaped and failed Node syntax checking. Replaced it with explicit text/numeric validation; no gameplay or inventory UI code changed.
+- [ ] Re-run preflight, Validate, and Browser Smoke on the latest head; the inventory contract repair remains unverified until all required gates pass.
