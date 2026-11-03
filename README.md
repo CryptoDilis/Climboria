@@ -1949,3 +1949,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
 - [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
 - [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
+
+
+## 2026-11-03 — all-water-body swim depth regression coverage
+
+- [x] Extended the Jarrell's Peak Browser Smoke diagnostics to audit all five registered water bodies (three freshwater basins, river and ocean).
+- [x] Added checks for the expected surface swim offset, monotonic mid-depth/deep movement, seabed clearance, and clamping when dive input exceeds the allowed depth.
+- [x] Assertions are additive; existing gameplay, movement, and visual checks are unchanged.
+- [ ] Validate Climboria and Browser Smoke must pass on the resulting PR before this coverage is accepted.
+- [ ] Physical Redmi 14 5G swimming and underwater visual acceptance remains open.
