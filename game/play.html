@@ -61,7 +61,7 @@ body.free #control-dock{opacity:1}
 body.mobile-device #rotate-phone-overlay{display:none!important;position:fixed;inset:0;z-index:5000;box-sizing:border-box;width:100vw;height:100dvh;padding:24px;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;white-space:normal;overflow-wrap:anywhere;background:#080d14;color:#ffe3a3;font:800 clamp(18px,5vw,26px)/1.35 system-ui;letter-spacing:.06em}
 body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:28rem;font-size:clamp(12px,3vw,15px);font-weight:500;letter-spacing:0;line-height:1.5;color:#e5dccb}
 @media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex!important}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
-@media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none!important}body.mobile-device #hud{display:none!important}
+@media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none!important}body.mobile-device #hud{display:block!important}
  body.mobile-device #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
  body.mobile-device #player-avatar{width:25px;height:25px;padding:2px}
  body.mobile-device #player-name{font-size:9px;letter-spacing:.06em}
@@ -85,7 +85,7 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 
 /* Mobile-first landscape gameplay layout: compact HUD, map and touch controls. */
 @media (max-width: 900px) and (orientation: landscape) {
-  #hud{display:none!important}
+  #hud{display:block!important}
   #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
   #player-avatar{width:25px;height:25px;padding:2px}
   #player-name{font-size:9px;letter-spacing:.06em}
@@ -140,6 +140,23 @@ body.mobile-device.climboria-portrait #hud{visibility:hidden!important}
 #player-avatar{width:38px;height:38px;object-fit:contain;background:#080d14;border:1px solid #cba45e;border-radius:9px;padding:3px}
 #climboriaInventoryPanel{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 28px))!important;max-height:82vh!important}
 
+/* Restore gameplay interface after first-frame boot on desktop and mobile landscape. */
+body.free #hud,
+body.free #player-card,
+body.free #status-card,
+body.free #world-map-panel,
+body.free #expedition-settings-toggle,
+body.free #control-dock{
+ visibility:visible!important;
+ opacity:1!important;
+}
+body.free #world-map-panel{display:block!important}
+body.free #expedition-settings-toggle{display:grid!important}
+body.free #control-dock{display:flex!important}
+@media(max-width:900px) and (orientation:landscape){
+ body.free #hud{display:block!important}
+ body.free #control-dock{display:none!important}
+}
 /* Final state gate: mobile orientation rules must never expose gameplay panels in the title menu. */
 body:not(.free) #world-map-panel,
 body:not(.free).mobile-device.climboria-landscape #world-map-panel,
@@ -702,7 +719,7 @@ const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero
 hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
 hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=true;scene.add(hero);document.documentElement.dataset.climboriaHero='procedural-placeholder';document.documentElement.dataset.climboriaHeroRenderer='fallback';
+hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
@@ -748,7 +765,7 @@ let heroLoadError='',heroLoadRequest=0;
 function loadAssetHero(choice='ClimboriaHero'){
  if(choice==='ClimboriaHero'||!assetChoices[choice])choice='Adventurer';
  const requestId=++heroLoadRequest;
- if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=true;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
+ if(!T3.GLTFLoader){heroLoadError='GLTFLoader unavailable';document.documentElement.dataset.climboriaHero='load-error';document.documentElement.dataset.climboriaHeroRenderer='fallback';hero.visible=false;heroReady=true;console.warn('[Climboria] '+heroLoadError);return}
  document.documentElement.dataset.climboriaHero='loading-'+choice.toLowerCase();
  new T3.GLTFLoader().load(assetChoices[choice],gltf=>{
   // Ignore late responses from an earlier character selection; the most recent choice always wins.
@@ -771,9 +788,10 @@ heroReady=true;
   heroLoadError=String(error&&error.message||error);
   document.documentElement.dataset.climboriaHero='load-error';
   document.documentElement.dataset.climboriaHeroRenderer='fallback';
-  hero.visible=true;
+  hero.visible=false;
   heroReady=true;
-  console.warn('[Climboria] GLB unavailable; using procedural hero:',assetChoices[choice],error);
+  document.documentElement.dataset.climboriaHeroRenderer='glb-unavailable';
+  console.warn('[Climboria] GLB unavailable; procedural placeholder suppressed:',assetChoices[choice],error);
  });
 }
 const saved=(()=>{try{return localStorage.getItem('climboria-selected-hero')||'ClimboriaHero'}catch(_){return 'ClimboriaHero'}})();
