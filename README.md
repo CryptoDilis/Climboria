@@ -2130,3 +2130,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] Physical Redmi 14 5G visual/gameplay acceptance of cave lighting, grotto visibility, swimming feel, mobile controls and collision remains open.
 - [ ] Continue P0 cave expansion: larger connected maze, additional branches and hidden chambers, readable navigation, deterministic trap/reward delivery and server-authoritative 3% rare-reward odds. Preserve existing map and keep snakes/animals disabled until owner approval.
 - [ ] Continue remaining Jarrell's Peak P0 checklist; do not call the whole world finished based on cave smoke alone.
+
+
+### 2026-11-04 — PR #181 hidden geode chamber review and workflow checkpoint
+
+- [x] Re-read the canonical master plan and latest main commit `26f7b6b8e8cd054044684c35178a30cfb05aa44b`; the most recent completed main validation, browser smoke, and Pages deployment runs remain green: Validate `41675144465`, Browser Smoke `41675144851`, Pages `41675143704`. Their latest-attempt jobs were individually inspected and all completed successfully.
+- [x] Reviewed the complete PR #181 diff. Scope is limited to `.github/scripts/game-smoke.mjs` and `game/play.html`: six-metre geode corridor, 12m x 12m chamber, matching floor/ceiling, six new wall segments with one removed east-room wall (expected net wall count 46), cave floor-height mapping, and deterministic route/floor/wall assertions.
+- [x] Static geometry review confirms the east-room north opening connects to the new corridor; corridor side walls bound the six-metre passage; the chamber has south/east/north walls and a partial west wall that leaves the corridor entrance open. The test checks the geode route, east boundary blocking, and floor alignment.
+- [ ] PR #181 must remain unmerged until its Validate and full desktop/mobile Browser Smoke runs complete successfully. The connector did not expose the PR head SHA or associated run IDs in this audit, so do not infer that its checks have passed from main's earlier green runs.
+- [ ] If PR #181 smoke fails, inspect the exact failing step/log and repair the implementation or test contract without weakening assertions. Then rerun both required checks.
+- [ ] After merge, verify new main Validate, Browser Smoke, and Pages deployment; record their actual run IDs and commit SHA here.
+- [ ] Next cave priorities after #181: extend connected maze/hidden chambers; improve cave wayfinding and lighting; verify treasure placement and respawn; implement funded, server-authoritative 3% rare-reward logic. No token reward should be promised or minted without a funded, auditable source.
+- [ ] Continue Jarrell's Peak P0 checklist in order: mountain approach/collision acceptance, full world interaction regression, UI/hero/HUD/fullscreen review, desktop and Redmi 14 5G hands-on acceptance. Keep wildlife disabled and preserve the existing map.
+- [ ] Do not claim the entire world is complete from cave geometry smoke alone. Physical device review and remaining world acceptance are separate gates.
