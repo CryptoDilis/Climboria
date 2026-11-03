@@ -203,19 +203,15 @@ try {
   if (!world.mountainSpawnRouteAudit || world.mountainSpawnRouteAudit.steps < 100 || world.mountainSpawnRouteAudit.fixedColliderCount < 1 || !Number.isFinite(world.mountainSpawnRouteAudit.terrain.maxAbsoluteGrade) || (world.mountainSpawnRouteAudit.blockedAt && !world.mountainSpawnRouteAudit.blockedAt.reason)) errors.push('Mountain spawn-to-summit collision trace is incomplete or missing blocker diagnostics: '+JSON.stringify(world.mountainSpawnRouteAudit));
   console.log('Jarrell desktop world diagnostics:', JSON.stringify(world));
 
-  // Enter through the visible expedition title overlay used by players, then test keyboard movement.
-  const title = page.locator('#title');
-  if (await title.count() !== 1 || await page.locator('html').getAttribute('data-climboria-ready') !== 'true') {
-    throw new Error('Expedition entry overlay is not ready');
+  // Direct-entry gameplay: no expedition title overlay or click-to-enter gate.
+  if (await page.locator('#title').count() !== 0) {
+    throw new Error('Direct gameplay must not contain the expedition title overlay');
   }
-  // The title overlay intentionally receives the entry gesture; clicking the canvas is intercepted by its visible prompt.
-  const titleBox=await title.boundingBox();
-  if(!titleBox) throw new Error('Expedition title overlay has no visible bounding box');
-  await title.click({position:{x:Math.floor(titleBox.width/2),y:Math.floor(titleBox.height/2)}});
   await page.waitForFunction(() => {
     const player = window.__climboriaJarrellsPeak?.player;
-    return document.body.classList.contains('free') && player?.mode === 'walk';
-  }, null, { timeout: 10000 });
+    return document.documentElement.dataset.climboriaReady === 'true' &&
+      document.body.classList.contains('free') && player?.mode === 'walk';
+  }, null, { timeout: 15000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
   await page.keyboard.down('w');
