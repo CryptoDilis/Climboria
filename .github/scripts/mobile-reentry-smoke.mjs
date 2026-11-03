@@ -51,6 +51,26 @@ import { chromium } from 'playwright';
       }));
       throw new Error('Mobile gameplay/GLB readiness timed out: '+JSON.stringify({diagnostic,failedRequests,badResponses,pageErrors:errors})+'; '+error.message);
     }
+    const uiAudit = await page.evaluate(() => {
+      const card=document.querySelector('#player-card'),stats=document.querySelector('#status-card');
+      const map=document.querySelector('#world-map-panel'),canvas=document.querySelector('#world-map'),gear=document.querySelector('#expedition-settings-toggle');
+      const cr=card?.getBoundingClientRect(),sr=stats?.getBoundingClientRect(),mr=map?.getBoundingClientRect(),gr=gear?.getBoundingClientRect();
+      const ctx=canvas?.getContext('2d'),pixels=ctx?.getImageData(0,0,canvas.width,canvas.height).data;
+      const colors=new Set(),greenPixels=0;
+      if(pixels)for(let i=0;i<pixels.length;i+=64){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];colors.add((r>>4)+','+(g>>4)+','+(b>>4));if(g>180&&g>r*1.2&&g>b*1.2)greenPixels++}
+      return {
+        noBottomDock:!document.querySelector('#control-dock'),
+        noDebugOverlay:getComputedStyle(document.querySelector('#hud')).display==='none'||getComputedStyle(document.querySelector('#hud')).visibility==='hidden',
+        cardAtUpperLeft:!!cr&&cr.left<=1&&cr.top<=1,
+        statsDirectlyBelow:!!cr&&!!sr&&sr.left<=1&&sr.top>=cr.bottom&&sr.top-cr.bottom<=10,
+        mapAtUpperRight:!!mr&&mr.right>=innerWidth-1&&mr.top<=1,
+        gearBesideMap:!!mr&&!!gr&&gr.top<=12&&mr.left-gr.right>=0&&mr.left-gr.right<=12,
+        mapHasTerrain:colors.size>20,
+        mapHasGlowingPlayerMarker:greenPixels>4,
+        mapColorCount:colors.size,greenPixels
+      };
+    });
+    if(Object.values(uiAudit).some(v=>v===false))throw new Error('Mobile gameplay HUD/minimap layout regression: '+JSON.stringify(uiAudit));
     const result = await page.evaluate(() => {
       const player = window.__climboriaJarrellsPeak.player;
       const hud = document.querySelector('#player-card');
