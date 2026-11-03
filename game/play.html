@@ -272,6 +272,9 @@ function maxSwimDepth(body){return Math.max(0,(body?.depth||0)-.45)}
 function swimTargetY(body,depth=0){return (body?.surfaceY||0)+1.72-Math.max(0,Math.min(maxSwimDepth(body),depth))}
 function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceInput=0,time=0){
  if((player.swim=!!body&&groundHeight<body.surfaceY-.2)){
+  // Space is a swim-to-surface control in water, never a land-jump trigger.
+  player.jumpHeld=!!surfaceInput;
+  player.jumpState='swim';
   player.vy=0;
   if(player.waterBodyId!==body.id)player.swimDepth=0;
   player.waterBodyId=body.id;
@@ -281,10 +284,26 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
  }else{
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
-  if(surfaceInput&&Math.abs(player.y-floor)<.12&&player.vy<=0)player.vy=11;
+  const grounded=player.y<=floor+.12&&player.vy<=0;
+  const wasAirborne=player.jumpState==='takeoff'||player.jumpState==='airborne';
+  if(surfaceInput&&!player.jumpHeld&&grounded){
+   player.vy=11;player.jumpState='takeoff';player.jumpStateTimer=0;
+   player.jumpCount=(player.jumpCount||0)+1;
+  }
+  player.jumpHeld=!!surfaceInput;
   player.vy-=30*dt;player.y+=player.vy*dt;
-  if(player.y<floor){player.y=floor;player.vy=0}
-  if(player.vy<=0&&player.y-1.75<groundHeight-.35){player.y=groundHeight+1.75;player.vy=0}
+  if(player.y<floor){
+   const landed=wasAirborne&&player.vy<0&&player.y<floor;
+   player.y=floor;player.vy=0;
+   if(landed){player.jumpState='land';player.jumpStateTimer=.2;player.landCount=(player.landCount||0)+1;}
+   else if(player.jumpState!=='land')player.jumpState='grounded';
+  }else if(player.y>floor+.12){
+   if(player.jumpState==='takeoff')player.jumpState='airborne';
+  }
+  if(player.jumpState==='land'){
+   player.jumpStateTimer=Math.max(0,(player.jumpStateTimer||0)-dt);
+   if(player.jumpStateTimer===0)player.jumpState='grounded';
+  }
  }
  return player.swim;
 }
@@ -770,7 +789,7 @@ const fgeo=new T3.BufferGeometry();fgeo.setAttribute('position',new T3.BufferAtt
 const fmat=new T3.PointsMaterial({color:L('#ffe9a8'),size:.9,transparent:true,opacity:0,depthWrite:false,fog:false});
 const flies=new T3.Points(fgeo,fmat);flies.frustumCulled=false;
 /* ---------- player / camera ---------- */
-const P={x:0,y:30,z:60,vy:0,yaw:Math.PI,pitch:0,mode:'cine'};
+const P={x:0,y:30,z:60,vy:0,yaw:Math.PI,pitch:0,mode:'cine',jumpState:'grounded',jumpHeld:false,jumpStateTimer:0,jumpCount:0,landCount:0};
 /* Official Climboria heroine — stylized third-person climber based on the approved Esmi key art. */
 const hero=new T3.Group();hero.name='ClimboriaOfficialHero';
 const hm=(color,roughness=.82,metalness=0)=>new T3.MeshStandardMaterial({color,roughness,metalness});
@@ -828,35 +847,49 @@ function cacheAssetRig(root){
   if(/hip|pelvis/.test(n))assetRig.hips=o;
   if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine=o;
   if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
-  if(/upperarm|lowerarm|arm|shoulder/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
+  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
  });
 }
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
- if(state==='idle'){
-  if(assetActive)assetMixer.stopAllAction();
-  assetActive=null;assetAnimState='idle';document.documentElement.dataset.climboriaHeroAnimation='idle';document.documentElement.dataset.climboriaHeroClip='';return true;
- }
- const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':'';
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='jump'?'Jump':state==='land'?'Landing':'';
+
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(!clip){
-  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:/idle|stand|breath/i;
+  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='jump'?/jump|takeoff|airborne/i:state==='land'?/land|touchdown/i:/idle|stand|breath|relax/i;
   clip=assetActions.find(a=>patterns.test(a.name));
  }
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
- if(!clip)return false;
+ if(!clip&&state==='land')clip=assetActions.find(a=>/idle|stand|breath/i.test(a.name));
+ if(!clip&&state==='jump')clip=assetActions.find(a=>/jump|takeoff|airborne/i.test(a.name));
+ if(!clip){
+  if(assetActive){assetActive.fadeOut(.16);assetActive=null;}
+  assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip='procedural-fallback';return false;
+ }
  if(assetActive&&assetActive.getClip()===clip){assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;}
  if(assetActive)assetActive.fadeOut(.16);
  assetActive=assetMixer.clipAction(clip);assetActive.reset().fadeIn(.16).play();assetAnimState=state;document.documentElement.dataset.climboriaHeroAnimation=state;document.documentElement.dataset.climboriaHeroClip=clip.name;return true;
 }
 function animateAssetFallback(t,state,speed){
- const moving=state==='walk'||state==='run',swimming=state==='swim',amp=moving?(state==='run'?.9:.58):0;
- const phase=t*(state==='run'?13:9);
- for(const item of assetRig.legs){const b=item.bone;if(swimming){b.rotation.x=item.base+Math.sin(phase+item.side)*.28}else b.rotation.x=item.base+Math.sin(phase)*amp*item.side}
- for(const item of assetRig.arms){const b=item.bone;if(swimming){b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16}else b.rotation.x=item.base-(moving?Math.sin(phase)*amp*.65*item.side:0)}
- if(assetRig.spine){assetRig.spine.rotation.x=0}
- if(assetRig.hips&&moving)assetRig.hips.rotation.y=Math.sin(phase)*.035;
+ const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',landing=state==='land';
+ const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
+ for(const item of assetRig.legs){
+  const b=item.bone;
+  if(swimming)b.rotation.x=item.base+Math.sin(phase+item.side)*.28;
+  else if(jumping)b.rotation.x=item.base-.28;
+  else if(landing)b.rotation.x=item.base+.16;
+  else b.rotation.x=item.base+Math.sin(phase)*amp*item.side;
+ }
+ for(const item of assetRig.arms){
+  const b=item.bone;
+  if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
+  else if(jumping)b.rotation.x=item.base-.52;
+  else if(landing)b.rotation.x=item.base+.22;
+  else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):(item.lower?.28:.08));
+ }
+ if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:jumping?-.08:0;
+ if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
 let heroLoadError='',heroLoadRequest=0;
@@ -1252,7 +1285,7 @@ function moveWalk(mx,mz){
   const steps=Math.max(1,Math.ceil(distance/.32)),sx=dx/steps,sz=dz/steps;
   for(let step=0;step<steps;step++){
    const ox=P.x,oz=P.z,nx=ox+sx,nz=oz+sz,oldCenter=groundAt(ox,oz),feet=P.y-1.75;
-   const grounded=P.vy<=0&&feet<=oldCenter+.55;
+   const grounded=P.vy<=0&&feet<=oldCenter+.08;
    if(blocked(nx,nz,ox,oz,feet))break;
    P.x=nx;P.z=nz;
    if(grounded){
@@ -1547,6 +1580,22 @@ function caveGrottoTraversalAudit(){
   return {startDry,inside,enteredSwim,surfaceValid,deepened,surfaced,exited,swimReset,local,depth,bedClearance,groundY:gh,floorY:caveG.position.y+.08,surfaceY:body?.surfaceY,positionRestoredToAnnex:Math.hypot(P.x-start[0],P.z-start[1])<.25};
  }finally{Object.assign(P,saved);}
 }
+function jumpControllerAudit(){
+ const p={y:1.75,vy:0,jumpState:'grounded',jumpHeld:false,jumpCount:0,landCount:0};
+ updatePlayerWaterState(p,null,0,.016,0,0,0);
+ updatePlayerWaterState(p,null,0,.016,0,1,0);
+ const takeoff={y:p.y,state:p.jumpState,count:p.jumpCount};
+ for(let i=0;i<5;i++)updatePlayerWaterState(p,null,0,.016,0,1,i*.016);
+ const heldCount=p.jumpCount;
+ updatePlayerWaterState(p,null,0,.016,0,0,.1);
+ let peak=p.y,frames=0;
+ while((p.jumpState==='takeoff'||p.jumpState==='airborne')&&frames<120){updatePlayerWaterState(p,null,0,.016,0,0,.1+frames*.016);peak=Math.max(peak,p.y);frames++;}
+ const landing={state:p.jumpState,count:p.landCount,y:p.y,peak,frames};
+ const body={id:'jump-audit-water',surfaceY:0,depth:3};
+ const swimmer={y:swimTargetY(body,1),vy:0,jumpState:'grounded',jumpHeld:false,jumpCount:0,swimDepth:1};
+ updatePlayerWaterState(swimmer,body,-1,.05,0,1,0);
+ return {takeoff,heldCount,landing,swimming:{state:swimmer.jumpState,count:swimmer.jumpCount,depth:swimmer.swimDepth,swim:swimmer.swim},ok:takeoff.y>1.75&&takeoff.count===1&&heldCount===1&&landing.count===1&&landing.state==='land'&&landing.peak>2.5&&swimmer.swim&&swimmer.jumpCount===0&&swimmer.swimDepth<1};
+}
 function geodeChestLifecycleAudit(){
  const c=chests.find(item=>item.kind==='geode');
  if(!c)return {ok:false,reason:'geode chest missing'};
@@ -1565,7 +1614,7 @@ function geodeChestLifecycleAudit(){
   return {ok:opened&&rewarded&&respawned,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,updatePlayerWaterState,chooseAssetAnimation,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -1619,7 +1668,9 @@ function update(dt){
   cam.near=0.15;
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
-  const moving=Math.hypot(fw,rt)>.08,animState=P.swim?'swim':moving?(keys.ShiftLeft?'run':'walk'):'idle';
+  const moving=Math.hypot(fw,rt)>.08,locomotionState=moving?(keys.ShiftLeft?'run':'walk'):'idle';
+  const animState=P.swim?'swim':(['takeoff','airborne'].includes(P.jumpState)?'jump':P.jumpState==='land'?'land':locomotionState);
+  document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');
   if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
    // that can make the character look like it is bowing.

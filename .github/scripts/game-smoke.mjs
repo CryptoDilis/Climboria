@@ -35,6 +35,45 @@ try {
   if (heroAssetAudit.identity !== 'adventurer' || heroAssetAudit.renderer !== 'glb' || !heroAssetAudit.visible) errors.push('Original Climboria Meshy GLB did not initialize: ' + JSON.stringify(heroAssetAudit));
   await page.waitForTimeout(500);
 
+  const jumpControllerAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.jumpControllerAudit?.() ?? null);
+  if (!jumpControllerAudit?.ok) errors.push('Ground jump takeoff/airtime/landing or water-surface separation failed: ' + JSON.stringify(jumpControllerAudit));
+
+  const liveJumpStart = await page.evaluate(() => {
+    const p=window.__climboriaJarrellsPeak?.player,w=window.__climboriaJarrellsPeak;
+    if(!p||!w)return null;
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpCount:p.jumpCount,landCount:p.landCount};
+    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
+    return {saved,baseline:p.y,jumpCount:p.jumpCount||0,landCount:p.landCount||0};
+  });
+  if(!liveJumpStart) errors.push('Live keyboard jump test could not access the gameplay player.');
+  else {
+    const liveJumps=[];
+    for(const running of [false,true]){
+      if(running) await page.keyboard.down('Shift');
+      await page.keyboard.down('w');
+      await page.waitForTimeout(100);
+      const before=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
+      await page.keyboard.down('Space');
+      await page.evaluate(({y,jumps})=>{window.__climboriaJumpBaseline=y;window.__climboriaJumpCount=jumps;},{y:before.y,jumps:before.jumps});
+      const rose=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.y>window.__climboriaJumpBaseline+.2&&p.jumpCount>window.__climboriaJumpCount;},undefined,{timeout:5000}).then(()=>true).catch(()=>false);
+      await page.keyboard.up('Space');
+      const peak=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,state:window.__climboriaJarrellsPeak.player.jumpState,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0}));
+      await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&(p.jumpState==='land'||p.jumpState==='grounded');},undefined,{timeout:8000}).catch(()=>{});
+      const landed=await page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
+      liveJumps.push({running,rose,baseline:before.y,peak:peak.y,airState:peak.state,jumpCount:peak.jumps,landState:landed.state,landCount:landed.lands,priorJumpCount:before.jumps,priorLandCount:before.lands});
+      await page.keyboard.up('w');
+      if(running) await page.keyboard.up('Shift');
+      await page.waitForTimeout(300);
+      await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak.player,w=window.__climboriaJarrellsPeak;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.jumpState='grounded';p.jumpHeld=false;});
+    }
+    await page.evaluate(saved=>{
+      const p=window.__climboriaJarrellsPeak.player;
+      Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,mode:saved.mode,jumpState:saved.jumpState,jumpHeld:saved.jumpHeld,jumpCount:saved.jumpCount,landCount:saved.landCount});
+    },liveJumpStart.saved);
+    if(liveJumps.some(x=>!x.rose||x.peak<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
+    console.log('Live walking/running jump diagnostics:',JSON.stringify(liveJumps));
+  }
+
   const renderState = await page.evaluate(() => window.__climboriaRenderState || null);
   if (!renderState || renderState.frames < 2) errors.push('3D renderer did not produce frames: ' + JSON.stringify(renderState));
   const sanctuaryFlags = await page.evaluate(() => window.__climboriaJarrellsPeak?.sanctuaryFlags?.map(flag => ({country:flag.country,attached:flag.mesh.parent===flag.pillar&&flag.pole.parent===flag.pillar,width:flag.mesh.geometry.parameters.width,height:flag.mesh.geometry.parameters.height})) || []);
