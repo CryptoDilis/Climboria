@@ -315,7 +315,7 @@ try {
     const backpackTitle = children.find(el => el.textContent.trim() === 'BACKPACK · 100 SLOTS');
     const backpackGrid = backpackTitle?.nextElementSibling;
     const equipmentLabels = [...(equipmentGrid?.querySelectorAll('b') ?? [])].map(el => el.textContent.trim());
-    const capacityLabel = [...panel.querySelectorAll('p')].some(el => /^\\d+\\s*\\/\\s*100 backpack slots used$/.test(el.textContent.trim()));
+    const capacityLabel = [...panel.querySelectorAll('p')].some(el => { const value = el.textContent.trim(); const used = value.split('/')[0]?.trim(); return value.endsWith('/ 100 backpack slots used') && used !== '' && Number.isFinite(Number(used)); });
     return {
       backpackHeading: !!backpackTitle,
       backpackSlots: backpackGrid?.children.length ?? 0,
