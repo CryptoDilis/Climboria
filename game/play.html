@@ -709,54 +709,9 @@ const fmat=new T3.PointsMaterial({color:L('#ffe9a8'),size:.9,transparent:true,op
 const flies=new T3.Points(fgeo,fmat);flies.frustumCulled=false;
 /* ---------- player / camera ---------- */
 const P={x:0,y:30,z:60,vy:0,yaw:Math.PI,pitch:0,mode:'cine'};
-/* Official Climboria heroine — stylized third-person climber based on the approved Esmi key art. */
-const hero=new T3.Group();hero.name='ClimboriaOfficialHero';
-const hm=(color,roughness=.82,metalness=0)=>new T3.MeshStandardMaterial({color,roughness,metalness});
-const olive=hm(0x53613a),oliveDark=hm(0x303d2c),skin=hm(0xc98d68),skinShade=hm(0x9d6348),hair=hm(0x291b19),hairHi=hm(0x583329),leather=hm(0x67452e),leatherHi=hm(0x9a6a3e),pants=hm(0x514536),pantsHi=hm(0x756044),boot=hm(0x29231e),metal=hm(0x8c9697,.34,.72),gold=hm(0xc49a51,.38,.5),glove=hm(0x302b27),ropeMat=hm(0xb58a55),eye=hm(0x211a17),white=hm(0xf0dfc9);
-const hBox=new T3.BoxGeometry(1,1,1),hSphere=new T3.SphereGeometry(1,16,12),hCyl=new T3.CylinderGeometry(1,1,1,12),hTorus=new T3.TorusGeometry(.24,.045,8,22);
-function hp(parent,geo,mat,x,y,z,sx,sy,sz){const m=new T3.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
-function hLimb(x,y,z,mat,len,width){const g=new T3.Group();g.position.set(x,y,z);hero.add(g);hp(g,hCyl,mat,0,-len*.5,0,width*.78,len,width*.78);hp(g,hSphere,mat,0,-len,0,width*.8,width*.8,width*.8);return g}
-function hStrap(x,y,z,rz=0){const m=hp(hero,hBox,leather,x,y,z,.055,.55,.055);m.rotation.z=rz;return m}
- // body and climbing outfit
-hp(hero,hSphere,skin,0,1.8,0,.19,.24,.17); // head
-hp(hero,hSphere,hair,0,1.96,.045,.205,.17,.19); // crown hair
-hp(hero,hSphere,hairHi,-.04,1.83,.17,.13,.25,.1);
-hp(hero,hSphere,hairHi,.05,1.78,.17,.12,.29,.1);
-hp(hero,hSphere,hair,-.13,1.78,.04,.09,.27,.1);hp(hero,hSphere,hair,.13,1.78,.04,.09,.27,.1);
-hp(hero,hSphere,white,-.12,1.94,-.04,.035,.04,.035); // small hair ornament
-hp(hero,hSphere,skin,0,1.29,0,.25,.37,.15); // torso base
-hp(hero,hBox,olive,0,1.34,-.01,.49,.52,.29); // fitted olive climbing top
-hp(hero,hBox,oliveDark,0,1.08,0,.5,.12,.3); // hem
-// harness and chest straps
-const chestA=hp(hero,hBox,leather,-.13,1.4,-.16,.055,.52,.045);chestA.rotation.z=-.22;
-const chestB=hp(hero,hBox,leather,.13,1.4,-.16,.055,.52,.045);chestB.rotation.z=.22;
-hp(hero,hBox,leather,0,1.18,-.17,.5,.07,.045);hp(hero,hBox,gold,0,1.18,-.2,.1,.08,.035);
-hp(hero,hBox,leather,0,1.02,.13,.55,.12,.06); // climbing belt
-hp(hero,hBox,gold,-.19,1.02,-.18,.09,.1,.035);hp(hero,hBox,gold,.19,1.02,-.18,.09,.1,.035);
-// backpack and visible shoulder straps
-hp(hero,hBox,leather,0,1.39,.22,.42,.48,.2);
-hp(hero,hBox,leatherHi,0,1.48,.33,.28,.25,.035);
-hStrap(-.21,1.43,.13,-.15);hStrap(.21,1.43,.13,.15);
-// arms, wrist wraps and gloves
-const armL=hLimb(-.31,1.55,0,skin,.49,.105),armR=hLimb(.31,1.55,0,skin,.49,.105);
-hp(hero,hBox,leather,-.31,1.12,0,.22,.11,.18);hp(hero,hBox,leather,.31,1.12,0,.22,.11,.18);
-hp(hero,hSphere,glove,-.31,1.03,-.01,.105,.09,.11);hp(hero,hSphere,glove,.31,1.03,-.01,.105,.09,.11);
-// cargo trousers and articulated legs
-hp(hero,hBox,pants,0,.91,0,.43,.2,.27);
-const legL=hLimb(-.14,.86,0,pants,.56,.13),legR=hLimb(.14,.86,0,pants,.56,.13);
-hp(hero,hBox,pantsHi,-.14,.57,.02,.28,.16,.3);hp(hero,hBox,pantsHi,.14,.57,.02,.28,.16,.3);
-hp(hero,hBox,boot,-.14,.18,-.04,.29,.3,.4);hp(hero,hBox,boot,.14,.18,-.04,.29,.3,.4);
-hp(hero,hBox,leatherHi,-.14,.3,-.06,.3,.07,.42);hp(hero,hBox,leatherHi,.14,.3,-.06,.3,.07,.42);
-// rope coil and metal carabiners on the waist
-for(let i=0;i<3;i++){const t=hp(hero,hTorus,ropeMat,-.28+i*.09,1.04,.23,.78,.78,.78);t.rotation.x=Math.PI/2;t.rotation.z=i*.22}
-const car=hp(hero,hTorus,metal,.29,.99,-.02,.48,.75,.48);car.rotation.z=.4;
-// climbing axe carried at the right side, with wrapped grip and steel pick head
-const axe=new T3.Group();axe.position.set(.46,1.04,.13);axe.rotation.z=-.22;hero.add(axe);
-hp(axe,hCyl,leather,0,.32,0,.045,.72,.045);hp(axe,hCyl,metal,0,.68,0,.045,.2,.045);
-hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
-for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
-hero.visible=true;scene.add(hero);document.documentElement.dataset.climboriaHero='procedural-placeholder';document.documentElement.dataset.climboriaHeroRenderer='fallback';
-/* Character model integration is paused until replacement Meshy GLBs are supplied. */
+/* The approved GLB is the only visible player model. Keep an empty anchor group for safe animation fallback references; never render a procedural substitute. */
+const hero=new T3.Group();hero.name='ClimboriaHeroAnchor';hero.visible=false;scene.add(hero);
+
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
@@ -802,14 +757,10 @@ let heroLoadError='',heroLoadRequest=0,heroTimeout=null,activeHeroRequest=null;
 function setReady(){renderReady=true;checkAllReady()}
 function useProceduralEsmiFallback(){
  if(assetHero)return;
- hero.visible=true;hero.position.set(P.x,P.y-1.75,P.z);hero.rotation.y=P.yaw+Math.PI;
- document.documentElement.dataset.climboriaHero='ClimboriaHero';
- document.documentElement.dataset.climboriaHeroName='Climboria Hero';
- document.documentElement.dataset.climboriaHeroRenderer='fallback';
- document.documentElement.dataset.climboriaHeroAnimation='procedural';
- if(status)status.textContent='Climboria Hero is ready. Procedural appearance active.';
- heroEntryAllowed=true;heroEntryBusy=false;
- if(P.mode==='cine')takeOver();
+ hero.visible=false;
+ document.documentElement.dataset.climboriaHeroRenderer='unavailable';
+ document.documentElement.dataset.climboriaHeroAnimation='unavailable';
+ heroEntryAllowed=false;heroEntryBusy=false;
 }
 let selectedHeroRecord=heroData.getSelectedHero(),loadedHeroId='',heroEntryAllowed=false,heroEntryBusy=false;
 function disposeHeroModel(root){
