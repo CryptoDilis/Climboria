@@ -277,11 +277,9 @@ try {
     bag: !!document.querySelector('#player-card'),
     worldMap: !!document.querySelector('#world-map') && getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
     hero: document.documentElement.dataset.climboriaHero === 'adventurer',
-    controlDock: !!document.querySelector('#control-dock'),
-    controlsText: document.querySelector('#control-dock')?.innerText || '',
+    bottomControlDock: !!document.querySelector('#control-dock'),
   }));
-  if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || !hudUi.controlDock) errors.push('Adventure HUD/inventory/map/controls UI missing: ' + JSON.stringify(hudUi));
-  if (!['W A S D','SHIFT','SPACE','LEFT CLICK','INTERACT','MAP'].every(k => hudUi.controlsText.toUpperCase().includes(k))) errors.push('Desktop control guide is incomplete: ' + JSON.stringify(hudUi.controlsText));
+  if (!hudUi.playerName || !hudUi.statusBars || !hudUi.bag || !hudUi.worldMap || !hudUi.hero || hudUi.bottomControlDock) errors.push('Adventure HUD/inventory/map/hero state is incorrect or an unwanted bottom control dock is present: ' + JSON.stringify(hudUi));
   if (await page.locator('#world-map-panel').isHidden()) errors.push('Persistent minimap is not visible by default');
   const settingsButton=page.locator('#expedition-settings-toggle');
   const settingsBox=await settingsButton.boundingBox();
