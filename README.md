@@ -2013,3 +2013,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual physical-device cave lighting verification on Redmi 14 5G remains open.
 - [ ] Next P0 cave task: expand the existing compact connected cave (current 23 wall segments, one side room, annex and east branch) into a substantially larger connected multi-room maze. Preserve existing geometry/routes and smoke contracts; add real floors/ceilings/wall colliders, branching corridors and hidden rooms, then add an independently verified underwater room/hangout and trap activation/damage/respawn tests. Snakes/wildlife remain disabled until owner approval.
 - [ ] Do not merge PR #165 wholesale: it remains open and divergent, and includes broad changes to `game/play.html`, hub, character-lab, customization, smoke workflow and multiple pages. Reconcile only required approved hub/hero-picker changes onto current main after inspecting each change and its tests.
+
+
+## 2026-11-03 — cave maze expansion merged
+
+- [x] PR #174 merged to main as `94db5c17de7a3c2b8c1e15bc4656b12bbf18bf92` after both required checks passed.
+- [x] PR #174 Validate `41658934167` passed.
+- [x] PR #174 Browser Smoke `41658934220` passed, including Jarrell's Peak desktop/mobile gameplay smoke stage.
+- [x] Previous post-cave-lighting main Browser Smoke `41658107652` passed; main Validate `41658107773` and Pages deployment `41658639293` passed.
+- [ ] Verify post-merge main Validate, Browser Smoke, and Pages deployment for merge SHA `94db5c17` before treating this change as main-deployed.
+- [ ] Next cave P0: add underwater route/room and safe hangout/swimming area with collision/water-boundary checks; implement deterministic trap activation, damage and respawn tests. Keep snakes/wildlife disabled unless approved.
+- [ ] Expand cave beyond the newly added west/north chambers toward the full large maze requirement; add readable navigation, additional branches, trap variants, hidden treasure chamber and reward odds safeguards. Do not claim the cave finished from the current two new chambers alone.
+- [ ] Continue remaining Jarrell's Peak checklist without replacing the existing world. Physical Redmi 14 5G visual acceptance remains open.
