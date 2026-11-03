@@ -1956,3 +1956,19 @@ For every integrated asset or borrowed technique, record:
 - [x] Corrected the assertion and added a mobile landscape minimap dimension check.
 - [ ] Await a fresh Browser Smoke run on the repaired branch; do not treat this repair as verified until the run passes.
 - [ ] Recheck physical Redmi 14 5G landscape rendering after the branch is merged/deployed. Desktop layout and the Jarrell’s Peak world/map assets were not changed by this CSS-only map repair.
+
+
+---
+
+## 2026-11-03 — mobile GLB auto-entry diagnosis and requested HUD cleanup (verification pending)
+
+- [x] Inspected failed Browser Smoke run `41546991546` on PR #165 head `5592777cbb38a526b007eecb9e257c3e65919d95`. Validate passed; Browser Smoke failed in the mobile Hub-to-game auto-entry gate after 90 seconds waiting for gameplay + landscape + the approved GLB renderer.
+- [x] Added timeout diagnostics to `.github/scripts/mobile-reentry-smoke.mjs` for readiness flags, gameplay mode, hero identity/renderer/error, GLTFLoader availability, GLB/CDN failed requests, HTTP error responses, and resource timing.
+- [x] Exposed the GLB load failure message as `document.documentElement.dataset.climboriaHeroError`.
+- [x] Removed the temporary procedural character mesh and its visible fallback. The approved GLB is now the only visible player model; a failed GLB request no longer substitutes the generated character.
+- [x] Tightened the explorer card to the upper-left edge and moved the health/stamina/damage panel directly beneath it with reduced spacing.
+- [x] Hid the overlapping biome/debug HUD and removed X/Z/altitude coordinates from the subtitle.
+- [x] Removed the bottom instruction dock from the gameplay markup, as explicitly requested.
+- [x] Added mobile smoke assertions for the minimap's terrain pixel variation, glowing player marker, settings-button adjacency, HUD alignment, hidden debug overlay, and absence of the bottom dock.
+- [ ] The latest code/test head is `7ddf088702d2186cc96056c6b2582c6c4fa24060` on `codex/fix-character-picker-overlay`. No new workflow run is currently returned for this head; these changes are **IMPLEMENTED — UNVERIFIED**, not green.
+- [ ] Next: obtain the new Browser Smoke diagnostic from the rerun; repair the actual GLB loading/landscape blocker without restoring the procedural hero or weakening the test. Then rerun Validate, Browser Smoke and Pages deployment.
