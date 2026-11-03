@@ -620,3 +620,13 @@ For each meaningful implementation batch:
 - [x] Browser smoke verifies 100 total chests, 84/15/1 category split, cave slots/floor alignment, world spawn validity and spacing, respawn windows, fixed summit chest and rarity totals. Global cooldown, simultaneous claim locking, funded rewards and server failure tests remain pending backend implementation.
 - [x] Preserved existing cave/geode/summit/ruins landmark chests within the 100-chest total; updated chest implementation passed Validate and desktop/mobile Browser Smoke on PR #184.
 - [ ] Physical desktop and Redmi 14 5G acceptance remains required for chest visibility, interaction range, cave readability, summit contest readability and performance.
+
+
+## 2026-11-04 — cave entrance access and camera-occlusion repair (in validation)
+
+- [x] Remove the opaque black sphere that filled the cave's central view and replace the flat rectangular lintel with an irregular stone arch.
+- [x] Move the 5 × 7 spike grid out of the doorway/first approach and into the bounded north-maze chamber; update the HUD trap warning to that room.
+- [x] Remove the large circular fixed collider centered across the doorway and retain two smaller flank colliders so the entrance remains framed without being sealed.
+- [x] Add a deterministic browser regression that walks from local cave exterior Z=-55 to interior Z=+8 through the real movement/collision controller; do not use the teleport shortcut as proof.
+- [ ] Await Validate and desktop/mobile Browser Smoke; entrance traversal must complete with no blocker and the black sphere audit must remain zero.
+- [ ] Review actual browser screenshots and manually verify the stone arch, lighting, cave floor and camera clearance. Physical desktop and Redmi 14 5G acceptance remain open.
