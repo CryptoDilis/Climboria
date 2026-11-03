@@ -2160,3 +2160,12 @@ For every integrated asset or borrowed technique, record:
 - [x] Confirmed current chest rewards are added to the browser's persistent local inventory. This is not a server-authoritative reward ledger and does not implement or secure the requested 3% rare-reward roll.
 - [ ] Next implementation: add a reachable, floor-aligned treasure spawn inside the geode chamber; extend smoke coverage to assert chamber location, open/hide/respawn lifecycle and inventory result. Preserve existing seven chests and test contracts.
 - [ ] Keep any 3% rare reward disabled/unpromised until there is a funded server-authoritative reward service, auditable randomness, anti-repeat/anti-exploit controls and a verified payout path. Do not simulate this with client-side Math.random or localStorage.
+
+### 2026-11-04 — geode chamber treasure spawn implemented
+
+- [x] Added a dedicated eighth world chest in the center of the hidden geode chamber at cave-local coordinates (54, 42).
+- [x] Geode chest placement uses the cave floor elevation on initial spawn and every respawn; the other existing chest placement behavior is unchanged.
+- [x] Extended Browser Smoke to assert the geode chest exists, is visible and unopened at startup, and its Y coordinate matches the cave floor audit.
+- [ ] Await fresh Browser Smoke and Validate results for commits `8c96b46a2ac7570997859bb309541dcc94c2e61b` and `065b88ff98db511de9b0660e285cdd6d5b9e81b1`. The current GitHub connector exposes PR-triggered runs only; it returned no push-triggered run records/statuses for these main commits, so no green status is claimed.
+- [ ] Follow-up: add an automated open/hide/90–150 second respawn/inventory lifecycle assertion; this change currently verifies spawn visibility and floor alignment only.
+- [ ] Do not enable or advertise the 3% rare token jackpot until a funded, server-authoritative reward service and verifiable payout controls are implemented.
