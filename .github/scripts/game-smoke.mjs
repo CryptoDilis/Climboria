@@ -436,7 +436,24 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
-  await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === window.ClimboriaHeroData?.getSelectedHero?.().id, { timeout: 45000 });
+  try {
+    await mobile.waitForFunction(() => document.documentElement.dataset.climboriaHero === window.ClimboriaHeroData?.getSelectedHero?.().id, { timeout: 45000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      ready: window.__climboriaGameReady,
+      readiness: window.__climboriaReadiness || null,
+      init: window.__climboriaInitState || null,
+      mode: window.__climboriaJarrellsPeak?.player?.mode,
+      selectedHero: window.ClimboriaHeroData?.getSelectedHero?.() || null,
+      hero: document.documentElement.dataset.climboriaHero || '',
+      renderer: document.documentElement.dataset.climboriaHeroRenderer || '',
+      heroError: document.documentElement.dataset.climboriaHeroError || '',
+      heroErrorDetail: document.documentElement.dataset.climboriaHeroErrorDetail || '',
+      frames: window.__climboriaRenderState?.frames ?? 0,
+      assetRequests: performance.getEntriesByType('resource').filter(x => /Climboria_Hero|GLTFLoader|three\\.min\\.js/i.test(x.name)).map(x => ({name:x.name,duration:x.duration,transferSize:x.transferSize}))
+    }));
+    throw new Error('Mobile selected hero did not become active: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+  }
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
   await mobile.keyboard.press('w');
   await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
