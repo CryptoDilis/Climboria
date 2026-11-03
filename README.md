@@ -2040,3 +2040,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Remaining cave scope: full death/respawn behavior test, more maze branches and hidden chambers, underwater route/room/hangout, readable wayfinding, treasure/reward odds safeguards, and physical Redmi 14 5G verification. Current PR #175 only adds deterministic spike contact/damage contract checks; do not claim end-to-end trap/respawn completion.
 - [ ] Next technical implementation should inspect the cave's actual vertical placement, terrain/water queries and collision model before adding an underwater chamber. Current world water plane is at Y=0 and freshwater/ocean registries are global; do not simply add a water mesh inside the cave without a coherent water volume, player swim query and collision boundaries.
 - [ ] Keep existing world, UI, hero, and disabled wildlife intact. No snake/animal reactivation without explicit owner approval.
+
+
+### Follow-up detail — PR #175 cave elevation and local trap coordinates
+
+- [x] Cave group now sets `POI.cave.h = heightAt(POI.cave.x, POI.cave.z)` before placement; the cave smoke audit asserts finite `caveBaseY`. This prevents undefined terrain elevation from propagating into cave transforms and makes local/world vertical comparisons well-defined.
+- [x] Spike contact helper now receives the player's feet converted to cave-local Y (`P.y - caveG.position.y - 1.75`) and compares against the animated spike's local Y. The prior helper version mixed coordinate spaces; its smoke run was superseded/cancelled after correction.
+- [x] Latest PR #175 validation `41660997856` passed on commit `9ada31a2`.
+- [ ] Latest PR #175 desktop/mobile Browser Smoke `41660997756` is still in progress; do not merge before it passes.
+- [x] Main Pages deployment `41660802606` passed after this README's previous update; this new documentation update will trigger a fresh deployment.
