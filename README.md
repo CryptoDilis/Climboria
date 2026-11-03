@@ -2025,3 +2025,18 @@ For every integrated asset or borrowed technique, record:
 - [ ] Next cave P0: add underwater route/room and safe hangout/swimming area with collision/water-boundary checks; implement deterministic trap activation, damage and respawn tests. Keep snakes/wildlife disabled unless approved.
 - [ ] Expand cave beyond the newly added west/north chambers toward the full large maze requirement; add readable navigation, additional branches, trap variants, hidden treasure chamber and reward odds safeguards. Do not claim the cave finished from the current two new chambers alone.
 - [ ] Continue remaining Jarrell's Peak checklist without replacing the existing world. Physical Redmi 14 5G visual acceptance remains open.
+
+
+## 2026-11-03 — latest workflow recheck and cave trap logic correction
+
+- [x] PR #174 post-merge main Validate `41659750696` passed.
+- [x] PR #174 post-merge main Browser Smoke `41659750658` passed on merge SHA `94db5c17`.
+- [x] Pages deployment `41659785216` passed on docs-updated main SHA `5e0700f3`.
+- [x] PR #175 Validate `41660175511` passed on initial trap-audit commit; that run's Browser Smoke `41660175702` was cancelled after a follow-up code correction, not a failure.
+- [x] Root cause correction in PR #175: trap contact must compare the player's feet and animated spike height in cave-local vertical coordinates. The initial helper mixed world-space player Y with cave-local spike Y. Live gameplay now converts player feet into cave-local Y, and deterministic audit probes use local Y.
+- [x] Updated PR #175 commit `85e4cb44e5e853db07513b05ef10950fba42c10e`; Validate `41660703787` passed.
+- [ ] PR #175 Browser Smoke `41660703828` is running; require it to pass before merge.
+- [ ] Main Browser Smoke and main deployment are green after PR #174; no outstanding failed workflow on current main.
+- [ ] Remaining cave scope: full death/respawn behavior test, more maze branches and hidden chambers, underwater route/room/hangout, readable wayfinding, treasure/reward odds safeguards, and physical Redmi 14 5G verification. Current PR #175 only adds deterministic spike contact/damage contract checks; do not claim end-to-end trap/respawn completion.
+- [ ] Next technical implementation should inspect the cave's actual vertical placement, terrain/water queries and collision model before adding an underwater chamber. Current world water plane is at Y=0 and freshwater/ocean registries are global; do not simply add a water mesh inside the cave without a coherent water volume, player swim query and collision boundaries.
+- [ ] Keep existing world, UI, hero, and disabled wildlife intact. No snake/animal reactivation without explicit owner approval.
