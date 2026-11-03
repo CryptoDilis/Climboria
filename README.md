@@ -6,7 +6,7 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
-## 0. Current project control panel — updated 2026-11-03
+## 0. Current project control panel — updated 2026-11-03 (readiness repair merged)
 
 ### Current priority and sequencing
 
@@ -22,9 +22,10 @@
 ### Verified repository snapshot at this update
 
 - Repository: [CryptoDilis/Climboria](https://github.com/CryptoDilis/Climboria), default branch `main`.
-- Latest `main` ref inspected: `a7070fb322bbf2b8ec656f838f366adcee8f1994`.
-- Open draft PR #165: [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165), head `2d6c5b5cd57a3aa654a38fa5ee61e3122579dbfc`. It is **not merged**.
-- PR #165 Validate run `41525442780` succeeded on an earlier head `0dd3f4601b75b36e20b7f56ee88ef0d38f419816`. The latest Browser Smoke run `41527544244` was **in progress** at inspection. Therefore PR #165 is not green/accepted yet.
+- Latest readiness-fix merge on `main`: `5aae1b37cdec6240767a79d21cb7a85a21241a14` (squash merge of PR #167).
+- PR #167 [Fix combined gameplay readiness lifecycle on current main](https://github.com/CryptoDilis/Climboria/pull/167) merged after both required checks passed: Validate run `41646206937` and Browser Smoke run `41646206964` (desktop and mobile gameplay smoke steps succeeded). The change is limited to `game/play.html`; chunk generation remains progressive/non-blocking, and combined readiness now waits for chunk and renderer readiness. It does not modify `waitForFunction`.
+- PR #165 [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165) remains open but is an older, heavily divergent branch. Do not merge it directly. Its previous mobile re-entry failure was traced to a smoke assertion reading `actualMobileTransition.heroMenuExists` instead of `actualMobileTransition.gameplay.heroMenuExists`; reconcile the intended changes onto current `main` and correct the assertion without weakening coverage.
+- Latest cave-side-room development history remains recorded below; re-check its current main-branch workflow evidence before changing its status.
 - The latest development log entry for the connected cave side-room increment records commits `51ade066b9830ae18f54f7f65fa77e3dad35682e`, `016a8d24f87ae40c8f805f16f714893f3d835d9c`, and `f60560f0bac7d13ff7edf3bfcfad7b573bf25131` with Validate, Browser Smoke and Pages deployment still pending in that log. Re-check live Actions before changing status.
 - DEX/Launchpad uploaded HTML static audit exists at [docs/AUDIT-DEX-LAUNCHPAD-UPLOADED-HTML.md](./docs/AUDIT-DEX-LAUNCHPAD-UPLOADED-HTML.md). Verdict: **do not publish as a real mainnet DEX/Launchpad**. The audit found a non-functional token creation alert, incorrect hard-coded token decimal conversions, fabricated fallback quotes, placeholder mint data, misleading live/mainnet labels, and no verified wallet-signing or on-chain flow. No live transaction verification was performed.
 
@@ -382,6 +383,20 @@ The game remains the priority. Crypto participation must not be required for the
 
 
 ---
+
+
+
+## 2026-11-03 — combined gameplay readiness lifecycle repaired and merged
+
+- [x] Kept chunk, renderer and hero readiness as independent lifecycle flags; progressive chunk generation remains non-blocking.
+- [x] Published `window.__climboriaGameReady` only after required chunk initialization and a successful renderer frame are both ready; hero readiness remains independently tracked.
+- [x] Corrected the GLB renderer diagnostic to represent actual GLB load success/failure rather than merely a running render loop.
+- [x] Preserved `waitForFunction`, existing smoke assertions, current world assets and approved hero asset.
+- [x] Merged PR #167 into `main`: commit `5aae1b37cdec6240767a79d21cb7a85a21241a14` (source head `ca9ec69eca402057cd8c31b6c8c882e2a9284e24`).
+- [x] Validate Climboria passed: run [41646206937](https://github.com/CryptoDilis/Climboria/actions/runs/41646206937).
+- [x] Browser Smoke passed, including desktop and mobile Jarrell's Peak gameplay smoke and screenshot upload: run [41646206964](https://github.com/CryptoDilis/Climboria/actions/runs/41646206964).
+- [ ] Manual visual acceptance on desktop and Redmi 14 5G remains open; automated CI does not close this item.
+- Next: reconcile PR #165 hub/menu/hero re-entry changes onto current `main` (do not merge its divergent branch directly); correct the nested `gameplay.heroMenuExists` assertion and retain full regression coverage.
 
 # Preserved detailed development history and checklist
 
