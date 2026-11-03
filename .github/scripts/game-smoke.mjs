@@ -428,6 +428,25 @@ try {
   // tested, but it must be closed before capturing the actual world/player view.
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
+  // Normalize the evidence view to the real Sanctuary spawn. Earlier controls tests
+  // teleport to the cave, so restoring only player coordinates leaves a misleading
+  // cave camera/biome view in the desktop screenshot.
+  await page.keyboard.press('1');
+  await page.waitForFunction(() => {
+    const p=window.__climboriaJarrellsPeak?.player;
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+      (window.__climboriaRenderState?.frames ?? 0)>=4;
+  }, undefined, { timeout: 10000 });
+  await page.waitForTimeout(900);
+  const desktopVisualCapture = await page.evaluate(() => ({
+    player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
+    camera:{yaw:window.__climboriaCameraOrbit?.yaw,distance:window.__climboriaCameraOrbit?.distance},
+    chunks:window.__climboriaJarrellsPeak?.chunks?.size ?? 0,
+    frames:window.__climboriaRenderState?.frames ?? 0,
+    viewport:{width:innerWidth,height:innerHeight}
+  }));
+  console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
+  if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
   const mobile = await browser.newPage({
@@ -624,6 +643,25 @@ try {
   if (!mobileState.canvas || !mobileState.ready || !mobileState.controls || mobileState.mobileActions.length!==4 || mobileState.mobileActions.some(a=>!a.visible) || !mobileState.playerName || !mobileState.playerVisible || !mobileState.statusVisible || !mobileState.worldMap || !mobileState.settingsVisible || !mobileState.hero || !mobileState.bag || mobileState.renderFrames < 2) errors.push('Mobile gameplay/render/HUD/visible-touch-control initialization failed: ' + JSON.stringify(mobileState));
   if (mobileState.renderErrors.length) errors.push('Mobile 3D frame loop reported errors: ' + JSON.stringify(mobileState.renderErrors));
   if (mobileState.document > mobileState.viewport + 2) errors.push('Mobile game overflows horizontally: ' + JSON.stringify(mobileState));
+  // Camera-orbit and pinch tests above deliberately change the view. Capture a
+  // comparable default Sanctuary view rather than leaving the screenshot zoomed
+  // toward an arbitrary direction or landmark.
+  await mobile.keyboard.press('1');
+  await mobile.waitForFunction(() => {
+    const p=window.__climboriaJarrellsPeak?.player;
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+      (window.__climboriaRenderState?.frames ?? 0)>=4;
+  }, undefined, { timeout: 10000 });
+  await mobile.waitForTimeout(900);
+  const mobileVisualCapture = await mobile.evaluate(() => ({
+    player:{x:window.__climboriaJarrellsPeak?.player?.x,y:window.__climboriaJarrellsPeak?.player?.y,z:window.__climboriaJarrellsPeak?.player?.z},
+    camera:{yaw:window.__climboriaCameraOrbit?.yaw,distance:window.__climboriaCameraOrbit?.distance},
+    chunks:window.__climboriaJarrellsPeak?.chunks?.size ?? 0,
+    frames:window.__climboriaRenderState?.frames ?? 0,
+    viewport:{width:innerWidth,height:innerHeight}
+  }));
+  console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
+  if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
