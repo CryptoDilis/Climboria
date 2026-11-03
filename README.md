@@ -1999,3 +1999,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Fresh Validate and Browser Smoke are still required on this exact code commit. The prior workflow is permanently tied to its older checkout and cannot verify this correction; API-created commits have not auto-triggered Actions.
 - [ ] Do not proceed with terrain/collider modifications until the corrected gameplay smoke completes. Keep the mountain massif blocked bearings as diagnostics only; inspect intended routes and collision source before edits.
 - [ ] Physical desktop and Redmi 14 5G visual acceptance remains outstanding.
+
+
+## 2026-11-03 — 100-slot inventory smoke contract repair (verification pending)
+
+- [x] Inspected Browser Smoke run [41637747904](https://github.com/CryptoDilis/Climboria/actions/runs/41637747904) on code commit `eec1c4672c8d56ce3b2f503c64144b8a4298fda2`. Preflight passed; mobile Hub-to-game auto-entry/HUD passed 3/3; homepage CTA/DEX/mobile navigation passed; desktop and mobile Jarrell's Peak world diagnostics loaded and rendered.
+- [x] Diagnosed the next gameplay smoke failure at `.github/scripts/game-smoke.mjs:524`: the test expected the obsolete `BACKPACK · 50 SLOTS` label, while the approved README contract and actual inventory implementation both specify 100 backpack slots, a 100-slot capacity guard, nine equipment slots including SKIN, and a clickable nameplate inventory panel.
+- [x] Updated the smoke audit to verify the actual approved contract: 100 rendered backpack cells, nine equipment slots, the SKIN slot, and the 100-slot capacity label. The test was strengthened rather than removing the assertion or changing the inventory UI.
+- [x] Smoke-test correction commit: `2d6f1e4f33da613a292e42b8922d9bdcd4fcca48`.
+- [ ] Fresh Validate and Browser Smoke on the latest branch head are required. Do not call this repair green until the exact latest head completes both workflows.
+- [ ] After the inventory gate passes, continue the remaining P0 Jarrell's Peak checklist in order. Physical desktop and Redmi 14 5G acceptance remains separate from browser emulation.
