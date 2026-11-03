@@ -45,7 +45,7 @@ import { chromium } from 'playwright';
         ready:window.__climboriaGameReady,readiness:window.__climboriaReadiness||null,
         bodyClasses:document.body.className,mode:window.__climboriaJarrellsPeak?.player?.mode,
         hero:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',
-        heroError:document.documentElement.dataset.climboriaHeroError||'',
+        heroError:document.documentElement.dataset.climboriaHeroError||'',heroErrorDetail:document.documentElement.dataset.climboriaHeroErrorDetail||'',
         loaderAvailable:typeof THREE!=='undefined'&&!!THREE.GLTFLoader,
         heroAssetEntries:performance.getEntriesByType('resource').filter(x=>/Climboria_Hero|GLTFLoader|three\.min\.js/i.test(x.name)).map(x=>({name:x.name,duration:x.duration,transferSize:x.transferSize}))
       }));
