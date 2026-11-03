@@ -312,7 +312,7 @@ function biome(x,z,h){
 /* ---------- renderer / scene ---------- */
 let chunkReady=false,renderReady=false,heroReady=false;
 window.__climboriaGameReady=false;
-function checkAllReady(){if(chunkReady&&renderReady){window.__climboriaGameReady=true;window.__climboriaGLBRenderer=!!renderer;document.documentElement.dataset.climboriaReady='true';document.body.classList.add('free');console.log('[READY] chunks,render,hero,landscape,walk all ready')}}
+function checkAllReady(){if(chunkReady&&renderReady&&heroReady){window.__climboriaGameReady=true;window.__climboriaGLBRenderer=!!renderer;document.documentElement.dataset.climboriaReady='true';document.body.classList.add('free');console.log('[READY] chunks,render,hero,landscape,walk all ready')}}
 const renderer=new T3.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.domElement.id='game';
 // Cap render resolution to reduce GPU fill-rate pressure on large open-world scenes.
