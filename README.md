@@ -6,7 +6,7 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
-## 0. Current project control panel — updated 2026-11-03 (PR #169 diagnostics merged; desktop/mobile smoke green)
+## 0. Current project control panel — updated 2026-11-03 (live smoke contract repaired; current main green)
 
 ### Current priority and sequencing
 
@@ -22,8 +22,9 @@
 ### Verified repository snapshot at this update
 
 - Repository: [CryptoDilis/Climboria](https://github.com/CryptoDilis/Climboria), default branch `main`.
-- Latest verified merge: PR #169 diagnostics commit `db59fd36109d6e3e250e6758504da8aa1f3bb008`; PR #168 all-water-body swim diagnostics merge `65120d7e5647dbb08dd081520fdbb11b31074052`; readiness-fix PR #167 merge `5aae1b37cdec6240767a79d21cb7a85a21241a14`.
+- Latest verified merge: PR #170 live-site smoke HUD contract `dee1c94625b3e5ff019eb33f4e20aee168b6057f`; PR #169 rainforest placement diagnostics `db59fd36109d6e3e250e6758504da8aa1f3bb008`; PR #168 all-water-body swim diagnostics `65120d7e5647dbb08dd081520fdbb11b31074052`; readiness-fix PR #167 `5aae1b37cdec6240767a79d21cb7a85a21241a14`.
 - PR #167 [Fix combined gameplay readiness lifecycle on current main](https://github.com/CryptoDilis/Climboria/pull/167) merged after both required checks passed: Validate run `41646206937` and Browser Smoke run `41646206964` (desktop and mobile gameplay smoke steps succeeded). The change is limited to `game/play.html`; chunk generation remains progressive/non-blocking, and combined readiness now waits for chunk and renderer readiness. It does not modify `waitForFunction`.
+- PR #170 [Fix live-site smoke to assert the current gameplay HUD](https://github.com/CryptoDilis/Climboria/pull/170) merged as `dee1c94625b3e5ff019eb33f4e20aee168b6057f`. The scheduled live-site smoke had failed because it waited for the intentionally hidden legacy `#zone` HUD. The test now waits for the actual ready/free gameplay state and visible player/status cards, map and settings control. PR Validate `41652046809`, post-merge Validate `41652151971`, live-site smoke `41652151904`, Pages deployment `41652150568`, and current-main Browser Smoke `41651579697` all passed. The live log confirms the game-ready flag, active gameplay, 1365×900 scene canvas, player/health/stamina HUD, map and settings are visible. Soundtrack object was not present in this live smoke snapshot; investigate audio initialization separately rather than treating it as passed.
 - PR #169 [Diagnose exact CC0 rainforest placement failures](https://github.com/CryptoDilis/Climboria/pull/169) merged as `db59fd36109d6e3e250e6758504da8aa1f3bb008`. Validate run `41650874654` and Browser Smoke run `41650874828` both passed. The desktop/mobile smoke log confirms all rainforest placement groups are valid (16 buttress, 16 canopy, 42 undergrowth, 14 fallen logs; zero invalid placements), all 11 fishing spots start correctly, freshwater entry/exit works, collision audit has 87 valid solids and zero water overlaps, and mobile HUD/controls/hero are visible. This PR changes diagnostics only; it does not change runtime map placement.
 - PR #165 [Restore Climboria hub and saved hero expedition flow](https://github.com/CryptoDilis/Climboria/pull/165) remains open but is an older, heavily divergent branch. Do not merge it directly. Its previous mobile re-entry failure was traced to a smoke assertion reading `actualMobileTransition.heroMenuExists` instead of `actualMobileTransition.gameplay.heroMenuExists`; reconcile the intended changes onto current `main` and correct the assertion without weakening coverage.
 - Latest cave-side-room development history remains recorded below; re-check its current main-branch workflow evidence before changing its status.
@@ -1978,3 +1979,13 @@ For every integrated asset or borrowed technique, record:
 - [x] Fishing interaction smoke passed for all eight coastal docks plus woodland pond, moonpool and sanctuary lake; freshwater movement entry/exit passed; collision audit reported 87 valid solids and no water overlaps; mobile diagnostics reported visible hero, HUD, map, settings and mobile controls.
 - [x] Merged PR #169 at `db59fd36109d6e3e250e6758504da8aa1f3bb008`.
 - [ ] Physical Redmi 14 5G visual acceptance remains open. Automated browser evidence does not certify real-device rendering.
+
+
+## 2026-11-03 — live-site smoke HUD contract repaired and reverified (PR #170)
+
+- [x] Diagnosed scheduled live-site smoke failure `41651569323`: Playwright timed out waiting for legacy `#zone` to become visible, although current gameplay intentionally hides the legacy HUD.
+- [x] Updated the live-site test to assert actual readiness (`__climboriaGameReady`), active gameplay (`body.free`), visible player/status cards, health/stamina, map and settings; no runtime gameplay changes.
+- [x] PR #170 merged at `dee1c94625b3e5ff019eb33f4e20aee168b6057f`; PR Validate `41652046809` passed.
+- [x] Post-merge Validate `41652151971`, live-site smoke `41652151904`, Pages deployment `41652150568`, and current-main Browser Smoke `41651579697` passed.
+- [ ] Live smoke reported `soundtrack:false`; current smoke does not fail on this optional field. Audio initialization/volume and the user's approved soundtrack remain an open manual/technical acceptance item.
+- [ ] Physical Redmi 14 5G visual acceptance remains open.
