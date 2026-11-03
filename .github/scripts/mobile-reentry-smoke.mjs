@@ -56,7 +56,7 @@ import { chromium } from 'playwright';
       const map=document.querySelector('#world-map-panel'),canvas=document.querySelector('#world-map'),gear=document.querySelector('#expedition-settings-toggle');
       const cr=card?.getBoundingClientRect(),sr=stats?.getBoundingClientRect(),mr=map?.getBoundingClientRect(),gr=gear?.getBoundingClientRect();
       const ctx=canvas?.getContext('2d'),pixels=ctx?.getImageData(0,0,canvas.width,canvas.height).data;
-      const colors=new Set(),greenPixels=0;
+      const colors=new Set();let greenPixels=0;
       if(pixels)for(let i=0;i<pixels.length;i+=4){const r=pixels[i],g=pixels[i+1],b=pixels[i+2];if(i%256===0)colors.add((r>>4)+','+(g>>4)+','+(b>>4));if(g>180&&g>r*1.2&&g>b*1.2)greenPixels++}
       return {
         noBottomDock:!document.querySelector('#control-dock'),
