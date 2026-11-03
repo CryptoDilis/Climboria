@@ -296,10 +296,13 @@ try {
   if(!groundCheck.groundFn||!groundCheck.ground||!Number.isFinite(groundCheck.feet)) errors.push('Terrain/player ground sampling diagnostic unavailable: '+JSON.stringify(groundCheck));
   const menu=await browser.newPage({viewport:{width:1365,height:900}});
   await menu.goto('http://127.0.0.1:4173/game/index.html',{waitUntil:'domcontentloaded'});
-  if((await menu.locator('body').innerText()).match(/FOUR CLEAR DESTINATIONS|FOUR DESTINATIONS/i)) errors.push('Expedition menu still advertises four destinations');
-  if(await menu.locator('a.menu-create').count()) errors.push('Old oversized header Create Character button is still present');
+  const createHero=menu.locator('#menuCreateHero');
+  if(await createHero.count()!==1 || !(await createHero.isVisible()) || await createHero.getAttribute('href')!=='./character-lab.html') errors.push('Hub Create Hero header action is missing, hidden, or points to the wrong page');
+  if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
+  if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
+  if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
   await Promise.all([
-    menu.waitForURL(/play\.html\?level=11(?:&|$)/, { timeout: 15000 }),
+    menu.waitForURL(/play\.html\?level=11(?:&|$)/, { timeout: 15000, waitUntil: 'domcontentloaded' }),
     menu.locator('.card[data-level="11"]').click(),
   ]);
   if(new URL(menu.url()).searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
