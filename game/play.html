@@ -897,7 +897,7 @@ addEventListener('keydown',e=>{
  // Direct player input always takes priority over a queued Dota-style click destination.
  if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))P.moveTarget=null;
  keys[e.code]=true;
- if(['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
+ if(P.mode==='cine'&&ready&&['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code))takeOver();
  
  if(!e.repeat&&e.code=='KeyT'){todI=(todI+1)%TOD.length;syncEnvironmentControls()}if(!e.repeat&&e.code=='KeyR'){wx=(wx+1)%weatherNames.length;syncEnvironmentControls()}if(e.code=='KeyE'&&!e.repeat)interact();
  if(e.code=='KeyV'){P.mode='cine';camY=null;free(false);document.exitPointerLock&&document.exitPointerLock();}
