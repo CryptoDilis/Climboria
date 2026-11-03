@@ -949,11 +949,11 @@ function cinematicPoint(u){
  return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
 }
 // Bring the explorer closer on narrow screens so the hero remains readable above the mobile controls.
-let camY=null,lookY=0,cameraDistance=MOB?5.8:7.2,targetCameraDistance=MOB?5.8:7.2;
+let camY=null,lookY=0,cameraDistance=MOB?5.8:7.2,targetCameraDistance=MOB?5.8:7.2,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
-window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance}};
+window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance},get safeBack(){return cameraSafeBack},get actualDistance(){return cameraActualDistance},get groundClearance(){return cameraGroundClearance},get mobile(){return MOB}};
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 let climboriaMusicRequested=false;
@@ -1674,7 +1674,10 @@ function update(dt){
   safeBack=Math.max(1.4,safeBack);
   terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+2.45+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*safeBack);
   terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+0.9);
+  cameraSafeBack=safeBack;
+  cameraGroundClearance=terrainCameraFinal.y-groundAt(terrainCameraFinal.x,terrainCameraFinal.z);
   cam.position.copy(terrainCameraFinal);
+  cameraActualDistance=cam.position.distanceTo(terrainCameraTarget);
   cam.near=0.15;
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
