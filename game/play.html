@@ -783,6 +783,7 @@ function loadAssetHero(choice='ClimboriaHero'){
   assetMixer=gltf.animations&&gltf.animations.length?new T3.AnimationMixer(assetHero):null;
   assetActions=gltf.animations||[];assetActive=null;assetAnimState='';cacheAssetRig(assetHero);chooseAssetAnimation('idle');
   document.documentElement.dataset.climboriaHero=choice.toLowerCase().replace(/[^a-z]/g,'-');document.documentElement.dataset.climboriaHeroAsset=assetChoices[choice];document.documentElement.dataset.climboriaHeroRenderer='glb';
+  window.__climboriaGLBRenderer=true;
   document.documentElement.dataset.climboriaAnimations=assetActions.map(a=>a.name).join('|')||'none';
 heroReady=true;
   console.info('[Climboria] Loaded '+choice+' GLB',assetActions.map(a=>a.name),'bones',assetRig.legs.length,assetRig.arms.length);
@@ -791,6 +792,7 @@ heroReady=true;
   heroLoadError=String(error&&error.message||error);
   document.documentElement.dataset.climboriaHero='load-error';
   document.documentElement.dataset.climboriaHeroRenderer='fallback';
+  window.__climboriaGLBRenderer=false;
   hero.visible=false;
   heroReady=true;
   document.documentElement.dataset.climboriaHeroRenderer='glb-unavailable';
@@ -1386,11 +1388,24 @@ function update(dt){
 }
 /* ---------- direct gameplay boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
+let gameReadyPublished=false;
+function publishGameReady(){
+ if(gameReadyPublished||!chunkReady||!renderReady)return;
+ gameReadyPublished=true;
+ document.body.classList.add('free');
+ window.__climboriaGameReady=true;
+ window.__climboriaWalkMode='walk';
+ document.documentElement.dataset.climboriaLandscape='ready';
+ document.documentElement.dataset.climboriaReady='true';
+ takeOver();
+}
 function initChunks(){
  const buildNext=()=>{
   const remaining=updateChunks(0,0,6);
   if(remaining>0){requestAnimationFrame(buildNext);return;}
-  chunkReady=true;ready=true;
+  chunkReady=true;
+  ready=true;
+  publishGameReady();
  };
  requestAnimationFrame(buildNext);
 }
@@ -1409,13 +1424,7 @@ function animate(now){
   window.__climboriaRenderState.objects=scene.children.length;
   if(!renderReady){
    renderReady=true;
-   document.body.classList.add('free');
-   window.__climboriaGameReady=true;
-   window.__climboriaGLBRenderer=true;
-   window.__climboriaWalkMode='walk';
-   document.documentElement.dataset.climboriaLandscape='ready';
-   document.documentElement.dataset.climboriaReady='true';
-   takeOver();
+   publishGameReady();
   }
  }catch(err){
   const msg=err&&err.stack?err.stack:String(err);
