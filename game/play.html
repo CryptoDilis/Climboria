@@ -266,7 +266,38 @@ function waterBodyAt(x,z){
 }
 function maxSwimDepth(body){return Math.max(0,(body?.depth||0)-.45)}
 function swimTargetY(body,depth=0){return (body?.surfaceY||0)+1.72-Math.max(0,Math.min(maxSwimDepth(body),depth))}
+function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceInput=0,time=0){
+ if((player.swim=!!body&&groundHeight<body.surfaceY-.2)){
+  player.vy=0;
+  if(player.waterBodyId!==body.id)player.swimDepth=0;
+  player.waterBodyId=body.id;
+  player.swimDepth=Math.max(0,Math.min(maxSwimDepth(body),(player.swimDepth||0)+(diveInput-surfaceInput)*dt*2.4));
+  const swimSurface=swimTargetY(body,player.swimDepth);
+  player.y+=(swimSurface+.045*Math.sin(time*2.2)-player.y)*Math.min(1,dt*7);
+ }else{
+  player.waterBodyId=null;player.swimDepth=0;
+  const floor=groundHeight+1.75;
+  if(surfaceInput&&Math.abs(player.y-floor)<.12&&player.vy<=0)player.vy=11;
+  player.vy-=30*dt;player.y+=player.vy*dt;
+  if(player.y<floor){player.y=floor;player.vy=0}
+  if(player.vy<=0&&player.y-1.75<groundHeight-.35){player.y=groundHeight+1.75;player.vy=0}
+ }
+ return player.swim;
+}
+function caveFloorHeightAt(x,z){
+ if(!caveG)return null;
+ const dx=x-caveG.position.x,dz=z-caveG.position.z,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
+ const lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
+ const floors=[
+  [8,22,21,29], [22,40,16,34], [25,35,40,45], [15,25,37,47],
+  [-42,-30,-11,-5], [-62,-42,-20,5], [-58,-52,-30,-20], [-68,-42,-50,-30],
+  [40,48,22,28], [48,54,20,30]
+ ];
+ return floors.some(([minX,maxX,minZ,maxZ])=>lx>=minX&&lx<=maxX&&lz>=minZ&&lz<=maxZ)?caveG.position.y+.08:null;
+}
 function groundAt(x,z){
+ const caveFloor=caveFloorHeightAt(x,z);
+ if(caveFloor!==null)return caveFloor;
  const gx=x/TERRAIN_STEP,gz=z/TERRAIN_STEP,ix=Math.floor(gx),iz=Math.floor(gz);
  const u=gx-ix,v=gz-iz;
  const h00=heightAt(ix*TERRAIN_STEP,iz*TERRAIN_STEP);
@@ -1393,11 +1424,23 @@ function caveGrottoTraversalAudit(){
   const body=waterBodyAt(P.x,P.z),inside=body?.id==='cave_grotto';
   const dx=P.x-caveG.position.x,dz=P.z-caveG.position.z,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry);
   const local={x:dx*cs-dz*sn,z:dx*sn+dz*cs};
-  const depth=maxSwimDepth(body),targetY=swimTargetY(body,depth),bedClearance=targetY-1.75-groundAt(P.x,P.z);
-  const surfaceValid=!!body&&Number.isFinite(targetY)&&targetY<=body.surfaceY+1.72+.001;
+  const gh=groundAt(P.x,P.z),enteredSwim=updatePlayerWaterState(P,body,gh,.05,0,0,0);
+  for(let i=0;i<8;i++)updatePlayerWaterState(P,body,gh,.05,0,0,0);
+  const surfaceY=P.y,surfaceValid=enteredSwim&&P.swim&&P.waterBodyId==='cave_grotto'&&Math.abs(surfaceY-swimTargetY(body,0))<.2;
+  for(let i=0;i<12;i++)updatePlayerWaterState(P,body,gh,.05,1,0,i*.05);
+  for(let i=0;i<8;i++)updatePlayerWaterState(P,body,gh,.05,0,0,.6+i*.05);
+  const diveDepth=P.swimDepth,diveY=P.y;
+  for(let i=0;i<25;i++)updatePlayerWaterState(P,body,gh,.05,1,0,1+i*.05);
+  for(let i=0;i<8;i++)updatePlayerWaterState(P,body,gh,.05,0,0,2.25+i*.05);
+  const depth=P.swimDepth,bedClearance=P.y-1.75-gh,deepened=depth>diveDepth&&P.y<diveY&&depth<=maxSwimDepth(body)+.001;
+  for(let i=0;i<25;i++)updatePlayerWaterState(P,body,gh,.05,0,1,3+i*.05);
+  for(let i=0;i<8;i++)updatePlayerWaterState(P,body,gh,.05,0,0,4.25+i*.05);
+  const surfaced=P.swimDepth<.02&&Math.abs(P.y-swimTargetY(body,0))<.2;
   walkTo(start);
   const exited=waterBodyAt(P.x,P.z)?.id!=='cave_grotto';
-  return {startDry,inside,exited,local,depth,bedClearance,surfaceValid,positionRestoredToAnnex:Math.hypot(P.x-start[0],P.z-start[1])<.25};
+  updatePlayerWaterState(P,null,groundAt(P.x,P.z),.05,0,0,5);
+  const swimReset=!P.swim&&P.waterBodyId===null&&P.swimDepth===0;
+  return {startDry,inside,enteredSwim,surfaceValid,deepened,surfaced,exited,swimReset,local,depth,bedClearance,groundY:gh,floorY:caveG.position.y+.08,surfaceY:body?.surfaceY,positionRestoredToAnnex:Math.hypot(P.x-start[0],P.z-start[1])<.25};
  }finally{Object.assign(P,saved);}
 }
 window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,shoreClear};
@@ -1432,24 +1475,8 @@ function update(dt){
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
   activeWater=waterBodyAt(P.x,P.z);
-  if((P.swim=!!activeWater&&gh<activeWater.surfaceY-.2)){
-   P.vy=0;
-   if(P.waterBodyId!==activeWater.id)P.swimDepth=0;
-   P.waterBodyId=activeWater.id;
-   const dive=(keys.ControlLeft||keys.ControlRight)?1:0,surface=keys.Space?1:0;
-   P.swimDepth=Math.max(0,Math.min(maxSwimDepth(activeWater),(P.swimDepth||0)+(dive-surface)*dt*2.4));
-   // Keep the swimmer above the mapped bed while allowing controlled vertical movement.
-   const swimSurface=swimTargetY(activeWater,P.swimDepth);
-   P.y+=(swimSurface+.045*Math.sin(Tm*2.2)-P.y)*Math.min(1,dt*7);
-  }else{
-   P.waterBodyId=null;P.swimDepth=0;
-   const g=gh+1.75;
-   if(keys.Space&&Math.abs(P.y-g)<.12&&P.vy<=0)P.vy=11;
-   P.vy-=30*dt;P.y+=P.vy*dt;
-   if(P.y<g){P.y=g;P.vy=0}
-   // Recover if a steep transition or frame hitch left the player below the terrain.
-   if(P.vy<=0&&P.y-1.75<gh-.35){P.y=gh+1.75;P.vy=0}
-  }
+  const diveInput=(keys.ControlLeft||keys.ControlRight)?1:0,surfaceInput=keys.Space?1:0;
+  updatePlayerWaterState(P,activeWater,gh,dt,diveInput,surfaceInput,Tm);
   // Third-person follow camera keeps the explorer visible in the world.
   cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);
   const back=cameraDistance;
