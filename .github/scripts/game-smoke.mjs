@@ -270,7 +270,7 @@ try {
   const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
   if(desktopHeroStability.identity!==spawnCheck.selectedHeroId||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
-  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== window.ClimboriaHeroData?.getSelectedHero?.().id) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
+  if (spawnCheck.mode !== 'walk' || !Number.isFinite(spawnCheck.y) || spawnCheck.heroAsset !== spawnCheck.selectedHeroId) errors.push('Explorer did not spawn with a loaded free GLB character in walk mode: ' + JSON.stringify(spawnCheck));
   const hudUi = await page.evaluate(() => ({
     playerName: !!document.querySelector('#player-name'),
     statusBars: !!document.querySelector('#health-fill') && !!document.querySelector('#stamina-fill'),
