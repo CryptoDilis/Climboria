@@ -181,6 +181,8 @@ try {
   const chestDistribution=await page.evaluate(()=>window.__climboriaJarrellsPeak?.chestDistributionAudit?.()??null);
   if(!chestDistribution||chestDistribution.total!==100||chestDistribution.world!==84||chestDistribution.cave!==15||chestDistribution.summit!==1||chestDistribution.remote!==83||chestDistribution.uniqueCaveSlots!==14||!chestDistribution.caveFloorAligned||!chestDistribution.worldSpawnsValid||chestDistribution.worldMinSpacing<17.99||!chestDistribution.summitFixed||chestDistribution.summitCooldownSeconds!==900||chestDistribution.summitGlobalClaimReady!==false||chestDistribution.respawnSamples.world<90||chestDistribution.respawnSamples.world>150||chestDistribution.respawnSamples.cave<120||chestDistribution.respawnSamples.cave>240||chestDistribution.respawnSamples.summit!==900||Object.values(chestDistribution.rarityTotals).some(v=>Math.abs(v-100)>.001)) errors.push('100-chest distribution, spawn validity, rarity totals, respawn windows, or safe summit authority state failed: '+JSON.stringify(chestDistribution));
   console.log('Jarrell chest distribution:',JSON.stringify(chestDistribution));
+  const summitTimerUi=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,c=w?.chests?.find(c=>c.kind==='summit'),p=w?.player,panel=document.querySelector('#summit-chest-status'),label=document.querySelector('#summit-chest-countdown');if(!w||!c||!p||!panel||!label||typeof w.updateSummitChestStatus!=='function')return{available:false};const saved={x:p.x,z:p.z,open:c.open,t:c.t,visible:c.g.visible};p.x=c.x;p.z=c.z;c.open=true;c.t=898.2;w.updateSummitChestStatus();const result={available:true,visible:getComputedStyle(panel).display!=='none',countdown:label.textContent};p.x=saved.x;p.z=saved.z;c.open=saved.open;c.t=saved.t;c.g.visible=saved.visible;w.updateSummitChestStatus();return result;});
+  if(!summitTimerUi.available||!summitTimerUi.visible||summitTimerUi.countdown!=='RESPAWN IN 14:59')errors.push('Summit chest visible 15-minute countdown UI failed: '+JSON.stringify(summitTimerUi));
   const geodeChest=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;const c=w?.chests?.find(c=>c.kind==='geode');return c?{x:c.x,z:c.z,y:c.g.position.y,visible:c.g.visible,open:c.open,ground:w.groundAt(c.x,c.z)}:null});
   if(!geodeChest||!geodeChest.visible||geodeChest.open||!Number.isFinite(geodeChest.x)||!Number.isFinite(geodeChest.z)||!Number.isFinite(geodeChest.y)||Math.abs(geodeChest.y-geodeChest.ground)>.02) errors.push('Geode chamber treasure chest missing, hidden, or misaligned with cave floor: '+JSON.stringify(geodeChest));
   if (!Array.isArray(world.caveGems) || world.caveGems.length !== 14 || world.caveGems.some(g => !g.cluster || g.children !== 3)) errors.push('Cave mineral crystal clusters missing or malformed: ' + JSON.stringify(world.caveGems));
@@ -286,6 +288,13 @@ try {
   await page.keyboard.up('w');
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
+  const clickMove=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,canvas=document.querySelector('canvas'),rect=canvas?.getBoundingClientRect();if(!p||!canvas||!rect)return{available:false};const previous=p.moveTarget;canvas.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:rect.left+rect.width*.62,clientY:rect.top+rect.height*.62}));const target=p.moveTarget;window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0}));p.moveTarget=previous;return{available:true,queued:!!target,finite:!!target&&Number.isFinite(target.x)&&Number.isFinite(target.z),distance:target?Math.hypot(target.x-p.x,target.z-p.z):null};});
+  if(!clickMove.available||!clickMove.queued||!clickMove.finite||!(clickMove.distance>2.5))errors.push('Desktop left-click did not queue a valid Dota-style ground movement destination: '+JSON.stringify(clickMove));
+  const clickCancel=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak?.player;if(!p)return{available:false};p.moveTarget={x:p.x+30,z:p.z+30};return{available:true,queued:!!p.moveTarget};});
+  await page.keyboard.down('w');
+  const keyboardPriority=await page.evaluate(()=>({target:window.__climboriaJarrellsPeak?.player?.moveTarget??null}));
+  await page.keyboard.up('w');
+  if(!clickCancel.available||!clickCancel.queued||keyboardPriority.target!==null)errors.push('Direct keyboard movement did not cancel queued click-to-move destination: '+JSON.stringify({clickCancel,keyboardPriority}));
   const desktopHeroStability=await page.evaluate(()=>({identity:document.documentElement.dataset.climboriaHero||'',renderer:document.documentElement.dataset.climboriaHeroRenderer||'',cameraApi:!!window.__climboriaCameraOrbit}));
   if(desktopHeroStability.identity!=='adventurer'||desktopHeroStability.renderer!=='glb'||!desktopHeroStability.cameraApi) errors.push('Desktop movement caused the procedural placeholder to disappear or change unexpectedly: '+JSON.stringify(desktopHeroStability));
 
@@ -398,6 +407,13 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
+  // Simulate the orientation class applied by the game's fullscreen/orientation handler.
+  // Playwright's viewport resize does not reproduce every Android Screen Orientation event.
+  await mobile.evaluate(() => {
+    document.body.classList.remove('climboria-portrait');
+    document.body.classList.add('climboria-landscape');
+    window.dispatchEvent(new Event('resize'));
+  });
   await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
   const directMobileEntry = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
