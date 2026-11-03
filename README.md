@@ -1988,3 +1988,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Obtain a fresh Validate and Browser Smoke run on exact commit `268c9ca23f15173c32e944fb33ae001b774dfedc`; inspect desktop and mobile gameplay steps and screenshots.
 - [ ] Continue active P0 checklist after the fresh run. The latest smoke diagnostics showed a clear spawn-to-Jarrell summit route and valid main-summit approach probes; distributed massif bearings include several blocked directions but each sampled massif has at least one traversable approach under the current audit. Inspect the intended traversal requirements and first blockers before any collider/terrain change.
 - [ ] Physical desktop and Redmi 14 5G acceptance remains separate from CI.
+
+
+## 2026-11-03 — desktop spawn assertion follow-up (verification pending)
+
+- [x] Rechecked Browser Smoke run [41635024510](https://github.com/CryptoDilis/Climboria/actions/runs/41635024510) and its exact failed log. It failed at `.github/scripts/game-smoke.mjs:271` on the run's checked-out commit because the desktop spawn assertion still referenced `window.ClimboriaHeroData` from Node scope. The earlier diagnosis had identified the neighboring desktop movement assertion, but this separate spawn assertion also needed correction.
+- [x] Confirmed the mobile auto-entry/HUD 3-run gate and homepage/navigation smoke steps passed; the gameplay step stopped at the desktop assertion before mobile gameplay assertions completed.
+- [x] Corrected the desktop spawn assertion to compare `spawnCheck.heroAsset` with `spawnCheck.selectedHeroId`, both captured by the same browser evaluation result. No assertions were removed or weakened.
+- [x] Commit: `eec1c4672c8d56ce3b2f503c64144b8a4298fda2` (`Fix remaining desktop spawn hero assertion scope`).
+- [ ] Fresh Validate and Browser Smoke are still required on this exact code commit. The prior workflow is permanently tied to its older checkout and cannot verify this correction; API-created commits have not auto-triggered Actions.
+- [ ] Do not proceed with terrain/collider modifications until the corrected gameplay smoke completes. Keep the mountain massif blocked bearings as diagnostics only; inspect intended routes and collision source before edits.
+- [ ] Physical desktop and Redmi 14 5G visual acceptance remains outstanding.
