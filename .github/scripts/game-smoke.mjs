@@ -283,7 +283,7 @@ try {
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   const idleAnimationAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
-  if (!idleAnimationAudit || idleAnimationAudit.forbiddenRestClip || /sit|sitting|seated|crouch|kneel|prone|sleep|lying|fall|death/i.test(idleAnimationAudit.activeClip)) {
+  if (!idleAnimationAudit || idleAnimationAudit.forbiddenRestClip || /sit|sitting|seated|crouch|kneel|prone|sleep|lying|fall|death|swim/i.test(idleAnimationAudit.activeClip)) {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
   }
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
