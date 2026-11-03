@@ -858,7 +858,7 @@ function cinematicPoint(u){
  const a=pts[index%count],b=pts[(index+1)%count];
  return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
 }
-let camY=null,lookY=0,cameraDistance=7.2,targetCameraDistance=7.2;
+let camY=null,lookY=0,cameraDistance=5.2,targetCameraDistance=5.2;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
@@ -1456,7 +1456,7 @@ function update(dt){
 }
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
-async function initChunks(){try{await updateChunks(0,0,6);chunkReady=true;checkAllReady();}catch(error){console.error('[Climboria chunks]',error)}}
+async function initChunks(){try{updateChunks(0,0,6);chunkReady=chunks.size>0;if(!chunkReady)throw new Error('Initial terrain chunk set is empty');checkAllReady();}catch(error){window.__climboriaChunkInitError=error?.stack||String(error);console.error('[Climboria chunks] Initial terrain generation failed',error);if(chunks.size>0){chunkReady=true;document.documentElement.dataset.climboriaChunkWarning='partial';checkAllReady();}}}
 function loadHero(){
  const timeout=setTimeout(()=>{hideHeroUntilGlbReady();heroReady=true;checkAllReady()},2000);
  try{loadAssetHero(selectedHeroRecord,(success,record)=>{clearTimeout(timeout);heroReady=true;checkAllReady();if(!success){hideHeroUntilGlbReady();return}if(record){const name=document.getElementById('player-name');if(name)name.textContent=record.name.toUpperCase()}if(P.mode==='walk'&&assetHero){hero.visible=false;assetHero.visible=true;}})}catch(error){clearTimeout(timeout);hideHeroUntilGlbReady();heroReady=true;checkAllReady();console.error('[Climboria hero]',error)}
