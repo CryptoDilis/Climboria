@@ -1388,8 +1388,19 @@ const WORLD_CHEST_ZONES=[[-420,-640],[930,-260],[250,-1000],[-600,300]];
 WORLD_CHEST_ZONES.forEach(a=>chest('remote',null,a,160));
 for(let i=0;i<79;i++)chest('remote',null,WORLD_CHEST_ZONES[i%WORLD_CHEST_ZONES.length],160);
 function chestDistributionAudit(){
- const world=chests.filter(c=>c.kind==='remote'||c.kind==='ruins'),cave=chests.filter(c=>c.kind==='cave'||c.kind==='geode'),summit=chests.filter(c=>c.kind==='summit');
- return {total:chests.length,world:world.length,cave:cave.length,summit:summit.length,remote:chests.filter(c=>c.kind==='remote').length,caveSpawnSlots:cave.filter(c=>c.kind==='cave').map(c=>c.spawnSlot),uniqueCaveSlots:new Set(cave.filter(c=>c.kind==='cave').map(c=>c.spawnSlot)).size,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
+ const world=chests.filter(c=>c.kind==='remote'||c.kind==='ruins'),remote=chests.filter(c=>c.kind==='remote'),cave=chests.filter(c=>c.kind==='cave'||c.kind==='geode'),summit=chests.filter(c=>c.kind==='summit');
+ let worldMinSpacing=Infinity;
+ for(let i=0;i<remote.length;i++)for(let j=i+1;j<remote.length;j++)worldMinSpacing=Math.min(worldMinSpacing,Math.hypot(remote[i].x-remote[j].x,remote[i].z-remote[j].z));
+ const rarityTotals=Object.fromEntries(Object.entries(CHEST_RARITY_ODDS).map(([key,rows])=>[key,rows.reduce((n,row)=>n+row[1],0)]));
+ const summitChest=summit[0];
+ return {total:chests.length,world:world.length,cave:cave.length,summit:summit.length,remote:remote.length,
+  caveSpawnSlots:cave.filter(c=>c.kind==='cave').map(c=>c.spawnSlot),uniqueCaveSlots:new Set(cave.filter(c=>c.kind==='cave').map(c=>c.spawnSlot)).size,
+  caveFloorAligned:cave.every(c=>Math.abs(c.g.position.y-groundAt(c.x,c.z))<.02),
+  worldSpawnsValid:remote.every(c=>{const h=heightAt(c.x,c.z);return Number.isFinite(h)&&h>2&&h<130&&!steep(c.x,c.z)&&!waterBodyAt(c.x,c.z)}),
+  worldMinSpacing:Number.isFinite(worldMinSpacing)?worldMinSpacing:null,
+  summitFixed:!!summitChest&&summitChest.x===POI.summit.px+5&&summitChest.z===POI.summit.pz+5,
+  respawnSamples:{world:chestRespawnDelay({kind:'remote'}),cave:chestRespawnDelay({kind:'cave'}),summit:chestRespawnDelay({kind:'summit'})},
+  rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
 function interact(){if(P.mode!='walk')return;
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=rollChestReward(c);addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
