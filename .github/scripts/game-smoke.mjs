@@ -308,8 +308,25 @@ try {
   await page.locator('#player-card').dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
-  const bagSlots = await page.locator('#climboriaInventoryPanel').locator('div').filter({has: page.locator('small')}).count().catch(()=>0);
-  if (!(await page.locator('#climboriaInventoryPanel').getByText('BACKPACK · 50 SLOTS').count())) errors.push('50-slot backpack heading missing');
+  const inventoryAudit = await page.locator('#climboriaInventoryPanel').evaluate(panel => {
+    const children = [...panel.children];
+    const equipmentTitle = children.find(el => el.textContent.trim() === 'EQUIPMENT SLOTS');
+    const equipmentGrid = equipmentTitle?.nextElementSibling;
+    const backpackTitle = children.find(el => el.textContent.trim() === 'BACKPACK · 100 SLOTS');
+    const backpackGrid = backpackTitle?.nextElementSibling;
+    const equipmentLabels = [...(equipmentGrid?.querySelectorAll('b') ?? [])].map(el => el.textContent.trim());
+    const capacityLabel = [...panel.querySelectorAll('p')].some(el => /^\\d+\\s*\\/\\s*100 backpack slots used$/.test(el.textContent.trim()));
+    return {
+      backpackHeading: !!backpackTitle,
+      backpackSlots: backpackGrid?.children.length ?? 0,
+      equipmentSlots: equipmentGrid?.children.length ?? 0,
+      skinSlot: equipmentLabels.includes('SKIN'),
+      capacityLabel,
+    };
+  });
+  if (!inventoryAudit.backpackHeading || inventoryAudit.backpackSlots !== 100 || inventoryAudit.equipmentSlots !== 9 || !inventoryAudit.skinSlot || !inventoryAudit.capacityLabel) {
+    errors.push('Inventory does not match the approved 100-slot backpack / nine equipment slot contract: ' + JSON.stringify(inventoryAudit));
+  }
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', { timeout: 5000 });
   await page.keyboard.press('f');
