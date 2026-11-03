@@ -1,3 +1,12 @@
+## 2026-11-04 — water-edge terrestrial vegetation regression gate
+
+- [x] Strengthened the desktop/mobile Browser Smoke forest-placement audit: every planned CC0 buttress tree, canopy tree, undergrowth patch, and fallen log must be outside mapped water and outside the 18-unit sandy shoreline/bank exclusion buffer.
+- [x] This verifies the existing `shoreClear` placement guard used by procedural terrain dressing and the CC0 forest spot planner; no gameplay placement rules or vegetation density changed.
+- [ ] Validate and Browser Smoke must pass before merge. This is a placement-data regression check, not full visual acceptance of every streamed chunk or aquatic ecosystem.
+- [ ] Keep aquatic vegetation/fish life and manual desktop/Redmi shoreline review open.
+
+---
+
 ## 2026-11-04 — mountain massif access audit and regression gate
 
 - [x] Merged diagnostic instrumentation in PR #188 (commit `6897101e2a2d5a873e6f292461b04077468c6d0a`); Validate passed and Browser Smoke passed (run `41706317202`).
