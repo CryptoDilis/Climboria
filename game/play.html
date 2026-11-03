@@ -1456,17 +1456,18 @@ function update(dt){
 }
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
-async function initChunks(){try{updateChunks(0,0,6);chunkReady=chunks.size>0;if(!chunkReady)throw new Error('Initial terrain chunk set is empty');checkAllReady();}catch(error){window.__climboriaChunkInitError=error?.stack||String(error);console.error('[Climboria chunks] Initial terrain generation failed',error);if(chunks.size>0){chunkReady=true;document.documentElement.dataset.climboriaChunkWarning='partial';checkAllReady();}}}
+async function initChunks(){window.__climboriaInitState.chunks='starting';try{updateChunks(0,0,6);chunkReady=chunks.size>0;if(!chunkReady)throw new Error('Initial terrain chunk set is empty');window.__climboriaInitState.chunks='ready:'+chunks.size;checkAllReady();}catch(error){window.__climboriaChunkInitError=error?.stack||String(error);window.__climboriaInitState.chunks='failed';console.error('[Climboria chunks] Initial terrain generation failed',error);if(chunks.size>0){chunkReady=true;document.documentElement.dataset.climboriaChunkWarning='partial';window.__climboriaInitState.chunks='partial:'+chunks.size;checkAllReady();}}}
 function loadHero(){
  const timeout=setTimeout(()=>{hideHeroUntilGlbReady();heroReady=true;checkAllReady()},2000);
  try{loadAssetHero(selectedHeroRecord,(success,record)=>{clearTimeout(timeout);heroReady=true;checkAllReady();if(!success){hideHeroUntilGlbReady();return}if(record){const name=document.getElementById('player-name');if(name)name.textContent=record.name.toUpperCase()}if(P.mode==='walk'&&assetHero){hero.visible=false;assetHero.visible=true;}})}catch(error){clearTimeout(timeout);hideHeroUntilGlbReady();heroReady=true;checkAllReady();console.error('[Climboria hero]',error)}
 }
 (function boot(){
- takeOver();
- tryLandscape();
- initChunks();
- loadHero();
- ready=true;
+ window.__climboriaInitState={boot:'starting',takeOver:'pending',chunks:'pending',hero:'pending',render:'pending'};
+ try{takeOver();window.__climboriaInitState.takeOver='ready';}catch(error){window.__climboriaInitState.takeOver='failed';window.__climboriaBootError=error?.stack||String(error);console.error('[Climboria boot] takeOver failed',error);P.mode='walk';free(true);}
+ try{tryLandscape();}catch(error){window.__climboriaInitState.landscape='failed';console.error('[Climboria boot] landscape setup failed',error)}
+ try{initChunks();}catch(error){window.__climboriaInitState.chunks='failed-sync';window.__climboriaChunkInitError=error?.stack||String(error);console.error('[Climboria boot] chunk setup failed',error)}
+ try{loadHero();}catch(error){window.__climboriaInitState.hero='failed-sync';window.__climboriaHeroInitError=error?.stack||String(error);console.error('[Climboria boot] hero setup failed',error)}
+ ready=true;window.__climboriaInitState.boot='running';
  last=performance.now();window.__climboriaRenderState={frames:0,errors:[],objects:scene.children.length,renderer:'webgl'};
  requestAnimationFrame(function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
