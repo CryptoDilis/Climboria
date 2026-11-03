@@ -640,3 +640,11 @@ For each meaningful implementation batch:
 - [ ] Validate and Browser Smoke must pass on the new head; inspect workflow logs and fix any regression before merge.
 - [ ] Manually verify in actual gameplay: no spontaneous sitting when controls are released; natural relaxed standing posture; visible jump takeoff, clear airborne height, and convincing landing while walking and running. Automated state counters alone do not satisfy visual acceptance.
 - [ ] Capture and inspect desktop plus Redmi 14 5G landscape gameplay before marking character animation complete.
+
+
+## 2026-11-04 — mobile third-person hero framing adjustment
+
+- [x] Reviewed the normalized PR #199 desktop/mobile gameplay captures. The hero was readable on desktop but undersized in the narrow landscape viewport.
+- [x] Set a closer 5.8-unit initial follow-camera distance on mobile while retaining the 7.2-unit desktop baseline; camera collision sweep remains enabled.
+- [ ] Validate, browser smoke, and fresh mobile screenshot must pass before merge.
+- [ ] Inspect that the closer camera does not clip into the hero, cave walls, sanctuary props, or mobile controls; physical Redmi 14 5G acceptance remains open.
