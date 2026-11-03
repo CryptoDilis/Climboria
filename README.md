@@ -6,6 +6,18 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-04 — latest workflow and master-list checkpoint
+
+- **Latest main merge:** PR #189 `dd95ba219eb21df37324a8e95acc03022e147355` — mountain massif access regression gate. PR Validate passed (`41707182880`); PR Browser Smoke passed (`41707182711`). The completed job record confirms desktop/mobile smoke success. Main post-merge Validate `41708254827` and Pages deployment `41708254356` passed. Main post-merge Browser Smoke `41708254803` was still reported in progress at this checkpoint; do not mark it green until its completed job conclusion is retrieved.
+- **PR #188** diagnostic instrumentation is merged as `6897101e2a2d5a873e6f292461b04077468c6d0a`. Validate `41706317323`, PR Browser Smoke `41706317202`, main Validate `41707027849`, main Browser Smoke `41707027773`, and Pages deployment `41707027558` passed. Eight sampled massifs show 7–8 of 8 clear approaches; spawn-to-summit route completed 100% (2,799 steps). Streamed rock blockers were identified; large fixed solids are cave perimeter barriers and were preserved.
+- **PR #191** [Improve cave passage ambient readability](https://github.com/CryptoDilis/Climboria/pull/191) is open on a clean branch from current main. It raises cave hemisphere ambient fill from 0.9 to 1.2 and strengthens the lighting smoke threshold to 1.15. Validate `41708373290` passed; Browser Smoke `41708373224` was still in progress at this checkpoint. Manual desktop/Redmi cave visual review remains open. The earlier stacked PR #190 was closed as superseded; its changes were reapplied cleanly in #191.
+- **PR #192** [Enforce water-edge vegetation clearance in smoke tests](https://github.com/CryptoDilis/Climboria/pull/192) is open. It now rejects CC0 forest placements inside mapped water or the 18-unit shoreline/bank exclusion buffer. Validate `126170489767` passed; Browser Smoke `126170490203` was still in progress at this checkpoint. This is a regression gate, not proof of full visual acceptance or aquatic life implementation.
+- **Latest known workflow status:** no failed jobs confirmed in the latest main/PR runs; several Browser Smoke runs were still active. A cancelled superseded main Browser Smoke run `41706138043` is not a test failure.
+- **Next actions:** retrieve completed conclusions for main run `41708254803`, PR #191 run `41708373224`, and PR #192 run `41708373224` (correct #192 run is `41708373224`? verify via branch run list before citing; actual PR #192 run IDs are `126170490203` Browser Smoke and `126170489767` Validate). Fix any genuine failures, merge only after both required checks pass, then continue cave maze/trap visual acceptance, aquatic ecosystems, freshwater expansion, forest/desert/Sakura scale, multiplayer backend, Arena, and physical Redmi 14 5G acceptance.
+- **Release honesty:** 100 chests and summit 15-minute countdown remain local prototypes; shared server-authoritative chest state, atomic claims, funded crypto/NFT rewards, global multiplayer and production account systems are not implemented. Do not represent them as production-ready.
+
+---
+
 ## 0. Current project control panel — updated 2026-11-03 (PRs #178–#180 merged; cave grotto swim path automated checks green)
 
 ### Current priority and sequencing
