@@ -1970,5 +1970,7 @@ For every integrated asset or borrowed technique, record:
 - [x] Hid the overlapping biome/debug HUD and removed X/Z/altitude coordinates from the subtitle.
 - [x] Removed the bottom instruction dock from the gameplay markup, as explicitly requested.
 - [x] Added mobile smoke assertions for the minimap's terrain pixel variation, glowing player marker, settings-button adjacency, HUD alignment, hidden debug overlay, and absence of the bottom dock.
-- [ ] The latest code/test head is `7ddf088702d2186cc96056c6b2582c6c4fa24060` on `codex/fix-character-picker-overlay`. No new workflow run is currently returned for this head; these changes are **IMPLEMENTED — UNVERIFIED**, not green.
+- [x] Added a cached terrain-relief minimap with a live, pulsing/glowing player marker that follows the hero without rebuilding the terrain map every frame.
+- [x] Removed the last update-loop/takeover branches that could mark the empty hero anchor as a visible fallback; renamed the old fallback helper to `hideHeroUntilGlbReady`.
+- [ ] The latest code/test head is `348350623e12d3d721c0a3d083aa2f3e5fd88a30` on `codex/fix-character-picker-overlay`. No new workflow run is currently returned for this head; these changes are **IMPLEMENTED — UNVERIFIED**, not green.
 - [ ] Next: obtain the new Browser Smoke diagnostic from the rerun; repair the actual GLB loading/landscape blocker without restoring the procedural hero or weakening the test. Then rerun Validate, Browser Smoke and Pages deployment.
