@@ -229,9 +229,9 @@
 
 ## P1 — Mountains, peaks, overlooks, and hangout summit
 
-- [ ] Add several walkable/explorable mountains beyond the existing terrain, with paths and believable slope transitions.
-- [ ] Ensure selected mountains have accessible peaks and panoramic overlooks with intentional sightlines.
-- [ ] Create one mountain destination specifically designed as a scenic hangout, not a level-ending summit.
+- [ ] Continue shaping walkable mountain ranges, ridges, cliffs, and foothills as natural landscape features within Jarrell’s Peak; do not create separate mountain worlds or level destinations.
+- [ ] Ensure selected Jarrell’s Peak landscape high points have accessible scenic overlooks and intentional sightlines.
+- [ ] Create a scenic hangout overlook within Jarrell’s Peak, not a separate destination or level.
 - [ ] Preserve Jarrell's Peak's endless exploration identity: no final summit, no final level, and no completion point.
 - [ ] Test walking/climbing routes, fall recovery, collision at ridges, and performance while viewing distant terrain.
 
