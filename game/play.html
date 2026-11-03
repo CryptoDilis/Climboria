@@ -852,7 +852,7 @@ function cacheAssetRig(root){
 }
 const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death)(?:$|[_\\s-])/i;
 function findStandingRestClip(){
- const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
+ const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(swim|swimming|combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
  const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Breathing_Idle','Idle_Breathing'];
  for(const name of preferred){const clip=safe.find(a=>a.name.toLowerCase()===name.toLowerCase());if(clip)return clip;}
  return safe.find(a=>/(?:^|[_\\s-])(idle|stand|standing|breath|relax)(?:$|[_\\s-])/i.test(a.name))||null;
