@@ -1459,12 +1459,12 @@ function caveGrottoTraversalAudit(){
 function geodeChestLifecycleAudit(){
  const c=chests.find(item=>item.kind==='geode');
  if(!c)return {ok:false,reason:'geode chest missing'};
- const saved={...P},before=inventory.reduce((n,item)=>n+(item.count||1),0);
+ const saved={...P},before=inventory.reduce((n,item)=>n+(item.qty||1),0);
  try{
   P.mode='walk';P.x=c.x;P.z=c.z;P.y=caveG.position.y+1.75;
   c.open=false;c.g.visible=true;interact();
   const opened=c.open&&!c.g.visible&&c.t>=90&&c.t<=150;
-  const after=inventory.reduce((n,item)=>n+(item.count||1),0);
+  const after=inventory.reduce((n,item)=>n+(item.qty||1),0);
   const rewarded=after>before;
   const timer=c.t;
   c.t=.01;
