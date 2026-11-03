@@ -775,6 +775,7 @@ heroReady=true;
   heroReady=true;
   console.warn('[Climboria] GLB unavailable; using procedural hero:',assetChoices[choice],error);
  });
+}
 const saved=(()=>{try{return localStorage.getItem('climboria-selected-hero')||'ClimboriaHero'}catch(_){return 'ClimboriaHero'}})();
 loadAssetHero(saved);
 const keys={};let locked=false,drag=false;
@@ -1405,7 +1406,6 @@ window.__climboriaReadiness={get chunkReady(){return chunkReady},get renderReady
 startRenderLoop();
 initChunks();
 })();
-</script>})();
 </script>
 </body>
 </html>
