@@ -640,3 +640,14 @@ For each meaningful implementation batch:
 - [ ] Validate and Browser Smoke must pass on the new head; inspect workflow logs and fix any regression before merge.
 - [ ] Manually verify in actual gameplay: no spontaneous sitting when controls are released; natural relaxed standing posture; visible jump takeoff, clear airborne height, and convincing landing while walking and running. Automated state counters alone do not satisfy visual acceptance.
 - [ ] Capture and inspect desktop plus Redmi 14 5G landscape gameplay before marking character animation complete.
+
+
+## 2026-11-04 — cave entrance arch and exterior-to-interior access repair (rebased onto current main)
+
+- [x] Replace the opaque black sphere and flat lintel at the cave mouth with an irregular stone arch and buttresses.
+- [x] Move the spike field away from the cave entrance into a dedicated north-maze trap chamber; update entrance-side collision so the approach remains traversable.
+- [x] Add deterministic exterior-to-interior traversal diagnostics and smoke assertions for the arch, black occluders, trap-room bounds, and passage.
+- [ ] Browser Smoke and Validate must pass on this rebased branch before merge.
+- [ ] Inspect fresh desktop/mobile screenshots and manually verify the cave entrance is visible, readable, and not blocked by invisible collision.
+- [ ] Redmi 14 5G physical acceptance remains open.
+- Code is rebased on main after the hero idle and screenshot-capture merges; it does not supersede the remaining cave maze, wildlife, and backend requirements.
