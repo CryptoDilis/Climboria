@@ -1,3 +1,14 @@
+## 2026-11-04 — mountain massif access audit and regression gate
+
+- [x] Merged diagnostic instrumentation in PR #188 (commit `6897101e2a2d5a873e6f292461b04077468c6d0a`); Validate passed and Browser Smoke passed (run `41706317202`).
+- [x] Audited eight distributed mountain massifs in eight directions each. Every sampled massif has 7–8 of 8 approach directions clear for at least 20 world units; the primary spawn-to-summit route completed 100% (2,799 steps) with no blocker.
+- [x] Blocked samples now report causes. Most are small streamed terrain rocks (radius approx. 1.18–4.14); the fixed-solid sample is at the cave boundary. The nearby larger fixed solids (radii 14–19) are cave perimeter barriers, so they were deliberately preserved rather than reduced and risking cave-wall traversal.
+- [x] Strengthened the Browser Smoke regression gate to require at least 7 clear directions per sampled massif and a recorded cause for every blocked direction. This locks in the verified access baseline without changing gameplay collision behavior.
+- [ ] Manual visual/pathing acceptance remains open: walk the marked approaches in-game, confirm the rock blockers are visible and bypassable, and verify cave walls remain sealed. Do not mark this complete from CI alone.
+- [ ] Next: inspect cave lighting/maze/trap navigation after the mountain regression gate passes; keep snakes disabled pending approval.
+
+---
+
 ## 2026-11-02 — freshwater and river sandy bank foundation (in progress)
 
 - [x] Expanded terrain vertex coloring with a soft sand apron along all three mapped freshwater basins and the river channel, preserving the existing depth-aware seabed sand-to-silt gradient.
