@@ -402,20 +402,31 @@ try {
     errors.push('Desktop explore/teleport controls failed: ' + JSON.stringify(controls));
   }
   const lootResult = await page.evaluate(() => {
-    const w=window.__climboriaJarrellsPeak, chest=w?.chests?.find(c=>!c.open);
-    if(!w||!chest) return {error:'no unopened chest available'};
-    w.player.mode='walk';w.player.x=chest.x;w.player.z=chest.z;w.player.y=w.heightAt(chest.x,chest.z)+1.75;
+    const w=window.__climboriaJarrellsPeak, chest=w?.chests?.find(c=>!c.open), p=w?.player;
+    if(!w||!chest||!p) return {error:'no unopened chest or player available'};
+    // Exercise chest interaction at the chest, then restore the explorer's actual
+    // position before capturing gameplay evidence. The prior test left the player
+    // at the chest location, making the screenshot look like a cave/close-up scene.
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,moveTarget:p.moveTarget};
+    p.mode='walk';p.x=chest.x;p.z=chest.z;p.y=w.heightAt(chest.x,chest.z)+1.75;
     w.interact();
-    return {inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
+    const result={inventory:w.inventory.map(i=>({...i})),stored:!!localStorage.getItem('climboria_jarrell_inventory_v1'),panel:!!document.querySelector('#climboriaInventoryPanel'),toggle:!!document.querySelector('#player-card')};
+    Object.assign(p,saved);
+    return result;
   });
   if(lootResult.error||!lootResult.inventory.length||!lootResult.stored||!lootResult.panel||!lootResult.toggle) errors.push('Chest loot did not enter persistent field inventory: '+JSON.stringify(lootResult));
   await page.locator('#player-card').dispatchEvent('click');
   const inventoryVisible=await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display!=='none');
   if(!inventoryVisible) errors.push('Character nameplate did not open the field inventory');
   console.log('Jarrell loot/inventory diagnostic:',JSON.stringify(lootResult));
+  // Keep the gameplay evidence unobstructed: the inventory interaction above is
+  // tested, but it must be closed before capturing the actual world/player view.
+  await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
   const mobile = await browser.newPage({
+    // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
