@@ -214,17 +214,17 @@ try {
     return document.documentElement.dataset.climboriaReady === 'true' &&
       document.body.classList.contains('free') && player?.mode === 'walk';
   }, null, { timeout: 15000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', { timeout: 45000 });
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroRenderer === 'glb' && document.documentElement.dataset.climboriaHero === 'adventurer', undefined, { timeout: 45000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   await page.keyboard.down('w');
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', undefined, { timeout: 10000 });
   const walkClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.down('Shift');
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'run', { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'run', undefined, { timeout: 10000 });
   const runClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.up('Shift');
   await page.keyboard.up('w');
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   const swimOrigin = await page.evaluate(() => {
     const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(body=>body.kind==='freshwater');
     if(!p||!b)return null;
@@ -233,11 +233,11 @@ try {
     return origin;
   });
   await page.keyboard.down('w');
-  await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', { timeout: 10000 });
+  await page.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.swim === true && document.documentElement.dataset.climboriaHeroAnimation === 'swim', undefined, { timeout: 10000 });
   const swimClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
   await page.keyboard.up('w');
   if(swimOrigin)await page.evaluate(origin=>Object.assign(window.__climboriaJarrellsPeak.player,origin),swimOrigin);
-  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', { timeout: 10000 });
+  await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'idle', undefined, { timeout: 10000 });
   console.log('Original Climboria GLB movement states:',JSON.stringify({idle:'idle',walk:'walk',run:'run',swim:'swim'}));
   const spawnCheck = await page.evaluate(() => ({gameplayActive: document.body.classList.contains('free'), mode: window.__climboriaJarrellsPeak?.player?.mode, y: window.__climboriaJarrellsPeak?.player?.y, heroAsset: document.documentElement.dataset.climboriaHero}));
   if(spawnCheck.heroAsset!=='adventurer')errors.push('Original Climboria GLB did not remain active during gameplay: '+JSON.stringify(spawnCheck));
@@ -308,12 +308,12 @@ try {
   if(new URL(menu.url()).searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
   await menu.close();
   await page.locator('#player-card').dispatchEvent('click');
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', { timeout: 5000 });
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display !== 'none', undefined, { timeout: 5000 });
   if (await page.locator('#climboriaInventoryPanel').isHidden()) errors.push('Inventory panel did not open');
   const bagSlots = await page.locator('#climboriaInventoryPanel').locator('div').filter({has: page.locator('small')}).count().catch(()=>0);
   if (!(await page.locator('#climboriaInventoryPanel').getByText('BACKPACK · 50 SLOTS').count())) errors.push('50-slot backpack heading missing');
   await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', { timeout: 5000 });
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
   await page.keyboard.press('f');
   await page.keyboard.press('3');
   const controls = await page.evaluate(() => ({
@@ -367,7 +367,7 @@ try {
     timeout: 90000,
   });
   await mobile.waitForSelector('canvas', { timeout: 45000 });
-  await mobile.waitForFunction(() => window.__climboriaGameReady === true, { timeout: 90000 });
+  await mobile.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   // Mobile Hub-to-game now enters gameplay directly; the character picker belongs in the Hub.
   const portraitGate = await mobile.evaluate(() => ({
     visible: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display !== 'none',
@@ -438,12 +438,12 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
-  await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, { timeout: 45000 });
+  await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { timeout: 45000 });
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
-  await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, { timeout: 15000 });
+  await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');
-  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', { timeout: 10000 });
+  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
@@ -476,7 +476,7 @@ try {
 
   const mobileHeadingBeforeMove=await mobile.evaluate(()=>({player:window.__climboriaCameraOrbit?.playerYaw,camera:window.__climboriaCameraOrbit?.yaw}));
   await mobile.keyboard.down('w');
-  await mobile.waitForFunction(()=>{const api=window.__climboriaCameraOrbit;if(!api)return false;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return Math.abs(delta)<.08;},{timeout:2000}).catch(()=>{});
+  await mobile.waitForFunction(()=>{const api=window.__climboriaCameraOrbit;if(!api)return false;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return Math.abs(delta)<.08;}, undefined, {timeout:2000}).catch(()=>{});
   await mobile.keyboard.up('w');
   const mobileMovementFacing=await mobile.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(mobileMovementFacing.player-mobileHeadingBeforeMove.player)<.05||!mobileMovementFacing.aligned) errors.push('Mobile hero did not turn toward camera-relative movement direction: '+JSON.stringify({mobileHeadingBeforeMove,mobileMovementFacing}));
