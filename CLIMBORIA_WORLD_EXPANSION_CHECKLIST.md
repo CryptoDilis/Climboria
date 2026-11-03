@@ -629,3 +629,14 @@ For each meaningful implementation batch:
 - [x] Browser smoke verifies 100 total chests, 84/15/1 category split, cave slots/floor alignment, world spawn validity and spacing, respawn windows, fixed summit chest and rarity totals. Global cooldown, simultaneous claim locking, funded rewards and server failure tests remain pending backend implementation.
 - [x] Preserved existing cave/geode/summit/ruins landmark chests within the 100-chest total; updated chest implementation passed Validate and desktop/mobile Browser Smoke on PR #184.
 - [ ] Physical desktop and Redmi 14 5G acceptance remains required for chest visibility, interaction range, cave readability, summit contest readability and performance.
+
+
+## 2026-11-04 — hero standing idle and jump animation regression repair
+
+- [x] Root-cause review of the gameplay animation selector: broad idle matching could select a seated/crouched/fallen clip because it accepted any first clip containing idle/stand/breath/relax.
+- [x] Restrict idle and landing selection to safe standing/rest clips; explicitly reject sitting, seated, crouching, kneeling, prone, sleeping, lying, falling, death, and combat/weapon idle clips. Use procedural fallback when no safe standing clip exists.
+- [x] Expose an animation audit containing the active clip, available clip names, selected standing-rest candidate, and forbidden-pose flag.
+- [x] Extend Browser Smoke to fail if the hero's idle state selects a seated/fallen pose; keep live walking/running jump and landing checks.
+- [ ] Validate and Browser Smoke must pass on the new head; inspect workflow logs and fix any regression before merge.
+- [ ] Manually verify in actual gameplay: no spontaneous sitting when controls are released; natural relaxed standing posture; visible jump takeoff, clear airborne height, and convincing landing while walking and running. Automated state counters alone do not satisfy visual acceptance.
+- [ ] Capture and inspect desktop plus Redmi 14 5G landscape gameplay before marking character animation complete.
