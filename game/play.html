@@ -16,7 +16,7 @@ canvas{display:block;position:fixed;inset:0;width:100vw!important;height:100dvh!
 .bar{display:none!important}
 #bt{top:0}#bb{bottom:0}
 body.free #bt{transform:translateY(-100%)}body.free #bb{transform:translateY(100%)}
-#hud{position:fixed;left:max(16px,env(safe-area-inset-left));top:calc(16px + env(safe-area-inset-top));z-index:6;opacity:0;transition:opacity 1s;text-shadow:0 1px 8px #000;pointer-events:none}
+#hud{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.free #hud{opacity:1}
 #zone{font-size:22px;color:#ffd98a;letter-spacing:.06em}
 #sub{font:12px/1.5 system-ui,sans-serif;opacity:.8;margin-top:2px}
@@ -33,12 +33,12 @@ body:not(.free) #world-map-panel,body:not(.free) #expedition-settings-toggle{vis
 body.free #world-map-panel,body.free #expedition-settings-toggle{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 
 /* Persistent adventure HUD */
-#player-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(14px + env(safe-area-inset-top));z-index:10;display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
+#player-card{position:fixed;z-index:100!important;left:0;top:0;z-index:10;display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #d8b46b88;border-radius:12px;background:linear-gradient(135deg,#101923eF,#070b10d9);box-shadow:0 8px 28px #0008;opacity:0;pointer-events:none;transition:opacity .5s;font:12px system-ui}
 body.free #player-card{opacity:1}
 #player-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#d9b36b,#73502b);color:#17120a;font-weight:900;font-size:17px}
 #player-name{font-weight:800;letter-spacing:.1em;color:#ffe3a3;font-size:12px}
 #player-rank{font-size:10px;color:#b9c1c8;margin-top:3px}
-#status-card{position:fixed;z-index:100!important;left:max(16px,env(safe-area-inset-left));top:calc(72px + env(safe-area-inset-top));z-index:10;width:190px;padding:8px 11px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
+#status-card{position:fixed;z-index:100!important;left:0;top:55px;z-index:10;width:180px;padding:6px 9px;border-radius:9px;background:#070b10c9;border:1px solid #ffffff20;opacity:0;pointer-events:none;transition:opacity .5s;font:10px system-ui}
 body.free #status-card{opacity:1}
 .stat-label{display:flex;justify-content:space-between;margin:2px 0 4px;color:#e9dfca}
 .stat-track{height:6px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-bottom:7px}
@@ -60,7 +60,7 @@ body.free #control-dock{opacity:1}
 .control-chip{white-space:nowrap;padding:5px 7px;border-radius:6px;background:#ffffff10}
 .control-chip b{color:#ffe3a3}
 #help{display:none}
-@media(max-width:650px){#player-card{top:calc(9px + env(safe-area-inset-top));padding:7px 9px}#status-card{top:calc(62px + env(safe-area-inset-top));width:145px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
+@media(max-width:650px){#player-card{left:0!important;top:0!important;padding:6px 8px}#status-card{left:0!important;top:43px!important;width:145px;padding:4px 7px}#world-map-panel{top:0!important;bottom:auto;right:0!important;width:190px;padding:7px;border-radius:0 0 0 12px}#world-map-panel.map-expanded{width:min(300px,100vw)}#expedition-settings-toggle{top:8px;right:198px;width:36px;height:36px}#expedition-settings-panel{top:54px;right:12px}#world-map-legend{font-size:8px}#control-dock{display:none}}
 
  
  
@@ -69,11 +69,11 @@ body.mobile-device #rotate-phone-overlay{display:none!important;position:fixed;i
 body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:28rem;font-size:clamp(12px,3vw,15px);font-weight:500;letter-spacing:0;line-height:1.5;color:#e5dccb}
 @media (orientation: portrait){body.mobile-device #rotate-phone-overlay{display:flex!important}body.mobile-device #player-card,body.mobile-device #status-card,body.mobile-device #world-map-panel,body.mobile-device #expedition-settings-toggle,body.mobile-device #expedition-settings-panel,body.mobile-device #control-dock,body.mobile-device #hud{visibility:hidden!important}}
 @media (orientation: landscape){body.mobile-device #rotate-phone-overlay{display:none!important}body.mobile-device #hud{display:none!important}
- body.mobile-device #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
+ body.mobile-device #player-card{left:0!important;top:0!important;gap:5px;padding:4px 6px;border-radius:0 0 8px 0}
  body.mobile-device #player-avatar{width:25px;height:25px;padding:2px}
  body.mobile-device #player-name{font-size:9px;letter-spacing:.06em}
  body.mobile-device #player-rank{font-size:7px;margin-top:1px}
- body.mobile-device #status-card{left:max(7px,env(safe-area-inset-left));top:calc(43px + env(safe-area-inset-top));width:112px;padding:4px 6px;font-size:8px}
+ body.mobile-device #status-card{left:0!important;top:43px!important;width:112px;padding:3px 6px;font-size:8px}
  body.mobile-device .stat-track{height:4px;margin-bottom:3px}
  body.mobile-device .stat-label{margin:1px 0 2px}
  body.mobile-device #world-map-panel{right:0!important;top:0!important;width:164px;height:auto;padding:5px;border-radius:0 0 0 8px}
@@ -93,11 +93,11 @@ body.mobile-device #rotate-phone-overlay .rotate-detail{display:block;max-width:
 /* Mobile-first landscape gameplay layout: compact HUD, map and touch controls. */
 @media (max-width: 900px) and (orientation: landscape) {
   #hud{display:none!important}
-  #player-card{left:max(7px,env(safe-area-inset-left));top:calc(6px + env(safe-area-inset-top));gap:6px;padding:4px 7px;border-radius:8px}
+  #player-card{left:0!important;top:0!important;gap:5px;padding:4px 6px;border-radius:0 0 8px 0}
   #player-avatar{width:25px;height:25px;padding:2px}
   #player-name{font-size:9px;letter-spacing:.06em}
   #player-rank{font-size:7px;margin-top:1px}
-  #status-card{left:max(7px,env(safe-area-inset-left));top:calc(43px + env(safe-area-inset-top));width:112px;padding:4px 6px;font-size:8px}
+  #status-card{left:0!important;top:43px!important;width:112px;padding:3px 6px;font-size:8px}
   .stat-track{height:4px;margin-bottom:3px}
   .stat-label{margin:1px 0 2px}
   #world-map-panel{right:0!important;top:0!important;width:164px;padding:5px;border-radius:0 0 0 8px}
@@ -214,7 +214,7 @@ body.mobile-device #world-map-panel.map-expanded #world-map{
 <div id="status-card"><div class="stat-label"><span>HEALTH</span><span id="health-value">500</span></div><div class="stat-track"><div class="stat-fill" id="health-fill"></div></div><div class="stat-label"><span>STAMINA</span><span id="stamina-value">200</span></div><div class="stat-track"><div class="stat-fill" id="stamina-fill"></div></div><div class="stat-label"><span>DAMAGE</span><span id="damage-value">5</span></div><div class="stat-track"><div class="stat-fill" id="damage-fill" style="width:25%;background:#c66b54"></div></div></div>
 <button id="world-map-toggle" type="button">WORLD MAP · M</button>
 <section id="world-map-panel"><strong>JARRELL’S PEAK · FIELD MAP</strong><canvas id="world-map" width="720" height="480"></canvas><div id="world-map-legend">Terrain map · Green = you · Gold = landmarks</div></section><button id="expedition-settings-toggle" type="button" aria-label="Expedition settings" title="Expedition settings">⚙</button><section id="expedition-settings-panel" aria-label="Expedition settings" style="display:none"><strong>EXPEDITION SETTINGS</strong><button id="time-cycle-control" type="button">TIME OF DAY · GOLDEN HOUR</button><button id="weather-cycle-control" type="button">WEATHER · CLEAR</button><label for="climboria-music-volume">SOUNDTRACK VOLUME <span id="climboria-volume-value">38%</span></label><input id="climboria-music-volume" type="range" min="0" max="100" value="38" step="1"><button id="expedition-settings-close" type="button">CLOSE</button></section>
-<div id="control-dock"><span class="control-chip"><b>W A S D</b> Move</span><span class="control-chip"><b>SHIFT</b> Sprint</span><span class="control-chip"><b>SPACE</b> Jump</span><span class="control-chip"><b>MOUSE</b> Look</span><span class="control-chip"><b>E</b> Interact</span><span class="control-chip"><b>I</b> Inventory</span><span class="control-chip"><b>M</b> Map</span><span class="control-chip"><b>LEFT CLICK</b> Move</span><span class="control-chip"><b>CTRL</b> Dive</span><span class="control-chip"><b>SPACE</b> Surface</span></div>
+
 <div id="help">WASD move · Shift sprint · Space jump · Mouse look (drag if not locked)<br>F fly/walk · Q/E down/up (fly) · E interact (walk) · T time · R weather · V tour<br>Teleport: 1 Sanctuary · 2 Summit · 3 Cave · 4 Rice · 5 Desert · 6 Sea · 7 Park · 8 Ruined camp<br>Swimming: CTRL dive · SPACE surface</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1490,7 +1490,7 @@ function update(dt){
  // HUD
  hudT-=dt;if(hudT<0){hudT=.25;const h=heightAt(cp.x,cp.z);zoneEl.textContent=biome(cp.x,cp.z,P.mode=='cine'?9:h);
   const cave=POI.cave,tr=Math.hypot(cp.x-cave.x-cave.dir.x*25,cp.z-cave.z-cave.dir.z*25)<22;
-  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]+' · x '+Math.round(cp.x)+'  z '+Math.round(cp.z)+'  alt '+Math.round(cp.y)}
+  subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]}
 }
 /* ---------- boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
