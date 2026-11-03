@@ -413,10 +413,15 @@ try {
   const inventoryVisible=await page.locator('#climboriaInventoryPanel').evaluate(el=>getComputedStyle(el).display!=='none');
   if(!inventoryVisible) errors.push('Character nameplate did not open the field inventory');
   console.log('Jarrell loot/inventory diagnostic:',JSON.stringify(lootResult));
+  // Keep the gameplay evidence unobstructed: the inventory interaction above is
+  // tested, but it must be closed before capturing the actual world/player view.
+  await page.locator('#climboriaInventoryPanel button').filter({hasText:'CLOSE'}).dispatchEvent('click');
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('#climboriaInventoryPanel')).display === 'none', undefined, { timeout: 5000 });
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
   const mobile = await browser.newPage({
-    viewport: { width: 390, height: 844 },
+    // Real phone gameplay is landscape; portrait is covered by the rotate overlay.
+    viewport: { width: 844, height: 390 },
     isMobile: true,
     hasTouch: true,
     deviceScaleFactor: 1,
