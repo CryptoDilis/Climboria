@@ -260,6 +260,7 @@ try {
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
+  if (!world.fishingInteractions?.length || world.fishingInteractions.some(x=>!x.started||!x.waitingNoCatch||!x.reeled)) errors.push('Fishing cast/wait/bite/reel interaction failed: '+JSON.stringify(world.fishingInteractions));
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));
