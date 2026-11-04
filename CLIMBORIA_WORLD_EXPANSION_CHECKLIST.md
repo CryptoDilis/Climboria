@@ -735,3 +735,11 @@ For each meaningful implementation batch:
 - [ ] Manual walk-in, wall/roof clearance, camera obstruction, trap navigation and Redmi 14 5G acceptance remain open.
 - [ ] Continue connected maze/branching-room expansion and cave wayfinding without changing the approved world layout; keep snakes and wildlife disabled.
 - [ ] Main push-triggered Validate, Browser Smoke and Pages results for merge SHA `9f05f2bd995717fa044a4db77f722c6982551e2d` were not returned by the available status lookup. Do not treat PR checks as post-merge deployment verification.
+
+
+## 2026-11-05 — procedural hero idle rest-pose correction (candidate)
+- [x] Source audit found the procedural fallback adding fixed positive X rotations to upper/lower arms during idle and scaling authored shoulder/upper-arm rotations, which can exaggerate a stiff raised-arm stance.
+- [x] Updated the fallback to preserve each captured GLB arm rest rotation while idle; locomotion gait offsets remain active while walking/running.
+- [ ] Validate and desktop/mobile Browser Smoke must pass on this branch.
+- [ ] Inspect fresh desktop/mobile idle, walk, run, jump and landing captures; automated rig diagnostics alone do not prove a natural pose.
+- [ ] Confirm the authored GLB idle clip and physical Redmi 14 5G landscape appearance; do not mark character animation complete until visually accepted.

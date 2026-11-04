@@ -1009,9 +1009,11 @@ function animateAssetFallback(t,state,speed){
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
   else if(jumping)b.rotation.x=item.base-.52;
   else if(landing)b.rotation.x=item.base+.22;
-  else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):(item.lower?.28:.08));
-  if(item.shoulder)b.rotation.z=item.baseZ*.08;
-  else if(!item.lower)b.rotation.y=item.baseY*.15;
+  else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):0);
+  // Preserve the GLB-authored shoulder/elbow rest pose while standing still.
+  // Apply gait offsets only during locomotion; never force the idle arms upward.
+  if(item.shoulder)b.rotation.z=item.baseZ;
+  else if(!item.lower)b.rotation.y=item.baseY;
  }
  if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:jumping?-.08:0;
  if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
