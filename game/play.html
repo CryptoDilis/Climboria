@@ -673,12 +673,30 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // overlapped the entrance approach and filled the camera with solid rock.
  // Keep large formations to the sides/rear of the approach; the central sightline from local -Z to the arch at z=-2 must stay open.
  [[-30,7,-18,8],[30,7,-18,8],[-34,8,5,9],[34,8,5,9],[-25,5,-38,7],[25,5,-38,7]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
- // Broad cave portal: two side piers with a light broken-stone crown.
- // Keep the central sightline clear; small crown stones replace the former overlapping center blocks; no central keystone.
- const archMat=M('#514b43');
- [[-11,4.1,-2,2.8,8.2,3.4],[11,4.1,-2,2.8,8.2,3.4],
-  [-7.2,8.6,-2,1.05,.85,2.4],[-5.1,9.1,-2,1.05,.8,2.3],[-3,9.5,-2,1,.75,2.2],[-1,9.7,-2,.9,.7,2.1],[1,9.7,-2,.9,.7,2.1],[3,9.5,-2,1,.75,2.2],[5.1,9.1,-2,1.05,.8,2.3],[7.2,8.6,-2,1.05,.85,2.4]].forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.035*(i%3),i*.11,.025*(i%2?1:-1));rock.castShadow=true;
+ // Natural cave mouth: a connected, irregular stone arch with a readable dark tunnel.
+ // Compact side shoulders support a continuous crown; avoid isolated pillars and floating teeth.
+ const archMat=M('#514b43'),archRockMat=M('#45433e');
+ const portalRock=(x,y,z,sx,sy,sz,rot=0)=>{
+  const rock=mk(SPH,archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
+  rock.rotation.set(.08*Math.sin(rot*1.7),rot,.06*Math.cos(rot*1.3));
+  rock.castShadow=true;return rock;
+ };
+ // Side shoulders taper into the crown rather than forming two freestanding columns.
+ portalRock(-6.6,2.9,-2.1,2.2,3.6,2.6,-.12);
+ portalRock(6.6,2.9,-2.1,2.2,3.6,2.6,.14);
+ portalRock(-6.2,5.0,-2.0,2.0,2.0,2.7,-.22);
+ portalRock(6.2,5.0,-2.0,2.0,2.0,2.7,.18);
+ // Overlapping crown stones form one continuous natural arch above the opening.
+ [[-5.2,6.35,2.1,1.75],[-3.7,7.35,2.0,1.65],[-1.9,7.95,1.9,1.5],[0,8.15,1.9,1.45],[1.9,7.95,1.9,1.5],[3.7,7.35,2.0,1.65],[5.2,6.35,2.1,1.75]].forEach(([x,y,sy,sx],i)=>{
+  portalRock(x,y,-2.05,sx,sy,2.75,(i-3)*.11);
+ });
+ // A deep shadowed inner throat makes the opening read as a tunnel, not a flat wall.
+ const caveMouth=new T3.Mesh(new T3.PlaneGeometry(12.2,7.2),new T3.MeshStandardMaterial({color:L('#080b0d'),emissive:L('#11191d'),emissiveIntensity:.24,roughness:1,side:T3.DoubleSide}));
+ caveMouth.position.set(0,3.9,3.9);g.add(caveMouth);
+ const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,12.8,.24,5.8,g);
+ // Low, irregular rubble blends the threshold into the natural approach apron.
+ [[-7.8,.45,-.8,1.7,.7,2.2],[7.7,.42,-.5,1.8,.65,2.1],[-5.8,.28,-5.0,2.4,.45,1.8],[5.9,.3,-4.7,2.2,.48,1.9]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.y=i*.7;rock.castShadow=true;
  });
  // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
  [-12,12].forEach(x=>caveTorches.push(torch(x,0,6,g)));
@@ -783,7 +801,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[49,2,22],[53,2,28],[51,2.2,34],[57,2.1,44]].forEach(([x,y,z])=>glow('#ffad55',.9,14,x,y,z,g));
  [[27,2.1,43],[33,2.1,43]].forEach(([x,y,z])=>glow('#ffad55',1.15,18,x,y,z,g));
  [[-25,3,-16],[25,3,-16],[-25,3,31],[25,3,31]].forEach(([x,y,z])=>glow('#ffad55',2.2,38,x,y,z,g));
- for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,-3.2,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
+ for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,12.5,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
  for(let j=0;j<5;j++)for(let i=0;i<7;i++){
   const x=-64+i*3,z=-47+j*3;
   const s=sc(mk(CON,M('#9a9ca4'),x,-2,z,g),.45,2.6,.45);spikes.push({s,ph:(i+j*1.7)*.55});
