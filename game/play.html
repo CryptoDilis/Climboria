@@ -682,18 +682,17 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   rock.castShadow=true;return rock;
  };
  // Side shoulders taper into the crown rather than forming two freestanding columns.
- portalRock(-6.6,2.9,-2.1,2.2,3.6,2.6,-.12);
- portalRock(6.6,2.9,-2.1,2.2,3.6,2.6,.14);
- portalRock(-6.2,5.0,-2.0,2.0,2.0,2.7,-.22);
- portalRock(6.2,5.0,-2.0,2.0,2.0,2.7,.18);
- // Overlapping crown stones form one continuous natural arch above the opening.
- [[-5.2,6.35,2.1,1.75],[-3.7,7.35,2.0,1.65],[-1.9,7.95,1.9,1.5],[0,8.15,1.9,1.45],[1.9,7.95,1.9,1.5],[3.7,7.35,2.0,1.65],[5.2,6.35,2.1,1.75]].forEach(([x,y,sy,sx],i)=>{
-  portalRock(x,y,-2.05,sx,sy,2.75,(i-3)*.11);
+ portalRock(-4.8,2.0,-2.1,1.65,2.45,2.1,-.12);
+ portalRock(4.8,2.0,-2.1,1.65,2.45,2.1,.14);
+ portalRock(-4.5,3.65,-2.0,1.5,1.45,2.15,-.22);
+ portalRock(4.5,3.65,-2.0,1.5,1.45,2.15,.18);
+ // A lower, tighter crown frames a walkable tunnel instead of a giant black void.
+ [[-3.8,4.35,1.35,1.25],[-2.65,5.05,1.25,1.2],[-1.35,5.45,1.2,1.1],[0,5.55,1.2,1.05],[1.35,5.45,1.2,1.1],[2.65,5.05,1.25,1.2],[3.8,4.35,1.35,1.25]].forEach(([x,y,sy,sx],i)=>{
+  portalRock(x,y,-2.05,sx,sy,2.2,(i-3)*.11);
  });
- // A deep shadowed inner throat makes the opening read as a tunnel, not a flat wall.
- const caveMouth=new T3.Mesh(new T3.PlaneGeometry(12.2,7.2),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.48,roughness:1,side:T3.DoubleSide}));
- caveMouth.position.set(0,3.9,3.9);g.add(caveMouth);
- const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,12.8,.24,5.8,g);
+ const caveMouth=new T3.Mesh(new T3.PlaneGeometry(8.6,4.9),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.22,roughness:1,side:T3.DoubleSide}));
+ caveMouth.position.set(0,2.75,3.9);g.add(caveMouth);
+ const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
  [[-7.8,.45,-.8,1.7,.7,2.2],[7.7,.42,-.5,1.8,.65,2.1],[-5.8,.28,-5.0,2.4,.45,1.8],[5.9,.3,-4.7,2.2,.48,1.9]].forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.y=i*.7;rock.castShadow=true;
@@ -713,7 +712,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Build the visible wall from tightly overlapping irregular stone masses rather
   // than a single flat box. Keep the original swept segment as the authoritative
   // collision boundary so every passage remains sealed and traversable as designed.
-  const stoneGeo=new T3.IcosahedronGeometry(1,1);
+  const stoneGeo=new T3.IcosahedronGeometry(1,0);
   const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
   const randWall=rng(seedBase);
   for(let along=-.35;along<=len+.35;along+=1.12){
@@ -724,7 +723,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
     const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.22;
     const y=.85+row*1.72+(randWall()-.5)*.32;
     const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,1.12+randWall()*.32,.98+randWall()*.42,.9+randWall()*.48);
+    sc(stone,.72+randWall()*.28,.72+randWall()*.32,.72+randWall()*.3);
     stone.rotation.set((randWall()-.5)*.48,angle+(randWall()-.5)*.55,(randWall()-.5)*.42);
     stone.castShadow=true;stone.receiveShadow=true;
    }
@@ -1504,7 +1503,7 @@ function chestRespawnDelay(c){
  if(c.kind==='cave'||c.kind==='geode')return 120+Math.random()*120;
  return 90+Math.random()*60;
 }
-function chest(kind,fixed,anchor,rad){const g=new T3.Group();const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43');sc(mk(DOD,wood,0,.42,0,g),.82,.43,.58);sc(mk(DOD,lid,0,.79,-.015,g),.84,.34,.6);[-.38,0,.38].forEach((x)=>{const band=mk(BOX,iron,x,.58,0,g);sc(band,.09,.72,1.03)});sc(mk(BOX,iron,0,.68,.57,g),.24,.28,.08);sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,g),.1,.1,.1);scene.add(g);
+function chest(kind,fixed,anchor,rad){const g=new T3.Group();const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43');sc(mk(DOD,wood,0,.42,0,g),.82,.43,.58);sc(mk(DOD,lid,0,.79,-.015,g),.84,.34,.6);[-.38,0,.38].forEach((x)=>{const band=mk(BOX,iron,x,.58,0,g);sc(band,.09,.72,1.03)});sc(mk(BOX,iron,0,.68,.57,g),.24,.28,.08);sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,g),.1,.1,.1);g.scale.setScalar(.62);scene.add(g);
  const c={g,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0,spawnSlot:null};chests.push(c);place(c)}
 function place(c){
  let x,z;
