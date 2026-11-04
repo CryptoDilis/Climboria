@@ -848,3 +848,13 @@ For each meaningful implementation batch:
 - [ ] Repair the pond presentation: reduce the broad exposed pale-sand apron, blend the green bank into the water edge, and replace the abrupt straight foreground cut with a natural irregular shoreline.
 - [ ] Verify the pond water surface follows the basin contour and fish remain submerged/visible without clipping or floating above the surface on desktop and mobile.
 - [ ] Add/verify rod, line, bobber and bait visuals plus complete cast → bite → reel → inventory reward flow; physical desktop and Redmi 14 5G acceptance remain open.
+
+
+### Inland pond sand/floor coloration correction — 2026-11-04
+- [x] Inspected latest desktop and mobile Woodland Pond screenshots from Browser Smoke artifact [13308233127](https://github.com/CryptoDilis/Climboria/actions/runs/41802406277/artifacts/13308233127), run [41802406277](https://github.com/CryptoDilis/Climboria/actions/runs/41802406277).
+- [x] Confirmed both views still show an exposed tan basin wall/apron and a sharp foreground grass edge; fish colors are visible but silhouettes remain stylized/flat.
+- [x] Traced the broad inland tan coloration to the global low-elevation bch sand blend in colorAt(), which painted every terrain vertex below the low-height threshold, including inland pond floors and basin walls.
+- [x] Updated colorAt() on commit f8aa3b6a30c6882997dbd2b8da10526a9b4329ef: low-elevation sand blend is now coast-scoped; freshwater sand is limited to a narrow near-waterline height band and mapped bank band; submerged inland pond floors no longer receive the global beach sand treatment.
+- [ ] Run Validate and Browser Smoke on this exact commit; inspect fresh desktop and mobile Woodland Pond screenshots for remaining basin-wall coloration, foreground occlusion, and waterline blending.
+- [ ] Do not mark pond visuals accepted until the screenshots show a natural irregular shoreline without exposed tan basin walls or a hard foreground cut.
+- [ ] Fish final silhouette/art, physical Redmi 14 5G acceptance, rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
