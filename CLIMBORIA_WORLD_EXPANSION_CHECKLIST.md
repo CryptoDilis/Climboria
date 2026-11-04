@@ -883,3 +883,4 @@ For each meaningful implementation batch:
 - [ ] Await fresh Validate and desktop/mobile Browser Smoke; current available run `41846275127` / `41846275056` passed on the previous head `d5433d1`, not this correction.
 - [ ] Inspect fresh pond screenshots for recognizable fish body/tail silhouettes and natural shoreline width before merge; do not accept based on registry/count assertions alone.
 - [ ] Physical Redmi 14 5G visibility/performance, rod/line/bobber animation, bait/tool inventory and live catch interaction remain open.
+- [x] Follow-up commit `6efd7f5b16369b17b6f3117c5e3be2eb74f09551` reduces pale sky reflection/water opacity and aligns fish facing with the tangent of their swim path; fresh screenshot review is still required.
