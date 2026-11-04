@@ -656,5 +656,7 @@ For each meaningful implementation batch:
 - [x] Added a three-second bite window after a randomized 1.8–3.0 second bite delay; missing the window awards nothing.
 - [x] Added movement cancellation when the player moves more than 2.5 world units from the cast position.
 - [x] Extended Browser Smoke to test cast start, no automatic reward while waiting, and a successful reel/inventory increment at each fishing spot.
-- [ ] Validate and desktop/mobile Browser Smoke must pass on this branch before merge.
+- [x] Validate passed on fishing branch head `64610e3` (run `41762973291`).
+- [x] Desktop/mobile Browser Smoke passed on the same head (run `41762973242`); all registered fishing spots passed cast/wait/reel assertions.
+- [x] Reviewed fresh desktop/mobile smoke captures: gameplay page loads and the hero/HUD render in both layouts; these baseline captures do not demonstrate a live fishing session or validate catch visuals.
 - [ ] Still open: fishing rod/line animation and bait/tool requirements; visible fish schools and marine-life behavior; actual Redmi 14 5G gameplay acceptance.
