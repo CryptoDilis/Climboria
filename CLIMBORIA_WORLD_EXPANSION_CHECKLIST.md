@@ -701,3 +701,10 @@ For each meaningful implementation batch:
 - [ ] Root-cause repair required: create a properly carved, walkable exterior approach/apron and a clearly visible cave mouth in the terrain/rock geometry; ensure nearby mountain terrain does not occlude the opening from desktop/mobile approach angles. Do not solve by changing screenshot camera position alone.
 - [ ] Re-run Validate + Browser Smoke and inspect fresh screenshots after the actual terrain/entrance geometry repair.
 - [ ] Physical Redmi 14 5G entrance/interior traversal, cave interior readability, maze/trap navigation and manual acceptance remain open.
+
+
+## 2026-11-04 — cave approach terrain apron candidate
+- [x] Added a terrain-height apron along the cave's local exterior approach axis, with blended lateral and longitudinal edges, to cut back the mountain slope toward cave-base elevation.
+- [ ] Run Validate and Browser Smoke on commit bb484568022e9d1c9e5bb3ad123bfd43a083366a.
+- [ ] Inspect fresh desktop and mobile cave-entrance screenshots; the apron is not visually accepted until the opening is clearly readable and the approach looks walkable.
+- [ ] Confirm exterior-to-interior traversal, cave interior readability, maze/trap navigation, and physical Redmi 14 5G performance.
