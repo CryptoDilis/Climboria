@@ -775,3 +775,12 @@ For each meaningful implementation batch:
 - [ ] Validate and Browser Smoke must pass on the new head; inspect both desktop and mobile pond screenshots before accepting the fish or shoreline visuals.
 - [ ] Fish still read as flat oval marks and the shoreline remains a broad, smooth oval in the last inspected desktop artifact; both visual issues remain open.
 - [ ] Physical Redmi 14 5G review, natural shoreline blending, rod/line/bobber animation, and bait/tool requirements remain open.
+
+
+### Mobile Woodland Pond artifact upload correction — 2026-11-04
+- [x] Validate passed on mobile pond capture head `a2bdaf2558642a47cc07e1b1418a7b9f83271a59` (run [41792636211](https://github.com/CryptoDilis/Climboria/actions/runs/41792636211)).
+- [x] Browser Smoke passed, including desktop and mobile gameplay smoke tests (run [41792636244](https://github.com/CryptoDilis/Climboria/actions/runs/41792636244)).
+- [x] Inspected artifact [13304167979](https://github.com/CryptoDilis/Climboria/actions/runs/41792636244/artifacts/13304167979): desktop Woodland Pond image is present, but the newly generated mobile Woodland Pond image was missing from the upload archive because its path was not listed in the workflow.
+- [x] Added `climboria-mobile-woodland-pond-fish.png` to the Browser Smoke artifact upload list (workflow correction commit `84393aee6ca3e1b66082a04af74b8e14f2696bb9`).
+- [ ] Re-run Validate and Browser Smoke on the workflow correction; verify the mobile pond image appears in the uploaded artifact and inspect both pond views.
+- [ ] Fish silhouette readability, natural shoreline/water-edge blending, physical Redmi 14 5G acceptance, rod/line/bobber animation, and bait/tool requirements remain open.
