@@ -660,3 +660,12 @@ For each meaningful implementation batch:
 - [x] Desktop/mobile Browser Smoke passed on the same head (run `41762973242`); all registered fishing spots passed cast/wait/reel assertions.
 - [x] Reviewed fresh desktop/mobile smoke captures: gameplay page loads and the hero/HUD render in both layouts; these baseline captures do not demonstrate a live fishing session or validate catch visuals.
 - [ ] Still open: fishing rod/line animation and bait/tool requirements; visible fish schools and marine-life behavior; actual Redmi 14 5G gameplay acceptance.
+
+
+## 2026-11-04 — visible aquatic life prototype
+
+- [x] Added lightweight animated fish schools to all three freshwater basins and sampled coastal open-sea locations; fish swim in looping paths just below the water surface.
+- [x] Shared low-poly body/tail geometry and materials; reduced school sizes on touch devices to limit draw calls and scene cost.
+- [x] Exposed an aquatic-life audit and added Browser Smoke assertions for minimum fish count, distinct schools, submerged placement, and shared geometry.
+- [ ] Review live desktop/mobile captures to confirm fish are visible through the water shader at normal camera angles; tune depth/contrast if they are hard to see.
+- [ ] Physical Redmi 14 5G frame-time and visibility acceptance remains open. Fishing rod/line animation, bait/tool requirements, and richer marine-life behavior remain open.
