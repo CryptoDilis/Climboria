@@ -387,7 +387,7 @@ gl_FragColor=vec4(c,1.);
 }`}));
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
-const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
+const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#07566a')}}]);
 const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
@@ -405,9 +405,9 @@ float dz=.2*.11*cos(vW.z*.11-uT*1.5)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW
 vec3 n=normalize(vec3(-dx*3.,1.,-dz*3.));vec3 v=normalize(cameraPosition-vW);
 float f=pow(1.-max(dot(n,v),0.),3.);vec3 r=reflect(-v,n);
 vec3 refl=mix(uHor,uTop,clamp(r.y,0.,1.));
-vec3 c=mix(uDeep,refl,.2+.8*f);
+vec3 c=mix(uDeep,refl,.18+.34*f);
 c+=uSunC*pow(max(dot(reflect(-uSun,n),v),0.),140.)*2.2;
-gl_FragColor=vec4(c,.52+.16*f);
+gl_FragColor=vec4(c,.9);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 #include <fog_fragment>
@@ -1384,11 +1384,11 @@ const fishEyeMat=M('#111820');
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
-  const g=new T3.Group();g.name='Aquatic Fish';const body=mk(fishBodyGeo,fishMats[(i+seed)%fishMats.length],0,0,0,g);sc(body,.82,.28,.24);
+  const g=new T3.Group();g.name='Aquatic Fish';const body=mk(fishBodyGeo,fishMats[(i+seed)%fishMats.length],0,0,0,g);sc(body,1.15,.38,.32);
   const tail=mk(fishTailGeo,fishMats[(i+seed)%fishMats.length],0,0,.68,g);tail.rotation.x=Math.PI/2;sc(tail,1.05,.95,.6);
-  for(const side of [-1,1]){const eye=mk(SPH,fishEyeMat,side*.105,.045,-.115,g);sc(eye,.025,.025,.025)}
+  for(const side of [-1,1]){const eye=mk(SPH,fishEyeMat,side*.105,.045,-.115,g);sc(eye,.04,.04,.04)}
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?1.15+rand()*2.2:.55+rand()*1.1,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?1.1+rand()*1.8:.22+rand()*.62,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
