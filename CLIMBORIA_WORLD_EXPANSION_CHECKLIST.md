@@ -784,3 +784,14 @@ For each meaningful implementation batch:
 - [x] Added `climboria-mobile-woodland-pond-fish.png` to the Browser Smoke artifact upload list (workflow correction commit `84393aee6ca3e1b66082a04af74b8e14f2696bb9`).
 - [ ] Re-run Validate and Browser Smoke on the workflow correction; verify the mobile pond image appears in the uploaded artifact and inspect both pond views.
 - [ ] Fish silhouette readability, natural shoreline/water-edge blending, physical Redmi 14 5G acceptance, rod/line/bobber animation, and bait/tool requirements remain open.
+
+
+### Freshwater pond depression and shoreline alignment (2026-11-04)
+- [x] Latest-head Validate workflow passed (run 41794215855).
+- [x] Latest-head Browser Smoke workflow passed (run 41794216152).
+- [x] Browser Smoke artifact 13305037601 now includes both desktop and mobile Woodland Pond captures.
+- [x] Confirmed visual issue in both captures: the pond still reads as an oversized flat oval with a broad, abrupt sand apron; fish are faint small surface marks at normal camera distance.
+- [x] Narrowed freshwater terrain depression transition from 0.66×–1.62× basin radius to a 20-unit shelf centered on the computed waterline, keeping the terrain depression aligned with the basin boundary.
+- [ ] Re-run Validate and Browser Smoke on the shoreline patch; inspect fresh desktop and mobile pond captures before accepting the visual result.
+- [ ] Fish silhouette/readability and natural shoreline blending remain open pending screenshot review.
+- [ ] Physical Redmi 14 5G acceptance remains open.
