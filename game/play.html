@@ -1461,10 +1461,16 @@ function chestDistributionAudit(){
   respawnSamples:{world:chestRespawnDelay({kind:'remote'}),cave:chestRespawnDelay({kind:'cave'}),summit:chestRespawnDelay({kind:'summit'})},
   rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
+function cancelFishing(message='Fishing cancelled.'){P.fish=0;P.fishPhase=null;P.fishElapsed=0;P.fishSource=null;P.fishStartX=null;P.fishStartZ=null;if(message)toast(message)}
+function finishFishing(){
+ const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];
+ const item=table[Math.floor(Math.random()*table.length)],waterBodyId=P.fishSource||'open_sea';
+ addInventoryItem(item,1);toast('Caught: '+item);emit('fish',{item,waterBodyId});cancelFishing(null);
+}
 function interact(){if(P.mode!='walk')return;
+ if(P.fish>0){if(P.fishPhase==='bite'&&P.fishElapsed<=P.fishBiteAt+P.fishBiteWindow){finishFishing()}else if(P.fishPhase==='waiting'){toast('A fish may bite soon · stay ready')}else{cancelFishing('Too late · the fish got away')}return}
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=rollChestReward(c);addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
- for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
-P.fish=0;
+ for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){P.fish=1;P.fishPhase='waiting';P.fishElapsed=0;P.fishBiteAt=1.8+Math.random()*1.2;P.fishBiteWindow=3;P.fishSource=f.waterBodyId||'open_sea';P.fishStartX=P.x;P.fishStartZ=P.z;toast('Line cast at '+f.label+' · wait for a bite, then press E')}else{toast(f.label);emit(f.type,{})}return}}
 /* weather: clear / rain / thunderstorm */
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
@@ -1488,7 +1494,7 @@ function gameTick(dt,cp){
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  updateSummitChestStatus();
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
+ if(P.fish>0){if(!live||Math.hypot(P.x-(P.fishStartX??P.x),P.z-(P.fishStartZ??P.z))>2.5){cancelFishing('Fishing cancelled · you moved away')}else{P.fishElapsed=(P.fishElapsed||0)+dt;if(P.fishPhase==='waiting'&&P.fishElapsed>=P.fishBiteAt){P.fishPhase='bite';toast('BITE! Press E to reel now')}else if(P.fishPhase==='bite'&&P.fishElapsed>P.fishBiteAt+P.fishBiteWindow){cancelFishing('Missed the bite · cast again')}}}
  hpEl.textContent='';
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
