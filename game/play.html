@@ -396,18 +396,18 @@ const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,tra
 vertexShader:`uniform float uT;varying vec3 vW;
 #include <fog_pars_vertex>
 void main(){vec4 wp=modelMatrix*vec4(position,1.);
-wp.y+=.3*sin(wp.x*.08+uT*1.2)+.2*sin(wp.z*.11-uT*1.5)+.1*sin((wp.x+wp.z)*.2+uT*2.2);
+wp.y+=.46*sin(wp.x*.075+uT*1.15)+.28*sin(wp.z*.105-uT*1.35)+.16*sin((wp.x+wp.z)*.19+uT*2.)+.075*sin((wp.x-wp.z)*.31-uT*2.6);
 vW=wp.xyz;vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
 #include <fog_vertex>
 }`,
 fragmentShader:`uniform float uT;uniform vec3 uSun,uSunC,uTop,uHor,uDeep;varying vec3 vW;
 #include <fog_pars_fragment>
-void main(){float dx=.3*.08*cos(vW.x*.08+uT*1.2)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.x*.5+uT*2.)*.5;
-float dz=.2*.11*cos(vW.z*.11-uT*1.5)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.z*.45-uT*1.7)*.5;
+void main(){float dx=.46*.075*cos(vW.x*.075+uT*1.15)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)+.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
+float dz=.28*.105*cos(vW.z*.105-uT*1.35)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)-.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
 vec3 n=normalize(vec3(-dx*3.,1.,-dz*3.));vec3 v=normalize(cameraPosition-vW);
 float f=pow(1.-max(dot(n,v),0.),3.);vec3 r=reflect(-v,n);
 vec3 refl=mix(uHor,uTop,clamp(r.y,0.,1.));
-vec3 c=mix(uDeep,refl,.025+.07*f);
+vec3 c=mix(uDeep,refl,.055+.18*f);
 c+=uSunC*pow(max(dot(reflect(-uSun,n),v),0.),140.)*2.2;
 gl_FragColor=vec4(c,.78);
 #include <tonemapping_fragment>
@@ -1384,7 +1384,7 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 // the surface. Keep counts modest on touch devices and share geometry/materials.
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
-const fishBodyGeo=new T3.SphereGeometry(1,12,8),fishTailGeo=new T3.ConeGeometry(.38,.58,4),fishFinGeo=new T3.ConeGeometry(.16,.34,4);
+const fishBodyGeo=new T3.SphereGeometry(1,20,14),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.58,.48);fishTailShape.lineTo(-.34,0);fishTailShape.lineTo(-.58,-.48);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinGeo=new T3.ConeGeometry(.16,.34,5);
 const fishMats=[M('#ffc34d',1),M('#45d5ef',1),M('#f2f5f7',1),M('#ff8752',1)];
 // Draw submerged fish before the transparent water surface (water.renderOrder=2).
 // The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
@@ -1396,7 +1396,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
   // Fish face local +Z: the tail sits behind the body, not off to its side.
   const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.52,.31,1.12);
-  const tail=mk(fishTailGeo,mat,0,0,-1.02,g);tail.rotation.x=-Math.PI/2;sc(tail,1.28,1.08,.92);
+  const tail=mk(fishTailGeo,mat,0,0,-1.02,g);tail.material.side=T3.DoubleSide;sc(tail,1.15,1.05,1);
   const dorsal=mk(fishFinGeo,mat,0,.23,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.68,.78,.52);
   for(const side of [-1,1]){
    const fin=mk(fishFinGeo,mat,side*.28,-.1,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.58,.64,.4);
