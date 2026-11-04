@@ -2214,3 +2214,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
 - [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
 - [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
+
+
+### 2026-11-05 — fishing integration work queue
+
+- [ ] Fishing branch #208 is being reconciled onto current main; do not merge its divergent head directly.
+- [ ] Integrate cast/wait/bite/reel interactions, animated submerged fish, and pond terrain/water visual corrections on a clean main-based branch.
+- [ ] Require Validate, desktop/mobile Browser Smoke, dedicated pond screenshots, and visual inspection before accepting the fishing work.
+- [ ] Rod/line/bobber animation, bait/tools, and physical Redmi 14 5G acceptance remain outstanding.
