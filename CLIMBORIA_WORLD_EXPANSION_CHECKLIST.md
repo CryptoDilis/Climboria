@@ -669,3 +669,9 @@ For each meaningful implementation batch:
 - [x] Exposed an aquatic-life audit and added Browser Smoke assertions for minimum fish count, distinct schools, submerged placement, and shared geometry.
 - [ ] Review live desktop/mobile captures to confirm fish are visible through the water shader at normal camera angles; tune depth/contrast if they are hard to see.
 - [ ] Physical Redmi 14 5G frame-time and visibility acceptance remains open. Fishing rod/line animation, bait/tool requirements, and richer marine-life behavior remain open.
+
+### Verification follow-up — PR #208 head `ba6a99e110e6c3b095b4a694bf48152a88ab0803`
+- [x] Validate passed on the current aquatic-life/fishing head (run `41764968766`).
+- [x] Desktop + mobile Browser Smoke passed on the same head (run `41764968566`).
+- [x] Inspected the fresh smoke artifact (`13292148374`): desktop and mobile gameplay screenshots both capture the sanctuary spawn, not a pond/coastal water view.
+- [ ] Aquatic-life visual acceptance remains unverified: add a dedicated pond/coast camera-positioned screenshot/test and inspect fish visibility through the water shader; the current registry/placement assertions are not a rendered-visibility proof.
