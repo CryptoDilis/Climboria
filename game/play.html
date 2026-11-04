@@ -1631,8 +1631,9 @@ function geodeChestLifecycleAudit(){
  }finally{Object.assign(P,saved)}
 }
 function positionAtCaveEntranceForSmoke(){
- const local={x:0,z:-14},world=l2w(caveG,local.x,local.z);
+ const local={x:0,z:-28},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
+ // Frame the full stone arch from farther back; the previous 14m spawn cropped its high crown outside the third-person camera FOV.
  // Face along the cave group's local +Z axis so the approach camera actually frames the mouth.
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.moveTarget=null;
  P.yaw=caveG.rotation.y+Math.PI;cameraYaw=caveG.rotation.y+Math.PI;cameraPitch=-.08;
