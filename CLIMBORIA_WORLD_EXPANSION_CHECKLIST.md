@@ -675,3 +675,12 @@ For each meaningful implementation batch:
 - [x] Desktop + mobile Browser Smoke passed on the same head (run `41764968566`).
 - [x] Inspected the fresh smoke artifact (`13292148374`): desktop and mobile gameplay screenshots both capture the sanctuary spawn, not a pond/coastal water view.
 - [ ] Aquatic-life visual acceptance remains unverified: add a dedicated pond/coast camera-positioned screenshot/test and inspect fish visibility through the water shader; the current registry/placement assertions are not a rendered-visibility proof.
+
+### Verification follow-up — PR #208 head `f85d7fcd4e1eab440d99c1db13af9ada2d4ff882`
+- [x] Validate passed on the current head: [run 41767492175](https://github.com/CryptoDilis/Climboria/actions/runs/41767492175).
+- [x] Desktop + mobile Browser Smoke passed on the same head: [run 41767492123](https://github.com/CryptoDilis/Climboria/actions/runs/41767492123).
+- [x] Captured and inspected the dedicated Woodland Pond screenshot from artifact [13292634803](https://github.com/CryptoDilis/Climboria/actions/runs/41767492123).
+- [ ] Visual acceptance FAILED / remains open: the screenshot shows no discernible fish through the water; it shows a broad exposed bank/terrain cutout and a narrow opaque-looking water surface. The automated registry, submerged-coordinate, and frame-count checks do not prove rendered fish visibility.
+- [ ] Next: diagnose Woodland Pond water/terrain alignment and water-surface material/depth occlusion; correct fish contrast/visibility without placing fish implausibly above the water; recapture and inspect the screenshot.
+- [ ] Fishing rod/line/bobber animation and bait/tool requirements remain open; physical desktop and Redmi 14 5G acceptance remain open.
+- [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance; do not mark character animation complete from the automated selector audit alone.
