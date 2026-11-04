@@ -120,6 +120,8 @@ jobs:
             climboria-mobile-gameplay.png
             climboria-desktop-cave-entrance.png
             climboria-mobile-cave-entrance.png
+            climboria-desktop-cave-interior.png
+            climboria-mobile-cave-interior.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
