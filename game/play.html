@@ -1387,17 +1387,18 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  for(let i=0;i<count;i++){
   const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length];
   // Fish face local +Z: the tail sits behind the body, not off to its side.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.43,.38,1.02);
-  const tail=mk(fishTailGeo,mat,0,0,-.91,g);tail.rotation.x=-Math.PI/2;sc(tail,1,.9,.72);
-  const dorsal=mk(fishFinGeo,mat,0,.34,-.08,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.62,.8,.55);
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.34,.23,.82);
+  const tail=mk(fishTailGeo,mat,0,0,-.72,g);tail.rotation.x=-Math.PI/2;sc(tail,.9,.78,.62);
+  const dorsal=mk(fishFinGeo,mat,0,.19,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.52,.66,.42);
   for(const side of [-1,1]){
-   const fin=mk(fishFinGeo,mat,side*.28,-.12,.08,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.52,.65,.38);
-   const eye=mk(SPH,fishEyeMat,side*.27,.105,.55,g);sc(eye,.055,.055,.055);
+   const fin=mk(fishFinGeo,mat,side*.22,-.09,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.43,.52,.3);
+   const eye=mk(SPH,fishEyeMat,side*.2,.065,.43,g);sc(eye,.045,.045,.045);
   }
-  // Enlarge the complete silhouette so the body, tail and fins read as fish at gameplay camera distance.
-  g.scale.setScalar(kind==='ocean'?2.8:3.5);
+  // Keep the whole fish silhouette below the animated water surface; contrast comes from
+  // its distinct tail/fins and clear body profile, not from protruding above the waterline.
+  g.scale.setScalar(kind==='ocean'?2.05:2.35);
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-.2+rand()*.06,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.12+rand()*.035,surfaceClearance:.48,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
@@ -1410,12 +1411,12 @@ for(let i=0;i<coastalDockSpots.length;i+=2){
 function updateAquaticLife(time){
  for(const fish of aquaticFish){
   const a=time*fish.speed+fish.phase;
-  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
+  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.025*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
   fish.g.rotation.y=Math.atan2(Math.cos(a*.83)*fish.orbit*.65,-Math.sin(a)*fish.orbit);
  }
 }
 function aquaticLifeAudit(){
- return {fishCount:aquaticFish.length,schoolCount:new Set(aquaticFish.map(f=>f.cx+','+f.cz)).size,belowSurface:aquaticFish.every(f=>f.g.position.y<0),sharedGeometry:aquaticFish.every(f=>f.g.children.some(c=>c.geometry===fishBodyGeo)),mobile:MOB};
+ return {fishCount:aquaticFish.length,schoolCount:new Set(aquaticFish.map(f=>f.cx+','+f.cz)).size,belowSurface:aquaticFish.every(f=>f.g.position.y+f.surfaceClearance<-.5),minimumSurfaceClearance:Math.min(...aquaticFish.map(f=>-(f.g.position.y+f.surfaceClearance))),sharedGeometry:aquaticFish.every(f=>f.g.children.some(c=>c.geometry===fishBodyGeo)),distinctSilhouette:aquaticFish.every(f=>f.g.children.length>=6),mobile:MOB};
 }
 /* Treasure chest registry: 84 world + 15 cave + 1 summit = exactly 100.
    Client-side timers are a playable prototype only; shared summit claims require a server ledger. */
