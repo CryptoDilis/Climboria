@@ -755,10 +755,12 @@ For each meaningful implementation batch:
 
 ## 2026-11-05 — fishing and aquatic-life integration onto current main
 
-- [ ] Port the fishing cast → wait → bite → manual reel loop onto the current main-based branch; movement beyond 2.5 world units cancels the cast and missed bites award nothing.
-- [ ] Add animated, submerged fish schools with shared low-poly geometry; retain reduced mobile counts.
-- [ ] Correct freshwater basin shape, shoreline transition and water tint so ponds read as water rather than exposed terrain cutouts.
-- [ ] Browser Smoke must exercise every fishing spot, verify no automatic reward while waiting, confirm successful reel/inventory increment, and capture dedicated desktop/mobile Woodland Pond screenshots.
+- [x] Ported the fishing cast → wait → bite → manual reel loop onto the current main-based branch; movement beyond 2.5 world units cancels the cast and missed bites award nothing.
+- [x] Added animated, submerged fish schools with shared low-poly geometry and reduced mobile counts.
+- [x] Corrected freshwater basin shape, shoreline transition and water tint so ponds read as water rather than exposed terrain cutouts.
+- [x] Added Browser Smoke assertions for fishing lifecycle behavior, including no automatic reward while waiting and inventory increment only after a successful manual reel; added dedicated desktop/mobile Woodland Pond screenshot captures.
+- [ ] Fresh Browser Smoke run 41904043235 / #1424 is still reported in progress at the Jarrell's Peak desktop/mobile gameplay step; no screenshot artifact is available. Job logs endpoint currently returns BlobNotFound, so the reason for the prolonged run cannot be confirmed.
 - [ ] Inspect fresh pond captures for recognizable fish silhouettes through water; automated coordinate/registry assertions are not visual acceptance.
 - [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G fishing acceptance remain open.
-- [ ] Do not enable or promise token/NFT fishing rewards; current inventory remains browser-local.
+- [x] No token/NFT fishing rewards enabled or promised; current inventory remains browser-local.
+- [ ] PR #211 remains unmerged until fresh desktop/mobile gameplay smoke completes and screenshots are inspected.
