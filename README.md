@@ -2194,3 +2194,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Summit chest is planned as a contested solo/party/guild objective with one globally locked claim per cycle, shared countdown, winner announcement and reward history. The server-authoritative competition and claim system is not implemented.
 - [ ] NFT and cryptocurrency rewards are disabled until a funded, auditable, server-authoritative reward and delivery service exists. Current inventory/reward handling is browser-local and must not be represented as secure token custody or payouts.
 - [ ] Next implementation gate: design and test deterministic valid spawn zones and category counts before changing production chest spawning. Then add server-backed shared summit cooldown/claim locking before enabling PvP contest rewards.
+
+
+### 2026-11-04 — cave arch polish and fishing-system audit
+
+- [x] Cave arch silhouette/material refinement committed as `2527d487e653a7eaba1219002615c5a525c6bcce`; shared higher-detail rock geometry and restrained stone variation replace the earlier coarse arch meshes.
+- [x] Validate run `41760465781` passed on this commit.
+- [ ] Browser Smoke run `41760465934` was still in progress at the latest check; do not treat cave polish as accepted until it completes and fresh screenshots are inspected.
+- [x] Fishing audit confirmed existing dock/freshwater spots, proximity casting, timed catch resolution, inventory rewards, and source-specific fish tables.
+- [ ] Fishing remains prototype-level; full cast/reel feedback, bite/skill interaction, cancellation behavior, tool/bait integration, and dedicated smoke coverage are not yet complete. Visible aquatic life is also still an open world task.
