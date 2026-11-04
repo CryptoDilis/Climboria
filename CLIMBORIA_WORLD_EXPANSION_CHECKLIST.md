@@ -839,3 +839,12 @@ For each meaningful implementation batch:
 - [ ] Run Validate and Browser Smoke on this exact head; inspect fresh desktop and mobile Woodland Pond screenshots before accepting the shoreline.
 - [ ] Fish remain simplified low-poly forms; final fish silhouette/art acceptance remains open.
 - [ ] Physical Redmi 14 5G review, rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
+
+
+## 2026-11-04 — Woodland Pond visual review after fish render-order correction
+
+- [x] Inspected desktop and mobile Woodland Pond captures from Browser Smoke artifact 13308190326 (run 41800448702).
+- [x] Confirmed fish silhouettes are now visible above/through the water surface at the tested camera distance; fish visibility is improved, not a full art-quality sign-off.
+- [ ] Repair the pond presentation: reduce the broad exposed pale-sand apron, blend the green bank into the water edge, and replace the abrupt straight foreground cut with a natural irregular shoreline.
+- [ ] Verify the pond water surface follows the basin contour and fish remain submerged/visible without clipping or floating above the surface on desktop and mobile.
+- [ ] Add/verify rod, line, bobber and bait visuals plus complete cast → bite → reel → inventory reward flow; physical desktop and Redmi 14 5G acceptance remain open.
