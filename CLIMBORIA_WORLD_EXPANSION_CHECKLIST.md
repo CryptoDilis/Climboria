@@ -831,3 +831,11 @@ For each meaningful implementation batch:
 - [ ] Visual acceptance remains OPEN on desktop and mobile. Do not mark fish art, pond contour, or shoreline blending complete based on CI assertions alone.
 - [ ] Next shoreline diagnosis must inspect terrain mesh/water-plane depth ordering and camera-facing near-bank geometry before changing radius/opacity again; fix the hard foreground occlusion and replace the smooth basin outline with a naturally irregular terrain-to-water transition.
 - [ ] Fish silhouette/art refinement, physical Redmi 14 5G acceptance, fishing rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
+
+
+### Freshwater shoreline contour pass — 2026-11-04
+- [x] Confirmed the latest desktop and mobile Woodland Pond screenshots still show a smooth oval waterline, broad pale sand apron, and abrupt grass-bank transition despite green CI (artifact `13308190326` from Browser Smoke run `41800448702`).
+- [x] Applied a targeted shoreline pass on commit `a1e06b48e694ea452e43017f1a56fd89b4dcb7f9`: increased multi-frequency shoreline contour variation, tightened the freshwater terrain depression blend, narrowed the sand-bank band, and reduced sand coverage at the water edge.
+- [ ] Run Validate and Browser Smoke on this exact head; inspect fresh desktop and mobile Woodland Pond screenshots before accepting the shoreline.
+- [ ] Fish remain simplified low-poly forms; final fish silhouette/art acceptance remains open.
+- [ ] Physical Redmi 14 5G review, rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
