@@ -758,3 +758,12 @@ For each meaningful implementation batch:
 - [ ] Current mobile smoke screenshot is the Sanctuary, not Woodland Pond; mobile pond framing and fish visibility remain unverified, as does physical Redmi 14 5G acceptance.
 - [ ] Next visual pass should redesign the fish silhouette with clearly separated tail and fins and test from normal gameplay camera distance; also soften the shoreline boundary without relying only on scale/opacity changes.
 - [ ] Rod/line/bobber animation, bait/tool requirements, and real fishing interaction acceptance remain open.
+
+
+### Aquatic fish silhouette and submersion hardening (2026-11-04)
+- [x] Reworked fish proportions into a clearer body/tail/dorsal/paired-fin silhouette and reduced overall scale to suit underwater viewing.
+- [x] Moved fish schools deeper and reduced vertical bob so the complete authored silhouette remains below the animated water surface rather than only checking the fish-group center.
+- [x] Strengthened Browser Smoke to fail unless the fish remain fully submerged with a distinct multi-part silhouette.
+- [ ] Review the new Woodland Pond screenshot for natural fish readability through the water shader; visual acceptance remains open.
+- [ ] Add mobile Woodland Pond screenshot coverage and complete physical Redmi 14 5G review.
+- [ ] Improve the smooth elliptical pond shoreline and confirm the rendered water edge blends naturally with terrain.
