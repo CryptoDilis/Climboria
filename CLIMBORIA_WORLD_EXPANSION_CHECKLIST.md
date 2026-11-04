@@ -671,3 +671,14 @@ For each meaningful implementation batch:
 - [ ] Re-run Validate and Browser Smoke on this commit; inspect fresh desktop and mobile cave-mouth screenshots. This is a capture-position correction, not proof that cave geometry or player approach is visually accepted.
 - [ ] If the new approach view still shows obstructing rock or an unclear opening, repair the actual nearby rock placement/scale and rerun visual review.
 - [ ] Keep cave interior readability, traversal on physical Redmi 14 5G, maze/trap navigation and manual acceptance open.
+
+
+## 2026-11-04 — cave entrance visual review: orientation defect found; correction queued
+
+- [x] Inspected fresh PR #207 Browser Smoke desktop and mobile cave-mouth captures from run 41800271488 (artifact 13307926491).
+- [x] Confirmed both screenshots still show a close solid brown rock/terrain face with no readable cave opening; the previous local z=-34 position change alone did not fix the visual result. Cave entrance is NOT visually accepted.
+- [x] Diagnosed the capture orientation: the exterior approach is along local -Z toward the opening at local +Z, but the deterministic hero/camera yaw remained 0, placing the follow camera on the wrong side of the hero.
+- [x] Updated the deterministic capture to face the hero and follow camera toward local +Z (yaw PI); strengthened desktop/mobile smoke assertions to check both yaw values.
+- [ ] Re-run Validate and Browser Smoke on the orientation correction; inspect the new desktop and mobile screenshots. Do not mark cave mouth fixed until the actual opening is clearly visible and approachable.
+- [ ] If the new captures still show a rock face, inspect cave group orientation, terrain/rock occlusion and camera collision; repair the world geometry rather than moving only the screenshot camera.
+- [ ] Manual cave entrance/interior traversal and physical Redmi 14 5G acceptance remain open.
