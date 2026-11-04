@@ -1633,10 +1633,13 @@ function geodeChestLifecycleAudit(){
  }finally{Object.assign(P,saved)}
 }
 function positionAtCaveEntranceForSmoke(){
- const local={x:0,z:-14},world=l2w(caveG,local.x,local.z);
+ // Capture from the exterior approach, not beneath the near-mouth rock overhang.
+ // Keep the hero facing into the opening with the follow camera behind them.
+ const local={x:0,z:-34},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
- P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.moveTarget=null;
- return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2)};
+ P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;P.moveTarget=null;
+ cameraYaw=0;cameraPitch=-.12;
+ return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),cameraYaw,cameraPitch};
 }
 function caveEntranceTraversalAudit(){
  const saved={x:P.x,z:P.z,y:P.y,vy:P.vy,mode:P.mode,moveTarget:P.moveTarget};
