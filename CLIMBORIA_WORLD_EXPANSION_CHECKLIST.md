@@ -748,3 +748,13 @@ For each meaningful implementation batch:
 - [x] Corrected all fish schools to use a negative vertical center depth with a smaller bob amplitude so their centers remain below the water surface (commit `353d0f3f559aab441a0959ff7d987dbd877d0286`).
 - [ ] Re-run Validate and Browser Smoke on the correction; inspect the new pond screenshot for partial submersion and recognizable silhouettes.
 - [ ] Shoreline naturalization, pond-focused mobile screenshot / physical Redmi 14 5G review, rod/line/bobber animation, and bait/tool requirements remain open.
+
+
+### Pond visual follow-up — submerged placement CI and screenshot review (2026-11-04)
+- [x] Latest-head Validate passed on `e65e01935d6c24fdb5f2bc3be9e011a4b68a4078` (run [41780587580](https://github.com/CryptoDilis/Climboria/actions/runs/41780587580)).
+- [x] Latest-head Browser Smoke passed on the same head (run [41780587569](https://github.com/CryptoDilis/Climboria/actions/runs/41780587569)); desktop/mobile gameplay smoke and screenshot upload completed.
+- [x] Inspected fresh Woodland Pond screenshot artifact [13298464915](https://github.com/CryptoDilis/Climboria/actions/runs/41780587569/artifacts/13298464915).
+- [ ] Visual acceptance remains OPEN: fish are now positioned lower, but still read as flat oval blobs from the gameplay camera; tail/dorsal/side fins are not sufficiently distinct. The pond remains a smooth, conspicuous oval against the tan bank. Do not mark aquatic-life or shoreline visuals complete.
+- [ ] Current mobile smoke screenshot is the Sanctuary, not Woodland Pond; mobile pond framing and fish visibility remain unverified, as does physical Redmi 14 5G acceptance.
+- [ ] Next visual pass should redesign the fish silhouette with clearly separated tail and fins and test from normal gameplay camera distance; also soften the shoreline boundary without relying only on scale/opacity changes.
+- [ ] Rod/line/bobber animation, bait/tool requirements, and real fishing interaction acceptance remain open.
