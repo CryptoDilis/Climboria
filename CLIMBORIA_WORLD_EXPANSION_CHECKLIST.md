@@ -740,3 +740,11 @@ For each meaningful implementation batch:
 - [ ] Run Validate and Browser Smoke on the new head and inspect a fresh pond screenshot before judging the correction.
 - [ ] Confirm fish read as fish (body, tail and fins) at gameplay camera distance; confirm irregular blended shoreline without abrupt exposed-bank ellipse.
 - [ ] Capture pond-focused mobile screenshot / manually verify on Redmi 14 5G. Rod/line/bobber animation, bait/tools and physical device acceptance remain open.
+
+
+### Pond visual follow-up — submerged fish placement correction
+- Latest Browser Smoke on head `492e057c72ec7a093708a4e9c38fdb9204cbe345` failed only at the aquatic-life placement audit (run [41779227417](https://github.com/CryptoDilis/Climboria/actions/runs/41779227417)); homepage/mobile navigation checks passed and screenshots uploaded.
+- Diagnostic: 41 fish across 7 schools, shared geometry true, but `belowSurface=false`. Screenshot artifact [13298398471](https://github.com/CryptoDilis/Climboria/actions/runs/41779227417/artifacts/13298398471) confirms fish read as floating oval marks above the waterline; shoreline still has a broad smooth exposed-bank transition.
+- [x] Corrected all fish schools to use a negative vertical center depth with a smaller bob amplitude so their centers remain below the water surface (commit `353d0f3f559aab441a0959ff7d987dbd877d0286`).
+- [ ] Re-run Validate and Browser Smoke on the correction; inspect the new pond screenshot for partial submersion and recognizable silhouettes.
+- [ ] Shoreline naturalization, pond-focused mobile screenshot / physical Redmi 14 5G review, rod/line/bobber animation, and bait/tool requirements remain open.
