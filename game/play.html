@@ -1393,6 +1393,8 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
    const fin=mk(fishFinGeo,mat,side*.28,-.12,.08,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.52,.65,.38);
    const eye=mk(SPH,fishEyeMat,side*.27,.105,.55,g);sc(eye,.055,.055,.055);
   }
+  // Enlarge the complete silhouette so the body, tail and fins read as fish at gameplay camera distance.
+  g.scale.setScalar(kind==='ocean'?1.75:2.05);
   aquaticLifeGroup.add(g);
   aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?1.1+rand()*1.8:.22+rand()*.62,kind});
  }
