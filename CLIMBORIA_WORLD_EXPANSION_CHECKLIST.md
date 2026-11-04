@@ -743,3 +743,11 @@ For each meaningful implementation batch:
 - [ ] Validate and desktop/mobile Browser Smoke must pass on this branch.
 - [ ] Inspect fresh desktop/mobile idle, walk, run, jump and landing captures; automated rig diagnostics alone do not prove a natural pose.
 - [ ] Confirm the authored GLB idle clip and physical Redmi 14 5G landscape appearance; do not mark character animation complete until visually accepted.
+
+
+## 2026-11-05 — hero idle rest-pose correction merged
+- [x] Merged PR #210 as `09be9c86fd255cadd70a47f1de1a8a835a5e4b1e` after Validate and desktop/mobile Browser Smoke both passed on PR head `531f02aad3bba9f67a347515477fad9b2709e65e`.
+- [x] Procedural fallback now preserves captured GLB arm rest rotations while idle; walk/run gait offsets remain.
+- [ ] Close-up visual acceptance of idle/walk/run/jump/landing animation remains open; smoke screenshots are general gameplay captures, not a dedicated animation review.
+- [ ] Physical Redmi 14 5G acceptance remains open.
+- [ ] Post-merge workflow verification for merge SHA remains pending; the commit-run lookup returned no runs.
