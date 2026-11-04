@@ -452,7 +452,7 @@ try {
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+14)>.01) errors.push('Desktop cave entrance visual position could not be prepared: '+JSON.stringify(desktopCaveView));
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+28)>.01) errors.push('Desktop cave entrance visual position could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
   await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
