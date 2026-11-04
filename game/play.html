@@ -712,7 +712,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Build the visible wall from tightly overlapping irregular stone masses rather
   // than a single flat box. Keep the original swept segment as the authoritative
   // collision boundary so every passage remains sealed and traversable as designed.
-  const stoneGeo=new T3.IcosahedronGeometry(1,0);
+  const stoneGeo=new T3.IcosahedronGeometry(1,2);
   const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
   const randWall=rng(seedBase);
   for(let along=-.35;along<=len+.35;along+=1.12){
@@ -756,11 +756,25 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  ];
  wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(new T3.IcosahedronGeometry(1,2),i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx*.72,sy*.72,sz*.72);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
+  sc(rock,sx*.58,sy*.58,sz*.58);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
  });
- // Broken ceiling clusters leave an irregular silhouette instead of broad block slabs.
- [[25,7.0,19,2.4,.8,2.0],[31,7.35,24,2.8,.72,2.2],[36,7.0,30,2.2,.82,2.0],[27,7.25,31,2.1,.7,1.9],[35,7.15,19,2.5,.75,2.0]].forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(new T3.IcosahedronGeometry(1,1),liningDark,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.16,i*1.1,.13);rock.castShadow=true;
+ // Continuous overlapping ceiling masses close the chamber roof so the player
+ // sees stone overhead instead of daylight through a scattered decorative layer.
+ // The smooth, irregular rock tiles overlap in both axes and preserve headroom.
+ const roofGeo=new T3.IcosahedronGeometry(1,2);
+ const roofMat=M('#393b3a');
+ const roofRand=rng(4407);
+ for(let rz=14.5;rz<=34.5;rz+=4){
+  for(let rx=20.5;rx<=40.5;rx+=4){
+   const roof=mk(roofGeo,roofMat,rx+(roofRand()-.5)*.55,7.55+(roofRand()-.5)*.34,rz+(roofRand()-.5)*.55,g);
+   sc(roof,2.85+roofRand()*.35,1.2+roofRand()*.38,2.85+roofRand()*.35);
+   roof.rotation.set((roofRand()-.5)*.2,roofRand()*Math.PI*2,(roofRand()-.5)*.2);
+   roof.castShadow=true;roof.receiveShadow=true;
+  }
+ }
+ // Irregular hanging teeth break the roof silhouette and reinforce the cave scale.
+ [[24,6.45,18],[29,6.35,23],[36,6.5,28],[25,6.4,32],[38,6.35,20],[33,6.45,34]].forEach(([x,y,z],i)=>{
+  const fang=mk(new T3.ConeGeometry(.42,1.25,9),liningMat,x,y,z,g);fang.rotation.set(Math.PI,.12+i*.8,.08);fang.castShadow=true;
  });
  [[27,5.9,22],[35,6.0,28],[24,5.8,30],[37,5.9,20]].forEach(([x,y,z],i)=>{
   const fang=mk(new T3.ConeGeometry(.48,1.5,7),liningMat,x,y,z,g);fang.rotation.set(Math.PI,.12+i*.8,.08);fang.castShadow=true;
