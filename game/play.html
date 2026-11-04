@@ -349,9 +349,9 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,'ontouchstart' in window?1:1.25
 renderer.outputEncoding=T3.sRGBEncoding;renderer.toneMapping=T3.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='auto';renderer.domElement.style.isolation='isolate';document.body.prepend(renderer.domElement);
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
-const mobileCameraMode=document.body.classList.contains('mobile-device');
+const mobileCameraMode=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 // Narrower vertical FOV keeps the explorer readable on wide mobile landscape screens.
-const cam=new T3.PerspectiveCamera(mobileCameraMode?46:58,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
+const cam=new T3.PerspectiveCamera(mobileCameraMode?40:52,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
 const terrainCameraTarget=new T3.Vector3(),terrainCameraDesired=new T3.Vector3(),terrainCameraFinal=new T3.Vector3();
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
@@ -951,7 +951,7 @@ function cinematicPoint(u){
  return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
 }
 // Bring the explorer closer on narrow screens so the hero remains readable above the mobile controls.
-let camY=null,lookY=0,cameraDistance=MOB?5.8:7.2,targetCameraDistance=MOB?5.8:7.2,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0;
+let camY=null,lookY=0,cameraDistance=MOB?4.6:5.8,targetCameraDistance=MOB?4.6:5.8,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
