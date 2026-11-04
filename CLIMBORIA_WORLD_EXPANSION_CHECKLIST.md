@@ -682,3 +682,12 @@ For each meaningful implementation batch:
 - [ ] Re-run Validate and Browser Smoke on the orientation correction; inspect the new desktop and mobile screenshots. Do not mark cave mouth fixed until the actual opening is clearly visible and approachable.
 - [ ] If the new captures still show a rock face, inspect cave group orientation, terrain/rock occlusion and camera collision; repair the world geometry rather than moving only the screenshot camera.
 - [ ] Manual cave entrance/interior traversal and physical Redmi 14 5G acceptance remain open.
+
+
+## 2026-11-04 — cave mouth screenshot review: move flank formations off the approach axis
+
+- [x] Inspected the completed PR #207 Browser Smoke artifact 13309325491 on desktop and mobile after the yaw correction; both screenshots still showed a large rock face dominating the approach and no clearly readable entrance.
+- [x] Root-cause geometry review found oversized surrounding formations and side buttresses close to the approach corridor. Moved the large surrounding formations laterally/rearward and reduced the two near-mouth buttresses while preserving the irregular arch and cave interior.
+- [ ] Re-run Validate and Browser Smoke on commit 4f6d011; inspect the new desktop and mobile cave-mouth screenshots. The geometry adjustment is not visual acceptance.
+- [ ] If the opening remains obscured, inspect terrain elevation, cave group/world rotation, and follow-camera collision against the live scene; do not keep changing only the deterministic screenshot pose.
+- [ ] Manually verify walk-in access, interior lighting/readability, maze/trap traversal and Redmi 14 5G performance. Cave entrance remains open until these checks pass.
