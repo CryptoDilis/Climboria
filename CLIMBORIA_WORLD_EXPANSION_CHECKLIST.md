@@ -658,3 +658,6 @@ For each meaningful implementation batch:
 - [ ] Inspect fresh desktop/mobile screenshots and manually verify the cave entrance is visible, readable, and not blocked by invisible collision.
 - [ ] Redmi 14 5G physical acceptance remains open.
 - Code is rebased on main after the hero camera framing merge; it does not supersede the remaining cave maze, wildlife, and backend requirements.
+
+- [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
+- [ ] Re-run Browser Smoke and Validate with cave-specific captures; inspect both cave screenshots before merge.
