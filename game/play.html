@@ -677,7 +677,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Compact side shoulders support a continuous crown; avoid isolated pillars and floating teeth.
  const archMat=M('#514b43'),archRockMat=M('#45433e');
  const portalRock=(x,y,z,sx,sy,sz,rot=0)=>{
-  const rock=mk(DOD,archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
+  const rock=mk(new T3.IcosahedronGeometry(1,1),archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
   rock.rotation.set(.08*Math.sin(rot*1.7),rot,.06*Math.cos(rot*1.3));
   rock.castShadow=true;return rock;
  };
@@ -714,7 +714,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // collision boundary so every passage remains sealed and traversable as designed.
   // Faceted, asymmetrical boulders: perturb the source vertices so the lining
   // reads as broken rock rather than repeated smooth spheres.
-  const stoneGeo=new T3.DodecahedronGeometry(1,0),stonePos=stoneGeo.attributes.position;
+  const stoneGeo=new T3.IcosahedronGeometry(1,1),stonePos=stoneGeo.attributes.position;
   const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
   const randWall=rng(seedBase);
   for(let vi=0;vi<stonePos.count;vi++){
@@ -869,12 +869,12 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[49,2,22],[53,2,28],[51,2.2,34],[57,2.1,44]].forEach(([x,y,z])=>glow('#ffad55',.9,14,x,y,z,g));
  [[27,2.1,43],[33,2.1,43]].forEach(([x,y,z])=>glow('#ffad55',1.15,18,x,y,z,g));
  [[-25,3,-16],[25,3,-16],[-25,3,31],[25,3,31]].forEach(([x,y,z])=>glow('#ffad55',2.2,38,x,y,z,g));
- for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,12.5,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
+ // Removed the detached ceiling cones: they floated above the cave mouth instead of attaching to the roof.
  for(let j=0;j<5;j++)for(let i=0;i<7;i++){
   const x=-64+i*3,z=-47+j*3;
   const s=sc(mk(CON,M('#9a9ca4'),x,-2,z,g),.45,2.6,.45);spikes.push({s,ph:(i+j*1.7)*.55});
   sc(mk(BOX,M('#2d2b2a'),x,.05,z,g),1.4,.1,1.4)}
- for(let i=0;i<5;i++)sc(mk(SPH,M('#e8e2cf'),-8+i*4,.35,6+(i%2)*2,g),.4,.35,.4);
+ // Removed the isolated smooth floor spheres; cave rubble is now formed by the connected rock lining.
  const r=rng(31);for(let i=0;i<5;i++){const s=soldier();s.position.set(-14+i*7,0,3+r()*3);s.rotation.y=r()*1.5-.75;g.add(s);soldiers.push({s,ph:r()*6,tilt:.05})}
 }
 /* Summit */
