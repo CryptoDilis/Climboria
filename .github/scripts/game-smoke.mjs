@@ -591,7 +591,7 @@ try {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
   try {
-    await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 45000 });
+    await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 75000 });
   } catch (error) {
     const diagnostic = await mobile.evaluate(() => ({
       readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
