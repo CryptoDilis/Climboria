@@ -1708,7 +1708,7 @@ function update(dt){
   let fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)-joy.dy,rt=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.dx;
    if(P.moveTarget&&Math.hypot(fw,rt)<.08){const dx=P.moveTarget.x-P.x,dz=P.moveTarget.z-P.z,dist=Math.hypot(dx,dz);if(dist<2.5)P.moveTarget=null;else{fw=Math.max(-1,Math.min(1,(-Math.cos(cameraYaw)*dz-Math.sin(cameraYaw)*dx)/dist));rt=Math.max(-1,Math.min(1,(Math.cos(cameraYaw)*dx-Math.sin(cameraYaw)*dz)/dist));}}else if(Math.hypot(fw,rt)>.08){P.moveTarget=null;}
   let gh=groundAt(P.x,P.z),activeWater=waterBodyAt(P.x,P.z),sw=activeWater&&gh<activeWater.surfaceY-.2?.5:1,l=Math.max(1,Math.hypot(fw,rt));
-  if(Math.hypot(fw,rt)>.08){const moveX=(-sy*fw+cy*rt)/l,moveZ=(-cy*fw-sy*rt)/l,targetYaw=Math.atan2(-moveX,-moveZ),yawDelta=Math.atan2(Math.sin(targetYaw-P.yaw),Math.cos(targetYaw-P.yaw));P.yaw+=yawDelta*Math.min(1,dt*12);}
+  if(Math.hypot(fw,rt)>.08){const moveX=(-sy*fw+cy*rt)/l,moveZ=(-cy*fw-sy*rt)/l,targetYaw=Math.atan2(-moveX,-moveZ),yawDelta=Math.atan2(Math.sin(targetYaw-P.yaw),Math.cos(targetYaw-P.yaw));P.yaw+=yawDelta*Math.min(1,dt*24);}
   {const mx=(-sy*fw+cy*rt)/l*sp*sw*dt,mz=(-cy*fw-sy*rt)/l*sp*sw*dt;moveWalk(mx,mz);}
   gh=groundAt(P.x,P.z);
   activeWater=waterBodyAt(P.x,P.z);
