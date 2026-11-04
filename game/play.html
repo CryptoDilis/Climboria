@@ -430,13 +430,17 @@ function colorAt(x,z,h,ny){
  if(rw>0){c=mc(c,mc(RA,RB,ss(.3,.7,t)),rw*.95);if(ny<.97)c=mc(c,RE,rw)}
  const rk=Math.max(1-ss(.62,.86,ny),ss(90,170,h+t*30));if(rk>0)c=mc(c,mc(RK1,RK2,t2),rk);
  const sn=ss(240,290,h+t*25)*ss(.5,.8,ny);if(sn>0)c=mc(c,SN,sn);
- const bch=1-ss(.3,2.4,h);
- // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
+ // Low-elevation sand belongs to the coast, not the floor and walls of every inland pond.
+ const coast=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
+ const bch=(1-ss(.3,2.4,h))*coast;
+ // Keep freshwater sand close to the waterline; do not paint the submerged basin floor.
+ const shore=ss(-1.1,-.15,h)*(1-ss(.75,1.8,h));
  let bank=0;
  for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,10,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
  bank=Math.max(bank,1-ss(2,20,riverEdge));
- if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.72,bank*ss(-.5,3.5,h)*.58));
+ const sand=Math.max(bch*.72,shore*.36,bank*ss(-.5,3.5,h)*.58);
+ if(sand>0)c=mc(c,SAND,sand);
  // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
  const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
  return c;
