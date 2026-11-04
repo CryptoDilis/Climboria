@@ -245,7 +245,24 @@ function rawH(x,z){
 }
 ['sanct','park','camp','cave'].forEach(k=>{const p=POI[k];p.h=Math.max(rawH(p.x,p.z),k=='cave'?-99:4)});
 const FLAT=['sanct','park','camp','cave'];
-function heightAt(x,z){let h=rawH(x,z);for(const k of FLAT){const p=POI[k],d=Math.hypot(x-p.x,z-p.z);if(d<p.r*1.7)h=mix(h,p.h,1-ss(p.r*.8,p.r*1.7,d))}return h}
+function caveApproachMask(x,z){
+ // Cut a broad, gently blended exterior apron into the mountain slope.
+ // The cave portal faces local +Z; the approach runs along local -Z.
+ const p=POI.cave,angle=Math.atan2(-p.x,-p.z),cs=Math.cos(angle),sn=Math.sin(angle);
+ const dx=x-p.x,dz=z-p.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
+ const across=1-ss(26,52,Math.abs(lx));
+ const along=ss(-145,-98,lz)*(1-ss(-12,9,lz));
+ return across*along;
+}
+function heightAt(x,z){
+ let h=rawH(x,z);
+ for(const k of FLAT){const p=POI[k],d=Math.hypot(x-p.x,z-p.z);if(d<p.r*1.7)h=mix(h,p.h,1-ss(p.r*.8,p.r*1.7,d))}
+ // Keep the walk-in corridor at cave-base elevation so the surrounding
+ // mountain ridge cannot form a high brown wall across the portal approach.
+ const apron=caveApproachMask(x,z);
+ if(apron>0)h=mix(h,POI.cave.h,apron);
+ return h;
+}
 // Match the rendered terrain's 5-unit triangle grid exactly. Sampling the smooth
 // procedural function between vertices can place the hero below the visible mesh.
 const TERRAIN_STEP=5;
