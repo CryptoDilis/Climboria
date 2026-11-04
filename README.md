@@ -2208,3 +2208,4 @@ For every integrated asset or borrowed technique, record:
 - [ ] Fresh Validate and desktop/mobile Browser Smoke runs are not yet visible for the new head. Do not merge until both pass and the new pond screenshots are inspected.
 - [ ] Visual acceptance remains open until desktop/mobile captures show recognizable fish silhouettes and a compact natural shoreline; physical Redmi 14 5G frame-time/visibility check remains required.
 - [ ] Rod/line/bobber animation, bait/tool requirements, and hands-on fishing acceptance remain open.
+- [x] Follow-up commit `6efd7f5b16369b17b6f3117c5e3be2eb74f09551` further reduces bright sky reflection and water opacity for fish visibility, and corrects fish heading to follow the actual swim-path tangent.
