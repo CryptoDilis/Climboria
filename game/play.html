@@ -1395,8 +1395,8 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  for(let i=0;i<count;i++){
   const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
   // Fish face local +Z: the tail sits behind the body, not off to its side.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.43,.27,.92);
-  const tail=mk(fishTailGeo,mat,0,0,-.82,g);tail.rotation.x=-Math.PI/2;sc(tail,1.08,.92,.78);
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.52,.31,1.12);
+  const tail=mk(fishTailGeo,mat,0,0,-1.02,g);tail.rotation.x=-Math.PI/2;sc(tail,1.28,1.08,.92);
   const dorsal=mk(fishFinGeo,mat,0,.23,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.68,.78,.52);
   for(const side of [-1,1]){
    const fin=mk(fishFinGeo,mat,side*.28,-.1,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.58,.64,.4);
@@ -1404,7 +1404,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   }
   // Keep the whole fish silhouette below the animated water surface; contrast comes from
   // its distinct tail/fins and clear body profile, not from protruding above the waterline.
-  g.scale.setScalar(kind==='ocean'?1.55:1.8);
+  g.scale.setScalar(kind==='ocean'?1.8:2.15);
   aquaticLifeGroup.add(g);
   aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-.85+rand()*.02,surfaceClearance:.3,kind});
  }
