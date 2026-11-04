@@ -712,19 +712,26 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Build the visible wall from tightly overlapping irregular stone masses rather
   // than a single flat box. Keep the original swept segment as the authoritative
   // collision boundary so every passage remains sealed and traversable as designed.
-  const stoneGeo=new T3.IcosahedronGeometry(1,1);
+  // Faceted, asymmetrical boulders: perturb the source vertices so the lining
+  // reads as broken rock rather than repeated smooth spheres.
+  const stoneGeo=new T3.DodecahedronGeometry(1,0),stonePos=stoneGeo.attributes.position;
   const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
   const randWall=rng(seedBase);
-  for(let along=-.2;along<=len+.2;along+=.78){
+  for(let vi=0;vi<stonePos.count;vi++){
+   const v=new T3.Vector3().fromBufferAttribute(stonePos,vi),rough=1+(randWall()-.5)*.3;
+   stonePos.setXYZ(vi,v.x*rough,v.y*(1+(randWall()-.5)*.2),v.z*(1+(randWall()-.5)*.25));
+  }
+  stonePos.needsUpdate=true;stoneGeo.computeVertexNormals();
+  for(let along=-.25;along<=len+.25;along+=1.08){
    const t=Math.max(0,Math.min(1,along/len)),cx=x1+dx*t,cz=z1+dz*t;
-   for(let row=0;row<5;row++){
-    const stagger=row%2?.32:0;
-    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.12;
-    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.12;
-    const y=.62+row*1.28+(randWall()-.5)*.2;
+   for(let row=0;row<4;row++){
+    const stagger=row%2?.52:0;
+    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.3;
+    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.3;
+    const y=.72+row*1.72+(randWall()-.5)*.38;
     const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,.39+randWall()*.13,.42+randWall()*.16,.38+randWall()*.14);
-    stone.rotation.set((randWall()-.5)*.38,angle+(randWall()-.5)*.4,(randWall()-.5)*.34);
+    sc(stone,.58+randWall()*.35,.62+randWall()*.34,.58+randWall()*.38);
+    stone.rotation.set((randWall()-.5)*.62,angle+(randWall()-.5)*.85,(randWall()-.5)*.58);
     stone.castShadow=true;stone.receiveShadow=true;
    }
   }
