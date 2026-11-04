@@ -119,6 +119,7 @@ jobs:
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
             climboria-desktop-woodland-pond-fish.png
+            climboria-mobile-woodland-pond-fish.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
