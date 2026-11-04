@@ -795,3 +795,12 @@ For each meaningful implementation batch:
 - [ ] Re-run Validate and Browser Smoke on the shoreline patch; inspect fresh desktop and mobile pond captures before accepting the visual result.
 - [ ] Fish silhouette/readability and natural shoreline blending remain open pending screenshot review.
 - [ ] Physical Redmi 14 5G acceptance remains open.
+
+
+### Freshwater shoreline patch — latest CI and screenshot review (2026-11-04)
+- [x] Validate passed on shoreline patch head `2e0aedcb2a3a3f027503491e775fb52daa2eb398` (run [41795956814](https://github.com/CryptoDilis/Climboria/actions/runs/41795956814)).
+- [x] Browser Smoke passed on the same head (run [41795956820](https://github.com/CryptoDilis/Climboria/actions/runs/41795956820)); desktop and mobile gameplay tests plus screenshot upload completed.
+- [x] Downloaded and inspected artifact [13305048524](https://github.com/CryptoDilis/Climboria/actions/runs/41795956820/artifacts/13305048524); both `climboria-desktop-woodland-pond-fish.png` and `climboria-mobile-woodland-pond-fish.png` are present.
+- [x] The narrowed terrain depression removed the previous broad tan depression from the near edge, but both screenshots still show a large, smooth pond outline, a hard straight foreground grass/water-bank boundary, and fish that read as faint small oval marks rather than recognizable fish at normal gameplay distance.
+- [ ] Visual acceptance remains OPEN. Next pass must address the actual shoreline contour/terrain transition and improve fish readability at normal camera distance; do not treat passing silhouette assertions as visual acceptance.
+- [ ] Redmi 14 5G physical-device review, fishing rod/line/bobber animation, bait/tool requirements, and player-facing fishing acceptance remain open.
