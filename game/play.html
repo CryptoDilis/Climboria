@@ -1381,22 +1381,25 @@ const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic L
 const aquaticFish=[];
 const fishBodyGeo=new T3.SphereGeometry(1,12,8),fishTailGeo=new T3.ConeGeometry(.38,.58,4),fishFinGeo=new T3.ConeGeometry(.16,.34,4);
 const fishMats=[M('#ffc34d',1),M('#45d5ef',1),M('#f2f5f7',1),M('#ff8752',1)];
-const fishEyeMat=M('#07131b',1);
+// The global water shader is transparent and must composite before the submerged fish.
+// Put fish in the transparent queue after water so the surface does not wash them out.
+for(const material of fishMats){material.transparent=true;material.opacity=.98;material.depthWrite=false}
+const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=1;fishEyeMat.depthWrite=false;
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
-  const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length];
+  const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=3;const mat=fishMats[(i+seed)%fishMats.length];
   // Fish face local +Z: the tail sits behind the body, not off to its side.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.34,.23,.82);
-  const tail=mk(fishTailGeo,mat,0,0,-.72,g);tail.rotation.x=-Math.PI/2;sc(tail,.9,.78,.62);
-  const dorsal=mk(fishFinGeo,mat,0,.19,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.52,.66,.42);
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.43,.27,.92);
+  const tail=mk(fishTailGeo,mat,0,0,-.82,g);tail.rotation.x=-Math.PI/2;sc(tail,1.08,.92,.78);
+  const dorsal=mk(fishFinGeo,mat,0,.23,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.68,.78,.52);
   for(const side of [-1,1]){
-   const fin=mk(fishFinGeo,mat,side*.22,-.09,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.43,.52,.3);
+   const fin=mk(fishFinGeo,mat,side*.28,-.1,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.58,.64,.4);
    const eye=mk(SPH,fishEyeMat,side*.2,.065,.43,g);sc(eye,.045,.045,.045);
   }
   // Keep the whole fish silhouette below the animated water surface; contrast comes from
   // its distinct tail/fins and clear body profile, not from protruding above the waterline.
-  g.scale.setScalar(kind==='ocean'?2.05:2.35);
+  g.scale.setScalar(kind==='ocean'?2.35:2.7);
   aquaticLifeGroup.add(g);
   aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.12+rand()*.035,surfaceClearance:.48,kind});
  }
