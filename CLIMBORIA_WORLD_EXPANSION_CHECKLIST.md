@@ -691,3 +691,13 @@ For each meaningful implementation batch:
 - [ ] Re-run Validate and Browser Smoke on commit 4f6d011; inspect the new desktop and mobile cave-mouth screenshots. The geometry adjustment is not visual acceptance.
 - [ ] If the opening remains obscured, inspect terrain elevation, cave group/world rotation, and follow-camera collision against the live scene; do not keep changing only the deterministic screenshot pose.
 - [ ] Manually verify walk-in access, interior lighting/readability, maze/trap traversal and Redmi 14 5G performance. Cave entrance remains open until these checks pass.
+
+
+### Latest PR #207 cave-mouth screenshot review — 2026-11-04
+- [x] Validate passed on head `a00238e07757d32f5744baa87e9295f1597677e4` (run [41804437229](https://github.com/CryptoDilis/Climboria/actions/runs/41804437229)).
+- [x] Desktop + mobile Browser Smoke passed (run [41804437225](https://github.com/CryptoDilis/Climboria/actions/runs/41804437225)); fresh captures are in artifact [13309776303](https://github.com/CryptoDilis/Climboria/actions/runs/41804437225/artifacts/13309776303).
+- [x] Inspected fresh desktop and mobile cave-entrance screenshots. Both still show a massive brown terrain/rock face filling the approach view; the arch/opening is not readable. Visual acceptance FAILED despite the traversal assertion and green CI.
+- [x] Confirmed the current smoke capture is positioned at cave-local (0,-34), facing local +Z, while the cave POI is on a steep mountain region. The cave POI flat-ground radius is only 34 units and the terrain blend extends to 57.8 units; the exterior camera view still intersects/looks into the nearby mountain slope.
+- [ ] Root-cause repair required: create a properly carved, walkable exterior approach/apron and a clearly visible cave mouth in the terrain/rock geometry; ensure nearby mountain terrain does not occlude the opening from desktop/mobile approach angles. Do not solve by changing screenshot camera position alone.
+- [ ] Re-run Validate + Browser Smoke and inspect fresh screenshots after the actual terrain/entrance geometry repair.
+- [ ] Physical Redmi 14 5G entrance/interior traversal, cave interior readability, maze/trap navigation and manual acceptance remain open.
