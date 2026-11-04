@@ -2192,3 +2192,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] Summit chest is planned as a contested solo/party/guild objective with one globally locked claim per cycle, shared countdown, winner announcement and reward history. The server-authoritative competition and claim system is not implemented.
 - [ ] NFT and cryptocurrency rewards are disabled until a funded, auditable, server-authoritative reward and delivery service exists. Current inventory/reward handling is browser-local and must not be represented as secure token custody or payouts.
 - [ ] Next implementation gate: design and test deterministic valid spawn zones and category counts before changing production chest spawning. Then add server-backed shared summit cooldown/claim locking before enabling PvP contest rewards.
+
+
+### 2026-11-04 — fishing cast and reel interaction
+
+- [x] Replaced automatic timed catches with a cast → wait → bite prompt → press E to reel loop. The bite window is three seconds after the randomized bite delay.
+- [x] Moving more than 2.5 world units from the cast position cancels the attempt; missed bites expire without granting inventory rewards.
+- [x] Added Browser Smoke assertions for cast start, waiting without an automatic catch, and successful reel reward at every registered fishing spot.
+- [ ] Await Validate and desktop/mobile Browser Smoke on the fishing branch. Visual rod/line animation, bait/tool requirements, and visible aquatic life remain separate follow-ups.

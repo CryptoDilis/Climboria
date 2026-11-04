@@ -118,13 +118,22 @@ try {
       sanctuaryFlags: w?.sanctuaryFlags?.map(f=>({country:f.country,attached:f.mesh.parent===f.pillar&&f.pole.parent===f.pillar,width:f.mesh.geometry.parameters.width,height:f.mesh.geometry.parameters.height})) ?? [],
       forestAssets: w?.forestAssets ? Object.fromEntries(Object.entries(w.forestAssets.spots).map(([key,spots])=>{const invalid=spots.map((p,index)=>({index,x:p.x,z:p.z,h:p.h,terrainHeight:w.heightAt(p.x,p.z),waterBody:w.waterBodyAt(p.x,p.z)?.id??null,reasons:[!Number.isFinite(p.x)||!Number.isFinite(p.z)||!Number.isFinite(p.h)?'non-finite':null,p.h<1.8||p.h>132?'height-out-of-range':null,Math.abs(w.heightAt(p.x,p.z)-p.h)>=0.001?'terrain-height-mismatch':null,w.waterBodyAt(p.x,p.z)?'water-overlap':null,w.shoreClear(p.x,p.z,p.h)?'shore-buffer-overlap':null].filter(Boolean)})).filter(p=>p.reasons.length);return[key,{count:spots.length,valid:invalid.length===0,invalid}]})) : null,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
+      aquaticLife: w?.aquaticLifeAudit?.() ?? null,
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
-        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
+        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,phase=p.fishPhase,elapsed=p.fishElapsed,biteAt=p.fishBiteAt,biteWindow=p.fishBiteWindow,startX=p.fishStartX,startZ=p.fishStartZ,mode=p.mode,items=w.inventory.map(i=>({...i}));
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
-        const started=p.fish>0&&p.fishSource===f.waterBodyId;
-        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.mode=mode;
-        return {waterBodyId:f.waterBodyId,started};
+        const cast=p.fish>0&&p.fishPhase==='waiting'&&p.fishSource===f.waterBodyId;
+        const before=w.inventory.reduce((n,i)=>n+i.qty,0);
+        if(cast){w.interact();const waitingNoCatch=w.inventory.reduce((n,i)=>n+i.qty,0)===before;p.fishPhase='bite';p.fishBiteAt=2;p.fishBiteWindow=3;p.fishElapsed=2.1;w.interact();
+          const reeled=p.fish===0&&w.inventory.reduce((n,i)=>n+i.qty,0)===before+1;
+          p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+          w.inventory.splice(0,w.inventory.length,...items);
+          return {waterBodyId:f.waterBodyId,started:cast,waitingNoCatch,reeled};
+        }
+        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+        w.inventory.splice(0,w.inventory.length,...items);
+        return {waterBodyId:f.waterBodyId,started:false,waitingNoCatch:false,reeled:false};
       }) : [],
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
       freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
@@ -220,6 +229,7 @@ try {
     };
   });
   if (!world.canvas || !world.ready || !world.api || !world.player) errors.push('Jarrell world failed to boot: ' + JSON.stringify(world));
+  if (!world.aquaticLife || world.aquaticLife.fishCount < 15 || world.aquaticLife.schoolCount < 5 || !world.aquaticLife.belowSurface || !world.aquaticLife.sharedGeometry) errors.push('Visible aquatic-life school registry/placement/shared-geometry audit failed: ' + JSON.stringify(world.aquaticLife));
   if (world.renderFrames < 2 || world.sceneObjects < 10) errors.push('3D scene is not visibly rendering: ' + JSON.stringify(world));
   if (world.renderErrors.length) errors.push('3D frame loop reported errors: ' + JSON.stringify(world.renderErrors));
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
@@ -252,6 +262,7 @@ try {
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
+  if (!world.fishingInteractions?.length || world.fishingInteractions.some(x=>!x.started||!x.waitingNoCatch||!x.reeled)) errors.push('Fishing cast/wait/bite/reel interaction failed: '+JSON.stringify(world.fishingInteractions));
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));
@@ -448,6 +459,29 @@ try {
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+
+  // Capture the actual fish habitat as visual evidence; the spawn screenshot above
+  // cannot prove that submerged fish render through the water surface.
+  const pondSetup=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');
+    if(!w||!p||!b)return {available:false};
+    p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;
+    return {available:true,waterBody:b.id,player:{x:p.x,y:p.y,z:p.z},fish:w.aquaticLifeAudit?.()??null};
+  });
+  if(!pondSetup.available)errors.push('Could not position desktop visual capture at Woodland Pond.');
+  await page.mouse.move(680,450);
+  await page.mouse.down({button:'right'});
+  await page.mouse.move(680,700,{steps:8});
+  await page.mouse.up({button:'right'});
+  await page.waitForTimeout(1200);
+  const pondVisualCapture=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player;
+    return {waterBody:'woodland_pond',player:{x:p?.x,y:p?.y,z:p?.z},camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,distance:window.__climboriaCameraOrbit?.actualDistance},fish:w?.aquaticLifeAudit?.(),frames:window.__climboriaRenderState?.frames??0};
+  });
+  console.log('Woodland Pond aquatic visual capture:',JSON.stringify({setup:pondSetup,capture:pondVisualCapture}));
+  if(!pondVisualCapture.fish||pondVisualCapture.fish.fishCount<15||pondVisualCapture.frames<4||!pondVisualCapture.fish.belowSurface||!pondVisualCapture.fish.distinctSilhouette)errors.push('Woodland Pond aquatic visual capture did not render fully submerged, articulated fish/frames: '+JSON.stringify(pondVisualCapture));
+  await page.screenshot({path:'climboria-desktop-woodland-pond-fish.png'});
+
 
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
@@ -663,6 +697,27 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+
+  // Capture Woodland Pond on the mobile gameplay camera as separate visual evidence.
+  const mobilePondSetup=await mobile.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');
+    if(!w||!p||!b)return {available:false};
+    p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;
+    return {available:true,waterBody:b.id,player:{x:p.x,y:p.y,z:p.z},fish:w.aquaticLifeAudit?.()};
+  });
+  if(!mobilePondSetup.available)errors.push('Could not position mobile visual capture at Woodland Pond.');
+  await mobile.mouse.move(420,180);
+  await mobile.mouse.down({button:'right'});
+  await mobile.mouse.move(420,300,{steps:8});
+  await mobile.mouse.up({button:'right'});
+  await mobile.waitForTimeout(1200);
+  const mobilePondCapture=await mobile.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player;
+    return {waterBody:'woodland_pond',player:{x:p?.x,y:p?.y,z:p?.z},camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,distance:window.__climboriaCameraOrbit?.actualDistance},fish:w?.aquaticLifeAudit?.(),frames:window.__climboriaRenderState?.frames??0,viewport:{width:innerWidth,height:innerHeight}};
+  });
+  console.log('Mobile Woodland Pond aquatic visual capture:',JSON.stringify({setup:mobilePondSetup,capture:mobilePondCapture}));
+  if(!mobilePondCapture.fish||mobilePondCapture.fish.fishCount<10||mobilePondCapture.frames<4||!mobilePondCapture.fish.belowSurface||!mobilePondCapture.fish.distinctSilhouette)errors.push('Mobile Woodland Pond aquatic visual capture did not render submerged articulated fish/frames: '+JSON.stringify(mobilePondCapture));
+  await mobile.screenshot({path:'climboria-mobile-woodland-pond-fish.png'});
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
