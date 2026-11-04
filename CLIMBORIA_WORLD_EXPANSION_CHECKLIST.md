@@ -858,3 +858,12 @@ For each meaningful implementation batch:
 - [ ] Run Validate and Browser Smoke on this exact commit; inspect fresh desktop and mobile Woodland Pond screenshots for remaining basin-wall coloration, foreground occlusion, and waterline blending.
 - [ ] Do not mark pond visuals accepted until the screenshots show a natural irregular shoreline without exposed tan basin walls or a hard foreground cut.
 - [ ] Fish final silhouette/art, physical Redmi 14 5G acceptance, rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
+
+
+### Latest fishing + Woodland Pond screenshot review — 2026-11-04
+- [x] Validate passed on PR #208 head `4d634a68c46fcdfcd48b1e79ea2fcf944670be40` (run [41803788340](https://github.com/CryptoDilis/Climboria/actions/runs/41803788340)).
+- [x] Desktop + mobile Browser Smoke passed on the same head (run [41803788382](https://github.com/CryptoDilis/Climboria/actions/runs/41803788382)); dedicated pond screenshots are in artifact [13309886296](https://github.com/CryptoDilis/Climboria/actions/runs/41803788382/artifacts/13309886296).
+- [x] Inspected both dedicated Woodland Pond screenshots: fish bodies and eyes are clearly discernible at the tested gameplay camera distance on desktop and mobile. Fish visibility through the water is accepted for this prototype pass.
+- [ ] Pond visual acceptance remains open: the water still reads as a broad, flat blue basin; the far bank is a steep exposed cut, and the near green bank creates a hard foreground edge across the water. Build a more irregular, gently blended shoreline and vegetation transition.
+- [ ] Fish still use simplified low-poly silhouettes; final art/motion refinement remains open if performance permits.
+- [ ] Physical Redmi 14 5G acceptance, rod/line/bobber animation, bait/tool inventory, and end-to-end live catch/reward verification remain open.
