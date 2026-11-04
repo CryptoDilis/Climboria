@@ -2203,3 +2203,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await fresh Validate and Browser Smoke runs for `2d31f9ced302666c9a836bfa5fd95c30d8564644`; no run for this commit was visible at the latest API check. If the workflow starts, inspect the detailed mobile diagnostic and repair the actual GLB readiness cause.
 - [ ] PR #208 remains open pending separate visual acceptance of pond shoreline blending and natural character idle; passing automated smoke does not certify those visual details.
 - [ ] PR #209 remains open and unmerged until fresh desktop/mobile smoke passes and cave entrance/interior screenshots are visually reviewed. Do not merge either PR solely on validation success.
+
+## 2026-11-05 — PR #209 merged; cave portal verification handoff
+
+- [x] Merged PR #209 as `9f05f2bd995717fa044a4db77f722c6982551e2d` after both required PR-head checks passed on `0bf75c8257dfeb743fb4053bba3ba998518ed00a`: Validate [41873351367](https://github.com/CryptoDilis/Climboria/actions/runs/41873351367) and desktop/mobile Browser Smoke [41873351094](https://github.com/CryptoDilis/Climboria/actions/runs/41873351094).
+- [x] Inspected fresh desktop and mobile cave-entrance screenshots from artifact [13345458379](https://github.com/CryptoDilis/Climboria/actions/runs/41873351094/artifacts/13345458379): the portal opening is now clearly visible and the approach sightline is no longer filled by the former oversized rock mass.
+- [x] Inspected desktop and mobile cave-interior screenshots from the same artifact. The main chamber is enclosed and lit, but its irregular rock lining remains visually dense/stylized; this is not final visual acceptance.
+- [x] PR #209 also carries the cave entrance walk-in/trap-room regression assertions, desktop/mobile cave capture positions, cave roof/rock refinements, and relaxed procedural idle/movement responsiveness changes.
+- [ ] Post-merge push-triggered Validate, Browser Smoke and Pages runs for merge SHA `9f05f2bd995717fa044a4db77f722c6982551e2d` were not exposed by the available commit-run/status lookup. PR checks passed; do not claim post-merge deployment verification.
+- [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
+- [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
+- [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
