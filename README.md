@@ -2200,3 +2200,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Moving more than 2.5 world units from the cast position cancels the attempt; missed bites expire without granting inventory rewards.
 - [x] Added Browser Smoke assertions for cast start, waiting without an automatic catch, and successful reel reward at every registered fishing spot.
 - [ ] Await Validate and desktop/mobile Browser Smoke on the fishing branch. Visual rod/line animation, bait/tool requirements, and visible aquatic life remain separate follow-ups.
+
+### 2026-11-05 — pond fish silhouette and shoreline correction candidate
+- [x] Inspected the latest passing PR #208 desktop/mobile pond captures (run `41846275056`, artifact `13331247767`): fish were visible but read as flat colored blobs; a broad pale exposed shoreline dominated the pond edge.
+- [x] Updated the fishing branch in commit `38e3ea404b0c885b5244359877ab49373bdcf1f1`: replace the flattened lathe profile with a side-on 3D fish body, forked tail, dorsal/pectoral fins and eyes; animate tail movement while retaining submerged placement and shared geometry.
+- [x] Tightened freshwater terrain depression transition from a 54m shelf to a 20m transition and narrowed freshwater sand tinting to reduce the exposed tan apron.
+- [ ] Fresh Validate and desktop/mobile Browser Smoke runs are not yet visible for the new head. Do not merge until both pass and the new pond screenshots are inspected.
+- [ ] Visual acceptance remains open until desktop/mobile captures show recognizable fish silhouettes and a compact natural shoreline; physical Redmi 14 5G frame-time/visibility check remains required.
+- [ ] Rod/line/bobber animation, bait/tool requirements, and hands-on fishing acceptance remain open.
