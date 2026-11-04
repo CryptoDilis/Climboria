@@ -813,3 +813,12 @@ For each meaningful implementation batch:
 - [ ] Run Validate and Browser Smoke on this exact head; inspect both desktop and mobile pond captures for fish visibility and sorting artifacts.
 - [ ] Shoreline contour/terrain transition still requires a separate visual fix; do not mark shoreline complete.
 - [ ] Physical Redmi 14 5G review and fishing rod/line/bobber/bait acceptance remain open.
+
+
+## 2026-11-04 — transparent-water fish visibility screenshot review
+
+- [x] Browser Smoke completed successfully on fishing PR head `51040e2a752913e0c8ce340deb3ad12166db355b` (run `41799124330`); Validate had already passed on the same head.
+- [x] Inspected fresh dedicated desktop and mobile Woodland Pond screenshots from artifact `13306828410`. Fish silhouettes are now clearly visible at gameplay distance with distinct contrasting bodies and visible eyes; this is a meaningful improvement over the prior washed-out oval marks.
+- [ ] Fish still read as simplified low-poly silhouettes; refine tail/fins and natural motion only if performance permits. Do not call final art acceptance complete yet.
+- [ ] Pond remains too much like a flat blue basin with a broad pale sand apron and a sharp green foreground bank edge. Natural irregular shoreline blending and vegetation transition remain open.
+- [ ] Physical Redmi 14 5G acceptance, fishing rod/line/bobber, bait/tool inventory and end-to-end catch/reward verification remain open.
