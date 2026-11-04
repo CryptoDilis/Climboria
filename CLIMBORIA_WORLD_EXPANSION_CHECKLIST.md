@@ -648,3 +648,37 @@ For each meaningful implementation batch:
 - [x] Set a closer 5.8-unit initial follow-camera distance on mobile while retaining the 7.2-unit desktop baseline; camera collision sweep remains enabled.
 - [ ] Validate, browser smoke, and fresh mobile screenshot must pass before merge.
 - [ ] Inspect that the closer camera does not clip into the hero, cave walls, sanctuary props, or mobile controls; physical Redmi 14 5G acceptance remains open.
+
+## 2026-11-04 — cave entrance arch and exterior-to-interior access repair (rebased onto current main)
+
+- [x] Replace the opaque black sphere and flat lintel at the cave mouth with an irregular stone arch and buttresses.
+- [x] Move the spike field away from the cave entrance into a dedicated north-maze trap chamber; update entrance-side collision so the approach remains traversable.
+- [x] Add deterministic exterior-to-interior traversal diagnostics and smoke assertions for the arch, black occluders, trap-room bounds, and passage.
+- [x] Browser Smoke `41758862835` and Validate `41758862527` passed on commit `dea2157d916209006bff25c5841ee3d00286383e`.
+- [ ] Inspect fresh desktop/mobile screenshots and manually verify the cave entrance is visible, readable, and not blocked by invisible collision.
+- [ ] Redmi 14 5G physical acceptance remains open.
+- Code is rebased on main after the hero camera framing merge; it does not supersede the remaining cave maze, wildlife, and backend requirements.
+
+- [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
+- [x] Re-ran Browser Smoke and Validate with cave-specific desktop/mobile captures; both workflows passed and six screenshot files were uploaded in artifact `13290405241`.
+- [ ] Visual acceptance remains open after screenshot inspection: the entrance is no longer black/occluded and the traversal smoke passes, but the arch still reads as oversized angular low-poly rock and the approach/interior composition needs further art polish. Physical Redmi 14 5G review remains open.
+
+
+## 2026-11-04 — cave arch material and silhouette refinement; fishing interaction audit
+
+- [x] Refined the cave arch mesh from coarse dodecahedron rocks to shared higher-detail icosahedron rock geometry with restrained stone-material variation; slightly reduced the arch and buttress dimensions while preserving the authored passage and existing collision setup. Commit: `2527d487e653a7eaba1219002615c5a525c6bcce`.
+- [x] Validate run `41760465781` passed on the cave-polish commit.
+- [ ] Browser Smoke run `41760465934` is still in progress; wait for completion and inspect the newly uploaded desktop/mobile cave screenshots before accepting the visual change.
+- [ ] Confirm the refined entrance silhouette still has a clear traversal aperture and no new collision/occlusion regression; Redmi 14 5G physical review remains open.
+- [x] Audited fishing implementation: coastal and freshwater fishing spots, dock/pier landmarks, proximity interaction, timed catch resolution, inventory rewards, and fish-source-specific reward tables already exist.
+- [ ] Fishing is still a lightweight timed prototype, not a complete fishing loop. Add player-facing cast/reel feedback, bite timing or a skill interaction, cancellation/movement handling, rod/bait/tool requirements if desired, and smoke coverage for freshwater versus open-sea outcomes before marking fishing complete.
+- [ ] Aquatic fish and marine-life world population/visible swimming behavior remains separate and open; a fishing reward table does not prove visible fish exist in the water.
+
+
+## 2026-11-04 — cave smoke failure diagnosis and audit correction
+
+- [x] Browser Smoke `41760787597` completed with failure at the cave lighting audit. Desktop/mobile gameplay rendered; mobile readiness, controls, hero, HUD, map, and screenshots completed without render errors.
+- [x] Failure was a stale audit predicate: it counted arch meshes only when their geometry equaled the former `DOD` geometry, while the refined arch now uses `IcosahedronGeometry`. Runtime diagnostics showed 6 torches, 29 local point lights, 0 black-sphere occluders, ambient fill 1.2, and 6 fixture meshes.
+- [x] Corrected `caveLightingAudit.entranceArchRocks` to count the current `IcosahedronGeometry` arch meshes. Commit: `301d10c33ae241d52ff99ec87eb7b6a2dda918de`.
+- [ ] Re-run Validate and Browser Smoke on the corrected head; inspect new desktop/mobile screenshots before considering the cave repair verified.
+- [ ] Visual acceptance and physical Redmi 14 5G acceptance remain open; the automated counter correction does not certify art quality or device behavior.

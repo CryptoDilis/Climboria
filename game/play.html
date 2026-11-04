@@ -652,10 +652,14 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   caveGems.push({cluster,baseY:y,phase:i*.83});
   if(i%3===0)glow(gemPalette[color],1.05,19,x,y,z,g);
  });
- [[-22,12,-20,20],[20,10,-22,19],[0,16,-34,26],[-30,6,-6,10],[30,6,-6,10],[-12,8,-26,14],[14,8,-28,15]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
- sc(mk(SPH,new T3.MeshBasicMaterial({color:0x000000}),0,0,-10,g),10,10,8);
- sc(mk(BOX,M('#5c574d'),0,11.5,-1,g),26,3,6);
- [-12,12].forEach(x=>sc(mk(DOD,M('#5c574d'),x,4.5,-2,g),5,6,5));
+ // The entrance arch is the only geometry across the exterior sightline; large freestanding boulders here occlude the mouth from the approach camera.
+ // Irregular stone arch replaces the opaque black sphere and flat lintel.
+ const archRockGeo=new T3.IcosahedronGeometry(1,2);
+ const archMats=['#62594f','#575047','#6a6054','#514a42'].map(color=>new T3.MeshLambertMaterial({color:L(color)}));
+ [[-10,5.5,-2,4.65,5.45,4.65],[-8.2,9.1,-2,3.65,3.75,3.95],[-5.1,11.1,-2,3.35,3.05,3.65],[-1.8,12,-2,3.1,2.75,3.75],[2,11.8,-2,3.2,2.85,3.65],[5.5,10.7,-2,3.5,3.4,3.85],[8.7,8.4,-2,3.75,4.3,4.3],[10.5,5.1,-2,4.3,5.35,4.6]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  const rock=mk(archRockGeo,archMats[i%archMats.length],x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.08*(i%3),i*.17,.06*(i%2?1:-1));rock.castShadow=true;rock.receiveShadow=true;
+ });
+ [-1,1].forEach((side,i)=>{const rock=mk(archRockGeo,archMats[(i+2)%archMats.length],side*11.6,3.7,-2.5,g);sc(rock,4.65,6.1,5.2);rock.rotation.set(.12,side*.18,-side*.08);rock.castShadow=true;rock.receiveShadow=true;});
  // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
  [-12,12].forEach(x=>caveTorches.push(torch(x,0,6,g)));
  [[-27,-16],[27,-16],[-27,31],[27,31]].forEach(([x,z])=>caveTorches.push(torch(x,0,z,g)));
@@ -761,8 +765,9 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[-25,3,-16],[25,3,-16],[-25,3,31],[25,3,31]].forEach(([x,y,z])=>glow('#ffad55',2.2,38,x,y,z,g));
  for(let i=0;i<8;i++)sc(mk(CON,M('#6a665c'),-9+i*2.6,9.5,-3.2,g),.5,2.2+i%3,.5).rotation.x=Math.PI;
  for(let j=0;j<5;j++)for(let i=0;i<7;i++){
-  const s=sc(mk(CON,M('#9a9ca4'),-9+i*3,-2,10+j*5,g),.45,2.6,.45);spikes.push({s,ph:(i+j*1.7)*.55});
-  sc(mk(BOX,M('#2d2b2a'),-9+i*3,.05,10+j*5,g),1.4,.1,1.4)}
+  const x=-64+i*3,z=-47+j*3;
+  const s=sc(mk(CON,M('#9a9ca4'),x,-2,z,g),.45,2.6,.45);spikes.push({s,ph:(i+j*1.7)*.55});
+  sc(mk(BOX,M('#2d2b2a'),x,.05,z,g),1.4,.1,1.4)}
  for(let i=0;i<5;i++)sc(mk(SPH,M('#e8e2cf'),-8+i*4,.35,6+(i%2)*2,g),.4,.35,.4);
  const r=rng(31);for(let i=0;i<5;i++){const s=soldier();s.position.set(-14+i*7,0,3+r()*3);s.rotation.y=r()*1.5-.75;g.add(s);soldiers.push({s,ph:r()*6,tilt:.05})}
 }
@@ -1197,7 +1202,7 @@ loadCC0ForestModel('fallenLog',cc0LogSpots);
 
 parkFixtureSolids.forEach(s=>solid(s.x,s.z,s.r));
 for(let i=0;i<12;i++){const a=i/12*6.283;solid(POI.sanct.x+Math.sin(a)*22,POI.sanct.z+Math.cos(a)*22,1.6)}
-[[-22,-20,15],[20,-22,14],[0,-34,19],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
+[[-22,-20,15],[20,-22,14],[-13,-34,5],[13,-34,5],[-30,-6,7],[30,-6,7]].forEach(([x,z,r])=>{const[w,v]=l2w(caveG,x,z);solid(w,v,r)});
 function caveWallBlocks(nx,nz,ox,oz){
  const pointSegmentDistance=(px,pz,ax,az,bx,bz)=>{
   const dx=bx-ax,dz=bz-az,len=dx*dx+dz*dz;
@@ -1626,7 +1631,32 @@ function geodeChestLifecycleAudit(){
   return {ok:opened&&rewarded&&respawned,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+function positionAtCaveEntranceForSmoke(){
+ const local={x:0,z:-28},world=l2w(caveG,local.x,local.z);
+ updateChunks(world[0],world[1],200);
+ // Frame the full stone arch from farther back; the previous 14m spawn cropped its high crown outside the third-person camera FOV.
+ // Face along the cave group's local +Z axis so the approach camera actually frames the mouth.
+ P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.moveTarget=null;
+ P.yaw=caveG.rotation.y+Math.PI;cameraYaw=caveG.rotation.y+Math.PI;cameraPitch=-.08;
+ return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),yaw:+cameraYaw.toFixed(3),caveYaw:+caveG.rotation.y.toFixed(3)};
+}
+function caveEntranceTraversalAudit(){
+ const saved={x:P.x,z:P.z,y:P.y,vy:P.vy,mode:P.mode,moveTarget:P.moveTarget};
+ const startLocal={x:0,z:-55},endLocal={x:0,z:8},start=l2w(caveG,startLocal.x,startLocal.z);
+ let reached=startLocal.z,blockedAt=null;
+ try{
+  updateChunks(start[0],start[1],200);P.mode='walk';P.x=start[0];P.z=start[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.moveTarget=null;
+  const steps=Math.ceil((endLocal.z-startLocal.z)/.32);
+  for(let i=1;i<=steps;i++){
+   const z=startLocal.z+(endLocal.z-startLocal.z)*i/steps,next=l2w(caveG,0,z);
+   moveWalk(next[0]-P.x,next[1]-P.z);
+   if(Math.hypot(P.x-next[0],P.z-next[1])>.18){blockedAt={localZ:+z.toFixed(2),remaining:+Math.hypot(P.x-next[0],P.z-next[1]).toFixed(2)};break;}
+   reached=z;P.y=groundAt(P.x,P.z)+1.75;
+  }
+  return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
+ }finally{Object.assign(P,saved)}
+}
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='IcosahedronGeometry'&&o.position.y>2.5&&o.position.z>-4&&o.position.z<0).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');

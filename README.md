@@ -15,6 +15,8 @@
 - **Latest known workflow status:** no failed jobs confirmed in the latest main/PR runs; several Browser Smoke runs were still active. A cancelled superseded main Browser Smoke run `41706138043` is not a test failure.
 - **Next actions:** retrieve completed conclusions for main Browser Smoke run `41708254803`, PR #191 Browser Smoke run `41708373224`, and PR #192 Browser Smoke check `126170490203`. Fix any genuine failures, merge only after both required checks pass, then continue cave maze/trap visual acceptance, aquatic ecosystems, freshwater expansion, forest/desert/Sakura scale, multiplayer backend, Arena, and physical Redmi 14 5G acceptance.
 - **Release honesty:** 100 chests and summit 15-minute countdown remain local prototypes; shared server-authoritative chest state, atomic claims, funded crypto/NFT rewards, global multiplayer and production account systems are not implemented. Do not represent them as production-ready.
+- **2026-11-04 cave entrance repair verification:** PR #206 head commit `dea2157d916209006bff25c5841ee3d00286383e` passed Validate run [41758862527](https://github.com/CryptoDilis/Climboria/actions/runs/41758862527) and Browser Smoke run [41758862835](https://github.com/CryptoDilis/Climboria/actions/runs/41758862835). Browser logs confirm Jarrell desktop/mobile gameplay smoke passed, cave exterior-to-interior traversal audit passed, cave trap/collision checks passed, and desktop/mobile cave screenshots were uploaded as artifact [13290405241](https://github.com/CryptoDilis/Climboria/actions/runs/41758862835/artifacts/13290405241). Screenshot review confirms the cave mouth is visible and no longer black-occluded, but the oversized angular rock arch and sparse entrance composition still need art polish; cave visual acceptance and physical Redmi 14 5G review remain open. The mobile smoke reports all controls visible and no render errors; this is browser-emulated evidence, not physical-device acceptance.
+- **Next actions:** polish cave entrance silhouette, rock scale/material variation, and approach dressing without compromising the verified walkable route; inspect full cave interior/trap-room screenshots; then continue the open Jarrell's Peak world checklist (aquatic ecosystems, freshwater/shoreline visual acceptance, forest/desert/Sakura scale, wildlife, multiplayer authority, Arena, and physical Redmi 14 5G acceptance). Keep automated test completion separate from art and device acceptance.
 
 ---
 
@@ -2192,3 +2194,19 @@ For every integrated asset or borrowed technique, record:
 - [ ] Summit chest is planned as a contested solo/party/guild objective with one globally locked claim per cycle, shared countdown, winner announcement and reward history. The server-authoritative competition and claim system is not implemented.
 - [ ] NFT and cryptocurrency rewards are disabled until a funded, auditable, server-authoritative reward and delivery service exists. Current inventory/reward handling is browser-local and must not be represented as secure token custody or payouts.
 - [ ] Next implementation gate: design and test deterministic valid spawn zones and category counts before changing production chest spawning. Then add server-backed shared summit cooldown/claim locking before enabling PvP contest rewards.
+
+
+### 2026-11-04 — cave arch polish and fishing-system audit
+
+- [x] Cave arch silhouette/material refinement committed as `2527d487e653a7eaba1219002615c5a525c6bcce`; shared higher-detail rock geometry and restrained stone variation replace the earlier coarse arch meshes.
+- [x] Validate run `41760465781` passed on this commit.
+- [ ] Browser Smoke run `41760465934` was still in progress at the latest check; do not treat cave polish as accepted until it completes and fresh screenshots are inspected.
+- [x] Fishing audit confirmed existing dock/freshwater spots, proximity casting, timed catch resolution, inventory rewards, and source-specific fish tables.
+- [ ] Fishing remains prototype-level; full cast/reel feedback, bite/skill interaction, cancellation behavior, tool/bait integration, and dedicated smoke coverage are not yet complete. Visible aquatic life is also still an open world task.
+
+
+### 2026-11-04 — cave smoke audit correction
+
+- [x] Diagnosed Browser Smoke run `41760787597`: desktop/mobile gameplay rendered, mobile controls and readiness passed, and cave lighting reported six torch fixtures, 29 local point lights, zero black-sphere occluders, and ambient fill 1.2. The failure was the stale arch counter still searching for the previous `DodecahedronGeometry` after the arch was refined to `IcosahedronGeometry`.
+- [x] Updated the cave lighting audit to count the geometry type actually used by the rendered arch (commit `301d10c33ae241d52ff99ec87eb7b6a2dda918de`). This is an audit correction, not a claim of visual acceptance.
+- [ ] Re-run Validate and desktop/mobile Browser Smoke on the new head; inspect fresh screenshots and retain physical Redmi 14 5G acceptance as open.
