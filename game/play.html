@@ -712,19 +712,19 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Build the visible wall from tightly overlapping irregular stone masses rather
   // than a single flat box. Keep the original swept segment as the authoritative
   // collision boundary so every passage remains sealed and traversable as designed.
-  const stoneGeo=new T3.IcosahedronGeometry(1,2);
+  const stoneGeo=new T3.IcosahedronGeometry(1,1);
   const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
   const randWall=rng(seedBase);
-  for(let along=-.35;along<=len+.35;along+=1.12){
+  for(let along=-.2;along<=len+.2;along+=.78){
    const t=Math.max(0,Math.min(1,along/len)),cx=x1+dx*t,cz=z1+dz*t;
-   for(let row=0;row<4;row++){
-    const stagger=row%2?.48:0;
-    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.22;
-    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.22;
-    const y=.85+row*1.72+(randWall()-.5)*.32;
+   for(let row=0;row<5;row++){
+    const stagger=row%2?.32:0;
+    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.12;
+    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.12;
+    const y=.62+row*1.28+(randWall()-.5)*.2;
     const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,.72+randWall()*.28,.72+randWall()*.32,.72+randWall()*.3);
-    stone.rotation.set((randWall()-.5)*.48,angle+(randWall()-.5)*.55,(randWall()-.5)*.42);
+    sc(stone,.39+randWall()*.13,.42+randWall()*.16,.38+randWall()*.14);
+    stone.rotation.set((randWall()-.5)*.38,angle+(randWall()-.5)*.4,(randWall()-.5)*.34);
     stone.castShadow=true;stone.receiveShadow=true;
    }
   }
@@ -742,7 +742,18 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(22,16,22,21,'side-room-west-lower');
  caveWall(22,29,22,34,'side-room-west-upper');
  const branchFloor=mk(BOX,M('#625b50'),15,.08,25,g);sc(branchFloor,14,.16,8,g);
- const chamberFloor=mk(BOX,M('#625b50'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ const chamberFloor=mk(BOX,M('#514b42'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ // Low broken mineral plates soften the flat prototype floor while leaving the
+ // central traversal lane and chest approach clear.
+ const floorRand=rng(8831),floorGeo=new T3.IcosahedronGeometry(1,1);
+ for(let i=0;i<44;i++){
+  const side=i%4,x=side===0?22.8+floorRand()*2.8:side===1?37.2+floorRand()*2.8:23.5+floorRand()*13.5;
+  const z=side===2?17.2+floorRand()*2.2:side===3?31.8+floorRand()*2.2:17.5+floorRand()*14.5;
+  const plate=mk(floorGeo,i%3===0?caveWallDark:caveWallMat,x,.18+floorRand()*.08,z,g);
+  sc(plate,.42+floorRand()*.38,.10+floorRand()*.09,.38+floorRand()*.42);
+  plate.rotation.set((floorRand()-.5)*.2,floorRand()*Math.PI,(floorRand()-.5)*.2);
+  plate.castShadow=true;plate.receiveShadow=true;
+ }
  const chamberGlow=glow('#55d9c8',1.35,30,31,3,25,g);
  // Break up the rectangular prototype room with a natural cave-rock lining.
  // Decorative masses sit against the structural walls and above head clearance;
@@ -756,7 +767,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  ];
  wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(new T3.IcosahedronGeometry(1,2),i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx*.58,sy*.58,sz*.58);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
+  sc(rock,sx*.36,sy*.38,sz*.34);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
  });
  // Continuous overlapping ceiling masses close the chamber roof so the player
  // sees stone overhead instead of daylight through a scattered decorative layer.
