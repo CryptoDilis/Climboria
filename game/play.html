@@ -660,7 +660,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Keep a clear 12m-wide walk-through opening; no rock is placed on the centerline.
  const archMat=M('#514b43');
  [[-9,4.8,-2,3.4,9.2,4.2],[9,4.8,-2,3.4,9.2,4.2],
-  [-5.2,10.1,-2,5.8,2.8,4.2],[0,10.8,-2,5.2,2.8,4.2],[5.2,10.1,-2,5.8,2.8,4.2]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  [-5.2,10.1,-2,5.8,2.8,4.2],[-1.7,12.1,-2,2.1,1.25,3.8],[1.7,12.1,-2,2.1,1.25,3.8],[5.2,10.1,-2,5.8,2.8,4.2]].forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.035*(i%3),i*.11,.025*(i%2?1:-1));rock.castShadow=true;
  });
  // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
