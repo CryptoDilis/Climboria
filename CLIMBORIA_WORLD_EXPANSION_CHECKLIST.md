@@ -661,3 +661,13 @@ For each meaningful implementation batch:
 
 - [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
 - [ ] Re-run Browser Smoke and Validate with cave-specific captures; inspect both cave screenshots before merge.
+
+
+## 2026-11-04 — cave entrance screenshot obstruction diagnosis and exterior capture correction
+
+- [x] Inspected the PR #207 desktop and mobile cave-mouth screenshots: both captures placed the hero directly beneath a massive near-mouth rock overhang; the opening was not readable in either frame.
+- [x] Traced the screenshot setup to `positionAtCaveEntranceForSmoke()`, which placed the player at local z=-14 without explicitly resetting the camera yaw/pitch. This was a poor exterior-approach visual sample and left the camera beneath nearby rock geometry.
+- [x] Changed the deterministic capture to local z=-34, explicitly face the hero toward the cave, and reset the follow camera behind the hero at a stable pitch. Updated desktop/mobile smoke assertions to require the new exterior capture coordinate.
+- [ ] Re-run Validate and Browser Smoke on this commit; inspect fresh desktop and mobile cave-mouth screenshots. This is a capture-position correction, not proof that cave geometry or player approach is visually accepted.
+- [ ] If the new approach view still shows obstructing rock or an unclear opening, repair the actual nearby rock placement/scale and rerun visual review.
+- [ ] Keep cave interior readability, traversal on physical Redmi 14 5G, maze/trap navigation and manual acceptance open.
