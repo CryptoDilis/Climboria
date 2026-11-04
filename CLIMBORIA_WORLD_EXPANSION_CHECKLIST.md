@@ -759,8 +759,13 @@ For each meaningful implementation batch:
 - [x] Added animated, submerged fish schools with shared low-poly geometry and reduced mobile counts.
 - [x] Corrected freshwater basin shape, shoreline transition and water tint so ponds read as water rather than exposed terrain cutouts.
 - [x] Added Browser Smoke assertions for fishing lifecycle behavior, including no automatic reward while waiting and inventory increment only after a successful manual reel; added dedicated desktop/mobile Woodland Pond screenshot captures.
-- [ ] Fresh Browser Smoke run 41904043235 / #1424 is still reported in progress at the Jarrell's Peak desktop/mobile gameplay step; no screenshot artifact is available. Job logs endpoint currently returns BlobNotFound, so the reason for the prolonged run cannot be confirmed.
-- [ ] Inspect fresh pond captures for recognizable fish silhouettes through water; automated coordinate/registry assertions are not visual acceptance.
+- [x] Browser Smoke run 41904043235 / #1424 ended cancelled during the Jarrell's Peak gameplay step; homepage checks passed. The uploaded screenshot artifact 13358529548 was downloaded and reviewed.
+- [x] Desktop Woodland Pond capture shows several distinct fish silhouettes clearly visible against the pond water; this is a positive first visual check, but the fish remain simplified/stylized and their underwater depth/translucency needs improvement.
+- [x] Desktop cave entrance capture shows a readable arch and open dark passage; the entrance approach is visible. Guard props and a chest in the immediate foreground add clutter.
+- [x] Desktop cave interior capture shows an enclosed chamber and treasure, but rock lining is overly dense/repetitive and the chamber reads as a narrow rock tunnel rather than a spacious natural cave.
+- [ ] Mobile pond/gameplay/cave captures were not present in the cancelled run artifact; mobile visual acceptance remains open.
+- [ ] Desktop gameplay capture still shows a broad, visually empty green foreground and the sanctuary structure cropped by the top of frame; review world dressing and default screenshot framing before visual acceptance.
+- [ ] Job logs endpoint returned BlobNotFound; cancellation cause is not confirmed. The cancelled gameplay job has been manually re-run; inspect the new attempt and its complete desktop/mobile screenshot artifact.
 - [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G fishing acceptance remain open.
 - [x] No token/NFT fishing rewards enabled or promised; current inventory remains browser-local.
 - [ ] PR #211 remains unmerged until fresh desktop/mobile gameplay smoke completes and screenshots are inspected.
