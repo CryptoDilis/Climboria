@@ -452,7 +452,7 @@ try {
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+34)>.01) errors.push('Desktop cave entrance visual position could not be prepared: '+JSON.stringify(desktopCaveView));
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+34)>.01||Math.abs(desktopCaveView.playerYaw-Math.PI)>.01||Math.abs(desktopCaveView.cameraYaw-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
   await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
@@ -672,7 +672,7 @@ try {
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+34)>.01) errors.push('Mobile cave entrance visual position could not be prepared: '+JSON.stringify(mobileCaveView));
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+34)>.01||Math.abs(mobileCaveView.playerYaw-Math.PI)>.01||Math.abs(mobileCaveView.cameraYaw-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
