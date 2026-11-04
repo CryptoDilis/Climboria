@@ -708,3 +708,11 @@ For each meaningful implementation batch:
 - [ ] Run Validate and Browser Smoke on commit bb484568022e9d1c9e5bb3ad123bfd43a083366a.
 - [ ] Inspect fresh desktop and mobile cave-entrance screenshots; the apron is not visually accepted until the opening is clearly readable and the approach looks walkable.
 - [ ] Confirm exterior-to-interior traversal, cave interior readability, maze/trap navigation, and physical Redmi 14 5G performance.
+
+
+## 2026-11-04 — cave interior geometry refinement (PR #209)
+- [x] Validate passed on cave refinement commit d975d2b93eb2bb103fb65cb935abf93225e2c772 (run 41836584805).
+- [x] Replaced oversized block-like cave lining with smaller irregular icosahedral rock clusters; replaced broad slab-like ceiling pieces with broken rock clusters and tapered stalactites. Passage collision geometry remains unchanged.
+- [x] Reworked treasure chest silhouette from a plain box into a faceted wooden chest with metal bands and a front clasp.
+- [ ] Browser Smoke run 41836584803 is still executing the Jarrell's Peak desktop/mobile gameplay tests; inspect its fresh screenshots after artifact upload.
+- [ ] Cave visual acceptance remains open until desktop and mobile captures show convincing natural rock forms, readable chamber depth, and an accessible passage. Physical Redmi 14 5G acceptance remains open.
