@@ -460,6 +460,29 @@ try {
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
 
+  // Capture the actual fish habitat as visual evidence; the spawn screenshot above
+  // cannot prove that submerged fish render through the water surface.
+  const pondSetup=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');
+    if(!w||!p||!b)return {available:false};
+    p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;
+    return {available:true,waterBody:b.id,player:{x:p.x,y:p.y,z:p.z},fish:w.aquaticLifeAudit?.()??null};
+  });
+  if(!pondSetup.available)errors.push('Could not position desktop visual capture at Woodland Pond.');
+  await page.mouse.move(680,450);
+  await page.mouse.down({button:'right'});
+  await page.mouse.move(680,700,{steps:8});
+  await page.mouse.up({button:'right'});
+  await page.waitForTimeout(1200);
+  const pondVisualCapture=await page.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player;
+    return {waterBody:'woodland_pond',player:{x:p?.x,y:p?.y,z:p?.z},camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,distance:window.__climboriaCameraOrbit?.actualDistance},fish:w?.aquaticLifeAudit?.(),frames:window.__climboriaRenderState?.frames??0};
+  });
+  console.log('Woodland Pond aquatic visual capture:',JSON.stringify({setup:pondSetup,capture:pondVisualCapture}));
+  if(!pondVisualCapture.fish||pondVisualCapture.fish.fishCount<15||pondVisualCapture.frames<4)errors.push('Woodland Pond aquatic visual capture did not render fish/frames: '+JSON.stringify(pondVisualCapture));
+  await page.screenshot({path:'climboria-desktop-woodland-pond-fish.png'});
+
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
