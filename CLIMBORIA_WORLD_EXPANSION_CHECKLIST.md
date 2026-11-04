@@ -726,3 +726,12 @@ For each meaningful implementation batch:
 - [x] Source audit confirmed the procedural GLB fallback adds fixed upper-arm and forearm X offsets while idle; this may preserve or exaggerate an unnatural arm pose. The actual GLB bone axes/rest pose must be inspected before applying a shoulder correction; do not guess at a rotation axis.
 - [ ] Character idle remains open: inspect actual GLB rig pose, then tune a relaxed neutral stance and visually verify desktop plus Redmi 14 5G landscape captures.
 - [ ] Keep PR #209 cave visual acceptance, physical cave traversal, wildlife/snake AI, and all other master checklist items open until their own evidence passes.
+
+## 2026-11-05 — cave portal merge and visual acceptance handoff
+
+- [x] PR #209 merged as `9f05f2bd995717fa044a4db77f722c6982551e2d`; PR-head Validate `41873351367` and desktop/mobile Browser Smoke `41873351094` passed.
+- [x] Reviewed desktop/mobile cave entrance captures in artifact `13345458379`: portal is readable and the exterior approach sightline is open.
+- [x] Reviewed desktop/mobile interior captures: chamber is enclosed and illuminated; irregular rock lining is still dense/stylized and requires further visual polish.
+- [ ] Manual walk-in, wall/roof clearance, camera obstruction, trap navigation and Redmi 14 5G acceptance remain open.
+- [ ] Continue connected maze/branching-room expansion and cave wayfinding without changing the approved world layout; keep snakes and wildlife disabled.
+- [ ] Main push-triggered Validate, Browser Smoke and Pages results for merge SHA `9f05f2bd995717fa044a4db77f722c6982551e2d` were not returned by the available status lookup. Do not treat PR checks as post-merge deployment verification.
