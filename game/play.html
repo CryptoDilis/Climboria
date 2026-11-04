@@ -222,7 +222,8 @@ const WATER_BODIES=[
 ];
 const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.012+b.x*.013,z*.012-b.z*.017,3)-.5;return b.radius+noise*6.2+Math.sin(a*3+b.x*.01)*2.1+Math.sin(a*7-b.z*.008)*1.25+Math.sin(a*11+b.x*.021)*.65+Math.sin(a*17-b.z*.019)*.35};
 // Ease inland pond depressions over a broad shelf: the old 14-unit fall created a sharp, faceted bowl wall on the 5-unit terrain grid.
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-26,r+28,d))},0);
+// Keep inland basin shelves compact: a 16–20m transition avoids the broad exposed tan apron.
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-9,r+11,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -435,12 +436,12 @@ function colorAt(x,z,h,ny){
  const coast=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
  const bch=(1-ss(.3,2.4,h))*coast;
  // Keep freshwater sand close to the waterline; do not paint the submerged basin floor.
- const shore=ss(-1.1,-.15,h)*(1-ss(.75,1.8,h));
+ const shore=ss(-.8,-.1,h)*(1-ss(.55,1.25,h));
  let bank=0;
- for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,10,edge))}
+ for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,4,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
- bank=Math.max(bank,1-ss(2,20,riverEdge));
- const sand=Math.max(bch*.72,shore*.36,bank*ss(-.5,3.5,h)*.58);
+ bank=Math.max(bank,1-ss(2,12,riverEdge));
+ const sand=Math.max(bch*.72,shore*.36,bank*ss(-.2,1.2,h)*.32);
  if(sand>0)c=mc(c,SAND,sand);
  // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
  const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
@@ -1384,27 +1385,27 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 // the surface. Keep counts modest on touch devices and share geometry/materials.
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
-const fishBodyGeo=new T3.LatheGeometry([new T3.Vector2(0,-1.12),new T3.Vector2(.08,-1.02),new T3.Vector2(.24,-.84),new T3.Vector2(.39,-.5),new T3.Vector2(.46,-.12),new T3.Vector2(.43,.32),new T3.Vector2(.32,.68),new T3.Vector2(.16,.94),new T3.Vector2(.05,1.08),new T3.Vector2(0,1.12)],20),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.58,.48);fishTailShape.lineTo(-.34,0);fishTailShape.lineTo(-.58,-.48);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinGeo=new T3.ConeGeometry(.16,.34,5);
-const fishMats=[M('#9b7442',1),M('#638b83',1),M('#aeb9b2',1),M('#b8754d',1)];
+const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
+const fishMats=[M('#d49a45',1),M('#65a7a0',1),M('#d7d9c9',1),M('#d47b4d',1)];
 // Draw submerged fish before the transparent water surface (water.renderOrder=2).
 // The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
 for(const material of fishMats){material.transparent=true;material.opacity=.9;material.depthWrite=false}
-const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.72;fishEyeMat.depthWrite=false;
+const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.95;fishEyeMat.depthWrite=false;
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
   const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
-  // Fish face local +Z: the tail sits behind the body, not off to its side.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);body.rotation.x=Math.PI/2;sc(body,1.02,1,1);
-  const tail=mk(fishTailGeo,mat,0,0,-1.02,g);tail.material.side=T3.DoubleSide;sc(tail,1.15,1.05,1);
-  const dorsal=mk(fishFinGeo,mat,0,.23,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.68,.78,.52);
+  // Side-on 3D fish silhouette: ellipsoid body, vertical fork tail, dorsal and pectoral fins.
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.72,.30,.25);
+  const tail=mk(fishTailGeo,mat,-.66,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.82,.82,.82);
+  const dorsal=mk(fishFinGeo,mat,-.08,.24,0,g);dorsal.material.side=T3.DoubleSide;sc(dorsal,.9,.78,.72);
   for(const side of [-1,1]){
-   const fin=mk(fishFinGeo,mat,side*.28,-.1,.02,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.58,.64,.4);
-   const eye=mk(SPH,fishEyeMat,side*.2,.065,.43,g);sc(eye,.045,.045,.045);
+   const fin=mk(fishFinGeo,mat,.12,-.08,side*.18,g);fin.material.side=T3.DoubleSide;fin.rotation.z=side*.9;sc(fin,.58,.56,.32);
+   const eye=mk(SPH,fishEyeMat,.34,.075,side*.205,g);sc(eye,.052,.052,.035);
   }
-  // Keep the whole fish silhouette below the animated water surface; contrast comes from
-  // its distinct tail/fins and clear body profile, not from protruding above the waterline.
-  g.scale.set(kind==='ocean'?1.55:1.7,kind==='ocean'?1.55:1.7,kind==='ocean'?1.85:2.0);
+  // Keep fish submerged while giving the body/tail a clear profile through the water.
+  g.scale.set(kind==='ocean'?1.45:1.55,kind==='ocean'?1.45:1.55,kind==='ocean'?1.45:1.55);
+  g.userData.tail=tail;
   aquaticLifeGroup.add(g);
   aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.45+rand()*.12,surfaceClearance:.3,kind});
  }
@@ -1421,6 +1422,7 @@ function updateAquaticLife(time){
   const a=time*fish.speed+fish.phase;
   fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
   fish.g.rotation.y=Math.atan2(Math.cos(a*.83)*fish.orbit*.65,-Math.sin(a)*fish.orbit);
+  if(fish.g.userData.tail)fish.g.userData.tail.rotation.y=Math.PI/2+Math.sin(a*2.1)*.24;
  }
 }
 function aquaticLifeAudit(){
