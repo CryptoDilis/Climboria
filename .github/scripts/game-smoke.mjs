@@ -277,6 +277,28 @@ try {
   if (!world.forestAssets || world.forestAssets.buttress?.count < 16 || world.forestAssets.canopy?.count < 16 || world.forestAssets.undergrowth?.count < 42 || world.forestAssets.fallenLog?.count < 14 || Object.values(world.forestAssets).some(x=>!x.valid)) errors.push('CC0 rainforest placement regression: '+JSON.stringify(world.forestAssets));
   if (world.coastalDocks.length !== 8 || world.coastalDocks.some(d=>!d.landClear||!d.waterClear||d.shoreHeight<.15)) errors.push('Expected eight accessible coastal docks with dry approaches and open-sea ends: '+JSON.stringify(world.coastalDocks));
   if (world.fishingSpots.length !== 11 || world.fishingInteractions.length !== 11 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all eight sea docks and three freshwater spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
+  const fishingLoop=await page.evaluate(async()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,spot=w?.fishingSpots?.[0];
+    if(!w||!p||!spot)return{available:false};
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,mode:p.mode,fish:p.fish,fishPhase:p.fishPhase,fishElapsed:p.fishElapsed,fishBiteAt:p.fishBiteAt,fishBiteWindow:p.fishBiteWindow,fishSource:p.fishSource,fishStartX:p.fishStartX,fishStartZ:p.fishStartZ};
+    const inventoryBefore=w.inventory.map(x=>({...x}));
+    const countBefore=inventoryBefore.reduce((n,x)=>n+(x.name=== 'Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)'?x.quantity||0:0),0);
+    p.x=spot.x;p.z=spot.z;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.fish=0;p.fishPhase=null;p.fishElapsed=0;
+    w.interact();
+    const started=p.fish>0&&p.fishPhase==='waiting';
+    await new Promise(resolve=>setTimeout(resolve,900));
+    const noEarlyReward=p.fish>0&&p.fishPhase==='waiting';
+    const stillNoCatch=w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.quantity||0):0),0)===countBefore;
+    const bite=await new Promise(resolve=>{const start=performance.now();const poll=()=>{if(p.fishPhase==='bite')return resolve(true);if(p.fish<=0||performance.now()-start>5000)return resolve(false);setTimeout(poll,80)};poll()});
+    if(bite)w.interact();
+    const caught=p.fish===0&&w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.quantity||0):0),0)>countBefore;
+    if(p.fish>0)w.cancelFishing?.(null);
+    Object.assign(p,saved);
+    return{available:true,started,noEarlyReward,stillNoCatch,bite,caught,fishSource:spot.waterBodyId};
+  });
+  if(!fishingLoop.available||!fishingLoop.started||!fishingLoop.noEarlyReward||!fishingLoop.stillNoCatch||!fishingLoop.bite||!fishingLoop.caught)errors.push('Fishing cast/wait/bite/manual-reel lifecycle failed: '+JSON.stringify(fishingLoop));
+  console.log('Fishing lifecycle diagnostics:',JSON.stringify(fishingLoop));
+
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
   if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
   if (!world.mountainApproachAudit || world.mountainApproachAudit.approaches.length !== 8 || world.mountainApproachAudit.approaches.some((a,index)=>a.bearing!==index*45 || !Number.isFinite(a.progress) || a.progress<0)) errors.push('Mountain approach-angle audit is incomplete or contains invalid traversal progress: '+JSON.stringify(world.mountainApproachAudit));
