@@ -458,7 +458,7 @@ try {
   await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
   const desktopCaveInterior=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
-  if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.z-12)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
+  if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-30)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
   await page.waitForTimeout(1200);
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
@@ -696,7 +696,7 @@ try {
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
-  if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.z-12)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
+  if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
