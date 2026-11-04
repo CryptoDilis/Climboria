@@ -118,6 +118,7 @@ try {
       sanctuaryFlags: w?.sanctuaryFlags?.map(f=>({country:f.country,attached:f.mesh.parent===f.pillar&&f.pole.parent===f.pillar,width:f.mesh.geometry.parameters.width,height:f.mesh.geometry.parameters.height})) ?? [],
       forestAssets: w?.forestAssets ? Object.fromEntries(Object.entries(w.forestAssets.spots).map(([key,spots])=>{const invalid=spots.map((p,index)=>({index,x:p.x,z:p.z,h:p.h,terrainHeight:w.heightAt(p.x,p.z),waterBody:w.waterBodyAt(p.x,p.z)?.id??null,reasons:[!Number.isFinite(p.x)||!Number.isFinite(p.z)||!Number.isFinite(p.h)?'non-finite':null,p.h<1.8||p.h>132?'height-out-of-range':null,Math.abs(w.heightAt(p.x,p.z)-p.h)>=0.001?'terrain-height-mismatch':null,w.waterBodyAt(p.x,p.z)?'water-overlap':null,w.shoreClear(p.x,p.z,p.h)?'shore-buffer-overlap':null].filter(Boolean)})).filter(p=>p.reasons.length);return[key,{count:spots.length,valid:invalid.length===0,invalid}]})) : null,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
+      aquaticLife: w?.aquaticLifeAudit?.() ?? null,
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
         const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,phase=p.fishPhase,elapsed=p.fishElapsed,biteAt=p.fishBiteAt,biteWindow=p.fishBiteWindow,startX=p.fishStartX,startZ=p.fishStartZ,mode=p.mode,items=w.inventory.map(i=>({...i}));
@@ -228,6 +229,7 @@ try {
     };
   });
   if (!world.canvas || !world.ready || !world.api || !world.player) errors.push('Jarrell world failed to boot: ' + JSON.stringify(world));
+  if (!world.aquaticLife || world.aquaticLife.fishCount < 15 || world.aquaticLife.schoolCount < 5 || !world.aquaticLife.belowSurface || !world.aquaticLife.sharedGeometry) errors.push('Visible aquatic-life school registry/placement/shared-geometry audit failed: ' + JSON.stringify(world.aquaticLife));
   if (world.renderFrames < 2 || world.sceneObjects < 10) errors.push('3D scene is not visibly rendering: ' + JSON.stringify(world));
   if (world.renderErrors.length) errors.push('3D frame loop reported errors: ' + JSON.stringify(world.renderErrors));
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
