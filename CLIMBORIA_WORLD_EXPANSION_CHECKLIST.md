@@ -693,3 +693,14 @@ For each meaningful implementation batch:
 - [ ] Follow-up shader/visibility tuning committed on this branch: stronger teal base water, reduced horizon reflection, higher water alpha, larger fish silhouettes, and shallower freshwater fish depth. Await fresh CI and a new inspected pond capture; this is not yet accepted.
 - [ ] Rod/line/bobber animation, bait/tool requirements, actual desktop fishing interaction, and physical Redmi 14 5G acceptance remain open.
 - [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance.
+
+
+### Verification follow-up — PR #208 head `7e497e2947ec8bd3220cc36e44b74fd13a68d3ec`
+- [x] Validate passed (run [41770828144](https://github.com/CryptoDilis/Climboria/actions/runs/41770828144)).
+- [x] Desktop + mobile Browser Smoke passed (run [41770828411](https://github.com/CryptoDilis/Climboria/actions/runs/41770828411)); screenshot artifact [13295515169](https://github.com/CryptoDilis/Climboria/actions/runs/41770828411).
+- [x] Inspected the dedicated Woodland Pond screenshot: the water surface still reads gray/tan and fish are only tiny colored marks, not recognizable silhouettes. Aquatic-life visual acceptance remains FAILED/open.
+- [x] Diagnosed the immediate rendering contributors: the shared world water plane used a high .9 alpha with a strong sky/reflection blend, while the fish body silhouette was small at the pond camera distance.
+- [x] Applied a visual tuning follow-up on this branch: reduced water reflection contribution and alpha, deepened the water base tint, and enlarged fish body/eye silhouettes. This is a candidate correction only; it is not accepted until a fresh pond screenshot is inspected.
+- [ ] Validate and desktop/mobile Browser Smoke must pass on the new head; inspect the new dedicated pond screenshot for clearly recognizable fish and natural teal water before closing visual acceptance.
+- [ ] Rod/line/bobber animation, bait/tool requirements, actual desktop fishing interaction, and physical Redmi 14 5G acceptance remain open.
+- [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance.
