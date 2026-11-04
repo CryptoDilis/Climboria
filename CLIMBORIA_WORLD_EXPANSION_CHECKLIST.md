@@ -751,3 +751,14 @@ For each meaningful implementation batch:
 - [ ] Close-up visual acceptance of idle/walk/run/jump/landing animation remains open; smoke screenshots are general gameplay captures, not a dedicated animation review.
 - [ ] Physical Redmi 14 5G acceptance remains open.
 - [ ] Post-merge workflow verification for merge SHA remains pending; the commit-run lookup returned no runs.
+
+
+## 2026-11-05 — fishing and aquatic-life integration onto current main
+
+- [ ] Port the fishing cast → wait → bite → manual reel loop onto the current main-based branch; movement beyond 2.5 world units cancels the cast and missed bites award nothing.
+- [ ] Add animated, submerged fish schools with shared low-poly geometry; retain reduced mobile counts.
+- [ ] Correct freshwater basin shape, shoreline transition and water tint so ponds read as water rather than exposed terrain cutouts.
+- [ ] Browser Smoke must exercise every fishing spot, verify no automatic reward while waiting, confirm successful reel/inventory increment, and capture dedicated desktop/mobile Woodland Pond screenshots.
+- [ ] Inspect fresh pond captures for recognizable fish silhouettes through water; automated coordinate/registry assertions are not visual acceptance.
+- [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G fishing acceptance remain open.
+- [ ] Do not enable or promise token/NFT fishing rewards; current inventory remains browser-local.
