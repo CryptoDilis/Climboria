@@ -479,7 +479,7 @@ try {
     return {waterBody:'woodland_pond',player:{x:p?.x,y:p?.y,z:p?.z},camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,distance:window.__climboriaCameraOrbit?.actualDistance},fish:w?.aquaticLifeAudit?.(),frames:window.__climboriaRenderState?.frames??0};
   });
   console.log('Woodland Pond aquatic visual capture:',JSON.stringify({setup:pondSetup,capture:pondVisualCapture}));
-  if(!pondVisualCapture.fish||pondVisualCapture.fish.fishCount<15||pondVisualCapture.frames<4)errors.push('Woodland Pond aquatic visual capture did not render fish/frames: '+JSON.stringify(pondVisualCapture));
+  if(!pondVisualCapture.fish||pondVisualCapture.fish.fishCount<15||pondVisualCapture.frames<4||!pondVisualCapture.fish.belowSurface||!pondVisualCapture.fish.distinctSilhouette)errors.push('Woodland Pond aquatic visual capture did not render fully submerged, articulated fish/frames: '+JSON.stringify(pondVisualCapture));
   await page.screenshot({path:'climboria-desktop-woodland-pond-fish.png'});
 
 
