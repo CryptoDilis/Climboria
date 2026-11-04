@@ -408,9 +408,9 @@ float dz=.28*.105*cos(vW.z*.105-uT*1.35)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)-.075
 vec3 n=normalize(vec3(-dx*3.,1.,-dz*3.));vec3 v=normalize(cameraPosition-vW);
 float f=pow(1.-max(dot(n,v),0.),3.);vec3 r=reflect(-v,n);
 vec3 refl=mix(uHor,uTop,clamp(r.y,0.,1.));
-vec3 c=mix(uDeep,refl,.055+.18*f);
+vec3 c=mix(uDeep,refl,.025+.11*f);
 c+=uSunC*pow(max(dot(reflect(-uSun,n),v),0.),140.)*2.2;
-gl_FragColor=vec4(c,.78);
+gl_FragColor=vec4(c,.70);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 #include <fog_fragment>
@@ -1421,7 +1421,7 @@ function updateAquaticLife(time){
  for(const fish of aquaticFish){
   const a=time*fish.speed+fish.phase;
   fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
-  fish.g.rotation.y=Math.atan2(Math.cos(a*.83)*fish.orbit*.65,-Math.sin(a)*fish.orbit);
+  fish.g.rotation.y=Math.atan2(-Math.cos(a*.83)*.83*fish.orbit*.65,-Math.sin(a)*fish.orbit);
   if(fish.g.userData.tail)fish.g.userData.tail.rotation.y=Math.PI/2+Math.sin(a*2.1)*.24;
  }
 }
