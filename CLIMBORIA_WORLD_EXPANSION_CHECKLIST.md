@@ -648,3 +648,13 @@ For each meaningful implementation batch:
 - [x] Set a closer 5.8-unit initial follow-camera distance on mobile while retaining the 7.2-unit desktop baseline; camera collision sweep remains enabled.
 - [ ] Validate, browser smoke, and fresh mobile screenshot must pass before merge.
 - [ ] Inspect that the closer camera does not clip into the hero, cave walls, sanctuary props, or mobile controls; physical Redmi 14 5G acceptance remains open.
+
+
+## 2026-11-04 — fishing cast/bite/reel gameplay prototype
+
+- [x] Replaced automatic timer-based fish awards with explicit cast, waiting, bite, and manual reel phases. Players press E after the bite prompt to claim a fish.
+- [x] Added a three-second bite window after a randomized 1.8–3.0 second bite delay; missing the window awards nothing.
+- [x] Added movement cancellation when the player moves more than 2.5 world units from the cast position.
+- [x] Extended Browser Smoke to test cast start, no automatic reward while waiting, and a successful reel/inventory increment at each fishing spot.
+- [ ] Validate and desktop/mobile Browser Smoke must pass on this branch before merge.
+- [ ] Still open: fishing rod/line animation and bait/tool requirements; visible fish schools and marine-life behavior; actual Redmi 14 5G gameplay acceptance.
