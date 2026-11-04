@@ -220,8 +220,8 @@ const WATER_BODIES=[
  {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
  {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
 ];
-const freshwaterRadiusAt=(b,x,z)=>b.radius+(fbm(x*.045+ b.x*.013,z*.045-b.z*.017,2)-.5)*7+Math.sin(Math.atan2(z-b.z,x-b.x)*5+b.x*.01)*1.5;
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-10,r+10,d))},0);
+const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.075+b.x*.013,z*.075-b.z*.017,3)-.5;return b.radius+noise*12+Math.sin(a*3+b.x*.01)*2.8+Math.sin(a*7-b.z*.008)*1.7};
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-6,r+8,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -433,10 +433,10 @@ function colorAt(x,z,h,ny){
  const bch=1-ss(.3,2.4,h);
  // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
  let bank=0;
- for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,14,edge))}
+ for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,10,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
  bank=Math.max(bank,1-ss(2,20,riverEdge));
- if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.9,bank*ss(-.5,4.5,h)*.78));
+ if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.72,bank*ss(-.5,3.5,h)*.58));
  // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
  const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
  return c;
