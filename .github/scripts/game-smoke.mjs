@@ -697,6 +697,27 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+
+  // Capture Woodland Pond on the mobile gameplay camera as separate visual evidence.
+  const mobilePondSetup=await mobile.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');
+    if(!w||!p||!b)return {available:false};
+    p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;
+    return {available:true,waterBody:b.id,player:{x:p.x,y:p.y,z:p.z},fish:w.aquaticLifeAudit?.()};
+  });
+  if(!mobilePondSetup.available)errors.push('Could not position mobile visual capture at Woodland Pond.');
+  await mobile.mouse.move(420,180);
+  await mobile.mouse.down({button:'right'});
+  await mobile.mouse.move(420,300,{steps:8});
+  await mobile.mouse.up({button:'right'});
+  await mobile.waitForTimeout(1200);
+  const mobilePondCapture=await mobile.evaluate(()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player;
+    return {waterBody:'woodland_pond',player:{x:p?.x,y:p?.y,z:p?.z},camera:{yaw:window.__climboriaCameraOrbit?.yaw,pitch:window.__climboriaCameraOrbit?.pitch,distance:window.__climboriaCameraOrbit?.actualDistance},fish:w?.aquaticLifeAudit?.(),frames:window.__climboriaRenderState?.frames??0,viewport:{width:innerWidth,height:innerHeight}};
+  });
+  console.log('Mobile Woodland Pond aquatic visual capture:',JSON.stringify({setup:mobilePondSetup,capture:mobilePondCapture}));
+  if(!mobilePondCapture.fish||mobilePondCapture.fish.fishCount<10||mobilePondCapture.frames<4||!mobilePondCapture.fish.belowSurface||!mobilePondCapture.fish.distinctSilhouette)errors.push('Mobile Woodland Pond aquatic visual capture did not render submerged articulated fish/frames: '+JSON.stringify(mobilePondCapture));
+  await mobile.screenshot({path:'climboria-mobile-woodland-pond-fish.png'});
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
