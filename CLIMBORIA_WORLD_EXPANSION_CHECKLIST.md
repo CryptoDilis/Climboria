@@ -867,3 +867,11 @@ For each meaningful implementation batch:
 - [ ] Pond visual acceptance remains open: the water still reads as a broad, flat blue basin; the far bank is a steep exposed cut, and the near green bank creates a hard foreground edge across the water. Build a more irregular, gently blended shoreline and vegetation transition.
 - [ ] Fish still use simplified low-poly silhouettes; final art/motion refinement remains open if performance permits.
 - [ ] Physical Redmi 14 5G acceptance, rod/line/bobber animation, bait/tool inventory, and end-to-end live catch/reward verification remain open.
+
+
+## 2026-11-04 — Woodland Pond fish visual follow-up
+- [x] Reviewed the latest available desktop and mobile Woodland Pond smoke captures: fish are visible below the surface on both layouts.
+- [ ] Fish silhouettes still read too much like small colored blobs at normal gameplay distance; visual acceptance remains open.
+- [x] Increased fish body length/width and fan-tail scale on branch codex/fishing-cast-reel-loop (commit 8af50cdd5c5a1e5445ae63e3ee33fe7867fcd3e5).
+- [ ] Obtain fresh desktop/mobile smoke screenshots for the enlarged silhouette pass; latest available passing screenshots predate this change.
+- [ ] Improve faceted freshwater shoreline transition if the updated captures still show the abrupt basin edge.
