@@ -767,3 +767,11 @@ For each meaningful implementation batch:
 - [ ] Review the new Woodland Pond screenshot for natural fish readability through the water shader; visual acceptance remains open.
 - [ ] Add mobile Woodland Pond screenshot coverage and complete physical Redmi 14 5G review.
 - [ ] Improve the smooth elliptical pond shoreline and confirm the rendered water edge blends naturally with terrain.
+
+
+### Mobile Woodland Pond evidence coverage — 2026-11-04
+- [x] Added a dedicated mobile landscape capture at Woodland Pond after the Sanctuary gameplay screenshot; the smoke records player/camera state, fish count, submerged placement, silhouette audit, render frames, and viewport.
+- [x] Added a separate artifact image `climboria-mobile-woodland-pond-fish.png` so mobile pond framing can be inspected instead of assuming the Sanctuary screenshot proves pond visibility.
+- [ ] Validate and Browser Smoke must pass on the new head; inspect both desktop and mobile pond screenshots before accepting the fish or shoreline visuals.
+- [ ] Fish still read as flat oval marks and the shoreline remains a broad, smooth oval in the last inspected desktop artifact; both visual issues remain open.
+- [ ] Physical Redmi 14 5G review, natural shoreline blending, rod/line/bobber animation, and bait/tool requirements remain open.
