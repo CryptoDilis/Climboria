@@ -1378,15 +1378,21 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 // the surface. Keep counts modest on touch devices and share geometry/materials.
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
-const fishBodyGeo=new T3.SphereGeometry(1,10,7),fishTailGeo=new T3.ConeGeometry(.22,.42,5);
-const fishMats=[M('#f4bd45',1),M('#56c7df',1),M('#e7eef0',1),M('#ff934d',1)];
+const fishBodyGeo=new T3.SphereGeometry(1,12,8),fishTailGeo=new T3.ConeGeometry(.38,.58,4),fishFinGeo=new T3.ConeGeometry(.16,.34,4);
+const fishMats=[M('#ffc34d',1),M('#45d5ef',1),M('#f2f5f7',1),M('#ff8752',1)];
 const fishEyeMat=M('#07131b',1);
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
-  const g=new T3.Group();g.name='Aquatic Fish';const body=mk(fishBodyGeo,fishMats[(i+seed)%fishMats.length],0,0,0,g);sc(body,1.8,.46,.38);
-  const tail=mk(fishTailGeo,fishMats[(i+seed)%fishMats.length],0,0,.68,g);tail.rotation.x=Math.PI/2;sc(tail,1.05,.95,.6);
-  for(const side of [-1,1]){const eye=mk(SPH,fishEyeMat,side*.105,.045,-.115,g);sc(eye,.05,.05,.05)}
+  const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length];
+  // Fish face local +Z: the tail sits behind the body, not off to its side.
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.43,.38,1.02);
+  const tail=mk(fishTailGeo,mat,0,0,-.91,g);tail.rotation.x=-Math.PI/2;sc(tail,1,.9,.72);
+  const dorsal=mk(fishFinGeo,mat,0,.34,-.08,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.62,.8,.55);
+  for(const side of [-1,1]){
+   const fin=mk(fishFinGeo,mat,side*.28,-.12,.08,g);fin.rotation.z=side*.65;fin.rotation.x=Math.PI/2;sc(fin,.52,.65,.38);
+   const eye=mk(SPH,fishEyeMat,side*.27,.105,.55,g);sc(eye,.055,.055,.055);
+  }
   aquaticLifeGroup.add(g);
   aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?1.1+rand()*1.8:.22+rand()*.62,kind});
  }
