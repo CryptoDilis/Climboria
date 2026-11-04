@@ -1388,7 +1388,7 @@ const fishBodyGeo=new T3.SphereGeometry(1,12,8),fishTailGeo=new T3.ConeGeometry(
 const fishMats=[M('#ffc34d',1),M('#45d5ef',1),M('#f2f5f7',1),M('#ff8752',1)];
 // Draw submerged fish before the transparent water surface (water.renderOrder=2).
 // The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
-for(const material of fishMats){material.transparent=true;material.opacity=.76;material.depthWrite=false}
+for(const material of fishMats){material.transparent=true;material.opacity=.9;material.depthWrite=false}
 const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.72;fishEyeMat.depthWrite=false;
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
@@ -1406,7 +1406,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   // its distinct tail/fins and clear body profile, not from protruding above the waterline.
   g.scale.setScalar(kind==='ocean'?1.25:1.5);
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-4.05+rand()*.06,surfaceClearance:2.05,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.05+rand()*.06,surfaceClearance:.5,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
