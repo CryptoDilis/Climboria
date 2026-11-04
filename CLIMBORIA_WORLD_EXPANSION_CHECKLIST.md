@@ -662,3 +662,14 @@ For each meaningful implementation batch:
 - [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
 - [x] Re-ran Browser Smoke and Validate with cave-specific desktop/mobile captures; both workflows passed and six screenshot files were uploaded in artifact `13290405241`.
 - [ ] Visual acceptance remains open after screenshot inspection: the entrance is no longer black/occluded and the traversal smoke passes, but the arch still reads as oversized angular low-poly rock and the approach/interior composition needs further art polish. Physical Redmi 14 5G review remains open.
+
+
+## 2026-11-04 — cave arch material and silhouette refinement; fishing interaction audit
+
+- [x] Refined the cave arch mesh from coarse dodecahedron rocks to shared higher-detail icosahedron rock geometry with restrained stone-material variation; slightly reduced the arch and buttress dimensions while preserving the authored passage and existing collision setup. Commit: `2527d487e653a7eaba1219002615c5a525c6bcce`.
+- [x] Validate run `41760465781` passed on the cave-polish commit.
+- [ ] Browser Smoke run `41760465934` is still in progress; wait for completion and inspect the newly uploaded desktop/mobile cave screenshots before accepting the visual change.
+- [ ] Confirm the refined entrance silhouette still has a clear traversal aperture and no new collision/occlusion regression; Redmi 14 5G physical review remains open.
+- [x] Audited fishing implementation: coastal and freshwater fishing spots, dock/pier landmarks, proximity interaction, timed catch resolution, inventory rewards, and fish-source-specific reward tables already exist.
+- [ ] Fishing is still a lightweight timed prototype, not a complete fishing loop. Add player-facing cast/reel feedback, bite timing or a skill interaction, cancellation/movement handling, rod/bait/tool requirements if desired, and smoke coverage for freshwater versus open-sea outcomes before marking fishing complete.
+- [ ] Aquatic fish and marine-life world population/visible swimming behavior remains separate and open; a fishing reward table does not prove visible fish exist in the water.
