@@ -712,3 +712,13 @@ For each meaningful implementation batch:
 - [x] Applied another candidate visual pass: saturated teal deep-water color, lower sky-reflection contribution, higher water opacity, high-contrast basic-material fish colors, and a slightly elongated body silhouette.
 - [ ] New head must pass Validate and Browser Smoke; inspect fresh pond screenshot before accepting. If fish are still not clearly fish-shaped, redesign mesh silhouette (distinct tail/fins) rather than only scaling it.
 - [ ] Physical Redmi 14 5G acceptance remains open.
+
+
+### Pond visual follow-up — inspected artifact from head `ad97868d77775ee72e61dbb58064e7df78b4fd44`
+- [x] Validate passed (run [41773897817](https://github.com/CryptoDilis/Climboria/actions/runs/41773897817)); desktop/mobile Browser Smoke passed (run [41773897798](https://github.com/CryptoDilis/Climboria/actions/runs/41773897798)).
+- [x] Downloaded and inspected dedicated Woodland Pond screenshot artifact [13296476797](https://github.com/CryptoDilis/Climboria/actions/runs/41773897798).
+- [x] Water is now visibly teal and fish are visible in the capture; however, fish still read as small flat oval marks with no clearly attached tail/fins. The broad exposed tan bank remains visually abrupt. Aquatic-life visual acceptance is still open.
+- [x] Diagnosed a geometry-axis mismatch: the fish body was elongated on local X while its tail was offset on local Z, producing disconnected/sideways silhouettes from the pond camera.
+- [x] Applied a candidate mesh redesign on commit `a8da3c11b17962e87ed0ac9d3906101b463a097a`: align body and tail along local Z, add distinct dorsal/side fins, and enlarge high-contrast eyes while keeping fish submerged.
+- [ ] Validate and desktop/mobile Browser Smoke must pass on the new head; inspect a fresh pond screenshot before accepting the fish silhouette or waterline.
+- [ ] Remaining: improve natural bank/water-disc blending; rod/line/bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
