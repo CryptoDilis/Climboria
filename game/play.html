@@ -1633,8 +1633,10 @@ function geodeChestLifecycleAudit(){
 function positionAtCaveEntranceForSmoke(){
  const local={x:0,z:-14},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
+ // Face along the cave group's local +Z axis so the approach camera actually frames the mouth.
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.moveTarget=null;
- return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2)};
+ P.yaw=caveG.rotation.y;cameraYaw=caveG.rotation.y;cameraPitch=-.08;
+ return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),yaw:+cameraYaw.toFixed(3),caveYaw:+caveG.rotation.y.toFixed(3)};
 }
 function caveEntranceTraversalAudit(){
  const saved={x:P.x,z:P.z,y:P.y,vy:P.vy,mode:P.mode,moveTarget:P.moveTarget};
