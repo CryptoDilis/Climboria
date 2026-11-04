@@ -1397,7 +1397,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   // Enlarge the complete silhouette so the body, tail and fins read as fish at gameplay camera distance.
   g.scale.setScalar(kind==='ocean'?2.8:3.5);
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?.02+rand()*.08:-.12+rand()*.12,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-.2+rand()*.06,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
@@ -1410,7 +1410,7 @@ for(let i=0;i<coastalDockSpots.length;i+=2){
 function updateAquaticLife(time){
  for(const fish of aquaticFish){
   const a=time*fish.speed+fish.phase;
-  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.08*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
+  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
   fish.g.rotation.y=Math.atan2(Math.cos(a*.83)*fish.orbit*.65,-Math.sin(a)*fish.orbit);
  }
 }
