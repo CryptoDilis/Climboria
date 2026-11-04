@@ -684,3 +684,12 @@ For each meaningful implementation batch:
 - [ ] Next: diagnose Woodland Pond water/terrain alignment and water-surface material/depth occlusion; correct fish contrast/visibility without placing fish implausibly above the water; recapture and inspect the screenshot.
 - [ ] Fishing rod/line/bobber animation and bait/tool requirements remain open; physical desktop and Redmi 14 5G acceptance remain open.
 - [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance; do not mark character animation complete from the automated selector audit alone.
+
+
+### Verification follow-up — PR #208 head `e905d52a3508169ceec7c8bd99403a5c873b1184`
+- [x] Validate passed (run [41768715891](https://github.com/CryptoDilis/Climboria/actions/runs/41768715891)).
+- [x] Desktop + mobile Browser Smoke passed (run [41768715882](https://github.com/CryptoDilis/Climboria/actions/runs/41768715882)); dedicated pond screenshot artifact [13294242076](https://github.com/CryptoDilis/Climboria/actions/runs/41768715882).
+- [x] Inspected the dedicated Woodland Pond capture: the pond remains a broad exposed tan basin; water reads as a tan/opaque patch and fish are not visibly discernible. Visual acceptance remains FAILED/open.
+- [ ] Follow-up shader/visibility tuning committed on this branch: stronger teal base water, reduced horizon reflection, higher water alpha, larger fish silhouettes, and shallower freshwater fish depth. Await fresh CI and a new inspected pond capture; this is not yet accepted.
+- [ ] Rod/line/bobber animation, bait/tool requirements, actual desktop fishing interaction, and physical Redmi 14 5G acceptance remain open.
+- [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance.
