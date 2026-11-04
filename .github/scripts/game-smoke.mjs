@@ -120,11 +120,19 @@ try {
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
-        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
+        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,phase=p.fishPhase,elapsed=p.fishElapsed,biteAt=p.fishBiteAt,biteWindow=p.fishBiteWindow,startX=p.fishStartX,startZ=p.fishStartZ,mode=p.mode,items=w.inventory.map(i=>({...i}));
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
-        const started=p.fish>0&&p.fishSource===f.waterBodyId;
-        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.mode=mode;
-        return {waterBodyId:f.waterBodyId,started};
+        const cast=p.fish>0&&p.fishPhase==='waiting'&&p.fishSource===f.waterBodyId;
+        const before=w.inventory.reduce((n,i)=>n+i.qty,0);
+        if(cast){w.interact();const waitingNoCatch=w.inventory.reduce((n,i)=>n+i.qty,0)===before;p.fishPhase='bite';p.fishBiteAt=2;p.fishBiteWindow=3;p.fishElapsed=2.1;w.interact();
+          const reeled=p.fish===0&&w.inventory.reduce((n,i)=>n+i.qty,0)===before+1;
+          p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+          w.inventory.splice(0,w.inventory.length,...items);
+          return {waterBodyId:f.waterBodyId,started:cast,waitingNoCatch,reeled};
+        }
+        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+        w.inventory.splice(0,w.inventory.length,...items);
+        return {waterBodyId:f.waterBodyId,started:false,waitingNoCatch:false,reeled:false};
       }) : [],
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
       freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
