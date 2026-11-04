@@ -2192,3 +2192,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Summit chest is planned as a contested solo/party/guild objective with one globally locked claim per cycle, shared countdown, winner announcement and reward history. The server-authoritative competition and claim system is not implemented.
 - [ ] NFT and cryptocurrency rewards are disabled until a funded, auditable, server-authoritative reward and delivery service exists. Current inventory/reward handling is browser-local and must not be represented as secure token custody or payouts.
 - [ ] Next implementation gate: design and test deterministic valid spawn zones and category counts before changing production chest spawning. Then add server-backed shared summit cooldown/claim locking before enabling PvP contest rewards.
+
+
+### 2026-11-04 — PR #208 fishing pass and PR #209 mobile smoke diagnosis
+
+- [x] PR #208 latest head `87b4e9a81cf3e5c909e991746a0ac5cced704f08`: Validate run `41819446009` passed and desktop/mobile Browser Smoke run `41819445973` passed. Fish silhouettes and submerged-clearance assertions are included in this tested head.
+- [x] PR #209 cave head `763ca8b4bfecd78d27541fd4afe52ebba54434a3`: Validate run `41819048497` passed; Browser Smoke run `41819048434` failed at mobile GLB readiness wait in `.github/scripts/game-smoke.mjs:588` after 45 seconds. Desktop cave capture completed; mobile readiness did not satisfy the smoke contract. This is not evidence that the cave geometry itself failed.
+- [x] Inspected the failed run log and captured mobile gameplay screenshot. Failure is specifically the conjunction of `heroReady`, `__climboriaGLBRenderer`, and `heroUsesGlb` not becoming true; the original log did not include the mobile state or console errors at timeout.
+- [x] Added failure diagnostics and mobile console-error capture to the smoke test in commit `2d31f9ced302666c9a836bfa5fd95c30d8564644`. This preserves the 45-second readiness requirement and does not weaken the GLB acceptance check.
+- [ ] Await fresh Validate and Browser Smoke runs for `2d31f9ced302666c9a836bfa5fd95c30d8564644`; no run for this commit was visible at the latest API check. If the workflow starts, inspect the detailed mobile diagnostic and repair the actual GLB readiness cause.
+- [ ] PR #208 remains open pending separate visual acceptance of pond shoreline blending and natural character idle; passing automated smoke does not certify those visual details.
+- [ ] PR #209 remains open and unmerged until fresh desktop/mobile smoke passes and cave entrance/interior screenshots are visually reviewed. Do not merge either PR solely on validation success.

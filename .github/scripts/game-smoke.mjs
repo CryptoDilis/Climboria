@@ -233,6 +233,9 @@ try {
   const geodeChest=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak;const c=w?.chests?.find(c=>c.kind==='geode');return c?{x:c.x,z:c.z,y:c.g.position.y,visible:c.g.visible,open:c.open,ground:w.groundAt(c.x,c.z)}:null});
   if(!geodeChest||!geodeChest.visible||geodeChest.open||!Number.isFinite(geodeChest.x)||!Number.isFinite(geodeChest.z)||!Number.isFinite(geodeChest.y)||Math.abs(geodeChest.y-geodeChest.ground)>.02) errors.push('Geode chamber treasure chest missing, hidden, or misaligned with cave floor: '+JSON.stringify(geodeChest));
   if (!Array.isArray(world.caveGems) || world.caveGems.length !== 14 || world.caveGems.some(g => !g.cluster || g.children !== 3)) errors.push('Cave mineral crystal clusters missing or malformed: ' + JSON.stringify(world.caveGems));
+  const caveEntrance=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveEntranceTraversalAudit?.()??null);
+  if(!caveEntrance||!caveEntrance.ok||caveEntrance.walkedDistance<62||caveEntrance.blockedAt) errors.push('Cave entrance exterior-to-interior traversal failed: '+JSON.stringify(caveEntrance));
+  console.log('Cave entrance traversal:',JSON.stringify(caveEntrance));
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
   if(!cavePassage||cavePassage.wallCount!==46||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall||!cavePassage.westRoute||!cavePassage.northMazeRoute||!cavePassage.westBlockedAcrossWall||!cavePassage.northBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
   const caveWater=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveWaterAudit?.()??null);
@@ -243,12 +246,12 @@ try {
   if(!geodeLifecycle||!geodeLifecycle.ok||!geodeLifecycle.opened||!geodeLifecycle.rewarded||!geodeLifecycle.respawned||geodeLifecycle.timer<120||geodeLifecycle.timer>240) errors.push('Geode chest open/reward/120-240s respawn lifecycle failed: '+JSON.stringify(geodeLifecycle));
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
-  if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
+  if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.trapRoom?.minX!==-64||caveTraps.trapRoom?.maxX!==-46||caveTraps.trapRoom?.minZ!==-47||caveTraps.trapRoom?.maxZ!==-35||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
   const caveTrapLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapLifecycleAudit?.()??null);
   if(!caveTrapLifecycle||!caveTrapLifecycle.damageCorrect||caveTrapLifecycle.damageTaken!==25||!caveTrapLifecycle.respawnCorrect) errors.push('Cave live damage/death/Sanctuary respawn lifecycle failed: '+JSON.stringify(caveTrapLifecycle));
   const caveSpikeTick=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveSpikeDamageTickAudit?.()??null);
   if(!caveSpikeTick||!caveSpikeTick.ok||caveSpikeTick.damageTaken!==25) errors.push('Live cave spike contact-to-gameTick damage path failed: '+JSON.stringify(caveSpikeTick));
-  if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.ambientFillIntensity<1.15||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
+  if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.blackSphereOccluders!==0||caveLighting.entranceArchRocks<8||caveLighting.ambientFillIntensity<1.15||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
@@ -448,6 +451,17 @@ try {
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
+  const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
+  console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
+  const desktopCaveInterior=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
+  if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-30)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
+  await page.waitForTimeout(1200);
+  await page.screenshot({path:'climboria-desktop-cave-interior.png'});
+  console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
@@ -576,7 +590,21 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
-  await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { timeout: 45000 });
+  try {
+    await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 75000 });
+  } catch (error) {
+    const diagnostic = await mobile.evaluate(() => ({
+      readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
+      glbRenderer: window.__climboriaGLBRenderer ?? null,
+      cameraHero: window.__climboriaCameraOrbit?.heroUsesGlb ?? null,
+      selectedHero: document.documentElement.dataset.climboriaHero ?? null,
+      renderer: document.documentElement.dataset.climboriaHeroRenderer ?? null,
+      asset: document.documentElement.dataset.climboriaHeroAsset ?? null,
+      frames: window.__climboriaRenderState?.frames ?? null,
+      canvas: !!document.querySelector('canvas')
+    }));
+    throw new Error('Mobile GLB readiness timed out: ' + JSON.stringify(diagnostic) + '; browserErrors=' + JSON.stringify(errors) + '; ' + error.message);
+  }
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
@@ -663,6 +691,16 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
+  await mobile.waitForTimeout(1200);
+  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
+  if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
+  await mobile.waitForTimeout(1200);
+  await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
+  console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));
+  console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
