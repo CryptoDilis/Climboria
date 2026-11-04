@@ -822,3 +822,12 @@ For each meaningful implementation batch:
 - [ ] Fish still read as simplified low-poly silhouettes; refine tail/fins and natural motion only if performance permits. Do not call final art acceptance complete yet.
 - [ ] Pond remains too much like a flat blue basin with a broad pale sand apron and a sharp green foreground bank edge. Natural irregular shoreline blending and vegetation transition remain open.
 - [ ] Physical Redmi 14 5G acceptance, fishing rod/line/bobber, bait/tool inventory and end-to-end catch/reward verification remain open.
+
+
+### Latest desktop + mobile Woodland Pond visual review — 2026-11-04
+- [x] Latest-head Validate passed on `8182f9f3820807f293526fad9b609d88a774380f` (run [41800448681](https://github.com/CryptoDilis/Climboria/actions/runs/41800448681)).
+- [x] Latest-head Browser Smoke passed (run [41800448702](https://github.com/CryptoDilis/Climboria/actions/runs/41800448702)); artifact [13308190326](https://github.com/CryptoDilis/Climboria/actions/runs/41800448702/artifacts/13308190326) contains dedicated desktop and mobile Woodland Pond captures.
+- [x] Inspected both new pond screenshots. Fish colors/eyes are visible, but the fish still read as flat oval silhouettes; the pale sand apron remains broad, and a hard straight green foreground bank edge occludes the near side of the water in both views.
+- [ ] Visual acceptance remains OPEN on desktop and mobile. Do not mark fish art, pond contour, or shoreline blending complete based on CI assertions alone.
+- [ ] Next shoreline diagnosis must inspect terrain mesh/water-plane depth ordering and camera-facing near-bank geometry before changing radius/opacity again; fix the hard foreground occlusion and replace the smooth basin outline with a naturally irregular terrain-to-water transition.
+- [ ] Fish silhouette/art refinement, physical Redmi 14 5G acceptance, fishing rod/line/bobber animation, bait/tool inventory, and end-to-end catch/reward verification remain open.
