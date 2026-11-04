@@ -704,3 +704,11 @@ For each meaningful implementation batch:
 - [ ] Validate and desktop/mobile Browser Smoke must pass on the new head; inspect the new dedicated pond screenshot for clearly recognizable fish and natural teal water before closing visual acceptance.
 - [ ] Rod/line/bobber animation, bait/tool requirements, actual desktop fishing interaction, and physical Redmi 14 5G acceptance remain open.
 - [ ] Hero natural relaxed idle posture and convincing jump/landing remain open for manual visual acceptance.
+
+
+### Pond visual follow-up — commit `8e89336b5846cb5aa370c30140508319c149d065`
+- [x] Browser Smoke passed on prior visual-tuning head `e466e45021eab3e14540a0c77dc9e9e7305aff10` (run [41771738491](https://github.com/CryptoDilis/Climboria/actions/runs/41771738491)); Validate passed (run [41771738452](https://github.com/CryptoDilis/Climboria/actions/runs/41771738452)).
+- [x] Inspected new desktop pond screenshot artifact [13294969230](https://github.com/CryptoDilis/Climboria/actions/runs/41771738491): fish are visible but read as small stones; water remains gray/tan. Visual acceptance still open.
+- [x] Applied another candidate visual pass: saturated teal deep-water color, lower sky-reflection contribution, higher water opacity, high-contrast basic-material fish colors, and a slightly elongated body silhouette.
+- [ ] New head must pass Validate and Browser Smoke; inspect fresh pond screenshot before accepting. If fish are still not clearly fish-shaped, redesign mesh silhouette (distinct tail/fins) rather than only scaling it.
+- [ ] Physical Redmi 14 5G acceptance remains open.
