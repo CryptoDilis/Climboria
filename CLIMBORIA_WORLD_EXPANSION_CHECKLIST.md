@@ -731,3 +731,12 @@ For each meaningful implementation batch:
 - [ ] Validate and Browser Smoke must pass on this new head; inspect its fresh pond screenshot before accepting the fish silhouette.
 - [ ] Natural shoreline blending/water-disc edge remains open; do not mark pond visuals complete.
 - [ ] Rod/line/bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
+
+
+## Pond visual follow-up — 2026-11-04
+- Browser Smoke on head `9a80c95159d6f6e304832612240928f8ef6f675b`: PASS (run `41777448248`); Validate: PASS (run `41777448242`). Screenshot artifact `13297144385` reviewed.
+- Fresh Woodland Pond screenshot still shows fish as small oval marks and a conspicuous smooth oval shoreline. Mobile gameplay screenshot captured the sanctuary area, not the pond, so it does not establish mobile pond acceptance.
+- Candidate visual correction committed as `c5dc008298d98d7b8db2fd8343d1119c916ae7fd`: varied freshwater shoreline radius with low-amplitude noise and widened terrain transition; enlarged fish silhouettes and moved fish closer to the water surface so tails/fins are not obscured by the water shader.
+- [ ] Run Validate and Browser Smoke on the new head and inspect a fresh pond screenshot before judging the correction.
+- [ ] Confirm fish read as fish (body, tail and fins) at gameplay camera distance; confirm irregular blended shoreline without abrupt exposed-bank ellipse.
+- [ ] Capture pond-focused mobile screenshot / manually verify on Redmi 14 5G. Rod/line/bobber animation, bait/tools and physical device acceptance remain open.
