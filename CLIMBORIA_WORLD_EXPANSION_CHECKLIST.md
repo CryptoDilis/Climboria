@@ -716,3 +716,13 @@ For each meaningful implementation batch:
 - [x] Reworked treasure chest silhouette from a plain box into a faceted wooden chest with metal bands and a front clasp.
 - [ ] Browser Smoke run 41836584803 is still executing the Jarrell's Peak desktop/mobile gameplay tests; inspect its fresh screenshots after artifact upload.
 - [ ] Cave visual acceptance remains open until desktop and mobile captures show convincing natural rock forms, readable chamber depth, and an accessible passage. Physical Redmi 14 5G acceptance remains open.
+
+## 2026-11-04 — current cave smoke and character/wildlife audit
+
+- [x] Rechecked PR #209 validation run 41848541316: all validation and JavaScript syntax checks passed on head e8c80325e11536df50519c73ccf328ae5c3e2629.
+- [x] Confirmed the current Browser Smoke run 41848541197 entered the desktop/mobile Jarrell's Peak gameplay test after homepage CTA, DEX modal, and mobile navigation checks passed.
+- [ ] Browser Smoke run 41848541197 remains in progress at the gameplay smoke step; no artifact is available yet. Inspect fresh desktop/mobile cave entrance and chamber captures before visual acceptance.
+- [x] Source audit confirmed animal actors are intentionally disabled while replacement-quality wildlife assets are pending; do not count wildlife or snake AI as complete. Current diagnostics should continue reporting zero spawned animals/snakes until proper actors and behavior are restored.
+- [x] Source audit confirmed the procedural GLB fallback adds fixed upper-arm and forearm X offsets while idle; this may preserve or exaggerate an unnatural arm pose. The actual GLB bone axes/rest pose must be inspected before applying a shoulder correction; do not guess at a rotation axis.
+- [ ] Character idle remains open: inspect actual GLB rig pose, then tune a relaxed neutral stance and visually verify desktop plus Redmi 14 5G landscape captures.
+- [ ] Keep PR #209 cave visual acceptance, physical cave traversal, wildlife/snake AI, and all other master checklist items open until their own evidence passes.
