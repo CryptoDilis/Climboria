@@ -648,3 +648,56 @@ For each meaningful implementation batch:
 - [x] Set a closer 5.8-unit initial follow-camera distance on mobile while retaining the 7.2-unit desktop baseline; camera collision sweep remains enabled.
 - [ ] Validate, browser smoke, and fresh mobile screenshot must pass before merge.
 - [ ] Inspect that the closer camera does not clip into the hero, cave walls, sanctuary props, or mobile controls; physical Redmi 14 5G acceptance remains open.
+
+## 2026-11-04 — cave entrance arch and exterior-to-interior access repair (rebased onto current main)
+
+- [x] Replace the opaque black sphere and flat lintel at the cave mouth with an irregular stone arch and buttresses.
+- [x] Move the spike field away from the cave entrance into a dedicated north-maze trap chamber; update entrance-side collision so the approach remains traversable.
+- [x] Add deterministic exterior-to-interior traversal diagnostics and smoke assertions for the arch, black occluders, trap-room bounds, and passage.
+- [ ] Browser Smoke and Validate must pass on this rebased branch before merge.
+- [ ] Inspect fresh desktop/mobile screenshots and manually verify the cave entrance is visible, readable, and not blocked by invisible collision.
+- [ ] Redmi 14 5G physical acceptance remains open.
+- Code is rebased on main after the hero camera framing merge; it does not supersede the remaining cave maze, wildlife, and backend requirements.
+
+- [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
+- [ ] Re-run Browser Smoke and Validate with cave-specific captures; inspect both cave screenshots before merge.
+
+
+## 2026-11-04 — cave entrance screenshot obstruction diagnosis and exterior capture correction
+
+- [x] Inspected the PR #207 desktop and mobile cave-mouth screenshots: both captures placed the hero directly beneath a massive near-mouth rock overhang; the opening was not readable in either frame.
+- [x] Traced the screenshot setup to `positionAtCaveEntranceForSmoke()`, which placed the player at local z=-14 without explicitly resetting the camera yaw/pitch. This was a poor exterior-approach visual sample and left the camera beneath nearby rock geometry.
+- [x] Changed the deterministic capture to local z=-34, explicitly face the hero toward the cave, and reset the follow camera behind the hero at a stable pitch. Updated desktop/mobile smoke assertions to require the new exterior capture coordinate.
+- [ ] Re-run Validate and Browser Smoke on this commit; inspect fresh desktop and mobile cave-mouth screenshots. This is a capture-position correction, not proof that cave geometry or player approach is visually accepted.
+- [ ] If the new approach view still shows obstructing rock or an unclear opening, repair the actual nearby rock placement/scale and rerun visual review.
+- [ ] Keep cave interior readability, traversal on physical Redmi 14 5G, maze/trap navigation and manual acceptance open.
+
+
+## 2026-11-04 — cave entrance visual review: orientation defect found; correction queued
+
+- [x] Inspected fresh PR #207 Browser Smoke desktop and mobile cave-mouth captures from run 41800271488 (artifact 13307926491).
+- [x] Confirmed both screenshots still show a close solid brown rock/terrain face with no readable cave opening; the previous local z=-34 position change alone did not fix the visual result. Cave entrance is NOT visually accepted.
+- [x] Diagnosed the capture orientation: the exterior approach is along local -Z toward the opening at local +Z, but the deterministic hero/camera yaw remained 0, placing the follow camera on the wrong side of the hero.
+- [x] Updated the deterministic capture to face the hero and follow camera toward local +Z (yaw PI); strengthened desktop/mobile smoke assertions to check both yaw values.
+- [ ] Re-run Validate and Browser Smoke on the orientation correction; inspect the new desktop and mobile screenshots. Do not mark cave mouth fixed until the actual opening is clearly visible and approachable.
+- [ ] If the new captures still show a rock face, inspect cave group orientation, terrain/rock occlusion and camera collision; repair the world geometry rather than moving only the screenshot camera.
+- [ ] Manual cave entrance/interior traversal and physical Redmi 14 5G acceptance remain open.
+
+
+## 2026-11-04 — cave mouth screenshot review: move flank formations off the approach axis
+
+- [x] Inspected the completed PR #207 Browser Smoke artifact 13309325491 on desktop and mobile after the yaw correction; both screenshots still showed a large rock face dominating the approach and no clearly readable entrance.
+- [x] Root-cause geometry review found oversized surrounding formations and side buttresses close to the approach corridor. Moved the large surrounding formations laterally/rearward and reduced the two near-mouth buttresses while preserving the irregular arch and cave interior.
+- [ ] Re-run Validate and Browser Smoke on commit 4f6d011; inspect the new desktop and mobile cave-mouth screenshots. The geometry adjustment is not visual acceptance.
+- [ ] If the opening remains obscured, inspect terrain elevation, cave group/world rotation, and follow-camera collision against the live scene; do not keep changing only the deterministic screenshot pose.
+- [ ] Manually verify walk-in access, interior lighting/readability, maze/trap traversal and Redmi 14 5G performance. Cave entrance remains open until these checks pass.
+
+
+### Latest PR #207 cave-mouth screenshot review — 2026-11-04
+- [x] Validate passed on head `a00238e07757d32f5744baa87e9295f1597677e4` (run [41804437229](https://github.com/CryptoDilis/Climboria/actions/runs/41804437229)).
+- [x] Desktop + mobile Browser Smoke passed (run [41804437225](https://github.com/CryptoDilis/Climboria/actions/runs/41804437225)); fresh captures are in artifact [13309776303](https://github.com/CryptoDilis/Climboria/actions/runs/41804437225/artifacts/13309776303).
+- [x] Inspected fresh desktop and mobile cave-entrance screenshots. Both still show a massive brown terrain/rock face filling the approach view; the arch/opening is not readable. Visual acceptance FAILED despite the traversal assertion and green CI.
+- [x] Confirmed the current smoke capture is positioned at cave-local (0,-34), facing local +Z, while the cave POI is on a steep mountain region. The cave POI flat-ground radius is only 34 units and the terrain blend extends to 57.8 units; the exterior camera view still intersects/looks into the nearby mountain slope.
+- [ ] Root-cause repair required: create a properly carved, walkable exterior approach/apron and a clearly visible cave mouth in the terrain/rock geometry; ensure nearby mountain terrain does not occlude the opening from desktop/mobile approach angles. Do not solve by changing screenshot camera position alone.
+- [ ] Re-run Validate + Browser Smoke and inspect fresh screenshots after the actual terrain/entrance geometry repair.
+- [ ] Physical Redmi 14 5G entrance/interior traversal, cave interior readability, maze/trap navigation and manual acceptance remain open.
