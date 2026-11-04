@@ -1406,7 +1406,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   // its distinct tail/fins and clear body profile, not from protruding above the waterline.
   g.scale.setScalar(kind==='ocean'?1.25:1.5);
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.05+rand()*.06,surfaceClearance:.5,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.3+rand()*.04,surfaceClearance:.6,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
