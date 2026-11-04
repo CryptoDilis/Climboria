@@ -755,8 +755,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   [24,1.45,16.45,1.7,1.45,1.1],[29,2.5,16.45,1.8,1.55,1.1],[35,1.5,16.45,1.8,1.45,1.1],[39,2.2,16.5,1.4,1.5,1.0]
  ];
  wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(new T3.IcosahedronGeometry(1,1),i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx,sy,sz);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
+  const rock=mk(new T3.IcosahedronGeometry(1,2),i%3===0?liningDark:liningMat,x,y,z,g);
+  sc(rock,sx*.72,sy*.72,sz*.72);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
  });
  // Broken ceiling clusters leave an irregular silhouette instead of broad block slabs.
  [[25,7.0,19,2.4,.8,2.0],[31,7.35,24,2.8,.72,2.2],[36,7.0,30,2.2,.82,2.0],[27,7.25,31,2.1,.7,1.9],[35,7.15,19,2.5,.75,2.0]].forEach(([x,y,z,sx,sy,sz],i)=>{
