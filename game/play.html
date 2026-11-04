@@ -734,22 +734,21 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // the underlying swept wall colliders remain authoritative for traversal.
  const liningMat=M('#514b43'),liningDark=M('#3d3935');
  const wallLining=[
-  [22.5,1.9,18,2.8,2.0,2.0],[22.6,4.3,23,2.5,2.2,2.4],[22.5,2.4,29,2.7,2.1,2.1],
-  [39.5,2.2,18,2.6,2.1,2.2],[39.4,4.5,24,2.8,2.0,2.4],[39.5,2.1,31,2.5,2.0,2.1],
-  [25,2.0,33.5,2.8,2.0,1.5],[30,4.1,33.5,3.2,2.1,1.5],[36,2.2,33.5,2.7,2.0,1.5],
-  [25,2.1,16.5,2.7,1.8,1.4],[35,2.4,16.5,2.8,2.0,1.4]
+  [22.35,1.35,18,1.8,1.55,1.65],[22.55,3.15,21,1.65,1.9,1.8],[22.4,1.7,25,1.9,1.55,1.7],[22.5,2.5,30,1.8,1.65,1.8],
+  [39.55,1.5,18,1.8,1.6,1.7],[39.4,3.3,22,1.7,1.8,1.8],[39.55,1.65,27,1.8,1.6,1.8],[39.45,2.35,32,1.7,1.7,1.55],
+  [24,1.45,33.55,1.8,1.5,1.2],[28,2.65,33.55,1.9,1.65,1.2],[33,1.5,33.55,1.7,1.5,1.2],[37,2.25,33.5,1.7,1.6,1.2],
+  [24,1.45,16.45,1.7,1.45,1.1],[29,2.5,16.45,1.8,1.55,1.1],[35,1.5,16.45,1.8,1.45,1.1],[39,2.2,16.5,1.4,1.5,1.0]
  ];
  wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(DOD,i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx,sy,sz);rock.rotation.set((i%2?-.16:.12),i*1.37,(i%3-.9)*.12);rock.castShadow=true;rock.receiveShadow=true;
+  const rock=mk(new T3.IcosahedronGeometry(1,1),i%3===0?liningDark:liningMat,x,y,z,g);
+  sc(rock,sx,sy,sz);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
  });
- // Low irregular roof slabs and a few short stalactites create a believable
- // enclosed chamber without lowering the walking clearance below 4.4 metres.
- [[25,7.2,19],[31,7.6,24],[36,7.1,30],[27,7.4,31],[35,7.5,19]].forEach(([x,y,z],i)=>{
-  const rock=mk(DOD,liningDark,x,y,z,g);sc(rock,4.4,1.15,3.7);rock.rotation.set(.08,i*1.1,.06);rock.castShadow=true;
+ // Broken ceiling clusters leave an irregular silhouette instead of broad block slabs.
+ [[25,7.0,19,2.4,.8,2.0],[31,7.35,24,2.8,.72,2.2],[36,7.0,30,2.2,.82,2.0],[27,7.25,31,2.1,.7,1.9],[35,7.15,19,2.5,.75,2.0]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  const rock=mk(new T3.IcosahedronGeometry(1,1),liningDark,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.16,i*1.1,.13);rock.castShadow=true;
  });
  [[27,5.9,22],[35,6.0,28],[24,5.8,30],[37,5.9,20]].forEach(([x,y,z],i)=>{
-  const fang=mk(DOD,liningMat,x,y,z,g);sc(fang,.42,1.35,.48);fang.rotation.set(.12,i*.8,.08);fang.castShadow=true;
+  const fang=mk(new T3.ConeGeometry(.48,1.5,7),liningMat,x,y,z,g);fang.rotation.set(Math.PI,.12+i*.8,.08);fang.castShadow=true;
  });
  // Short north branch and separate mineral annex; keep the doorway six metres wide.
  caveWall(27,34,27,40,'annex-passage-west');
@@ -1489,7 +1488,7 @@ function chestRespawnDelay(c){
  if(c.kind==='cave'||c.kind==='geode')return 120+Math.random()*120;
  return 90+Math.random()*60;
 }
-function chest(kind,fixed,anchor,rad){const g=new T3.Group();sc(mk(BOX,M('#6b4a2e'),0,.4,0,g),1.4,.8,.9);sc(mk(BOX,M('#7a5a38'),0,.95,0,g),1.4,.3,.9);sc(mk(BOX,M('#d8a83a'),0,.6,.46,g),.2,.9,.05);sc(mk(SPH,M('#ffd27a',1),0,1.8,0,g),.12,.12,.12);scene.add(g);
+function chest(kind,fixed,anchor,rad){const g=new T3.Group();const wood=M('#68452b'),lid=M('#805936'),iron=M('#b58a43');sc(mk(DOD,wood,0,.42,0,g),.82,.43,.58);sc(mk(DOD,lid,0,.79,-.015,g),.84,.34,.6);[-.38,0,.38].forEach((x)=>{const band=mk(BOX,iron,x,.58,0,g);sc(band,.09,.72,1.03)});sc(mk(BOX,iron,0,.68,.57,g),.24,.28,.08);sc(mk(SPH,M('#ffd27a',1),0,1.12,.02,g),.1,.1,.1);scene.add(g);
  const c={g,kind,fixed,anchor,rad,open:true,t:0,x:0,z:0,spawnSlot:null};chests.push(c);place(c)}
 function place(c){
  let x,z;
