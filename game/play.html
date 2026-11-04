@@ -677,7 +677,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Compact side shoulders support a continuous crown; avoid isolated pillars and floating teeth.
  const archMat=M('#514b43'),archRockMat=M('#45433e');
  const portalRock=(x,y,z,sx,sy,sz,rot=0)=>{
-  const rock=mk(SPH,archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
+  const rock=mk(DOD,archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
   rock.rotation.set(.08*Math.sin(rot*1.7),rot,.06*Math.cos(rot*1.3));
   rock.castShadow=true;return rock;
  };
@@ -1672,7 +1672,7 @@ function geodeChestLifecycleAudit(){
 function positionAtCaveEntranceForSmoke(){
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
- const local={x:0,z:-34},world=l2w(caveG,local.x,local.z);
+ const local={x:0,z:-20},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
  // Local +Z points through the cave mouth. Convert that direction into world yaw;
