@@ -220,8 +220,9 @@ const WATER_BODIES=[
  {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
  {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
 ];
-const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.075+b.x*.013,z*.075-b.z*.017,3)-.5;return b.radius+noise*12+Math.sin(a*3+b.x*.01)*2.8+Math.sin(a*7-b.z*.008)*1.7};
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-6,r+8,d))},0);
+const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.028+b.x*.013,z*.028-b.z*.017,3)-.5;return b.radius+noise*7+Math.sin(a*3+b.x*.01)*1.8+Math.sin(a*7-b.z*.008)*1.1};
+// Ease inland pond depressions over a broad shelf: the old 14-unit fall created a sharp, faceted bowl wall on the 5-unit terrain grid.
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-18,r+14,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -241,7 +242,7 @@ function rawH(x,z){
  const W=13+7*Math.sin(z*.003),rc=(1-ss(W,W*3.2,rv))*(1-mN)*(1-sea);
  h=mix(h,-3.2,Math.pow(rc,.8));
  const lake=freshwaterMask(x,z);
- // Keep the terrain depression aligned with the rendered basin; only a 20-unit shelf eases the shoreline.
+ // The broad freshwater mask creates a gradual 32-unit shoreline shelf instead of a steep cut wall.
  h=mix(h,-3.2,Math.pow(lake,.9));
  return mix(h,-26,sea);
 }
