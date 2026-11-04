@@ -672,7 +672,7 @@ try {
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+14)>.01) errors.push('Mobile cave entrance visual position could not be prepared: '+JSON.stringify(mobileCaveView));
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+28)>.01) errors.push('Mobile cave entrance visual position could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
   console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
