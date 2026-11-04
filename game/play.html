@@ -652,7 +652,9 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   caveGems.push({cluster,baseY:y,phase:i*.83});
   if(i%3===0)glow(gemPalette[color],1.05,19,x,y,z,g);
  });
- [[-22,12,-20,20],[20,10,-22,19],[0,16,-34,26],[-30,6,-6,10],[30,6,-6,10],[-12,8,-26,14],[14,8,-28,15]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
+ // Keep the cave mouth unobstructed: the former central 26m dodecahedron
+ // overlapped the entrance approach and filled the camera with solid rock.
+ [[-22,12,-20,16],[20,10,-22,16],[-30,6,-6,8],[30,6,-6,8],[-12,8,-26,10],[14,8,-28,10]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
  // Irregular stone arch replaces the opaque black sphere and flat lintel.
  const archMat=M('#514b43');
  [[-10,5.5,-2,5.2,6.2,5.2],[-8.2,9.1,-2,4.1,4.2,4.4],[-5.1,11.1,-2,3.8,3.4,4.1],[-1.8,12,-2,3.5,3.1,4.2],[2,11.8,-2,3.6,3.2,4.1],[5.5,10.7,-2,3.9,3.8,4.3],[8.7,8.4,-2,4.2,4.8,4.8],[10.5,5.1,-2,4.8,6,5.1]].forEach(([x,y,z,sx,sy,sz],i)=>{
