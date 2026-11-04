@@ -654,10 +654,11 @@ For each meaningful implementation batch:
 - [x] Replace the opaque black sphere and flat lintel at the cave mouth with an irregular stone arch and buttresses.
 - [x] Move the spike field away from the cave entrance into a dedicated north-maze trap chamber; update entrance-side collision so the approach remains traversable.
 - [x] Add deterministic exterior-to-interior traversal diagnostics and smoke assertions for the arch, black occluders, trap-room bounds, and passage.
-- [ ] Browser Smoke and Validate must pass on this rebased branch before merge.
+- [x] Browser Smoke `41758862835` and Validate `41758862527` passed on commit `dea2157d916209006bff25c5841ee3d00286383e`.
 - [ ] Inspect fresh desktop/mobile screenshots and manually verify the cave entrance is visible, readable, and not blocked by invisible collision.
 - [ ] Redmi 14 5G physical acceptance remains open.
 - Code is rebased on main after the hero camera framing merge; it does not supersede the remaining cave maze, wildlife, and backend requirements.
 
 - [x] Add dedicated deterministic cave-mouth camera positioning and separate desktop/mobile cave-entrance screenshots to Browser Smoke evidence.
-- [ ] Re-run Browser Smoke and Validate with cave-specific captures; inspect both cave screenshots before merge.
+- [x] Re-ran Browser Smoke and Validate with cave-specific desktop/mobile captures; both workflows passed and six screenshot files were uploaded in artifact `13290405241`.
+- [ ] Visual acceptance remains open after screenshot inspection: the entrance is no longer black/occluded and the traversal smoke passes, but the arch still reads as oversized angular low-poly rock and the approach/interior composition needs further art polish. Physical Redmi 14 5G review remains open.
