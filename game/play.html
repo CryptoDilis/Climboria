@@ -657,7 +657,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Keep large formations to the sides/rear of the approach; the central sightline from local -Z to the arch at z=-2 must stay open.
  [[-30,7,-18,8],[30,7,-18,8],[-34,8,5,9],[34,8,5,9],[-25,5,-38,7],[25,5,-38,7]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
  // Broad cave portal: two side piers with a light broken-stone crown.
- // Keep the central sightline clear; small crown stones replace the former overlapping center blocks.
+ // Keep the central sightline clear; small crown stones replace the former overlapping center blocks; no central keystone.
  const archMat=M('#514b43');
  [[-9,4.8,-2,3.4,9.2,4.2],[9,4.8,-2,3.4,9.2,4.2],
   [-6,10.2,-2,1.05,.85,2.2],[-3.6,10.8,-2,1.05,.75,2.1],[-1.2,11.1,-2,.9,.7,2],[1.2,11.1,-2,.9,.7,2],[3.6,10.8,-2,1.05,.75,2.1],[6,10.2,-2,1.05,.85,2.2]].forEach(([x,y,z,sx,sy,sz],i)=>{
