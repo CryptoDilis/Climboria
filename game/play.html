@@ -1384,7 +1384,7 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 // the surface. Keep counts modest on touch devices and share geometry/materials.
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
-const fishBodyGeo=new T3.SphereGeometry(1,20,14),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.58,.48);fishTailShape.lineTo(-.34,0);fishTailShape.lineTo(-.58,-.48);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinGeo=new T3.ConeGeometry(.16,.34,5);
+const fishBodyGeo=new T3.LatheGeometry([new T3.Vector2(0,-1.12),new T3.Vector2(.08,-1.02),new T3.Vector2(.24,-.84),new T3.Vector2(.39,-.5),new T3.Vector2(.46,-.12),new T3.Vector2(.43,.32),new T3.Vector2(.32,.68),new T3.Vector2(.16,.94),new T3.Vector2(.05,1.08),new T3.Vector2(0,1.12)],20),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.58,.48);fishTailShape.lineTo(-.34,0);fishTailShape.lineTo(-.58,-.48);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinGeo=new T3.ConeGeometry(.16,.34,5);
 const fishMats=[M('#ffc34d',1),M('#45d5ef',1),M('#f2f5f7',1),M('#ff8752',1)];
 // Draw submerged fish before the transparent water surface (water.renderOrder=2).
 // The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
@@ -1395,7 +1395,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  for(let i=0;i<count;i++){
   const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
   // Fish face local +Z: the tail sits behind the body, not off to its side.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.52,.31,1.12);
+  const body=mk(fishBodyGeo,mat,0,0,0,g);body.rotation.x=Math.PI/2;sc(body,1.02,1,1);
   const tail=mk(fishTailGeo,mat,0,0,-1.02,g);tail.material.side=T3.DoubleSide;sc(tail,1.15,1.05,1);
   const dorsal=mk(fishFinGeo,mat,0,.23,-.04,g);dorsal.rotation.x=Math.PI/2;sc(dorsal,.68,.78,.52);
   for(const side of [-1,1]){
