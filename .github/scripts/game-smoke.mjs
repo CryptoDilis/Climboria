@@ -451,6 +451,11 @@ try {
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+14)>.01) errors.push('Desktop cave entrance visual position could not be prepared: '+JSON.stringify(desktopCaveView));
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
+  console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
 
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
@@ -666,6 +671,11 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+14)>.01) errors.push('Mobile cave entrance visual position could not be prepared: '+JSON.stringify(mobileCaveView));
+  await mobile.waitForTimeout(1200);
+  await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
+  console.log('Mobile cave entrance visual capture:',JSON.stringify(mobileCaveView));
   console.log('Jarrell mobile diagnostics:', JSON.stringify(mobileState));
 
   if (errors.length) throw new Error(errors.join('\n'));
