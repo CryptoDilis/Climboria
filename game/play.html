@@ -691,7 +691,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   portalRock(x,y,-2.05,sx,sy,2.75,(i-3)*.11);
  });
  // A deep shadowed inner throat makes the opening read as a tunnel, not a flat wall.
- const caveMouth=new T3.Mesh(new T3.PlaneGeometry(12.2,7.2),new T3.MeshStandardMaterial({color:L('#080b0d'),emissive:L('#11191d'),emissiveIntensity:.24,roughness:1,side:T3.DoubleSide}));
+ const caveMouth=new T3.Mesh(new T3.PlaneGeometry(12.2,7.2),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.48,roughness:1,side:T3.DoubleSide}));
  caveMouth.position.set(0,3.9,3.9);g.add(caveMouth);
  const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,12.8,.24,5.8,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
@@ -709,10 +709,26 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Every wall has a matching swept player collider; the doorway remains open at the west end.
  const caveWallMat=M('#514b43'),caveWallHeight=7,caveWallThickness=1.1;
  function caveWall(x1,z1,x2,z2,label){
-  const midX=(x1+x2)/2,midZ=(z1+z2)/2,len=Math.hypot(x2-x1,z2-z1);
-  const mesh=mk(BOX,caveWallMat,midX,caveWallHeight/2,midZ,g);
-  sc(mesh,len,caveWallHeight,caveWallThickness);
-  mesh.rotation.y=-Math.atan2(z2-z1,x2-x1);
+  const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dz,dx);
+  // Build the visible wall from tightly overlapping irregular stone masses rather
+  // than a single flat box. Keep the original swept segment as the authoritative
+  // collision boundary so every passage remains sealed and traversable as designed.
+  const stoneGeo=new T3.IcosahedronGeometry(1,1);
+  const seedBase=Array.from(label).reduce((n,ch)=>((n*33)^ch.charCodeAt(0))>>>0,17);
+  const randWall=rng(seedBase);
+  for(let along=-.35;along<=len+.35;along+=1.12){
+   const t=Math.max(0,Math.min(1,along/len)),cx=x1+dx*t,cz=z1+dz*t;
+   for(let row=0;row<4;row++){
+    const stagger=row%2?.48:0;
+    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.22;
+    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.22;
+    const y=.85+row*1.72+(randWall()-.5)*.32;
+    const stone=mk(stoneGeo,randWall()>.72?liningDark:caveWallMat,x,y,z,g);
+    sc(stone,1.12+randWall()*.32,.98+randWall()*.42,.9+randWall()*.48);
+    stone.rotation.set((randWall()-.5)*.48,angle+(randWall()-.5)*.55,(randWall()-.5)*.42);
+    stone.castShadow=true;stone.receiveShadow=true;
+   }
+  }
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
   caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
  }
