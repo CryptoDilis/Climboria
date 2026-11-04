@@ -220,7 +220,10 @@ const WATER_BODIES=[
  {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
  {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
 ];
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>Math.max(m,1-ss(b.radius*.62,b.radius,Math.hypot(x-b.x,z-b.z))),0);
+const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.012+b.x*.013,z*.012-b.z*.017,3)-.5;return b.radius+noise*6.2+Math.sin(a*3+b.x*.01)*2.1+Math.sin(a*7-b.z*.008)*1.25+Math.sin(a*11+b.x*.021)*.65+Math.sin(a*17-b.z*.019)*.35};
+// Ease inland pond depressions over a broad shelf: the old 14-unit fall created a sharp, faceted bowl wall on the 5-unit terrain grid.
+// Keep inland basin shelves compact: a 16–20m transition avoids the broad exposed tan apron.
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-9,r+11,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -240,7 +243,8 @@ function rawH(x,z){
  const W=13+7*Math.sin(z*.003),rc=(1-ss(W,W*3.2,rv))*(1-mN)*(1-sea);
  h=mix(h,-3.2,Math.pow(rc,.8));
  const lake=freshwaterMask(x,z);
- h=mix(h,-3.2,Math.pow(lake,.8));
+ // The broad freshwater mask creates a gradual 32-unit shoreline shelf instead of a steep cut wall.
+ h=mix(h,-3.2,Math.pow(lake,.9));
  return mix(h,-26,sea);
 }
 ['sanct','park','camp','cave'].forEach(k=>{const p=POI[k];p.h=Math.max(rawH(p.x,p.z),k=='cave'?-99:4)});
@@ -278,7 +282,7 @@ function waterBodyAt(x,z){
  // Named freshwater basins take precedence where a basin intersects the river channel.
  for(const body of WATER_BODIES){
   if(body.kind!=='freshwater')continue;
-  if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
+  if(Math.hypot(x-body.x,z-body.z)<freshwaterRadiusAt(body,x,z)&&heightAt(x,z)<-.2)return body;
  }
  const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
  const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
@@ -403,27 +407,27 @@ gl_FragColor=vec4(c,1.);
 }`}));
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
-const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
+const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#006b80')}}]);
 const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
 #include <fog_pars_vertex>
 void main(){vec4 wp=modelMatrix*vec4(position,1.);
-wp.y+=.3*sin(wp.x*.08+uT*1.2)+.2*sin(wp.z*.11-uT*1.5)+.1*sin((wp.x+wp.z)*.2+uT*2.2);
+wp.y+=.46*sin(wp.x*.075+uT*1.15)+.28*sin(wp.z*.105-uT*1.35)+.16*sin((wp.x+wp.z)*.19+uT*2.)+.075*sin((wp.x-wp.z)*.31-uT*2.6);
 vW=wp.xyz;vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
 #include <fog_vertex>
 }`,
 fragmentShader:`uniform float uT;uniform vec3 uSun,uSunC,uTop,uHor,uDeep;varying vec3 vW;
 #include <fog_pars_fragment>
-void main(){float dx=.3*.08*cos(vW.x*.08+uT*1.2)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.x*.5+uT*2.)*.5;
-float dz=.2*.11*cos(vW.z*.11-uT*1.5)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.z*.45-uT*1.7)*.5;
+void main(){float dx=.46*.075*cos(vW.x*.075+uT*1.15)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)+.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
+float dz=.28*.105*cos(vW.z*.105-uT*1.35)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)-.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
 vec3 n=normalize(vec3(-dx*3.,1.,-dz*3.));vec3 v=normalize(cameraPosition-vW);
 float f=pow(1.-max(dot(n,v),0.),3.);vec3 r=reflect(-v,n);
 vec3 refl=mix(uHor,uTop,clamp(r.y,0.,1.));
-vec3 c=mix(uDeep,refl,.2+.8*f);
+vec3 c=mix(uDeep,refl,.025+.11*f);
 c+=uSunC*pow(max(dot(reflect(-uSun,n),v),0.),140.)*2.2;
-gl_FragColor=vec4(c,.78+.2*f);
+gl_FragColor=vec4(c,.70);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 #include <fog_fragment>
@@ -445,13 +449,17 @@ function colorAt(x,z,h,ny){
  if(rw>0){c=mc(c,mc(RA,RB,ss(.3,.7,t)),rw*.95);if(ny<.97)c=mc(c,RE,rw)}
  const rk=Math.max(1-ss(.62,.86,ny),ss(90,170,h+t*30));if(rk>0)c=mc(c,mc(RK1,RK2,t2),rk);
  const sn=ss(240,290,h+t*25)*ss(.5,.8,ny);if(sn>0)c=mc(c,SN,sn);
- const bch=1-ss(.3,2.4,h);
- // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
+ // Low-elevation sand belongs to the coast, not the floor and walls of every inland pond.
+ const coast=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
+ const bch=(1-ss(.3,2.4,h))*coast;
+ // Keep freshwater sand close to the waterline; do not paint the submerged basin floor.
+ const shore=ss(-.8,-.1,h)*(1-ss(.55,1.25,h));
  let bank=0;
- for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-body.radius);bank=Math.max(bank,1-ss(0,11,edge))}
+ for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,4,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
- bank=Math.max(bank,1-ss(2,20,riverEdge));
- if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.9,bank*ss(-.5,4.5,h)*.78));
+ bank=Math.max(bank,1-ss(2,12,riverEdge));
+ const sand=Math.max(bch*.72,shore*.36,bank*ss(-.2,1.2,h)*.32);
+ if(sand>0)c=mc(c,SAND,sand);
  // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
  const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
  return c;
@@ -1489,6 +1497,53 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
  sc(mk(BOX,M('#b88c67'),0,2.1,0,sign),1.3,.8,.14);
  FAC.push({x:bankX,z:bankZ,type:'fish',label:body.name+' fishing spot',waterBodyId:body.id});
 }
+// Lightweight visible fish schools: simple low-poly fish follow looping paths just below
+// the surface. Keep counts modest on touch devices and share geometry/materials.
+const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
+const aquaticFish=[];
+const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
+const fishMats=[M('#d49a45',1),M('#65a7a0',1),M('#d7d9c9',1),M('#d47b4d',1)];
+// Draw submerged fish before the transparent water surface (water.renderOrder=2).
+// The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
+for(const material of fishMats){material.transparent=true;material.opacity=.9;material.depthWrite=false}
+const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.95;fishEyeMat.depthWrite=false;
+function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
+ const rand=rng(Math.floor(cx*13+cz*17+seed*101));
+ for(let i=0;i<count;i++){
+  const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
+  // Side-on 3D fish silhouette: ellipsoid body, vertical fork tail, dorsal and pectoral fins.
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.72,.30,.25);
+  const tail=mk(fishTailGeo,mat,-.66,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.82,.82,.82);
+  const dorsal=mk(fishFinGeo,mat,-.08,.24,0,g);dorsal.material.side=T3.DoubleSide;sc(dorsal,.9,.78,.72);
+  for(const side of [-1,1]){
+   const fin=mk(fishFinGeo,mat,.12,-.08,side*.18,g);fin.material.side=T3.DoubleSide;fin.rotation.z=side*.9;sc(fin,.58,.56,.32);
+   const eye=mk(SPH,fishEyeMat,.34,.075,side*.205,g);sc(eye,.052,.052,.035);
+  }
+  // Keep fish submerged while giving the body/tail a clear profile through the water.
+  g.scale.set(kind==='ocean'?1.45:1.55,kind==='ocean'?1.45:1.55,kind==='ocean'?1.45:1.55);
+  g.userData.tail=tail;
+  aquaticLifeGroup.add(g);
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.45+rand()*.12,surfaceClearance:.3,kind});
+ }
+}
+for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
+ addFishSchool(body.x,body.z,MOB?4:7,body.radius*.36,'freshwater',aquaticFish.length+1);
+}
+for(let i=0;i<coastalDockSpots.length;i+=2){
+ const dock=coastalDockSpots[i];
+ addFishSchool(dock.waterX-10,dock.z,MOB?3:5,5,'ocean',i+11);
+}
+function updateAquaticLife(time){
+ for(const fish of aquaticFish){
+  const a=time*fish.speed+fish.phase;
+  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
+  fish.g.rotation.y=Math.atan2(-Math.cos(a*.83)*.83*fish.orbit*.65,-Math.sin(a)*fish.orbit);
+  if(fish.g.userData.tail)fish.g.userData.tail.rotation.y=Math.PI/2+Math.sin(a*2.1)*.24;
+ }
+}
+function aquaticLifeAudit(){
+ return {fishCount:aquaticFish.length,schoolCount:new Set(aquaticFish.map(f=>f.cx+','+f.cz)).size,belowSurface:aquaticFish.every(f=>f.g.position.y+f.surfaceClearance<-.5),minimumSurfaceClearance:Math.min(...aquaticFish.map(f=>-(f.g.position.y+f.surfaceClearance))),sharedGeometry:aquaticFish.every(f=>f.g.children.some(c=>c.geometry===fishBodyGeo)),distinctSilhouette:aquaticFish.every(f=>f.g.children.length>=6),mobile:MOB};
+}
 /* Treasure chest registry: 84 world + 15 cave + 1 summit = exactly 100.
    Client-side timers are a playable prototype only; shared summit claims require a server ledger. */
 const steep=(x,z)=>Math.max(Math.abs(heightAt(x+3,z)-heightAt(x-3,z)),Math.abs(heightAt(x,z+3)-heightAt(x,z-3)))/6>.5;
@@ -1577,10 +1632,16 @@ function chestDistributionAudit(){
   respawnSamples:{world:chestRespawnDelay({kind:'remote'}),cave:chestRespawnDelay({kind:'cave'}),summit:chestRespawnDelay({kind:'summit'})},
   rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
+function cancelFishing(message='Fishing cancelled.'){P.fish=0;P.fishPhase=null;P.fishElapsed=0;P.fishSource=null;P.fishStartX=null;P.fishStartZ=null;if(message)toast(message)}
+function finishFishing(){
+ const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];
+ const item=table[Math.floor(Math.random()*table.length)],waterBodyId=P.fishSource||'open_sea';
+ addInventoryItem(item,1);toast('Caught: '+item);emit('fish',{item,waterBodyId});cancelFishing(null);
+}
 function interact(){if(P.mode!='walk')return;
+ if(P.fish>0){if(P.fishPhase==='bite'&&P.fishElapsed<=P.fishBiteAt+P.fishBiteWindow){finishFishing()}else if(P.fishPhase==='waiting'){toast('A fish may bite soon · stay ready')}else{cancelFishing('Too late · the fish got away')}return}
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=rollChestReward(c);addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
- for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
-P.fish=0;
+ for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){P.fish=1;P.fishPhase='waiting';P.fishElapsed=0;P.fishBiteAt=1.8+Math.random()*1.2;P.fishBiteWindow=3;P.fishSource=f.waterBodyId||'open_sea';P.fishStartX=P.x;P.fishStartZ=P.z;toast('Line cast at '+f.label+' · wait for a bite, then press E')}else{toast(f.label);emit(f.type,{})}return}}
 /* weather: clear / rain / thunderstorm */
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
@@ -1604,7 +1665,7 @@ function gameTick(dt,cp){
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  updateSummitChestStatus();
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
+ if(P.fish>0){if(!live||Math.hypot(P.x-(P.fishStartX??P.x),P.z-(P.fishStartZ??P.z))>2.5){cancelFishing('Fishing cancelled · you moved away')}else{P.fishElapsed=(P.fishElapsed||0)+dt;if(P.fishPhase==='waiting'&&P.fishElapsed>=P.fishBiteAt){P.fishPhase='bite';toast('BITE! Press E to reel now')}else if(P.fishPhase==='bite'&&P.fishElapsed>P.fishBiteAt+P.fishBiteWindow){cancelFishing('Missed the bite · cast again')}}}
  hpEl.textContent='';
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
@@ -1780,13 +1841,14 @@ function caveEntranceTraversalAudit(){
   return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,aquaticLifeAudit,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
 function update(dt){
  Tm+=dt;
+ updateAquaticLife(Tm);
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
