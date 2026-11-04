@@ -220,7 +220,8 @@ const WATER_BODIES=[
  {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
  {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
 ];
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>Math.max(m,1-ss(b.radius*.66,b.radius*1.28,Math.hypot(x-b.x,z-b.z))),0);
+const freshwaterRadiusAt=(b,x,z)=>b.radius+(fbm(x*.045+ b.x*.013,z*.045-b.z*.017,2)-.5)*7+Math.sin(Math.atan2(z-b.z,x-b.x)*5+b.x*.01)*1.5;
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r*.66,r*1.62,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -262,7 +263,7 @@ function waterBodyAt(x,z){
  // Named freshwater basins take precedence where a basin intersects the river channel.
  for(const body of WATER_BODIES){
   if(body.kind!=='freshwater')continue;
-  if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
+  if(Math.hypot(x-body.x,z-body.z)<freshwaterRadiusAt(body,x,z)&&heightAt(x,z)<-.2)return body;
  }
  const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
  const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
@@ -432,7 +433,7 @@ function colorAt(x,z,h,ny){
  const bch=1-ss(.3,2.4,h);
  // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
  let bank=0;
- for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-body.radius);bank=Math.max(bank,1-ss(0,11,edge))}
+ for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,14,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
  bank=Math.max(bank,1-ss(2,20,riverEdge));
  if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.9,bank*ss(-.5,4.5,h)*.78));
@@ -1394,9 +1395,9 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
    const eye=mk(SPH,fishEyeMat,side*.27,.105,.55,g);sc(eye,.055,.055,.055);
   }
   // Enlarge the complete silhouette so the body, tail and fins read as fish at gameplay camera distance.
-  g.scale.setScalar(kind==='ocean'?1.75:2.05);
+  g.scale.setScalar(kind==='ocean'?2.8:3.5);
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?1.1+rand()*1.8:.22+rand()*.62,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:kind==='ocean'?.02+rand()*.08:-.12+rand()*.12,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
@@ -1409,7 +1410,7 @@ for(let i=0;i<coastalDockSpots.length;i+=2){
 function updateAquaticLife(time){
  for(const fish of aquaticFish){
   const a=time*fish.speed+fish.phase;
-  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,-fish.depth+.12*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
+  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.08*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
   fish.g.rotation.y=Math.atan2(Math.cos(a*.83)*fish.orbit*.65,-Math.sin(a)*fish.orbit);
  }
 }
