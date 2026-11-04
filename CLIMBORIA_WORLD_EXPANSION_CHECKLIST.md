@@ -875,3 +875,11 @@ For each meaningful implementation batch:
 - [x] Increased fish body length/width and fan-tail scale on branch codex/fishing-cast-reel-loop (commit 8af50cdd5c5a1e5445ae63e3ee33fe7867fcd3e5).
 - [ ] Obtain fresh desktop/mobile smoke screenshots for the enlarged silhouette pass; latest available passing screenshots predate this change.
 - [ ] Improve faceted freshwater shoreline transition if the updated captures still show the abrupt basin edge.
+
+## 2026-11-05 — pond fish silhouette and shoreline correction candidate
+- [x] Inspected latest available PR #208 pond captures: fish are detectable but look like flat colored blobs; broad pale sand/terrain apron remains visually dominant.
+- [x] Candidate correction committed to `codex/fishing-cast-reel-loop` as `38e3ea404b0c885b5244359877ab49373bdcf1f1`: side-on 3D ellipsoid fish bodies, forked tails, dorsal/pectoral fins, eyes and tail animation; fish remain submerged and reuse shared geometry/materials.
+- [x] Narrowed freshwater terrain depression shelf from a 54m transition to 20m and tightened freshwater shoreline sand coloration.
+- [ ] Await fresh Validate and desktop/mobile Browser Smoke; current available run `41846275127` / `41846275056` passed on the previous head `d5433d1`, not this correction.
+- [ ] Inspect fresh pond screenshots for recognizable fish body/tail silhouettes and natural shoreline width before merge; do not accept based on registry/count assertions alone.
+- [ ] Physical Redmi 14 5G visibility/performance, rod/line/bobber animation, bait/tool inventory and live catch interaction remain open.
