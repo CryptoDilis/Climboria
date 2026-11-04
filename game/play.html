@@ -659,8 +659,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Broad cave portal: two side piers with a light broken-stone crown.
  // Keep the central sightline clear; small crown stones replace the former overlapping center blocks; no central keystone.
  const archMat=M('#514b43');
- [[-9,4.8,-2,3.4,9.2,4.2],[9,4.8,-2,3.4,9.2,4.2],
-  [-6,10.2,-2,1.05,.85,2.2],[-3.6,10.8,-2,1.05,.75,2.1],[-1.2,11.1,-2,.9,.7,2],[1.2,11.1,-2,.9,.7,2],[3.6,10.8,-2,1.05,.75,2.1],[6,10.2,-2,1.05,.85,2.2]].forEach(([x,y,z,sx,sy,sz],i)=>{
+ [[-11,4.1,-2,2.8,8.2,3.4],[11,4.1,-2,2.8,8.2,3.4],
+  [-7.2,8.6,-2,1.05,.85,2.4],[-5.1,9.1,-2,1.05,.8,2.3],[-3,9.5,-2,1,.75,2.2],[-1,9.7,-2,.9,.7,2.1],[1,9.7,-2,.9,.7,2.1],[3,9.5,-2,1,.75,2.2],[5.1,9.1,-2,1.05,.8,2.3],[7.2,8.6,-2,1.05,.85,2.4]].forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.035*(i%3),i*.11,.025*(i%2?1:-1));rock.castShadow=true;
  });
  // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
