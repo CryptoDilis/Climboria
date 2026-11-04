@@ -656,12 +656,13 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // overlapped the entrance approach and filled the camera with solid rock.
  // Keep large formations to the sides/rear of the approach; the central sightline from local -Z to the arch at z=-2 must stay open.
  [[-30,7,-18,8],[30,7,-18,8],[-34,8,5,9],[34,8,5,9],[-25,5,-38,7],[25,5,-38,7]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
- // Irregular stone arch replaces the opaque black sphere and flat lintel.
+ // Broad, unmistakable cave portal: two side piers and a broken stone crown.
+ // Keep a clear 12m-wide walk-through opening; no rock is placed on the centerline.
  const archMat=M('#514b43');
- [[-10,5.5,-2,5.2,6.2,5.2],[-8.2,9.1,-2,4.1,4.2,4.4],[-5.1,11.1,-2,3.8,3.4,4.1],[-1.8,12,-2,3.5,3.1,4.2],[2,11.8,-2,3.6,3.2,4.1],[5.5,10.7,-2,3.9,3.8,4.3],[8.7,8.4,-2,4.2,4.8,4.8],[10.5,5.1,-2,4.8,6,5.1]].forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.08*(i%3),i*.17,.06*(i%2?1:-1));rock.castShadow=true;
+ [[-9,4.8,-2,3.4,9.2,4.2],[9,4.8,-2,3.4,9.2,4.2],
+  [-5.2,10.1,-2,5.8,2.8,4.2],[0,10.8,-2,5.2,2.8,4.2],[5.2,10.1,-2,5.8,2.8,4.2]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.set(.035*(i%3),i*.11,.025*(i%2?1:-1));rock.castShadow=true;
  });
- [-1,1].forEach(side=>{const rock=mk(DOD,archMat,side*14,3.1,-2.5,g);sc(rock,3.6,4.8,3.9);rock.rotation.set(.12,side*.18,-side*.08);rock.castShadow=true;});
  // Layered warm lighting keeps the chamber readable without washing out its mineral colors.
  [-12,12].forEach(x=>caveTorches.push(torch(x,0,6,g)));
  [[-27,-16],[27,-16],[-27,31],[27,31]].forEach(([x,z])=>caveTorches.push(torch(x,0,z,g)));
