@@ -286,10 +286,12 @@ try {
     p.x=spot.x;p.z=spot.z;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.fish=0;p.fishPhase=null;p.fishElapsed=0;
     w.interact();
     const started=p.fish>0&&p.fishPhase==='waiting';
-    await new Promise(resolve=>setTimeout(resolve,900));
+    const tick=()=>w.gameTick(.1,{x:p.x,y:p.y,z:p.z});
+    for(let i=0;i<9;i++)tick();
     const noEarlyReward=p.fish>0&&p.fishPhase==='waiting';
     const stillNoCatch=w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.quantity||0):0),0)===countBefore;
-    const bite=await new Promise(resolve=>{const start=performance.now();const poll=()=>{if(p.fishPhase==='bite')return resolve(true);if(p.fish<=0||performance.now()-start>5000)return resolve(false);setTimeout(poll,80)};poll()});
+    for(let i=0;i<40&&p.fish>0&&p.fishPhase!=='bite';i++)tick();
+    const bite=p.fish>0&&p.fishPhase==='bite';
     if(bite)w.interact();
     const caught=p.fish===0&&w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.quantity||0):0),0)>countBefore;
     if(p.fish>0)w.cancelFishing?.(null);
