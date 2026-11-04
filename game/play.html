@@ -1639,10 +1639,13 @@ function positionAtCaveEntranceForSmoke(){
  // Keep the hero facing into the opening with the follow camera behind them.
  const local={x:0,z:-34},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
- P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=Math.PI;P.moveTarget=null;
- // The approach is local -Z and the opening is toward local +Z: put the follow camera behind the hero.
- cameraYaw=Math.PI;cameraPitch=-.12;
- return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),playerYaw:P.yaw,cameraYaw,cameraPitch};
+ P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
+ // Local +Z points through the cave mouth. Convert that direction into world yaw;
+ // keep the follow camera on local -Z, directly behind the explorer.
+ const playerYaw=caveG.rotation.y,behindYaw=playerYaw+Math.PI;
+ P.yaw=playerYaw;P.moveTarget=null;
+ cameraYaw=behindYaw;cameraPitch=-.12;
+ return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),playerYaw:P.yaw,cameraYaw,cameraPitch,expectedPlayerYaw:playerYaw,expectedCameraYaw:behindYaw};
 }
 function caveEntranceTraversalAudit(){
  const saved={x:P.x,z:P.z,y:P.y,vy:P.vy,mode:P.mode,moveTarget:P.moveTarget};
