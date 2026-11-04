@@ -673,3 +673,12 @@ For each meaningful implementation batch:
 - [x] Audited fishing implementation: coastal and freshwater fishing spots, dock/pier landmarks, proximity interaction, timed catch resolution, inventory rewards, and fish-source-specific reward tables already exist.
 - [ ] Fishing is still a lightweight timed prototype, not a complete fishing loop. Add player-facing cast/reel feedback, bite timing or a skill interaction, cancellation/movement handling, rod/bait/tool requirements if desired, and smoke coverage for freshwater versus open-sea outcomes before marking fishing complete.
 - [ ] Aquatic fish and marine-life world population/visible swimming behavior remains separate and open; a fishing reward table does not prove visible fish exist in the water.
+
+
+## 2026-11-04 — cave smoke failure diagnosis and audit correction
+
+- [x] Browser Smoke `41760787597` completed with failure at the cave lighting audit. Desktop/mobile gameplay rendered; mobile readiness, controls, hero, HUD, map, and screenshots completed without render errors.
+- [x] Failure was a stale audit predicate: it counted arch meshes only when their geometry equaled the former `DOD` geometry, while the refined arch now uses `IcosahedronGeometry`. Runtime diagnostics showed 6 torches, 29 local point lights, 0 black-sphere occluders, ambient fill 1.2, and 6 fixture meshes.
+- [x] Corrected `caveLightingAudit.entranceArchRocks` to count the current `IcosahedronGeometry` arch meshes. Commit: `301d10c33ae241d52ff99ec87eb7b6a2dda918de`.
+- [ ] Re-run Validate and Browser Smoke on the corrected head; inspect new desktop/mobile screenshots before considering the cave repair verified.
+- [ ] Visual acceptance and physical Redmi 14 5G acceptance remain open; the automated counter correction does not certify art quality or device behavior.
