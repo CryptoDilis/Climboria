@@ -804,3 +804,12 @@ For each meaningful implementation batch:
 - [x] The narrowed terrain depression removed the previous broad tan depression from the near edge, but both screenshots still show a large, smooth pond outline, a hard straight foreground grass/water-bank boundary, and fish that read as faint small oval marks rather than recognizable fish at normal gameplay distance.
 - [ ] Visual acceptance remains OPEN. Next pass must address the actual shoreline contour/terrain transition and improve fish readability at normal camera distance; do not treat passing silhouette assertions as visual acceptance.
 - [ ] Redmi 14 5G physical-device review, fishing rod/line/bobber animation, bait/tool requirements, and player-facing fishing acceptance remain open.
+
+
+### Fish visibility through transparent water — render-order correction (2026-11-04)
+- [x] Traced faint fish appearance to the renderer queue: opaque fish were drawn before the large transparent water plane, allowing the water shader to wash out the fish silhouettes.
+- [x] Moved fish materials into the transparent render queue after the water surface, with depth writing disabled so the surface can composite first while submerged fish remain visible.
+- [x] Increased body, tail, dorsal/paired-fin proportions and overall school scale for normal gameplay-camera readability (commit `2c8151f838a0e2d17a34e656b077eb28fcf38720`).
+- [ ] Run Validate and Browser Smoke on this exact head; inspect both desktop and mobile pond captures for fish visibility and sorting artifacts.
+- [ ] Shoreline contour/terrain transition still requires a separate visual fix; do not mark shoreline complete.
+- [ ] Physical Redmi 14 5G review and fishing rod/line/bobber/bait acceptance remain open.
