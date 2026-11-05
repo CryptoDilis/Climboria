@@ -1,3 +1,19 @@
+## NON-NEGOTIABLE ASSET POLICY — FREE GITHUB-HOSTED ASSETS ONLY
+
+**Owner directive:** Climboria must use free assets sourced from GitHub repositories only. This applies to every new or replacement game asset: 3D models, characters, costumes, animations, environment props, rocks, trees, vegetation, animals, fish, buildings, weapons, tools, textures, materials, audio, UI art, and effects.
+
+- Do not use paid asset packs, paid downloads, subscriptions, Patreon/supporter-only files, marketplace purchases, or assets that require payment to unlock.
+- The asset's actual distributable file must be available from a GitHub repository at no cost. A GitHub list/catalog that links to a paid or non-GitHub download does not satisfy this rule.
+- Before use, verify the exact asset/file license and the upstream repository's terms. Prefer CC0/public domain or permissive licenses that explicitly allow commercial use and redistribution. For CC-BY or other attribution licenses, preserve all required credits and LICENSE/NOTICE files.
+- Reject assets with missing, unclear, non-commercial (NC), no-redistribution, or otherwise incompatible terms. Never assume every file in a repository shares one license.
+- Record each approved asset in a checked-in manifest: asset name/use, GitHub repository URL, immutable commit/tag/release, exact file path, license, required attribution, source file size, polygon/texture budget, dependencies, and collision/LOD status.
+- Vendor approved files into this repository and load them locally; do not hotlink third-party runtime assets. Keep upstream license notices alongside the imported files.
+- Optimize and test every asset for Three.js compatibility, scale, pivots, materials, download size, memory, draw calls, mobile frame time, and collision. Decorative meshes must not substitute for collision geometry.
+- If no suitable free GitHub-hosted asset with compatible licensing exists, use existing assets or create a simple in-house procedural placeholder; do not silently switch to a paid or off-GitHub asset.
+- This rule is permanent unless the owner explicitly changes it. It does not mean all existing assets have been audited or approved retroactively.
+
+---
+
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
 ## 2026-11-06 — Owner-directed priority reset (male hero deferred)
