@@ -2289,3 +2289,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Rod/line/bobber polish, bait/tools, physical Redmi 14 5G acceptance, and manual cave traversal/readability remain open.
 - [ ] Keep PR #215 unmerged until cave and pond visual blockers are fixed/reviewed and remaining P0 acceptance is recorded. Do not close superseded PRs #211/#214 until #215 is safely merged.
 - [ ] Server-authoritative reward ledger, global chest claims/cooldowns, and funded crypto/NFT payouts remain unimplemented; browser-local rewards are not secure or payable.
+
+
+## 2026-11-06 — Cave tunnel and underwater fish depth polish
+
+- [x] Committed visual pass `749f03bffb60d2bbbe3583347ed45b4b1a4ea2d9` to PR #215: replaced the flat cave-mouth plane with a rock-lined tunnel throat, overhead/side rock masses, tunnel floor and warm/cool interior lighting; retained the existing cave wall/traversal collider system.
+- [x] Moved freshwater and ocean fish deeper (freshwater swim band about -4.15 to -4.60 world units; ocean -5.10 to -5.55) and reduced model scale to improve perceived underwater depth. The existing submerged-clearance audit remains in place.
+- [x] Latest Validate [42084914567](https://github.com/CryptoDilis/Climboria/actions/runs/42084914567) passed on this code commit.
+- [ ] Latest full desktop/mobile Browser Smoke [42084914580](https://github.com/CryptoDilis/Climboria/actions/runs/42084914580) is queued/pending; wait for completion and inspect fresh desktop/mobile cave and pond captures before marking visual acceptance.
+- [ ] PR #215 remains open and unmerged. Manual cave traversal/ceiling clearance, fish visual depth, fishing tool polish and physical Redmi 14 5G acceptance remain open.
