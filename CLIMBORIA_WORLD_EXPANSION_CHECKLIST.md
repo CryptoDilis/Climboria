@@ -1158,3 +1158,17 @@ For each meaningful implementation batch:
 - [ ] After a terminal workflow result, inspect the full job logs and desktop/mobile screenshots. If the run remains stuck, investigate runner/workflow cancellation or rerun path rather than silently assuming success.
 - [ ] Keep PR #215 unmerged until fresh Validate and full Browser Smoke pass, cave/fish/pond visual blockers are reviewed, and device acceptance is recorded separately.
 - [ ] PR #211 and PR #214 are superseded by #215; close them only after #215 has completed required verification and is safely merged.
+
+
+## 2026-11-06 — PR #215 fresh CI green; visual blockers remain
+
+- [x] Latest PR head `6113d570515609ae13c3f71e2e6916973653c8be` is based on current main with 8 commits ahead and 0 behind at the latest compare; PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) is open and currently reported mergeable, not merged.
+- [x] Fresh Validate [42082944653](https://github.com/CryptoDilis/Climboria/actions/runs/42082944653): success.
+- [x] Fresh full desktop/mobile Browser Smoke [42082944675](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675): success, including the Jarrell's Peak gameplay smoke step and screenshot upload. This supersedes the earlier cancelled Browser Smoke [42082091241](https://github.com/CryptoDilis/Climboria/actions/runs/42082091241).
+- [x] Fresh screenshot artifact [13440769119](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675/artifacts/13440769119) downloaded; desktop/mobile gameplay, cave entrance/interior, and pond-fish images reviewed.
+- [ ] Cave visual acceptance: **not passed**. The entrance reads as a dark, nearly featureless opening; interior surfaces/floor and rock formations still look blocky and stylized. Improve entrance depth/readability, natural rock silhouette, floor/wall variation and lighting, then re-capture both desktop and mobile.
+- [ ] Woodland Pond fish visual acceptance: **not passed**. The automated aquatic audit confirms fish count/silhouette/submerged clearance, but the screenshot makes fish look close to the water surface and visually flat. Improve perceived depth, water/fish layering and fish readability without weakening the submerged-clearance assertion.
+- [ ] Manual traversal/collision/ceiling clearance, trap visibility, and physical Redmi 14 5G performance/controls remain separate acceptance gates.
+- [ ] Rod, line, bobber, bait and fishing-tool polish remain open; fishing lifecycle smoke is green but visual/gameplay polish is not fully accepted.
+- [ ] No server-authoritative rewards, global chest claim/cooldown ledger, or funded token/NFT payouts are implemented. Keep crypto rewards disabled; browser-local inventory is prototype-only.
+- [ ] Keep PR #215 open and unmerged until the cave and pond visual blockers plus remaining P0 gates are reviewed. Male hero/Meshy/costumes remain deferred as previously directed.
