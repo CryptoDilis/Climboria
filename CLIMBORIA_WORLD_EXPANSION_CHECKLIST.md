@@ -1054,3 +1054,16 @@ For each meaningful implementation batch:
 - [ ] Confirm the actual GLB animation names and bone axes before final pose tuning; current fallback arm correction is a conservative code-side adjustment and still requires visual review.
 - [ ] Redmi 14 5G physical review remains required for animation smoothness and frame-time impact.
 - [ ] Current status: code correction committed; visual and device acceptance are not yet complete.
+
+
+## 2026-11-06 — Male hero visual reference received and rig audit instrumentation
+
+- [x] Received the user's full-body male explorer reference image. Visual targets recorded: preserve the reference face and short dark hairstyle as closely as feasible; brown worn leather outdoor jacket over black shirt; olive cargo trousers; brown hiking boots; dark fingerless gloves; expedition backpack with rolled bedroll, rope, utility pouches, compass and hanging gear.
+- [x] Confirmed the existing character asset is present at `assets/characters/Climboria_Hero.glb`; GitHub reports a file size of **42,923,204 bytes (~42.9 MB)**. This is a significant mobile download/memory/performance risk and must be optimized before the final Redmi 14 5G acceptance gate. Do not silently replace the existing GLB.
+- [x] Added browser QA hooks `window.__climboriaHeroRigAudit()` and `window.__climboriaHeroAnimationAudit()` to expose loaded animation names, full bone hierarchy, bone parentage and likely socket candidates for evidence-based rig mapping.
+- [ ] Capture the new rig audit from a real browser session and record exact hand/wrist, forearm, spine/back, pelvis/hip bone names and transforms.
+- [ ] Inspect the GLB's actual geometry, materials, textures, animation clips and mesh skin weights before choosing a safe appearance-adaptation method.
+- [ ] Create/adapt the male appearance as a skinned visual mesh compatible with the existing skeleton; preserve face likeness, clothing silhouette and gear. Avoid image-texture projection as a substitute for real 3D facial geometry.
+- [ ] Optimize the existing 42.9 MB GLB (geometry/material cleanup, texture resizing, mesh compression and/or KTX2/Basis textures as appropriate); verify loader support and retain an uncompressed source copy. Compare visual quality and animation fidelity before replacing the runtime asset.
+- [ ] Browser smoke must capture idle, walk, run, jump, fall and landing poses plus the rig audit. Validate no A/T-pose idle and believable fall/landing behavior.
+- [ ] Current status: visual reference recorded and audit hooks committed; no new character mesh, rig retarget, socket system or GLB optimization has been completed yet.
