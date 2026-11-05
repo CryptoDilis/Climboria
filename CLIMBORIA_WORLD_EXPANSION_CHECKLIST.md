@@ -751,3 +751,398 @@ For each meaningful implementation batch:
 - [ ] Close-up visual acceptance of idle/walk/run/jump/landing animation remains open; smoke screenshots are general gameplay captures, not a dedicated animation review.
 - [ ] Physical Redmi 14 5G acceptance remains open.
 - [ ] Post-merge workflow verification for merge SHA remains pending; the commit-run lookup returned no runs.
+
+
+## 2026-11-05 — fishing and aquatic-life integration onto current main
+
+- [x] Ported the fishing cast → wait → bite → manual reel loop onto the current main-based branch; movement beyond 2.5 world units cancels the cast and missed bites award nothing.
+- [x] Added animated, submerged fish schools with shared low-poly geometry and reduced mobile counts.
+- [x] Corrected freshwater basin shape, shoreline transition and water tint so ponds read as water rather than exposed terrain cutouts.
+- [x] Added Browser Smoke assertions for fishing lifecycle behavior, including no automatic reward while waiting and inventory increment only after a successful manual reel; added dedicated desktop/mobile Woodland Pond screenshot captures.
+- [x] Browser Smoke run 41904043235 / #1424 ended cancelled during the Jarrell's Peak gameplay step; homepage checks passed. The uploaded screenshot artifact 13358529548 was downloaded and reviewed.
+- [x] Desktop Woodland Pond capture shows several distinct fish silhouettes clearly visible against the pond water; this is a positive first visual check, but the fish remain simplified/stylized and their underwater depth/translucency needs improvement.
+- [x] Desktop cave entrance capture shows a readable arch and open dark passage; the entrance approach is visible. Guard props and a chest in the immediate foreground add clutter.
+- [x] Desktop cave interior capture shows an enclosed chamber and treasure, but rock lining is overly dense/repetitive and the chamber reads as a narrow rock tunnel rather than a spacious natural cave.
+- [ ] Mobile pond/gameplay/cave captures were not present in the cancelled run artifact; mobile visual acceptance remains open.
+- [ ] Desktop gameplay capture still shows a broad, visually empty green foreground and the sanctuary structure cropped by the top of frame; review world dressing and default screenshot framing before visual acceptance.
+- [ ] Job logs endpoint returned BlobNotFound; cancellation cause is not confirmed. The cancelled gameplay job has been manually re-run; inspect the new attempt and its complete desktop/mobile screenshot artifact.
+- [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G fishing acceptance remain open.
+- [x] No token/NFT fishing rewards enabled or promised; current inventory remains browser-local.
+- [ ] PR #211 remains unmerged until fresh desktop/mobile gameplay smoke completes and screenshots are inspected.
+
+
+## 2026-11-05 — post-smoke visual review and aquatic-life refinement
+
+- [x] Fresh Validate #1994 passed on commit 75f829e7bcc80f5957c57c6bd4df04567cfa6fd1.
+- [x] Fresh Browser Smoke #1428 passed on commit 75f829e7bcc80f5957c57c6bd4df04567cfa6fd1; desktop and mobile gameplay smoke completed and all ten screenshot captures uploaded.
+- [x] Reviewed desktop/mobile cave, gameplay, home, and Woodland Pond screenshots from artifact 13402043792.
+- [x] Cave entrance is readable and open; interior chamber is traversable in the smoke capture. Rock lining still looks repetitive and needs natural variation/less clutter.
+- [x] Woodland Pond fish are visible, but screenshot review shows them reading as bright surface-level decorations rather than submerged wildlife.
+- [x] Reduced fish school scale and opacity and moved freshwater/ocean fish deeper into the water column to improve underwater depth cues.
+- [ ] Re-run Validate and desktop/mobile Browser Smoke for follow-up commit c45a698ec9b7e2bfd274a5df83092951a0fba94a; inspect the new pond captures before accepting the visual change.
+- [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
+- [ ] Cave wall variation, spacious natural chamber dressing, and reduced entrance/treasure clutter remain open.
+- [ ] Desktop/mobile gameplay world dressing and default camera framing remain open; current smoke captures show large empty foreground areas and the sanctuary structure cropped at the top edge.
+- [ ] PR #211 remains unmerged until the new commit's workflows pass and updated pond screenshots receive visual review.
+
+
+## 2026-11-05 — underwater fish smoke diagnosis and correction
+
+- [x] Browser Smoke #1430 completed; homepage/navigation checks passed and desktop/mobile gameplay rendered, but the job failed the aquatic-life placement audit.
+- [x] Root cause isolated from the job log: fish groups were moved deeper, but the audit's `surfaceClearance` metadata still used the old, oversized 1.65-unit value. The resulting computed top-of-silhouette clearance was only 0.26–0.31 units below the surface, failing the required 0.5-unit margin.
+- [x] Corrected the fish silhouette clearance metadata to 0.38 units, matching the scaled fish body rather than the full fish depth. Fish positions, swimming paths, and gameplay behavior are unchanged.
+- [ ] Run fresh Validate and desktop/mobile Browser Smoke on follow-up commit c5fe5547289284c0eba0cf54d7a86f605341aa5f; confirm the aquatic-life audit passes and inspect new pond captures.
+- [ ] Do not mark fish visual acceptance complete until new desktop/mobile pond screenshots show readable submerged fish with natural depth cues.
+- [ ] PR #211 remains unmerged pending fresh green checks and screenshot review.
+
+
+## 2026-11-05 — fresh green smoke and screenshot acceptance review
+
+- [x] Validate #1998 passed on commit 36a56c6c04a43433ec6564091ad1b2f9286e0008.
+- [x] Browser Smoke #1432 passed on the same commit; homepage/navigation plus Jarrell's Peak desktop and mobile gameplay checks completed, and all ten screenshots uploaded in artifact 13405003554.
+- [x] Downloaded and inspected the desktop/mobile Woodland Pond fish captures, desktop gameplay, and desktop cave interior from artifact 13405003554.
+- [ ] Fish visual acceptance remains open: both pond captures show small, bright fish silhouettes against a broad flat-looking water surface; the depth/translucency cue is still too weak to confidently read them as naturally submerged fish. Improve silhouette scale/contrast/depth layering and water/fish interaction, then capture again.
+- [ ] Cave visual acceptance remains open: the interior screenshot is heavily crowded with repeated faceted rocks across the walls and ceiling; reduce repetition/clutter, vary rock profiles and spacing, and preserve the walkable chamber, treasure and trap clearances.
+- [ ] Gameplay composition remains open: desktop capture has a very large empty green foreground and the sanctuary dominates the upper frame; improve nearby world dressing and camera framing without obscuring navigation.
+- [ ] Mobile pond capture confirms the same fish readability issue at the narrow viewport; do not treat automated mobile smoke as physical Redmi 14 5G acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements and physical Redmi 14 5G review remain open.
+- [ ] PR #211 remains unmerged; green automated checks do not override the outstanding visual acceptance gates.
+
+
+## 2026-11-05 — pond fish readability follow-up
+
+- [x] Based on Browser Smoke #1432 desktop/mobile captures, confirmed the fish silhouettes were still too small and too faint to read convincingly as submerged wildlife at normal gameplay framing.
+- [x] Increased fish body scale and material opacity, and moved schools slightly closer to the surface while preserving a clear below-surface silhouette margin; this is a visual-only refinement.
+- [ ] Re-run Validate and desktop/mobile Browser Smoke on the new head, then inspect both pond captures for improved fish readability and confirm the placement audit still passes.
+- [ ] Do not mark aquatic-life visual acceptance complete until desktop and mobile captures show readable underwater fish with depth cues.
+- [ ] Cave interior rock repetition/clutter and the large empty gameplay foreground remain open visual polish tasks.
+- [ ] PR #211 remains open and unmerged pending latest checks, screenshot review, and mergeability verification.
+
+
+## 2026-11-05 — cave backing smoke #1438 visual acceptance review
+
+- [x] Validate #2004 passed on commit d24a920ff7b9918c0e835dccdc1bbf8d2d4e16e1.
+- [x] Browser Smoke #1438 passed on the same commit; Jarrell's Peak desktop/mobile gameplay smoke completed and all ten screenshot captures uploaded in artifact 13412088563.
+- [x] Downloaded and inspected desktop/mobile cave entrance, cave interior, gameplay, and Woodland Pond fish screenshots from artifact 13412088563.
+- [x] Cave wall backing removes the previous wall-wide dense boulder clutter and the interior route remains visible in automated desktop/mobile captures.
+- [ ] Cave visual acceptance remains open: the backing now reads as broad flat brown panels, with several isolated/floating-looking faceted rocks and an overly flat floor. Improve connected natural rock relief, wall/floor material variation, and chamber depth without restoring dense repetitive boulders; inspect arch/opening geometry and player clearance.
+- [ ] Fish visual acceptance remains open: desktop/mobile pond screenshots still show bright, flat fish silhouettes sitting visually on the water surface. Improve underwater depth cues, body volume, scale/readability and interaction with the water surface; keep placement audit passing.
+- [ ] Gameplay composition remains open: desktop capture retains a large empty green foreground and the sanctuary/world landmark is distant; improve nearby world dressing and camera framing.
+- [x] Browser smoke verifies the game renders on desktop and mobile browser viewports; this is not physical Redmi 14 5G acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Android/Redmi 14 5G testing, and real-device performance remain open.
+- [ ] PR #211 remains open and unmerged; green automated checks do not override the cave/fish visual acceptance gates.
+
+
+## 2026-11-05 — latest cave and fish screenshot review / two-sided rock relief
+
+- [x] Validate #2008 and Browser Smoke #1441 passed on commit 98fba8de1bd7a9fbfcb642f1c495cba2582d0c62.
+- [x] Validate #2007 and Browser Smoke #1442 passed on commit 57bb4c9bf74720f90c77a1235d2a1dcf9b44ffc0; desktop/mobile gameplay and screenshot upload completed.
+- [x] Reviewed desktop and mobile cave interior screenshots from Browser Smoke #1442 and desktop Woodland Pond fish screenshot.
+- [ ] Cave visual acceptance remains open: wall surfaces still read as broad dark panels with sparse isolated relief; central passage opening is visible, but the chamber lacks continuous natural rock depth and the floor remains visually flat. The wall-relief follow-up now places staggered outcrops on both faces of each structural wall so the player-facing side cannot randomly be left bare.
+- [ ] Fish visual acceptance remains open: fish remain small and flattened in the wide gameplay view despite darker color, lower opacity, and deeper placement. Improve body volume/scale and camera-distance readability without making fish appear to float above the water; keep aquaticLifeAudit passing.
+- [x] Commit 70f1b8199b7bccb2208a3ab086cf3465f6d04f6c adds staggered relief to both sides of cave structural walls while preserving the swept collision segments.
+- [ ] Fresh Validate and desktop/mobile Browser Smoke for 70f1b8199b7bccb2208a3ab086cf3465f6d04f6c; inspect new cave captures for relief, passage clearance, and no collision obstruction.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and performance measurements remain open.
+- [ ] PR #211 remains unmerged until the latest commit has fresh green workflows and the updated cave/fish screenshots pass visual review.
+
+
+## 2026-11-05 — fresh Browser Smoke #1444 review and visual-scale correction
+
+- [x] Validate #2010 passed on PR #211 head 44b36941b8fe91801e29aa75f3b5ec777405c600.
+- [x] Browser Smoke #1444 passed on the same head; desktop and mobile gameplay smoke steps and screenshot upload completed (artifact 13419997557).
+- [x] Downloaded and inspected the new desktop cave-interior and Woodland Pond fish captures from artifact 13419997557.
+- [ ] Cave visual acceptance remains open: the player-facing wall relief is now present on both sides, but the protruding faceted rocks are oversized and visually crowded; the floor remains a broad flat brown plane and the rear opening reads visually bright. Reduce decorative rock scale while preserving the sealed wall backing, collision segments, and clear passage.
+- [ ] Fish visual acceptance remains open: fish schools are distinct but still small/flattened at the wide gameplay camera distance. Increase body scale/opacity and retain a conservative submerged top-of-silhouette margin; inspect fresh desktop/mobile captures before acceptance.
+- [x] Follow-up commit 6d8997943cb4d80d2fdcd6e37e74e02d17bfb72c reduces cave outcrop scale, increases fish school scale and opacity, and moves fish slightly deeper with a revised silhouette-clearance audit value.
+- [ ] Fresh Validate and desktop/mobile Browser Smoke for 6d8997943cb4d80d2fdcd6e37e74e02d17bfb72c; inspect both pond screenshots and both cave interior screenshots for improved scale, visibility, wall continuity, and passage clearance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged pending fresh workflows and visual acceptance.
+
+## 2026-11-05 — Browser Smoke #1446 desktop/mobile visual review
+
+- [x] Validate #2012 passed on PR #211 head dfecbcdb0080f47fbd1ccaf1220d4931e5655485.
+- [x] Browser Smoke #1446 passed on the same head; homepage/navigation and Jarrell's Peak desktop/mobile gameplay smoke completed; screenshot artifact 13427383234 uploaded.
+- [x] Downloaded and inspected desktop/mobile cave-interior and Woodland Pond fish captures from artifact 13427383234.
+- [ ] Cave visual acceptance remains open: both viewport captures show large, isolated faceted wall rocks with visible gaps against broad dark wall panels; the floor still reads as a large flat brown slab, and the rear passage is brightly exposed. The smaller outcrop change did not yet deliver connected natural rock relief. Next cave pass must reduce the isolated/floating appearance, improve continuous wall/floor material breakup, and control the rear opening brightness without compromising the sealed structural backing, collision boundary, passage width, treasure approach, or head clearance.
+- [ ] Fish visual acceptance remains open: fish are now clearly identifiable at desktop distance and visible on mobile, but the silhouettes still read as pale, flat graphic shapes near the water surface rather than convincing volumetric underwater wildlife. Improve body volume, fin/tail depth and water attenuation; retain below-surface placement and aquaticLifeAudit clearance. Do not simply enlarge them further.
+- [ ] Pond/world composition remains open: the broad green foreground and simple distant tree line dominate both pond captures; improve shoreline dressing and camera framing without obstructing the water approach.
+- [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G compatibility, touch feel, sustained frame rate, or memory performance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing, and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not authorize merging past the outstanding cave/fish gates.
+
+
+## 2026-11-06 — Browser Smoke #1449 visual acceptance review
+
+- [x] Validate #2015 passed on PR #211 head c7384610e3ba82c108dd7cfcb56816345ac086ed.
+- [x] Browser Smoke #1449 passed on the same head; homepage/navigation, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload completed (artifact 13430888311).
+- [x] Downloaded and inspected desktop/mobile cave-interior and Woodland Pond fish captures from artifact 13430888311.
+- [ ] Cave visual acceptance remains open: the entrance/interior is traversable in browser smoke, but the chamber still reads as broad angular wall panels, a flat tan floor, scattered flat mineral plates, and an overexposed rear opening. The player-facing screenshot does not yet look like a natural, connected rock cave. Improve continuous wall/floor relief, lighting falloff and entrance depth while preserving wall collision, head clearance, chest approach and passage width.
+- [ ] Fish visual acceptance remains open: schools are visible in desktop/mobile captures but still read as pale, flat surface icons rather than volumetric submerged fish. Add convincing body volume, tail/fin depth, darker underwater attenuation and clear water-column separation; preserve below-surface clearance and aquaticLifeAudit.
+- [ ] Pond/world composition remains open: the near bank and broad green foreground dominate the frame; improve shoreline dressing and nearby environmental detail without blocking fishing access.
+- [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G touch, sustained FPS, memory or thermal acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not override the cave/fish visual gates.
+
+
+## 2026-11-06 — Browser Smoke #1450 visual review
+
+- [x] Validate #2016 passed on checklist commit 1945f4094147fceb13525fbc3fb9ae846fd6cbad.
+- [x] Browser Smoke #1450 passed on the same commit; desktop/mobile Jarrell's Peak gameplay smoke and screenshot upload completed (artifact 13432853311).
+- [x] Inspected desktop cave interior and Woodland Pond fish screenshots from artifact 13432853311.
+- [ ] Cave visual acceptance remains blocked: screenshot shows broad near-vertical flat dark wall panels, a large flat tan floor, scattered flat mineral discs, a bright exposed rear opening, and a visibly placeholder-like torch. The chamber does not yet read as a natural cave. The prior displaced backing and floor skin do not solve the visible geometry at gameplay distance. Rework wall/ceiling/floor surfaces as connected irregular rock forms with layered material variation and controlled lighting; retain verified passage collision and clear route to the chest.
+- [ ] Fish visual acceptance remains blocked: screenshot shows a short line of pale, flat, icon-like fish silhouettes at the water surface. They lack convincing volume, underwater depth and natural schooling composition. Replace the flat silhouette read with clearly volumetric fish bodies/fins/tails, darker underwater attenuation and stronger separation below the water plane; preserve aquaticLifeAudit and mobile counts.
+- [ ] Pond presentation remains blocked: very broad empty green foreground, sparse distant trees, and minimal shoreline detail dominate the view. Improve near-bank environmental dressing and camera composition while keeping fishing access open.
+- [x] Automated browser smoke passed on desktop and mobile; this does not establish physical Redmi 14 5G input, sustained FPS, memory or thermal acceptance.
+- [ ] Rod, line, bobber animation, bait/tools, physical Redmi 14 5G test and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged; screenshot evidence confirms the cave and fish visual gates are not satisfied.
+
+
+## 2026-11-06 — Marine biodiversity expansion requested
+
+- [x] Added a permanent marine-life and fishing biodiversity scope to the master checklist; this is a specification addition, not an implementation claim.
+- [ ] Build distinct marine habitats: shallow shore/reef, seagrass and kelp beds, open-water schools, rocky seabed, deep-water/abyssal zones, wreck/port habitat, and freshwater ponds/rivers as a separate ecosystem.
+- [ ] Common catches: sardines, anchovies, mackerel, milkfish/bangus, tilapia (freshwater), small reef fish, crabs, shrimp, mussels, oysters, squid and common shellfish. Use locally recognizable species where appropriate.
+- [ ] Uncommon catches: snapper, grouper, trevally, barracuda, mahi-mahi, tuna juveniles/adults, octopus, lobster, sea urchin and larger reef species.
+- [ ] Rare catches: giant trevally, large tuna, sailfish, marlin, large grouper, rare reef variants, nautilus and deep-water species; tune spawn chance by habitat, depth, weather, time and bait.
+- [ ] Epic/legendary catches: whale shark (non-catchable protected encounter), manta ray (non-catchable protected encounter), giant oceanic fish, rare deep-sea fish and unique named trophy species. Protected wildlife must be observation/photo encounters, never inventory loot.
+- [ ] Add non-fish marine life: sea turtles, dolphins, whales, rays, sharks, jellyfish, sea snakes, corals, anemones, starfish, sea cucumbers, sea horses, shells and plankton/bioluminescent organisms. Define safe/non-hostile behavior and conservation rules; no harvesting protected species.
+- [ ] Create a rarity ladder (Common, Uncommon, Rare, Epic, Legendary) with transparent catch tables, habitat/depth/time/weather/bait requirements, anti-repeat weighting and no guaranteed legendary exploit.
+- [ ] Add distinct 3D silhouettes, swimming/feeding/schooling/escape behavior, depth bands, size/age variation, underwater audio/particles and water attenuation; avoid flat icon-like fish.
+- [ ] Add fishing gear progression: rods, reels, lines, hooks, nets only where suitable, bait/lures, bobbers, tackle, durability and repair; gear must affect catch opportunities without pay-to-win promises.
+- [ ] Add field guide/collection log, species name and rarity identification, size/weight records, habitat notes, catch/release option, conservation quests and non-token progression.
+- [ ] Keep inventory browser-local in prototype; no token/NFT or monetary reward claims until a secure server-authoritative system and approved token design exist.
+- [ ] Current implementation status: basic fish-school prototype and cast/wait/bite/manual-reel loop exist; 11 fishing spots are recorded (8 coastal docks and 3 freshwater spots). Visual acceptance is blocked by flat pale fish silhouettes; rod/line/bobber/bait and species diversity are not implemented/verified. Browser Smoke #1451 is still running at the time of this entry; Validate #2018 passed.
+- [ ] PR #211 remains open and unmerged pending cave/fish visuals, complete smoke evidence and later physical-device acceptance.
+
+
+## 2026-11-06 — Permanent asset sourcing and realism requirement (user directive)
+
+- [x] Recorded the user's standing direction: prioritize high-quality, realistic FREE assets from GitHub and trusted free asset libraries; do not substitute crude procedural/generated placeholder geometry for finished world assets. This requirement persists across future Climboria work and chat sessions.
+- [ ] Before adding any asset, inspect the actual model/texture preview and verify visual quality, scale, topology, UVs, PBR maps, polygon/texture budget, format compatibility (prefer GLB/glTF for Three.js), and mobile performance.
+- [ ] Prefer photorealistic CC0 sources for natural world content: Poly Haven for scanned models, rocks, vegetation, PBR materials and HDRIs; ambientCG for realistic PBR surfaces; inspect GitHub repositories for curated GLB/glTF assets and source provenance.
+- [ ] Use GitHub-hosted asset repositories only after opening the original source and verifying the specific asset's license and redistribution rights. Public/downloadable does not automatically mean free for commercial use.
+- [ ] Use Kenney/Quaternius only where their stylized art direction is intentionally suitable; do not mix obvious low-poly assets into Climboria's realistic/cinematic environments.
+- [ ] Create and maintain an asset manifest: asset name, creator/source URL, exact license, attribution requirement, file path, format, dimensions/triangles, texture sizes, intended scene use, collision status and optimization notes.
+- [ ] Preserve creator credits where practical even for CC0; never strip attribution from CC-BY assets. Exclude CC-BY-NC, unclear, ripped, leaked, or unlicensed assets from the commercial project.
+- [ ] Prefer real scanned/photogrammetry assets for cave rocks, cliffs, boulders, seabed, coral, trees, wrecks, wildlife and props. Use procedural geometry only for terrain/system support, collision proxies, variation, or gaps—not as a replacement for quality hero assets.
+- [ ] Every imported model must be checked for scale/orientation, pivots, normals, materials, animation/rig if relevant, collision proxy, LODs, draw calls, texture memory and desktop/mobile loading.
+- [ ] Do not mark an asset task complete from a repository link alone: download/import it, verify it in the actual Climboria scene, inspect desktop/mobile screenshots, and record source/license in the manifest.
+- [ ] Preferred starting points researched: Poly Haven (CC0 realistic models/PBR/HDRIs), ambientCG (CC0 PBR), and curated GitHub collections such as awesome-3d-assets; all individual linked assets still require license verification. Kenney and Quaternius are optional stylized sources only when style-matched.
+
+
+## 2026-11-06 — Walking performance / anti-lag pass
+
+- [x] Identified a concrete per-frame CPU hotspot: `update(dt)` called `updateChunks()` every animation frame, causing repeated chunk-grid scans, missing-chunk collection and sorting even while the player remained inside the same 200-unit terrain chunk.
+- [x] Changed terrain streaming to run only when the camera/player crosses into a different terrain chunk; initial chunk bootstrapping remains on its existing incremental path. Code commit: 64398fb217687fda5d53e6fd5284dec4db3dacd2.
+- [ ] Validate and browser-smoke the walking change on desktop and mobile; inspect movement smoothness and chunk pop-in at chunk boundaries.
+- [ ] Add measured FPS/frame-time, draw-call, triangle, geometry/texture memory and long-session thermal checks; do not claim smoothness from code inspection alone.
+- [ ] Profile and optimize remaining likely costs: 12-sample camera-ground sweep per frame, per-frame HUD DOM writes in `gameTick`, animated aquatic entities, weather updates, terrain draw calls and uncullable world objects.
+- [ ] Add adaptive quality tiers only after measurements: mobile-first render scale, shadow/foliage/fish/weather density and view-distance controls, preserving visual quality where possible.
+- [ ] Acceptance targets: stable 30 FPS minimum on Redmi 14 5G during normal exploration (prefer 45–60 where thermals allow), no repeated hitching during walk/run/turn/jump, controlled chunk pop-in, no collision or gameplay regression, and sustained 10-minute mobile test.
+- [ ] Current evidence: code-level chunk-streaming optimization committed; automated validation and browser smoke pending. Physical Redmi 14 5G test and measured FPS/thermal results remain open.
+
+
+## 2026-11-06 — Coastal shoreline, fishing port and dock visual audit
+
+- [x] Audited the current `game/play.html` coastal implementation rather than assuming the checklist item was visually complete.
+- [x] Confirmed the code contains a procedural coast query, up to eight simple narrow timber dock platforms, fishing interaction points, and a rudimentary port marker (one block platform and a pole). The actual number of coastal docks is conditional on valid `coastAt(z)` samples; eight authored candidates do not guarantee eight successfully placed docks.
+- [ ] **Sandy beaches / dalampasigan:** create broad, continuous, walkable sandy shoreline areas with visible wet/dry sand transition, natural coves, varied beach width, shallow-water seabed visibility, and collision-safe paths. Current shore exclusion/sand tint logic is not proof of a finished beach scene.
+- [ ] **Rocky shores:** add separate rocky/coastal cliff sections and boulder transitions, with walkable routes and no floating or blocking assets.
+- [ ] **Fishing port:** replace the single block-and-pole marker with a recognizable, navigable harbor: substantial pier/boardwalk, mooring posts, ramps, boat slips, fishing sheds/market stalls, nets, crates, barrels, lamps, signage and safe player access. Keep a distinct main port landmark.
+- [ ] **Eight coastal fishing docks:** verify eight actually spawned and visually distinct docks, spaced along the coast, each connected to dry land, extending over water, with a working fishing interaction and collision-tested access. Add a runtime audit reporting requested/placed counts and invalid coast samples.
+- [ ] **Broken ship / wreck:** add a recognizable partially wrecked ship near the coast/port, grounded/partly submerged correctly, with visible hull/deck/mast damage and optional exploration access; not a lone primitive block and pole.
+- [ ] **Coastal dressing and activity:** add boats, buoys, ropes, mooring rings, seabirds, shoreline rocks, driftwood and appropriate ambient audio; preserve performance through instancing/LOD and realistic free licensed assets per the permanent asset directive.
+- [ ] **Visual acceptance:** capture and inspect desktop plus mobile screenshots from the actual gameplay camera at the port, each beach type, and representative dock. Confirm shoreline is visible and walkable in-game; automated presence checks alone are insufficient.
+- [ ] **Current status:** coast/open-sea query and basic dock/fishing-point code exist; the current port is only a primitive placeholder. Broad beach presentation, distinct rocky/sandy shore art direction, detailed functional harbor, recognizable broken ship, actual placed-dock count audit and in-game visual acceptance are not verified. Keep all coastal tasks OPEN until evidence passes.
+
+
+## 2026-11-06 — Major coastal expansion: grand harbor, broad beaches, clear-water ecosystems and two ships (user direction)
+
+- [x] Recorded the user's explicit art-direction requirement: the coast must feel like a major explorable destination, not a few tiny piers. Every new environment addition must prioritize realistic, high-quality free assets hosted on GitHub or trusted asset libraries, with the exact asset license verified before use. This extends and reinforces the permanent asset sourcing directive above.
+- [ ] **Grand fishing port / harbor district:** build a large, unmistakable harbor with a broad main quay, multiple long piers and finger docks, boat slips, walkable boardwalks, ramps, mooring bollards/rings, ladders, fenders, warehouses, fish market, net-mending/supply sheds, cranes/winches, lights, signage, crates, barrels, nets and believable fishing activity. Provide clear paths, collision, interaction points and navigation landmarks.
+- [ ] **Large coastal dock network:** expand beyond narrow single-platform piers into a substantial connected dock system with several branches and distinct fishing zones. Confirm all intended docks actually spawn; provide runtime counts, location labels, interaction checks and collision/path audits.
+- [ ] **Wide seashores / dalampasigan:** create long, broad, walkable sandy beaches, coves and bays with natural transitions from dry sand to wet reflective sand to shallow water. Vary beach width and orientation; avoid a thin sand-colored strip or flat empty foreground. Add beach access trails, dunes/vegetation where ecologically appropriate, driftwood and scattered rocks.
+- [ ] **Rocky coastal regions:** add separate rugged headlands, tide pools, cliffs, boulder fields and safe traversable routes, visually distinct from sandy beaches.
+- [ ] **Clear-water rendering:** improve water clarity, transparency/refraction impression, shallow-water color gradients, visible sandy seabed, depth falloff, caustic/light patterns and shoreline foam. Keep water readable without exposing a featureless flat plane; tune underwater attenuation and mobile rendering cost.
+- [ ] **Visible marine ecosystem:** populate distinct near-shore, reef, seagrass, open-water, rocky seabed and deep-water habitats with recognizable coral, anemones, sponges, sea grass, kelp where suitable, shells, starfish, urchins, crustaceans, mollusks, schooling fish and larger marine wildlife. Use habitat-specific species, scale, depth, behavior and spawn rules. Protected species are observation/photo encounters, not catchable loot.
+- [ ] **Large Titanic-inspired shipwreck landmark:** create a huge, recognizable, fictional early-20th-century ocean liner wreck (inspired by the scale and drama of a Titanic-like liner, not an exact copied branded asset): long broken hull, split/tilted sections, collapsed decks, damaged funnels/masts, exposed ribs, rust/weathering, partially submerged bow/stern, underwater debris field and explorable safe sections. Must read as a ship at a distance and have collision/navigation safety. Source realistic free/licensed ship/wreck assets and modify/assemble only where the license permits; do not fake it with a few primitive boxes.
+- [ ] **Intact ship offshore:** place a separate fully intact, large ship out in the open sea, clearly visible from shore/harbor. Give it believable hull/superstructure, navigation lights, wake/idle bobbing, mooring/route context and optional boat approach/boarding interaction if feasible. It must be distinct from the wreck and not merely a tiny decorative boat.
+- [ ] **Marine travel and scale:** add smaller fishing boats/launches as supporting craft, navigable routes between harbor, offshore intact ship, wreck and fishing grounds; preserve clear shallow-water and deep-water boundaries.
+- [ ] **Asset sourcing / manifest:** search GitHub and trusted free asset libraries first. Candidate leads discovered for review include Poly Haven's Smuggler's Cove CC0 ship/boat/coast-rock collection and 3DAssets.dev's CC0 Pirate Port and Tall Ships GLB pack; inspect actual previews and exact individual model license, quality, style, dimensions, textures, and mobile budgets before importing. These are candidates only, not approved imports or proof of completion. Avoid obviously stylized low-poly assets in the realistic coast.
+- [ ] **Optimization:** prefer GLB/glTF; use LODs, instancing, texture compression, sensible collision proxies, occlusion/frustum culling and streamed coastal sectors. Do not load the full port/wreck/reef asset set at maximum detail on mobile.
+- [ ] **Acceptance evidence:** desktop and mobile screenshots/video from shore, harbor entrance, main dock, broad sandy beach, rocky coast, shallow reef/seabed, offshore intact ship and wreck approach; runtime audit of placed assets/docks; collision and traversal checks; measured frame-time/FPS on mobile. Keep items open until visually inspected in the actual Climboria scene.
+- [ ] **Current status:** this is a newly expanded specification only. Existing code has an open-sea query, basic coast sampling, narrow timber dock candidates and a crude port marker. The broad beaches, large harbor, clear-water/marine ecosystem presentation, Titanic-scale wreck and intact offshore ship are not yet implemented or visually accepted.
+
+
+## 2026-11-06 — Browser Smoke #1458 evidence review
+
+- [x] Latest branch commit `5198422acfe4a1c6ca1b9f31c3060fdcf96130d2`: Validate workflow #2025 completed successfully.
+- [x] Browser Smoke workflow #1458 completed successfully; all 9 job steps passed, including homepage CTA/DEX/mobile navigation checks, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload.
+- [x] Downloaded and inspected the actual desktop/mobile screenshot artifact (10 screenshots: home, gameplay, cave entrance/interior and Woodland Pond/fish).
+- [ ] **Cave visual gate remains FAILED / NOT ACCEPTED:** screenshot still shows a blocky arch, broad flat wall panels, flat floor, simple torch props and placeholder-like interior; requires natural rock forms, layered depth, lighting falloff and believable cave dressing while preserving collision.
+- [ ] **Fish/pond visual gate remains FAILED / NOT ACCEPTED:** screenshot still shows a broad empty green foreground, simple flat teal pond surface and pale icon-like fish silhouettes near the surface; requires more convincing volumetric fish, fins/tails, depth placement/lighting and richer pond shore composition.
+- [ ] Browser smoke is an automated browser pass only; it does not establish real-device Redmi 14 5G FPS, thermal stability, touch feel or sustained performance. Those remain open.
+- [ ] Keep PR #211 open and unmerged until cave and fish/pond visual gates are corrected and inspected, plus mobile performance acceptance.
+- [ ] Next priority: address cave and fish/pond visual blockers before expanding into the newly specified grand coastal environment; do not spend the remaining pre-launch window on non-launch-critical coastal scope.
+
+
+## 2026-11-06 — Cave entrance correction, interior maze and Roman-era ruin art direction (user feedback)
+
+- [x] Recorded correction: the maze belongs **inside the cave**, not as an exterior maze. The approach outside must read as a natural cave entrance integrated into the landscape.
+- [x] Recorded removal requirement: remove the cardboard-looking guard/placeholder prop outside the cave. Replace only with a believable, properly scaled ancient Roman/late-antique sentinel statue, stone guardian or licensed character asset if a guard is truly needed; no cardboard silhouettes or crude box stand-ins.
+- [ ] **Cave maze layout:** build a navigable maze inside the cave interior with multiple branching corridors, chambers, dead ends, loops, landmarks, hidden treasure alcoves and readable wayfinding. Keep the maze physically inside the cave boundary and preserve safe collision/navigation; do not place maze walls outside the entrance.
+- [ ] **Roman Empire / ancient Mediterranean visual direction:** use believable ancient stone architecture and archaeological ruin language: weathered limestone/marble, Roman arches, columns, pilasters, aqueduct fragments, mosaics, statues, altars, braziers, amphorae, carved reliefs, worn paving and overgrown masonry. Make it feel like an ancient buried Roman sanctuary/fortress integrated into a natural cave, not a generic cardboard fantasy dungeon.
+- [ ] **Free asset candidates for review (not yet imported or visually approved):**
+  - Shuriken Studio Greek & Roman GLB kit: 25 models, 3.5 MB; page states free use in any project, no account/credit. Includes temple, arena, villa, bathhouse, basilica, triumphal arch, aqueduct, statues, column kit and Roman legionary. Verify the individual free-model license text and inspect previews before importing: https://shuriken.studio/kits/greek-and-roman
+  - Shuriken Studio Jungle Temple GLB kit: 25 models, 3.2 MB; page states free use in any project. Includes guardian, temple ruins, puzzle walls, traps, treasure room and temple mechanisms; use selectively for cave maze props only if exact model license and style fit: https://shuriken.studio/kits/jungle-temple
+  - GitHub monuments repository: measured historic-building GLB assets under CC BY-SA 4.0; attribution and share-alike obligations apply, and each model's architectural-rights notes must be reviewed: https://github.com/bilol-makhmudov/monuments
+  - Sketchfab Temple Ruins Asset Pack: CC BY; attribution required; inspect exact downloadable model and creator terms before use: https://sketchfab.com/3d-models/temple-ruins-asset-pack-d1e25cdbe51e467a87baf94ead0afa63
+  - Do not use paid Ancient Ruins pack assets unless separately approved/licensed; its full pack is commercial paid, despite a few individual free samples.
+- [ ] **Asset acceptance:** download and inspect candidate GLB previews, geometry, textures, scale, collision suitability, mobile cost and exact license. Record creator, source URL, license, attribution, file hash/path, triangle/texture budget in asset manifest. Free download alone is not proof of commercial permission.
+- [ ] **Visual acceptance:** inspect actual gameplay screenshots at exterior approach, cave mouth, first interior chamber, multiple maze turns, dead end/secret chamber and exit. Confirm the cardboard guard is gone, maze is inside, lighting/rock surfaces feel natural, and player can traverse without clipping.
+- [ ] **Current status:** requirements and candidate sources recorded only. Cave still has visual blockers from Browser Smoke #1458; Roman assets are not yet imported or accepted.
+
+
+## 2026-11-06 — Roman asset source verification and quality gate
+
+- [x] Checked the current Shuriken Studio Greek & Roman kit listing: 25 GLB models, 3.5 MB total; listed contents include Roman basilica, bathhouse, villa, aqueduct, triumphal arch, statues, column kit, Roman road, war galley and legionary.
+- [x] Checked the publisher's free-model license (version 2026-10-25): commercial game use and modification are permitted; models may be embedded in a published game; standalone redistribution/resale of the model files is prohibited; no credit is required. Preserve the license version applicable on download and keep the source/license record.
+- [x] Quality caveat: the publisher describes models as AI-made; individual examples are explicitly low-poly / Roblox-ready. Therefore these assets are **license-cleared candidates, not approved hero assets**. Do not use them for close-up photorealistic cave architecture if they look stylized or clash with Climboria's realistic direction. They may be suitable only for distant/background dressing or a deliberately stylized sub-area after preview review.
+- [x] Checked individual Classical Column Kit: GLB, 5,042 triangles, 16 parts, 0.3 MB; explicitly described as low-poly.
+- [x] Checked individual Roman Road Kit: GLB, 12,682 triangles, 43 parts, 0.8 MB; explicitly described as low-poly.
+- [ ] Download and inspect all intended individual model previews/files in Blender or Three.js before any import; test scale, normals, PBR textures, material quality, collision proxy, draw calls and mobile load.
+- [ ] Continue searching for photogrammetry/scanned Roman ruins, realistic stone arches/statues/columns and cave rock assets under CC0 or clear commercial licenses. Prioritize realistic scanned assets over low-poly kits for foreground/hero scenes.
+- [ ] Keep the cave maze inside the cave; remove cardboard guard; build believable natural cave rock around Roman-era buried sanctuary architecture. No exterior maze.
+- [ ] Current status: source license terms checked; no Roman kit asset has yet been imported or accepted visually.
+
+
+## 2026-11-06 — Hero equipment socket system requirements (tools, weapons and fishing rods)
+
+- [x] Audited current hero integration: the GLB loader scales and places the character; `cacheAssetRig()` currently detects leg, arm, hip and spine bones only.
+- [x] Audited current inventory UI: equipment slots are display-only placeholders; no equip action or 3D attachment is wired yet.
+- [ ] Add named attachment groups under the loaded GLB skeleton using actual hand/wrist, spine/back and hip/pelvis bones when present; include safe fallback anchors and per-model offset/rotation/scale metadata.
+- [ ] Required sockets: `hand_r` (main-hand tools, weapons, fishing rod), `hand_l` (off-hand/shield/lantern), `back` (stowed long tools/weapon/rod), `belt_l` and `belt_r` (small tools, knife, pouch), plus optional `shoulder` and `head` accessory sockets.
+- [ ] Equipment state must distinguish equipped/held from stowed: one active main-hand item at a time; rod only appears in hand while fishing, and can stow to back when not fishing; weapon/tool swaps must not duplicate models.
+- [ ] Implement a shared equip/unequip API and catalog metadata (asset path, socket, local position, Euler rotation, scale, category, allowed hero rigs); clone loaded GLB assets and dispose safely.
+- [ ] Wire inventory UI selection to the equip API; persist equipped item IDs, not transient Three.js objects; restore after reload.
+- [ ] Add rig compatibility audit for each hero GLB: required bone names, socket world transforms, grip alignment, hand pose, clipping and animation interaction. Do not assume every Meshy rig uses identical bone names.
+- [ ] Validate with actual 3D tool, weapon and fishing-rod assets in desktop and mobile screenshots/video; test walk/run/jump/swim/fishing and weapon/tool swap transitions.
+- [ ] Current status: architecture and requirements recorded; no socket implementation or equipment assets have been committed yet.
+
+
+## 2026-11-06 — Existing rigged hero reuse and image-to-hero appearance workflow
+
+- [x] Confirmed the current game loads the existing `../assets/characters/Climboria_Hero.glb` through GLTFLoader and retains its authored animation clips when available; no replacement character is required to begin the socket-system work.
+- [x] Clarified compatibility: the current GLB is a valid starting point for equipment attachment, but its exact hand/wrist/back/hip bone names and grip transforms still need runtime inspection before final offsets can be approved.
+- [x] Recorded user direction: preserve the existing rig, skeleton, bone hierarchy and animation system when adapting the hero's appearance from a user-supplied reference image. Do not replace the rig just to change the visual identity.
+- [ ] **Image-reference appearance pass:** when the user supplies the chosen image, inspect front/side/back visibility and translate the visual identity into the existing character mesh/materials or a compatible skinned visual replacement. Match face, hair, clothing, colors and silhouette as closely as the available views and model topology allow; do not promise pixel-perfect identity from a single view.
+- [ ] **Rig preservation gate:** verify that any modified/replaced visual mesh is weighted to the existing skeleton with compatible bone names, bind pose, scale and transforms; preserve current animation clips and test deformation at shoulders, elbows, wrists, hips, knees and ankles.
+- [ ] **Equipment socket implementation:** add named socket groups to detected hand/wrist, spine/back and hip/pelvis bones, with stable fallback anchors only when a suitable bone is absent. Store per-item local position, rotation and scale; do not alter the base hero rig to fit one item.
+- [ ] **Visual acceptance:** compare the adapted hero against the supplied reference in neutral idle, walk, run, jump and fishing poses; inspect face and outfit from front/side/back; test tool/weapon/rod attachment and clipping on desktop and Redmi 14 5G.
+- [ ] **Current status:** compatibility and preservation plan recorded. No appearance adaptation, socket manager or new equipment attachments have been committed yet. Existing hero GLB remains the intended base.
+
+
+## 2026-11-06 — Hero idle posture and falling transition correction
+
+- [x] Audited the current GLB animation selector and found that it did not explicitly reject A-pose/T-pose clips as standing idle candidates.
+- [x] Standing-idle candidate filtering now excludes A-pose/T-pose and other non-standing rest clips; procedural fallback applies a subtle arm-lowering correction and restores the authored upper-arm baseline when transitioning into movement/jump/fall.
+- [x] Airborne state now transitions into a distinct `fall` state while descending, including when the player walks/falls off a ledge rather than initiating a jump.
+- [x] Landing detection now recognizes the fall state so the existing landing transition can run after a fall.
+- [x] Added falling clip lookup (`Falling`, `fall`, `freefall`, `drop`, etc.) and a procedural falling pose fallback when no compatible authored fall clip exists.
+- [ ] Validate Climboria and Browser Smoke on the latest gameplay commit; inspect logs and fix any regression before acceptance.
+- [ ] Inspect actual desktop/mobile gameplay footage: idle arms must look relaxed (not A/T pose), jump must be a believable airborne action, falling must look like an uncontrolled fall rather than a standing character, and landing must recover naturally.
+- [ ] Confirm the actual GLB animation names and bone axes before final pose tuning; current fallback arm correction is a conservative code-side adjustment and still requires visual review.
+- [ ] Redmi 14 5G physical review remains required for animation smoothness and frame-time impact.
+- [ ] Current status: code correction committed; visual and device acceptance are not yet complete.
+
+
+## 2026-11-06 — Male hero visual reference received and rig audit instrumentation
+
+- [x] Received the user's full-body male explorer reference image. Visual targets recorded: preserve the reference face and short dark hairstyle as closely as feasible; brown worn leather outdoor jacket over black shirt; olive cargo trousers; brown hiking boots; dark fingerless gloves; expedition backpack with rolled bedroll, rope, utility pouches, compass and hanging gear.
+- [x] Confirmed the existing character asset is present at `assets/characters/Climboria_Hero.glb`; GitHub reports a file size of **42,923,204 bytes (~42.9 MB)**. This is a significant mobile download/memory/performance risk and must be optimized before the final Redmi 14 5G acceptance gate. Do not silently replace the existing GLB.
+- [x] Added browser QA hooks `window.__climboriaHeroRigAudit()` and `window.__climboriaHeroAnimationAudit()` to expose loaded animation names, full bone hierarchy, bone parentage and likely socket candidates for evidence-based rig mapping.
+- [ ] Capture the new rig audit from a real browser session and record exact hand/wrist, forearm, spine/back, pelvis/hip bone names and transforms.
+- [ ] Inspect the GLB's actual geometry, materials, textures, animation clips and mesh skin weights before choosing a safe appearance-adaptation method.
+- [ ] Create/adapt the male appearance as a skinned visual mesh compatible with the existing skeleton; preserve face likeness, clothing silhouette and gear. Avoid image-texture projection as a substitute for real 3D facial geometry.
+- [ ] Optimize the existing 42.9 MB GLB (geometry/material cleanup, texture resizing, mesh compression and/or KTX2/Basis textures as appropriate); verify loader support and retain an uncompressed source copy. Compare visual quality and animation fidelity before replacing the runtime asset.
+- [ ] Browser smoke must capture idle, walk, run, jump, fall and landing poses plus the rig audit. Validate no A/T-pose idle and believable fall/landing behavior.
+- [ ] Current status: visual reference recorded and audit hooks committed; no new character mesh, rig retarget, socket system or GLB optimization has been completed yet.
+
+
+## 2026-11-06 — First socket-anchor implementation
+
+- [x] Added named socket anchor groups to the existing loaded hero: `hand_r`, `hand_l`, `back`, `belt_l`, `belt_r`, `shoulder`, and `head`.
+- [x] Socket creation uses detected matching bones where available; when a named bone is absent, a clearly flagged provisional root-relative fallback anchor is created rather than silently pretending the rig contains that bone.
+- [x] Extended `__climboriaHeroRigAudit()` to report each socket's actual parent bone or fallback status and local position.
+- [ ] Capture browser audit output and verify side/orientation/scale for the actual GLB before approving any equipment offsets. Current fallback coordinates are provisional.
+- [ ] Implement catalog-driven item loading, clone/attach, equip/unequip, stow and persisted equipment IDs.
+- [ ] Add hand grip alignment and animation-aware rod/tool/weapon transitions; no equipment assets have been attached yet.
+- [ ] Run fresh Validate and Browser Smoke for this socket-anchor commit; visual acceptance remains pending.
+
+
+## 2026-11-06 — Character skins and costume production pipeline
+
+- [x] Recorded the recommended production location: create/author character skins and costume assets in a 3D character tool (Blender or a compatible character-generation workflow), then export rig-compatible GLB assets for the game to load. Do not build full costume geometry by hand inside `game/play.html`.
+- [x] Established three costume tiers:
+  - **Material/texture skins:** recolor or replace material/texture sets on the existing hero mesh; lowest download and runtime cost, but cannot change silhouette or add real clothing geometry.
+  - **Modular clothing pieces:** separate skinned meshes (jacket, trousers, boots, gloves, helmet, backpack) weighted to the existing skeleton; recommended long-term costume system. Each piece must use compatible bone names/skin weights and be tested against the existing animations.
+  - **Full character appearance variant:** a complete alternate skinned visual mesh using the existing skeleton/bind pose; use for major identity changes such as the male reference hero, while preserving the shared animation rig.
+- [x] Defined the runtime boundary: `game/play.html` should load/select costume GLBs, apply material variants, attach rigid accessories through sockets, and persist cosmetic IDs. Blender/Meshy/other authoring tools should create geometry, UVs, textures, skin weights, and export-ready assets.
+- [ ] Audit the current GLB skeleton, materials, texture maps, UVs, mesh partitions, and skin weights before choosing which costume tier the current hero supports best.
+- [ ] Create one test costume as a separate skinned GLB (start with jacket + trousers or the supplied male expedition outfit) bound to the existing skeleton; do not alter or replace the base rig.
+- [ ] Validate shoulder/elbow/wrist/hip/knee/ankle deformation across idle, walk, run, jump, fall, landing, swim and fishing poses; fix clipping and weight painting in the authoring tool.
+- [ ] Implement a costume catalog with cosmetic IDs, slot compatibility, preview, equip/unequip, persistence and asset preloading.
+- [ ] Optimize costume geometry and textures for mobile; share materials/textures where possible and load only equipped/previewed assets.
+- [ ] Keep cosmetic skins separate from gameplay equipment: clothing/appearance slots must not conflict with tool/weapon/rod sockets.
+- [ ] Current status: pipeline and asset boundaries documented; no costume asset has yet been created or imported.
+
+## 2026-11-06 — Meshy-assisted male hero and costume production workflow
+
+- [x] Confirmed Meshy is an approved production option for generating the male hero base and costume concepts; it is not excluded from the pipeline.
+- [x] Defined the safe handoff: Meshy generates the appearance/mesh; Blender is used for topology cleanup, materials, UVs, scale/orientation and rig/weight compatibility; the game continues using the existing Climboria skeleton and animation controller.
+- [x] Defined two acceptable Meshy routes: (A) generate/export a character with a rig only if its skeleton, bind pose and bone mapping can be verified and retargeted; (B) generate an unrigged/static appearance mesh and bind/weight it to the existing Climboria skeleton in Blender. Route B is the safer default when Meshy's rig differs.
+- [x] Preserve the original hero GLB as a rollback source. Never replace it until the new visual passes rig, deformation, animation, performance and mobile checks.
+- [ ] Generate the male expedition hero in Meshy from the supplied reference. Keep the face, short dark hair, brown expedition jacket, black shirt, olive cargo trousers, boots, gloves and backpack/bedroll/rope details consistent with the reference; request a clean full-body neutral A-pose/T-pose only as a modeling bind pose, not as the in-game idle animation.
+- [ ] Export the highest-quality practical mesh and texture maps from Meshy; retain source project/export and record polygon count, texture dimensions, material count, rig type and bone list.
+- [ ] In Blender, inspect topology and face fidelity; clean intersections, separate clothing/accessory parts where useful, set correct scale/orientation, and either retarget a verified compatible rig or transfer skin weights to the existing Climboria skeleton.
+- [ ] Verify bind pose, bone names/mapping, armature transforms and skin weights. Test shoulders, elbows, wrists, spine, hips, knees and ankles through idle, walk, run, jump, fall, landing, swim and fishing animations.
+- [ ] Export a test GLB under a new filename; load it behind a feature flag or QA-only selector so the original hero remains available for rollback.
+- [ ] Compare face/outfit silhouette from front, side and back; capture browser screenshots and test download/memory/frame-time impact on desktop and Redmi 14 5G before acceptance.
+- [ ] Current status: Meshy workflow approved and documented; no Meshy generation/export or replacement asset has been produced or imported yet.
+
+## 2026-11-06 — Simplified Meshy-first workflow (no manual Blender/Maya required from user)
+
+- [x] User workflow simplified: the user only needs to generate the character in Meshy and export the available model/rig/textures; do not require the user to learn Blender or Maya to continue the project.
+- [x] Technical workflow assigned to the development side: inspect the export, bone hierarchy, bind pose, mesh/material data and file size; prepare scripted/headless Blender processing or another automated conversion path where supported.
+- [x] Keep the current Climboria hero GLB and rig as the rollback baseline. Never replace it based only on a successful Meshy generation or export.
+- [ ] User generates the male expedition character in Meshy using the approved prompt and supplied reference image.
+- [ ] User exports the generated character in GLB or FBX (whichever Meshy makes available with the required rig/texture data) and provides the original export files. Include textures and rig/animation data when offered; do not re-export through another app first.
+- [ ] Inspect the exported asset directly and report its actual skeleton, bind pose, mesh/skin data, materials, texture sizes, polygon count and total download size.
+- [ ] Choose the least-manual integration route based on evidence: reuse compatible rig; retarget if safely mappable; or use an automated Blender script to transfer/weight the appearance mesh to the existing Climboria skeleton. If automated weight transfer cannot preserve deformation/face quality, stop and report the exact manual step rather than silently shipping a broken rig.
+- [ ] Produce a separate test asset and QA-only loader path; preserve the existing hero as default until visual and animation acceptance.
+- [ ] Run browser checks for relaxed idle, walk, run, jump, fall, landing, swim and fishing; capture front/side/back evidence and inspect clipping.
+- [ ] Optimize textures/geometry and verify mobile loading/frame time before promoting the new hero.
+- [ ] Current status: user-facing workflow simplified and technical responsibilities recorded; waiting for the user's Meshy export. No new Meshy asset has been received or integrated.
+
+## 2026-11-06 — Owner-directed priority reset (male hero deferred)
+
+- **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
+- **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #211 stays open until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
+- **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
+- **Current verification snapshot for branch `codex/fishing-mainline-integration`:** head before this priority note was `4d866c6e8f9641f44365e6c8f2d3c45466e63ff6`; Validate run `42080052728` passed; Browser Smoke run `42080052801` was still in progress at the latest check, with homepage/DEX/mobile-navigation stage passed and Jarrell's Peak desktop/mobile gameplay stage running. PR #211 is open and unmerged. Recheck the newest head workflows before claiming a final green state.
+
+---
+
+
+
+## 2026-11-06 — fishing integration clean-main reconciliation and jump-audit correction
+
+- [x] Preserved the fishing cast → wait → bite → manual reel lifecycle, movement cancellation, no-early-reward behavior, animated submerged fish schools, shared geometry, reduced mobile counts, and desktop/mobile pond screenshot captures from the previous integration branch.
+- [x] Reconciled the integration onto a fresh branch created from current main rather than carrying the old branch's 58-ahead/2-behind history.
+- [x] Diagnosed the previous Browser Smoke jump failure: the PR added a `fall` state, but the smoke audit loop stopped at `fall` before it could observe the landing transition. Updated the audit loop to continue through `fall` until landing or its existing frame cap; gameplay physics and assertions remain intact.
+- [ ] Fresh Validate and full desktop/mobile Browser Smoke on the clean integration branch are pending; do not mark fishing or jump/landing integration passed until both complete successfully.
+- [ ] Inspect fresh desktop/mobile Woodland Pond screenshots, cave captures, and gameplay framing; automated assertions do not replace visual acceptance.
+- [ ] Rod/line/bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
+- [ ] No server-authoritative or token/NFT fishing rewards are implemented; current inventory/rewards remain browser-local.
