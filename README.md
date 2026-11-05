@@ -6,6 +6,16 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-06 — account-system requirements clarified (documentation only)
+
+- [x] Re-read the canonical account/cloud-save section and confirmed that the account system is already sequenced as P2, frozen until Jarrell's Peak is accepted.
+- [x] Expanded the account requirements to explicitly include Guest play with later account upgrade, logout/session revocation, password reset, unique immutable Player ID, username, and cross-device progress recovery.
+- [ ] No login, registration, OAuth, backend, or cloud-save implementation is claimed by this documentation update. Keep the account system planned/frozen until the P2 gate.
+- [ ] After Jarrell's Peak acceptance, choose the auth/database provider only after checking current pricing, free-tier limits, region availability, backup/export options, and security controls. Implement and test Guest-to-account migration without losing or duplicating progress.
+- [ ] Continue P0 Jarrell's Peak work first; the next gameplay task remains the first confirmed open world/performance blocker, with desktop/mobile verification and physical Redmi 14 5G acceptance tracked separately.
+
+---
+
 ## 2026-11-04 — latest workflow and master-list checkpoint
 
 - **Latest main merge:** PR #189 `dd95ba219eb21df37324a8e95acc03022e147355` — mountain massif access regression gate. PR Validate passed (`41707182880`); PR Browser Smoke passed (`41707182711`). The completed job record confirms desktop/mobile smoke success. Main post-merge Validate `41708254827` and Pages deployment `41708254356` passed. Main post-merge Browser Smoke `41708254803` subsequently completed successfully (job `126169238689`).
@@ -186,15 +196,20 @@
 
 **Status: PLANNED / FROZEN until Jarrell's Peak is accepted.**
 
-### Account and authentication
-- [ ] Email/password registration and sign-in.
-- [ ] Google OAuth sign-in (Gmail address alone is not the same as Google OAuth).
-- [ ] X account OAuth, subject to provider approval, API access and possible cost.
+### Guest play, account creation and authentication
+- [ ] Let players start in Guest mode without email, password or crypto wallet; clearly explain that guest progress is device/browser-local until an account is linked.
+- [ ] Provide a safe Guest-to-account upgrade/link flow that preserves existing progress and prevents duplicate accounts or duplicated inventory.
+- [ ] Email/password sign-up and sign-in, including logout.
+- [ ] Email verification and password reset/recovery flows with expiring, single-use tokens.
+- [ ] Google OAuth sign-in (a Gmail address alone is not the same as Google OAuth).
+- [ ] X account OAuth only if provider approval, API access, reliability and cost make it practical; do not make it a launch dependency.
+- [ ] Assign every account an immutable unique Player ID; allow a separately editable, unique username with validation and rename policy.
+- [ ] One Climboria account can link multiple sign-in methods and optional wallets; linking must not create duplicate player identities.
 - [ ] Optional wallet sign-in/linking: MetaMask (EVM), Phantom, Solflare and OKX Wallet, with supported chain/network validation.
-- [ ] One Climboria account can link multiple sign-in methods and wallets; linking must not create duplicate player identities.
 - [ ] Wallet login uses a one-time server nonce and verified signature; never request private keys or seed phrases.
-- [ ] Account recovery, email verification, safe unlinking, session expiry, device/session management and anti-account-takeover protections.
+- [ ] Secure sessions: expiry, logout/revocation, device/session management, rate limits, abuse protection and account-takeover safeguards.
 - [ ] Ordinary gameplay must not require a crypto wallet.
+- [ ] Support cross-device sign-in on desktop and mobile, with server-backed identity and progress after cloud save is implemented.
 
 ### Cloud save and exact world-position restore
 - [ ] Store player/account ID, world/map ID, X/Y/Z position, facing rotation, selected hero, checkpoint/expedition progress, inventory, collected items and relevant survival stats.
@@ -498,7 +513,6 @@ The following is the existing detailed checklist/log imported intact for continu
 - [x] Validate passed on current-main code/test head `d75bf3f95ed4c22fbabddbd57cc631212bb0d0eb`: [run 41412697815](https://github.com/CryptoDilis/Climboria/actions/runs/41412697815).
 - [x] Browser Smoke passed on the same head, including desktop and mobile gameplay: [run 41412697790](https://github.com/CryptoDilis/Climboria/actions/runs/41412697790).
 - [ ] Jump/fall/climb pose appearance, swim pose quality, foot grounding, and physical Android visual acceptance remain manual checks; no visual/device acceptance is claimed from CI.
-
 ---
 
 ## 2026-11-02 — desktop wheel and mobile pinch camera zoom regression coverage (automated verification passed; manual review open)
@@ -998,7 +1012,6 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 ## P1 — World environment and free asset research/integration
 
 For each asset or code technique: find a trustworthy open-source/GitHub source, verify license and attribution, record the source and license, integrate it, optimize it, and test collision/performance. Do not bulk-copy an entire project without checking its license and dependencies.
-
 ### Terrain, mountains, weather, and water
 - [ ] Realistic mountain ranges, ice peaks, snow/rock transitions, cliffs, ridges, ravines, boulders, scree, and believable terrain silhouettes.
 - [ ] Volcano/magma region in a distinct part of the map, with safe readable boundaries, heat/particle effects, and tested collision.
@@ -1499,7 +1512,6 @@ For every integrated asset or borrowed technique, record:
 - [ ] Verify all dock placement assertions and the complete Validate / Browser Smoke / Pages workflow set before merge.
 - [ ] Manual desktop and Redmi 14 5G acceptance remains open for the dock approach, deck height, shoreline transitions, and fishing feedback.
 
-
 ## 2026-11-02 — Jarrell’s Peak shallow seabed shading (in progress)
 
 - [x] Added a depth-aware sand-to-silt color blend for underwater terrain vertices without changing water-body geometry or swim depth.
@@ -1997,8 +2009,7 @@ For every integrated asset or borrowed technique, record:
 - [x] Added per-instance placement diagnostics without changing the existing strict acceptance assertion.
 - [x] Validate run `41650874654` passed.
 - [x] Browser Smoke run `41650874828` passed on desktop and mobile. Log confirms buttress 16/16, canopy 16/16, undergrowth 42/42, fallen logs 14/14; all four groups report `valid: true` and `invalid: []`.
-- [x] Fishing interaction smoke passed for all eight coastal docks plus woodland pond, moonpool and sanctuary lake; freshwater movement entry/exit passed; collision audit reported 87 valid solids and no water overlaps; mobile diagnostics reported visible hero, HUD, map, settings and mobile controls.
-- [x] Merged PR #169 at `db59fd36109d6e3e250e6758504da8aa1f3bb008`.
+- [x] Fishing interaction smoke passed for all eight coastal docks plus woodland pond, moonpool and sanctuary lake; freshwater movement entry/exit passed; collision audit reported 87 valid solids and no water overlaps; mobile diagnostics reported visible hero, HUD, map, settings and mobile controls.- [x] Merged PR #169 at `db59fd36109d6e3e250e6758504da8aa1f3bb008`.
 - [ ] Physical Redmi 14 5G visual acceptance remains open. Automated browser evidence does not certify real-device rendering.
 
 
