@@ -784,3 +784,13 @@ For each meaningful implementation batch:
 - [ ] Cave wall variation, spacious natural chamber dressing, and reduced entrance/treasure clutter remain open.
 - [ ] Desktop/mobile gameplay world dressing and default camera framing remain open; current smoke captures show large empty foreground areas and the sanctuary structure cropped at the top edge.
 - [ ] PR #211 remains unmerged until the new commit's workflows pass and updated pond screenshots receive visual review.
+
+
+## 2026-11-05 — underwater fish smoke diagnosis and correction
+
+- [x] Browser Smoke #1430 completed; homepage/navigation checks passed and desktop/mobile gameplay rendered, but the job failed the aquatic-life placement audit.
+- [x] Root cause isolated from the job log: fish groups were moved deeper, but the audit's `surfaceClearance` metadata still used the old, oversized 1.65-unit value. The resulting computed top-of-silhouette clearance was only 0.26–0.31 units below the surface, failing the required 0.5-unit margin.
+- [x] Corrected the fish silhouette clearance metadata to 0.38 units, matching the scaled fish body rather than the full fish depth. Fish positions, swimming paths, and gameplay behavior are unchanged.
+- [ ] Run fresh Validate and desktop/mobile Browser Smoke on follow-up commit c5fe5547289284c0eba0cf54d7a86f605341aa5f; confirm the aquatic-life audit passes and inspect new pond captures.
+- [ ] Do not mark fish visual acceptance complete until new desktop/mobile pond screenshots show readable submerged fish with natural depth cues.
+- [ ] PR #211 remains unmerged pending fresh green checks and screenshot review.
