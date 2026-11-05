@@ -1067,3 +1067,14 @@ For each meaningful implementation batch:
 - [ ] Optimize the existing 42.9 MB GLB (geometry/material cleanup, texture resizing, mesh compression and/or KTX2/Basis textures as appropriate); verify loader support and retain an uncompressed source copy. Compare visual quality and animation fidelity before replacing the runtime asset.
 - [ ] Browser smoke must capture idle, walk, run, jump, fall and landing poses plus the rig audit. Validate no A/T-pose idle and believable fall/landing behavior.
 - [ ] Current status: visual reference recorded and audit hooks committed; no new character mesh, rig retarget, socket system or GLB optimization has been completed yet.
+
+
+## 2026-11-06 — First socket-anchor implementation
+
+- [x] Added named socket anchor groups to the existing loaded hero: `hand_r`, `hand_l`, `back`, `belt_l`, `belt_r`, `shoulder`, and `head`.
+- [x] Socket creation uses detected matching bones where available; when a named bone is absent, a clearly flagged provisional root-relative fallback anchor is created rather than silently pretending the rig contains that bone.
+- [x] Extended `__climboriaHeroRigAudit()` to report each socket's actual parent bone or fallback status and local position.
+- [ ] Capture browser audit output and verify side/orientation/scale for the actual GLB before approving any equipment offsets. Current fallback coordinates are provisional.
+- [ ] Implement catalog-driven item loading, clone/attach, equip/unequip, stow and persisted equipment IDs.
+- [ ] Add hand grip alignment and animation-aware rod/tool/weapon transitions; no equipment assets have been attached yet.
+- [ ] Run fresh Validate and Browser Smoke for this socket-anchor commit; visual acceptance remains pending.
