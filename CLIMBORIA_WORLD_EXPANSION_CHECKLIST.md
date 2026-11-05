@@ -831,3 +831,16 @@ For each meaningful implementation batch:
 - [x] Browser smoke verifies the game renders on desktop and mobile browser viewports; this is not physical Redmi 14 5G acceptance.
 - [ ] Rod, line, bobber animation, bait/tool requirements, physical Android/Redmi 14 5G testing, and real-device performance remain open.
 - [ ] PR #211 remains open and unmerged; green automated checks do not override the cave/fish visual acceptance gates.
+
+
+## 2026-11-05 — latest cave and fish screenshot review / two-sided rock relief
+
+- [x] Validate #2008 and Browser Smoke #1441 passed on commit 98fba8de1bd7a9fbfcb642f1c495cba2582d0c62.
+- [x] Validate #2007 and Browser Smoke #1442 passed on commit 57bb4c9bf74720f90c77a1235d2a1dcf9b44ffc0; desktop/mobile gameplay and screenshot upload completed.
+- [x] Reviewed desktop and mobile cave interior screenshots from Browser Smoke #1442 and desktop Woodland Pond fish screenshot.
+- [ ] Cave visual acceptance remains open: wall surfaces still read as broad dark panels with sparse isolated relief; central passage opening is visible, but the chamber lacks continuous natural rock depth and the floor remains visually flat. The wall-relief follow-up now places staggered outcrops on both faces of each structural wall so the player-facing side cannot randomly be left bare.
+- [ ] Fish visual acceptance remains open: fish remain small and flattened in the wide gameplay view despite darker color, lower opacity, and deeper placement. Improve body volume/scale and camera-distance readability without making fish appear to float above the water; keep aquaticLifeAudit passing.
+- [x] Commit 70f1b8199b7bccb2208a3ab086cf3465f6d04f6c adds staggered relief to both sides of cave structural walls while preserving the swept collision segments.
+- [ ] Fresh Validate and desktop/mobile Browser Smoke for 70f1b8199b7bccb2208a3ab086cf3465f6d04f6c; inspect new cave captures for relief, passage clearance, and no collision obstruction.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and performance measurements remain open.
+- [ ] PR #211 remains unmerged until the latest commit has fresh green workflows and the updated cave/fish screenshots pass visual review.
