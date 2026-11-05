@@ -981,16 +981,37 @@ for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
+const HERO_SOCKET_DEFS={
+ hand_r:{bone:/(?:right|_r|\.r)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:right|_r|\.r)/i,fallback:{x:.28,y:.92,z:0}},
+ hand_l:{bone:/(?:left|_l|\.l)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:left|_l|\.l)/i,fallback:{x:-.28,y:.92,z:0}},
+ back:{bone:/(?:upper)?spine|chest/i,fallback:{x:0,y:1.28,z:-.2}},
+ belt_l:{bone:/(?:left|_l|\.l)[^/]*(?:upleg|thigh)|(?:upleg|thigh)[^/]*(?:left|_l|\.l)/i,fallback:{x:-.17,y:.82,z:0}},
+ belt_r:{bone:/(?:right|_r|\.r)[^/]*(?:upleg|thigh)|(?:upleg|thigh)[^/]*(?:right|_r|\.r)/i,fallback:{x:.17,y:.82,z:0}},
+ shoulder:{bone:/(?:right|_r|\.r)[^/]*shoulder/i,fallback:{x:.25,y:1.42,z:0}},
+ head:{bone:/head|neck/i,fallback:{x:0,y:1.68,z:0}}
+};
+let heroSockets={};
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
+ const bones=[];
  root.traverse(o=>{
   if(!o.isBone)return;
+  bones.push(o);
   const n=o.name.toLowerCase();
   if(/hip|pelvis/.test(n))assetRig.hips=o;
   if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine=o;
-  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
-  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
+  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2?-1:1});
+  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2?-1:1});
  });
+ heroSockets={};
+ for(const [name,def] of Object.entries(HERO_SOCKET_DEFS)){
+  const bone=bones.find(o=>def.bone.test(o.name));
+  const anchor=new T3.Group();anchor.name='ClimboriaSocket_'+name;
+  anchor.userData={socket:name,attachedToBone:bone?.name||null,fallback:!bone};
+  if(bone)bone.add(anchor);
+  else{root.add(anchor);anchor.position.set(def.fallback.x,def.fallback.y,def.fallback.z);}
+  heroSockets[name]=anchor;
+ }
 }
 const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|death|a[_\\s-]?pose|t[_\\s-]?pose)(?:$|[_\\s-])/i;
 function findStandingRestClip(){
@@ -1026,7 +1047,7 @@ window.__climboriaHeroAnimationAudit=heroAnimationAudit;
 window.__climboriaHeroRigAudit=()=>{
  const bones=[];
  if(assetHero)assetHero.traverse(o=>{if(o.isBone)bones.push({name:o.name,parent:o.parent?.name||'',position:{x:+o.position.x.toFixed(4),y:+o.position.y.toFixed(4),z:+o.position.z.toFixed(4)}})});
- return {loaded:!!assetHero,renderer:document.documentElement.dataset.climboriaHeroRenderer||'',asset:assetChoices.Adventurer,animationNames:assetActions.map(a=>a.name),boneCount:bones.length,bones,socketCandidates:bones.filter(b=>/(hand|wrist|forearm|arm|shoulder|spine|chest|pelvis|hip|root)/i.test(b.name))};
+ return {loaded:!!assetHero,renderer:document.documentElement.dataset.climboriaHeroRenderer||'',asset:assetChoices.Adventurer,animationNames:assetActions.map(a=>a.name),boneCount:bones.length,bones,socketCandidates:bones.filter(b=>/(hand|wrist|forearm|arm|shoulder|spine|chest|pelvis|hip|root)/i.test(b.name)),sockets:Object.fromEntries(Object.entries(heroSockets).map(([name,node])=>[name,{bone:node.userData.attachedToBone,fallback:node.userData.fallback,position:{x:node.position.x,y:node.position.y,z:node.position.z}}]))};
 };
 function animateAssetFallback(t,state,speed){
  const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',falling=state==='fall',landing=state==='land';
