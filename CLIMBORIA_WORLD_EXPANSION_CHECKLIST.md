@@ -1014,3 +1014,17 @@ For each meaningful implementation batch:
 - [ ] Continue searching for photogrammetry/scanned Roman ruins, realistic stone arches/statues/columns and cave rock assets under CC0 or clear commercial licenses. Prioritize realistic scanned assets over low-poly kits for foreground/hero scenes.
 - [ ] Keep the cave maze inside the cave; remove cardboard guard; build believable natural cave rock around Roman-era buried sanctuary architecture. No exterior maze.
 - [ ] Current status: source license terms checked; no Roman kit asset has yet been imported or accepted visually.
+
+
+## 2026-11-06 — Hero equipment socket system requirements (tools, weapons and fishing rods)
+
+- [x] Audited current hero integration: the GLB loader scales and places the character; `cacheAssetRig()` currently detects leg, arm, hip and spine bones only.
+- [x] Audited current inventory UI: equipment slots are display-only placeholders; no equip action or 3D attachment is wired yet.
+- [ ] Add named attachment groups under the loaded GLB skeleton using actual hand/wrist, spine/back and hip/pelvis bones when present; include safe fallback anchors and per-model offset/rotation/scale metadata.
+- [ ] Required sockets: `hand_r` (main-hand tools, weapons, fishing rod), `hand_l` (off-hand/shield/lantern), `back` (stowed long tools/weapon/rod), `belt_l` and `belt_r` (small tools, knife, pouch), plus optional `shoulder` and `head` accessory sockets.
+- [ ] Equipment state must distinguish equipped/held from stowed: one active main-hand item at a time; rod only appears in hand while fishing, and can stow to back when not fishing; weapon/tool swaps must not duplicate models.
+- [ ] Implement a shared equip/unequip API and catalog metadata (asset path, socket, local position, Euler rotation, scale, category, allowed hero rigs); clone loaded GLB assets and dispose safely.
+- [ ] Wire inventory UI selection to the equip API; persist equipped item IDs, not transient Three.js objects; restore after reload.
+- [ ] Add rig compatibility audit for each hero GLB: required bone names, socket world transforms, grip alignment, hand pose, clipping and animation interaction. Do not assume every Meshy rig uses identical bone names.
+- [ ] Validate with actual 3D tool, weapon and fishing-rod assets in desktop and mobile screenshots/video; test walk/run/jump/swim/fishing and weapon/tool swap transitions.
+- [ ] Current status: architecture and requirements recorded; no socket implementation or equipment assets have been committed yet.
