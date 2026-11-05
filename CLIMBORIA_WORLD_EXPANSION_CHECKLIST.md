@@ -1001,3 +1001,16 @@ For each meaningful implementation batch:
 - [ ] **Asset acceptance:** download and inspect candidate GLB previews, geometry, textures, scale, collision suitability, mobile cost and exact license. Record creator, source URL, license, attribution, file hash/path, triangle/texture budget in asset manifest. Free download alone is not proof of commercial permission.
 - [ ] **Visual acceptance:** inspect actual gameplay screenshots at exterior approach, cave mouth, first interior chamber, multiple maze turns, dead end/secret chamber and exit. Confirm the cardboard guard is gone, maze is inside, lighting/rock surfaces feel natural, and player can traverse without clipping.
 - [ ] **Current status:** requirements and candidate sources recorded only. Cave still has visual blockers from Browser Smoke #1458; Roman assets are not yet imported or accepted.
+
+
+## 2026-11-06 — Roman asset source verification and quality gate
+
+- [x] Checked the current Shuriken Studio Greek & Roman kit listing: 25 GLB models, 3.5 MB total; listed contents include Roman basilica, bathhouse, villa, aqueduct, triumphal arch, statues, column kit, Roman road, war galley and legionary.
+- [x] Checked the publisher's free-model license (version 2026-10-25): commercial game use and modification are permitted; models may be embedded in a published game; standalone redistribution/resale of the model files is prohibited; no credit is required. Preserve the license version applicable on download and keep the source/license record.
+- [x] Quality caveat: the publisher describes models as AI-made; individual examples are explicitly low-poly / Roblox-ready. Therefore these assets are **license-cleared candidates, not approved hero assets**. Do not use them for close-up photorealistic cave architecture if they look stylized or clash with Climboria's realistic direction. They may be suitable only for distant/background dressing or a deliberately stylized sub-area after preview review.
+- [x] Checked individual Classical Column Kit: GLB, 5,042 triangles, 16 parts, 0.3 MB; explicitly described as low-poly.
+- [x] Checked individual Roman Road Kit: GLB, 12,682 triangles, 43 parts, 0.8 MB; explicitly described as low-poly.
+- [ ] Download and inspect all intended individual model previews/files in Blender or Three.js before any import; test scale, normals, PBR textures, material quality, collision proxy, draw calls and mobile load.
+- [ ] Continue searching for photogrammetry/scanned Roman ruins, realistic stone arches/statues/columns and cave rock assets under CC0 or clear commercial licenses. Prioritize realistic scanned assets over low-poly kits for foreground/hero scenes.
+- [ ] Keep the cave maze inside the cave; remove cardboard guard; build believable natural cave rock around Roman-era buried sanctuary architecture. No exterior maze.
+- [ ] Current status: source license terms checked; no Roman kit asset has yet been imported or accepted visually.
