@@ -1182,3 +1182,19 @@ For each meaningful implementation batch:
 - [ ] Full desktop/mobile Browser Smoke [42084914580](https://github.com/CryptoDilis/Climboria/actions/runs/42084914580) is pending/queued. Review the new cave entrance/interior and pond screenshots when uploaded; visual acceptance is not yet granted.
 - [ ] Manually verify cave walk-in, ceiling/head clearance, collision and trap readability; verify fish remain visible but convincingly submerged on desktop/mobile; complete physical Redmi 14 5G acceptance.
 - [ ] Keep PR #215 unmerged until fresh smoke and visual acceptance pass. Rod/line/bobber/bait polish remains open. Server-authoritative rewards and funded token/NFT payouts remain disabled/unimplemented.
+
+## 2026-11-06 — owner directive: free GitHub-hosted assets only
+
+- [x] Recorded the owner directive: source environment/gameplay assets from free GitHub-hosted repositories; do not introduce paid packs, subscriptions, or assets that require a purchase.
+- [x] Asset intake rule: inspect the exact upstream repository, asset-level license, commercial-use permissions, attribution/notice requirements, redistribution terms, dependencies, and source revision before downloading or committing any asset. "Free download" alone is not proof of permission.
+- [x] Preferred licenses: CC0/public-domain dedication or permissive licenses that explicitly allow commercial game use and redistribution. For CC-BY, preserve the required attribution and license notices in the asset manifest. Reject NC, unclear, missing, or incompatible licenses; do not assume every asset in a repository shares one license.
+- [x] GitHub source discovery references for review (not yet imported/approved assets):
+  - Open Source 3D Assets registry: https://github.com/toxsam/open-source-3d-assets — each collection/asset must still be checked against its individual license metadata.
+  - Awesome 3D Assets index: https://github.com/glbkit-tools/awesome-3d-assets — discovery index only; follow each asset to its authoritative source and verify its own license.
+  - three.ws CC0 catalog helper: https://github.com/nirholas/three-ws-assets — catalog describes its published library as CC0; verify the specific selected asset and current source record before use.
+- [ ] Build a checked-in asset manifest recording asset name, intended in-game use, original GitHub repository, exact commit/tag or release, source file path, license, attribution text, file size, polygon/texture budget, and collision/LOD status.
+- [ ] Download approved assets into the repository (no runtime hotlinking to third-party asset hosts); pin source revisions, retain required LICENSE/NOTICE files, and avoid silently replacing upstream files.
+- [ ] Prioritize the current P0 blockers with licensed realistic assets: cave rock/limestone formations and Roman sanctuary props, then aquatic fish/underwater details, then vegetation/shoreline/ruins/animals/props. Use GLB/glTF where practical for Three.js.
+- [ ] Before integration, preview each asset in the actual Climboria scene; check scale, pivots, material/texture paths, normals, draw calls, mobile memory/download size, and visual consistency. Create simple collision proxies where needed; do not rely on decorative meshes for player collision.
+- [ ] Run Validate and full desktop/mobile Browser Smoke after each asset integration; inspect screenshots and complete physical Redmi 14 5G performance checks. CI success alone is not visual or device acceptance.
+- [ ] **Status:** sourcing policy and discovery references recorded only. No third-party asset is claimed downloaded, licensed, integrated, or visually accepted by this documentation update.
