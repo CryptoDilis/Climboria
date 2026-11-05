@@ -1826,7 +1826,7 @@ function jumpControllerAudit(){
  const heldCount=p.jumpCount;
  updatePlayerWaterState(p,null,0,.016,0,0,.1);
  let peak=p.y,frames=0;
- while((p.jumpState==='takeoff'||p.jumpState==='airborne')&&frames<120){updatePlayerWaterState(p,null,0,.016,0,0,.1+frames*.016);peak=Math.max(peak,p.y);frames++;}
+ while((p.jumpState==='takeoff'||p.jumpState==='airborne'||p.jumpState==='fall')&&frames<120){updatePlayerWaterState(p,null,0,.016,0,0,.1+frames*.016);peak=Math.max(peak,p.y);frames++;}
  const landing={state:p.jumpState,count:p.landCount,y:p.y,peak,frames};
  const body={id:'jump-audit-water',surfaceY:0,depth:3};
  const swimmer={y:swimTargetY(body,1),vy:0,jumpState:'grounded',jumpHeld:false,jumpCount:0,swimDepth:1};
