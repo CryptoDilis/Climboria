@@ -1308,3 +1308,18 @@ For each meaningful implementation batch:
 - [ ] Inspect the sample elevations before designing the tunnel floor/roof. The audit records the existing terrain surface; it does not yet calculate a safe roof thickness, dig terrain, create tunnel walls/floor, add collision, or create the separate underwater seabed exit.
 - [ ] Keep the original cave entrance and current cave rooms unchanged. Keep the sea tunnel, underwater exit, cave/fish visual acceptance, manual traversal/headroom/trap review, natural hero idle, and physical Redmi 14 5G acceptance open.
 - [ ] PR #215 remains OPEN and UNMERGED; no test thresholds were relaxed. Free GitHub-hosted assets only remains mandatory; no asset imported in this increment.
+
+
+## 2026-11-06 — Browser Smoke #1506 and visual review
+
+- [x] Validate Climboria #2073 [42110493307](https://github.com/CryptoDilis/Climboria/actions/runs/42110493307) passed on PR head `1a595d16f3abf54d807ba8b8b3cb9d122bbdf67f`.
+- [x] Full Browser Smoke #1506 [42110493377](https://github.com/CryptoDilis/Climboria/actions/runs/42110493377) passed, including homepage CTA/DEX/mobile navigation and Jarrell's Peak desktop/mobile gameplay checks.
+- [x] Screenshot artifact [13453937553](https://github.com/CryptoDilis/Climboria/actions/runs/42110493377/artifacts/13453937553) downloaded and all 10 captures reviewed.
+- [x] The 213-sample cave-to-coast audit passed its smoke assertions: all sampled positions/heights are finite and the centreline reaches mapped `open_sea` within 700m. The exact ocean-entry station/elevation profile was printed in the job output but is not available from the artifact; do not invent coordinates or floor elevations. Next verification increment should persist the full audit JSON as a CI artifact so route design uses measured values.
+- [ ] Cave entrance screenshot still has a very broad empty foreground and the arch appears small/distant; improve approach composition without changing entrance geometry or player spawn until separately verified.
+- [ ] Cave interior screenshot still exposes bright sky/exterior through a short opening; it does not yet read as a sealed underground tunnel. Build the longer enclosed route only after persisting and inspecting the terrain profile.
+- [ ] Woodland Pond fish are clearly visible but appear as flat, pale surface silhouettes rather than convincingly submerged fish. Improve depth cues/body volume/motion while preserving fish-below-surface checks.
+- [ ] Hero idle remains stiff with arms held away from the body; relaxed natural idle remains open.
+- [ ] No sea tunnel, roof/floor/collision, or distinct underwater seabed exit is claimed implemented. Manual cave traversal/headroom/trap review and physical Redmi 14 5G acceptance remain open.
+- [ ] PR #215 remains OPEN and UNMERGED. CI success and mergeability do not satisfy visual/manual/device acceptance.
+- [ ] Free GitHub-hosted asset policy remains mandatory; no third-party asset import is claimed in this checkpoint.
