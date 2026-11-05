@@ -1172,3 +1172,13 @@ For each meaningful implementation batch:
 - [ ] Rod, line, bobber, bait and fishing-tool polish remain open; fishing lifecycle smoke is green but visual/gameplay polish is not fully accepted.
 - [ ] No server-authoritative rewards, global chest claim/cooldown ledger, or funded token/NFT payouts are implemented. Keep crypto rewards disabled; browser-local inventory is prototype-only.
 - [ ] Keep PR #215 open and unmerged until the cave and pond visual blockers plus remaining P0 gates are reviewed. Male hero/Meshy/costumes remain deferred as previously directed.
+
+
+## 2026-11-06 — Cave tunnel and underwater fish depth polish
+
+- [x] PR #215 code commit `749f03bffb60d2bbbe3583347ed45b4b1a4ea2d9`: replaced the featureless flat cave-mouth plane with a visible rock-lined tunnel throat, irregular side/roof masses, tunnel floor and layered warm/cool lighting. Existing cave layout and collision-segment logic were retained.
+- [x] Fish schools moved farther below the water surface and reduced in scale: freshwater approximately -4.15 to -4.60 Y; ocean approximately -5.10 to -5.55 Y. Existing underwater-clearance audit is retained; no threshold was relaxed.
+- [x] Validate run [42084914567](https://github.com/CryptoDilis/Climboria/actions/runs/42084914567) passed on this code commit.
+- [ ] Full desktop/mobile Browser Smoke [42084914580](https://github.com/CryptoDilis/Climboria/actions/runs/42084914580) is pending/queued. Review the new cave entrance/interior and pond screenshots when uploaded; visual acceptance is not yet granted.
+- [ ] Manually verify cave walk-in, ceiling/head clearance, collision and trap readability; verify fish remain visible but convincingly submerged on desktop/mobile; complete physical Redmi 14 5G acceptance.
+- [ ] Keep PR #215 unmerged until fresh smoke and visual acceptance pass. Rod/line/bobber/bait polish remains open. Server-authoritative rewards and funded token/NFT payouts remain disabled/unimplemented.
