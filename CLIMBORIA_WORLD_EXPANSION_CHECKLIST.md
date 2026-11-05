@@ -1262,3 +1262,13 @@ For each meaningful implementation batch:
 - [ ] Review fresh cave exterior/interior screenshots and manually confirm the remaining maze is underground, the original entrance is unchanged, and all retained routes/collision/headroom remain sound.
 - [ ] Underground tunnel to the sea and a separate seabed underwater exit are NOT implemented by this change. Map-coordinate route, seabed depth, sealed ceiling, swim transition and underwater exit remain next cave tasks.
 - [ ] PR #215 remains open and unmerged; physical Redmi 14 5G acceptance and other cave/fish visual gates remain outstanding.
+
+
+## 2026-11-06 — validation failure diagnosis and syntax correction
+
+- [x] Inspected Validate run [42101305818](https://github.com/CryptoDilis/Climboria/actions/runs/42101305818); homepage checks and initial inline-script syntax check passed, but the game script syntax check failed.
+- [x] Root cause: the first stale-audit cleanup removed property names but left fragments of their nested `l2w(...)` arguments in the `cavePassageAudit` object, producing `SyntaxError: Unexpected token '-'`. This was a test-integration/code-edit defect, not a gameplay runtime finding.
+- [x] Repaired the complete malformed tail of the audit object in commit `6121d1634bf0276aae178e7f29391a7bab41e73f`; the remaining passage audit now closes after the east-branch collision assertion.
+- [ ] Fresh Validate for the repaired head `6121d1634bf0276aae178e7f29391a7bab41e73f` is pending; the observed failed run checked the earlier merge ref `0fc7cad2c4759d0e57442b305eb69e8a6199d01b`, not this repair commit.
+- [ ] Browser Smoke run `42101305839` was still running against the earlier merge ref when last checked; its result is not evidence for the repaired head. Require a fresh run on the latest PR head and inspect screenshots.
+- [ ] Do not merge until latest Validate and full desktop/mobile Browser Smoke pass, cave screenshots/manual traversal are reviewed, and physical Redmi 14 5G acceptance is completed.
