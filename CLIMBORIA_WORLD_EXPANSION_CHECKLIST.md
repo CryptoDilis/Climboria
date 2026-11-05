@@ -940,3 +940,17 @@ For each meaningful implementation batch:
 - [ ] Add adaptive quality tiers only after measurements: mobile-first render scale, shadow/foliage/fish/weather density and view-distance controls, preserving visual quality where possible.
 - [ ] Acceptance targets: stable 30 FPS minimum on Redmi 14 5G during normal exploration (prefer 45–60 where thermals allow), no repeated hitching during walk/run/turn/jump, controlled chunk pop-in, no collision or gameplay regression, and sustained 10-minute mobile test.
 - [ ] Current evidence: code-level chunk-streaming optimization committed; automated validation and browser smoke pending. Physical Redmi 14 5G test and measured FPS/thermal results remain open.
+
+
+## 2026-11-06 — Coastal shoreline, fishing port and dock visual audit
+
+- [x] Audited the current `game/play.html` coastal implementation rather than assuming the checklist item was visually complete.
+- [x] Confirmed the code contains a procedural coast query, up to eight simple narrow timber dock platforms, fishing interaction points, and a rudimentary port marker (one block platform and a pole). The actual number of coastal docks is conditional on valid `coastAt(z)` samples; eight authored candidates do not guarantee eight successfully placed docks.
+- [ ] **Sandy beaches / dalampasigan:** create broad, continuous, walkable sandy shoreline areas with visible wet/dry sand transition, natural coves, varied beach width, shallow-water seabed visibility, and collision-safe paths. Current shore exclusion/sand tint logic is not proof of a finished beach scene.
+- [ ] **Rocky shores:** add separate rocky/coastal cliff sections and boulder transitions, with walkable routes and no floating or blocking assets.
+- [ ] **Fishing port:** replace the single block-and-pole marker with a recognizable, navigable harbor: substantial pier/boardwalk, mooring posts, ramps, boat slips, fishing sheds/market stalls, nets, crates, barrels, lamps, signage and safe player access. Keep a distinct main port landmark.
+- [ ] **Eight coastal fishing docks:** verify eight actually spawned and visually distinct docks, spaced along the coast, each connected to dry land, extending over water, with a working fishing interaction and collision-tested access. Add a runtime audit reporting requested/placed counts and invalid coast samples.
+- [ ] **Broken ship / wreck:** add a recognizable partially wrecked ship near the coast/port, grounded/partly submerged correctly, with visible hull/deck/mast damage and optional exploration access; not a lone primitive block and pole.
+- [ ] **Coastal dressing and activity:** add boats, buoys, ropes, mooring rings, seabirds, shoreline rocks, driftwood and appropriate ambient audio; preserve performance through instancing/LOD and realistic free licensed assets per the permanent asset directive.
+- [ ] **Visual acceptance:** capture and inspect desktop plus mobile screenshots from the actual gameplay camera at the port, each beach type, and representative dock. Confirm shoreline is visible and walkable in-game; automated presence checks alone are insufficient.
+- [ ] **Current status:** coast/open-sea query and basic dock/fishing-point code exist; the current port is only a primitive placeholder. Broad beach presentation, distinct rocky/sandy shore art direction, detailed functional harbor, recognizable broken ship, actual placed-dock count audit and in-game visual acceptance are not verified. Keep all coastal tasks OPEN until evidence passes.
