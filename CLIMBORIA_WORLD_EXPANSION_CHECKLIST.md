@@ -1235,3 +1235,18 @@ For each meaningful implementation batch:
 - [ ] Cave traversal, collision, headroom and trap navigation still require manual review; automated smoke success is not visual/manual acceptance.
 - [ ] Keep PR #215 open and unmerged until the above visual/device gates pass. No test assertions may be weakened to obtain green CI.
 - Evidence: GitHub Actions runs 42091047502 and 42091047292; screenshot artifact 13445980917.
+
+
+## 2026-11-06 — distant cave screenshot review and verification checkpoint
+
+- [x] Updated the automated cave entrance capture position to local Z = -55 (55 world units outside the cave mouth) for desktop and mobile screenshots; smoke assertions were updated to match.
+- [x] Latest Validate run #2059 (run ID `42095051110`) passed on head `7f6f7a26f79a7d22116b8846860103309cbeac51`.
+- [x] Latest Browser Smoke #1492 (run ID `42095053357`) passed, including Jarrell's Peak desktop/mobile gameplay capture and screenshot upload. Artifact `13446518254` contains 10 screenshots.
+- [x] Reviewed desktop cave entrance, cave interior, and Woodland Pond fish captures from the new artifact.
+- [ ] **Cave entrance visual acceptance remains open:** the 55m capture exposes a very broad, mostly empty foreground; the entrance reads as a small decorative stone arch between oversized angular rock faces. The approach needs stronger terrain framing, scale, and readable path/landmarks.
+- [ ] **Cave interior visual acceptance remains open:** the interior capture still shows a short, brightly exposed chamber with a large exterior opening/background visible beyond it; the main tunnel does not yet read as a deep enclosed cave network. Improve tunnel depth, occlusion, ceiling continuity, lighting falloff, and visible branching landmarks without closing intended traversal routes.
+- [ ] **Fish visual acceptance remains open:** the pond capture now shows distinct pale fish silhouettes near the surface, but they still look like simple flat/low-detail shapes rather than convincing submerged fish. Improve silhouette/body detail, depth cues, and natural movement while preserving below-surface placement and mobile budgets.
+- [ ] Hero relaxed idle remains open; the capture still shows an arms-out/stiff pose.
+- [ ] Manual cave traversal, collision, headroom/ceiling clearance, and physical Redmi 14 5G acceptance remain open. Passing smoke tests do not replace these checks.
+- [ ] PR #215 remains OPEN and UNMERGED. Do not merge until cave visual/interior traversal and fish visibility blockers are addressed and physical mobile acceptance is completed.
+- [ ] Next priority: fix cave composition/depth and fish readability using the free-GitHub-asset policy (exact-file license verification, local vendoring, manifest); if no qualifying asset exists, use procedural improvements. Do not weaken smoke assertions or remove any master-scope items.
