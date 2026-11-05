@@ -882,3 +882,16 @@ For each meaningful implementation batch:
 - [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G touch, sustained FPS, memory or thermal acceptance.
 - [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing and measured real-device performance remain open.
 - [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not override the cave/fish visual gates.
+
+
+## 2026-11-06 — Browser Smoke #1450 visual review
+
+- [x] Validate #2016 passed on checklist commit 1945f4094147fceb13525fbc3fb9ae846fd6cbad.
+- [x] Browser Smoke #1450 passed on the same commit; desktop/mobile Jarrell's Peak gameplay smoke and screenshot upload completed (artifact 13432853311).
+- [x] Inspected desktop cave interior and Woodland Pond fish screenshots from artifact 13432853311.
+- [ ] Cave visual acceptance remains blocked: screenshot shows broad near-vertical flat dark wall panels, a large flat tan floor, scattered flat mineral discs, a bright exposed rear opening, and a visibly placeholder-like torch. The chamber does not yet read as a natural cave. The prior displaced backing and floor skin do not solve the visible geometry at gameplay distance. Rework wall/ceiling/floor surfaces as connected irregular rock forms with layered material variation and controlled lighting; retain verified passage collision and clear route to the chest.
+- [ ] Fish visual acceptance remains blocked: screenshot shows a short line of pale, flat, icon-like fish silhouettes at the water surface. They lack convincing volume, underwater depth and natural schooling composition. Replace the flat silhouette read with clearly volumetric fish bodies/fins/tails, darker underwater attenuation and stronger separation below the water plane; preserve aquaticLifeAudit and mobile counts.
+- [ ] Pond presentation remains blocked: very broad empty green foreground, sparse distant trees, and minimal shoreline detail dominate the view. Improve near-bank environmental dressing and camera composition while keeping fishing access open.
+- [x] Automated browser smoke passed on desktop and mobile; this does not establish physical Redmi 14 5G input, sustained FPS, memory or thermal acceptance.
+- [ ] Rod, line, bobber animation, bait/tools, physical Redmi 14 5G test and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged; screenshot evidence confirms the cave and fish visual gates are not satisfied.
