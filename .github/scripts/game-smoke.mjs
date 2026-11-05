@@ -248,6 +248,9 @@ try {
   console.log('Cave entrance traversal:',JSON.stringify(caveEntrance));
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
   if(!cavePassage||cavePassage.wallCount!==32||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
+  const caveCoast=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastRouteAudit?.()??null);
+  if(!caveCoast||!caveCoast.ok||!caveCoast.finite||caveCoast.sampleCount!==81||caveCoast.samples?.length!==81||caveCoast.samples.some(p=>![p.x,p.z,p.surface].every(Number.isFinite))||!caveCoast.oceanReached) errors.push('Cave-to-coast terrain route sampling failed or did not reach mapped ocean within 260m: '+JSON.stringify(caveCoast));
+  console.log('Cave-to-coast terrain route audit:',JSON.stringify(caveCoast));
   const caveWater=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveWaterAudit?.()??null);
   if(!caveWater||!caveWater.inside||!caveWater.outside||caveWater.depth!==2.5||Math.abs(caveWater.surfaceY-(caveWater.baseY+2.8))>.001||!Number.isFinite(caveWater.ground)||Math.abs(caveWater.ground-(caveWater.baseY+.08))>.02) errors.push('Cave grotto water-volume boundary/surface/depth/floor alignment audit failed: '+JSON.stringify(caveWater));
   const grottoTraversal=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveGrottoTraversalAudit?.()??null);
