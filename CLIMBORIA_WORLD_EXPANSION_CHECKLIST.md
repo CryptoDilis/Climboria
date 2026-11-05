@@ -769,3 +769,18 @@ For each meaningful implementation batch:
 - [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G fishing acceptance remain open.
 - [x] No token/NFT fishing rewards enabled or promised; current inventory remains browser-local.
 - [ ] PR #211 remains unmerged until fresh desktop/mobile gameplay smoke completes and screenshots are inspected.
+
+
+## 2026-11-05 — post-smoke visual review and aquatic-life refinement
+
+- [x] Fresh Validate #1994 passed on commit 75f829e7bcc80f5957c57c6bd4df04567cfa6fd1.
+- [x] Fresh Browser Smoke #1428 passed on commit 75f829e7bcc80f5957c57c6bd4df04567cfa6fd1; desktop and mobile gameplay smoke completed and all ten screenshot captures uploaded.
+- [x] Reviewed desktop/mobile cave, gameplay, home, and Woodland Pond screenshots from artifact 13402043792.
+- [x] Cave entrance is readable and open; interior chamber is traversable in the smoke capture. Rock lining still looks repetitive and needs natural variation/less clutter.
+- [x] Woodland Pond fish are visible, but screenshot review shows them reading as bright surface-level decorations rather than submerged wildlife.
+- [x] Reduced fish school scale and opacity and moved freshwater/ocean fish deeper into the water column to improve underwater depth cues.
+- [ ] Re-run Validate and desktop/mobile Browser Smoke for follow-up commit c45a698ec9b7e2bfd274a5df83092951a0fba94a; inspect the new pond captures before accepting the visual change.
+- [ ] Rod, line and bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
+- [ ] Cave wall variation, spacious natural chamber dressing, and reduced entrance/treasure clutter remain open.
+- [ ] Desktop/mobile gameplay world dressing and default camera framing remain open; current smoke captures show large empty foreground areas and the sanctuary structure cropped at the top edge.
+- [ ] PR #211 remains unmerged until the new commit's workflows pass and updated pond screenshots receive visual review.
