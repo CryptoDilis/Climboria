@@ -804,6 +804,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Continuous overlapping ceiling masses close the chamber roof so the player
  // sees stone overhead instead of daylight through a scattered decorative layer.
  // The smooth, irregular rock tiles overlap in both axes and preserve headroom.
+ const liningMat=M('#514b43'); // shared mineral material for ceiling fangs
  const roofGeo=new T3.IcosahedronGeometry(1,2);
  const roofMat=M('#393b3a');
  const roofRand=rng(4407);
