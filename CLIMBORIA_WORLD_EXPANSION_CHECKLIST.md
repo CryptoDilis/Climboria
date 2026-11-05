@@ -794,3 +794,16 @@ For each meaningful implementation batch:
 - [ ] Run fresh Validate and desktop/mobile Browser Smoke on follow-up commit c5fe5547289284c0eba0cf54d7a86f605341aa5f; confirm the aquatic-life audit passes and inspect new pond captures.
 - [ ] Do not mark fish visual acceptance complete until new desktop/mobile pond screenshots show readable submerged fish with natural depth cues.
 - [ ] PR #211 remains unmerged pending fresh green checks and screenshot review.
+
+
+## 2026-11-05 — fresh green smoke and screenshot acceptance review
+
+- [x] Validate #1998 passed on commit 36a56c6c04a43433ec6564091ad1b2f9286e0008.
+- [x] Browser Smoke #1432 passed on the same commit; homepage/navigation plus Jarrell's Peak desktop and mobile gameplay checks completed, and all ten screenshots uploaded in artifact 13405003554.
+- [x] Downloaded and inspected the desktop/mobile Woodland Pond fish captures, desktop gameplay, and desktop cave interior from artifact 13405003554.
+- [ ] Fish visual acceptance remains open: both pond captures show small, bright fish silhouettes against a broad flat-looking water surface; the depth/translucency cue is still too weak to confidently read them as naturally submerged fish. Improve silhouette scale/contrast/depth layering and water/fish interaction, then capture again.
+- [ ] Cave visual acceptance remains open: the interior screenshot is heavily crowded with repeated faceted rocks across the walls and ceiling; reduce repetition/clutter, vary rock profiles and spacing, and preserve the walkable chamber, treasure and trap clearances.
+- [ ] Gameplay composition remains open: desktop capture has a very large empty green foreground and the sanctuary dominates the upper frame; improve nearby world dressing and camera framing without obscuring navigation.
+- [ ] Mobile pond capture confirms the same fish readability issue at the narrow viewport; do not treat automated mobile smoke as physical Redmi 14 5G acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements and physical Redmi 14 5G review remain open.
+- [ ] PR #211 remains unmerged; green automated checks do not override the outstanding visual acceptance gates.
