@@ -1,5 +1,25 @@
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
+## 2026-11-06 — Owner-directed priority reset (male hero deferred)
+
+- **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
+- **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); the fishing integration stays unmerged until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
+- **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
+
+---
+
+## 2026-11-06 — jump/landing smoke diagnosis (PR #211 follow-up; verification pending)
+
+- [x] Inspected the failing Browser Smoke diagnostic and compared the current-main jump controller with PR #211's jump-state changes.
+- [x] Root cause isolated to the smoke audit loop, not a demonstrated runtime landing defect: PR #211 correctly introduces a `fall` state and includes it in the airborne/landing eligibility check, but `jumpControllerAudit()` stopped advancing when state changed from `airborne` to `fall`. The audit therefore sampled the player before the landing transition and incorrectly reported zero landings.
+- [x] Updated PR #211 head with commit `cb4f9863f80713f511a5e25843ee0433ab1cfa26` so the audit continues through `fall` until landing or its existing 120-frame cap. No gameplay physics or pass thresholds were weakened.
+- [ ] Fresh Validate and Browser Smoke results for the corrected clean integration branch are pending; do not mark the fix passed until the actual run completes and its diagnostics are reviewed.
+- [x] Created a clean integration branch from current main to avoid carrying the stale/diverged PR #211 history; fishing/gameplay, smoke, workflow, and world-checklist changes are being ported without overwriting the newer account/security README decisions.
+- [ ] PR #214 remains documentation-only; no account, backend, server-authoritative reward, anti-bot, or payout implementation is claimed.
+
+
 > **Single source of truth.** This root README is the canonical place for Climboria's product decisions, full master checklist, implementation status, test evidence, and next actions. At the end of any work session, update this file before stopping. At the start of the next session, review this file first. Do not rely on chat memory or recreate already completed work.
 >
 > **Status labels:** `NOT STARTED`, `PLANNED / DESIGN ONLY`, `IN PROGRESS`, `IMPLEMENTED — UNVERIFIED`, `TESTED — PASSED`, `BLOCKED`, `DEFERRED`. A checkbox is not complete merely because code was committed. Link the commit and relevant workflow runs; separate automated tests from manual device acceptance.
@@ -16,6 +36,30 @@
 
 ---
 
+## 2026-11-06 — verified reward conditions and player-friendly anti-abuse policy
+
+- [x] Owner decision: do not force CAPTCHA/challenge pages on every normal visitor or make account creation mandatory before playing. Preserve smooth guest play.
+- [x] Product principle: **Play freely. Earn legitimately. No account-creation farming.** Creating multiple accounts must not itself generate rewards or improve reward eligibility.
+- [x] Clarify "verified condition": a reward-bearing action is eligible only after trusted game services validate its required facts and atomically record the result. A browser message, client-side flag, localStorage value, screenshot, or editable score is never proof by itself.
+- [ ] **Chest claims:** server validates chest ID and permitted location/state, player eligibility, global/per-player cooldown and whether the chest/cycle was already claimed; then atomically records one claim and its reward. Never trust client-submitted reward item, rarity roll, cooldown or inventory balance.
+- [ ] **Fishing rewards:** server validates a legitimate cast → waiting → bite → timely reel sequence, allowed fishing spot, movement/cancellation rules and reward eligibility; missed bites or invalid/replayed requests award nothing.
+- [ ] **Leaderboard/season rewards:** server derives or validates score, completion, time, season window and anti-replay evidence from trusted gameplay events. Client-submitted score/time alone is not authoritative.
+- [ ] **Marketplace/fee rewards:** credit only after the relevant transaction is independently confirmed against the intended chain/contract and checked for duplicate transaction/log processing. Pending, failed or simulated transactions do not qualify.
+- [ ] **Account/reward eligibility:** account creation, referrals, logins and wallet connections alone do not mint points, tokens, items or prize eligibility. Apply rate limits and abuse controls to sensitive endpoints without blocking ordinary guest play.
+- [ ] Use idempotency keys, unique claim/transaction constraints, server-side cooldowns, audit logs and replay protection so retries cannot duplicate rewards. Keep private keys and secrets server-side; never request seed phrases.
+- [ ] Turnstile or another challenge may be considered selectively for suspicious/high-risk sensitive actions only after a server-side verification endpoint exists. It is not required for normal game loading or basic guest play.
+- [ ] Current implementation status: these are product/security requirements only. No server-authoritative reward ledger, anti-farming service, account backend, Turnstile verification or production token payout is claimed implemented.
+- [ ] Keep P0 Jarrell's Peak first. Implement reward validation only when its backend/reward-system sequence gate is reached; do not divert current world polish.
+
+## 2026-11-06 — PR #211 fishing branch smoke diagnosis (not merged)
+
+- [x] Inspected Browser Smoke run [42080403707](https://github.com/CryptoDilis/Climboria/actions/runs/42080403707), job `127431828393`. Homepage CTA/DEX/mobile navigation passed; the desktop/mobile Jarrell's Peak gameplay step failed.
+- [x] Exact failing assertion: ground jump takeoff/airtime/landing or water-surface separation. Diagnostic showed takeoff count `1`, held count `1`, but landing state remained `fall` with count `0`; swimming state was `swim` with count `0` and depth `0`. This is a jump/landing/swim-state contract failure, not evidence that the fishing sequence itself failed.
+- [ ] Do not merge PR #211 while its Browser Smoke is red and its branch is not reconciled with current main. Repair the actual jump/landing/swim-state lifecycle without weakening the smoke assertions, then rerun Validate and full desktop/mobile Browser Smoke.
+- [ ] Inspect the uploaded desktop/mobile pond screenshots and verify visible fish, rod/line/bobber, shoreline blend, bait/tools and actual fishing feel separately. Automated fishing assertions do not replace visual or physical Redmi 14 5G acceptance.
+- [ ] Reconcile PR #211 onto the latest main while preserving the account and security documentation added after its base. Re-run all required checks on the reconciled head before considering merge.
+
+---
 ## 2026-11-04 — latest workflow and master-list checkpoint
 
 - **Latest main merge:** PR #189 `dd95ba219eb21df37324a8e95acc03022e147355` — mountain massif access regression gate. PR Validate passed (`41707182880`); PR Browser Smoke passed (`41707182711`). The completed job record confirms desktop/mobile smoke success. Main post-merge Validate `41708254827` and Pages deployment `41708254356` passed. Main post-merge Browser Smoke `41708254803` subsequently completed successfully (job `126169238689`).
