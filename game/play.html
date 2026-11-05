@@ -1574,10 +1574,9 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
 const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
-const fishMats=[M('#718b82',1),M('#66818a',1),M('#a4aaa0',1),M('#817b68',1)];
-// Draw submerged fish before the transparent water surface (water.renderOrder=2).
-// The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
-for(const material of fishMats){material.transparent=true;material.opacity=.68;material.depthWrite=false}
+const fishMats=[M('#a8c7c0',1),M('#83b9c8',1),M('#d0d0b8',1),M('#b8a98b',1)];
+// Keep fish readable through the water tint while retaining a clearly submerged depth band.
+for(const material of fishMats){material.transparent=true;material.opacity=.92;material.depthWrite=false}
 const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.95;fishEyeMat.depthWrite=false;
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
@@ -1593,11 +1592,11 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   }
   // Smaller silhouettes at a deeper swim band read as fish beneath the waterline,
   // rather than bright objects hovering on the pond surface.
-  const fishScale=kind==='ocean'?2.05:1.9;
+  const fishScale=kind==='ocean'?2.65:2.8;
   g.scale.setScalar(fishScale);
   g.userData.tail=tail;
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:(kind==='ocean'?-5.1:-4.15)-rand()*.45,surfaceClearance:.72,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:(kind==='ocean'?-5.1:-3.05)-rand()*.35,surfaceClearance:.72,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
