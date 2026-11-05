@@ -738,8 +738,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   for(let vi=0;vi<bp.count;vi++){
    const vx=bp.getX(vi),vy=bp.getY(vi),vz=bp.getZ(vi);
    if(Math.abs(vz)>caveWallThickness*.42){
-    const broad=Math.sin((vx+seedBase*.013)*.83)*.24+Math.sin((vy+seedBase*.021)*1.17)*.17;
-    const strata=Math.sin((vx*.42+vy*.31+seedBase)*2.1)*.11;
+    const broad=Math.sin((vx+seedBase*.013)*.83)*.48+Math.sin((vy+seedBase*.021)*1.17)*.29;
+    const strata=Math.sin((vx*.42+vy*.31+seedBase)*2.1)*.2;
     const grain=(randWall()-.5)*.16;
     bp.setZ(vi,vz+Math.sign(vz)*(broad+strata+grain));
     bp.setY(vi,vy+(randWall()-.5)*.08);
@@ -752,21 +752,9 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Medium-sized broken strata overlap the backing in staggered bands. Their
   // irregular silhouettes create connected rock relief without recreating the
   // former wall-to-wall boulder clutter or narrowing the traversable corridor.
-  for(let along=.9;along<len-.5;along+=2.15){
-   const t=along/len,cx=x1+dx*t,cz=z1+dz*t;
-   for(const side of [-1,1]){
-    for(const band of [0,1,2]){
-     if(randWall()<.12)continue;
-     const x=cx-Math.sin(angle)*side*.92+(randWall()-.5)*.2;
-     const z=cz+Math.cos(angle)*side*.92+(randWall()-.5)*.2;
-     const y=.72+band*2.38+(randWall()-.5)*.48;
-     const stone=mk(stoneGeo,randWall()>.7?caveWallDark:caveWallMat,x,y,z,g);
-     sc(stone,.72+randWall()*.34,.55+randWall()*.28,.32+randWall()*.18);
-     stone.rotation.set((randWall()-.5)*.42,angle+(randWall()-.5)*.5,(randWall()-.5)*.38);
-     stone.castShadow=true;stone.receiveShadow=true;
-    }
-   }
-  }
+  // Do not hang isolated boulders in front of the backing: the displaced,
+  // continuous structural face itself supplies the rock relief and keeps the
+  // chamber visually connected at gameplay distance.
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
   caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
  }
@@ -782,6 +770,20 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(22,29,22,34,'side-room-west-upper');
  const branchFloor=mk(BOX,M('#625b50'),15,.08,25,g);sc(branchFloor,14,.16,8,g);
  const chamberFloor=mk(BOX,M('#514b42'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ // A shallow, triangulated stone skin breaks the broad slab silhouette without
+ // changing the underlying floor collider or raising the walking surface.
+ function addCaveFloorRelief(cx,cz,w,d,seed){
+  const geo=new T3.PlaneGeometry(w,d,22,22),pos=geo.attributes.position,rand=rng(seed);
+  for(let i=0;i<pos.count;i++){
+   const x=pos.getX(i),z=pos.getY(i);
+   const ridge=Math.sin(x*.82+seed)*.075+Math.sin(z*1.13-seed*.3)*.055;
+   pos.setZ(i,ridge+(rand()-.5)*.045);
+  }
+  geo.computeVertexNormals();
+  const mesh=new T3.Mesh(geo,M('#625b50'));mesh.rotation.x=-Math.PI/2;mesh.position.set(cx,.245,cz);mesh.receiveShadow=true;mesh.castShadow=false;g.add(mesh);
+ }
+ addCaveFloorRelief(15,25,14,8,8821);
+ addCaveFloorRelief(31,25,18,18,8822);
  // Low broken mineral plates soften the flat prototype floor while leaving the
  // central traversal lane and chest approach clear.
  const floorRand=rng(8831),floorGeo=new T3.IcosahedronGeometry(1,1);
@@ -797,17 +799,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Break up the rectangular prototype room with a natural cave-rock lining.
  // Decorative masses sit against the structural walls and above head clearance;
  // the underlying swept wall colliders remain authoritative for traversal.
- const liningMat=M('#514b43'),liningDark=M('#3d3935');
- const wallLining=[
-  [22.35,1.35,18,1.8,1.55,1.65],[22.55,3.15,21,1.65,1.9,1.8],[22.4,1.7,25,1.9,1.55,1.7],[22.5,2.5,30,1.8,1.65,1.8],
-  [39.55,1.5,18,1.8,1.6,1.7],[39.4,3.3,22,1.7,1.8,1.8],[39.55,1.65,27,1.8,1.6,1.8],[39.45,2.35,32,1.7,1.7,1.55],
-  [24,1.45,33.55,1.8,1.5,1.2],[28,2.65,33.55,1.9,1.65,1.2],[33,1.5,33.55,1.7,1.5,1.2],[37,2.25,33.5,1.7,1.6,1.2],
-  [24,1.45,16.45,1.7,1.45,1.1],[29,2.5,16.45,1.8,1.55,1.1],[35,1.5,16.45,1.8,1.45,1.1],[39,2.2,16.5,1.4,1.5,1.0]
- ];
- wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(new T3.IcosahedronGeometry(1,2),i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx*.36,sy*.38,sz*.34);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
- });
+ // Wall relief is integrated into the displaced backing surface above; no
+ // detached lining boulders are added, avoiding floating props and clutter.
  // Continuous overlapping ceiling masses close the chamber roof so the player
  // sees stone overhead instead of daylight through a scattered decorative layer.
  // The smooth, irregular rock tiles overlap in both axes and preserve headroom.
