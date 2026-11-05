@@ -972,3 +972,15 @@ For each meaningful implementation batch:
 - [ ] **Optimization:** prefer GLB/glTF; use LODs, instancing, texture compression, sensible collision proxies, occlusion/frustum culling and streamed coastal sectors. Do not load the full port/wreck/reef asset set at maximum detail on mobile.
 - [ ] **Acceptance evidence:** desktop and mobile screenshots/video from shore, harbor entrance, main dock, broad sandy beach, rocky coast, shallow reef/seabed, offshore intact ship and wreck approach; runtime audit of placed assets/docks; collision and traversal checks; measured frame-time/FPS on mobile. Keep items open until visually inspected in the actual Climboria scene.
 - [ ] **Current status:** this is a newly expanded specification only. Existing code has an open-sea query, basic coast sampling, narrow timber dock candidates and a crude port marker. The broad beaches, large harbor, clear-water/marine ecosystem presentation, Titanic-scale wreck and intact offshore ship are not yet implemented or visually accepted.
+
+
+## 2026-11-06 — Browser Smoke #1458 evidence review
+
+- [x] Latest branch commit `5198422acfe4a1c6ca1b9f31c3060fdcf96130d2`: Validate workflow #2025 completed successfully.
+- [x] Browser Smoke workflow #1458 completed successfully; all 9 job steps passed, including homepage CTA/DEX/mobile navigation checks, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload.
+- [x] Downloaded and inspected the actual desktop/mobile screenshot artifact (10 screenshots: home, gameplay, cave entrance/interior and Woodland Pond/fish).
+- [ ] **Cave visual gate remains FAILED / NOT ACCEPTED:** screenshot still shows a blocky arch, broad flat wall panels, flat floor, simple torch props and placeholder-like interior; requires natural rock forms, layered depth, lighting falloff and believable cave dressing while preserving collision.
+- [ ] **Fish/pond visual gate remains FAILED / NOT ACCEPTED:** screenshot still shows a broad empty green foreground, simple flat teal pond surface and pale icon-like fish silhouettes near the surface; requires more convincing volumetric fish, fins/tails, depth placement/lighting and richer pond shore composition.
+- [ ] Browser smoke is an automated browser pass only; it does not establish real-device Redmi 14 5G FPS, thermal stability, touch feel or sustained performance. Those remain open.
+- [ ] Keep PR #211 open and unmerged until cave and fish/pond visual gates are corrected and inspected, plus mobile performance acceptance.
+- [ ] Next priority: address cave and fish/pond visual blockers before expanding into the newly specified grand coastal environment; do not spend the remaining pre-launch window on non-launch-critical coastal scope.
