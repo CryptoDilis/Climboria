@@ -752,18 +752,19 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   // Medium-sized broken strata overlap the backing in staggered bands. Their
   // irregular silhouettes create connected rock relief without recreating the
   // former wall-to-wall boulder clutter or narrowing the traversable corridor.
-  for(let along=1.1;along<len-0.7;along+=2.65){
+  for(let along=.9;along<len-.5;along+=2.15){
    const t=along/len,cx=x1+dx*t,cz=z1+dz*t;
-   for(const band of [0,1,2]){
-    if(randWall()<.18)continue;
-    const side=randWall()>.5?1:-1;
-    const x=cx-Math.sin(angle)*side*.53+(randWall()-.5)*.26;
-    const z=cz+Math.cos(angle)*side*.53+(randWall()-.5)*.26;
-    const y=.75+band*2.45+(randWall()-.5)*.52;
-    const stone=mk(stoneGeo,randWall()>.76?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,1.05+randWall()*.58,.72+randWall()*.55,.34+randWall()*.24);
-    stone.rotation.set((randWall()-.5)*.48,angle+(randWall()-.5)*.58,(randWall()-.5)*.42);
-    stone.castShadow=true;stone.receiveShadow=true;
+   for(const side of [-1,1]){
+    for(const band of [0,1,2]){
+     if(randWall()<.12)continue;
+     const x=cx-Math.sin(angle)*side*.92+(randWall()-.5)*.2;
+     const z=cz+Math.cos(angle)*side*.92+(randWall()-.5)*.2;
+     const y=.72+band*2.38+(randWall()-.5)*.48;
+     const stone=mk(stoneGeo,randWall()>.7?caveWallDark:caveWallMat,x,y,z,g);
+     sc(stone,1.18+randWall()*.62,.82+randWall()*.55,.48+randWall()*.34);
+     stone.rotation.set((randWall()-.5)*.42,angle+(randWall()-.5)*.5,(randWall()-.5)*.38);
+     stone.castShadow=true;stone.receiveShadow=true;
+    }
    }
   }
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
