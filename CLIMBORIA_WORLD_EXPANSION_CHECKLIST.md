@@ -1123,3 +1123,15 @@ For each meaningful implementation batch:
 - [ ] Run browser checks for relaxed idle, walk, run, jump, fall, landing, swim and fishing; capture front/side/back evidence and inspect clipping.
 - [ ] Optimize textures/geometry and verify mobile loading/frame time before promoting the new hero.
 - [ ] Current status: user-facing workflow simplified and technical responsibilities recorded; waiting for the user's Meshy export. No new Meshy asset has been received or integrated.
+
+## 2026-11-06 — Owner-directed priority reset (male hero deferred)
+
+- **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
+- **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #211 stays open until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
+- **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
+- **Current verification snapshot for branch `codex/fishing-mainline-integration`:** head before this priority note was `4d866c6e8f9641f44365e6c8f2d3c45466e63ff6`; Validate run `42080052728` passed; Browser Smoke run `42080052801` was still in progress at the latest check, with homepage/DEX/mobile-navigation stage passed and Jarrell's Peak desktop/mobile gameplay stage running. PR #211 is open and unmerged. Recheck the newest head workflows before claiming a final green state.
+
+---
+
