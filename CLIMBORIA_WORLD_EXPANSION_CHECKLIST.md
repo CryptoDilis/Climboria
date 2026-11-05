@@ -1028,3 +1028,15 @@ For each meaningful implementation batch:
 - [ ] Add rig compatibility audit for each hero GLB: required bone names, socket world transforms, grip alignment, hand pose, clipping and animation interaction. Do not assume every Meshy rig uses identical bone names.
 - [ ] Validate with actual 3D tool, weapon and fishing-rod assets in desktop and mobile screenshots/video; test walk/run/jump/swim/fishing and weapon/tool swap transitions.
 - [ ] Current status: architecture and requirements recorded; no socket implementation or equipment assets have been committed yet.
+
+
+## 2026-11-06 — Existing rigged hero reuse and image-to-hero appearance workflow
+
+- [x] Confirmed the current game loads the existing `../assets/characters/Climboria_Hero.glb` through GLTFLoader and retains its authored animation clips when available; no replacement character is required to begin the socket-system work.
+- [x] Clarified compatibility: the current GLB is a valid starting point for equipment attachment, but its exact hand/wrist/back/hip bone names and grip transforms still need runtime inspection before final offsets can be approved.
+- [x] Recorded user direction: preserve the existing rig, skeleton, bone hierarchy and animation system when adapting the hero's appearance from a user-supplied reference image. Do not replace the rig just to change the visual identity.
+- [ ] **Image-reference appearance pass:** when the user supplies the chosen image, inspect front/side/back visibility and translate the visual identity into the existing character mesh/materials or a compatible skinned visual replacement. Match face, hair, clothing, colors and silhouette as closely as the available views and model topology allow; do not promise pixel-perfect identity from a single view.
+- [ ] **Rig preservation gate:** verify that any modified/replaced visual mesh is weighted to the existing skeleton with compatible bone names, bind pose, scale and transforms; preserve current animation clips and test deformation at shoulders, elbows, wrists, hips, knees and ankles.
+- [ ] **Equipment socket implementation:** add named socket groups to detected hand/wrist, spine/back and hip/pelvis bones, with stable fallback anchors only when a suitable bone is absent. Store per-item local position, rotation and scale; do not alter the base hero rig to fit one item.
+- [ ] **Visual acceptance:** compare the adapted hero against the supplied reference in neutral idle, walk, run, jump and fishing poses; inspect face and outfit from front/side/back; test tool/weapon/rod attachment and clipping on desktop and Redmi 14 5G.
+- [ ] **Current status:** compatibility and preservation plan recorded. No appearance adaptation, socket manager or new equipment attachments have been committed yet. Existing hero GLB remains the intended base.
