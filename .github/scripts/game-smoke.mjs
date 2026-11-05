@@ -494,7 +494,7 @@ try {
   await page.screenshot({path:'climboria-desktop-woodland-pond-fish.png'});
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
-  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+55)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
   await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
@@ -739,7 +739,7 @@ try {
   if(!mobilePondVisual.fish||!mobilePondVisual.fish.distinctSilhouette||!mobilePondVisual.fish.belowSurface||mobilePondVisual.frames<4)errors.push('Mobile Woodland Pond fish visual audit failed: '+JSON.stringify(mobilePondVisual));
   await mobile.screenshot({path:'climboria-mobile-woodland-pond-fish.png'});
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+55)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
