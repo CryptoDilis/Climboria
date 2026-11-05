@@ -2278,3 +2278,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
 - [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
 - [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
+
+## 2026-11-06 — PR #215 fresh CI and screenshot review
+
+- [x] Latest PR head: `6113d570515609ae13c3f71e2e6916973653c8be`; PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) is open, unmerged, and GitHub currently reports it mergeable.
+- [x] Fresh Validate run [42082944653](https://github.com/CryptoDilis/Climboria/actions/runs/42082944653) passed on the latest PR head.
+- [x] Fresh full desktop/mobile Browser Smoke run [42082944675](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675) passed on the latest PR head. The Jarrell's Peak desktop/mobile gameplay smoke step and screenshot upload both completed successfully. The earlier run [42082091241](https://github.com/CryptoDilis/Climboria/actions/runs/42082091241) was cancelled; it is superseded by the fresh successful run.
+- [x] Downloaded and reviewed the fresh screenshot artifact [13440769119](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675/artifacts/13440769119), including desktop/mobile gameplay, cave entrance/interior, and Woodland Pond captures.
+- [ ] **Visual acceptance remains open:** cave entrance/interior still read as blocky/stylized geometry with a dark, featureless mouth and need a real visual pass; Woodland Pond fish are technically submerged per the audit but appear too close to the surface/visually flat in the capture and need natural underwater depth/readability. Automated smoke passing does not close these visual defects.
+- [ ] Rod/line/bobber polish, bait/tools, physical Redmi 14 5G acceptance, and manual cave traversal/readability remain open.
+- [ ] Keep PR #215 unmerged until cave and pond visual blockers are fixed/reviewed and remaining P0 acceptance is recorded. Do not close superseded PRs #211/#214 until #215 is safely merged.
+- [ ] Server-authoritative reward ledger, global chest claims/cooldowns, and funded crypto/NFT payouts remain unimplemented; browser-local rewards are not secure or payable.
