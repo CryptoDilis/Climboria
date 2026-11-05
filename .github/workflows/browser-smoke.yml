@@ -124,6 +124,7 @@ jobs:
             climboria-mobile-cave-interior.png
             climboria-desktop-woodland-pond-fish.png
             climboria-mobile-woodland-pond-fish.png
+            cave-coast-route-audit.json
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
