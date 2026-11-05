@@ -1128,10 +1128,10 @@ For each meaningful implementation batch:
 
 - **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
 - **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
-- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #211 stays open until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #215 stays open until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
 - **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
 - **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
-- **Current verification snapshot for branch `codex/fishing-mainline-integration`:** head before this priority note was `4d866c6e8f9641f44365e6c8f2d3c45466e63ff6`; Validate run `42080052728` passed; Browser Smoke run `42080052801` was still in progress at the latest check, with homepage/DEX/mobile-navigation stage passed and Jarrell's Peak desktop/mobile gameplay stage running. PR #211 is open and unmerged. Recheck the newest head workflows before claiming a final green state.
+- **Current verification snapshot:** clean-main reconciliation is PR [#215](https://github.com/CryptoDilis/Climboria/pull/215), latest head `45ac8d41e5208ff843d07bcb098a99373ef7e8c5`. Validate run `42082093541` passed on the code head. Browser Smoke run `42082091241` / job `127437500159` was still reported `in_progress` with no artifacts at the latest poll; treat as stalled/pending and do not claim full desktop/mobile smoke passed. The latest README-only checklist commit did not return a new workflow run in the connector. PR #215 remains open and unmerged.
 
 ---
 
@@ -1146,3 +1146,15 @@ For each meaningful implementation batch:
 - [ ] Inspect fresh desktop/mobile Woodland Pond screenshots, cave captures, and gameplay framing; automated assertions do not replace visual acceptance.
 - [ ] Rod/line/bobber animation, bait/tool requirements, and physical Redmi 14 5G acceptance remain open.
 - [ ] No server-authoritative or token/NFT fishing rewards are implemented; current inventory/rewards remain browser-local.
+
+
+## 2026-11-06 — Clean-main PR #215 verification checkpoint
+
+- [x] Ported the fishing integration, desktop/mobile smoke harness, workflow, world checklist and verified-reward documentation onto a branch based directly on current main. This avoids merging the old divergent PR #211 history and preserves newer account/security requirements.
+- [x] Corrected the jump-controller audit loop to continue through `fall` until the landing transition or existing frame cap; no gameplay physics or pass thresholds were weakened.
+- [x] PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) opened; code head before README-only status correction: `8acba2907a1df1f2ec497d66d49ecc720a788fe4`. Latest PR head after master-checklist correction: `45ac8d41e5208ff843d07bcb098a99373ef7e8c5`.
+- [x] Validate run [42082093541](https://github.com/CryptoDilis/Climboria/actions/runs/42082093541) passed on the code head.
+- [ ] Browser Smoke run [42082091241](https://github.com/CryptoDilis/Climboria/actions/runs/42082091241), job `127437500159`, remained `in_progress` across repeated status polls and had no uploaded artifacts at the latest check. Treat as stalled/pending; do not call desktop/mobile gameplay smoke green until GitHub reports completion and screenshots can be inspected.
+- [ ] After a terminal workflow result, inspect the full job logs and desktop/mobile screenshots. If the run remains stuck, investigate runner/workflow cancellation or rerun path rather than silently assuming success.
+- [ ] Keep PR #215 unmerged until fresh Validate and full Browser Smoke pass, cave/fish/pond visual blockers are reviewed, and device acceptance is recorded separately.
+- [ ] PR #211 and PR #214 are superseded by #215; close them only after #215 has completed required verification and is safely merged.
