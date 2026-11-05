@@ -122,6 +122,8 @@ jobs:
             climboria-mobile-cave-entrance.png
             climboria-desktop-cave-interior.png
             climboria-mobile-cave-interior.png
+            climboria-desktop-woodland-pond-fish.png
+            climboria-mobile-woodland-pond-fish.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
