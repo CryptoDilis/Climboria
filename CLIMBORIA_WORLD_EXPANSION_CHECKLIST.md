@@ -1221,3 +1221,17 @@ For each meaningful implementation batch:
 - [ ] Validate and full desktop/mobile Browser Smoke for commit `5040cccc62a905f3f7a1524bb6999ecbe7c6795a` are pending; no workflow runs were returned by the commit lookup yet. Do not claim this visual fix accepted until fresh screenshots are reviewed.
 - [ ] Verify fish remain below the water surface, do not clip through water, and remain visually natural on desktop/mobile. Keep the existing clearance assertions intact.
 - [ ] Cave visual overhaul remains the next P0 scene blocker; no cave geometry change is included in this increment.
+
+
+## 2026-11-05 — PR #215 fresh desktop/mobile smoke evidence review
+
+- [x] Validate workflow passed on head `729a2d437ee444cba845cfed4dd5fdbd29d858c5` (run 42091047502).
+- [x] Full Browser Smoke run 42091047292 completed successfully, including Jarrell's Peak desktop/mobile gameplay and screenshot upload (artifact 13445980917).
+- [x] Reviewed all 10 screenshots from artifact 13445980917.
+- [ ] Freshwater fish are present as pale small shapes in the pond captures but do not read clearly as fish; improve silhouette contrast/scale/placement and inspect fresh captures. Do not treat registry/count/geometry audit as visual acceptance.
+- [ ] Cave entrance arch is visible, but interior capture remains a short/open chamber with a bright exit/background; redesign into a visibly enclosed, longer tunnel/network with readable side branches and landmarks, then inspect screenshots.
+- [ ] Hero still has stiff arms-out idle pose; natural relaxed idle remains open.
+- [ ] Physical Redmi 14 5G acceptance remains open; Playwright mobile screenshots are not device acceptance.
+- [ ] Cave traversal, collision, headroom and trap navigation still require manual review; automated smoke success is not visual/manual acceptance.
+- [ ] Keep PR #215 open and unmerged until the above visual/device gates pass. No test assertions may be weakened to obtain green CI.
+- Evidence: GitHub Actions runs 42091047502 and 42091047292; screenshot artifact 13445980917.
