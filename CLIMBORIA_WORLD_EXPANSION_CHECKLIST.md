@@ -1109,3 +1109,17 @@ For each meaningful implementation batch:
 - [ ] Export a test GLB under a new filename; load it behind a feature flag or QA-only selector so the original hero remains available for rollback.
 - [ ] Compare face/outfit silhouette from front, side and back; capture browser screenshots and test download/memory/frame-time impact on desktop and Redmi 14 5G before acceptance.
 - [ ] Current status: Meshy workflow approved and documented; no Meshy generation/export or replacement asset has been produced or imported yet.
+
+## 2026-11-06 — Simplified Meshy-first workflow (no manual Blender/Maya required from user)
+
+- [x] User workflow simplified: the user only needs to generate the character in Meshy and export the available model/rig/textures; do not require the user to learn Blender or Maya to continue the project.
+- [x] Technical workflow assigned to the development side: inspect the export, bone hierarchy, bind pose, mesh/material data and file size; prepare scripted/headless Blender processing or another automated conversion path where supported.
+- [x] Keep the current Climboria hero GLB and rig as the rollback baseline. Never replace it based only on a successful Meshy generation or export.
+- [ ] User generates the male expedition character in Meshy using the approved prompt and supplied reference image.
+- [ ] User exports the generated character in GLB or FBX (whichever Meshy makes available with the required rig/texture data) and provides the original export files. Include textures and rig/animation data when offered; do not re-export through another app first.
+- [ ] Inspect the exported asset directly and report its actual skeleton, bind pose, mesh/skin data, materials, texture sizes, polygon count and total download size.
+- [ ] Choose the least-manual integration route based on evidence: reuse compatible rig; retarget if safely mappable; or use an automated Blender script to transfer/weight the appearance mesh to the existing Climboria skeleton. If automated weight transfer cannot preserve deformation/face quality, stop and report the exact manual step rather than silently shipping a broken rig.
+- [ ] Produce a separate test asset and QA-only loader path; preserve the existing hero as default until visual and animation acceptance.
+- [ ] Run browser checks for relaxed idle, walk, run, jump, fall, landing, swim and fishing; capture front/side/back evidence and inspect clipping.
+- [ ] Optimize textures/geometry and verify mobile loading/frame time before promoting the new hero.
+- [ ] Current status: user-facing workflow simplified and technical responsibilities recorded; waiting for the user's Meshy export. No new Meshy asset has been received or integrated.
