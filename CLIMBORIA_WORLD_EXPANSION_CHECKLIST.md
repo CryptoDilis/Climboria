@@ -857,3 +857,15 @@ For each meaningful implementation batch:
 - [ ] Fresh Validate and desktop/mobile Browser Smoke for 6d8997943cb4d80d2fdcd6e37e74e02d17bfb72c; inspect both pond screenshots and both cave interior screenshots for improved scale, visibility, wall continuity, and passage clearance.
 - [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and measured real-device performance remain open.
 - [ ] PR #211 remains open and unmerged pending fresh workflows and visual acceptance.
+
+## 2026-11-05 — Browser Smoke #1446 desktop/mobile visual review
+
+- [x] Validate #2012 passed on PR #211 head dfecbcdb0080f47fbd1ccaf1220d4931e5655485.
+- [x] Browser Smoke #1446 passed on the same head; homepage/navigation and Jarrell's Peak desktop/mobile gameplay smoke completed; screenshot artifact 13427383234 uploaded.
+- [x] Downloaded and inspected desktop/mobile cave-interior and Woodland Pond fish captures from artifact 13427383234.
+- [ ] Cave visual acceptance remains open: both viewport captures show large, isolated faceted wall rocks with visible gaps against broad dark wall panels; the floor still reads as a large flat brown slab, and the rear passage is brightly exposed. The smaller outcrop change did not yet deliver connected natural rock relief. Next cave pass must reduce the isolated/floating appearance, improve continuous wall/floor material breakup, and control the rear opening brightness without compromising the sealed structural backing, collision boundary, passage width, treasure approach, or head clearance.
+- [ ] Fish visual acceptance remains open: fish are now clearly identifiable at desktop distance and visible on mobile, but the silhouettes still read as pale, flat graphic shapes near the water surface rather than convincing volumetric underwater wildlife. Improve body volume, fin/tail depth and water attenuation; retain below-surface placement and aquaticLifeAudit clearance. Do not simply enlarge them further.
+- [ ] Pond/world composition remains open: the broad green foreground and simple distant tree line dominate both pond captures; improve shoreline dressing and camera framing without obstructing the water approach.
+- [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G compatibility, touch feel, sustained frame rate, or memory performance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing, and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not authorize merging past the outstanding cave/fish gates.
