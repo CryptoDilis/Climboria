@@ -1250,3 +1250,15 @@ For each meaningful implementation batch:
 - [ ] Manual cave traversal, collision, headroom/ceiling clearance, and physical Redmi 14 5G acceptance remain open. Passing smoke tests do not replace these checks.
 - [ ] PR #215 remains OPEN and UNMERGED. Do not merge until cave visual/interior traversal and fish visibility blockers are addressed and physical mobile acceptance is completed.
 - [ ] Next priority: fix cave composition/depth and fish readability using the free-GitHub-asset policy (exact-file license verification, local vendoring, manifest); if no qualifying asset exists, use procedural improvements. Do not weaken smoke assertions or remove any master-scope items.
+
+
+## 2026-11-06 — remove exposed western cave maze and align regression tests
+
+- [x] Removed the western/north maze wall segments and their disconnected floor slabs from the cave group; retained the existing cave entrance, main room, annex, grotto, east branch and geode chamber.
+- [x] Removed the 5×7 spike grid that belonged to the same exposed western extension; retained the generic damage/death/respawn lifecycle test, while the smoke audit now explicitly verifies that the exterior spike field is absent.
+- [x] Updated cave passage regression expectations to the remaining 32 wall segments and removed stale assertions that expected the deleted western/north maze routes. No remaining route/collision thresholds were weakened.
+- [x] Gameplay commit: `a783a609171738a0ff1959c284d647b9fa126da2`; smoke-test commit / current head: `79e243fcf239e82779a19ee871628ad451777af4`.
+- [ ] Fresh Validate and full desktop/mobile Browser Smoke results for this head have not yet been returned. Treat verification as pending; do not claim the visual fix passed from code inspection alone.
+- [ ] Review fresh cave exterior/interior screenshots and manually confirm the remaining maze is underground, the original entrance is unchanged, and all retained routes/collision/headroom remain sound.
+- [ ] Underground tunnel to the sea and a separate seabed underwater exit are NOT implemented by this change. Map-coordinate route, seabed depth, sealed ceiling, swim transition and underwater exit remain next cave tasks.
+- [ ] PR #215 remains open and unmerged; physical Redmi 14 5G acceptance and other cave/fish visual gates remain outstanding.
