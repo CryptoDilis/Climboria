@@ -895,3 +895,21 @@ For each meaningful implementation batch:
 - [x] Automated browser smoke passed on desktop and mobile; this does not establish physical Redmi 14 5G input, sustained FPS, memory or thermal acceptance.
 - [ ] Rod, line, bobber animation, bait/tools, physical Redmi 14 5G test and measured real-device performance remain open.
 - [ ] PR #211 remains open and unmerged; screenshot evidence confirms the cave and fish visual gates are not satisfied.
+
+
+## 2026-11-06 — Marine biodiversity expansion requested
+
+- [x] Added a permanent marine-life and fishing biodiversity scope to the master checklist; this is a specification addition, not an implementation claim.
+- [ ] Build distinct marine habitats: shallow shore/reef, seagrass and kelp beds, open-water schools, rocky seabed, deep-water/abyssal zones, wreck/port habitat, and freshwater ponds/rivers as a separate ecosystem.
+- [ ] Common catches: sardines, anchovies, mackerel, milkfish/bangus, tilapia (freshwater), small reef fish, crabs, shrimp, mussels, oysters, squid and common shellfish. Use locally recognizable species where appropriate.
+- [ ] Uncommon catches: snapper, grouper, trevally, barracuda, mahi-mahi, tuna juveniles/adults, octopus, lobster, sea urchin and larger reef species.
+- [ ] Rare catches: giant trevally, large tuna, sailfish, marlin, large grouper, rare reef variants, nautilus and deep-water species; tune spawn chance by habitat, depth, weather, time and bait.
+- [ ] Epic/legendary catches: whale shark (non-catchable protected encounter), manta ray (non-catchable protected encounter), giant oceanic fish, rare deep-sea fish and unique named trophy species. Protected wildlife must be observation/photo encounters, never inventory loot.
+- [ ] Add non-fish marine life: sea turtles, dolphins, whales, rays, sharks, jellyfish, sea snakes, corals, anemones, starfish, sea cucumbers, sea horses, shells and plankton/bioluminescent organisms. Define safe/non-hostile behavior and conservation rules; no harvesting protected species.
+- [ ] Create a rarity ladder (Common, Uncommon, Rare, Epic, Legendary) with transparent catch tables, habitat/depth/time/weather/bait requirements, anti-repeat weighting and no guaranteed legendary exploit.
+- [ ] Add distinct 3D silhouettes, swimming/feeding/schooling/escape behavior, depth bands, size/age variation, underwater audio/particles and water attenuation; avoid flat icon-like fish.
+- [ ] Add fishing gear progression: rods, reels, lines, hooks, nets only where suitable, bait/lures, bobbers, tackle, durability and repair; gear must affect catch opportunities without pay-to-win promises.
+- [ ] Add field guide/collection log, species name and rarity identification, size/weight records, habitat notes, catch/release option, conservation quests and non-token progression.
+- [ ] Keep inventory browser-local in prototype; no token/NFT or monetary reward claims until a secure server-authoritative system and approved token design exist.
+- [ ] Current implementation status: basic fish-school prototype and cast/wait/bite/manual-reel loop exist; 11 fishing spots are recorded (8 coastal docks and 3 freshwater spots). Visual acceptance is blocked by flat pale fish silhouettes; rod/line/bobber/bait and species diversity are not implemented/verified. Browser Smoke #1451 is still running at the time of this entry; Validate #2018 passed.
+- [ ] PR #211 remains open and unmerged pending cave/fish visuals, complete smoke evidence and later physical-device acceptance.
