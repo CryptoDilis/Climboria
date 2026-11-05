@@ -1523,7 +1523,7 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
   g.scale.set(kind==='ocean'?1.18:1.08,kind==='ocean'?1.18:1.08,kind==='ocean'?1.18:1.08);
   g.userData.tail=tail;
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.95-rand()*.42,surfaceClearance:1.65,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-1.95-rand()*.42,surfaceClearance:.38,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
