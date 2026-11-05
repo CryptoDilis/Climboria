@@ -731,20 +731,22 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
    stonePos.setXYZ(vi,v.x*rough,v.y*(1+(randWall()-.5)*.2),v.z*(1+(randWall()-.5)*.25));
   }
   stonePos.needsUpdate=true;stoneGeo.computeVertexNormals();
-  // Sparse, larger wall formations replace the former four tightly packed rows.
-  // The swept collision segment below remains continuous and authoritative.
-  for(let along=-.35;along<=len+.35;along+=2.15){
-   const t=Math.max(0,Math.min(1,along/len)),cx=x1+dx*t,cz=z1+dz*t;
-   for(let row=0;row<2;row++){
-    const stagger=row%2?.82:0;
-    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.48;
-    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.48;
-    const y=1.05+row*2.75+(randWall()-.5)*.62;
-    const stone=mk(stoneGeo,randWall()>.76?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,.88+randWall()*.55,.9+randWall()*.58,.82+randWall()*.58);
-    stone.rotation.set((randWall()-.5)*.82,angle+(randWall()-.5)*1.15,(randWall()-.5)*.76);
-    stone.castShadow=true;stone.receiveShadow=true;
-   }
+  // A continuous dark stone backing closes the wall visually; a few large
+  // irregular outcrops provide natural relief without burying the chamber.
+  const wallBacking=mk(BOX,caveWallDark,(x1+x2)*.5,caveWallHeight*.5,(z1+z2)*.5,g);
+  sc(wallBacking,len,caveWallHeight,caveWallThickness);
+  wallBacking.rotation.y=-angle;
+  wallBacking.receiveShadow=true;
+  for(let along=1.4;along<len-1;along+=4.6){
+   const t=along/len,cx=x1+dx*t,cz=z1+dz*t;
+   const side=randWall()>.5?1:-1;
+   const x=cx-Math.sin(angle)*side*.42+(randWall()-.5)*.34;
+   const z=cz+Math.cos(angle)*side*.42+(randWall()-.5)*.34;
+   const y=1.05+randWall()*3.65;
+   const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
+   sc(stone,1.05+randWall()*.72,.85+randWall()*.78,.48+randWall()*.42);
+   stone.rotation.set((randWall()-.5)*.7,angle+(randWall()-.5)*.95,(randWall()-.5)*.62);
+   stone.castShadow=true;stone.receiveShadow=true;
   }
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
   caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
