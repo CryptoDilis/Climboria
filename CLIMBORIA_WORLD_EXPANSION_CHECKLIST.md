@@ -928,3 +928,15 @@ For each meaningful implementation batch:
 - [ ] Every imported model must be checked for scale/orientation, pivots, normals, materials, animation/rig if relevant, collision proxy, LODs, draw calls, texture memory and desktop/mobile loading.
 - [ ] Do not mark an asset task complete from a repository link alone: download/import it, verify it in the actual Climboria scene, inspect desktop/mobile screenshots, and record source/license in the manifest.
 - [ ] Preferred starting points researched: Poly Haven (CC0 realistic models/PBR/HDRIs), ambientCG (CC0 PBR), and curated GitHub collections such as awesome-3d-assets; all individual linked assets still require license verification. Kenney and Quaternius are optional stylized sources only when style-matched.
+
+
+## 2026-11-06 — Walking performance / anti-lag pass
+
+- [x] Identified a concrete per-frame CPU hotspot: `update(dt)` called `updateChunks()` every animation frame, causing repeated chunk-grid scans, missing-chunk collection and sorting even while the player remained inside the same 200-unit terrain chunk.
+- [x] Changed terrain streaming to run only when the camera/player crosses into a different terrain chunk; initial chunk bootstrapping remains on its existing incremental path. Code commit: 64398fb217687fda5d53e6fd5284dec4db3dacd2.
+- [ ] Validate and browser-smoke the walking change on desktop and mobile; inspect movement smoothness and chunk pop-in at chunk boundaries.
+- [ ] Add measured FPS/frame-time, draw-call, triangle, geometry/texture memory and long-session thermal checks; do not claim smoothness from code inspection alone.
+- [ ] Profile and optimize remaining likely costs: 12-sample camera-ground sweep per frame, per-frame HUD DOM writes in `gameTick`, animated aquatic entities, weather updates, terrain draw calls and uncullable world objects.
+- [ ] Add adaptive quality tiers only after measurements: mobile-first render scale, shadow/foliage/fish/weather density and view-distance controls, preserving visual quality where possible.
+- [ ] Acceptance targets: stable 30 FPS minimum on Redmi 14 5G during normal exploration (prefer 45–60 where thermals allow), no repeated hitching during walk/run/turn/jump, controlled chunk pop-in, no collision or gameplay regression, and sustained 10-minute mobile test.
+- [ ] Current evidence: code-level chunk-streaming optimization committed; automated validation and browser smoke pending. Physical Redmi 14 5G test and measured FPS/thermal results remain open.
