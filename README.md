@@ -16,6 +16,16 @@
 
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
+## 2026-11-06 — cave-to-coast route audit correction (CI pending)
+
+- [x] Browser Smoke #1502 exposed a real route-survey failure: the first 260m cave-local -Z sample ended at X≈-975 and never reached the mapped ocean. The sampled ground climbed from Y≈131 to Y≈241, so no tunnel geometry was built from that invalid endpoint.
+- [x] Corrected the survey range to 700m (10m steps, three lateral tracks; 213 samples) based on the map's actual ocean mask transition across X≈-900 to -1180. The smoke assertion now expects all 213 finite samples and a confirmed ocean hit.
+- [ ] Validate and full Browser Smoke for the extended survey are pending. Review the exact ocean-entry station and elevation profile before designing any tunnel.
+- [ ] Tunnel floor/roof/side-wall geometry, collision, walkable slope, and separate underwater seabed exit remain NOT IMPLEMENTED. Preserve the cave entrance and existing chamber layout.
+- [ ] PR #215 remains unmerged; no manual visual or Redmi 14 5G acceptance is claimed.
+
+---
+
 ## 2026-11-06 — Owner-directed priority reset (male hero deferred)
 
 - **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
