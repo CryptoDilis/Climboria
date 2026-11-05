@@ -220,7 +220,10 @@ const WATER_BODIES=[
  {id:'long_river',name:'The Long River',kind:'river',surfaceY:0,depth:3.2},
  {id:'open_sea',name:'Open Sea',kind:'ocean',surfaceY:0,depth:26}
 ];
-const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>Math.max(m,1-ss(b.radius*.62,b.radius,Math.hypot(x-b.x,z-b.z))),0);
+const freshwaterRadiusAt=(b,x,z)=>{const a=Math.atan2(z-b.z,x-b.x);const noise=fbm(x*.012+b.x*.013,z*.012-b.z*.017,3)-.5;return b.radius+noise*6.2+Math.sin(a*3+b.x*.01)*2.1+Math.sin(a*7-b.z*.008)*1.25+Math.sin(a*11+b.x*.021)*.65+Math.sin(a*17-b.z*.019)*.35};
+// Ease inland pond depressions over a broad shelf: the old 14-unit fall created a sharp, faceted bowl wall on the 5-unit terrain grid.
+// Keep inland basin shelves compact: a 16–20m transition avoids the broad exposed tan apron.
+const freshwaterMask=(x,z)=>WATER_BODIES.filter(b=>b.kind==='freshwater').reduce((m,b)=>{const d=Math.hypot(x-b.x,z-b.z),r=freshwaterRadiusAt(b,x,z);return Math.max(m,1-ss(r-9,r+11,d))},0);
 const rx=z=>160+90*Math.sin(z*.0042)+45*Math.sin(z*.011+2);
 const desF=(x,z)=>ss(650,1000,z+(fbm(x*.002,z*.002,2)-.5)*200);
 const fd=(x,z)=>fbm(x*.006+7,z*.006-3,3);
@@ -240,7 +243,8 @@ function rawH(x,z){
  const W=13+7*Math.sin(z*.003),rc=(1-ss(W,W*3.2,rv))*(1-mN)*(1-sea);
  h=mix(h,-3.2,Math.pow(rc,.8));
  const lake=freshwaterMask(x,z);
- h=mix(h,-3.2,Math.pow(lake,.8));
+ // The broad freshwater mask creates a gradual 32-unit shoreline shelf instead of a steep cut wall.
+ h=mix(h,-3.2,Math.pow(lake,.9));
  return mix(h,-26,sea);
 }
 ['sanct','park','camp','cave'].forEach(k=>{const p=POI[k];p.h=Math.max(rawH(p.x,p.z),k=='cave'?-99:4)});
@@ -278,7 +282,7 @@ function waterBodyAt(x,z){
  // Named freshwater basins take precedence where a basin intersects the river channel.
  for(const body of WATER_BODIES){
   if(body.kind!=='freshwater')continue;
-  if(Math.hypot(x-body.x,z-body.z)<body.radius&&heightAt(x,z)<-.2)return body;
+  if(Math.hypot(x-body.x,z-body.z)<freshwaterRadiusAt(body,x,z)&&heightAt(x,z)<-.2)return body;
  }
  const rv=Math.abs(x-rx(z)),W=13+7*Math.sin(z*.003);
  const river=(1-ss(W,W*3.2,rv))*(1-ss(.52,.72,fbm(x*.0005+9,z*.0005-4,3))*ss(300,650,Math.hypot(x,z)))*(1-sea);
@@ -302,7 +306,7 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
   player.waterBodyId=null;player.swimDepth=0;
   const floor=groundHeight+1.75;
   const grounded=player.y<=floor+.12&&player.vy<=0;
-  const wasAirborne=player.jumpState==='takeoff'||player.jumpState==='airborne';
+  const wasAirborne=['takeoff','airborne','fall'].includes(player.jumpState);
   if(surfaceInput&&!player.jumpHeld&&grounded){
    player.vy=11;player.jumpState='takeoff';player.jumpStateTimer=0;
    player.jumpCount=(player.jumpCount||0)+1;
@@ -315,7 +319,8 @@ function updatePlayerWaterState(player,body,groundHeight,dt,diveInput=0,surfaceI
    if(landed){player.jumpState='land';player.jumpStateTimer=.2;player.landCount=(player.landCount||0)+1;}
    else if(player.jumpState!=='land')player.jumpState='grounded';
   }else if(player.y>floor+.12){
-   if(player.jumpState==='takeoff')player.jumpState='airborne';
+   if(player.jumpState==='takeoff'||player.jumpState==='grounded')player.jumpState='airborne';
+   if(player.jumpState==='airborne'&&player.vy< -1.5)player.jumpState='fall';
   }
   if(player.jumpState==='land'){
    player.jumpStateTimer=Math.max(0,(player.jumpStateTimer||0)-dt);
@@ -403,27 +408,27 @@ gl_FragColor=vec4(c,1.);
 }`}));
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
-const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#0d3b4a')}}]);
+const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#006b80')}}]);
 const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
 #include <fog_pars_vertex>
 void main(){vec4 wp=modelMatrix*vec4(position,1.);
-wp.y+=.3*sin(wp.x*.08+uT*1.2)+.2*sin(wp.z*.11-uT*1.5)+.1*sin((wp.x+wp.z)*.2+uT*2.2);
+wp.y+=.46*sin(wp.x*.075+uT*1.15)+.28*sin(wp.z*.105-uT*1.35)+.16*sin((wp.x+wp.z)*.19+uT*2.)+.075*sin((wp.x-wp.z)*.31-uT*2.6);
 vW=wp.xyz;vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
 #include <fog_vertex>
 }`,
 fragmentShader:`uniform float uT;uniform vec3 uSun,uSunC,uTop,uHor,uDeep;varying vec3 vW;
 #include <fog_pars_fragment>
-void main(){float dx=.3*.08*cos(vW.x*.08+uT*1.2)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.x*.5+uT*2.)*.5;
-float dz=.2*.11*cos(vW.z*.11-uT*1.5)+.1*.2*cos((vW.x+vW.z)*.2+uT*2.2)+.06*cos(vW.z*.45-uT*1.7)*.5;
+void main(){float dx=.46*.075*cos(vW.x*.075+uT*1.15)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)+.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
+float dz=.28*.105*cos(vW.z*.105-uT*1.35)+.16*.19*cos((vW.x+vW.z)*.19+uT*2.)-.075*.31*cos((vW.x-vW.z)*.31-uT*2.6);
 vec3 n=normalize(vec3(-dx*3.,1.,-dz*3.));vec3 v=normalize(cameraPosition-vW);
 float f=pow(1.-max(dot(n,v),0.),3.);vec3 r=reflect(-v,n);
 vec3 refl=mix(uHor,uTop,clamp(r.y,0.,1.));
-vec3 c=mix(uDeep,refl,.2+.8*f);
+vec3 c=mix(uDeep,refl,.025+.11*f);
 c+=uSunC*pow(max(dot(reflect(-uSun,n),v),0.),140.)*2.2;
-gl_FragColor=vec4(c,.78+.2*f);
+gl_FragColor=vec4(c,.70);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 #include <fog_fragment>
@@ -445,13 +450,17 @@ function colorAt(x,z,h,ny){
  if(rw>0){c=mc(c,mc(RA,RB,ss(.3,.7,t)),rw*.95);if(ny<.97)c=mc(c,RE,rw)}
  const rk=Math.max(1-ss(.62,.86,ny),ss(90,170,h+t*30));if(rk>0)c=mc(c,mc(RK1,RK2,t2),rk);
  const sn=ss(240,290,h+t*25)*ss(.5,.8,ny);if(sn>0)c=mc(c,SN,sn);
- const bch=1-ss(.3,2.4,h);
- // Add a soft sand apron along mapped freshwater and river banks, not just low-elevation vertices.
+ // Low-elevation sand belongs to the coast, not the floor and walls of every inland pond.
+ const coast=ss(-900,-1180,x+(fbm(x*.002,z*.002,3)-.5)*260);
+ const bch=(1-ss(.3,2.4,h))*coast;
+ // Keep freshwater sand close to the waterline; do not paint the submerged basin floor.
+ const shore=ss(-.8,-.1,h)*(1-ss(.55,1.25,h));
  let bank=0;
- for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-body.radius);bank=Math.max(bank,1-ss(0,11,edge))}
+ for(const body of WATER_BODIES){if(body.kind!=='freshwater')continue;const edge=Math.abs(Math.hypot(x-body.x,z-body.z)-freshwaterRadiusAt(body,x,z));bank=Math.max(bank,1-ss(0,4,edge))}
  const riverWidth=13+7*Math.sin(z*.003),riverEdge=Math.abs(Math.abs(x-rx(z))-riverWidth*2.1);
- bank=Math.max(bank,1-ss(2,20,riverEdge));
- if(bch>0||bank>0)c=mc(c,SAND,Math.max(bch*.9,bank*ss(-.5,4.5,h)*.78));
+ bank=Math.max(bank,1-ss(2,12,riverEdge));
+ const sand=Math.max(bch*.72,shore*.36,bank*ss(-.2,1.2,h)*.32);
+ if(sand>0)c=mc(c,SAND,sand);
  // Preserve sandy shallows while gradually shifting deeper seabeds to muted silt.
  const u=ss(0,-5,h);if(u>0)c=mc(c,mc(SAND,UB,ss(-1,-7,h)),u);
  return c;
@@ -707,7 +716,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  glow('#9bd8e5',2.4,58,51,3,25,g);
  // First connected side chamber: a short walkable branch off the existing chamber.
  // Every wall has a matching swept player collider; the doorway remains open at the west end.
- const caveWallMat=M('#514b43'),caveWallDark=M('#3d3935'),caveWallHeight=7,caveWallThickness=1.1;
+ const caveWallMat=M('#45433e'),caveWallDark=M('#292e30'),caveWallHeight=7,caveWallThickness=1.1;
  function caveWall(x1,z1,x2,z2,label){
   const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dz,dx);
   // Build the visible wall from tightly overlapping irregular stone masses rather
@@ -723,19 +732,30 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
    stonePos.setXYZ(vi,v.x*rough,v.y*(1+(randWall()-.5)*.2),v.z*(1+(randWall()-.5)*.25));
   }
   stonePos.needsUpdate=true;stoneGeo.computeVertexNormals();
-  for(let along=-.25;along<=len+.25;along+=1.08){
-   const t=Math.max(0,Math.min(1,along/len)),cx=x1+dx*t,cz=z1+dz*t;
-   for(let row=0;row<4;row++){
-    const stagger=row%2?.52:0;
-    const x=cx-Math.sin(angle)*stagger+(randWall()-.5)*.3;
-    const z=cz+Math.cos(angle)*stagger+(randWall()-.5)*.3;
-    const y=.72+row*1.72+(randWall()-.5)*.38;
-    const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
-    sc(stone,.58+randWall()*.35,.62+randWall()*.34,.58+randWall()*.38);
-    stone.rotation.set((randWall()-.5)*.62,angle+(randWall()-.5)*.85,(randWall()-.5)*.58);
-    stone.castShadow=true;stone.receiveShadow=true;
+  // Recessed structural backing keeps the passage sealed, while a subdivided,
+  // deterministic uneven face prevents the wall reading as a flat rectangular panel.
+  const backingGeo=new T3.BoxGeometry(len,caveWallHeight,caveWallThickness,Math.max(8,Math.ceil(len/1.05)),9,1);
+  const bp=backingGeo.attributes.position;
+  for(let vi=0;vi<bp.count;vi++){
+   const vx=bp.getX(vi),vy=bp.getY(vi),vz=bp.getZ(vi);
+   if(Math.abs(vz)>caveWallThickness*.42){
+    const broad=Math.sin((vx+seedBase*.013)*.83)*.48+Math.sin((vy+seedBase*.021)*1.17)*.29;
+    const strata=Math.sin((vx*.42+vy*.31+seedBase)*2.1)*.2;
+    const grain=(randWall()-.5)*.16;
+    bp.setZ(vi,vz+Math.sign(vz)*(broad+strata+grain));
+    bp.setY(vi,vy+(randWall()-.5)*.08);
    }
   }
+  bp.needsUpdate=true;backingGeo.computeVertexNormals();
+  const wallBacking=new T3.Mesh(backingGeo,caveWallDark);
+  wallBacking.position.set((x1+x2)*.5,caveWallHeight*.5,(z1+z2)*.5);
+  wallBacking.rotation.y=-angle;wallBacking.castShadow=true;wallBacking.receiveShadow=true;g.add(wallBacking);
+  // Medium-sized broken strata overlap the backing in staggered bands. Their
+  // irregular silhouettes create connected rock relief without recreating the
+  // former wall-to-wall boulder clutter or narrowing the traversable corridor.
+  // Do not hang isolated boulders in front of the backing: the displaced,
+  // continuous structural face itself supplies the rock relief and keeps the
+  // chamber visually connected at gameplay distance.
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
   caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
  }
@@ -751,6 +771,20 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(22,29,22,34,'side-room-west-upper');
  const branchFloor=mk(BOX,M('#625b50'),15,.08,25,g);sc(branchFloor,14,.16,8,g);
  const chamberFloor=mk(BOX,M('#514b42'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ // A shallow, triangulated stone skin breaks the broad slab silhouette without
+ // changing the underlying floor collider or raising the walking surface.
+ function addCaveFloorRelief(cx,cz,w,d,seed){
+  const geo=new T3.PlaneGeometry(w,d,22,22),pos=geo.attributes.position,rand=rng(seed);
+  for(let i=0;i<pos.count;i++){
+   const x=pos.getX(i),z=pos.getY(i);
+   const ridge=Math.sin(x*.82+seed)*.075+Math.sin(z*1.13-seed*.3)*.055;
+   pos.setZ(i,ridge+(rand()-.5)*.045);
+  }
+  geo.computeVertexNormals();
+  const mesh=new T3.Mesh(geo,M('#625b50'));mesh.rotation.x=-Math.PI/2;mesh.position.set(cx,.245,cz);mesh.receiveShadow=true;mesh.castShadow=false;g.add(mesh);
+ }
+ addCaveFloorRelief(15,25,14,8,8821);
+ addCaveFloorRelief(31,25,18,18,8822);
  // Low broken mineral plates soften the flat prototype floor while leaving the
  // central traversal lane and chest approach clear.
  const floorRand=rng(8831),floorGeo=new T3.IcosahedronGeometry(1,1);
@@ -766,28 +800,22 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Break up the rectangular prototype room with a natural cave-rock lining.
  // Decorative masses sit against the structural walls and above head clearance;
  // the underlying swept wall colliders remain authoritative for traversal.
- const liningMat=M('#514b43'),liningDark=M('#3d3935');
- const wallLining=[
-  [22.35,1.35,18,1.8,1.55,1.65],[22.55,3.15,21,1.65,1.9,1.8],[22.4,1.7,25,1.9,1.55,1.7],[22.5,2.5,30,1.8,1.65,1.8],
-  [39.55,1.5,18,1.8,1.6,1.7],[39.4,3.3,22,1.7,1.8,1.8],[39.55,1.65,27,1.8,1.6,1.8],[39.45,2.35,32,1.7,1.7,1.55],
-  [24,1.45,33.55,1.8,1.5,1.2],[28,2.65,33.55,1.9,1.65,1.2],[33,1.5,33.55,1.7,1.5,1.2],[37,2.25,33.5,1.7,1.6,1.2],
-  [24,1.45,16.45,1.7,1.45,1.1],[29,2.5,16.45,1.8,1.55,1.1],[35,1.5,16.45,1.8,1.45,1.1],[39,2.2,16.5,1.4,1.5,1.0]
- ];
- wallLining.forEach(([x,y,z,sx,sy,sz],i)=>{
-  const rock=mk(new T3.IcosahedronGeometry(1,2),i%3===0?liningDark:liningMat,x,y,z,g);
-  sc(rock,sx*.36,sy*.38,sz*.34);rock.rotation.set((i%2?-.31:.22),i*1.37,(i%3-.9)*.24);rock.castShadow=true;rock.receiveShadow=true;
- });
+ // Wall relief is integrated into the displaced backing surface above; no
+ // detached lining boulders are added, avoiding floating props and clutter.
  // Continuous overlapping ceiling masses close the chamber roof so the player
  // sees stone overhead instead of daylight through a scattered decorative layer.
  // The smooth, irregular rock tiles overlap in both axes and preserve headroom.
+ const liningMat=M('#514b43'); // shared mineral material for ceiling fangs
  const roofGeo=new T3.IcosahedronGeometry(1,2);
  const roofMat=M('#393b3a');
  const roofRand=rng(4407);
- for(let rz=14.5;rz<=34.5;rz+=4){
-  for(let rx=20.5;rx<=40.5;rx+=4){
-   const roof=mk(roofGeo,roofMat,rx+(roofRand()-.5)*.55,7.55+(roofRand()-.5)*.34,rz+(roofRand()-.5)*.55,g);
-   sc(roof,2.85+roofRand()*.35,1.2+roofRand()*.38,2.85+roofRand()*.35);
-   roof.rotation.set((roofRand()-.5)*.2,roofRand()*Math.PI*2,(roofRand()-.5)*.2);
+ // Wider spacing and fewer, larger irregular roof masses open the chamber silhouette.
+ // These are decorative only; the cave collision shell and traversal routes are unchanged.
+ for(let rz=15.5;rz<=33.5;rz+=6){
+  for(let rx=21.5;rx<=39.5;rx+=6){
+   const roof=mk(roofGeo,roofMat,rx+(roofRand()-.5)*1.15,7.7+(roofRand()-.5)*.48,rz+(roofRand()-.5)*1.15,g);
+   sc(roof,3.35+roofRand()*.65,1.05+roofRand()*.42,3.35+roofRand()*.65);
+   roof.rotation.set((roofRand()-.5)*.32,roofRand()*Math.PI*2,(roofRand()-.5)*.32);
    roof.castShadow=true;roof.receiveShadow=true;
   }
  }
@@ -953,18 +981,39 @@ for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
 let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
+const HERO_SOCKET_DEFS={
+ hand_r:{bone:/(?:right|_r|\.r)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:right|_r|\.r)/i,fallback:{x:.28,y:.92,z:0}},
+ hand_l:{bone:/(?:left|_l|\.l)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:left|_l|\.l)/i,fallback:{x:-.28,y:.92,z:0}},
+ back:{bone:/(?:upper)?spine|chest/i,fallback:{x:0,y:1.28,z:-.2}},
+ belt_l:{bone:/(?:left|_l|\.l)[^/]*(?:upleg|thigh)|(?:upleg|thigh)[^/]*(?:left|_l|\.l)/i,fallback:{x:-.17,y:.82,z:0}},
+ belt_r:{bone:/(?:right|_r|\.r)[^/]*(?:upleg|thigh)|(?:upleg|thigh)[^/]*(?:right|_r|\.r)/i,fallback:{x:.17,y:.82,z:0}},
+ shoulder:{bone:/(?:right|_r|\.r)[^/]*shoulder/i,fallback:{x:.25,y:1.42,z:0}},
+ head:{bone:/head|neck/i,fallback:{x:0,y:1.68,z:0}}
+};
+let heroSockets={};
 function cacheAssetRig(root){
  assetRig={legs:[],arms:[],hips:null,spine:null};
+ const bones=[];
  root.traverse(o=>{
   if(!o.isBone)return;
+  bones.push(o);
   const n=o.name.toLowerCase();
   if(/hip|pelvis/.test(n))assetRig.hips=o;
   if(/spine|chest/.test(n)&&!assetRig.spine)assetRig.spine=o;
-  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2? -1:1});
-  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2? -1:1});
+  if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2?-1:1});
+  if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2?-1:1});
  });
+ heroSockets={};
+ for(const [name,def] of Object.entries(HERO_SOCKET_DEFS)){
+  const bone=bones.find(o=>def.bone.test(o.name));
+  const anchor=new T3.Group();anchor.name='ClimboriaSocket_'+name;
+  anchor.userData={socket:name,attachedToBone:bone?.name||null,fallback:!bone};
+  if(bone)bone.add(anchor);
+  else{root.add(anchor);anchor.position.set(def.fallback.x,def.fallback.y,def.fallback.z);}
+  heroSockets[name]=anchor;
+ }
 }
-const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|fall|death)(?:$|[_\\s-])/i;
+const FORBIDDEN_REST_CLIP=/(?:^|[_\\s-])(sit|sitting|seated|crouch|kneel|prone|sleep|lying|lie|death|a[_\\s-]?pose|t[_\\s-]?pose)(?:$|[_\\s-])/i;
 function findStandingRestClip(){
  const safe=assetActions.filter(a=>!FORBIDDEN_REST_CLIP.test(a.name)&&!/(swim|swimming|combat|weapon|rifle|sword|aim|attack)/i.test(a.name));
  const preferred=['Standing_Idle','Idle_Standing','Standing','Idle','Idle_01','Breathing_Idle','Idle_Breathing'];
@@ -973,11 +1022,11 @@ function findStandingRestClip(){
 }
 function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
- const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='jump'?'Jump':state==='land'?'Landing':'';
+ const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='jump'?'Jump':state==='fall'?'Falling':state==='land'?'Landing':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
  if(state==='idle'||state==='land')clip=findStandingRestClip();
  else if(!clip){
-  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='jump'?/jump|takeoff|airborne/i:/land|touchdown/i;
+  const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='jump'?/jump|takeoff|airborne/i:state==='fall'?/fall|falling|free.?fall|drop|airborne/i:/land|touchdown/i;
   clip=assetActions.find(a=>patterns.test(a.name)&&!FORBIDDEN_REST_CLIP.test(a.name));
  }
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
@@ -994,13 +1043,20 @@ function heroAnimationAudit(){
  const active=assetActive?.getClip()?.name||'procedural-fallback';
  return {state:assetAnimState,activeClip:active,availableClips:assetActions.map(a=>a.name),forbiddenRestClip:FORBIDDEN_REST_CLIP.test(active),idleCandidate:findStandingRestClip()?.name||'procedural-fallback',armBones:assetRig.arms.map(({bone,base,baseZ,shoulder,lower,side})=>({name:bone.name,parent:bone.parent?.name||'',shoulder,lower,side,baseX:base,baseZ,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z},position:{x:bone.position.x,y:bone.position.y,z:bone.position.z}})),legBones:assetRig.legs.map(({bone,base,side})=>({name:bone.name,parent:bone.parent?.name||'',side,baseX:base,rotation:{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z}}))};
 }
+window.__climboriaHeroAnimationAudit=heroAnimationAudit;
+window.__climboriaHeroRigAudit=()=>{
+ const bones=[];
+ if(assetHero)assetHero.traverse(o=>{if(o.isBone)bones.push({name:o.name,parent:o.parent?.name||'',position:{x:+o.position.x.toFixed(4),y:+o.position.y.toFixed(4),z:+o.position.z.toFixed(4)}})});
+ return {loaded:!!assetHero,renderer:document.documentElement.dataset.climboriaHeroRenderer||'',asset:assetChoices.Adventurer,animationNames:assetActions.map(a=>a.name),boneCount:bones.length,bones,socketCandidates:bones.filter(b=>/(hand|wrist|forearm|arm|shoulder|spine|chest|pelvis|hip|root)/i.test(b.name)),sockets:Object.fromEntries(Object.entries(heroSockets).map(([name,node])=>[name,{bone:node.userData.attachedToBone,fallback:node.userData.fallback,position:{x:node.position.x,y:node.position.y,z:node.position.z}}]))};
+};
 function animateAssetFallback(t,state,speed){
- const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',landing=state==='land';
+ const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',falling=state==='fall',landing=state==='land';
  const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
  for(const item of assetRig.legs){
   const b=item.bone;
   if(swimming)b.rotation.x=item.base+Math.sin(phase+item.side)*.28;
   else if(jumping)b.rotation.x=item.base-.28;
+  else if(falling)b.rotation.x=item.base-.42;
   else if(landing)b.rotation.x=item.base+.16;
   else b.rotation.x=item.base+Math.sin(phase)*amp*item.side;
  }
@@ -1008,14 +1064,14 @@ function animateAssetFallback(t,state,speed){
   const b=item.bone;
   if(swimming)b.rotation.x=item.base+Math.PI*.42+Math.sin(phase+item.side)*.16;
   else if(jumping)b.rotation.x=item.base-.52;
+  else if(falling)b.rotation.x=item.base-.78;
   else if(landing)b.rotation.x=item.base+.22;
   else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):0);
   // Preserve the GLB-authored shoulder/elbow rest pose while standing still.
   // Apply gait offsets only during locomotion; never force the idle arms upward.
-  if(item.shoulder)b.rotation.z=item.baseZ;
-  else if(!item.lower)b.rotation.y=item.baseY;
+  if(item.shoulder||!item.lower){b.rotation.z=item.baseZ+(!moving&&!swimming&&!jumping&&!falling&&!landing?item.side*.42:0);if(!item.shoulder)b.rotation.y=item.baseY;}
  }
- if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:jumping?-.08:0;
+ if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:falling?.18:jumping?-.08:0;
  if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
@@ -1489,6 +1545,53 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
  sc(mk(BOX,M('#b88c67'),0,2.1,0,sign),1.3,.8,.14);
  FAC.push({x:bankX,z:bankZ,type:'fish',label:body.name+' fishing spot',waterBodyId:body.id});
 }
+// Lightweight visible fish schools: simple low-poly fish follow looping paths just below
+// the surface. Keep counts modest on touch devices and share geometry/materials.
+const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
+const aquaticFish=[];
+const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
+const fishMats=[M('#718b82',1),M('#66818a',1),M('#a4aaa0',1),M('#817b68',1)];
+// Draw submerged fish before the transparent water surface (water.renderOrder=2).
+// The water then tints/blends over their silhouettes instead of painting fish on top of the pond.
+for(const material of fishMats){material.transparent=true;material.opacity=.68;material.depthWrite=false}
+const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.95;fishEyeMat.depthWrite=false;
+function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
+ const rand=rng(Math.floor(cx*13+cz*17+seed*101));
+ for(let i=0;i<count;i++){
+  const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
+  // Side-on 3D fish silhouette: ellipsoid body, vertical fork tail, dorsal and pectoral fins.
+  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.72,.30,.25);
+  const tail=mk(fishTailGeo,mat,-.66,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.82,.82,.82);
+  const dorsal=mk(fishFinGeo,mat,-.08,.24,0,g);dorsal.material.side=T3.DoubleSide;sc(dorsal,.9,.78,.72);
+  for(const side of [-1,1]){
+   const fin=mk(fishFinGeo,mat,.12,-.08,side*.18,g);fin.material.side=T3.DoubleSide;fin.rotation.z=side*.9;sc(fin,.58,.56,.32);
+   const eye=mk(SPH,fishEyeMat,.34,.075,side*.205,g);sc(eye,.052,.052,.035);
+  }
+  // Keep fish submerged while giving the body/tail a clear profile through the water.
+  g.scale.set(kind==='ocean'?2.55:2.45,kind==='ocean'?2.55:2.45,kind==='ocean'?2.55:2.45);
+  g.userData.tail=tail;
+  aquaticLifeGroup.add(g);
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-2.65-rand()*.18,surfaceClearance:.76,kind});
+ }
+}
+for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
+ addFishSchool(body.x,body.z,MOB?4:7,body.radius*.36,'freshwater',aquaticFish.length+1);
+}
+for(let i=0;i<coastalDockSpots.length;i+=2){
+ const dock=coastalDockSpots[i];
+ addFishSchool(dock.waterX-10,dock.z,MOB?3:5,5,'ocean',i+11);
+}
+function updateAquaticLife(time){
+ for(const fish of aquaticFish){
+  const a=time*fish.speed+fish.phase;
+  fish.g.position.set(fish.cx+Math.cos(a)*fish.orbit,fish.depth+.045*Math.sin(a*1.7),fish.cz+Math.sin(a*.83)*fish.orbit*.65);
+  fish.g.rotation.y=Math.atan2(-Math.cos(a*.83)*.83*fish.orbit*.65,-Math.sin(a)*fish.orbit);
+  if(fish.g.userData.tail)fish.g.userData.tail.rotation.y=Math.PI/2+Math.sin(a*2.1)*.24;
+ }
+}
+function aquaticLifeAudit(){
+ return {fishCount:aquaticFish.length,schoolCount:new Set(aquaticFish.map(f=>f.cx+','+f.cz)).size,belowSurface:aquaticFish.every(f=>f.g.position.y+f.surfaceClearance<-.5),minimumSurfaceClearance:Math.min(...aquaticFish.map(f=>-(f.g.position.y+f.surfaceClearance))),sharedGeometry:aquaticFish.every(f=>f.g.children.some(c=>c.geometry===fishBodyGeo)),distinctSilhouette:aquaticFish.every(f=>f.g.children.length>=6),mobile:MOB};
+}
 /* Treasure chest registry: 84 world + 15 cave + 1 summit = exactly 100.
    Client-side timers are a playable prototype only; shared summit claims require a server ledger. */
 const steep=(x,z)=>Math.max(Math.abs(heightAt(x+3,z)-heightAt(x-3,z)),Math.abs(heightAt(x,z+3)-heightAt(x,z-3)))/6>.5;
@@ -1577,10 +1680,16 @@ function chestDistributionAudit(){
   respawnSamples:{world:chestRespawnDelay({kind:'remote'}),cave:chestRespawnDelay({kind:'cave'}),summit:chestRespawnDelay({kind:'summit'})},
   rarityTotals,summitCooldownSeconds:900,summitCooldownScope:'local-prototype-only',summitGlobalClaimReady:false,rarityOdds:CHEST_RARITY_ODDS};
 }
+function cancelFishing(message='Fishing cancelled.'){P.fish=0;P.fishPhase=null;P.fishElapsed=0;P.fishSource=null;P.fishStartX=null;P.fishStartZ=null;if(message)toast(message)}
+function finishFishing(){
+ const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];
+ const item=table[Math.floor(Math.random()*table.length)],waterBodyId=P.fishSource||'open_sea';
+ addInventoryItem(item,1);toast('Caught: '+item);emit('fish',{item,waterBodyId});cancelFishing(null);
+}
 function interact(){if(P.mode!='walk')return;
+ if(P.fish>0){if(P.fishPhase==='bite'&&P.fishElapsed<=P.fishBiteAt+P.fishBiteWindow){finishFishing()}else if(P.fishPhase==='waiting'){toast('A fish may bite soon · stay ready')}else{cancelFishing('Too late · the fish got away')}return}
  for(const c of chests)if(!c.open&&Math.hypot(c.x-P.x,c.z-P.z)<4){c.open=true;c.t=chestRespawnDelay(c);c.g.visible=false;const reward=rollChestReward(c);addInventoryItem(reward.item,1);toast('Chest opened · '+reward.rarity.toUpperCase()+' · '+reward.item);emit('chest',{kind:c.kind,item:reward.item,rarity:reward.rarity,x:c.x,z:c.z});return}
- for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){if(P.fish>0)return;P.fish=2+Math.random()*4;P.fishSource=f.waterBodyId||'open_sea';toast('Line cast at '+f.label+'…')}else{toast(f.label);emit(f.type,{})}return}}
-P.fish=0;
+ for(const f of FAC)if(Math.hypot(f.x-P.x,f.z-P.z)<5){if(f.type=='fish'){P.fish=1;P.fishPhase='waiting';P.fishElapsed=0;P.fishBiteAt=1.8+Math.random()*1.2;P.fishBiteWindow=3;P.fishSource=f.waterBodyId||'open_sea';P.fishStartX=P.x;P.fishStartZ=P.z;toast('Line cast at '+f.label+' · wait for a bite, then press E')}else{toast(f.label);emit(f.type,{})}return}}
 /* weather: clear / rain / thunderstorm */
 const RN=MOB?500:1100,rp=new Float32Array(RN*6),rox=new Float32Array(RN),roz=new Float32Array(RN),rdy=new Float32Array(RN);for(let i=0;i<RN;i++){rox[i]=(Math.random()-.5)*90;roz[i]=(Math.random()-.5)*90;rdy[i]=Math.random()*50}
 const rgeo=new T3.BufferGeometry();rgeo.setAttribute('position',new T3.BufferAttribute(rp,3));
@@ -1604,7 +1713,7 @@ function gameTick(dt,cp){
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
  updateSummitChestStatus();
- if(P.fish>0&&(P.fish-=dt)<=0){P.fish=0;const table=P.fishSource==='open_sea'?['Silverfin','Bluefin Tuna','Mahi-Mahi','Old Boot (junk)']:['Reed Carp','Golden Trout','Moonpool Koi','Woodland Perch'];const f=table[Math.floor(Math.random()*table.length)];addInventoryItem(f,1);toast('Caught: '+f);emit('fish',{item:f,waterBodyId:P.fishSource||'open_sea'});P.fishSource=null}
+ if(P.fish>0){if(!live||Math.hypot(P.x-(P.fishStartX??P.x),P.z-(P.fishStartZ??P.z))>2.5){cancelFishing('Fishing cancelled · you moved away')}else{P.fishElapsed=(P.fishElapsed||0)+dt;if(P.fishPhase==='waiting'&&P.fishElapsed>=P.fishBiteAt){P.fishPhase='bite';toast('BITE! Press E to reel now')}else if(P.fishPhase==='bite'&&P.fishElapsed>P.fishBiteAt+P.fishBiteWindow){cancelFishing('Missed the bite · cast again')}}}
  hpEl.textContent='';
  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
@@ -1780,13 +1889,15 @@ function caveEntranceTraversalAudit(){
   return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,aquaticLifeAudit,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear,gameTick};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
+let lastStreamChunkX=NaN,lastStreamChunkZ=NaN;
 function update(dt){
  Tm+=dt;
+ updateAquaticLife(Tm);
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
@@ -1838,7 +1949,7 @@ function update(dt){
   cam.updateProjectionMatrix();
   cam.lookAt(terrainCameraTarget);
   const moving=Math.hypot(fw,rt)>.08,locomotionState=moving?(keys.ShiftLeft?'run':'walk'):'idle';
-  const animState=P.swim?'swim':(['takeoff','airborne'].includes(P.jumpState)?'jump':P.jumpState==='land'?'land':locomotionState);
+  const animState=P.swim?'swim':(P.jumpState==='fall'?'fall':(['takeoff','airborne'].includes(P.jumpState)?(P.vy< -1.5?'fall':'jump'):P.jumpState==='land'?'land':locomotionState));
   document.documentElement.dataset.climboriaJumpState=P.swim?'swim':(P.jumpState||'grounded');
   if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset+(P.swim?.42:0),P.z);assetHero.rotation.y=P.yaw+Math.PI;assetHero.rotation.x=P.swim&&!assetHeroUsesAuthoredAnimations?-Math.PI/2:0;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';
    // Swimming uses a deliberate prone body pose instead of an arbitrary imported clip
@@ -1851,7 +1962,7 @@ function update(dt){
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
  const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
- updateChunks(cp.x,cp.z,ready?1:0);
+ const streamChunkX=Math.floor(cp.x/CS),streamChunkZ=Math.floor(cp.z/CS);if(streamChunkX!==lastStreamChunkX||streamChunkZ!==lastStreamChunkZ){lastStreamChunkX=streamChunkX;lastStreamChunkZ=streamChunkZ;updateChunks(cp.x,cp.z,ready?1:0);}
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
  // props
