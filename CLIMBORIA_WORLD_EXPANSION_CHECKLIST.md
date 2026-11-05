@@ -1198,3 +1198,17 @@ For each meaningful implementation batch:
 - [ ] Before integration, preview each asset in the actual Climboria scene; check scale, pivots, material/texture paths, normals, draw calls, mobile memory/download size, and visual consistency. Create simple collision proxies where needed; do not rely on decorative meshes for player collision.
 - [ ] Run Validate and full desktop/mobile Browser Smoke after each asset integration; inspect screenshots and complete physical Redmi 14 5G performance checks. CI success alone is not visual or device acceptance.
 - [ ] **Status:** sourcing policy and discovery references recorded only. No third-party asset is claimed downloaded, licensed, integrated, or visually accepted by this documentation update.
+
+
+## 2026-11-06 — PR #215 full desktop/mobile smoke and screenshot review
+
+- [x] Latest branch head at review: `0d31090b52f5c38b3c6984d27bae230477dab251`; PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) remains open and unmerged.
+- [x] Validate run [42088765428](https://github.com/CryptoDilis/Climboria/actions/runs/42088765428) passed.
+- [x] Full Browser Smoke run [42088765448](https://github.com/CryptoDilis/Climboria/actions/runs/42088765448) completed successfully, including homepage/navigation checks, Jarrell's Peak desktop and mobile gameplay smoke, and screenshot upload.
+- [x] Downloaded and reviewed screenshot artifact [13444368276](https://github.com/CryptoDilis/Climboria/actions/runs/42088765448/artifacts/13444368276): ten desktop/mobile captures were present.
+- [ ] **Cave visual acceptance remains failed/open:** entrance arch is visible, but the interior capture still reads as a short, bright/open chamber rather than a deep, naturally enclosed cave network. Improve the tunnel depth/readability, rock silhouettes, ceiling/floor variation, and branch landmarks; retain the existing traversal/collision assertions. Re-capture desktop and mobile after the actual scene change.
+- [ ] **Woodland Pond fish visual acceptance remains failed/open:** neither desktop nor mobile capture makes the fish clearly readable. The aquatic-life registry/count/submerged-clearance automated audit passes, but it does not prove visible fish in the rendered pond. Improve fish scale/contrast/depth and camera-visible distribution without placing fish above water or weakening clearance checks; re-capture both devices.
+- [ ] Hero idle still appears arms-out/stiff in the general gameplay captures; natural relaxed idle remains open and deferred behind cave/fish P0 work.
+- [ ] Physical Redmi 14 5G play test remains a separate owner/device acceptance gate. CI's mobile browser viewport is not a physical-device test.
+- [ ] PR #215 remains unmerged until cave/fish visual blockers, manual cave traversal/headroom/collision/trap review, and physical-device acceptance are resolved. Do not weaken tests to pass.
+- [ ] No third-party assets were imported by this verification. The permanent free-GitHub-hosted-assets-only policy remains in force; verify exact file license before any asset import.
