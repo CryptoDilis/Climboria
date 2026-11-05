@@ -1040,3 +1040,17 @@ For each meaningful implementation batch:
 - [ ] **Equipment socket implementation:** add named socket groups to detected hand/wrist, spine/back and hip/pelvis bones, with stable fallback anchors only when a suitable bone is absent. Store per-item local position, rotation and scale; do not alter the base hero rig to fit one item.
 - [ ] **Visual acceptance:** compare the adapted hero against the supplied reference in neutral idle, walk, run, jump and fishing poses; inspect face and outfit from front/side/back; test tool/weapon/rod attachment and clipping on desktop and Redmi 14 5G.
 - [ ] **Current status:** compatibility and preservation plan recorded. No appearance adaptation, socket manager or new equipment attachments have been committed yet. Existing hero GLB remains the intended base.
+
+
+## 2026-11-06 — Hero idle posture and falling transition correction
+
+- [x] Audited the current GLB animation selector and found that it did not explicitly reject A-pose/T-pose clips as standing idle candidates.
+- [x] Standing-idle candidate filtering now excludes A-pose/T-pose and other non-standing rest clips; procedural fallback applies a subtle arm-lowering correction and restores the authored upper-arm baseline when transitioning into movement/jump/fall.
+- [x] Airborne state now transitions into a distinct `fall` state while descending, including when the player walks/falls off a ledge rather than initiating a jump.
+- [x] Landing detection now recognizes the fall state so the existing landing transition can run after a fall.
+- [x] Added falling clip lookup (`Falling`, `fall`, `freefall`, `drop`, etc.) and a procedural falling pose fallback when no compatible authored fall clip exists.
+- [ ] Validate Climboria and Browser Smoke on the latest gameplay commit; inspect logs and fix any regression before acceptance.
+- [ ] Inspect actual desktop/mobile gameplay footage: idle arms must look relaxed (not A/T pose), jump must be a believable airborne action, falling must look like an uncontrolled fall rather than a standing character, and landing must recover naturally.
+- [ ] Confirm the actual GLB animation names and bone axes before final pose tuning; current fallback arm correction is a conservative code-side adjustment and still requires visual review.
+- [ ] Redmi 14 5G physical review remains required for animation smoothness and frame-time impact.
+- [ ] Current status: code correction committed; visual and device acceptance are not yet complete.
