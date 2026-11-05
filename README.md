@@ -4,7 +4,7 @@
 
 - **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
 - **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
-- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); the fishing integration stays unmerged until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #215 stays unmerged until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
 - **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
 - **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
 
@@ -17,7 +17,7 @@
 - [x] Updated PR #211 head with commit `cb4f9863f80713f511a5e25843ee0433ab1cfa26` so the audit continues through `fall` until landing or its existing 120-frame cap. No gameplay physics or pass thresholds were weakened.
 - [ ] Fresh Validate and Browser Smoke results for the corrected clean integration branch are pending; do not mark the fix passed until the actual run completes and its diagnostics are reviewed.
 - [x] Created a clean integration branch from current main to avoid carrying the stale/diverged PR #211 history; fishing/gameplay, smoke, workflow, and world-checklist changes are being ported without overwriting the newer account/security README decisions.
-- [ ] PR #214 remains documentation-only; no account, backend, server-authoritative reward, anti-bot, or payout implementation is claimed.
+- [ ] PR #214's documentation changes are included in PR #215; no account, backend, server-authoritative reward, anti-bot, or payout implementation is claimed.
 
 
 > **Single source of truth.** This root README is the canonical place for Climboria's product decisions, full master checklist, implementation status, test evidence, and next actions. At the end of any work session, update this file before stopping. At the start of the next session, review this file first. Do not rely on chat memory or recreate already completed work.
