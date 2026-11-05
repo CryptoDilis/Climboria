@@ -1095,3 +1095,17 @@ For each meaningful implementation batch:
 - [ ] Optimize costume geometry and textures for mobile; share materials/textures where possible and load only equipped/previewed assets.
 - [ ] Keep cosmetic skins separate from gameplay equipment: clothing/appearance slots must not conflict with tool/weapon/rod sockets.
 - [ ] Current status: pipeline and asset boundaries documented; no costume asset has yet been created or imported.
+
+## 2026-11-06 — Meshy-assisted male hero and costume production workflow
+
+- [x] Confirmed Meshy is an approved production option for generating the male hero base and costume concepts; it is not excluded from the pipeline.
+- [x] Defined the safe handoff: Meshy generates the appearance/mesh; Blender is used for topology cleanup, materials, UVs, scale/orientation and rig/weight compatibility; the game continues using the existing Climboria skeleton and animation controller.
+- [x] Defined two acceptable Meshy routes: (A) generate/export a character with a rig only if its skeleton, bind pose and bone mapping can be verified and retargeted; (B) generate an unrigged/static appearance mesh and bind/weight it to the existing Climboria skeleton in Blender. Route B is the safer default when Meshy's rig differs.
+- [x] Preserve the original hero GLB as a rollback source. Never replace it until the new visual passes rig, deformation, animation, performance and mobile checks.
+- [ ] Generate the male expedition hero in Meshy from the supplied reference. Keep the face, short dark hair, brown expedition jacket, black shirt, olive cargo trousers, boots, gloves and backpack/bedroll/rope details consistent with the reference; request a clean full-body neutral A-pose/T-pose only as a modeling bind pose, not as the in-game idle animation.
+- [ ] Export the highest-quality practical mesh and texture maps from Meshy; retain source project/export and record polygon count, texture dimensions, material count, rig type and bone list.
+- [ ] In Blender, inspect topology and face fidelity; clean intersections, separate clothing/accessory parts where useful, set correct scale/orientation, and either retarget a verified compatible rig or transfer skin weights to the existing Climboria skeleton.
+- [ ] Verify bind pose, bone names/mapping, armature transforms and skin weights. Test shoulders, elbows, wrists, spine, hips, knees and ankles through idle, walk, run, jump, fall, landing, swim and fishing animations.
+- [ ] Export a test GLB under a new filename; load it behind a feature flag or QA-only selector so the original hero remains available for rollback.
+- [ ] Compare face/outfit silhouette from front, side and back; capture browser screenshots and test download/memory/frame-time impact on desktop and Redmi 14 5G before acceptance.
+- [ ] Current status: Meshy workflow approved and documented; no Meshy generation/export or replacement asset has been produced or imported yet.
