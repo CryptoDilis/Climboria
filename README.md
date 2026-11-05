@@ -1,5 +1,15 @@
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
+## 2026-11-06 — jump/landing smoke diagnosis (PR #211 follow-up; verification pending)
+
+- [x] Inspected the failing Browser Smoke diagnostic and compared the current-main jump controller with PR #211's jump-state changes.
+- [x] Root cause isolated to the smoke audit loop, not a demonstrated runtime landing defect: PR #211 correctly introduces a `fall` state and includes it in the airborne/landing eligibility check, but `jumpControllerAudit()` stopped advancing when state changed from `airborne` to `fall`. The audit therefore sampled the player before the landing transition and incorrectly reported zero landings.
+- [x] Updated PR #211 head with commit `cb4f9863f80713f511a5e25843ee0433ab1cfa26` so the audit continues through `fall` until landing or its existing 120-frame cap. No gameplay physics or pass thresholds were weakened.
+- [ ] Fresh Validate and Browser Smoke results for the corrected PR #211 head are not yet visible; do not mark the fix passed until the actual run completes and its diagnostics are reviewed.
+- [ ] PR #211 remains unmerged and diverged from main (58 commits ahead, 2 behind at this checkpoint); reconcile it with current main, resolve any documentation conflicts, then rerun required workflows before merge.
+- [ ] PR #214 remains documentation-only; no account, backend, server-authoritative reward, anti-bot, or payout implementation is claimed.
+
+
 > **Single source of truth.** This root README is the canonical place for Climboria's product decisions, full master checklist, implementation status, test evidence, and next actions. At the end of any work session, update this file before stopping. At the start of the next session, review this file first. Do not rely on chat memory or recreate already completed work.
 >
 > **Status labels:** `NOT STARTED`, `PLANNED / DESIGN ONLY`, `IN PROGRESS`, `IMPLEMENTED — UNVERIFIED`, `TESTED — PASSED`, `BLOCKED`, `DEFERRED`. A checkbox is not complete merely because code was committed. Link the commit and relevant workflow runs; separate automated tests from manual device acceptance.
