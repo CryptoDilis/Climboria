@@ -1286,3 +1286,14 @@ For each meaningful implementation batch:
 - [ ] Manual traversal/collision/headroom/trap review and physical Redmi 14 5G acceptance remain open. Playwright mobile viewport is not a physical-device test.
 - [ ] PR #215 remains OPEN and UNMERGED. Do not merge until cave/sea tunnel and fish visuals are reviewed, manual cave traversal is accepted, and physical-device testing is recorded.
 - [ ] Free-GitHub-hosted-assets-only policy remains mandatory; no new third-party asset was imported in this checkpoint.
+
+
+## 2026-11-06 — latest checklist CI and cave-to-coast route audit
+
+- [x] Documentation head `25d962289dce61570b1f4ce966fa99227a0146fc` verified: Validate #2066 [42105655154](https://github.com/CryptoDilis/Climboria/actions/runs/42105655154) passed and full Browser Smoke #1499 [42105654870](https://github.com/CryptoDilis/Climboria/actions/runs/42105654870) passed.
+- [x] PR #215 is still OPEN and UNMERGED; latest GitHub PR inspection reports `mergeable=true`. Branch comparison: 34 commits ahead, 0 behind main. Passing CI and mergeability do not close the outstanding visual/manual/device acceptance gates.
+- [x] Audited the cave transform: cave origin is approximately `(-760,-520)`; local +Z points inward toward the world origin, so the sea-facing route is local -Z. At 200 local metres outward, the centreline is approximately `(-925,-633)` (using the current cave rotation); this reaches the mapped coast transition near x=-900, subject to the terrain's noise-modulated shoreline.
+- [ ] Do not yet build a straight, level 200m corridor: the seabed is around Y=-26 while the cave base elevation is set from terrain. First sample actual rendered terrain height and sea-floor transition along the transformed centreline and both tunnel shoulders; choose a continuous descending floor profile and maintain enough roof cover below terrain.
+- [ ] Next code increment: add a route/terrain sampling audit for the proposed local -Z corridor (centreline and both shoulders at regular intervals), then design the tunnel cross-section and collision/roof/floor from those measured elevations. Preserve the original entrance and all existing cave rooms; the separate seabed opening must be a distinct, traversable underwater exit.
+- [ ] No sea tunnel, seabed opening, or route terrain sampling implementation is claimed complete in this checkpoint. Keep cave/fish visuals, manual traversal/headroom/trap review, and physical Redmi 14 5G acceptance open.
+- [ ] PR #215 remains unmerged until all acceptance gates pass. Continue to retain all world master-checklist requirements and the free-GitHub-assets-only policy.
