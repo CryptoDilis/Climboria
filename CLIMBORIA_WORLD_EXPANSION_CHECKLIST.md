@@ -913,3 +913,18 @@ For each meaningful implementation batch:
 - [ ] Keep inventory browser-local in prototype; no token/NFT or monetary reward claims until a secure server-authoritative system and approved token design exist.
 - [ ] Current implementation status: basic fish-school prototype and cast/wait/bite/manual-reel loop exist; 11 fishing spots are recorded (8 coastal docks and 3 freshwater spots). Visual acceptance is blocked by flat pale fish silhouettes; rod/line/bobber/bait and species diversity are not implemented/verified. Browser Smoke #1451 is still running at the time of this entry; Validate #2018 passed.
 - [ ] PR #211 remains open and unmerged pending cave/fish visuals, complete smoke evidence and later physical-device acceptance.
+
+
+## 2026-11-06 — Permanent asset sourcing and realism requirement (user directive)
+
+- [x] Recorded the user's standing direction: prioritize high-quality, realistic FREE assets from GitHub and trusted free asset libraries; do not substitute crude procedural/generated placeholder geometry for finished world assets. This requirement persists across future Climboria work and chat sessions.
+- [ ] Before adding any asset, inspect the actual model/texture preview and verify visual quality, scale, topology, UVs, PBR maps, polygon/texture budget, format compatibility (prefer GLB/glTF for Three.js), and mobile performance.
+- [ ] Prefer photorealistic CC0 sources for natural world content: Poly Haven for scanned models, rocks, vegetation, PBR materials and HDRIs; ambientCG for realistic PBR surfaces; inspect GitHub repositories for curated GLB/glTF assets and source provenance.
+- [ ] Use GitHub-hosted asset repositories only after opening the original source and verifying the specific asset's license and redistribution rights. Public/downloadable does not automatically mean free for commercial use.
+- [ ] Use Kenney/Quaternius only where their stylized art direction is intentionally suitable; do not mix obvious low-poly assets into Climboria's realistic/cinematic environments.
+- [ ] Create and maintain an asset manifest: asset name, creator/source URL, exact license, attribution requirement, file path, format, dimensions/triangles, texture sizes, intended scene use, collision status and optimization notes.
+- [ ] Preserve creator credits where practical even for CC0; never strip attribution from CC-BY assets. Exclude CC-BY-NC, unclear, ripped, leaked, or unlicensed assets from the commercial project.
+- [ ] Prefer real scanned/photogrammetry assets for cave rocks, cliffs, boulders, seabed, coral, trees, wrecks, wildlife and props. Use procedural geometry only for terrain/system support, collision proxies, variation, or gaps—not as a replacement for quality hero assets.
+- [ ] Every imported model must be checked for scale/orientation, pivots, normals, materials, animation/rig if relevant, collision proxy, LODs, draw calls, texture memory and desktop/mobile loading.
+- [ ] Do not mark an asset task complete from a repository link alone: download/import it, verify it in the actual Climboria scene, inspect desktop/mobile screenshots, and record source/license in the manifest.
+- [ ] Preferred starting points researched: Poly Haven (CC0 realistic models/PBR/HDRIs), ambientCG (CC0 PBR), and curated GitHub collections such as awesome-3d-assets; all individual linked assets still require license verification. Kenney and Quaternius are optional stylized sources only when style-matched.
