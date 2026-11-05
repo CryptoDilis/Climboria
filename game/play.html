@@ -715,7 +715,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  glow('#9bd8e5',2.4,58,51,3,25,g);
  // First connected side chamber: a short walkable branch off the existing chamber.
  // Every wall has a matching swept player collider; the doorway remains open at the west end.
- const caveWallMat=M('#514b43'),caveWallDark=M('#3d3935'),caveWallHeight=7,caveWallThickness=1.1;
+ const caveWallMat=M('#45433e'),caveWallDark=M('#292e30'),caveWallHeight=7,caveWallThickness=1.1;
  function caveWall(x1,z1,x2,z2,label){
   const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dz,dx);
   // Build the visible wall from tightly overlapping irregular stone masses rather
@@ -733,16 +733,16 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
   stonePos.needsUpdate=true;stoneGeo.computeVertexNormals();
   // Recessed structural backing keeps the passage sealed, while a subdivided,
   // deterministic uneven face prevents the wall reading as a flat rectangular panel.
-  const backingGeo=new T3.BoxGeometry(len,caveWallHeight,caveWallThickness,Math.max(4,Math.ceil(len/1.8)),5,1);
+  const backingGeo=new T3.BoxGeometry(len,caveWallHeight,caveWallThickness,Math.max(8,Math.ceil(len/1.05)),9,1);
   const bp=backingGeo.attributes.position;
   for(let vi=0;vi<bp.count;vi++){
    const vx=bp.getX(vi),vy=bp.getY(vi),vz=bp.getZ(vi);
-   const face=Math.abs(vz)>caveWallThickness*.42;
-   if(face){
-    const wave=Math.sin((vx+seedBase*.013)*1.7)*.12+Math.sin((vy+seedBase*.021)*2.3)*.08;
-    const grain=(randWall()-.5)*.12;
-    bp.setZ(vi,vz+Math.sign(vz)*(wave+grain));
-    bp.setY(vi,vy+(randWall()-.5)*.045);
+   if(Math.abs(vz)>caveWallThickness*.42){
+    const broad=Math.sin((vx+seedBase*.013)*.83)*.24+Math.sin((vy+seedBase*.021)*1.17)*.17;
+    const strata=Math.sin((vx*.42+vy*.31+seedBase)*2.1)*.11;
+    const grain=(randWall()-.5)*.16;
+    bp.setZ(vi,vz+Math.sign(vz)*(broad+strata+grain));
+    bp.setY(vi,vy+(randWall()-.5)*.08);
    }
   }
   bp.needsUpdate=true;backingGeo.computeVertexNormals();
