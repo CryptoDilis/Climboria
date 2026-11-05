@@ -1865,6 +1865,7 @@ window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
+let lastStreamChunkX=NaN,lastStreamChunkZ=NaN;
 function update(dt){
  Tm+=dt;
  updateAquaticLife(Tm);
@@ -1932,7 +1933,7 @@ function update(dt){
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
  const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
- updateChunks(cp.x,cp.z,ready?1:0);
+ const streamChunkX=Math.floor(cp.x/CS),streamChunkZ=Math.floor(cp.z/CS);if(streamChunkX!==lastStreamChunkX||streamChunkZ!==lastStreamChunkZ){lastStreamChunkX=streamChunkX;lastStreamChunkZ=streamChunkZ;updateChunks(cp.x,cp.z,ready?1:0);}
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
  // props
