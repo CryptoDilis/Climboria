@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Climboria DEX & Launchpad — UI Preview</title>
+<style>
+:root{color-scheme:dark;--bg:#070a14;--panel:#0d1222;--line:#252b3d;--gold:#fbbf24;--muted:#929bb0;--green:#34d399;--red:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#172039 0,#070a14 48%);color:#eef2ff;font:14px/1.45 Inter,system-ui,sans-serif}
+.notice{position:sticky;top:0;z-index:10;background:#7f1d1d;color:white;text-align:center;padding:9px 12px;font-size:12px;font-weight:700;border-bottom:1px solid #fbbf24}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px clamp(12px,3vw,34px);border-bottom:1px solid #ffffff12}
+.brand{font-weight:900;letter-spacing:.08em;font-size:18px}.brand b{color:var(--gold)}.chip{border:1px solid #fbbf2444;color:var(--gold);border-radius:99px;padding:5px 9px;font-size:11px}
+.wrap{max-width:1500px;margin:auto;padding:18px clamp(12px,2vw,26px) 40px}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:13px}.card{background:linear-gradient(145deg,#11182aee,#0b1020ee);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0;box-shadow:0 10px 35px #0002}.span8{grid-column:span 8}.span4{grid-column:span 4}.span6{grid-column:span 6}.span12{grid-column:span 12}
+h1,h2,h3,p{margin:0}h1{font-size:clamp(20px,3vw,30px)}h2{font-size:15px;margin-bottom:12px}small,.muted{color:var(--muted)}.price{font-size:28px;font-weight:800;letter-spacing:-.04em}.gold{color:var(--gold)}.green{color:var(--green)}.red{color:var(--red)}
+button,input,select{font:inherit}button{border:1px solid #343b50;border-radius:10px;padding:9px 12px;background:#151c2e;color:#e5e7eb;cursor:pointer}button.active,button.primary{background:var(--gold);color:#17120a;border-color:var(--gold);font-weight:800}button:disabled{opacity:.45;cursor:not-allowed}
+.stat{background:#080d19;border:1px solid #20283a;border-radius:12px;padding:11px;flex:1;min-width:110px}.stat strong{display:block;font-size:17px}.chart{width:100%;height:210px;display:block;background:linear-gradient(#0a1020,#090d18);border:1px solid #1c2638;border-radius:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.list{display:grid;gap:8px}.item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#080d19;border:1px solid #1d2638;border-radius:10px}.pill{font-size:10px;padding:3px 7px;border-radius:99px;background:#20283a;color:#bfc7d8}.token{display:flex;align-items:center;gap:9px}.coin{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#242a3a;color:var(--gold);font-weight:900}
+input,select{width:100%;padding:10px;background:#080d19;border:1px solid #293248;border-radius:9px;color:#eee}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}.sectionhead{margin:24px 0 12px;display:flex;justify-content:space-between;align-items:center}
+@media(max-width:850px){.span8,.span4,.span6{grid-column:span 12}.wrap{padding-top:12px}.chart{height:180px}}
+@media(max-width:480px){header{padding:12px}.formgrid{grid-template-columns:1fr}.price{font-size:24px}.card{padding:12px}}
+.menu-backdrop{position:fixed;inset:0;background:#0009;z-index:30;display:none}
+.menu-panel{position:fixed;top:0;right:0;bottom:0;width:min(320px,88vw);padding:22px;background:#0b1020;border-left:1px solid #343b50;z-index:31;transform:translateX(105%);transition:transform .2s ease;display:flex;flex-direction:column;gap:10px}
+.menu-panel.open{transform:translateX(0)}.menu-backdrop.open{display:block}.menu-panel a{display:block;color:#eef2ff;text-decoration:none;padding:12px;border:1px solid #252b3d;border-radius:10px}.menu-panel a:focus,.menu-panel a:hover{border-color:var(--gold);color:var(--gold)}
+body.menu-open{overflow:hidden}
+</style>
+</head>
+<body>
+<div class="notice">UI PREVIEW ONLY · market figures/listings below are illustrative sample content · wallet signing, swaps and minting are not enabled</div>
+<header><div class="brand">⛰ CLIMBORIA<b>.FUN</b></div><div class="row"><span class="chip">DEX + LAUNCHPAD CONCEPT</span><button disabled>Connect wallet (not enabled)</button><button id="menuToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="siteMenu">☰</button></div></header>
+<div class="menu-backdrop" id="menuBackdrop"></div><nav class="menu-panel" id="siteMenu" aria-label="Preview navigation" aria-hidden="true"><div class="row between"><strong>Climboria menu</strong><button id="menuClose" aria-label="Close menu">✕</button></div><a href="#market">Market overview</a><a href="#swap">Swap panel</a><a href="#trades">Trade feed</a><a href="#holders">Holders preview</a><a href="#discovery">Discovery</a><a href="#launchpad">Launchpad</a><a href="#expedition">Expedition status</a><small>Preview navigation only; no wallet actions.</small></nav><div class="wrap">
+<section class="row between" style="margin-bottom:16px"><div><h1>Basecamp Trading</h1><p class="muted">A Climboria-themed market interface concept.</p></div><span class="chip">SAMPLE DATA · NOT LIVE</span></section>
+<div class="grid">
+<section class="card span8" id="market">
+<div class="row between"><div class="token"><div class="coin">C</div><div><h2 style="margin:0">CLIMBORIA <span class="pill">CLIMB · placeholder</span></h2><small>Mint address not configured / verified</small></div></div><span class="pill">Market overview mock</span></div>
+<div class="row" style="margin:15px 0"><div><div class="price">$0.00482</div><small class="green">+4.2% · illustrative</small></div><div class="stat"><small>Market cap</small><strong>$4.82M</strong></div><div class="stat"><small>24h volume</small><strong>$286K</strong></div></div>
+<div class="row between" style="margin-bottom:8px"><div class="tabs" id="timeframeTabs" style="margin:0"><button class="active" data-timeframe="1m" aria-pressed="true">1m</button><button data-timeframe="5m" aria-pressed="false">5m</button><button data-timeframe="15m" aria-pressed="false">15m</button><button data-timeframe="1H" aria-pressed="false">1H</button><button data-timeframe="4H" aria-pressed="false">4H</button><button data-timeframe="1D" aria-pressed="false">1D</button></div><small id="timeframeStatus">Preview timeframe: 1m · bars remain illustrative</small></div>
+<canvas class="chart" id="chart" aria-label="Illustrative candlestick chart"></canvas><small>Chart is a static visual mock—not sourced from market history.</small>
+</section>
+<section class="card span4" id="swap"><h2>⛓ Swap panel</h2><div class="muted" style="margin-bottom:12px">Jupiter integration placeholder</div><label>From</label><div class="row"><div style="flex:1"><input value="0.25" readonly></div><select style="width:110px"><option>SOL</option><option>USDC</option></select></div><div style="text-align:center;padding:8px;color:var(--gold)">⇅</div><label>To</label><div class="row"><div style="flex:1"><input value="— quote unavailable —" readonly></div><select style="width:110px"><option>CLIMB (unverified)</option></select></div><p class="muted" style="margin:12px 0">No live quote or transaction is requested in this UI-only commit.</p><button class="primary" disabled style="width:100%">Swap disabled in preview</button></section>
+<section class="card span6" id="trades"><div class="row between"><h2>⌁ Trade feed</h2><span class="pill">SAMPLE ROWS</span></div><div class="list"><div class="item"><span><b class="green">BUY</b> · 8xQ…demo</span><span>0.42 SOL <small>sample</small></span></div><div class="item"><span><b class="red">SELL</b> · 4kP…demo</span><span>1.10 SOL <small>sample</small></span></div><div class="item"><span><b class="green">BUY</b> · 9mA…demo</span><span>0.08 SOL <small>sample</small></span></div></div><small>These are not blockchain transactions; no Solscan transaction links are represented.</small></section>
+<section class="card span6" id="holders"><div class="row between"><h2>◉ Holders & bubble map</h2><span class="pill">ILLUSTRATIVE</span></div><div class="row"><div class="stat"><small>Top 10 share</small><strong>—</strong></div><div class="stat"><small>Holder count</small><strong>—</strong></div><div class="stat"><small>Dev wallet</small><strong>Not set</strong></div></div><div class="row" style="justify-content:center;min-height:105px;margin:12px 0"><div style="width:88px;height:88px;border-radius:50%;background:#fbbf2433;border:2px solid #fbbf24;display:grid;place-items:center;color:var(--gold)">DEV?</div><div style="width:52px;height:52px;border-radius:50%;background:#9ca3af22;border:1px solid #9ca3af"></div><div style="width:36px;height:36px;border-radius:50%;background:#9ca3af22;border:1px solid #9ca3af"></div></div><small>Bubble map artwork only. No holder/dev analytics loaded.</small></section>
+<section class="card span6" id="discovery"><div class="row between"><h2>🧭 Discovery</h2><span class="pill">DEMO LIST</span></div><div class="tabs" id="discoverTabs"><button class="active" data-tab="new">New</button><button data-tab="graduated">Graduated</button><button data-tab="trending">Trending</button><button data-tab="volume">High volume</button></div><div class="list" id="discoverList"><div class="item"><span class="token"><span class="coin">N</span> Sample token A</span><span class="pill">sample</span></div><div class="item"><span class="token"><span class="coin">B</span> Sample token B</span><span class="pill">sample</span></div></div><small>Discovery providers and live token data are not wired in this preview.</small></section>
+<section class="card span6" id="launchpad"><div class="row between"><h2>🚀 Launchpad</h2><span class="pill">FORM CONCEPT</span></div><div class="tabs" id="launchModeTabs"><button class="active" data-mode="Standard" aria-pressed="true">Standard</button><button data-mode="Developer options" aria-pressed="false">Developer options</button><button data-mode="Climboria signature" aria-pressed="false">Climboria signature</button></div><p class="muted" id="launchModeStatus" style="margin:-4px 0 10px">Selected form concept: Standard (visual selection only).</p><div class="formgrid"><div><label>Token name</label><input placeholder="Token name"></div><div><label>Symbol</label><input placeholder="TICKER"></div><div><label>Supply</label><input placeholder="Total supply"></div><div><label>Decimals</label><input placeholder="9"></div><div class="full"><label>Description</label><input placeholder="Describe your token"></div><div class="full"><label>Image URL</label><input placeholder="https://…"></div></div><p class="muted" style="margin:12px 0">No mint, metadata upload, authority change or transaction signing in this UI-only commit.</p><button class="primary" disabled style="width:100%">Create token disabled in preview</button></section>
+<section class="card span12" id="expedition"><div class="row between"><h2>⛰ Expedition status</h2><span class="pill">UI COMPONENTS ONLY</span></div><div class="row"><div class="stat"><small>Altitude</small><strong>6,200 m <span class="gold">▲</span></strong></div><div class="stat"><small>O₂</small><strong>12.5%</strong></div><div class="stat"><small>Sherpa rank</small><strong>Basecamp</strong></div><div class="stat"><small>Chat</small><strong>Not connected</strong></div></div></section>
+</div><p class="muted" style="margin-top:18px;text-align:center;font-size:12px">Climboria DEX/Launchpad design preview. Production work requires verified token configuration, trusted data sources, secure wallet/transaction handling and testing.</p>
+</div>
+<script>
+const c=document.getElementById('chart'),ctx=c.getContext('2d');function draw(){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;ctx.scale(d,d);const w=r.width,h=r.height;ctx.strokeStyle='#202a3d';for(let i=1;i<5;i++){ctx.beginPath();ctx.moveTo(0,h*i/5);ctx.lineTo(w,h*i/5);ctx.stroke()}const bars=[[45,65,35,54],[54,72,48,66],[66,78,52,57],[57,63,42,48],[48,61,40,59],[59,83,55,77],[77,89,64,69],[69,76,52,58],[58,70,45,66],[66,80,61,73],[73,84,63,67],[67,78,50,55],[55,68,42,62],[62,76,54,72],[72,90,65,84],[84,94,72,78],[78,86,60,65],[65,75,56,71],[71,88,66,82],[82,96,75,91]];let x=12;const step=(w-24)/bars.length;for(const [o,hi,lo,cl]of bars){const up=cl>=o;ctx.strokeStyle=up?'#34d399':'#fb7185';ctx.fillStyle=ctx.strokeStyle;const y=v=>h-12-v/110*(h-24);ctx.beginPath();ctx.moveTo(x+step/2,y(hi));ctx.lineTo(x+step/2,y(lo));ctx.stroke();ctx.fillRect(x+step*.2,Math.min(y(o),y(cl)),step*.6,Math.max(2,Math.abs(y(cl)-y(o))));x+=step}ctx.fillStyle='#fbbf24';ctx.font='10px system-ui';ctx.fillText('8,848m summit overlay (concept)',10,14)}draw();addEventListener('resize',draw);
+document.querySelectorAll('#discoverTabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#discoverTabs button').forEach(x=>x.classList.toggle('active',x===b));document.getElementById('discoverList').innerHTML='<div class="item"><span class="token"><span class="coin">'+b.dataset.tab[0].toUpperCase()+'</span> '+b.dataset.tab+' sample asset</span><span class="pill">illustrative</span></div><div class="item"><span class="token"><span class="coin">C</span> Climboria placeholder</span><span class="pill">not verified</span></div>'});
+
+/* Accessible preview interactions: navigation, chart timeframe labels, and launch-form mode labels. */
+const menu=document.getElementById('siteMenu');
+const backdrop=document.getElementById('menuBackdrop');
+const menuToggle=document.getElementById('menuToggle');
+const menuClose=document.getElementById('menuClose');
+function setMenu(open){
+  menu.classList.toggle('open',open);
+  backdrop.classList.toggle('open',open);
+  document.body.classList.toggle('menu-open',open);
+  menuToggle.setAttribute('aria-expanded',String(open));
+  menu.setAttribute('aria-hidden',String(!open));
+  if(open) menuClose.focus(); else menuToggle.focus();
+}
+menuToggle.addEventListener('click',()=>setMenu(!menu.classList.contains('open')));
+menuClose.addEventListener('click',()=>setMenu(false));
+backdrop.addEventListener('click',()=>setMenu(false));
+menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open'))setMenu(false)});
+document.querySelectorAll('#timeframeTabs button').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('#timeframeTabs button').forEach(b=>{
+    const selected=b===button;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));
+  });
+  document.getElementById('timeframeStatus').textContent='Preview timeframe: '+button.dataset.timeframe+' · chart remains illustrative (not market data)';
+}));
+document.querySelectorAll('#launchModeTabs button').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('#launchModeTabs button').forEach(b=>{
+    const selected=b===button;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));
+  });
+  document.getElementById('launchModeStatus').textContent='Selected form concept: '+button.dataset.mode+' (visual selection only; no token is created).';
+}));
+</script>
+</body></html>
