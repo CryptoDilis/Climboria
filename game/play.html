@@ -731,22 +731,40 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
    stonePos.setXYZ(vi,v.x*rough,v.y*(1+(randWall()-.5)*.2),v.z*(1+(randWall()-.5)*.25));
   }
   stonePos.needsUpdate=true;stoneGeo.computeVertexNormals();
-  // A continuous dark stone backing closes the wall visually; a few large
-  // irregular outcrops provide natural relief without burying the chamber.
-  const wallBacking=mk(BOX,caveWallDark,(x1+x2)*.5,caveWallHeight*.5,(z1+z2)*.5,g);
-  sc(wallBacking,len,caveWallHeight,caveWallThickness);
-  wallBacking.rotation.y=-angle;
-  wallBacking.receiveShadow=true;
-  for(let along=1.4;along<len-1;along+=4.6){
+  // Recessed structural backing keeps the passage sealed, while a subdivided,
+  // deterministic uneven face prevents the wall reading as a flat rectangular panel.
+  const backingGeo=new T3.BoxGeometry(len,caveWallHeight,caveWallThickness,Math.max(4,Math.ceil(len/1.8)),5,1);
+  const bp=backingGeo.attributes.position;
+  for(let vi=0;vi<bp.count;vi++){
+   const vx=bp.getX(vi),vy=bp.getY(vi),vz=bp.getZ(vi);
+   const face=Math.abs(vz)>caveWallThickness*.42;
+   if(face){
+    const wave=Math.sin((vx+seedBase*.013)*1.7)*.12+Math.sin((vy+seedBase*.021)*2.3)*.08;
+    const grain=(randWall()-.5)*.12;
+    bp.setZ(vi,vz+Math.sign(vz)*(wave+grain));
+    bp.setY(vi,vy+(randWall()-.5)*.045);
+   }
+  }
+  bp.needsUpdate=true;backingGeo.computeVertexNormals();
+  const wallBacking=new T3.Mesh(backingGeo,caveWallDark);
+  wallBacking.position.set((x1+x2)*.5,caveWallHeight*.5,(z1+z2)*.5);
+  wallBacking.rotation.y=-angle;wallBacking.castShadow=true;wallBacking.receiveShadow=true;g.add(wallBacking);
+  // Medium-sized broken strata overlap the backing in staggered bands. Their
+  // irregular silhouettes create connected rock relief without recreating the
+  // former wall-to-wall boulder clutter or narrowing the traversable corridor.
+  for(let along=1.1;along<len-0.7;along+=2.65){
    const t=along/len,cx=x1+dx*t,cz=z1+dz*t;
-   const side=randWall()>.5?1:-1;
-   const x=cx-Math.sin(angle)*side*.42+(randWall()-.5)*.34;
-   const z=cz+Math.cos(angle)*side*.42+(randWall()-.5)*.34;
-   const y=1.05+randWall()*3.65;
-   const stone=mk(stoneGeo,randWall()>.72?caveWallDark:caveWallMat,x,y,z,g);
-   sc(stone,1.05+randWall()*.72,.85+randWall()*.78,.48+randWall()*.42);
-   stone.rotation.set((randWall()-.5)*.7,angle+(randWall()-.5)*.95,(randWall()-.5)*.62);
-   stone.castShadow=true;stone.receiveShadow=true;
+   for(const band of [0,1,2]){
+    if(randWall()<.18)continue;
+    const side=randWall()>.5?1:-1;
+    const x=cx-Math.sin(angle)*side*.53+(randWall()-.5)*.26;
+    const z=cz+Math.cos(angle)*side*.53+(randWall()-.5)*.26;
+    const y=.75+band*2.45+(randWall()-.5)*.52;
+    const stone=mk(stoneGeo,randWall()>.76?caveWallDark:caveWallMat,x,y,z,g);
+    sc(stone,1.05+randWall()*.58,.72+randWall()*.55,.34+randWall()*.24);
+    stone.rotation.set((randWall()-.5)*.48,angle+(randWall()-.5)*.58,(randWall()-.5)*.42);
+    stone.castShadow=true;stone.receiveShadow=true;
+   }
   }
   const a=l2w(g,x1,z1),b=l2w(g,x2,z2);
   caveWallSegments.push({ax:a[0],az:a[1],bx:b[0],bz:b[1],thickness:caveWallThickness,label});
