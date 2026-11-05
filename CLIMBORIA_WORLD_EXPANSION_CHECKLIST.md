@@ -1078,3 +1078,20 @@ For each meaningful implementation batch:
 - [ ] Implement catalog-driven item loading, clone/attach, equip/unequip, stow and persisted equipment IDs.
 - [ ] Add hand grip alignment and animation-aware rod/tool/weapon transitions; no equipment assets have been attached yet.
 - [ ] Run fresh Validate and Browser Smoke for this socket-anchor commit; visual acceptance remains pending.
+
+
+## 2026-11-06 — Character skins and costume production pipeline
+
+- [x] Recorded the recommended production location: create/author character skins and costume assets in a 3D character tool (Blender or a compatible character-generation workflow), then export rig-compatible GLB assets for the game to load. Do not build full costume geometry by hand inside `game/play.html`.
+- [x] Established three costume tiers:
+  - **Material/texture skins:** recolor or replace material/texture sets on the existing hero mesh; lowest download and runtime cost, but cannot change silhouette or add real clothing geometry.
+  - **Modular clothing pieces:** separate skinned meshes (jacket, trousers, boots, gloves, helmet, backpack) weighted to the existing skeleton; recommended long-term costume system. Each piece must use compatible bone names/skin weights and be tested against the existing animations.
+  - **Full character appearance variant:** a complete alternate skinned visual mesh using the existing skeleton/bind pose; use for major identity changes such as the male reference hero, while preserving the shared animation rig.
+- [x] Defined the runtime boundary: `game/play.html` should load/select costume GLBs, apply material variants, attach rigid accessories through sockets, and persist cosmetic IDs. Blender/Meshy/other authoring tools should create geometry, UVs, textures, skin weights, and export-ready assets.
+- [ ] Audit the current GLB skeleton, materials, texture maps, UVs, mesh partitions, and skin weights before choosing which costume tier the current hero supports best.
+- [ ] Create one test costume as a separate skinned GLB (start with jacket + trousers or the supplied male expedition outfit) bound to the existing skeleton; do not alter or replace the base rig.
+- [ ] Validate shoulder/elbow/wrist/hip/knee/ankle deformation across idle, walk, run, jump, fall, landing, swim and fishing poses; fix clipping and weight painting in the authoring tool.
+- [ ] Implement a costume catalog with cosmetic IDs, slot compatibility, preview, equip/unequip, persistence and asset preloading.
+- [ ] Optimize costume geometry and textures for mobile; share materials/textures where possible and load only equipped/previewed assets.
+- [ ] Keep cosmetic skins separate from gameplay equipment: clothing/appearance slots must not conflict with tool/weapon/rod sockets.
+- [ ] Current status: pipeline and asset boundaries documented; no costume asset has yet been created or imported.
