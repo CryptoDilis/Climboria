@@ -6,6 +6,17 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-06 — Owner-directed priority reset (male hero deferred)
+
+- **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
+- **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #211 stays open until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
+- **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
+- **Current verification snapshot for branch `codex/fishing-mainline-integration`:** head before this priority note was `4d866c6e8f9641f44365e6c8f2d3c45466e63ff6`; Validate run `42080052728` passed; Browser Smoke run `42080052801` was still in progress at the latest check, with homepage/DEX/mobile-navigation stage passed and Jarrell's Peak desktop/mobile gameplay stage running. PR #211 is open and unmerged. Recheck the newest head workflows before claiming a final green state.
+
+---
+
 ## 2026-11-04 — latest workflow and master-list checkpoint
 
 - **Latest main merge:** PR #189 `dd95ba219eb21df37324a8e95acc03022e147355` — mountain massif access regression gate. PR Validate passed (`41707182880`); PR Browser Smoke passed (`41707182711`). The completed job record confirms desktop/mobile smoke success. Main post-merge Validate `41708254827` and Pages deployment `41708254356` passed. Main post-merge Browser Smoke `41708254803` subsequently completed successfully (job `126169238689`).
