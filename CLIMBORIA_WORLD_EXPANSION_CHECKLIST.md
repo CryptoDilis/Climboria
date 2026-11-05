@@ -1272,3 +1272,17 @@ For each meaningful implementation batch:
 - [ ] Fresh Validate for the repaired head `6121d1634bf0276aae178e7f29391a7bab41e73f` is pending; the observed failed run checked the earlier merge ref `0fc7cad2c4759d0e57442b305eb69e8a6199d01b`, not this repair commit.
 - [ ] Browser Smoke run `42101305839` was still running against the earlier merge ref when last checked; its result is not evidence for the repaired head. Require a fresh run on the latest PR head and inspect screenshots.
 - [ ] Do not merge until latest Validate and full desktop/mobile Browser Smoke pass, cave screenshots/manual traversal are reviewed, and physical Redmi 14 5G acceptance is completed.
+
+
+## 2026-11-06 — cave maze removal screenshot review and fresh CI checkpoint
+
+- [x] Validate [#2065](https://github.com/CryptoDilis/Climboria/actions/runs/42101545660) passed on PR #215 head `59aea6dba4991f1c87ad06a67c6e0f00ac96b216`.
+- [x] Full desktop/mobile Browser Smoke [#1498](https://github.com/CryptoDilis/Climboria/actions/runs/42101545491) passed, including homepage/navigation, Jarrell's Peak desktop/mobile gameplay, and screenshot upload (artifact [13450546690](https://github.com/CryptoDilis/Climboria/actions/runs/42101545491/artifacts/13450546690)).
+- [x] Reviewed all 10 desktop/mobile screenshots from artifact 13450546690. Exterior capture shows the original entrance arch and no obvious exposed western/north maze or spike grid. This is screenshot evidence only; it does not prove all exterior geometry/colliders are clear.
+- [ ] Cave interior remains visually open: the interior capture still shows a large bright exterior opening beyond the chamber. Need a longer sealed underground passage with continuous roof/floor and readable branch landmarks; preserve the existing entrance and retained cave chambers.
+- [ ] Pond fish are visible as pale silhouettes but still look flat/simple. Improve body detail, movement and underwater depth cues while retaining submerged-clearance assertions.
+- [ ] Hero idle remains stiff/arms-out. Keep natural relaxed idle on the open list, deferred behind cave/sea route and fish visual blockers.
+- [ ] **Sea tunnel and separate underwater seabed exit are not implemented.** Preserve the existing cave entrance; remove only the exposed outdoor maze. Build a continuous enclosed passage from the cave toward the sea, with safe floor, sealed ceiling, collision/headroom, seabed transition and a distinct underwater exit. Terrain mapping indicates the coast is only a few hundred metres from the cave, so do not claim a 2 km tunnel without a verified route measurement and explicit route plan.
+- [ ] Manual traversal/collision/headroom/trap review and physical Redmi 14 5G acceptance remain open. Playwright mobile viewport is not a physical-device test.
+- [ ] PR #215 remains OPEN and UNMERGED. Do not merge until cave/sea tunnel and fish visuals are reviewed, manual cave traversal is accepted, and physical-device testing is recorded.
+- [ ] Free-GitHub-hosted-assets-only policy remains mandatory; no new third-party asset was imported in this checkpoint.
