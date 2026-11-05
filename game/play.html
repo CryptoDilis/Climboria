@@ -700,9 +700,33 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[-3.8,4.35,1.35,1.25],[-2.65,5.05,1.25,1.2],[-1.35,5.45,1.2,1.1],[0,5.55,1.2,1.05],[1.35,5.45,1.2,1.1],[2.65,5.05,1.25,1.2],[3.8,4.35,1.35,1.25]].forEach(([x,y,sy,sx],i)=>{
   portalRock(x,y,-2.05,sx,sy,2.2,(i-3)*.11);
  });
- const caveMouth=new T3.Mesh(new T3.PlaneGeometry(8.6,4.9),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.22,roughness:1,side:T3.DoubleSide}));
- caveMouth.position.set(0,2.75,3.9);g.add(caveMouth);
+ // Give the entrance a real tunnel throat instead of a flat dark plane.
+ // The side shoulders and overhead rock masses create visible parallax as the player walks in.
+ const tunnelStoneMats=[M('#393d3d'),M('#484640'),M('#565047')];
+ const tunnelRand=rng(77193);
+ for(let row=0;row<4;row++){
+  const z=3.5+row*4.1;
+  for(const side of [-1,1]){
+   const rock=mk(new T3.IcosahedronGeometry(1,1),tunnelStoneMats[(row+(side>0?1:0))%tunnelStoneMats.length],side*(4.25+tunnelRand()*.22),2.5+tunnelRand()*.45,z+(tunnelRand()-.5)*.7,g);
+   sc(rock,1.0+tunnelRand()*.32,2.05+tunnelRand()*.35,2.35+tunnelRand()*.55);
+   rock.rotation.set((tunnelRand()-.5)*.22,side*.12+(tunnelRand()-.5)*.25,(tunnelRand()-.5)*.18);
+   rock.castShadow=true;rock.receiveShadow=true;
+  }
+  // Overhead slabs overlap to form a continuous natural roof while preserving a walkable centre.
+  const roof=mk(new T3.IcosahedronGeometry(1,1),tunnelStoneMats[(row+2)%tunnelStoneMats.length],(tunnelRand()-.5)*1.1,7.1+(tunnelRand()-.5)*.3,z,g);
+  sc(roof,3.25+tunnelRand()*.35,.95+tunnelRand()*.25,2.55+tunnelRand()*.35);
+  roof.rotation.set((tunnelRand()-.5)*.18,tunnelRand()*Math.PI,(tunnelRand()-.5)*.18);
+  roof.castShadow=true;roof.receiveShadow=true;
+ }
+ // Irregular far-wall rocks keep the sightline deep; a warm mineral glow marks the chamber beyond.
+ [[-3.2,2.3,18.2,2.1,2.4,1.1],[0,1.65,19.1,2.2,1.55,1.0],[3.1,2.4,18.4,2.0,2.3,1.1]].forEach(([x,y,z,sx,sy,sz],i)=>{
+  const rock=mk(new T3.IcosahedronGeometry(1,1),tunnelStoneMats[i%tunnelStoneMats.length],x,y,z,g);
+  sc(rock,sx,sy,sz);rock.rotation.y=i*.43;rock.castShadow=true;
+ });
  const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
+ const tunnelFloor=mk(BOX,M('#4c4942'),0,.035,9.5,g);sc(tunnelFloor,7.2,.07,19.5,g);
+ glow('#e7a65e',2.1,34,0,3.1,10.5,g);
+ glow('#77c9c1',1.25,24,0,3.3,16.2,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
  [[-7.8,.45,-.8,1.7,.7,2.2],[7.7,.42,-.5,1.8,.65,2.1],[-5.8,.28,-5.0,2.4,.45,1.8],[5.9,.3,-4.7,2.2,.48,1.9]].forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.y=i*.7;rock.castShadow=true;
@@ -1567,11 +1591,13 @@ function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
    const fin=mk(fishFinGeo,mat,.12,-.08,side*.18,g);fin.material.side=T3.DoubleSide;fin.rotation.z=side*.9;sc(fin,.58,.56,.32);
    const eye=mk(SPH,fishEyeMat,.34,.075,side*.205,g);sc(eye,.052,.052,.035);
   }
-  // Keep fish submerged while giving the body/tail a clear profile through the water.
-  g.scale.set(kind==='ocean'?2.55:2.45,kind==='ocean'?2.55:2.45,kind==='ocean'?2.55:2.45);
+  // Smaller silhouettes at a deeper swim band read as fish beneath the waterline,
+  // rather than bright objects hovering on the pond surface.
+  const fishScale=kind==='ocean'?2.05:1.9;
+  g.scale.setScalar(fishScale);
   g.userData.tail=tail;
   aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:-2.65-rand()*.18,surfaceClearance:.76,kind});
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:(kind==='ocean'?-5.1:-4.15)-rand()*.45,surfaceClearance:.72,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
