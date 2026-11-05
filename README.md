@@ -73,6 +73,19 @@
 - Free/open-source assets must have their licence checked and recorded before use.
 - Do not mark a feature complete because its button or mockup exists.
 
+## Domain edge security and anti-bot protection — planned / not yet enabled
+
+- [ ] Confirm where `climboria.fun` DNS is managed and whether the authoritative DNS is on Cloudflare; verify the web records are proxied through Cloudflare before relying on edge Bot Fight Mode.
+- [ ] Evaluate Cloudflare Free Bot Fight Mode as baseline domain-wide protection against known automated traffic. It is a broad challenge toggle, not a guarantee against all bots; check for false positives with the browser game, mobile clients, monitoring and any future API traffic.
+- [ ] Do not force every human visitor through a CAPTCHA or challenge page on normal game load. Keep normal page loading smooth; challenge suspicious traffic only where practical.
+- [ ] Use Cloudflare Turnstile Free selectively for sensitive actions such as future registration, login, contact forms or reward claims. The server must verify every Turnstile token with Siteverify; a front-end-only widget is not security.
+- [ ] If the static GitHub Pages site has no server-side verification endpoint, do not pretend Turnstile is enforced. Add a trusted server-side endpoint (for example, a reviewed Cloudflare Worker/Pages Function) before protecting sensitive actions.
+- [ ] Keep secrets (Turnstile secret key, API credentials) out of GitHub source, browser JavaScript and public repository files; use protected server-side environment secrets.
+- [ ] Test desktop and mobile, Philippines/local ISP access, game loading, browser smoke, legitimate crawlers/monitoring and false-positive recovery before enabling production challenges.
+- [ ] Record actual DNS/proxy status, enabled Cloudflare settings, test evidence and rollback steps. **Current status: not verified as configured or enabled; no anti-bot protection is claimed live.**
+
+---
+
 ## 1. Current active master checklist — Jarrell's Peak first
 
 ### A. Stability, menu, UI and controls
@@ -497,7 +510,6 @@ The following is the existing detailed checklist/log imported intact for continu
 ---
 
 ## 2026-11-02 — fixed collision-solid integrity audit (verification pending)
-
 - [x] Added a read-only audit for authored fixed colliders, reporting invalid coordinates/radii, radius distribution, large colliders, and water-body overlaps without changing gameplay collision behavior.
 - [x] Extended Browser Smoke diagnostics to collect the fixed-collider audit and reject missing or invalid collider data.
 - [ ] Validate, Browser Smoke, and Pages workflows for this change are pending; inspect actual run results before marking the automated audit verified.
@@ -997,7 +1009,6 @@ The launch menu has only four destinations: **Jarrell’s Peak, Arena, Marketpla
 - [ ] Starting/respawn area: create a polished medieval-fantasy frontier camp featuring a castle-era black-market cart/stall and a clearly identifiable merchant NPC with an honest interaction prompt. Keep any purchase as a demo until currency/inventory transactions truly work.
 - [ ] Climboria soldiers: add patrol NPCs that loop around suitable camp, trail, and ruin routes, turn/pause naturally, avoid obstacles, and never block or trap the player at spawn.
 - [ ] Free assets: research GitHub/open-license models first, verify the exact license and redistribution terms, record source URLs/license/format/size in the asset-source log, and test model loading, scale, rig/animations, collision, and mobile performance before marking integrated.
-
 ## P0 — Restore a stable build (blockers)
 
 - [x] Fix all current JavaScript/module-loading errors in `game/play.html`; confirm Three.js and GLTFLoader load in a real browser. Browser smoke run [40704098148](https://github.com/CryptoDilis/Climboria/actions/runs/40704098148) completed successfully on gameplay commit `3ea08fbb`.
@@ -1498,7 +1509,6 @@ For every integrated asset or borrowed technique, record:
 
 
 ## 2026-11-02 — classify the first mountain-route collision
-
 - [ ] Record the exact collision class at the first spawn-to-summit blocker: fixed prop, streamed chunk collider, center slope, edge slope, or step-up.
 - [ ] Use the measured blocker coordinates and collider/terrain data to make a narrowly targeted correction; retain legitimate environmental collision.
 - [ ] Add a regression assertion for the corrected route and rerun desktop/mobile browser smoke plus Validate.
@@ -1997,8 +2007,7 @@ For every integrated asset or borrowed technique, record:
 
 ### 2026-11-03 — Mobile saved-hero smoke assertion repair
 
-- Browser Smoke run `41648207838` failed at `.github/scripts/game-smoke.mjs:441` because the test hard-coded `document.documentElement.dataset.climboriaHero === 'adventurer'`, while the current saved-hero loader publishes the selected hero name dynamically and exposes authoritative readiness through `__climboriaReadiness`, `__climboriaGLBRenderer`, and `__climboriaCameraOrbit.heroUsesGlb`.
-- Desktop Jarrell diagnostics in that run passed: world readiness, 182 chunks, five water-body depth audits, freshwater entry/exit, fishing interactions, collision audit, spawn-to-peak route, and original GLB movement states. Mobile gameplay smoke then timed out on the stale name assertion.
+- Browser Smoke run `41648207838` failed at `.github/scripts/game-smoke.mjs:441` because the test hard-coded `document.documentElement.dataset.climboriaHero === 'adventurer'`, while the current saved-hero loader publishes the selected hero name dynamically and exposes authoritative readiness through `__climboriaReadiness`, `__climboriaGLBRenderer`, and `__climboriaCameraOrbit.heroUsesGlb`.- Desktop Jarrell diagnostics in that run passed: world readiness, 182 chunks, five water-body depth audits, freshwater entry/exit, fishing interactions, collision audit, spawn-to-peak route, and original GLB movement states. Mobile gameplay smoke then timed out on the stale name assertion.
 - Fixed the mobile smoke gate to require chunk/render/hero readiness, successful GLB renderer load, and a visible GLB hero; fallback/load-error states cannot pass.
 - Repair commit: `8a1c15e805a9655b3d76308993c6d4acdf364350` on `codex/test-all-waterbody-dive-depths`.
 - **Status: IMPLEMENTED — UNVERIFIED.** Validate and Browser Smoke must rerun and pass before PR #168 can merge. No gameplay runtime, world assets, approved hero asset, or `waitForFunction` implementation was changed.
