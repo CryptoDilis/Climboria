@@ -807,3 +807,13 @@ For each meaningful implementation batch:
 - [ ] Mobile pond capture confirms the same fish readability issue at the narrow viewport; do not treat automated mobile smoke as physical Redmi 14 5G acceptance.
 - [ ] Rod, line, bobber animation, bait/tool requirements and physical Redmi 14 5G review remain open.
 - [ ] PR #211 remains unmerged; green automated checks do not override the outstanding visual acceptance gates.
+
+
+## 2026-11-05 — pond fish readability follow-up
+
+- [x] Based on Browser Smoke #1432 desktop/mobile captures, confirmed the fish silhouettes were still too small and too faint to read convincingly as submerged wildlife at normal gameplay framing.
+- [x] Increased fish body scale and material opacity, and moved schools slightly closer to the surface while preserving a clear below-surface silhouette margin; this is a visual-only refinement.
+- [ ] Re-run Validate and desktop/mobile Browser Smoke on the new head, then inspect both pond captures for improved fish readability and confirm the placement audit still passes.
+- [ ] Do not mark aquatic-life visual acceptance complete until desktop and mobile captures show readable underwater fish with depth cues.
+- [ ] Cave interior rock repetition/clutter and the large empty gameplay foreground remain open visual polish tasks.
+- [ ] PR #211 remains open and unmerged pending latest checks, screenshot review, and mergeability verification.
