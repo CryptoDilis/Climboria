@@ -1297,3 +1297,14 @@ For each meaningful implementation batch:
 - [ ] Next code increment: add a route/terrain sampling audit for the proposed local -Z corridor (centreline and both shoulders at regular intervals), then design the tunnel cross-section and collision/roof/floor from those measured elevations. Preserve the original entrance and all existing cave rooms; the separate seabed opening must be a distinct, traversable underwater exit.
 - [ ] No sea tunnel, seabed opening, or route terrain sampling implementation is claimed complete in this checkpoint. Keep cave/fish visuals, manual traversal/headroom/trap review, and physical Redmi 14 5G acceptance open.
 - [ ] PR #215 remains unmerged until all acceptance gates pass. Continue to retain all world master-checklist requirements and the free-GitHub-assets-only policy.
+
+
+## 2026-11-06 — cave-to-coast terrain sampling audit added (CI pending)
+
+- [x] Added `caveCoastRouteAudit()` to the Jarrell's Peak browser audit API. It samples 27 stations at 10m intervals from 0–260m along cave-local -Z, with three lateral tracks (-7m, centre, +7m), returning world coordinates, rendered ground height, and water-body classification.
+- [x] Added Browser Smoke assertions requiring all 81 terrain samples to be finite and the centreline to reach the mapped Open Sea within 260m. No tunnel geometry, terrain, player collision, cave entrance or existing cave rooms were changed in this increment.
+- [x] Gameplay audit commit: `ee8505200cb48d0b5767840eee8a75d4ac422977`; smoke test commit / current PR head: `fdb043b2c29fd9a65ece836d5da5ee195ebe12a7`.
+- [ ] Fresh Validate and Browser Smoke for this head are pending; the commit-run lookup has not yet returned PR-triggered workflow records. Do not claim this route audit passed until the actual workflow result and route-sample output are inspected.
+- [ ] Inspect the sample elevations before designing the tunnel floor/roof. The audit records the existing terrain surface; it does not yet calculate a safe roof thickness, dig terrain, create tunnel walls/floor, add collision, or create the separate underwater seabed exit.
+- [ ] Keep the original cave entrance and current cave rooms unchanged. Keep the sea tunnel, underwater exit, cave/fish visual acceptance, manual traversal/headroom/trap review, natural hero idle, and physical Redmi 14 5G acceptance open.
+- [ ] PR #215 remains OPEN and UNMERGED; no test thresholds were relaxed. Free GitHub-hosted assets only remains mandatory; no asset imported in this increment.
