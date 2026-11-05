@@ -817,3 +817,17 @@ For each meaningful implementation batch:
 - [ ] Do not mark aquatic-life visual acceptance complete until desktop and mobile captures show readable underwater fish with depth cues.
 - [ ] Cave interior rock repetition/clutter and the large empty gameplay foreground remain open visual polish tasks.
 - [ ] PR #211 remains open and unmerged pending latest checks, screenshot review, and mergeability verification.
+
+
+## 2026-11-05 — cave backing smoke #1438 visual acceptance review
+
+- [x] Validate #2004 passed on commit d24a920ff7b9918c0e835dccdc1bbf8d2d4e16e1.
+- [x] Browser Smoke #1438 passed on the same commit; Jarrell's Peak desktop/mobile gameplay smoke completed and all ten screenshot captures uploaded in artifact 13412088563.
+- [x] Downloaded and inspected desktop/mobile cave entrance, cave interior, gameplay, and Woodland Pond fish screenshots from artifact 13412088563.
+- [x] Cave wall backing removes the previous wall-wide dense boulder clutter and the interior route remains visible in automated desktop/mobile captures.
+- [ ] Cave visual acceptance remains open: the backing now reads as broad flat brown panels, with several isolated/floating-looking faceted rocks and an overly flat floor. Improve connected natural rock relief, wall/floor material variation, and chamber depth without restoring dense repetitive boulders; inspect arch/opening geometry and player clearance.
+- [ ] Fish visual acceptance remains open: desktop/mobile pond screenshots still show bright, flat fish silhouettes sitting visually on the water surface. Improve underwater depth cues, body volume, scale/readability and interaction with the water surface; keep placement audit passing.
+- [ ] Gameplay composition remains open: desktop capture retains a large empty green foreground and the sanctuary/world landmark is distant; improve nearby world dressing and camera framing.
+- [x] Browser smoke verifies the game renders on desktop and mobile browser viewports; this is not physical Redmi 14 5G acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Android/Redmi 14 5G testing, and real-device performance remain open.
+- [ ] PR #211 remains open and unmerged; green automated checks do not override the cave/fish visual acceptance gates.
