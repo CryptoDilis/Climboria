@@ -869,3 +869,16 @@ For each meaningful implementation batch:
 - [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G compatibility, touch feel, sustained frame rate, or memory performance.
 - [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing, and measured real-device performance remain open.
 - [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not authorize merging past the outstanding cave/fish gates.
+
+
+## 2026-11-06 — Browser Smoke #1449 visual acceptance review
+
+- [x] Validate #2015 passed on PR #211 head c7384610e3ba82c108dd7cfcb56816345ac086ed.
+- [x] Browser Smoke #1449 passed on the same head; homepage/navigation, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload completed (artifact 13430888311).
+- [x] Downloaded and inspected desktop/mobile cave-interior and Woodland Pond fish captures from artifact 13430888311.
+- [ ] Cave visual acceptance remains open: the entrance/interior is traversable in browser smoke, but the chamber still reads as broad angular wall panels, a flat tan floor, scattered flat mineral plates, and an overexposed rear opening. The player-facing screenshot does not yet look like a natural, connected rock cave. Improve continuous wall/floor relief, lighting falloff and entrance depth while preserving wall collision, head clearance, chest approach and passage width.
+- [ ] Fish visual acceptance remains open: schools are visible in desktop/mobile captures but still read as pale, flat surface icons rather than volumetric submerged fish. Add convincing body volume, tail/fin depth, darker underwater attenuation and clear water-column separation; preserve below-surface clearance and aquaticLifeAudit.
+- [ ] Pond/world composition remains open: the near bank and broad green foreground dominate the frame; improve shoreline dressing and nearby environmental detail without blocking fishing access.
+- [x] Automated desktop/mobile browser smoke passed; this does not establish physical Redmi 14 5G touch, sustained FPS, memory or thermal acceptance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G testing and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged. Green CI is not visual acceptance and does not override the cave/fish visual gates.
