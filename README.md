@@ -2328,3 +2328,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Physical Redmi 14 5G play test remains a separate owner/device acceptance gate. CI's mobile browser viewport is not a physical-device test.
 - [ ] PR #215 remains unmerged until cave/fish visual blockers, manual cave traversal/headroom/collision/trap review, and physical-device acceptance are resolved. Do not weaken tests to pass.
 - [ ] No third-party assets were imported by this verification. The permanent free-GitHub-hosted-assets-only policy remains in force; verify exact file license before any asset import.
+
+
+## 2026-11-06 — Woodland Pond fish visibility refinement (verification pending)
+
+- [x] Reviewed the latest successful desktop/mobile Browser Smoke screenshots. Fish were not visually readable in either Woodland Pond capture even though the aquatic-life registry and submerged-clearance audit passed.
+- [x] Updated the fish presentation in `game/play.html`: increased freshwater fish scale, improved silhouette contrast/opacity, and raised the freshwater swim band closer to (but still below) the surface. Ocean fish depth was not changed.
+- [ ] Validate and full desktop/mobile Browser Smoke for commit `5040cccc62a905f3f7a1524bb6999ecbe7c6795a` are pending; no workflow runs were returned by the commit lookup yet. Do not claim this visual fix accepted until fresh screenshots are reviewed.
+- [ ] Verify fish remain below the water surface, do not clip through water, and remain visually natural on desktop/mobile. Keep the existing clearance assertions intact.
+- [ ] Cave visual overhaul remains the next P0 scene blocker; no cave geometry change is included in this increment.
