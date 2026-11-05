@@ -844,3 +844,16 @@ For each meaningful implementation batch:
 - [ ] Fresh Validate and desktop/mobile Browser Smoke for 70f1b8199b7bccb2208a3ab086cf3465f6d04f6c; inspect new cave captures for relief, passage clearance, and no collision obstruction.
 - [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and performance measurements remain open.
 - [ ] PR #211 remains unmerged until the latest commit has fresh green workflows and the updated cave/fish screenshots pass visual review.
+
+
+## 2026-11-05 — fresh Browser Smoke #1444 review and visual-scale correction
+
+- [x] Validate #2010 passed on PR #211 head 44b36941b8fe91801e29aa75f3b5ec777405c600.
+- [x] Browser Smoke #1444 passed on the same head; desktop and mobile gameplay smoke steps and screenshot upload completed (artifact 13419997557).
+- [x] Downloaded and inspected the new desktop cave-interior and Woodland Pond fish captures from artifact 13419997557.
+- [ ] Cave visual acceptance remains open: the player-facing wall relief is now present on both sides, but the protruding faceted rocks are oversized and visually crowded; the floor remains a broad flat brown plane and the rear opening reads visually bright. Reduce decorative rock scale while preserving the sealed wall backing, collision segments, and clear passage.
+- [ ] Fish visual acceptance remains open: fish schools are distinct but still small/flattened at the wide gameplay camera distance. Increase body scale/opacity and retain a conservative submerged top-of-silhouette margin; inspect fresh desktop/mobile captures before acceptance.
+- [x] Follow-up commit 6d8997943cb4d80d2fdcd6e37e74e02d17bfb72c reduces cave outcrop scale, increases fish school scale and opacity, and moves fish slightly deeper with a revised silhouette-clearance audit value.
+- [ ] Fresh Validate and desktop/mobile Browser Smoke for 6d8997943cb4d80d2fdcd6e37e74e02d17bfb72c; inspect both pond screenshots and both cave interior screenshots for improved scale, visibility, wall continuity, and passage clearance.
+- [ ] Rod, line, bobber animation, bait/tool requirements, physical Redmi 14 5G acceptance, and measured real-device performance remain open.
+- [ ] PR #211 remains open and unmerged pending fresh workflows and visual acceptance.
