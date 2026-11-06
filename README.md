@@ -2431,3 +2431,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Tunnel geometry remains unimplemented. Next engineering design must independently establish a walkable alignment, maximum player grade, minimum rock cover, water pressure/seabed clearance, collision, headroom, and a safe underwater exit. Keep the existing cave entrance and rooms intact.
 - [ ] The four `cdn.3dassets.dev` rainforest GLB runtime URLs remain an asset-policy violation to resolve through exact-file license-verified GitHub assets vendored locally or by disabling those loads and retaining procedural foliage.
 - [ ] Cave enclosure, fish realism, relaxed idle, manual traversal, and physical Redmi 14 5G acceptance remain open. PR #215 stays unmerged.
+
+
+## 2026-11-06 — unverified rainforest runtime downloads removed (verification pending)
+
+- [x] Removed all four runtime model loads from `cdn.3dassets.dev` (buttress, canopy, undergrowth, fallen log) from `game/play.html`. The procedural forest remains the active visual fallback; no replacement third-party assets were imported.
+- [x] Kept the forest decoration location audit data for future asset placement planning, without fetching external model files.
+- [ ] Fresh Validate and Browser Smoke for this removal are pending. Inspect forest screenshots after the run to ensure the procedural forest remains visually acceptable and gameplay collision is unchanged.
+- [ ] Future forest asset imports must come from exact freely downloadable GitHub files with verified commercial/redistribution terms, pinned upstream revisions, attribution/NOTICE as required, and local vendoring.
+- [ ] Cave route feasibility diagnostic changes from commits `75b5ff7`, `899d097`, and `4e52132` are also awaiting fresh latest-head CI; the earlier #1513 smoke/#2080 validate passed on the previous README-only checkpoint, not these code changes.
+- [ ] Cave tunnel/underwater exit, cave enclosure, fish realism, relaxed idle, manual traversal and physical Redmi 14 5G acceptance remain open. PR #215 stays open and unmerged.
