@@ -1437,3 +1437,11 @@ For each meaningful implementation batch:
 - [x] Performance artifact uses headless Chromium + SwiftShader, not physical GPU: desktop sanctuary 2.4 FPS mean (422.45ms/frame), 129,935 triangles, 30 calls, 35 geometries, 10 textures; mobile emulation 1.1 FPS mean (906.02ms/frame), 129,211 triangles, 45 calls, 44 geometries, 8 textures. Renderer timing has extreme outliers (mobile renderer p99 1,493.8ms; max 5,299.3ms). Treat as a severe software-renderer warning and profile signal only, not a Redmi 14 5G benchmark.
 - [ ] Do not call visual acceptance complete from green automation. Keep cave entrance/interior, fish realism, safe cave-to-coast corridor, renderer/device baseline, manual collision/headroom/trap traversal, natural idle and physical Redmi 14 5G acceptance OPEN.
 - [ ] PR #215 remains OPEN and UNMERGED. Do not merge until visual, gameplay, performance, route and physical-device gates are actually accepted.
+
+
+## 2026-11-07 — sanctuary flag animation CPU-work reduction (verification pending)
+
+- [x] Latest profile showed sanctuary flag deformation averaging 0.629ms desktop and 1.645ms mobile-emulation per update sample; the flag meshes use MeshBasicMaterial, so per-frame normal recomputation was unnecessary.
+- [x] Committed a targeted change in game/play.html: update the flag cloth deformation at 20Hz rather than every render frame and remove redundant per-frame normal recomputation. Flag movement remains animated; this reduces CPU-side vertex writes and avoids work that cannot affect unlit MeshBasicMaterial shading.
+- [ ] Fresh Validate and Browser Smoke on the new head must pass. Compare the new flagAnimation stage profile and inspect screenshots for visible flag quality/regression.
+- [ ] This is a narrow CPU-work reduction only. It does not solve the dominant SwiftShader renderer cost, cave/fish/sanctuary realism, cave-to-coast route, or physical Redmi 14 5G acceptance. Do not claim an FPS improvement until measured on the same test environment and separately on physical hardware.
