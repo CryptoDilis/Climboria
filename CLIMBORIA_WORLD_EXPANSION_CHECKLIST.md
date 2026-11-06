@@ -1364,3 +1364,17 @@ For each meaningful implementation batch:
 - [ ] Establish a representative hardware/GPU baseline, then isolate GPU/render cost, asset/texture upload stalls, and chunk-streaming spikes before changing scene density or claiming performance is fixed.
 - [ ] Keep cave enclosure/realistic geometry, fish realism, manual cave traversal/collision/headroom, natural hero idle, route-grade feasibility, and physical Redmi 14 5G acceptance open.
 - [ ] PR #215 remains open and unmerged. Do not weaken assertions to obtain a green run.
+
+
+## 2026-11-07 — shoulder-idle correction, screenshot review, and route/performance evidence
+
+- [x] Latest PR head `95f4c223dcbc9fc5b4deb7e2dff217fab7588960`: Validate run [42303497973](https://github.com/CryptoDilis/Climboria/actions/runs/42303497973) passed; full Browser Smoke run [42303498098](https://github.com/CryptoDilis/Climboria/actions/runs/42303498098) passed; second Browser Smoke run [42303489600](https://github.com/CryptoDilis/Climboria/actions/runs/42303489600) also passed.
+- [x] Downloaded and reviewed screenshot artifact [13546275464](https://github.com/CryptoDilis/Climboria/actions/runs/42303498098/artifacts/13546275464), including desktop gameplay and cave interior. Shoulder relaxation visibly reduces the extreme arms-out pose; this is a limited improvement, not final character-animation acceptance.
+- [ ] Gameplay composition remains visually unaccepted: the player occupies a small portion of the 1365×900 frame, with a very large flat green foreground and oversized primitive/stylized sanctuary columns. Rework camera framing and sanctuary presentation using measured screenshot evidence; do not enlarge the character model or alter collision scale as a shortcut.
+- [ ] Cave interior remains visually unaccepted: angular faceted walls, broad flat floor, and a bright exterior opening remain visible behind the player. The capture still does not read as a deep, enclosed underground cave. Do not mark cave visual acceptance complete.
+- [x] Route survey artifact for this head contains 663 finite samples over 2,200m, with open sea first reached at 300m and seabed at 450m. It also records extreme terrain grades: +330.2% rise from 120–130m and -186.2% drop from 230–240m.
+- [ ] The 2.2km route survey is not proof of a traversable route. These extreme grades block tunnel/floor construction acceptance; derive a continuous safe corridor and cross-section from the actual sampled terrain before building the tunnel, roof, collision, and separate underwater exit. Preserve the existing cave entrance and chambers.
+- [x] Performance artifact records 1.6 FPS desktop and 0.7 FPS mobile-emulation in headless Chromium + SwiftShader, with 231,763 and 159,855 triangles respectively. This is a severe software-renderer warning only, not a physical GPU or Redmi 14 5G benchmark. Stage measurements are highly irregular/outlier-heavy; do not infer device performance from them.
+- [ ] Establish a reliable GPU/device performance baseline and isolate renderer/asset-upload costs before claiming performance is fixed or making density changes.
+- [ ] Woodland fish realism, cave traversal/collision/headroom/traps, natural idle acceptance, physical Redmi 14 5G acceptance, and all previously recorded master checklist items remain open. No new realistic 3D asset is claimed imported by this checkpoint.
+- [ ] PR #215 remains OPEN and UNMERGED. Green automation does not override outstanding visual, route, performance, and physical-device acceptance gates.
