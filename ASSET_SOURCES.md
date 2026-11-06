@@ -132,3 +132,11 @@ Source repository: [npmiaman/game-forge](https://github.com/npmiaman/game-forge)
 Exact source asset pages: [Rocky Terrain 02](https://polyhaven.com/a/rocky_terrain_02) and [Sand 01](https://polyhaven.com/a/sand_01). Provenance is copied into `game/assets/pbr/ASSET_LICENSES.md`. No off-GitHub runtime requests are used.
 
 Initial integration in `game/play.html`: replace the dodecahedron flat-shaded rock instances with irregular subdivided icosahedral rock geometry, smooth normals, and locally loaded PBR rock colour/normal/roughness maps. This is a first visual improvement, not a complete photogrammetry asset replacement. The PBR sand maps are vendored for the next shoreline integration pass; they are not yet applied to the coast.
+
+
+## 2026-11-06 — cardboard soldier placeholder removal
+
+- Removed the camp's primitive soldier generator (boxes, spheres, cylinders and cone) and disabled the 12 placeholder patrol spawns.
+- This is a deliberate quality hold, **not** a completed soldier replacement. The camp no longer displays those unacceptable figures.
+- Do not substitute another low-poly soldier pack. The existing `assets/expedition-crests/The_Police_Officer_Nigeria.glb` is not yet approved as a soldier: inspect its actual appearance, rig/animation suitability, provenance and redistribution license before reuse.
+- Next gate: vendor a visually approved realistic rigged soldier GLB from a verifiable GitHub source, add required license/attribution, then restore patrol placement with instancing/animation and collision/performance checks.
