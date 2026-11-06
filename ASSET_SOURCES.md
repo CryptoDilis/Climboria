@@ -140,3 +140,24 @@ Initial integration in `game/play.html`: replace the dodecahedron flat-shaded ro
 - This is a deliberate quality hold, **not** a completed soldier replacement. The camp no longer displays those unacceptable figures.
 - Do not substitute another low-poly soldier pack. The existing `assets/expedition-crests/The_Police_Officer_Nigeria.glb` is not yet approved as a soldier: inspect its actual appearance, rig/animation suitability, provenance and redistribution license before reuse.
 - Next gate: vendor a visually approved realistic rigged soldier GLB from a verifiable GitHub source, add required license/attribution, then restore patrol placement with instancing/animation and collision/performance checks.
+
+
+## 2026-11-06 — primitive rice huts removed; fish asset screening
+
+- Removed the five box/cone rice-field hut stand-ins from `game/play.html`. The rice biome remains; the fake huts will not be presented as finished structures.
+- Realistic structures remain pending a visually inspected, license-verified GitHub-hosted model. Do not replace these with another stylized/low-poly hut pack.
+
+### Fish candidate — screened, not integrated
+
+- [KhronosGroup/glTF-Sample-Assets — BarramundiFish](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish)
+- Model page identifies the asset as CC0 1.0 Universal; upstream README lists Microsoft for Everything. The repository tree contains a binary GLB (12,488,144 bytes) and a Draco glTF variant with separate geometry and texture maps.
+- This is a plausible textured specimen for the freshwater/ocean visual pass, but the full GLB is too large to blindly duplicate across mobile fish schools. It has **not** been imported or visually accepted. Next gate: inspect its screenshot/model, reduce texture payload and instantiate/clone one shared model; confirm actual file provenance and CC0 notice in the vendored manifest before use.
+- Do not substitute Kenney Survival Kit or Quiet Lake Fishing fish as the realism solution: those sources are explicitly low-poly/stylized and fail the current art direction.
+
+### Remaining visible placeholder audit
+
+- Soldier primitive generator and both spawn sites: removed.
+- Wolf/deer primitive wildlife: disabled.
+- Rice-field hut boxes/cones: removed.
+- Fish: still the simple procedural low-poly silhouettes; replacement pending. Do not mark fish realism complete.
+- Camp fire, shrine/statue, treasure chests, torches, and some cave rock formations still use primitive geometry. These are separate audit targets; inspect in-game before deciding whether they need replacement or can remain as functional/simple set dressing.
