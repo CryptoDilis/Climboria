@@ -1391,3 +1391,11 @@ For each meaningful implementation batch:
 - [ ] Establish a reliable GPU/device performance baseline and isolate renderer/asset-upload costs before claiming performance is fixed or making density changes.
 - [ ] Woodland fish realism, cave traversal/collision/headroom/traps, natural idle acceptance, physical Redmi 14 5G acceptance, and all previously recorded master checklist items remain open. No new realistic 3D asset is claimed imported by this checkpoint.
 - [ ] PR #215 remains OPEN and UNMERGED. Green automation does not override outstanding visual, route, performance, and physical-device acceptance gates.
+
+
+## 2026-11-07 — preserve complete browser-smoke verification runs
+
+- [x] Updated `.github/workflows/browser-smoke.yml` so the browser-smoke concurrency group uses `cancel-in-progress: false`. A newer push to the same ref will no longer automatically cancel an in-progress desktop/mobile smoke run.
+- [x] Workflow change committed as `a1d3dd253e90a8bcca0268ee3c4b802327cae47a`; fetched the branch file again and confirmed the setting is present.
+- [ ] Confirm the push-triggered Browser Smoke run completes on the updated workflow; the commit-workflow lookup only returns pull-request-triggered runs and returned no record for this push commit.
+- [ ] This is a CI reliability improvement only. It does not resolve the previously recorded cave/fish visual acceptance, severe SwiftShader performance warning, cave-to-coast grade feasibility, manual traversal, or physical Redmi 14 5G acceptance. PR #215 remains unmerged.
