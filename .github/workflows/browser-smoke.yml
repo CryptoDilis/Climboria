@@ -2,7 +2,7 @@ name: Climboria Browser Smoke Test
 
 concurrency:
   group: climboria-browser-smoke-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   push:
