@@ -2420,3 +2420,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Visual review: desktop cave interior still shows an exterior opening/bright background and reads as a short chamber; fish are visible as pale stylized silhouettes but still need convincing underwater volume/depth; natural relaxed hero idle remains open.
 - [ ] Free-GitHub asset audit remains open: four rainforest prop models still load from `cdn.3dassets.dev`; replace with exact-file license-verified GitHub assets vendored locally or disable those loads while retaining procedural fallback.
 - [ ] Manual traversal/headroom/collision/trap review and physical Redmi 14 5G acceptance remain open. PR #215 remains OPEN and UNMERGED; automated smoke success is not visual/device acceptance.
+
+
+## 2026-11-06 — cave route feasibility metrics added (verification pending)
+
+- [x] Extended `caveCoastRouteAudit()` to report maximum adjacent centreline surface rise/drop grade, the first open-sea seabed sample (surface <= -25.5), and the 2,200m endpoint coordinates/surface.
+- [x] Extended Browser Smoke assertions to verify the 663-sample three-track survey, finite terrain data, mapped ocean and seabed reach, exact 2,200m endpoint, and measured steep surface-grade diagnostics. The checks preserve the observed non-walkable terrain evidence rather than pretending the surface itself is a tunnel route.
+- [x] Measured from the prior passing 2.2km artifact: maximum adjacent centreline rise is approximately 330.2% over 10m (120–130m station); maximum adjacent drop is approximately 186.2% over 10m (230–240m station). These are terrain-surface gradients, not proposed tunnel-floor grades.
+- [ ] Fresh Validate and Browser Smoke for the diagnostic code are pending. Do not claim these new fields/assertions pass until artifact inspection.
+- [ ] Tunnel geometry remains unimplemented. Next engineering design must independently establish a walkable alignment, maximum player grade, minimum rock cover, water pressure/seabed clearance, collision, headroom, and a safe underwater exit. Keep the existing cave entrance and rooms intact.
+- [ ] The four `cdn.3dassets.dev` rainforest GLB runtime URLs remain an asset-policy violation to resolve through exact-file license-verified GitHub assets vendored locally or by disabling those loads and retaining procedural foliage.
+- [ ] Cave enclosure, fish realism, relaxed idle, manual traversal, and physical Redmi 14 5G acceptance remain open. PR #215 stays unmerged.
