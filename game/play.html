@@ -466,8 +466,26 @@ function colorAt(x,z,h,ny){
  return c;
 }
 const D=new T3.Object3D();
-const ROCK=new T3.DodecahedronGeometry(1,0);
-const mRock=new T3.MeshLambertMaterial({flatShading:true});
+const ROCK=new T3.IcosahedronGeometry(1,2);
+{
+ const p=ROCK.attributes.position;
+ for(let i=0;i<p.count;i++){
+  const x=p.getX(i),y=p.getY(i),z=p.getZ(i),len=Math.hypot(x,y,z)||1;
+  const n=1+.105*Math.sin(x*7.1+y*4.3)*Math.sin(z*6.2-x*3.7)+.045*Math.sin(y*13.2+z*9.1);
+  p.setXYZ(i,x/len*n,y/len*n,z/len*n);
+ }
+ ROCK.computeVertexNormals();
+}
+const mRock=new T3.MeshStandardMaterial({color:0xffffff,roughness:.94,metalness:0,flatShading:false});
+const rockTexLoader=new T3.TextureLoader();
+function prepareRockTexture(tex,isColor=false){
+ tex.wrapS=tex.wrapT=T3.RepeatWrapping;tex.repeat.set(1.8,1.8);tex.anisotropy=4;
+ if(isColor&&T3.sRGBEncoding!==undefined)tex.encoding=T3.sRGBEncoding;
+ return tex;
+}
+rockTexLoader.load('assets/pbr/rocky_terrain_02/diff.jpg',tex=>{mRock.map=prepareRockTexture(tex,true);mRock.needsUpdate=true;});
+rockTexLoader.load('assets/pbr/rocky_terrain_02/nor.jpg',tex=>{mRock.normalMap=prepareRockTexture(tex);mRock.normalScale.set(.72,.72);mRock.needsUpdate=true;});
+rockTexLoader.load('assets/pbr/rocky_terrain_02/rough.jpg',tex=>{mRock.roughnessMap=prepareRockTexture(tex);mRock.needsUpdate=true;});
 const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
  // Lightweight instanced grass: one shared blade mesh/material, per-chunk batches,
  // vertex-shader wind, and deterministic placement for stable streaming.
