@@ -103,6 +103,8 @@ jobs:
           JS
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
+        env:
+          CLIMBORIA_TESTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         timeout-minutes: 21
         run: |
           echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
