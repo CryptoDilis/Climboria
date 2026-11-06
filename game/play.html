@@ -1568,14 +1568,15 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
 const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
-const fishMats=[M('#a8c7c0',1),M('#83b9c8',1),M('#d0d0b8',1),M('#b8a98b',1)];
-// Keep fish readable through the water tint while retaining a clearly submerged depth band.
-for(const material of fishMats){material.transparent=true;material.opacity=.92;material.depthWrite=false}
-const fishEyeMat=M('#07131b',1);fishEyeMat.transparent=true;fishEyeMat.opacity=.95;fishEyeMat.depthWrite=false;
+const fishMats=[M('#536b65',1),M('#526d78',1),M('#77766a',1),M('#74634f',1)];
+// Fish are opaque submerged geometry: render the transparent water over them so
+// the water surface tints and softens their silhouettes instead of drawing them on top.
+for(const material of fishMats){material.transparent=false;material.opacity=1;material.depthWrite=true}
+const fishEyeMat=M('#07131b',1);
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
-  const g=new T3.Group();g.name='Aquatic Fish';g.renderOrder=1;const mat=fishMats[(i+seed)%fishMats.length];
+  const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length];
   // Side-on 3D fish silhouette: ellipsoid body, vertical fork tail, dorsal and pectoral fins.
   const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.72,.30,.25);
   const tail=mk(fishTailGeo,mat,-.66,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.82,.82,.82);
