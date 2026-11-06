@@ -564,8 +564,7 @@ function terrainIndexFor(seg){
  for(let j=0;j<seg;j++)for(let i=0;i<seg;i++){const a=j*n+i;indices.push(a,a+n,a+1,a+1,a+n,a+n+1)}
  attr=new T3.BufferAttribute(new Uint32Array(indices),1);terrainIndexCache.set(seg,attr);return attr;
 }
-function buildChunk(cx,cz){
- const centerX=Math.floor(P.x/CS),centerZ=Math.floor(P.z/CS);
+function buildChunk(cx,cz,centerX,centerZ){
  // Keep full 5 m terrain sampling near the explorer. Fogged outer chunks use
  // 10 m sampling to cut far-field terrain vertices without changing collision.
  const seg=Math.max(12,Math.max(Math.abs(cx-centerX),Math.abs(cz-centerZ))>2?SEG/2:SEG);
@@ -604,7 +603,7 @@ function updateChunks(px,pz,budget){
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
- for(let i=0;i<Math.min(budget,need.length);i++){const[cx,cz]=need[i];chunks.set(cx+','+cz,buildChunk(cx,cz))}
+ for(let i=0;i<Math.min(budget,need.length);i++){const[cx,cz]=need[i];chunks.set(cx+','+cz,buildChunk(cx,cz,ccx,ccz))}
  return need.length;
 }
 /* ---------- helpers for hand-built structures ---------- */
