@@ -557,21 +557,32 @@ function props(cx,cz,out){
  const rk=inst(ROCK,mRock,ro,t=>{D.position.set(t.x,t.h+t.s*.2,t.z);D.rotation.set(t.rot*.3,t.rot,0);D.scale.set(t.s,t.s*.7,t.s)});
  if(rk){g.add(rk);out.push(rk)}scene.add(g);out.push(g);return col;
 }
+const terrainIndexCache=new Map([[SEG,IDX]]);
+function terrainIndexFor(seg){
+ let attr=terrainIndexCache.get(seg);if(attr)return attr;
+ const n=seg+1,indices=[];
+ for(let j=0;j<seg;j++)for(let i=0;i<seg;i++){const a=j*n+i;indices.push(a,a+n,a+1,a+1,a+n,a+n+1)}
+ attr=new T3.BufferAttribute(new Uint32Array(indices),1);terrainIndexCache.set(seg,attr);return attr;
+}
 function buildChunk(cx,cz){
- const ox=cx*CS,oz=cz*CS,B=N1+2,hg=new Float32Array(B*B);
- for(let j=-1;j<=N1;j++)for(let i=-1;i<=N1;i++)hg[(j+1)*B+i+1]=heightAt(ox+i*STEP,oz+j*STEP);
- const pos=new Float32Array(N1*N1*3),nor=new Float32Array(N1*N1*3),col=new Float32Array(N1*N1*3);
- for(let j=0;j<N1;j++)for(let i=0;i<N1;i++){
+ const centerX=Math.floor(P.x/CS),centerZ=Math.floor(P.z/CS);
+ // Keep full 5 m terrain sampling near the explorer. Fogged outer chunks use
+ // 10 m sampling to cut far-field terrain vertices without changing collision.
+ const seg=Math.max(12,Math.max(Math.abs(cx-centerX),Math.abs(cz-centerZ))>2?SEG/2:SEG);
+ const n=seg+1,step=CS/seg,ox=cx*CS,oz=cz*CS,B=seg+3,hg=new Float32Array(B*B);
+ for(let j=-1;j<=seg+1;j++)for(let i=-1;i<=seg+1;i++)hg[(j+1)*B+i+1]=heightAt(ox+i*step,oz+j*step);
+ const pos=new Float32Array(n*n*3),nor=new Float32Array(n*n*3),col=new Float32Array(n*n*3);
+ for(let j=0;j<n;j++)for(let i=0;i<n;i++){
   const k=(j+1)*B+i+1,y=hg[k],hl=hg[k-1],hr=hg[k+1],hd=hg[k-B],hu=hg[k+B];
-  let nx=hl-hr,ny=2*STEP,nz=hd-hu;const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;
-  const o=(j*N1+i)*3;pos[o]=i*STEP;pos[o+1]=y;pos[o+2]=j*STEP;nor[o]=nx;nor[o+1]=ny;nor[o+2]=nz;
-  const c=colorAt(ox+i*STEP,oz+j*STEP,y,ny),ao=1-Math.min(.35,Math.max(-.15,((hl+hr+hd+hu)/4-y)*.06));
+  let nx=hl-hr,ny=2*step,nz=hd-hu;const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;
+  const o=(j*n+i)*3;pos[o]=i*step;pos[o+1]=y;pos[o+2]=j*step;nor[o]=nx;nor[o+1]=ny;nor[o+2]=nz;
+  const c=colorAt(ox+i*step,oz+j*step,y,ny),ao=1-Math.min(.35,Math.max(-.15,((hl+hr+hd+hu)/4-y)*.06));
   col[o]=c[0]*ao;col[o+1]=c[1]*ao;col[o+2]=c[2]*ao;
  }
  const geo=new T3.BufferGeometry();geo.setAttribute('position',new T3.BufferAttribute(pos,3));geo.setAttribute('normal',new T3.BufferAttribute(nor,3));
- geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(IDX);geo.computeBoundingSphere();
+ geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(terrainIndexFor(seg));geo.computeBoundingSphere();
  const m=new T3.Mesh(geo,terrMat);m.position.set(ox,0,oz);scene.add(m);
- const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl};
+ const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl,terrainSegments:seg};
 }
 const chunks=new Map();
 function updateChunks(px,pz,budget){
