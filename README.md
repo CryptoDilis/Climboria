@@ -1,3 +1,16 @@
+## 2026-11-07 — latest artifact visual rejection and performance baseline
+
+- [x] Re-fetched PR #215 and inspected its latest head `de7afc4661b5587397634d6e1486e821bb7e49dd`; PR remains open, unmerged and mergeable.
+- [x] Latest-head Validate [42277972111](https://github.com/CryptoDilis/Climboria/actions/runs/42277972111) passed. Full desktop/mobile Browser Smoke [42277972370](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370) completed successfully. Screenshot artifact [13535045712](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370/artifacts/13535045712) contains 10 captures and was downloaded and visually inspected.
+- [x] Latest artifact confirms the automated boot, interaction and screenshot steps completed; this is not visual or physical-device acceptance.
+- [ ] **Visual acceptance rejected:** cave entrance still has an excessively broad empty foreground and the portal reads small/decorative. The cave interior still shows a bright exterior gap behind the player; its large faceted surfaces and floor read as a simple procedural prototype, not the requested realistic cave. The pond capture shows flat pale fish silhouettes rather than natural submerged fish. Do not mark these assets complete and do not try to solve the art-direction failure by adding more generic primitive rocks.
+- [ ] **Performance baseline recorded (CI SwiftShader only):** desktop sanctuary 2.5 FPS / 397.2 ms mean frame time / 199,971 triangles / 103 draw calls; mobile emulation 0.8 FPS / 1,183.25 ms mean / 166,067 triangles / 81 draw calls. These software-renderer values are not representative physical-device benchmarks, but they are a warning signal. Profile update CPU cost, chunk generation, geometry and draw calls separately; capture a real hardware baseline before claiming performance is acceptable.
+- [x] Cave-to-coast survey artifact is finite and reaches the ocean and seabed at the tested route endpoint; this verifies only the survey data, not a built tunnel or traversable underwater exit.
+- [ ] Next focused implementation: replace the rejected procedural cave surfaces with visually inspected, license-verified, GitHub-hosted realistic assets; vendor them locally, build matching collision/LODs, and preserve the existing cave route contracts. If no qualifying asset is found, keep the current cave explicitly marked as a prototype rather than silently accepting another low-poly pack.
+- [ ] Keep PR #215 unmerged until cave visuals, fish visuals, natural hero idle, manual cave traversal/headroom, performance, and physical Redmi 14 5G acceptance are independently resolved. Do not weaken existing smoke assertions.
+
+---
+
 ## 2026-11-06 — latest-head visual and performance review
 
 - [x] Re-checked PR #215 current head: `171b81ddf594c4c232e0d273774902d364fb17ec` (PR remains open and unmerged).
