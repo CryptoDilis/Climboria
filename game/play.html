@@ -1964,9 +1964,32 @@ window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
 let ready=false,Tm=0,hudT=0,last=performance.now(),tmpC=new T3.Color();
 let lastStreamChunkX=NaN,lastStreamChunkZ=NaN;
+// Diagnostic-only stage timing is enabled by the browser smoke query parameter.
+const climboriaProfileEnabled=new URLSearchParams(location.search).has('smoke');
+const climboriaProfileStages=Object.create(null);
+let climboriaProfileWriteIndex=0;
+function climboriaProfileRecord(name,start){
+ if(!climboriaProfileEnabled)return;
+ const samples=climboriaProfileStages[name]||(climboriaProfileStages[name]=[]);
+ const value=performance.now()-start;
+ if(samples.length<900)samples.push(value);else{samples[climboriaProfileWriteIndex%900]=value;climboriaProfileWriteIndex++;}
+}
+function climboriaProfileSnapshot(){
+ const out={enabled:climboriaProfileEnabled,stages:{}};
+ for(const[name,values]of Object.entries(climboriaProfileStages)){
+  const sorted=values.slice().sort((a,b)=>a-b),sum=values.reduce((a,b)=>a+b,0);
+  const at=p=>sorted.length?+sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(3):null;
+  out.stages[name]={samples:values.length,meanMs:values.length?+(sum/values.length).toFixed(3):null,p95Ms:at(.95),p99Ms:at(.99),maxMs:sorted.length?+sorted[sorted.length-1].toFixed(3):null};
+ }
+ return out;
+}
+window.__climboriaPerformanceProfile=climboriaProfileSnapshot;
 function update(dt){
+ const updateStart=climboriaProfileEnabled?performance.now():0;
  Tm+=dt;
+ let stageStart=climboriaProfileEnabled?performance.now():0;
  updateAquaticLife(Tm);
+ climboriaProfileRecord('aquaticLife',stageStart);
  // time of day easing
  const tg=TOD[todI],k=Math.min(1,dt*1.2);
  cur.top.lerp(tg.top,k);cur.hor.lerp(tg.hor,k);cur.sun.lerp(tg.sun,k);
@@ -2004,6 +2027,7 @@ function update(dt){
   // camera ray crossed a rising slope, which collapsed the view into the avatar.
   // Lift the camera above the sampled terrain instead of pushing it into the hero.
   let safeBack=back;cameraTerrainLift=0;
+  const cameraSweepStart=climboriaProfileEnabled?performance.now():0;
   const CAMERA_SWEEP_STEPS=16;
   for(let i=1;i<=CAMERA_SWEEP_STEPS;i++){
    const t=i/CAMERA_SWEEP_STEPS;
@@ -2016,6 +2040,7 @@ function update(dt){
   terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+1.35);
   cameraSafeBack=safeBack;
   cameraGroundClearance=terrainCameraFinal.y-groundAt(terrainCameraFinal.x,terrainCameraFinal.z);
+  climboriaProfileRecord('cameraTerrainSweep',cameraSweepStart);
   cam.position.copy(terrainCameraFinal);
   cameraActualDistance=cam.position.distanceTo(terrainCameraTarget);
   cam.near=0.15;
@@ -2034,8 +2059,10 @@ function update(dt){
   }else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  }
  mapMarkerClock+=dt;if(mapMarkerClock>=.12){mapMarkerClock=0;drawWorldMapPlayer();}
- const cp=cam.position;gameTick(dt,cp);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const cp=cam.position;stageStart=climboriaProfileEnabled?performance.now():0;gameTick(dt,cp);climboriaProfileRecord('gameTick',stageStart);if(grassMat.userData.shader)grassMat.userData.shader.uniforms.uGrassTime.value=Tm;
+ const chunkStart=climboriaProfileEnabled?performance.now():0;
  const streamChunkX=Math.floor(cp.x/CS),streamChunkZ=Math.floor(cp.z/CS);if(streamChunkX!==lastStreamChunkX||streamChunkZ!==lastStreamChunkZ){lastStreamChunkX=streamChunkX;lastStreamChunkZ=streamChunkZ;updateChunks(cp.x,cp.z,ready?1:0);}
+ climboriaProfileRecord('chunkStreaming',chunkStart);
  sky.position.copy(cp);const sx=(Math.floor(cp.x/CS)+.5)*CS,sz=(Math.floor(cp.z/CS)+.5)*CS;water.position.set(sx,0,sz);
  sunL.position.copy(cp).addScaledVector(sunDir,200);sunL.target.position.copy(cp);
  // props
@@ -2045,7 +2072,9 @@ function update(dt){
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
+ const flagStart=climboriaProfileEnabled?performance.now():0;
  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});
+ climboriaProfileRecord('flagAnimation',flagStart);
  // Wild-animal simulation disabled along with placeholder wildlife models.
  // fireflies
  for(let i=0;i<FN;i++){const o=fof[i];fpos[i*3]=cp.x+((o[0]+Tm*.6*Math.sin(o[3])+240)%160)-80;fpos[i*3+1]=Math.max(heightAt(cp.x+o[0],cp.z+o[2]),0)+1+o[1]*.25+Math.sin(Tm+o[3])*1.5;fpos[i*3+2]=cp.z+o[2]}
@@ -2054,6 +2083,7 @@ function update(dt){
  hudT-=dt;if(hudT<0){hudT=.25;const h=heightAt(cp.x,cp.z);zoneEl.textContent=biome(cp.x,cp.z,P.mode=='cine'?9:h);
   const cave=POI.cave,tr=Math.hypot(cp.x-cave.x-cave.dir.x*25,cp.z-cave.z-cave.dir.z*25)<22;
   subEl.textContent=(tr?'⚠ Spike trap ahead · ':'')+TOD[todI].n+' · '+weatherNames[wx]}
+ climboriaProfileRecord('updateTotal',updateStart);
 }
 /* ---------- direct gameplay boot ---------- */
 cam.position.set(0,40,60);cam.lookAt(0,8,-90);
@@ -2085,16 +2115,20 @@ function animate(now){
  // Do not simulate or render the open world while its browser tab is hidden.
  if(document.hidden){last=now;return;}
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
+ const renderUpdateStart=climboriaProfileEnabled?performance.now():0;
  try{update(dt)}catch(err){
   const msg=err&&err.stack?err.stack:String(err);
   if(window.__climboriaRenderState.errors.length<8)window.__climboriaRenderState.errors.push(msg);
   console.error('[Climboria frame update]',err);
  }
  try{
+  const renderStart=climboriaProfileEnabled?performance.now():0;
   renderer.render(scene,cam);
+  climboriaProfileRecord('renderer',renderStart);
   window.__climboriaRenderState.frames=renderer.info.render.frame;
   window.__climboriaRenderState.objects=scene.children.length;
   window.__climboriaRenderState.rendererInfo={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};
+  climboriaProfileRecord('updateAndErrorHandling',renderUpdateStart);
   if(!renderReady){
    renderReady=true;
    publishGameReady();
