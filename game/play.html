@@ -587,8 +587,20 @@ function buildChunk(cx,cz){
 const chunks=new Map();
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
- for(const[k,c]of chunks)if(Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz))>R+1){
-  c.objs.forEach(o=>{scene.remove(o);if(o.userData?.climboriaOwnedGeometry)o.geometry.dispose();o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
+ for(const[k,c]of chunks){
+  const distance=Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz));
+  if(distance>R+1){
+   c.objs.forEach(o=>{scene.remove(o);if(o.userData?.climboriaOwnedGeometry)o.geometry.dispose();o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k);
+   continue;
+  }
+  // Rebuild chunks when they cross the near/far LOD boundary so detail
+  // follows the player instead of being frozen at the chunk's creation time.
+  const desiredSegments=distance>2?SEG/2:SEG;
+  if(c.terrainSegments!==desiredSegments){
+   c.objs.forEach(o=>{scene.remove(o);if(o.userData?.climboriaOwnedGeometry)o.geometry.dispose();o.dispose&&o.dispose()});
+   c.geo.dispose();chunks.delete(k);
+  }
+ }
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
