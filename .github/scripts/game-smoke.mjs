@@ -374,6 +374,24 @@ try {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
   }
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
+  const landingSetup = await page.evaluate(() => {
+    const p=window.__climboriaJarrellsPeak?.player;
+    if(!p)return null;
+    const previous={jumpState:p.jumpState,jumpStateTimer:p.jumpStateTimer};
+    p.jumpState='land';p.jumpStateTimer=.6;
+    return {previous,availableClips:window.__climboriaJarrellsPeak?.heroAnimationAudit?.().availableClips||[]};
+  });
+  if(!landingSetup) errors.push('Hero landing animation test could not access the gameplay player.');
+  else {
+    await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'land', undefined, {timeout:5000}).catch(()=>{});
+    const landingAudit=await page.evaluate(()=>({state:document.documentElement.dataset.climboriaHeroAnimation||'',clip:document.documentElement.dataset.climboriaHeroClip||'',audit:window.__climboriaJarrellsPeak?.heroAnimationAudit?.()??null}));
+    const authoredLanding=landingSetup.availableClips.find(name=>/(?:^|[_\\s-])(landing|land|touchdown)(?:$|[_\\s-])/i.test(name));
+    if(landingAudit.state!=='land'||(authoredLanding&&landingAudit.clip!==authoredLanding)||(!authoredLanding&&landingAudit.clip!==idleAnimationAudit.idleCandidate&&landingAudit.clip!=='procedural-fallback')) {
+      errors.push('Hero landing animation did not prefer the authored landing clip or use the standing-idle fallback: '+JSON.stringify({authoredLanding,landingAudit,idleCandidate:idleAnimationAudit.idleCandidate}));
+    }
+    console.log('Hero landing-animation audit:',JSON.stringify({authoredLanding,landingAudit}));
+    await page.evaluate(previous=>{const p=window.__climboriaJarrellsPeak.player;p.jumpState=previous.jumpState;p.jumpStateTimer=previous.jumpStateTimer;},landingSetup.previous);
+  }
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', undefined, { timeout: 10000 });
   const walkClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
