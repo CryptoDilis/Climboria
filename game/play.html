@@ -1169,7 +1169,13 @@ function animateAssetFallback(t,state,speed){
   else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):idle?breath*(item.lower?.35:1):0);
   // Preserve the GLB-authored shoulder/elbow rest pose while standing still.
   // Apply gait offsets only during locomotion; never force the idle arms upward.
-  if(item.shoulder||!item.lower){b.rotation.z=item.baseZ+(!moving&&!swimming&&!jumping&&!falling&&!landing?item.side*(.08+weightShift):0);if(!item.shoulder)b.rotation.y=item.baseY;}
+  if(item.shoulder||!item.lower){
+   // Counter the supplied GLB's pronounced T-pose shoulder spread while preserving
+   // the authored arm bend; restore the source shoulder rotation during locomotion.
+   const relaxedShoulder=idle&&item.shoulder?-item.side*.28:0;
+   b.rotation.z=item.baseZ+relaxedShoulder+(!moving&&!swimming&&!jumping&&!falling&&!landing?item.side*(.025+weightShift):0);
+   if(!item.shoulder)b.rotation.y=item.baseY;
+  }
  }
  if(assetRig.spine)assetRig.spine.rotation.x=assetRig.spineBase+(landing?.12:falling?.18:jumping?-.08:breath);
  if(assetRig.hips)assetRig.hips.rotation.y=assetRig.hipsBase+(moving?Math.sin(phase)*.025:idle?weightShift:0);
