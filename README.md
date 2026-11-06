@@ -2408,3 +2408,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await fresh Validate and Browser Smoke for the 2.2km/663-sample audit; inspect the full offshore route and endpoint before tunnel construction.
 - [ ] Design the distinct underwater exit at the requested offshore endpoint (2km out to sea), with continuous walkable descent, seabed clearance, sealed roof, collision, headroom and swim transition. Do not dig or replace the existing cave entrance.
 - [ ] Keep cave visual polish, fish depth/body detail, relaxed idle, manual traversal, physical Redmi 14 5G acceptance, and free-GitHub asset audit open. PR #215 remains open and unmerged.
+
+
+## 2026-11-06 — 2.2km offshore survey verified (Browser Smoke #1512)
+
+- [x] Validate Climboria #2079 [42159385661](https://github.com/CryptoDilis/Climboria/actions/runs/42159385661) passed on head `6b8f6f2692086da690d27184a20b68b567807db9`.
+- [x] Browser Smoke #1512 [42159385720](https://github.com/CryptoDilis/Climboria/actions/runs/42159385720) passed, including homepage CTA/DEX/mobile navigation and Jarrell's Peak desktop/mobile gameplay; screenshot/audit artifact [13476382628](https://github.com/CryptoDilis/Climboria/actions/runs/42159385720/artifacts/13476382628) downloaded and inspected.
+- [x] Inspected all 663 finite route samples at 10m intervals across lateral tracks -7m, 0m, +7m. Centreline first reaches mapped open sea at 300m (x=-1007.59,z=-689.41,Y=34.57); +7m track reaches at 310m. At 2,200m, centreline endpoint is x=-2575.68,z=-1762.30, rendered seabed Y=-26; all three tracks end over open sea at Y=-26.
+- [x] Identified abrupt terrain variation in the sampled profile: adjacent 10m stations can differ by approximately 34.29m. Do not derive a straight walkable tunnel directly from this surface profile; route engineering must account for a gradual traversable grade, terrain cover, sealed roof, seabed clearance, collision and headroom.
+- [ ] No tunnel bore, walkable floor, roof, collision corridor, or distinct underwater exit has been implemented by this survey. Preserve the existing cave entrance and rooms while designing the separate offshore opening.
+- [ ] Visual review: desktop cave interior still shows an exterior opening/bright background and reads as a short chamber; fish are visible as pale stylized silhouettes but still need convincing underwater volume/depth; natural relaxed hero idle remains open.
+- [ ] Free-GitHub asset audit remains open: four rainforest prop models still load from `cdn.3dassets.dev`; replace with exact-file license-verified GitHub assets vendored locally or disable those loads while retaining procedural fallback.
+- [ ] Manual traversal/headroom/collision/trap review and physical Redmi 14 5G acceptance remain open. PR #215 remains OPEN and UNMERGED; automated smoke success is not visual/device acceptance.
