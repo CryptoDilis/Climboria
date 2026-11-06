@@ -373,7 +373,7 @@ renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='au
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
 const mobileCameraMode=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 // Narrower vertical FOV keeps the explorer readable on wide mobile landscape screens.
-const cam=new T3.PerspectiveCamera(mobileCameraMode?40:52,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
+const cam=new T3.PerspectiveCamera(mobileCameraMode?46:54,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
 const terrainCameraTarget=new T3.Vector3(),terrainCameraDesired=new T3.Vector3(),terrainCameraFinal=new T3.Vector3();
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
@@ -1172,7 +1172,7 @@ function cinematicPoint(u){
  return new T3.Vector3(a.x+(b.x-a.x)*alpha,a.y+(b.y-a.y)*alpha,a.z+(b.z-a.z)*alpha);
 }
 // Bring the explorer closer on narrow screens so the hero remains readable above the mobile controls.
-let camY=null,lookY=0,cameraDistance=MOB?4.6:5.8,targetCameraDistance=MOB?4.6:5.8,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0;
+let camY=null,lookY=0,cameraDistance=MOB?7.2:8.5,targetCameraDistance=MOB?7.2:8.5,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
@@ -1225,7 +1225,7 @@ addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;P.moveTarget=null;drag=false;});
 const cv=renderer.domElement;
 // Mouse-wheel camera zoom is deliberately limited to gameplay so the cinematic intro stays composed.
-cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(3.4,Math.min(14,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
+cv.addEventListener('wheel',e=>{if(P.mode!=='walk')return;e.preventDefault();targetCameraDistance=Math.max(5.2,Math.min(18,targetCameraDistance+Math.sign(e.deltaY)*.9));},{passive:false});
 function requestLandscapeMode(){
  if(!MOB)return Promise.resolve(false);
  // Fullscreen must be requested directly from a real user gesture on mobile browsers.
@@ -1956,8 +1956,8 @@ function update(dt){
   // Third-person follow camera keeps the explorer visible in the world.
   cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);
   const back=cameraDistance;
-  terrainCameraTarget.set(P.x,P.y+.85,P.z);
-  terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+2.45+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*back);
+  terrainCameraTarget.set(P.x,P.y+1.05,P.z);
+  terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+4.35+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*back);
   let safeBack=back;
   const CAMERA_SWEEP_STEPS=12;
   for(let i=1;i<=CAMERA_SWEEP_STEPS;i++){
@@ -1966,8 +1966,8 @@ function update(dt){
    const sy=terrainCameraTarget.y+(terrainCameraDesired.y-terrainCameraTarget.y)*t;
    if(sy<groundAt(sx,sz)+0.9){safeBack=back*(i-1)/CAMERA_SWEEP_STEPS;break;}
   }
-  safeBack=Math.max(1.4,safeBack);
-  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+2.45+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*safeBack);
+  safeBack=Math.max(2.2,safeBack);
+  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+4.35+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*safeBack);
   terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+0.9);
   cameraSafeBack=safeBack;
   cameraGroundClearance=terrainCameraFinal.y-groundAt(terrainCameraFinal.x,terrainCameraFinal.z);
