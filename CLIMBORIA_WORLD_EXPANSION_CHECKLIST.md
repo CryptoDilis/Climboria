@@ -1323,3 +1323,13 @@ For each meaningful implementation batch:
 - [ ] No sea tunnel, roof/floor/collision, or distinct underwater seabed exit is claimed implemented. Manual cave traversal/headroom/trap review and physical Redmi 14 5G acceptance remain open.
 - [ ] PR #215 remains OPEN and UNMERGED. CI success and mergeability do not satisfy visual/manual/device acceptance.
 - [ ] Free GitHub-hosted asset policy remains mandatory; no third-party asset import is claimed in this checkpoint.
+
+
+## 2026-11-06 — 2.2km offshore exit survey extension
+
+- [x] Browser Smoke #1509 [42113502138](https://github.com/CryptoDilis/Climboria/actions/runs/42113502138) passed and uploaded route JSON artifact [13455945687](https://github.com/CryptoDilis/Climboria/actions/runs/42113502138/artifacts/13455945687).
+- [x] Inspected the 213-sample JSON: centreline first reaches mapped open sea at 300m (world approx. x=-1007.59, z=-689.41; rendered ground Y=34.57). Cave origin approx. x=-760,z=-520, baseY=131.32. Ground profile is highly non-linear before the coast (e.g. 150m Y=236.39; 200m Y=177.81; 250m Y=99.41); open-sea seabed reaches Y=-26 by about 470m and remains there through 700m.
+- [x] Extended the next survey to 2,200m from cave origin, preserving 10m spacing and three lateral tracks (-7,0,+7), expected 663 samples. This is a survey only, not tunnel excavation or geometry.
+- [ ] Await fresh Validate and Browser Smoke for the 2.2km/663-sample audit; inspect the full offshore route and endpoint before tunnel construction.
+- [ ] Design the distinct underwater exit at the requested offshore endpoint (2km out to sea), with continuous walkable descent, seabed clearance, sealed roof, collision, headroom and swim transition. Do not dig or replace the existing cave entrance.
+- [ ] Keep cave visual polish, fish depth/body detail, relaxed idle, manual traversal, physical Redmi 14 5G acceptance, and free-GitHub asset audit open. PR #215 remains open and unmerged.
