@@ -1350,3 +1350,17 @@ For each meaningful implementation batch:
 - [ ] Apply the vendored sand maps to shoreline terrain in a separate tested increment. Source and license exactness, UV scale, colour space, normal-map convention and mobile memory cost must be checked.
 - [ ] Establish measured baseline before setting FPS budgets. Browser mobile emulation is not physical Redmi 14 5G acceptance. Always compare before/after average FPS and p95/p99 frame time after every asset batch.
 - [ ] Cave tunnel/underwater exit, cave enclosure, fish realism, relaxed idle, manual traversal, physical Redmi 14 5G acceptance and PR merge gates remain open. PR #215 remains OPEN and UNMERGED.
+
+
+---
+
+## 2026-11-07 — Browser Smoke artifact review and performance warning
+
+- [x] Downloaded and inspected artifact `13535649469` from Browser Smoke run `42283014238`; the workflow job ended **cancelled**, so this is partial diagnostic evidence, not a passing gameplay smoke.
+- [x] Screenshot review: desktop/mobile cave entrance still has a small arch against a broad empty approach; cave interior remains angular/flat with a bright exterior opening visible behind the player; Woodland Pond fish remain flat/stylized rather than realistic. Visual acceptance remains open.
+- [x] Performance JSON identifies the tested game commit as `18fe8618ce00976b0f73dfddd5b37b03501ef8f9`. In CI headless Chromium + SwiftShader only: desktop 2.0 FPS mean / 503.49 ms mean frame interval / 200,343 triangles / 110 renderer calls; mobile emulation 0.7 FPS / 1,352.31 ms / 166,439 triangles / 88 calls. This is a severe software-renderer warning, **not** a physical GPU or Redmi 14 5G benchmark.
+- [x] Stage profile shows mobile-emulation renderer mean 133.632 ms with a 7,172.8 ms maximum outlier; updateTotal mean 4.632 ms. Desktop renderer mean 3.988 ms and updateTotal mean 2.443 ms. Percentile/outlier behavior is irregular, so do not treat these figures as a reliable device-level bottleneck diagnosis.
+- [ ] Repeat the full desktop/mobile smoke on the current PR head and retain the complete artifact; do not mark the cancelled run green.
+- [ ] Establish a representative hardware/GPU baseline, then isolate GPU/render cost, asset/texture upload stalls, and chunk-streaming spikes before changing scene density or claiming performance is fixed.
+- [ ] Keep cave enclosure/realistic geometry, fish realism, manual cave traversal/collision/headroom, natural hero idle, route-grade feasibility, and physical Redmi 14 5G acceptance open.
+- [ ] PR #215 remains open and unmerged. Do not weaken assertions to obtain a green run.
