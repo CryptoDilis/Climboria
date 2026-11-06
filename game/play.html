@@ -499,6 +499,21 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat grassBend=uv.y*uv.y*(sin(uGrassTime*1.7+instanceMatrix[3][0]*0.035+instanceMatrix[3][2]*0.027)*0.12+sin(uGrassTime*0.8+instanceMatrix[3][0]*0.012)*0.045);\ntransformed.x += grassBend;');
  };
  grassMat.customProgramCacheKey=()=>'climboria-grass-wind-v1';
+ function enableInstancedCulling(im,sourceGeo){
+  // Three.js r128 has no InstancedMesh.computeBoundingSphere(). Give each
+  // batch a private geometry sphere that encloses every transformed instance.
+  const geo=sourceGeo.clone(),base=sourceGeo.boundingSphere|| (sourceGeo.computeBoundingSphere(),sourceGeo.boundingSphere);
+  const center=new T3.Vector3(),matrix=new T3.Matrix4(),point=new T3.Vector3();
+  const count=im.count;
+  if(!count){geo.boundingSphere=new T3.Sphere(new T3.Vector3(),0);im.geometry=geo;im.userData.climboriaOwnedGeometry=true;im.frustumCulled=true;return im}
+  for(let i=0;i<count;i++){im.getMatrixAt(i,matrix);point.copy(base.center).applyMatrix4(matrix);center.add(point)}
+  center.multiplyScalar(1/count);
+  let radius=0;
+  for(let i=0;i<count;i++){im.getMatrixAt(i,matrix);point.copy(base.center).applyMatrix4(matrix);radius=Math.max(radius,point.distanceTo(center)+base.radius*matrix.getMaxScaleOnAxis())}
+  geo.boundingSphere=new T3.Sphere(center,radius);
+  im.geometry=geo;im.userData.climboriaOwnedGeometry=true;im.frustumCulled=true;
+  return im;
+ }
  function makeGrass(cx,cz,out){
   const ox=cx*CS,oz=cz*CS,rand=rng(cx*1877+cz*3181+991),items=[];
   const count=MOB?150:330;
@@ -514,10 +529,10 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   if(!items.length)return;
   const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
-  im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;out.push(im);
+  im.instanceMatrix.needsUpdate=true;enableInstancedCulling(im,grassGeo);out.push(im);
  }
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
- list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
+ list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});return enableInstancedCulling(im,geo)}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
 function shoreClear(x,z,h){
  const radius=18;
@@ -562,7 +577,7 @@ const chunks=new Map();
 function updateChunks(px,pz,budget){
  const ccx=Math.floor(px/CS),ccz=Math.floor(pz/CS);
  for(const[k,c]of chunks)if(Math.max(Math.abs(c.cx-ccx),Math.abs(c.cz-ccz))>R+1){
-  c.objs.forEach(o=>{scene.remove(o);o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
+  c.objs.forEach(o=>{scene.remove(o);if(o.userData?.climboriaOwnedGeometry)o.geometry.dispose();o.dispose&&o.dispose()});c.geo.dispose();chunks.delete(k)}
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
