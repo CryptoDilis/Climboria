@@ -114,3 +114,21 @@ The target art direction is realistic / photogrammetry-inspired PBR, not low-pol
 - Midground: optimized realistic LODs with matching materials.
 - Distant background: lower-detail silhouettes are allowed only where they do not read as low-poly close to the camera.
 - No replacement by another low-poly pack just because it is free or lightweight.
+
+
+## 2026-11-06 — first realistic PBR surface files vendored
+
+<badge>Imported locally; visual/performance verification pending</badge>
+
+Source repository: [npmiaman/game-forge](https://github.com/npmiaman/game-forge), immutable source commit `2b25427358dbfb6badd47f658ba71a6de748e548`. Its `assets/LICENSES.md` explicitly identifies these Poly Haven materials as CC0 and states commercial use and redistribution are allowed.
+
+- `game/assets/pbr/rocky_terrain_02/diff.jpg` — 843,188 bytes, base colour
+- `game/assets/pbr/rocky_terrain_02/nor.jpg` — 993,692 bytes, normal
+- `game/assets/pbr/rocky_terrain_02/rough.jpg` — 437,094 bytes, roughness
+- `game/assets/pbr/sand_01/diff.jpg` — 485,088 bytes, base colour
+- `game/assets/pbr/sand_01/nor.jpg` — 877,821 bytes, normal
+- `game/assets/pbr/sand_01/rough.jpg` — 189,667 bytes, roughness
+
+Exact source asset pages: [Rocky Terrain 02](https://polyhaven.com/a/rocky_terrain_02) and [Sand 01](https://polyhaven.com/a/sand_01). Provenance is copied into `game/assets/pbr/ASSET_LICENSES.md`. No off-GitHub runtime requests are used.
+
+Initial integration in `game/play.html`: replace the dodecahedron flat-shaded rock instances with irregular subdivided icosahedral rock geometry, smooth normals, and locally loaded PBR rock colour/normal/roughness maps. This is a first visual improvement, not a complete photogrammetry asset replacement. The PBR sand maps are vendored for the next shoreline integration pass; they are not yet applied to the coast.
