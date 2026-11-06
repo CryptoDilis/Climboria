@@ -373,7 +373,8 @@ renderer.domElement.style.zIndex='0';renderer.domElement.style.pointerEvents='au
 const scene=new T3.Scene();scene.background=L('#536b7c');scene.fog=new T3.FogExp2(0xffffff,.0022);
 const mobileCameraMode=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 // Narrower vertical FOV keeps the explorer readable on wide mobile landscape screens.
-const cam=new T3.PerspectiveCamera(mobileCameraMode?46:54,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
+// Frame the explorer as the visual anchor while retaining enough terrain context for navigation.
+const cam=new T3.PerspectiveCamera(mobileCameraMode?38:46,innerWidth/innerHeight,.5,1800);cam.rotation.order='YXZ';
 const terrainCameraTarget=new T3.Vector3(),terrainCameraDesired=new T3.Vector3(),terrainCameraFinal=new T3.Vector3();
 const sunL=new T3.DirectionalLight(0xffffff,2),hemi=new T3.HemisphereLight(0xffffff,0x444444,.5);
 scene.add(sunL,sunL.target,hemi);
