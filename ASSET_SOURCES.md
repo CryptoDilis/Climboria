@@ -168,3 +168,19 @@ Initial integration in `game/play.html`: replace the dodecahedron flat-shaded ro
 - Removed the unused procedural deer/wolf-style animal mesh generator and its placement helper from `game/play.html`. The world still exports an empty wildlife collection for interface stability; no realistic wildlife replacement is claimed or rendered yet.
 - Wildlife remains blocked pending properly licensed, visually inspected realistic animal models. Do not reintroduce the old sphere/cylinder placeholder generator.
 - The fish schools remain a known low-poly visual placeholder. The Khronos BarramundiFish candidate is CC0 but its full GLB is approximately 12.5 MB; it is not integrated and is not approved for repeated mobile school instances until optimized, visually inspected, and benchmarked.
+
+
+## 2026-11-06 — pinned fish source and Poly Haven container candidate
+
+### Barramundi Fish — source revision pinned, still not integrated
+
+- Archived upstream: [KhronosGroupArchives/glTF-Sample-Models](https://github.com/KhronosGroupArchives/glTF-Sample-Models), commit `d7a3cc8e51d7c573771ae77a57f16b0662a905c6` (immutable revision).
+- Exact model folder: `2.0/BarramundiFish/`. Its upstream README explicitly states CC0 1.0 and says Microsoft waived copyright and related rights for the asset.
+- The non-Draco glTF geometry buffer is 128,208 bytes; the separate texture maps are 4,985,099 bytes (base colour), 3,050,432 bytes (normal), and 4,355,820 bytes (occlusion/roughness/metallic). These source-resolution maps are not suitable to ship unmodified for many mobile instances.
+- The model has not been vendored, visually accepted, or integrated. Next gate: inspect the official screenshot/model, create a mobile-sized texture variant, confirm exact glTF/material compatibility, then load one shared model for school instances and run the desktop/mobile visual and performance audits.
+
+### Treasure chest — Poly Haven candidate, not a confirmed treasure chest
+
+- [Poly Haven Wooden Crate 01](https://polyhaven.com/a/wooden_crate_01) is a free CC0 maritime/colonial prop. The Poly Haven public model catalogue describes it as a weathered wooden crate/chest with rope handles and metal rivets; catalogue count is 6,576 polygons and source textures are available up to 8K.
+- This is **not** a purpose-built fantasy treasure chest and must not be passed off as one. It may be suitable as a secondary supply crate only after preview, low-resolution texture download, and in-world scale check. No integration is claimed.
+- The existing 100 gameplay chests remain functional but their visible dodecahedron geometry is still a placeholder. Keep this issue open until an authentic, suitable chest model is found and integrated; do not silently substitute the crate.
