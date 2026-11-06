@@ -1445,3 +1445,12 @@ For each meaningful implementation batch:
 - [x] Committed a targeted change in game/play.html: update the flag cloth deformation at 20Hz rather than every render frame and remove redundant per-frame normal recomputation. Flag movement remains animated; this reduces CPU-side vertex writes and avoids work that cannot affect unlit MeshBasicMaterial shading.
 - [ ] Fresh Validate and Browser Smoke on the new head must pass. Compare the new flagAnimation stage profile and inspect screenshots for visible flag quality/regression.
 - [ ] This is a narrow CPU-work reduction only. It does not solve the dominant SwiftShader renderer cost, cave/fish/sanctuary realism, cave-to-coast route, or physical Redmi 14 5G acceptance. Do not claim an FPS improvement until measured on the same test environment and separately on physical hardware.
+
+
+## 2026-11-07 — gameplay HUD update throttling (verification pending)
+
+- [x] Further code audit found health/stamina/damage DOM text and bar widths were rewritten on every gameplay frame, and the summit chest proximity/countdown panel performed a 100-chest lookup plus DOM writes every frame.
+- [x] Added a shared 200ms gameplay HUD refresh gate. Health/stamina/damage display and summit chest proximity/countdown now refresh at up to 5Hz while gameplay timers and world simulation continue at frame cadence.
+- [x] Corrected the refresh boolean gate in a follow-up commit before verification; final implementation is on the current branch head.
+- [ ] Validate and Browser Smoke must pass on the final head; inspect profile stages and compare before/after under the same browser conditions.
+- [ ] This is a CPU/DOM-work reduction hypothesis, not an accepted FPS gain. It does not address the main renderer/SwiftShader cost, low-detail sanctuary/cave/fish art, route safety, or physical Redmi 14 5G testing.
