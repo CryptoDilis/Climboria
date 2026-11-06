@@ -956,17 +956,10 @@ const flag=(()=>{const s=POI.summit,g=new T3.Group();g.position.set(s.px,s.h,s.p
  const r=rng(3);for(let i=0;i<8;i++){const a=i/8*6.283,k=sc(mk(DOD,M('#5a554c'),Math.sin(a)*9,.8,Math.cos(a)*9,g),1.4+r()*.8,2+r()*1.2,1.4+r()*.8);k.rotation.y=r()*3}
  // No artificial summit beam; retain natural environmental lighting.
  return f})();
-/* ---------- animals ---------- */
+/* ---------- wildlife ---------- */
+// Wildlife remains intentionally absent until properly licensed, realistic models are integrated.
+// Keep the exported collection stable for world systems without rendering primitive placeholders.
 const animals=[];
-function animal(k){const g=new T3.Group(),s=[1.15,.9,.8][k],m=M(['#9b6b3c','#6c6f74','#4a3626'][k]),legs=[];
- sc(mk(SPH,m,0,1.08*s,0,g),.48*s,.48*s,.9*s);sc(mk(SPH,m,0,1.52*s,.72*s,g),.3*s,.3*s,.34*s);
- [[-.25,.6],[.25,.6],[-.25,-.6],[.25,-.6]].forEach(([x,z])=>{const pv=new T3.Group();pv.position.set(x*s,.8*s,z*s);g.add(pv);const leg=mk(CYL,m,0,-.32*s,0,pv);leg.scale.set(.075*s,.48*s,.075*s);legs.push(pv)});
- if(k==0)[-1,1].forEach(x=>{const a=sc(mk(CON,M('#d8cdb0'),x*.14,2.05,1.0,g),.07,.8,.07);a.rotation.z=-x*.5});
- if(k==1){const tail=sc(mk(CYL,m,0,1.22*s,-.82*s,g),.09*s,.5*s,.09*s);tail.rotation.x=1.1;}
- g.userData.legs=legs;return g}
-function placeAnimal(a,px,pz){for(let t=0;t<20;t++){const an=Math.random()*6.28,d=120+Math.random()*320,x=px+Math.sin(an)*d,z=pz+Math.cos(an)*d,h=heightAt(x,z);
- if(h>1.2&&h<55&&desF(x,z)<.6&&!nearPOI(x,z)){a.x=x;a.z=z;return}}a.x=px+200;a.z=pz}
-// Wild animals temporarily disabled: remove the low-quality placeholder models until proper assets are ready.
 /* ---------- fireflies ---------- */
 const FN=0,fpos=new Float32Array(0),fof=[];
 
