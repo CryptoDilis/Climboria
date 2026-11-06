@@ -1791,18 +1791,22 @@ function updateSummitChestStatus(){
  else countdown.textContent='READY TO CLAIM';
 }
 document.getElementById('time-cycle-control').addEventListener('click',()=>{todI=(todI+1)%TOD.length;syncEnvironmentControls()});document.getElementById('weather-cycle-control').addEventListener('click',()=>{wx=(wx+1)%weatherNames.length;syncEnvironmentControls()});syncEnvironmentControls();
+let gameplayHudClock=0;
 function gameTick(dt,cp){
  const live=P.mode=='walk';P.inv=Math.max(0,P.inv-dt);
  if(live){const c=POI.cave,ry=caveG.rotation.y,cs=Math.cos(ry),sn=Math.sin(ry),dx=P.x-c.x,dz=P.z-c.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs;
   for(const o of spikes)if(caveSpikeContact(lx,lz,P.y-caveG.position.y-1.75,o)){hurt(CAVE_SPIKE_DAMAGE,'Spike trap!');break}}
  /* Snake AI disabled with wildlife. */
  for(const c of chests)if(c.open&&(c.t-=dt)<0)place(c);
- updateSummitChestStatus();
+ gameplayHudClock+=dt;
+ if(gameplayHudClock>=.2){gameplayHudClock%=.2;updateSummitChestStatus();}
  if(P.fish>0){if(!live||Math.hypot(P.x-(P.fishStartX??P.x),P.z-(P.fishStartZ??P.z))>2.5){cancelFishing('Fishing cancelled · you moved away')}else{P.fishElapsed=(P.fishElapsed||0)+dt;if(P.fishPhase==='waiting'&&P.fishElapsed>=P.fishBiteAt){P.fishPhase='bite';toast('BITE! Press E to reel now')}else if(P.fishPhase==='bite'&&P.fishElapsed>P.fishBiteAt+P.fishBiteWindow){cancelFishing('Missed the bite · cast again')}}}
- hpEl.textContent='';
- const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
- document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
- document.getElementById('stamina-value').textContent=st;document.getElementById('stamina-fill').style.width=(st/P.maxStamina*100)+'%';document.getElementById('damage-value').textContent=P.damage;document.getElementById('damage-fill').style.width=(P.damage*5)+'%';
+ if(gameplayHudClock<dt+.2){
+  hpEl.textContent='';
+  const hp=Math.max(0,Math.min(P.maxHp,Math.round(P.hp??500))),st=Math.max(0,Math.min(P.maxStamina,Math.round(P.stamina??200)));
+  document.getElementById('health-value').textContent=hp;document.getElementById('health-fill').style.width=(hp/P.maxHp*100)+'%';
+  document.getElementById('stamina-value').textContent=st;document.getElementById('stamina-fill').style.width=(st/P.maxStamina*100)+'%';document.getElementById('damage-value').textContent=P.damage;document.getElementById('damage-fill').style.width=(P.damage*5)+'%';
+ }
  // The terrain map is a static relief image; redraw it only when opened/toggled.
  // Recomputing 240x240 height + multi-octave noise samples every frame stalls gameplay.
 
