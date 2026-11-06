@@ -1074,7 +1074,7 @@ hp(axe,hBox,metal,0,.8,0,.5,.07,.08);hp(axe,hBox,metal,-.22,.75,0,.12,.16,.08);
 for(let i=0;i<4;i++)hp(axe,hCyl,leather,0,.1+i*.09,-.005,.05,.025,.05);
 hero.visible=false;scene.add(hero);document.documentElement.dataset.climboriaHero='awaiting-saved-glb';document.documentElement.dataset.climboriaHeroRenderer='glb-only';
 /* Character model integration is paused until replacement Meshy GLBs are supplied. */
-let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
+let assetHero=null,assetMixer=null,assetActions=[],assetActive=null,assetRig={legs:[],arms:[],hips:null,spine:null,hipsBase:0,spineBase:0},assetAnimState='',assetHeroGroundOffset=0,assetHeroUsesAuthoredAnimations=false;
 const HERO_SOCKET_DEFS={
  hand_r:{bone:/(?:right|_r|\.r)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:right|_r|\.r)/i,fallback:{x:.28,y:.92,z:0}},
  hand_l:{bone:/(?:left|_l|\.l)[^/]*(?:hand|wrist)|(?:hand|wrist)[^/]*(?:left|_l|\.l)/i,fallback:{x:-.28,y:.92,z:0}},
@@ -1097,6 +1097,8 @@ function cacheAssetRig(root){
   if(/thigh|upleg|calf|lowerleg|knee|leg/.test(n))assetRig.legs.push({bone:o,base:o.rotation.x,side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.legs.length%2?-1:1});
   if(/upperarm|lowerarm|arm|shoulder|forearm/.test(n))assetRig.arms.push({bone:o,base:o.rotation.x,baseY:o.rotation.y,baseZ:o.rotation.z,shoulder:/shoulder/.test(n),lower:/lower|forearm/.test(n),side:/left|_l|\.l/.test(n)?1:/right|_r|\.r/.test(n)?-1:assetRig.arms.length%2?-1:1});
  });
+ assetRig.hipsBase=assetRig.hips?.rotation.y??0;
+ assetRig.spineBase=assetRig.spine?.rotation.x??0;
  heroSockets={};
  for(const [name,def] of Object.entries(HERO_SOCKET_DEFS)){
   const bone=bones.find(o=>def.bone.test(o.name));
@@ -1146,15 +1148,17 @@ window.__climboriaHeroRigAudit=()=>{
  return {loaded:!!assetHero,renderer:document.documentElement.dataset.climboriaHeroRenderer||'',asset:assetChoices.Adventurer,animationNames:assetActions.map(a=>a.name),boneCount:bones.length,bones,socketCandidates:bones.filter(b=>/(hand|wrist|forearm|arm|shoulder|spine|chest|pelvis|hip|root)/i.test(b.name)),sockets:Object.fromEntries(Object.entries(heroSockets).map(([name,node])=>[name,{bone:node.userData.attachedToBone,fallback:node.userData.fallback,position:{x:node.position.x,y:node.position.y,z:node.position.z}}]))};
 };
 function animateAssetFallback(t,state,speed){
- const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',falling=state==='fall',landing=state==='land';
+ const moving=state==='walk'||state==='run',swimming=state==='swim',jumping=state==='jump',falling=state==='fall',landing=state==='land',idle=state==='idle';
  const amp=moving?(state==='run'?.72:.42):0,phase=t*(state==='run'?11:8.5);
+ // Subtle breathing and weight shifts keep the supplied GLB alive when it has no authored idle clip.
+ const breath=idle?Math.sin(t*1.35)*.018:0,weightShift=idle?Math.sin(t*.72)*.012:0;
  for(const item of assetRig.legs){
   const b=item.bone;
   if(swimming)b.rotation.x=item.base+Math.sin(phase+item.side)*.28;
   else if(jumping)b.rotation.x=item.base-.28;
   else if(falling)b.rotation.x=item.base-.42;
   else if(landing)b.rotation.x=item.base+.16;
-  else b.rotation.x=item.base+Math.sin(phase)*amp*item.side;
+  else b.rotation.x=item.base+(idle?weightShift*item.side:Math.sin(phase)*amp*item.side);
  }
  for(const item of assetRig.arms){
   const b=item.bone;
@@ -1162,13 +1166,13 @@ function animateAssetFallback(t,state,speed){
   else if(jumping)b.rotation.x=item.base-.52;
   else if(falling)b.rotation.x=item.base-.78;
   else if(landing)b.rotation.x=item.base+.22;
-  else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):0);
+  else b.rotation.x=item.base+(moving?-Math.sin(phase)*amp*.58*item.side+(item.lower?.2:.06):idle?breath*(item.lower?.35:1):0);
   // Preserve the GLB-authored shoulder/elbow rest pose while standing still.
   // Apply gait offsets only during locomotion; never force the idle arms upward.
-  if(item.shoulder||!item.lower){b.rotation.z=item.baseZ+(!moving&&!swimming&&!jumping&&!falling&&!landing?item.side*.08:0);if(!item.shoulder)b.rotation.y=item.baseY;}
+  if(item.shoulder||!item.lower){b.rotation.z=item.baseZ+(!moving&&!swimming&&!jumping&&!falling&&!landing?item.side*(.08+weightShift):0);if(!item.shoulder)b.rotation.y=item.baseY;}
  }
- if(assetRig.spine)assetRig.spine.rotation.x=landing?.12:falling?.18:jumping?-.08:0;
- if(assetRig.hips)assetRig.hips.rotation.y=moving?Math.sin(phase)*.025:0;
+ if(assetRig.spine)assetRig.spine.rotation.x=assetRig.spineBase+(landing?.12:falling?.18:jumping?-.08:breath);
+ if(assetRig.hips)assetRig.hips.rotation.y=assetRig.hipsBase+(moving?Math.sin(phase)*.025:idle?weightShift:0);
 }
 const assetChoices={Adventurer:'../assets/characters/Climboria_Hero.glb'};
 let heroLoadError='',heroLoadRequest=0;
