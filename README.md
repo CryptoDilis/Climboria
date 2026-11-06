@@ -2455,3 +2455,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Do not bulk-delete all simple geometry before replacement assets are locally available and collision-tested. Replace by biome/asset class in measured batches, capture before/after screenshots, and compare performance after each batch.
 - [ ] Realistic PBR rocks/cliffs, trees/foliage, ground, cave walls, water/coast, wildlife, ruins, and camp/port props remain to be sourced and integrated from eligible GitHub files. Preserve procedural fallbacks only where no acceptable free GitHub asset is found.
 - [ ] PR #215 remains open/unmerged until latest Validate/Browser Smoke, visual review, collision checks, performance baselines and physical Redmi 14 5G acceptance pass.
+
+
+## 2026-11-06 — first realistic PBR surface batch
+
+- [x] Vendored six Poly Haven CC0 PBR maps from GitHub source repository `npmiaman/game-forge` at immutable commit `2b25427358dbfb6badd47f658ba71a6de748e548`: rocky terrain and sand (base colour, normal, roughness). Exact license/source details are in `game/assets/pbr/ASSET_LICENSES.md`.
+- [x] Replaced the very coarse dodecahedron rock instances with irregular subdivided geometry, smooth normals, and local PBR rock maps. This is an interim improvement; not yet a photogrammetry model.
+- [ ] Browser Smoke for the rock material change and performance sampler is pending. A prior smoke failure was traced to literal newline characters accidentally inserted into the test script; repaired in commit `8e70281`. Do not mark the smoke pass until the latest run and artifact are inspected.
+- [ ] Sand PBR maps are vendored but not yet applied to the coastline. High-detail rock/cliff/tree/vegetation meshes still need individually license-verified GitHub sources.
+- [ ] First performance artifact should establish desktop/mobile-emulation FPS, frame-time percentiles, draw calls, triangles, geometries and textures. Hard budgets will be set from measured baselines; physical Redmi 14 5G testing remains separate.
+- [ ] Low-poly/stylized world geometry remains in other systems (trees, grass, cave props, structures, wildlife and terrain). Replace in controlled batches only after visual/collision/performance checks; do not claim the whole world is realistic yet.
