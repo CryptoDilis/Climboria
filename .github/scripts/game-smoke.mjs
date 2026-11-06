@@ -53,7 +53,7 @@ try {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
-  await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  await page.waitForSelector('canvas:not(#world-map)', { state: 'visible', timeout: 45000 });
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
