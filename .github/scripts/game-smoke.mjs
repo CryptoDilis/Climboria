@@ -4,25 +4,30 @@ import { writeFileSync } from 'node:fs';
 
 async function measureRuntimePerformance(page, label) {
   const result = await page.evaluate(async () => {
-    const intervals = [];
-    let previous = 0;
-    await new Promise(resolve => {
+    const sampleFrames = durationMs => new Promise(resolve => {
+      const intervals = [];
+      let previous = 0;
       const start = performance.now();
       const tick = now => {
         if (previous) intervals.push(now - previous);
         previous = now;
-        if (now - start >= 2200) resolve();
+        if (now - start >= durationMs) resolve(intervals);
         else requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     });
+    // Let shader compilation, texture upload, and initial chunk streaming settle
+    // before measuring. Keep warm-up separate from the reported sample.
+    const warmupIntervals = await sampleFrames(3000);
+    const intervals = await sampleFrames(10000);
     const sorted = intervals.slice().sort((a,b)=>a-b);
     const percentile = p => sorted.length ? +sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2) : null;
     const mean = intervals.length ? intervals.reduce((a,b)=>a+b,0)/intervals.length : null;
     const state = window.__climboriaRenderState || {};
     const info = state.rendererInfo || null;
     return {
-      durationMs:2200,frames:intervals.length,
+      warmupDurationMs:3000,warmupFrames:warmupIntervals.length,
+      durationMs:10000,frames:intervals.length,
       averageFps:mean?+(1000/mean).toFixed(1):null,
       frameMsMean:mean?+mean.toFixed(2):null,
       frameMsP95:percentile(.95),frameMsP99:percentile(.99),
@@ -32,7 +37,8 @@ async function measureRuntimePerformance(page, label) {
       textures:info?.textures??null,
       sceneObjects:state.objects??null,
       devicePixelRatio:window.devicePixelRatio,
-      viewport:{width:innerWidth,height:innerHeight}
+      viewport:{width:innerWidth,height:innerHeight},
+      rendererEnvironment:'Playwright headless Chromium with SwiftShader software WebGL; not a physical GPU benchmark'
     };
   });
   return {label,...result};
