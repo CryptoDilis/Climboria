@@ -88,3 +88,29 @@ Research evidence: the 3DAssets.dev pack page documents the 94-model count, 4.1 
 | C — broad medieval kit | [Free Low-Poly Medieval Collection — Avramania](https://avramania.itch.io/free-collection) | CC0; 189 models across nature, village, castle/siege, interiors and dungeon/ruins; GLB and FBX formats; 8.4 MB archive. | Style is explicitly low-poly/flat-shaded. Use only if visual review confirms it fits Climboria; do not mix styles blindly. |
 
 Research evidence: the linked source pages list the stated CC0 terms, formats and specifications. These are candidates only; no castle asset has been downloaded, integrated, collision-tested or visually accepted yet.
+
+
+## 2026-11-06 — owner realism directive and GitHub-only source screening
+
+The target art direction is realistic / photogrammetry-inspired PBR, not low-poly, flat-shaded, faceted, toy-like or cartoon assets. GitHub repository hosting alone does not prove the individual asset is redistributable. Verify exact file license, commercial use, modification and redistribution before copying.
+
+### Screened, not approved for import
+- `anandin/the-wild-between`: tree/plant/rock GLTF files are from a Quaternius nature pack; repository metadata returns `NOASSERTION`. Reject as a realism replacement unless each original source file and license are separately verified; visual style is not the requested photoreal target.
+- `petroulacl/fps-buildings-env-kit`: README claims CC0 for listed packs but includes Quaternius stylized nature assets. May be useful for matching industrial/urban prop classes only after exact file/source/license inspection; not approved for forest/rock realism.
+- `cktang88/3d-fps`: screenshots demonstrate a photoreal browser environment and the README identifies Poly Haven / ambientCG sources for several assets. Repository tree contains local GLBs and WebP PBR maps, but no top-level LICENSE file was found in the inspected root. It mixes CC0 and CC-BY assets. Do not copy a file until its individual `SOURCE.md` and original source license are checked. Its industrial props may be candidates for port/black-market/camp dressing, not generic forest assets.
+
+### Import acceptance gates (every batch)
+1. Exact GitHub repository + immutable commit SHA + exact asset path.
+2. Exact original creator/source and file-specific license; commercial use, modifications and redistribution allowed. Keep required attribution and notices.
+3. Inspect model and texture visually; reject low-poly, flat-shaded, visibly faceted, toy-like, broken UVs, missing maps, or wrong scale.
+4. Vendor locally; no runtime hotlinks. Record source, revision, file size, license, texture resolution, triangle count, material count, collision/LOD status.
+5. Optimize GLB with mesh/texture compression only when visual quality survives. Use 1K/2K PBR maps for mobile, LODs, instancing/batching, region-based loading and disposal.
+6. Verify grounding, collision, walkability and camera clipping in the game.
+7. Run desktop and mobile Browser Smoke, compare average FPS and p95/p99 frame times, draw calls, triangles, geometry/texture counts and memory. Inspect before/after screenshots. Reject/rework any batch that introduces visible lag, stutter, crashes or collision regression.
+8. Physical Redmi 14 5G test is a separate release gate; browser mobile emulation does not count as device acceptance.
+
+### Visual target
+- Foreground/hero assets: high-detail PBR or photogrammetry-inspired, realistic proportions, natural roughness/normal detail and non-repeating surface variation.
+- Midground: optimized realistic LODs with matching materials.
+- Distant background: lower-detail silhouettes are allowed only where they do not read as low-poly close to the camera.
+- No replacement by another low-poly pack just because it is free or lightweight.
