@@ -1176,7 +1176,7 @@ let camY=null,lookY=0,cameraDistance=MOB?7.2:8.5,targetCameraDistance=MOB?7.2:8.
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
-window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance},get safeBack(){return cameraSafeBack},get actualDistance(){return cameraActualDistance},get groundClearance(){return cameraGroundClearance},get mobile(){return MOB},get fov(){return cam.fov}};
+window.__climboriaCameraOrbit={get yaw(){return cameraYaw},get pitch(){return cameraPitch},get playerYaw(){return P.yaw},get heroYaw(){return assetHero?.rotation.y??hero.rotation.y},get heroUsesGlb(){return !!assetHero&&assetHero.visible},get distance(){return cameraDistance},get targetDistance(){return targetCameraDistance},get safeBack(){return cameraSafeBack},get actualDistance(){return cameraActualDistance},get groundClearance(){return cameraGroundClearance},get mobile(){return MOB},get terrainLift(){return cameraLift},get fov(){return cam.fov}};
 const free=on=>document.body.classList.toggle('free',on);
 const climboriaMusic=new Audio('./assets/music/TRACK_01.mp3');climboriaMusic.loop=true;climboriaMusic.volume=.38;climboriaMusic.preload='auto';
 let climboriaMusicRequested=false;
@@ -1958,17 +1958,21 @@ function update(dt){
   const back=cameraDistance;
   terrainCameraTarget.set(P.x,P.y+1.05,P.z);
   terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+4.35+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*back);
-  let safeBack=back;
-  const CAMERA_SWEEP_STEPS=12;
+  // Preserve the full third-person distance on steep terrain. The previous
+  // ground sweep shortened the camera toward the hero whenever the rearward
+  // camera ray crossed a rising slope, which collapsed the view into the avatar.
+  // Lift the camera above the sampled terrain instead of pushing it into the hero.
+  let safeBack=back,cameraLift=0;
+  const CAMERA_SWEEP_STEPS=16;
   for(let i=1;i<=CAMERA_SWEEP_STEPS;i++){
    const t=i/CAMERA_SWEEP_STEPS;
    const sx=P.x+Math.sin(cameraYaw)*back*t,sz=P.z+Math.cos(cameraYaw)*back*t;
-   const sy=terrainCameraTarget.y+(terrainCameraDesired.y-terrainCameraTarget.y)*t;
-   if(sy<groundAt(sx,sz)+0.9){safeBack=back*(i-1)/CAMERA_SWEEP_STEPS;break;}
+   const baseY=terrainCameraTarget.y+(terrainCameraDesired.y-terrainCameraTarget.y)*t;
+   const clearanceY=groundAt(sx,sz)+1.35;
+   if(baseY<clearanceY)cameraLift=Math.max(cameraLift,(clearanceY-baseY)/t);
   }
-  safeBack=Math.max(2.2,safeBack);
-  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+4.35+Math.max(0,cameraPitch*1.6),P.z+Math.cos(cameraYaw)*safeBack);
-  terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+0.9);
+  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+4.35+Math.max(0,cameraPitch*1.6)+cameraLift,P.z+Math.cos(cameraYaw)*safeBack);
+  terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+1.35);
   cameraSafeBack=safeBack;
   cameraGroundClearance=terrainCameraFinal.y-groundAt(terrainCameraFinal.x,terrainCameraFinal.z);
   cam.position.copy(terrainCameraFinal);
