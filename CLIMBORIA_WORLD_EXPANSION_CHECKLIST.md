@@ -1333,3 +1333,20 @@ For each meaningful implementation batch:
 - [ ] Await fresh Validate and Browser Smoke for the 2.2km/663-sample audit; inspect the full offshore route and endpoint before tunnel construction.
 - [ ] Design the distinct underwater exit at the requested offshore endpoint (2km out to sea), with continuous walkable descent, seabed clearance, sealed roof, collision, headroom and swim transition. Do not dig or replace the existing cave entrance.
 - [ ] Keep cave visual polish, fish depth/body detail, relaxed idle, manual traversal, physical Redmi 14 5G acceptance, and free-GitHub asset audit open. PR #215 remains open and unmerged.
+
+
+## 2026-11-06 — realistic asset replacement and performance baseline
+
+- [x] Remove unverified off-GitHub rainforest runtime model downloads; procedural fallback remains temporary.
+- [x] Vendor six CC0 PBR texture maps (rocky terrain + sand, base colour/normal/roughness) from pinned GitHub source `npmiaman/game-forge@2b25427358dbfb6badd47f658ba71a6de748e548`; provenance and exact file list are in `game/assets/pbr/ASSET_LICENSES.md`.
+- [x] Replace the coarse flat-shaded dodecahedron rock instances with irregular subdivided geometry, smooth normals, and locally loaded rocky-terrain PBR maps.
+- [x] Add desktop/mobile-emulation performance sampling to Browser Smoke: average FPS, mean/p95/p99 frame interval, draw calls, triangles, geometry and texture counts. Report path: `climboria-performance.json`.
+- [x] Validate #2100 [42165117525](https://github.com/CryptoDilis/Climboria/actions/runs/42165117525) passed after the first PBR integration.
+- [ ] Browser Smoke #1533 [42165117563](https://github.com/CryptoDilis/Climboria/actions/runs/42165117563) is still running on the documentation checkpoint; its performance artifact and screenshots have not yet been reviewed.
+- [ ] Latest smoke script repair commit `8e70281` fixes literal newline syntax introduced during performance instrumentation. Fresh Validate/Smoke for the latest PR head is still required.
+- [ ] The six PBR texture files are not equivalent to scanned 3D rock/tree models. Other low-poly/stylized assets remain in generated terrain, vegetation, grass, cave props, structures, wildlife and other world dressing; each category needs a visual inventory and a controlled replacement batch.
+- [ ] Do not import low-poly packs (including Gobkit, Quaternius, Kenney, CC0Tree) as realism replacements even if they are free/CC0. Do not bulk-delete existing props before approved realistic replacements are locally vendored, collision-tested and performance-tested.
+- [ ] Candidate repositories are screened individually. `npmiaman/game-forge` is approved for the exact six Poly Haven CC0 PBR texture files only; its other models include stylized packs and are not blanket-approved.
+- [ ] Apply the vendored sand maps to shoreline terrain in a separate tested increment. Source and license exactness, UV scale, colour space, normal-map convention and mobile memory cost must be checked.
+- [ ] Establish measured baseline before setting FPS budgets. Browser mobile emulation is not physical Redmi 14 5G acceptance. Always compare before/after average FPS and p95/p99 frame time after every asset batch.
+- [ ] Cave tunnel/underwater exit, cave enclosure, fish realism, relaxed idle, manual traversal, physical Redmi 14 5G acceptance and PR merge gates remain open. PR #215 remains OPEN and UNMERGED.
