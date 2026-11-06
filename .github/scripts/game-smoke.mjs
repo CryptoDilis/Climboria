@@ -447,6 +447,15 @@ try {
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
   const clickMove=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,canvas=document.querySelector('canvas'),rect=canvas?.getBoundingClientRect();if(!p||!canvas||!rect)return{available:false};const previous=p.moveTarget;canvas.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:rect.left+rect.width*.62,clientY:rect.top+rect.height*.62}));const target=p.moveTarget;window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0}));p.moveTarget=previous;return{available:true,queued:!!target,finite:!!target&&Number.isFinite(target.x)&&Number.isFinite(target.z),distance:target?Math.hypot(target.x-p.x,target.z-p.z):null};});
   if(!clickMove.available||!clickMove.queued||!clickMove.finite||!(clickMove.distance>2.5))errors.push('Desktop left-click did not queue a valid Dota-style ground movement destination: '+JSON.stringify(clickMove));
+  const clickTravel=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player;if(!w||!p)return null;const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,moveTarget:p.moveTarget};const target={x:p.x+12,z:p.z};p.moveTarget=target;return{saved,target,startDistance:Math.hypot(target.x-p.x,target.z-p.z)};});
+  if(!clickTravel) errors.push('Click-to-move travel test could not access the gameplay player.');
+  else {
+    await page.waitForTimeout(900);
+    const travelResult=await page.evaluate(target=>{const p=window.__climboriaJarrellsPeak.player;return{x:p.x,z:p.z,remaining:Math.hypot(target.x-p.x,target.z-p.z),targetStillQueued:!!p.moveTarget};},clickTravel.target);
+    if(!(travelResult.remaining<clickTravel.startDistance-1)) errors.push('Hero queued a click destination but did not travel toward it: '+JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
+    console.log('Left-click destination travel audit:',JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
+    await page.evaluate(saved=>{const p=window.__climboriaJarrellsPeak.player;Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,moveTarget:saved.moveTarget});},clickTravel.saved);
+  }
   const clickCancel=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak?.player;if(!p)return{available:false};p.moveTarget={x:p.x+30,z:p.z+30};return{available:true,queued:!!p.moveTarget};});
   await page.keyboard.down('w');
   const keyboardPriority=await page.evaluate(()=>({target:window.__climboriaJarrellsPeak?.player?.moveTarget??null}));
