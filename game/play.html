@@ -1118,11 +1118,13 @@ function chooseAssetAnimation(state,speed=0){
  if(!assetMixer||!assetActions.length)return false;
  const exact=state==='swim'?(speed>.08?'Swim_Forward':'Swim_Idle'):state==='run'?'Running':state==='walk'?'Walking':state==='jump'?'Jump':state==='fall'?'Falling':state==='land'?'Landing':'';
  let clip=exact?assetActions.find(a=>a.name.toLowerCase()===exact.toLowerCase()):null;
- if(state==='idle'||state==='land')clip=findStandingRestClip();
+ if(state==='idle')clip=findStandingRestClip();
  else if(!clip){
   const patterns=state==='run'?/run|sprint|jog/i:state==='walk'?/walk|locomotion|move|travel/i:state==='swim'?/swim|stroke/i:state==='jump'?/jump|takeoff|airborne/i:state==='fall'?/fall|falling|free.?fall|drop|airborne/i:/land|touchdown/i;
   clip=assetActions.find(a=>patterns.test(a.name)&&!FORBIDDEN_REST_CLIP.test(a.name));
  }
+ // Prefer a real authored landing clip; use the standing rest pose only when the GLB has none.
+ if(state==='land'&&!clip)clip=findStandingRestClip();
  if(!clip&&state==='run')clip=assetActions.find(a=>/walk|locomotion|move/i.test(a.name));
  if(!clip&&state==='walk')clip=assetActions.find(a=>/run|jog|locomotion|move/i.test(a.name));
  if(!clip){
