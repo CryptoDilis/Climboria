@@ -19,17 +19,17 @@ async function measureRuntimePerformance(page, label) {
     const sorted = intervals.slice().sort((a,b)=>a-b);
     const percentile = p => sorted.length ? +sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2) : null;
     const mean = intervals.length ? intervals.reduce((a,b)=>a+b,0)/intervals.length : null;
-    const info = window.__climboriaRenderer?.info || window.renderer?.info || null;
+    const info = state.rendererInfo || null;
     const state = window.__climboriaRenderState || {};
     return {
       durationMs:2200,frames:intervals.length,
       averageFps:mean?+(1000/mean).toFixed(1):null,
       frameMsMean:mean?+mean.toFixed(2):null,
       frameMsP95:percentile(.95),frameMsP99:percentile(.99),
-      rendererCalls:info?.render?.calls??null,
-      rendererTriangles:info?.render?.triangles??null,
-      geometries:info?.memory?.geometries??null,
-      textures:info?.memory?.textures??null,
+      rendererCalls:info?.calls??null,
+      rendererTriangles:info?.triangles??null,
+      geometries:info?.geometries??null,
+      textures:info?.textures??null,
       sceneObjects:state.objects??null,
       devicePixelRatio:window.devicePixelRatio,
       viewport:{width:innerWidth,height:innerHeight}
