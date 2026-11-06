@@ -36,6 +36,7 @@ async function measureRuntimePerformance(page, label) {
       geometries:info?.geometries??null,
       textures:info?.textures??null,
       sceneObjects:state.objects??null,
+      stageProfile:window.__climboriaPerformanceProfile?.()??null,
       devicePixelRatio:window.devicePixelRatio,
       viewport:{width:innerWidth,height:innerHeight},
       rendererEnvironment:'Playwright headless Chromium with SwiftShader software WebGL; not a physical GPU benchmark'
