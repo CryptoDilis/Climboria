@@ -527,7 +527,8 @@ try {
   }));
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
-  await page.screenshot({ path: 'climboria-desktop-gameplay.png' });\n  performanceResults.push(await measureRuntimePerformance(page,'desktop-sanctuary'));
+  await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  performanceResults.push(await measureRuntimePerformance(page,'desktop-sanctuary'));
   const pondSetup=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
   if(!pondSetup.available)errors.push('Could not position desktop visual capture at Woodland Pond.');
   await page.mouse.move(680,450);await page.mouse.down({button:'right'});await page.mouse.move(680,700,{steps:8});await page.mouse.up({button:'right'});await page.waitForTimeout(1200);
@@ -773,7 +774,10 @@ try {
   }));
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
-  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });\n  performanceResults.push(await measureRuntimePerformance(mobile,'mobile-sanctuary-emulation'));\n  writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));\n  console.log('Climboria runtime performance baseline:',JSON.stringify(performanceResults));
+  await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  performanceResults.push(await measureRuntimePerformance(mobile,'mobile-sanctuary-emulation'));
+  writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));
+  console.log('Climboria runtime performance baseline:',JSON.stringify(performanceResults));
   const mobilePondSetup=await mobile.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
   if(!mobilePondSetup.available)errors.push('Could not position mobile visual capture at Woodland Pond.');
   await mobile.mouse.move(420,180);await mobile.mouse.down({button:'right'});await mobile.mouse.move(420,300,{steps:8});await mobile.mouse.up({button:'right'});await mobile.waitForTimeout(1200);
