@@ -1,3 +1,19 @@
+## 2026-11-06 — latest-head visual and performance review
+
+- [x] Re-checked PR #215 current head: `171b81ddf594c4c232e0d273774902d364fb17ec` (PR remains open and unmerged).
+- [x] Validate passed: [run 42165828873](https://github.com/CryptoDilis/Climboria/actions/runs/42165828873).
+- [x] Full desktop/mobile Browser Smoke passed: [run 42165828882](https://github.com/CryptoDilis/Climboria/actions/runs/42165828882); screenshot artifact [13479310831](https://github.com/CryptoDilis/Climboria/actions/runs/42165828882/artifacts/13479310831) inspected.
+- [x] Cave exterior-to-interior movement and broad smoke coverage completed by the automated browser job; this does not close manual collision/headroom/device acceptance.
+- [ ] Cave visual acceptance remains open: desktop/mobile interior captures still show a bright exterior opening behind the player and the chamber reads short/open; entrance still reads small/decorative against a broad empty foreground.
+- [ ] Woodland Pond fish are visible as pale silhouettes, but remain visually flat and do not yet read as natural submerged fish.
+- [ ] Hero idle remains unaccepted: smoke diagnostic identifies `procedural-fallback` as idle candidate; captured stance remains arms-out/stiff even though movement-state diagnostics report idle/walk/run/swim.
+- [ ] Performance warning requires investigation: the smoke artifact measured 931,447 desktop triangles / 296 renderer calls and 500,039 mobile-emulation triangles / 185 calls. SwiftShader's 2.2-second sample reported 1.1 FPS desktop and 0.7 FPS mobile emulation. This software-rendered CI number is not a physical-device benchmark, but it is too concerning to ignore. Establish representative desktop GPU and physical Redmi 14 5G frame-time/FPS baselines; profile chunk/scene draw cost and wildlife/vegetation separately before claiming acceptable performance.
+- [ ] Do not merge PR #215 until cave depth/occlusion, fish visual readability, hero idle, and physical-device acceptance are resolved. Keep all smoke assertions; do not weaken thresholds to manufacture a pass.
+- [x] Review findings and merge gate recorded in PR #215 discussion.
+- **Next focused task:** diagnose the cave's short/open visual read and the underlying scene-performance cost without changing unrelated gameplay systems; then rerun Validate, desktop/mobile Browser Smoke and inspect fresh screenshots.
+
+---
+
 ## NON-NEGOTIABLE ASSET POLICY — FREE GITHUB-HOSTED ASSETS ONLY
 
 **Owner directive:** Climboria must use free assets sourced from GitHub repositories only. This applies to every new or replacement game asset: 3D models, characters, costumes, animations, environment props, rocks, trees, vegetation, animals, fish, buildings, weapons, tools, textures, materials, audio, UI art, and effects.
