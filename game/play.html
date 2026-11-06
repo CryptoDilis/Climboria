@@ -949,7 +949,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Removed the detached ceiling cones: they floated above the cave mouth instead of attaching to the roof.
  // The spike field was part of the removed exposed western extension.
  // Removed the isolated smooth floor spheres; cave rubble is now formed by the connected rock lining.
- const r=rng(31);for(let i=0;i<5;i++){const s=soldier();s.position.set(-14+i*7,0,3+r()*3);s.rotation.y=r()*1.5-.75;g.add(s);soldiers.push({s,ph:r()*6,tilt:.05})}
+ // Keep this outpost free of primitive soldier stand-ins until the approved realistic GLB patrol asset is ready.
 }
 /* Summit */
 const flag=(()=>{const s=POI.summit,g=new T3.Group();g.position.set(s.px,s.h,s.pz);scene.add(g);
