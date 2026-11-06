@@ -1263,7 +1263,7 @@ volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeC
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
- cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.25,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.75,P.z);
+ cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.25,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.15,P.z);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
@@ -2044,7 +2044,7 @@ function update(dt){
   // Third-person follow camera keeps the explorer visible in the world.
   cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);
   const back=cameraDistance;
-  terrainCameraTarget.set(P.x,P.y+.75,P.z);
+  terrainCameraTarget.set(P.x,P.y+.15,P.z);
   // Keep the full character in frame: a lower shoulder-height follow camera
   // avoids cropping the legs at spawn and reduces the steep top-down angle.
   terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+2.65+Math.max(0,cameraPitch*1.2),P.z+Math.cos(cameraYaw)*back);
