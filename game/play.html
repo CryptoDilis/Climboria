@@ -657,10 +657,8 @@ const parkFixtureSolids=[];
   for(const px of [-4,4]){const rope=mk(CYL,M('#b8a37b'),px,1.7,0,hammock);sc(rope,.035,.9,.035);rope.rotation.z=Math.PI/2}
  }
 }
-/* Rice huts */
-{const r=rng(9);for(let i=0;i<5;i++){const a=r()*6.283,d=50+r()*130,x=RICE.x+Math.sin(a)*d,z=RICE.z+Math.cos(a)*d,h=heightAt(x,z);
- if(h<.5)continue;const g=new T3.Group();g.position.set(x,h,z);g.rotation.y=r()*6;scene.add(g);
- sc(mk(BOX,M('#b08a55'),0,1.5,0,g),4,3,4);const rf=sc(mk(CON,M('#8a5a2b'),0,4.2,0,g),3.8,2.4,3.8);rf.rotation.y=Math.PI/4}}
+/* Rice-field hut placeholders removed.
+   Keep the rice biome clear until a properly sourced, visually inspected structure GLB is ready. */
 /* Soldiers — placeholder primitive figures intentionally removed.
    Do not restore box/sphere/cylinder stand-ins. Re-enable camp patrols only after
    a visually inspected, properly licensed realistic rigged soldier GLB is vendored. */
