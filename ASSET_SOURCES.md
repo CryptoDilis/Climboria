@@ -161,3 +161,10 @@ Initial integration in `game/play.html`: replace the dodecahedron flat-shaded ro
 - Rice-field hut boxes/cones: removed.
 - Fish: still the simple procedural low-poly silhouettes; replacement pending. Do not mark fish realism complete.
 - Camp fire, shrine/statue, treasure chests, torches, and some cave rock formations still use primitive geometry. These are separate audit targets; inspect in-game before deciding whether they need replacement or can remain as functional/simple set dressing.
+
+
+## 2026-11-06 follow-up — primitive wildlife code removal
+
+- Removed the unused procedural deer/wolf-style animal mesh generator and its placement helper from `game/play.html`. The world still exports an empty wildlife collection for interface stability; no realistic wildlife replacement is claimed or rendered yet.
+- Wildlife remains blocked pending properly licensed, visually inspected realistic animal models. Do not reintroduce the old sphere/cylinder placeholder generator.
+- The fish schools remain a known low-poly visual placeholder. The Khronos BarramundiFish candidate is CC0 but its full GLB is approximately 12.5 MB; it is not integrated and is not approved for repeated mobile school instances until optimized, visually inspected, and benchmarked.
