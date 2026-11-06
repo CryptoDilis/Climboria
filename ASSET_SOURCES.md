@@ -184,3 +184,22 @@ Initial integration in `game/play.html`: replace the dodecahedron flat-shaded ro
 - [Poly Haven Wooden Crate 01](https://polyhaven.com/a/wooden_crate_01) is a free CC0 maritime/colonial prop. The Poly Haven public model catalogue describes it as a weathered wooden crate/chest with rope handles and metal rivets; catalogue count is 6,576 polygons and source textures are available up to 8K.
 - This is **not** a purpose-built fantasy treasure chest and must not be passed off as one. It may be suitable as a secondary supply crate only after preview, low-resolution texture download, and in-world scale check. No integration is claimed.
 - The existing 100 gameplay chests remain functional but their visible dodecahedron geometry is still a placeholder. Keep this issue open until an authentic, suitable chest model is found and integrated; do not silently substitute the crate.
+
+
+## 2026-11-07 — latest cave/pond screenshot audit: current procedural art rejected
+
+Reviewed all ten screenshots from Browser Smoke run [42277972370](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370), artifact [13535045712](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370/artifacts/13535045712), tested commit `de7afc4661b5587397634d6e1486e821bb7e49dd`.
+
+- Cave entrance: the portal is small in the composition and separated from the player by a broad empty foreground. The entrance is not visually accepted.
+- Cave interior: the player can be captured inside the chamber, but a bright exterior opening remains visible behind the player. Large procedural rock planes, angular ceiling pieces and simple floor patches still read as a stylized blockout. The chamber is not visually accepted.
+- Woodland Pond: fish are visible as pale flat silhouettes, but the sphere/shape-geometry fish do not read as natural, detailed fish. Fish realism is not accepted.
+- These screenshots demonstrate that the existing PBR rock maps alone do not solve the cave's silhouette, geometry, lighting or composition problems. Do not label the procedural cave as photorealistic.
+- Do not import Kenney Modular Cave Kit or another low-poly/stylized cave pack as a substitute; that would violate the current visual target.
+- No new cave model is approved by this audit. Continue searching for an actual GitHub-hosted distributable file with exact provenance and commercial/redistribution rights. Inspect the model preview and file before importing. GitHub hosting or a repository-level CC0 claim is not enough when the exact asset source/license is unclear.
+- Any future cave asset batch must be vendored locally, have immutable source revision and exact file path recorded, include license/NOTICE, use collision meshes independent from decorative geometry, and pass screenshot plus desktop/mobile performance checks. Physical Redmi 14 5G acceptance remains separate.
+
+### Latest CI performance evidence (not a device benchmark)
+
+- Desktop SwiftShader: 199,971 triangles, 103 draw calls, 78 geometries, 18 textures, 2.5 FPS mean over 2.2 seconds.
+- Mobile-emulation SwiftShader: 166,067 triangles, 81 draw calls, 64 geometries, 10 textures, 0.8 FPS mean over 2.2 seconds.
+- Treat these as software-renderer warning signals only. Profile main-thread update work, terrain chunk generation, draw-call/geometry cost and GPU frame time separately on representative hardware before changing world density or claiming performance is fixed.
