@@ -37,7 +37,8 @@ async function measureRuntimePerformance(page, label) {
   });
   return {label,...result};
 }
-\nconst errors = [];\nconst performanceResults = [];
+const errors = [];
+const performanceResults = [];
 const browser = await chromium.launch({
   headless: true,
   args: ['--no-sandbox', '--enable-webgl', '--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
