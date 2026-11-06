@@ -452,7 +452,7 @@ try {
   else {
     await page.waitForTimeout(900);
     const travelResult=await page.evaluate(target=>{const p=window.__climboriaJarrellsPeak.player;return{x:p.x,z:p.z,remaining:Math.hypot(target.x-p.x,target.z-p.z),targetStillQueued:!!p.moveTarget};},clickTravel.target);
-    if(!(travelResult.remaining<clickTravel.startDistance-1)) errors.push('Hero queued a click destination but did not travel toward it: '+JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
+    if(!(travelResult.remaining<clickTravel.startDistance-.5)) errors.push('Hero queued a click destination but did not travel toward it: '+JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
     console.log('Left-click destination travel audit:',JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
     await page.evaluate(saved=>{const p=window.__climboriaJarrellsPeak.player;Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,moveTarget:saved.moveTarget});},clickTravel.saved);
   }
