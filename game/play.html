@@ -436,6 +436,9 @@ gl_FragColor=vec4(c,.70);
 water.frustumCulled=false;water.renderOrder=2;scene.add(water);
 /* ---------- terrain chunks ---------- */
 const CS=200,SEG=40,STEP=CS/SEG,N1=SEG+1;
+// Mobile terrain uses a slightly coarser mesh LOD to reduce vertex/triangle load;
+// analytic heightAt/groundAt collision remains unchanged.
+const TERRAIN_NEAR_SEGMENTS=MOB?32:SEG,TERRAIN_FAR_SEGMENTS=TERRAIN_NEAR_SEGMENTS/2;
 const idx=[];for(let j=0;j<SEG;j++)for(let i=0;i<SEG;i++){const a=j*N1+i;idx.push(a,a+N1,a+1,a+1,a+N1,a+N1+1)}
 const IDX=new T3.BufferAttribute(new Uint32Array(idx),1);
 const terrMat=new T3.MeshLambertMaterial({vertexColors:true});
@@ -584,7 +587,7 @@ function terrainIndexFor(seg){
 function buildChunk(cx,cz,centerX,centerZ){
  // Keep full 5 m terrain sampling near the explorer. Fogged outer chunks use
  // 10 m sampling to cut far-field terrain vertices without changing collision.
- const seg=Math.max(12,Math.max(Math.abs(cx-centerX),Math.abs(cz-centerZ))>2?SEG/2:SEG);
+ const seg=Math.max(12,Math.max(Math.abs(cx-centerX),Math.abs(cz-centerZ))>2?TERRAIN_FAR_SEGMENTS:TERRAIN_NEAR_SEGMENTS);
  const n=seg+1,step=CS/seg,ox=cx*CS,oz=cz*CS,B=seg+3,hg=new Float32Array(B*B);
  for(let j=-1;j<=seg+1;j++)for(let i=-1;i<=seg+1;i++)hg[(j+1)*B+i+1]=heightAt(ox+i*step,oz+j*step);
  const pos=new Float32Array(n*n*3),nor=new Float32Array(n*n*3),col=new Float32Array(n*n*3);
@@ -611,7 +614,7 @@ function updateChunks(px,pz,budget){
   }
   // Rebuild chunks when they cross the near/far LOD boundary so detail
   // follows the player instead of being frozen at the chunk's creation time.
-  const desiredSegments=distance>2?SEG/2:SEG;
+  const desiredSegments=distance>2?TERRAIN_FAR_SEGMENTS:TERRAIN_NEAR_SEGMENTS;
   if(c.terrainSegments!==desiredSegments){
    c.objs.forEach(o=>{scene.remove(o);if(o.userData?.climboriaOwnedGeometry)o.geometry.dispose();o.dispose&&o.dispose()});
    c.geo.dispose();chunks.delete(k);
