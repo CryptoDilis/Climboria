@@ -1,3 +1,16 @@
+## 2026-11-06 — camera zoom regression and visual/performance acceptance (PR #215)
+
+- [x] Camera framing/zoom regression fix committed as gameplay commit `74b3f1e3b6046971ad37d5b1576b47246925a611`; wheel zoom lower clamp is now 3.4, matching the camera's supported closer range.
+- [x] Validate Climboria passed: run [42307390635](https://github.com/CryptoDilis/Climboria/actions/runs/42307390635).
+- [x] Both Browser Smoke runs passed: [42307390613](https://github.com/CryptoDilis/Climboria/actions/runs/42307390613) and [42307382282](https://github.com/CryptoDilis/Climboria/actions/runs/42307382282). This confirms automated smoke coverage and zoom interaction, not visual acceptance.
+- [ ] Screenshot review on the same commit still fails visual acceptance: desktop and mobile spawn gameplay frames show the explorer too small against a very large empty green foreground; sanctuary columns remain primitive. Do not make further camera changes blindly; reproduce the capture state and tune framing against screenshots.
+- [ ] Cave visual acceptance remains blocked: screenshot shows a broad flat floor, angular/faceted wall geometry, an oversized bright opening, and exposed exterior view from the interior. Ambient-light test passing does not fix cave geometry or occlusion.
+- [ ] Performance warning from the same Playwright headless Chromium + SwiftShader software-WebGL artifact (not a physical GPU or Redmi benchmark): desktop sanctuary 1.8 FPS, 140,243 triangles, 43 renderer calls; mobile emulation 0.9 FPS, 147,487 triangles, 67 calls. Profile shows renderer dominating; investigate renderer/scene cost and capture on real hardware before setting device FPS claims.
+- [ ] Cave-to-coast audit reaches open sea and seabed, but sampled path is not walkable: max rise grade 330.2% over 10 units (distance 120–130), max drop 186.2% (230–240). Redesign/validate the actual traversable route before marking coast access complete.
+- [ ] PR #215 remains open and unmerged. Preserve all visual, performance, collision, and manual Redmi review gates.
+
+---
+
 ## 2026-11-04 — water-edge terrestrial vegetation regression gate
 
 - [x] Strengthened the desktop/mobile Browser Smoke forest-placement audit: every planned CC0 buttress tree, canopy tree, undergrowth patch, and fallen log must be outside mapped water and outside the 18-unit sandy shoreline/bank exclusion buffer.
