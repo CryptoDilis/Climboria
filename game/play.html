@@ -516,7 +516,8 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
  }
  function makeGrass(cx,cz,out){
   const ox=cx*CS,oz=cz*CS,rand=rng(cx*1877+cz*3181+991),items=[];
-  const count=MOB?150:330;
+  // Keep foliage instancing bounded while retaining dense natural ground cover.
+  const count=MOB?100:220;
   for(let i=0;i<count;i++){
    const x=ox+rand()*CS,z=oz+rand()*CS,h=heightAt(x,z);
    if(h<2||h>155||shoreClear(x,z,h)||nearPOI(x,z))continue;
@@ -548,7 +549,7 @@ function shoreClear(x,z,h){
 }
 function props(cx,cz,out){
  const ox=cx*CS,oz=cz*CS,r=rng(cx*7349+cz*911+13),ro=[],col=[];
- for(let i=0;i<34;i++){
+ for(let i=0;i<26;i++){
   const x=ox+r()*CS,z=oz+r()*CS,h=heightAt(x,z),s=1+r()*r()*5,k=r();
   if(h<.2||shoreClear(x,z,h)||nearPOI(x,z)||k>(h>60?.9:desF(x,z)>.5?.5:.25))continue;
   col.push({x,z,r:s*.8});ro.push({x,h,z,s,rot:r()*6.28,c:desF(x,z)>.5?L('#b98a55'):hsl(.08,.06,.3+.12*r())});
