@@ -743,6 +743,20 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  });
  const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
  const tunnelFloor=mk(BOX,M('#4c4942'),0,.035,9.5,g);sc(tunnelFloor,7.2,.07,19.5,g);
+ // Continuous structural roof closes the gaps between decorative throat boulders.
+ // Keep its underside well above the player capsule; the entrance remains open
+ // at the portal while the approach reads as a dark, enclosed tunnel.
+ const tunnelRoofGeo=new T3.BoxGeometry(9.4,1.65,19.8,12,1,20);
+ const tunnelRoofPos=tunnelRoofGeo.attributes.position;
+ for(let vi=0;vi<tunnelRoofPos.count;vi++){
+  const x=tunnelRoofPos.getX(vi),y=tunnelRoofPos.getY(vi),z=tunnelRoofPos.getZ(vi);
+  const rockUndulation=Math.sin(x*.72+z*.21)*.075+Math.sin(z*.48-x*.31)*.055;
+  tunnelRoofPos.setY(vi,y+rockUndulation);
+ }
+ tunnelRoofGeo.computeVertexNormals();
+ const tunnelRoof=new T3.Mesh(tunnelRoofGeo,new T3.MeshStandardMaterial({color:L('#343735'),roughness:.99,metalness:0,side:T3.DoubleSide}));
+ tunnelRoof.position.set(0,7.25,9.6);tunnelRoof.receiveShadow=true;tunnelRoof.castShadow=true;
+ tunnelRoof.userData.caveTunnelRoof=true;g.add(tunnelRoof);
  // Close the main chamber with a continuous, irregular stone roof. The previous
  // build left the chamber open to the sky, making the interior read like an
  // outdoor courtyard. This roof covers the connected rooms but leaves the
