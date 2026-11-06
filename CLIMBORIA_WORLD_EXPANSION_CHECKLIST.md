@@ -1408,3 +1408,12 @@ For each meaningful implementation batch:
 - [ ] Continue searching for a realistic, GitHub-downloadable sanctuary/ruin asset whose exact file license permits the intended commercial game distribution without imposing an incompatible share-alike obligation. Verify exact model file, pinned revision, attribution, triangle/texture budgets, mobile memory, and collision before import.
 - [ ] Until a compliant replacement is vetted, retain existing sanctuary/gameplay assets; do not bulk-delete or disguise the primitive geometry with unverified packs. Sanctuary visual acceptance remains OPEN.
 - [ ] Cave enclosure, submerged fish realism, safe cave-to-coast corridor, rendering/device performance baseline, manual collision/headroom/trap traversal, natural idle, and physical Redmi 14 5G acceptance remain OPEN. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — GitHub CC0 Egyptian architecture candidate screened
+
+- [x] Found a GitHub-hosted CC0 GLB collection from Polygonal Mind: `ToxSam/cc0-models-Polygonal-Mind`, project `tomb-chaser-1`. Its published registry marks the project CC0 and the model index identifies `Column_Art.glb` as an Egyptian architectural column (636,964 bytes), plus a door and torch props. The collection's license statement says CC0.
+- [ ] This is only a candidate, not an approved Climboria asset: the available metadata does not establish photorealistic quality, exact triangle/texture counts, mobile cost, collision suitability, or a matching sanctuary-wide structure. No model was downloaded or imported, and no visual quality claim is made.
+- [ ] Before any import, inspect the exact GLB and rendered thumbnail, pin the upstream commit, verify the individual source/license trail, measure mesh/material/texture complexity, test desktop/mobile GPU and memory, and author/test collision proxies. Reject it if the visual result is stylized/low-poly or cannot meet the realism bar.
+- [ ] Sanctuary remains visually unaccepted. Do not replace current pillars with a single column prop or scale the hero/collision. Continue seeking a complete realistic structure or a coherent set of genuinely realistic architectural modules.
+- [ ] All existing open gates remain: cave enclosure and safe cave-to-coast route; submerged fish realism; reliable GPU/device performance baseline; manual cave traversal/collision/headroom/traps; natural idle; physical Redmi 14 5G testing. PR #215 remains OPEN and UNMERGED.
