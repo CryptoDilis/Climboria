@@ -1417,3 +1417,12 @@ For each meaningful implementation batch:
 - [ ] Before any import, inspect the exact GLB and rendered thumbnail, pin the upstream commit, verify the individual source/license trail, measure mesh/material/texture complexity, test desktop/mobile GPU and memory, and author/test collision proxies. Reject it if the visual result is stylized/low-poly or cannot meet the realism bar.
 - [ ] Sanctuary remains visually unaccepted. Do not replace current pillars with a single column prop or scale the hero/collision. Continue seeking a complete realistic structure or a coherent set of genuinely realistic architectural modules.
 - [ ] All existing open gates remain: cave enclosure and safe cave-to-coast route; submerged fish realism; reliable GPU/device performance baseline; manual cave traversal/collision/headroom/traps; natural idle; physical Redmi 14 5G testing. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — tomb-chaser CC0 candidate decision
+
+- [x] Verified upstream repository metadata: `ToxSam/cc0-models-Polygonal-Mind` is a fork of `PolygonalMind/initiative-opensource-release`, default branch `main`, current inspected revision `56db2d4088512531a070d0bf3eb9d284d077528d`, repository license CC0-1.0. README states the converted packs include Tomb Chaser 1 and 2 and describes a broad game-environment collection.
+- [x] Verified `projects/tomb-chaser-1/Column_Art.glb` exists at 636,964 bytes and is described in the model registry as an Egyptian architectural column. This establishes file presence and collection license metadata only; it does not establish photorealistic appearance or safe performance.
+- [ ] Candidate is NOT approved for Climboria sanctuary replacement. No asset has been imported. The collection's game-pack provenance and missing verified visual/mesh/texture/collision metrics mean it cannot yet satisfy the owner's realism bar. Do not substitute its column or props as the sanctuary solution without direct model inspection and acceptance.
+- [ ] Seek a better-fit realistic architectural environment/ruin with exact GitHub-hosted files and explicit compatible license, then inspect rendered model and technical budgets before local vendoring.
+- [ ] Sanctuary, cave, fish, cave-to-coast corridor, rendering/device baseline, manual cave traversal, natural idle, and physical Redmi 14 5G acceptance remain OPEN. PR #215 remains OPEN and UNMERGED.
