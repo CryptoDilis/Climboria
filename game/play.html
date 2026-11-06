@@ -1224,7 +1224,8 @@ function cinematicPoint(u){
 }
 // Bring the explorer closer on narrow screens so the hero remains readable above the mobile controls.
 // Closer shoulder-height framing keeps the explorer readable on both desktop and narrow mobile screens.
-let camY=null,lookY=0,cameraDistance=MOB?6.2:7.2,targetCameraDistance=MOB?6.2:7.2,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0,cameraTerrainLift=0;
+// Tighter third-person framing gives the explorer more screen presence without changing model scale or collision dimensions.
+let camY=null,lookY=0,cameraDistance=MOB?5.2:5.8,targetCameraDistance=MOB?5.2:5.8,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0,cameraTerrainLift=0;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
