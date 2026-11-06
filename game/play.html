@@ -514,10 +514,10 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
   if(!items.length)return;
   const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
-  im.instanceMatrix.needsUpdate=true;im.computeBoundingSphere();im.frustumCulled=true;out.push(im);
+  im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;out.push(im);
  }
 function inst(geo,mat,list,fn){if(!list.length)return null;const im=new T3.InstancedMesh(geo,mat,list.length);
- list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.computeBoundingSphere();im.frustumCulled=true;return im}
+ list.forEach((t,i)=>{fn(t);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});im.frustumCulled=false;return im}
 /* Keep terrestrial dressing outside water and the full sandy bank buffer for every water type. */
 function shoreClear(x,z,h){
  const radius=18;
