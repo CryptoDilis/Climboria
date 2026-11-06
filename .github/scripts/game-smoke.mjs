@@ -287,7 +287,7 @@ try {
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
   if(!cavePassage||cavePassage.wallCount!==32||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
   const caveCoast=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastRouteAudit?.()??null);
-  if(caveCoast) writeFileSync('cave-coast-route-audit.json', JSON.stringify({schemaVersion:1,commit:process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),source:'Jarrell’s Peak caveCoastRouteAudit',...caveCoast},null,2));
+  if(caveCoast) writeFileSync('cave-coast-route-audit.json', JSON.stringify({schemaVersion:1,commit:process.env.CLIMBORIA_TESTED_HEAD_SHA||process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),source:'Jarrell’s Peak caveCoastRouteAudit',...caveCoast},null,2));
   if(!caveCoast||!caveCoast.ok||!caveCoast.finite||caveCoast.sampleCount!==663||caveCoast.samples?.length!==663||caveCoast.samples.some(p=>![p.x,p.z,p.surface].every(Number.isFinite))||!caveCoast.oceanReached||!caveCoast.seabedReached||caveCoast.endpoint?.distance!==2200||caveCoast.endpoint?.water!=='open_sea'||caveCoast.maxSurfaceRise?.gradePercent<200||caveCoast.maxSurfaceDrop?.gradePercent<150) errors.push('Cave-to-coast terrain survey/grade/seabed feasibility audit failed: '+JSON.stringify(caveCoast));
   console.log('Cave-to-coast terrain route audit:',JSON.stringify(caveCoast));
   const caveWater=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveWaterAudit?.()??null);
@@ -776,7 +776,7 @@ try {
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   performanceResults.push(await measureRuntimePerformance(mobile,'mobile-sanctuary-emulation'));
-  writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));
+  writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.CLIMBORIA_TESTED_HEAD_SHA||process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));
   console.log('Climboria runtime performance baseline:',JSON.stringify(performanceResults));
   const mobilePondSetup=await mobile.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
   if(!mobilePondSetup.available)errors.push('Could not position mobile visual capture at Woodland Pond.');
