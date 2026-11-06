@@ -1,5 +1,10 @@
 # Climboria — Realistic Environment Asset Sources
 
+> **CURRENT ACCEPTANCE RULE — STRICT:** New or replacement 3D models/props must be downloadable as the exact asset file from a public GitHub repository at a pinned immutable commit. The exact file must have a verifiable license permitting commercial use, modification, and redistribution. A GitHub repository that merely links to an off-GitHub download does **not** qualify. Poly Haven website downloads, Kenney packs, Quaternius/stylized packs, marketplace links, and other non-GitHub-hosted downloads are not approved for new imports under this rule, even if free or CC0. Existing references below are historical research only unless the exact distributable file is independently verified against this rule.
+
+> **Visual acceptance:** No generic, low-poly, toy-like, or cartoon substitutes. Prefer realistic/photogrammetry-quality assets with PBR materials. Do not integrate an asset until its actual file and preview are inspected; record repository URL, immutable commit SHA, exact file path, license/NOTICE, file size, triangle count, texture dimensions, and runtime optimization. Vendor locally; no runtime hotlinks. Build collision separately where needed, and test loading/performance on desktop and mobile. Never claim an asset is integrated or visually accepted until that exact asset is present in-game and reviewed.
+
+
 This file records candidate assets before integration. The source page is authoritative for license and download formats; re-check it when importing a file. Do not mark an asset integrated until its actual model/texture is in the game, its file size and license are recorded, and desktop/mobile loading is tested.
 
 ## Photorealistic rocks and cliffs
