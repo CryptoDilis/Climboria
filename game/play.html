@@ -409,7 +409,7 @@ gl_FragColor=vec4(c,1.);
 sky.renderOrder=-1;sky.frustumCulled=false;scene.add(sky);
 /* ---------- water ---------- */
 const wU=T3.UniformsUtils.merge([T3.UniformsLib.fog,{uT:{value:0},uSun:{value:sunDir},uSunC:{value:cur.sun},uTop:{value:cur.top},uHor:{value:cur.hor},uDeep:{value:L('#006b80')}}]);
-const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?4:6,WS=(2*R+1)*200,WSEG=120;
+const MOB=('ontouchstart' in window)||navigator.maxTouchPoints>0; if(MOB){document.body.classList.add('mobile-device');resizeClimboriaViewport()} const R=MOB?3:4,WS=(2*R+1)*200,WSEG=120;
 const waterGeo=new T3.PlaneGeometry(WS,WS,WSEG,WSEG);waterGeo.rotateX(-Math.PI/2);
 const water=new T3.Mesh(waterGeo,new T3.ShaderMaterial({uniforms:wU,fog:true,transparent:true,depthWrite:false,
 vertexShader:`uniform float uT;varying vec3 vW;
