@@ -19,8 +19,8 @@ async function measureRuntimePerformance(page, label) {
     const sorted = intervals.slice().sort((a,b)=>a-b);
     const percentile = p => sorted.length ? +sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2) : null;
     const mean = intervals.length ? intervals.reduce((a,b)=>a+b,0)/intervals.length : null;
-    const info = state.rendererInfo || null;
     const state = window.__climboriaRenderState || {};
+    const info = state.rendererInfo || null;
     return {
       durationMs:2200,frames:intervals.length,
       averageFps:mean?+(1000/mean).toFixed(1):null,
