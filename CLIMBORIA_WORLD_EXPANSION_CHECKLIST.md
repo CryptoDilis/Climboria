@@ -1399,3 +1399,12 @@ For each meaningful implementation batch:
 - [x] Workflow change committed as `a1d3dd253e90a8bcca0268ee3c4b802327cae47a`; fetched the branch file again and confirmed the setting is present.
 - [ ] Confirm the push-triggered Browser Smoke run completes on the updated workflow; the commit-workflow lookup only returns pull-request-triggered runs and returned no record for this push commit.
 - [ ] This is a CI reliability improvement only. It does not resolve the previously recorded cave/fish visual acceptance, severe SwiftShader performance warning, cave-to-coast grade feasibility, manual traversal, or physical Redmi 14 5G acceptance. PR #215 remains unmerged.
+
+
+## 2026-11-07 — sanctuary replacement asset license/performance screening
+
+- [x] Reviewed the latest desktop gameplay capture: the sanctuary still reads as a primitive circular platform with oversized cylindrical pillars; the large empty green foreground and player-to-landmark composition remain visually unaccepted. No camera/model/collision scale change is claimed in this checkpoint.
+- [x] Screened the GitHub-hosted `bilol-makhmudov/monuments` candidate. Its Devonaboy Jome Masjidi GLB is 11.3 MB and 415,504 triangles; the repository explicitly requires CC BY-SA 4.0 attribution and share-alike for derivatives. This is not an approved drop-in replacement for Climboria's current licensing/performance constraints, and the model is not a close match for the fantasy sanctuary. Rejected; do not vendor it.
+- [ ] Continue searching for a realistic, GitHub-downloadable sanctuary/ruin asset whose exact file license permits the intended commercial game distribution without imposing an incompatible share-alike obligation. Verify exact model file, pinned revision, attribution, triangle/texture budgets, mobile memory, and collision before import.
+- [ ] Until a compliant replacement is vetted, retain existing sanctuary/gameplay assets; do not bulk-delete or disguise the primitive geometry with unverified packs. Sanctuary visual acceptance remains OPEN.
+- [ ] Cave enclosure, submerged fish realism, safe cave-to-coast corridor, rendering/device performance baseline, manual collision/headroom/trap traversal, natural idle, and physical Redmi 14 5G acceptance remain OPEN. PR #215 remains OPEN and UNMERGED.
