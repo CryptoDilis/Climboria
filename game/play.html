@@ -2061,9 +2061,12 @@ function initChunks(){
  };
  requestAnimationFrame(buildNext);
 }
+document.addEventListener('visibilitychange',()=>{last=performance.now()});
 function animate(now){
  requestAnimationFrame(animate);
  now=Number.isFinite(now)?now:performance.now();
+ // Do not simulate or render the open world while its browser tab is hidden.
+ if(document.hidden){last=now;return;}
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
  try{update(dt)}catch(err){
   const msg=err&&err.stack?err.stack:String(err);
