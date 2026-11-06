@@ -1301,7 +1301,13 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('pointerdown',requestImmersiveFromGesture,{capture:true});
 document.addEventListener('touchstart',requestImmersiveFromGesture,{capture:true,passive:true});
-cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){const ray=new T3.Raycaster();ray.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);const planeY=groundAt(P.x,P.z);const plane=new T3.Plane(new T3.Vector3(0,1,0),-planeY);const hit=new T3.Vector3();if(ray.ray.intersectPlane(plane,hit)){P.moveTarget={x:hit.x,z:hit.z};}}drag=true});
+cv.addEventListener('mousedown',e=>{if(e.target!==cv)return;if(e.button===0&&P.mode==='walk'){
+ // Project the click ray onto the actual height field, not a flat plane at the hero's current elevation.
+ const raycaster=new T3.Raycaster();raycaster.setFromCamera(new T3.Vector2((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1),cam);
+ const ray=raycaster.ray,point=new T3.Vector3();let previousT=0,previousClearance=ray.origin.y-groundAt(ray.origin.x,ray.origin.z),hitT=null;
+ for(let step=1;step<=80;step++){const t=step*25;ray.at(t,point);const clearance=point.y-groundAt(point.x,point.z);if(previousClearance>=0&&clearance<=0){let lo=previousT,hi=t;for(let refine=0;refine<12;refine++){const mid=(lo+hi)*.5;ray.at(mid,point);if(point.y>groundAt(point.x,point.z))lo=mid;else hi=mid;}hitT=(lo+hi)*.5;break;}previousT=t;previousClearance=clearance;}
+ if(hitT!==null){ray.at(hitT,point);P.moveTarget={x:point.x,z:point.z};takeOver();}
+ }drag=true});
 addEventListener('mouseup',()=>drag=false);
 document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===cv);
 addEventListener('mousemove',e=>{if(!(locked||drag))return;cameraYaw-=e.movementX*.0022;cameraPitch=Math.max(-1.25,Math.min(1.15,cameraPitch-e.movementY*.0022))});
