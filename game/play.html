@@ -632,7 +632,7 @@ const mats={};const M=(hex,e)=>{const k=hex+(e?'e':'');return mats[k]||(mats[k]=
 const BOX=new T3.BoxGeometry(1,1,1),CYL=new T3.CylinderGeometry(1,1,1,14),SPH=new T3.SphereGeometry(1,14,10),CON=new T3.ConeGeometry(1,1,10),DOD=new T3.DodecahedronGeometry(1,0);
 const mk=(g,m,x,y,z,p)=>{const o=new T3.Mesh(g,m);o.position.set(x,y,z);p&&p.add(o);return o};
 const sc=(o,x,y,z)=>{o.scale.set(x,y,z);return o};
-const lights=[],flames=[],wavingFlags=[],sanctuaryFlagMeshes=[];
+const lights=[],flames=[],wavingFlags=[],sanctuaryFlagMeshes=[];let flagAnimationClock=0;
 function torch(x,y,z,p){const f=sc(mk(CON,M('#ff9a2e',1),x,y+2.2,z,p),.35,.9,.35);sc(mk(CYL,M('#4a3322'),x,y+1,z,p),.12,2,.12);flames.push(f);return f}
 function glow(color,i,d,x,y,z,p){const l=new T3.PointLight(L(color),i,d,2);l.position.set(x,y,z);(p||scene).add(l);lights.push(l);return l}
 /* Sanctuary */
@@ -2098,9 +2098,16 @@ function update(dt){
  lights.forEach((l,i)=>{if(i>0&&l.color.r>.5)l.intensity=l.intensity*.9+.1*(2.6+Math.sin(Tm*11+i)*.5)*(l.distance>100?1.1:1)});
  spikes.forEach(o=>{const w=Math.sin(Tm*1.6+o.ph);o.s.position.y=w>.55?1.2:w>.3?-.2:-2});
  soldiers.forEach(o=>{o.s.rotation.z=Math.sin(Tm*.8+o.ph)*o.tilt;o.s.rotation.x=Math.sin(Tm*.6+o.ph)*o.tilt*.6});
- const flagStart=climboriaProfileEnabled?performance.now():0;
- const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true;geometry.computeVertexNormals()});
- climboriaProfileRecord('flagAnimation',flagStart);
+ flagAnimationClock+=dt;
+ if(flagAnimationClock>=.05){
+  flagAnimationClock%=.05;
+  const flagStart=climboriaProfileEnabled?performance.now():0;
+  const pa=flag.geometry.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i);pa.setZ(i,Math.sin(x*1.1-Tm*5)*.3*(x+3)/6)}pa.needsUpdate=true;
+  // National flags use MeshBasicMaterial, so recomputing surface normals every
+  // frame has no visual benefit. Update their cloth deformation at 20 Hz.
+  wavingFlags.forEach(({geometry,base,phase})=>{const p=geometry.attributes.position;for(let i=0;i<p.count;i++){const x=base[i*3],y=base[i*3+1],fall=Math.max(0,(x+1.125)/2.25);p.setZ(i,base[i*3+2]+fall*(Math.sin(x*3.1-Tm*4.2+phase+y*.7)*.17+Math.sin(x*5.4-Tm*6.1+phase)*.035))}p.needsUpdate=true});
+  climboriaProfileRecord('flagAnimation',flagStart);
+ }
  // Wild-animal simulation disabled along with placeholder wildlife models.
  // fireflies
  for(let i=0;i<FN;i++){const o=fof[i];fpos[i*3]=cp.x+((o[0]+Tm*.6*Math.sin(o[3])+240)%160)-80;fpos[i*3+1]=Math.max(heightAt(cp.x+o[0],cp.z+o[2]),0)+1+o[1]*.25+Math.sin(Tm+o[3])*1.5;fpos[i*3+2]=cp.z+o[2]}
