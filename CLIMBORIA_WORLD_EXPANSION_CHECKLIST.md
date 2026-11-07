@@ -1507,3 +1507,11 @@ For each meaningful implementation batch:
 - [ ] Screenshot/model visual inspection still blocked because the GitHub connector rejects the binary JPEG. Model remains NOT integrated and NOT visually accepted.
 - [ ] Verify compatible mesh payload and optimize textures/geometry locally before any integration; run fresh desktop/mobile smoke and compare performance.
 - [ ] All cave, fish, traversable route, world realism, gameplay, social/economy, performance, and physical Redmi 14 5G gates remain OPEN. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — BarramundiFish preview gate update
+
+- [x] Inspected the exact upstream preview image (blob `615f07dbfee13277d2cf34b2c97135fcd6d74acd`): a single dark grey/olive barramundi with a coherent body and fin silhouette; not a primitive toy-like fish.
+- [ ] The preview is only 160×160; final material quality, mesh, scale, orientation, animation and in-game result remain unverified. Do not mark integrated or accepted.
+- [ ] Obtain/inspect the actual payload, verify UV/material compatibility and texture dimensions, optimize for mobile, vendor with notice, then run fresh visual/performance smoke.
+- [ ] Cave realism, traversable coast route, other world/gameplay systems, physical Redmi 14 5G and production performance remain OPEN. PR #215 remains OPEN and UNMERGED.
