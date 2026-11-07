@@ -1479,3 +1479,14 @@ For each meaningful implementation batch:
 - [ ] Fresh Validate and Browser Smoke must pass on profiler-fix head; inspect fresh artifact and verify interval sample statistics.
 - [ ] Cave entrance/interior realism, natural fish, safe cave-to-coast corridor, renderer/device performance, natural character idle, manual gameplay acceptance and physical Redmi 14 5G test remain OPEN.
 - [ ] PR #215 remains OPEN and UNMERGED; do not merge until all acceptance gates are met.
+
+
+## 2026-11-07 — Profiler ring-buffer fix verified (Browser Smoke #1645)
+
+- [x] Validate #2173 passed on profiler-fix head `783a4a803f7241e2b510723ea09f77d1ba7d7b84`.
+- [x] Browser Smoke #1645 passed all steps on the same head, including Jarrell's Peak desktop/mobile gameplay smoke and screenshot artifact upload (artifact 13551740996).
+- [x] Reviewed fresh #1645 desktop cave interior and pond-fish captures. Cave remains an obvious blockout: flat beige floor, broad exposed opening, angular walls, primitive torch and faceted chest. Fish remain flat blue silhouettes. Both remain visually rejected.
+- [x] Frame interval sampler now records 301 desktop samples and 93 mobile-emulation samples, confirming the ring-buffer no longer reports a single stale slot after saturation.
+- [x] Performance remains a severe software-renderer warning: desktop SwiftShader 2.0 FPS mean / 495.81ms external frame mean; mobile emulation 0.9 FPS / 1079.59ms. Renderer stage mean desktop 3.478ms, mobile 100.018ms with p99 1803.9ms/max 4561.5ms. Headless SwiftShader is not a physical GPU or Redmi 14 5G benchmark.
+- [ ] Do not infer the frame-time anomaly is solely GPU-bound from synchronous renderer submission timing; investigate browser scheduling, software WebGL, scene complexity, resolution and renderer costs separately.
+- [ ] Cave, fish, entrance framing, traversable coast route, natural idle, physical Redmi test and production performance remain OPEN. PR #215 remains OPEN and UNMERGED.
