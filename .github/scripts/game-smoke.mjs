@@ -48,25 +48,34 @@ async function measureWorldLayerIsolation(page,label) {
   return await page.evaluate(async label => {
     const diagnostics=window.__climboriaDiagnostics;
     if(!diagnostics)return {label,available:false,reason:'diagnostics API missing'};
-    const sample=duration=>new Promise(resolve=>{
+    // SwiftShader can deliver fewer than one frame per second. Fixed 2.2s
+    // windows therefore produce statistically useless 1–4 frame comparisons.
+    // Collect at least 8 intervals, with a 15s ceiling per sample window.
+    const sample=({minFrames=8,maxDurationMs=15000}={})=>new Promise(resolve=>{
       const values=[];let previous=0,start=performance.now();
-      const tick=now=>{if(previous)values.push(now-previous);previous=now;if(now-start>=duration)resolve(values);else requestAnimationFrame(tick)};
+      const tick=now=>{
+        if(previous)values.push(now-previous);
+        previous=now;
+        if(values.length>=minFrames||now-start>=maxDurationMs)resolve(values);
+        else requestAnimationFrame(tick);
+      };
       requestAnimationFrame(tick);
     });
     const summarize=values=>{
       const sorted=values.slice().sort((a,b)=>a-b);
       const mean=values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
-      return {frames:values.length,averageFps:mean?+(1000/mean).toFixed(1):null,frameMsMean:mean?+mean.toFixed(2):null,frameMsP95:sorted.length?+sorted[Math.floor((sorted.length-1)*.95)].toFixed(2):null};
+      const percentile=p=>sorted.length?+sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2):null;
+      return {frames:values.length,averageFps:mean?+(1000/mean).toFixed(1):null,frameMsMean:mean?+mean.toFixed(2):null,frameMsMedian:percentile(.5),frameMsP95:percentile(.95),frameMsP99:percentile(.99)};
     };
     const baselineStats=diagnostics.reset();
-    await sample(900);
-    const baseline=summarize(await sample(2200));
+    await sample({minFrames:3,maxDurationMs:3000});
+    const baseline=summarize(await sample());
     const isolated={};
     for(const layer of ['water','terrain','rocks','grass']){
       diagnostics.reset();
       const stats=diagnostics.setLayerVisible(layer,false);
-      await sample(500);
-      isolated[layer]={hiddenLayer:layer,stats,frames:summarize(await sample(2200))};
+      await sample({minFrames:3,maxDurationMs:3000});
+      isolated[layer]={hiddenLayer:layer,stats,frames:summarize(await sample())};
     }
     diagnostics.reset();
     return {label,available:true,environment:'Playwright headless Chromium SwiftShader; diagnostic comparison only, not physical GPU benchmark',baselineStats,baseline,isolated,restored:diagnostics.stats()};
