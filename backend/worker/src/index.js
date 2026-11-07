@@ -128,12 +128,14 @@ async function session(request, env) {
   const raw = (request.headers.get("Cookie") || "").split(";").map(v => v.trim()).find(v => v.startsWith("__Host-climboria_session="))?.split("=").slice(1).join("=");
   if (!raw) return json({ authenticated: false }, 401);
   const hash = await sha256Hex(raw);
-  const row = await env.DB.prepare("SELECT user_id, wallet, chain, auth_method, expires_at FROM auth_sessions WHERE token_hash = ? AND revoked = 0")
+  const row = await env.DB.prepare("SELECT s.user_id, s.wallet, s.chain, s.auth_method, s.expires_at FROM auth_sessions s LEFT JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.revoked = 0 AND (s.user_id IS NULL OR COALESCE(u.disabled, 0) = 0)")
     .bind(hash).first();
   if (!row || Date.parse(row.expires_at) <= Date.now()) return json({ authenticated: false }, 401);
   return json({ authenticated: true, userId: row.user_id, wallet: row.wallet, chain: row.chain, authMethod: row.auth_method, expiresAt: row.expires_at });
 }
 async function logout(request, env) {
+  const origin = request.headers.get("Origin");
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) return json({ error: "Origin not allowed." }, 403);
   const raw = (request.headers.get("Cookie") || "").split(";").map(v => v.trim()).find(v => v.startsWith("__Host-climboria_session="))?.split("=").slice(1).join("=");
   if (raw) {
     const hash = await sha256Hex(raw);
