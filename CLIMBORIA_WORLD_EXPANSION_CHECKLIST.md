@@ -1607,3 +1607,17 @@ For each meaningful implementation batch:
 - [ ] Full Jarrell's Peak geography and gameplay checklist remains open unless individually verified: distributed mountains and climb paths; caves/traps/snakes; ponds/rivers/ocean and docks; forest/desert/snow/wheat/sunflower/rice biomes; sakura park, sanctuary, camps, ruins/statue; wildlife/flying animals; random chests/respawn/death stone; fishing biodiversity/gear; black market/merchant; crafting/forging; marketplace/economy; guilds/seasons/badges; world/private/guild/party/nearby chat; Dota-style left-click movement and remaining controls.
 - [ ] Performance acceptance remains open; investigate measured bottlenecks only after adequate samples, preserve visual quality, and verify on a physical Redmi 14 5G. Do not infer device FPS from SwiftShader.
 - [ ] Manual gameplay/visual acceptance and physical Redmi 14 5G test remain open. PR #215 stays OPEN and UNMERGED; do not merge on green CI alone.
+
+## 2026-11-07 — latest-head visual artifact review (commit f5290d84a5c07677eb0c9b012b4a915abc481368)
+
+- [x] Downloaded and reviewed all 10 desktop/mobile PNG captures from Browser Smoke run 42349709014 (artifact 13565298125), plus the cave/coast route audit and performance JSON.
+- [x] Cave/coast route audit reports finite samples across 2,200 world units, with open-sea reached at 300 units and seabed at 450 units. This is a sampled surface/water query only; it does not establish a traversable underground tunnel or collision-safe cave-to-coast connection.
+- [x] Latest screenshots still reject cave visual acceptance: entrance capture reads as an oversized open canyon rather than a natural enclosed rock portal; interior remains a short, bright, open chamber with primitive/faceted rock dressing. Desktop and mobile both show the issue.
+- [x] Woodland Pond fish are faintly visible as small pale silhouettes, but do not yet read as convincing volumetric natural fish at gameplay camera distance. Pond shoreline/water still reads stylized.
+- [x] Character idle remains stiff in the captured gameplay views; natural relaxed idle/motion polish remains open.
+- [x] Performance JSON has 8 samples per baseline but runs under Playwright Chromium + SwiftShader software WebGL: desktop sanctuary mean 622.89ms/frame (1.6 FPS); mobile emulation mean 1,591.61ms/frame (0.6 FPS). These are severe software-renderer diagnostics, not physical GPU performance estimates. Do not claim Redmi 14 5G FPS from these figures.
+- [ ] Fix and recapture the cave entrance silhouette and interior: narrower irregular portal, continuous roof/wall shell, deeper dark tunnel perspective, natural rock relief and collision/headroom validation. Do not replace with generic low-poly props.
+- [ ] Replace/refine fish visuals so fish read as volumetric animals with visible body/fins and natural schooling/depth cues at desktop and mobile gameplay distances; improve pond shore/water presentation without hiding fish.
+- [ ] Review idle animation and correct the stiff arms-out pose without changing the character's established identity/art.
+- [ ] Profile actual device performance separately; preserve visual quality and do not use SwiftShader numbers as device acceptance.
+- [ ] PR #215 remains OPEN and UNMERGED. Green automated smoke does not close these visual/manual/device acceptance gates.
