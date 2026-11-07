@@ -100,13 +100,27 @@ async function verify(request, env) {
   const consumed = await env.DB.prepare("UPDATE auth_challenges SET used = 1 WHERE id = ? AND used = 0 AND expires_at > ?")
     .bind(challengeId, new Date().toISOString()).run();
   if (!consumed.meta?.changes) return json({ error: "Challenge was already consumed." }, 409);
+  // Resolve this wallet to one persistent Climboria player account.
+  const providerSubject = `${row.chain}:${row.wallet.toLowerCase()}`;
+  let identity = await env.DB.prepare(
+    "SELECT user_id FROM auth_identities WHERE provider = 'wallet' AND provider_subject = ?"
+  ).bind(providerSubject).first();
+  let userId = identity?.user_id;
+  if (!userId) {
+    userId = randomHex(16);
+    await env.DB.prepare("INSERT INTO users (id) VALUES (?)").bind(userId).run();
+    await env.DB.prepare(
+      "INSERT INTO auth_identities (id, user_id, provider, provider_subject, email_verified) VALUES (?, ?, 'wallet', ?, 0)"
+    ).bind(randomHex(16), userId, providerSubject).run();
+  }
   const rawSession = randomHex(32);
   const sessionHash = await sha256Hex(rawSession);
   const sessionId = randomHex(16);
   const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000).toISOString();
-  await env.DB.prepare("INSERT INTO auth_sessions (id, token_hash, wallet, chain, expires_at, revoked) VALUES (?, ?, ?, ?, ?, 0)")
-    .bind(sessionId, sessionHash, row.wallet, row.chain, expiresAt).run();
-  return json({ authenticated: true, wallet: row.wallet, chain: row.chain, expiresAt }, 200, {
+  await env.DB.prepare(
+    "INSERT INTO auth_sessions (id, token_hash, user_id, wallet, chain, auth_method, expires_at, revoked) VALUES (?, ?, ?, ?, ?, 'wallet', ?, 0)"
+  ).bind(sessionId, sessionHash, userId, row.wallet, row.chain, expiresAt).run();
+  return json({ authenticated: true, userId, wallet: row.wallet, chain: row.chain, expiresAt }, 200, {
     "set-cookie": cookie("__Host-climboria_session", rawSession, SESSION_TTL_SECONDS),
   });
 }
@@ -114,10 +128,10 @@ async function session(request, env) {
   const raw = (request.headers.get("Cookie") || "").split(";").map(v => v.trim()).find(v => v.startsWith("__Host-climboria_session="))?.split("=").slice(1).join("=");
   if (!raw) return json({ authenticated: false }, 401);
   const hash = await sha256Hex(raw);
-  const row = await env.DB.prepare("SELECT wallet, chain, expires_at FROM auth_sessions WHERE token_hash = ? AND revoked = 0")
+  const row = await env.DB.prepare("SELECT user_id, wallet, chain, auth_method, expires_at FROM auth_sessions WHERE token_hash = ? AND revoked = 0")
     .bind(hash).first();
   if (!row || Date.parse(row.expires_at) <= Date.now()) return json({ authenticated: false }, 401);
-  return json({ authenticated: true, wallet: row.wallet, chain: row.chain, expiresAt: row.expires_at });
+  return json({ authenticated: true, userId: row.user_id, wallet: row.wallet, chain: row.chain, authMethod: row.auth_method, expiresAt: row.expires_at });
 }
 async function logout(request, env) {
   const raw = (request.headers.get("Cookie") || "").split(";").map(v => v.trim()).find(v => v.startsWith("__Host-climboria_session="))?.split("=").slice(1).join("=");
