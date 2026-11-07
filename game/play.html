@@ -856,6 +856,22 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  const tunnelRoof=new T3.Mesh(tunnelRoofGeo,new T3.MeshStandardMaterial({color:L('#343735'),roughness:.99,metalness:0,side:T3.DoubleSide}));
  tunnelRoof.position.set(0,7.25,9.6);tunnelRoof.receiveShadow=true;tunnelRoof.castShadow=true;
  tunnelRoof.userData.caveTunnelRoof=true;g.add(tunnelRoof);
+ // Extend the stone roof outward over the entrance approach. The old throat
+ // roof began several metres inside the arch, leaving the exterior approach
+ // framed by tall canyon walls but completely open to the sky.
+ const entranceCanopyGeo=new T3.BoxGeometry(12.4,2.35,13.5,18,3,20);
+ const entranceCanopyPos=entranceCanopyGeo.attributes.position;
+ for(let vi=0;vi<entranceCanopyPos.count;vi++){
+  const x=entranceCanopyPos.getX(vi),y=entranceCanopyPos.getY(vi),z=entranceCanopyPos.getZ(vi);
+  const ridge=Math.sin(x*.63+z*.19)*.28+Math.sin(z*.51-x*.27)*.19;
+  const brokenEdge=Math.max(0,Math.abs(x)/6.2-.72)*Math.sin(z*1.7+x*.8)*.34;
+  entranceCanopyPos.setY(vi,y+ridge+brokenEdge);
+ }
+ entranceCanopyGeo.computeVertexNormals();
+ const entranceCanopy=new T3.Mesh(entranceCanopyGeo,new T3.MeshStandardMaterial({color:L('#393b38'),roughness:.99,metalness:0,side:T3.DoubleSide}));
+ entranceCanopy.position.set(0,8.25,-3.7);
+ entranceCanopy.receiveShadow=true;entranceCanopy.castShadow=true;
+ entranceCanopy.userData.caveEntranceCanopy=true;g.add(entranceCanopy);
  // Close the main chamber with a continuous, irregular stone roof. The previous
  // build left the chamber open to the sky, making the interior read like an
  // outdoor courtyard. This roof covers the connected rooms but leaves the
