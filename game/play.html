@@ -1694,9 +1694,9 @@ function makeFishBodyGeometry(){
  const geo=new T3.BufferGeometry();geo.setAttribute('position',new T3.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();return geo;
 }
 const fishBodyGeo=makeFishBodyGeometry(),fishTailShape=new T3.Shape();fishTailShape.moveTo(-.72,0);fishTailShape.lineTo(-1.12,.48);fishTailShape.lineTo(-.91,.08);fishTailShape.lineTo(-1.12,-.48);fishTailShape.lineTo(-.72,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.38,.38);fishFinShape.lineTo(.16,.12);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
-const fishMats=[M('#a8c6c0',1),M('#91b9ca',1),M('#c1b99a',1),M('#b28c65',1)];
+const fishMats=['#a8c6c0','#91b9ca','#c1b99a','#b28c65'].map(color=>new T3.MeshStandardMaterial({color:L(color),roughness:.48,metalness:.12,emissive:L('#243b40'),emissiveIntensity:.22}));
 // Natural muted colours with restrained highlights keep silhouettes readable through pond water.
-for(const material of fishMats){material.transparent=false;material.opacity=1;material.depthWrite=true;material.roughness=.48;material.metalness=.12;material.emissive.set('#243b40');material.emissiveIntensity=.22}
+for(const material of fishMats){material.transparent=false;material.opacity=1;material.depthWrite=true}
 const fishFinMats=[M('#536d70',1),M('#587783',1),M('#77735e',1),M('#765c43',1)];
 const fishEyeWhite=M('#e4dfc9',1),fishEyeMat=M('#10191b',1);
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
