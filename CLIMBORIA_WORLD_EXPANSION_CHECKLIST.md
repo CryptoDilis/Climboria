@@ -1490,3 +1490,11 @@ For each meaningful implementation batch:
 - [x] Performance remains a severe software-renderer warning: desktop SwiftShader 2.0 FPS mean / 495.81ms external frame mean; mobile emulation 0.9 FPS / 1079.59ms. Renderer stage mean desktop 3.478ms, mobile 100.018ms with p99 1803.9ms/max 4561.5ms. Headless SwiftShader is not a physical GPU or Redmi 14 5G benchmark.
 - [ ] Do not infer the frame-time anomaly is solely GPU-bound from synchronous renderer submission timing; investigate browser scheduling, software WebGL, scene complexity, resolution and renderer costs separately.
 - [ ] Cave, fish, entrance framing, traversable coast route, natural idle, physical Redmi test and production performance remain OPEN. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — Barramundi fish asset gate rechecked
+
+- [x] Revalidated the pinned GitHub source README and CC0 1.0 statement at immutable revision `d7a3cc8e51d7c573771ae77a57f16b0662a905c6`; source/license evidence recorded in `ASSET_SOURCES.md`.
+- [ ] Preview/model geometry could not be inspected yet. This is a hard stop before integration; no visual acceptance claimed.
+- [ ] Next fish batch remains: inspect actual model, verify binary/texture files and compatibility, optimize mobile maps, vendor exact files with NOTICE, instance one shared model, then smoke-test visuals and performance.
+- [ ] Existing procedural fish remain until a replacement passes. No generic low-poly substitute.
