@@ -1549,3 +1549,17 @@ For each meaningful implementation batch:
 - [ ] These are headless Chromium SwiftShader software-renderer diagnostics, not physical GPU or Redmi 14 5G benchmarks. Do not equate renderer submission time with GPU completion. Investigate software WebGL/browser scheduling, render resolution, scene complexity and device performance separately.
 - [ ] Cave architecture, pond depth/shore, realistic fish integration, traversable route, performance acceptance and physical Redmi 14 5G test remain OPEN. All remaining world, gameplay, social and economy checklist items remain OPEN unless individually verified.
 - [ ] PR #215 remains OPEN and UNMERGED; do not merge before visual, functional, route and performance acceptance.
+
+
+## 2026-11-07 — Gameplay/world placeholder audit (source inspection, commit 55777ba)
+
+- [x] Inspected current source for world actors/facilities before marking features complete.
+- [x] Confirmed snake actor generator exists but the current source explicitly disables spawning snakes and animal actors. Cave snake attacks and realistic wildlife are therefore NOT implemented/accepted.
+- [x] Confirmed Black Market is explicitly labelled `PLACEHOLDER inventory`; merchant is a primitive block/cone figure, not a finished NPC or functioning shop inventory. Black Market feature remains OPEN.
+- [x] Confirmed forge/anvil and crafting bench presentation is built from primitive boxes/cylinders/cones; no finished forge/crafting interaction acceptance is established by this visual block alone.
+- [x] Confirmed the broken ship is currently a primitive box hull and cylinder mast, not an inspected realistic shipwreck asset. Shipwreck realism remains OPEN.
+- [ ] Implement/verify actual snake AI, attack/damage and cave encounter boundaries; do not count disabled snake spawns as complete.
+- [ ] Replace primitive wildlife and shipwreck with inspected realistic GitHub-hosted assets under the existing pinned-source/license/local-vendoring rules.
+- [ ] Implement actual Black Market inventory, merchant interaction and transaction flow; remove placeholder label only after functionality is real and tested.
+- [ ] Verify crafting and forging recipes, materials, costs, output, persistence and error handling end-to-end.
+- [ ] These findings do not change the cave/fish/route/performance rejection. PR #215 remains OPEN and UNMERGED.
