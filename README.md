@@ -2234,3 +2234,80 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
 - [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
 - [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
+
+## Climboria DEX release candidate — 8 November 2026
+
+- A focused release branch, `codex/dex-release-2026-11-08`, is being prepared from the current `main` commit; it does not merge the unrelated long-running game branch.
+- The standalone `/dex/` page is a Solana market-discovery terminal using provider-returned DexScreener data, token/pool detail, pool comparison, token search and Jupiter Swap API V2 quote preview.
+- Homepage desktop navigation, mobile navigation and the SWAP / DEX hero action route to `/dex/`.
+- **Scope limitation:** the current DEX page is not an exhaustive Solana-wide index. Its discovery coverage is provider/search based and explicitly reports that limitation.
+- **Execution limitation:** wallet connection is read-only; quote preview does not request a transaction, sign, submit or confirm a swap. Do not describe mainnet trading as live.
+- Production status remains pending until the focused pull request passes CI, the GitHub Pages deployment completes, and `https://climboria.fun/dex/` is independently smoke-tested.
+
+
+### 2026-11-08 — DEX secure execution architecture and fail-closed checks
+
+- [x] Reviewed the current official Jupiter Swap API V2 Order & Execute flow. A signable order requires the wallet `taker`; execution requires the signed transaction plus matching `requestId` at `/execute`.
+- [x] Added `dex/EXECUTION_READINESS.md` with the required server-side API-key proxy, wallet review/signing, Jupiter execution response handling, Devnet test matrix, monitoring, and mainnet release gates.
+- [x] Added Browser Smoke assertions that the public DEX page does not expose Jupiter API credentials or transaction signing/submission calls, clearly identifies quote-only status, and retains the documented execution gates.
+- [ ] Await GitHub Actions for latest DEX branch head `8c7a1e02c1b8af9d51027b1ca9d8f33c5d30da8d`. The available commit-run lookup returned no PR-triggered run records at this check; no new green status is claimed.
+- [ ] Implement a secure backend proxy before adding wallet-signing and Jupiter `/execute` calls. Do not put API credentials in the static GitHub Pages frontend.
+- [ ] Devnet swap lifecycle, failure-path tests, and independent security review remain mandatory before mainnet activation.
+
+
+### 2026-11-08 — Cloudflare Jupiter swap proxy scaffold
+
+- [x] Added Cloudflare Worker source at `dex/swap-proxy/src/index.mjs` with allowlisted CORS, strict request-size/input validation, server-side Jupiter API-key forwarding, and fail-closed behavior.
+- [x] Added Cloudflare rate-limit binding configuration (30 requests / 60 seconds baseline) and made the Worker reject order/execute calls if the binding is missing. Cloudflare documents this built-in limiter as approximate and regional; it is not a strict global quota.
+- [x] Added `dex/swap-proxy/DEPLOYMENT.md` with secret setup, unique namespace-ID replacement, custom-domain setup, tests and deployment steps.
+- [x] Added Node unit tests for health, origin rejection, malformed requests, missing API key, missing limiter and rate-limit rejection; wired them into Browser Smoke CI.
+- [ ] Await CI on the current PR head and repair any failures.
+- [ ] Cloudflare Worker is **not deployed**. Deployment requires the owner's Cloudflare account, unique rate-limit namespace ID, Jupiter server key set as a Worker secret, and custom domain configuration. Never request or commit the server key in chat/source.
+- [ ] Frontend still needs wallet transaction decoding/review/signing and Jupiter execute integration; no actual swap is enabled or claimed live.
+
+
+### 2026-11-08 — Wallet-reviewed Jupiter swap flow (feature-gated)
+
+- [x] Added a separate **Prepare wallet-reviewed swap** step to the DEX quote panel. It requires a connected wallet and a configured backend; no transaction is requested while the feature flag is off.
+- [x] Added Jupiter Order request through the Climboria proxy with connected wallet as taker and v0 transaction ceiling.
+- [x] Added v0 transaction deserialization, fee-payer match check against the connected wallet, non-empty instruction check, and pre-sign review of input/output mints, amounts, router/fee and instruction count.
+- [x] Added an explicit user-initiated wallet signing step and Jupiter Execute request carrying the signed transaction and matching request ID.
+- [x] Success UI requires Jupiter `status === "Success"`, `code === 0`, and a transaction signature; failed/unknown responses are never shown as successful.
+- [x] Kept execution disabled by default until the Cloudflare Worker is deployed, configured and independently verified.
+- [x] Worker order request now explicitly caps supported transaction version at v0; execute accepts Jupiter's string block-height response and normalizes it safely.
+- [ ] Await CI on the latest PR head. The preceding run on an earlier head had Validate green and Browser Smoke cancelled; this does not verify the current changes.
+- [ ] Deploy/configure Cloudflare Worker and run backend integration tests before enabling the runtime feature flag.
+- [ ] Test real wallet approval/rejection, insufficient funds, expired order, Jupiter failure, network timeout, and confirmed Devnet swap before any mainnet activation.
+
+
+### 2026-11-08 — DEX frontend transaction review and signing integration
+
+- [x] Added a distinct order-preparation button; it is fail-closed unless the runtime swap config explicitly enables the verified backend.
+- [x] Order request sends input/output mint, exact base-unit amount and connected wallet taker to the Climboria Worker.
+- [x] Frontend accepts v0 only, decodes the returned transaction, checks fee payer equals the connected wallet and checks for non-empty instructions.
+- [x] Added a pre-sign review summary showing token mints, amounts, router/fee and instruction count.
+- [x] Signing is a separate user click that invokes the wallet provider; the signed transaction and Jupiter request ID are sent to the Worker execute endpoint.
+- [x] Success display requires Jupiter Success + code 0 + signature; otherwise the UI reports not confirmed.
+- [x] Confirmed by source audit: no Jupiter API key/header is present in the public DEX HTML.
+- [ ] CI has not yet reported a completed run for the latest head; do not claim these tests are green.
+- [ ] Cloudflare Worker is not deployed; keep the execution feature flag off until account setup, Devnet testing, and security review are complete.
+
+
+### CI failure diagnosis and correction — DEX proxy
+- [x] Inspected failed Browser Smoke run #1769: Validate passed; DEX/mobile navigation passed; proxy tests exposed three failures.
+- [x] Corrected the health endpoint test to assert the current readiness payload, including configured key/rate-limiter booleans.
+- [x] Found a real implementation omission: the rate-limit helper existed but was not called by order/execute handlers. Both handlers now enforce it before parsing/proxying requests.
+- [ ] Await a fresh CI run for the corrected proxy; previous red run is not the final state.
+
+
+## DEX + dedicated Swap route checkpoint — 8 November 2026
+
+- [x] Add a dedicated Solana Swap UI at `/swap/`, reusing the wallet connection, Jupiter token search, quote preview, and explicitly gated wallet-reviewed execution flow.
+- [x] Route the homepage SWAP CTA to `/swap/`; keep DEX navigation at `/dex/`; add Swap links in the DEX header and homepage navigation.
+- [x] Add standalone Swap browser smoke coverage and include `swap/**` in browser workflow path filters.
+- [x] Latest confirmed green checks before this route work: Validate #2261 and Browser Smoke #1775 on commit `9aa4f44372463cefccecf51b19c216467ad5fdb3`.
+- [ ] Verify Browser Smoke #1779 and Validate #2265 for the new `/swap/` route and latest changes.
+- [ ] Merge PR #216 only after CI and route review; it remains draft until release checks are complete.
+- [ ] Cloudflare Worker remains not deployed: replace the rate-limit namespace placeholder, set the Jupiter API key as a Worker secret, deploy, attach `api.climboria.fun`, and verify `/health` and order/execute failure paths.
+- [ ] Verify production GitHub Pages deployment for both `/dex/` and `/swap/`; web access could not independently confirm the live DEX URL in this session.
+- [ ] Keep actual swap signing/execution disabled until semantic transaction inspection, independent security review, and controlled end-to-end tests pass.
