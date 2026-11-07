@@ -218,3 +218,13 @@ Reviewed all ten screenshots from Browser Smoke run [42277972370](https://github
 - [ ] Visual preview/model geometry has not yet been successfully inspected in this environment. Do not integrate or claim visual acceptance until the actual model and screenshot are inspected.
 - [ ] Still required: choose the compatible GLB/Draco variant, verify exact binary and texture payload, produce mobile texture variants, vendor locally with source/license notice, share one loaded model across instances, and benchmark desktop/mobile.
 - [ ] Current primitive fish remain in-game until replacement passes all import, performance and visual gates. Do not leave the pond empty or substitute another low-poly model.
+
+
+## 2026-11-07 — BarramundiFish geometry and runtime-weight inspection
+
+- [x] Parsed the pinned uncompressed glTF JSON at KhronosGroupArchives/glTF-Sample-Models commit `d7a3cc8e51d7c573771ae77a57f16b0662a905c6`.
+- [x] Confirmed one mesh / one primitive, 2,188 vertices, 11,592 unsigned-short indices, and POSITION/NORMAL/TANGENT/TEXCOORD_0 attributes.
+- [x] Confirmed three external PBR maps: base color 4,985,099 bytes, normal 3,050,432 bytes, ORM 4,355,820 bytes; combined texture payload is 12,391,351 bytes before compression/runtime overhead. The GLB variant is 12,521,196 bytes.
+- [x] Confirmed the glTF scene has a single BarramundiFish node and material with base-color, metallic-roughness, normal and occlusion texture references.
+- [ ] The 2,138-byte screenshot/model preview is still not visually inspected; GitHub binary fetch rejected the JPEG. Do not integrate or approve on metadata alone.
+- [ ] Next gate: retrieve/inspect the actual preview and compatible binary, check visual scale/orientation/rigging and triangle/texture budget, then prepare an optimized local mobile variant with attribution/CC0 notice. No runtime hotlink.
