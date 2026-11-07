@@ -1581,3 +1581,13 @@ For each meaningful implementation batch:
 - [x] This mesh is a meaningful render cost and a visual architecture issue, but it accounts for only a portion of the measured ~129k scene triangles. Do not claim it is the sole source of the very poor SwiftShader frame intervals.
 - [ ] Profile scene with isolated water visibility toggles in the browser smoke harness (water on/off, terrain on/off, foliage/props on/off) and compare external frame intervals plus renderer stage timings. Keep normal gameplay behavior unchanged during diagnostics.
 - [ ] Based on isolated measurements, replace global water with bounded body surfaces and/or optimize wave mesh/shader complexity while retaining proper shorelines and existing swimming/fishing API behavior. Validate desktop/mobile captures and physical-device performance separately.
+
+
+## 2026-11-07 — Terrain and foliage cost audit (source inspection, commit 73716f6)
+
+- [x] Terrain is streamed in 200×200 world-unit chunks. Near terrain uses 32 subdivisions on mobile / 40 desktop; far chunks use half the near subdivision count. Collision continues to use analytic height sampling.
+- [x] Each chunk attempts 26 rock placements and up to 100 grass instances on mobile / 220 desktop, subject to biome, slope, water and POI filters. Rocks use a shared subdivided IcosahedronGeometry and are instanced per chunk; grass is also instanced per chunk.
+- [x] Rock PBR diffuse, normal and roughness maps are requested separately through TextureLoader. Actual image dimensions and GPU memory footprint still need to be read from the assets and runtime.
+- [ ] Add a repeatable smoke diagnostic that captures chunk count, per-chunk terrain vertex/triangle totals, rock/grass instance counts, active draw calls and textures. Capture identical camera/player positions and warm-up windows for all comparisons.
+- [ ] Run controlled visibility/cost experiments for global water, terrain chunks, rock instances, grass instances and remaining props independently. Record external frame intervals and renderer-stage timings; avoid interpreting software-renderer results as physical GPU performance.
+- [ ] Tune LOD/streaming/instance density only after identifying the dominant cost. Preserve visual realism and analytic collision. Verify on physical Redmi 14 5G before acceptance.
