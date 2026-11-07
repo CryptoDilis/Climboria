@@ -1998,12 +1998,13 @@ function positionAtCaveEntranceForSmoke(){
  return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),playerYaw:P.yaw,cameraYaw,cameraPitch,expectedPlayerYaw:playerYaw,expectedCameraYaw:behindYaw};
 }
 function positionAtCaveInteriorForSmoke(){
- // Capture from the center of the main connected chamber (x=22..40, z=16..34).
- const local={x:30,z:25},world=l2w(caveG,local.x,local.z);
+ // Capture from the chamber's west half, looking across the open passage toward the annex.
+ // The prior centre point faced the north wall at z=34, hiding the room and doorway.
+ const local={x:31,z:25},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
- // Face into the chamber so the interior capture inspects the enclosed route, not the bright entrance behind the explorer.
- const playerYaw=caveG.rotation.y,behindYaw=playerYaw;
+ // Local -X faces the west passage; keep the follow camera behind the explorer.
+ const playerYaw=caveG.rotation.y-Math.PI/2,behindYaw=playerYaw;
  P.yaw=playerYaw;P.moveTarget=null;cameraYaw=behindYaw;cameraPitch=-.18;
  return {local,world:{x:+P.x.toFixed(2),z:+P.z.toFixed(2)},groundY:+(P.y-1.75).toFixed(2),playerYaw:P.yaw,cameraYaw,cameraPitch,expectedPlayerYaw:playerYaw,expectedCameraYaw:behindYaw};
 }
