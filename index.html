@@ -577,6 +577,38 @@ footer:first-of-type>div{
   let connectedSolanaAddress='';
   let connectedSolanaName='';
   const shortWalletAddress=address=>address?address.slice(0,4)+'…'+address.slice(-4):'';
+  const AUTH_API_BASE='https://api.climboria.fun';
+  const authApi=async(path,options={})=>{
+    const response=await fetch(AUTH_API_BASE+path,{...options,credentials:'include',headers:{'content-type':'application/json',...(options.headers||{})}});
+    const data=await response.json().catch(()=>({error:'Invalid API response.'}));
+    if(!response.ok)throw new Error(data.error||'Authentication request failed ('+response.status+').');
+    return data;
+  };
+  const base58Encode=bytes=>{
+    const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let zeros=0;while(zeros<bytes.length&&bytes[zeros]===0)zeros++;
+    let digits=[0];
+    for(const byte of bytes){let carry=byte;for(let i=0;i<digits.length;i++){carry+=digits[i]*256;digits[i]=carry%58;carry=Math.floor(carry/58);}while(carry){digits.push(carry%58);carry=Math.floor(carry/58);}}
+    let out='1'.repeat(zeros);
+    for(let i=digits.length-1;i>=0;i--)if(!(i===digits.length-1&&digits[i]===0))out+=alphabet[digits[i]];
+    return out||'1';
+  };
+  const finishWalletLogin=async(chain,wallet,signMessage)=>{
+    authStatus.textContent='Preparing a secure Climboria sign-in message…';
+    const challenge=await authApi('/v1/auth/challenge',{method:'POST',body:JSON.stringify({chain,wallet})});
+    authStatus.textContent='Review the wallet message carefully. It is sign-in only; it does not approve tokens or send a transaction.';
+    const signature=await signMessage(challenge.message);
+    authStatus.textContent='Verifying wallet ownership and saving your Climboria account…';
+    const result=await authApi('/v1/auth/verify',{method:'POST',body:JSON.stringify({challengeId:challenge.challengeId,signature})});
+    authStatus.textContent='Climboria account saved. Signed in with '+result.wallet+'. Your session is secured for this browser.';
+    return result;
+  };
+  const restoreWalletSession=async()=>{
+    try{const s=await authApi('/v1/auth/session',{method:'GET',headers:{}});if(s.authenticated)authStatus.textContent='Welcome back. Your Climboria account is signed in with '+s.wallet+'.';}
+    catch(error){if(!/401/.test(error.message))authStatus.textContent='Wallet login is not available yet: '+error.message;}
+  };
+  restoreWalletSession();
+
   const resetSolanaWallet=message=>{
     connectedSolanaProvider=null;connectedSolanaAddress='';connectedSolanaName='';
     authWalletLabel.textContent='Connect Solana wallet';
@@ -616,8 +648,15 @@ footer:first-of-type>div{
       connectedSolanaProvider=provider;connectedSolanaAddress=address;connectedSolanaName=name;
       authWalletLabel.textContent='Disconnect wallet';
       authWalletTag.textContent=shortWalletAddress(address);
-      authStatus.textContent=name+' connected: '+address+'. Connection only; no signature or transaction requested.';
+      authStatus.textContent=name+' connected. Preparing secure sign-in…';
       bindSolanaWalletEvents(provider,name);
+      if(typeof provider.signMessage!=='function'){authStatus.textContent=name+' connected, but this wallet does not support safe message signing. No login was created.';return;}
+      await finishWalletLogin('solana:mainnet',address,async message=>{
+        const signed=await provider.signMessage(new TextEncoder().encode(message),'utf8');
+        const sig=signed?.signature||signed;
+        if(!sig)throw new Error('Wallet did not return a message signature.');
+        return base58Encode(sig instanceof Uint8Array?sig:new Uint8Array(sig));
+      });
     }catch(error){
       const code=error?.code;
       if(code===4001)authStatus.textContent='Connection request rejected in your wallet. You can retry whenever ready.';
@@ -670,8 +709,14 @@ footer:first-of-type>div{
       connectedEvmProvider=provider;connectedEvmAddress=address;connectedEvmName=name;
       authEvmWalletLabel.textContent='Clear EVM connection';
       authEvmWalletTag.textContent=shortWalletAddress(address);
-      authStatus.textContent=name+' connected: '+address+'. Connection only; no signature or transaction requested.';
+      const chainId=await provider.request({method:'eth_chainId'});
+      if(String(chainId).toLowerCase()!=='0x2105'){authStatus.textContent='Switch to Base (chain ID 8453) in your wallet, then reconnect. No network switch was requested.';return;}
+      authStatus.textContent=name+' connected. Preparing secure sign-in…';
       bindEvmWalletEvents(provider,name);
+      await finishWalletLogin('eip155:8453',address,async message=>{
+        const signature=await provider.request({method:'personal_sign',params:[ '0x'+Array.from(new TextEncoder().encode(message),b=>b.toString(16).padStart(2,'0')).join(''), address ]});
+        return signature;
+      });
     }catch(error){
       if(error?.code===4001)authStatus.textContent='Connection request rejected in your wallet. You can retry whenever ready.';
       else if(error?.code===-32002)authStatus.textContent='A wallet request is already pending. Open your wallet to approve or reject it.';
