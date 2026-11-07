@@ -62,6 +62,8 @@ async function enforceRateLimit(request, env) {
   return null;
 }
 async function handleOrder(request, env) {
+  const limited = await enforceRateLimit(request, env);
+  if (limited) return limited;
   const body = await readJson(request, 8192);
   const { inputMint, outputMint, amount, taker } = body || {};
   if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint || !validPubkey(taker)) {
@@ -94,6 +96,8 @@ async function handleOrder(request, env) {
   });
 }
 async function handleExecute(request, env) {
+  const limited = await enforceRateLimit(request, env);
+  if (limited) return limited;
   const body = await readJson(request, 60000);
   const { signedTransaction, requestId, lastValidBlockHeight } = body || {};
   if (typeof signedTransaction !== "string" || signedTransaction.length < 100 || signedTransaction.length > 50000 ||
