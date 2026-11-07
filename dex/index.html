@@ -67,12 +67,13 @@ async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSear
 function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
 const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
-function swapProxyReady(){return swapConfig.enabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
 async function prepareJupiterSwap(){
  const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
  if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
  if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
- if(!swapProxyReady()){status.textContent='Swap execution is safely disabled: the Climboria backend has not been deployed and verified.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
  const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
  if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
  const raw=Math.floor(amount*Math.pow(10,from.decimals));
@@ -105,7 +106,7 @@ async function prepareJupiterSwap(){
 async function signAndExecuteJupiterSwap(){
  const status=$('quoteStatus'),button=$('signExecuteSwap');
  if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
- if(!swapProxyReady()){status.textContent='Execution backend is not enabled.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
  button.disabled=true;button.textContent='Waiting for wallet approval…';
  try{
   const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
