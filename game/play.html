@@ -998,7 +998,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  const roofMat=M('#393b3a');
  const roofRand=rng(4407);
  // Wider spacing and fewer, larger irregular roof masses open the chamber silhouette.
- // These are decorative only; the cave collision shell and traversal routes are unchanged. for(let rz=15.5;rz<=33.5;rz+=6){
+ // These are decorative only; the cave collision shell and traversal routes are unchanged.
+ for(let rz=15.5;rz<=33.5;rz+=6){
   for(let rx=21.5;rx<=39.5;rx+=6){
    const roof=mk(roofGeo,roofMat,rx+(roofRand()-.5)*1.15,7.7+(roofRand()-.5)*.48,rz+(roofRand()-.5)*1.15,g);
    sc(roof,3.35+roofRand()*.65,1.05+roofRand()*.42,3.35+roofRand()*.65);
