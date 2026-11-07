@@ -26,6 +26,8 @@ This Worker is prepared but **not deployed**. The static GitHub Pages site canno
 
 ## API
 
+- `GET /api/tokens/search?query=SOL`: Jupiter Tokens V2 search through the server-side key.
+- `GET /api/swap/quote?inputMint=...&outputMint=...&amount=...`: quote-only Jupiter Order request; does not create a signable transaction because no taker is supplied.
 - `POST /api/swap/order`: JSON `{ inputMint, outputMint, amount, taker }`. Amount is an integer string in the input token's base units.
 - `POST /api/swap/execute`: JSON `{ signedTransaction, requestId, lastValidBlockHeight? }`.
 - `GET /health`: non-secret service readiness response.
@@ -45,3 +47,8 @@ This Worker is prepared but **not deployed**. The static GitHub Pages site canno
 - `https://climboria.fun/dex/` — standalone Solana market terminal.
 - `https://climboria.fun/swap/` — dedicated swap interface. It can display Jupiter quote previews, but wallet signing and execution remain feature-gated until the Worker is deployed, configured, security-reviewed, and tested.
 - The homepage SWAP action routes to `/swap/`; the DEX navigation routes to `/dex/`.
+
+
+## Frontend backend switch
+
+Both `/dex/` and `/swap/` load the public `/swap-config.js` file. It contains no secret. Keep `enabled: false` until the Worker is deployed and all security/release checks pass. Once ready, set `enabled: true` in that file; token search and quote previews will then use the Worker routes, and order/execute will become available behind the wallet-review flow. Never set this flag merely because a Worker exists: verify `/health`, CORS, rate limits, API key handling, and transaction security first.
