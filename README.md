@@ -2253,3 +2253,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await GitHub Actions for latest DEX branch head `8c7a1e02c1b8af9d51027b1ca9d8f33c5d30da8d`. The available commit-run lookup returned no PR-triggered run records at this check; no new green status is claimed.
 - [ ] Implement a secure backend proxy before adding wallet-signing and Jupiter `/execute` calls. Do not put API credentials in the static GitHub Pages frontend.
 - [ ] Devnet swap lifecycle, failure-path tests, and independent security review remain mandatory before mainnet activation.
+
+
+### 2026-11-08 — Cloudflare Jupiter swap proxy scaffold
+
+- [x] Added Cloudflare Worker source at `dex/swap-proxy/src/index.mjs` with allowlisted CORS, strict request-size/input validation, server-side Jupiter API-key forwarding, and fail-closed behavior.
+- [x] Added Cloudflare rate-limit binding configuration (30 requests / 60 seconds baseline) and made the Worker reject order/execute calls if the binding is missing. Cloudflare documents this built-in limiter as approximate and regional; it is not a strict global quota.
+- [x] Added `dex/swap-proxy/DEPLOYMENT.md` with secret setup, unique namespace-ID replacement, custom-domain setup, tests and deployment steps.
+- [x] Added Node unit tests for health, origin rejection, malformed requests, missing API key, missing limiter and rate-limit rejection; wired them into Browser Smoke CI.
+- [ ] Await CI on the current PR head and repair any failures.
+- [ ] Cloudflare Worker is **not deployed**. Deployment requires the owner's Cloudflare account, unique rate-limit namespace ID, Jupiter server key set as a Worker secret, and custom domain configuration. Never request or commit the server key in chat/source.
+- [ ] Frontend still needs wallet transaction decoding/review/signing and Jupiter execute integration; no actual swap is enabled or claimed live.
