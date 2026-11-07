@@ -228,3 +228,11 @@ Reviewed all ten screenshots from Browser Smoke run [42277972370](https://github
 - [x] Confirmed the glTF scene has a single BarramundiFish node and material with base-color, metallic-roughness, normal and occlusion texture references.
 - [ ] The 2,138-byte screenshot/model preview is still not visually inspected; GitHub binary fetch rejected the JPEG. Do not integrate or approve on metadata alone.
 - [ ] Next gate: retrieve/inspect the actual preview and compatible binary, check visual scale/orientation/rigging and triangle/texture budget, then prepare an optimized local mobile variant with attribution/CC0 notice. No runtime hotlink.
+
+
+## 2026-11-07 — BarramundiFish preview visually inspected
+
+- [x] Retrieved the exact 2,138-byte upstream JPEG preview through the GitHub file API (blob `615f07dbfee13277d2cf34b2c97135fcd6d74acd`) at pinned model commit `d7a3cc8e51d7c573771ae77a57f16b0662a905c6` and inspected it.
+- [x] Preview depicts a single dark grey/olive barramundi with a coherent fish silhouette and visible fins/body form; it is not a toy-like or low-poly primitive silhouette in the preview.
+- [ ] Preview is only 160×160 and does not establish final in-game appearance, shading, texture quality, orientation, scale or rig/animation behavior. No in-game visual approval is granted.
+- [ ] Still required: inspect actual GLB/Draco payload and texture dimensions, confirm geometry/UV/material compatibility, reduce the 12.39 MB texture payload for mobile, vendor locally with license notice, then compare desktop/mobile screenshots and performance.
