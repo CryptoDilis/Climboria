@@ -593,6 +593,13 @@ footer:first-of-type>div{
     for(let i=digits.length-1;i>=0;i--)if(!(i===digits.length-1&&digits[i]===0))out+=alphabet[digits[i]];
     return out||'1';
   };
+  let activeSessionWallet='';
+  let activeSessionChain='';
+  const revokeWalletSession=async()=>{
+    try{await authApi('/v1/auth/logout',{method:'POST',body:JSON.stringify({})});}
+    catch(error){authStatus.textContent='Wallet disconnected locally, but server logout could not be confirmed: '+error.message;throw error;}
+    activeSessionWallet='';activeSessionChain='';
+  };
   const finishWalletLogin=async(chain,wallet,signMessage)=>{
     authStatus.textContent='Preparing a secure Climboria sign-in message…';
     const challenge=await authApi('/v1/auth/challenge',{method:'POST',body:JSON.stringify({chain,wallet})});
@@ -600,27 +607,31 @@ footer:first-of-type>div{
     const signature=await signMessage(challenge.message);
     authStatus.textContent='Verifying wallet ownership and saving your Climboria account…';
     const result=await authApi('/v1/auth/verify',{method:'POST',body:JSON.stringify({challengeId:challenge.challengeId,signature})});
+    activeSessionWallet=result.wallet;activeSessionChain=result.chain||chain;
     authStatus.textContent='Climboria account saved. Signed in with '+result.wallet+'. Your session is secured for this browser.';
     return result;
   };
   const restoreWalletSession=async()=>{
-    try{const s=await authApi('/v1/auth/session',{method:'GET',headers:{}});if(s.authenticated)authStatus.textContent='Welcome back. Your Climboria account is signed in with '+s.wallet+'.';}
+    try{const s=await authApi('/v1/auth/session',{method:'GET',headers:{}});if(s.authenticated){activeSessionWallet=s.wallet;activeSessionChain=s.chain||'';authStatus.textContent='Welcome back. Your Climboria account is signed in with '+s.wallet+'.';}}
     catch(error){if(!/401/.test(error.message))authStatus.textContent='Wallet login is not available yet: '+error.message;}
   };
   restoreWalletSession();
 
-  const resetSolanaWallet=message=>{
+  const resetSolanaWallet=async(message)=>{
+    const hadSession=activeSessionChain.startsWith('solana:');
     connectedSolanaProvider=null;connectedSolanaAddress='';connectedSolanaName='';
     authWalletLabel.textContent='Connect Solana wallet';
     authWalletTag.textContent='Phantom / Solflare';
-    authStatus.textContent=message||'Wallet disconnected. No transaction was submitted.';
+    if(hadSession)await revokeWalletSession();
+    authStatus.textContent=message||'Wallet disconnected. Climboria server session revoked when applicable; no transaction was submitted.';
   };
   const bindSolanaWalletEvents=(provider,name)=>{
     if(typeof provider.on!=='function')return;
-    provider.on('disconnect',()=>resetSolanaWallet('Wallet disconnected.'));
+    provider.on('disconnect',()=>{void resetSolanaWallet('Wallet disconnected.');});
     provider.on('accountChanged',publicKey=>{
       const nextAddress=publicKey?.toString?.()||'';
-      if(!nextAddress){resetSolanaWallet('Wallet account disconnected.');return;}
+      if(!nextAddress){void resetSolanaWallet('Wallet account disconnected.');return;}
+      if(nextAddress!==connectedSolanaAddress&&activeSessionChain.startsWith('solana:')){void revokeWalletSession().then(()=>{authStatus.textContent='Solana account changed. Previous Climboria session revoked; sign in again with the new account.';});}
       connectedSolanaAddress=nextAddress;
       authWalletLabel.textContent='Disconnect wallet';
       authWalletTag.textContent=shortWalletAddress(nextAddress);
@@ -631,7 +642,7 @@ footer:first-of-type>div{
     if(connectedSolanaProvider){
       authStatus.textContent='Disconnecting wallet…';
       try{await connectedSolanaProvider.disconnect?.();}catch(error){authStatus.textContent='Could not disconnect wallet: '+(error?.message||'Please disconnect it in your wallet app.');return;}
-      resetSolanaWallet('Wallet disconnected.');
+      await resetSolanaWallet('Wallet disconnected.');
       return;
     }
     authWalletButton.disabled=true;
@@ -670,29 +681,33 @@ footer:first-of-type>div{
   let connectedEvmProvider=null;
   let connectedEvmAddress='';
   let connectedEvmName='';
-  const resetEvmWallet=message=>{
+  const resetEvmWallet=async(message)=>{
+    const hadSession=activeSessionChain==='eip155:8453';
     connectedEvmProvider=null;connectedEvmAddress='';connectedEvmName='';
     authEvmWalletLabel.textContent='Connect EVM wallet';
     authEvmWalletTag.textContent='MetaMask / OKX';
-    authStatus.textContent=message||'EVM wallet disconnected. No transaction was submitted.';
+    if(hadSession)await revokeWalletSession();
+    authStatus.textContent=message||'EVM wallet connection cleared. Climboria server session revoked when applicable.';
   };
   const bindEvmWalletEvents=(provider,name)=>{
     if(typeof provider.on!=='function')return;
     provider.on('accountsChanged',accounts=>{
       const nextAddress=Array.isArray(accounts)?accounts[0]||'':'';
-      if(!nextAddress){resetEvmWallet('EVM wallet account disconnected.');return;}
+      if(!nextAddress){void resetEvmWallet('EVM wallet account disconnected.');return;}
+      if(nextAddress.toLowerCase()!==connectedEvmAddress.toLowerCase()&&activeSessionChain==='eip155:8453'){void revokeWalletSession().then(()=>{authStatus.textContent='EVM account changed. Previous Climboria session revoked; sign in again with the new account.';});}
       connectedEvmAddress=nextAddress;
       authEvmWalletLabel.textContent='Clear EVM connection';
       authEvmWalletTag.textContent=shortWalletAddress(nextAddress);
       authStatus.textContent=name+' connected: '+nextAddress+'. Connection only; no signature or transaction requested.';
     });
     provider.on('chainChanged',chainId=>{
+      if(String(chainId).toLowerCase()!=='0x2105'&&activeSessionChain==='eip155:8453'){void revokeWalletSession().then(()=>{authStatus.textContent='Network changed away from Base. Previous Climboria session revoked; reconnect on Base to sign in again.';});return;}
       authStatus.textContent=name+' connected on chain '+chainId+'. Network validation will be enforced by Climboria login.';
     });
-    provider.on('disconnect',()=>resetEvmWallet('EVM wallet disconnected.'));
+    provider.on('disconnect',()=>{void resetEvmWallet('EVM wallet disconnected.');});
   };
   authEvmWalletButton.addEventListener('click',async()=>{
-    if(connectedEvmProvider){resetEvmWallet('Local EVM connection cleared. To revoke this site permission, use your wallet settings.');return;}
+    if(connectedEvmProvider){await resetEvmWallet('EVM wallet connection cleared. To revoke this site permission, use your wallet settings.');return;}
     authEvmWalletButton.disabled=true;
     authStatus.textContent='Looking for MetaMask or OKX Wallet…';
     try{
