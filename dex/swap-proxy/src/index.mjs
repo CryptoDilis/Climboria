@@ -80,6 +80,22 @@ async function handleOrder(request, env) {
   if (!data || typeof data.requestId !== "string" || !data.requestId) {
     return json({ error: "Jupiter returned an incomplete order response" }, 502);
   }
+  // An HTTP 200 can still be a quote-only/error order (transaction: null or "").
+  // Never return that as an executable order to the wallet-review frontend.
+  if (typeof data.transaction !== "string" || !data.transaction.length) {
+    return json({
+      error: data.errorMessage || "Jupiter returned a quote without an executable transaction",
+      errorCode: data.errorCode ?? null,
+      router: data.router || null
+    }, 422);
+  }
+  if (data.transactionVersion !== 0) {
+    return json({ error: "Jupiter returned an unsupported or unspecified transaction version" }, 502);
+  }
+  if (typeof data.inAmount !== "string" || !/^[1-9][0-9]*$/.test(data.inAmount) ||
+      typeof data.outAmount !== "string" || !/^[1-9][0-9]*$/.test(data.outAmount)) {
+    return json({ error: "Jupiter returned invalid order amounts" }, 502);
+  }
   return json({
     requestId: data.requestId,
     transaction: typeof data.transaction === "string" && data.transaction.length ? data.transaction : null,
