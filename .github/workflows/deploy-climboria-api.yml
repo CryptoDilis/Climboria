@@ -74,3 +74,19 @@ jobs:
           done
           echo "::error::Deployed Worker did not return a successful /health response."
           exit 1
+
+      - name: Verify allowed and blocked CORS origins
+        run: |
+          allowed_status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request OPTIONS             --header 'Origin: https://climboria.fun'             --header 'Access-Control-Request-Method: POST'             --header 'Access-Control-Request-Headers: content-type'             https://climboria-api.escalante-wacom.workers.dev/v1/auth/challenge)
+          if [ "$allowed_status" != "204" ]; then
+            echo "::error::Expected allowed website origin to receive HTTP 204, got $allowed_status."
+            exit 1
+          fi
+
+          blocked_status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request OPTIONS             --header 'Origin: https://not-climboria.example'             --header 'Access-Control-Request-Method: POST'             --header 'Access-Control-Request-Headers: content-type'             https://climboria-api.escalante-wacom.workers.dev/v1/auth/challenge)
+          if [ "$blocked_status" != "403" ]; then
+            echo "::error::Expected untrusted origin to receive HTTP 403, got $blocked_status."
+            exit 1
+          fi
+
+          echo "CORS checks passed: official origin allowed; untrusted origin blocked."
