@@ -1,0 +1,11 @@
+name = "climboria-swap-proxy"
+main = "src/index.mjs"
+compatibility_date = "2026-11-08"
+workers_dev = true
+
+[vars]
+# Replace with the exact production origin after confirming the custom domain.
+ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"
+
+# Configure the secret outside source control:
+# npx wrangler secret put JUPITER_API_KEY
