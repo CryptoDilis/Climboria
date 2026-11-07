@@ -644,7 +644,9 @@ function climboriaLayerStats(){
   const r=result[layer],geo=o.geometry;
   r.objects++;
   r.vertices+=geo?.attributes?.position?.count||0;
-  r.triangles+=geo?.index?(geo.index.count/3):((geo?.attributes?.position?.count||0)/3);
+  const baseTriangles=geo?.index?(geo.index.count/3):((geo?.attributes?.position?.count||0)/3);
+  const instanceCount=o.isInstancedMesh?o.count:1;
+  r.triangles+=baseTriangles*instanceCount;
   r.instances+=o.isInstancedMesh?o.count:0;
  };
  add('water',water);
