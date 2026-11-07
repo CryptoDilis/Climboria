@@ -70,7 +70,7 @@ jobs:
           cat /tmp/climboria-http.log
           exit 1
 
-      - name: Test homepage CTAs, DEX modal, and mobile navigation
+      - name: Test homepage CTAs, DEX routing, and mobile navigation
         run: |
           node <<'JS'
           const { chromium } = require('playwright');
@@ -86,11 +86,13 @@ jobs:
               if(await ctas.count()!==3) throw new Error('Expected 3 hero CTA buttons');
               const labels=(await ctas.allTextContents()).map(s=>s.trim());
               if(!labels[0].includes('PLAY')||!labels[1].includes('SWAP')||!labels[2].includes('LAUNCHPAD')) throw new Error('Unexpected hero CTA labels: '+JSON.stringify(labels));
-              await page.locator('#swapBtn').click();
-              if(!await page.locator('#swapModal').evaluate(el=>el.classList.contains('active'))) throw new Error('DEX modal did not open');
-              await page.locator('#closeSwap').click();
-              if(await page.locator('#swapModal').evaluate(el=>el.classList.contains('active'))) throw new Error('DEX modal did not close');
               await page.screenshot({path:'climboria-desktop-home.png',fullPage:true});
+              for (const selector of ['#dexNavLink','#mobileDexBtn']) {
+                const href=await page.locator(selector).getAttribute('href');
+                if(href!=='/dex/') throw new Error(selector+' must route to /dex/, got '+href);
+              }
+              await Promise.all([page.waitForURL('**/dex/'),page.locator('#swapBtn').click()]);
+              if(new URL(page.url()).pathname!=='/dex/') throw new Error('Homepage SWAP CTA did not navigate to /dex/');
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',e=>errors.push('mobile: '+e.message));
               await mobile.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
@@ -98,9 +100,13 @@ jobs:
               if(!await mobile.locator('#mobileMenu').evaluate(el=>el.classList.contains('active'))) throw new Error('Mobile menu did not open');
               const metrics=await mobile.evaluate(()=>({vw:document.documentElement.clientWidth,sw:document.documentElement.scrollWidth,ctas:document.querySelectorAll('.hero-buttons button').length}));
               if(metrics.sw>metrics.vw+2||metrics.ctas!==3) throw new Error('Mobile layout overflow/CTA check: '+JSON.stringify(metrics));
+              const mobileDexHref=await mobile.locator('#mobileDexBtn').getAttribute('href');
+              if(mobileDexHref!=='/dex/') throw new Error('Mobile DEX link must route to /dex/, got '+mobileDexHref);
               await mobile.screenshot({path:'climboria-mobile-home.png',fullPage:true});
+              await Promise.all([mobile.waitForURL('**/dex/'),mobile.locator('#mobileDexBtn').click()]);
+              if(new URL(mobile.url()).pathname!=='/dex/') throw new Error('Mobile DEX navigation did not reach /dex/');
               if(errors.length) throw new Error('Browser errors: '+errors.join(' | '));
-              console.log('PASS: homepage, 3 hero CTAs, DEX modal, mobile menu, and mobile width.');
+              console.log('PASS: homepage, 3 hero CTAs, desktop/mobile DEX routing, mobile menu, and mobile width.');
             } finally { await browser.close(); }
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
