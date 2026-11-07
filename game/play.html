@@ -434,7 +434,7 @@ gl_FragColor=vec4(c,.70);
 #include <encodings_fragment>
 #include <fog_fragment>
 }`}));
-water.frustumCulled=false;water.renderOrder=2;scene.add(water);
+water.userData.climboriaLayer='water';water.frustumCulled=false;water.renderOrder=2;scene.add(water);
 /* ---------- terrain chunks ---------- */
 const CS=200,SEG=40,STEP=CS/SEG,N1=SEG+1;
 // Mobile terrain uses a slightly coarser mesh LOD to reduce vertex/triangle load;
@@ -532,7 +532,7 @@ const hsl=(h,s,l)=>new T3.Color().setHSL(h,s,l).convertSRGBToLinear();
    items.push({x,h,z,scale,rot:rand()*Math.PI*2,c:green});
   }
   if(!items.length)return;
-  const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);
+  const im=new T3.InstancedMesh(grassGeo,grassMat,items.length);im.userData.climboriaLayer='grass';
   items.forEach((t,i)=>{D.position.set(t.x,t.h+.02,t.z);D.rotation.set(0,t.rot,0);D.scale.set(t.scale,t.scale,t.scale);D.updateMatrix();im.setMatrixAt(i,D.matrix);im.setColorAt(i,t.c)});
   im.instanceMatrix.needsUpdate=true;enableInstancedCulling(im,grassGeo);out.push(im);
  }
@@ -576,7 +576,7 @@ function props(cx,cz,out){
  }
  const g=new T3.Group();
  const rk=inst(ROCK,mRock,ro,t=>{D.position.set(t.x,t.h+t.s*.2,t.z);D.rotation.set(t.rot*.3,t.rot,0);D.scale.set(t.s,t.s*.7,t.s)});
- if(rk){g.add(rk);out.push(rk)}scene.add(g);out.push(g);return col;
+ if(rk){rk.userData.climboriaLayer='rocks';g.add(rk);out.push(rk)}scene.add(g);out.push(g);return col;
 }
 const terrainIndexCache=new Map([[SEG,IDX]]);
 function terrainIndexFor(seg){
@@ -601,7 +601,7 @@ function buildChunk(cx,cz,centerX,centerZ){
  }
  const geo=new T3.BufferGeometry();geo.setAttribute('position',new T3.BufferAttribute(pos,3));geo.setAttribute('normal',new T3.BufferAttribute(nor,3));
  geo.setAttribute('color',new T3.BufferAttribute(col,3));geo.setIndex(terrainIndexFor(seg));geo.computeBoundingSphere();
- const m=new T3.Mesh(geo,terrMat);m.position.set(ox,0,oz);scene.add(m);
+ const m=new T3.Mesh(geo,terrMat);m.userData.climboriaLayer='terrain';m.position.set(ox,0,oz);scene.add(m);
  const objs=[m],cl=props(cx,cz,objs);makeGrass(cx,cz,objs);return{cx,cz,objs,geo,col:cl,terrainSegments:seg};
 }
 const chunks=new Map();
@@ -627,6 +627,38 @@ function updateChunks(px,pz,budget){
  for(let i=0;i<Math.min(budget,need.length);i++){const[cx,cz]=need[i];chunks.set(cx+','+cz,buildChunk(cx,cz,ccx,ccz))}
  return need.length;
 }
+// Read-only layer counters plus reversible visibility switches for repeatable
+// subsystem isolation. Flags are applied to existing and newly streamed chunks.
+const climboriaDiagnosticLayers={water:true,terrain:true,rocks:true,grass:true};
+function climboriaApplyDiagnosticLayers(){
+ water.visible=climboriaDiagnosticLayers.water;
+ for(const c of chunks.values())for(const o of c.objs){
+  const layer=o.userData&&o.userData.climboriaLayer;
+  if(layer) o.visible=climboriaDiagnosticLayers[layer]!==false;
+ }
+}
+function climboriaLayerStats(){
+ const result={water:{objects:0,vertices:0,triangles:0,instances:0},terrain:{objects:0,vertices:0,triangles:0,instances:0},rocks:{objects:0,vertices:0,triangles:0,instances:0},grass:{objects:0,vertices:0,triangles:0,instances:0}};
+ const add=(layer,o)=>{
+  if(!layer||!result[layer])return;
+  const r=result[layer],geo=o.geometry;
+  r.objects++;
+  r.vertices+=geo?.attributes?.position?.count||0;
+  r.triangles+=geo?.index?(geo.index.count/3):((geo?.attributes?.position?.count||0)/3);
+  r.instances+=o.isInstancedMesh?o.count:0;
+ };
+ add('water',water);
+ for(const c of chunks.values())for(const o of c.objs)add(o.userData?.climboriaLayer,o);
+ return {layers:result,chunkCount:chunks.size,visibility:{...climboriaDiagnosticLayers},renderer:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures},sceneObjects:scene.children.length,device:{mobile:MOB,dpr:window.devicePixelRatio,viewport:{width:innerWidth,height:innerHeight}}};
+}
+window.__climboriaDiagnostics={
+ stats:climboriaLayerStats,
+ setLayerVisible(name,visible){
+  if(!Object.prototype.hasOwnProperty.call(climboriaDiagnosticLayers,name))throw new Error('Unknown Climboria layer: '+name);
+  climboriaDiagnosticLayers[name]=!!visible;climboriaApplyDiagnosticLayers();return climboriaLayerStats();
+ },
+ reset(){for(const name of Object.keys(climboriaDiagnosticLayers))climboriaDiagnosticLayers[name]=true;climboriaApplyDiagnosticLayers();return climboriaLayerStats();}
+};
 /* ---------- helpers for hand-built structures ---------- */
 const mats={};const M=(hex,e)=>{const k=hex+(e?'e':'');return mats[k]||(mats[k]=e?new T3.MeshBasicMaterial({color:L(hex)}):new T3.MeshLambertMaterial({color:L(hex)}))};
 const BOX=new T3.BoxGeometry(1,1,1),CYL=new T3.CylinderGeometry(1,1,1,14),SPH=new T3.SphereGeometry(1,14,10),CON=new T3.ConeGeometry(1,1,10),DOD=new T3.DodecahedronGeometry(1,0);
