@@ -173,3 +173,56 @@ test("rejects malformed quote and token search requests before upstream calls", 
     assert.equal(search.status, 400);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test("normalizes Jupiter upstream server errors without claiming an order exists", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({ message: "temporary upstream failure" }, { status: 503 });
+    const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100", { headers: { origin } });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    assert.match((await res.json()).error, /quote request failed/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("rejects an incomplete Jupiter order response without a request ID", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({ transaction: "AQID", inAmount: "100", outAmount: "200" });
+    const req = new Request("https://worker.test/api/swap/order", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    assert.match((await res.json()).error, /incomplete order response/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("preserves Jupiter Failed status without converting it to success", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({ status: "Failed", code: 6001, signature: null, error: "Slippage tolerance exceeded" });
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.status, "Failed");
+    assert.equal(body.code, 6001);
+    assert.equal(body.signature, null);
+    assert.equal(body.error, "Slippage tolerance exceeded");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
