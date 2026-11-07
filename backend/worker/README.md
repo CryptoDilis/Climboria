@@ -1,50 +1,48 @@
 # Climboria API — Cloudflare setup
 
-This is a backend source scaffold. It is not deployed and wallet login is not live until the deployment and verification gates below are completed.
+The Worker and website wallet-login integration are implemented in source, but this is **not live until deployment and end-to-end verification succeed**. Do not describe it as production-ready or independently audited.
 
-## Important: do not deploy the Hello World placeholder
+## Worker and routes
 
-The Worker source is in `backend/worker/src/index.js`. It imports `viem`; it must be deployed with the package installed through Wrangler. Pasting this file into the dashboard's basic Hello World editor will not install the dependency. The GitHub deploy workflow currently deploys code only; it does not create the D1 database or apply either SQL file.
+Worker source: `backend/worker/src/index.js`. Install dependencies in this directory before deploying; the Worker imports `viem`.
 
-## Current API routes
-
-- `GET /health` — service health response.
-- `POST /v1/auth/challenge` — creates a five-minute, single-use challenge for Base (chain ID 8453) or Solana mainnet.
+- `GET /health` — service health.
+- `POST /v1/auth/challenge` — creates a five-minute, single-use sign-in challenge for Base (chain ID 8453) or Solana mainnet.
 - `POST /v1/auth/verify` — verifies the signed challenge and issues an HttpOnly session cookie.
 - `GET /v1/auth/session` — checks the server-side session.
 - `POST /v1/auth/logout` — revokes the session and clears the cookie.
 
-The API currently allows only `https://climboria.fun` and `https://www.climboria.fun`. Do not use a wildcard origin. A separate staging origin must be deliberately added before testing from it.
+The website's `index.html` now calls `https://api.climboria.fun`, requests wallet message signatures (not transactions), restores the server session, and attempts server logout when a connected wallet disconnects or changes account/network. This frontend integration still needs browser testing against the deployed API.
 
-## Required Cloudflare resources
+CORS allows only `https://climboria.fun` and `https://www.climboria.fun`. Do not add wildcard origins.
 
-1. Create a D1 database named `climboria-auth`.
-2. Copy the D1 database ID into `backend/worker/wrangler.toml`, replacing the placeholder, and confirm the database belongs to the Cloudflare account used for deployment.
-3. Apply the initial schema once: `npx wrangler d1 execute climboria-auth --remote --file=./schema.sql` (run from `backend/worker`).
-4. Apply migration 0002 once, after the initial schema: `npx wrangler d1 execute climboria-auth --remote --file=./migrations/0002_unified_accounts.sql` (run from `backend/worker`). This migration adds columns with `ALTER TABLE` and is **not safe to run twice**. Do not rerun it against a database where it has already been applied.
-5. Deploy the Worker from the `backend/worker` directory with Wrangler and the `viem` dependency installed.
-6. Verify `GET https://<worker-host>/health` returns `{"ok":true,...}` and then exercise challenge → signature verification → session → logout using test wallets.
-7. Attach a custom API hostname such as `api.climboria.fun` only after the Worker is verified. Then update the frontend API base URL and CORS allowlist deliberately.
+## Cloudflare resources and database
 
-## Deployment paths
+The Worker is configured in `wrangler.toml` with D1 binding `DB`, database `climboria-auth`, and custom domain `api.climboria.fun`.
 
-Preferred: connect the repository to Cloudflare Workers Builds and configure the project root as `backend/worker`, build/install command as `npm install`, and deploy command as `npx wrangler deploy`. Ensure the build uses the checked-in `wrangler.toml` and D1 database ID.
+The initial schema creates `auth_challenges` and `auth_sessions`. Migration `migrations/0002_unified_accounts.sql` adds unified account tables and session columns. Migration 0002 uses ALTER TABLE and is **not safe to apply twice**. The operator reported that it was applied; do not rerun it unless the remote database schema has first been checked and shown to require it.
 
-Alternative: deploy with Wrangler CLI from the `backend/worker` directory after installing dependencies and authenticating to the correct Cloudflare account.
+The deploy workflow deploys Worker code only. It does not create the D1 database or apply SQL migrations.
 
-Do not put Cloudflare API tokens, account passwords, wallet secrets, or private keys in Git. If using CI, store a narrowly scoped Cloudflare API token and account ID as protected repository secrets.
+## Deploy
 
-## Pre-production security gates
+GitHub Actions workflow: `.github/workflows/deploy-climboria-api.yml`. It is manual-only (`workflow_dispatch`) and uses the protected repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Never put tokens, passwords, wallet seed phrases, or private keys in Git or chat.
 
-- Configure Cloudflare rate limiting for challenge and verification endpoints, keyed by IP and wallet where possible.
-- Configure D1 backups/retention and periodic deletion of expired challenge/session rows.
-- Verify EVM recovery against test vectors and Solana Ed25519 signatures with test vectors.
-- Test nonce replay, expiration, wrong origin, wrong chain, wrong address, malformed signatures, and parallel verification.
-- Verify cookie behavior from the production website origin and mobile browsers. Prefer a same-site custom hostname (`api.climboria.fun`) rather than a `workers.dev` hostname for browser sessions.
-- Add abuse monitoring and safe operational logs that never include raw signatures, session cookies, or challenge secrets.
-- Frontend wallet connection UI is not yet wired to these endpoints. Do not display an authenticated account until the API session endpoint confirms it.
-- Contract-wallet EIP-1271 support, wallet linking, CSRF token defense for any future state-changing routes, and full rate-limit configuration are not implemented in this initial scaffold.
+Run the workflow from the intended branch in GitHub Actions. The job installs dependencies in `backend/worker`, validates the D1 configuration and secret presence/format, then runs `npx wrangler deploy`. A successful workflow is necessary but not sufficient: verify the deployed endpoint and browser login afterward.
 
-## Current truth
+## Verification gates
 
-This code is an initial implementation scaffold and has not yet passed an independent security review, production deployment, or end-to-end wallet test. Do not describe it as audited or production-secure. No smart contract or token transaction is deployed by this API.
+1. Confirm the workflow completes successfully.
+2. Check `GET https://api.climboria.fun/health` returns an OK JSON response.
+3. From `https://climboria.fun`, test a Base wallet and a Solana wallet using test accounts. Confirm challenge issuance, signature verification, authenticated session restoration, and logout.
+4. Test expired/replayed challenges, wrong chain/address, malformed signatures, account changes, wallet disconnect, CORS, and cookie behavior on mobile browsers.
+5. Confirm no raw signatures, challenge secrets, or session cookies appear in logs.
+
+## Remaining production hardening
+
+- Configure Cloudflare rate limits for challenge and verification endpoints.
+- Configure D1 backups/retention and cleanup of expired challenge/session rows.
+- Run independent signature-verification test vectors and a security review.
+- Contract-wallet EIP-1271 support, wallet linking, CSRF defenses for future state-changing routes, and full rate-limit configuration are not implemented in this initial scaffold.
+
+No smart contract or token transaction is deployed by this API.
