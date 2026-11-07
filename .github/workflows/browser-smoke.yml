@@ -115,6 +115,9 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
+      - name: Test Cloudflare DEX swap proxy
+        run: node --test dex/swap-proxy/test/worker.test.mjs
+
       - name: Verify DEX execution stays fail-closed without secure backend
         run: |
           node <<'JS'
