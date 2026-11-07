@@ -712,7 +712,8 @@ let crystal;{
  }
  crystal=sc(mk(new T3.OctahedronGeometry(1),M('#7fe9ff',1),0,6,0,g),2,3,2);
  glow('#7fe9ff',2.5,90,0,7,0,g);
- const bm=new T3.Mesh(new T3.CylinderGeometry(1.2,2.4,120,16,1,true),new T3.MeshBasicMaterial({color:L('#7fe9ff'),transparent:true,opacity:.22,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=60;g.add(bm);
+ // Restrained Sanctuary wayfinding beam: keep it above the crystal without filling the spawn camera.
+ const bm=new T3.Mesh(new T3.CylinderGeometry(.35,.9,24,16,1,true),new T3.MeshBasicMaterial({color:L('#7fe9ff'),transparent:true,opacity:.075,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=18;g.add(bm);
 }
 /* Park */
 const parkFixtureSolids=[];
@@ -997,8 +998,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  const roofMat=M('#393b3a');
  const roofRand=rng(4407);
  // Wider spacing and fewer, larger irregular roof masses open the chamber silhouette.
- // These are decorative only; the cave collision shell and traversal routes are unchanged.
- for(let rz=15.5;rz<=33.5;rz+=6){
+ // These are decorative only; the cave collision shell and traversal routes are unchanged. for(let rz=15.5;rz<=33.5;rz+=6){
   for(let rx=21.5;rx<=39.5;rx+=6){
    const roof=mk(roofGeo,roofMat,rx+(roofRand()-.5)*1.15,7.7+(roofRand()-.5)*.48,rz+(roofRand()-.5)*1.15,g);
    sc(roof,3.35+roofRand()*.65,1.05+roofRand()*.42,3.35+roofRand()*.65);
@@ -1997,8 +1997,7 @@ function geodeChestLifecycleAudit(){
   const floor=groundAt(c.x,c.z);
   const respawned=!c.open&&c.g.visible&&Math.abs(c.g.position.y-floor)<=.02;
   return {ok:opened&&rewarded&&respawned,opened,rewarded,respawned,timer,inventoryBefore:before,inventoryAfter:after,visible:c.g.visible,open:c.open,floorY:floor,chestY:c.g.position.y};
- }finally{Object.assign(P,saved)}
-}
+ }finally{Object.assign(P,saved)}}
 function positionAtCaveEntranceForSmoke(){
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
