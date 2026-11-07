@@ -20,35 +20,12 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "dex/**"
       - "climboria-favicon.png"
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
-
-      - name: Test standalone DEX market and quote-preview shell
-        run: |
-          node <<'JS'
-          const { chromium } = require('playwright');
-          (async () => {
-            const browser = await chromium.launch({headless:true});
-            try {
-              const page = await browser.newPage({viewport:{width:1365,height:900}});
-              const errors=[];
-              page.on('pageerror',error=>errors.push(error.message));
-              const response=await page.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
-              if(!response?.ok()) throw new Error('Local DEX route failed to load');
-              if(!await page.locator('#markets').count()) throw new Error('Market explorer missing');
-              for(const selector of ['#search','#refresh','#connectWallet','#getQuote','#quoteAmount']) {
-                if(await page.locator(selector).count()!==1) throw new Error('Missing DEX control: '+selector);
-              }
-              const heading=await page.locator('h1').first().innerText();
-              if(!heading.toLowerCase().includes('solana')) throw new Error('Unexpected DEX page heading: '+heading);
-              if(errors.length) throw new Error('DEX browser errors: '+errors.join(' | '));
-              console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls.');
-            } finally { await browser.close(); }
-          })().catch(error=>{console.error(error);process.exit(1)});
-          JS
 
   workflow_dispatch:
 
@@ -126,6 +103,30 @@ jobs:
               console.log('PASS: homepage, 3 hero CTAs, DEX modal, mobile menu, and mobile width.');
             } finally { await browser.close(); }
           })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Test standalone DEX market and quote-preview shell
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const page = await browser.newPage({viewport:{width:1365,height:900}});
+              const errors=[];
+              page.on('pageerror',error=>errors.push(error.message));
+              const response=await page.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Local DEX route failed to load');
+              if(!await page.locator('#markets').count()) throw new Error('Market explorer missing');
+              for(const selector of ['#search','#refresh','#connectWallet','#getQuote','#quoteAmount']) {
+                if(await page.locator(selector).count()!==1) throw new Error('Missing DEX control: '+selector);
+              }
+              const heading=await page.locator('h1').first().innerText();
+              if(!heading.toLowerCase().includes('solana')) throw new Error('Unexpected DEX page heading: '+heading);
+              if(errors.length) throw new Error('DEX browser errors: '+errors.join(' | '));
+              console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
