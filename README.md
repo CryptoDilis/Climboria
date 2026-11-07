@@ -1989,6 +1989,7 @@ For every integrated asset or borrowed technique, record:
 **Owner-approved product direction (2026-11-08):** Climboria DEX is a Solana-wide market discovery and swap terminal, not a $CLIMB-only swap screen. Show the broader Solana token market and allow swaps for any token pair for which the selected routing provider returns a valid, executable route and the connected wallet has the required assets. Do not imply every token is liquid or tradable.
 
 - [ ] Product requirements and screen-by-screen wireframes approved.
+- [x] Climboria signature-engine specification drafted: [docs/CLIMBORIA-DEX-ENGINES.md](docs/CLIMBORIA-DEX-ENGINES.md) (specification only; implementation remains unchecked).
 - [ ] Brand system and responsive high-fidelity designs approved.
 - [ ] **Solana-wide market discovery:** trending tokens/pools, newest pools and launches, search by token name/symbol/mint/pair, sortable market tables, token detail pages, and market-wide filters.
 - [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
