@@ -38,7 +38,7 @@ This Worker is prepared but **not deployed**. The static GitHub Pages site canno
 - The server key is stored as a Cloudflare Worker secret and added only to upstream Jupiter requests.
 - The configured Cloudflare Rate Limiting binding is mandatory; requests fail closed if it is absent. The configured 30 requests per 60 seconds is an approximate per-IP baseline, not a strict global quota. Cloudflare documents that built-in limits are regional and eventually consistent; add account-level firewall rules/monitoring and tune limits against Jupiter's API plan.
 - CORS is a browser-origin control, not authentication. The Worker remains a public endpoint and must have edge rate limits, monitoring, and abuse controls.
-- No mainnet swap is enabled in the Climboria frontend by this deployment scaffold. The frontend must still implement wallet transaction decoding, user review, compatible wallet signing, and Jupiter execution-result display before connecting to these endpoints.
+- The frontend wallet-reviewed Order/Execute flow is implemented in `/swap/` and `/dex/`, but remains feature-gated by public `swap-config.js` (`enabled: false`). It deserializes v0 transactions, checks the fee payer against the connected wallet, displays route/mint/amount/fee and instruction metadata, requests explicit wallet signing, and requires Jupiter `status: Success`, `code: 0`, plus a signature before showing success. This metadata is not a semantic instruction audit or a security guarantee. Mainnet execution must remain disabled until the Worker is deployed, independently security-reviewed, and Devnet/controlled-validator test cases pass.
 - Never claim a swap succeeded unless Jupiter returns `status: "Success"` and `code: 0`.
 
 
