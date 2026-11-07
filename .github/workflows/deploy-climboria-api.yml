@@ -14,6 +14,7 @@ jobs:
   deploy:
     name: Build and deploy Worker
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend/worker
-        run: npm install --package-lock-only && npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Check D1 configuration is present
         working-directory: backend/worker
