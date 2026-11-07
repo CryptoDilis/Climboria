@@ -102,6 +102,10 @@ jobs:
               if(metrics.sw>metrics.vw+2||metrics.ctas!==3) throw new Error('Mobile layout overflow/CTA check: '+JSON.stringify(metrics));
               const mobileDexHref=await mobile.locator('#mobileDexBtn').getAttribute('href');
               if(mobileDexHref!=='/dex/') throw new Error('Mobile DEX link must route to /dex/, got '+mobileDexHref);
+              const mobileDexLabel=(await mobile.locator('#mobileDexBtn').innerText()).trim();
+              if(!mobileDexLabel.includes('SUMMIT RADAR')||/demo only/i.test(mobileDexLabel)) throw new Error('Mobile DEX menu still presents as demo-only: '+mobileDexLabel);
+              const launchpadLabel=(await mobile.locator('#mobileLaunchpadBtn').innerText()).trim();
+              if(!/demo only/i.test(launchpadLabel)) throw new Error('Launchpad must remain clearly marked demo-only until operational: '+launchpadLabel);
               await mobile.screenshot({path:'climboria-mobile-home.png',fullPage:true});
               await Promise.all([mobile.waitForURL('**/dex/'),mobile.locator('#mobileDexBtn').click()]);
               if(new URL(mobile.url()).pathname!=='/dex/') throw new Error('Mobile DEX navigation did not reach /dex/');
