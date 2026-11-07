@@ -30,7 +30,7 @@ Status: **quote-only; execution intentionally disabled**.
    - Treat Failed, timeout, malformed response, or unknown status as unresolved/failed; never infer success from an HTTP 200 alone.
    - Persist a minimal, privacy-conscious audit record: request ID, wallet public key, mints, amounts, router, signature, timestamps and final status. Never log credentials or signed transaction payloads.
 
-4. **Network and release gates**
+4. **Frontend flow implemented, feature-gated**\n   - The DEX page now has a separate Prepare Wallet-Reviewed Swap step. It requests an order only when a wallet is connected and the explicit runtime configuration enables execution.\n   - The browser accepts v0 transactions only, deserializes with Solana web3.js, verifies the transaction fee payer matches the connected wallet, and displays the token mints, amounts, router/fee and instruction count before wallet approval.\n   - The user must explicitly press the wallet-review/sign button. The browser then sends the signed transaction plus request ID to the backend. A success message requires Jupiter status Success, code 0, and a signature.\n   - Execution is disabled by default because the Worker is not deployed or verified. The UI does not enable mainnet trading merely because the code exists.\n\n5. **Network and release gates**
    - Implement and test on Devnet or a controlled local validator with a supported test route before mainnet.
    - Verify wallet rejection, insufficient balance, insufficient SOL for fees, stale/expired order, unsupported transaction version, duplicate click, network timeout, Jupiter execution failure, and successful confirmation.
    - Add rate limits, request validation, monitoring, key rotation, and a documented incident/rollback procedure.
