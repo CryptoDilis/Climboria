@@ -95,6 +95,48 @@ async function handleOrder(request, env) {
     errorMessage: data.errorMessage || null
   });
 }
+async function handleQuote(request, env) {
+  const limited = await enforceRateLimit(request, env);
+  if (limited) return limited;
+  const url = new URL(request.url);
+  const inputMint = url.searchParams.get("inputMint");
+  const outputMint = url.searchParams.get("outputMint");
+  const amount = url.searchParams.get("amount");
+  if (!validPubkey(inputMint) || !validPubkey(outputMint) || inputMint === outputMint ||
+      typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
+    return json({ error: "Invalid quote input mints or amount" }, 400);
+  }
+  const params = new URLSearchParams({ inputMint, outputMint, amount });
+  const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) return json({ error: "Jupiter quote request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
+  if (!data || !data.inAmount || !data.outAmount || !data.requestId) {
+    return json({ error: data?.errorMessage || "Jupiter returned an incomplete quote", errorCode: data?.errorCode ?? null }, 502);
+  }
+  return json({
+    requestId: data.requestId, inAmount: data.inAmount, outAmount: data.outAmount,
+    router: data.router || null, mode: data.mode || null,
+    feeBps: Number.isFinite(Number(data.feeBps)) ? Number(data.feeBps) : null,
+    feeMint: data.feeMint || null, priceImpactPct: data.priceImpactPct ?? null
+  });
+}
+async function handleTokenSearch(request, env) {
+  const limited = await enforceRateLimit(request, env);
+  if (limited) return limited;
+  const query = new URL(request.url).searchParams.get("query")?.trim() || "";
+  if (query.length < 2 || query.length > 64 || /[\u0000-\u001f]/.test(query)) {
+    return json({ error: "Token search query must be 2 to 64 printable characters" }, 400);
+  }
+  const response = await upstream("/../tokens/v2/search?query=" + encodeURIComponent(query), { method: "GET" }, env);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) return json({ error: "Jupiter token search failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
+  if (!Array.isArray(data)) return json({ error: "Jupiter returned an invalid token search response" }, 502);
+  return json(data.slice(0, 20).filter(t => t && validPubkey(t.id) && Number.isInteger(Number(t.decimals)) && Number(t.decimals) >= 0 && Number(t.decimals) <= 18).map(t => ({
+    id: t.id, name: String(t.name || "Unknown token").slice(0, 100),
+    symbol: String(t.symbol || "TOKEN").slice(0, 32), decimals: Number(t.decimals),
+    icon: typeof t.icon === "string" ? t.icon : null, isVerified: Boolean(t.isVerified)
+  })));
+}
 async function handleExecute(request, env) {
   const limited = await enforceRateLimit(request, env);
   if (limited) return limited;
@@ -148,6 +190,8 @@ export default {
     if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403);
     try {
       if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"); return json({ ok: ready, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") } }, ready ? 200 : 503, headers); }
+      if (request.method === "GET" && url.pathname === "/api/swap/quote") return await handleQuote(request, env).then(r => addHeaders(r, headers));
+      if (request.method === "GET" && url.pathname === "/api/tokens/search") return await handleTokenSearch(request, env).then(r => addHeaders(r, headers));
       if (request.method === "POST" && url.pathname === "/api/swap/order") return await handleOrder(request, env).then(r => addHeaders(r, headers));
       if (request.method === "POST" && url.pathname === "/api/swap/execute") return await handleExecute(request, env).then(r => addHeaders(r, headers));
       return json({ error: "Not found" }, 404, headers);
