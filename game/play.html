@@ -2002,7 +2002,7 @@ function geodeChestLifecycleAudit(){
 function positionAtCaveEntranceForSmoke(){
  // Capture from the exterior approach, not beneath the near-mouth rock overhang.
  // Keep the hero facing into the opening with the follow camera behind them.
- const local={x:0,z:-55},world=l2w(caveG,local.x,local.z);
+ const local={x:0,z:-22},world=l2w(caveG,local.x,local.z);
  updateChunks(world[0],world[1],200);
  P.mode='walk';P.x=world[0];P.z=world[1];P.y=groundAt(P.x,P.z)+1.75;P.vy=0;
  // Local +Z points through the cave mouth. The follow-camera offset is
