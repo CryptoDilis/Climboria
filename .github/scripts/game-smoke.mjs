@@ -82,6 +82,8 @@ async function measureWorldLayerIsolation(page,label) {
   },label);
 }
 const errors = [];
+const failedRequests = [];
+const failedResponses = [];
 const performanceResults = [];
 const browser = await chromium.launch({
   headless: true,
@@ -93,11 +95,30 @@ try {
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
+  page.on('requestfailed', request => failedRequests.push({url:request.url(),method:request.method(),failure:request.failure()?.errorText||'unknown'}));
+  page.on('response', response => { if(response.status()>=400) failedResponses.push({url:response.url(),status:response.status()}); });
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
-  await page.waitForSelector('canvas:not(#world-map)', { state: 'visible', timeout: 45000 });
+  try {
+    await page.waitForSelector('canvas:not(#world-map)', { state: 'visible', timeout: 45000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({
+      title:document.title,
+      readyState:document.readyState,
+      scripts:[...document.scripts].map(s=>({src:s.src||'inline',loaded:!!s.src?performance.getEntriesByName(s.src).length>0:true})),
+      three:typeof window.THREE,
+      canvas:[...document.querySelectorAll('canvas')].map(c=>({id:c.id,width:c.width,height:c.height,rect:(()=>{const r=c.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})(),display:getComputedStyle(c).display,visibility:getComputedStyle(c).visibility})),
+      readiness:window.__climboriaReadiness?{chunk:window.__climboriaReadiness.chunkReady,render:window.__climboriaReadiness.renderReady,hero:window.__climboriaReadiness.heroReady}:null,
+      renderState:window.__climboriaRenderState||null,
+      gameReady:window.__climboriaGameReady??null,
+      rootData:{...document.documentElement.dataset},
+      bodyClass:document.body.className
+    }));
+    await page.screenshot({path:'climboria-desktop-boot-failure.png',fullPage:true}).catch(()=>{});
+    throw new Error('Visible gameplay canvas failed to initialize: '+JSON.stringify(diagnostic)+'; browserErrors='+JSON.stringify(errors)+'; failedRequests='+JSON.stringify(failedRequests)+'; failedResponses='+JSON.stringify(failedResponses)+'; '+error.message);
+  }
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
