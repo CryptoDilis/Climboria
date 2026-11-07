@@ -1999,6 +1999,7 @@ const climboriaProfileStages=Object.create(null);
 const climboriaProfileFrameIntervals=[];
 let climboriaProfilePreviousFrame=0;
 let climboriaProfileWriteIndex=0;
+let climboriaProfileFrameWriteIndex=0;
 function climboriaProfileRecord(name,start){
  if(!climboriaProfileEnabled)return;
  const samples=climboriaProfileStages[name]||(climboriaProfileStages[name]=[]);
@@ -2161,7 +2162,7 @@ function animate(now){
  if(climboriaProfileEnabled&&climboriaProfilePreviousFrame){
   const frameInterval=now-climboriaProfilePreviousFrame;
   if(climboriaProfileFrameIntervals.length<900)climboriaProfileFrameIntervals.push(frameInterval);
-  else climboriaProfileFrameIntervals[climboriaProfileFrameIntervals.length%900]=frameInterval;
+  else{climboriaProfileFrameIntervals[climboriaProfileFrameWriteIndex%900]=frameInterval;climboriaProfileFrameWriteIndex++;}
  }
  climboriaProfilePreviousFrame=now;
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
