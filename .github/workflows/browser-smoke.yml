@@ -115,6 +115,19 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
+      - name: Verify DEX execution stays fail-closed without secure backend
+        run: |
+          node <<'JS'
+          const fs=require('fs');
+          const page=fs.readFileSync('dex/index.html','utf8');
+          const readiness=fs.readFileSync('dex/EXECUTION_READINESS.md','utf8');
+          if(/JUPITER_API_KEY|x-api-key/i.test(page)) throw new Error('A Jupiter API credential/header must never be exposed in the public DEX page');
+          if(!/quote-only/i.test(page)||!/Swap execution is not enabled/i.test(page)) throw new Error('DEX must clearly disclose quote-only status');
+          if(/\.signTransaction\s*\(|\.sendTransaction\s*\(|/i.test(page)) throw new Error('Public DEX unexpectedly contains a transaction signing/submission call');
+          for(const term of ['taker','requestId','/execute','Devnet','private key','seed phrase']) if(!readiness.includes(term)) throw new Error('Execution readiness document missing: '+term);
+          console.log('PASS: public DEX exposes no Jupiter credential or signing/submission path; secure execution gates documented.');
+          JS
+
       - name: Test standalone DEX market and quote-preview shell
         run: |
           node <<'JS'
