@@ -1466,3 +1466,16 @@ For each meaningful implementation batch:
 - [x] New performance artifact for the same tested head: desktop sanctuary 2.4 FPS mean / 423.89ms frame mean; mobile emulation 1.1 FPS mean / 918.29ms frame mean. Desktop renderer stage mean 3.228ms with max 199.7ms; mobile renderer stage mean 96.986ms with p99 1,599ms and max 4,883.9ms. Test environment is headless Chromium + SwiftShader software WebGL, not a physical GPU or Redmi benchmark. Treat as a software-renderer warning, not a device-performance result.
 - [ ] Investigate GPU/software-renderer bottleneck separately from JS update cost. Profile renderer, shader/material, overdraw, resolution, shadow/light passes, and scene complexity before choosing optimizations; preserve visual quality and avoid arbitrary global pixel-ratio reduction without comparative screenshots.
 - [ ] PR #215 remains OPEN and UNMERGED. Green automation does not override rejected cave/fish visual acceptance or pending route, performance, and physical-device gates.
+
+
+## 2026-11-07 — Browser Smoke #1643 completed; profiler ring-buffer correction
+
+- [x] Validate Climboria workflow for head `10089a6ab77f8b34a0a7befa9626a803ecb967dd` passed (run 42316567153).
+- [x] Browser Smoke workflow run 42316567113 passed all steps, including homepage/DEX/mobile navigation, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot artifact upload (artifact 13551127770).
+- [x] Reviewed artifact screenshots: cave interior remains a broad flat beige floor with angular/blockout walls, a bright exterior opening, primitive torch and faceted chest; cave realism is rejected. Pond fish remain flat blue silhouettes; natural submerged fish acceptance is rejected.
+- [x] Latest headless Chromium + SwiftShader report: desktop sanctuary 3.4 FPS mean / 290.67ms frame mean; mobile emulation 1.5 FPS mean / 653.31ms frame mean. Desktop scene 129,935 triangles/30 calls; mobile 129,463 triangles/46 calls. This is a software-renderer diagnostic only, not a physical GPU or Redmi 14 5G benchmark. It is a severe performance warning, not device acceptance.
+- [x] Route audit completed 663 finite samples and reached open sea/seabed, but maximum sampled rise is +330.2% (120–130m) and drop is -186.2% (230–240m). This does not prove a traversable/safe corridor; route remains rejected pending grade, collision, headroom and traversal checks.
+- [x] Fixed the profiler frame-interval circular buffer: once 900 samples are collected, subsequent samples now rotate through all 900 slots rather than repeatedly overwriting slot zero.
+- [ ] Fresh Validate and Browser Smoke must pass on profiler-fix head; inspect fresh artifact and verify interval sample statistics.
+- [ ] Cave entrance/interior realism, natural fish, safe cave-to-coast corridor, renderer/device performance, natural character idle, manual gameplay acceptance and physical Redmi 14 5G test remain OPEN.
+- [ ] PR #215 remains OPEN and UNMERGED; do not merge until all acceptance gates are met.
