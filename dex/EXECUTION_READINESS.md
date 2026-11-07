@@ -5,8 +5,9 @@ Status: **quote-only; execution intentionally disabled**.
 ## Current architecture
 
 - The public GitHub Pages site is a static frontend.
-- `dex/index.html` reads public market data from DexScreener and requests Jupiter quote-only data.
-- Wallet connection is read-only. No transaction is requested, signed, submitted, or represented as confirmed.
+- `dex/index.html` reads public market data from DexScreener and supports Jupiter quote previews.
+- `/dex/` and `/swap/` contain a wallet-reviewed Order/Execute flow, but the public runtime switch in `/swap-config.js` is `enabled: false`; therefore the deployed frontend must not request an executable order, ask the wallet to sign, submit a transaction, or represent a swap as confirmed.
+- Wallet connection alone is not transaction approval. The feature gate must remain off until the Worker, Devnet tests, transaction review, and production security gates are complete.
 - Do not add a Jupiter API key, RPC provider secret, wallet secret key, seed phrase, or other credential to browser JavaScript, HTML, Git history, or a public GitHub Actions artifact.
 
 ## Required execution architecture
