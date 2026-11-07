@@ -208,3 +208,13 @@ Reviewed all ten screenshots from Browser Smoke run [42277972370](https://github
 - Desktop SwiftShader: 199,971 triangles, 103 draw calls, 78 geometries, 18 textures, 2.5 FPS mean over 2.2 seconds.
 - Mobile-emulation SwiftShader: 166,067 triangles, 81 draw calls, 64 geometries, 10 textures, 0.8 FPS mean over 2.2 seconds.
 - Treat these as software-renderer warning signals only. Profile main-thread update work, terrain chunk generation, draw-call/geometry cost and GPU frame time separately on representative hardware before changing world density or claiming performance is fixed.
+
+
+## 2026-11-07 — BarramundiFish source/license re-verification
+
+- [x] Re-fetched the exact upstream README from pinned revision `KhronosGroupArchives/glTF-Sample-Models@d7a3cc8e51d7c573771ae77a57f16b0662a905c6`, path `2.0/BarramundiFish/README.md`.
+- [x] README explicitly links CC0 1.0 and states Microsoft waived copyright and related/neighbouring rights to the asset. This verifies the candidate's stated license at the pinned source revision.
+- [x] Re-confirmed the model directory contains separate `glTF-Binary`, `glTF-Draco`, `glTF`, and screenshot folders at that revision.
+- [ ] Visual preview/model geometry has not yet been successfully inspected in this environment. Do not integrate or claim visual acceptance until the actual model and screenshot are inspected.
+- [ ] Still required: choose the compatible GLB/Draco variant, verify exact binary and texture payload, produce mobile texture variants, vendor locally with source/license notice, share one loaded model across instances, and benchmark desktop/mobile.
+- [ ] Current primitive fish remain in-game until replacement passes all import, performance and visual gates. Do not leave the pond empty or substitute another low-poly model.
