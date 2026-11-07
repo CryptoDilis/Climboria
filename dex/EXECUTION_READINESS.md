@@ -1,0 +1,50 @@
+# Climboria DEX — swap execution readiness
+
+Status: **quote-only; execution intentionally disabled**.
+
+## Current architecture
+
+- The public GitHub Pages site is a static frontend.
+- `dex/index.html` reads public market data from DexScreener and requests Jupiter quote-only data.
+- Wallet connection is read-only. No transaction is requested, signed, submitted, or represented as confirmed.
+- Do not add a Jupiter API key, RPC provider secret, wallet secret key, seed phrase, or other credential to browser JavaScript, HTML, Git history, or a public GitHub Actions artifact.
+
+## Required execution architecture
+
+1. **Backend order proxy**
+   - Store the Jupiter API key only in server-side environment/secret storage.
+   - Accept a narrowly validated request: input mint, output mint, raw amount, connected wallet public key, and supported transaction version.
+   - Validate mint strings, amount bounds, pair inequality, wallet public key format, request size, origin, rate limits, and abuse controls.
+   - Call Jupiter Swap API V2 `GET /order` with `inputMint`, `outputMint`, `amount`, and `taker`, attaching `x-api-key` server-side.
+   - Return only the fields the client needs. Treat an absent or empty `transaction`, missing `requestId`, API error, or expired order as non-executable. Never silently downgrade to a fabricated quote.
+
+2. **Wallet review and signing**
+   - Display input/output mint addresses, token symbols, exact input amount, expected output, fees, router, transaction expiry and warnings before requesting wallet approval.
+   - Deserialize only supported Solana transaction versions. Reject unknown versions and transactions whose required signer does not match the connected wallet.
+   - Ask the user's wallet to sign. Climboria must never receive or store the user's private key or seed phrase.
+   - Do not auto-sign, auto-submit, or change the order after the user reviews it.
+
+3. **Jupiter execution**
+   - Send the wallet-signed base64 transaction and matching `requestId` to Jupiter `POST /execute` through the backend proxy.
+   - Validate the response schema and show Success only when Jupiter reports `status: "Success"` and `code: 0`.
+   - Treat Failed, timeout, malformed response, or unknown status as unresolved/failed; never infer success from an HTTP 200 alone.
+   - Persist a minimal, privacy-conscious audit record: request ID, wallet public key, mints, amounts, router, signature, timestamps and final status. Never log credentials or signed transaction payloads.
+
+4. **Network and release gates**
+   - Implement and test on Devnet or a controlled local validator with a supported test route before mainnet.
+   - Verify wallet rejection, insufficient balance, insufficient SOL for fees, stale/expired order, unsupported transaction version, duplicate click, network timeout, Jupiter execution failure, and successful confirmation.
+   - Add rate limits, request validation, monitoring, key rotation, and a documented incident/rollback procedure.
+   - Mainnet remains disabled until the backend, wallet review, execution, and all release gates are independently verified.
+
+## Official protocol references
+
+- Jupiter Order & Execute: https://developers.jup.ag/docs/swap/order-and-execute
+- Solana transaction signing in production: https://solana.com/docs/core/transactions/signing-in-production
+- Solana RPC sendTransaction semantics: https://solana.com/docs/rpc/http/sendtransaction
+
+## Important implementation facts
+
+- Jupiter's current Order & Execute flow uses `/order` to return an unsigned transaction and `requestId`; the `taker` wallet address is required for an assembled transaction.
+- Jupiter's `/execute` accepts the signed transaction and matching request ID and returns an execution status.
+- A successful RPC submission alone is not confirmation. Do not display a successful swap unless the selected execution/confirmation provider reports a verified success.
+- The public frontend must not contain a Jupiter API key. A static-site-only implementation cannot safely conceal a provider credential.
