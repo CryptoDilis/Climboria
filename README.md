@@ -2000,6 +2000,8 @@ For every integrated asset or borrowed technique, record:
   - [ ] Browser verification of /dex/ market and token-detail interactions plus live API response still pending; no swap execution is enabled.
 - [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
 - [ ] **Charts and activity:** pool/token charts, OHLCV where available, recent trades, supported DEX/pool venues, holders and token metadata where reliable sources permit.
+- [x] Jupiter Swap API V2 quote-preview alpha: requests `/swap/v2/order` without `taker` for quote-only output; no transaction, wallet signature or submission is requested.
+- [x] Arbitrary token picker added using Jupiter Tokens API V2 search by name, symbol or mint; selected mint decimals come from provider metadata, not guessed.
 - [ ] **Swap in the same Climboria experience:** select any supported Solana input/output token, fetch fresh live quote, show route, price impact, slippage, network/priority fees, minimum received and quote expiry, then ask the user's wallet to sign.
 - [ ] **Execution:** use an established Solana aggregator (evaluate current Jupiter Swap API V2 first); submit only signed transactions, verify confirmed signature and actual amounts, and show an explorer link. Never custody keys or request seed phrases.
 - [ ] **Data integrity:** fetch actual mint decimals; validate mint/program and token identity; reject stale/invalid quotes; never synthesize fallback quotes or fabricate price, liquidity, market cap, volume, holders or trade activity.
