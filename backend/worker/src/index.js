@@ -3,6 +3,8 @@ import { recoverMessageAddress } from "viem";
 const ALLOWED_ORIGINS = new Set(["https://climboria.fun", "https://www.climboria.fun"]);
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 const CHALLENGE_TTL_SECONDS = 5 * 60;
+const MAX_BODY_BYTES = 4096;
+const MAX_CHALLENGES_PER_WALLET_WINDOW = 5;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -43,7 +45,15 @@ async function sha256Hex(value) {
   return [...new Uint8Array(digest)].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 function cookie(name, value, maxAge) {
-  return `${name}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=None`;
+  return `${name}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+}
+async function readJson(request) {
+  if (!(request.headers.get("content-type") || "").toLowerCase().includes("application/json")) throw new Error("Expected application/json.");
+  const length = Number(request.headers.get("content-length") || 0);
+  if (length > MAX_BODY_BYTES) throw new Error("Request body too large.");
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).length > MAX_BODY_BYTES) throw new Error("Request body too large.");
+  return JSON.parse(raw);
 }
 function validWallet(chain, wallet) {
   if (typeof wallet !== "string") return false;
@@ -54,11 +64,13 @@ function validWallet(chain, wallet) {
   return false;
 }
 async function challenge(request, env) {
-  const body = await request.json();
+  const body = await readJson(request);
   const { chain, wallet } = body || {};
   if (!validWallet(chain, wallet)) return json({ error: "Unsupported chain or invalid wallet address." }, 400);
   const origin = request.headers.get("Origin");
   if (!origin || !ALLOWED_ORIGINS.has(origin)) return json({ error: "Origin not allowed." }, 403);
+  const recent = await env.DB.prepare("SELECT COUNT(*) AS total FROM auth_challenges WHERE wallet = ? AND created_at >= datetime('now', '-10 minutes')").bind(wallet).first();
+  if ((recent?.total || 0) >= MAX_CHALLENGES_PER_WALLET_WINDOW) return json({ error: "Too many login attempts. Please wait a few minutes and retry." }, 429);
   const id = randomHex(16);
   const nonce = randomHex(16);
   const issued = new Date();
@@ -73,7 +85,7 @@ async function challenge(request, env) {
   return json({ challengeId: id, message, expiresAt: expires.toISOString(), purpose: "authentication_only" });
 }
 async function verify(request, env) {
-  const body = await request.json();
+  const body = await readJson(request);
   const { challengeId, signature } = body || {};
   if (typeof challengeId !== "string" || !/^[a-f0-9]{32}$/.test(challengeId) || typeof signature !== "string" || signature.length > 1024) {
     return json({ error: "Invalid verification request." }, 400);
@@ -97,22 +109,22 @@ async function verify(request, env) {
     }
   } catch { valid = false; }
   if (!valid) return json({ error: "Signature verification failed." }, 401);
-  const consumed = await env.DB.prepare("UPDATE auth_challenges SET used = 1 WHERE id = ? AND used = 0 AND expires_at > ?")
-    .bind(challengeId, new Date().toISOString()).run();
-  if (!consumed.meta?.changes) return json({ error: "Challenge was already consumed." }, 409);
-  // Resolve this wallet to one persistent Climboria player account.
+  const consumed = await env.DB.prepare("UPDATE auth_challenges SET used = 1 WHERE id = ? AND used = 0 AND expires_at > ? AND origin = ?")
+    .bind(challengeId, new Date().toISOString(), origin).run();
+  if (!consumed.meta?.changes) return json({ error: "Challenge was already consumed or expired." }, 409);
+  // INSERT OR IGNORE avoids duplicate identities when first logins race.
   const providerSubject = `${row.chain}:${row.wallet.toLowerCase()}`;
-  let identity = await env.DB.prepare(
-    "SELECT user_id FROM auth_identities WHERE provider = 'wallet' AND provider_subject = ?"
-  ).bind(providerSubject).first();
+  let identity = await env.DB.prepare("SELECT user_id FROM auth_identities WHERE provider = 'wallet' AND provider_subject = ?").bind(providerSubject).first();
   let userId = identity?.user_id;
   if (!userId) {
-    userId = randomHex(16);
-    await env.DB.prepare("INSERT INTO users (id) VALUES (?)").bind(userId).run();
-    await env.DB.prepare(
-      "INSERT INTO auth_identities (id, user_id, provider, provider_subject, email_verified) VALUES (?, ?, 'wallet', ?, 0)"
-    ).bind(randomHex(16), userId, providerSubject).run();
+    const candidateUserId = randomHex(16);
+    await env.DB.prepare("INSERT OR IGNORE INTO users (id) VALUES (?)").bind(candidateUserId).run();
+    await env.DB.prepare("INSERT OR IGNORE INTO auth_identities (id, user_id, provider, provider_subject, email_verified) VALUES (?, ?, 'wallet', ?, 0)")
+      .bind(randomHex(16), candidateUserId, providerSubject).run();
+    identity = await env.DB.prepare("SELECT user_id FROM auth_identities WHERE provider = 'wallet' AND provider_subject = ?").bind(providerSubject).first();
+    userId = identity?.user_id;
   }
+  if (!userId) return json({ error: "Could not resolve Climboria account. Please retry." }, 503);
   const rawSession = randomHex(32);
   const sessionHash = await sha256Hex(rawSession);
   const sessionId = randomHex(16);
@@ -128,9 +140,9 @@ async function session(request, env) {
   const raw = (request.headers.get("Cookie") || "").split(";").map(v => v.trim()).find(v => v.startsWith("__Host-climboria_session="))?.split("=").slice(1).join("=");
   if (!raw) return json({ authenticated: false }, 401);
   const hash = await sha256Hex(raw);
-  const row = await env.DB.prepare("SELECT s.user_id, s.wallet, s.chain, s.auth_method, s.expires_at FROM auth_sessions s LEFT JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.revoked = 0 AND (s.user_id IS NULL OR COALESCE(u.disabled, 0) = 0)")
-    .bind(hash).first();
-  if (!row || Date.parse(row.expires_at) <= Date.now()) return json({ authenticated: false }, 401);
+  const row = await env.DB.prepare("SELECT s.user_id, s.wallet, s.chain, s.auth_method, s.expires_at FROM auth_sessions s LEFT JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.revoked = 0 AND s.expires_at > ? AND (s.user_id IS NULL OR COALESCE(u.disabled, 0) = 0)")
+    .bind(hash, new Date().toISOString()).first();
+  if (!row) return json({ authenticated: false }, 401);
   return json({ authenticated: true, userId: row.user_id, wallet: row.wallet, chain: row.chain, authMethod: row.auth_method, expiresAt: row.expires_at });
 }
 async function logout(request, env) {
@@ -153,6 +165,7 @@ export default {
     const headers = origin && ALLOWED_ORIGINS.has(origin) ? corsHeaders(origin) : {};
     try {
       const url = new URL(request.url);
+      if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") return json({ error: "HTTPS required." }, 400, headers);
       let response;
       if (request.method === "GET" && url.pathname === "/health") {
         response = json({ ok: true, service: "climboria-api", auth: "configured-by-deployment" });
