@@ -80,6 +80,33 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
   }
 });
 
+test("rejects a Jupiter quote-only order instead of returning it as executable", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({
+      requestId: "jupiter-request-quote-only",
+      transaction: "",
+      inAmount: "100",
+      outAmount: "200",
+      errorCode: 2,
+      errorMessage: "Insufficient SOL for gas",
+      transactionVersion: 0
+    });
+    const req = new Request("https://worker.test/api/swap/order", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 422);
+    const body = await res.json();
+    assert.equal(body.errorCode, 2);
+    assert.match(body.error, /Insufficient SOL for gas/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("executes only with a valid Jupiter success response and matching request payload", async () => {
   const originalFetch = globalThis.fetch;
   let upstreamPayload;
