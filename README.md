@@ -1995,7 +1995,8 @@ For every integrated asset or borrowed technique, record:
   - [x] Summit Radar alpha page created at [dex/index.html](dex/index.html), linked from the homepage DEX entry points; live provider fetches, Solana filtering, token/pair search, sorting, latest profiles and 60-second refresh implemented.
   - [x] Token detail view added: fetches pools for selected mint, displays provider-backed price/volume/liquidity/change, shows pool candidates and embeds the selected pool chart.
   - [ ] Coverage remains partial: current alpha combines provider search seeds and up to 30 latest profile mints; it is not an exhaustive Solana-wide pool index. Full pagination/coverage remains open.
-  - [ ] Browser verification of the new /dex/ page and live API response still pending; no swap execution is enabled.
+  - [x] TrailMap alpha added: compares discovered pools by reported liquidity, volume, price and age; user can select a pool to update chart and metrics.
+  - [ ] Browser verification of /dex/ market and token-detail interactions plus live API response still pending; no swap execution is enabled.
 - [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
 - [ ] **Charts and activity:** pool/token charts, OHLCV where available, recent trades, supported DEX/pool venues, holders and token metadata where reliable sources permit.
 - [ ] **Swap in the same Climboria experience:** select any supported Solana input/output token, fetch fresh live quote, show route, price impact, slippage, network/priority fees, minimum received and quote expiry, then ask the user's wallet to sign.
