@@ -624,7 +624,7 @@ function updateChunks(px,pz,budget){
  const need=[];
  for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++){const cx=ccx+i,cz=ccz+j;if(!chunks.has(cx+','+cz))need.push([cx,cz,i*i+j*j])}
  need.sort((a,b)=>a[2]-b[2]);
- for(let i=0;i<Math.min(budget,need.length);i++){const[cx,cz]=need[i];chunks.set(cx+','+cz,buildChunk(cx,cz,ccx,ccz))}
+ for(let i=0;i<Math.min(budget,need.length);i++){const[cx,cz]=need[i],chunk=buildChunk(cx,cz,ccx,ccz);chunks.set(cx+','+cz,chunk);for(const o of chunk.objs){const layer=o.userData?.climboriaLayer;if(layer)o.visible=climboriaDiagnosticLayers[layer]!==false}}
  return need.length;
 }
 // Read-only layer counters plus reversible visibility switches for repeatable
