@@ -1985,16 +1985,21 @@ For every integrated asset or borrowed technique, record:
 - [ ] Never scrape private endpoints or bypass provider access controls.
 
 ## L. Climboria DEX implementation and acceptance gates
+
+**Owner-approved product direction (2026-11-08):** Climboria DEX is a Solana-wide market discovery and swap terminal, not a $CLIMB-only swap screen. Show the broader Solana token market and allow swaps for any token pair for which the selected routing provider returns a valid, executable route and the connected wallet has the required assets. Do not imply every token is liquid or tradable.
+
 - [ ] Product requirements and screen-by-screen wireframes approved.
 - [ ] Brand system and responsive high-fidelity designs approved.
-- [ ] Data-provider selection, API terms, quotas and cost model documented.
-- [ ] Solana market-data ingestion and normalized schema tested.
-- [ ] Token discovery, search and token detail pages pass data-integrity tests.
-- [ ] Charts verified against independent source and on-chain trades.
-- [ ] Wallet connection, signing, quote, swap and explorer verification tested on devnet.
-- [ ] Security/risk labels tested for false positives/false negatives and clearly qualified.
-- [ ] Portfolio/PnL math tested against known transaction histories.
-- [ ] Mainnet launch only after security review, confirmed official token identity, liquidity/venue validation and owner approval.
+- [ ] **Solana-wide market discovery:** trending tokens/pools, newest pools and launches, search by token name/symbol/mint/pair, sortable market tables, token detail pages, and market-wide filters.
+- [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
+- [ ] **Charts and activity:** pool/token charts, OHLCV where available, recent trades, supported DEX/pool venues, holders and token metadata where reliable sources permit.
+- [ ] **Swap in the same Climboria experience:** select any supported Solana input/output token, fetch fresh live quote, show route, price impact, slippage, network/priority fees, minimum received and quote expiry, then ask the user's wallet to sign.
+- [ ] **Execution:** use an established Solana aggregator (evaluate current Jupiter Swap API V2 first); submit only signed transactions, verify confirmed signature and actual amounts, and show an explorer link. Never custody keys or request seed phrases.
+- [ ] **Data integrity:** fetch actual mint decimals; validate mint/program and token identity; reject stale/invalid quotes; never synthesize fallback quotes or fabricate price, liquidity, market cap, volume, holders or trade activity.
+- [ ] **Risk transparency:** label unverified metadata, missing liquidity, low coverage and provider-derived estimates; do not label a token "safe".
+- [ ] **Provider operations:** document API terms, keys, rate limits, quotas, cache policy, attribution, uptime, retries, backoff and graceful degradation. Keep secret API keys server-side where required.
+- [ ] **Acceptance tests:** validate market data against independent sources and on-chain transactions; test wallet signing, route, quote expiry, slippage bounds, failed transactions, confirmation and explorer verification on devnet before mainnet.
+- [ ] Mainnet launch only after security review, confirmed official $CLIMB mint identity (for the $CLIMB listing), liquidity/venue validation, production provider configuration and owner approval.
 - [ ] Base/EVM phase only after Solana production flow is stable and independently verified.
 
 ## M. Reference feature research (not implementation evidence)
