@@ -1573,3 +1573,11 @@ For each meaningful implementation batch:
 - [ ] Replace the global water sheet with correctly bounded water surfaces or a verified equivalent that follows each water body's shoreline and depth, while preserving the existing waterBodyAt, swimming, diving and fishing APIs.
 - [ ] Profile the bounded-water implementation on desktop and mobile smoke, compare triangles/draw calls/frame intervals and inspect pond/coast/cave screenshots. Avoid simply lowering water quality without visual review.
 - [ ] Water architecture, cave/grotto realism, fish assets, safe coast route, all world/gameplay/social/economy acceptance, and physical Redmi 14 5G test remain OPEN. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — Water mesh cost quantified (source-derived, commit 2c97285)
+
+- [x] Global water PlaneGeometry is `WSEG=120`, therefore 120×120 = 14,400 quads / 28,800 triangles before renderer clipping; it is one draw call with a custom animated vertex/fragment shader.
+- [x] This mesh is a meaningful render cost and a visual architecture issue, but it accounts for only a portion of the measured ~129k scene triangles. Do not claim it is the sole source of the very poor SwiftShader frame intervals.
+- [ ] Profile scene with isolated water visibility toggles in the browser smoke harness (water on/off, terrain on/off, foliage/props on/off) and compare external frame intervals plus renderer stage timings. Keep normal gameplay behavior unchanged during diagnostics.
+- [ ] Based on isolated measurements, replace global water with bounded body surfaces and/or optimize wave mesh/shader complexity while retaining proper shorelines and existing swimming/fishing API behavior. Validate desktop/mobile captures and physical-device performance separately.
