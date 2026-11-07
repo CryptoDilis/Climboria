@@ -38,3 +38,10 @@ This Worker is prepared but **not deployed**. The static GitHub Pages site canno
 - CORS is a browser-origin control, not authentication. The Worker remains a public endpoint and must have edge rate limits, monitoring, and abuse controls.
 - No mainnet swap is enabled in the Climboria frontend by this deployment scaffold. The frontend must still implement wallet transaction decoding, user review, compatible wallet signing, and Jupiter execution-result display before connecting to these endpoints.
 - Never claim a swap succeeded unless Jupiter returns `status: "Success"` and `code: 0`.
+
+
+## Frontend routes
+
+- `https://climboria.fun/dex/` — standalone Solana market terminal.
+- `https://climboria.fun/swap/` — dedicated swap interface. It can display Jupiter quote previews, but wallet signing and execution remain feature-gated until the Worker is deployed, configured, security-reviewed, and tested.
+- The homepage SWAP action routes to `/swap/`; the DEX navigation routes to `/dex/`.
