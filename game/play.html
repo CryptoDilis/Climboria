@@ -1309,12 +1309,12 @@ const volumeControl=document.getElementById('climboria-music-volume'),volumeValu
 volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeControl.value)/100;volumeValue.textContent=volumeControl.value+'%';});
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
- P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
+ P.x=0;P.z=-105;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
  cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+3.05,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x-Math.sin(cameraYaw)*3.5,P.y+1.05,P.z-Math.cos(cameraYaw)*3.5);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
-const TP={1:()=>tp(0,-30,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
+const TP={1:()=>tp(0,-105,0),2:()=>tp(POI.summit.px+6,POI.summit.pz+6,Math.PI*.75),3:()=>{const c=POI.cave;tp(c.x+c.dir.x*45,c.z+c.dir.z*45,Math.atan2(c.dir.x,c.dir.z))},
  4:()=>tp(RICE.x-60,RICE.z+40,Math.PI*.6),5:()=>tp(100,1000,Math.PI),6:()=>tp(-960,0,Math.PI/2),7:()=>tp(-170,160,0),8:()=>tp(-150,-120,Math.PI*.6)};
 addEventListener('keydown',e=>{
  if(e.code=='Space')e.preventDefault();
