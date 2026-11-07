@@ -9,7 +9,7 @@ const valid = "So11111111111111111111111111111111111111112";
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "jupiter-order-execute" });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: true, rateLimiter: true } });
 });
 test("rejects unapproved browser origins", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health", { headers: { origin: "https://evil.test" } }), env);
