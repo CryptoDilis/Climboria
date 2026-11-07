@@ -1536,3 +1536,16 @@ For each meaningful implementation batch:
 - [x] Latest SwiftShader smoke performance: desktop sanctuary 4.1 average FPS / 243.49ms mean frame interval; mobile emulation 1.8 average FPS / 556.46ms mean frame interval. Mobile renderer-stage mean 55.679ms, p99 961.2ms, max 3063ms. This remains a severe software-renderer warning only, not a physical GPU benchmark.
 - [ ] Need separate investigation of frame scheduling/SwiftShader overhead, scene cost and resolution; do not assume renderer CPU submission equals GPU completion.
 - [ ] Physical Redmi 14 5G testing remains pending. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — Browser Smoke #42320098729 artifact fully inspected (commit 981bd57)
+
+- [x] Browser Smoke run `42320098729` completed SUCCESS; job `128242296396` and all listed steps completed successfully. Screenshot artifact `13553290085` downloaded and inspected.
+- [x] Exact desktop cave-interior capture confirms rejection: broad flat beige floor, angular wall masses, visible daylight gap/opening, primitive torch and faceted chest. Rebuild cave architecture and dressing; lighting-only changes are insufficient.
+- [x] Exact desktop pond/fish capture confirms rejection: oversized flat cyan water plane, green featureless foreground/shore transition, fish rendered as flat blue silhouettes, and no convincing underwater depth/environment. Pond water/shore/depth presentation and fish assets both need replacement.
+- [x] Latest route audit: 663 samples, finite, ocean and seabed reached; max sampled rise +330.2% over 10m (120–130m) and max drop -186.2% over 10m (230–240m). Endpoint reach is not proof of traversability; corridor remains REJECTED pending terrain grading, collision and actual traversal.
+- [x] Latest SwiftShader desktop sanctuary: 2.4 average FPS, 414.57ms mean external frame interval, 129,935 triangles, 30 renderer calls, 35 geometries, 10 textures, 317 scene objects. Internal renderer stage mean 3.679ms (max 237.6ms); game-loop frame interval mean 451.7ms, p99 1733.2ms, max 6783ms.
+- [x] Latest SwiftShader mobile emulation: 1.0 average FPS, 958.3ms mean external frame interval, 129,091 triangles, 39 renderer calls, 43 geometries, 8 textures, 251 scene objects. Internal renderer stage mean 86.433ms, p99 1650.1ms, max 4806.4ms; game-loop interval mean 957.35ms, p99 2999.9ms, max 4816.31ms.
+- [ ] These are headless Chromium SwiftShader software-renderer diagnostics, not physical GPU or Redmi 14 5G benchmarks. Do not equate renderer submission time with GPU completion. Investigate software WebGL/browser scheduling, render resolution, scene complexity and device performance separately.
+- [ ] Cave architecture, pond depth/shore, realistic fish integration, traversable route, performance acceptance and physical Redmi 14 5G test remain OPEN. All remaining world, gameplay, social and economy checklist items remain OPEN unless individually verified.
+- [ ] PR #215 remains OPEN and UNMERGED; do not merge before visual, functional, route and performance acceptance.
