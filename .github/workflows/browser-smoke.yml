@@ -97,6 +97,7 @@ jobs:
               if(!dexResponse?.ok()) throw new Error('DEX market explorer HTTP load failed');
               if(!(await dex.locator('h1').innerText()).includes('Explore the Solana market')) throw new Error('DEX market explorer heading missing');
               if(await dex.locator('#markets').count()!==1||await dex.locator('#search').count()!==1) throw new Error('DEX market explorer controls missing');
+              if(await dex.locator('#swapQuote').count()!==1||await dex.locator('#getQuote').count()!==1) throw new Error('Jupiter quote preview controls missing');
               await dex.locator('#search').fill('SOL');
               await dex.screenshot({path:'climboria-dex-market.png',fullPage:true});
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
