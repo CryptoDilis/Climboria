@@ -1679,39 +1679,50 @@ for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
 // the surface. Keep counts modest on touch devices and share geometry/materials.
 const aquaticLifeGroup=new T3.Group();aquaticLifeGroup.name='Climboria Aquatic Life';scene.add(aquaticLifeGroup);
 const aquaticFish=[];
-const fishBodyGeo=new T3.SphereGeometry(1,16,10),fishTailShape=new T3.Shape();fishTailShape.moveTo(0,0);fishTailShape.lineTo(-.62,.42);fishTailShape.lineTo(-.42,0);fishTailShape.lineTo(-.62,-.42);fishTailShape.lineTo(0,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.28,.34);fishFinShape.lineTo(.08,.08);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
-const fishMats=[M('#536b65',1),M('#526d78',1),M('#77766a',1),M('#74634f',1)];
-// Fish are opaque submerged geometry: render the transparent water over them so
-// the water surface tints and softens their silhouettes instead of drawing them on top.
-for(const material of fishMats){material.transparent=false;material.opacity=1;material.depthWrite=true}
-const fishEyeMat=M('#07131b',1);
+// A smoothly tapered, ring-built fish body (not a sphere) gives each school a
+// recognisable head, shoulder, narrow peduncle and caudal base at gameplay distance.
+function makeFishBodyGeometry(){
+ const rings=[[-.9,.015,.025],[-.76,.13,.105],[-.52,.235,.19],[-.18,.29,.235],[.18,.275,.22],[.48,.205,.165],[.7,.105,.095],[.82,.012,.018]];
+ const radial=16,vertices=[],indices=[];
+ for(const [x,ry,rz] of rings)for(let j=0;j<radial;j++){
+  const angle=j/radial*Math.PI*2;vertices.push(x,Math.cos(angle)*ry,Math.sin(angle)*rz);
+ }
+ for(let i=0;i<rings.length-1;i++)for(let j=0;j<radial;j++){
+  const p=i*radial+j,q=i*radial+(j+1)%radial,r=(i+1)*radial+(j+1)%radial,t=(i+1)*radial+j;
+  indices.push(p,q,t,q,r,t);
+ }
+ const geo=new T3.BufferGeometry();geo.setAttribute('position',new T3.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();return geo;
+}
+const fishBodyGeo=makeFishBodyGeometry(),fishTailShape=new T3.Shape();fishTailShape.moveTo(-.72,0);fishTailShape.lineTo(-1.12,.48);fishTailShape.lineTo(-.91,.08);fishTailShape.lineTo(-1.12,-.48);fishTailShape.lineTo(-.72,0);const fishTailGeo=new T3.ShapeGeometry(fishTailShape);const fishFinShape=new T3.Shape();fishFinShape.moveTo(0,0);fishFinShape.lineTo(-.38,.38);fishFinShape.lineTo(.16,.12);fishFinShape.lineTo(0,0);const fishFinGeo=new T3.ShapeGeometry(fishFinShape);
+const fishMats=[M('#a8c6c0',1),M('#91b9ca',1),M('#c1b99a',1),M('#b28c65',1)];
+// Natural muted colours with restrained highlights keep silhouettes readable through pond water.
+for(const material of fishMats){material.transparent=false;material.opacity=1;material.depthWrite=true;material.roughness=.48;material.metalness=.12;material.emissive.set('#243b40');material.emissiveIntensity=.22}
+const fishFinMats=[M('#536d70',1),M('#587783',1),M('#77735e',1),M('#765c43',1)];
+const fishEyeWhite=M('#e4dfc9',1),fishEyeMat=M('#10191b',1);
 function addFishSchool(cx,cz,count,spread,kind='freshwater',seed=0){
  const rand=rng(Math.floor(cx*13+cz*17+seed*101));
  for(let i=0;i<count;i++){
-  const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length];
-  // Side-on 3D fish silhouette: ellipsoid body, vertical fork tail, dorsal and pectoral fins.
-  const body=mk(fishBodyGeo,mat,0,0,0,g);sc(body,.72,.30,.25);
-  const tail=mk(fishTailGeo,mat,-.66,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.82,.82,.82);
-  const dorsal=mk(fishFinGeo,mat,-.08,.24,0,g);dorsal.material.side=T3.DoubleSide;sc(dorsal,.9,.78,.72);
+  const g=new T3.Group();g.name='Aquatic Fish';const mat=fishMats[(i+seed)%fishMats.length],finMat=fishFinMats[(i+seed)%fishFinMats.length];
+  const body=mk(fishBodyGeo,mat,0,0,0,g);body.castShadow=false;body.receiveShadow=true;
+  const tail=mk(fishTailGeo,finMat,-.78,0,0,g);tail.material.side=T3.DoubleSide;tail.rotation.y=Math.PI/2;sc(tail,.9,.92,.72);
+  const dorsal=mk(fishFinGeo,finMat,-.12,.22,0,g);dorsal.material.side=T3.DoubleSide;sc(dorsal,1.05,.82,.8);
+  const anal=mk(fishFinGeo,finMat,-.38,-.2,0,g);anal.material.side=T3.DoubleSide;anal.rotation.z=Math.PI;sc(anal,.78,.56,.65);
   for(const side of [-1,1]){
-   const fin=mk(fishFinGeo,mat,.12,-.08,side*.18,g);fin.material.side=T3.DoubleSide;fin.rotation.z=side*.9;sc(fin,.58,.56,.32);
-   const eye=mk(SPH,fishEyeMat,.34,.075,side*.205,g);sc(eye,.052,.052,.035);
+   const pectoral=mk(fishFinGeo,finMat,.08,-.045,side*.17,g);pectoral.material.side=T3.DoubleSide;pectoral.rotation.z=side*.72;sc(pectoral,.62,.55,.34);
+   const eyeSocket=mk(SPH,fishEyeWhite,.62,.075,side*.105,g);sc(eyeSocket,.052,.052,.028);
+   const eye=mk(SPH,fishEyeMat,.638,.078,side*.127,g);sc(eye,.026,.029,.018);
   }
-  // Smaller silhouettes at a deeper swim band read as fish beneath the waterline,
-  // rather than bright objects hovering on the pond surface.
-  const fishScale=kind==='ocean'?2.65:2.8;
-  g.scale.setScalar(fishScale);
-  g.userData.tail=tail;
-  aquaticLifeGroup.add(g);
-  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:(kind==='ocean'?-5.1:-3.05)-rand()*.35,surfaceClearance:.72,kind});
+  // Larger fish swim in the upper submerged band, remaining below the water plane.
+  const fishScale=kind==='ocean'?3.05:3.2;
+  g.scale.setScalar(fishScale);g.userData.tail=tail;aquaticLifeGroup.add(g);
+  aquaticFish.push({g,cx,cz,phase:rand()*Math.PI*2,orbit:spread*(.25+rand()*.75),speed:.35+rand()*.3,depth:(kind==='ocean'?-2.35:-1.82)-rand()*.28,surfaceClearance:1.0,kind});
  }
 }
 for(const body of WATER_BODIES.filter(b=>b.kind==='freshwater')){
  addFishSchool(body.x,body.z,MOB?4:7,body.radius*.36,'freshwater',aquaticFish.length+1);
 }
 for(let i=0;i<coastalDockSpots.length;i+=2){
- const dock=coastalDockSpots[i];
- addFishSchool(dock.waterX-10,dock.z,MOB?3:5,5,'ocean',i+11);
+ const dock=coastalDockSpots[i];addFishSchool(dock.waterX-10,dock.z,MOB?3:5,5,'ocean',i+11);
 }
 function updateAquaticLife(time){
  for(const fish of aquaticFish){
