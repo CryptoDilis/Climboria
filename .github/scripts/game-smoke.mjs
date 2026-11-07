@@ -44,6 +44,34 @@ async function measureRuntimePerformance(page, label) {
   });
   return {label,...result};
 }
+async function measureWorldLayerIsolation(page,label) {
+  return await page.evaluate(async label => {
+    const diagnostics=window.__climboriaDiagnostics;
+    if(!diagnostics)return {label,available:false,reason:'diagnostics API missing'};
+    const sample=duration=>new Promise(resolve=>{
+      const values=[];let previous=0,start=performance.now();
+      const tick=now=>{if(previous)values.push(now-previous);previous=now;if(now-start>=duration)resolve(values);else requestAnimationFrame(tick)};
+      requestAnimationFrame(tick);
+    });
+    const summarize=values=>{
+      const sorted=values.slice().sort((a,b)=>a-b);
+      const mean=values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+      return {frames:values.length,averageFps:mean?+(1000/mean).toFixed(1):null,frameMsMean:mean?+mean.toFixed(2):null,frameMsP95:sorted.length?+sorted[Math.floor((sorted.length-1)*.95)].toFixed(2):null};
+    };
+    const baselineStats=diagnostics.reset();
+    await sample(900);
+    const baseline=summarize(await sample(2200));
+    const isolated={};
+    for(const layer of ['water','terrain','rocks','grass']){
+      diagnostics.reset();
+      const stats=diagnostics.setLayerVisible(layer,false);
+      await sample(500);
+      isolated[layer]={hiddenLayer:layer,stats,frames:summarize(await sample(2200))};
+    }
+    diagnostics.reset();
+    return {label,available:true,environment:'Playwright headless Chromium SwiftShader; diagnostic comparison only, not physical GPU benchmark',baselineStats,baseline,isolated,restored:diagnostics.stats()};
+  },label);
+}
 const errors = [];
 const performanceResults = [];
 const browser = await chromium.launch({
@@ -563,6 +591,7 @@ try {
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
   performanceResults.push(await measureRuntimePerformance(page,'desktop-sanctuary'));
+  performanceResults.push({label:'desktop-world-layer-isolation',...(await measureWorldLayerIsolation(page,'desktop-sanctuary'))});
   const pondSetup=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
   if(!pondSetup.available)errors.push('Could not position desktop visual capture at Woodland Pond.');
   await page.mouse.move(680,450);await page.mouse.down({button:'right'});await page.mouse.move(680,700,{steps:8});await page.mouse.up({button:'right'});await page.waitForTimeout(1200);
@@ -810,6 +839,7 @@ try {
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
   performanceResults.push(await measureRuntimePerformance(mobile,'mobile-sanctuary-emulation'));
+  performanceResults.push({label:'mobile-world-layer-isolation',...(await measureWorldLayerIsolation(mobile,'mobile-sanctuary-emulation'))});
   writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.CLIMBORIA_TESTED_HEAD_SHA||process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));
   console.log('Climboria runtime performance baseline:',JSON.stringify(performanceResults));
   const mobilePondSetup=await mobile.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
