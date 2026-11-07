@@ -1454,3 +1454,15 @@ For each meaningful implementation batch:
 - [x] Corrected the refresh boolean gate in a follow-up commit before verification; final implementation is on the current branch head.
 - [ ] Validate and Browser Smoke must pass on the final head; inspect profile stages and compare before/after under the same browser conditions.
 - [ ] This is a CPU/DOM-work reduction hypothesis, not an accepted FPS gain. It does not address the main renderer/SwiftShader cost, low-detail sanctuary/cave/fish art, route safety, or physical Redmi 14 5G testing.
+
+
+## 2026-11-07 — Browser Smoke #1639 completed; visual/performance rejection findings
+
+- [x] Validate Climboria workflow for tested head `d8d6a0f820a480cf5d815c12fe03ad6df4909da7` passed (run 42314599173).
+- [x] Browser Smoke workflow run 42314599144 passed all steps, including desktop/mobile Jarrell's Peak gameplay smoke and screenshot upload. Artifact 13549583886 was downloaded and reviewed.
+- [x] Desktop cave entrance screenshot confirms the entrance is not readable in the prepared view; frame is dominated by empty green terrain with a small centered character. Keep cave entrance visual acceptance OPEN.
+- [x] Desktop cave interior screenshot confirms angular/blockout walls, flat beige floor, primitive torch and faceted placeholder chest. Keep cave interior realism OPEN.
+- [x] Desktop pond screenshot confirms fish are visible below the water surface but remain flat blue silhouettes/simple geometry. Keep realistic fish acceptance OPEN.
+- [x] New performance artifact for the same tested head: desktop sanctuary 2.4 FPS mean / 423.89ms frame mean; mobile emulation 1.1 FPS mean / 918.29ms frame mean. Desktop renderer stage mean 3.228ms with max 199.7ms; mobile renderer stage mean 96.986ms with p99 1,599ms and max 4,883.9ms. Test environment is headless Chromium + SwiftShader software WebGL, not a physical GPU or Redmi benchmark. Treat as a software-renderer warning, not a device-performance result.
+- [ ] Investigate GPU/software-renderer bottleneck separately from JS update cost. Profile renderer, shader/material, overdraw, resolution, shadow/light passes, and scene complexity before choosing optimizations; preserve visual quality and avoid arbitrary global pixel-ratio reduction without comparative screenshots.
+- [ ] PR #215 remains OPEN and UNMERGED. Green automation does not override rejected cave/fish visual acceptance or pending route, performance, and physical-device gates.
