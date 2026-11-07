@@ -2234,3 +2234,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
 - [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
 - [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
+
+## Climboria DEX release candidate — 8 November 2026
+
+- A focused release branch, `codex/dex-release-2026-11-08`, is being prepared from the current `main` commit; it does not merge the unrelated long-running game branch.
+- The standalone `/dex/` page is a Solana market-discovery terminal using provider-returned DexScreener data, token/pool detail, pool comparison, token search and Jupiter Swap API V2 quote preview.
+- Homepage desktop navigation, mobile navigation and the SWAP / DEX hero action route to `/dex/`.
+- **Scope limitation:** the current DEX page is not an exhaustive Solana-wide index. Its discovery coverage is provider/search based and explicitly reports that limitation.
+- **Execution limitation:** wallet connection is read-only; quote preview does not request a transaction, sign, submit or confirm a swap. Do not describe mainnet trading as live.
+- Production status remains pending until the focused pull request passes CI, the GitHub Pages deployment completes, and `https://climboria.fun/dex/` is independently smoke-tested.
