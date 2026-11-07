@@ -2264,3 +2264,17 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await CI on the current PR head and repair any failures.
 - [ ] Cloudflare Worker is **not deployed**. Deployment requires the owner's Cloudflare account, unique rate-limit namespace ID, Jupiter server key set as a Worker secret, and custom domain configuration. Never request or commit the server key in chat/source.
 - [ ] Frontend still needs wallet transaction decoding/review/signing and Jupiter execute integration; no actual swap is enabled or claimed live.
+
+
+### 2026-11-08 — Wallet-reviewed Jupiter swap flow (feature-gated)
+
+- [x] Added a separate **Prepare wallet-reviewed swap** step to the DEX quote panel. It requires a connected wallet and a configured backend; no transaction is requested while the feature flag is off.
+- [x] Added Jupiter Order request through the Climboria proxy with connected wallet as taker and v0 transaction ceiling.
+- [x] Added v0 transaction deserialization, fee-payer match check against the connected wallet, non-empty instruction check, and pre-sign review of input/output mints, amounts, router/fee and instruction count.
+- [x] Added an explicit user-initiated wallet signing step and Jupiter Execute request carrying the signed transaction and matching request ID.
+- [x] Success UI requires Jupiter `status === "Success"`, `code === 0`, and a transaction signature; failed/unknown responses are never shown as successful.
+- [x] Kept execution disabled by default until the Cloudflare Worker is deployed, configured and independently verified.
+- [x] Worker order request now explicitly caps supported transaction version at v0; execute accepts Jupiter's string block-height response and normalizes it safely.
+- [ ] Await CI on the latest PR head. The preceding run on an earlier head had Validate green and Browser Smoke cancelled; this does not verify the current changes.
+- [ ] Deploy/configure Cloudflare Worker and run backend integration tests before enabling the runtime feature flag.
+- [ ] Test real wallet approval/rejection, insufficient funds, expired order, Jupiter failure, network timeout, and confirmed Devnet swap before any mainnet activation.
