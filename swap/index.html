@@ -27,6 +27,7 @@ main{padding:46px 0}.eyebrow{color:var(--gold);letter-spacing:3px;font-size:10px
 <div class="quote-status" id="quoteStatus">Ready. Enter an amount and request a fresh Jupiter quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
 <div class="quote-warning">Quotes are indicative and may change. Wallet connection is not approval. Swap signing and execution are disabled until Cloudflare deployment, transaction security review and live verification are complete. Never approve a transaction if your wallet summary differs from this page.</div>
 </section><p class="foot">Climboria Swap · Powered by Jupiter routing · <a href="/dex/">Explore Solana markets</a></p></main></div>
+<script src="/swap-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
