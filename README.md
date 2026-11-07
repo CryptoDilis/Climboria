@@ -2298,3 +2298,16 @@ For every integrated asset or borrowed technique, record:
 - [x] Corrected the health endpoint test to assert the current readiness payload, including configured key/rate-limiter booleans.
 - [x] Found a real implementation omission: the rate-limit helper existed but was not called by order/execute handlers. Both handlers now enforce it before parsing/proxying requests.
 - [ ] Await a fresh CI run for the corrected proxy; previous red run is not the final state.
+
+
+## DEX + dedicated Swap route checkpoint — 8 November 2026
+
+- [x] Add a dedicated Solana Swap UI at `/swap/`, reusing the wallet connection, Jupiter token search, quote preview, and explicitly gated wallet-reviewed execution flow.
+- [x] Route the homepage SWAP CTA to `/swap/`; keep DEX navigation at `/dex/`; add Swap links in the DEX header and homepage navigation.
+- [x] Add standalone Swap browser smoke coverage and include `swap/**` in browser workflow path filters.
+- [x] Latest confirmed green checks before this route work: Validate #2261 and Browser Smoke #1775 on commit `9aa4f44372463cefccecf51b19c216467ad5fdb3`.
+- [ ] Verify Browser Smoke #1779 and Validate #2265 for the new `/swap/` route and latest changes.
+- [ ] Merge PR #216 only after CI and route review; it remains draft until release checks are complete.
+- [ ] Cloudflare Worker remains not deployed: replace the rate-limit namespace placeholder, set the Jupiter API key as a Worker secret, deploy, attach `api.climboria.fun`, and verify `/health` and order/execute failure paths.
+- [ ] Verify production GitHub Pages deployment for both `/dex/` and `/swap/`; web access could not independently confirm the live DEX URL in this session.
+- [ ] Keep actual swap signing/execution disabled until semantic transaction inspection, independent security review, and controlled end-to-end tests pass.
