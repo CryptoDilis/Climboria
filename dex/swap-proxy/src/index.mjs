@@ -143,7 +143,7 @@ export default {
     }
     if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403);
     try {
-      if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "climboria-swap-proxy", execution: "jupiter-order-execute" }, 200, headers);
+      if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"); return json({ ok: ready, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") } }, ready ? 200 : 503, headers); }
       if (request.method === "POST" && url.pathname === "/api/swap/order") return await handleOrder(request, env).then(r => addHeaders(r, headers));
       if (request.method === "POST" && url.pathname === "/api/swap/execute") return await handleExecute(request, env).then(r => addHeaders(r, headers));
       return json({ error: "Not found" }, 404, headers);
