@@ -1996,6 +1996,7 @@ For every integrated asset or borrowed technique, record:
   - [x] Token detail view added: fetches pools for selected mint, displays provider-backed price/volume/liquidity/change, shows pool candidates and embeds the selected pool chart.
   - [ ] Coverage remains partial: current alpha combines provider search seeds and up to 30 latest profile mints; it is not an exhaustive Solana-wide pool index. Full pagination/coverage remains open.
   - [x] TrailMap alpha added: compares discovered pools by reported liquidity, volume, price and age; user can select a pool to update chart and metrics.
+  - [x] Summit Signal data-quality panel added: reports availability of price, liquidity, 24h volume, pool age, transactions and token name/symbol; missing fields remain unknown and no safety score is presented.
   - [ ] Browser verification of /dex/ market and token-detail interactions plus live API response still pending; no swap execution is enabled.
 - [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
 - [ ] **Charts and activity:** pool/token charts, OHLCV where available, recent trades, supported DEX/pool venues, holders and token metadata where reliable sources permit.
