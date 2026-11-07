@@ -339,8 +339,9 @@ footer:first-of-type>div{
  <div class="auth-panel">
   <button class="auth-close" id="authClose">×</button>
   <h2 id="authTitle">Enter Climboria</h2>
-  <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
-  <button class="auth-option" id="authWallet"><span>Connect crypto wallet</span><span class="auth-tag">Phantom / EVM</span></button>
+  <div class="auth-note" role="note" style="margin:12px 0;padding:12px;border:1px solid rgba(251,191,36,.35);border-radius:10px;background:rgba(251,191,36,.07);color:#f3e7c4"><strong>Wallet safety notice</strong><p style="margin:6px 0 0">Connecting only shares your public wallet address with this site. Climboria will never ask for your seed phrase or private key. This connection does not sign a message, approve a token, grant spending permission, or send a transaction. Read every wallet prompt and reject anything you did not initiate or do not understand.</p></div>
+  <button class="auth-option" id="authWallet" type="button"><span id="authWalletLabel">Connect Solana wallet</span><span class="auth-tag" id="authWalletTag">Phantom / Solflare</span></button>
+  <button class="auth-option" id="authEvmWallet" type="button"><span id="authEvmWalletLabel">Connect EVM wallet</span><span class="auth-tag" id="authEvmWalletTag">MetaMask / OKX</span></button>
   <button class="auth-option" disabled><span>Continue with X</span><span class="auth-tag">OAuth setup needed</span></button>
   <button class="auth-option" disabled><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth setup needed</span></button>
   <button class="auth-option" disabled><span>Email and password</span><span class="auth-tag">Auth backend needed</span></button>
@@ -569,17 +570,173 @@ footer:first-of-type>div{
   document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
   document.getElementById('authClose').addEventListener('click',closeAuth);
   authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
-  document.getElementById('authWallet').addEventListener('click',async()=>{
-    authStatus.textContent='Looking for an installed wallet…';
-    try {
-      let address='';
-      if(window.solana && window.solana.isPhantom){
-        const r=await window.solana.connect(); address=r?.publicKey?.toString()||'';
-      } else if(window.ethereum){
-        const a=await window.ethereum.request({method:'eth_requestAccounts'}); address=a?.[0]||'';
-      } else { authStatus.textContent='No compatible wallet detected. Install Phantom then retry.';return;}
-      authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
-    } catch { authStatus.textContent='Wallet connection failed.'; }
+  const authWalletButton=document.getElementById('authWallet');
+  const authWalletLabel=document.getElementById('authWalletLabel');
+  const authWalletTag=document.getElementById('authWalletTag');
+  let connectedSolanaProvider=null;
+  let connectedSolanaAddress='';
+  let connectedSolanaName='';
+  const shortWalletAddress=address=>address?address.slice(0,4)+'…'+address.slice(-4):'';
+  const AUTH_API_BASE='https://api.climboria.fun';
+  const authApi=async(path,options={})=>{
+    const response=await fetch(AUTH_API_BASE+path,{...options,credentials:'include',headers:{'content-type':'application/json',...(options.headers||{})}});
+    const data=await response.json().catch(()=>({error:'Invalid API response.'}));
+    if(!response.ok)throw new Error(data.error||'Authentication request failed ('+response.status+').');
+    return data;
+  };
+  const base58Encode=bytes=>{
+    const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let zeros=0;while(zeros<bytes.length&&bytes[zeros]===0)zeros++;
+    let digits=[0];
+    for(const byte of bytes){let carry=byte;for(let i=0;i<digits.length;i++){carry+=digits[i]*256;digits[i]=carry%58;carry=Math.floor(carry/58);}while(carry){digits.push(carry%58);carry=Math.floor(carry/58);}}
+    let out='1'.repeat(zeros);
+    for(let i=digits.length-1;i>=0;i--)if(!(i===digits.length-1&&digits[i]===0))out+=alphabet[digits[i]];
+    return out||'1';
+  };
+  let activeSessionWallet='';
+  let activeSessionChain='';
+  const revokeWalletSession=async()=>{
+    try{await authApi('/v1/auth/logout',{method:'POST',body:JSON.stringify({})});}
+    catch(error){authStatus.textContent='Wallet disconnected locally, but server logout could not be confirmed: '+error.message;throw error;}
+    activeSessionWallet='';activeSessionChain='';
+  };
+  const finishWalletLogin=async(chain,wallet,signMessage)=>{
+    authStatus.textContent='Preparing a secure Climboria sign-in message…';
+    const challenge=await authApi('/v1/auth/challenge',{method:'POST',body:JSON.stringify({chain,wallet})});
+    authStatus.textContent='Review the wallet message carefully. It is sign-in only; it does not approve tokens or send a transaction.';
+    const signature=await signMessage(challenge.message);
+    authStatus.textContent='Verifying wallet ownership and saving your Climboria account…';
+    const result=await authApi('/v1/auth/verify',{method:'POST',body:JSON.stringify({challengeId:challenge.challengeId,signature})});
+    activeSessionWallet=result.wallet;activeSessionChain=result.chain||chain;
+    authStatus.textContent='Climboria account saved. Signed in with '+result.wallet+'. Your session is secured for this browser.';
+    return result;
+  };
+  const restoreWalletSession=async()=>{
+    try{const s=await authApi('/v1/auth/session',{method:'GET',headers:{}});if(s.authenticated){activeSessionWallet=s.wallet;activeSessionChain=s.chain||'';authStatus.textContent='Welcome back. Your Climboria account is signed in with '+s.wallet+'.';}}
+    catch(error){if(!/401/.test(error.message))authStatus.textContent='Wallet login is not available yet: '+error.message;}
+  };
+  restoreWalletSession();
+
+  const resetSolanaWallet=async(message)=>{
+    const hadSession=activeSessionChain.startsWith('solana:');
+    connectedSolanaProvider=null;connectedSolanaAddress='';connectedSolanaName='';
+    authWalletLabel.textContent='Connect Solana wallet';
+    authWalletTag.textContent='Phantom / Solflare';
+    if(hadSession)await revokeWalletSession();
+    authStatus.textContent=message||'Wallet disconnected. Climboria server session revoked when applicable; no transaction was submitted.';
+  };
+  const bindSolanaWalletEvents=(provider,name)=>{
+    if(typeof provider.on!=='function')return;
+    provider.on('disconnect',()=>{void resetSolanaWallet('Wallet disconnected.');});
+    provider.on('accountChanged',publicKey=>{
+      const nextAddress=publicKey?.toString?.()||'';
+      if(!nextAddress){void resetSolanaWallet('Wallet account disconnected.');return;}
+      if(nextAddress!==connectedSolanaAddress&&activeSessionChain.startsWith('solana:')){void revokeWalletSession().then(()=>{authStatus.textContent='Solana account changed. Previous Climboria session revoked; sign in again with the new account.';});}
+      connectedSolanaAddress=nextAddress;
+      authWalletLabel.textContent='Disconnect wallet';
+      authWalletTag.textContent=shortWalletAddress(nextAddress);
+      authStatus.textContent=name+' connected: '+nextAddress+'. Connection only; no signature or transaction requested.';
+    });
+  };
+  authWalletButton.addEventListener('click',async()=>{
+    if(connectedSolanaProvider){
+      authStatus.textContent='Disconnecting wallet…';
+      try{await connectedSolanaProvider.disconnect?.();}catch(error){authStatus.textContent='Could not disconnect wallet: '+(error?.message||'Please disconnect it in your wallet app.');return;}
+      await resetSolanaWallet('Wallet disconnected.');
+      return;
+    }
+    authWalletButton.disabled=true;
+    authStatus.textContent='Looking for a Solana wallet…';
+    try{
+      const phantom=window.phantom?.solana||(window.solana?.isPhantom?window.solana:null);
+      const solflare=window.solflare?.isSolflare?window.solflare:null;
+      const provider=phantom||solflare;
+      const name=phantom?'Phantom':'Solflare';
+      if(!provider){authStatus.textContent='No supported Solana wallet detected. Open this site in Phantom or Solflare, or install one and retry.';return;}
+      const response=await provider.connect();
+      const address=response?.publicKey?.toString?.()||provider.publicKey?.toString?.()||'';
+      if(!address){authStatus.textContent='The wallet did not return a public address. Please reconnect.';return;}
+      connectedSolanaProvider=provider;connectedSolanaAddress=address;connectedSolanaName=name;
+      authWalletLabel.textContent='Disconnect wallet';
+      authWalletTag.textContent=shortWalletAddress(address);
+      authStatus.textContent=name+' connected. Preparing secure sign-in…';
+      bindSolanaWalletEvents(provider,name);
+      if(typeof provider.signMessage!=='function'){authStatus.textContent=name+' connected, but this wallet does not support safe message signing. No login was created.';return;}
+      await finishWalletLogin('solana:mainnet',address,async message=>{
+        const signed=await provider.signMessage(new TextEncoder().encode(message),'utf8');
+        const sig=signed?.signature||signed;
+        if(!sig)throw new Error('Wallet did not return a message signature.');
+        return base58Encode(sig instanceof Uint8Array?sig:new Uint8Array(sig));
+      });
+    }catch(error){
+      const code=error?.code;
+      if(code===4001)authStatus.textContent='Connection request rejected in your wallet. You can retry whenever ready.';
+      else if(code===-32002)authStatus.textContent='A wallet request is already pending. Open your wallet to approve or reject it.';
+      else authStatus.textContent='Wallet connection failed: '+(error?.message||'Unknown wallet error. Please retry.');
+    }finally{authWalletButton.disabled=false;}
+  });
+  const authEvmWalletButton=document.getElementById('authEvmWallet');
+  const authEvmWalletLabel=document.getElementById('authEvmWalletLabel');
+  const authEvmWalletTag=document.getElementById('authEvmWalletTag');
+  let connectedEvmProvider=null;
+  let connectedEvmAddress='';
+  let connectedEvmName='';
+  const resetEvmWallet=async(message)=>{
+    const hadSession=activeSessionChain==='eip155:8453';
+    connectedEvmProvider=null;connectedEvmAddress='';connectedEvmName='';
+    authEvmWalletLabel.textContent='Connect EVM wallet';
+    authEvmWalletTag.textContent='MetaMask / OKX';
+    if(hadSession)await revokeWalletSession();
+    authStatus.textContent=message||'EVM wallet connection cleared. Climboria server session revoked when applicable.';
+  };
+  const bindEvmWalletEvents=(provider,name)=>{
+    if(typeof provider.on!=='function')return;
+    provider.on('accountsChanged',accounts=>{
+      const nextAddress=Array.isArray(accounts)?accounts[0]||'':'';
+      if(!nextAddress){void resetEvmWallet('EVM wallet account disconnected.');return;}
+      if(nextAddress.toLowerCase()!==connectedEvmAddress.toLowerCase()&&activeSessionChain==='eip155:8453'){void revokeWalletSession().then(()=>{authStatus.textContent='EVM account changed. Previous Climboria session revoked; sign in again with the new account.';});}
+      connectedEvmAddress=nextAddress;
+      authEvmWalletLabel.textContent='Clear EVM connection';
+      authEvmWalletTag.textContent=shortWalletAddress(nextAddress);
+      authStatus.textContent=name+' connected: '+nextAddress+'. Connection only; no signature or transaction requested.';
+    });
+    provider.on('chainChanged',chainId=>{
+      if(String(chainId).toLowerCase()!=='0x2105'&&activeSessionChain==='eip155:8453'){void revokeWalletSession().then(()=>{authStatus.textContent='Network changed away from Base. Previous Climboria session revoked; reconnect on Base to sign in again.';});return;}
+      authStatus.textContent=name+' connected on chain '+chainId+'. Network validation will be enforced by Climboria login.';
+    });
+    provider.on('disconnect',()=>{void resetEvmWallet('EVM wallet disconnected.');});
+  };
+  authEvmWalletButton.addEventListener('click',async()=>{
+    if(connectedEvmProvider){await resetEvmWallet('EVM wallet connection cleared. To revoke this site permission, use your wallet settings.');return;}
+    authEvmWalletButton.disabled=true;
+    authStatus.textContent='Looking for MetaMask or OKX Wallet…';
+    try{
+      const eth=window.ethereum;
+      const providers=Array.isArray(eth?.providers)?eth.providers:[eth].filter(Boolean);
+      const okx=window.okxwallet||providers.find(p=>p?.isOKXWallet)||null;
+      const metamask=providers.find(p=>p?.isMetaMask&&!p?.isOKXWallet)||null;
+      const provider=okx||metamask;
+      const name=okx?'OKX Wallet':'MetaMask';
+      if(!provider){authStatus.textContent='No supported EVM wallet detected. Open Climboria in MetaMask or OKX Wallet, or install one and retry.';return;}
+      const accounts=await provider.request({method:'eth_requestAccounts'});
+      const address=Array.isArray(accounts)?accounts[0]||'':'';
+      if(!address){authStatus.textContent='The wallet returned no EVM account. Please reconnect.';return;}
+      connectedEvmProvider=provider;connectedEvmAddress=address;connectedEvmName=name;
+      authEvmWalletLabel.textContent='Clear EVM connection';
+      authEvmWalletTag.textContent=shortWalletAddress(address);
+      const chainId=await provider.request({method:'eth_chainId'});
+      if(String(chainId).toLowerCase()!=='0x2105'){authStatus.textContent='Switch to Base (chain ID 8453) in your wallet, then reconnect. No network switch was requested.';return;}
+      authStatus.textContent=name+' connected. Preparing secure sign-in…';
+      bindEvmWalletEvents(provider,name);
+      await finishWalletLogin('eip155:8453',address,async message=>{
+        const signature=await provider.request({method:'personal_sign',params:[ '0x'+Array.from(new TextEncoder().encode(message),b=>b.toString(16).padStart(2,'0')).join(''), address ]});
+        return signature;
+      });
+    }catch(error){
+      if(error?.code===4001)authStatus.textContent='Connection request rejected in your wallet. You can retry whenever ready.';
+      else if(error?.code===-32002)authStatus.textContent='A wallet request is already pending. Open your wallet to approve or reject it.';
+      else authStatus.textContent='EVM wallet connection failed: '+(error?.message||'Unknown wallet error. Please retry.');
+    }finally{authEvmWalletButton.disabled=false;}
   });
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');

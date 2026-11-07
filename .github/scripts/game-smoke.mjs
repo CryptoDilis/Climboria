@@ -1,6 +1,90 @@
 import { chromium } from 'playwright';
+import { writeFileSync } from 'node:fs';
 
+
+async function measureRuntimePerformance(page, label) {
+  const result = await page.evaluate(async () => {
+    const sampleFrames = durationMs => new Promise(resolve => {
+      const intervals = [];
+      let previous = 0;
+      const start = performance.now();
+      const tick = now => {
+        if (previous) intervals.push(now - previous);
+        previous = now;
+        if (now - start >= durationMs) resolve(intervals);
+        else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    // Let shader compilation, texture upload, and initial chunk streaming settle
+    // before measuring. Keep warm-up separate from the reported sample.
+    const warmupIntervals = await sampleFrames(3000);
+    const intervals = await sampleFrames(10000);
+    const sorted = intervals.slice().sort((a,b)=>a-b);
+    const percentile = p => sorted.length ? +sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2) : null;
+    const mean = intervals.length ? intervals.reduce((a,b)=>a+b,0)/intervals.length : null;
+    const state = window.__climboriaRenderState || {};
+    const info = state.rendererInfo || null;
+    return {
+      warmupDurationMs:3000,warmupFrames:warmupIntervals.length,
+      durationMs:10000,frames:intervals.length,
+      averageFps:mean?+(1000/mean).toFixed(1):null,
+      frameMsMean:mean?+mean.toFixed(2):null,
+      frameMsP95:percentile(.95),frameMsP99:percentile(.99),
+      rendererCalls:info?.calls??null,
+      rendererTriangles:info?.triangles??null,
+      geometries:info?.geometries??null,
+      textures:info?.textures??null,
+      sceneObjects:state.objects??null,
+      stageProfile:window.__climboriaPerformanceProfile?.()??null,
+      devicePixelRatio:window.devicePixelRatio,
+      viewport:{width:innerWidth,height:innerHeight},
+      rendererEnvironment:'Playwright headless Chromium with SwiftShader software WebGL; not a physical GPU benchmark'
+    };
+  });
+  return {label,...result};
+}
+async function measureWorldLayerIsolation(page,label) {
+  return await page.evaluate(async label => {
+    const diagnostics=window.__climboriaDiagnostics;
+    if(!diagnostics)return {label,available:false,reason:'diagnostics API missing'};
+    // SwiftShader can deliver fewer than one frame per second. Fixed 2.2s
+    // windows therefore produce statistically useless 1–4 frame comparisons.
+    // Collect at least 8 intervals, with a 15s ceiling per sample window.
+    const sample=({minFrames=8,maxDurationMs=15000}={})=>new Promise(resolve=>{
+      const values=[];let previous=0,start=performance.now();
+      const tick=now=>{
+        if(previous)values.push(now-previous);
+        previous=now;
+        if(values.length>=minFrames||now-start>=maxDurationMs)resolve(values);
+        else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    const summarize=values=>{
+      const sorted=values.slice().sort((a,b)=>a-b);
+      const mean=values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+      const percentile=p=>sorted.length?+sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(2):null;
+      return {frames:values.length,averageFps:mean?+(1000/mean).toFixed(1):null,frameMsMean:mean?+mean.toFixed(2):null,frameMsMedian:percentile(.5),frameMsP95:percentile(.95),frameMsP99:percentile(.99)};
+    };
+    const baselineStats=diagnostics.reset();
+    await sample({minFrames:3,maxDurationMs:3000});
+    const baseline=summarize(await sample());
+    const isolated={};
+    for(const layer of ['water','terrain','rocks','grass']){
+      diagnostics.reset();
+      const stats=diagnostics.setLayerVisible(layer,false);
+      await sample({minFrames:3,maxDurationMs:3000});
+      isolated[layer]={hiddenLayer:layer,stats,frames:summarize(await sample())};
+    }
+    diagnostics.reset();
+    return {label,available:true,environment:'Playwright headless Chromium SwiftShader; diagnostic comparison only, not physical GPU benchmark',baselineStats,baseline,isolated,restored:diagnostics.stats()};
+  },label);
+}
 const errors = [];
+const failedRequests = [];
+const failedResponses = [];
+const performanceResults = [];
 const browser = await chromium.launch({
   headless: true,
   args: ['--no-sandbox', '--enable-webgl', '--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
@@ -11,11 +95,30 @@ try {
   const page = await desktop.newPage();
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
+  page.on('requestfailed', request => failedRequests.push({url:request.url(),method:request.method(),failure:request.failure()?.errorText||'unknown'}));
+  page.on('response', response => { if(response.status()>=400) failedResponses.push({url:response.url(),status:response.status()}); });
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
     waitUntil: 'domcontentloaded',
     timeout: 90000,
   });
-  await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  try {
+    await page.waitForSelector('canvas:not(#world-map)', { state: 'visible', timeout: 45000 });
+  } catch (error) {
+    const diagnostic = await page.evaluate(() => ({
+      title:document.title,
+      readyState:document.readyState,
+      scripts:[...document.scripts].map(s=>({src:s.src||'inline',loaded:!!s.src?performance.getEntriesByName(s.src).length>0:true})),
+      three:typeof window.THREE,
+      canvas:[...document.querySelectorAll('canvas')].map(c=>({id:c.id,width:c.width,height:c.height,rect:(()=>{const r=c.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})(),display:getComputedStyle(c).display,visibility:getComputedStyle(c).visibility})),
+      readiness:window.__climboriaReadiness?{chunk:window.__climboriaReadiness.chunkReady,render:window.__climboriaReadiness.renderReady,hero:window.__climboriaReadiness.heroReady}:null,
+      renderState:window.__climboriaRenderState||null,
+      gameReady:window.__climboriaGameReady??null,
+      rootData:{...document.documentElement.dataset},
+      bodyClass:document.body.className
+    }));
+    await page.screenshot({path:'climboria-desktop-boot-failure.png',fullPage:true}).catch(()=>{});
+    throw new Error('Visible gameplay canvas failed to initialize: '+JSON.stringify(diagnostic)+'; browserErrors='+JSON.stringify(errors)+'; failedRequests='+JSON.stringify(failedRequests)+'; failedResponses='+JSON.stringify(failedResponses)+'; '+error.message);
+  }
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
@@ -42,7 +145,7 @@ try {
     const p=window.__climboriaJarrellsPeak?.player,w=window.__climboriaJarrellsPeak;
     if(!p||!w)return null;
     const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpCount:p.jumpCount,landCount:p.landCount};
-    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
+    p.x=0;p.z=-105;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
     return {saved,baseline:p.y,jumpCount:p.jumpCount||0,landCount:p.landCount||0};
   });
   if(!liveJumpStart) errors.push('Live keyboard jump test could not access the gameplay player.');
@@ -118,13 +221,22 @@ try {
       sanctuaryFlags: w?.sanctuaryFlags?.map(f=>({country:f.country,attached:f.mesh.parent===f.pillar&&f.pole.parent===f.pillar,width:f.mesh.geometry.parameters.width,height:f.mesh.geometry.parameters.height})) ?? [],
       forestAssets: w?.forestAssets ? Object.fromEntries(Object.entries(w.forestAssets.spots).map(([key,spots])=>{const invalid=spots.map((p,index)=>({index,x:p.x,z:p.z,h:p.h,terrainHeight:w.heightAt(p.x,p.z),waterBody:w.waterBodyAt(p.x,p.z)?.id??null,reasons:[!Number.isFinite(p.x)||!Number.isFinite(p.z)||!Number.isFinite(p.h)?'non-finite':null,p.h<1.8||p.h>132?'height-out-of-range':null,Math.abs(w.heightAt(p.x,p.z)-p.h)>=0.001?'terrain-height-mismatch':null,w.waterBodyAt(p.x,p.z)?'water-overlap':null,w.shoreClear(p.x,p.z,p.h)?'shore-buffer-overlap':null].filter(Boolean)})).filter(p=>p.reasons.length);return[key,{count:spots.length,valid:invalid.length===0,invalid}]})) : null,
       fishingSpots: w?.fishingSpots?.map(f=>({label:f.label,waterBodyId:f.waterBodyId})) ?? [],
+      aquaticLife: w?.aquaticLifeAudit?.() ?? null,
       coastalDocks: w?.coastalDockSpots?.map(d=>({label:d.label,landClear:!w.waterBodyAt(d.x,d.z),waterClear:w.waterBodyAt(d.waterX,d.z)?.id==='open_sea',shoreHeight:w.heightAt(d.x,d.z)})) ?? [],
       fishingInteractions: w ? w.fishingSpots.map(f=>{
-        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,mode=p.mode;
+        const p=w.player,ox=p.x,oz=p.z,fish=p.fish,source=p.fishSource,phase=p.fishPhase,elapsed=p.fishElapsed,biteAt=p.fishBiteAt,biteWindow=p.fishBiteWindow,startX=p.fishStartX,startZ=p.fishStartZ,mode=p.mode,items=w.inventory.map(i=>({...i}));
         p.mode='walk';p.x=f.x;p.z=f.z;p.fish=0;w.interact();
-        const started=p.fish>0&&p.fishSource===f.waterBodyId;
-        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.mode=mode;
-        return {waterBodyId:f.waterBodyId,started};
+        const cast=p.fish>0&&p.fishPhase==='waiting'&&p.fishSource===f.waterBodyId;
+        const before=w.inventory.reduce((n,i)=>n+i.qty,0);
+        if(cast){w.interact();const waitingNoCatch=w.inventory.reduce((n,i)=>n+i.qty,0)===before;p.fishPhase='bite';p.fishBiteAt=2;p.fishBiteWindow=3;p.fishElapsed=2.1;w.interact();
+          const reeled=p.fish===0&&w.inventory.reduce((n,i)=>n+i.qty,0)===before+1;
+          p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+          w.inventory.splice(0,w.inventory.length,...items);
+          return {waterBodyId:f.waterBodyId,started:cast,waitingNoCatch,reeled};
+        }
+        p.x=ox;p.z=oz;p.fish=fish;p.fishSource=source;p.fishPhase=phase;p.fishElapsed=elapsed;p.fishBiteAt=biteAt;p.fishBiteWindow=biteWindow;p.fishStartX=startX;p.fishStartZ=startZ;p.mode=mode;
+        w.inventory.splice(0,w.inventory.length,...items);
+        return {waterBodyId:f.waterBodyId,started:false,waitingNoCatch:false,reeled:false};
       }) : [],
       freshwaterBodies: w?.waterBodies?.filter(b=>b.kind==='freshwater').map(b=>({id:b.id,name:b.name,center:[b.x,b.z],surfaceY:b.surfaceY,depth:b.depth})) ?? [],
       freshwaterCenters: w?.waterBodies?.filter(b=>b.kind==='freshwater').every(b=>w.waterBodyAt(b.x,b.z)?.id===b.id && w.groundAt(b.x,b.z)<b.surfaceY-.2) ?? false,
@@ -220,6 +332,7 @@ try {
     };
   });
   if (!world.canvas || !world.ready || !world.api || !world.player) errors.push('Jarrell world failed to boot: ' + JSON.stringify(world));
+  if (!world.aquaticLife || world.aquaticLife.fishCount < 15 || world.aquaticLife.schoolCount < 5 || !world.aquaticLife.belowSurface || !world.aquaticLife.sharedGeometry) errors.push('Visible aquatic-life school registry/placement/shared-geometry audit failed: ' + JSON.stringify(world.aquaticLife));
   if (world.renderFrames < 2 || world.sceneObjects < 10) errors.push('3D scene is not visibly rendering: ' + JSON.stringify(world));
   if (world.renderErrors.length) errors.push('3D frame loop reported errors: ' + JSON.stringify(world.renderErrors));
   if (!world.heading.includes('JARRELL')) errors.push('Jarrell title branding is missing: ' + JSON.stringify(world));
@@ -237,7 +350,12 @@ try {
   if(!caveEntrance||!caveEntrance.ok||caveEntrance.walkedDistance<62||caveEntrance.blockedAt) errors.push('Cave entrance exterior-to-interior traversal failed: '+JSON.stringify(caveEntrance));
   console.log('Cave entrance traversal:',JSON.stringify(caveEntrance));
   const cavePassage=await page.evaluate(()=>window.__climboriaJarrellsPeak?.cavePassageAudit?.()??null);
-  if(!cavePassage||cavePassage.wallCount!==46||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall||!cavePassage.westRoute||!cavePassage.northMazeRoute||!cavePassage.westBlockedAcrossWall||!cavePassage.northBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
+  if(!cavePassage||cavePassage.wallCount!==32||cavePassage.passageWidth!==8||cavePassage.annexPassageWidth!==6||cavePassage.eastBranchWidth!==6||!cavePassage.clearRoute||!cavePassage.annexRoute||!cavePassage.eastBranchRoute||!cavePassage.geodeRoute||!cavePassage.geodeBlockedAcrossWall||Math.abs(cavePassage.geodeFloorY-cavePassage.caveFloorY)>.02||!cavePassage.blockedAcrossWall||!cavePassage.annexBlockedAcrossWall||!cavePassage.eastBlockedAcrossWall) errors.push('Cave connected-maze/geode chamber route, floor or collision audit failed: '+JSON.stringify(cavePassage));
+  const caveCoast=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveCoastRouteAudit?.()??null);
+  if(caveCoast) writeFileSync('cave-coast-route-audit.json', JSON.stringify({schemaVersion:1,commit:process.env.CLIMBORIA_TESTED_HEAD_SHA||process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),source:'Jarrell’s Peak caveCoastRouteAudit',...caveCoast},null,2));
+  const maxWalkableRouteGradePercent=60;
+  if(!caveCoast||!caveCoast.ok||!caveCoast.finite||caveCoast.sampleCount!==663||caveCoast.samples?.length!==663||caveCoast.samples.some(p=>![p.x,p.z,p.surface].every(Number.isFinite))||!caveCoast.oceanReached||!caveCoast.seabedReached||caveCoast.endpoint?.distance!==2200||caveCoast.endpoint?.water!=='open_sea'||!Number.isFinite(caveCoast.maxSurfaceRise?.gradePercent)||!Number.isFinite(caveCoast.maxSurfaceDrop?.gradePercent)||caveCoast.maxSurfaceRise.gradePercent>maxWalkableRouteGradePercent||Math.abs(caveCoast.maxSurfaceDrop.gradePercent)>maxWalkableRouteGradePercent) errors.push('Cave-to-coast terrain survey/grade/seabed feasibility audit failed (maximum absolute sampled grade '+maxWalkableRouteGradePercent+'%): '+JSON.stringify(caveCoast));
+  console.log('Cave-to-coast terrain route audit:',JSON.stringify(caveCoast));
   const caveWater=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveWaterAudit?.()??null);
   if(!caveWater||!caveWater.inside||!caveWater.outside||caveWater.depth!==2.5||Math.abs(caveWater.surfaceY-(caveWater.baseY+2.8))>.001||!Number.isFinite(caveWater.ground)||Math.abs(caveWater.ground-(caveWater.baseY+.08))>.02) errors.push('Cave grotto water-volume boundary/surface/depth/floor alignment audit failed: '+JSON.stringify(caveWater));
   const grottoTraversal=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveGrottoTraversalAudit?.()??null);
@@ -246,15 +364,16 @@ try {
   if(!geodeLifecycle||!geodeLifecycle.ok||!geodeLifecycle.opened||!geodeLifecycle.rewarded||!geodeLifecycle.respawned||geodeLifecycle.timer<120||geodeLifecycle.timer>240) errors.push('Geode chest open/reward/120-240s respawn lifecycle failed: '+JSON.stringify(geodeLifecycle));
   const caveLighting=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveLightingAudit?.()??null);
   const caveTraps=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapAudit?.()??null);
-  if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==35||caveTraps.rows!==5||caveTraps.columns!==7||caveTraps.trapRoom?.minX!==-64||caveTraps.trapRoom?.maxX!==-46||caveTraps.trapRoom?.minZ!==-47||caveTraps.trapRoom?.maxZ!==-35||caveTraps.damage!==25||!caveTraps.activeProbe||!caveTraps.inactiveProbe||!caveTraps.outsideProbe) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
+  if(!caveTraps||!Number.isFinite(caveTraps.caveBaseY)||caveTraps.spikeCount!==0||!caveTraps.removedExposedWesternTrap) errors.push('Cave spike trap activation/damage audit failed: '+JSON.stringify(caveTraps));
   const caveTrapLifecycle=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveTrapLifecycleAudit?.()??null);
   if(!caveTrapLifecycle||!caveTrapLifecycle.damageCorrect||caveTrapLifecycle.damageTaken!==25||!caveTrapLifecycle.respawnCorrect) errors.push('Cave live damage/death/Sanctuary respawn lifecycle failed: '+JSON.stringify(caveTrapLifecycle));
   const caveSpikeTick=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveSpikeDamageTickAudit?.()??null);
-  if(!caveSpikeTick||!caveSpikeTick.ok||caveSpikeTick.damageTaken!==25) errors.push('Live cave spike contact-to-gameTick damage path failed: '+JSON.stringify(caveSpikeTick));
+  if(!caveSpikeTick||!caveSpikeTick.ok||!caveSpikeTick.removed||caveSpikeTick.spikeCount!==0) errors.push('Live cave spike contact-to-gameTick damage path failed: '+JSON.stringify(caveSpikeTick));
   if(!caveLighting||caveLighting.torchCount!==6||caveLighting.localPointLights<8||caveLighting.blackSphereOccluders!==0||caveLighting.entranceArchRocks<8||caveLighting.ambientFillIntensity<1.15||caveLighting.torchPositions.some(p=>![p.x,p.y,p.z].every(Number.isFinite))) errors.push('Cave readable-light coverage, ambient fill, or six-fixture layout is invalid: '+JSON.stringify(caveLighting));
   if (world.snakes !== 0) errors.push('Snakes should remain temporarily disabled with all wildlife, got ' + world.snakes);
   if (world.animals !== 0) errors.push('Low-quality placeholder wildlife should remain disabled, got ' + world.animals);
   for (const facility of ['black_market','forge','craft','fish']) if (!world.facilities.includes(facility)) errors.push('Missing world facility: ' + facility);
+  if (!world.fishingInteractions?.length || world.fishingInteractions.some(x=>!x.started||!x.waitingNoCatch||!x.reeled)) errors.push('Fishing cast/wait/bite/reel interaction failed: '+JSON.stringify(world.fishingInteractions));
   if (!world.terrainFinite || world.chunkCount < 1) errors.push('Terrain samples/chunk streaming are not ready: ' + JSON.stringify(world));
   if (!world.shorelineClearance) errors.push('Sea/coast vegetation clearance helper failed: '+JSON.stringify(world.seaHeights));
   if (!world.freshwaterBankClearance || !world.riverBankClearance) errors.push('Freshwater/river sandy bank vegetation buffer regression: '+JSON.stringify({freshwater:world.freshwaterBankClearance,river:world.riverBankClearance}));
@@ -266,6 +385,30 @@ try {
   if (!world.forestAssets || world.forestAssets.buttress?.count < 16 || world.forestAssets.canopy?.count < 16 || world.forestAssets.undergrowth?.count < 42 || world.forestAssets.fallenLog?.count < 14 || Object.values(world.forestAssets).some(x=>!x.valid)) errors.push('CC0 rainforest placement regression: '+JSON.stringify(world.forestAssets));
   if (world.coastalDocks.length !== 8 || world.coastalDocks.some(d=>!d.landClear||!d.waterClear||d.shoreHeight<.15)) errors.push('Expected eight accessible coastal docks with dry approaches and open-sea ends: '+JSON.stringify(world.coastalDocks));
   if (world.fishingSpots.length !== 11 || world.fishingInteractions.length !== 11 || world.fishingInteractions.some(x=>!x.started)) errors.push('Coastal/freshwater fishing interactions did not start at all eight sea docks and three freshwater spots: '+JSON.stringify({spots:world.fishingSpots,tests:world.fishingInteractions}));
+  const fishingLoop=await page.evaluate(async()=>{
+    const w=window.__climboriaJarrellsPeak,p=w?.player,spot=w?.fishingSpots?.[0];
+    if(!w||!p||!spot)return{available:false};
+    const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,mode:p.mode,fish:p.fish,fishPhase:p.fishPhase,fishElapsed:p.fishElapsed,fishBiteAt:p.fishBiteAt,fishBiteWindow:p.fishBiteWindow,fishSource:p.fishSource,fishStartX:p.fishStartX,fishStartZ:p.fishStartZ};
+    const inventoryBefore=w.inventory.map(x=>({...x}));
+    const countBefore=inventoryBefore.reduce((n,x)=>n+(x.name=== 'Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)'?x.qty??x.quantity??0:0),0);
+    p.x=spot.x;p.z=spot.z;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.fish=0;p.fishPhase=null;p.fishElapsed=0;
+    w.interact();
+    const started=p.fish>0&&p.fishPhase==='waiting';
+    const tick=()=>w.gameTick(.1,{x:p.x,y:p.y,z:p.z});
+    for(let i=0;i<9;i++)tick();
+    const noEarlyReward=p.fish>0&&p.fishPhase==='waiting';
+    const stillNoCatch=w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.qty??x.quantity??0):0),0)===countBefore;
+    for(let i=0;i<40&&p.fish>0&&p.fishPhase!=='bite';i++)tick();
+    const bite=p.fish>0&&p.fishPhase==='bite';
+    if(bite)w.interact();
+    const caught=p.fish===0&&w.inventory.reduce((n,x)=>n+((x.name==='Reed Carp'||x.name==='Golden Trout'||x.name==='Moonpool Koi'||x.name==='Woodland Perch'||x.name==='Silverfin'||x.name==='Bluefin Tuna'||x.name==='Mahi-Mahi'||x.name==='Old Boot (junk)')?(x.qty??x.quantity??0):0),0)>countBefore;
+    if(p.fish>0)w.cancelFishing?.(null);
+    Object.assign(p,saved);
+    return{available:true,started,noEarlyReward,stillNoCatch,bite,caught,fishSource:spot.waterBodyId};
+  });
+  if(!fishingLoop.available||!fishingLoop.started||!fishingLoop.noEarlyReward||!fishingLoop.stillNoCatch||!fishingLoop.bite||!fishingLoop.caught)errors.push('Fishing cast/wait/bite/manual-reel lifecycle failed: '+JSON.stringify(fishingLoop));
+  console.log('Fishing lifecycle diagnostics:',JSON.stringify(fishingLoop));
+
   if (!world.riverQuery || !world.oceanQuery) errors.push('River/ocean water-body query regression: '+JSON.stringify({river:world.riverQuery,ocean:world.oceanQuery}));
   if (world.freshwaterMovement.length !== 3 || world.freshwaterMovement.some(x=>!x.entered||!x.exited)) errors.push('Freshwater player movement entry/exit regression: '+JSON.stringify(world.freshwaterMovement));
   if (!world.mountainApproachAudit || world.mountainApproachAudit.approaches.length !== 8 || world.mountainApproachAudit.approaches.some((a,index)=>a.bearing!==index*45 || !Number.isFinite(a.progress) || a.progress<0)) errors.push('Mountain approach-angle audit is incomplete or contains invalid traversal progress: '+JSON.stringify(world.mountainApproachAudit));
@@ -290,6 +433,24 @@ try {
     errors.push('Hero idle selected a forbidden seated/fallen pose: ' + JSON.stringify(idleAnimationAudit));
   }
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
+  const landingSetup = await page.evaluate(() => {
+    const p=window.__climboriaJarrellsPeak?.player;
+    if(!p)return null;
+    const previous={jumpState:p.jumpState,jumpStateTimer:p.jumpStateTimer};
+    p.jumpState='land';p.jumpStateTimer=.6;
+    return {previous,availableClips:window.__climboriaJarrellsPeak?.heroAnimationAudit?.().availableClips||[]};
+  });
+  if(!landingSetup) errors.push('Hero landing animation test could not access the gameplay player.');
+  else {
+    await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'land', undefined, {timeout:5000}).catch(()=>{});
+    const landingAudit=await page.evaluate(()=>({state:document.documentElement.dataset.climboriaHeroAnimation||'',clip:document.documentElement.dataset.climboriaHeroClip||'',audit:window.__climboriaJarrellsPeak?.heroAnimationAudit?.()??null}));
+    const authoredLanding=landingSetup.availableClips.find(name=>/(?:^|[_\\s-])(landing|land|touchdown)(?:$|[_\\s-])/i.test(name));
+    if(landingAudit.state!=='land'||(authoredLanding&&landingAudit.clip!==authoredLanding)||(!authoredLanding&&landingAudit.clip!==idleAnimationAudit.idleCandidate&&landingAudit.clip!=='procedural-fallback')) {
+      errors.push('Hero landing animation did not prefer the authored landing clip or use the standing-idle fallback: '+JSON.stringify({authoredLanding,landingAudit,idleCandidate:idleAnimationAudit.idleCandidate}));
+    }
+    console.log('Hero landing-animation audit:',JSON.stringify({authoredLanding,landingAudit}));
+    await page.evaluate(previous=>{const p=window.__climboriaJarrellsPeak.player;p.jumpState=previous.jumpState;p.jumpStateTimer=previous.jumpStateTimer;},landingSetup.previous);
+  }
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', undefined, { timeout: 10000 });
   const walkClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
@@ -343,8 +504,17 @@ try {
   await page.keyboard.up('w');
   const movementFacing=await page.evaluate(()=>{const api=window.__climboriaCameraOrbit;const delta=Math.atan2(Math.sin(api.playerYaw-api.yaw),Math.cos(api.playerYaw-api.yaw));return {player:api.playerYaw,camera:api.yaw,hero:api.heroYaw,aligned:Math.abs(delta)<.08};});
   if(Math.abs(movementFacing.player-headingBeforeMove.player)<.05||!movementFacing.aligned) errors.push('Hero did not naturally turn toward camera-relative movement direction: '+JSON.stringify({headingBeforeMove,movementFacing}));
-  const clickMove=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,canvas=document.querySelector('canvas'),rect=canvas?.getBoundingClientRect();if(!p||!canvas||!rect)return{available:false};const previous=p.moveTarget;canvas.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:rect.left+rect.width*.62,clientY:rect.top+rect.height*.62}));const target=p.moveTarget;window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0}));p.moveTarget=previous;return{available:true,queued:!!target,finite:!!target&&Number.isFinite(target.x)&&Number.isFinite(target.z),distance:target?Math.hypot(target.x-p.x,target.z-p.z):null};});
+  const clickMove=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,canvas=document.querySelector('canvas'),rect=canvas?.getBoundingClientRect();if(!p||!canvas||!rect)return{available:false};const previous=p.moveTarget;canvas.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:rect.left+rect.width*.62,clientY:rect.top+rect.height*.48}));const target=p.moveTarget;window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0}));p.moveTarget=previous;return{available:true,queued:!!target,finite:!!target&&Number.isFinite(target.x)&&Number.isFinite(target.z),distance:target?Math.hypot(target.x-p.x,target.z-p.z):null};});
   if(!clickMove.available||!clickMove.queued||!clickMove.finite||!(clickMove.distance>2.5))errors.push('Desktop left-click did not queue a valid Dota-style ground movement destination: '+JSON.stringify(clickMove));
+  const clickTravel=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player;if(!w||!p)return null;const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,moveTarget:p.moveTarget};const target={x:p.x+12,z:p.z};p.moveTarget=target;return{saved,target,startDistance:Math.hypot(target.x-p.x,target.z-p.z)};});
+  if(!clickTravel) errors.push('Click-to-move travel test could not access the gameplay player.');
+  else {
+    await page.waitForTimeout(900);
+    const travelResult=await page.evaluate(target=>{const p=window.__climboriaJarrellsPeak.player;return{x:p.x,z:p.z,remaining:Math.hypot(target.x-p.x,target.z-p.z),targetStillQueued:!!p.moveTarget};},clickTravel.target);
+    if(!(travelResult.remaining<clickTravel.startDistance-.5)) errors.push('Hero queued a click destination but did not travel toward it: '+JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
+    console.log('Left-click destination travel audit:',JSON.stringify({startDistance:clickTravel.startDistance,travelResult}));
+    await page.evaluate(saved=>{const p=window.__climboriaJarrellsPeak.player;Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,moveTarget:saved.moveTarget});},clickTravel.saved);
+  }
   const clickCancel=await page.evaluate(()=>{const p=window.__climboriaJarrellsPeak?.player;if(!p)return{available:false};p.moveTarget={x:p.x+30,z:p.z+30};return{available:true,queued:!!p.moveTarget};});
   await page.keyboard.down('w');
   const keyboardPriority=await page.evaluate(()=>({target:window.__climboriaJarrellsPeak?.player?.moveTarget??null}));
@@ -437,7 +607,7 @@ try {
   await page.keyboard.press('1');
   await page.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+105)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await page.waitForTimeout(900);
@@ -451,14 +621,22 @@ try {
   console.log('Desktop visual capture normalized to Sanctuary:',JSON.stringify(desktopVisualCapture));
   if (desktopVisualCapture.chunks < 1 || desktopVisualCapture.frames < 4) errors.push('Desktop Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(desktopVisualCapture));
   await page.screenshot({ path: 'climboria-desktop-gameplay.png' });
+  performanceResults.push(await measureRuntimePerformance(page,'desktop-sanctuary'));
+  performanceResults.push({label:'desktop-world-layer-isolation',...(await measureWorldLayerIsolation(page,'desktop-sanctuary'))});
+  const pondSetup=await page.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
+  if(!pondSetup.available)errors.push('Could not position desktop visual capture at Woodland Pond.');
+  await page.mouse.move(680,450);await page.mouse.down({button:'right'});await page.mouse.move(680,700,{steps:8});await page.mouse.up({button:'right'});await page.waitForTimeout(1200);
+  const pondVisual=await page.evaluate(()=>({fish:window.__climboriaJarrellsPeak?.aquaticLifeAudit?.()??null,frames:window.__climboriaRenderState?.frames??0}));
+  if(!pondVisual.fish||!pondVisual.fish.distinctSilhouette||!pondVisual.fish.belowSurface||pondVisual.frames<4)errors.push('Woodland Pond fish visual audit failed: '+JSON.stringify(pondVisual));
+  await page.screenshot({path:'climboria-desktop-woodland-pond-fish.png'});
   const desktopCaveView=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
   const caveAngleDelta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
-  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw)-Math.PI)>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
+  if(!desktopCaveView||Math.abs(desktopCaveView.local.z+22)>.01||Math.abs(caveAngleDelta(desktopCaveView.playerYaw,desktopCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(desktopCaveView.cameraYaw,desktopCaveView.playerYaw))>.01) errors.push('Desktop cave entrance visual position/orientation could not be prepared: '+JSON.stringify(desktopCaveView));
   await page.waitForTimeout(1200);
   await page.screenshot({ path: 'climboria-desktop-cave-entrance.png' });
   console.log('Desktop cave entrance visual capture:',JSON.stringify(desktopCaveView));
   const desktopCaveInterior=await page.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
-  if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-30)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
+  if(!desktopCaveInterior||Math.abs(desktopCaveInterior.local.x-31)>.01||Math.abs(desktopCaveInterior.local.z-25)>.01) errors.push('Desktop cave interior visual position could not be prepared: '+JSON.stringify(desktopCaveInterior));
   await page.waitForTimeout(1200);
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
@@ -677,7 +855,7 @@ try {
   await mobile.keyboard.press('1');
   await mobile.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+105)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await mobile.waitForTimeout(900);
@@ -691,12 +869,22 @@ try {
   console.log('Mobile visual capture normalized to Sanctuary:',JSON.stringify(mobileVisualCapture));
   if (mobileVisualCapture.chunks < 1 || mobileVisualCapture.frames < 4) errors.push('Mobile Sanctuary visual capture did not finish rendering nearby chunks: '+JSON.stringify(mobileVisualCapture));
   await mobile.screenshot({ path: 'climboria-mobile-gameplay.png' });
+  performanceResults.push(await measureRuntimePerformance(mobile,'mobile-sanctuary-emulation'));
+  performanceResults.push({label:'mobile-world-layer-isolation',...(await measureWorldLayerIsolation(mobile,'mobile-sanctuary-emulation'))});
+  writeFileSync('climboria-performance.json',JSON.stringify({schemaVersion:1,commit:process.env.CLIMBORIA_TESTED_HEAD_SHA||process.env.GITHUB_SHA||'local',capturedAt:new Date().toISOString(),results:performanceResults},null,2));
+  console.log('Climboria runtime performance baseline:',JSON.stringify(performanceResults));
+  const mobilePondSetup=await mobile.evaluate(()=>{const w=window.__climboriaJarrellsPeak,p=w?.player,b=w?.waterBodies?.find(x=>x.id==='woodland_pond');if(!w||!p||!b)return{available:false};p.x=b.x;p.z=b.z+b.radius+18;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.yaw=0;p.mode='walk';p.moveTarget=null;return{available:true,waterBody:b.id,fish:w.aquaticLifeAudit?.()??null};});
+  if(!mobilePondSetup.available)errors.push('Could not position mobile visual capture at Woodland Pond.');
+  await mobile.mouse.move(420,180);await mobile.mouse.down({button:'right'});await mobile.mouse.move(420,300,{steps:8});await mobile.mouse.up({button:'right'});await mobile.waitForTimeout(1200);
+  const mobilePondVisual=await mobile.evaluate(()=>({fish:window.__climboriaJarrellsPeak?.aquaticLifeAudit?.()??null,frames:window.__climboriaRenderState?.frames??0,viewport:{width:innerWidth,height:innerHeight}}));
+  if(!mobilePondVisual.fish||!mobilePondVisual.fish.distinctSilhouette||!mobilePondVisual.fish.belowSurface||mobilePondVisual.frames<4)errors.push('Mobile Woodland Pond fish visual audit failed: '+JSON.stringify(mobilePondVisual));
+  await mobile.screenshot({path:'climboria-mobile-woodland-pond-fish.png'});
   const mobileCaveView=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveEntranceForSmoke?.()??null);
-  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+20)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw)-Math.PI)>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
+  if(!mobileCaveView||Math.abs(mobileCaveView.local.z+22)>.01||Math.abs(caveAngleDelta(mobileCaveView.playerYaw,mobileCaveView.expectedPlayerYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.expectedCameraYaw))>.01||Math.abs(caveAngleDelta(mobileCaveView.cameraYaw,mobileCaveView.playerYaw))>.01) errors.push('Mobile cave entrance visual position/orientation could not be prepared: '+JSON.stringify(mobileCaveView));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({ path: 'climboria-mobile-cave-entrance.png' });
   const mobileCaveInterior=await mobile.evaluate(()=>window.__climboriaJarrellsPeak?.positionAtCaveInteriorForSmoke?.()??null);
-  if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-30)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
+  if(!mobileCaveInterior||Math.abs(mobileCaveInterior.local.x-31)>.01||Math.abs(mobileCaveInterior.local.z-25)>.01) errors.push('Mobile cave interior visual position could not be prepared: '+JSON.stringify(mobileCaveInterior));
   await mobile.waitForTimeout(1200);
   await mobile.screenshot({path:'climboria-mobile-cave-interior.png'});
   console.log('Mobile cave interior visual capture:',JSON.stringify(mobileCaveInterior));

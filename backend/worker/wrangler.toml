@@ -1,0 +1,12 @@
+name = "climboria-api"
+main = "src/index.js"
+compatibility_date = "2026-11-07"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "climboria-auth"
+database_id = "2b90a302-aea9-4128-b9f4-4e59e54bfbba"
+
+[[routes]]
+pattern = "api.climboria.fun"
+custom_domain = true

@@ -1,4 +1,79 @@
+## 2026-11-07 — latest artifact visual rejection and performance baseline
+
+- [x] Re-fetched PR #215 and inspected its latest head `de7afc4661b5587397634d6e1486e821bb7e49dd`; PR remains open, unmerged and mergeable.
+- [x] Latest-head Validate [42277972111](https://github.com/CryptoDilis/Climboria/actions/runs/42277972111) passed. Full desktop/mobile Browser Smoke [42277972370](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370) completed successfully. Screenshot artifact [13535045712](https://github.com/CryptoDilis/Climboria/actions/runs/42277972370/artifacts/13535045712) contains 10 captures and was downloaded and visually inspected.
+- [x] Latest artifact confirms the automated boot, interaction and screenshot steps completed; this is not visual or physical-device acceptance.
+- [ ] **Visual acceptance rejected:** cave entrance still has an excessively broad empty foreground and the portal reads small/decorative. The cave interior still shows a bright exterior gap behind the player; its large faceted surfaces and floor read as a simple procedural prototype, not the requested realistic cave. The pond capture shows flat pale fish silhouettes rather than natural submerged fish. Do not mark these assets complete and do not try to solve the art-direction failure by adding more generic primitive rocks.
+- [ ] **Performance baseline recorded (CI SwiftShader only):** desktop sanctuary 2.5 FPS / 397.2 ms mean frame time / 199,971 triangles / 103 draw calls; mobile emulation 0.8 FPS / 1,183.25 ms mean / 166,067 triangles / 81 draw calls. These software-renderer values are not representative physical-device benchmarks, but they are a warning signal. Profile update CPU cost, chunk generation, geometry and draw calls separately; capture a real hardware baseline before claiming performance is acceptable.
+- [x] Cave-to-coast survey artifact is finite and reaches the ocean and seabed at the tested route endpoint; this verifies only the survey data, not a built tunnel or traversable underwater exit.
+- [ ] Next focused implementation: replace the rejected procedural cave surfaces with visually inspected, license-verified, GitHub-hosted realistic assets; vendor them locally, build matching collision/LODs, and preserve the existing cave route contracts. If no qualifying asset is found, keep the current cave explicitly marked as a prototype rather than silently accepting another low-poly pack.
+- [ ] Keep PR #215 unmerged until cave visuals, fish visuals, natural hero idle, manual cave traversal/headroom, performance, and physical Redmi 14 5G acceptance are independently resolved. Do not weaken existing smoke assertions.
+
+---
+
+## 2026-11-06 — latest-head visual and performance review
+
+- [x] Re-checked PR #215 current head: `171b81ddf594c4c232e0d273774902d364fb17ec` (PR remains open and unmerged).
+- [x] Validate passed: [run 42165828873](https://github.com/CryptoDilis/Climboria/actions/runs/42165828873).
+- [x] Full desktop/mobile Browser Smoke passed: [run 42165828882](https://github.com/CryptoDilis/Climboria/actions/runs/42165828882); screenshot artifact [13479310831](https://github.com/CryptoDilis/Climboria/actions/runs/42165828882/artifacts/13479310831) inspected.
+- [x] Cave exterior-to-interior movement and broad smoke coverage completed by the automated browser job; this does not close manual collision/headroom/device acceptance.
+- [ ] Cave visual acceptance remains open: desktop/mobile interior captures still show a bright exterior opening behind the player and the chamber reads short/open; entrance still reads small/decorative against a broad empty foreground.
+- [ ] Woodland Pond fish are visible as pale silhouettes, but remain visually flat and do not yet read as natural submerged fish.
+- [ ] Hero idle remains unaccepted: smoke diagnostic identifies `procedural-fallback` as idle candidate; captured stance remains arms-out/stiff even though movement-state diagnostics report idle/walk/run/swim.
+- [ ] Performance warning requires investigation: the smoke artifact measured 931,447 desktop triangles / 296 renderer calls and 500,039 mobile-emulation triangles / 185 calls. SwiftShader's 2.2-second sample reported 1.1 FPS desktop and 0.7 FPS mobile emulation. This software-rendered CI number is not a physical-device benchmark, but it is too concerning to ignore. Establish representative desktop GPU and physical Redmi 14 5G frame-time/FPS baselines; profile chunk/scene draw cost and wildlife/vegetation separately before claiming acceptable performance.
+- [ ] Do not merge PR #215 until cave depth/occlusion, fish visual readability, hero idle, and physical-device acceptance are resolved. Keep all smoke assertions; do not weaken thresholds to manufacture a pass.
+- [x] Review findings and merge gate recorded in PR #215 discussion.
+- **Next focused task:** diagnose the cave's short/open visual read and the underlying scene-performance cost without changing unrelated gameplay systems; then rerun Validate, desktop/mobile Browser Smoke and inspect fresh screenshots.
+
+---
+
+## NON-NEGOTIABLE ASSET POLICY — FREE GITHUB-HOSTED ASSETS ONLY
+
+**Owner directive:** Climboria must use free assets sourced from GitHub repositories only. This applies to every new or replacement game asset: 3D models, characters, costumes, animations, environment props, rocks, trees, vegetation, animals, fish, buildings, weapons, tools, textures, materials, audio, UI art, and effects.
+
+- Do not use paid asset packs, paid downloads, subscriptions, Patreon/supporter-only files, marketplace purchases, or assets that require payment to unlock.
+- The asset's actual distributable file must be available from a GitHub repository at no cost. A GitHub list/catalog that links to a paid or non-GitHub download does not satisfy this rule.
+- Before use, verify the exact asset/file license and the upstream repository's terms. Prefer CC0/public domain or permissive licenses that explicitly allow commercial use and redistribution. For CC-BY or other attribution licenses, preserve all required credits and LICENSE/NOTICE files.
+- Reject assets with missing, unclear, non-commercial (NC), no-redistribution, or otherwise incompatible terms. Never assume every file in a repository shares one license.
+- Record each approved asset in a checked-in manifest: asset name/use, GitHub repository URL, immutable commit/tag/release, exact file path, license, required attribution, source file size, polygon/texture budget, dependencies, and collision/LOD status.
+- Vendor approved files into this repository and load them locally; do not hotlink third-party runtime assets. Keep upstream license notices alongside the imported files.
+- Optimize and test every asset for Three.js compatibility, scale, pivots, materials, download size, memory, draw calls, mobile frame time, and collision. Decorative meshes must not substitute for collision geometry.
+- If no suitable free GitHub-hosted asset with compatible licensing exists, use existing assets or create a simple in-house procedural placeholder; do not silently switch to a paid or off-GitHub asset.
+- This rule is permanent unless the owner explicitly changes it. It does not mean all existing assets have been audited or approved retroactively.
+
+---
+
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
+
+## 2026-11-06 — cave-to-coast route audit correction (CI pending)
+
+- [x] Browser Smoke #1502 exposed a real route-survey failure: the first 260m cave-local -Z sample ended at X≈-975 and never reached the mapped ocean. The sampled ground climbed from Y≈131 to Y≈241, so no tunnel geometry was built from that invalid endpoint.
+- [x] Corrected the survey range to 700m (10m steps, three lateral tracks; 213 samples) based on the map's actual ocean mask transition across X≈-900 to -1180. The smoke assertion now expects all 213 finite samples and a confirmed ocean hit.
+- [ ] Validate and full Browser Smoke for the extended survey are pending. Review the exact ocean-entry station and elevation profile before designing any tunnel.
+- [ ] Tunnel floor/roof/side-wall geometry, collision, walkable slope, and separate underwater seabed exit remain NOT IMPLEMENTED. Preserve the cave entrance and existing chamber layout.
+- [ ] PR #215 remains unmerged; no manual visual or Redmi 14 5G acceptance is claimed.
+
+---
+
+## 2026-11-06 — Owner-directed priority reset (male hero deferred)
+
+- **Decision:** Defer Meshy male-hero generation, Blender/rig work, costume work and socket/equipment expansion until tomorrow. Do not spend today's development time on the character replacement. Keep the current Climboria hero and existing rig unchanged.
+- **P0 today — release-critical existing game:** (1) complete and diagnose the latest desktop/mobile Browser Smoke run; (2) fix any real gameplay boot/readiness, movement/jump/fall, collision, water/swim, cave or UI regressions revealed by the test; (3) verify fishing integration and pond/coast interactions; (4) inspect available desktop/mobile screenshots and capture cave/pond/gameplay evidence; (5) check Pages/deployment and PR status before any merge decision.
+- **P0 acceptance gates:** latest Validate must pass; full Browser Smoke must complete successfully (not just homepage stage); PR #215 stays unmerged until required checks and visual evidence are reviewed; physical Redmi 14 5G acceptance remains a separate owner/device gate.
+- **P1 after the current gameplay gates:** continue cave maze/readability and world traversal/biome tasks from the active checklist, prioritizing blockers that affect playable routes and stability over decorative expansion.
+- **Deferred:** Meshy male hero, new costume asset, Blender processing, rig retargeting, socket equipment catalog, new character customization. Resume tomorrow after the owner is ready with the Meshy export; no need for the owner to learn Blender/Maya.
+
+---
+
+## 2026-11-06 — jump/landing smoke diagnosis (PR #211 follow-up; verification pending)
+
+- [x] Inspected the failing Browser Smoke diagnostic and compared the current-main jump controller with PR #211's jump-state changes.
+- [x] Root cause isolated to the smoke audit loop, not a demonstrated runtime landing defect: PR #211 correctly introduces a `fall` state and includes it in the airborne/landing eligibility check, but `jumpControllerAudit()` stopped advancing when state changed from `airborne` to `fall`. The audit therefore sampled the player before the landing transition and incorrectly reported zero landings.
+- [x] Updated PR #211 head with commit `cb4f9863f80713f511a5e25843ee0433ab1cfa26` so the audit continues through `fall` until landing or its existing 120-frame cap. No gameplay physics or pass thresholds were weakened.
+- [ ] Fresh Validate and Browser Smoke results for the corrected clean integration branch are pending; do not mark the fix passed until the actual run completes and its diagnostics are reviewed.
+- [x] Created a clean integration branch from current main to avoid carrying the stale/diverged PR #211 history; fishing/gameplay, smoke, workflow, and world-checklist changes are being ported without overwriting the newer account/security README decisions.
+- [ ] PR #214's documentation changes are included in PR #215; no account, backend, server-authoritative reward, anti-bot, or payout implementation is claimed.
+
 
 > **Single source of truth.** This root README is the canonical place for Climboria's product decisions, full master checklist, implementation status, test evidence, and next actions. At the end of any work session, update this file before stopping. At the start of the next session, review this file first. Do not rely on chat memory or recreate already completed work.
 >
@@ -16,6 +91,30 @@
 
 ---
 
+## 2026-11-06 — verified reward conditions and player-friendly anti-abuse policy
+
+- [x] Owner decision: do not force CAPTCHA/challenge pages on every normal visitor or make account creation mandatory before playing. Preserve smooth guest play.
+- [x] Product principle: **Play freely. Earn legitimately. No account-creation farming.** Creating multiple accounts must not itself generate rewards or improve reward eligibility.
+- [x] Clarify "verified condition": a reward-bearing action is eligible only after trusted game services validate its required facts and atomically record the result. A browser message, client-side flag, localStorage value, screenshot, or editable score is never proof by itself.
+- [ ] **Chest claims:** server validates chest ID and permitted location/state, player eligibility, global/per-player cooldown and whether the chest/cycle was already claimed; then atomically records one claim and its reward. Never trust client-submitted reward item, rarity roll, cooldown or inventory balance.
+- [ ] **Fishing rewards:** server validates a legitimate cast → waiting → bite → timely reel sequence, allowed fishing spot, movement/cancellation rules and reward eligibility; missed bites or invalid/replayed requests award nothing.
+- [ ] **Leaderboard/season rewards:** server derives or validates score, completion, time, season window and anti-replay evidence from trusted gameplay events. Client-submitted score/time alone is not authoritative.
+- [ ] **Marketplace/fee rewards:** credit only after the relevant transaction is independently confirmed against the intended chain/contract and checked for duplicate transaction/log processing. Pending, failed or simulated transactions do not qualify.
+- [ ] **Account/reward eligibility:** account creation, referrals, logins and wallet connections alone do not mint points, tokens, items or prize eligibility. Apply rate limits and abuse controls to sensitive endpoints without blocking ordinary guest play.
+- [ ] Use idempotency keys, unique claim/transaction constraints, server-side cooldowns, audit logs and replay protection so retries cannot duplicate rewards. Keep private keys and secrets server-side; never request seed phrases.
+- [ ] Turnstile or another challenge may be considered selectively for suspicious/high-risk sensitive actions only after a server-side verification endpoint exists. It is not required for normal game loading or basic guest play.
+- [ ] Current implementation status: these are product/security requirements only. No server-authoritative reward ledger, anti-farming service, account backend, Turnstile verification or production token payout is claimed implemented.
+- [ ] Keep P0 Jarrell's Peak first. Implement reward validation only when its backend/reward-system sequence gate is reached; do not divert current world polish.
+
+## 2026-11-06 — PR #211 fishing branch smoke diagnosis (not merged)
+
+- [x] Inspected Browser Smoke run [42080403707](https://github.com/CryptoDilis/Climboria/actions/runs/42080403707), job `127431828393`. Homepage CTA/DEX/mobile navigation passed; the desktop/mobile Jarrell's Peak gameplay step failed.
+- [x] Exact failing assertion: ground jump takeoff/airtime/landing or water-surface separation. Diagnostic showed takeoff count `1`, held count `1`, but landing state remained `fall` with count `0`; swimming state was `swim` with count `0` and depth `0`. This is a jump/landing/swim-state contract failure, not evidence that the fishing sequence itself failed.
+- [ ] Do not merge PR #211 while its Browser Smoke is red and its branch is not reconciled with current main. Repair the actual jump/landing/swim-state lifecycle without weakening the smoke assertions, then rerun Validate and full desktop/mobile Browser Smoke.
+- [ ] Inspect the uploaded desktop/mobile pond screenshots and verify visible fish, rod/line/bobber, shoreline blend, bait/tools and actual fishing feel separately. Automated fishing assertions do not replace visual or physical Redmi 14 5G acceptance.
+- [ ] Reconcile PR #211 onto the latest main while preserving the account and security documentation added after its base. Re-run all required checks on the reconciled head before considering merge.
+
+---
 ## 2026-11-04 — latest workflow and master-list checkpoint
 
 - **Latest main merge:** PR #189 `dd95ba219eb21df37324a8e95acc03022e147355` — mountain massif access regression gate. PR Validate passed (`41707182880`); PR Browser Smoke passed (`41707182711`). The completed job record confirms desktop/mobile smoke success. Main post-merge Validate `41708254827` and Pages deployment `41708254356` passed. Main post-merge Browser Smoke `41708254803` subsequently completed successfully (job `126169238689`).
@@ -2234,3 +2333,176 @@ For every integrated asset or borrowed technique, record:
 - [ ] Manual cave entrance/interior traversal, cave readability and physical Redmi 14 5G acceptance remain open. Verify the actual portal walk-in, ceiling/wall clearance, lighting, traps, and no camera clipping.
 - [ ] Continue P0 Jarrell's Peak cave maze expansion and wayfinding after the entrance acceptance gate; preserve the existing map and keep snakes/wildlife disabled.
 - [ ] PR #208 fishing remains open for separate pond shoreline/fish-visibility and character-idle visual acceptance; do not merge solely because its automated checks passed.
+
+## 2026-11-06 — PR #215 fresh CI and screenshot review
+
+- [x] Latest PR head: `6113d570515609ae13c3f71e2e6916973653c8be`; PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) is open, unmerged, and GitHub currently reports it mergeable.
+- [x] Fresh Validate run [42082944653](https://github.com/CryptoDilis/Climboria/actions/runs/42082944653) passed on the latest PR head.
+- [x] Fresh full desktop/mobile Browser Smoke run [42082944675](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675) passed on the latest PR head. The Jarrell's Peak desktop/mobile gameplay smoke step and screenshot upload both completed successfully. The earlier run [42082091241](https://github.com/CryptoDilis/Climboria/actions/runs/42082091241) was cancelled; it is superseded by the fresh successful run.
+- [x] Downloaded and reviewed the fresh screenshot artifact [13440769119](https://github.com/CryptoDilis/Climboria/actions/runs/42082944675/artifacts/13440769119), including desktop/mobile gameplay, cave entrance/interior, and Woodland Pond captures.
+- [ ] **Visual acceptance remains open:** cave entrance/interior still read as blocky/stylized geometry with a dark, featureless mouth and need a real visual pass; Woodland Pond fish are technically submerged per the audit but appear too close to the surface/visually flat in the capture and need natural underwater depth/readability. Automated smoke passing does not close these visual defects.
+- [ ] Rod/line/bobber polish, bait/tools, physical Redmi 14 5G acceptance, and manual cave traversal/readability remain open.
+- [ ] Keep PR #215 unmerged until cave and pond visual blockers are fixed/reviewed and remaining P0 acceptance is recorded. Do not close superseded PRs #211/#214 until #215 is safely merged.
+- [ ] Server-authoritative reward ledger, global chest claims/cooldowns, and funded crypto/NFT payouts remain unimplemented; browser-local rewards are not secure or payable.
+
+
+## 2026-11-06 — Cave tunnel and underwater fish depth polish
+
+- [x] Committed visual pass `749f03bffb60d2bbbe3583347ed45b4b1a4ea2d9` to PR #215: replaced the flat cave-mouth plane with a rock-lined tunnel throat, overhead/side rock masses, tunnel floor and warm/cool interior lighting; retained the existing cave wall/traversal collider system.
+- [x] Moved freshwater and ocean fish deeper (freshwater swim band about -4.15 to -4.60 world units; ocean -5.10 to -5.55) and reduced model scale to improve perceived underwater depth. The existing submerged-clearance audit remains in place.
+- [x] Latest Validate [42084914567](https://github.com/CryptoDilis/Climboria/actions/runs/42084914567) passed on this code commit.
+- [ ] Latest full desktop/mobile Browser Smoke [42084914580](https://github.com/CryptoDilis/Climboria/actions/runs/42084914580) is queued/pending; wait for completion and inspect fresh desktop/mobile cave and pond captures before marking visual acceptance.
+- [ ] PR #215 remains open and unmerged. Manual cave traversal/ceiling clearance, fish visual depth, fishing tool polish and physical Redmi 14 5G acceptance remain open.
+
+
+## 2026-11-06 — PR #215 full desktop/mobile smoke and screenshot review
+
+- [x] Latest branch head at review: `0d31090b52f5c38b3c6984d27bae230477dab251`; PR [#215](https://github.com/CryptoDilis/Climboria/pull/215) remains open and unmerged.
+- [x] Validate run [42088765428](https://github.com/CryptoDilis/Climboria/actions/runs/42088765428) passed.
+- [x] Full Browser Smoke run [42088765448](https://github.com/CryptoDilis/Climboria/actions/runs/42088765448) completed successfully, including homepage/navigation checks, Jarrell's Peak desktop and mobile gameplay smoke, and screenshot upload.
+- [x] Downloaded and reviewed screenshot artifact [13444368276](https://github.com/CryptoDilis/Climboria/actions/runs/42088765448/artifacts/13444368276): ten desktop/mobile captures were present.
+- [ ] **Cave visual acceptance remains failed/open:** entrance arch is visible, but the interior capture still reads as a short, bright/open chamber rather than a deep, naturally enclosed cave network. Improve the tunnel depth/readability, rock silhouettes, ceiling/floor variation, and branch landmarks; retain the existing traversal/collision assertions. Re-capture desktop and mobile after the actual scene change.
+- [ ] **Woodland Pond fish visual acceptance remains failed/open:** neither desktop nor mobile capture makes the fish clearly readable. The aquatic-life registry/count/submerged-clearance automated audit passes, but it does not prove visible fish in the rendered pond. Improve fish scale/contrast/depth and camera-visible distribution without placing fish above water or weakening clearance checks; re-capture both devices.
+- [ ] Hero idle still appears arms-out/stiff in the general gameplay captures; natural relaxed idle remains open and deferred behind cave/fish P0 work.
+- [ ] Physical Redmi 14 5G play test remains a separate owner/device acceptance gate. CI's mobile browser viewport is not a physical-device test.
+- [ ] PR #215 remains unmerged until cave/fish visual blockers, manual cave traversal/headroom/collision/trap review, and physical-device acceptance are resolved. Do not weaken tests to pass.
+- [ ] No third-party assets were imported by this verification. The permanent free-GitHub-hosted-assets-only policy remains in force; verify exact file license before any asset import.
+
+
+## 2026-11-06 — Woodland Pond fish visibility refinement (verification pending)
+
+- [x] Reviewed the latest successful desktop/mobile Browser Smoke screenshots. Fish were not visually readable in either Woodland Pond capture even though the aquatic-life registry and submerged-clearance audit passed.
+- [x] Updated the fish presentation in `game/play.html`: increased freshwater fish scale, improved silhouette contrast/opacity, and raised the freshwater swim band closer to (but still below) the surface. Ocean fish depth was not changed.
+- [ ] Validate and full desktop/mobile Browser Smoke for commit `5040cccc62a905f3f7a1524bb6999ecbe7c6795a` are pending; no workflow runs were returned by the commit lookup yet. Do not claim this visual fix accepted until fresh screenshots are reviewed.
+- [ ] Verify fish remain below the water surface, do not clip through water, and remain visually natural on desktop/mobile. Keep the existing clearance assertions intact.
+- [ ] Cave visual overhaul remains the next P0 scene blocker; no cave geometry change is included in this increment.
+
+
+## 2026-11-06 — cave maze removal screenshot review and fresh CI checkpoint
+
+- [x] Validate [#2065](https://github.com/CryptoDilis/Climboria/actions/runs/42101545660) passed on PR #215 head `59aea6dba4991f1c87ad06a67c6e0f00ac96b216`.
+- [x] Full desktop/mobile Browser Smoke [#1498](https://github.com/CryptoDilis/Climboria/actions/runs/42101545491) passed, including homepage/navigation, Jarrell's Peak desktop/mobile gameplay, and screenshot upload (artifact [13450546690](https://github.com/CryptoDilis/Climboria/actions/runs/42101545491/artifacts/13450546690)).
+- [x] Reviewed all 10 desktop/mobile screenshots from artifact 13450546690. Exterior capture shows the original entrance arch and no obvious exposed western/north maze or spike grid. This is screenshot evidence only; it does not prove all exterior geometry/colliders are clear.
+- [ ] Cave interior remains visually open: the interior capture still shows a large bright exterior opening beyond the chamber. Need a longer sealed underground passage with continuous roof/floor and readable branch landmarks; preserve the existing entrance and retained cave chambers.
+- [ ] Pond fish are visible as pale silhouettes but still look flat/simple. Improve body detail, movement and underwater depth cues while retaining submerged-clearance assertions.
+- [ ] Hero idle remains stiff/arms-out. Keep natural relaxed idle on the open list, deferred behind cave/sea route and fish visual blockers.
+- [ ] **Sea tunnel and separate underwater seabed exit are not implemented.** Preserve the existing cave entrance; remove only the exposed outdoor maze. Build a continuous enclosed passage from the cave toward the sea, with safe floor, sealed ceiling, collision/headroom, seabed transition and a distinct underwater exit. Terrain mapping indicates the coast is only a few hundred metres from the cave, so do not claim a 2 km tunnel without a verified route measurement and explicit route plan.
+- [ ] Manual traversal/collision/headroom/trap review and physical Redmi 14 5G acceptance remain open. Playwright mobile viewport is not a physical-device test.
+- [ ] PR #215 remains OPEN and UNMERGED. Do not merge until cave/sea tunnel and fish visuals are reviewed, manual cave traversal is accepted, and physical-device testing is recorded.
+- [ ] Free-GitHub-hosted-assets-only policy remains mandatory; no new third-party asset was imported in this checkpoint.
+
+
+## 2026-11-06 — latest checklist CI and cave-to-coast route audit
+
+- [x] Documentation head `25d962289dce61570b1f4ce966fa99227a0146fc` verified: Validate #2066 [42105655154](https://github.com/CryptoDilis/Climboria/actions/runs/42105655154) passed and full Browser Smoke #1499 [42105654870](https://github.com/CryptoDilis/Climboria/actions/runs/42105654870) passed.
+- [x] PR #215 is still OPEN and UNMERGED; latest GitHub PR inspection reports `mergeable=true`. Branch comparison: 34 commits ahead, 0 behind main. Passing CI and mergeability do not close the outstanding visual/manual/device acceptance gates.
+- [x] Audited the cave transform: cave origin is approximately `(-760,-520)`; local +Z points inward toward the world origin, so the sea-facing route is local -Z. At 200 local metres outward, the centreline is approximately `(-925,-633)` (using the current cave rotation); this reaches the mapped coast transition near x=-900, subject to the terrain's noise-modulated shoreline.
+- [ ] Do not yet build a straight, level 200m corridor: the seabed is around Y=-26 while the cave base elevation is set from terrain. First sample actual rendered terrain height and sea-floor transition along the transformed centreline and both tunnel shoulders; choose a continuous descending floor profile and maintain enough roof cover below terrain.
+- [ ] Next code increment: add a route/terrain sampling audit for the proposed local -Z corridor (centreline and both shoulders at regular intervals), then design the tunnel cross-section and collision/roof/floor from those measured elevations. Preserve the original entrance and all existing cave rooms; the separate seabed opening must be a distinct, traversable underwater exit.
+- [ ] No sea tunnel, seabed opening, or route terrain sampling implementation is claimed complete in this checkpoint. Keep cave/fish visuals, manual traversal/headroom/trap review, and physical Redmi 14 5G acceptance open.
+- [ ] PR #215 remains unmerged until all acceptance gates pass. Continue to retain all world master-checklist requirements and the free-GitHub-assets-only policy.
+
+
+## 2026-11-06 — cave-to-coast terrain sampling audit added (CI pending)
+
+- [x] Added `caveCoastRouteAudit()` to the Jarrell's Peak browser audit API. It samples 27 stations at 10m intervals from 0–260m along cave-local -Z, with three lateral tracks (-7m, centre, +7m), returning world coordinates, rendered ground height, and water-body classification.
+- [x] Added Browser Smoke assertions requiring all 81 terrain samples to be finite and the centreline to reach the mapped Open Sea within 260m. No tunnel geometry, terrain, player collision, cave entrance or existing cave rooms were changed in this increment.
+- [x] Gameplay audit commit: `ee8505200cb48d0b5767840eee8a75d4ac422977`; smoke test commit / current PR head: `fdb043b2c29fd9a65ece836d5da5ee195ebe12a7`.
+- [ ] Fresh Validate and Browser Smoke for this head are pending; the commit-run lookup has not yet returned PR-triggered workflow records. Do not claim this route audit passed until the actual workflow result and route-sample output are inspected.
+- [ ] Inspect the sample elevations before designing the tunnel floor/roof. The audit records the existing terrain surface; it does not yet calculate a safe roof thickness, dig terrain, create tunnel walls/floor, add collision, or create the separate underwater seabed exit.
+- [ ] Keep the original cave entrance and current cave rooms unchanged. Keep the sea tunnel, underwater exit, cave/fish visual acceptance, manual traversal/headroom/trap review, natural hero idle, and physical Redmi 14 5G acceptance open.
+- [ ] PR #215 remains OPEN and UNMERGED; no test thresholds were relaxed. Free GitHub-hosted assets only remains mandatory; no asset imported in this increment.
+
+
+## 2026-11-06 — Browser Smoke #1506 and visual review
+
+- [x] Validate Climboria #2073 [42110493307](https://github.com/CryptoDilis/Climboria/actions/runs/42110493307) passed on PR head `1a595d16f3abf54d807ba8b8b3cb9d122bbdf67f`.
+- [x] Full Browser Smoke #1506 [42110493377](https://github.com/CryptoDilis/Climboria/actions/runs/42110493377) passed, including homepage CTA/DEX/mobile navigation and Jarrell's Peak desktop/mobile gameplay checks.
+- [x] Screenshot artifact [13453937553](https://github.com/CryptoDilis/Climboria/actions/runs/42110493377/artifacts/13453937553) downloaded and all 10 captures reviewed.
+- [x] The 213-sample cave-to-coast audit passed its smoke assertions: all sampled positions/heights are finite and the centreline reaches mapped `open_sea` within 700m. The exact ocean-entry station/elevation profile was printed in the job output but is not available from the artifact; do not invent coordinates or floor elevations. Next verification increment should persist the full audit JSON as a CI artifact so route design uses measured values.
+- [ ] Cave entrance screenshot still has a very broad empty foreground and the arch appears small/distant; improve approach composition without changing entrance geometry or player spawn until separately verified.
+- [ ] Cave interior screenshot still exposes bright sky/exterior through a short opening; it does not yet read as a sealed underground tunnel. Build the longer enclosed route only after persisting and inspecting the terrain profile.
+- [ ] Woodland Pond fish are clearly visible but appear as flat, pale surface silhouettes rather than convincingly submerged fish. Improve depth cues/body volume/motion while preserving fish-below-surface checks.
+- [ ] Hero idle remains stiff with arms held away from the body; relaxed natural idle remains open.
+- [ ] No sea tunnel, roof/floor/collision, or distinct underwater seabed exit is claimed implemented. Manual cave traversal/headroom/trap review and physical Redmi 14 5G acceptance remain open.
+- [ ] PR #215 remains OPEN and UNMERGED. CI success and mergeability do not satisfy visual/manual/device acceptance.
+- [ ] Free GitHub-hosted asset policy remains mandatory; no third-party asset import is claimed in this checkpoint.
+
+
+## 2026-11-06 — 2.2km offshore exit survey extension
+
+- [x] Browser Smoke #1509 [42113502138](https://github.com/CryptoDilis/Climboria/actions/runs/42113502138) passed and uploaded route JSON artifact [13455945687](https://github.com/CryptoDilis/Climboria/actions/runs/42113502138/artifacts/13455945687).
+- [x] Inspected the 213-sample JSON: centreline first reaches mapped open sea at 300m (world approx. x=-1007.59, z=-689.41; rendered ground Y=34.57). Cave origin approx. x=-760,z=-520, baseY=131.32. Ground profile is highly non-linear before the coast (e.g. 150m Y=236.39; 200m Y=177.81; 250m Y=99.41); open-sea seabed reaches Y=-26 by about 470m and remains there through 700m.
+- [x] Extended the next survey to 2,200m from cave origin, preserving 10m spacing and three lateral tracks (-7,0,+7), expected 663 samples. This is a survey only, not tunnel excavation or geometry.
+- [ ] Await fresh Validate and Browser Smoke for the 2.2km/663-sample audit; inspect the full offshore route and endpoint before tunnel construction.
+- [ ] Design the distinct underwater exit at the requested offshore endpoint (2km out to sea), with continuous walkable descent, seabed clearance, sealed roof, collision, headroom and swim transition. Do not dig or replace the existing cave entrance.
+- [ ] Keep cave visual polish, fish depth/body detail, relaxed idle, manual traversal, physical Redmi 14 5G acceptance, and free-GitHub asset audit open. PR #215 remains open and unmerged.
+
+
+## 2026-11-06 — 2.2km offshore survey verified (Browser Smoke #1512)
+
+- [x] Validate Climboria #2079 [42159385661](https://github.com/CryptoDilis/Climboria/actions/runs/42159385661) passed on head `6b8f6f2692086da690d27184a20b68b567807db9`.
+- [x] Browser Smoke #1512 [42159385720](https://github.com/CryptoDilis/Climboria/actions/runs/42159385720) passed, including homepage CTA/DEX/mobile navigation and Jarrell's Peak desktop/mobile gameplay; screenshot/audit artifact [13476382628](https://github.com/CryptoDilis/Climboria/actions/runs/42159385720/artifacts/13476382628) downloaded and inspected.
+- [x] Inspected all 663 finite route samples at 10m intervals across lateral tracks -7m, 0m, +7m. Centreline first reaches mapped open sea at 300m (x=-1007.59,z=-689.41,Y=34.57); +7m track reaches at 310m. At 2,200m, centreline endpoint is x=-2575.68,z=-1762.30, rendered seabed Y=-26; all three tracks end over open sea at Y=-26.
+- [x] Identified abrupt terrain variation in the sampled profile: adjacent 10m stations can differ by approximately 34.29m. Do not derive a straight walkable tunnel directly from this surface profile; route engineering must account for a gradual traversable grade, terrain cover, sealed roof, seabed clearance, collision and headroom.
+- [ ] No tunnel bore, walkable floor, roof, collision corridor, or distinct underwater exit has been implemented by this survey. Preserve the existing cave entrance and rooms while designing the separate offshore opening.
+- [ ] Visual review: desktop cave interior still shows an exterior opening/bright background and reads as a short chamber; fish are visible as pale stylized silhouettes but still need convincing underwater volume/depth; natural relaxed hero idle remains open.
+- [ ] Free-GitHub asset audit remains open: four rainforest prop models still load from `cdn.3dassets.dev`; replace with exact-file license-verified GitHub assets vendored locally or disable those loads while retaining procedural fallback.
+- [ ] Manual traversal/headroom/collision/trap review and physical Redmi 14 5G acceptance remain open. PR #215 remains OPEN and UNMERGED; automated smoke success is not visual/device acceptance.
+
+
+## 2026-11-06 — cave route feasibility metrics added (verification pending)
+
+- [x] Extended `caveCoastRouteAudit()` to report maximum adjacent centreline surface rise/drop grade, the first open-sea seabed sample (surface <= -25.5), and the 2,200m endpoint coordinates/surface.
+- [x] Extended Browser Smoke assertions to verify the 663-sample three-track survey, finite terrain data, mapped ocean and seabed reach, exact 2,200m endpoint, and measured steep surface-grade diagnostics. The checks preserve the observed non-walkable terrain evidence rather than pretending the surface itself is a tunnel route.
+- [x] Measured from the prior passing 2.2km artifact: maximum adjacent centreline rise is approximately 330.2% over 10m (120–130m station); maximum adjacent drop is approximately 186.2% over 10m (230–240m station). These are terrain-surface gradients, not proposed tunnel-floor grades.
+- [ ] Fresh Validate and Browser Smoke for the diagnostic code are pending. Do not claim these new fields/assertions pass until artifact inspection.
+- [ ] Tunnel geometry remains unimplemented. Next engineering design must independently establish a walkable alignment, maximum player grade, minimum rock cover, water pressure/seabed clearance, collision, headroom, and a safe underwater exit. Keep the existing cave entrance and rooms intact.
+- [ ] The four `cdn.3dassets.dev` rainforest GLB runtime URLs remain an asset-policy violation to resolve through exact-file license-verified GitHub assets vendored locally or by disabling those loads and retaining procedural foliage.
+- [ ] Cave enclosure, fish realism, relaxed idle, manual traversal, and physical Redmi 14 5G acceptance remain open. PR #215 stays unmerged.
+
+
+## 2026-11-06 — unverified rainforest runtime downloads removed (verification pending)
+
+- [x] Removed all four runtime model loads from `cdn.3dassets.dev` (buttress, canopy, undergrowth, fallen log) from `game/play.html`. The procedural forest remains the active visual fallback; no replacement third-party assets were imported.
+- [x] Kept the forest decoration location audit data for future asset placement planning, without fetching external model files.
+- [ ] Fresh Validate and Browser Smoke for this removal are pending. Inspect forest screenshots after the run to ensure the procedural forest remains visually acceptable and gameplay collision is unchanged.
+- [ ] Future forest asset imports must come from exact freely downloadable GitHub files with verified commercial/redistribution terms, pinned upstream revisions, attribution/NOTICE as required, and local vendoring.
+- [ ] Cave route feasibility diagnostic changes from commits `75b5ff7`, `899d097`, and `4e52132` are also awaiting fresh latest-head CI; the earlier #1513 smoke/#2080 validate passed on the previous README-only checkpoint, not these code changes.
+- [ ] Cave tunnel/underwater exit, cave enclosure, fish realism, relaxed idle, manual traversal and physical Redmi 14 5G acceptance remain open. PR #215 stays open and unmerged.
+
+
+## 2026-11-06 — realistic asset quality and performance gate
+
+- [x] Owner directive: remove visibly low-poly/stylized environment assets and replace them only with realistic, locally vendored files sourced from GitHub repositories; every exact file must have verified commercial-use and redistribution terms. No paid assets, Patreon/supporter-only downloads, or external runtime hotlinks.
+- [x] Removed the four unverified `cdn.3dassets.dev` rainforest model runtime loads in commit `2055a60`; procedural forest dressing remains as a temporary fallback, not an accepted final realism pass.
+- [x] Inventory found only 48 tracked repository entries; the game world is predominantly generated procedurally in `game/play.html`. Some generated forms use deliberately coarse primitives (e.g. low-segment spheres/cylinders/cones and `IcosahedronGeometry(1,1)` for the cave arch). These are now explicit visual-review targets, not accepted as photoreal assets.
+- [x] Existing local hero GLB is 42,923,204 bytes (~40.9 MiB); expedition crest GLBs are 9,413,392 bytes (~9.0 MiB) and 7,555,388 bytes (~7.2 MiB). Do not replace or re-export character files without inspecting their source/license and preserving the approved face.
+- [x] Added desktop and mobile-emulation frame-time sampling to Browser Smoke: average FPS, mean/p95/p99 frame interval, renderer draw calls, triangle count, geometry/texture counts, viewport and DPR. A JSON performance report is uploaded as `climboria-performance.json` with the smoke artifact. This is a browser-emulation baseline; physical Redmi 14 5G measurements remain mandatory.
+- [ ] First performance artifact and visual regression review are pending. Establish a stable baseline before applying hard FPS/frame-time budgets; do not fake performance results or treat desktop emulation as a physical phone test.
+- [ ] Candidate repositories reviewed: `anandin/the-wild-between` uses Quaternius nature assets and reports no repository-wide license assertion; `petroulacl/fps-buildings-env-kit` includes Quaternius stylized vegetation and is not a photoreal nature replacement; `cktang88/3d-fps` includes realistic Poly Haven-derived industrial props/materials, but its repository has no top-level license file and mixes CC0 and CC-BY assets. None is approved as a wholesale nature import. Exact file-level source/terms must be proven before import.
+- [ ] Do not bulk-delete all simple geometry before replacement assets are locally available and collision-tested. Replace by biome/asset class in measured batches, capture before/after screenshots, and compare performance after each batch.
+- [ ] Realistic PBR rocks/cliffs, trees/foliage, ground, cave walls, water/coast, wildlife, ruins, and camp/port props remain to be sourced and integrated from eligible GitHub files. Preserve procedural fallbacks only where no acceptable free GitHub asset is found.
+- [ ] PR #215 remains open/unmerged until latest Validate/Browser Smoke, visual review, collision checks, performance baselines and physical Redmi 14 5G acceptance pass.
+
+
+## 2026-11-06 — first realistic PBR surface batch
+
+- [x] Vendored six Poly Haven CC0 PBR maps from GitHub source repository `npmiaman/game-forge` at immutable commit `2b25427358dbfb6badd47f658ba71a6de748e548`: rocky terrain and sand (base colour, normal, roughness). Exact license/source details are in `game/assets/pbr/ASSET_LICENSES.md`.
+- [x] Replaced the very coarse dodecahedron rock instances with irregular subdivided geometry, smooth normals, and local PBR rock maps. This is an interim improvement; not yet a photogrammetry model.
+- [ ] Browser Smoke for the rock material change and performance sampler is pending. A prior smoke failure was traced to literal newline characters accidentally inserted into the test script; repaired in commit `8e70281`. Do not mark the smoke pass until the latest run and artifact are inspected.
+- [ ] Sand PBR maps are vendored but not yet applied to the coastline. High-detail rock/cliff/tree/vegetation meshes still need individually license-verified GitHub sources.
+- [ ] First performance artifact should establish desktop/mobile-emulation FPS, frame-time percentiles, draw calls, triangles, geometries and textures. Hard budgets will be set from measured baselines; physical Redmi 14 5G testing remains separate.
+- [ ] Low-poly/stylized world geometry remains in other systems (trees, grass, cave props, structures, wildlife and terrain). Replace in controlled batches only after visual/collision/performance checks; do not claim the whole world is realistic yet.
+
+
+## 2026-11-07 — PR #215 dual smoke verification and visual/performance review
+- [x] Latest head `c8e8311fe492503791fc69a76f2d8afd725ede25`: Validate run [42311154297](https://github.com/CryptoDilis/Climboria/actions/runs/42311154297) passed.
+- [x] Browser Smoke runs [42311147941](https://github.com/CryptoDilis/Climboria/actions/runs/42311147941) and [42311154464](https://github.com/CryptoDilis/Climboria/actions/runs/42311154464) both completed successfully. Homepage CTA/DEX/mobile navigation and Jarrell's Peak desktop/mobile gameplay smoke passed, including the left-click ground-movement assertion. This is automated smoke coverage, not physical-device acceptance.
+- [x] Downloaded and reviewed the second run's desktop gameplay and cave-interior screenshots. Desktop gameplay still shows a very large, nearly uniform green ground plane with the explorer small in frame. Cave interior still reads as a bright, stylized chamber with a visible exterior opening and primitive floor/rock forms. Visual acceptance remains open.
+- [x] Latest performance artifact reports SwiftShader software-renderer baselines: desktop sanctuary 2.0 FPS / 499.98ms mean frame interval; mobile emulation 0.9 FPS / 1085.14ms. Renderer stage dominates; mobile renderer mean is 94.623ms with severe outliers. These values are not physical GPU or Redmi 14 5G measurements.
+- [x] Latest 663-sample, three-track cave-to-coast audit confirms mapped open sea at 300m and seabed at 450m, with 2,200m endpoint at Y=-26. Existing terrain surface is not walkable as-is: maximum adjacent centreline rise 330.2% and drop 186.2%. These are surface measurements, not a designed tunnel grade.
+- [ ] Next P0: diagnose and improve spawn-camera/terrain composition and replace the visually flat terrain with eligible, locally vendored realistic ground assets; do not use extra expensive procedural fragment noise until its performance impact is measured.
+- [ ] Next P0: design a separately engineered cave-to-sea tunnel with gradual walkable floor, sufficient terrain cover, sealed roof, collision/headroom and distinct underwater exit. Do not follow the raw terrain profile or claim a 2.2km walkable tunnel.
+- [ ] Cave interior realism, fish visual depth, natural hero idle, manual cave/trap traversal, actual-device Redmi 14 5G testing, and real-world performance remain open. Preserve existing map/features; no low-poly stand-ins or unverified runtime asset hotlinks.
+- [ ] PR #215 remains OPEN and UNMERGED until visual, route, collision, performance and physical-device acceptance gates pass.
