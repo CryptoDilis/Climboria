@@ -712,8 +712,7 @@ let crystal;{
  }
  crystal=sc(mk(new T3.OctahedronGeometry(1),M('#7fe9ff',1),0,6,0,g),2,3,2);
  glow('#7fe9ff',2.5,90,0,7,0,g);
- // Restrained Sanctuary wayfinding beam: keep it above the crystal without filling the spawn camera.
- const bm=new T3.Mesh(new T3.CylinderGeometry(.35,.9,24,16,1,true),new T3.MeshBasicMaterial({color:L('#7fe9ff'),transparent:true,opacity:.075,blending:T3.AdditiveBlending,depthWrite:false,fog:false,side:T3.DoubleSide}));bm.position.y=18;g.add(bm);
+ // The crystal and point glow remain the Sanctuary landmark; omit the tall beam because it obstructs the spawn camera.
 }
 /* Park */
 const parkFixtureSolids=[];
