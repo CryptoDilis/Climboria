@@ -91,7 +91,7 @@ test("executes only with a valid Jupiter success response and matching request p
       upstreamPayload = JSON.parse(init.body);
       return Response.json({ status: "Success", code: 0, signature: "5".repeat(64), totalInputAmount: "100", totalOutputAmount: "250" });
     };
-    const signedTransaction = Buffer.from("signed-transaction-fixture").toString("base64");
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
@@ -114,7 +114,7 @@ test("does not treat an unknown Jupiter execution status as success", async () =
   const originalFetch = globalThis.fetch;
   try {
     globalThis.fetch = async () => Response.json({ status: "Pending", code: 0, signature: "5".repeat(64) });
-    const signedTransaction = Buffer.from("signed-transaction-fixture").toString("base64");
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
