@@ -47,7 +47,8 @@ async function readJson(request, maxBytes = 40000) {
 }
 async function upstream(path, init, env) {
   if (!env.JUPITER_API_KEY) throw new Error("Backend is not configured: missing Jupiter server API key");
-  return fetch(JUPITER + path, {
+  const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
+  return fetch(target, {
     ...init,
     headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY }
   });
@@ -127,7 +128,7 @@ async function handleTokenSearch(request, env) {
   if (query.length < 2 || query.length > 64 || /[\u0000-\u001f]/.test(query)) {
     return json({ error: "Token search query must be 2 to 64 printable characters" }, 400);
   }
-  const response = await upstream("/../tokens/v2/search?query=" + encodeURIComponent(query), { method: "GET" }, env);
+  const response = await upstream("https://api.jup.ag/tokens/v2/search?query=" + encodeURIComponent(query), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
   if (!response.ok) return json({ error: "Jupiter token search failed", upstreamStatus: response.status }, response.status >= 400 && response.status < 500 ? response.status : 502);
   if (!Array.isArray(data)) return json({ error: "Jupiter returned an invalid token search response" }, 502);
