@@ -2278,3 +2278,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] Await CI on the latest PR head. The preceding run on an earlier head had Validate green and Browser Smoke cancelled; this does not verify the current changes.
 - [ ] Deploy/configure Cloudflare Worker and run backend integration tests before enabling the runtime feature flag.
 - [ ] Test real wallet approval/rejection, insufficient funds, expired order, Jupiter failure, network timeout, and confirmed Devnet swap before any mainnet activation.
+
+
+### 2026-11-08 — DEX frontend transaction review and signing integration
+
+- [x] Added a distinct order-preparation button; it is fail-closed unless the runtime swap config explicitly enables the verified backend.
+- [x] Order request sends input/output mint, exact base-unit amount and connected wallet taker to the Climboria Worker.
+- [x] Frontend accepts v0 only, decodes the returned transaction, checks fee payer equals the connected wallet and checks for non-empty instructions.
+- [x] Added a pre-sign review summary showing token mints, amounts, router/fee and instruction count.
+- [x] Signing is a separate user click that invokes the wallet provider; the signed transaction and Jupiter request ID are sent to the Worker execute endpoint.
+- [x] Success display requires Jupiter Success + code 0 + signature; otherwise the UI reports not confirmed.
+- [x] Confirmed by source audit: no Jupiter API key/header is present in the public DEX HTML.
+- [ ] CI has not yet reported a completed run for the latest head; do not claim these tests are green.
+- [ ] Cloudflare Worker is not deployed; keep the execution feature flag off until account setup, Devnet testing, and security review are complete.
