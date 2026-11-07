@@ -111,7 +111,7 @@ async function signAndExecuteJupiterSwap(){
   const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
   button.textContent='Submitting to Jupiter…';
   const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
-  if(pendingSwapOrder.order.lastValidBlockHeight)payload.lastValidBlockHeight=String(pendingSwapOrder.order.lastValidBlockHeight);
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
