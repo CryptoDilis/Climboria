@@ -52,6 +52,15 @@ async function upstream(path, init, env) {
     headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY }
   });
 }
+async function enforceRateLimit(request, env) {
+  if (!env.RATE_LIMITER || typeof env.RATE_LIMITER.limit !== "function") {
+    return json({ error: "Backend rate limiter is not configured; swap proxy is fail-closed" }, 503);
+  }
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  const result = await env.RATE_LIMITER.limit({ key: ip });
+  if (!result?.success) return json({ error: "Rate limit exceeded; retry later" }, 429);
+  return null;
+}
 async function handleOrder(request, env) {
   const body = await readJson(request, 8192);
   const { inputMint, outputMint, amount, taker } = body || {};
