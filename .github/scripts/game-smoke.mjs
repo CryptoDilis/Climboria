@@ -115,7 +115,7 @@ try {
     const p=window.__climboriaJarrellsPeak?.player,w=window.__climboriaJarrellsPeak;
     if(!p||!w)return null;
     const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpCount:p.jumpCount,landCount:p.landCount};
-    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
+    p.x=0;p.z=-105;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
     return {saved,baseline:p.y,jumpCount:p.jumpCount||0,landCount:p.landCount||0};
   });
   if(!liveJumpStart) errors.push('Live keyboard jump test could not access the gameplay player.');
@@ -577,7 +577,7 @@ try {
   await page.keyboard.press('1');
   await page.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+105)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await page.waitForTimeout(900);
@@ -825,7 +825,7 @@ try {
   await mobile.keyboard.press('1');
   await mobile.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+105)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await mobile.waitForTimeout(900);
