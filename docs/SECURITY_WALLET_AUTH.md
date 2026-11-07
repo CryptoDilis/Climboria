@@ -1,6 +1,6 @@
 # Climboria Wallet Authentication & Transaction Safety
 
-Status: **Design / implementation gate — NOT LIVE**  
+Status: **Backend hardening in progress — NOT approved for production login**  
 Scope: climboria.fun website; Solana (Phantom, Solflare) and EVM (MetaMask, OKX Wallet).  
 Hosting baseline: static GitHub Pages has no trusted server runtime. A separate server-side API must be provisioned before wallet login can be called secure.
 
@@ -16,11 +16,11 @@ Hosting baseline: static GitHub Pages has no trusted server runtime. A separate 
 
 ## Authentication architecture
 
-- Keep GitHub Pages as the static frontend. Deploy a separate HTTPS API (Cloudflare Worker is a candidate, not yet provisioned or deployed).
+- Keep GitHub Pages as the static frontend. The Cloudflare Worker implementation is in the PR branch; production deployment and a same-site API hostname (for example, api.climboria.fun) must be verified before browser login is enabled.
 - Use a persistent database (D1 or equivalent) for one-time challenges, account IDs, wallet links, session revocation, and audit metadata. Never store signing keys.
 - API CORS allowlist must contain only the exact production origin and explicitly approved development origins. No wildcard credentialed CORS.
-- Apply per-IP and per-wallet rate limits, request size limits, strict input schemas, origin checks, and security headers.
-- Use HTTPS only. Set session cookies Secure, HttpOnly, SameSite=Lax (or stricter where compatible), Path=/, and an appropriate short lifetime. Rotate session identifiers after authentication; support logout and revocation. Store only a hash of opaque session tokens server-side.
+- Apply per-IP and per-wallet rate limits, request size limits, strict input schemas, origin checks, and security headers. Current Worker branch adds JSON content-type/body-size checks and a per-wallet challenge throttle; per-IP throttling remains outstanding.
+- Use HTTPS only. Set session cookies Secure, HttpOnly, SameSite=Lax, Path=/, and an appropriate short lifetime. The Worker now sets SameSite=Lax; this requires the API to be hosted on a same-site subdomain of climboria.fun for reliable browser cookie behavior. Rotate session identifiers after authentication; support logout and revocation. Store only a hash of opaque session tokens server-side.
 - Protect state-changing cookie-authenticated routes against CSRF (Origin/Referer validation and CSRF token where required). Never put session tokens in localStorage, URLs, or browser logs.
 - Use a separate, auditable account identity; linking multiple wallets must not create duplicate player accounts. Require fresh proof of control before linking/unlinking a wallet.
 
