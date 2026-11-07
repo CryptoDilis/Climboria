@@ -9,3 +9,13 @@ ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"
 
 # Configure the secret outside source control:
 # npx wrangler secret put JUPITER_API_KEY
+
+# Replace namespace_id with a positive integer unique to this Cloudflare account.
+# Cloudflare's built-in limiter is approximate and regional; it is a baseline abuse guard.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "20261108"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
