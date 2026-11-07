@@ -1996,6 +1996,8 @@ let lastStreamChunkX=NaN,lastStreamChunkZ=NaN;
 // Diagnostic-only stage timing is enabled by the browser smoke query parameter.
 const climboriaProfileEnabled=new URLSearchParams(location.search).has('smoke');
 const climboriaProfileStages=Object.create(null);
+const climboriaProfileFrameIntervals=[];
+let climboriaProfilePreviousFrame=0;
 let climboriaProfileWriteIndex=0;
 function climboriaProfileRecord(name,start){
  if(!climboriaProfileEnabled)return;
@@ -2010,6 +2012,10 @@ function climboriaProfileSnapshot(){
   const at=p=>sorted.length?+sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*p))].toFixed(3):null;
   out.stages[name]={samples:values.length,meanMs:values.length?+(sum/values.length).toFixed(3):null,p95Ms:at(.95),p99Ms:at(.99),maxMs:sorted.length?+sorted[sorted.length-1].toFixed(3):null};
  }
+ const frameSorted=climboriaProfileFrameIntervals.slice().sort((a,b)=>a-b);
+ const frameSum=climboriaProfileFrameIntervals.reduce((a,b)=>a+b,0);
+ const frameAt=p=>frameSorted.length?+frameSorted[Math.min(frameSorted.length-1,Math.floor((frameSorted.length-1)*p))].toFixed(2):null;
+ out.gameLoopFrameInterval={samples:frameSorted.length,meanMs:frameSorted.length?+(frameSum/frameSorted.length).toFixed(2):null,p95Ms:frameAt(.95),p99Ms:frameAt(.99),maxMs:frameSorted.length?+frameSorted[frameSorted.length-1].toFixed(2):null,source:'same animate(requestAnimationFrame) callback as game update/render; excludes hidden-tab frames'};
  return out;
 }
 window.__climboriaPerformanceProfile=climboriaProfileSnapshot;
@@ -2151,7 +2157,13 @@ function animate(now){
  requestAnimationFrame(animate);
  now=Number.isFinite(now)?now:performance.now();
  // Do not simulate or render the open world while its browser tab is hidden.
- if(document.hidden){last=now;return;}
+ if(document.hidden){last=now;climboriaProfilePreviousFrame=0;return;}
+ if(climboriaProfileEnabled&&climboriaProfilePreviousFrame){
+  const frameInterval=now-climboriaProfilePreviousFrame;
+  if(climboriaProfileFrameIntervals.length<900)climboriaProfileFrameIntervals.push(frameInterval);
+  else climboriaProfileFrameIntervals[climboriaProfileFrameIntervals.length%900]=frameInterval;
+ }
+ climboriaProfilePreviousFrame=now;
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
  const renderUpdateStart=climboriaProfileEnabled?performance.now():0;
  try{update(dt)}catch(err){
