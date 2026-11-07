@@ -748,7 +748,7 @@ footer:first-of-type>div{
   document.getElementById('launchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
   document.getElementById('launchpadNavLink').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
   document.getElementById('mobileLaunchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
-  document.getElementById('closeSwap').addEventListener('click', ()=>closeModal(swapModal));
+  document.getElementById('closeSwap').addEventListener('click', e=>{e.preventDefault();e.stopPropagation();swapModal.classList.remove('active');});
   document.getElementById('closeLaunchpad').addEventListener('click', ()=>closeModal(launchModal));
   const copy={normal:'Normal Launchpad — TBA. This option is not available yet.',developer:'Developer Options — TBA. Advanced creator settings are not available yet.',signature:'Climboria Signature — TBA. Rules and safeguards will be disclosed before this option opens.'};
   document.querySelectorAll('[data-launch-choice]').forEach(b=>{
