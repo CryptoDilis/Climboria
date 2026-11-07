@@ -1498,3 +1498,12 @@ For each meaningful implementation batch:
 - [ ] Preview/model geometry could not be inspected yet. This is a hard stop before integration; no visual acceptance claimed.
 - [ ] Next fish batch remains: inspect actual model, verify binary/texture files and compatibility, optimize mobile maps, vendor exact files with NOTICE, instance one shared model, then smoke-test visuals and performance.
 - [ ] Existing procedural fish remain until a replacement passes. No generic low-poly substitute.
+
+
+## 2026-11-07 — BarramundiFish geometry and mobile budget gate
+
+- [x] Pinned model JSON inspection: one primitive, 2,188 vertices, 11,592 indices, position/normal/tangent/UV attributes.
+- [x] Three PBR maps total 12,391,351 bytes; full GLB is 12,521,196 bytes. This is not yet an acceptable mobile payload without optimization.
+- [ ] Screenshot/model visual inspection still blocked because the GitHub connector rejects the binary JPEG. Model remains NOT integrated and NOT visually accepted.
+- [ ] Verify compatible mesh payload and optimize textures/geometry locally before any integration; run fresh desktop/mobile smoke and compare performance.
+- [ ] All cave, fish, traversable route, world realism, gameplay, social/economy, performance, and physical Redmi 14 5G gates remain OPEN. PR #215 remains OPEN and UNMERGED.
