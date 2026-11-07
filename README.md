@@ -2243,3 +2243,13 @@ For every integrated asset or borrowed technique, record:
 - **Scope limitation:** the current DEX page is not an exhaustive Solana-wide index. Its discovery coverage is provider/search based and explicitly reports that limitation.
 - **Execution limitation:** wallet connection is read-only; quote preview does not request a transaction, sign, submit or confirm a swap. Do not describe mainnet trading as live.
 - Production status remains pending until the focused pull request passes CI, the GitHub Pages deployment completes, and `https://climboria.fun/dex/` is independently smoke-tested.
+
+
+### 2026-11-08 — DEX secure execution architecture and fail-closed checks
+
+- [x] Reviewed the current official Jupiter Swap API V2 Order & Execute flow. A signable order requires the wallet `taker`; execution requires the signed transaction plus matching `requestId` at `/execute`.
+- [x] Added `dex/EXECUTION_READINESS.md` with the required server-side API-key proxy, wallet review/signing, Jupiter execution response handling, Devnet test matrix, monitoring, and mainnet release gates.
+- [x] Added Browser Smoke assertions that the public DEX page does not expose Jupiter API credentials or transaction signing/submission calls, clearly identifies quote-only status, and retains the documented execution gates.
+- [ ] Await GitHub Actions for latest DEX branch head `8c7a1e02c1b8af9d51027b1ca9d8f33c5d30da8d`. The available commit-run lookup returned no PR-triggered run records at this check; no new green status is claimed.
+- [ ] Implement a secure backend proxy before adding wallet-signing and Jupiter `/execute` calls. Do not put API credentials in the static GitHub Pages frontend.
+- [ ] Devnet swap lifecycle, failure-path tests, and independent security review remain mandatory before mainnet activation.
