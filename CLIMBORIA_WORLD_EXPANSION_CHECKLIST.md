@@ -1515,3 +1515,12 @@ For each meaningful implementation batch:
 - [ ] The preview is only 160×160; final material quality, mesh, scale, orientation, animation and in-game result remain unverified. Do not mark integrated or accepted.
 - [ ] Obtain/inspect the actual payload, verify UV/material compatibility and texture dimensions, optimize for mobile, vendor with notice, then run fresh visual/performance smoke.
 - [ ] Cave realism, traversable coast route, other world/gameplay systems, physical Redmi 14 5G and production performance remain OPEN. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — Fish loader compatibility gate
+
+- [x] Existing game loads Three.js r128 GLTFLoader.
+- [x] No DRACOLoader/Draco decoder is configured; the compressed Barramundi glTF requires `KHR_draco_mesh_compression` and is not compatible with the current loader setup as-is.
+- [x] Plain glTF is the safer loader-compatible candidate, with a 128,208-byte geometry buffer, subject to local textures and visual/technical inspection.
+- [ ] Texture binaries/dimensions and optimized mobile maps remain unverified; integration remains blocked.
+- [ ] Cave, fish visuals, coast route, world/gameplay systems, performance, manual acceptance and physical Redmi 14 5G remain OPEN. PR #215 stays OPEN and UNMERGED.
