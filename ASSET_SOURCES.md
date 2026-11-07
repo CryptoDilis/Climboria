@@ -236,3 +236,13 @@ Reviewed all ten screenshots from Browser Smoke run [42277972370](https://github
 - [x] Preview depicts a single dark grey/olive barramundi with a coherent fish silhouette and visible fins/body form; it is not a toy-like or low-poly primitive silhouette in the preview.
 - [ ] Preview is only 160×160 and does not establish final in-game appearance, shading, texture quality, orientation, scale or rig/animation behavior. No in-game visual approval is granted.
 - [ ] Still required: inspect actual GLB/Draco payload and texture dimensions, confirm geometry/UV/material compatibility, reduce the 12.39 MB texture payload for mobile, vendor locally with license notice, then compare desktop/mobile screenshots and performance.
+
+
+## 2026-11-07 — Fish loader compatibility check
+
+- [x] Inspected current game loader setup: Three.js r128 and its matching `examples/js/loaders/GLTFLoader.js` are already loaded for the character asset.
+- [x] Current game does not load or configure `DRACOLoader` / a Draco decoder.
+- [x] Barramundi's Draco glTF declares `KHR_draco_mesh_compression` as both used and required. It cannot be passed to the existing GLTFLoader setup without adding and verifying a compatible decoder.
+- [x] The plain glTF variant has standard accessors and a separate 128,208-byte buffer, so it is the lower-risk compatibility candidate with the existing loader; it still requires all three texture files to be locally vendored.
+- [ ] Texture binaries cannot currently be read through the GitHub file connector (large base64 content returned empty); exact texture dimensions and optimized variants remain unverified.
+- [ ] No fish integration performed. Do not hotlink source files or claim the model is in-game.
