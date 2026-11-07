@@ -44,8 +44,7 @@ jobs:
             echo "::error::Missing GitHub Actions secret CLOUDFLARE_API_TOKEN."
             exit 1
           fi
-          if ! printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -Eq '^[a-fA-F0-9]{32}
-; then
+          if ! printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | grep -Eq '^[a-fA-F0-9]{32}$'; then
             echo "::error::Missing or invalid GitHub Actions secret CLOUDFLARE_ACCOUNT_ID (expected 32 hexadecimal characters)."
             exit 1
           fi
