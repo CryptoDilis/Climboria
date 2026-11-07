@@ -1591,3 +1591,19 @@ For each meaningful implementation batch:
 - [ ] Add a repeatable smoke diagnostic that captures chunk count, per-chunk terrain vertex/triangle totals, rock/grass instance counts, active draw calls and textures. Capture identical camera/player positions and warm-up windows for all comparisons.
 - [ ] Run controlled visibility/cost experiments for global water, terrain chunks, rock instances, grass instances and remaining props independently. Record external frame intervals and renderer-stage timings; avoid interpreting software-renderer results as physical GPU performance.
 - [ ] Tune LOD/streaming/instance density only after identifying the dominant cost. Preserve visual realism and analytic collision. Verify on physical Redmi 14 5G before acceptance.
+
+## 2026-11-07 — latest-head smoke/performance review and diagnostic correction
+
+- [x] Validate #2205 (run `42334235873`) passed on tested head `ad33cdfa8bb0bc63a1fa59909f63822bd9be038c`.
+- [x] Browser Smoke #1696 (run `42334235932`) passed on the same tested head; desktop/mobile gameplay and screenshot artifact `13559695804` were uploaded and reviewed.
+- [x] Latest CI SwiftShader report recorded as a severe software-renderer warning: desktop sanctuary 1.6 FPS mean / 634.42ms external frame interval; mobile emulation 0.6 FPS / 1,616.6ms. This is not a physical GPU or Redmi 14 5G benchmark.
+- [x] Identified that the prior layer-isolation test used fixed 2.2-second windows and returned only 3–4 desktop intervals and one mobile interval, too few for reliable attribution.
+- [x] Updated `.github/scripts/game-smoke.mjs` in commit `3163aa9c56ac3335488444423cb2773a3f7f436d`: each baseline/isolated layer sample now collects at least 8 frame intervals or runs to a 15-second cap, and reports median, p95 and p99 as well as mean. Warm-up remains separate; every layer is restored after its isolated sample.
+- [ ] Run fresh Validate and full Browser Smoke on the diagnostic change; inspect sample counts and fresh screenshots before using layer comparisons to guide optimization.
+- [ ] Cave entrance/interior realism remains visually rejected: enclosed natural rock portal, continuous irregular roof shell, non-flat collision-safe floor, believable wall/ceiling relief, and removal of primitive stalactite/chest appearance remain open.
+- [ ] Fish/pond realism remains visually rejected: volumetric natural fish, schooling/depth attenuation, realistic pond water/shore and habitat dressing remain open; basic fishing lifecycle automation is not visual acceptance.
+- [ ] Cave-to-coast underground route remains unimplemented/unsafe; surface route samples are not proof of connected tunnel traversal, swimming, collision or headroom.
+- [ ] Realistic GitHub-hosted-only asset integration remains incomplete: candidate screening and some PBR surface files are recorded, but realistic fish, cave, wildlife, soldiers, shipwreck, chest and other hero props still require exact file/license verification, local import, collision/LOD/performance and visual acceptance.
+- [ ] Full Jarrell's Peak geography and gameplay checklist remains open unless individually verified: distributed mountains and climb paths; caves/traps/snakes; ponds/rivers/ocean and docks; forest/desert/snow/wheat/sunflower/rice biomes; sakura park, sanctuary, camps, ruins/statue; wildlife/flying animals; random chests/respawn/death stone; fishing biodiversity/gear; black market/merchant; crafting/forging; marketplace/economy; guilds/seasons/badges; world/private/guild/party/nearby chat; Dota-style left-click movement and remaining controls.
+- [ ] Performance acceptance remains open; investigate measured bottlenecks only after adequate samples, preserve visual quality, and verify on a physical Redmi 14 5G. Do not infer device FPS from SwiftShader.
+- [ ] Manual gameplay/visual acceptance and physical Redmi 14 5G test remain open. PR #215 stays OPEN and UNMERGED; do not merge on green CI alone.
