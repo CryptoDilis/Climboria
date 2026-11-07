@@ -127,3 +127,49 @@ test("does not treat an unknown Jupiter execution status as success", async () =
     globalThis.fetch = originalFetch;
   }
 });
+
+test("proxies quote-only orders with server-side Jupiter key", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    let target = "";
+    globalThis.fetch = async (url, init) => {
+      target = String(url);
+      assert.equal(init.headers["x-api-key"], "test-server-key");
+      return Response.json({ requestId: "quote-request-123", inAmount: "100000000", outAmount: "1234567", router: "metis", feeBps: 0 });
+    };
+    const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000", { headers: { origin } });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 200);
+    assert.match(target, /api\.jup\.ag\/swap\/v2\/order/);
+    assert.equal((await res.json()).outAmount, "1234567");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("proxies Jupiter token search through server-side credentials", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    let target = "";
+    globalThis.fetch = async (url, init) => {
+      target = String(url);
+      assert.equal(init.headers["x-api-key"], "test-server-key");
+      return Response.json([{ id: valid, name: "Solana", symbol: "SOL", decimals: 9, isVerified: true }]);
+    };
+    const res = await worker.fetch(new Request("https://worker.test/api/tokens/search?query=SOL", { headers: { origin } }), env);
+    assert.equal(res.status, 200);
+    assert.match(target, /api\.jup\.ag\/tokens\/v2\/search/);
+    const tokens = await res.json();
+    assert.equal(tokens[0].id, valid);
+    assert.equal(tokens[0].decimals, 9);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("rejects malformed quote and token search requests before upstream calls", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("upstream must not be called"); };
+    const quote = await worker.fetch(new Request("https://worker.test/api/swap/quote?inputMint=bad&outputMint=" + valid + "&amount=100", { headers: { origin } }), env);
+    const search = await worker.fetch(new Request("https://worker.test/api/tokens/search?query=x", { headers: { origin } }), env);
+    assert.equal(quote.status, 400);
+    assert.equal(search.status, 400);
+  } finally { globalThis.fetch = originalFetch; }
+});
