@@ -130,7 +130,7 @@ jobs:
           if(!/signTransaction/.test(page)||!/VersionedTransaction\.deserialize/.test(page)||!/requestId/.test(page)||!/status==='Success'/.test(page)) throw new Error('Wallet-reviewed Jupiter Order/Execute flow is incomplete');
           if(/JUPITER_API_KEY|x-api-key/i.test(page)) throw new Error('Public DEX must not contain provider credentials');
           for(const term of ['taker','requestId','/execute','Devnet','private key','seed phrase']) if(!readiness.includes(term)) throw new Error('Execution readiness document missing: '+term);
-          console.log('PASS: public DEX exposes no Jupiter credential or signing/submission path; secure execution gates documented.');
+          console.log('PASS: public DEX exposes no Jupiter credential; wallet signing and execution require explicit backend feature enablement; security gates documented.');
           JS
 
       - name: Test standalone DEX market and quote-preview shell
