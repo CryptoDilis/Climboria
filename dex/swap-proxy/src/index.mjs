@@ -70,7 +70,7 @@ async function handleOrder(request, env) {
   if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
     return json({ error: "Amount must be a positive integer string in base units" }, 400);
   }
-  const params = new URLSearchParams({ inputMint, outputMint, amount, taker });
+  const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
   if (!response.ok) return json({ error: "Jupiter order request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
