@@ -1524,3 +1524,15 @@ For each meaningful implementation batch:
 - [x] Plain glTF is the safer loader-compatible candidate, with a 128,208-byte geometry buffer, subject to local textures and visual/technical inspection.
 - [ ] Texture binaries/dimensions and optimized mobile maps remain unverified; integration remains blocked.
 - [ ] Cave, fish visuals, coast route, world/gameplay systems, performance, manual acceptance and physical Redmi 14 5G remain OPEN. PR #215 stays OPEN and UNMERGED.
+
+
+## 2026-11-07 — Browser Smoke #latest (commit a85db25) artifact inspection
+
+- [x] Validate workflow run `42319402334` passed.
+- [x] Browser Smoke workflow run `42319402214` passed all jobs and steps: homepage CTAs/DEX/mobile navigation, Jarrell's Peak desktop/mobile smoke, screenshot upload. Artifact `13551564116` downloaded and inspected.
+- [x] Reviewed fresh desktop cave-interior screenshot: still a blockout-like wide flat beige floor, angular low-detail walls, open daylight gap, primitive torch and faceted chest; visual acceptance remains REJECTED.
+- [x] Reviewed fresh desktop pond screenshot: fish remain flat blue primitive silhouettes beneath a large flat cyan water surface; visual acceptance remains REJECTED. Barramundi not integrated.
+- [x] Route audit finite with 663 samples and reaches open sea/seabed, but reports max rise 330.2% and max drop 186.2%; this is NOT a traversable route. Route gate remains OPEN.
+- [x] Latest SwiftShader smoke performance: desktop sanctuary 4.1 average FPS / 243.49ms mean frame interval; mobile emulation 1.8 average FPS / 556.46ms mean frame interval. Mobile renderer-stage mean 55.679ms, p99 961.2ms, max 3063ms. This remains a severe software-renderer warning only, not a physical GPU benchmark.
+- [ ] Need separate investigation of frame scheduling/SwiftShader overhead, scene cost and resolution; do not assume renderer CPU submission equals GPU completion.
+- [ ] Physical Redmi 14 5G testing remains pending. PR #215 remains OPEN and UNMERGED.
