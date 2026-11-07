@@ -1993,7 +1993,8 @@ For every integrated asset or borrowed technique, record:
 - [ ] Brand system and responsive high-fidelity designs approved.
 - [ ] **Solana-wide market discovery:** full-market coverage, newest pools and launches, search by token name/symbol/mint/pair, sortable market tables, token detail pages, and market-wide filters.
   - [x] Summit Radar alpha page created at [dex/index.html](dex/index.html), linked from the homepage DEX entry points; live provider fetches, Solana filtering, token/pair search, sorting, latest profiles and 60-second refresh implemented.
-  - [ ] Coverage remains partial: current alpha combines provider search seeds and up to 30 latest profile mints; it is not an exhaustive Solana-wide pool index. Token-detail routes and full pagination/coverage remain open.
+  - [x] Token detail view added: fetches pools for selected mint, displays provider-backed price/volume/liquidity/change, shows pool candidates and embeds the selected pool chart.
+  - [ ] Coverage remains partial: current alpha combines provider search seeds and up to 30 latest profile mints; it is not an exhaustive Solana-wide pool index. Full pagination/coverage remains open.
   - [ ] Browser verification of the new /dex/ page and live API response still pending; no swap execution is enabled.
 - [ ] **Market data:** live/near-live price, volume, liquidity, market cap/FDV (clearly distinguish estimates), price change, transactions, pool/pair age and source timestamp.
 - [ ] **Charts and activity:** pool/token charts, OHLCV where available, recent trades, supported DEX/pool venues, holders and token metadata where reliable sources permit.
