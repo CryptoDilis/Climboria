@@ -2291,3 +2291,10 @@ For every integrated asset or borrowed technique, record:
 - [x] Confirmed by source audit: no Jupiter API key/header is present in the public DEX HTML.
 - [ ] CI has not yet reported a completed run for the latest head; do not claim these tests are green.
 - [ ] Cloudflare Worker is not deployed; keep the execution feature flag off until account setup, Devnet testing, and security review are complete.
+
+
+### CI failure diagnosis and correction — DEX proxy
+- [x] Inspected failed Browser Smoke run #1769: Validate passed; DEX/mobile navigation passed; proxy tests exposed three failures.
+- [x] Corrected the health endpoint test to assert the current readiness payload, including configured key/rate-limiter booleans.
+- [x] Found a real implementation omission: the rate-limit helper existed but was not called by order/execute handlers. Both handlers now enforce it before parsing/proxying requests.
+- [ ] Await a fresh CI run for the corrected proxy; previous red run is not the final state.
