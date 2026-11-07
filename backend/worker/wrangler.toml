@@ -7,7 +7,4 @@ binding = "DB"
 database_name = "climboria-auth"
 database_id = "2b90a302-aea9-4128-b9f4-4e59e54bfbba"
 
-[[routes]]
-pattern = "api.climboria.fun"
-custom_domain = true
-zone_name = "climboria.fun"
+workers_dev = true
