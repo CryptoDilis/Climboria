@@ -1278,7 +1278,7 @@ function cinematicPoint(u){
 // Bring the explorer closer on narrow screens so the hero remains readable above the mobile controls.
 // Closer shoulder-height framing keeps the explorer readable on both desktop and narrow mobile screens.
 // Tighter third-person framing gives the explorer more screen presence without changing model scale or collision dimensions.
-let camY=null,lookY=0,cameraDistance=MOB?4.6:4.8,targetCameraDistance=MOB?4.6:4.8,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0,cameraTerrainLift=0;
+let camY=null,lookY=0,cameraDistance=MOB?7.2:8.2,targetCameraDistance=MOB?7.2:8.2,cameraSafeBack=cameraDistance,cameraActualDistance=cameraDistance,cameraGroundClearance=0,cameraTerrainLift=0;
 // Camera orbit is independent from the explorer's body heading. Rotating the view
 // must never spin the hero in place; movement/facing continue to use P.yaw.
 let cameraYaw=0,cameraPitch=-.08;
@@ -1310,7 +1310,7 @@ volumeControl.addEventListener('input',()=>{climboriaMusic.volume=Number(volumeC
 function takeOver(){startClimboriaMusic();if(P.mode!='cine')return;
  // Start at the sanctuary spawn, snapped to the generated terrain. Never inherit the cinematic camera's altitude.
  P.x=0;P.z=-30;P.y=groundAt(P.x,P.z)+1.75;P.vy=0;P.yaw=0;cameraYaw=P.yaw;cameraPitch=-.08;P.mode='walk';
- cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+2.25,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x,P.y+.15,P.z);
+ cam.position.set(P.x+Math.sin(cameraYaw)*targetCameraDistance,P.y+3.05,P.z+Math.cos(cameraYaw)*targetCameraDistance);cam.lookAt(P.x-Math.sin(cameraYaw)*3.5,P.y+1.05,P.z-Math.cos(cameraYaw)*3.5);
  if(assetHero){assetHero.visible=true;assetHero.position.set(P.x,P.y-1.75+assetHeroGroundOffset,P.z);assetHero.rotation.y=P.yaw+Math.PI;hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='glb';}else{hero.visible=false;document.documentElement.dataset.climboriaHeroRenderer='awaiting-saved-glb';}
  free(true)}
 function tp(x,z,yaw){P.x=x;P.z=z;P.yaw=yaw;cameraYaw=yaw;cameraPitch=-.05;P.vy=0;P.mode='walk';P.y=groundAt(x,z)+1.75;free(true);updateChunks(x,z,200)}
@@ -2103,10 +2103,11 @@ function update(dt){
   // Third-person follow camera keeps the explorer visible in the world.
   cameraDistance+=(targetCameraDistance-cameraDistance)*Math.min(1,dt*9);
   const back=cameraDistance;
-  terrainCameraTarget.set(P.x,P.y+.15,P.z);
+  const cameraLookAhead=MOB?3.5:4.5;
+  terrainCameraTarget.set(P.x-Math.sin(cameraYaw)*cameraLookAhead,P.y+1.05,P.z-Math.cos(cameraYaw)*cameraLookAhead);
   // Keep the full character in frame: a lower shoulder-height follow camera
   // avoids cropping the legs at spawn and reduces the steep top-down angle.
-  terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+2.65+Math.max(0,cameraPitch*1.2),P.z+Math.cos(cameraYaw)*back);
+  terrainCameraDesired.set(P.x+Math.sin(cameraYaw)*back,P.y+3.05+Math.max(0,cameraPitch*1.2),P.z+Math.cos(cameraYaw)*back);
   // Preserve the full third-person distance on steep terrain. The previous
   // ground sweep shortened the camera toward the hero whenever the rearward
   // camera ray crossed a rising slope, which collapsed the view into the avatar.
@@ -2121,7 +2122,7 @@ function update(dt){
    const clearanceY=groundAt(sx,sz)+1.35;
    if(baseY<clearanceY)cameraTerrainLift=Math.max(cameraTerrainLift,(clearanceY-baseY)/t);
   }
-  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+2.65+Math.max(0,cameraPitch*1.2)+cameraTerrainLift,P.z+Math.cos(cameraYaw)*safeBack);
+  terrainCameraFinal.set(P.x+Math.sin(cameraYaw)*safeBack,P.y+3.05+Math.max(0,cameraPitch*1.2)+cameraTerrainLift,P.z+Math.cos(cameraYaw)*safeBack);
   terrainCameraFinal.y=Math.max(terrainCameraFinal.y,groundAt(terrainCameraFinal.x,terrainCameraFinal.z)+1.35);
   cameraSafeBack=safeBack;
   cameraGroundClearance=terrainCameraFinal.y-groundAt(terrainCameraFinal.x,terrainCameraFinal.z);
