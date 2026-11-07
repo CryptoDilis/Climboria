@@ -265,6 +265,19 @@ function heightAt(x,z){
  // mountain ridge cannot form a high brown wall across the portal approach.
  const apron=caveApproachMask(x,z);
  if(apron>0)h=mix(h,POI.cave.h,apron);
+ // Shape a continuous, traversable cave-to-coast trail. The route follows
+ // cave-local -Z, stays level across its 14 m walking width, then descends
+ // gradually to sea level at the shoreline and to the shallow seabed.
+ const p=POI.cave,angle=Math.atan2(-p.x,-p.z),cs=Math.cos(angle),sn=Math.sin(angle);
+ const dx=x-p.x,dz=z-p.z,lx=dx*cs-dz*sn,lz=dx*sn+dz*cs,distance=-lz;
+ if(distance>=0&&distance<=480){
+  const trailMask=1-ss(12,34,Math.abs(lx));
+  const shoreDistance=Math.min(300,distance);
+  const trailHeight=distance<=300
+   ?p.h*(1-distance/300)
+   :-26*Math.min(1,(distance-300)/150);
+  h=mix(h,trailHeight,trailMask);
+ }
  return h;
 }
 // Match the rendered terrain's 5-unit triangle grid exactly. Sampling the smooth
