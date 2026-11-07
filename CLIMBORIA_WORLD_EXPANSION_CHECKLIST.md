@@ -1563,3 +1563,13 @@ For each meaningful implementation batch:
 - [ ] Implement actual Black Market inventory, merchant interaction and transaction flow; remove placeholder label only after functionality is real and tested.
 - [ ] Verify crafting and forging recipes, materials, costs, output, persistence and error handling end-to-end.
 - [ ] These findings do not change the cave/fish/route/performance rejection. PR #215 remains OPEN and UNMERGED.
+
+
+## 2026-11-07 — Water rendering architecture audit (source inspection, commit 3d4f8bb)
+
+- [x] Confirmed the visible world water is currently one large transparent shader plane shared across the scene: `WS=(2*R+1)*200`, `WSEG=120`; mobile uses a 1,400-unit plane and desktop an 1,800-unit plane. It is not a set of independently bounded pond/river/ocean surface meshes.
+- [x] Confirmed water-body gameplay queries are separately bounded by `WATER_BODIES`, so the visual water surface architecture and the swim/fishing query volumes are distinct systems. Keep this distinction in mind when fixing shoreline/water appearance; do not accidentally break swim/fishing behavior.
+- [x] The current shader is transparent at alpha 0.70, depthWrite disabled, with animated multi-frequency vertex displacement and per-fragment reflection/fresnel-like shading. This is a candidate for targeted visual/performance profiling, not proof that it alone causes the severe SwiftShader frame times.
+- [ ] Replace the global water sheet with correctly bounded water surfaces or a verified equivalent that follows each water body's shoreline and depth, while preserving the existing waterBodyAt, swimming, diving and fishing APIs.
+- [ ] Profile the bounded-water implementation on desktop and mobile smoke, compare triangles/draw calls/frame intervals and inspect pond/coast/cave screenshots. Avoid simply lowering water quality without visual review.
+- [ ] Water architecture, cave/grotto realism, fish assets, safe coast route, all world/gameplay/social/economy acceptance, and physical Redmi 14 5G test remain OPEN. PR #215 remains OPEN and UNMERGED.
