@@ -5,4 +5,4 @@ compatibility_date = "2026-11-07"
 [[d1_databases]]
 binding = "DB"
 database_name = "climboria-auth"
-database_id = "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID"
+database_id = "2b90a302-aea9-4128-b9f4-4e59e54bfbba"
