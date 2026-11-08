@@ -105,7 +105,7 @@ jobs:
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
               await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               await page.locator('#majorCoins .major-row').first().waitFor({state:'visible',timeout:15000});
-              await page.route('https://api.dexscreener.com/latest/dex/search?q=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',dexId:'test-dex',pairAddress:'11111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'BTC',name:'Bitcoin'},liquidity:{usd:100000}}]})}));
+              await page.route('https://api.dexscreener.com/latest/dex/search?q=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',dexId:'test-dex',pairAddress:'11111111111111111111111111111111',baseToken:{address:'11111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'},liquidity:{usd:100000}}]})}));
               await page.route('https://api.mainnet-beta.solana.com/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               const btc=page.locator('#majorCoins .major-row[data-major-symbol="BTC"]');
               if(await btc.count()!==1) throw new Error('BTC major asset button missing');
