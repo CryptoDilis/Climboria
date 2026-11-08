@@ -102,6 +102,17 @@ async function handleOrder(request, env) {
       router: data.router || null
     }, 422);
   }
+  // Bound and validate the upstream transaction before forwarding it to a wallet.
+  // Deserialization and semantic instruction review still happen in the client/release gates.
+  if (data.transaction.length > 50000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(data.transaction) || data.transaction.length % 4 !== 0) {
+    return json({ error: "Jupiter returned an invalid or oversized transaction encoding" }, 502);
+  }
+  if (typeof data.requestId !== "string" || data.requestId.length < 8 || data.requestId.length > 200 || !/^[A-Za-z0-9._:-]+$/.test(data.requestId)) {
+    return json({ error: "Jupiter returned an invalid request ID" }, 502);
+  }
+  if (data.lastValidBlockHeight !== undefined && (!Number.isSafeInteger(data.lastValidBlockHeight) || data.lastValidBlockHeight <= 0)) {
+    return json({ error: "Jupiter returned an invalid lastValidBlockHeight" }, 502);
+  }
   if (data.transactionVersion !== 0) {
     return json({ error: "Jupiter returned an unsupported or unspecified transaction version" }, 502);
   }
