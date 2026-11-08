@@ -274,3 +274,23 @@ test("preserves Jupiter Failed status without converting it to success", async (
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("bounds Jupiter upstream requests with a 12-second abort signal", async () => {
+  const originalFetch = globalThis.fetch;
+  let receivedSignal = null;
+  try {
+    globalThis.fetch = async (_url, init) => {
+      receivedSignal = init?.signal || null;
+      throw new DOMException("The operation timed out", "TimeoutError");
+    };
+    const req = new Request("https://worker.test/api/swap/quote?inputMint=" + valid + "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100", { headers: { origin } });
+    const res = await worker.fetch(req, env);
+    assert.ok(receivedSignal instanceof AbortSignal);
+    assert.equal(receivedSignal.aborted, false);
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /timed out/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
