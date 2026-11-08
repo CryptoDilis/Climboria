@@ -97,3 +97,7 @@ Only confirmed on-chain receipts count as collected revenue. Pending, failed, re
 - [ ] Owner explicitly authorizes production activation.
 
 Until every gate is checked and separately approved, keep proxyEnabled=false, enabled=false, and all Launchpad/DEX execution paths disabled.
+
+## Wallet signature verification implementation
+
+The dedicated verification flow is specified in [TREASURY-SIGNATURE-VERIFICATION-SPEC.md](./TREASURY-SIGNATURE-VERIFICATION-SPEC.md). It is not yet implemented or deployed. Do not ask the owner to sign until the backend nonce store, server-side EVM and Solana signature verification, replay protection, and Coinbase mobile compatibility tests pass.
