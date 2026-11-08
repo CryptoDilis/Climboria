@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d17">
+<title>Climboria Launchpad | Build Your Summit</title>
+<meta name="description" content="Climboria Launchpad — a dedicated home for future token launches and creator tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#080d17;--panel:#101a2a;--panel2:#0b1321;--gold:#e4bd69;--muted:#9ba9bc;--line:#29374b;--white:#f6f4ef}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#1b2b42 0,#0b1320 42%,var(--bg) 78%);color:var(--white);font-family:Inter,system-ui,sans-serif}
+a{color:inherit;text-decoration:none}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+header{height:78px;border-bottom:1px solid #ffffff14;background:#080d17d9;backdrop-filter:blur(16px);position:sticky;top:0;z-index:10}
+.head{height:100%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font:900 21px Cinzel,serif;letter-spacing:2px;color:var(--gold)}.brand small{display:block;font:700 9px Inter,sans-serif;letter-spacing:3px;color:#aab5c5;margin-top:4px}
+.nav{display:flex;align-items:center;gap:22px;color:#c0cada;font-size:12px;letter-spacing:1px;text-transform:uppercase}.nav a:hover{color:var(--gold)}
+.nav .back{border:1px solid #806b43;border-radius:99px;padding:11px 16px;color:#f0d99d}
+.hero{text-align:center;padding:84px 0 48px}.eyebrow{color:var(--gold);font-size:11px;font-weight:800;letter-spacing:4px;text-transform:uppercase}
+h1{font:900 clamp(38px,7vw,76px)/1.02 Cinzel,Georgia,serif;letter-spacing:-1.5px;margin:20px auto 18px;max-width:900px}.hero h1 span{color:var(--gold)}
+.lead{max-width:690px;margin:0 auto;color:#aeb9c9;font-size:16px;line-height:1.8}
+.hero-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:30px}
+.btn{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:0 23px;border-radius:999px;font-weight:800;font-size:11px;letter-spacing:1.4px;text-transform:uppercase}
+.btn.primary{background:linear-gradient(120deg,#f3d889,#c48a2b);color:#17130b;box-shadow:0 8px 30px #d4af3730}.btn.secondary{border:1px solid #56657a;background:#101a2a;color:#e6edf6}
+.statusline{display:flex;justify-content:center;align-items:center;gap:9px;margin-top:25px;color:#8493a8;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}.dot{width:7px;height:7px;border-radius:50%;background:#d4a84f;box-shadow:0 0 12px #d4a84f}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:35px 0 18px}.section-head h2{font:800 25px Cinzel,serif;margin:0}.section-head p{margin:0;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.card{position:relative;overflow:hidden;min-height:335px;padding:27px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(155deg,#17253a,#0c1422 72%);box-shadow:0 18px 50px #0003;display:flex;flex-direction:column}
+.card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,#b48d4b,transparent);opacity:.75}
+.card.featured{border-color:#8d7042;background:radial-gradient(ellipse at 100% 0%,#6d51252a,transparent 48%),linear-gradient(155deg,#202b3a,#101725 72%)}
+.card-icon{width:54px;height:54px;border:1px solid #b99a5b66;border-radius:16px;display:grid;place-items:center;color:var(--gold);font-size:25px;background:#d4af3710;margin-bottom:23px}
+.tag{color:var(--gold);font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.card h3{font:800 22px Cinzel,serif;margin:12px 0 10px}.card p{color:#aab7c8;font-size:13px;line-height:1.7;margin:0 0 18px}
+.features{list-style:none;padding:0;margin:0 0 22px;color:#c3ccda;font-size:11px;line-height:2}.features li:before{content:"✦";color:var(--gold);margin-right:9px}
+.card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:16px;border-top:1px solid #ffffff12}
+.pill{border:1px solid #766342;border-radius:99px;padding:7px 10px;color:#e4c783;font-size:9px;font-weight:800;letter-spacing:1px;white-space:nowrap}
+.card-foot small{color:#8291a5;font-size:10px}
+.notice{margin:22px 0 75px;padding:22px 25px;border:1px solid #39465a;border-radius:17px;background:#0c1523;color:#aeb9c9;font-size:12px;line-height:1.75}
+.notice strong{color:#f0d99d}
+footer{border-top:1px solid #ffffff12;padding:25px 0 35px;color:#728197;font-size:10px;letter-spacing:1px}.foot{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+@media(max-width:760px){.wrap{width:min(100% - 28px,600px)}header{height:auto;min-height:68px}.head{padding:13px 0;align-items:flex-start}.brand{font-size:17px}.nav{gap:10px;flex-wrap:wrap;justify-content:flex-end;font-size:10px}.nav a:not(.back){display:none}.nav .back{padding:9px 11px}.hero{padding:60px 0 35px}.lead{font-size:14px}.section-head{display:block}.section-head p{margin-top:7px;line-height:1.6}.grid{grid-template-columns:1fr;gap:13px}.card{min-height:0;padding:23px}.card-foot{margin-top:6px}.notice{margin-bottom:45px}}
+</style>
+</head>
+<body>
+<header><div class="wrap head"><a class="brand" href="/">CLIMBORIA<small>THE SUMMIT ECOSYSTEM</small></a><nav class="nav"><a href="/game/">Game</a><a href="/dex/">DEX</a><a href="/swap/">Swap</a><a class="back" href="/">← HOME</a></nav></div></header>
+<main class="wrap">
+<section class="hero"><div class="eyebrow">CLIMBORIA · CREATOR ECOSYSTEM</div><h1>Launch your idea.<br><span>Build your summit.</span></h1><p class="lead">A dedicated home for future token launches, creator tools, and project discovery across the Climboria ecosystem.</p><div class="hero-actions"><a class="btn primary" href="#launch-types">Explore launch options</a><a class="btn secondary" href="/">Return to Climboria</a></div><div class="statusline"><span class="dot"></span>Development preview · Launch services are not open yet</div></section>
+<section id="launch-types"><div class="section-head"><h2>Choose your launch path</h2><p>Three planned paths. Availability will be announced after readiness checks.</p></div>
+<div class="grid">
+<article class="card"><div class="card-icon">🚀</div><div class="tag">01 · Creator friendly</div><h3>Normal Launchpad</h3><p>A guided token-launch flow designed for creators who want a straightforward setup.</p><ul class="features"><li>Guided project setup</li><li>Token details and launch review</li><li>Clear launch status and requirements</li></ul><div class="card-foot"><small>Access opens after launch readiness</small><span class="pill">COMING SOON</span></div></article>
+<article class="card"><div class="card-icon">⌘</div><div class="tag">02 · Advanced controls</div><h3>Developer Launchpad</h3><p>A planned workspace for experienced builders who need more configuration and technical visibility.</p><ul class="features"><li>Advanced configuration options</li><li>Technical validation checks</li><li>Deployment and verification status</li></ul><div class="card-foot"><small>Developer access not enabled</small><span class="pill">IN DEVELOPMENT</span></div></article>
+<article class="card featured"><div class="card-icon">✦</div><div class="tag">03 · Climboria signature</div><h3>Signature Launchpad</h3><p>A premium launch experience intended for selected projects with additional review and ecosystem alignment.</p><ul class="features"><li>Project review and eligibility</li><li>Published requirements and safeguards</li><li>Transparent launch milestones</li></ul><div class="card-foot"><small>Rules and eligibility not finalized</small><span class="pill">PLANNED</span></div></article>
+</div></section>
+<div class="notice"><strong>Important — not live yet.</strong> This page is the dedicated Launchpad interface and product overview. Token creation, deployment, fundraising, payments, liquidity provisioning, and launch execution are not available from this page. No project is currently accepting submissions here. We will only enable actions after the backend, security checks, fees, eligibility rules, and operational status are verified.</div>
+</main>
+<footer><div class="wrap foot"><span>© CLIMBORIA · THE SUMMIT ECOSYSTEM</span><span><a href="/whitepaper/">WHITEPAPER</a> · <a href="/dex/">DEX</a> · <a href="/swap/">SWAP</a></span></div></footer>
+</body></html>
