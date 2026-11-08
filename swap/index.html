@@ -56,6 +56,60 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 @media(max-width:700px){.hero{padding-top:58px}.trade-card,.swap-card,.panel{border-radius:20px}}
 
 .chain-switch{display:flex;gap:8px;margin:0 0 12px}.chain-switch .active{border-color:#c6a05a;background:linear-gradient(135deg,#49381e,#211c16);color:#ffe2a0}.chain-notice{margin:0 0 14px;padding:11px 13px;border:1px solid #765d32;border-radius:10px;background:#211b14;color:#e8d2a8;font-size:11px}
+
+/* Desktop swap-first fold: show the asset pair immediately */
+@media(min-width:761px){
+ .shell{max-width:1180px;padding-left:24px;padding-right:24px}
+ .top{height:62px}
+ .brand{font-size:14px;gap:9px}
+ .brand-mark{width:32px;height:32px;font-size:14px}
+ .brand small{font-size:8px;letter-spacing:2px}
+ .nav{gap:19px;font-size:10px}
+ .nav .wallet-link{padding:8px 13px}
+ main{display:flex;flex-direction:column;padding:12px 0 24px;gap:12px}
+ .trade-layout{order:1;max-width:980px;width:100%;grid-template-columns:minmax(0,1fr) 220px;gap:12px}
+ .card{padding:15px;border-radius:18px}
+ .walletbar{padding:8px 11px;margin-bottom:10px}
+ .chain-switch{margin-bottom:8px}
+ .chain-notice{margin-bottom:9px;padding:8px 10px;font-size:10px}
+ .quote-controls{gap:8px}
+ .quote-field{padding:10px 12px}
+ .quote-field input{font-size:19px;margin-top:5px}
+ .quote-field .tab{margin-top:5px;padding:8px 11px}
+ .quote-controls>.tab{min-height:40px}
+ .quote-results{margin-top:10px;gap:7px}
+ .quote-result{padding:9px 10px}
+ .quote-status{min-height:32px;padding:8px 2px}
+ .side-panel{padding:15px 14px}
+ .side-panel h2{font-size:17px;margin-bottom:8px}
+ .side-item{padding:9px 0}
+ .hero{order:2;max-width:980px;width:100%;margin:0 auto;padding:12px 18px 14px;border-radius:16px}
+ .hero .eyebrow{font-size:8px;padding:5px 10px;letter-spacing:2px}
+ .hero .title{font-size:23px;line-height:1.05;margin:6px 0}
+ .hero .lead{font-size:10px;line-height:1.4}
+ .hero .trustline{margin-top:7px;gap:14px;font-size:8px}
+}
+@media(min-width:761px) and (max-height:820px){
+ main{padding-top:8px;gap:8px}
+ .trade-layout{gap:10px}
+ .card{padding:12px}
+ .walletbar{margin-bottom:8px}
+ .quote-field{padding:8px 10px}
+ .quote-controls{gap:6px}
+ .quote-results{margin-top:7px}
+ .hero{padding:8px 14px}
+ .hero .title{font-size:20px;margin:4px 0}
+ .hero .trustline{display:none}
+}
+@media(max-width:760px){
+ main{display:flex;flex-direction:column;padding-top:12px;gap:12px}
+ .trade-layout{order:1}
+ .hero{order:2;margin-bottom:0;padding:16px 12px 18px}
+ .hero .title{font-size:30px;margin:8px 0}
+ .hero .lead{font-size:11px}
+ .hero .trustline{margin-top:10px}
+}
+
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a></nav></header>
