@@ -450,12 +450,12 @@ function exportTokenRoom(){
 }
 
 
-let activeIntelMint=null,activeIntelPair=null;
+let activeIntelMint=null,activeIntelPair=null,intelActivityTimer=null;
 const intelLoaded=new Set();
 function intelShort(v){return v?String(v).slice(0,5)+'…'+String(v).slice(-5):'—'}
 function intelSafeUrl(v){try{const u=new URL(v);return ['https:','http:'].includes(u.protocol)?u.href:null}catch(e){return null}}
 async function loadAdvancedIntel(mint,pair){
- activeIntelMint=mint;activeIntelPair=pair;intelLoaded.clear();
+ activeIntelMint=mint;activeIntelPair=pair;intelLoaded.clear();if(intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}
  const websites=(pair.info?.websites||[]).map(x=>({label:x.label||'Website',url:intelSafeUrl(x.url)})).filter(x=>x.url);
  const socials=(pair.info?.socials||[]).map(x=>({label:x.type||'Social',url:intelSafeUrl(x.url)})).filter(x=>x.url);
  const age=pair.pairCreatedAt?Math.max(0,(Date.now()-Number(pair.pairCreatedAt))/86400000):null;
@@ -507,7 +507,7 @@ async function loadIntelActivity(){
 }
 document.addEventListener('click',e=>{
  const toggle=e.target.closest('[data-intel-panel]');
- if(toggle){const type=toggle.dataset.intelPanel,panel=$('intelPanel'+type.charAt(0).toUpperCase()+type.slice(1)),opening=panel.hidden;panel.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.querySelector('strong').textContent=opening?'−':'＋';if(opening&&!intelLoaded.has(type)){intelLoaded.add(type);if(type==='holders')loadIntelHolders();if(type==='activity')loadIntelActivity();}}
+ if(toggle){const type=toggle.dataset.intelPanel,panel=$('intelPanel'+type.charAt(0).toUpperCase()+type.slice(1)),opening=panel.hidden;panel.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.querySelector('strong').textContent=opening?'−':'＋';if(opening&&!intelLoaded.has(type)){intelLoaded.add(type);if(type==='holders')loadIntelHolders();if(type==='activity'){loadIntelActivity();if(intelActivityTimer)clearInterval(intelActivityTimer);intelActivityTimer=setInterval(()=>{if(!$('intelPanelActivity').hidden)loadIntelActivity();},30000);}}if(!opening&&type==='activity'&&intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}}
  const refresh=e.target.closest('[data-intel-refresh]');
  if(refresh){if(refresh.dataset.intelRefresh==='holders')loadIntelHolders();if(refresh.dataset.intelRefresh==='activity')loadIntelActivity();}
 });
