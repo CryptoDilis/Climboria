@@ -23,7 +23,7 @@ Never infer that the Jupiter top-level feeBps is Climboria revenue. Inspect the 
 - Solana: `J5W4CHVjTddn3sMheD6oo7aHUoN1SjK2ke1nkcVhjHLp`
 - Base/EVM: `0xd595f6e998260583e7a07e77d17a7ee5160a8230`
 
-These addresses pass basic syntax/length checks (Solana base58 decodes to 32 bytes; EVM is 0x plus 40 hexadecimal characters). This does NOT prove wallet ownership, signing control, account existence, network activity, custody safety, or suitability as a treasury. They remain proposed until verified by a signed challenge and chain-specific checks. Do not send funds during verification.
+These addresses pass basic syntax/length checks (Solana base58 decodes to 32 bytes; EVM is 0x plus 40 hexadecimal characters). The owner has personally stated that they control both addresses. This is an owner attestation, not cryptographic proof: signed-message verification, account/network checks, custody review and suitability checks remain pending. Do not send funds during verification.
 
 ## Treasury architecture
 - Use one dedicated treasury wallet per chain: Solana treasury and Base treasury. Do not reuse a Solana address as an EVM receiving address.
@@ -80,6 +80,7 @@ Only confirmed on-chain receipts count as collected revenue. Pending, failed, re
 5. Testnet results do not authorize mainnet collection. Before mainnet, repeat address verification and a separately approved minimal production receipt test.
 
 ## Release gates (all required)
+- [x] Owner self-attests personal control of the proposed Solana and Base addresses (2026-11-08); cryptographic proof is still pending.
 - [ ] Proposed Solana address signed-challenge ownership verified and chain state checked.
 - [ ] Proposed Base address signed-challenge ownership verified and chain state checked.
 - [ ] Owner approves Launchpad 1.00% fee base (recommended: successfully settled gross contributions, net of refunds).
