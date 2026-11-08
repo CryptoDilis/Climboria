@@ -38,6 +38,7 @@
 - [x] Added real mobile Playwright tap coverage for all six Major Asset rows, actual BTC tap selection, hit-target verification and no `SELECT` overlay (commit `45be61d`).
 - [ ] Verify the new mobile Major Assets regression in Browser Smoke run `42474813130`; keep this item open until the run is green.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
+- [ ] Security blocker for Major Assets: BTC/ETH/BNB/XRP currently resolve by exact symbol plus highest DexScreener liquidity, which is not proof of canonical token identity. Add a reviewed canonical Solana mint allowlist (source + verification date), label unknown assets unverified, and reject ambiguous/mismatched mints before production trading.
 - [ ] Confirm CoinGecko/DexScreener/Jupiter/RPC provider availability, rate limits, fallback behavior and data freshness; do not claim universal token coverage.
 
 ### Complete DEX/Swap product checklist
