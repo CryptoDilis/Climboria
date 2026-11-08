@@ -2719,3 +2719,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] Gameplay smoke passes as a boot/control regression test, but the captured Sanctuary start view shows a broad uninterrupted green foreground and the player relatively small. Inspect actual spawn terrain, camera framing, paths and vegetation in a normal player session; do not call the world visually finished based on smoke success.
 - [ ] Production Cloudflare Worker remains a separate blocker: configure the account-specific rate-limit namespace and encrypted Cloudflare/Jupiter Actions secrets, deploy the Worker, and verify production health/CORS/rate limiting. Keep public Swap execution disabled until all backend and transaction-security gates pass.
 - PR #219 remains open and unmerged; do not merge until the latest checks and visual follow-ups are reviewed.
+
+
+## 2026-11-09 — DEX direct token lookup and chart identity correction
+
+- [x] Added a dedicated DEX token lookup that accepts a Solana mint/CA, token name, or symbol and returns live DexScreener Solana pool candidates.
+- [x] Selecting a lookup result opens Token Intelligence using the exact base-token mint and loads its corresponding pair chart.
+- [x] Corrected the DEX chart resolver to exclude pools where the searched mint is only the quote token; never display the quote-side token's chart (for example, SOL) as the searched asset's chart.
+- [ ] Run Validate and Browser Smoke on the new DEX lookup/chart change; add a deterministic regression assertion for name lookup and exact-mint chart identity.
+- [ ] Verify with a real Solana CA and name lookup on the deployed site after merge/deployment. If a token has no indexed base-side pool, show an explicit no-chart state rather than substituting SOL.
