@@ -120,6 +120,12 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
+              await page.goBack({waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='USDC',null,{timeout:10000});
+              if(await page.locator('#quoteToSearch').inputValue()!=='USDC') throw new Error('Swap browser Back did not restore the previous output token');
+              await page.goForward({waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
+              if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
