@@ -112,12 +112,14 @@ jobs:
               if(!await mobile.locator('#mobileMenu').evaluate(el=>el.classList.contains('active'))) throw new Error('Mobile menu did not open');
               const metrics=await mobile.evaluate(()=>({vw:document.documentElement.clientWidth,sw:document.documentElement.scrollWidth,ctas:document.querySelectorAll('.hero-buttons button').length}));
               if(metrics.sw>metrics.vw+2||metrics.ctas!==3) throw new Error('Mobile layout overflow/CTA check: '+JSON.stringify(metrics));
+              const mobileGameHref=await mobile.locator('#mobileGameBtn').getAttribute('href');
+              if(mobileGameHref!=='/game/') throw new Error('Mobile Game menu must route directly to /game/');
               const mobileDexHref=await mobile.locator('#mobileDexBtn').getAttribute('href');
               if(mobileDexHref!=='/dex/') throw new Error('Mobile DEX link must route to /dex/, got '+mobileDexHref);
               const mobileSwapHref=await mobile.locator('#mobileSwapBtn').getAttribute('href');
               if(mobileSwapHref!=='/swap/') throw new Error('Mobile Swap link must route to /swap/, got '+mobileSwapHref);
               const mobileDexLabel=(await mobile.locator('#mobileDexBtn').innerText()).trim();
-              if(!mobileDexLabel.includes('SUMMIT RADAR')||/demo only/i.test(mobileDexLabel)) throw new Error('Mobile DEX menu still presents as demo-only: '+mobileDexLabel);
+              if(!/^DEX$/i.test(mobileDexLabel)||/demo only/i.test(mobileDexLabel)) throw new Error('Mobile DEX menu label is unexpected: '+mobileDexLabel);
               const launchpadLabel=(await mobile.locator('#mobileLaunchpadBtn').innerText()).trim();
               if(!launchpadLabel.toLowerCase().includes('launchpad')) throw new Error('Launchpad menu item missing: '+launchpadLabel);
               if(await mobile.locator('#mobileLaunchpadBtn').getAttribute('href')!=='/launchpad/') throw new Error('Launchpad menu must route to its dedicated page');
