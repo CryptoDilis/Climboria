@@ -274,7 +274,7 @@ jobs:
               const card=await desktop.locator('.swap-focus-card').boundingBox();
               if(!card||card.width>600||Math.abs((card.x+card.width/2)-682.5)>8) throw new Error('Swap card is not a compact centered desktop card: '+JSON.stringify(card));
               if(!await desktop.locator('#getQuote').isDisabled()) throw new Error('Quote button must remain disabled until an amount is entered');
-    if((await desktop.locator('#getQuote').innerText()).trim()!=='Enter an amount') throw new Error('Initial quote CTA must explain that an amount is required');
+              if((await desktop.locator('#getQuote').innerText()).trim()!=='Enter an amount') throw new Error('Initial quote CTA must explain that an amount is required');
               if(!await desktop.locator('#prepareSwap').isDisabled()||!((await desktop.locator('#prepareSwap').innerText()).toLowerCase().includes('coming soon'))) throw new Error('Swap execution must remain visibly locked');
               if(await desktop.locator('.popular-chips button').count()!==4) throw new Error('Expected four popular pair shortcuts');
               if(await desktop.locator('#swapAdvanced').evaluate(el=>el.open)) throw new Error('Advanced settings should be collapsed by default');
