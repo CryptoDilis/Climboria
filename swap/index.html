@@ -110,6 +110,47 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
  .hero .trustline{margin-top:10px}
 }
 
+
+/* Swap market intelligence sidebar */
+.trade-layout{max-width:1180px;grid-template-columns:minmax(0,1fr) 330px;gap:14px}
+.swap-sidebar{display:grid;gap:12px;min-width:0}
+.swap-sidebar .side-panel{min-width:0;padding:14px;background:linear-gradient(150deg,#182a40,#0a1422);border-color:#4b5e78;box-shadow:0 18px 48px #0005,inset 0 1px #ffffff10}
+.side-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.side-head h2{margin:3px 0 0;font:700 17px Georgia,serif;color:#f2dfb8}
+.side-kicker{font-size:8px;letter-spacing:1.8px;color:#d8b66d;font-weight:800}
+.side-sub{font-size:9px!important;color:#93a3b8!important;margin:6px 0 9px!important;line-height:1.45}
+.live-tag{font-size:7px;letter-spacing:1px;color:#c8d4e3;border:1px solid #52657e;border-radius:99px;padding:4px 6px;white-space:nowrap}
+.live-tag i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#54d69b;margin-right:4px}
+.major-list{display:grid;gap:3px}
+.major-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 5px;border-top:1px solid #ffffff10}
+.major-identity{display:flex;align-items:center;gap:8px;min-width:0}
+.major-icon{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#26364b;color:#f1d18c;font-size:10px;font-weight:900;flex:0 0 auto}
+.major-name{min-width:0}
+.major-name b{display:block;font-size:10px;color:#edf2f8;white-space:nowrap}
+.major-name small{display:block;font-size:8px;color:#8495aa;white-space:nowrap}
+.major-values{text-align:right}
+.major-values b{display:block;font-size:10px;font-variant-numeric:tabular-nums}
+.major-values small{display:block;font-size:8px;font-variant-numeric:tabular-nums}
+.market-foot{font-size:8px;color:#7f90a6;line-height:1.45;margin-top:8px}
+.market-loading{padding:18px 4px;color:#91a2b8;font-size:10px}
+.selected-price{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:8px 0}
+.selected-price b{font:700 22px Georgia,serif;color:#fff1d0}
+.selected-price span{font-size:10px;font-weight:800}
+.selected-chart-wrap{height:190px;position:relative;overflow:hidden;border:1px solid #30445d;border-radius:10px;background:#080f1b}
+.selected-chart-wrap iframe{width:100%;height:100%;border:0;display:block}
+.chart-empty{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;color:#8294aa;font-size:9px;pointer-events:none;background:linear-gradient(180deg,#080f1b44,#080f1b22)}
+.asset-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.asset-stats>div{padding:8px;background:#091321;border:1px solid #293d55;border-radius:8px;min-width:0}
+.asset-stats small{display:block;font-size:7px;letter-spacing:.8px;color:#8798ad}
+.asset-stats b{display:block;font-size:10px;color:#e8d9b9;margin-top:3px;overflow-wrap:anywhere}
+.trust-panel h2{font-size:15px}
+.trust-panel p{margin:5px 0 8px;font-size:9px}
+.trust-panel .side-item{padding:7px 0}
+.trust-panel .side-item b{font-size:9px}
+.trust-panel .side-item span{font-size:8px}
+@media(min-width:761px){.trade-layout{max-width:1180px;grid-template-columns:minmax(0,1fr) 330px}.card{min-width:0}}
+@media(max-width:760px){.trade-layout{grid-template-columns:1fr}.swap-sidebar{grid-template-columns:1fr}.major-panel{order:1}.selected-panel{order:2}.trust-panel{order:3}.selected-chart-wrap{height:230px}}
+
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a></nav></header>
@@ -124,7 +165,10 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <div class="quote-status" id="quoteStatus" aria-live="polite">Ready when you are. Enter an amount to request a fresh route quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
 <div class="quote-warning"><strong>Execution status · Not enabled</strong><br>Quotes are indicative and may change. Wallet connection is not approval. Signing and execution remain disabled until backend deployment, transaction security review and release verification are complete.</div>
 </section>
-<aside class="side-panel"><h2>Trade with clarity.</h2><p>Everything starts with a fresh quote. No hidden custody and no automatic wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Transaction details must be checked in your wallet.</span></div><div class="side-item"><b><i class="status-dot"></i>Execution gate active</b><span>Real swaps remain locked until release checks pass.</span></div></aside></div>
+<aside class="swap-sidebar">
+<section class="side-panel major-panel"><div class="side-head"><div><span class="side-kicker">MARKET PULSE</span><h2>Major assets</h2></div><span class="live-tag"><i></i> MARKET DATA</span></div><p class="side-sub">Price, 24h volume, market cap and best discovered pool liquidity.</p><div class="major-list" id="majorCoins"><div class="market-loading">Loading major market data…</div></div><div class="market-foot" id="majorStatus">Market data loading…</div></section>
+<section class="side-panel selected-panel"><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">—</b><span id="selectedAssetChange">—</span></div><div class="selected-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="chart-empty" id="selectedChartEmpty">Choose a Solana token to load its pool chart.</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">—</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">—</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">—</b></div><div><small>POOL</small><b id="selectedAssetVenue">—</b></div></div><div class="market-foot" id="selectedAssetNote">Metrics are provider-reported and may be incomplete.</div></section>
+<section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Check the transaction details in your wallet.</span></div><div class="side-item"><b><i class="status-dot"></i>Execution gate active</b><span>Real swaps remain locked until release checks pass.</span></div></section></aside></div>
 <p class="foot">CLIMBORIA SWAP · SOLANA NETWORK · ROUTING BY JUPITER</p></main></div>
 <script src="/swap-config.js"></script>
 <script>
@@ -133,7 +177,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let connectedWallet=null,walletProvider=null;
 let selectedChain='solana';
 function setSwapChain(chain){
- selectedChain=chain;
+ selectedChain=chain; if(chain==='solana')updateSelectedAsset(quoteTokens.from);
  $('chainSolana').classList.toggle('active',chain==='solana');
  $('chainBase').classList.toggle('active',chain==='base');
  const isBase=chain==='base';
@@ -144,6 +188,588 @@ function setSwapChain(chain){
  $('quoteFromSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteToSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base quote provider not configured. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div>';
+}
+
+
+/* Public market data panels: CoinGecko majors + DexScreener selected Solana pool */
+const usdFmt=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1000?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};updateSelectedAsset(quoteTokens[side]);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+loadMajorMarkets();updateSelectedAsset(quoteTokens.from);setInterval(loadMajorMarkets,60000);
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+n.toLocaleString('en-US',{maximumFractionDigits:2}):n>=1?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+n.toFixed(2):'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+n.toPrecision(4)};
+const compactUsd=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1e9?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+(n/1e9).toFixed(2)+'B':n>=1e6?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+(n/1e6).toFixed(2)+'M':n>=1e3?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+(n/1e3).toFixed(1)+'K':'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';}
+const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
+let pendingSwapOrder=null;
+function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
+function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
+async function prepareJupiterSwap(){
+ const status=$('quoteStatus'),button=$('prepareSwap'),review=$('swapReview');
+ if(!connectedWallet||!walletProvider){status.textContent='Connect your Solana wallet first. No transaction has been requested.';return;}
+ if(typeof walletProvider.signTransaction!=='function'){status.textContent='This wallet does not expose signTransaction. No transaction has been requested.';return;}
+ if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));
+ if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
+ try{
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
+  const order=await response.json();
+  if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
+  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
+  const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
+  const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
+  const transaction=web3.VersionedTransaction.deserialize(bytes);
+  const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
+  if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
+  if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  const out=Number(order.outAmount)/Math.pow(10,to.decimals);
+  if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
+  const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
+  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  review.hidden=false;
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
+  $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
+  status.textContent='Order prepared. Review the details above before opening your wallet.';
+ }catch(e){status.textContent='Swap preparation failed: '+e.message;review.hidden=true;review.innerHTML='';}
+ finally{button.disabled=false;button.textContent='Prepare wallet-reviewed swap';}
+}
+async function signAndExecuteJupiterSwap(){
+ const status=$('quoteStatus'),button=$('signExecuteSwap');
+ if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
+ button.disabled=true;button.textContent='Waiting for wallet approval…';
+ try{
+  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
+  const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
+  button.textContent='Submitting to Jupiter…';
+  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
+  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
+  if(result.status==='Success'&&result.code===0&&result.signature){
+   status.textContent='Swap confirmed by Jupiter. Signature: '+result.signature;
+   $('swapReview').innerHTML='<div class="quote-result"><small>Confirmed transaction</small><b>'+esc(result.signature)+'</b></div><a target="_blank" rel="noopener" href="https://solscan.io/tx/'+encodeURIComponent(result.signature)+'">View on Solscan</a>';
+  }else{
+   status.textContent='Swap not confirmed: '+(result.error||'Jupiter reported '+(result.status||'unknown')+' / code '+result.code)+'. Do not retry until wallet and transaction status are checked.';
+  }
+  pendingSwapOrder=null;
+ }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
+ finally{button.disabled=false;button.textContent='Review in wallet & sign';}
+}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('getQuote').addEventListener('click',requestJupiterQuote);
+$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+$('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
+$('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
+$('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
+</script></body></html>+n.toFixed(0)};
+async function loadMajorMarkets(){
+ const ids='bitcoin,ethereum,solana,binancecoin,ripple,usd-coin';
+ try{
+  const r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+ids+'&order=market_cap_desc&per_page=6&page=1&sparkline=false&price_change_percentage=24h',{headers:{accept:'application/json'}});
+  if(!r.ok)throw new Error('CoinGecko HTTP '+r.status);
+  const data=await r.json();
+  $('majorCoins').innerHTML=data.map(c=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<div class="major-row"><div class="major-identity"><span class="major-icon">'+esc((c.symbol||'?').slice(0,1).toUpperCase())+'</span><div class="major-name"><b>'+esc((c.symbol||'').toUpperCase())+'</b><small>'+esc(c.name||'')+'</small></div></div><div class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></div></div>'}).join('');
+  $('majorStatus').textContent='CoinGecko market data · 24h volume and market cap shown on selected asset panel where available.';
+  window.__climboriaMajor=data;
+ }catch(e){$('majorCoins').innerHTML='<div class="market-loading">Major market data unavailable right now. '+esc(e.message)+'</div>';$('majorStatus').textContent='Live provider unavailable; no cached values substituted.'}
+}
+let selectedAssetRequest=0;
+async function updateSelectedAsset(token){
+ if(selectedChain!=='solana'){$('selectedAssetTitle').textContent='Base · ERC-20';$('selectedAssetNote').textContent='Base market analytics and chart integration are not configured yet.';$('selectedAssetChart').src='about:blank';$('selectedChartEmpty').style.display='grid';return}
+ const request=++selectedAssetRequest;
+ const title=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
+ $('selectedAssetTitle').textContent=title;$('selectedAssetPrice').textContent='Loading…';$('selectedAssetChange').textContent='—';$('selectedAssetVolume').textContent='—';$('selectedAssetMcap').textContent='—';$('selectedAssetLiquidity').textContent='—';$('selectedAssetVenue').textContent='Finding pool…';$('selectedChartEmpty').style.display='grid';$('selectedChartEmpty').textContent='Loading selected token market data…';
+ try{
+  const res=await fetch('https://api.dexscreener.com/token-pairs/v1/solana/'+encodeURIComponent(token.id),{headers:{accept:'application/json'}});
+  if(!res.ok)throw new Error('DexScreener HTTP '+res.status);
+  const pairs=await res.json();if(request!==selectedAssetRequest)return;
+  const valid=(Array.isArray(pairs)?pairs:[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress);
+  valid.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+  const p=valid[0];if(!p)throw new Error('No Solana liquidity pool found for this token.');
+  const ch=p.priceChange?.h24,change=Number(ch);
+  $('selectedAssetPrice').textContent=usdFmt(p.priceUsd);
+  $('selectedAssetChange').textContent=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'Change —';
+  $('selectedAssetChange').className=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
+  $('selectedAssetVolume').textContent=compactUsd(p.volume?.h24);
+  $('selectedAssetMcap').textContent=compactUsd(p.marketCap??p.fdv);
+  $('selectedAssetLiquidity').textContent=compactUsd(p.liquidity?.usd);
+  $('selectedAssetVenue').textContent=p.dexId||'—';
+  $('selectedAssetChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
+  $('selectedChartEmpty').style.display='none';
+  $('selectedAssetNote').textContent='Best discovered pool by reported liquidity · '+valid.length+' pool(s) found. Market cap uses provider market cap or FDV when available.';
+ }catch(e){if(request!==selectedAssetRequest)return;$('selectedAssetPrice').textContent='—';$('selectedAssetVenue').textContent='Unavailable';$('selectedAssetNote').textContent=e.message+' Price, volume, market cap and liquidity are not invented.';$('selectedChartEmpty').style.display='grid';$('selectedChartEmpty').textContent='No chart available for this selected asset.';$('selectedAssetChart').src='about:blank'}
 }
 
 async function connectClimboriaWallet(){if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
