@@ -2443,3 +2443,14 @@ For every integrated asset or borrowed technique, record:
 - [x] Reviewed Worker source and tests: API key stays server-side, order/execute paths enforce the configured rate limiter, origin allowlist and input validation are present, and Worker deployment workflow has read-only contents permission.
 - [ ] Worker is still not deployed; the Wrangler rate-limit namespace remains the placeholder `20261108`. Configure the real Cloudflare namespace, Actions secrets, Worker Jupiter secret, custom domain/TLS, then deploy and verify health + CORS. Do not paste secrets into chat.
 - [ ] Keep `swap-config.js` `proxyEnabled:false` and `enabled:false` until Worker production verification, semantic transaction review, controlled Devnet lifecycle tests, WAF/monitoring and independent security review are complete.
+
+
+## 2026-11-08 — DEX metadata numeric integrity follow-up
+
+- Fixed Pump.fun metadata normalization so absent, null, empty, boolean, or malformed numeric fields do not silently become zero. Holder count, curve progress, market cap, created timestamp, and total supply remain unavailable unless the provider supplies a valid value.
+- Fixed the DEX profile renderer so a missing bonding-curve percentage is shown as unavailable rather than a misleading 0% progress bar.
+- Added Worker regression coverage for missing/null/empty Pump.fun numeric fields.
+- Commits: backend `97a3110e81dfefcd94f250503cf632e357b73c21`; regression test `cbd219aacea2f35bd4a085ed294cbcce0291577b`; DEX renderer `766011dd902bc7bd6e976695eac5c5a4021cecdf`.
+- Validation passed: [42488288582](https://github.com/CryptoDilis/Climboria/actions/runs/42488288582). GitHub Pages deployment passed: [42488288227](https://github.com/CryptoDilis/Climboria/actions/runs/42488288227).
+- Browser smoke [42488288561](https://github.com/CryptoDilis/Climboria/actions/runs/42488288561) passed homepage/CTA/mobile navigation, Cloudflare Worker tests, fail-closed execution checks, standalone Swap, and DEX market/pool Back/Forward checks; Jarrell's Peak desktop/mobile gameplay test is still running. Do not mark full browser smoke green until the gameplay test and artifact step finish successfully.
+- Production Worker remains undeployed: replace the placeholder Cloudflare rate-limit namespace, configure server-side `JUPITER_API_KEY`, deploy, then verify health/CORS/rate limiting and production origin. Keep `proxyEnabled: false` and `enabled: false` until all execution release gates pass.
