@@ -1,3 +1,10 @@
+## 2026-11-09 — Swap Browser Smoke history-navigation timeout diagnosed and fixed
+
+- [x] Browser Smoke run `42506189408` exposed a test-harness timeout at `page.goBack()`: Playwright waited for the full `load` event while the embedded chart could delay that event. This was not a failed Swap chart assertion.
+- [x] Updated Swap history Back/Forward checks to wait for `domcontentloaded` with a bounded 15-second timeout, avoiding dependence on the third-party embedded chart's full load event.
+- [ ] Re-run Browser Smoke and confirm the rapid-selection race regression passes on the updated test harness.
+- [ ] The dedicated no-pool stale-state/mobile chart consistency regression remains open; Cloudflare Worker production deployment and physical Redmi 14 5G acceptance remain blockers.
+
 ## 2026-11-09 — Swap rapid-selection race regression added
 
 - [x] Added a controlled slow-response fixture to the Swap Browser Smoke test. It starts a SLOW asset request, immediately selects BTC, then verifies the delayed stale response cannot overwrite BTC's title, price, or chart.
