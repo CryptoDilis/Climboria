@@ -292,7 +292,7 @@ jobs:
               mobile.on('pageerror',error=>errors.push('MOBILE '+error.message));
               const mobileResponse=await mobile.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!mobileResponse?.ok()) throw new Error('Mobile Swap route failed to load');
-              const metrics=await mobile.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,card:document.querySelector('.swap-focus-card')?.getBoundingClientRect().toJSON()}));
+              const metrics=await mobile.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,card:document.querySelector('.swap-focus-card')?.getBoundingClientRect().toJSON(),offenders:[...document.querySelectorAll('body *')].map(el=>({tag:el.tagName,id:el.id,cls:typeof el.className==='string'?el.className:'',rect:el.getBoundingClientRect().toJSON(),overflow:getComputedStyle(el).overflowX})).filter(x=>x.rect.right>document.documentElement.clientWidth+2||x.rect.left< -2).sort((a,b)=>b.rect.right-a.rect.right).slice(0,20)}));
               if(metrics.scrollWidth>metrics.width+2) throw new Error('Premium Swap mobile layout overflows: '+JSON.stringify(metrics));
               if(!metrics.card||metrics.card.width>metrics.width) throw new Error('Premium Swap card exceeds mobile viewport: '+JSON.stringify(metrics));
               if(!await mobile.locator('#prepareSwap').isDisabled()) throw new Error('Mobile Swap execution must remain locked');
