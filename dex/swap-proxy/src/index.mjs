@@ -196,6 +196,13 @@ async function handleExecute(request, env) {
   if (!data || !["Success", "Failed"].includes(data.status) || !Number.isInteger(data.code)) {
     return json({ error: "Jupiter returned an unknown execution status; do not assume success" }, 502);
   }
+  // A success status is not sufficient by itself: require Jupiter's success code
+  // and a plausible Solana transaction signature before returning success upstream.
+  if (data.status === "Success" &&
+      (data.code !== 0 || typeof data.signature !== "string" ||
+       !/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(data.signature))) {
+    return json({ error: "Jupiter returned an incomplete or inconsistent success result" }, 502);
+  }
   return json({
     status: data.status,
     code: data.code,
