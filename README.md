@@ -1,3 +1,15 @@
+
+
+## 2026-11-09 — DEX premium terminal first pass from Meta feedback
+
+- [x] Added an additive terminal visual layer in `dex/terminal-premium.css`: deep navy/black canvas, restrained contour-line texture, tabular numeric styling, improved dark search controls, and more deliberate market-row hover states. Existing market/data logic is untouched.
+- [x] Replaced the active-looking DEX `OPEN SWAP` link with a non-clickable `SWAP COMING SOON · QUOTE ONLY` status while the production backend and security gates remain incomplete.
+- [x] Updated the DEX footer with the quote-only / no-wallet-required browsing statement and independent Solscan / DexScreener verification links. Added a last-refresh display slot; timestamp wiring remains to be completed.
+- [ ] Next: wire live footer refresh timestamp and replace initial hero/selected-token placeholder dashes with real skeleton states and a curated, API-sourced Solana trending set.
+- [ ] Redesign TrailMap as visual route cards with actual route/liquidity evidence; add a transparent Summit Signal score only where source data supports each component (otherwise show unknown/insufficient data).
+- [ ] Add selected-token Solscan verification link, price-update flash, copy-mint feedback, and honest timeframe controls (do not imply unsupported chart intervals).
+- [ ] Validate desktop/mobile screenshots and run Browser Smoke, Validate, and Pages workflows before calling this UI pass complete.
+- [ ] Cloudflare Worker production deployment remains a separate blocker; quote-only status and disabled execution must remain until deployment and security verification pass.
 ## 2026-11-09 — Swap popstate test made deterministic
 
 - [x] Browser Smoke run `42506639195` passed source validation but failed the test's browser-history restoration wait. The browser's Back/Forward navigation timing was not reliable in this embedded-chart test page.
