@@ -1,3 +1,22 @@
+## 2026-11-09 — Latest DEX lookup + full Browser Smoke verification
+
+- [x] Root cause confirmed for the DEX name-lookup regression: the browser test's DexScreener search fixture returned unrelated SOL pools alongside the searched CLT token, allowing the higher-liquidity SOL candidate to appear first. This was a fixture defect, not a production liquidity-ranking change.
+- [x] Corrected the isolated lookup fixture to return only query-matching Climb Test Asset (CLT) candidates while retaining the full pool response for exact-mint lookup. Commit: [50d8ae7](https://github.com/CryptoDilis/Climboria/commit/50d8ae70f203196df6c440e8ec895168cfa848a3).
+- [x] Validate Climboria passed on commit `50d8ae7`: [run 42522265661](https://github.com/CryptoDilis/Climboria/actions/runs/42522265661).
+- [x] Full Browser Smoke passed on commit `50d8ae7`: [run 42522265642](https://github.com/CryptoDilis/Climboria/actions/runs/42522265642). Homepage/desktop-mobile navigation, Cloudflare proxy tests, fail-closed execution gate, premium Swap desktop/mobile, standalone DEX lookup/chart identity and pool history, and Jarrell's Peak desktop/mobile gameplay all completed successfully.
+- [x] DEX direct name lookup selected the exact CLT mint and its exact pair chart; the test no longer accepts SOL as an unrelated first result.
+- [x] Jarrell's Peak smoke passed boot/render, GLB hero, jump/landing, terrain/route audits, loot/inventory, sanctuary, desktop/mobile controls, and cave entrance/interior captures. Wildlife was explicitly disabled for this smoke run; animal and snake AI behavior/performance are **not** validated by this result.
+- [x] Screenshot artifact uploaded: [climboria-browser-smoke-screenshots](https://github.com/CryptoDilis/Climboria/actions/runs/42522265642/artifacts/13633668067) (10 files; expires 2026-11-15).
+- [ ] Review the newly uploaded desktop/mobile screenshots visually; automated upload is not a visual sign-off.
+- [ ] Verify DEX CA/name/symbol lookup against real provider data on the deployed domain after merge/deployment. CI used deterministic fixtures and does not prove live production provider behavior.
+- [ ] Cloudflare Worker production deployment and production-domain health/CORS/rate-limit/Jupiter checks remain separate blockers. Keep `proxyEnabled:false` and `enabled:false`; wallet execution remains disabled until deployment and independent transaction-security review.
+- [ ] Physical Redmi 14 5G acceptance remains open. Automated mobile viewport tests are not physical-device acceptance.
+- [ ] PR #219 remains open and unmerged; no production deployment is claimed.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+---
+
 ## 2026-11-09 — Premium Swap redesign from Meta feedback
 
 - [x] Replaced the wide multi-column first impression with a centered dark-navy / antique-gold swap card.
