@@ -855,7 +855,8 @@ function setSwapAmountFraction(fraction){
  if(!Number.isFinite(balance)||balance<=0)return;
  const reserve=quoteTokens.from.symbol==='SOL'&&fraction===1?0.005:0;
  const value=Math.max(0,balance-reserve)*fraction;
- $('quoteAmount').value=value.toFixed(Math.min(quoteTokens.from.decimals,8)).replace(/\.?(0+)$/,'');
+ const fixed=value.toFixed(Math.min(quoteTokens.from.decimals,8));
+ $('quoteAmount').value=fixed.includes('.')?fixed.replace(/0+$/,'').replace(/\.$/,''):fixed;
  $('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
 }
 document.querySelectorAll('[data-fraction]').forEach(button=>button.addEventListener('click',()=>setSwapAmountFraction(Number(button.dataset.fraction))));
