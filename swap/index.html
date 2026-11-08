@@ -430,8 +430,11 @@ async function updateSelectedAsset(token){
  try{
   const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
   if(chartRequest!==selectedChartRequest)return;
-  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress&&(p.baseToken?.address===token.id||p.quoteToken?.address===token.id));
-  if(!pairs.length)throw new Error('No Solana liquidity pool found for this mint.');
+  // DexScreener pair charts render the pool's BASE asset. A mint appearing only as
+  // quoteToken would show the other asset (often SOL), so never use that pool as a
+  // misleading chart for the selected token.
+  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress&&p.baseToken?.address===token.id);
+  if(!pairs.length)throw new Error('No Solana pool with this exact mint as the chart base asset. Choose another verified representation or pool.');
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   if(chartRequest!==selectedChartRequest)return;
   const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);
@@ -442,12 +445,12 @@ async function updateSelectedAsset(token){
   mcap.textContent=compactUsd(pair.marketCap??pair.fdv);
   liquidity.textContent=compactUsd(pair.liquidity?.usd);
   venue.textContent=pair.dexId||'Solana pool';
-  note.textContent='Live DexScreener pool data · '+pairs.length+' matching Solana pool(s). Values may be incomplete.';
+  note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
   empty.hidden=true;
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
-  price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='No chart available for this token. '+error.message;chart.removeAttribute('src');
+  price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Chart unavailable for '+(token.symbol||'selected token')+'. '+error.message;chart.removeAttribute('src');
  }
 }
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
