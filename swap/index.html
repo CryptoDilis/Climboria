@@ -732,6 +732,9 @@ $('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBa
 $('getQuote').addEventListener('click',()=>requestJupiterQuote());
 $('prepareSwap').addEventListener('click',prepareJupiterSwap);
 $('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+let fromAssetSearchTimer=null;
+$('quoteFromSearch').addEventListener('input',()=>{clearTimeout(fromAssetSearchTimer);const query=$('quoteFromSearch').value.trim();if(query.length<2)return;fromAssetSearchTimer=setTimeout(()=>searchQuoteToken('from'),450);});
+$('quoteFromSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(fromAssetSearchTimer);searchQuoteToken('from');}});
 $('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
 
 let majorAssetSelectionSequence=0;
