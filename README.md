@@ -1,3 +1,11 @@
+## 2026-11-09 — Swap history smoke corrected for same-document navigation
+
+- [x] Browser Smoke run `42506516332` showed the Back check still timed out after the previous waitUntil adjustment. The URL state is managed with `history.pushState` / `popstate`, so this is same-document history, not a full document navigation.
+- [x] Replaced Playwright `page.goBack()/goForward()` navigation waits with browser `history.back()/history.forward()` plus assertions on the restored input token and URL mint.
+- [ ] Re-run Browser Smoke on `9d14e15d27f42198e0a5021f5703b61ecab8f0fb`; confirm the full workflow, including the rapid-response race regression, passes.
+- [ ] Dedicated no-pool stale-state and mobile exact-mint chart consistency regression remains open.
+- [ ] Cloudflare Worker production deployment, canonical mint/issuer policy, and physical Redmi 14 5G acceptance remain open. Swap execution stays disabled.
+
 ## 2026-11-09 — Swap Browser Smoke history-navigation timeout diagnosed and fixed
 
 - [x] Browser Smoke run `42506189408` exposed a test-harness timeout at `page.goBack()`: Playwright waited for the full `load` event while the embedded chart could delay that event. This was not a failed Swap chart assertion.
