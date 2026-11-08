@@ -14,6 +14,8 @@ Commits: [454d8a3](https://github.com/CryptoDilis/Climboria/commit/454d8a3c6c846
 ---
 
 ## 2026-11-09 — Cloudflare first-deployment order correction
+> **Superseded:** The newer “Cloudflare Custom Domain deployment correction” section above is authoritative. Wrangler now provisions `api.climboria.fun` from `wrangler.toml`; do not manually pre-attach the custom domain before the first deploy.
+
 
 - [x] Audited `dex/swap-proxy/DEPLOYMENT.md`, `.github/workflows/deploy-climboria-api.yml`, and `dex/swap-proxy/wrangler.toml` against the first-run sequence.
 - [x] Found and corrected an instruction-order blocker: the deploy workflow checks `https://api.climboria.fun/health` immediately after Wrangler deploys, while the old guide placed custom-domain attachment after that check. The guide now requires attaching `api.climboria.fun` to the Worker and confirming TLS **before** dispatching the workflow; post-deploy steps now verify the existing domain.
