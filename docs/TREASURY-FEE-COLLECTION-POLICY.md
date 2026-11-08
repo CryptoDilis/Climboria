@@ -5,6 +5,8 @@ Status: DESIGN ONLY — collection is not enabled. No wallet address, fee accoun
 ## Owner decisions recorded
 - Treasury destination: a dedicated Climboria treasury wallet, separate from the owner's personal wallet.
 - Proposed Swap fee: 10 basis points (0.10%).
+- Proposed DEX execution fee: 10 basis points (0.10%), only on trades actually executed through a Climboria-controlled fee-enabled route; market data and external trades do not generate this fee.
+- Proposed Launchpad fee: 100 basis points (1.00%); collection base and settlement timing must be explicitly disclosed and finalized before contract deployment.
 - Real transaction execution and fee collection remain disabled until wallet ownership, contracts, security review, provider behavior, and public disclosures are verified.
 
 ## Critical Solana/Jupiter compatibility note
@@ -40,11 +42,15 @@ Never infer that the Jupiter top-level feeBps is Climboria revenue. Inspect the 
 - Test quote, simulation, approval limits, transaction receipt and actual treasury balance delta before release.
 
 ### DEX
+- Proposed Climboria DEX execution fee: 10 bps (0.10%).
 - Market discovery, pair charts, sorting and pool analytics do not generate Climboria fees.
 - Collect a DEX fee only when a user executes through a Climboria-controlled, fee-enabled route or contract.
+- Before implementation, specify whether the fee is calculated on the input amount or output amount, the fee asset, minimum/maximum fee, rounding rules and provider fees. Do not charge twice if the underlying route already deducts the Climboria fee.
 - Do not claim fees on trades made directly on external DEXes or merely viewed in Climboria's market tables.
 
 ### Launchpad
+- Proposed Climboria Launchpad fee: 100 bps (1.00%).
+- Before implementation, owner must approve the fee base: recommended default is 1.00% of successfully settled gross contributions, excluding refunded/failed contributions; disclose whether network costs and third-party fees are additional.
 - Use a reviewed on-chain sale contract with immutable or tightly governed fee recipient and disclosed fee rate.
 - On each successful purchase/claim/settlement as applicable, split creator proceeds, Climboria fee, refunds and any other allocations deterministically.
 - Define whether fees apply to contributions, successful raise proceeds, token purchases, or claims; disclose failed-sale refund behavior and network costs.
@@ -62,6 +68,8 @@ Only confirmed on-chain receipts count as collected revenue. Pending, failed, re
 
 ## Release gates (all required)
 - [ ] Dedicated Solana treasury address supplied and ownership verified.
+- [ ] Dedicated Base treasury address supplied and ownership verified.
+- [ ] Owner approves Launchpad 1.00% fee base (recommended: successfully settled gross contributions, net of refunds).
 - [ ] Dedicated Base treasury address supplied and ownership verified.
 - [ ] Treasury custody/multisig and recovery process documented.
 - [ ] Solana 10 bps vs Jupiter V2 routing incompatibility resolved by explicit owner decision.
