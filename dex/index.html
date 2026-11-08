@@ -543,6 +543,57 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  .token-community .community-room{height:260px}
 }
 
+
+/* Climboria premium three-column trading terminal — chart / execution / community */
+@media(min-width:1201px){
+ .wrap{max-width:1600px!important;padding-left:24px;padding-right:24px}
+ .detail-content{display:grid!important;grid-template-columns:minmax(420px,1fr) minmax(265px,300px) minmax(245px,275px)!important;gap:10px;align-items:start}
+ .detail-main{grid-column:1;grid-row:1;min-width:0}
+ .detail-main .detailchart,.chart-workspace .detailchart{height:clamp(420px,44vw,610px)}
+ .dex-trade-terminal{grid-column:2;grid-row:1;position:sticky;top:78px;padding:11px;align-self:start}
+ .token-community{grid-column:3;grid-row:1;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px;position:sticky;top:78px;min-width:0}
+ .token-community>.community-card{grid-column:1!important;padding:10px;min-width:0}
+ .token-community .community-room{height:clamp(250px,31vh,390px);min-height:220px}
+ .trade-terminal-head h3{font-size:16px}
+ .trade-token-line{margin:7px 0;padding:7px}
+ .dex-auto-route{margin:7px 0;padding:8px}
+ .dex-auto-route p{font-size:8px}
+ .dex-trade-field{margin:7px 0}
+ .dex-trade-field input{padding:8px}
+ .dex-trade-settings{margin:8px 0}
+ .dex-trade-quote,.dex-trade-prepare{padding:8px}
+ .detail-social-rail{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+ .detail-social-rail a{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid #8d7148;border-radius:8px;background:linear-gradient(145deg,#1b2b40,#0b1421);color:#f0d18b;font-size:8px;font-weight:800;text-decoration:none}
+ .detail-social-rail svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7}
+ .detail-social-rail .social-empty{font-size:8px;color:#8395aa}
+ .detail{padding:12px;margin:10px 0}
+ .detailtop{gap:9px;padding:7px 0}
+}
+@media(min-width:821px) and (max-width:1200px){
+ .detail-content{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(285px,330px)!important;gap:10px}
+ .detail-main{grid-column:1;grid-row:1 / span 2}
+ .dex-trade-terminal{grid-column:2;grid-row:1;position:sticky;top:78px}
+ .token-community{grid-column:2;grid-row:2;position:relative;top:auto}
+ .token-community .community-room{height:250px}
+}
+@media(max-width:820px){
+ .detail-content{display:flex!important;flex-direction:column;gap:10px}
+ .detail-main{order:1;width:100%}
+ .dex-trade-terminal{order:2;width:100%;position:relative;top:auto}
+ .token-community{order:3;width:100%;position:relative;top:auto}
+ .token-community .community-room{height:260px}
+ .detail-social-rail{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
+ .detail-social-rail a{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid #8d7148;border-radius:8px;color:#f0d18b;font-size:9px;text-decoration:none}
+ .detail-social-rail svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7}
+ .detail-social-rail .social-empty{font-size:8px;color:#8395aa}
+}
+@media(max-width:560px){
+ .detail{padding:10px}
+ .detail-main .detailchart,.chart-workspace .detailchart{height:330px;min-height:290px}
+ .detail-name-row{grid-template-columns:minmax(0,1fr) 30px}
+ .token-overview-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
@@ -556,7 +607,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <section class="quote-panel" id="swapQuote" hidden><h2>Jupiter Swap · Live quote preview</h2><p>Solana-wide routing quote from Jupiter Swap API V2. Wallet connection is read-only; this stage does not sign or submit transactions.</p><div class="walletbar"><div><small>Connected wallet</small><b id="walletStatus">Not connected</b></div><button class="tab" id="connectWallet" type="button">Connect wallet</button></div><div class="quote-controls"><div class="quote-field"><label for="quoteAmount">Amount</label><input id="quoteAmount" type="number" min="0" step="any" value="0.1" inputmode="decimal"></div><div class="quote-field"><label for="quoteFromSearch">From token · name, symbol or mint</label><input id="quoteFromSearch" value="SOL" placeholder="Search any Solana token"><button class="tab" id="searchFrom" type="button">Find input token</button><div id="fromResults"></div><small id="fromSelected">SOL · 9 decimals</small></div><div class="quote-field"><label for="quoteToSearch">To token · name, symbol or mint</label><input id="quoteToSearch" value="USDC" placeholder="Search any Solana token"><button class="tab" id="searchTo" type="button">Find output token</button><div id="toResults"></div><small id="toSelected">USDC · 6 decimals</small></div><button class="tab" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div><div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Router</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div><div class="quote-status" id="quoteStatus">Ready. Enter an amount and request a fresh quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div><div class="quote-warning">Quotes are indicative and expire/change with market conditions. Quote preview is read-only. Wallet-reviewed execution requires the separately deployed Climboria backend and remains disabled until explicitly configured and verified.</div></section><section class="stats">
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount">—</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount">—</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume">—</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section>
-<section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="closeDetail" type="button">Close</button></div></div><div class="detail-content"><div class="detail-main"><div class="chart-workspace">
+<section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div><div class="detail-social-rail" id="detailSocialRail" aria-label="Token social links"><span class="social-empty">Official links appear when supplied by token metadata.</span></div></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="closeDetail" type="button">Close</button></div></div><div class="detail-content"><div class="detail-main"><div class="chart-workspace">
 <iframe class="detailchart" id="detailChart" title="Selected Solana pool chart" loading="eager" referrerpolicy="origin"></iframe>
 <div class="chart-overview" aria-label="Selected pool overview">
 <div class="detail-metrics" aria-label="Selected pool live metrics">
@@ -774,6 +825,19 @@ async function loadAdvancedIntel(mint,pair){
    ['Description',esc(pair.info?.description||'Not listed by provider')]
   ].map(([k,v])=>'<div class="intel-profile-item"><small>'+k+'</small><b>'+v+'</b></div>').join('');
   $('profileSocials').innerHTML=[...websites,...socials].map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+esc(x.label)+' ↗</a>').join('');
+  const socialRail=$('detailSocialRail');
+  if(socialRail){
+   const links=[...websites,...socials].filter(x=>x.url&&/^https:\/\//i.test(x.url)).slice(0,4);
+   socialRail.innerHTML=links.length?links.map(x=>{
+    const label=String(x.label||'Website').toLowerCase();
+    const icon=label.includes('twitter')||label==='x'
+     ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4L4 20" stroke-linecap="round"/></svg>'
+     : label.includes('telegram')
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-7-4 17-5-6-4 3 1-6 9-5-11 8-3-4Z" stroke-linejoin="round"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>';
+    return '<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+icon+'<span>'+esc(x.label||'Website')+'</span></a>';
+   }).join(''):'<span class="social-empty">No official links supplied by the provider.</span>';
+  }
     $('bubbleMapOpen').href='https://app.bubblemaps.io/sol/token/'+encodeURIComponent(mint);
  document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');const indicator=b.querySelector('strong');if(indicator)indicator.textContent='＋'});
  document.querySelectorAll('.intel-panel').forEach(p=>p.hidden=true);
