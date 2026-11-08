@@ -430,7 +430,7 @@ async function updateSelectedAsset(token){
  try{
   const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
   if(chartRequest!==selectedChartRequest)return;
-  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress);
+  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress&&(p.baseToken?.address===token.id||p.quoteToken?.address===token.id));
   if(!pairs.length)throw new Error('No Solana liquidity pool found for this mint.');
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   if(chartRequest!==selectedChartRequest)return;
