@@ -83,6 +83,45 @@ a:hover{color:#ffe3a0}
  .layout>#evmMarkets .panelhead h2{font-size:18px}
  .layout .tablewrap table{min-width:720px}
 }
+
+/* Desktop DEX declutter: aligned market workspaces and compact navigation */
+@media(min-width:851px){
+ .wrap{max-width:1440px;padding-left:28px;padding-right:28px}
+ .hero{padding:30px 0 16px}
+ .hero h1{font-size:42px;margin:8px 0}
+ .hero p{font-size:12px;max-width:780px;line-height:1.55}
+ .status{margin-top:10px}
+ .execution-status{margin:10px 0!important;padding:10px 14px!important}
+ .stats{gap:10px;margin:14px 0}
+ .stat{padding:12px 15px}
+ .stat strong{font-size:21px}
+ .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+ .layout>#markets,.layout>#evmMarkets{padding:15px;border-radius:17px;min-width:0}
+ .layout>#markets .panelhead,.layout>#evmMarkets .panelhead{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-bottom:10px}
+ .layout>#markets .panelhead h2,.layout>#evmMarkets .panelhead h2{font-size:18px}
+ .layout>#markets .tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:2px 1px 8px;gap:6px;scrollbar-width:thin;overscroll-behavior-x:contain}
+ .layout>#markets .tab{flex:0 0 auto;padding:7px 9px;font-size:10px;white-space:nowrap}
+ .layout .controls{display:grid;grid-template-columns:minmax(0,1fr) 150px auto;gap:7px;margin:10px 0}
+ .layout>#evmMarkets .controls{grid-template-columns:minmax(0,1fr) 150px}
+ .layout .search,.layout .select{min-width:0;padding:9px 10px;font-size:11px}
+ .layout .tablewrap{border:1px solid #263750;border-radius:10px;background:#09132166}
+ .layout table{min-width:650px}
+ .layout th{font-size:9px;padding:10px 7px;white-space:nowrap}
+ .layout td{font-size:11px;padding:11px 7px}
+ .layout .token{min-width:170px;gap:7px}
+ .layout .token small{max-width:150px}
+ .layout .source{font-size:9px;line-height:1.45;margin-top:8px}
+ .layout>.side{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+ .layout>.side .panel{padding:15px}
+}
+@media(min-width:851px) and (max-width:1100px){
+ .layout{gap:12px}
+ .layout>#markets,.layout>#evmMarkets{padding:12px}
+ .layout .controls{grid-template-columns:minmax(0,1fr) 125px auto}
+ .layout>#evmMarkets .controls{grid-template-columns:minmax(0,1fr) 125px}
+ .layout .tablewrap table{min-width:630px}
+}
+
 </style>
 </head>
 <body>
