@@ -831,16 +831,16 @@ async function dexTradeSyncToken(pair){
  $('dexTradeTokenSymbol').textContent=dexTradeToken.symbol;$('dexTradeTokenMint').textContent=dexTradeToken.id;
  const price=Number(pair.priceUsd),change=Number(pair.priceChange?.h24);
  $('tokenIntro').textContent=dexTradeToken.name+' ('+dexTradeToken.symbol+') · '+(pair.dexId||'Solana DEX')+' · '+(Number.isFinite(price)?'Price $'+price.toPrecision(6):'Price unavailable')+' · '+(Number.isFinite(change)?'24h '+(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable');
- dexTradeSetStatus('Loading exact token metadata from Jupiter…');$('dexTradeGetQuote').disabled=true;$('dexTradePrepare').disabled=true;
+ dexTradeSetStatus('Checking exact mint decimals on Solana…');$('dexTradeGetQuote').disabled=true;$('dexTradePrepare').disabled=true;
  try{
-  const response=await fetch('https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(token.address),{headers:{accept:'application/json'},cache:'no-store'});
-  if(!response.ok)throw new Error('Jupiter token metadata HTTP '+response.status);
-  const records=await response.json(),exact=Array.isArray(records)?records.find(t=>String(t.id||'').toLowerCase()===token.address.toLowerCase()):null;
-  if(!exact||!Number.isInteger(Number(exact.decimals))||Number(exact.decimals)<0||Number(exact.decimals)>18)throw new Error('Jupiter did not return decimals for this exact mint.');
-  dexTradeToken={...dexTradeToken,name:exact.name||dexTradeToken.name,symbol:exact.symbol||dexTradeToken.symbol,decimals:Number(exact.decimals),isVerified:!!exact.isVerified};
-  $('dexTradeTokenSymbol').textContent=dexTradeToken.symbol;dexTradeApplyDirection();
-  $('dexTradeGetQuote').disabled=false;$('dexTradePrepare').disabled=false;
-  dexTradeSetStatus('Exact mint metadata loaded · '+dexTradeToken.decimals+' decimals. Market quotes available; execution remains backend-gated.');
+  const response=await fetch('https://api.mainnet-beta.solana.com',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[token.address,{commitment:'confirmed'}]})});
+  if(!response.ok)throw new Error('Solana RPC HTTP '+response.status);
+  const data=await response.json();if(data.error)throw new Error(data.error.message||'Solana RPC token supply lookup failed');
+  const decimals=Number(data.result?.value?.decimals);
+  if(!data.result?.value||!Number.isInteger(decimals)||decimals<0||decimals>18)throw new Error('The selected mint did not return valid on-chain decimals.');
+  dexTradeToken.decimals=decimals;
+  dexTradeApplyDirection();$('dexTradeGetQuote').disabled=false;$('dexTradePrepare').disabled=false;
+  dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Jupiter market quote is available; execution remains backend-gated.');
  }catch(error){dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
 }
 function dexTradeApplyDirection(){
