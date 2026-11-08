@@ -129,6 +129,102 @@ a:hover{color:#ffe3a0}
 @media(max-width:850px){.detailchart{height:390px}}
 @media(max-width:560px){.detailchart{height:350px}}
 
+
+/* Climboria Summit Terminal: premium spot-style workspace + launch discovery */
+:root{--terminal-gold:#e9c477;--terminal-line:#34465f;--terminal-panel:#101b2b}
+body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e18 68%,#060a12 100%)}
+.top{height:62px;background:linear-gradient(90deg,#070c15f7,#142238f5,#070c15f7);border-bottom:1px solid #c39a543d;box-shadow:0 9px 32px #0006}
+.topin{max-width:1480px;padding:0 26px}
+.brand{font-size:19px;letter-spacing:2.2px}
+.brand small{font-size:8px;letter-spacing:2.6px}
+.toplinks{gap:20px}
+.toplinks a{font-size:10px;letter-spacing:1px}
+.pill{padding:7px 12px;background:linear-gradient(135deg,#322818,#111a27);border-color:#c39a5477;color:#ffe2a0}
+.wrap{max-width:1480px;padding-left:26px;padding-right:26px}
+.hero{padding:15px 0 12px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.hero .eyebrow{font-size:9px;letter-spacing:2.2px}
+.hero h1{font-size:27px;margin:3px 0 2px;letter-spacing:-.5px}
+.hero p{font-size:10px;line-height:1.45;max-width:640px}
+.hero .status{margin-top:5px;font-size:9px}
+.execution-status{border-color:#53647c!important;background:linear-gradient(100deg,#17263a,#0b1422)!important;box-shadow:0 12px 32px #0004}
+.stats{gap:9px;margin:10px 0 14px}
+.stat{padding:11px 14px;border-radius:13px;background:linear-gradient(145deg,#1a2a40,#0c1523);border-color:#3d506a}
+.stat label{font-size:9px;letter-spacing:1.2px}
+.stat strong{font-size:20px;color:#f2dfb6}
+.layout{gap:14px}
+.layout>#markets,.layout>#evmMarkets{padding:14px;border-radius:17px;background:linear-gradient(155deg,#192a40,#0d1726 72%);border:1px solid #4b5f79;box-shadow:0 20px 52px #0006,inset 0 1px #ffffff12}
+.layout>#markets{border-top:2px solid #d8b36a}
+.layout>#evmMarkets{border-top:2px solid #718ba9}
+.layout>#markets .panelhead,.layout>#evmMarkets .panelhead{align-items:flex-start;flex-direction:column;gap:8px;margin-bottom:9px}
+.layout>#markets .panelhead h2,.layout>#evmMarkets .panelhead h2{font-size:18px}
+.layout>#markets .panelhead .source,.layout>#evmMarkets .panelhead .source{font-size:9px}
+.layout>#markets .tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:2px 1px 7px;gap:5px;scrollbar-width:thin}
+.layout>#markets .tab{flex:0 0 auto;padding:7px 9px;font-size:9px;border-radius:8px}
+.layout .controls{display:grid;grid-template-columns:minmax(0,1fr) 155px auto;gap:7px;margin:9px 0}
+.layout>#evmMarkets .controls{grid-template-columns:minmax(0,1fr) 145px}
+.layout .search,.layout .select{min-width:0;padding:9px 10px;font-size:10px;border-radius:9px}
+.layout .tablewrap{border:1px solid #283b54;border-radius:11px;background:#080f1b88;overflow:auto}
+.layout table{min-width:650px}
+.layout th{padding:10px 8px;font-size:9px;color:#d7bd83;white-space:nowrap}
+.layout td{padding:11px 8px;font-size:10px}
+.layout tbody tr{transition:background .16s,box-shadow .16s;cursor:pointer}
+.layout tbody tr:hover{background:#e6bd6810;box-shadow:inset 2px 0 #d7b36c}
+.layout .token{min-width:160px;gap:8px}
+.layout .token b{font-size:11px}
+.layout .token small{font-size:9px}
+.layout>.side{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:14px}
+.layout>.side .panel{padding:15px;border-radius:16px;background:linear-gradient(150deg,#17273b,#0b1422);border-color:#3e526c}
+.layout>.side h3{font-size:16px}
+.feeditem{padding:9px 0;border-bottom-color:#ffffff10}
+.feeditem img{width:38px;height:38px;border:1px solid #3b4e68}
+.feeditem b{font-size:11px}
+.feeditem small{font-size:9px}
+.detail{margin:14px 0;padding:16px;border-radius:17px;border-color:#b28b4e;background:linear-gradient(145deg,#192a40,#0a1422);box-shadow:0 22px 60px #0007}
+.detailtop h2{font-size:22px}
+.detailchart{height:480px;border:1px solid #344962;background:#070d17}
+.detailgrid{gap:8px}
+.detailmetric{background:#091321;border-color:#31445d}
+.detailmetric b{font-size:17px}
+.flowbox,.trailmap,.signalbox{background:linear-gradient(145deg,#14243a,#0a1422);border-color:#3c526e}
+.flowbox h3,.trailmap h3,.signalbox h3{color:#f0d18a}
+.quote-panel{border-color:#9d7b45;background:linear-gradient(145deg,#192a40,#0b1422)}
+.footer{font-size:9px}
+@media(min-width:851px){
+ .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+ .layout>#markets,.layout>#evmMarkets{min-width:0}
+}
+@media(max-width:850px){
+ .wrap{padding-left:16px;padding-right:16px}
+ .hero{display:block;padding:20px 0 12px}
+ .hero h1{font-size:25px}
+ .layout{display:flex;flex-direction:column}
+ .layout>#markets{order:1;width:100%}
+ .layout>#evmMarkets{order:2;width:100%}
+ .layout>.side{order:3;width:100%;grid-template-columns:1fr}
+ .detailchart{height:390px}
+}
+@media(max-width:560px){
+ .top{height:62px}
+ .topin{padding:0 12px}
+ .brand{font-size:16px}
+ .toplinks{gap:8px}
+ .toplinks a{font-size:9px}
+ .wrap{padding-left:12px;padding-right:12px}
+ .hero{padding:17px 0 10px}
+ .hero h1{font-size:23px}
+ .stats{gap:7px}
+ .stat{padding:10px}
+ .stat strong{font-size:17px}
+ .layout>#markets,.layout>#evmMarkets{padding:11px}
+ .layout>#markets .panelhead h2,.layout>#evmMarkets .panelhead h2{font-size:16px}
+ .layout .controls{grid-template-columns:minmax(0,1fr) 115px}
+ .layout>#markets .controls #refresh{grid-column:1/-1}
+ .layout .tablewrap table{min-width:680px}
+ .detail{padding:12px}
+ .detailchart{height:340px}
+ .flowgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
