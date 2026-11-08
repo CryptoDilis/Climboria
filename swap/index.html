@@ -275,10 +275,13 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .major-row{width:100%;font:inherit;color:inherit;text-align:left;background:transparent;border:0;border-top:1px solid #ffffff10;cursor:pointer;border-radius:7px;transition:background .18s,border-color .18s,transform .18s;position:relative}
 .major-row:hover,.major-row:focus-visible{background:linear-gradient(90deg,#263a52aa,#14243a55);border-top-color:#b9955c;outline:none;transform:translateX(2px)}
 .major-row:focus-visible{box-shadow:0 0 0 2px #d9b66d88}
-.major-row:after{content:'SELECT';position:absolute;right:6px;bottom:4px;color:#e4c27b;font-size:7px;letter-spacing:1px;font-weight:900;opacity:0;transition:opacity .18s}
-.major-row:hover:after,.major-row:focus-visible:after{opacity:1}
+.major-row:after{content:none!important;display:none!important;pointer-events:none!important}
+.major-row:hover:after,.major-row:focus-visible:after{content:none!important;display:none!important}
 .major-row[disabled]{cursor:not-allowed;opacity:.5}
-.major-row[disabled]:after{content:'NO SOLANA MINT'}
+.major-row{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.major-row *{pointer-events:none}
+.major-row:hover,.major-row:focus-visible{transform:none}
+.major-row[disabled]{cursor:not-allowed;opacity:.5}
 
 /* Summit Exchange wide-screen and responsive finish */
 .shell{max-width:1680px;padding-left:clamp(18px,2.2vw,38px);padding-right:clamp(18px,2.2vw,38px)}
@@ -347,6 +350,8 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .swap-advanced{margin:12px 0;padding:11px 12px;border:1px solid #394d65;border-radius:11px;background:#0c1929;color:#dce6f2}.swap-advanced summary{cursor:pointer;font-size:11px;font-weight:800;color:#f2d18d;list-style:none}.swap-advanced summary::-webkit-details-marker{display:none}.swap-advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.swap-advanced-grid label{display:grid;gap:6px;font-size:10px;color:#aebed0}.swap-advanced-grid select,.swap-advanced-grid input{width:100%;padding:9px;border:1px solid #354a63;border-radius:8px;background:#081321;color:#f3f5f8}.swap-advanced-grid small,.swap-advanced-note{font-size:9px;line-height:1.45;color:#8498b0}.swap-advanced-note{margin:10px 0 0}@media(max-width:560px){.swap-advanced-grid{grid-template-columns:1fr}}
 
 .routing-coverage{margin:14px 0;padding:13px;border:1px solid #394e66;border-radius:12px;background:linear-gradient(145deg,#14263a,#0a1422)}.routing-coverage-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.routing-coverage-head span{font-size:8px;letter-spacing:1.6px;color:#e3c27b;font-weight:900}.routing-coverage-head b{font-size:10px;color:#e8edf5}.routing-coverage-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.routing-coverage-grid>div{padding:10px;border:1px solid #354b63;border-radius:9px;background:#0a1726}.routing-coverage-grid small{display:block;color:#93a7bd;font-size:8px;letter-spacing:1px}.routing-coverage-grid strong{display:block;color:#f3d596;font:700 14px Georgia,serif;margin:5px 0}.routing-coverage-grid p,.routing-coverage-grid em,.routing-coverage-foot{font-size:9px;line-height:1.45;color:#a6b6c8}.routing-coverage-grid em{display:block;color:#cba96b;font-style:normal;margin-top:6px}.routing-coverage-foot{margin:10px 0 0}@media(max-width:560px){.routing-coverage-grid{grid-template-columns:1fr}}
+
+.major-row.is-selected{background:linear-gradient(90deg,#253a52aa,#14243a55);border-left:2px solid #d8b66f}.major-row.is-loading{opacity:.65;cursor:progress}
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a><button class="watchlist-trigger" id="watchlistTrigger" type="button" aria-label="Open watchlist" aria-expanded="false" title="Watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 14.7 8.7l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z"/></svg><span>WATCHLIST</span><i id="watchlistCount">0</i></button></nav><section class="watchlist-popover" id="watchlistPopover" hidden aria-label="Climboria watchlist"><div class="watchlist-head"><div><small>SUMMIT FINANCE</small><b>Your watchlist</b></div><button type="button" id="watchlistClose" aria-label="Close watchlist">×</button></div><p>Track tokens across Climboria DEX and Swap on this browser.</p><div class="watchlist-current"><span>Add selected swap assets</span><div class="watchlist-add-pair"><button type="button" id="watchlistAddFrom">＋ From · SOL</button><button type="button" id="watchlistAddTo">＋ To · USDC</button></div></div><div id="watchlistItems" class="watchlist-items"></div></section></header>
@@ -525,36 +530,42 @@ $('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
 $('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
 
 $('majorCoins').addEventListener('click',async e=>{
- const row=e.target.closest('button[data-major-index]');if(!row)return;
- const assets=[{symbol:'BTC',name:'Bitcoin'},{symbol:'ETH',name:'Ethereum'},{symbol:'SOL',name:'Solana'},{symbol:'BNB',name:'BNB'},{symbol:'XRP',name:'XRP'},{symbol:'USDC',name:'USD Coin'}];
- const choice=assets[Number(row.dataset.majorIndex)];if(!choice)return;
- if(selectedChain!=='solana'){ $('quoteStatus').textContent='Major asset selection is currently available on Solana only. Base routing is not configured.';return; }
- row.classList.add('is-loading');$('quoteStatus').classList.remove('error');$('quoteStatus').textContent='Finding '+choice.symbol+' on Jupiter…';
+ const row=e.target.closest('button.major-row[data-major-symbol]');
+ if(!row||row.disabled)return;
+ const symbol=String(row.dataset.majorSymbol||'').toUpperCase();
+ const assets={BTC:{name:'Bitcoin'},ETH:{name:'Ethereum'},SOL:{name:'Solana'},BNB:{name:'BNB'},XRP:{name:'XRP'},USDC:{name:'USD Coin'}};
+ const choice=assets[symbol];if(!choice)return;
+ if(selectedChain!=='solana'){ $('quoteStatus').textContent='This asset list currently selects Solana tokens. Switch to Solana to continue; Base routing is not enabled yet.';return; }
+ $('majorCoins').querySelectorAll('.major-row').forEach(el=>el.classList.toggle('is-selected',el===row));
+ row.classList.add('is-loading');$('quoteStatus').classList.remove('error');$('quoteStatus').textContent='Resolving '+symbol+' Solana mint…';
  try{
   const mintBySymbol={SOL:'So11111111111111111111111111111111111111112',USDC:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'};
   let token=null;
-  if(mintBySymbol[choice.symbol]){
-   const id=mintBySymbol[choice.symbol];token={id,symbol:choice.symbol,name:choice.name,decimals:choice.symbol==='SOL'?9:6,isVerified:true};
-  }else{
-   const url=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(choice.symbol):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(choice.symbol);
-   const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Jupiter token lookup HTTP '+response.status);
-   const candidates=await response.json();
-   const matches=Array.isArray(candidates)?candidates.filter(t=>String(t.symbol||'').toUpperCase()===choice.symbol&&t.id&&Number.isInteger(Number(t.decimals))):[];
-   matches.sort((a,b)=>Number(!!b.isVerified)-Number(!!a.isVerified)||(Number(b.liquidity)||0)-(Number(a.liquidity)||0)||(Number(b.organicScore)||0)-(Number(a.organicScore)||0));
-   token=matches[0]||null;
+  if(mintBySymbol[symbol])token={id:mintBySymbol[symbol],symbol,name:choice.name,decimals:symbol==='SOL'?9:6,isVerified:true};
+  else{
+   const search=await fetchMarketJson('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(symbol));
+   const pairs=(search.pairs||[]).filter(p=>p.chainId==='solana'&&p.baseToken&&String(p.baseToken.symbol||'').toUpperCase()===symbol&&p.baseToken.address&&Number.isFinite(Number(p.liquidity?.usd)));
+   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+   const mint=pairs[0]?.baseToken?.address;
+   if(!mint)throw new Error('No matching Solana liquidity pool was found for '+symbol+'.');
+   const endpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+   let decimals=null,lastError='No Solana RPC available';
+   for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=Number(data.result?.value?.decimals);if(!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
+   if(decimals===null)throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);
+   token={id:mint,symbol,name:choice.name,decimals,isVerified:false};
   }
-  if(!token)throw new Error('No matching Solana token metadata found on Jupiter for '+choice.symbol+'.');
-  const side=token.id===quoteTokens.from.id?'from':'to';
-  if(side==='from'){
-   const previousFrom=quoteTokens.from;quoteTokens.from=quoteTokens.to;quoteTokens.to=previousFrom;
-   for(const key of ['from','to']){const t=quoteTokens[key];$(key==='from'?'quoteFromSearch':'quoteToSearch').value=t.symbol;$(key==='from'?'fromSelected':'toSelected').textContent=t.symbol+' · '+t.decimals+' decimals · '+(t.isVerified?'Jupiter verified':'Unverified');}
-   updateSelectedAsset(quoteTokens.to);
-  }else chooseQuoteToken('to',token);
-  setSwapUrl();$('quoteStatus').textContent=choice.symbol+' selected · swap pair updated. Enter an amount and request a fresh quote.';
- }catch(error){$('quoteStatus').textContent='Could not select '+choice.symbol+': '+error.message;$('quoteStatus').classList.add('error')}
+  if(!token||!Number.isInteger(token.decimals))throw new Error('Exact token mint metadata is unavailable.');
+  if(token.id===quoteTokens.from.id){
+   updateSelectedAsset(token);
+   $('quoteStatus').textContent=symbol+' is already your input asset. Selected market chart refreshed; choose another asset to change the pair.';
+  }else{
+   chooseQuoteToken('to',token);
+   $('quoteStatus').textContent=symbol+' selected as output · '+token.id+' · enter amount and request a fresh quote.';
+  }
+  setSwapUrl();
+ }catch(error){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}
  finally{row.classList.remove('is-loading')}
 });
-
 $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
 $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
 
@@ -563,7 +574,7 @@ function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Nu
 async function loadMajorMarkets(){
  const assets=[{id:'bitcoin',symbol:'BTC',name:'Bitcoin'},{id:'ethereum',symbol:'ETH',name:'Ethereum'},{id:'solana',symbol:'SOL',name:'Solana'},{id:'binancecoin',symbol:'BNB',name:'BNB'},{id:'ripple',symbol:'XRP',name:'XRP'},{id:'usd-coin',symbol:'USDC',name:'USD Coin'}];
  const render=(data,sourceNote)=>{
-  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" aria-label="Select '+esc(c.symbol.toUpperCase())+' for swap"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
+  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
   $('majorStatus').textContent=sourceNote+' · Select an asset to load its Jupiter token and chart.';
  };
  try{
