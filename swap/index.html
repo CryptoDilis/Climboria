@@ -728,7 +728,7 @@ async function signAndExecuteJupiterSwap(){
   const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
   button.textContent='Submitting to Jupiter…';
   const payload={signedTransaction,requestId:prepared.order.requestId};
-  if(prepared.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  if(prepared.order.lastValidBlockHeight!==undefined&&prepared.order.lastValidBlockHeight!==null){const blockHeight=Number(prepared.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
@@ -933,7 +933,7 @@ $('quoteAmount').addEventListener('input',()=>{
  swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),2100);
 });
 const setSwapChainBase=setSwapChain;
-setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
+setSwapChain=function(chain){clearPreparedSwap('Prepared order cleared because the network changed. Prepare a fresh order.');swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
 const requestJupiterQuoteBase=requestJupiterQuote;
 requestJupiterQuote=async function(){
  const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
