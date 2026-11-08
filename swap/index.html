@@ -530,133 +530,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 </aside>
 </div>
 <p class="foot">CLIMBORIA SWAP · SOLANA MAINNET · ROUTING BY JUPITER</p></main></div>
-<script src="/swap-config.js">
-/* Focused Swap interactions: live reference, wallet balances, quick amounts and quote-first states */
-let swapQuoteTimer=null,swapQuoteRequest=0,swapWalletBalanceCache={};
-const SWAP_USDC_MINT='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-const SWAP_RPC_ENDPOINTS=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
-function setSwapReference(token,pair){
- const line=$('referencePrice'),usd=Number(pair?.priceUsd),native=Number(pair?.priceNative);
- const quoteIsUsdc=pair?.quoteToken?.address===SWAP_USDC_MINT;
- if(quoteIsUsdc&&Number.isFinite(native)&&native>0)line.textContent='1 '+token.symbol+' ≈ '+native.toLocaleString('en-US',{maximumFractionDigits:6})+' USDC · live pool';
- else if(Number.isFinite(usd)&&usd>0)line.textContent='1 '+token.symbol+' ≈ '+usdFmt(usd)+' USD · market reference';
- else line.textContent='Live market reference unavailable for this exact mint';
-}
-async function getSwapWalletBalance(token){
- if(!connectedWallet||!token?.id)return null;
- const key=connectedWallet+':'+token.id;
- if(Object.prototype.hasOwnProperty.call(swapWalletBalanceCache,key))return swapWalletBalanceCache[key];
- for(const endpoint of SWAP_RPC_ENDPOINTS){
-  try{
-   const method=token.id==='So11111111111111111111111111111111111111112'?'getBalance':'getTokenAccountsByOwner';
-   const params=method==='getBalance'?[connectedWallet,{commitment:'confirmed'}]:[connectedWallet,{mint:token.id},{encoding:'jsonParsed',commitment:'confirmed'}];
-   const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
-   if(!response.ok)throw new Error('RPC HTTP '+response.status);
-   const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');
-   let amount=0;
-   if(method==='getBalance')amount=Number(data.result?.value)/1e9;
-   else for(const row of (data.result?.value||[]))amount+=Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0);
-   if(!Number.isFinite(amount))throw new Error('Invalid wallet balance');
-   swapWalletBalanceCache[key]=amount;return amount;
-  }catch(error){continue;}
- }
- return null;
-}
-async function refreshSwapBalances(){
- const fromLabel=$('fromBalance'),toLabel=$('toBalance'),buttons=[...document.querySelectorAll('[data-fraction]')];
- if(!connectedWallet){fromLabel.textContent='Connect wallet for balance';toLabel.textContent='Connect wallet for balance';buttons.forEach(b=>b.disabled=true);return;}
- fromLabel.textContent='Loading balance…';toLabel.textContent='Loading balance…';buttons.forEach(b=>b.disabled=true);
- const [from,to]=await Promise.all([getSwapWalletBalance(quoteTokens.from),getSwapWalletBalance(quoteTokens.to)]);
- if(!connectedWallet)return;
- const fmt=v=>v===null?'Balance unavailable':v.toLocaleString('en-US',{maximumFractionDigits:6})+' available';
- fromLabel.textContent=fmt(from);toLabel.textContent=fmt(to);
- buttons.forEach(b=>b.disabled=from===null||from<=0||selectedChain!=='solana');
-}
-const connectWalletBase=connectClimboriaWallet;
-connectClimboriaWallet=async function(){await connectWalletBase();swapWalletBalanceCache={};refreshSwapBalances();setSwapExecutionState();};
-const chooseQuoteTokenBase=chooseQuoteToken;
-chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
-function clearSwapQuotePreview(){
- swapQuoteRequest++;clearTimeout(swapQuoteTimer);
- $('estimatedReceive').textContent='Enter an amount';$('receiveUsd').textContent='Indicative market reference only';$('quoteSummary').textContent='Route details · shown with live quote';
- $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Provider fee</small><b>Shown when supplied</b></div>';
-}
-function setSwapExecutionState(){
- const button=$('prepareSwap'),ready=swapExecutionReady(),amount=Number($('quoteAmount').value)>0;
- button.disabled=!ready||!connectedWallet||!amount;
- button.textContent=ready?(connectedWallet?'Swap '+quoteTokens.from.symbol+' → '+quoteTokens.to.symbol:'Connect wallet to swap'):'🔒 Swap coming soon';
- button.title=ready?'Review the route before wallet approval':'Swap execution is disabled until backend deployment and security verification are complete';
-}
-function setSwapAmountFraction(fraction){
- const balance=swapWalletBalanceCache[connectedWallet+':'+quoteTokens.from.id];
- if(!Number.isFinite(balance)||balance<=0)return;
- const reserve=quoteTokens.from.symbol==='SOL'&&fraction===1?0.005:0;
- const value=Math.max(0,balance-reserve)*fraction;
- $('quoteAmount').value=value.toFixed(Math.min(quoteTokens.from.decimals,8)).replace(/\.?(0+)$/,'');
- $('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
-}
-document.querySelectorAll('[data-fraction]').forEach(button=>button.addEventListener('click',()=>setSwapAmountFraction(Number(button.dataset.fraction))));
-$('swapFlip').addEventListener('click',()=>{
- const oldFrom=quoteTokens.from;quoteTokens.from=quoteTokens.to;quoteTokens.to=oldFrom;
- $('quoteFromSearch').value=quoteTokens.from.symbol;$('quoteToSearch').value=quoteTokens.to.symbol;
- $('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;
- $('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);
- $('fromResults').innerHTML='';$('toResults').innerHTML='';setSwapUrl();updateSelectedAsset(quoteTokens.from);swapWalletBalanceCache={};refreshSwapBalances();clearSwapQuotePreview();setSwapExecutionState();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
-});
-document.querySelectorAll('[data-pair]').forEach(button=>button.addEventListener('click',()=>{
- const [from,to]=button.dataset.pair.split('|');$('quoteFromSearch').value=from;$('quoteToSearch').value=to;
- if(from==='SOL'||from==='USDC')$('fromResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
- if(to==='SOL'||to==='USDC')$('toResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
- searchQuoteToken('from');searchQuoteToken('to');
-}));
-$('quoteAmount').addEventListener('input',()=>{
- swapQuoteRequest++;
- const amount=Number($('quoteAmount').value),valid=Number.isFinite(amount)&&amount>0;
- $('getQuote').disabled=!valid||selectedChain!=='solana';$('getQuote').textContent=valid?'Find best route':'Enter an amount';
- setSwapExecutionState();$('estimatedReceive').textContent=valid?'Finding best route…':'Enter an amount';
- $('estimatedReceive').classList.toggle('swap-loading',valid);$('quoteFreshness').textContent=valid?'Updating live quote…':'Quote updates as you type';
- clearTimeout(swapQuoteTimer);if(!valid){swapQuoteRequest++;$('estimatedReceive').classList.remove('swap-loading');return;}
- swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),650);
-});
-const setSwapChainBase=setSwapChain;
-setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
-const requestJupiterQuoteBase=requestJupiterQuote;
-requestJupiterQuote=async function(){
- const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
- const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
- if(selectedChain!=='solana'){status.textContent='Base quotes are not available yet.';return;}
- if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return;}
- if(from.id===to.id){status.textContent='Choose two different token mints.';return;}
- const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
- button.disabled=true;button.textContent='Finding best route…';$('estimatedReceive').textContent='Finding best route…';$('estimatedReceive').classList.add('swap-loading');
- $('quoteFreshness').textContent='Requesting a fresh Jupiter quote';
- try{
-  const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)}),slippage=$('swapSlippage')?.value||'auto';
-  if(slippage!=='auto')params.set('slippageBps',slippage);
-  const url=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();
-  const response=await fetch(url,{headers:{accept:'application/json'}}),data=await response.json();
-  if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
-  if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
-  if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote');
-  if(request!==swapQuoteRequest)return;
-  const out=Number(data.outAmount)/Math.pow(10,to.decimals),impact=data.priceImpactPct??data.priceImpact??null;
-  const router=data.router||'Jupiter';$('estimatedReceive').textContent=out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol;
-  $('estimatedReceive').classList.remove('swap-loading');$('receiveUsd').textContent='Route estimate · subject to change';
-  $('quoteSummary').textContent='1 '+from.symbol+' → '+to.symbol+' · '+router+' · view breakdown';
-  const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';
-  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Provider fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Execution</small><b>Locked · quote only</b></div>';
-  $('quoteDetails').open=true;status.textContent='Fresh quote received from Jupiter. No transaction has been signed or submitted.';$('quoteFreshness').textContent='Quote just updated';setSwapExecutionState();
- }catch(error){
-  if(request!==swapQuoteRequest)return;
-  $('estimatedReceive').classList.remove('swap-loading');$('estimatedReceive').textContent='Quote unavailable';
-  $('quoteResults').innerHTML='<div class="notice" style="grid-column:1/-1">Live quote unavailable: '+esc(error.message)+'. No cached or fabricated estimate is shown.</div>';
-  $('quoteSummary').textContent='Route details · quote unavailable';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.';$('quoteFreshness').textContent='Provider unavailable';
- }finally{
-  if(request===swapQuoteRequest){button.disabled=!(Number($('quoteAmount').value)>0);button.textContent='Find best route';}
- }
-};
-
-</script>
+<script src="/swap-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -918,5 +792,132 @@ $('watchlistClose').addEventListener('click',()=>{$('watchlistPopover').hidden=t
 $('watchlistAddFrom').addEventListener('click',()=>addClimboriaWatch(quoteTokens.from));$('watchlistAddTo').addEventListener('click',()=>addClimboriaWatch(quoteTokens.to));
 $('watchlistItems').addEventListener('click',e=>{const b=e.target.closest('[data-watch-remove]');if(!b)return;localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(getClimboriaWatchlist().filter(m=>m!==b.dataset.watchRemove)));renderClimboriaWatchlist();$('watchlistAddFrom').disabled=getClimboriaWatchlist().includes(quoteTokens.from.id);$('watchlistAddTo').disabled=getClimboriaWatchlist().includes(quoteTokens.to.id)});
 window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderClimboriaWatchlist()});renderClimboriaWatchlist();
+
+
+/* Focused Swap interactions: live reference, wallet balances, quick amounts and quote-first states */
+let swapQuoteTimer=null,swapQuoteRequest=0,swapWalletBalanceCache={};
+const SWAP_USDC_MINT='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const SWAP_RPC_ENDPOINTS=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+function setSwapReference(token,pair){
+ const line=$('referencePrice'),usd=Number(pair?.priceUsd),native=Number(pair?.priceNative);
+ const quoteIsUsdc=pair?.quoteToken?.address===SWAP_USDC_MINT;
+ if(quoteIsUsdc&&Number.isFinite(native)&&native>0)line.textContent='1 '+token.symbol+' ≈ '+native.toLocaleString('en-US',{maximumFractionDigits:6})+' USDC · live pool';
+ else if(Number.isFinite(usd)&&usd>0)line.textContent='1 '+token.symbol+' ≈ '+usdFmt(usd)+' USD · market reference';
+ else line.textContent='Live market reference unavailable for this exact mint';
+}
+async function getSwapWalletBalance(token){
+ if(!connectedWallet||!token?.id)return null;
+ const key=connectedWallet+':'+token.id;
+ if(Object.prototype.hasOwnProperty.call(swapWalletBalanceCache,key))return swapWalletBalanceCache[key];
+ for(const endpoint of SWAP_RPC_ENDPOINTS){
+  try{
+   const method=token.id==='So11111111111111111111111111111111111111112'?'getBalance':'getTokenAccountsByOwner';
+   const params=method==='getBalance'?[connectedWallet,{commitment:'confirmed'}]:[connectedWallet,{mint:token.id},{encoding:'jsonParsed',commitment:'confirmed'}];
+   const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+   if(!response.ok)throw new Error('RPC HTTP '+response.status);
+   const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');
+   let amount=0;
+   if(method==='getBalance')amount=Number(data.result?.value)/1e9;
+   else for(const row of (data.result?.value||[]))amount+=Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0);
+   if(!Number.isFinite(amount))throw new Error('Invalid wallet balance');
+   swapWalletBalanceCache[key]=amount;return amount;
+  }catch(error){continue;}
+ }
+ return null;
+}
+async function refreshSwapBalances(){
+ const fromLabel=$('fromBalance'),toLabel=$('toBalance'),buttons=[...document.querySelectorAll('[data-fraction]')];
+ if(!connectedWallet){fromLabel.textContent='Connect wallet for balance';toLabel.textContent='Connect wallet for balance';buttons.forEach(b=>b.disabled=true);return;}
+ fromLabel.textContent='Loading balance…';toLabel.textContent='Loading balance…';buttons.forEach(b=>b.disabled=true);
+ const [from,to]=await Promise.all([getSwapWalletBalance(quoteTokens.from),getSwapWalletBalance(quoteTokens.to)]);
+ if(!connectedWallet)return;
+ const fmt=v=>v===null?'Balance unavailable':v.toLocaleString('en-US',{maximumFractionDigits:6})+' available';
+ fromLabel.textContent=fmt(from);toLabel.textContent=fmt(to);
+ buttons.forEach(b=>b.disabled=from===null||from<=0||selectedChain!=='solana');
+}
+const connectWalletBase=connectClimboriaWallet;
+connectClimboriaWallet=async function(){await connectWalletBase();swapWalletBalanceCache={};refreshSwapBalances();setSwapExecutionState();};
+const chooseQuoteTokenBase=chooseQuoteToken;
+chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
+function clearSwapQuotePreview(){
+ swapQuoteRequest++;clearTimeout(swapQuoteTimer);
+ $('estimatedReceive').textContent='Enter an amount';$('receiveUsd').textContent='Indicative market reference only';$('quoteSummary').textContent='Route details · shown with live quote';
+ $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Provider fee</small><b>Shown when supplied</b></div>';
+}
+function setSwapExecutionState(){
+ const button=$('prepareSwap'),ready=swapExecutionReady(),amount=Number($('quoteAmount').value)>0;
+ button.disabled=!ready||!connectedWallet||!amount;
+ button.textContent=ready?(connectedWallet?'Swap '+quoteTokens.from.symbol+' → '+quoteTokens.to.symbol:'Connect wallet to swap'):'🔒 Swap coming soon';
+ button.title=ready?'Review the route before wallet approval':'Swap execution is disabled until backend deployment and security verification are complete';
+}
+function setSwapAmountFraction(fraction){
+ const balance=swapWalletBalanceCache[connectedWallet+':'+quoteTokens.from.id];
+ if(!Number.isFinite(balance)||balance<=0)return;
+ const reserve=quoteTokens.from.symbol==='SOL'&&fraction===1?0.005:0;
+ const value=Math.max(0,balance-reserve)*fraction;
+ $('quoteAmount').value=value.toFixed(Math.min(quoteTokens.from.decimals,8)).replace(/\.?(0+)$/,'');
+ $('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
+}
+document.querySelectorAll('[data-fraction]').forEach(button=>button.addEventListener('click',()=>setSwapAmountFraction(Number(button.dataset.fraction))));
+$('swapFlip').addEventListener('click',()=>{
+ const oldFrom=quoteTokens.from;quoteTokens.from=quoteTokens.to;quoteTokens.to=oldFrom;
+ $('quoteFromSearch').value=quoteTokens.from.symbol;$('quoteToSearch').value=quoteTokens.to.symbol;
+ $('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;
+ $('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);
+ $('fromResults').innerHTML='';$('toResults').innerHTML='';setSwapUrl();updateSelectedAsset(quoteTokens.from);swapWalletBalanceCache={};refreshSwapBalances();clearSwapQuotePreview();setSwapExecutionState();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
+});
+document.querySelectorAll('[data-pair]').forEach(button=>button.addEventListener('click',()=>{
+ const [from,to]=button.dataset.pair.split('|');$('quoteFromSearch').value=from;$('quoteToSearch').value=to;
+ if(from==='SOL'||from==='USDC')$('fromResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
+ if(to==='SOL'||to==='USDC')$('toResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
+ searchQuoteToken('from');searchQuoteToken('to');
+}));
+$('quoteAmount').addEventListener('input',()=>{
+ swapQuoteRequest++;
+ const amount=Number($('quoteAmount').value),valid=Number.isFinite(amount)&&amount>0;
+ $('getQuote').disabled=!valid||selectedChain!=='solana';$('getQuote').textContent=valid?'Find best route':'Enter an amount';
+ setSwapExecutionState();$('estimatedReceive').textContent=valid?'Finding best route…':'Enter an amount';
+ $('estimatedReceive').classList.toggle('swap-loading',valid);$('quoteFreshness').textContent=valid?'Updating live quote…':'Quote updates as you type';
+ clearTimeout(swapQuoteTimer);if(!valid){swapQuoteRequest++;$('estimatedReceive').classList.remove('swap-loading');return;}
+ swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),650);
+});
+const setSwapChainBase=setSwapChain;
+setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
+const requestJupiterQuoteBase=requestJupiterQuote;
+requestJupiterQuote=async function(){
+ const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(selectedChain!=='solana'){status.textContent='Base quotes are not available yet.';return;}
+ if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return;}
+ if(from.id===to.id){status.textContent='Choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Finding best route…';$('estimatedReceive').textContent='Finding best route…';$('estimatedReceive').classList.add('swap-loading');
+ $('quoteFreshness').textContent='Requesting a fresh Jupiter quote';
+ try{
+  const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)}),slippage=$('swapSlippage')?.value||'auto';
+  if(slippage!=='auto')params.set('slippageBps',slippage);
+  const url=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();
+  const response=await fetch(url,{headers:{accept:'application/json'}}),data=await response.json();
+  if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
+  if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
+  if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote');
+  if(request!==swapQuoteRequest)return;
+  const out=Number(data.outAmount)/Math.pow(10,to.decimals),impact=data.priceImpactPct??data.priceImpact??null;
+  const router=data.router||'Jupiter';$('estimatedReceive').textContent=out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol;
+  $('estimatedReceive').classList.remove('swap-loading');$('receiveUsd').textContent='Route estimate · subject to change';
+  $('quoteSummary').textContent='1 '+from.symbol+' → '+to.symbol+' · '+router+' · view breakdown';
+  const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';
+  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Provider fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Execution</small><b>Locked · quote only</b></div>';
+  $('quoteDetails').open=true;status.textContent='Fresh quote received from Jupiter. No transaction has been signed or submitted.';$('quoteFreshness').textContent='Quote just updated';setSwapExecutionState();
+ }catch(error){
+  if(request!==swapQuoteRequest)return;
+  $('estimatedReceive').classList.remove('swap-loading');$('estimatedReceive').textContent='Quote unavailable';
+  $('quoteResults').innerHTML='<div class="notice" style="grid-column:1/-1">Live quote unavailable: '+esc(error.message)+'. No cached or fabricated estimate is shown.</div>';
+  $('quoteSummary').textContent='Route details · quote unavailable';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.';$('quoteFreshness').textContent='Provider unavailable';
+ }finally{
+  if(request===swapQuoteRequest){button.disabled=!(Number($('quoteAmount').value)>0);button.textContent='Find best route';}
+ }
+};
+
 
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>
