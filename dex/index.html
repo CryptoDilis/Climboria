@@ -507,7 +507,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <div class="dex-trade-field"><label for="dexTradeAmount">You pay <span id="dexTradePaySymbol">SOL</span></label><input id="dexTradeAmount" type="number" min="0" step="any" placeholder="0.00" inputmode="decimal"></div>
  <div class="dex-trade-percent" aria-label="Wallet balance percentage"><button type="button" data-dex-percent="25">25%</button><button type="button" data-dex-percent="50">50%</button><button type="button" data-dex-percent="75">75%</button><button type="button" data-dex-percent="100">100%</button></div>
  <div class="dex-limit-fields" id="dexLimitFields" hidden><label for="dexLimitPrice">Limit price (USD)</label><input id="dexLimitPrice" type="number" min="0" step="any" placeholder="Target price"><p>Limit orders require a deployed and audited on-chain order program. This option is a preview only.</p></div>
- <div class="dex-trade-settings"><label>Slippage tolerance<select id="dexTradeSlippage"><option value="50">0.50%</option><option value="100" selected>1.00%</option><option value="150">1.50%</option><option value="300">3.00%</option></select></label><label>Priority fee<select id="dexTradePriority"><option value="low">Low</option><option value="medium" selected>Standard</option><option value="high">High</option></select></label></div>
+ <div class="dex-trade-settings"><label>Slippage tolerance<select id="dexTradeSlippage"><option value="50">0.50%</option><option value="100" selected>1.00%</option><option value="150">1.50%</option><option value="300">3.00%</option></select></label><label>Priority fee · preview only<select id="dexTradePriority"><option value="low">Low</option><option value="medium" selected>Standard</option><option value="high">High</option></select></label></div>
  <div class="dex-trade-wallet"><span id="dexTradeWalletStatus">Wallet not connected</span><button type="button" id="dexTradeConnect">Connect wallet</button></div>
  <button type="button" class="dex-trade-quote" id="dexTradeGetQuote">Get live quote</button>
  <button type="button" class="dex-trade-prepare" id="dexTradePrepare">Prepare wallet-reviewed order</button>
@@ -832,7 +832,7 @@ async function dexTradeSyncToken(pair){
 function dexTradeApplyDirection(){
  if(!dexTradeToken)return;
  const sol={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
- if(dexTradeSide==='sell'&&!Number.isInteger(dexTradeToken.decimals)){dexTradeSetStatus('Exact token decimals are unavailable. Sell quote is blocked to prevent an incorrect amount.');return}const from=dexTradeSide==='buy'?sol:dexTradeToken,to=dexTradeSide==='buy'?dexTradeToken:sol;
+ if(!Number.isInteger(dexTradeToken.decimals)){dexTradeSetStatus('Exact token decimals are unavailable. Trading is blocked to prevent an incorrect amount.');return}const from=dexTradeSide==='buy'?sol:dexTradeToken,to=dexTradeSide==='buy'?dexTradeToken:sol;
  quoteTokens.from={...from};quoteTokens.to={...to};
  $('quoteFromSearch').value=from.symbol;$('quoteToSearch').value=to.symbol;
  $('fromSelected').textContent=from.symbol+' · '+from.decimals+' decimals';$('toSelected').textContent=to.symbol+' · '+to.decimals+' decimals';
