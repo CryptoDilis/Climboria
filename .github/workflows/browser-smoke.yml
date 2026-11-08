@@ -114,19 +114,19 @@ jobs:
               const hoverLabel=await btc.evaluate(el=>getComputedStyle(el,'::after').content);
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
-              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
-              if(await page.locator('#quoteToSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not select BTC as the output asset');
-              const selectedMint=new URL(page.url()).searchParams.get('to');
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not select BTC as the input asset');
+              const selectedMint=new URL(page.url()).searchParams.get('from');
               if(selectedMint!=='11111111111111111111111111111111') throw new Error('Major asset click did not persist the exact selected token mint URL');
               await page.reload({waitUntil:'domcontentloaded'});
-              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
-              if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
               await page.goBack();
-              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='USDC',null,{timeout:10000});
-              if(await page.locator('#quoteToSearch').inputValue()!=='USDC') throw new Error('Swap browser Back did not restore the previous output token');
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='USDC',null,{timeout:10000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='USDC') throw new Error('Swap browser Back did not restore the previous input token');
               await page.goForward();
-              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
-              if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
               // Real mobile touch acceptance: every Major Asset stays visible, has no SELECT overlay, and BTC responds to a tap.
               const mobileSwap=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobileSwap.on('pageerror',e=>errors.push('MOBILE SWAP PAGEERROR '+mobileSwap.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
@@ -144,8 +144,8 @@ jobs:
               const mobileHit=await mobileBtc.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {cursor:getComputedStyle(el).cursor,userSelect:getComputedStyle(el).userSelect,after:getComputedStyle(el,'::after').content,hit:!!hit&&!!hit.closest('button.major-row[data-major-symbol="BTC"]')}});
               if(mobileHit.cursor!=='pointer'||mobileHit.userSelect!=='none'||(mobileHit.after!=='none'&&mobileHit.after!=='normal')||!mobileHit.hit) throw new Error('Mobile Major Asset hit-target/SELECT overlay check failed: '+JSON.stringify(mobileHit));
               await mobileBtc.tap();
-              await mobileSwap.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
-              if(await mobileSwap.locator('#quoteToSearch').inputValue()!=='BTC') throw new Error('Tapping BTC on mobile did not select BTC as output');
+              await mobileSwap.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
+              if(await mobileSwap.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Tapping BTC on mobile did not select BTC as input');
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
@@ -207,7 +207,7 @@ jobs:
               page.on('pageerror',error=>errors.push(error.message));
               const response=await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
-              for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteToSearch','#getQuote','#prepareSwap','#quoteStatus']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
+              for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteFromSearch','#getQuote','#prepareSwap','#quoteStatus']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               const heading=await page.locator('h1').first().innerText();
               if(!heading.toLowerCase().includes('swap')) throw new Error('Unexpected Swap page heading: '+heading);
               if(errors.length) throw new Error('Swap browser errors: '+errors.join(' | '));
