@@ -266,7 +266,7 @@ jobs:
               const poolA='11111111111111111111111111111111';
               const poolB='22222222222222222222222222222222';
               const poolData={pairs:[
-                {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}}},
+                {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}},info:{websites:[{label:'Website',url:'https://climboria.fun'}],socials:[{type:'twitter',url:'https://x.com/ClimboriaHQ'}]}},
                 {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'1',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
@@ -278,6 +278,17 @@ jobs:
                 return route.fulfill({status:200,contentType:'application/json',body:'{}'});
               });
               await page.goto('http://127.0.0.1:4173/dex/?token='+mint,{waitUntil:'domcontentloaded'});
+              // Token Intelligence social actions must remain inside the card, beneath the title/metrics row.
+              await page.locator('#detailSocialRail a').first().waitFor({state:'visible',timeout:15000});
+              const socialLayout=await page.evaluate(()=>{
+                const card=document.querySelector('#tokenDetail'),rail=document.querySelector('#detailSocialRail'),heading=card?.querySelector('.detail-heading');
+                if(!card||!rail||!heading)return null;
+                const c=card.getBoundingClientRect(),r=rail.getBoundingClientRect(),h=heading.getBoundingClientRect();
+                return {cardRight:c.right,railRight:r.right,headingBottom:h.bottom,railTop:r.top,links:[...rail.querySelectorAll('a')].map(a=>({label:a.innerText.trim(),href:a.href}))};
+              });
+              if(!socialLayout||socialLayout.links.length!==2) throw new Error('Token Intelligence social links did not render from provider metadata: '+JSON.stringify(socialLayout));
+              if(socialLayout.railRight>socialLayout.cardRight+1||socialLayout.railTop<socialLayout.headingBottom-1) throw new Error('Token social action rail escaped the card or overlapped title/metrics: '+JSON.stringify(socialLayout));
+              await page.screenshot({path:'climboria-dex-token-socials.png',fullPage:true});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
               if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
               await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
