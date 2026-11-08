@@ -203,7 +203,34 @@ function setSwapChain(chain){
 
 
 /* Public market data panels: CoinGecko majors + DexScreener selected Solana pool */
-const usdFmt=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1000?'{if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
+const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
+const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
+async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
+async function updateSelectedAsset(token){
+ const title=$('selectedAssetTitle'),price=$('selectedAssetPrice'),change=$('selectedAssetChange'),volume=$('selectedAssetVolume'),mcap=$('selectedAssetMcap'),liquidity=$('selectedAssetLiquidity'),venue=$('selectedAssetVenue'),note=$('selectedAssetNote'),chart=$('selectedAssetChart'),empty=$('selectedChartEmpty');
+ if(!token||!token.id)return;
+ title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
+ price.textContent='Loading…';change.textContent='—';volume.textContent='—';mcap.textContent='—';liquidity.textContent='—';venue.textContent='—';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
+ try{
+  const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
+  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress);
+  if(!pairs.length)throw new Error('No Solana liquidity pool found for this mint.');
+  pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+  const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);
+  price.textContent=Number.isFinite(usd)?usdFmt(usd):'—';
+  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'—';
+  change.className=Number.isFinite(change24)?(change24>=0?'positive':'negative'):'muted';
+  volume.textContent=compactUsd(pair.volume?.h24);
+  mcap.textContent=compactUsd(pair.marketCap??pair.fdv);
+  liquidity.textContent=compactUsd(pair.liquidity?.usd);
+  venue.textContent=pair.dexId||'Solana pool';
+  note.textContent='Live DexScreener pool data · '+pairs.length+' matching Solana pool(s). Values may be incomplete.';
+  chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
+  empty.hidden=true;
+ }catch(error){
+  price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='No chart available for this token. '+error.message;chart.removeAttribute('src');
+ }
+}
 async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
