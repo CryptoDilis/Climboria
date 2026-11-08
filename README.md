@@ -1,3 +1,18 @@
+## 2026-11-09 — Cloudflare Custom Domain deployment correction
+
+- [x] Re-checked the first-deploy sequence against Cloudflare's current Custom Domains documentation. Corrected the earlier manual-pre-attachment guidance: a Custom Domain can be declared in Wrangler config using `[[routes]]`, `pattern = "api.climboria.fun"`, and `custom_domain = true`; Wrangler provisions it during deployment.
+- [x] Added the `api.climboria.fun` Custom Domain route to `dex/swap-proxy/wrangler.toml`.
+- [x] Added deployment-workflow assertions that the custom-domain hostname and `custom_domain = true` remain configured.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md`: confirm the Cloudflare zone is active and remove any conflicting existing CNAME before deploy; Wrangler provisions the domain and certificate. The workflow then verifies health and CORS.
+- [ ] Cloudflare account-specific namespace and encrypted GitHub Actions secrets remain prerequisites. No Worker deployment was run; frontend proxy and transaction execution remain disabled.
+- [ ] Confirm the latest Validate and Browser Smoke checks on this head before treating the change as CI-verified.
+
+Cloudflare reference: [Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+
+Commits: [454d8a3](https://github.com/CryptoDilis/Climboria/commit/454d8a3c6c846148ea1ad11f6bce44c422a6042a), [d11db03](https://github.com/CryptoDilis/Climboria/commit/d11db038f99c606faf6b15e532bfe0c0957c7c15), [c37565b](https://github.com/CryptoDilis/Climboria/commit/c37565bba9e7b1666630347851fbf54da29e0ea3).
+
+---
+
 ## 2026-11-09 — Cloudflare first-deployment order correction
 
 - [x] Audited `dex/swap-proxy/DEPLOYMENT.md`, `.github/workflows/deploy-climboria-api.yml`, and `dex/swap-proxy/wrangler.toml` against the first-run sequence.
