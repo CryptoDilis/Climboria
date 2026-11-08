@@ -271,6 +271,19 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .hub-link .climboria-icon,.mobile-hub-link .climboria-icon{width:23px;height:23px;flex:0 0 auto}
 @media(max-width:900px){.header-icon{width:36px!important;height:36px!important}.header-icon .climboria-icon{width:22px;height:22px}}
 
+/* Premium Jupiter token search results */
+.results{display:grid;gap:7px;margin-top:9px;max-height:280px;overflow:auto;overscroll-behavior:contain;padding:2px 3px 4px;border-radius:12px;scrollbar-width:thin;scrollbar-color:#52657e #0b1421}
+.results:empty{display:none}
+.results .notice{padding:12px 14px;border:1px solid #34465d;border-radius:10px;background:linear-gradient(145deg,#142338,#0a1422);color:#aebdd0;font-size:11px;line-height:1.5}
+.token-option{display:grid;width:100%;gap:5px;padding:11px 13px;text-align:left;border:1px solid #30445d;border-radius:10px;background:linear-gradient(145deg,#17283e,#0b1421);color:#edf2f8;font:inherit;cursor:pointer;transition:border-color .16s,background .16s,transform .16s}
+.token-option:hover,.token-option:focus-visible{border-color:#c39b58;background:linear-gradient(145deg,#21364f,#101d2e);outline:none}
+.token-option:focus-visible{box-shadow:0 0 0 2px #c39b5866}
+.token-option b{font-size:12px;color:#f4dfb4}
+.token-option small{display:block;overflow-wrap:anywhere;color:#91a3b9;font-size:9px;line-height:1.4}
+.token-option .token-option-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#9aabc0;font-size:9px}
+.token-option .token-verification{color:#74d6a5}
+.major-row.is-selected{background:linear-gradient(90deg,#6b512833,#17283e);border-top-color:#c49b59;box-shadow:inset 2px 0 #d8b66d}
+.major-row.is-loading{opacity:.65;cursor:progress}
 /* Clickable major-asset market rows */
 .major-row{width:100%;font:inherit;color:inherit;text-align:left;background:transparent;border:0;border-top:1px solid #ffffff10;cursor:pointer;border-radius:7px;transition:background .18s,border-color .18s,transform .18s;position:relative}
 .major-row:hover,.major-row:focus-visible{background:linear-gradient(90deg,#263a52aa,#14243a55);border-top-color:#b9955c;outline:none;transform:translateX(2px)}
@@ -407,16 +420,20 @@ let majorAssetChoices=[];
 const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
 const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
+let selectedChartRequest=0;
 async function updateSelectedAsset(token){
+ const chartRequest=++selectedChartRequest;
  const title=$('selectedAssetTitle'),price=$('selectedAssetPrice'),change=$('selectedAssetChange'),volume=$('selectedAssetVolume'),mcap=$('selectedAssetMcap'),liquidity=$('selectedAssetLiquidity'),venue=$('selectedAssetVenue'),note=$('selectedAssetNote'),chart=$('selectedAssetChart'),empty=$('selectedChartEmpty');
  if(!token||!token.id)return;
  title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
  price.textContent='Loading…';change.textContent='—';volume.textContent='—';mcap.textContent='—';liquidity.textContent='—';venue.textContent='—';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
  try{
   const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
+  if(chartRequest!==selectedChartRequest)return;
   const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress);
   if(!pairs.length)throw new Error('No Solana liquidity pool found for this mint.');
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+  if(chartRequest!==selectedChartRequest)return;
   const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);
   price.textContent=Number.isFinite(usd)?usdFmt(usd):'—';
   change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'—';
@@ -429,6 +446,7 @@ async function updateSelectedAsset(token){
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
   empty.hidden=true;
  }catch(error){
+  if(chartRequest!==selectedChartRequest)return;
   price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='No chart available for this token. '+error.message;chart.removeAttribute('src');
  }
 }
@@ -471,7 +489,7 @@ async function connectClimboriaWallet(){
 }
 async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
-async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+'</b> · '+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'<br><small>'+esc(t.id)+' · '+(t.isVerified?'Jupiter verified':'Unverified')+'</small></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+async function searchQuoteToken(side){const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
 function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};updateSelectedAsset(quoteTokens[side]);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';setSwapUrl();}
 const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
@@ -559,19 +577,21 @@ $('majorCoins').addEventListener('click',async e=>{
   let mint=mintBySymbol[symbol];
   if(!mint){
    const search=await fetchMarketJson('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(symbol));
-   const pairs=(search.pairs||[]).filter(p=>p.chainId==='solana'&&p.baseToken&&String(p.baseToken.symbol||'').toUpperCase()===symbol&&p.baseToken.address&&Number.isFinite(Number(p.liquidity?.usd)));
-   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
-   mint=pairs[0]?.baseToken?.address;
+   const candidates=(search.pairs||[]).filter(p=>p.chainId==='solana'&&Number.isFinite(Number(p.liquidity?.usd))).map(p=>{
+    const base=String(p.baseToken?.symbol||'').toUpperCase()===symbol?p.baseToken:null;
+    const quote=String(p.quoteToken?.symbol||'').toUpperCase()===symbol?p.quoteToken:null;
+    const match=base||quote;
+    return match?.address?{mint:match.address,liquidity:Number(p.liquidity?.usd)||0}:null;
+   }).filter(Boolean);
+   candidates.sort((a,b)=>b.liquidity-a.liquidity);
+   mint=candidates[0]?.mint;
    if(!mint)throw new Error('No matching Solana liquidity pool was found for '+symbol+'.');
   }
   const token=await resolveSolanaTokenByMint(mint,symbol,choice.name);
-  if(token.id===quoteTokens.from.id){
-   updateSelectedAsset(token);
-   $('quoteStatus').textContent=symbol+' is already your input asset. Selected market chart refreshed; choose another asset to change the pair.';
-  }else{
-   chooseQuoteToken('to',token);
-   $('quoteStatus').textContent=symbol+' selected as output · '+token.id+' · enter amount and request a fresh quote.';
-  }
+  if(token.id===quoteTokens.to.id)throw new Error(symbol+' is already your output asset. Choose a different major asset.');
+  chooseQuoteToken('from',token);
+  $('quoteStatus').textContent=symbol+' selected as input asset · chart and market panel updated for '+token.id+'.';
+  $('majorCoins').querySelectorAll('.major-row').forEach(el=>el.classList.toggle('is-selected',el===row));
   setSwapUrl();
  }catch(error){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}
  finally{row.classList.remove('is-loading')}
