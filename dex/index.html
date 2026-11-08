@@ -495,7 +495,19 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 </aside></div>
 <footer class="footer">Climboria DEX · Summit Radar alpha · Data provider: <a href="https://docs.dexscreener.com/api/reference" target="_blank" rel="noopener">DexScreener API</a>. Values are provider-reported; coverage and freshness vary. Always verify token mint addresses and pool liquidity independently.</footer>
 </main>
-<script src="/swap-config.js"></script>
+<script src="/swap-config.js">
+const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';
+function getClimboriaWatchlist(){try{const v=JSON.parse(localStorage.getItem(CLIMBORIA_WATCHLIST_KEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'):[]}catch(e){return []}}
+function renderClimboriaWatchlist(){const list=getClimboriaWatchlist(),box=$('watchlistItems');$('watchlistCount').textContent=String(list.length);box.innerHTML=list.length?list.map(m=>'<div class="watchlist-item"><a href="/dex/?token='+encodeURIComponent(m)+'" title="'+esc(m)+'">'+esc(m.slice(0,7)+'…'+m.slice(-5))+'</a><button type="button" data-watch-remove="'+esc(m)+'" aria-label="Remove token">×</button></div>').join(''):'<div class="watchlist-empty">No saved tokens yet. Add a selected token to start tracking.</div>';}
+function addClimboriaWatch(mint){if(!mint)return;const list=getClimboriaWatchlist();if(!list.includes(mint))list.unshift(mint);try{localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list.slice(0,100)));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='✓ Added to watchlist';}catch(e){$('watchlistAddCurrent').textContent='Storage unavailable';}}
+$('watchlistTrigger').addEventListener('click',()=>{const panel=$('watchlistPopover'),open=panel.hidden;panel.hidden=!open;$('watchlistTrigger').setAttribute('aria-expanded',String(open));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='＋ Add selected token';$('watchlistCurrentLabel').textContent=activeDetailMint?'Selected: '+activeDetailMint.slice(0,7)+'…'+activeDetailMint.slice(-5):'No token selected yet';$('watchlistAddCurrent').disabled=!activeDetailMint;});
+$('watchlistClose').addEventListener('click',()=>{$('watchlistPopover').hidden=true;$('watchlistTrigger').setAttribute('aria-expanded','false')});
+$('watchlistAddCurrent').addEventListener('click',()=>addClimboriaWatch(activeDetailMint));
+$('watchlistItems').addEventListener('click',e=>{const b=e.target.closest('[data-watch-remove]');if(!b)return;const list=getClimboriaWatchlist().filter(m=>m!==b.dataset.watchRemove);localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list));renderClimboriaWatchlist()});
+window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderClimboriaWatchlist()});renderClimboriaWatchlist();
+
+
+</script>
 <script>
 (()=>{'use strict';
 const API='https://api.dexscreener.com';
@@ -884,16 +896,5 @@ load();loadBaseMarkets();setInterval(load,60000);setInterval(loadBaseMarkets,600
 })();
 
 const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');document.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>{const type=button.dataset.panel;document.getElementById('climboriaPanelTitle').textContent=type==='announcements'?'Announcements':'Notifications';document.getElementById('climboriaPanelContent').innerHTML=type==='announcements'?'<p>Official Climboria ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Market and account alerts will appear here when notification services are enabled.';climboriaPanelBackdrop.hidden=false}));document.getElementById('climboriaPanelClose').addEventListener('click',()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener('click',e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
-
-const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';
-function getClimboriaWatchlist(){try{const v=JSON.parse(localStorage.getItem(CLIMBORIA_WATCHLIST_KEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'):[]}catch(e){return []}}
-function renderClimboriaWatchlist(){const list=getClimboriaWatchlist(),box=$('watchlistItems');$('watchlistCount').textContent=String(list.length);box.innerHTML=list.length?list.map(m=>'<div class="watchlist-item"><a href="/dex/?token='+encodeURIComponent(m)+'" title="'+esc(m)+'">'+esc(m.slice(0,7)+'…'+m.slice(-5))+'</a><button type="button" data-watch-remove="'+esc(m)+'" aria-label="Remove token">×</button></div>').join(''):'<div class="watchlist-empty">No saved tokens yet. Add a selected token to start tracking.</div>';}
-function addClimboriaWatch(mint){if(!mint)return;const list=getClimboriaWatchlist();if(!list.includes(mint))list.unshift(mint);try{localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list.slice(0,100)));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='✓ Added to watchlist';}catch(e){$('watchlistAddCurrent').textContent='Storage unavailable';}}
-$('watchlistTrigger').addEventListener('click',()=>{const panel=$('watchlistPopover'),open=panel.hidden;panel.hidden=!open;$('watchlistTrigger').setAttribute('aria-expanded',String(open));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='＋ Add selected token';$('watchlistCurrentLabel').textContent=activeDetailMint?'Selected: '+activeDetailMint.slice(0,7)+'…'+activeDetailMint.slice(-5):'No token selected yet';$('watchlistAddCurrent').disabled=!activeDetailMint;});
-$('watchlistClose').addEventListener('click',()=>{$('watchlistPopover').hidden=true;$('watchlistTrigger').setAttribute('aria-expanded','false')});
-$('watchlistAddCurrent').addEventListener('click',()=>addClimboriaWatch(activeDetailMint));
-$('watchlistItems').addEventListener('click',e=>{const b=e.target.closest('[data-watch-remove]');if(!b)return;const list=getClimboriaWatchlist().filter(m=>m!==b.dataset.watchRemove);localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list));renderClimboriaWatchlist()});
-window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderClimboriaWatchlist()});renderClimboriaWatchlist();
-
 </script>
 <svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>
