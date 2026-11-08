@@ -574,32 +574,29 @@ $('majorCoins').addEventListener('click',async e=>{
  const choice=assets[symbol];if(!choice)return;
  if(selectedChain!=='solana'){ $('quoteStatus').textContent='This asset list currently selects Solana tokens. Switch to Solana to continue; Base routing is not enabled yet.';return; }
  $('majorCoins').querySelectorAll('.major-row').forEach(el=>el.classList.toggle('is-selected',el===row));
- row.classList.add('is-loading');$('quoteStatus').classList.remove('error');$('quoteStatus').textContent='Resolving '+symbol+' Solana mint…';
- try{
-  const mintBySymbol={SOL:'So11111111111111111111111111111111111111112',USDC:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'};
-  let mint=mintBySymbol[symbol];
-  if(!mint){
-   const search=await fetchMarketJson('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(symbol));
+ $('quoteStatus').classList.remove('error');
+ if(symbol==='SOL'||symbol==='USDC'){
+  row.classList.add('is-loading');
+  $('quoteStatus').textContent='Loading verified '+symbol+' Solana asset…';
+  try{
+   const mint=symbol==='SOL'?'So11111111111111111111111111111111111111112':'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+   const token=await resolveSolanaTokenByMint(mint,symbol,choice.name);
    if(request!==majorAssetSelectionSequence)return;
-   const candidates=(search.pairs||[]).filter(p=>p.chainId==='solana'&&Number.isFinite(Number(p.liquidity?.usd))).map(p=>{
-    const base=String(p.baseToken?.symbol||'').toUpperCase()===symbol?p.baseToken:null;
-    const quote=String(p.quoteToken?.symbol||'').toUpperCase()===symbol?p.quoteToken:null;
-    const match=base||quote;
-    return match?.address?{mint:match.address,liquidity:Number(p.liquidity?.usd)||0}:null;
-   }).filter(Boolean);
-   candidates.sort((a,b)=>b.liquidity-a.liquidity);
-   mint=candidates[0]?.mint;
-   if(!mint)throw new Error('No matching Solana liquidity pool was found for '+symbol+'.');
-  }
-  const token=await resolveSolanaTokenByMint(mint,symbol,choice.name);
-  if(request!==majorAssetSelectionSequence)return;
-  if(token.id===quoteTokens.to.id)throw new Error(symbol+' is already your output asset. Choose a different major asset.');
-  chooseQuoteToken('from',token);
-  $('quoteStatus').textContent=symbol+' selected as input asset · chart and market panel updated for '+token.id+'.';
-  $('majorCoins').querySelectorAll('.major-row').forEach(el=>el.classList.toggle('is-selected',el===row));
-  setSwapUrl();
- }catch(error){if(request===majorAssetSelectionSequence){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}}
- finally{row.classList.remove('is-loading')}
+   if(token.id===quoteTokens.to.id)throw new Error(symbol+' is already your output asset. Choose a different major asset.');
+   chooseQuoteToken('from',token);
+   $('quoteStatus').textContent=symbol+' selected as input asset · market chart follows the exact canonical mint.';
+  }catch(error){if(request===majorAssetSelectionSequence){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}}
+  finally{row.classList.remove('is-loading')}
+  return;
+ }
+ // BTC/ETH/BNB/XRP have multiple wrapped or bridged Solana representations.
+ // Never infer the intended asset from ticker or pool liquidity. Ask the user to select an explicit Jupiter token result.
+ const input=$('quoteFromSearch');
+ input.value=symbol;
+ $('quoteStatus').textContent='Choose the exact Solana '+symbol+' representation below. Wrapped/bridged variants are not interchangeable.';
+ $('fromSelected').textContent='Selection required · verify the exact mint before trading';
+ $('fromResults').innerHTML='<div class="notice">Loading Jupiter token candidates for '+esc(symbol)+'…</div>';
+ searchQuoteToken('from');
 });
 $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
 $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
