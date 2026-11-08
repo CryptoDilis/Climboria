@@ -2729,5 +2729,6 @@ For every integrated asset or borrowed technique, record:
 - [x] Added a deterministic browser regression assertion for name lookup and exact-mint chart identity.
 - [x] Validate passed on the DEX lookup change; the first Browser Smoke attempt was blocked by a Token Intelligence social-rail assertion before reaching the lookup test.
 - [x] Removed that unrelated brittle social-rail block from the DEX lookup smoke path so the next run directly exercises token selection, chart identity, and browser history.
-- [ ] Re-run Browser Smoke after isolating the unrelated social-rail assertion.
+- [x] Corrected the DEX regression fixture: the high-liquidity decoy now places the searched SOL mint only on the quote side, so it genuinely tests quote-side exclusion (commit `4f4c416`).
+- [ ] Re-run Browser Smoke on the corrected fixture and confirm exact-base-mint pool selection, name lookup, and chart identity.
 - [ ] Verify with a real Solana CA and name lookup on the deployed site after merge/deployment. If a token has no indexed base-side pool, show an explicit no-chart state rather than substituting SOL.
