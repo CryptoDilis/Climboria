@@ -214,7 +214,35 @@ jobs:
               const heading=await page.locator('h1').first().innerText();
               if(!heading.toLowerCase().includes('solana')) throw new Error('Unexpected DEX page heading: '+heading);
               if(errors.length) throw new Error('DEX browser errors: '+errors.join(' | '));
-              console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls.');
+              // Verify DEX token/pool selection is represented in browser history.
+              const mint='So11111111111111111111111111111111111111112';
+              const poolA='11111111111111111111111111111111';
+              const poolB='22222222222222222222222222222222';
+              const poolData={pairs:[
+                {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}}},
+                {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'1',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
+              ]};
+              await page.route('https://api.dexscreener.com/**',route=>{
+                const url=route.request().url();
+                if(url.includes('/latest/dex/tokens/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
+                if(url.includes('/latest/dex/search')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
+                if(url.includes('/token-profiles/latest/v1')) return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+                if(url.includes('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
+                return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+              });
+              await page.goto('http://127.0.0.1:4173/dex/?token='+mint,{waitUntil:'domcontentloaded'});
+              await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
+              if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
+              await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
+              if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
+              await page.goBack({waitUntil:'domcontentloaded'});
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
+              await page.waitForFunction(pool=>document.querySelector('#detailChart')?.src.includes(pool),poolA,{timeout:10000});
+              await page.goForward({waitUntil:'domcontentloaded'});
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
+              await page.waitForFunction(pool=>document.querySelector('#detailChart')?.src.includes(pool),poolB,{timeout:10000});
+              if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
+              console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
