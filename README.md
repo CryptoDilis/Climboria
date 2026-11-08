@@ -26,6 +26,7 @@
 - [x] Previous main commit `f12dee5c` passed Validate, Browser Smoke (including BTC major-asset click/no-hover-label check), and GitHub Pages deployment.
 - [x] Found and fixed a refresh-restoration gap: exact selected Solana mint metadata now restores through DexScreener exact-mint pools plus on-chain decimals verification, rather than relying on the Jupiter token-search endpoint.
 - [x] Swap URL changes now create browser history entries and `popstate` restores the selected chain and exact token mints.
+- [x] Playwright Back/Forward assertions added for Swap; the test step passed in Browser Smoke run `42450182932` (commit `4288353`).
 - [x] Base URLs are guarded from the Solana mint resolver; EVM token restoration remains explicitly pending the Base backend.
 - [x] Follow-up commit `35c7e6f` passed Validate, Browser Smoke and GitHub Pages deployment. The Browser Smoke run confirmed BTC major-asset click, no hover SELECT overlay, exact mint URL persistence and refresh restoration.
 - [ ] Run the latest token/pool history and browser back/forward regressions after commit `4288353`; inspect and repair failures.
@@ -36,7 +37,7 @@
 ### Complete DEX/Swap product checklist
 - [ ] DEX selected token header: title, short intro, compact profile icon, website/X/Telegram links, mint copy, verified/unknown state and provider timestamp.
 - [ ] DEX chart workspace: chart remains primary; remove the old pool-metrics strip from below the chart; show pool metrics only inside the token overview/header where space permits.
-- [x] DEX token/pool URL history: selecting a token or pool now pushes a browser history entry; popstate restores the selected token and requested pool from the URL. Automated back/forward regression is still pending.
+- [x] DEX token/pool URL history: selecting a token or pool now pushes a browser history entry; popstate restores the selected token and requested pool from the URL. Playwright regression for token/pool URL, pool selection and Back/Forward restoration added in `72b33c4`; workflow result pending.
 - [ ] DEX pool selector: exact selected pool URL state; refresh selected pool; correct loading/error/empty states.
 - [ ] DEX right rail: retain the approved execution rail position and keep Summit Chat at the far-right/below layout as accepted; no layout regression.
 - [ ] DEX buy/sell: Market and Limit choices, 25/50/75/100% balance presets, slippage, priority fee/compute-unit settings, route preview, wallet transaction review and safe rejection states.
