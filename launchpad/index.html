@@ -101,6 +101,46 @@ h1 span{background:linear-gradient(110deg,#fff0c1 0%,#d6a64e 48%,#fff0c1 85%);-w
 footer{border-top-color:#d4af3725}
 @media(max-width:760px){.hero{padding:66px 0 36px}.hero:before{margin-bottom:22px}.section-head{margin:32px 0 17px}.card{min-height:0;padding:24px}.nav{gap:9px}}
 
+
+/* Desktop first-fold optimization: compact hero, show all launch paths immediately */
+@media(min-width:761px){
+ header{height:64px}
+ .brand{font-size:19px}
+ .brand small{font-size:8px;margin-top:2px}
+ .nav{gap:20px}
+ .nav .back{padding:8px 13px}
+ .hero{padding:34px 0 14px}
+ .hero:before{margin-bottom:12px}
+ .eyebrow{font-size:9px;padding:7px 13px;letter-spacing:3.5px}
+ h1{font-size:clamp(38px,5vw,58px);line-height:1;letter-spacing:-1.5px;margin:11px auto 10px;max-width:850px}
+ .lead{font-size:13px;line-height:1.5;max-width:650px}
+ .hero-actions{display:none!important}
+ .statusline{font-size:9px;margin:12px auto 0;padding:7px 12px;letter-spacing:1.4px}
+ .section-head{margin:20px 0 13px;align-items:center}
+ .section-head h2{font-size:23px}
+ .section-head p{font-size:11px}
+ .grid{gap:14px}
+ .card{min-height:290px;padding:21px;border-radius:19px}
+ .card-icon{width:46px;height:46px;border-radius:14px;font-size:22px;margin-bottom:15px}
+ .card h3{font-size:20px;margin:9px 0 7px}
+ .card p{font-size:12px;line-height:1.55;margin-bottom:12px}
+ .features{font-size:10px;line-height:1.75;margin-bottom:14px}
+ .card-foot{padding-top:12px}
+ .notice{margin:18px 0 42px;padding:17px 20px}
+}
+@media(min-width:761px) and (max-height:820px){
+ .hero{padding-top:25px;padding-bottom:8px}
+ .hero:before{margin-bottom:8px}
+ h1{font-size:clamp(36px,4.6vw,52px);margin:8px auto}
+ .lead{font-size:12px}
+ .statusline{margin-top:9px}
+ .section-head{margin-top:14px;margin-bottom:10px}
+ .card{min-height:260px;padding:18px}
+ .card-icon{margin-bottom:11px}
+ .card p{line-height:1.45}
+ .features{line-height:1.6}
+}
+
 </style>
 </head>
 <body>
