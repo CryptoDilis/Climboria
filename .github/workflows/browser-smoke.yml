@@ -156,10 +156,10 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
-              await page.goBack();
+              await page.goBack({waitUntil:'domcontentloaded',timeout:15000});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='SOL',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='SOL') throw new Error('Swap browser Back did not restore the previous input token (SOL)');
-              await page.goForward();
+              await page.goForward({waitUntil:'domcontentloaded',timeout:15000});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
               // Real mobile touch acceptance: every Major Asset stays visible, has no SELECT overlay, and BTC responds to a tap.
