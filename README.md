@@ -1,5 +1,15 @@
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
+## 2026-11-08 — Swap selected-market consistency and async race guards
+
+- [x] Commit `87a7a214d2b23403a4fed4f35d7bfac1fa6d734c`: keep the selected-market chart and token metrics bound to the **From/input** asset only. Changing the To/output asset through token search no longer silently replaces the selected market chart.
+- [x] Added per-side request sequencing to Jupiter token search so an older, slower search response cannot overwrite newer results or an updated query.
+- [x] Added a major-asset selection request sequence so stale BTC/ETH/etc. resolver responses cannot overwrite a more recent asset selection after rapid clicks.
+- [ ] Verify the new race guards and input/output chart binding in the next Browser Smoke run; inspect any failure logs and fix the actual root cause before marking passed.
+- [ ] Keep the canonical Solana mint allowlist as a security blocker: symbol plus highest-liquidity DexScreener discovery is not proof of canonical identity.
+- [ ] Keep Cloudflare Worker production deployment and production-domain health/CORS/rate-limit verification open; do not enable quotes through the proxy or wallet execution until verified.
+
+
 > **Single source of truth.** This root README is the canonical place for Climboria's product decisions, full master checklist, implementation status, test evidence, and next actions. At the end of any work session, update this file before stopping. At the start of the next session, review this file first. Do not rely on chat memory or recreate already completed work.
 >
 > **Status labels:** `NOT STARTED`, `PLANNED / DESIGN ONLY`, `IN PROGRESS`, `IMPLEMENTED — UNVERIFIED`, `TESTED — PASSED`, `BLOCKED`, `DEFERRED`. A checkbox is not complete merely because code was committed. Link the commit and relevant workflow runs; separate automated tests from manual device acceptance.
