@@ -336,6 +336,35 @@ footer:first-of-type>div{
 @media(max-width:900px){.header-icon{width:36px!important;height:36px!important}.header-icon .climboria-icon{width:22px;height:22px}}
 /* Homepage: advertising placements are not permitted */
 .home-ad-slot,.home-advertising,[data-home-ad],#homeAdvertising{display:none!important}
+
+/* Unified premium homepage navigation: every top-level action shares the alert-control finish */
+.navl{align-items:center;gap:10px!important}
+.navl>a:not([target]),.navl>a[target],.navl>.hub-link,.navl>.btn-gold{
+ min-height:42px!important;height:42px!important;box-sizing:border-box!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ padding:0 15px!important;border:1px solid rgba(184,148,84,.58)!important;
+ border-radius:12px!important;
+ background:linear-gradient(145deg,#1d2d42 0%,#111d2e 58%,#0b1421 100%)!important;
+ color:#ead7ad!important;text-decoration:none!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 0 0 1px rgba(216,182,109,.09),0 4px 14px rgba(0,0,0,.28)!important;
+ font:700 11px Inter,system-ui,sans-serif!important;letter-spacing:.8px!important;
+ text-transform:uppercase!important;white-space:nowrap!important;
+ transition:border-color .2s,box-shadow .2s,transform .2s,background .2s!important;
+}
+.navl>a:not([target]):before,.navl>a[target]:before,.navl>.btn-gold:before{content:"";position:absolute;inset:3px;border:1px solid rgba(216,182,109,.22);border-radius:8px;pointer-events:none}
+.navl>a:not([target]):hover,.navl>a[target]:hover,.navl>.hub-link:hover,.navl>.btn-gold:hover{
+ border-color:#f1d18c!important;color:#fff0c5!important;
+ background:linear-gradient(145deg,#293d55,#14243a 65%,#0d1929)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 0 1px rgba(217,182,109,.24),0 0 20px rgba(217,182,109,.13)!important;
+ transform:translateY(-1px)!important
+}
+.navl>.hub-link{gap:9px!important}
+.navl>.hub-link .climboria-icon{width:23px!important;height:23px!important}
+.navl>.btn-gold{background:linear-gradient(145deg,#293d55,#14243a 65%,#0d1929)!important;color:#f4d99b!important}
+@media(min-width:901px) and (max-width:1250px){
+ .navl{gap:7px!important}
+ .navl>a:not([target]),.navl>a[target],.navl>.hub-link,.navl>.btn-gold{padding:0 10px!important;font-size:9px!important;letter-spacing:.45px!important}
+}
 </style>
 </head>
 <body>
