@@ -279,6 +279,53 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .major-row:hover:after,.major-row:focus-visible:after{opacity:1}
 .major-row[disabled]{cursor:not-allowed;opacity:.5}
 .major-row[disabled]:after{content:'NO SOLANA MINT'}
+
+/* Summit Exchange wide-screen and responsive finish */
+.shell{max-width:1680px;padding-left:clamp(18px,2.2vw,38px);padding-right:clamp(18px,2.2vw,38px)}
+.trade-layout.premium-trade-layout{width:100%;max-width:1600px;grid-template-columns:minmax(220px,255px) minmax(420px,1fr) minmax(500px,570px);gap:16px}
+.market-rail{top:96px}
+.market-rail .major-panel{padding:17px 16px}
+.market-rail .major-row{appearance:none;-webkit-appearance:none;display:grid;width:100%;grid-template-columns:minmax(0,1fr) 62px auto;align-items:center;gap:7px;padding:11px 6px 13px}
+.market-rail .major-identity{min-width:0}
+.market-rail .major-spark,.market-rail .mini-spark{width:62px}
+.market-rail .major-extra{grid-column:1/-1;display:flex;justify-content:space-between;gap:6px;padding:0 0 0 33px;flex-wrap:nowrap}
+.market-rail .major-extra span{font-size:7px;white-space:nowrap}
+.premium-trade-layout .card{padding:22px}
+.premium-chart-wrap{height:520px;border-color:#405674;box-shadow:inset 0 0 0 1px #ffffff08,0 18px 48px #00000025}
+.selected-panel{padding:20px}
+.chart-terminal-head h2{font-size:21px}
+.selected-price b{font-size:26px}
+.asset-stats>div{padding:11px}
+.asset-stats small{font-size:8px}
+.asset-stats b{font-size:11px}
+.ad-slot{max-width:1600px;margin:0 auto 22px;min-height:96px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:18px;padding:18px 24px}
+.ad-slot>b{font-size:19px}
+.ad-slot>small{justify-self:end}
+.major-row:after{right:9px;bottom:4px}
+@media(max-width:1240px){
+ .trade-layout.premium-trade-layout{grid-template-columns:minmax(205px,245px) minmax(360px,1fr);max-width:1120px}
+ .premium-trade-layout .swap-sidebar{grid-column:1/-1}
+ .premium-chart-wrap{height:440px}
+}
+@media(max-width:760px){
+ .shell{padding-left:14px;padding-right:14px}
+ .trade-layout.premium-trade-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+ .market-rail{position:static}
+ .premium-trade-layout .swap-sidebar{grid-column:auto}
+ .premium-trade-layout .card{padding:15px}
+ .premium-chart-wrap{height:370px}
+ .selected-panel{display:block}
+ .ad-slot{display:flex;align-items:flex-start;gap:6px;margin-bottom:16px;padding:15px}
+ .ad-slot>small{justify-self:auto}
+ .market-rail .major-row{grid-template-columns:minmax(0,1fr) 58px auto}
+ .market-rail .major-spark,.market-rail .mini-spark{width:58px}
+}
+@media(max-width:420px){
+ .premium-chart-wrap{height:320px}
+ .market-rail .major-extra{padding-left:0;gap:4px}
+ .market-rail .major-extra span{font-size:6px}
+}
+
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a></nav></header>
