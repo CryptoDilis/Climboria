@@ -19,6 +19,12 @@ Do not silently raise the user's fee to 50 bps. Before enabling Solana fee colle
 
 Never infer that the Jupiter top-level feeBps is Climboria revenue. Inspect the returned fee breakdown, fee mint, referral account and on-chain transaction. Record only the amount actually received by a Climboria-controlled account.
 
+## Proposed treasury receiving addresses (owner supplied; format checked only)
+- Solana: `J5W4CHVjTddn3sMheD6oo7aHUoN1SjK2ke1nkcVhjHLp`
+- Base/EVM: `0xd595f6e998260583e7a07e77d17a7ee5160a8230`
+
+These addresses pass basic syntax/length checks (Solana base58 decodes to 32 bytes; EVM is 0x plus 40 hexadecimal characters). This does NOT prove wallet ownership, signing control, account existence, network activity, custody safety, or suitability as a treasury. They remain proposed until verified by a signed challenge and chain-specific checks. Do not send funds during verification.
+
 ## Treasury architecture
 - Use one dedicated treasury wallet per chain: Solana treasury and Base treasury. Do not reuse a Solana address as an EVM receiving address.
 - Prefer a multisig or appropriately controlled treasury for production. Keep signing keys outside GitHub, frontend JavaScript, Cloudflare plain-text variables, chat, and logs.
@@ -66,9 +72,16 @@ For each confirmed fee event, store:
 
 Only confirmed on-chain receipts count as collected revenue. Pending, failed, reverted, simulated, or quote-only transactions count as zero.
 
+## Testnet receipt verification plan (no mainnet funds)
+1. Verify control of each proposed address by signing a unique, expiring message containing the project name, chain, purpose and nonce. Never request private keys or seed phrases. If a multisig is used, verify the required signer threshold and execute a test message/transaction through the multisig.
+2. Solana: create/use a dedicated devnet treasury wallet or multisig and verify its address via Solana devnet RPC. For native SOL, send a tiny devnet SOL transfer from a faucet-funded test wallet; confirm finalized signature and exact balance delta. For SPL fee tokens, create the correct associated token account for the treasury owner and mint, then transfer a tiny test amount and verify mint, owner, decimals and token-account balance. Test fee-routing instruction separately in a program/provider test transaction and confirm actual receipt.
+3. Base: use Base Sepolia (chain ID 84532), not Base mainnet. Verify the address via Base Sepolia RPC. Send a tiny Sepolia ETH test transfer; confirm successful receipt, recipient, value and balance delta. Deploy/use a test ERC-20, transfer a tiny amount and verify token contract, recipient and balance delta. Simulate and test fee routing with a Base Sepolia-compatible provider/contract.
+4. Record chain, testnet, tx hash, block number, asset contract/mint, expected amount, actual balance delta and confirmation status. Test wrong-chain, wrong-recipient, failed/reverted, duplicate/replay and fee-rounding cases.
+5. Testnet results do not authorize mainnet collection. Before mainnet, repeat address verification and a separately approved minimal production receipt test.
+
 ## Release gates (all required)
-- [ ] Dedicated Solana treasury address supplied and ownership verified.
-- [ ] Dedicated Base treasury address supplied and ownership verified.
+- [ ] Proposed Solana address signed-challenge ownership verified and chain state checked.
+- [ ] Proposed Base address signed-challenge ownership verified and chain state checked.
 - [ ] Owner approves Launchpad 1.00% fee base (recommended: successfully settled gross contributions, net of refunds).
 - [ ] Dedicated Base treasury address supplied and ownership verified.
 - [ ] Treasury custody/multisig and recovery process documented.
