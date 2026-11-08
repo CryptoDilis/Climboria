@@ -6,6 +6,32 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-08 — DEX token intelligence, pool fallback and browser verification
+
+**Current implementation snapshot**
+- [x] Added skeleton loading for token detail metrics and pool rows; market fetches use a 9-second timeout.
+- [x] Added explicit no-pool / failed-pool state with Retry, DexScreener and Solscan links. Pool failures no longer leave the detail panel looking blank.
+- [x] Added server-side Worker route `GET /api/pump/coin?mint=...` for public Pump.fun token metadata. It validates the mint, bounds the upstream request, sanitizes HTTPS links, and returns only public profile fields. Worker tests cover valid metadata and invalid-mint rejection.
+- [x] Added Pump.fun profile rendering for token image, name, ticker, mint copy, creator, supply, provider holder count (if supplied), official socials, and reported curve/graduation state. No progress percentage is fabricated when the source does not supply one.
+- [x] Buy/Sell, wallet connect, quote and order-preparation controls in the DEX terminal are disabled with a clear `Swaps disabled — backend not verified` notice. Quote-only status remains explicit.
+- [x] Summit Chat now states that messages are local-only and browser-local, not a public or synchronized feed.
+- [x] Added mobile Chart / Trade / Chat / Pools tabs, pool-share and volume/liquidity bars, and a prominent share-link control.
+- [x] Added a 20-second selected-token refresh while the document is visible.
+- [x] Added Solana parsed-mint evidence for mint/freeze authority; LP lock/burn remains Unknown until independently verified. Holder concentration is calculated only from returned largest accounts and clearly described as partial evidence, not a safety score.
+- [x] Repaired malformed DEX JavaScript declarations and selected-pool metrics code; parsed the complete inline DEX script successfully.
+- [x] Removed duplicated trailing DEX document fragments and corrected broken image error handlers. The DEX document now has one closing HTML document and one active inline app script.
+- [x] Browser smoke on commit `c6f9aead221d84591669af4d59b56208a9f754a3` progressed through homepage, DEX routing, standalone Swap and DEX token/pool Back/Forward checks, then entered the Jarrell's Peak gameplay smoke step. Full browser workflow is still running; do not mark the entire workflow passed until its final conclusion is success.
+- [x] Validation passed: [run 42487819413](https://github.com/CryptoDilis/Climboria/actions/runs/42487819413).
+- [x] GitHub Pages deployment passed: [run 42487819560](https://github.com/CryptoDilis/Climboria/actions/runs/42487819560).
+- [ ] Deploy the Cloudflare Worker and verify `https://api.climboria.fun/health`, CORS, rate limiting, and Pump.fun metadata route on the production domain. Until then Pump.fun fallback is implemented in source but not live-verified.
+- [ ] Verify Pump.fun bonding-curve progress source and data semantics before displaying a percentage; current UI intentionally shows unavailable if no validated progress value exists.
+- [ ] Add independent LP lock/burn evidence and confirm provider coverage for holder count / creator balances. Do not turn the evidence checklist into a score.
+- [ ] Complete the full Browser Smoke workflow including Jarrell's Peak desktop/mobile tests, and perform manual mobile acceptance. Automated browser checks do not replace Redmi 14 5G device testing.
+- [ ] Keep Swap execution disabled until Cloudflare backend, transaction semantic validation, canonical mint allowlist, rate limits, and mainnet security gates are independently verified.
+
+**Latest DEX UI source commit:** `28a4790fdc37349d34a70b69375729f16d1fe94d`  
+**Latest verification/test-harness commit:** `c6f9aead221d84591669af4d59b56208a9f754a3` (subsequent test-only diagnostics/filter adjustments are recorded in Git history).
+
 ## 2026-11-08 — DEX/Swap clickable assets, release checklist and security gate
 
 **Owner clarification:** The DEX Buy/Sell execution rail position is already approved and must not be moved during token-info work. The current correction target is the selected-token header/overview only. On Swap, the Major Assets rows must be directly clickable and must never display a hover/focus "SELECT" label.
