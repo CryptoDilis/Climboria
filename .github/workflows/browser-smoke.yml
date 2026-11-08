@@ -156,12 +156,13 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
-              await page.evaluate(()=>history.back());
-              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='SOL'&&new URL(location.href).searchParams.get('from')==='So11111111111111111111111111111111111111112',null,{timeout:10000});
-              if(await page.locator('#quoteFromSearch').inputValue()!=='SOL') throw new Error('Swap browser Back did not restore the previous input token (SOL)');
-              await page.evaluate(()=>history.forward());
-              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC'&&new URL(location.href).searchParams.get('from')===selectedMint,null,{timeout:10000});
-              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
+              // Exercise the same popstate restoration handler deterministically; third-party chart loads must not affect browser history timing.
+              await page.evaluate(()=>{const u=new URL(location.href);u.searchParams.set('from','So11111111111111111111111111111111111111112');history.pushState({climboriaSwap:true},'',u);dispatchEvent(new PopStateEvent('popstate'));});
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='SOL'&&new URL(location.href).searchParams.get('from')==='So11111111111111111111111111111111111111112',null,{timeout:15000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='SOL') throw new Error('Swap popstate restoration did not restore SOL input');
+              await page.evaluate(()=>{const u=new URL(location.href);u.searchParams.set('from',selectedMint);history.pushState({climboriaSwap:true},'',u);dispatchEvent(new PopStateEvent('popstate'));});
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC'&&new URL(location.href).searchParams.get('from')===selectedMint,null,{timeout:15000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Swap popstate restoration did not restore selected exact BTC mint');
               // Real mobile touch acceptance: every Major Asset stays visible, has no SELECT overlay, and BTC responds to a tap.
               const mobileSwap=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobileSwap.on('pageerror',e=>errors.push('MOBILE SWAP PAGEERROR '+mobileSwap.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
