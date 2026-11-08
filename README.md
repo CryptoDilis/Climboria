@@ -2572,3 +2572,6 @@ For every integrated asset or borrowed technique, record:
 - [x] Quote-side-only pools are rejected for chart display rather than silently showing the counter-asset (which could look like SOL).
 - [x] Loading, no-chart, and selected-chart notes explicitly identify the selected FROM asset and exact-mint requirement.
 - [ ] Verify Major Assets BTC/ETH/BNB/XRP exact-mint selection updates chart title, pair, price, and stats on desktop/mobile Browser Smoke; confirm no stale SOL chart remains during loading or when no matching base-side pool exists.
+
+- [x] DEX token Website / X / Telegram action rail moved out of the title grid and contained as a full-width, compact row inside the Token Intelligence card; no links should protrude beyond the card edge.
+- [ ] Verify desktop/mobile token detail screenshots, including long social labels and missing-link states.
