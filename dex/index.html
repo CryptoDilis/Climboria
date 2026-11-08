@@ -1085,7 +1085,15 @@ async function openToken(mint,options={}){
   dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
   $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
   const priceValue=Number(p.priceUsd),volumeValue=Number(p.volume?.h24),liquidityValue=Number(p.liquidity?.usd),changeValue=Number(p.priceChange?.h24);
-  $('detailPrice').textContent=Number.isFinite(priceValue)?'
+  $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
+  $("detailVolume").textContent=Number.isFinite(volumeValue)?fmt(volumeValue):"Unavailable";
+  $("detailLiquidity").textContent=Number.isFinite(liquidityValue)?fmt(liquidityValue):"Unavailable";
+  $("detailChange").textContent=Number.isFinite(changeValue)?(changeValue>0?"+":"")+changeValue.toFixed(2)+"%":"Unavailable";
+  const buys=Number(p.txns?.h24?.buys),sells=Number(p.txns?.h24?.sells),totalTx=buys+sells;
+  $("flowBuySell").textContent=Number.isFinite(totalTx)?buys+" / "+sells:"N/A";
+  $("flowImbalance").textContent=Number.isFinite(totalTx)&&totalTx>0?(((buys-sells)/totalTx)*100).toFixed(1)+"%":"N/A";
+  ["detailPrice","detailVolume","detailLiquidity","detailChange"].forEach(id=>$(id).classList.remove("skeleton-value"));
+  document.querySelectorAll(".routecandidate").forEach(el=>el.classList.toggle("selected",el.dataset.pair===p.pairAddress));
   $('trailHint').textContent='Selected pool: '+p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5)+' · '+p.dexId+' · '+p.quoteToken.symbol;
   const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
   const checks=[['Price',Number.isFinite(Number(p.priceUsd))&&p.priceUsd!==null,'Provider price available'],['Liquidity',Number.isFinite(Number(p.liquidity?.usd))&&p.liquidity?.usd!==null,'Reported pool liquidity'],['24h volume',Number.isFinite(Number(p.volume?.h24))&&p.volume?.h24!==null,'Reported rolling volume'],['Pool age',age!==null,age===null?'Creation time unavailable':age.toFixed(1)+' days since creation'],['24h transactions',Number.isFinite(Number(p.txns?.h24?.buys))&&Number.isFinite(Number(p.txns?.h24?.sells)),'Buy/sell counts reported'],['Token metadata',!!(p.baseToken?.name&&p.baseToken?.symbol),'Name and symbol present']];
