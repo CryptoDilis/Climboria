@@ -1,6 +1,6 @@
 # Deploying the Climboria Jupiter swap proxy
 
-This Worker is prepared but **not deployed**. The static GitHub Pages site cannot deploy or host this backend by itself.
+This Worker is prepared but **not deployed**. The deployment workflow now targets `dex/swap-proxy` (not the obsolete `backend/worker` path), runs the Worker test suite first, and then invokes Wrangler. A successful Pages deployment does not deploy this Worker. The static GitHub Pages site cannot deploy or host this backend by itself.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This Worker is prepared but **not deployed**. The static GitHub Pages site canno
 ## Configure
 
 1. In Cloudflare Workers & Pages, create/configure the Worker named `climboria-swap-proxy` using this directory and `wrangler.toml`.
-2. Replace `ratelimits.namespace_id` in `wrangler.toml` with a positive integer unique to this account. The current value is a placeholder, not a verified account allocation.
+2. Allocate/confirm a positive integer `ratelimits.namespace_id` unique to this Cloudflare account and update `wrangler.toml`. The checked-in value is a placeholder and must not be assumed valid for the account.
 3. Set the exact website origin(s) in `ALLOWED_ORIGINS`. Do not use a wildcard.
 4. From this directory, add the Jupiter server key through the secret manager:
    `npx wrangler@latest secret put JUPITER_API_KEY`
