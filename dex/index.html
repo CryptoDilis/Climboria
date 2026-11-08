@@ -718,10 +718,10 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <div><small>24H CHANGE</small><b id="detailChange">—</b></div>
 </div>
 <div class="flow-metrics" aria-label="Pool flow analytics">
- <div><small>BUYS / SELLS · 24H</small><b id="flowBuySell">N/A</b></div>
- <div><small>BUY IMBALANCE</small><b id="flowImbalance">N/A</b></div>
- <div><small>VOLUME / LIQUIDITY</small><b id="flowTurnover">N/A</b></div>
- <div><small>POOL SHARE</small><b id="flowShare">N/A</b></div>
+ <div><small>BUYS / SELLS · 24H</small><b id="flowBuySell" class="skeleton-value">Loading</b></div>
+ <div><small>BUY IMBALANCE</small><b id="flowImbalance" class="skeleton-value">Loading</b></div>
+ <div><small>VOLUME / LIQUIDITY</small><b id="flowTurnover" class="skeleton-value">Loading</b></div>
+ <div><small>POOL SHARE</small><b id="flowShare" class="skeleton-value">Loading</b></div>
 </div>
 <div class="flow-bars" id="flowBars" aria-label="Pool share and volume liquidity bars"><div><span>Pool share</span><b id="poolShareBarLabel">Unavailable</b><i><em id="poolShareBar"></em></i></div><div><span>Volume / liquidity</span><b id="turnoverBarLabel">Unavailable</b><i><em id="turnoverBar"></em></i></div></div><p class="intel-foot" id="flowNote">Metrics are provider-reported for the selected pool. Missing values remain unavailable, not zero.</p>
 </div>
@@ -826,7 +826,7 @@ state.pairs=bestByToken(solPairs(pairs));
 $('profileCount').textContent=state.profiles.length.toLocaleString();
 $('pairCount').textContent=state.pairs.length.toLocaleString();
 $('topVolume').textContent=fmt(Math.max(0,...state.pairs.map(p=>Number(p.volume?.h24)||0)));
-state.last=Date.now();$('updated').textContent='Updated '+new Date(state.last).toLocaleTimeString();$('status').textContent='Live provider connection · Solana pairs only';$('coverage').textContent='Source: DexScreener public API · '+state.pairs.length+' unique base-token pairs from market searches plus up to 30 latest profile mints; latest profile feed: '+state.profiles.length+'. This is not an exhaustive listing of every Solana pool.';
+state.last=Date.now();['pairCount','profileCount','topVolume'].forEach(id=>$(id).classList.remove('skeleton-value'));$('updated').textContent='Updated '+new Date(state.last).toLocaleTimeString();$('status').textContent='Live provider connection · Solana pairs only';$('coverage').textContent='Source: DexScreener public API · '+state.pairs.length+' unique base-token pairs from market searches plus up to 30 latest profile mints; latest profile feed: '+state.profiles.length+'. This is not an exhaustive listing of every Solana pool.';
 render();renderProfiles();loadGraduations().then(render).catch(e=>{state.graduationStatus='unavailable';console.warn('Climboria graduation feed unavailable',e);if(state.mode==='newlyGraduated')render()});
 }catch(e){$('status').textContent='Market data temporarily unavailable';$('coverage').textContent='Could not refresh provider data: '+e.message+'. Retry shortly; no fallback prices are displayed.';if(!state.pairs.length)$('rows').innerHTML='<tr><td colspan="7"><div class="empty">Market provider unavailable. Tap Refresh to try again.</div></td></tr>'}finally{state.busy=false}}
 function filtered(){
@@ -962,7 +962,7 @@ async function loadIntelHolders(){
   const owners=new Map();
   accounts.forEach((a,i)=>{const info=details.value?.[i]?.data?.parsed?.info;const owner=info?.owner;const amount=Number(a.uiAmountString);if(!owner||!Number.isFinite(amount))return;owners.set(owner,(owners.get(owner)||0)+amount)});
   const rows=[...owners.entries()].map(([owner,amount])=>({owner,amount,share:amount/total*100})).sort((a,b)=>b.amount-a.amount).slice(0,10);
-  const top10=rows.reduce((n,x)=>n+x.share,0);
+  const top10=rows.reduce((n,x)=>n+x.share,0);const holderSignal=[...$('signalGrid').querySelectorAll('.signalitem')].find(el=>el.textContent.includes('Holder concentration'));if(holderSignal){holderSignal.classList.remove('missing');holderSignal.classList.add('good');holderSignal.querySelector('strong').textContent=top10.toFixed(2)+'%';holderSignal.querySelector('small').textContent='Top 10 owner share across returned largest 20 accounts · aggregated by owner wallet';holderSignal.title='Concentration evidence only; not a full holder-distribution audit.'}
   const creator=pumpCoinCache.get(mint)?.creator;let devShare='Unavailable';if(creator){try{const creatorAccounts=await call('getTokenAccountsByOwner',[creator,{mint},{encoding:'jsonParsed',commitment:'confirmed'}]);const creatorAmount=(creatorAccounts.value||[]).reduce((sum,row)=>sum+Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0),0);devShare=Number.isFinite(creatorAmount)?(creatorAmount/total*100).toFixed(3)+'%':'Unavailable';}catch(e){devShare='RPC unavailable';}}const holderCount=pumpCoinCache.get(mint)?.holderCount;
   kpis.innerHTML='<div><small>Top 10 owner share (largest 20 accounts)</small><b>'+top10.toFixed(2)+'%</b></div><div><small>Creator / dev holding</small><b>'+devShare+'</b></div><div><small>Holders · pump.fun</small><b>'+(holderCount??'Unavailable')+'</b></div><div><small>Accounts checked</small><b>'+accounts.length+'</b></div>';
   list.innerHTML=rows.length?'<div class="holder-table-head"><span>RANK</span><span>OWNER WALLET</span><span>SUPPLY SHARE</span></div>'+rows.map((x,i)=>'<div class="holder-row"><span class="holder-rank">#'+(i+1)+'</span><span class="holder-address"><a class="intel-link" href="https://solscan.io/account/'+encodeURIComponent(x.owner)+'" target="_blank" rel="noopener">'+esc(intelShort(x.owner))+' ↗</a></span><span class="holder-share">'+x.share.toFixed(3)+'%</span></div>').join(''):'<div class="intel-loading">Owner wallet records unavailable from RPC.</div>';
@@ -1094,7 +1094,7 @@ async function openToken(mint,options={}){
   const buys=Number(p.txns?.h24?.buys),sells=Number(p.txns?.h24?.sells),totalTx=buys+sells;
   $("flowBuySell").textContent=Number.isFinite(totalTx)?buys+" / "+sells:"N/A";
   $("flowImbalance").textContent=Number.isFinite(totalTx)&&totalTx>0?(((buys-sells)/totalTx)*100).toFixed(1)+"%":"N/A";
-  ["detailPrice","detailVolume","detailLiquidity","detailChange"].forEach(id=>$(id).classList.remove("skeleton-value"));
+  ["detailPrice","detailVolume","detailLiquidity","detailChange","flowBuySell","flowImbalance","flowTurnover","flowShare"].forEach(id=>$(id).classList.remove("skeleton-value"));
   document.querySelectorAll(".routecandidate").forEach(el=>el.classList.toggle("selected",el.dataset.pair===p.pairAddress));
   $('trailHint').textContent='Selected pool: '+p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5)+' · '+p.dexId+' · '+p.quoteToken.symbol;
   const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
