@@ -188,6 +188,8 @@ async function handlePumpCoin(request, env) {
   return json({
     mint,
     name: typeof data.name === "string" ? data.name.slice(0, 100) : null,
+    verified: data.verified === true || data.is_verified === true,
+    holderCount: Number.isSafeInteger(Number(data.holder_count ?? data.num_holders)) && Number(data.holder_count ?? data.num_holders) >= 0 ? Number(data.holder_count ?? data.num_holders) : null,
     symbol: typeof data.symbol === "string" ? data.symbol.slice(0, 32) : null,
     description: typeof data.description === "string" ? data.description.slice(0, 2000) : null,
     image: safeUrl(data.image_uri || data.image),
