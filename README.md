@@ -2623,14 +2623,17 @@ For every integrated asset or borrowed technique, record:
 - [x] Selected-token chart resolver now accepts only Solana pools where the exact selected FROM mint is the pool base token, matching the asset DexScreener renders on its pair chart.
 - [x] Quote-side-only pools are rejected for chart display rather than silently showing the counter-asset (which could look like SOL).
 - [x] Loading, no-chart, and selected-chart notes explicitly identify the selected FROM asset and exact-mint requirement.
-- [ ] Verify Major Assets BTC/ETH/BNB/XRP exact-mint selection updates chart title, pair, price, and stats on desktop/mobile Browser Smoke; confirm no stale SOL chart remains during loading or when no matching base-side pool exists.
+- [x] Browser Smoke on `d382f78` verifies selected BTC exact-mint chart/pair/price synchronization, quote-side-only pool rejection, true no-pool stale-metric clearing, rapid-selection race protection, and mobile BTC chart synchronization. ETH/BNB/XRP exact candidate permutations remain a follow-up coverage item.
 
 - [x] DEX token Website / X / Telegram action rail moved out of the title grid and contained as a full-width, compact row inside the Token Intelligence card; no links should protrude beyond the card edge.
 - [ ] Verify desktop/mobile token detail screenshots, including long social labels and missing-link states.
 - [x] Browser Smoke on `235b97f` passed end-to-end: homepage/navigation, Cloudflare proxy unit tests, DEX fail-closed security gate, standalone Swap, DEX market/pool history, and Jarrell's Peak desktop/mobile gameplay; screenshot artifact uploaded.
 - [x] Added `climboria-dex-token-socials.png` to the Browser Smoke artifact upload list so the next eligible run retains the DEX social-rail layout capture (the prior successful artifact did not include that new screenshot despite the layout assertion passing).
-- [ ] Confirm the next Browser Smoke artifact contains `climboria-dex-token-socials.png` and review its desktop geometry; add a dedicated mobile DEX social-rail assertion if needed.
+- [x] Reviewed Browser Smoke artifact `13629741194`: desktop and mobile DEX Token Intelligence screenshots show Website/X buttons inside the card, beneath the title/metrics row and within card boundaries.
+- [x] Browser Smoke includes desktop and mobile DEX social-rail screenshots and mobile card-boundary assertions.
 - [ ] Cloudflare Worker production deployment remains blocked pending repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; keep public Swap execution disabled until deployed and independently verified.
 - [x] Browser Smoke passed on commit `235b97f`: DEX social-rail regression, Swap/DEX browser checks, Cloudflare proxy security tests, and Jarrell's Peak desktop/mobile gameplay smoke tests.
 - [x] Browser Smoke artifact confirmed; follow-up adds explicit DEX social-rail desktop/mobile screenshots and mobile card-boundary assertion to the uploaded artifact.
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
+
+- [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
