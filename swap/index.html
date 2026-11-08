@@ -610,6 +610,7 @@ document.querySelectorAll('[data-pair]').forEach(button=>button.addEventListener
  searchQuoteToken('from');searchQuoteToken('to');
 }));
 $('quoteAmount').addEventListener('input',()=>{
+ swapQuoteRequest++;
  const amount=Number($('quoteAmount').value),valid=Number.isFinite(amount)&&amount>0;
  $('getQuote').disabled=!valid||selectedChain!=='solana';$('getQuote').textContent=valid?'Find best route':'Enter an amount';
  setSwapExecutionState();$('estimatedReceive').textContent=valid?'Finding best route…':'Enter an amount';
@@ -618,7 +619,7 @@ $('quoteAmount').addEventListener('input',()=>{
  swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),650);
 });
 const setSwapChainBase=setSwapChain;
-setSwapChain=function(chain){setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();};
+setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();};
 const requestJupiterQuoteBase=requestJupiterQuote;
 requestJupiterQuote=async function(){
  const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
@@ -713,7 +714,7 @@ async function updateSelectedAsset(token){
   empty.hidden=true;
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
-  price.textContent='Price unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Chart unavailable for '+(token.symbol||'selected token')+'. '+error.message;chart.removeAttribute('src');
+  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Chart unavailable for '+(token.symbol||'selected token')+'. '+error.message;chart.removeAttribute('src');
  }
 }
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
