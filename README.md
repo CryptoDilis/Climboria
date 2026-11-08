@@ -1,3 +1,17 @@
+## 2026-11-09 — Premium Swap redesign from Meta feedback
+
+- [x] Replaced the oversized multi-column Swap first impression with a centered, dark navy / antique-gold quote card.
+- [x] Moved Major Assets, the selected-token chart, and trust information below the primary swap card; preserved the existing market selection, exact-mint chart resolver, URL state and token search behavior.
+- [x] Added From / You receive panels, token flip, 25% / 50% / MAX controls backed by connected-wallet RPC balances, popular-pair shortcuts that require exact token selection, and compact settings.
+- [x] Added live selected-mint market reference, debounced Jupiter quote preview while typing, collapsible quote/routing details, and explicit loading / pending / unavailable states instead of placeholder dashes.
+- [x] Kept Base clearly marked as planned and the execution button locked. No Cloudflare Worker deployment or transaction-security gate was bypassed.
+- [ ] Validate the new inline JavaScript and run Validate on the PR head.
+- [ ] Run the complete Browser Smoke suite; inspect desktop and mobile screenshots for layout, token search, quick balances, flip behavior, Major Assets click-through, and exact-mint chart synchronization.
+- [ ] Verify that quote responses cannot overwrite newer amount/token selections; add regression coverage for debounced quote races and wallet balance RPC failure.
+- [ ] Physical Redmi 14 5G acceptance remains required. Cloudflare Worker production deployment, semantic transaction instruction review and independent security review remain separate blockers. Keep public Swap execution disabled.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
