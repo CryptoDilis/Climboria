@@ -126,8 +126,8 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
               await page.goBack();
-              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='USDC',null,{timeout:10000});
-              if(await page.locator('#quoteFromSearch').inputValue()!=='USDC') throw new Error('Swap browser Back did not restore the previous input token');
+              await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='SOL',null,{timeout:10000});
+              if(await page.locator('#quoteFromSearch').inputValue()!=='SOL') throw new Error('Swap browser Back did not restore the previous input token (SOL)');
               await page.goForward();
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
