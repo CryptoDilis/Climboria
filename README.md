@@ -1,3 +1,14 @@
+## 2026-11-08 — DEX social rail desktop/mobile visual verification (latest)
+
+- [x] Latest Browser Smoke run `42503317470` on commit `841f50b3fc899a67c698ba291dc5232c4ce2e7d8` completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42503317470
+- [x] Latest Validate run `42503317365` on the same source commit completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42503317365
+- [x] GitHub Pages deployment for the README follow-up commit `1a61e0c696226b6306684a3db4c5f3977e23b4b9` completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42503331309
+- [x] Downloaded and visually inspected artifact `13626109554`: `climboria-dex-token-socials.png` and `climboria-dex-token-socials-mobile.png`. Website and X/Twitter links remain inside the Token Intelligence card on both desktop and mobile.
+- [x] Both DEX social screenshots are present in the uploaded artifact (expires 2026-11-15).
+- [ ] Manually accept DEX layout on a physical Android device (automated mobile viewport is not equivalent to Redmi 14 5G acceptance).
+- [ ] Continue Swap exact-input chart verification for BTC/ETH/BNB/XRP, no-pool behavior, rapid asset changes and mobile viewport; keep execution disabled.
+- [ ] Cloudflare Worker production deployment remains blocked pending repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; do not enable public Swap execution until deployed and independently verified.
+
 # CLIMBORIA — MASTER PLAN, MASTER CHECKLIST & DEVELOPMENT LOG
 
 ## 2026-11-08 — Swap selected-market consistency and async race guards
