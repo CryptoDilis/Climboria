@@ -5,7 +5,8 @@
 - [x] Commit `87a7a214d2b23403a4fed4f35d7bfac1fa6d734c`: keep the selected-market chart and token metrics bound to the **From/input** asset only. Changing the To/output asset through token search no longer silently replaces the selected market chart.
 - [x] Added per-side request sequencing to Jupiter token search so an older, slower search response cannot overwrite newer results or an updated query.
 - [x] Added a major-asset selection request sequence so stale BTC/ETH/etc. resolver responses cannot overwrite a more recent asset selection after rapid clicks.
-- [ ] Verify the new race guards and input/output chart binding in the next Browser Smoke run; inspect any failure logs and fix the actual root cause before marking passed.
+- [x] Validate Climboria passed on source commit `87a7a214d2b23403a4fed4f35d7bfac1fa6d734c`: [run 42490832296](https://github.com/CryptoDilis/Climboria/actions/runs/42490832296), including inline JavaScript syntax and Cloudflare Worker tests.
+- [ ] Verify the new race guards and input/output chart binding in Browser Smoke; inspect any failure logs and fix the actual root cause before marking passed.
 - [ ] Keep the canonical Solana mint allowlist as a security blocker: symbol plus highest-liquidity DexScreener discovery is not proof of canonical identity.
 - [ ] Keep Cloudflare Worker production deployment and production-domain health/CORS/rate-limit verification open; do not enable quotes through the proxy or wallet execution until verified.
 
