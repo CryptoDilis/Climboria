@@ -1,3 +1,21 @@
+## 2026-11-09 — Latest PR #219 full verification and screenshot review
+
+- [x] Validate Climboria passed on PR head `da8b0cba4adb90ee76ceebf58a3ba68a5fd7a1f1`: [run 42536000111](https://github.com/CryptoDilis/Climboria/actions/runs/42536000111).
+- [x] Full Browser Smoke passed on the same head: [run 42536000123](https://github.com/CryptoDilis/Climboria/actions/runs/42536000123). Homepage/CTA and desktop/mobile navigation, Cloudflare proxy tests, fail-closed execution, premium Swap desktop/mobile, DEX market/quote-preview shell, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload all completed successfully.
+- [x] Retrieved the 10-image artifact [climboria-browser-smoke-screenshots](https://github.com/CryptoDilis/Climboria/actions/runs/42536000123/artifacts/13639850718) for visual review.
+- [x] Reviewed desktop/mobile Swap, home, gameplay, cave entrance, and cave interior captures. Swap card is centered and compact on desktop and remains a narrow single-column mobile layout. Gameplay boot and mobile control overlays render.
+- [ ] Visual quality follow-up: Sanctuary spawn capture still shows a large uninterrupted green foreground and the player small in frame; improve terrain dressing, visible path/landmarks, and camera framing after inspecting a normal player session.
+- [ ] Visual quality follow-up: cave interior still reads as low-poly with repetitive faceted rock forms, large smooth boulders and flat lighting. Improve rock asset/material variety, silhouette, debris, depth lighting/fog, and floor dressing while preserving collision/navigation.
+- [ ] Wildlife and snake AI remain disabled in source for this smoke; no wildlife behavior/performance validation is implied.
+- [ ] Validate live provider behavior on deployed domain after deployment; deterministic CI fixtures do not prove production data availability or canonical wrapped-asset identity.
+- [ ] Cloudflare Worker production deployment remains pending account-specific namespace and encrypted Actions secrets. No Worker deployment is claimed. Keep `proxyEnabled:false` and `enabled:false`; do not enable wallet execution until transaction binding, semantic instruction validation, controlled Devnet lifecycle tests, monitoring/WAF, and independent security review pass.
+- [ ] Physical Redmi 14 5G acceptance remains open; viewport emulation is not physical-device sign-off.
+- [x] PR #219 description updated to reflect the passed validation and browser suite, remaining visual review and backend/security blockers. PR remains open and unmerged.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+---
+
 ## 2026-11-09 — Cloudflare Custom Domain deployment correction
 
 - [x] Re-checked the first-deploy sequence against Cloudflare's current Custom Domains documentation. Corrected the earlier manual-pre-attachment guidance: a Custom Domain can be declared in Wrangler config using `[[routes]]`, `pattern = "api.climboria.fun"`, and `custom_domain = true`; Wrangler provisions it during deployment.
