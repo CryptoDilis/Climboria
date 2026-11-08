@@ -2548,3 +2548,10 @@ For every integrated asset or borrowed technique, record:
 - [ ] Cloudflare Worker production deployment remains pending repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and encrypted Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; manually run **Deploy Climboria API** only after these are configured. No production API deployment is claimed.
 - [ ] Keep public swap execution disabled until Worker deployment and production health/CORS/rate-limit verification, canonical mint policy, semantic transaction instruction review, controlled Devnet lifecycle tests, monitoring/WAF, and independent security review pass.
 - [ ] GitHub runner reports Node.js 20 deprecation warnings for current Actions v4 dependencies. Track migration to Node.js 24-compatible action releases when available; these warnings did not fail this run.
+
+### Screenshot review notes — 2026-11-09
+
+- [x] Retrieved and inspected the eight-image Browser Smoke artifact from run `42493493261`.
+- [ ] Gameplay captures normalized at the Sanctuary show a very broad uninterrupted green foreground with the player relatively small in frame. Review camera distance/target framing and nearby terrain/vegetation composition; determine whether this is only the smoke-test capture location or a real spawn-area presentation gap.
+- [ ] Cave interior capture currently reads as strongly low-poly/stylized, with repeated faceted rock forms and simple floor props. Compare against the intended realistic/cinematic art direction and plan a focused cave asset/material/lighting polish pass.
+- [ ] Repeat visual review with wildlife enabled. The gameplay smoke log explicitly states wildlife was temporarily disabled, so these screenshots do not validate animal presence, behavior, or performance.
