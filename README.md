@@ -6,6 +6,9 @@
 - [x] Added selected-mint live market reference and debounced Jupiter quote preview while typing. Quote output is sourced from a fresh provider response; no cached or fabricated fallback is shown.
 - [x] Added collapsible route/quote details and explicit loading, pending and unavailable states. No visible placeholder dashes remain in the primary swap card.
 - [x] Kept Base marked planned and transaction execution locked. No fee collection or production backend is claimed.
+- [x] Browser Smoke failure diagnosed: the mobile Major Assets hit-test sampled a button before it was scrolled into the viewport; this was a test-coordinate issue, not an overlay defect.
+- [x] Updated the mobile hit-test to scroll the BTC row into view before checking the actual hit target; added viewport/element geometry to diagnostics. Updated main browser-smoke script parses successfully.
+- [ ] Re-run full Browser Smoke on current PR head and inspect premium Swap desktop/mobile screenshots; the prior run stopped in the earlier homepage/DEX/mobile test before reaching the new Swap-specific test.
 - [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
 - [x] Static checks passed: inline JavaScript parses, smoke-test JavaScript parses, no duplicate HTML IDs, and all literal `$(id)` references resolve.
 - [x] Fixed the first Browser Smoke failure at the exact-mint chart assertion: the new interaction block had been attached to the external `swap-config.js` script element, where browsers ignore inline code when `src` is present. Moved the block into the actual inline Swap application script; the full application script now parses and all literal DOM ID references resolve.
