@@ -50,7 +50,30 @@ a:hover{color:#ffe3a0}
 .token-change{display:block;margin-top:3px;font-size:11px;font-weight:800;letter-spacing:.2px;font-variant-numeric:tabular-nums}
 .flowbox{margin:14px 0;padding:15px;border:1px solid #465b75;border-radius:14px;background:linear-gradient(145deg,#14243a,#0b1422)}.flowbox h3{margin:0 0 5px;color:#f0d18a;font:700 16px Georgia,serif}.flowbox p{margin:0 0 12px;color:#aab8ca;font-size:12px;line-height:1.5}.flowgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.flowgrid>div{padding:10px;border:1px solid #34465e;border-radius:9px;min-width:0}.flowgrid small{display:block;color:#9eacc0;font-size:10px;line-height:1.4}.flowgrid b{display:block;color:#f2f5fa;font-size:15px;margin-top:5px;overflow-wrap:anywhere}@media(max-width:600px){.flowgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pair-age{white-space:nowrap;color:#e8c477;font-variant-numeric:tabular-nums;font-weight:700}
-.age-sub{display:block;color:#9aa9bd;font-size:9px;font-weight:500;margin-top:3px}\n</style>
+.age-sub{display:block;color:#9aa9bd;font-size:9px;font-weight:500;margin-top:3px}\n
+/* Responsive dual-chain market layout: Solana-first on mobile, balanced on desktop */
+@media(min-width:851px){
+ .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+ .layout>#markets{grid-column:1;grid-row:1;order:1;min-width:0}
+ .layout>#evmMarkets{grid-column:2;grid-row:1;order:2;min-width:0;margin-top:0!important}
+ .layout>.side{grid-column:1/-1;grid-row:2;order:3;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+ .layout>.side>.panel{min-width:0}
+}
+@media(max-width:850px){
+ .layout{display:flex;flex-direction:column;gap:16px}
+ .layout>#markets{order:1;width:100%;min-width:0}
+ .layout>#evmMarkets{order:2;width:100%;min-width:0;margin-top:0!important}
+ .layout>.side{order:3;width:100%;grid-template-columns:1fr}
+ .layout .tablewrap{max-width:100%;overscroll-behavior-x:contain}
+}
+@media(max-width:560px){
+ .layout>#markets{border-color:#b9955b88;box-shadow:0 16px 42px #0006,inset 0 1px #ffffff12}
+ .layout>#markets .panelhead{align-items:flex-start;flex-direction:column}
+ .layout>#markets .tabs{width:100%;gap:6px}
+ .layout>#markets .tab{padding:8px 9px}
+ .layout>#evmMarkets{opacity:.94}
+}
+</style>
 </head>
 <body>
 <header class="top"><div class="wrap topin"><a class="brand" href="../">CLIMBORIA<small>SUMMIT FINANCE</small></a><nav class="toplinks"><a href="../">Home</a><a href="#markets">Markets</a><span class="pill">SOLANA MAINNET</span></nav></div></header>
