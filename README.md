@@ -6,6 +6,68 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-08 — DEX/Swap clickable assets, release checklist and security gate
+
+**Owner clarification:** The DEX Buy/Sell execution rail position is already approved and must not be moved during token-info work. The current correction target is the selected-token header/overview only. On Swap, the Major Assets rows must be directly clickable and must never display a hover/focus "SELECT" label.
+
+### Current work and evidence
+- [x] DEX token header overview fills the open horizontal space beside the token name; live provider fields include price, 24h change, 24h volume, liquidity and venue. The compact profile/social icon remains separate.
+- [x] Preserve the approved DEX Buy/Sell terminal position; do not move it while correcting token information.
+- [x] Swap major-asset rows use button semantics, explicit symbol data attributes, and keyboard focus; removed the pseudo-element hover/focus "SELECT" label.
+- [x] Major asset selection resolves a Solana mint using exact-symbol DexScreener pool discovery (highest reported liquidity) and verifies decimals from Solana RPC before changing the output token. SOL/USDC use known canonical mints.
+- [x] Swap wallet connect handler restored for injected Phantom, Solflare and Backpack providers; wallet signing remains user-approved.
+- [x] Swap proxy hardened with nosniff, DENY frame policy, no-referrer, restrictive permissions policy, no-store caching, JSON content-type validation and known-route method allowlisting.
+- [x] Worker tests added for response security headers, JSON content type and method restrictions.
+- [x] Cloudflare API deploy workflow corrected to run tests and deploy from the actual dex/swap-proxy directory (the old workflow pointed at a non-existent backend/worker).
+- [x] Added Playwright regression coverage for clicking BTC in Major Assets and confirming no hover SELECT overlay.
+- [ ] Run the new major-assets browser regression and all required GitHub Actions after the latest commits; inspect and repair failures.
+- [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
+- [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
+- [ ] Confirm CoinGecko/DexScreener/Jupiter/RPC provider availability, rate limits, fallback behavior and data freshness; do not claim universal token coverage.
+
+### Complete DEX/Swap product checklist
+- [ ] DEX selected token header: title, short intro, compact profile icon, website/X/Telegram links, mint copy, verified/unknown state and provider timestamp.
+- [ ] DEX chart workspace: chart remains primary; remove the old pool-metrics strip from below the chart; show pool metrics only inside the token overview/header where space permits.
+- [ ] DEX selected token URL: token and selected pool restore after refresh, share/copy link, back/forward, invalid mint and unavailable-pool states.
+- [ ] DEX pool selector: exact selected pool URL state; refresh selected pool; correct loading/error/empty states.
+- [ ] DEX right rail: retain the approved execution rail position and keep Summit Chat at the far-right/below layout as accepted; no layout regression.
+- [ ] DEX buy/sell: Market and Limit choices, 25/50/75/100% balance presets, slippage, priority fee/compute-unit settings, route preview, wallet transaction review and safe rejection states.
+- [ ] Limit orders: implement only after selecting and auditing a real on-chain order program; until then clearly label as unavailable/preview-only.
+- [ ] Climboria Auto Route card: compare available Solana routes, show provider/venue, expected output, price impact, network fee, Climboria fee and route expiry; do not fabricate unsupported routes.
+- [ ] Routing sources: Jupiter Meta-Aggregator and eligible underlying Solana venues; add direct Pump.fun/PumpSwap/Raydium/Orca/Meteora adapters only where verified and materially improve coverage. Base uses a separate EVM router (e.g. Uniswap API), separate chain wallet and gas/approval flow.
+- [ ] Swap Major Assets: direct clickable row, no hover SELECT/tooltip overlay, click selects asset, URL persists, chart updates; test every row and touch interaction.
+- [ ] Swap Advanced Settings: auto/custom slippage, priority fee strategy, max fee/compute-unit price only when the transaction builder actually applies it; distinguish estimate from applied settings.
+- [ ] Wallets: Phantom, Solflare, Backpack; disconnect, wrong network, rejection, stale account, changed account, unsupported transaction and insufficient SOL handling.
+- [ ] Quote/order/execute: quote expiry, stale quote invalidation, exact mint decimals, token account existence, rent/ATA costs, balance/fee checks, v0 transaction review, user signature, execution status and signature confirmation.
+- [ ] Climboria swap revenue: configure Jupiter referral account and fee token accounts; choose and disclose an owner-approved fee; verify referral fee in actual order/transaction output; do not enable fee collection before test transactions and accounting/reconciliation.
+- [ ] Backend: deploy Cloudflare Worker from dex/swap-proxy; provision Jupiter server API key as a Worker secret; assign a real unique rate-limit namespace; bind api.climboria.fun; verify TLS, health, exact CORS origins, rate limits and logs; then enable proxy-backed quotes.
+- [ ] Production trading gate: keep swap-config.js enabled:false until backend, wallet review, transaction security review, controlled tests and live smoke tests pass. Never enable execution merely because Worker deployment succeeds.
+- [ ] Base: separate EVM quote, chain ID validation, wallet connection, ERC-20 approvals, gas estimate/max fee, transaction simulation, signing, receipt confirmation and failure handling; do not show Base as live until end-to-end verified.
+- [ ] Browser QA: desktop/mobile, major-asset click, hover/focus, selected token refresh, URL restore, wallet connect/disconnect, quote/order fail-closed behavior, chart load, chat layout and console errors.
+
+### Security / anti-defacement release checklist
+- [x] Worker secrets are not stored in frontend config or committed source; swap-config.js contains public feature flags only.
+- [x] Worker requires exact allowlisted origins for browser CORS and fails closed if the rate limiter or Jupiter server key is missing.
+- [x] Worker validates public keys, amount format, request body sizes, JSON content type and Jupiter execution response status.
+- [x] Added defensive API response headers and method allowlisting.
+- [ ] Cloudflare: enable DNSSEC if registrar/zone supports it; enforce HTTPS and redirect HTTP; verify registrar account MFA/lock and recovery; restrict API tokens to the zone/Workers permissions required; rotate any previously exposed/lost tokens.
+- [ ] Cloudflare: deploy WAF/managed rules, bot/rate controls, DDoS protections, alerting and log retention; review origin/worker routes and remove stale DNS records.
+- [ ] GitHub: enable branch protection/rulesets on main, require review/checks, block force pushes/deletion, restrict Actions permissions to read-only by default, protect deployment environment and secrets, enable secret scanning/push protection and Dependabot.
+- [ ] Supply chain: pin third-party GitHub Actions to immutable commit SHAs, review npm dependency lockfiles, enable Dependabot/Renovate and audit transitive dependencies.
+- [ ] Frontend: audit all innerHTML/template interpolation and external links for XSS/open redirects; maintain strict escaping/textContent; add a tested Content Security Policy and security headers at Cloudflare Pages (not just API Worker).
+- [ ] DEX/Swap: semantic transaction instruction review/simulation is not yet a security guarantee; independently audit Jupiter transaction contents, wallet fee payer, expected mints/amounts, approvals, program IDs and fee destinations before mainnet activation.
+- [ ] Backend abuse: add per-wallet and per-IP limits/quotas, request IDs, replay/idempotency protection where supported, origin-independent abuse controls, provider quota alerts and operational kill switch.
+- [ ] Security test: dependency audit, secret scan, static analysis, XSS/DOM injection tests, CORS/CSRF review, rate-limit bypass tests, oversized payload tests, wallet spoofing tests, malformed transaction tests and independent penetration review.
+- [ ] Backup/recovery: protect DNS, GitHub, Cloudflare and registrar accounts with MFA; document break-glass owner access and rollback procedure; test restore of last known good Pages/Worker deployments.
+
+### Verified security findings / known blockers
+- **Critical release blocker:** The Cloudflare Worker is source code only until deployed; dex/swap-proxy/DEPLOYMENT.md explicitly says it is not deployed. swap-config.js keeps proxyEnabled:false and enabled:false. No production swap execution or Climboria fee collection is active.
+- **Deployment configuration blocker:** dex/swap-proxy/wrangler.toml currently uses a documented placeholder rate-limit namespace ID. The API deployment workflow previously pointed to non-existent backend/worker; it is now corrected to the actual Worker directory. Real Cloudflare account credentials, Jupiter API key secret, namespace allocation and custom domain still need verification.
+- **Security limitation:** Worker rate limiting is currently per-IP and approximate; CORS is not authentication. Add WAF/monitoring and wallet-aware quotas before public trading.
+- **Transaction risk:** Worker/Jupiter response validation and frontend transaction metadata checks do not equal semantic instruction auditing. Mainnet execution stays disabled pending independent review and controlled test cases.
+- **Defacement exposure:** Static Pages content is deployed from GitHub; compromise of GitHub account, repository write access, workflow permissions, Cloudflare DNS/Pages account or registrar can deface the site. Branch protection, MFA, protected deployment environment, pinned Actions and DNS/account hardening remain unverified.
+- **No claim of penetration testing:** This is a source/configuration review, not a live penetration test or Cloudflare account audit. Never claim the website is hack-proof.
+
 ## 2026-11-06 — account-system requirements clarified (documentation only)
 
 - [x] Re-read the canonical account/cloud-save section and confirmed that the account system is already sequenced as P2, frozen until Jarrell's Peak is accepted.
