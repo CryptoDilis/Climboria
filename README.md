@@ -2579,3 +2579,6 @@ For every integrated asset or borrowed technique, record:
 - [x] Added `climboria-dex-token-socials.png` to the Browser Smoke artifact upload list so the next eligible run retains the DEX social-rail layout capture (the prior successful artifact did not include that new screenshot despite the layout assertion passing).
 - [ ] Confirm the next Browser Smoke artifact contains `climboria-dex-token-socials.png` and review its desktop geometry; add a dedicated mobile DEX social-rail assertion if needed.
 - [ ] Cloudflare Worker production deployment remains blocked pending repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; keep public Swap execution disabled until deployed and independently verified.
+- [x] Browser Smoke passed on commit `235b97f`: DEX social-rail regression, Swap/DEX browser checks, Cloudflare proxy security tests, and Jarrell's Peak desktop/mobile gameplay smoke tests.
+- [x] Browser Smoke artifact confirmed; follow-up adds explicit DEX social-rail desktop/mobile screenshots and mobile card-boundary assertion to the uploaded artifact.
+- [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
