@@ -112,7 +112,7 @@ jobs:
               const hoverLabel=await btc.evaluate(el=>getComputedStyle(el,'::after').content);
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
-              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',{timeout:10000}).catch(()=>{});
+              await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteToSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not select BTC as the output asset');
               if(!new URL(page.url()).searchParams.get('to')) throw new Error('Major asset click did not persist the selected token URL');
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
