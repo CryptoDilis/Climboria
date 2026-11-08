@@ -109,7 +109,13 @@ jobs:
               const mockMint='SysvarRent111111111111111111111111111111111';
               const mockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               await page.route('https://api.jup.ag/tokens/v2/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
-              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})}));
+              const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
+              const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
+              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
+                const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
+                if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
+              });
               await page.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://rpc.ankr.com/solana',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -132,6 +138,13 @@ jobs:
               if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
+              // A pool where the selected mint is only the quote side must never show the base token's (e.g. SOL) chart or metrics.
+              await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarC1ock11111111111111111111111111111111',symbol:'QONLY',name:'Quote Only'}));
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});
+              const quoteOnlyState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),emptyHidden:document.querySelector('#selectedChartEmpty')?.hidden}));
+              if(!quoteOnlyState.title.startsWith('QONLY')||quoteOnlyState.price!=='—'||quoteOnlyState.chart||quoteOnlyState.emptyHidden) throw new Error('Quote-side-only pool incorrectly displayed another asset chart or stale metrics: '+JSON.stringify(quoteOnlyState));
+              await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
