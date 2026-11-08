@@ -702,7 +702,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <section class="quote-panel" id="swapQuote" hidden><h2>Jupiter Swap · Live quote preview</h2><p>Solana-wide routing quote from Jupiter Swap API V2. Wallet connection is read-only; this stage does not sign or submit transactions.</p><div class="walletbar"><div><small>Connected wallet</small><b id="walletStatus">Not connected</b></div><button class="tab" id="connectWallet" type="button">Connect wallet</button></div><div class="quote-controls"><div class="quote-field"><label for="quoteAmount">Amount</label><input id="quoteAmount" type="number" min="0" step="any" value="0.1" inputmode="decimal"></div><div class="quote-field"><label for="quoteFromSearch">From token · name, symbol or mint</label><input id="quoteFromSearch" value="SOL" placeholder="Search any Solana token"><button class="tab" id="searchFrom" type="button">Find input token</button><div id="fromResults"></div><small id="fromSelected">SOL · 9 decimals</small></div><div class="quote-field"><label for="quoteToSearch">To token · name, symbol or mint</label><input id="quoteToSearch" value="USDC" placeholder="Search any Solana token"><button class="tab" id="searchTo" type="button">Find output token</button><div id="toResults"></div><small id="toSelected">USDC · 6 decimals</small></div><button class="tab" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div><div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Router</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div><div class="quote-status" id="quoteStatus">Ready. Enter an amount and request a fresh quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div><div class="quote-warning">Quotes are indicative and expire/change with market conditions. Quote preview is read-only. Wallet-reviewed execution requires the separately deployed Climboria backend and remains disabled until explicitly configured and verified.</div></section><section class="stats">
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount">—</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount">—</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume">—</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section>
-<section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div><div class="detail-social-rail" id="detailSocialRail" aria-label="Token social links"><span class="social-empty">Official links appear when supplied by token metadata.</span></div></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="shareToken" type="button">↗ Share</button><button class="tab" id="closeDetail" type="button">Close</button></div></div>
+<section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div></div><div class="detail-social-rail" id="detailSocialRail" aria-label="Token social links"><span class="social-empty">Official links appear when supplied by token metadata.</span></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="shareToken" type="button">↗ Share</button><button class="tab" id="closeDetail" type="button">Close</button></div></div>
 <nav class="detail-mobile-tabs" id="detailMobileTabs" aria-label="Token workspace sections">
  <button type="button" data-detail-tab="chart" class="active">Chart</button><button type="button" data-detail-tab="trade">Trade</button><button type="button" data-detail-tab="chat">Chat</button><button type="button" data-detail-tab="pools">Pools</button>
 </nav>
@@ -1343,5 +1343,27 @@ const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');d
  .intel-accordion>.intel-card:has(.intel-toggle[data-intel-panel="profile"][aria-expanded="true"]){grid-column:1/-1!important;max-width:100%}
  #intelPanelProfile{max-width:100%}
 }
+</style>
+<style id="climboria-dex-social-rail-contained">
+/* Keep Website / X / Telegram inside the Token Intelligence card, below the title grid. */
+#tokenDetail .detail-heading{min-width:0;max-width:100%;overflow:hidden}
+#tokenDetail .detail-name-row{min-width:0;max-width:100%}
+#tokenDetail .detail-social-rail{
+ display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-start;
+ gap:7px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+ margin:10px 0 0;padding:10px 0 0;border-top:1px solid #34465f;
+ overflow:hidden
+}
+#tokenDetail .detail-social-rail a{
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ min-height:29px;max-width:100%;padding:6px 10px;
+ border:1px solid #8d7148;border-radius:8px;
+ background:linear-gradient(145deg,#1b2b40,#0b1421);
+ color:#f0d18b;font-size:9px;font-weight:800;text-decoration:none;
+ overflow-wrap:anywhere
+}
+#tokenDetail .detail-social-rail svg{width:13px;height:13px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7}
+#tokenDetail .detail-social-rail .social-empty{font-size:9px;color:#8395aa}
+@media(max-width:640px){#tokenDetail .detail-social-rail{margin-top:8px;padding-top:8px}}
 </style>
 </body></html>
