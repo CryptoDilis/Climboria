@@ -13,6 +13,7 @@
 - [x] Diagnosed Browser Smoke #42515783374: homepage/mobile, Cloudflare proxy, and fail-closed security tests passed; premium Swap test exposed that URL restoration re-enabled "Find best route" with an empty amount.
 - [x] Fixed the base Solana network initializer to keep the quote CTA disabled until a valid amount exists, even during first-load URL restoration; the locked execution CTA remains disabled.
 - [x] Added a browser assertion for both the disabled initial quote CTA and its "Enter an amount" label.
+- [x] Corrected a YAML heredoc indentation mistake in the new browser assertion after GitHub rejected the workflow file before creating a job.
 - [ ] Re-run the full Browser Smoke on the latest PR head; confirm quote-preview, mobile layout, screenshots, and gameplay smoke all pass.
 - [ ] Re-run full Browser Smoke on current PR head and inspect premium Swap desktop/mobile screenshots; the prior run stopped in the earlier homepage/DEX/mobile test before reaching the new Swap-specific test.
 - [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
