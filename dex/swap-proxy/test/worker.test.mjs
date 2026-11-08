@@ -270,6 +270,29 @@ test("proxies pump.fun token metadata server-side and sanitizes public fields", 
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("keeps absent and malformed Pump.fun metrics unavailable instead of coercing them to zero", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({
+      mint: valid,
+      holder_count: null,
+      num_holders: "",
+      bonding_curve_progress: null,
+      usd_market_cap: "",
+      created_timestamp: undefined,
+      total_supply: null
+    });
+    const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=" + valid, { headers: { origin } }), env);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.holderCount, null);
+    assert.equal(body.bondingCurveProgress, null);
+    assert.equal(body.usdMarketCap, null);
+    assert.equal(body.createdTimestamp, null);
+    assert.equal(body.totalSupply, null);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("rejects invalid mint on pump.fun metadata route before upstream request", async () => {
   const originalFetch = globalThis.fetch;
   try {
