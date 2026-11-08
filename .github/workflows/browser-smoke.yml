@@ -119,6 +119,8 @@ jobs:
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
               await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
+              const candidateUi=await page.locator('#fromResults button[data-index="0"]').evaluate(el=>({cursor:getComputedStyle(el).cursor,tabIndex:el.tabIndex,mintWrap:getComputedStyle(el.querySelector('small')).overflowWrap,cardWidth:el.getBoundingClientRect().width,listWidth:el.parentElement.getBoundingClientRect().width}));
+              if(candidateUi.cursor!=='pointer'||candidateUi.tabIndex!==0||candidateUi.mintWrap!=='anywhere'||candidateUi.cardWidth>candidateUi.listWidth+1) throw new Error('Token candidate card accessibility/wrapping/overlap check failed: '+JSON.stringify(candidateUi));
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not open BTC input token candidates');
               if(new URL(page.url()).searchParams.get('from')==='') throw new Error('Swap URL lost its current input mint while candidates load');
               if(await page.locator('#fromResults button').count()!==2) throw new Error('Expected multiple explicit BTC representation choices');
@@ -128,6 +130,8 @@ jobs:
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Explicit BTC token choice did not select BTC as the input asset');
               const selectedMint=new URL(page.url()).searchParams.get('from');
               if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
