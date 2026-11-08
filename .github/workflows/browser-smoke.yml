@@ -237,10 +237,10 @@ jobs:
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
               await page.goBack({waitUntil:'domcontentloaded'});
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
-              await page.waitForFunction(pool=>document.querySelector('#detailChart')?.src.includes(pool),poolA,{timeout:10000});
+              await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000});
               await page.goForward({waitUntil:'domcontentloaded'});
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
-              await page.waitForFunction(pool=>document.querySelector('#detailChart')?.src.includes(pool),poolB,{timeout:10000});
+              await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000});
               if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
               console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
             } finally { await browser.close(); }
