@@ -19,6 +19,7 @@
 - [x] Swap proxy hardened with nosniff, DENY frame policy, no-referrer, restrictive permissions policy, no-store caching, JSON content-type validation and known-route method allowlisting.
 - [x] Worker tests added for response security headers, JSON content type and method restrictions.
 - [x] Cloudflare API deploy workflow corrected to run tests and deploy from the actual dex/swap-proxy directory (the old workflow pointed at a non-existent backend/worker).
+- [x] Cloudflare deploy workflow now fails the release gate unless the deployed api.climboria.fun health endpoint confirms the Jupiter secret and rate-limit binding, and the exact website CORS preflight passes.
 - [x] Added Playwright regression coverage for clicking BTC in Major Assets and confirming no hover SELECT overlay.
 - [x] Corrected the Playwright wait assertion and gave the mocked BTC mint a distinct address so the test exercises a real input/output change.
 - [x] Main validation workflow now runs Node syntax checks and the Cloudflare swap proxy security/API test suite.
@@ -47,7 +48,7 @@
 - [ ] Wallets: Phantom, Solflare, Backpack; disconnect, wrong network, rejection, stale account, changed account, unsupported transaction and insufficient SOL handling.
 - [ ] Quote/order/execute: quote expiry, stale quote invalidation, exact mint decimals, token account existence, rent/ATA costs, balance/fee checks, v0 transaction review, user signature, execution status and signature confirmation.
 - [ ] Climboria swap revenue: configure Jupiter referral account and fee token accounts; choose and disclose an owner-approved fee; verify referral fee in actual order/transaction output; do not enable fee collection before test transactions and accounting/reconciliation.
-- [ ] Backend: deploy Cloudflare Worker from dex/swap-proxy; provision Jupiter server API key as a Worker secret; assign a real unique rate-limit namespace; bind api.climboria.fun; verify TLS, health, exact CORS origins, rate limits and logs; then enable proxy-backed quotes.
+- [ ] Backend: add Cloudflare account secrets to GitHub Actions; provision Jupiter server API key as a Worker secret in Cloudflare; confirm the rate-limit namespace binding; bind api.climboria.fun; run the manual deploy workflow and pass its post-deploy health/CORS gate; verify TLS, rate limits and logs; then enable proxy-backed quotes.
 - [ ] Production trading gate: keep swap-config.js enabled:false until backend, wallet review, transaction security review, controlled tests and live smoke tests pass. Never enable execution merely because Worker deployment succeeds.
 - [ ] Base: separate EVM quote, chain ID validation, wallet connection, ERC-20 approvals, gas estimate/max fee, transaction simulation, signing, receipt confirmation and failure handling; do not show Base as live until end-to-end verified.
 - [ ] Browser QA: desktop/mobile, major-asset click, hover/focus, selected token refresh, URL restore, wallet connect/disconnect, quote/order fail-closed behavior, chart load, chat layout and console errors.
