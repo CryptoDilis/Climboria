@@ -10,6 +10,10 @@
 - [x] Updated the mobile hit-test to scroll the BTC row into view before checking the actual hit target; added viewport/element geometry to diagnostics. Updated main browser-smoke script parses successfully.
 - [x] Fixed captured-handler references so Connect Wallet and Find Best Route buttons call the live wrapped handlers (including balance refresh and the debounced quote preview).
 - [x] Changed the quote-preview debounce to 2.1 seconds to stay within Jupiter's documented 0.5 requests/second keyless limit; corrected the displayed fee to "total route fee rate" rather than mislabeling it as a provider fee.
+- [x] Diagnosed Browser Smoke #42515783374: homepage/mobile, Cloudflare proxy, and fail-closed security tests passed; premium Swap test exposed that URL restoration re-enabled "Find best route" with an empty amount.
+- [x] Fixed the base Solana network initializer to keep the quote CTA disabled until a valid amount exists, even during first-load URL restoration; the locked execution CTA remains disabled.
+- [x] Added a browser assertion for both the disabled initial quote CTA and its "Enter an amount" label.
+- [ ] Re-run the full Browser Smoke on the latest PR head; confirm quote-preview, mobile layout, screenshots, and gameplay smoke all pass.
 - [ ] Re-run full Browser Smoke on current PR head and inspect premium Swap desktop/mobile screenshots; the prior run stopped in the earlier homepage/DEX/mobile test before reaching the new Swap-specific test.
 - [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
 - [x] Static checks passed: inline JavaScript parses, smoke-test JavaScript parses, no duplicate HTML IDs, and all literal `$(id)` references resolve.
