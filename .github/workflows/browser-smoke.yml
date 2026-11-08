@@ -124,7 +124,7 @@ jobs:
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not open BTC input token candidates');
               if(new URL(page.url()).searchParams.get('from')==='') throw new Error('Swap URL lost its current input mint while candidates load');
               if(await page.locator('#fromResults button').count()!==2) throw new Error('Expected multiple explicit BTC representation choices');
-              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||!(await page.locator('#fromSelected').innerText()).includes('SOL')||new URL(page.url()).searchParams.get('from')!=='So11111111111111111111111111111111111111112') throw new Error('Ambiguous BTC candidate was silently selected without explicit mint choice');
+              const preChoice=await page.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,selected:document.querySelector('#fromSelected')?.textContent,chartTitle:document.querySelector('#selectedAssetTitle')?.textContent})); if(preChoice.input!=='BTC'||!preChoice.selected.includes('SOL')||!preChoice.chartTitle.startsWith('SOL')) throw new Error('Ambiguous BTC candidate was silently selected without explicit mint choice: '+JSON.stringify(preChoice));
               await page.locator('#fromResults button[data-index="0"]').click();
               await page.waitForFunction(()=>new URL(location.href).searchParams.get('from')==='SysvarRent111111111111111111111111111111111',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Explicit BTC token choice did not select BTC as the input asset');
@@ -167,7 +167,7 @@ jobs:
               if(mobileHit.cursor!=='pointer'||mobileHit.userSelect!=='none'||(mobileHit.after!=='none'&&mobileHit.after!=='normal')||!mobileHit.hit) throw new Error('Mobile Major Asset hit-target/SELECT overlay check failed: '+JSON.stringify(mobileHit));
               await mobileBtc.tap();
               await mobileSwap.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
-              if(await mobileSwap.locator('#quoteFromSearch').inputValue()!=='BTC'||!(await mobileSwap.locator('#fromSelected').innerText()).includes('SOL')||new URL(mobileSwap.url()).searchParams.get('from')!=='So11111111111111111111111111111111111111112') throw new Error('Mobile BTC tap silently changed the selected mint before user choice');
+              const mobilePreChoice=await mobileSwap.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,selected:document.querySelector('#fromSelected')?.textContent,chartTitle:document.querySelector('#selectedAssetTitle')?.textContent})); if(mobilePreChoice.input!=='BTC'||!mobilePreChoice.selected.includes('SOL')||!mobilePreChoice.chartTitle.startsWith('SOL')) throw new Error('Mobile BTC tap silently changed the selected mint before user choice: '+JSON.stringify(mobilePreChoice));
               if(await mobileSwap.locator('#fromResults button').count()!==2) throw new Error('Mobile BTC candidate list did not render both variants');
               await mobileSwap.locator('#fromResults button[data-index="0"]').tap();
               await mobileSwap.waitForFunction(()=>new URL(location.href).searchParams.get('from')==='SysvarRent111111111111111111111111111111111',null,{timeout:10000});
