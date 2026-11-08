@@ -120,10 +120,10 @@ jobs:
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
-              await page.goBack({waitUntil:'domcontentloaded'});
+              await page.goBack();
               await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='USDC',null,{timeout:10000});
               if(await page.locator('#quoteToSearch').inputValue()!=='USDC') throw new Error('Swap browser Back did not restore the previous output token');
-              await page.goForward({waitUntil:'domcontentloaded'});
+              await page.goForward();
               await page.waitForFunction(()=>document.querySelector('#quoteToSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteToSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('to')!==selectedMint) throw new Error('Swap browser Forward did not restore the selected exact mint');
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
@@ -235,10 +235,10 @@ jobs:
               if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
-              await page.goBack({waitUntil:'domcontentloaded'});
+              await page.goBack();
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000});
-              await page.goForward({waitUntil:'domcontentloaded'});
+              await page.goForward();
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000});
               if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
