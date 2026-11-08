@@ -585,7 +585,7 @@ async function loadMajorMarkets(){
  const assets=[{id:'bitcoin',symbol:'BTC',name:'Bitcoin'},{id:'ethereum',symbol:'ETH',name:'Ethereum'},{id:'solana',symbol:'SOL',name:'Solana'},{id:'binancecoin',symbol:'BNB',name:'BNB'},{id:'ripple',symbol:'XRP',name:'XRP'},{id:'usd-coin',symbol:'USDC',name:'USD Coin'}];
  const render=(data,sourceNote)=>{
   $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
-  $('majorStatus').textContent=sourceNote+' · Select an asset to load its Jupiter token and chart.';
+  $('majorStatus').textContent=sourceNote+' · Tap an asset to load its Solana market and chart.';
  };
  try{
   const data=await fetchMarketJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+assets.map(x=>x.id).join(',')+'&order=market_cap_desc&per_page=6&page=1&sparkline=true&price_change_percentage=24h');
