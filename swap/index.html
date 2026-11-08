@@ -545,11 +545,11 @@ function setSwapChain(chain){
  const isBase=chain==='base';
  $('chainNotice').textContent=isBase?'Base network selected · ERC-20 assets require a Base-compatible wallet and verified EVM routing backend. Quotes and execution are not enabled yet.':'Solana network selected · Jupiter route interface. Execution remains disabled pending backend verification.';
  $('quoteStatus').textContent=isBase?'Base ERC-20 swap is not yet connected. No Solana quote will be requested for a Base selection.':'Ready when you are. Enter an amount to request a fresh Solana route quote.';setSwapUrl();
- $('getQuote').disabled=isBase;$('prepareSwap').disabled=isBase;
+ const hasQuoteAmount=Number.isFinite(Number($('quoteAmount').value))&&Number($('quoteAmount').value)>0;$('getQuote').disabled=isBase||!hasQuoteAmount;$('getQuote').textContent=hasQuoteAmount?'Find best route':'Enter an amount';$('prepareSwap').disabled=true;
  $('searchFrom').disabled=isBase;$('searchTo').disabled=isBase;
  $('quoteFromSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteToSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
- $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base routing is not live. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Provider fee</small><b>Shown when supplied</b></div>';
+ $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base routing is not live. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Total route fee rate</small><b>Shown when supplied</b></div>';
 }
 
 
