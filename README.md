@@ -25,6 +25,7 @@
 - [x] Previous main commit `f12dee5c` passed Validate, Browser Smoke (including BTC major-asset click/no-hover-label check), and GitHub Pages deployment.
 - [x] Found and fixed a refresh-restoration gap: exact selected Solana mint metadata now restores through DexScreener exact-mint pools plus on-chain decimals verification, rather than relying on the Jupiter token-search endpoint.
 - [x] Swap URL changes now create browser history entries and `popstate` restores the selected chain and exact token mints.
+- [x] Base URLs are guarded from the Solana mint resolver; EVM token restoration remains explicitly pending the Base backend.
 - [ ] New refresh/history regression and latest Pages deployment for the follow-up commits are running; only mark passed after their final conclusions are checked.
 - [ ] Run the new major-assets browser regression and all required GitHub Actions after the latest commits; inspect and repair failures.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
