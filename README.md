@@ -2511,3 +2511,9 @@ For every integrated asset or borrowed technique, record:
 - [ ] Cloudflare Worker production deployment remains blocked on the account's real rate-limit namespace, server-side Jupiter API secret, custom-domain binding and production verification. Do not request secrets in chat.
 - [ ] Keep public swap execution disabled until backend deployment, semantic instruction validation, controlled Devnet lifecycle tests, monitoring and independent security review are complete.
 - Commits: UI safety change [f813760](https://github.com/CryptoDilis/Climboria/commit/f81376090212325a5751c0adcd18e02b10bc190a); desktop/mobile acceptance update [a54759a](https://github.com/CryptoDilis/Climboria/commit/a54759a9bc31aec76dd9d13d23e61bdeebc0a369).
+
+
+- [x] Tightened the selected-market chart lookup: a Solana pool is now accepted only when its base or quote token mint exactly equals the selected input mint. A symbol match or unrelated Solana pool can no longer populate the selected asset's chart.
+- [x] Expanded Browser Smoke coverage for multiple BTC representations, explicit user selection, token-card keyboard tab stops, mint wrapping, card/list width, and selected-mint chart title/price.
+- [x] Added mobile assertions that tapping an ambiguous major asset opens candidate choices without silently changing the selected mint; explicit candidate tap is required.
+- [ ] Verify the latest Browser Smoke, Validate and Pages runs after the final test assertion correction. Historical run 42491345347 failed on the old assertion expecting implicit BTC selection; this was a stale test expectation, not a code failure. The subsequent run was cancelled by a newer commit before full completion.
