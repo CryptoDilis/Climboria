@@ -16,7 +16,9 @@ async function loadHero(){
   const p=pairs[0];if(!p)throw new Error('No wrapped-SOL base pair returned');
   const change=Number(p.priceChange?.h24),changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
   const changeClass=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
-  el.innerHTML='<div><small>MARKET LEADER · SOL / '+esc(p.quoteToken?.symbol||'PAIR')+'</small><b id="heroSolPrice">'+price(p.priceUsd)+'</b></div><div class="hero-market-change '+changeClass+'" id="heroSolChange">'+changeText+'</div><span class="hero-market-source">DexScreener · '+new Date().toLocaleTimeString()+'</span>';
+  const previous=Number(el.dataset.lastPrice),current=Number(p.priceUsd),flash=Number.isFinite(previous)&&Number.isFinite(current)&&current!==previous?(current>previous?'price-flash-up':'price-flash-down'):'';
+  el.dataset.lastPrice=String(current);
+  el.innerHTML='<div><small>MARKET LEADER · SOL / '+esc(p.quoteToken?.symbol||'PAIR')+'</small><b id="heroSolPrice" class="'+flash+'">'+price(p.priceUsd)+'</b></div><div class="hero-market-change '+changeClass+'" id="heroSolChange">'+changeText+'</div><span class="hero-market-source">DexScreener · '+new Date().toLocaleTimeString()+'</span>';
  }catch(e){el.innerHTML='<div><small>MARKET LEADER · WRAPPED SOL</small><b>Live price temporarily unavailable</b></div><div class="hero-market-change muted">No cached or estimated price shown</div><span class="hero-market-source">Retrying with next market refresh</span>'}
 }
 async function loadTrending(){
