@@ -37,7 +37,7 @@
 ### Complete DEX/Swap product checklist
 - [ ] DEX selected token header: title, short intro, compact profile icon, website/X/Telegram links, mint copy, verified/unknown state and provider timestamp.
 - [ ] DEX chart workspace: chart remains primary; remove the old pool-metrics strip from below the chart; show pool metrics only inside the token overview/header where space permits.
-- [x] DEX token/pool URL history: selecting a token or pool now pushes a browser history entry; popstate restores the selected token and requested pool from the URL. Playwright regression for token/pool URL, pool selection and Back/Forward restoration added in `72b33c4`; workflow result pending.
+- [x] DEX token/pool URL history: selecting a token or pool now pushes a browser history entry; popstate restores the selected token and requested pool from the URL. Playwright regression added in `72b33c4` exposed a bug: initial URL token restore did not replace the URL with its default best pool. Fixed in `744396f` by using `replaceState` only when the incoming URL has no pool; regression rerun pending.
 - [ ] DEX pool selector: exact selected pool URL state; refresh selected pool; correct loading/error/empty states.
 - [ ] DEX right rail: retain the approved execution rail position and keep Summit Chat at the far-right/below layout as accepted; no layout regression.
 - [ ] DEX buy/sell: Market and Limit choices, 25/50/75/100% balance presets, slippage, priority fee/compute-unit settings, route preview, wallet transaction review and safe rejection states.
