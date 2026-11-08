@@ -167,6 +167,43 @@ async function handleTokenSearch(request, env) {
     icon: typeof t.icon === "string" ? t.icon : null, isVerified: Boolean(t.isVerified)
   })));
 }
+async function handlePumpCoin(request, env) {
+  const limited = await enforceRateLimit(request, env);
+  if (limited) return limited;
+  const mint = new URL(request.url).searchParams.get("mint") || "";
+  if (!validPubkey(mint)) return json({ error: "A valid Solana mint address is required" }, 400);
+  // pump.fun blocks browser-origin requests. Fetch server-side and expose only
+  // the public metadata fields needed by the token profile.
+  const response = await fetch("https://frontend-api-v3.pump.fun/coins-v2/" + encodeURIComponent(mint), {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(9000)
+  });
+  if (!response.ok) return json({ error: "pump.fun metadata unavailable", upstreamStatus: response.status }, response.status === 404 ? 404 : 502);
+  const data = await response.json().catch(() => null);
+  if (!data || (data.mint && data.mint !== mint)) return json({ error: "pump.fun returned invalid token metadata" }, 502);
+  const safeUrl = value => {
+    if (typeof value !== "string" || value.length > 2048) return null;
+    try { const u = new URL(value); return u.protocol === "https:" ? u.href : null; } catch { return null; }
+  };
+  return json({
+    mint,
+    name: typeof data.name === "string" ? data.name.slice(0, 100) : null,
+    symbol: typeof data.symbol === "string" ? data.symbol.slice(0, 32) : null,
+    description: typeof data.description === "string" ? data.description.slice(0, 2000) : null,
+    image: safeUrl(data.image_uri || data.image),
+    website: safeUrl(data.website),
+    twitter: safeUrl(data.twitter),
+    telegram: safeUrl(data.telegram),
+    creator: validPubkey(data.creator) ? data.creator : null,
+    complete: typeof data.complete === "boolean" ? data.complete : null,
+    bondingCurve: validPubkey(data.bonding_curve) ? data.bonding_curve : null,
+    pumpSwapPool: validPubkey(data.pump_swap_pool) ? data.pump_swap_pool : null,
+    totalSupply: data.total_supply ?? null,
+    usdMarketCap: Number.isFinite(Number(data.usd_market_cap)) ? Number(data.usd_market_cap) : null,
+    createdTimestamp: Number.isFinite(Number(data.created_timestamp)) ? Number(data.created_timestamp) : null,
+    source: "pump.fun"
+  });
+}
 async function handleExecute(request, env) {
   const limited = await enforceRateLimit(request, env);
   if (limited) return limited;
@@ -226,14 +263,15 @@ export default {
     }
     if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, headers);
     const knownRoute = (url.pathname === "/health" && request.method === "GET") ||
-      (["/api/swap/quote", "/api/tokens/search"].includes(url.pathname) && request.method === "GET") ||
+      (["/api/swap/quote", "/api/tokens/search", "/api/pump/coin"].includes(url.pathname) && request.method === "GET") ||
       (["/api/swap/order", "/api/swap/execute"].includes(url.pathname) && request.method === "POST");
-    const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
+    const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/pump/coin", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
     if (knownPath && !knownRoute) return json({ error: "Method not allowed" }, 405, { ...headers, allow: url.pathname === "/health" || url.pathname.endsWith("/quote") || url.pathname.endsWith("/search") ? "GET, OPTIONS" : "POST, OPTIONS" });
     try {
       if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"); return json({ ok: ready, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") } }, ready ? 200 : 503, headers); }
       if (request.method === "GET" && url.pathname === "/api/swap/quote") return await handleQuote(request, env).then(r => addHeaders(r, headers));
       if (request.method === "GET" && url.pathname === "/api/tokens/search") return await handleTokenSearch(request, env).then(r => addHeaders(r, headers));
+      if (request.method === "GET" && url.pathname === "/api/pump/coin") return await handlePumpCoin(request, env).then(r => addHeaders(r, headers));
       if (request.method === "POST" && url.pathname === "/api/swap/order") return await handleOrder(request, env).then(r => addHeaders(r, headers));
       if (request.method === "POST" && url.pathname === "/api/swap/execute") return await handleExecute(request, env).then(r => addHeaders(r, headers));
       return json({ error: "Not found" }, 404, headers);
