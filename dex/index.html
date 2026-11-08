@@ -511,40 +511,36 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 @media(max-width:560px){.profile-icon{min-width:112px!important}.profile-popover{width:calc(100vw - 36px)!important}}
 
 
-/* Approved DEX workspace: chart left, token profile + room right, trade beneath. */
-.chart-overview{display:none!important}
-@media(min-width:851px){
- .detail-content{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(470px,1fr)!important;gap:14px;align-items:start}
- .detail-main{grid-column:1;grid-row:1 / span 2;min-width:0}
- .token-community{grid-column:2;grid-row:1;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch;min-width:0}
- .token-community .profile-card{grid-column:1;min-width:0}
- .token-community>.community-card:not(.profile-card):not(.tools-card){grid-column:2;min-width:0}
- .token-community .tools-card{grid-column:1/-1}
- .dex-trade-terminal{grid-column:2;grid-row:2;min-width:0}
+
+/* Premium trading terminal layout based on the supplied WBTC reference. */
+.detail-content{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(330px,380px)!important;gap:14px;align-items:start}
+.detail-main{grid-column:1;grid-row:1 / span 2;min-width:0}
+.detail-main .detailchart{width:100%;height:520px;margin-top:0;border:1px solid #344962;border-radius:13px;background:#070d17}
+.chart-overview{display:block!important}
+.dex-trade-terminal{grid-column:2;grid-row:1;position:sticky;top:100px;min-width:0;align-self:start}
+.token-community{grid-column:2;grid-row:2;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px;min-width:0}
+.token-community>.community-card{grid-column:1!important;min-width:0}
+.token-community .community-room{height:300px}
+.profile-socials{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.profile-socials a{display:inline-flex;padding:6px 9px;border:1px solid #6e5734;border-radius:99px;color:#f1d18b;font-size:9px;text-decoration:none}
+@media(max-width:1050px){
+ .detail-content{grid-template-columns:minmax(0,1fr) minmax(290px,340px)!important}
+ .detail-main .detailchart{height:450px}
 }
-.profile-card{overflow:hidden;background:linear-gradient(155deg,#14243a,#07111e);border-color:#b18a4b}
-.profile-banner{height:76px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 65%,#b66b24 0,#4a2a20 28%,#172b43 68%,#0a1422 100%);border:1px solid #3d5067;border-radius:9px;margin:9px 0 0}
-.profile-banner img{width:100%;height:100%;object-fit:cover}
-.profile-banner span{font:900 20px Georgia,serif;color:#f4d28c;letter-spacing:3px;text-shadow:0 2px 8px #000}
-.profile-identity{display:flex;align-items:center;gap:9px;margin:9px 0}
-.profile-token-avatar{width:38px;height:38px;flex:0 0 38px;border:1px solid #c69a4e;border-radius:50%;display:grid;place-items:center;background:#172b43;color:#f5d28d;font-weight:900;overflow:hidden}
-.profile-token-avatar img{width:100%;height:100%;object-fit:cover}
-.profile-identity-copy{min-width:0;display:grid;gap:3px}
-.profile-identity-copy b{font:700 14px Georgia,serif;color:#f6e5c1;overflow-wrap:anywhere}
-.profile-identity-copy span{font-size:9px;color:#a9bbcf;overflow-wrap:anywhere}
-.profile-description{font-size:9px;line-height:1.5;color:#c5d0dd;min-height:42px;margin:7px 0}
-.profile-metadata{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.profile-metadata .intel-profile-item{padding:7px;background:#0b1727;border-color:#30445e}
-.profile-metadata .intel-profile-item b{font-size:9px;line-height:1.4;overflow-wrap:anywhere}
-.profile-socials{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
-.profile-socials a{border:1px solid #6e5734;border-radius:99px;padding:5px 8px;color:#f1d18b;font-size:8px;text-decoration:none}
-.token-community .community-room{height:260px}
-@media(max-width:850px){
- .detail-content{display:flex!important;flex-direction:column}
- .detail-main,.token-community,.dex-trade-terminal{width:100%;order:initial}
- .token-community{order:2;display:grid;grid-template-columns:1fr;gap:10px}
- .token-community .profile-card,.token-community>.community-card:not(.profile-card):not(.tools-card),.token-community .tools-card{grid-column:1}
- .dex-trade-terminal{order:3}
+@media(max-width:820px){
+ .detail-content{display:flex!important;flex-direction:column;gap:12px}
+ .detail-main,.dex-trade-terminal,.token-community{width:100%;order:initial}
+ .detail-main{order:1}
+ .dex-trade-terminal{order:2;position:relative;top:auto}
+ .token-community{order:3}
+ .detail-main .detailchart{height:390px}
+ .token-community .community-room{height:280px}
+}
+@media(max-width:560px){
+ .detail-content{gap:10px}
+ .detail-main .detailchart{height:340px}
+ .dex-trade-terminal{padding:11px}
+ .token-community .community-room{height:260px}
 }
 
 </style>
@@ -580,6 +576,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 </div>
 <div class="chart-external"><a id="detailChartExternal" href="#" target="_blank" rel="noopener">Open full chart on DexScreener ↗</a></div>
 <div class="intel-accordion">
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="profile" aria-expanded="false"><span><small>TOKEN IDENTITY</small><b>Token profile & socials</b><em>Provider-listed identity, mint, pool details and official links when supplied</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelProfile" hidden><div class="intel-profile" id="tokenProfile"><div class="intel-loading">Select a pool to load token profile details…</div></div><div class="profile-socials" id="profileSocials"></div></div></section>
 
 <section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="holders" aria-expanded="false"><span><small>ON-CHAIN DISTRIBUTION</small><b>Top holders</b><em>Largest token accounts and their owner wallets, read from Solana RPC</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelHolders" hidden><div class="intel-kpis" id="holderKpis"><div><small>Top 10 owner share</small><b>—</b></div><div><small>Accounts checked</small><b>—</b></div></div><div class="holder-list" id="topHolders"><div class="intel-loading">Expand to fetch on-chain holder records…</div></div><div class="intel-foot" id="holderNote">Largest token accounts are not necessarily unique holders until owner wallets are aggregated.</div><button type="button" class="intel-refresh" data-intel-refresh="holders">Refresh holder records</button></div></section>
 <section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="activity" aria-expanded="false"><span><small>LIVE TRADE TAPE</small><b>Recent token activity</b><em>Indexed buys/sells · wallet · USD value · transaction links</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelActivity" hidden><div class="intel-panel-meta" id="activityUpdated">Not loaded yet</div><div class="activity-list" id="recentActivity"><div class="intel-loading">Expand to fetch recent indexed swaps…</div></div><div class="intel-foot" id="activityNote">Source: GeckoTerminal public pool-trades endpoint. Provider indexing and rate limits apply.</div><button type="button" class="intel-refresh" data-intel-refresh="activity">Refresh recent activity</button></div></section>
@@ -604,7 +601,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <div class="dex-trade-status" id="dexTradeStatus">Quotes are provider-sourced. No order is sent until you review and approve it in your wallet.</div>
  <div class="dex-trade-safety">Market route: Jupiter. Priority fee and slippage selections are displayed as preferences; execution stays gated by the verified Climboria backend. Limit execution is not yet available.</div>
  </aside><aside class="token-community">
- <section class="community-card profile-card" aria-label="Selected token profile"><div class="community-head"><div><span class="community-kicker">TOKEN INTELLIGENCE</span><h3>Token Profile</h3></div><span class="community-live" id="profileTrust">PROVIDER DATA</span></div><div class="profile-banner" id="profileBanner"><span id="profileBannerSymbol">TOKEN</span></div><div class="profile-identity"><div class="profile-token-avatar" id="profileTokenAvatar">T</div><div class="profile-identity-copy"><b id="profileTokenName">Select a token</b><span id="profileTokenSymbol">Token profile loads with selected pool</span></div></div><div class="profile-description" id="profileDescription">Provider-listed token description will appear here when available. Unavailable fields remain clearly marked.</div><div class="profile-metadata" id="tokenProfile"><div class="intel-loading">Profile details load when a pool is selected…</div></div><div class="profile-socials" id="profileSocials"></div></section>
+ 
 <section class="community-card"><div class="community-head"><div><span class="community-kicker">CLIMBORIA EXCLUSIVE</span><h3>Summit Chat</h3></div><span class="community-live">TOKEN ROOM</span></div><p class="community-desc">A separate room for this token. Your room history is saved on this browser.</p><div class="community-room" id="communityRoom"><div class="community-empty">Loading this token's room…</div></div><form id="communityForm" class="community-form"><textarea id="communityMessage" maxlength="1000" rows="2" placeholder="Share your market thoughts…"></textarea><div class="community-actions"><small id="communityCount">0 / 1000</small><button class="community-send" type="submit">Send message</button></div></form><div class="community-tools"><button type="button" id="exportCommunity">Export history</button><span id="communityStorageNote">Saved locally · per token mint</span></div></section>
 <section class="community-card tools-card"><span class="community-kicker">TOKEN TOOLS</span><h3>Summit Toolkit</h3><button type="button" id="copyTokenMint">Copy token mint</button><a id="openTokenExplorer" href="#" target="_blank" rel="noopener">Open on DexScreener ↗</a><button type="button" id="watchToken">☆ Add to watchlist</button><div class="community-watch-note" id="watchTokenNote">Watchlist is stored on this browser.</div></section>
 </aside></div><div class="detailhint">Chart and pool metrics are supplied by DexScreener. Pool coverage and chart availability vary. Always verify mint and pool details before trading.</div><h3 style="margin:16px 0 6px;font:700 16px Georgia,serif">Available pools & route candidates</h3><div class="trailmap"><h3>TrailMap · Pool & liquidity comparison</h3><p>Ranks discovered pools by reported liquidity and 24h volume. These are pool candidates only—not executable swap routes or guaranteed best prices.</p><div class="routehead"><span>Venue / pair</span><span>Liquidity</span><span>24h volume</span><span>Price USD</span><span>Pool age</span></div><div id="detailPairs"></div><div class="detailhint" id="trailHint">Select a pool to inspect its chart and metrics above.</div></div><div class="signalbox"><h3>Summit Signal · Data quality</h3><p>Evidence checklist from the selected provider pool. This is not a safety rating, audit, or investment recommendation.</p><div class="signalgrid" id="signalGrid"><div class="notice">Select a pool to inspect available evidence.</div></div><div class="signalfoot" id="signalFoot">Missing data is shown as unknown, never assumed to be zero or safe.</div></div></section><div class="layout">
@@ -765,20 +762,19 @@ async function loadAdvancedIntel(mint,pair){
  const socials=(pair.info?.socials||[]).map(x=>({label:x.type||'Social',url:intelSafeUrl(x.url)})).filter(x=>x.url);
  const age=pair.pairCreatedAt?Math.max(0,(Date.now()-Number(pair.pairCreatedAt))/86400000):null;
  const ageLabel=age===null?'Unavailable':age<1?(age*24).toFixed(1)+' hours':age<30?age.toFixed(1)+' days':(age/30.4375).toFixed(1)+' months';
- const tokenName=pair.baseToken?.name||'Unknown token',tokenSymbol=pair.baseToken?.symbol||'TOKEN';
-  const imageUrl=intelSafeUrl(pair.info?.imageUrl||pair.info?.header);
-  $('profileTokenName').textContent=tokenName;$('profileTokenSymbol').textContent=tokenSymbol+' · '+intelShort(mint);
-  $('profileBannerSymbol').textContent=tokenSymbol;$('profileTrust').textContent='PROVIDER DATA';
-  $('profileDescription').textContent=pair.info?.description||'No verified description is listed by the market-data provider for this token.';
-  $('profileTokenAvatar').innerHTML=imageUrl?'<img src="'+esc(imageUrl)+'" alt="" referrerpolicy="no-referrer">':esc(tokenSymbol.slice(0,2).toUpperCase());
-  $('profileBanner').innerHTML=imageUrl?'<img src="'+esc(imageUrl)+'" alt="" referrerpolicy="no-referrer">':'<span>'+esc(tokenSymbol)+'</span>';
-  $('tokenProfile').innerHTML=[
-   ['Mint address',esc(mint)],['Pool venue',esc(pair.dexId||'Unavailable')],
-   ['Pool age',esc(ageLabel)],['Pool created',esc(pair.pairCreatedAt?new Date(Number(pair.pairCreatedAt)).toLocaleString():'Unavailable')],
-   ['Price USD',esc(pair.priceUsd?'$'+pair.priceUsd:'Unavailable')],['24h change',esc(pair.priceChange?.h24===undefined?'Unavailable':Number(pair.priceChange.h24).toFixed(2)+'%')]
-  ].map(([k,v])=>'<div class="intel-profile-item"><small>'+esc(k)+'</small><b>'+v+'</b></div>').join('');
+ $('tokenProfile').innerHTML=[
+   ['Token name',esc(pair.baseToken?.name||'Unknown token')],
+   ['Symbol',esc(pair.baseToken?.symbol||'Unknown')],
+   ['Mint address',esc(mint)],
+   ['Pool venue',esc(pair.dexId||'Unavailable')],
+   ['Pool age',esc(ageLabel)],
+   ['Pool created',esc(pair.pairCreatedAt?new Date(Number(pair.pairCreatedAt)).toLocaleString():'Unavailable')],
+   ['Price USD',esc(pair.priceUsd?'$'+pair.priceUsd:'Unavailable')],
+   ['24h change',esc(pair.priceChange?.h24===undefined?'Unavailable':Number(pair.priceChange.h24).toFixed(2)+'%')],
+   ['Description',esc(pair.info?.description||'Not listed by provider')]
+  ].map(([k,v])=>'<div class="intel-profile-item"><small>'+k+'</small><b>'+v+'</b></div>').join('');
   $('profileSocials').innerHTML=[...websites,...socials].map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+esc(x.label)+' ↗</a>').join('');
-  $('bubbleMapOpen').href='https://app.bubblemaps.io/sol/token/'+encodeURIComponent(mint);
+    $('bubbleMapOpen').href='https://app.bubblemaps.io/sol/token/'+encodeURIComponent(mint);
  document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');const indicator=b.querySelector('strong');if(indicator)indicator.textContent='＋'});
  document.querySelectorAll('.intel-panel').forEach(p=>p.hidden=true);
  $('topHolders').innerHTML='<div class="intel-loading">Expand to fetch current on-chain holder records…</div>';
