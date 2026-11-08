@@ -229,7 +229,7 @@ export default {
       return json({ error: "Not found" }, 404, headers);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected backend error";
-      const status = message.includes("too large") || message.includes("Invalid") || message.includes("positive integer") ? 400 : 503;
+      const status = message.includes("too large") || message.includes("Invalid") || message.includes("positive integer") || message.includes("Content-Type must be application/json") ? 400 : 503;
       return json({ error: message }, status, headers);
     }
   }
