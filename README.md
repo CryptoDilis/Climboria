@@ -2504,7 +2504,7 @@ For every integrated asset or borrowed technique, record:
 - [x] Clicking BTC, ETH, BNB or XRP now opens Jupiter token search candidates and requires an explicit token-result click before changing the From mint, selected-market chart and URL.
 - [x] SOL and USDC retain direct selection using their known Solana mint addresses.
 - [x] Updated the desktop and mobile browser-smoke fixtures to return multiple BTC representations and require explicit selection.
-- [ ] Complete and pass the new Browser Smoke run after these changes; the previous Jarrell's Peak gameplay job remained in progress and its log artifact was unavailable.
+- [x] Complete and pass the full Browser Smoke run after these changes, including Jarrell's Peak desktop/mobile gameplay and screenshot upload: [run 42491597724](https://github.com/CryptoDilis/Climboria/actions/runs/42491597724).
 - [ ] Extend automated checks for search-result mint wrapping, keyboard focus, overlapping cards, delayed/out-of-order query responses, no-pool states, mismatched symbol/mint metadata and rapid asset clicks.
 - [ ] Verify BTC, ETH, BNB and XRP issuer/bridge representation policy before adding any fixed mint allowlist. Do not label a wrapped/bridged variant as the sole canonical asset without a supported issuer/bridge source.
 - [ ] Review desktop/mobile screenshots and confirm chart title, price, pool and exact mint stay aligned after explicit selection.
@@ -2516,12 +2516,20 @@ For every integrated asset or borrowed technique, record:
 - [x] Tightened the selected-market chart lookup: a Solana pool is now accepted only when its base or quote token mint exactly equals the selected input mint. A symbol match or unrelated Solana pool can no longer populate the selected asset's chart.
 - [x] Expanded Browser Smoke coverage for multiple BTC representations, explicit user selection, token-card keyboard tab stops, mint wrapping, card/list width, and selected-mint chart title/price.
 - [x] Added mobile assertions that tapping an ambiguous major asset opens candidate choices without silently changing the selected mint; explicit candidate tap is required.
-- [ ] Verify the latest Browser Smoke, Validate and Pages runs after the final test assertion correction. Historical run 42491345347 failed on the old assertion expecting implicit BTC selection; this was a stale test expectation, not a code failure. The subsequent run was cancelled by a newer commit before full completion.
+- [x] Verified final Browser Smoke, Validate and Pages runs after the final test assertion correction. Browser Smoke [42491597724](https://github.com/CryptoDilis/Climboria/actions/runs/42491597724), Validate [42491597605](https://github.com/CryptoDilis/Climboria/actions/runs/42491597605), Pages [42491705124](https://github.com/CryptoDilis/Climboria/actions/runs/42491705124) all completed successfully.
 
 
 ## 2026-11-08 — Latest verification checkpoint
 
 - [x] Validate Climboria passed on commit `8cc4fd0`: [run 42491597605](https://github.com/CryptoDilis/Climboria/actions/runs/42491597605).
 - [x] GitHub Pages deployment passed on commit `8cc4fd0`: [run 42491597482](https://github.com/CryptoDilis/Climboria/actions/runs/42491597482).
-- [x] Browser Smoke homepage/CTA/mobile navigation, Cloudflare proxy tests, fail-closed execution, standalone Swap, and standalone DEX market/quote-preview steps passed on commit `8cc4fd0`.
-- [ ] Browser Smoke [run 42491597724](https://github.com/CryptoDilis/Climboria/actions/runs/42491597724): Jarrell's Peak desktop/mobile gameplay test and screenshot upload are not yet complete. Do not mark the full browser suite green until the workflow concludes successfully.
+- [x] Full Browser Smoke [run 42491597724](https://github.com/CryptoDilis/Climboria/actions/runs/42491597724) completed successfully on commit `8cc4fd0`: homepage/CTA/mobile navigation, Cloudflare proxy tests, fail-closed execution, standalone Swap, standalone DEX market/quote-preview, Jarrell's Peak desktop/mobile gameplay, and screenshot upload all passed.
+- [x] Validate [run 42491597605](https://github.com/CryptoDilis/Climboria/actions/runs/42491597605) and latest Pages deployment [run 42491705124](https://github.com/CryptoDilis/Climboria/actions/runs/42491705124) also passed.
+
+
+## 2026-11-08 — Full browser suite completed
+
+- [x] All steps in Browser Smoke run `42491597724` completed successfully, including Jarrell's Peak desktop/mobile gameplay and browser screenshot artifact upload: [view run and screenshots](https://github.com/CryptoDilis/Climboria/actions/runs/42491597724).
+- [x] Validation run `42491597605` and Pages deployment run `42491705124` completed successfully.
+- [ ] Remaining production gate is the Cloudflare Worker: allocate a real account-specific rate-limit namespace, add GitHub Actions secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, ensure the Worker secret `JUPITER_API_KEY` is configured, then manually run **Deploy Climboria API**. The workflow validates Worker tests/config/secrets and then checks production `/health` and CORS. Never paste secrets into chat or source.
+- [ ] After Worker deployment, independently verify canonical mint policy, semantic transaction instructions, controlled Devnet lifecycle, edge monitoring/WAF, and abuse/rate-limit behavior before changing `swap-config.js` flags. Current `proxyEnabled:false` and `enabled:false` remain intentional.
