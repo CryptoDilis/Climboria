@@ -27,8 +27,8 @@
 - [x] Found and fixed a refresh-restoration gap: exact selected Solana mint metadata now restores through DexScreener exact-mint pools plus on-chain decimals verification, rather than relying on the Jupiter token-search endpoint.
 - [x] Swap URL changes now create browser history entries and `popstate` restores the selected chain and exact token mints.
 - [x] Base URLs are guarded from the Solana mint resolver; EVM token restoration remains explicitly pending the Base backend.
-- [ ] New refresh/history regression and latest Pages deployment for the follow-up commits are running; only mark passed after their final conclusions are checked.
-- [ ] Run the new major-assets browser regression and all required GitHub Actions after the latest commits; inspect and repair failures.
+- [x] Follow-up commit `35c7e6f` passed Validate, Browser Smoke and GitHub Pages deployment. The Browser Smoke run confirmed BTC major-asset click, no hover SELECT overlay, exact mint URL persistence and refresh restoration.
+- [ ] Run the latest token/pool history and browser back/forward regressions after commit `4288353`; inspect and repair failures.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
 - [ ] Confirm CoinGecko/DexScreener/Jupiter/RPC provider availability, rate limits, fallback behavior and data freshness; do not claim universal token coverage.
