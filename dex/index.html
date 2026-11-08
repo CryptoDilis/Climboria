@@ -51,27 +51,37 @@ a:hover{color:#ffe3a0}
 .flowbox{margin:14px 0;padding:15px;border:1px solid #465b75;border-radius:14px;background:linear-gradient(145deg,#14243a,#0b1422)}.flowbox h3{margin:0 0 5px;color:#f0d18a;font:700 16px Georgia,serif}.flowbox p{margin:0 0 12px;color:#aab8ca;font-size:12px;line-height:1.5}.flowgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.flowgrid>div{padding:10px;border:1px solid #34465e;border-radius:9px;min-width:0}.flowgrid small{display:block;color:#9eacc0;font-size:10px;line-height:1.4}.flowgrid b{display:block;color:#f2f5fa;font-size:15px;margin-top:5px;overflow-wrap:anywhere}@media(max-width:600px){.flowgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pair-age{white-space:nowrap;color:#e8c477;font-variant-numeric:tabular-nums;font-weight:700}
 .age-sub{display:block;color:#9aa9bd;font-size:9px;font-weight:500;margin-top:3px}\n
-/* Responsive dual-chain market layout: Solana-first on mobile, balanced on desktop */
+/* Dual-chain market hierarchy: Solana leads on mobile; equal premium columns on desktop */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+.layout>#markets,.layout>#evmMarkets{min-width:0;margin-top:0!important}
+.layout .tablewrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.layout>#markets{border-color:#b9955b99;box-shadow:0 18px 48px #0005,inset 0 1px #ffffff12}
+.layout>#markets .panelhead h2:after{content:"PRIMARY · SOLANA";display:inline-block;margin-left:9px;vertical-align:middle;border:1px solid #b9955b88;border-radius:99px;padding:3px 7px;color:#f3d58f;font:800 8px/1.2 system-ui;letter-spacing:1px}
+.layout>#evmMarkets .panelhead h2:after{content:"EVM · BASE";display:inline-block;margin-left:9px;vertical-align:middle;border:1px solid #657b9a88;border-radius:99px;padding:3px 7px;color:#bdcbe0;font:800 8px/1.2 system-ui;letter-spacing:1px}
 @media(min-width:851px){
- .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
- .layout>#markets{grid-column:1;grid-row:1;order:1;min-width:0}
- .layout>#evmMarkets{grid-column:2;grid-row:1;order:2;min-width:0;margin-top:0!important}
+ .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+ .layout>#markets{grid-column:1;grid-row:1;order:1}
+ .layout>#evmMarkets{grid-column:2;grid-row:1;order:2}
  .layout>.side{grid-column:1/-1;grid-row:2;order:3;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
  .layout>.side>.panel{min-width:0}
+ .layout>#markets,.layout>#evmMarkets{height:100%;min-width:0}
 }
 @media(max-width:850px){
- .layout{display:flex;flex-direction:column;gap:16px}
+ .layout{display:flex;flex-direction:column;gap:18px}
  .layout>#markets{order:1;width:100%;min-width:0}
- .layout>#evmMarkets{order:2;width:100%;min-width:0;margin-top:0!important}
+ .layout>#evmMarkets{order:2;width:100%;min-width:0}
  .layout>.side{order:3;width:100%;grid-template-columns:1fr}
- .layout .tablewrap{max-width:100%;overscroll-behavior-x:contain}
 }
 @media(max-width:560px){
- .layout>#markets{border-color:#b9955b88;box-shadow:0 16px 42px #0006,inset 0 1px #ffffff12}
+ .layout{gap:14px}
+ .layout>#markets{order:1;border:1px solid #c49c55;box-shadow:0 18px 46px #0007,inset 0 1px #ffffff18}
  .layout>#markets .panelhead{align-items:flex-start;flex-direction:column}
+ .layout>#markets .panelhead h2{font-size:21px}
  .layout>#markets .tabs{width:100%;gap:6px}
- .layout>#markets .tab{padding:8px 9px}
- .layout>#evmMarkets{opacity:.94}
+ .layout>#markets .tab{padding:9px 10px}
+ .layout>#evmMarkets{order:2;opacity:.92}
+ .layout>#evmMarkets .panelhead h2{font-size:18px}
+ .layout .tablewrap table{min-width:720px}
 }
 </style>
 </head>
