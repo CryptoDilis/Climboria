@@ -385,7 +385,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let connectedWallet=null,walletProvider=null;
 let selectedChain='solana';
-function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);history.replaceState({climboriaSwap:true},'',u);}
+let restoringSwapUrl=false;
+function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
 function setSwapChain(chain){
  selectedChain=chain; if(chain==='solana')updateSelectedAsset(quoteTokens.from);
  $('chainSolana').classList.toggle('active',chain==='solana');
@@ -430,6 +431,21 @@ async function updateSelectedAsset(token){
  }catch(error){
   price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='No chart available for this token. '+error.message;chart.removeAttribute('src');
  }
+}
+async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
+ if(typeof mint!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint))throw new Error('Invalid Solana mint address.');
+ const canonical={So11111111111111111111111111111111111111112:{symbol:'SOL',name:'Solana',decimals:9},EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v:{symbol:'USDC',name:'USD Coin',decimals:6}};
+ const pairsPayload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(mint));
+ const pairs=(pairsPayload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&((p.baseToken?.address===mint)||(p.quoteToken?.address===mint)));
+ pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const pair=pairs[0];
+ const meta=pair?(pair.baseToken?.address===mint?pair.baseToken:pair.quoteToken):null;
+ if(!meta&&!canonical[mint])throw new Error('No Solana market metadata found for this exact mint.');
+ const endpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+ let decimals=null,lastError='No Solana RPC available';
+ for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=Number(data.result?.value?.decimals);if(!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
+ if(decimals===null){if(canonical[mint])decimals=canonical[mint].decimals;else throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);}
+ return {id:mint,symbol:meta?.symbol||canonical[mint]?.symbol||fallbackSymbol,name:meta?.name||canonical[mint]?.name||fallbackName,decimals,isVerified:false};
 }
 async function connectClimboriaWallet(){
  const button=$('connectWallet'),status=$('walletStatus');
@@ -540,21 +556,15 @@ $('majorCoins').addEventListener('click',async e=>{
  row.classList.add('is-loading');$('quoteStatus').classList.remove('error');$('quoteStatus').textContent='Resolving '+symbol+' Solana mint…';
  try{
   const mintBySymbol={SOL:'So11111111111111111111111111111111111111112',USDC:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'};
-  let token=null;
-  if(mintBySymbol[symbol])token={id:mintBySymbol[symbol],symbol,name:choice.name,decimals:symbol==='SOL'?9:6,isVerified:true};
-  else{
+  let mint=mintBySymbol[symbol];
+  if(!mint){
    const search=await fetchMarketJson('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(symbol));
    const pairs=(search.pairs||[]).filter(p=>p.chainId==='solana'&&p.baseToken&&String(p.baseToken.symbol||'').toUpperCase()===symbol&&p.baseToken.address&&Number.isFinite(Number(p.liquidity?.usd)));
    pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
-   const mint=pairs[0]?.baseToken?.address;
+   mint=pairs[0]?.baseToken?.address;
    if(!mint)throw new Error('No matching Solana liquidity pool was found for '+symbol+'.');
-   const endpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
-   let decimals=null,lastError='No Solana RPC available';
-   for(const endpoint of endpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[mint,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');const value=Number(data.result?.value?.decimals);if(!Number.isInteger(value)||value<0||value>18)throw new Error('Invalid on-chain mint decimals');decimals=value;break;}catch(error){lastError=error.message;}}
-   if(decimals===null)throw new Error('Could not verify mint decimals from Solana RPC. '+lastError);
-   token={id:mint,symbol,name:choice.name,decimals,isVerified:false};
   }
-  if(!token||!Number.isInteger(token.decimals))throw new Error('Exact token mint metadata is unavailable.');
+  const token=await resolveSolanaTokenByMint(mint,symbol,choice.name);
   if(token.id===quoteTokens.from.id){
    updateSelectedAsset(token);
    $('quoteStatus').textContent=symbol+' is already your input asset. Selected market chart refreshed; choose another asset to change the pair.';
@@ -588,7 +598,20 @@ async function loadMajorMarkets(){
 }
 
 
-async function restoreSwapFromUrl(){const p=new URLSearchParams(location.search),chain=p.get('chain');if(chain==='base')setSwapChain('base');else setSwapChain('solana');for(const [side,mint] of [['from',p.get('from')],['to',p.get('to')]]){if(!mint||mint===quoteTokens[side].id)continue;try{const u=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(mint):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(mint);const r=await fetch(u,{headers:{accept:'application/json'}});if(!r.ok)continue;const a=await r.json(),t=Array.isArray(a)?a.find(x=>String(x.id||'').toLowerCase()===mint.toLowerCase()):null;if(t)chooseQuoteToken(side,t);}catch(e){$('quoteStatus').textContent='Could not restore token '+mint+': '+e.message;}}setSwapUrl();}
+async function restoreSwapFromUrl(){
+ const p=new URLSearchParams(location.search),chain=p.get('chain');
+ restoringSwapUrl=true;
+ try{
+  setSwapChain(chain==='base'?'base':'solana');
+  for(const [side,mint] of [['from',p.get('from')],['to',p.get('to')]]){
+   if(!mint||mint===quoteTokens[side].id)continue;
+   try{const token=await resolveSolanaTokenByMint(mint);chooseQuoteToken(side,token);}
+   catch(error){$('quoteStatus').textContent='Could not restore exact token '+mint+': '+error.message;$('quoteStatus').classList.add('error');}
+  }
+  setSwapUrl();
+ }finally{restoringSwapUrl=false;}
+}
+window.addEventListener('popstate',()=>{restoreSwapFromUrl();});
 
 restoreSwapFromUrl();
 
