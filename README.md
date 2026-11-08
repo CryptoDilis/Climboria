@@ -2552,6 +2552,7 @@ For every integrated asset or borrowed technique, record:
 ### Screenshot review notes — 2026-11-09
 
 - [x] Retrieved and inspected the eight-image Browser Smoke artifact from run `42493493261`.
+- [x] Completed visual review of desktop/mobile gameplay and cave captures; recorded concrete camera/framing and cave-art follow-ups below.
 - [ ] Gameplay captures normalized at the Sanctuary show a very broad uninterrupted green foreground with the player relatively small in frame. Improve the smoke-test camera framing for useful evidence and inspect the actual Sanctuary spawn terrain/vegetation in a normal player session before deciding whether this is a world-design gap.
 - [ ] Cave interior capture reads strongly low-poly/stylized: repeated faceted rock forms, oversized smooth boulders, sparse floor dressing, and flat lighting. Prioritize a focused cave art pass: higher-quality rock meshes/material variation, more natural wall/ceiling silhouettes, grounded debris, improved indirect lighting/fog, and less repetitive geometry while preserving collision and cave navigation.
 - [ ] Repeat visual review with wildlife enabled. The gameplay smoke log explicitly states wildlife was temporarily disabled, so these screenshots do not validate animal presence, behavior, or performance.
