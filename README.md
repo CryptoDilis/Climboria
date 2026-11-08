@@ -20,6 +20,8 @@
 - [x] Worker tests added for response security headers, JSON content type and method restrictions.
 - [x] Cloudflare API deploy workflow corrected to run tests and deploy from the actual dex/swap-proxy directory (the old workflow pointed at a non-existent backend/worker).
 - [x] Added Playwright regression coverage for clicking BTC in Major Assets and confirming no hover SELECT overlay.
+- [x] Corrected the Playwright wait assertion and gave the mocked BTC mint a distinct address so the test exercises a real input/output change.
+- [x] Main validation workflow now runs Node syntax checks and the Cloudflare swap proxy security/API test suite.
 - [ ] Run the new major-assets browser regression and all required GitHub Actions after the latest commits; inspect and repair failures.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
@@ -66,6 +68,7 @@
 - **Security limitation:** Worker rate limiting is currently per-IP and approximate; CORS is not authentication. Add WAF/monitoring and wallet-aware quotas before public trading.
 - **Transaction risk:** Worker/Jupiter response validation and frontend transaction metadata checks do not equal semantic instruction auditing. Mainnet execution stays disabled pending independent review and controlled test cases.
 - **Defacement exposure:** Static Pages content is deployed from GitHub; compromise of GitHub account, repository write access, workflow permissions, Cloudflare DNS/Pages account or registrar can deface the site. Branch protection, MFA, protected deployment environment, pinned Actions and DNS/account hardening remain unverified.
+- **Repository protection evidence:** GitHub rulesets API returned an empty list for this repository. Branch-protection endpoint access was denied to the connected integration, so branch protection cannot be confirmed. Treat main as unprotected until an owner verifies and enables required checks/reviews in GitHub Settings.
 - **No claim of penetration testing:** This is a source/configuration review, not a live penetration test or Cloudflare account audit. Never claim the website is hack-proof.
 
 ## 2026-11-06 — account-system requirements clarified (documentation only)
