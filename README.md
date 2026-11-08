@@ -33,6 +33,10 @@
 - [x] Diagnosed Live Site Smoke run `42452901198`: homepage/Jarrell (including soundtrack recovery) and DEX passed; Swap's fail-closed behavior was correct, but the test expected the wrong status text when no wallet was connected. Updated the assertion in commit `6f4118f` to accept the explicit wallet-first/no-transaction response while retaining `enabled:false`.
 - [ ] Re-run Live Site Smoke run `42474421309` after `6f4118f`; verify all three stages pass before marking the release smoke gate green.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
+- [x] Hardened Swap Major Assets rendering so all six BTC/ETH/SOL/BNB/XRP/USDC rows remain visible when CoinGecko returns a partial market response; unavailable prices display as `—` rather than removing the row (commit `5a71413`).
+- [x] Reinforced Major Asset button touch behavior (`pointer-events`, pointer cursor, no text selection/tap highlight) while keeping the hover/focus `SELECT` pseudo-element suppressed (commit `5a71413`).
+- [x] Added real mobile Playwright tap coverage for all six Major Asset rows, actual BTC tap selection, hit-target verification and no `SELECT` overlay (commit `45be61d`).
+- [ ] Verify the new mobile Major Assets regression in Browser Smoke run `42474813130`; keep this item open until the run is green.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
 - [ ] Confirm CoinGecko/DexScreener/Jupiter/RPC provider availability, rate limits, fallback behavior and data freshness; do not claim universal token coverage.
 
