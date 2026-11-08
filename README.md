@@ -2454,3 +2454,12 @@ For every integrated asset or borrowed technique, record:
 - Validation passed: [42488288582](https://github.com/CryptoDilis/Climboria/actions/runs/42488288582). GitHub Pages deployment passed: [42488288227](https://github.com/CryptoDilis/Climboria/actions/runs/42488288227).
 - Browser smoke [42488288561](https://github.com/CryptoDilis/Climboria/actions/runs/42488288561) passed homepage/CTA/mobile navigation, Cloudflare Worker tests, fail-closed execution checks, standalone Swap, and DEX market/pool Back/Forward checks; Jarrell's Peak desktop/mobile gameplay test is still running. Do not mark full browser smoke green until the gameplay test and artifact step finish successfully.
 - Production Worker remains undeployed: replace the placeholder Cloudflare rate-limit namespace, configure server-side `JUPITER_API_KEY`, deploy, then verify health/CORS/rate limiting and production origin. Keep `proxyEnabled: false` and `enabled: false` until all execution release gates pass.
+
+
+## 2026-11-08 — Jupiter Order response hardening
+
+- The Worker now validates the upstream Jupiter order transaction as bounded base64 (maximum 50 KB) before forwarding it, validates request ID format/length, and rejects invalid last-valid block height metadata.
+- Added regression coverage for malformed transaction encoding and invalid expiry metadata. These checks protect the proxy boundary; they do not replace client deserialization, wallet review, instruction-level allowlisting, or Devnet/production verification.
+- Commits: Worker `5e282edfa51b5cef0bd2f35e7eb8a9e1ed557936`; tests `62bca0a95b5bdb5d7a6f2031d7dba294a65cf43f`.
+- Validation and Pages deployment for the latest commit are being verified; latest Pages deployment run: [42488606871](https://github.com/CryptoDilis/Climboria/actions/runs/42488606871) (success). Browser smoke: [42488606778](https://github.com/CryptoDilis/Climboria/actions/runs/42488606778), currently in the Jarrell's Peak desktop/mobile gameplay step; not yet green.
+- Cloudflare Worker production deployment remains blocked on replacing the placeholder rate-limit namespace and setting the Jupiter API key as a Cloudflare secret. Keep public proxy and transaction execution flags disabled until production checks and all transaction security gates pass.
