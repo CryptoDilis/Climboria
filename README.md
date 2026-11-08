@@ -1,5 +1,21 @@
 ## 2026-11-09 — Premium Swap redesign from Meta feedback
 
+- [x] Replaced the wide multi-column first impression with a centered dark-navy / antique-gold swap card.
+- [x] Preserved Major Assets, exact-mint market chart, token search, selected-asset URL state and history behavior by moving market panels below the swap card.
+- [x] Added From / You receive panels, token flip, wallet balance lookup through public Solana RPC, 25% / 50% / MAX controls, popular-pair search shortcuts and compact settings.
+- [x] Added selected-mint live market reference and debounced Jupiter quote preview while typing. Quote output is sourced from a fresh provider response; no cached or fabricated fallback is shown.
+- [x] Added collapsible route/quote details and explicit loading, pending and unavailable states. No visible placeholder dashes remain in the primary swap card.
+- [x] Kept Base marked planned and transaction execution locked. No fee collection or production backend is claimed.
+- [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
+- [x] Static checks passed: inline JavaScript parses, smoke-test JavaScript parses, no duplicate HTML IDs, and all literal `$(id)` references resolve.
+- [ ] Full GitHub Validate and Browser Smoke runs plus Pages deployment are still required; no CI pass is claimed yet.
+- [ ] Review uploaded desktop/mobile Swap screenshots and test wallet balance RPC success/failure, quote race handling, major asset selection, exact-mint chart synchronization and mobile layout.
+- [ ] Physical Redmi 14 5G acceptance remains open. Cloudflare Worker production deployment, semantic transaction instruction review and independent security review remain separate blockers. Keep public execution disabled.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+## 2026-11-09 — Premium Swap redesign from Meta feedback
+
 - [x] Replaced the oversized multi-column Swap first impression with a centered, dark navy / antique-gold quote card.
 - [x] Moved Major Assets, the selected-token chart, and trust information below the primary swap card; preserved the existing market selection, exact-mint chart resolver, URL state and token search behavior.
 - [x] Added From / You receive panels, token flip, 25% / 50% / MAX controls backed by connected-wallet RPC balances, popular-pair shortcuts that require exact token selection, and compact settings.
