@@ -1021,7 +1021,6 @@ $('dexTradePrepare').addEventListener('click',async()=>{
 });
 
 })();
-window.addEventListener('popstate',()=>{const p=new URLSearchParams(location.search),m=p.get('token');if(m&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(m))openToken(m,{fromUrl:true});else{$('tokenDetail').classList.remove('open');$('detailChart').src='about:blank';}});
 
 const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');document.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>{const type=button.dataset.panel;document.getElementById('climboriaPanelTitle').textContent=type==='announcements'?'Announcements':'Notifications';document.getElementById('climboriaPanelContent').innerHTML=type==='announcements'?'<p>Official Climboria ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Market and account alerts will appear here when notification services are enabled.';climboriaPanelBackdrop.hidden=false}));document.getElementById('climboriaPanelClose').addEventListener('click',()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener('click',e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
 </script>
