@@ -2393,3 +2393,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Cloudflare Worker remains not deployed: replace the rate-limit namespace placeholder, set the Jupiter API key as a Worker secret, deploy, attach `api.climboria.fun`, and verify `/health` and order/execute failure paths.
 - [ ] Verify production GitHub Pages deployment for both `/dex/` and `/swap/`; web access could not independently confirm the live DEX URL in this session.
 - [ ] Keep actual swap signing/execution disabled until semantic transaction inspection, independent security review, and controlled end-to-end tests pass.
+
+### 2026-11-08 — Full Browser Smoke and Pages deployment verified
+
+- [x] Browser Smoke run `42475103574` completed successfully on main commit `59ad77b732e3ba7d87225ea260b28bbd0fab43c4`. All 13 workflow steps passed, including homepage/desktop+mobile navigation, Major Assets tap selection, DEX pool Back/Forward restoration, Worker proxy unit tests, fail-closed execution checks, standalone DEX/Swap, and Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] Browser screenshot artifact `13615521456` was uploaded successfully for visual review; it expires 2026-11-15.
+- [x] GitHub Pages deployment run `42475258526` completed successfully, including build and deploy jobs, for the latest documentation commit `fc69d4cfca96218598861510c1fa4fef06eb59e8`. The tested gameplay/DEX source commit remains `59ad77b`; later changes in this deployment were README documentation only.
+- [ ] Screenshots still require visual inspection and hands-on acceptance on the physical Redmi 14 5G. Automated gameplay smoke is not a substitute for device review.
+- [ ] Production Cloudflare Worker deployment remains blocked until a real account rate-limit namespace, GitHub Actions Cloudflare credentials, Jupiter Worker secret, custom-domain/TLS and health/CORS checks are configured and verified.
+- [ ] Keep `swap-config.js` `proxyEnabled:false` and `enabled:false`; no live mainnet swap or fee collection is active.
+- [ ] Before enabling trading, replace symbol/liquidity-based major-asset resolution with an independently reviewed canonical Solana mint allowlist; add semantic transaction-instruction review, Devnet end-to-end tests, WAF/monitoring, and independent security review.
+
