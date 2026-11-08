@@ -88,15 +88,21 @@ jobs:
               const ctas=page.locator('.hero-buttons button');
               if(await ctas.count()!==3) throw new Error('Expected 3 hero CTA buttons');
               const labels=(await ctas.allTextContents()).map(s=>s.trim());
-              if(!labels[0].includes('PLAY')||!labels[1].includes('SWAP')||!labels[2].includes('LAUNCHPAD')) throw new Error('Unexpected hero CTA labels: '+JSON.stringify(labels));
+              if(!labels[0].includes('PLAY')||!labels[1].includes('DEX')||!labels[2].includes('LAUNCHPAD')) throw new Error('Unexpected hero CTA labels: '+JSON.stringify(labels));
               await page.screenshot({path:'climboria-desktop-home.png',fullPage:true});
               for (const selector of ['#dexNavLink','#mobileDexBtn']) {
                 const href=await page.locator(selector).getAttribute('href');
                 if(href!=='/dex/') throw new Error(selector+' must route to /dex/, got '+href);
               }
-              await Promise.all([page.waitForURL('**/swap/'),page.locator('#swapBtn').click()]);
-              if(new URL(page.url()).pathname!=='/swap/') throw new Error('Homepage SWAP CTA did not navigate to /swap/');
+              await Promise.all([page.waitForURL('**/dex/'),page.locator('#swapBtn').click()]);
+              if(new URL(page.url()).pathname!=='/dex/') throw new Error('Homepage DEX CTA did not navigate to /dex/');
+              const dexPage=page;
+              if(!await dexPage.locator('#markets').count()) throw new Error('DEX CTA did not open the market explorer');
+              await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
+              await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
+              if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
+              if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',e=>errors.push('mobile: '+(e.stack||e.message)));
               await mobile.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
@@ -111,7 +117,8 @@ jobs:
               const mobileDexLabel=(await mobile.locator('#mobileDexBtn').innerText()).trim();
               if(!mobileDexLabel.includes('SUMMIT RADAR')||/demo only/i.test(mobileDexLabel)) throw new Error('Mobile DEX menu still presents as demo-only: '+mobileDexLabel);
               const launchpadLabel=(await mobile.locator('#mobileLaunchpadBtn').innerText()).trim();
-              if(!/demo only/i.test(launchpadLabel)) throw new Error('Launchpad must remain clearly marked demo-only until operational: '+launchpadLabel);
+              if(!launchpadLabel.toLowerCase().includes('launchpad')) throw new Error('Launchpad menu item missing: '+launchpadLabel);
+              if(await mobile.locator('#mobileLaunchpadBtn').getAttribute('href')!=='/launchpad/') throw new Error('Launchpad menu must route to its dedicated page');
               await mobile.screenshot({path:'climboria-mobile-home.png',fullPage:true});
               await Promise.all([mobile.waitForURL('**/dex/'),mobile.locator('#mobileDexBtn').click()]);
               if(new URL(mobile.url()).pathname!=='/dex/') throw new Error('Mobile DEX navigation did not reach /dex/');
