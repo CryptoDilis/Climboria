@@ -2496,3 +2496,18 @@ For every integrated asset or borrowed technique, record:
 - [ ] Visually review search-result cards and chart on desktop/mobile; CI currently checks the route and click flow but does not prove real provider prices/market charts match every canonical asset.
 - [ ] Production Cloudflare Worker is not deployed: `wrangler.toml` still contains placeholder rate-limit namespace `20261108`; provision a real namespace, configure server-side `JUPITER_API_KEY`, deploy Worker, attach `api.climboria.fun`, and verify production health/CORS/rate limiting.
 - [ ] Keep `swap-config.js` `proxyEnabled:false` and `enabled:false`. Do not enable wallet execution until Worker production verification, canonical mint mapping, semantic transaction instruction review, controlled Devnet lifecycle tests, monitoring/WAF and independent security review are complete.
+
+
+## 2026-11-08 — Major asset mint disambiguation
+
+- [x] Removed symbol-only / highest-liquidity auto-selection for BTC, ETH, BNB and XRP. These tickers can map to multiple wrapped or bridged Solana assets; selecting one by liquidity silently chooses an asset representation the user did not request.
+- [x] Clicking BTC, ETH, BNB or XRP now opens Jupiter token search candidates and requires an explicit token-result click before changing the From mint, selected-market chart and URL.
+- [x] SOL and USDC retain direct selection using their known Solana mint addresses.
+- [x] Updated the desktop and mobile browser-smoke fixtures to return multiple BTC representations and require explicit selection.
+- [ ] Complete and pass the new Browser Smoke run after these changes; the previous Jarrell's Peak gameplay job remained in progress and its log artifact was unavailable.
+- [ ] Extend automated checks for search-result mint wrapping, keyboard focus, overlapping cards, delayed/out-of-order query responses, no-pool states, mismatched symbol/mint metadata and rapid asset clicks.
+- [ ] Verify BTC, ETH, BNB and XRP issuer/bridge representation policy before adding any fixed mint allowlist. Do not label a wrapped/bridged variant as the sole canonical asset without a supported issuer/bridge source.
+- [ ] Review desktop/mobile screenshots and confirm chart title, price, pool and exact mint stay aligned after explicit selection.
+- [ ] Cloudflare Worker production deployment remains blocked on the account's real rate-limit namespace, server-side Jupiter API secret, custom-domain binding and production verification. Do not request secrets in chat.
+- [ ] Keep public swap execution disabled until backend deployment, semantic instruction validation, controlled Devnet lifecycle tests, monitoring and independent security review are complete.
+- Commits: UI safety change [f813760](https://github.com/CryptoDilis/Climboria/commit/f81376090212325a5751c0adcd18e02b10bc190a); desktop/mobile acceptance update [a54759a](https://github.com/CryptoDilis/Climboria/commit/a54759a9bc31aec76dd9d13d23e61bdeebc0a369).
