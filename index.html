@@ -317,7 +317,7 @@ footer:first-of-type>div{
 <body>
 <nav>
 <a class="logo" href="./" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl"><a href="#overview">Overview</a><a href="#game">Game</a><a href="#roadmap">Roadmap</a><a href="#tokenomics">Tokenomics</a><a href="#whitepaper">Whitepaper</a><a href="/dex/" id="dexNavLink">DEX · SUMMIT RADAR</a><a href="#" id="launchpadNavLink">Launchpad (Demo)</a>
+<div class="navl"><a href="#game">Game</a><a href="#" id="launchpadNavLink">Launchpad</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
 <button class="btn-gold" data-open-auth>SIGN IN</button></div>
 <div style="display:flex;align-items:center;gap:12px">
@@ -326,8 +326,7 @@ footer:first-of-type>div{
 </div>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
-<a href="#overview">Overview</a><a href="#game">Game</a><a href="#tokenomics">Tokenomics</a><a href="#roadmap">Roadmap</a><a href="#whitepaper">Whitepaper</a>
-<a href="/dex/" id="mobileDexBtn">DEX · SUMMIT RADAR</a><a href="#" id="mobileLaunchpadBtn">Launchpad — Demo Only</a>
+<a href="#game" id="mobileGameBtn">Game</a><a href="#" id="mobileLaunchpadBtn">Launchpad</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
 </div>
@@ -419,6 +418,7 @@ footer:first-of-type>div{
  <p class="menu-destinations-foot">Jarrell’s Peak and Arena are the only game-world destinations. Marketplace and Inventory are supporting menu panels.</p>
 </div><div class="grid3"><div class="card"><h3>🌲 Jarrell’s Peak</h3><p>Explore forests, cliffs, a long river, fishing spots, hidden paths, landmarks, and treasure chests. Survival and exploration—not summit completion—define the journey.</p></div><div class="card"><h3>💬 Chatworld · Planned</h3><p>Global Chat, Proximity Chat, and Private Messages are planned for Jarrell’s Peak and the future Arena, with mute, block, report, anti-spam, and moderator tools.</p></div><div class="card"><h3>⚔ Public Arena · Future Map</h3><p>A separate public forest Arena is planned for free-for-all battles, Guild Battles, and sponsor events. Casual fights have no rewards; event prizes require full verified funding.</p></div></div></div>
 
+<div id="whitepaper" class="sec"><div class="label">Whitepaper</div><div class="title">The Climboria Design Brief</div><div class="desc">A single source of truth for the launch world, game-funding rules, future social and Arena features, sponsorship safeguards, and implementation status.</div><div class="white">
 <div id="tokenomics" class="sec"><div class="label">Tokenomics & Game Funding</div><div class="title">$CLIMB — Designed for the Climboria Ecosystem</div><div class="tok-wrap"><div class="tok-chart">
 <div class="bar"><span>Token supply & allocation</span><span class="pct">TBD</span></div>
 <div class="bar"><span>Liquidity & launch details</span><span class="pct">TBD</span></div>
@@ -426,6 +426,7 @@ footer:first-of-type>div{
 <div class="bar"><span>Community & development</span><span class="pct">TBD</span></div>
 <div style="margin-top:18px;font-size:13px;color:rgba(255,255,255,.5)">Token supply, allocation percentages, liquidity, and contract details must be officially verified before publication. No allocation is implied by this page.</div>
 </div><div class="card"><h3>Agreed fee design · not yet a live system</h3><p><strong>Marketplace:</strong> 2.5% buy fee and 2.5% sell fee. Five percent of the actual marketplace fee revenue collected is allocated to the Climboria game funding pool; this is not an additional 5% charge on trading volume.<br><br><strong>Future Arena wagers:</strong> optional wager matches would charge a 2.5% platform fee on the total pot, sent to the game funding pool. Casual fights remain free and have no rewards.<br><br><strong>Rewards:</strong> Jarrell’s Peak Top Gainers rewards can be paid only from a verified, funded pool under published rules. No rewards are guaranteed before launch readiness and funding.</p><p style="margin-top:12px">Marketplace items and eligible crafted gear are intended to use $CLIMB only. NFT minting is intended to have no Climboria minting fee; players pay network gas. These features are not live until implemented and verified.</p></div></div></div>
+
 
 <div id="roadmap" class="sec" style="background:rgba(255,255,255,.02)"><div class="label">Roadmap</div><div class="title">One World First. Expand When Ready.</div><div class="desc">Milestones are staged targets, not promises. Only Jarrell’s Peak is in the launch scope; additional maps wait until after token launch and a budget review.</div><div class="road">
 <div class="phase"><div class="num">PHASE 01 — BASE CAMP</div><h4>Jarrell’s Peak foundation</h4><li>Protect existing gameplay mechanics</li><li>Stabilize starting camp, river, swimming, collision, and treasure discovery</li><li>Validate desktop and mobile browser behavior</li><li>Publish consistent project documentation</li></div>
@@ -436,7 +437,8 @@ footer:first-of-type>div{
 <div class="phase"><div class="num">PHASE 06 — FUTURE EXPANSION</div><h4>Additional maps only when funded</h4><li>Reassess after token launch and budget review</li><li>Weapon roster and climbing-themed combat design to be planned later</li><li>Badges are deferred; no current badge system</li><li>Do not announce a new map until approved and funded</li></div>
 </div></div>
 
-<div id="whitepaper" class="sec"><div class="label">Whitepaper</div><div class="title">The Climboria Design Brief</div><div class="desc">A single source of truth for the launch world, game-funding rules, future social and Arena features, sponsorship safeguards, and implementation status.</div><div class="white">
+
+
 <a class="wp" href="./overview/"><h3>📄 Project Overview</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Jarrell’s Peak, game-first principles, current scope, and ecosystem status.</p></a>
 <a class="wp" href="./overview/#roadmap"><h3>🗺 Roadmap</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Launch-first milestones and clearly marked future plans.</p></a>
 <a class="wp" href="./GAME_CONCEPT.md"><h3>🏔 Game Concept</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Agreed world design and feature boundaries.</p></a>
@@ -560,7 +562,7 @@ footer:first-of-type>div{
   };
   ham.addEventListener('click', () => setMenu(!menuOpen));
   menu.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => {
-    if(a.id !== 'mobileDexBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
+    if(a.id !== 'mobileDexBtn' && a.id !== 'mobileSwapBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
   }));
   const authModal = document.getElementById('authModal');
   const authStatus = document.getElementById('authStatus');
@@ -590,6 +592,7 @@ footer:first-of-type>div{
   document.getElementById('swapBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/dex/'});
   document.getElementById('dexNavLink').addEventListener('click', e=>{e.preventDefault();window.location.href='/dex/'});
   document.getElementById('mobileDexBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/dex/'});
+  document.getElementById('mobileSwapBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/swap/'});
   document.getElementById('launchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
   document.getElementById('launchpadNavLink').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
   document.getElementById('mobileLaunchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
