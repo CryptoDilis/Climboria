@@ -1115,7 +1115,7 @@ async function openToken(mint,options={}){
  const maxPoolLiquidity=Math.max(0,...pairs.map(x=>Number(x.liquidity?.usd)).filter(Number.isFinite));
  $('detailPairs').innerHTML=pairs.slice(0,15).map(p=>{
   const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
-  const depth=Number(p.liquidity?.usd),depthPct=Number.isFinite(depth)&&maxLiq>0?Math.max(2,Math.round(depth/maxPoolLiquidity*100)):0;
+  const depth=Number(p.liquidity?.usd),depthPct=Number.isFinite(depth)&&maxPoolLiquidity>0?Math.max(2,Math.round(depth/maxPoolLiquidity*100)):0;
   return '<div class="routecandidate '+(p.pairAddress===best.pairAddress?'selected':'')+'" data-pair="'+esc(p.pairAddress)+'"><button type="button" data-pool="'+esc(p.pairAddress)+'"><span class="trail-route"><i>'+esc(p.quoteToken.symbol||'QUOTE')+'</i><b>→</b><strong>'+esc(p.baseToken.symbol||'TOKEN')+'</strong></span><small>'+esc(p.dexId||'DEX')+' · '+esc(p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5))+'</small></button><div class="trail-depth"><span>Liquidity depth</span><b>'+fmt(p.liquidity?.usd)+'</b><i><em style="width:'+depthPct+'%"></em></i></div><div class="trail-route-metrics"><span>24h vol <b>'+fmt(p.volume?.h24)+'</b></span><span>Price <b>'+price(p.priceUsd)+'</b></span><span>Age <b>'+(age===null?'Unavailable':age.toFixed(1)+'d')+'</b></span></div></div>';
  }).join('');
  $('detailPairs').onclick=e=>{const b=e.target.closest('button[data-pool]');if(!b)return;const p=pairs.find(x=>x.pairAddress===b.dataset.pool);if(p)selectPool(p)};
