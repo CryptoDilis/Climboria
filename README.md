@@ -2564,3 +2564,5 @@ For every integrated asset or borrowed technique, record:
 - [x] Removed sticky positioning from the token detail header.
 - [x] Grouped Token Profile social links (X, Website, Telegram when supplied by verified provider metadata) inside the profile panel with a single divider and consistent compact link styling.
 - [ ] Verify desktop and mobile scroll behavior and profile-link layout in Browser Smoke screenshots.
+
+- [x] DEX Token Profile expanded card constrained to a compact desktop width (max 640px), with two-column profile details; mobile remains full-width for readability.
