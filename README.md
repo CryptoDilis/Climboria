@@ -1,3 +1,10 @@
+## 2026-11-09 — Swap popstate test made deterministic
+
+- [x] Browser Smoke run `42506639195` passed source validation but failed the test's browser-history restoration wait. The browser's Back/Forward navigation timing was not reliable in this embedded-chart test page.
+- [x] Replaced native history traversal in the test with controlled same-document `pushState` + `popstate` events, asserting the Swap app restores SOL and then the exact BTC mint. This directly tests the app's registered restoration handler without waiting on third-party iframe navigation.
+- [ ] Re-run Browser Smoke on `c8d01dd3041a9d099b4537656344aba9aa44acc2`; confirm rapid-selection and popstate tests pass.
+- [ ] Dedicated no-pool stale-state/mobile chart regression remains open. Cloudflare Worker production deployment, canonical mint/issuer policy, and physical Redmi 14 5G acceptance remain open; execution remains disabled.
+
 ## 2026-11-09 — Swap history smoke corrected for same-document navigation
 
 - [x] Browser Smoke run `42506516332` showed the Back check still timed out after the previous waitUntil adjustment. The URL state is managed with `history.pushState` / `popstate`, so this is same-document history, not a full document navigation.
