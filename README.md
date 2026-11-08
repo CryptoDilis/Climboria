@@ -2404,3 +2404,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] Keep `swap-config.js` `proxyEnabled:false` and `enabled:false`; no live mainnet swap or fee collection is active.
 - [ ] Before enabling trading, replace symbol/liquidity-based major-asset resolution with an independently reviewed canonical Solana mint allowlist; add semantic transaction-instruction review, Devnet end-to-end tests, WAF/monitoring, and independent security review.
 
+
+
+### 2026-11-08 — Visual artifact review and repository security audit
+
+- [x] Downloaded and visually inspected all eight screenshots from Browser Smoke artifact [13615521456](https://github.com/CryptoDilis/Climboria/actions/runs/42475103574/artifacts/13615521456), including desktop/mobile homepage, gameplay, cave entrance and cave interior.
+- [x] Confirmed the cave entrance is readable in the captured view and the player/chest are visible in the cave interior.
+- [ ] **Visual quality remains open:** cave walls, ceiling, portal rocks, floor rubble, chest and several sanctuary/gameplay props still read as low-poly/procedural placeholder geometry. Replace the visibly faceted environment with optimized realistic free assets (with collision where needed); preserve approved character art and gameplay interaction. Re-capture and inspect desktop/mobile after replacement.
+- [ ] **Physical device acceptance remains open:** test on the owner's Redmi 14 5G in landscape, including touch controls, camera, HUD/map overlap, frame pacing, heat and memory use. Browser emulation is not device acceptance.
+- [x] Verified that the latest `main` commit is `513bddb46664731aad619be295851084b9f590b4` and GitHub Pages run [42478615637](https://github.com/CryptoDilis/Climboria/actions/runs/42478615637) completed successfully for that exact commit.
+- [ ] **Repository protection gap:** GitHub reports `main` as unprotected (`protected:false`, required status checks disabled). Enable branch protection/rulesets with required Validate + Browser Smoke checks, block force-push/deletion, and require review where practical. The connected GitHub capability can inspect settings but cannot administer this protection setting in this session.
+- [x] Reviewed Worker source and tests: API key stays server-side, order/execute paths enforce the configured rate limiter, origin allowlist and input validation are present, and Worker deployment workflow has read-only contents permission.
+- [ ] Worker is still not deployed; the Wrangler rate-limit namespace remains the placeholder `20261108`. Configure the real Cloudflare namespace, Actions secrets, Worker Jupiter secret, custom domain/TLS, then deploy and verify health + CORS. Do not paste secrets into chat.
+- [ ] Keep `swap-config.js` `proxyEnabled:false` and `enabled:false` until Worker production verification, semantic transaction review, controlled Devnet lifecycle tests, WAF/monitoring and independent security review are complete.
