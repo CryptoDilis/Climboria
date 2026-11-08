@@ -55,12 +55,13 @@ input,select{border-color:#394b64!important}
 input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3px #d8b66d22!important}
 @media(max-width:700px){.hero{padding-top:58px}.trade-card,.swap-card,.panel{border-radius:20px}}
 
+.chain-switch{display:flex;gap:8px;margin:0 0 12px}.chain-switch .active{border-color:#c6a05a;background:linear-gradient(135deg,#49381e,#211c16);color:#ffe2a0}.chain-notice{margin:0 0 14px;padding:11px 13px;border:1px solid #765d32;border-radius:10px;background:#211b14;color:#e8d2a8;font-size:11px}
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a></nav></header>
 <main><section class="hero"><div class="eyebrow">SOLANA · ROUTED BY JUPITER</div><h1 class="title">Swap assets.<br><span>Reach new heights.</span></h1><p class="lead">A dedicated Climboria trading experience. Choose your assets, review the route and compare a fresh quote in one focused interface.</p><div class="trustline"><span>Non-custodial wallet</span><span>Live route quotes</span><span>On-chain settlement gated</span></div></section>
 <div class="trade-layout" id="trade"><section class="card" aria-label="Climboria token swap"><div class="walletbar"><div><small>Wallet connection</small><b id="walletStatus">Not connected</b></div><button class="tab" id="connectWallet" type="button">Connect wallet</button></div>
-<div class="quote-controls">
+<div class="chain-switch" role="group" aria-label="Swap network"><button class="tab active" id="chainSolana" type="button">Solana · SPL</button><button class="tab" id="chainBase" type="button">Base · ERC-20</button></div><div class="chain-notice" id="chainNotice" aria-live="polite">Solana network selected · Jupiter route interface.</div><div class="quote-controls">
 <div class="quote-field"><label for="quoteAmount">You pay · amount</label><input id="quoteAmount" type="number" min="0" step="any" value="0.1" inputmode="decimal"></div>
 <div class="quote-field"><label for="quoteFromSearch">From asset · token or mint</label><input id="quoteFromSearch" value="SOL" placeholder="Search Solana token"><button class="tab" id="searchFrom" type="button">Search input asset</button><div class="results" id="fromResults"></div><small id="fromSelected">SOL · 9 decimals</small></div>
 <div class="quote-field"><label for="quoteToSearch">To asset · token or mint</label><input id="quoteToSearch" value="USDC" placeholder="Search Solana token"><button class="tab" id="searchTo" type="button">Search output asset</button><div class="results" id="toResults"></div><small id="toSelected">USDC · 6 decimals</small></div>
@@ -76,6 +77,21 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let connectedWallet=null,walletProvider=null;
+let selectedChain='solana';
+function setSwapChain(chain){
+ selectedChain=chain;
+ $('chainSolana').classList.toggle('active',chain==='solana');
+ $('chainBase').classList.toggle('active',chain==='base');
+ const isBase=chain==='base';
+ $('chainNotice').textContent=isBase?'Base network selected · ERC-20 assets require a Base-compatible wallet and verified EVM routing backend. Quotes and execution are not enabled yet.':'Solana network selected · Jupiter route interface. Execution remains disabled pending backend verification.';
+ $('quoteStatus').textContent=isBase?'Base ERC-20 swap is not yet connected. No Solana quote will be requested for a Base selection.':'Ready when you are. Enter an amount to request a fresh Solana route quote.';
+ $('getQuote').disabled=isBase;$('prepareSwap').disabled=isBase;
+ $('searchFrom').disabled=isBase;$('searchTo').disabled=isBase;
+ $('quoteFromSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
+ $('quoteToSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
+ $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base quote provider not configured. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div>';
+}
+
 async function connectClimboriaWallet(){if(connectedWallet){await disconnectClimboriaWallet();return}const button=$('connectWallet');button.disabled=true;try{const provider=window.phantom?.solana||window.solflare||window.solana;if(!provider||typeof provider.connect!=='function')throw new Error('No supported Solana wallet detected. Open Climboria in Phantom or Solflare browser.');const result=await provider.connect();const key=(result?.publicKey||provider.publicKey)?.toString();if(!key)throw new Error('Wallet connection returned no public key.');connectedWallet=key;walletProvider=provider;$('walletStatus').textContent=key.slice(0,6)+'…'+key.slice(-6);button.textContent='Disconnect';button.disabled=false;}catch(e){$('quoteStatus').textContent=e.message;button.disabled=false;}}
 async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
@@ -146,7 +162,7 @@ async function signAndExecuteJupiterSwap(){
 }
 async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
 
-$('connectWallet').addEventListener('click',connectClimboriaWallet);
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
 $('getQuote').addEventListener('click',requestJupiterQuote);
 $('prepareSwap').addEventListener('click',prepareJupiterSwap);
 $('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
