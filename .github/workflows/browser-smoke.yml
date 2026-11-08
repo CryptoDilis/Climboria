@@ -111,9 +111,10 @@ jobs:
               await page.route('https://api.jup.ag/tokens/v2/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
-              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
+              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
+                if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
               });
               await page.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -145,6 +146,13 @@ jobs:
               if(!quoteOnlyState.title.startsWith('QONLY')||quoteOnlyState.price!=='—'||quoteOnlyState.chart||quoteOnlyState.emptyHidden) throw new Error('Quote-side-only pool incorrectly displayed another asset chart or stale metrics: '+JSON.stringify(quoteOnlyState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              // Rapid selection race: a slower earlier asset response must not overwrite the latest BTC selection.
+              await page.evaluate(()=>window.updateSelectedAsset({id:'SlowAsset11111111111111111111111111111111',symbol:'SLOW',name:'Slow Asset'}));
+              await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              await page.waitForTimeout(850);
+              const rapidSelectionState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src')}));
+              if(!rapidSelectionState.title.startsWith('BTC')||!rapidSelectionState.price.includes('65,000')||!rapidSelectionState.chart?.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe')) throw new Error('A stale slow asset response overwrote the latest BTC chart/metrics: '+JSON.stringify(rapidSelectionState));
               await page.reload({waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='BTC',null,{timeout:10000});
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC'||new URL(page.url()).searchParams.get('from')!==selectedMint) throw new Error('Selected major asset did not restore after page refresh');
