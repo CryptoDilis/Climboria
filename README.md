@@ -1,3 +1,16 @@
+## 2026-11-09 — Cloudflare first-deployment order correction
+
+- [x] Audited `dex/swap-proxy/DEPLOYMENT.md`, `.github/workflows/deploy-climboria-api.yml`, and `dex/swap-proxy/wrangler.toml` against the first-run sequence.
+- [x] Found and corrected an instruction-order blocker: the deploy workflow checks `https://api.climboria.fun/health` immediately after Wrangler deploys, while the old guide placed custom-domain attachment after that check. The guide now requires attaching `api.climboria.fun` to the Worker and confirming TLS **before** dispatching the workflow; post-deploy steps now verify the existing domain.
+- [x] Clarified that the checked-in Wrangler config enables `workers_dev` but does not declare the `api.climboria.fun` custom domain itself. Domain attachment remains a Cloudflare Dashboard prerequisite.
+- [ ] Cloudflare custom domain, account-specific rate-limit namespace, and encrypted GitHub Actions secrets still need to be configured by an account administrator. No Worker deployment was run.
+- [ ] After configuration, run **Actions → Deploy Climboria API → Run workflow** and verify health, CORS, rate limiter, and Jupiter key readiness. Keep frontend proxy and transaction execution disabled until all release/security gates pass.
+- [ ] PR #219 remains open/unmerged; this documentation correction does not deploy production.
+
+Commit: [516d29b](https://github.com/CryptoDilis/Climboria/commit/516d29b68a63435aec5a6a158bd1f57f5670b6ac)
+
+---
+
 ## 2026-11-09 — Latest DEX lookup + full Browser Smoke verification
 
 - [x] Root cause confirmed for the DEX name-lookup regression: the browser test's DexScreener search fixture returned unrelated SOL pools alongside the searched CLT token, allowing the higher-liquidity SOL candidate to appear first. This was a fixture defect, not a production liquidity-ranking change.
