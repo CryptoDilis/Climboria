@@ -101,6 +101,31 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
   }
 });
 
+test("rejects malformed transaction encoding and invalid order expiry metadata", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    const request = () => new Request("https://worker.test/api/swap/order", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+    });
+    globalThis.fetch = async () => Response.json({
+      requestId: "jupiter-request-123", transaction: "not base64!", inAmount: "100", outAmount: "200", transactionVersion: 0
+    });
+    const malformed = await worker.fetch(request(), env);
+    assert.equal(malformed.status, 502);
+    assert.match((await malformed.json()).error, /transaction encoding/i);
+
+    globalThis.fetch = async () => Response.json({
+      requestId: "jupiter-request-123", transaction: "AQID", inAmount: "100", outAmount: "200",
+      transactionVersion: 0, lastValidBlockHeight: -1
+    });
+    const invalidExpiry = await worker.fetch(request(), env);
+    assert.equal(invalidExpiry.status, 502);
+    assert.match((await invalidExpiry.json()).error, /lastValidBlockHeight/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("rejects a Jupiter quote-only order instead of returning it as executable", async () => {
   const originalFetch = globalThis.fetch;
   try {
