@@ -11,6 +11,27 @@ test("health endpoint responds without exposing credentials", async () => {
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: true, rateLimiter: true } });
 });
+test("sets defensive security headers on API responses", async () => {
+  const res = await worker.fetch(new Request("https://worker.test/health"), env);
+  assert.equal(res.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(res.headers.get("x-frame-options"), "DENY");
+  assert.equal(res.headers.get("referrer-policy"), "no-referrer");
+  assert.match(res.headers.get("cache-control"), /no-store/);
+});
+test("rejects JSON endpoints with a non-JSON content type", async () => {
+  const req = new Request("https://worker.test/api/swap/order", {
+    method: "POST", headers: { origin, "content-type": "text/plain" },
+    body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+  });
+  const res = await worker.fetch(req, env);
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /Content-Type must be application\/json/);
+});
+test("rejects unsupported methods on known API routes", async () => {
+  const res = await worker.fetch(new Request("https://worker.test/api/swap/execute", { method: "GET" }), env);
+  assert.equal(res.status, 405);
+  assert.match(res.headers.get("allow"), /POST/);
+});
 test("rejects unapproved browser origins", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health", { headers: { origin: "https://evil.test" } }), env);
   assert.equal(res.status, 403);
