@@ -2566,3 +2566,9 @@ For every integrated asset or borrowed technique, record:
 - [ ] Verify desktop and mobile scroll behavior and profile-link layout in Browser Smoke screenshots.
 
 - [x] DEX Token Profile expanded card constrained to a compact desktop width (max 640px), with two-column profile details; mobile remains full-width for readability.
+
+### Swap chart/input asset synchronization
+- [x] Selected-token chart resolver now accepts only Solana pools where the exact selected FROM mint is the pool base token, matching the asset DexScreener renders on its pair chart.
+- [x] Quote-side-only pools are rejected for chart display rather than silently showing the counter-asset (which could look like SOL).
+- [x] Loading, no-chart, and selected-chart notes explicitly identify the selected FROM asset and exact-mint requirement.
+- [ ] Verify Major Assets BTC/ETH/BNB/XRP exact-mint selection updates chart title, pair, price, and stats on desktop/mobile Browser Smoke; confirm no stale SOL chart remains during loading or when no matching base-side pool exists.
