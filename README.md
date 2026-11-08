@@ -1,3 +1,10 @@
+## 2026-11-09 — Swap rapid-selection race regression added
+
+- [x] Added a controlled slow-response fixture to the Swap Browser Smoke test. It starts a SLOW asset request, immediately selects BTC, then verifies the delayed stale response cannot overwrite BTC's title, price, or chart.
+- [ ] Validate run, Browser Smoke run, and Pages deployment for test-harness commit `1e8dd2292dd87eea63a14eb7a4a5fe30535ce82f` are queued; do not mark the regression passed until all relevant runs complete successfully.
+- [ ] No-pool stale-state regression and mobile exact-mint chart consistency remain open.
+- [ ] Physical Redmi 14 5G acceptance, canonical Solana mint/issuer policy, and Cloudflare Worker production deployment remain open. Public Swap execution remains disabled until backend and security gates pass.
+
 ## 2026-11-08 — Swap quote-side chart rejection regression passed
 
 - [x] Browser Smoke run `42504938462` on commit `d9b428c665cbc2f5df77532fdb46a337af70023d` completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42504938462
