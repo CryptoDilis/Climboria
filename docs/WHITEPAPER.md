@@ -22,7 +22,7 @@ Weekly payout timing, if funded and launched, is Friday at 03:00 UTC (11:00 AM P
 
 ## 4. Marketplace and game funding
 
-Eligible marketplace items and crafted gear are intended to use $CLIMB only. Buy fee is 2.5%; sell fee is 2.5%. Five percent of actual marketplace fee revenue collected is allocated to the Climboria game funding pool. This is not an additional 5% charge on gross trading volume. For example, 2,500 $CLIMB in collected marketplace fees results in 125 $CLIMB allocated to game funding. NFT minting is intended to have no Climboria minting fee; the player pays network gas.
+Eligible marketplace items and crafted gear are intended to use $CLIMB only. Buy fee is 2.5%; sell fee is 2.5%. The current design brief previously described 5% of collected marketplace fee revenue for game funding. A newer proposed policy separates a 5% allocation of eligible gross marketplace sales from a separate 5% buy/sell transaction tax. This newer proposal is not yet reconciled with the existing 2.5% buy and 2.5% sell fee design, and must not be implemented or advertised as active until the calculation base, payer, destination, and no-double-charge rules are formally approved. See REVENUE_TREASURY_POLICY.md. NFT minting is intended to have no Climboria minting fee; the player pays network gas.
 
 These are agreed design rules, not proof that marketplace, fee collection, NFT minting, or on-chain reward systems are live.
 
@@ -49,6 +49,14 @@ Climboria admin retains final approval. A written eligibility checklist and agre
 Launchpad-created tokens may receive fast-track sponsor review after basic eligibility, payment, and event checks. Other crypto sponsors receive full review; non-crypto sponsors are reviewed according to business type and risk. Fast-track is not a blanket exemption for fraud, impersonation, illegal promotions, or misleading claims.
 
 After payment verification, announcements may appear on X.com, the homepage, game menu, and running announcements in both worlds. Arena branding may include the central sponsor flag, entrance panel, and event banners. Automatic renewal at the same price is intended, with a three-day grace period; new announcements and activations pause while unpaid. Cancellation and refund outcomes follow the signed agreement and applicable law.
+
+## 8A. Ecosystem revenue and treasury policy — proposed
+
+Climboria's broader vision connects gaming, Climboria Signature, DEX & Swap, Launchpad, Marketplace/Crafting/Forging, Jarrell's Peak, and intended $CLIMB utility. The proposed DEX and Launchpad contribution is a fixed 10% of each product's eligible net available revenue, calculated independently. Eligible net available revenue means actual revenue received less refunds/reversals, documented direct operating costs, applicable taxes/mandatory charges, and other approved product obligations. Trading volume, projected revenue, market capitalization, and unrealized gains are excluded. A zero or negative result produces no contribution.
+
+The proposed marketplace 5% gross-sales allocation and 5% buy/sell transaction tax are maintained in separate ledgers. Their bases, payer, exemptions, destination, and relationship to the previous 2.5% buy/2.5% sell fee design require approval before implementation. DEX/Launchpad contributions may support Jarrell's Peak and approved player incentives, subject to available funds and published rules. Weekly treasury reporting is targeted for publication each Monday after the Monday–Sunday UTC reporting period is reconciled. The intended $CLIMB payout target is Friday 03:00 UTC (11:00 AM Philippines time), not a guarantee.
+
+No revenue, treasury funding, fee collection, or payout mechanism is claimed to be operational by this policy. Full draft: REVENUE_TREASURY_POLICY.md.
 
 ## 9. Token and platform status
 

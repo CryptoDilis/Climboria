@@ -6,6 +6,20 @@
 >
 > **Precedence:** The current decisions and active checklist below override older historical notes later in this file. Historical entries are retained as evidence, not as permission to revive superseded plans. Never reintroduce the obsolete 10-normal-mountain plan.
 
+## 2026-11-08 — Ecosystem narrative & Revenue/Treasury policy checkpoint
+
+**Canonical direction:** Climboria is positioned as **“More Than a Game. A Connected Web3 Ecosystem.”** Explain Climboria Signature, DEX & Swap, Launchpad, Marketplace/Crafting/Forging, Jarrell’s Peak, and intended $CLIMB utility as connected pillars. Use the premium official Climboria identity (official emblem, dark charcoal/navy, antique bronze and muted gold); do not use generic stock imagery or generic icon packs. Never imply a planned product is live.
+
+**Policy decisions recorded (proposed; not yet operational):** DEX contribution = fixed 10% of eligible net available revenue; Launchpad contribution = fixed 10% of eligible net available revenue, calculated independently per product. Marketplace 5% gross-sales allocation and 5% buy/sell transaction tax are separate accounting rules. Weekly treasury reporting; period Monday 00:00–Sunday 23:59 UTC; target report publication following Monday after reconciliation. Intended reward currency $CLIMB; payout target Friday 03:00 UTC / 11:00 AM PHT, subject to available funds and readiness. DEX/Launchpad contributions may support Jarrell’s Peak and approved community rewards after costs/obligations. No guaranteed revenue or rewards.
+
+**Formula:** eligible net available revenue = actual revenue received − refunds/reversals − documented direct operating costs − applicable taxes/mandatory charges − other approved product obligations. Contribution = max(0, eligible net available revenue) × 10%. Exclude trading volume, projected revenue, market cap, and unrealized gains.
+
+**Important unresolved gates:** decide whether the marketplace 5% gross-sales allocation is platform-funded or seller-charged; define tax base/payer/exemptions/destination; reconcile with the prior 2.5% buy + 2.5% sell fee design; define public reporting detail; establish multisig signers/thresholds; complete legal/accounting review. Keep separate ledgers for DEX, Launchpad, marketplace allocation, transaction tax, Jarrell’s Peak rewards, and restricted donations. See [docs/REVENUE_TREASURY_POLICY.md](./docs/REVENUE_TREASURY_POLICY.md).
+
+**Website/docs scope:** update homepage, Overview, and Whitepaper with consistent ecosystem narrative and proposed reward-funding flow. Mark DEX, Launchpad, fee collection, treasury, and reward payouts as planned/proposed until verified. Preserve current game-first priority and existing product/security release gates.
+
+---
+
 ## 2026-11-08 — DEX/Swap clickable assets, release checklist and security gate
 
 **Owner clarification:** The DEX Buy/Sell execution rail position is already approved and must not be moved during token-info work. The current correction target is the selected-token header/overview only. On Swap, the Major Assets rows must be directly clickable and must never display a hover/focus "SELECT" label.
