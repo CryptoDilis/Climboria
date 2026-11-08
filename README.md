@@ -22,6 +22,10 @@
 - [x] Added Playwright regression coverage for clicking BTC in Major Assets and confirming no hover SELECT overlay.
 - [x] Corrected the Playwright wait assertion and gave the mocked BTC mint a distinct address so the test exercises a real input/output change.
 - [x] Main validation workflow now runs Node syntax checks and the Cloudflare swap proxy security/API test suite.
+- [x] Previous main commit `f12dee5c` passed Validate, Browser Smoke (including BTC major-asset click/no-hover-label check), and GitHub Pages deployment.
+- [x] Found and fixed a refresh-restoration gap: exact selected Solana mint metadata now restores through DexScreener exact-mint pools plus on-chain decimals verification, rather than relying on the Jupiter token-search endpoint.
+- [x] Swap URL changes now create browser history entries and `popstate` restores the selected chain and exact token mints.
+- [ ] New refresh/history regression and latest Pages deployment for the follow-up commits are running; only mark passed after their final conclusions are checked.
 - [ ] Run the new major-assets browser regression and all required GitHub Actions after the latest commits; inspect and repair failures.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
@@ -63,7 +67,7 @@
 - [ ] Backup/recovery: protect DNS, GitHub, Cloudflare and registrar accounts with MFA; document break-glass owner access and rollback procedure; test restore of last known good Pages/Worker deployments.
 
 ### Verified security findings / known blockers
-- **Critical release blocker:** The Cloudflare Worker is source code only until deployed; dex/swap-proxy/DEPLOYMENT.md explicitly says it is not deployed. swap-config.js keeps proxyEnabled:false and enabled:false. No production swap execution or Climboria fee collection is active.
+- **Critical release blocker:** The Cloudflare Worker is source code only until deployed; dex/swap-proxy/DEPLOYMENT.md explicitly says it is not deployed. The GitHub Pages deployment is a separate static-site deployment and does not deploy the Worker. swap-config.js keeps proxyEnabled:false and enabled:false. No production swap execution or Climboria fee collection is active.
 - **Deployment configuration blocker:** dex/swap-proxy/wrangler.toml currently uses a documented placeholder rate-limit namespace ID. The API deployment workflow previously pointed to non-existent backend/worker; it is now corrected to the actual Worker directory. Real Cloudflare account credentials, Jupiter API key secret, namespace allocation and custom domain still need verification.
 - **Security limitation:** Worker rate limiting is currently per-IP and approximate; CORS is not authentication. Add WAF/monitoring and wallet-aware quotas before public trading.
 - **Transaction risk:** Worker/Jupiter response validation and frontend transaction metadata checks do not equal semantic instruction auditing. Mainnet execution stays disabled pending independent review and controlled test cases.
