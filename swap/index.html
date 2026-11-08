@@ -566,9 +566,9 @@ $('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
 
 let majorAssetSelectionSequence=0;
 $('majorCoins').addEventListener('click',async e=>{
- const request=++majorAssetSelectionSequence;
  const row=e.target.closest('button.major-row[data-major-symbol]');
  if(!row||row.disabled)return;
+ const request=++majorAssetSelectionSequence;
  const symbol=String(row.dataset.majorSymbol||'').toUpperCase();
  const assets={BTC:{name:'Bitcoin'},ETH:{name:'Ethereum'},SOL:{name:'Solana'},BNB:{name:'BNB'},XRP:{name:'XRP'},USDC:{name:'USD Coin'}};
  const choice=assets[symbol];if(!choice)return;
@@ -598,7 +598,7 @@ $('majorCoins').addEventListener('click',async e=>{
   $('quoteStatus').textContent=symbol+' selected as input asset · chart and market panel updated for '+token.id+'.';
   $('majorCoins').querySelectorAll('.major-row').forEach(el=>el.classList.toggle('is-selected',el===row));
   setSwapUrl();
- }catch(error){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}
+ }catch(error){if(request===majorAssetSelectionSequence){$('quoteStatus').textContent='Could not select '+symbol+': '+error.message;$('quoteStatus').classList.add('error')}}
  finally{row.classList.remove('is-loading')}
 });
 $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
