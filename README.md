@@ -2537,3 +2537,14 @@ For every integrated asset or borrowed technique, record:
 
 - [x] Hardened the manual Worker deployment workflow: it now requires an account-specific repository variable for the rate-limit namespace, validates all three encrypted deployment secrets, writes `JUPITER_API_KEY` into Cloudflare Worker secrets via Wrangler, deploys, and checks production health/CORS. See `dex/swap-proxy/DEPLOYMENT.md`.
 - [ ] Actual Worker deployment still awaits the Cloudflare account variable and Actions secrets; no production backend is claimed live until the manual workflow completes successfully.
+
+## 2026-11-09 — Latest full browser verification
+
+- [x] Browser Smoke run `42493493261` completed successfully on commit `bf0c7c4`: homepage/CTA and desktop/mobile navigation, Swap major-asset explicit selection and exact-mint chart checks, Cloudflare proxy unit tests, DEX fail-closed security checks, standalone Swap, standalone DEX market/quote-preview and browser-history checks, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot artifact upload all passed. [View run](https://github.com/CryptoDilis/Climboria/actions/runs/42493493261).
+- [x] Screenshot artifact `climboria-browser-smoke-screenshots` uploaded (8 files; 5.8 MB; expires 2026-11-15): [download from run](https://github.com/CryptoDilis/Climboria/actions/runs/42493493261/artifacts/13623120902).
+- [x] Jarrell's Peak gameplay diagnostics passed for game boot/render, hero GLB, walking/running jump and landing, terrain and mountain route audits, chest distribution, inventory, sanctuary, desktop/mobile controls, and cave entrance/interior visual captures.
+- [ ] Note on test scope: the successful gameplay smoke explicitly ran with all wildlife temporarily disabled. Wildlife/animal AI and performance therefore still require a separate enabled-wildlife verification; do not interpret this run as validating wildlife behavior.
+- [ ] Review the uploaded desktop/mobile screenshots visually for camera framing, UI readability, cave lighting, and mobile composition.
+- [ ] Cloudflare Worker production deployment remains pending repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and encrypted Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; manually run **Deploy Climboria API** only after these are configured. No production API deployment is claimed.
+- [ ] Keep public swap execution disabled until Worker deployment and production health/CORS/rate-limit verification, canonical mint policy, semantic transaction instruction review, controlled Devnet lifecycle tests, monitoring/WAF, and independent security review pass.
+- [ ] GitHub runner reports Node.js 20 deprecation warnings for current Actions v4 dependencies. Track migration to Node.js 24-compatible action releases when available; these warnings did not fail this run.
