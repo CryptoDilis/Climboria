@@ -332,7 +332,7 @@ jobs:
               // DEX identity/chart regression is tested below; social-rail layout has its own UI coverage and must not block token lookup verification.
               await page.setViewportSize({width:1365,height:900});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
-              if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,title:document.querySelector('#detailTitle')?.textContent,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>x.dataset.pair)}));throw new Error('DEX initial best-pool URL sync failed: '+JSON.stringify(state)+'; '+error.message)});
               await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
