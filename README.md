@@ -2558,3 +2558,9 @@ For every integrated asset or borrowed technique, record:
 - [ ] Repeat visual review with wildlife enabled. The gameplay smoke log explicitly states wildlife was temporarily disabled, so these screenshots do not validate animal presence, behavior, or performance.
 - [x] Confirmed wildlife is disabled in the actual Jarrell's Peak game source, not only in the smoke harness: `game/play.html` documents that low-quality placeholder animal models are not spawned and snake AI is disabled with wildlife. Treat this as an intentional temporary art-quality gate, not a passing wildlife feature.
 - [ ] Before restoring wildlife, add final-quality animal and snake assets, collision/animation/AI, spawn-density and performance limits, and desktop/mobile interaction tests; then remove the smoke assertions that require zero animals/snakes and replace them with positive behavior checks.
+
+### DEX UI cleanup — 2026-11-09
+- [x] Removed viewport-sticky positioning from the DEX trade terminal and token-community cards so they follow normal document scrolling.
+- [x] Removed sticky positioning from the token detail header.
+- [x] Grouped Token Profile social links (X, Website, Telegram when supplied by verified provider metadata) inside the profile panel with a single divider and consistent compact link styling.
+- [ ] Verify desktop and mobile scroll behavior and profile-link layout in Browser Smoke screenshots.
