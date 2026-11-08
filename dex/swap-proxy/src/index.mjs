@@ -8,6 +8,7 @@ const JSON_HEADERS = {
   "cross-origin-resource-policy": "same-site"
 };
 const JUPITER = "https://api.jup.ag/swap/v2";
+const UPSTREAM_TIMEOUT_MS = 12000;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -60,7 +61,9 @@ async function upstream(path, init, env) {
   const target = path.startsWith("https://api.jup.ag/") ? path : JUPITER + path;
   return fetch(target, {
     ...init,
-    headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY }
+    headers: { ...(init?.headers || {}), "x-api-key": env.JUPITER_API_KEY },
+    // Bound provider latency so stalled upstream requests cannot pin Worker capacity.
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
   });
 }
 async function enforceRateLimit(request, env) {
