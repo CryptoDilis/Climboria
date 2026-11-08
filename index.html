@@ -320,7 +320,7 @@ footer:first-of-type>div{
 <body>
 <nav>
 <a class="logo" href="./" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl"><a href="/game/" id="gameNavLink">Game</a><a href="#" id="launchpadNavLink">Launchpad</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
+<div class="navl"><a href="/game/" id="gameNavLink">Game</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
 <a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
 <button class="btn-gold" data-open-auth>SIGN IN</button></div>
 <div style="display:flex;align-items:center;gap:12px">
@@ -329,7 +329,7 @@ footer:first-of-type>div{
 </div>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
-<a href="/game/" id="mobileGameBtn">Game</a><a href="#" id="mobileLaunchpadBtn">Launchpad</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
+<a href="/game/" id="mobileGameBtn">Game</a><a href="/launchpad/" id="mobileLaunchpadBtn">Launchpad</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
 </div>
@@ -374,7 +374,7 @@ footer:first-of-type>div{
     <div class="hero-buttons">
       <button class="btn-play" id="nextlevelVictoryButton">▶ PLAY</button>
       <button class="btn-trade" id="swapBtn">DEX</button>
-      <button class="btn-launch" id="launchpadBtn">LAUNCHPAD (DEMO)</button>
+      <button class="btn-launch" id="launchpadBtn">LAUNCHPAD</button>
     </div>
   </div>
 </div>
@@ -598,9 +598,9 @@ footer:first-of-type>div{
   document.getElementById('mobileGameBtn').addEventListener('click', e=>{e.preventDefault();setMenu(false);window.location.href='/game/'});
   document.getElementById('mobileDexBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/dex/'});
   document.getElementById('mobileSwapBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/swap/'});
-  document.getElementById('launchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
-  document.getElementById('launchpadNavLink').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
-  document.getElementById('mobileLaunchpadBtn').addEventListener('click', e=>{e.preventDefault();openModal(launchModal)});
+  document.getElementById('launchpadBtn').addEventListener('click', e=>{e.preventDefault();window.location.href='/launchpad/'});
+  document.getElementById('launchpadNavLink').addEventListener('click', e=>{e.preventDefault();window.location.href='/launchpad/'});
+  document.getElementById('mobileLaunchpadBtn').addEventListener('click', e=>{e.preventDefault();setMenu(false);window.location.href='/launchpad/'});
   document.getElementById('closeSwap').addEventListener('click', ()=>closeModal(swapModal));
   document.getElementById('closeLaunchpad').addEventListener('click', ()=>closeModal(launchModal));
   const copy={normal:'Normal Launchpad — TBA. This option is not available yet.',developer:'Developer Options — TBA. Advanced creator settings are not available yet.',signature:'Climboria Signature — TBA. Rules and safeguards will be disclosed before this option opens.'};
