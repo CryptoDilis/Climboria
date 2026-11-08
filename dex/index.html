@@ -993,7 +993,7 @@ function safeHttps(value){try{const u=new URL(value);return u.protocol==='https:
 async function fetchPumpCoin(mint){
  const base=window.CLIMBORIA_SWAP_CONFIG?.apiBase;
  if(!base)return null;
- const response=await fetch(base.replace(/\\/$/,'')+'/api/pump/coin?mint='+encodeURIComponent(mint),{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(8000)});
+ const response=await fetch(base.replace(/\/$/,'')+'/api/pump/coin?mint='+encodeURIComponent(mint),{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(8000)});
  if(!response.ok)throw new Error('pump.fun metadata proxy HTTP '+response.status);
  const data=await response.json();if(!data||data.mint!==mint)throw new Error('pump.fun metadata did not match the selected mint');
  pumpCoinCache.set(mint,data);return data;
