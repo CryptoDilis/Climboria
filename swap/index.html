@@ -603,6 +603,7 @@ async function restoreSwapFromUrl(){
  restoringSwapUrl=true;
  try{
   setSwapChain(chain==='base'?'base':'solana');
+  if(chain==='base'){$('quoteStatus').textContent='Base URL restored. EVM token restoration remains unavailable until the Base routing backend is implemented.';setSwapUrl();return;}
   for(const [side,mint] of [['from',p.get('from')],['to',p.get('to')]]){
    if(!mint||mint===quoteTokens[side].id)continue;
    try{const token=await resolveSolanaTokenByMint(mint);chooseQuoteToken(side,token);}
