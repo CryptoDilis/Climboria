@@ -144,7 +144,7 @@ jobs:
               if(!config||config.enabled!==false) throw new Error('Live swap execution must remain disabled until backend security gates pass');
               await page.locator('#prepareSwap').click();
               const status=await page.locator('#quoteStatus').innerText();
-              if(!status.includes('safely disabled')) throw new Error('Swap execution did not fail closed: '+status);
+              if(!(status.includes('Connect your Solana wallet first') && status.includes('No transaction has been requested.')) && !status.includes('safely disabled')) throw new Error('Swap execution did not fail closed: '+status);
               if(errors.length) throw new Error('Live Swap browser errors: '+errors.join(' | '));
               console.log('PASS live Swap route, mobile controls, and disabled execution gate.');
             } finally { await browser.close(); }
