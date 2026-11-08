@@ -8,6 +8,8 @@
 - [x] Kept Base marked planned and transaction execution locked. No fee collection or production backend is claimed.
 - [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
 - [x] Static checks passed: inline JavaScript parses, smoke-test JavaScript parses, no duplicate HTML IDs, and all literal `$(id)` references resolve.
+- [x] Fixed the first Browser Smoke failure at the exact-mint chart assertion: the new interaction block had been attached to the external `swap-config.js` script element, where browsers ignore inline code when `src` is present. Moved the block into the actual inline Swap application script; the full application script now parses and all literal DOM ID references resolve.
+- [ ] Re-run Validate and Browser Smoke after the script-placement correction. The prior Browser Smoke run failed before reaching the new standalone premium Swap test, so the new UI has not yet passed real-browser acceptance.
 - [ ] Full GitHub Validate and Browser Smoke runs plus Pages deployment are still required; no CI pass is claimed yet.
 - [ ] Review uploaded desktop/mobile Swap screenshots and test wallet balance RPC success/failure, quote race handling, major asset selection, exact-mint chart synchronization and mobile layout.
 - [ ] Physical Redmi 14 5G acceptance remains open. Cloudflare Worker production deployment, semantic transaction instruction review and independent security review remain separate blockers. Keep public execution disabled.
