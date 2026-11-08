@@ -119,24 +119,26 @@ function filtered(){
  let p=[...state.pairs];
  const q=state.search.trim().toLowerCase();
  if(q)p=p.filter(x=>[x.baseToken.name,x.baseToken.symbol,x.baseToken.address,x.quoteToken.symbol].some(v=>String(v||'').toLowerCase().includes(q)));
- const change=x=>Number(x.priceChange?.h24);
- const volume=x=>Number(x.volume?.h24)||0;
- const liquidity=x=>Number(x.liquidity?.usd)||0;
- const age=x=>Number(x.pairCreatedAt)||0;
+ const change=x=>{const v=x.priceChange?.h24;return v===null||v===undefined||v===''?NaN:Number(v)};
+ const volume=x=>{const v=x.volume?.h24;return v===null||v===undefined||v===''?NaN:Number(v)};
+ const liquidity=x=>{const v=x.liquidity?.usd;return v===null||v===undefined||v===''?NaN:Number(v)};
+ const age=x=>{const v=x.pairCreatedAt;return v===null||v===undefined||v===''?NaN:Number(v)};
+ const descending=(getter)=>(a,b)=>{const av=getter(a),bv=getter(b);if(!Number.isFinite(av))return 1;if(!Number.isFinite(bv))return -1;return bv-av};
+ const ascending=(getter)=>(a,b)=>{const av=getter(a),bv=getter(b);if(!Number.isFinite(av))return 1;if(!Number.isFinite(bv))return -1;return av-bv};
  // Graduated is intentionally provider-evidence-only. Never infer graduation from volume, age or venue name.
  if(state.mode==='graduated')p=p.filter(x=>Array.isArray(x.labels)&&x.labels.some(v=>/graduat(ed|ion)/i.test(String(v))));
- if(state.mode==='volume'||state.mode==='trending')p.sort((a,b)=>volume(b)-volume(a));
- else if(state.mode==='liquidity')p.sort((a,b)=>liquidity(b)-liquidity(a));
- else if(state.mode==='new')p.sort((a,b)=>age(b)-age(a));
- else if(state.mode==='gainers')p=p.filter(x=>Number.isFinite(change(x))).sort((a,b)=>change(b)-change(a));
- else if(state.mode==='losers')p=p.filter(x=>Number.isFinite(change(x))).sort((a,b)=>change(a)-change(b));
+ if(state.mode==='volume'||state.mode==='trending')p.sort(descending(volume));
+ else if(state.mode==='liquidity')p.sort(descending(liquidity));
+ else if(state.mode==='new')p.sort(descending(age));
+ else if(state.mode==='gainers')p=p.filter(x=>Number.isFinite(change(x))).sort(descending(change));
+ else if(state.mode==='losers')p=p.filter(x=>Number.isFinite(change(x))).sort(ascending(change));
  else if(state.mode==='movers')p=p.filter(x=>Number.isFinite(change(x))).sort((a,b)=>Math.abs(change(b))-Math.abs(change(a)));
  const s=$('sort').value;
- if(s==='volume')p.sort((a,b)=>volume(b)-volume(a));
- if(s==='liquidity')p.sort((a,b)=>liquidity(b)-liquidity(a));
- if(s==='change'||s==='gainers')p.sort((a,b)=>(Number(b.priceChange?.h24)||-Infinity)-(Number(a.priceChange?.h24)||-Infinity));
- if(s==='losers')p.sort((a,b)=>(Number(a.priceChange?.h24)||Infinity)-(Number(b.priceChange?.h24)||Infinity));
- if(s==='age')p.sort((a,b)=>age(b)-age(a));
+ if(s==='volume')p.sort(descending(volume));
+ if(s==='liquidity')p.sort(descending(liquidity));
+ if(s==='change'||s==='gainers')p=p.filter(x=>Number.isFinite(change(x))).sort(descending(change));
+ if(s==='losers')p=p.filter(x=>Number.isFinite(change(x))).sort(ascending(change));
+ if(s==='age')p.sort(descending(age));
  return p
 }
 function render(){const list=filtered();const modeLabels={trending:'Trending by 24h volume',volume:'Highest 24h volume',gainers:'Top 24h gainers',losers:'Top 24h losers',movers:'Largest absolute 24h moves',new:'Newest discovered pools',liquidity:'Highest reported liquidity',graduated:'Provider-labelled graduated tokens'};$('coverage').textContent=(modeLabels[state.mode]||'Market results')+' · '+list.length+' results in currently loaded Solana dataset. Graduated only includes provider-labelled records; unlabelled assets are not assumed graduated.';$('rows').innerHTML=list.length?list.slice(0,60).map(p=>{const rawChange=p.priceChange?.h24;const change=rawChange===null||rawChange===undefined||rawChange===''?NaN:Number(rawChange);const cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';const changeLabel=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'N/A';const img=p.info?.imageUrl;return '<tr><td><button class="token token-open" type="button" data-mint="'+esc(p.baseToken.address)+'" style="background:none;border:0;color:inherit;text-align:left;cursor:pointer;padding:0"><span class="icon">'+(img?'<img class="icon" src="'+esc(img)+'" alt="" onerror="this.style.display=\'none\'">':esc((p.baseToken.symbol||'?').slice(0,2)))+'</span><span><b>'+esc(p.baseToken.symbol)+' / '+esc(p.quoteToken.symbol)+'</b><small>'+esc(p.baseToken.name)+' · '+esc(p.baseToken.address.slice(0,5)+'…'+p.baseToken.address.slice(-5))+'</small><span class="token-change '+cls+'">24h '+changeLabel+'</span></span></button></td><td>'+price(p.priceUsd)+'</td><td class="'+cls+'">'+changeLabel+'</td><td>'+fmt(p.volume?.h24)+'</td><td>'+fmt(p.liquidity?.usd)+'</td><td>'+esc(p.dexId||'—')+'</td></tr>'}).join(''):'<tr><td colspan="6"><div class="empty">No matching Solana pairs in the currently loaded dataset.</div></td></tr>'}
