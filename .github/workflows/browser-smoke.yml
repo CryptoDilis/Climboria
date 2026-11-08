@@ -263,6 +263,7 @@ jobs:
             const errors=[];
             try {
               const desktop=await browser.newPage({viewport:{width:1365,height:900}});
+              await desktop.route('https://api.jup.ag/swap/v2/order**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'250000000',outAmount:'49000000',feeBps:1,router:'Jupiter Test Route',priceImpactPct:0.001})}));
               desktop.on('pageerror',error=>errors.push('DESKTOP '+error.message));
               const response=await desktop.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
@@ -280,6 +281,10 @@ jobs:
               await desktop.locator('#swapFlip').click();
               if(await desktop.locator('#quoteFromSearch').inputValue()!==initialTo||await desktop.locator('#quoteToSearch').inputValue()!==initialFrom) throw new Error('Swap flip did not exchange the selected assets');
               await desktop.locator('#swapFlip').click();
+              await desktop.locator('#quoteAmount').fill('0.25');
+              await desktop.waitForFunction(()=>document.querySelector('#estimatedReceive')?.textContent.includes('49')&&!document.querySelector('#estimatedReceive')?.classList.contains('swap-loading'),null,{timeout:10000});
+              if(!(await desktop.locator('#quoteStatus').innerText()).includes('Fresh quote received')) throw new Error('Debounced Jupiter quote did not update the quote status');
+              if(!(await desktop.locator('#quoteSummary').innerText()).includes('Jupiter Test Route')) throw new Error('Fresh route summary did not show the quote provider');
               await desktop.screenshot({path:'climboria-swap-premium-desktop.png',fullPage:true});
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',error=>errors.push('MOBILE '+error.message));
