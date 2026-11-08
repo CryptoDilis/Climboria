@@ -497,14 +497,14 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
   <div class="chain-notice" id="chainNotice" aria-live="polite">Solana Mainnet selected · live route quotes.</div>
   <div class="swap-input-stack">
     <section class="swap-token-panel">
-      <div class="swap-panel-top"><label for="quoteAmount">You pay</label><span id="fromBalance">Balance —</span></div>
+      <div class="swap-panel-top"><label for="quoteAmount">You pay</label><span id="fromBalance">Connect wallet for balance</span></div>
       <div class="swap-amount-line"><input id="quoteAmount" type="number" min="0" step="any" value="" placeholder="0.00" inputmode="decimal" aria-label="Amount to swap"><div class="swap-token-picker"><span class="token-symbol-mark" id="fromTokenMark">◎</span><input id="quoteFromSearch" value="SOL" placeholder="Search token" aria-label="From token"><button class="token-search-button" id="searchFrom" type="button" aria-label="Search input token" title="Search token">⌕</button></div></div>
       <div class="swap-token-foot"><small id="fromSelected">Solana · SOL</small><div class="quick-amounts"><button type="button" data-fraction="0.25" disabled>25%</button><button type="button" data-fraction="0.5" disabled>50%</button><button type="button" data-fraction="1" disabled>MAX</button></div></div>
       <div class="results" id="fromResults"></div>
     </section>
     <button class="swap-flip" id="swapFlip" type="button" aria-label="Flip swap tokens" title="Flip tokens">⇅</button>
     <section class="swap-token-panel swap-output-panel">
-      <div class="swap-panel-top"><label>You receive</label><span id="toBalance">Balance —</span></div>
+      <div class="swap-panel-top"><label>You receive</label><span id="toBalance">Connect wallet for balance</span></div>
       <div class="swap-amount-line"><div class="swap-output-amount" id="estimatedReceive">Enter an amount</div><div class="swap-token-picker"><span class="token-symbol-mark" id="toTokenMark">$</span><input id="quoteToSearch" value="USDC" placeholder="Search token" aria-label="To token"><button class="token-search-button" id="searchTo" type="button" aria-label="Search output token" title="Search token">⌕</button></div></div>
       <div class="swap-token-foot"><small id="toSelected">USD Coin · USDC</small><span class="receive-usd" id="receiveUsd">Indicative market reference only</span></div>
       <div class="results" id="toResults"></div>
@@ -548,7 +548,7 @@ async function getSwapWalletBalance(token){
  if(Object.prototype.hasOwnProperty.call(swapWalletBalanceCache,key))return swapWalletBalanceCache[key];
  for(const endpoint of SWAP_RPC_ENDPOINTS){
   try{
-   const method=token.id===quoteTokens.from.id&&token.symbol==='SOL'?'getBalance':'getTokenAccountsByOwner';
+   const method=token.id==='So11111111111111111111111111111111111111112'?'getBalance':'getTokenAccountsByOwner';
    const params=method==='getBalance'?[connectedWallet,{commitment:'confirmed'}]:[connectedWallet,{mint:token.id},{encoding:'jsonParsed',commitment:'confirmed'}];
    const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
    if(!response.ok)throw new Error('RPC HTTP '+response.status);
@@ -573,10 +573,11 @@ async function refreshSwapBalances(){
  buttons.forEach(b=>b.disabled=from===null||from<=0||selectedChain!=='solana');
 }
 const connectWalletBase=connectClimboriaWallet;
-connectClimboriaWallet=async function(){await connectWalletBase();if(connectedWallet){swapWalletBalanceCache={};refreshSwapBalances();}};
+connectClimboriaWallet=async function(){await connectWalletBase();swapWalletBalanceCache={};refreshSwapBalances();setSwapExecutionState();};
 const chooseQuoteTokenBase=chooseQuoteToken;
-chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();};
+chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();};
 function clearSwapQuotePreview(){
+ swapQuoteRequest++;clearTimeout(swapQuoteTimer);
  $('estimatedReceive').textContent='Enter an amount';$('receiveUsd').textContent='Indicative market reference only';$('quoteSummary').textContent='Route details · shown with live quote';
  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Provider fee</small><b>Shown when supplied</b></div>';
 }
@@ -616,6 +617,8 @@ $('quoteAmount').addEventListener('input',()=>{
  clearTimeout(swapQuoteTimer);if(!valid){swapQuoteRequest++;$('estimatedReceive').classList.remove('swap-loading');return;}
  swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),650);
 });
+const setSwapChainBase=setSwapChain;
+setSwapChain=function(chain){setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();};
 const requestJupiterQuoteBase=requestJupiterQuote;
 requestJupiterQuote=async function(){
  const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
@@ -677,8 +680,8 @@ function setSwapChain(chain){
 
 let majorAssetChoices=[];
 /* Public market data panels: CoinGecko majors + DexScreener selected Solana pool */
-const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
-const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
+const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
+const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
@@ -698,8 +701,8 @@ async function updateSelectedAsset(token){
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   if(chartRequest!==selectedChartRequest)return;
   const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);setSwapReference(token,pair);
-  price.textContent=Number.isFinite(usd)?usdFmt(usd):'—';
-  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'—';
+  price.textContent=Number.isFinite(usd)?usdFmt(usd):'Price unavailable';
+  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'24h change unavailable';
   change.className=Number.isFinite(change24)?(change24>=0?'positive':'negative'):'muted';
   volume.textContent=compactUsd(pair.volume?.h24);
   mcap.textContent=compactUsd(pair.marketCap??pair.fdv);
@@ -865,11 +868,11 @@ $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[d
 $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
 
 
-function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">—</span>';const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">Chart pending</span>';const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
 async function loadMajorMarkets(){
  const assets=[{id:'bitcoin',symbol:'BTC',name:'Bitcoin'},{id:'ethereum',symbol:'ETH',name:'Ethereum'},{id:'solana',symbol:'SOL',name:'Solana'},{id:'binancecoin',symbol:'BNB',name:'BNB'},{id:'ripple',symbol:'XRP',name:'XRP'},{id:'usd-coin',symbol:'USDC',name:'USD Coin'}];
  const render=(data,sourceNote)=>{
-  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
+  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'Unavailable')+'</small></span></button>'}).join('');
   $('majorStatus').textContent=sourceNote+' · Tap an asset to load its Solana market and chart.';
  };
  try{
