@@ -243,6 +243,42 @@ test("proxies Jupiter token search through server-side credentials", async () =>
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("proxies pump.fun token metadata server-side and sanitizes public fields", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    let target = "";
+    globalThis.fetch = async url => {
+      target = String(url);
+      return Response.json({
+        mint: valid, name: "Climboria", symbol: "CLIMB",
+        image_uri: "https://images.example/climb.png",
+        website: "https://climboria.fun", twitter: "https://x.com/ClimboriaHQ",
+        telegram: "javascript:alert(1)", creator: valid, complete: false,
+        bonding_curve: valid, pump_swap_pool: null, total_supply: "1000000000"
+      });
+    };
+    const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=" + valid, { headers: { origin } }), env);
+    assert.equal(res.status, 200);
+    assert.match(target, /^https:\/\/frontend-api-v3\.pump\.fun\/coins-v2\//);
+    const body = await res.json();
+    assert.equal(body.name, "Climboria");
+    assert.equal(body.symbol, "CLIMB");
+    assert.equal(body.creator, valid);
+    assert.equal(body.complete, false);
+    assert.equal(body.telegram, null);
+    assert.equal(body.source, "pump.fun");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("rejects invalid mint on pump.fun metadata route before upstream request", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("upstream must not be called"); };
+    const res = await worker.fetch(new Request("https://worker.test/api/pump/coin?mint=bad", { headers: { origin } }), env);
+    assert.equal(res.status, 400);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("rejects malformed quote and token search requests before upstream calls", async () => {
   const originalFetch = globalThis.fetch;
   try {
