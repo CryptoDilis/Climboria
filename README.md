@@ -1,5 +1,20 @@
 
 
+## 2026-11-09 — DEX premium terminal implementation follow-through
+
+- [x] Added a live Wrapped SOL hero metric using the exact wrapped-SOL mint lookup; price and 24h change are sourced from the selected DexScreener base-token pair. If unavailable, the UI states that clearly rather than showing an invented quote.
+- [x] Added a six-card “Trending on Solana” discovery strip sourced from current DexScreener Solana pair-search responses. Cards require actual liquidity and 24h volume, rank by provider-reported volume, and open the selected mint. No synthetic pairs/prices are used.
+- [x] Added shimmer loading placeholders for hero, trending cards and market counters; market counter skeletons clear when the first market response arrives.
+- [x] Added footer refresh timestamp wiring, per-token Solscan verification link, and hero price direction flash on refreshed price changes.
+- [x] Reworked TrailMap pool candidates into quote-token → selected-token route checkpoint cards with liquidity-depth bars normalized against the selected token's discovered pools; route candidates remain explicitly not executable routes.
+- [x] Reworked Summit Signal into evidence breakdown: relative liquidity depth (0–100 vs. this mint's discovered pools), holder concentration after on-chain holder lookup, pool age, and 24h buy imbalance. It explicitly withholds a composite safety score while holder evidence is not loaded and does not label this as an audit/safety rating.
+- [x] Added responsive terminal styling for route cards, evidence cards, live market cards, dark search controls, hover states and mobile layout.
+- [x] Static JavaScript syntax validation passed for the inline DEX script and `dex/premium-terminal.js` after correcting a duplicate variable declaration.
+- [ ] Browser Smoke and Pages deployment for final commit `1afef63` are still running at the time of this record. Do not call this visual pass fully verified until both finish and screenshots are reviewed.
+- [ ] Chart timeframe buttons and real mini-sparklines are not added: DexScreener's public pair snapshot does not supply historical OHLC series. Do not draw fake sparkline history or label candle intervals as exact 1H/24H/7D viewing windows. Integrate a verified historical candle provider before adding these controls.
+- [ ] Production Cloudflare Worker / swap execution remains separately blocked pending deployment secrets, health/CORS/rate-limit checks, transaction validation and security review. Keep all execution controls disabled.
+
+
 ## 2026-11-09 — DEX premium terminal first pass from Meta feedback
 
 - [x] Added an additive terminal visual layer in `dex/terminal-premium.css`: deep navy/black canvas, restrained contour-line texture, tabular numeric styling, improved dark search controls, and more deliberate market-row hover states. Existing market/data logic is untouched.
