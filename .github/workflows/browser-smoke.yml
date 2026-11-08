@@ -114,6 +114,7 @@ jobs:
               await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
+                if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
                 if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
               });
@@ -144,6 +145,13 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});
               const quoteOnlyState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),emptyHidden:document.querySelector('#selectedChartEmpty')?.hidden}));
               if(!quoteOnlyState.title.startsWith('QONLY')||quoteOnlyState.price!=='—'||quoteOnlyState.chart||quoteOnlyState.emptyHidden) throw new Error('Quote-side-only pool incorrectly displayed another asset chart or stale metrics: '+JSON.stringify(quoteOnlyState));
+              await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              // A true no-pool response must clear every stale chart metric and iframe.
+              await page.evaluate(()=>window.updateSelectedAsset({id:'NoPoolMint11111111111111111111111111111111',symbol:'NOPool',name:'No Pool Asset'}));
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});
+              const noPoolState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,change:document.querySelector('#selectedAssetChange')?.textContent,volume:document.querySelector('#selectedAssetVolume')?.textContent,mcap:document.querySelector('#selectedAssetMcap')?.textContent,liquidity:document.querySelector('#selectedAssetLiquidity')?.textContent,venue:document.querySelector('#selectedAssetVenue')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),emptyHidden:document.querySelector('#selectedChartEmpty')?.hidden}));
+              if(!noPoolState.title.startsWith('NOPool')||noPoolState.price!=='—'||noPoolState.change!=='—'||noPoolState.volume!=='—'||noPoolState.mcap!=='—'||noPoolState.liquidity!=='—'||noPoolState.venue!=='—'||noPoolState.chart||noPoolState.emptyHidden) throw new Error('No-pool selection retained stale chart data: '+JSON.stringify(noPoolState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               // Rapid selection race: a slower earlier asset response must not overwrite the latest BTC selection.
@@ -194,6 +202,9 @@ jobs:
               await mobileSwap.locator('#fromResults button[data-index="0"]').tap();
               await mobileSwap.waitForFunction(()=>new URL(location.href).searchParams.get('from')==='SysvarRent111111111111111111111111111111111',null,{timeout:10000});
               if(await mobileSwap.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Explicit BTC token choice on mobile did not select BTC as input');
+              await mobileSwap.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              const mobileChartState=await mobileSwap.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src')}));
+              if(!mobileChartState.title.startsWith('BTC')||!mobileChartState.price.includes('65,000')||!mobileChartState.chart?.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe')) throw new Error('Mobile selected BTC mint did not synchronize chart and metrics: '+JSON.stringify(mobileChartState));
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
