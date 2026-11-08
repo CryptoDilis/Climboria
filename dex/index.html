@@ -613,7 +613,7 @@ async function loadAdvancedIntel(mint,pair){
   ['Social accounts',socials.length?socials.map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+' ↗</a>').join(' · '):'Not listed']
  ].map(([k,v])=>'<div class="intel-profile-item"><small>'+esc(k)+'</small><b>'+v+'</b></div>').join('');
  $('bubbleMapOpen').href='https://app.bubblemaps.io/sol/token/'+encodeURIComponent(mint);
- document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');b.querySelector('strong').textContent='＋'});
+ document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');const indicator=b.querySelector('strong');if(indicator)indicator.textContent='＋'});
  document.querySelectorAll('.intel-panel').forEach(p=>p.hidden=true);
  $('topHolders').innerHTML='<div class="intel-loading">Expand to fetch current on-chain holder records…</div>';
  $('recentActivity').innerHTML='<div class="intel-loading">Expand to fetch recent indexed swaps…</div>';
@@ -653,7 +653,7 @@ async function loadIntelActivity(){
 }
 document.addEventListener('click',e=>{
  const toggle=e.target.closest('[data-intel-panel]');
- if(toggle){const type=toggle.dataset.intelPanel,panel=$('intelPanel'+type.charAt(0).toUpperCase()+type.slice(1)),opening=panel.hidden;panel.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.querySelector('strong').textContent=opening?'−':'＋';if(opening&&!intelLoaded.has(type)){intelLoaded.add(type);if(type==='holders')loadIntelHolders();if(type==='activity'){loadIntelActivity();if(intelActivityTimer)clearInterval(intelActivityTimer);intelActivityTimer=setInterval(()=>{if(!$('intelPanelActivity').hidden)loadIntelActivity();},30000);}}if(!opening&&type==='activity'&&intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}}
+ if(toggle){const type=toggle.dataset.intelPanel,panel=$('intelPanel'+type.charAt(0).toUpperCase()+type.slice(1)),opening=panel.hidden;panel.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));const indicator=toggle.querySelector('strong');if(indicator)indicator.textContent=opening?'−':'＋';if(opening&&!intelLoaded.has(type)){intelLoaded.add(type);if(type==='holders')loadIntelHolders();if(type==='activity'){loadIntelActivity();if(intelActivityTimer)clearInterval(intelActivityTimer);intelActivityTimer=setInterval(()=>{if(!$('intelPanelActivity').hidden)loadIntelActivity();},30000);}}if(!opening&&type==='activity'&&intelActivityTimer){clearInterval(intelActivityTimer);intelActivityTimer=null;}}
  const refresh=e.target.closest('[data-intel-refresh]');
  if(refresh){if(refresh.dataset.intelRefresh==='holders')loadIntelHolders();if(refresh.dataset.intelRefresh==='activity')loadIntelActivity();}
 });
