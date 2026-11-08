@@ -2463,3 +2463,17 @@ For every integrated asset or borrowed technique, record:
 - Commits: Worker `5e282edfa51b5cef0bd2f35e7eb8a9e1ed557936`; tests `62bca0a95b5bdb5d7a6f2031d7dba294a65cf43f`.
 - Validation and Pages deployment for the latest commit are being verified; latest Pages deployment run: [42488606871](https://github.com/CryptoDilis/Climboria/actions/runs/42488606871) (success). Browser smoke: [42488606778](https://github.com/CryptoDilis/Climboria/actions/runs/42488606778), currently in the Jarrell's Peak desktop/mobile gameplay step; not yet green.
 - Cloudflare Worker production deployment remains blocked on replacing the placeholder rate-limit namespace and setting the Jupiter API key as a Cloudflare secret. Keep public proxy and transaction execution flags disabled until production checks and all transaction security gates pass.
+
+
+## 2026-11-08 — Swap Major Assets selection and token search UI
+
+- [x] Reviewed the supplied Swap screenshot and traced the Major Assets click flow, token resolver, selected-market chart and Jupiter search-result renderer.
+- [x] Major Assets now select the chosen Solana asset into the **From / input** field (rather than silently placing it in the To field), update the selected market panel/chart for that exact mint, and persist the input mint in the URL.
+- [x] Major-asset resolution now checks exact symbol matches in either side of a Solana pool and ranks candidates by discovered pool liquidity; no mint is hardcoded for BTC/ETH/BNB/XRP.
+- [x] Added a request-generation guard so a slow response for an earlier selected token cannot overwrite the chart/metrics for a newer selection.
+- [x] Replaced the browser-default grey token search results with branded dark navy/bronze result cards, readable mint metadata, verification state, focus styling and a scrollable results panel.
+- [x] Updated desktop/mobile browser smoke expectations to verify Major Assets populate the input token and restore through refresh and Back/Forward navigation.
+- [ ] Await fresh Browser Smoke + Validate runs for commits `5a86bc6` and `7709d21`; visual chart correctness and live-provider behavior still require review after CI.
+- [ ] Verify all six major assets individually against the exact selected mint, matching market title/price/chart, including no-pool cases and delayed/out-of-order responses. A chart embed loading state is not considered acceptance.
+- [ ] Review the updated search-result cards in desktop and mobile screenshots; confirm long mint addresses wrap cleanly and result list does not cover quote controls.
+- [ ] Keep wallet execution disabled until the existing backend and security release gates are met.
