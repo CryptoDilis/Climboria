@@ -594,6 +594,82 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  .token-overview-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
+
+/* Readability pass: larger type, stronger contrast and breathing room */
+@media(min-width:1450px){
+ .detail-content{grid-template-columns:minmax(0,1.7fr) minmax(340px,.78fr) minmax(320px,.74fr)!important;gap:16px!important;align-items:start}
+ .detail-main{min-width:0}
+ .dex-trade-terminal,.token-community{min-width:0;padding:18px!important}
+ .token-community{grid-column:3!important;grid-row:1!important;position:sticky;top:18px}
+ .dex-trade-terminal{grid-column:2!important;grid-row:1!important;position:sticky;top:18px}
+ .detail-main{grid-column:1!important;grid-row:1!important}
+}
+.detail-name-row h2{font-size:clamp(24px,2vw,30px)!important;line-height:1.15}
+.detail-name-row .token-intro,.token-intro{font-size:12px!important;line-height:1.55!important;color:#c0ccdc!important}
+.token-overview-stats>div{padding:12px 14px!important}
+.token-overview-stats small,.detail-metrics small,.flow-metrics small{font-size:10px!important;letter-spacing:.8px!important;color:#b5c3d5!important}
+.token-overview-stats b,.detail-metrics b,.flow-metrics b{font-size:14px!important}
+.trade-terminal-head small,.community-kicker{font-size:10px!important;letter-spacing:1.3px!important}
+.trade-terminal-head h3,.community-head h3,.tools-card h3{font-size:21px!important}
+.trade-network,.community-live{font-size:9px!important;padding:5px 8px!important}
+.trade-token-line{padding:12px!important;gap:6px!important}
+.trade-token-line span{font-size:20px!important}
+.trade-token-line small{font-size:10px!important;line-height:1.45}
+.trade-mode-tabs button,.trade-order-tabs button{font-size:13px!important;padding:11px 9px!important;min-height:42px}
+.dex-auto-route{padding:13px!important;margin:12px 0!important}
+.dex-auto-route-head strong{font-size:16px!important}
+.dex-auto-route-head span{font-size:9px!important}
+.dex-auto-route p,.dex-auto-route label{font-size:12px!important;line-height:1.55!important}
+.dex-auto-fee{font-size:11px!important;line-height:1.4;padding-top:9px!important}
+.dex-trade-field label,.dex-limit-fields label,.dex-trade-settings label,.dex-advanced-grid label{font-size:12px!important}
+.dex-trade-field input,.dex-limit-fields input,.dex-trade-settings select,.dex-advanced-grid select,.dex-advanced-grid input{font-size:15px!important;padding:12px!important;min-height:44px}
+.dex-trade-percent button{font-size:12px!important;padding:10px 4px!important}
+.dex-advanced{padding:12px!important}
+.dex-advanced summary{font-size:12px!important}
+.dex-advanced-grid small,.dex-advanced p,.dex-limit-fields p{font-size:11px!important;line-height:1.5!important}
+.dex-trade-wallet{padding:12px 0!important}
+.dex-trade-wallet span,.dex-trade-wallet button{font-size:11px!important}
+.dex-trade-wallet button{padding:10px!important}
+.dex-trade-quote,.dex-trade-prepare{font-size:13px!important;padding:13px!important;min-height:44px}
+.dex-trade-status{font-size:11px!important;line-height:1.55!important;padding:11px!important}
+.dex-trade-safety{font-size:10px!important;line-height:1.55!important}
+.community-desc{font-size:12px!important;line-height:1.55!important;color:#bac7d8!important}
+.community-room{height:clamp(300px,42vh,460px)!important;padding:12px!important}
+.community-empty{font-size:12px!important;line-height:1.55!important}
+.chat-message{padding:10px!important}
+.chat-message .chat-meta{font-size:10px!important}
+.chat-message p{font-size:12px!important;line-height:1.5!important}
+.community-form textarea{font-size:13px!important;min-height:72px!important;padding:11px!important}
+.community-actions small,.community-send,.community-tools button,.community-tools span{font-size:10px!important}
+.community-send{padding:10px 13px!important}
+.community-tools button{padding:9px 10px!important}
+.tools-card button,.tools-card a{font-size:11px!important;padding:10px!important}
+@media(max-width:1449px){
+ .detail-content{grid-template-columns:minmax(0,1fr) minmax(320px,370px)!important;gap:16px!important}
+ .detail-main{grid-column:1!important;grid-row:1/span 2!important}
+ .dex-trade-terminal{grid-column:2!important;grid-row:1!important}
+ .token-community{grid-column:2!important;grid-row:2!important;position:relative!important;top:auto!important}
+}
+@media(max-width:820px){
+ .detail-content{display:flex!important;flex-direction:column!important;gap:14px!important}
+ .detail-main,.dex-trade-terminal,.token-community{width:100%!important;position:relative!important;top:auto!important}
+ .dex-trade-terminal,.token-community{padding:16px!important}
+ .trade-terminal-head h3,.community-head h3,.tools-card h3{font-size:20px!important}
+ .trade-mode-tabs button,.trade-order-tabs button{font-size:13px!important;min-height:44px}
+ .dex-auto-route p,.dex-auto-route label,.community-desc{font-size:12px!important}
+ .dex-trade-status,.dex-trade-safety{font-size:11px!important}
+ .community-room{height:300px!important}
+ .chat-message p{font-size:12px!important}
+ .community-form textarea{font-size:13px!important;min-height:76px!important}
+}
+@media(max-width:560px){
+ .detail-name-row h2{font-size:23px!important}
+ .detail-name-row .token-intro{font-size:11px!important}
+ .dex-trade-terminal,.token-community{padding:13px!important}
+ .community-room{height:280px!important}
+ .detail-main .detailchart,.chart-workspace .detailchart{height:360px!important;min-height:320px!important}
+}
+
 </style>
 </head>
 <body>
