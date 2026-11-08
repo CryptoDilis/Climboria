@@ -34,3 +34,19 @@ tbody tr:hover{background:#183047!important;box-shadow:inset 2px 0 #d8b66d}
 #footerLastRefresh{font-variant-numeric:tabular-nums;color:#d8c18e}
 @media(max-width:900px){.premium-trending-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.premium-trending{padding:13px}.premium-section-head{align-items:flex-start;flex-direction:column}.premium-section-head>span{text-align:left}.premium-trending-grid{grid-template-columns:1fr 1fr;gap:7px}.premium-asset-card{padding:11px;gap:7px}.premium-asset-card>strong{font-size:16px}.premium-asset-meta{flex-direction:column;gap:5px}.hero-market{gap:10px;padding:13px}.hero-market-source{width:100%;margin-left:0}.premium-asset-skeleton{height:160px}}
+
+
+/* TrailMap visual checkpoints and Summit Signal evidence cards */
+.trailmap .routehead{display:none!important}
+#detailPairs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+#detailPairs .routecandidate{display:flex;flex-direction:column;gap:10px;min-width:0;padding:13px;border:1px solid #293e53;border-radius:12px;background:linear-gradient(145deg,#142338,#0a121d);transition:border-color .16s,background .16s}
+#detailPairs .routecandidate.selected{border-color:#b8955b;background:linear-gradient(145deg,#253248,#111b29);box-shadow:inset 0 0 0 1px #b8955b33}
+#detailPairs .routecandidate>button{display:grid;gap:7px;width:100%;padding:0;background:transparent;border:0;color:#e8edf5;text-align:left;cursor:pointer}
+.trail-route{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.trail-route i,.trail-route strong{font:800 12px ui-monospace,monospace;font-style:normal;padding:6px 8px;border-radius:7px;background:#1c3045;color:#e7d5ad}.trail-route b{color:#d8b66d}.trail-route small{font-size:9px;color:#8fa3b8}
+#detailPairs .routecandidate>button>small{font-size:9px;color:#8fa3b8;overflow-wrap:anywhere}
+.trail-depth{display:grid;grid-template-columns:1fr auto;gap:5px 8px;align-items:center}.trail-depth>span{font-size:9px;color:#8fa3b8}.trail-depth>b{font:700 11px ui-monospace,monospace;color:#d8e2ee}.trail-depth>i{grid-column:1/-1;height:6px;border-radius:9px;background:#26394d;overflow:hidden}.trail-depth>i>em{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#167c70,#42d6a4)}
+.trail-route-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.trail-route-metrics span{font-size:8px;color:#8fa3b8}.trail-route-metrics b{display:block;margin-top:4px;font:700 9px ui-monospace,monospace;color:#dce5ef;overflow-wrap:anywhere}
+.signalgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.signalitem{display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px;border:1px solid #293e53;border-radius:11px;background:#101d2b}
+.signalitem .signal-value{font:800 16px ui-monospace,monospace;color:#e8d6ad;font-variant-numeric:tabular-nums}.signalitem small{line-height:1.45;color:#91a4b9}
+@media(max-width:640px){#detailPairs{grid-template-columns:1fr}.signalgrid{grid-template-columns:1fr}.trail-route-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
