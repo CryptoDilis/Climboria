@@ -1,3 +1,15 @@
+## 2026-11-08 — Swap quote-side chart rejection regression passed
+
+- [x] Browser Smoke run `42504938462` on commit `d9b428c665cbc2f5df77532fdb46a337af70023d` completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42504938462
+- [x] The new Swap regression verified that a token appearing only as a pool's quote asset does not display the base asset's chart or stale price/metrics; the unavailable state is shown, and selecting a valid exact-mint base pool restores the correct chart.
+- [x] Validate run `42504938376` and Pages deployment `42504937712` both passed for `d9b428c`.
+- [x] Downloaded and visually reviewed Browser Smoke artifact `13627416822`; DEX social links remain contained inside Token Intelligence on desktop and mobile. Screenshots: `climboria-dex-token-socials.png`, `climboria-dex-token-socials-mobile.png`.
+- [x] Gameplay smoke completed successfully as part of the full Browser Smoke workflow.
+- [ ] Manual acceptance on physical Redmi 14 5G remains open.
+- [ ] Extend Swap tests to cover rapid selection changes, no-pool response and title/price/chart consistency across desktop and mobile.
+- [ ] Canonical Solana mint allowlist and wrapped-asset issuer/bridge policy remain security blockers; do not treat DexScreener highest-liquidity symbol discovery as canonical proof.
+- [ ] Cloudflare Worker production deployment and production-domain health/CORS/rate-limit/Jupiter checks remain blocked on required repository variable and Actions secrets; public Swap execution stays disabled.
+
 ## 2026-11-08 — DEX social rail desktop/mobile visual verification (latest)
 
 - [x] Latest Browser Smoke run `42503317470` on commit `841f50b3fc899a67c698ba291dc5232c4ce2e7d8` completed successfully: https://github.com/CryptoDilis/Climboria/actions/runs/42503317470
