@@ -442,11 +442,23 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 .watchlist-head{display:flex;justify-content:space-between;align-items:center}.watchlist-head small{display:block;color:#d9b66e;font-size:8px;letter-spacing:1.7px}.watchlist-head b{display:block;margin-top:3px;font:700 17px Georgia,serif;color:#f4e3c0}.watchlist-head>button{border:1px solid #40536b;border-radius:7px;background:#101d2d;color:#dce5f0;width:27px;height:27px;cursor:pointer}.watchlist-popover>p{font-size:10px;color:#91a4bb;margin:8px 0 12px}.watchlist-current{display:grid;gap:6px;padding:9px;border:1px solid #334962;border-radius:9px;background:#0d1929}.watchlist-current span{font-size:9px;color:#a6b7ca}.watchlist-current button{border:1px solid #9c7a46;border-radius:7px;padding:8px;background:#2a2a26;color:#f3d797;font-size:10px;font-weight:800;cursor:pointer}.watchlist-items{display:grid;gap:6px;margin-top:10px;max-height:260px;overflow:auto}.watchlist-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border:1px solid #2e425a;border-radius:8px;background:#0d1929}.watchlist-item a{min-width:0;color:#e8d6ad;text-decoration:none;font-size:10px;overflow-wrap:anywhere}.watchlist-item button{border:0;background:transparent;color:#9eafc3;cursor:pointer;font-size:15px}.watchlist-empty{padding:12px;text-align:center;color:#8194ab;font-size:10px;border:1px dashed #354a63;border-radius:8px}
 @media(max-width:560px){.watchlist-trigger{height:34px;padding:0 8px}.watchlist-trigger span{display:none}.watchlist-popover{right:10px}}
 
-/* Three-column DEX workstation: chart, trade terminal, far-right token chat */
-.detail-content{grid-template-columns:minmax(0,1fr) 286px 286px;gap:12px;align-items:stretch}
-.detail-main{grid-column:1;min-width:0}
-.dex-trade-terminal{grid-column:2;min-width:0;align-self:stretch;padding:13px;border:1px solid #80683f;border-radius:13px;background:linear-gradient(155deg,#192b42,#091321 72%);box-shadow:inset 0 1px #ffffff12,0 10px 28px #0003}
-.token-community{grid-column:3;min-width:0}
+/* Pump.fun-inspired DEX workspace: chart center-left, execution rail at far right */
+.detail-content{grid-template-columns:minmax(0,1fr) 320px;gap:12px;align-items:start}
+.detail-main{grid-column:1;grid-row:1 / span 2;min-width:0}
+.dex-trade-terminal{grid-column:2;grid-row:1;min-width:0;align-self:start;position:sticky;top:116px;padding:13px;border:1px solid #a17d43;border-radius:13px;background:linear-gradient(155deg,#192b42,#091321 72%);box-shadow:inset 0 1px #ffffff12,0 10px 28px #0003}
+.token-community{grid-column:2;grid-row:2;min-width:0}
+.dex-auto-route{margin:10px 0;padding:11px;border:1px solid #b18a4e;border-radius:10px;background:linear-gradient(145deg,#2a271f,#101d2e);box-shadow:inset 0 1px #ffffff12}
+.dex-auto-route-head{display:flex;justify-content:space-between;align-items:center;gap:7px}
+.dex-auto-route-head strong{font:700 13px Georgia,serif;color:#f4d99e}
+.dex-auto-route-head span{font-size:7px;letter-spacing:1px;color:#a9e5c3;border:1px solid #32664e;border-radius:99px;padding:4px 6px}
+.dex-auto-route p{font-size:9px;line-height:1.45;color:#aebed0;margin:7px 0}
+.dex-auto-route label{display:flex;align-items:flex-start;gap:7px;font-size:9px;line-height:1.4;color:#e7d6b3;cursor:pointer}
+.dex-auto-route input{accent-color:#d9b66d;margin-top:1px}
+.dex-auto-fee{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:7px;border-top:1px solid #8c754933;font-size:8px;color:#9aaec2}
+.dex-auto-fee b{color:#f2d18d}
+@media(max-width:1120px){.detail-content{grid-template-columns:minmax(0,1fr) 290px}.dex-trade-terminal{top:104px}}
+@media(max-width:820px){.detail-content{grid-template-columns:minmax(0,1fr)}.detail-main,.dex-trade-terminal,.token-community{grid-column:1;grid-row:auto}.dex-trade-terminal{position:relative;top:auto;max-width:none}.token-community{grid-row:auto}}
+@media(max-width:560px){.detail-content{gap:10px}.dex-trade-terminal{padding:11px}}
 .trade-terminal-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.trade-terminal-head small{font-size:8px;font-weight:900;letter-spacing:1.5px;color:#e6c477}.trade-terminal-head h3{font:700 18px Georgia,serif;color:#f4e4c2;margin:3px 0}.trade-network{border:1px solid #28634e;color:#9ce4be;border-radius:99px;padding:4px 7px;font-size:7px;letter-spacing:1px}
 .trade-token-line{display:grid;gap:3px;margin:10px 0;padding:9px;border:1px solid #344a63;border-radius:9px;background:#0b1727}.trade-token-line span{font:700 16px Georgia,serif;color:#f5dfb3}.trade-token-line small{font-size:8px;color:#8fa2b9;overflow-wrap:anywhere}
 .trade-mode-tabs,.trade-order-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0}.trade-mode-tabs button,.trade-order-tabs button{padding:8px;border:1px solid #354b64;border-radius:8px;background:#101d2e;color:#aebed0;font-size:10px;font-weight:800;cursor:pointer}.trade-mode-tabs button.active{background:linear-gradient(120deg,#1e704e,#123c31);border-color:#3ca879;color:#d5ffe9}.trade-order-tabs button.active{border-color:#bd9655;color:#f4d796;background:#342a1c}
@@ -505,7 +517,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
  <div class="trade-terminal-head"><div><small>CLIMBORIA EXECUTION</small><h3>Trade token</h3></div><span class="trade-network">SOLANA</span></div>
  <div class="trade-token-line"><span id="dexTradeTokenSymbol">TOKEN</span><small id="dexTradeTokenMint">Select a token</small></div>
  <div class="trade-mode-tabs"><button type="button" class="active" data-dex-side="buy">Buy</button><button type="button" data-dex-side="sell">Sell</button></div>
- <div class="trade-order-tabs"><button type="button" class="active" data-dex-order="market">Market</button><button type="button" data-dex-order="limit">Limit</button></div>
+ <div class="trade-order-tabs"><button type="button" class="active" data-dex-order="market">Market</button><button type="button" data-dex-order="limit">Limit</button></div> <div class="dex-auto-route" id="dexAutoRoute"><div class="dex-auto-route-head"><strong>Climboria Auto Route</strong><span>SMART ROUTING</span></div><p>Request the best eligible route across Jupiter's connected Solana routing engines. Review the quote, network fee and any Climboria fee before approving in your wallet.</p><label><input type="checkbox" id="dexAutoRouteEnabled"> Use auto routing and router-managed priority fees for this trade</label><div class="dex-auto-fee"><span>Climboria integrator fee target</span><b>0.50% · not active yet</b></div><div class="dex-auto-fee"><span>Fee collection status</span><b id="dexClimbFeeStatus">Referral account not configured</b></div></div>
  <div class="dex-trade-field"><label for="dexTradeAmount">You pay <span id="dexTradePaySymbol">SOL</span></label><input id="dexTradeAmount" type="number" min="0" step="any" placeholder="0.00" inputmode="decimal"></div>
  <div class="dex-trade-percent" aria-label="Wallet balance percentage"><button type="button" data-dex-percent="25">25%</button><button type="button" data-dex-percent="50">50%</button><button type="button" data-dex-percent="75">75%</button><button type="button" data-dex-percent="100">100%</button></div>
  <div class="dex-limit-fields" id="dexLimitFields" hidden><label for="dexLimitPrice">Limit price (USD)</label><input id="dexLimitPrice" type="number" min="0" step="any" placeholder="Target price"><p>Limit orders require a deployed and audited on-chain order program. This option is a preview only.</p></div>
@@ -891,6 +903,7 @@ $('dexTradeConnect').addEventListener('click',async()=>{
  await connectClimboriaWallet();$('dexTradeWalletStatus').textContent=connectedWallet?connectedWallet.slice(0,6)+'…'+connectedWallet.slice(-6):'Wallet not connected';
  $('dexTradeConnect').textContent=connectedWallet?'Disconnect':'Connect wallet';
 });
+$('dexAutoRouteEnabled').addEventListener('change',e=>{if(e.target.checked){$('dexTradePriority').value='auto';$('dexTradeSlippage').value='auto';dexTradeSetStatus('Auto Route selected: Jupiter chooses the best eligible route and manages priority fees. You still review and approve every wallet transaction.');}else{dexTradeSetStatus('Manual route preferences selected. Review the quote before wallet approval.');}});
 $('dexTradeGetQuote').addEventListener('click',async()=>{
  if(!dexTradeToken||!Number.isInteger(dexTradeToken.decimals)){dexTradeSetStatus('Select a token and load exact mint metadata first.');return}
  if(dexTradeOrderType==='limit'){dexTradeSetStatus('Limit orders are preview-only; no on-chain order program is deployed.');return}
