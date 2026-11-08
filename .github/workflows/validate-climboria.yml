@@ -40,6 +40,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test Cloudflare swap proxy security and API contracts
+        run: |
+          node --check dex/swap-proxy/src/index.mjs
+          node --test dex/swap-proxy/test/worker.test.mjs
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
