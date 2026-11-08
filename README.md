@@ -30,6 +30,8 @@
 - [x] Base URLs are guarded from the Solana mint resolver; EVM token restoration remains explicitly pending the Base backend.
 - [x] Follow-up commit `35c7e6f` passed Validate, Browser Smoke and GitHub Pages deployment. The Browser Smoke run confirmed BTC major-asset click, no hover SELECT overlay, exact mint URL persistence and refresh restoration.
 - [ ] Run the latest token/pool history and browser back/forward regressions after commit `4288353`; inspect and repair failures.
+- [x] Diagnosed Live Site Smoke run `42452901198`: homepage/Jarrell (including soundtrack recovery) and DEX passed; Swap's fail-closed behavior was correct, but the test expected the wrong status text when no wallet was connected. Updated the assertion in commit `6f4118f` to accept the explicit wallet-first/no-transaction response while retaining `enabled:false`.
+- [ ] Re-run Live Site Smoke run `42474421309` after `6f4118f`; verify all three stages pass before marking the release smoke gate green.
 - [ ] Verify desktop and mobile DEX header visually; verify chart, chat and approved Buy/Sell rail positions are unchanged.
 - [ ] Verify all six Major Assets (BTC, ETH, SOL, BNB, XRP, USDC) resolve correctly, handle missing/ambiguous pools safely, and persist from/to URL state on refresh/back navigation.
 - [ ] Confirm CoinGecko/DexScreener/Jupiter/RPC provider availability, rate limits, fallback behavior and data freshness; do not claim universal token coverage.
