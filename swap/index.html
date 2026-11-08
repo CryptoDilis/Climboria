@@ -575,7 +575,7 @@ async function refreshSwapBalances(){
 const connectWalletBase=connectClimboriaWallet;
 connectClimboriaWallet=async function(){await connectWalletBase();swapWalletBalanceCache={};refreshSwapBalances();setSwapExecutionState();};
 const chooseQuoteTokenBase=chooseQuoteToken;
-chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();};
+chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
 function clearSwapQuotePreview(){
  swapQuoteRequest++;clearTimeout(swapQuoteTimer);
  $('estimatedReceive').textContent='Enter an amount';$('receiveUsd').textContent='Indicative market reference only';$('quoteSummary').textContent='Route details · shown with live quote';
@@ -601,7 +601,7 @@ $('swapFlip').addEventListener('click',()=>{
  $('quoteFromSearch').value=quoteTokens.from.symbol;$('quoteToSearch').value=quoteTokens.to.symbol;
  $('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;
  $('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);
- $('fromResults').innerHTML='';$('toResults').innerHTML='';setSwapUrl();updateSelectedAsset(quoteTokens.from);swapWalletBalanceCache={};refreshSwapBalances();clearSwapQuotePreview();setSwapExecutionState();
+ $('fromResults').innerHTML='';$('toResults').innerHTML='';setSwapUrl();updateSelectedAsset(quoteTokens.from);swapWalletBalanceCache={};refreshSwapBalances();clearSwapQuotePreview();setSwapExecutionState();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
 });
 document.querySelectorAll('[data-pair]').forEach(button=>button.addEventListener('click',()=>{
  const [from,to]=button.dataset.pair.split('|');$('quoteFromSearch').value=from;$('quoteToSearch').value=to;
@@ -619,7 +619,7 @@ $('quoteAmount').addEventListener('input',()=>{
  swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),650);
 });
 const setSwapChainBase=setSwapChain;
-setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();};
+setSwapChain=function(chain){swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
 const requestJupiterQuoteBase=requestJupiterQuote;
 requestJupiterQuote=async function(){
  const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
