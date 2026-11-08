@@ -259,6 +259,40 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 @media(max-width:1050px){.detail-content{grid-template-columns:minmax(0,1fr) 300px}.community-room{height:270px}}
 @media(max-width:760px){.detail-content{grid-template-columns:1fr}.detail-main .detailchart{height:360px}.token-community{grid-template-columns:1fr}.community-room{height:280px}}
 
+
+/* Clean expandable live token intelligence */
+.intel-accordion{display:grid;gap:9px;margin-top:14px}
+.intel-card{overflow:hidden;border:1px solid #344a65;border-radius:12px;background:linear-gradient(145deg,#14243a,#091321);box-shadow:0 8px 22px #0002}
+.intel-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 17px;text-align:left;border:0;background:transparent;color:#eef3fa;cursor:pointer}
+.intel-toggle:hover,.intel-toggle[aria-expanded="true"]{background:linear-gradient(90deg,#20344d,#14243a)}
+.intel-toggle span{display:grid;gap:4px;min-width:0}
+.intel-toggle small{font-size:8px;letter-spacing:1.7px;color:#e4bf70;font-weight:900}
+.intel-toggle b{font:700 16px Georgia,serif;color:#f4e4c2}
+.intel-toggle em{font-style:normal;font-size:10px;color:#91a2b8;line-height:1.4}
+.intel-toggle>strong{flex:0 0 30px;width:30px;height:30px;border:1px solid #8d7144;border-radius:50%;display:grid;place-items:center;color:#f2d18b;font-size:19px}
+.intel-panel{padding:14px 16px 16px;border-top:1px solid #2d415b;background:#0a1422}
+.intel-panel[hidden]{display:none}
+.intel-profile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.intel-profile-item{min-width:0;padding:10px;background:#101e30;border:1px solid #2b405b;border-radius:8px}
+.intel-profile-item small,.intel-kpis small{display:block;color:#91a2b8;font-size:8px;text-transform:uppercase;letter-spacing:.8px}
+.intel-profile-item b{display:block;color:#f1f4f8;font-size:11px;margin-top:5px;overflow-wrap:anywhere}
+.intel-profile-item a,.intel-link{color:#f0ce83;text-decoration:none;font-size:10px;overflow-wrap:anywhere}
+.intel-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.intel-kpis>div{padding:10px;background:#101e30;border:1px solid #2b405b;border-radius:8px}
+.intel-kpis b{display:block;color:#f4e4c2;font-size:14px;margin-top:5px}
+.holder-row,.activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid #26364b;font-size:10px}
+.holder-row:last-child,.activity-row:last-child{border-bottom:0}
+.holder-address,.activity-address{color:#c9d5e4;overflow-wrap:anywhere}
+.holder-share,.activity-value{color:#f0ce83;font-weight:800;white-space:nowrap}
+.activity-row{grid-template-columns:auto minmax(0,1fr) auto}
+.activity-kind{font-weight:900;text-transform:uppercase;font-size:9px}
+.activity-kind.buy{color:#72d6a5}.activity-kind.sell{color:#ff8996}
+.activity-meta{display:block;color:#8193aa;font-size:8px;margin-top:3px}
+.intel-loading,.intel-foot,.intel-panel-meta{color:#8fa0b5;font-size:9px;line-height:1.6}
+.intel-panel-meta{margin-bottom:7px}
+.intel-refresh{margin-top:10px;padding:8px 12px;border:1px solid #405773;border-radius:7px;background:#17283e;color:#e4c77f;font-size:9px;font-weight:800;cursor:pointer}
+.intel-refresh:hover{border-color:#d8b46d;background:#20344d}
+@media(max-width:760px){.intel-profile{grid-template-columns:repeat(2,minmax(0,1fr))}.intel-toggle{padding:13px}.intel-toggle b{font-size:14px}}
 </style>
 </head>
 <body>
@@ -273,12 +307,13 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount">—</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount">—</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume">—</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section>
 <section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><h2 id="detailTitle">Token details</h2><div class="source" id="detailMint"></div></div><button class="tab" id="closeDetail" type="button">Close</button></div><div class="detail-content"><div class="detail-main"><iframe class="detailchart" id="detailChart" title="Selected Solana pool chart" loading="lazy" referrerpolicy="no-referrer"></iframe>
-<div class="intel-section"><div class="intel-heading"><div><span class="community-kicker">CLIMBORIA ON-CHAIN INTELLIGENCE</span><h3>Token profile & social footprint</h3></div><span class="intel-source">LIVE PROVIDER DATA</span></div><div class="intel-profile" id="tokenProfile"><div class="intel-loading">Loading token profile…</div></div></div>
-<div class="intel-columns">
-<section class="intel-section"><div class="intel-heading"><div><span class="community-kicker">HOLDER DISTRIBUTION</span><h3>Top holders & launch health</h3></div><span class="intel-source">BUBBLEMAPS DATA</span></div><div class="intel-kpis" id="holderKpis"><div><small>Top 10 share</small><b>—</b></div><div><small>Sniper share</small><b>—</b></div><div><small>Bundle share</small><b>—</b></div><div><small>Dev cluster</small><b>—</b></div></div><div class="holder-list" id="topHolders"><div class="intel-loading">Loading holder map…</div></div><div class="intel-foot" id="holderNote">Holder concentration and launch flags are provider-derived, not a safety verdict.</div></section>
-<section class="intel-section"><div class="intel-heading"><div><span class="community-kicker">LIVE TAPE</span><h3>Recent token activity</h3></div><span class="intel-source">GECKOTERMINAL</span></div><div class="activity-list" id="recentActivity"><div class="intel-loading">Loading recent trades…</div></div><div class="intel-foot" id="activityNote">Recent indexed pool trades; refresh timing depends on provider indexing.</div></section>
-</div>
-<div class="intel-section bubble-section"><div class="intel-heading"><div><span class="community-kicker">WALLET CLUSTERS</span><h3>Holder bubble map</h3></div><a id="bubbleMapOpen" class="intel-link" href="https://v2.bubblemaps.io/" target="_blank" rel="noopener">Open full map ↗</a></div><iframe id="bubbleMapFrame" class="bubble-map-frame" title="Token holder bubble map" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="intel-foot">Bubble size represents holder share; links represent wallet connections. Clusters are signals for investigation, not proof of coordinated or malicious activity.</div></div></div><aside class="token-community">
+<div class="intel-accordion">
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="profile" aria-expanded="false"><span><small>TOKEN OVERVIEW</small><b>Token profile & social accounts</b><em>Pool age · website · X · Telegram · mint details</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelProfile" hidden><div class="intel-profile" id="tokenProfile"><div class="intel-loading">Open to load token profile…</div></div></div></section>
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="holders" aria-expanded="false"><span><small>ON-CHAIN DISTRIBUTION</small><b>Top holders</b><em>Largest token accounts and their owner wallets, read from Solana RPC</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelHolders" hidden><div class="intel-kpis" id="holderKpis"><div><small>Top 10 owner share</small><b>—</b></div><div><small>Accounts checked</small><b>—</b></div></div><div class="holder-list" id="topHolders"><div class="intel-loading">Expand to fetch on-chain holder records…</div></div><div class="intel-foot" id="holderNote">Largest token accounts are not necessarily unique holders until owner wallets are aggregated.</div><button type="button" class="intel-refresh" data-intel-refresh="holders">Refresh holder records</button></div></section>
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="activity" aria-expanded="false"><span><small>LIVE TRADE TAPE</small><b>Recent token activity</b><em>Indexed buys/sells · wallet · USD value · transaction links</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelActivity" hidden><div class="intel-panel-meta" id="activityUpdated">Not loaded yet</div><div class="activity-list" id="recentActivity"><div class="intel-loading">Expand to fetch recent indexed swaps…</div></div><div class="intel-foot" id="activityNote">Source: GeckoTerminal public pool-trades endpoint. Provider indexing and rate limits apply.</div><button type="button" class="intel-refresh" data-intel-refresh="activity">Refresh recent activity</button></div></section>
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="snipers" aria-expanded="false"><span><small>LAUNCH INTELLIGENCE</small><b>Sniper & bundle analysis</b><em>Early buyer clusters · launch-window wallets · bundled entries</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelSnipers" hidden><div class="intel-kpis"><div><small>Sniper count</small><b>Not available</b></div><div><small>Bundle count</small><b>Not available</b></div><div><small>Launch-window buys</small><b>Not verified</b></div><div><small>Classification</small><b>Unclassified</b></div></div><p class="intel-foot">We will not guess sniper or bundle counts from ordinary buy/sell activity. Reliable classification requires indexed launch transactions and wallet funding/cluster analysis. This page currently has no configured launch-intelligence provider for that data.</p></div></section>
+<section class="intel-card"><button class="intel-toggle" type="button" data-intel-panel="bubbles" aria-expanded="false"><span><small>WALLET CLUSTERS</small><b>Holder bubble map</b><em>Connected wallets · concentration · cluster investigation</em></span><strong>＋</strong></button><div class="intel-panel" id="intelPanelBubbles" hidden><p class="intel-foot">Open the selected mint in Bubblemaps to inspect its holder map. Availability depends on whether the token is indexed by Bubblemaps.</p><a id="bubbleMapOpen" class="intel-link" href="https://app.bubblemaps.io/" target="_blank" rel="noopener">Open selected token in Bubblemaps ↗</a></div></section>
+</div></div><aside class="token-community"><aside class="token-community">
 <section class="community-card"><div class="community-head"><div><span class="community-kicker">CLIMBORIA EXCLUSIVE</span><h3>Summit Chat</h3></div><span class="community-live">TOKEN ROOM</span></div><p class="community-desc">A separate room for this token. Your room history is saved on this browser.</p><div class="community-room" id="communityRoom"><div class="community-empty">Loading this token's room…</div></div><form id="communityForm" class="community-form"><textarea id="communityMessage" maxlength="1000" rows="2" placeholder="Share your market thoughts…"></textarea><div class="community-actions"><small id="communityCount">0 / 1000</small><button class="community-send" type="submit">Send message</button></div></form><div class="community-tools"><button type="button" id="exportCommunity">Export history</button><span id="communityStorageNote">Saved locally · per token mint</span></div></section>
 <section class="community-card tools-card"><span class="community-kicker">TOKEN TOOLS</span><h3>Summit Toolkit</h3><button type="button" id="copyTokenMint">Copy token mint</button><a id="openTokenExplorer" href="#" target="_blank" rel="noopener">Open on DexScreener ↗</a><button type="button" id="watchToken">☆ Add to watchlist</button><div class="community-watch-note" id="watchTokenNote">Watchlist is stored on this browser.</div></section>
 </aside></div><div class="detailhint">Chart and pool metrics are supplied by DexScreener. Pool coverage and chart availability vary. Always verify mint and pool details before trading.</div><h3 style="margin:16px 0 6px;font:700 16px Georgia,serif">Available pools & route candidates</h3><div class="trailmap"><h3>TrailMap · Pool & liquidity comparison</h3><p>Ranks discovered pools by reported liquidity and 24h volume. These are pool candidates only—not executable swap routes or guaranteed best prices.</p><div class="routehead"><span>Venue / pair</span><span>Liquidity</span><span>24h volume</span><span>Price USD</span><span>Pool age</span></div><div id="detailPairs"></div><div class="detailhint" id="trailHint">Select a pool to inspect its chart and metrics above.</div></div><div class="signalbox"><h3>Summit Signal · Data quality</h3><p>Evidence checklist from the selected provider pool. This is not a safety rating, audit, or investment recommendation.</p><div class="signalgrid" id="signalGrid"><div class="notice">Select a pool to inspect available evidence.</div></div><div class="signalfoot" id="signalFoot">Missing data is shown as unknown, never assumed to be zero or safe.</div></div></section><div class="layout">
@@ -415,37 +450,67 @@ function exportTokenRoom(){
 }
 
 
+let activeIntelMint=null,activeIntelPair=null;
+const intelLoaded=new Set();
+function intelShort(v){return v?String(v).slice(0,5)+'…'+String(v).slice(-5):'—'}
+function intelSafeUrl(v){try{const u=new URL(v);return ['https:','http:'].includes(u.protocol)?u.href:null}catch(e){return null}}
 async function loadAdvancedIntel(mint,pair){
- const profile=$('tokenProfile'),holders=$('topHolders'),kpis=$('holderKpis'),activity=$('recentActivity');
- const safeUrl=(value)=>{try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)?u.href:null}catch(e){return null}};
- const shortAddr=v=>v?String(v).slice(0,5)+'…'+String(v).slice(-5):'—';
- const ageText=ms=>{if(!Number.isFinite(Number(ms))||Number(ms)<=0)return 'Unavailable';const days=Math.max(0,(Date.now()-Number(ms))/86400000);if(days<1)return Math.max(1,Math.floor(days*24))+' hours';if(days<30)return days.toFixed(1)+' days';if(days<365)return (days/30.4375).toFixed(1)+' months';return (days/365.25).toFixed(1)+' years'};
- const websites=(pair.info?.websites||[]).map(x=>({label:x.label||'Website',url:safeUrl(x.url)})).filter(x=>x.url);
- const socials=(pair.info?.socials||[]).map(x=>({label:x.type||'Social',url:safeUrl(x.url)})).filter(x=>x.url);
- const links=[...websites,...socials];
- const poolAge=ageText(pair.pairCreatedAt);
- profile.innerHTML='<div class="intel-profile-item"><small>Pool age</small><b>'+esc(poolAge)+'</b></div><div class="intel-profile-item"><small>First discovered pool</small><b>'+esc(pair.dexId||'Unknown venue')+'</b></div><div class="intel-profile-item"><small>Token website</small><b>'+(websites[0]?'<a href="'+esc(websites[0].url)+'" target="_blank" rel="noopener">'+esc(websites[0].label)+' ↗</a>':'Not listed')+'</b></div><div class="intel-profile-item"><small>Social accounts</small><b>'+(links.length?links.map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+' ↗</a>').join(' · '):'Not listed')+'</b></div><div class="intel-profile-item"><small>Token symbol</small><b>'+esc(pair.baseToken?.symbol||'—')+'</b></div><div class="intel-profile-item"><small>Token mint</small><b title="'+esc(mint)+'">'+esc(shortAddr(mint))+'</b></div>';
- $('bubbleMapFrame').src='https://v2.bubblemaps.io/map?address='+encodeURIComponent(mint)+'&chain=solana&partnerId=regular';
+ activeIntelMint=mint;activeIntelPair=pair;intelLoaded.clear();
+ const websites=(pair.info?.websites||[]).map(x=>({label:x.label||'Website',url:intelSafeUrl(x.url)})).filter(x=>x.url);
+ const socials=(pair.info?.socials||[]).map(x=>({label:x.type||'Social',url:intelSafeUrl(x.url)})).filter(x=>x.url);
+ const age=pair.pairCreatedAt?Math.max(0,(Date.now()-Number(pair.pairCreatedAt))/86400000):null;
+ const ageLabel=age===null?'Unavailable':age<1?(age*24).toFixed(1)+' hours':age<30?age.toFixed(1)+' days':(age/30.4375).toFixed(1)+' months';
+ $('tokenProfile').innerHTML=[
+  ['Pool age',ageLabel],['Pool venue',pair.dexId||'Unavailable'],['Token name',pair.baseToken?.name||'Unavailable'],
+  ['Symbol',pair.baseToken?.symbol||'Unavailable'],['Mint address',mint],['Pool created',pair.pairCreatedAt?new Date(Number(pair.pairCreatedAt)).toLocaleString():'Unavailable'],
+  ['Website',websites.length?websites.map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+' ↗</a>').join(' · '):'Not listed'],
+  ['Social accounts',socials.length?socials.map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+' ↗</a>').join(' · '):'Not listed']
+ ].map(([k,v])=>'<div class="intel-profile-item"><small>'+esc(k)+'</small><b>'+v+'</b></div>').join('');
  $('bubbleMapOpen').href='https://app.bubblemaps.io/sol/token/'+encodeURIComponent(mint);
- holders.innerHTML='<div class="intel-loading">Fetching top-holder distribution and launch flags…</div>';
- try{
-  const response=await fetch('https://bubblemaps.dev/api/map/'+encodeURIComponent(mint),{headers:{accept:'application/json'},cache:'no-store'});
-  if(!response.ok)throw new Error('Holder provider HTTP '+response.status);
-  const payload=await response.json();const map=payload.map||{};const launch=map.launch||{};const nodes=Array.isArray(map.nodes)?map.nodes:[];
-  const pct=v=>Number.isFinite(Number(v))?(Number(v)*100).toFixed(2)+'%':'N/A';
-  kpis.innerHTML=[['Top 10 share',launch.top10Share],['Sniper share',launch.sniperShare],['Bundle share',launch.bundleShare],['Dev cluster',launch.devClusterShare]].map(([label,value])=>'<div><small>'+label+'</small><b>'+pct(value)+'</b></div>').join('');
-  const top=nodes.filter(n=>n&&n.address).sort((a,b)=>(Number(b.share)||0)-(Number(a.share)||0)).slice(0,10);
-  holders.innerHTML=top.length?top.map((n,i)=>'<div class="holder-row"><span class="holder-address">#'+(i+1)+' · '+esc(n.label||shortAddr(n.address))+(n.flags?.sniper?' · SNIPER':n.flags?.bundle?' · BUNDLE':n.flags?.dev?' · DEV':'')+'</span><span class="holder-share">'+pct(n.share)+'</span></div>').join(''):'<div class="intel-loading">Holder addresses are not available in this provider response.</div>';
-  $('holderNote').textContent=launch.status==='unknown'?'Holder map loaded, but launch-origin classification is unknown for this mint. Values marked N/A are not zero.':('Launch classification: '+(launch.status||'available')+'. Sniper/bundle flags are provider estimates; inspect the linked wallets and map before drawing conclusions.');
- }catch(error){kpis.innerHTML=['Top 10 share','Sniper share','Bundle share','Dev cluster'].map(x=>'<div><small>'+x+'</small><b>N/A</b></div>').join('');holders.innerHTML='<div class="intel-loading">Holder analytics unavailable: '+esc(error.message)+'</div>';$('holderNote').textContent='No holder or sniper figures are inferred from buy/sell counts. Try the full Bubblemaps view.';}
- activity.innerHTML='<div class="intel-loading">Loading recent indexed swaps…</div>';
- try{
-  const response=await fetch('https://api.geckoterminal.com/api/v2/networks/solana/pools/'+encodeURIComponent(pair.pairAddress)+'/trades',{headers:{accept:'application/json;version=20230203'},cache:'no-store'});
-  if(!response.ok)throw new Error('Trade feed HTTP '+response.status);
-  const payload=await response.json();const trades=payload.data||[];
-  activity.innerHTML=trades.length?trades.slice(0,10).map(item=>{const t=item.attributes||{};const kind=String(t.kind||'trade').toLowerCase();const wallet=t.tx_from_address;const time=t.block_timestamp?new Date(t.block_timestamp).toLocaleTimeString():'—';const tx=t.tx_hash;return '<div class="activity-row"><span class="activity-kind '+(kind==='buy'?'buy':kind==='sell'?'sell':'')+'">'+esc(kind)+'</span><span><span class="activity-address">'+esc(shortAddr(wallet))+'</span><small class="activity-meta">'+esc(time)+(tx?' · <a class="intel-link" href="https://solscan.io/tx/'+encodeURIComponent(tx)+'" target="_blank" rel="noopener">TX ↗</a>':'')+'</small></span><span class="activity-value">'+(Number.isFinite(Number(t.volume_in_usd))?'$'+Number(t.volume_in_usd).toLocaleString('en-US',{maximumFractionDigits:2}):'—')+'</span></div>'}).join(''):'<div class="intel-loading">No recent trades returned for this pool.</div>';
- }catch(error){activity.innerHTML='<div class="intel-loading">Recent trade feed unavailable: '+esc(error.message)+'</div>';$('activityNote').textContent='GeckoTerminal public trade feed may be rate-limited. The chart and DexScreener aggregate counts remain separate sources.';}
+ document.querySelectorAll('[data-intel-panel]').forEach(b=>{b.setAttribute('aria-expanded','false');b.querySelector('strong').textContent='＋'});
+ document.querySelectorAll('.intel-panel').forEach(p=>p.hidden=true);
+ $('topHolders').innerHTML='<div class="intel-loading">Expand to fetch current on-chain holder records…</div>';
+ $('recentActivity').innerHTML='<div class="intel-loading">Expand to fetch recent indexed swaps…</div>';
+ $('activityUpdated').textContent='Not loaded yet';
 }
+async function loadIntelHolders(){
+ const mint=activeIntelMint;if(!mint)return;
+ const list=$('topHolders'),kpis=$('holderKpis'),note=$('holderNote');
+ list.innerHTML='<div class="intel-loading">Reading largest token accounts from Solana mainnet RPC…</div>';
+ try{
+  const rpc='https://api.mainnet-beta.solana.com';
+  const call=async(method,params)=>{const r=await fetch(rpc,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),cache:'no-store'});if(!r.ok)throw new Error('Solana RPC HTTP '+r.status);const j=await r.json();if(j.error)throw new Error(j.error.message||'Solana RPC error');return j.result};
+  const [largest,supply]=await Promise.all([call('getTokenLargestAccounts',[mint,{commitment:'confirmed'}]),call('getTokenSupply',[mint,{commitment:'confirmed'}])]);
+  const accounts=(largest.value||[]).slice(0,20),total=Number(supply.value?.uiAmountString);
+  if(!accounts.length||!Number.isFinite(total)||total<=0)throw new Error('No holder data returned for this mint');
+  const details=await call('getMultipleAccounts',[accounts.map(a=>a.address),{encoding:'jsonParsed',commitment:'confirmed'}]);
+  const owners=new Map();
+  accounts.forEach((a,i)=>{const info=details.value?.[i]?.data?.parsed?.info;const owner=info?.owner;const amount=Number(a.uiAmountString);if(!owner||!Number.isFinite(amount))return;owners.set(owner,(owners.get(owner)||0)+amount)});
+  const rows=[...owners.entries()].map(([owner,amount])=>({owner,amount,share:amount/total*100})).sort((a,b)=>b.amount-a.amount).slice(0,10);
+  const top10=rows.reduce((n,x)=>n+x.share,0);
+  kpis.innerHTML='<div><small>Top 10 owner share (among largest 20 accounts)</small><b>'+top10.toFixed(2)+'%</b></div><div><small>Accounts checked</small><b>'+accounts.length+'</b></div>';
+  list.innerHTML=rows.length?rows.map((x,i)=>'<div class="holder-row"><span class="holder-address">#'+(i+1)+' · <a class="intel-link" href="https://solscan.io/account/'+encodeURIComponent(x.owner)+'" target="_blank" rel="noopener">'+esc(intelShort(x.owner))+' ↗</a></span><span class="holder-share">'+x.share.toFixed(3)+'%</span></div>').join(''):'<div class="intel-loading">Owner wallet records unavailable from RPC.</div>';
+  note.textContent='Live Solana mainnet RPC · confirmed commitment · '+new Date().toLocaleString()+'. Top 10 share is calculated only across the returned largest 20 token accounts, not the entire holder population. Token accounts are aggregated by owner wallet.';
+ }catch(e){kpis.innerHTML='<div><small>Top 10 owner share</small><b>Unavailable</b></div><div><small>Accounts checked</small><b>Unavailable</b></div>';list.innerHTML='<div class="intel-loading">Live holder lookup failed: '+esc(e.message)+'</div>';note.textContent='No holder numbers are estimated or fabricated. Try again later or configure a dedicated indexed RPC provider.'}
+}
+async function loadIntelActivity(){
+ const pair=activeIntelPair;if(!pair)return;
+ const box=$('recentActivity');box.innerHTML='<div class="intel-loading">Fetching latest indexed pool trades…</div>';
+ try{
+  const url='https://api.geckoterminal.com/api/v2/networks/solana/pools/'+encodeURIComponent(pair.pairAddress)+'/trades';
+  const r=await fetch(url,{headers:{accept:'application/json;version=20230203'},cache:'no-store'});if(!r.ok)throw new Error('GeckoTerminal HTTP '+r.status);
+  const payload=await r.json(),trades=payload.data||[];
+  box.innerHTML=trades.length?trades.slice(0,20).map(item=>{const t=item.attributes||{},kind=String(t.kind||'trade').toLowerCase(),wallet=t.tx_from_address,tx=t.tx_hash,stamp=t.block_timestamp?new Date(t.block_timestamp):null,value=Number(t.volume_in_usd);return '<div class="activity-row"><span class="activity-kind '+(kind==='buy'?'buy':kind==='sell'?'sell':'')+'">'+esc(kind)+'</span><span><span class="activity-address">'+esc(intelShort(wallet))+'</span><small class="activity-meta">'+(stamp?esc(stamp.toLocaleString()):'Time unavailable')+(tx?' · <a class="intel-link" href="https://solscan.io/tx/'+encodeURIComponent(tx)+'" target="_blank" rel="noopener">View tx ↗</a>':'')+'</small></span><span class="activity-value">'+(Number.isFinite(value)?'$'+value.toLocaleString('en-US',{maximumFractionDigits:2}):'—')+'</span></div>'}).join(''):'<div class="intel-loading">No indexed trades returned for this pool.</div>';
+  $('activityUpdated').textContent='Provider response received · '+new Date().toLocaleString()+' · '+trades.length+' records';
+  $('activityNote').textContent='Source: GeckoTerminal public API · selected pool '+intelShort(pair.pairAddress)+'. Data reflects provider indexing, not guaranteed real-time block streaming.';
+ }catch(e){box.innerHTML='<div class="intel-loading">Recent trade lookup failed: '+esc(e.message)+'</div>';$('activityUpdated').textContent='Update failed · '+new Date().toLocaleString();$('activityNote').textContent='Provider unavailable or rate-limited. No synthetic trades are shown.'}
+}
+document.addEventListener('click',e=>{
+ const toggle=e.target.closest('[data-intel-panel]');
+ if(toggle){const type=toggle.dataset.intelPanel,panel=$('intelPanel'+type.charAt(0).toUpperCase()+type.slice(1)),opening=panel.hidden;panel.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.querySelector('strong').textContent=opening?'−':'＋';if(opening&&!intelLoaded.has(type)){intelLoaded.add(type);if(type==='holders')loadIntelHolders();if(type==='activity')loadIntelActivity();}}
+ const refresh=e.target.closest('[data-intel-refresh]');
+ if(refresh){if(refresh.dataset.intelRefresh==='holders')loadIntelHolders();if(refresh.dataset.intelRefresh==='activity')loadIntelActivity();}
+});
 async function openToken(mint){openTokenRoom(mint);const box=$('tokenDetail');box.classList.add('open');$('detailTitle').textContent='Loading token…';box.scrollIntoView({behavior:'smooth',block:'start'});$('detailMint').textContent=mint;$('detailPairs').innerHTML='<div class="skeleton"></div>';try{const data=await get('/latest/dex/tokens/'+encodeURIComponent(mint));const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));if(!pairs.length)throw new Error('No Solana pools returned for this mint');const best=pairs[0];$('detailTitle').textContent=best.baseToken.name+' ('+best.baseToken.symbol+')';$('detailMint').textContent='Mint: '+mint+' · '+pairs.length+' pool(s) discovered';function selectPool(p){$('detailPrice').textContent=price(p.priceUsd);$('detailVolume').textContent=fmt(p.volume?.h24);$('detailLiquidity').textContent=fmt(p.liquidity?.usd);const ch=Number(p.priceChange?.h24);$('detailChange').textContent=Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—';$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
 const buys=p.txns?.h24?.buys,sells=p.txns?.h24?.sells,vol=p.volume?.h24,liq=p.liquidity?.usd;
 const validTrades=buys!==null&&buys!==undefined&&sells!==null&&sells!==undefined&&Number.isFinite(Number(buys))&&Number.isFinite(Number(sells));
