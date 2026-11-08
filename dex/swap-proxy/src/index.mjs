@@ -1,4 +1,12 @@
-const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
+const JSON_HEADERS = {
+  "content-type": "application/json; charset=utf-8",
+  "cache-control": "no-store, max-age=0",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "no-referrer",
+  "permissions-policy": "camera=(), microphone=(), geolocation=()",
+  "cross-origin-resource-policy": "same-site"
+};
 const JUPITER = "https://api.jup.ag/swap/v2";
 
 function json(data, status = 200, headers = {}) {
@@ -39,6 +47,8 @@ function base58DecodedLength(value) {
 }
 function validPubkey(value) { return base58DecodedLength(value) === 32; }
 async function readJson(request, maxBytes = 40000) {
+  const contentType = String(request.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.startsWith("application/json")) throw new Error("Content-Type must be application/json");
   const length = Number(request.headers.get("content-length") || 0);
   if (length > maxBytes) throw new Error("Request body too large");
   const raw = await request.text();
@@ -201,10 +211,15 @@ export default {
     const allowed = allowedOrigins(env);
     const headers = corsHeaders(origin, env);
     if (request.method === "OPTIONS") {
-      if (!origin || !allowed.includes(origin)) return new Response(null, { status: 403 });
-      return new Response(null, { status: 204, headers });
+      if (!origin || !allowed.includes(origin)) return new Response(null, { status: 403, headers: JSON_HEADERS });
+      return new Response(null, { status: 204, headers: { ...JSON_HEADERS, ...headers } });
     }
-    if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403);
+    if (origin && !allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, headers);
+    const knownRoute = (url.pathname === "/health" && request.method === "GET") ||
+      (["/api/swap/quote", "/api/tokens/search"].includes(url.pathname) && request.method === "GET") ||
+      (["/api/swap/order", "/api/swap/execute"].includes(url.pathname) && request.method === "POST");
+    const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
+    if (knownPath && !knownRoute) return json({ error: "Method not allowed" }, 405, { ...headers, allow: url.pathname === "/health" || url.pathname.endsWith("/quote") || url.pathname.endsWith("/search") ? "GET, OPTIONS" : "POST, OPTIONS" });
     try {
       if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"); return json({ ok: ready, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") } }, ready ? 200 : 503, headers); }
       if (request.method === "GET" && url.pathname === "/api/swap/quote") return await handleQuote(request, env).then(r => addHeaders(r, headers));
