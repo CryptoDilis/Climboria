@@ -35,6 +35,11 @@ jobs:
           grep -q '^name = "climboria-swap-proxy"' wrangler.toml
           grep -q 'name = "RATE_LIMITER"' wrangler.toml
           grep -q 'ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"' wrangler.toml
+          namespace_id="$(sed -n 's/^namespace_id = "\([0-9][0-9]*\)"/\1/p' wrangler.toml)"
+          if [ -z "$namespace_id" ] || [ "$namespace_id" = "20261108" ]; then
+            echo "::error::Replace the placeholder RATE_LIMITER namespace_id with a real positive integer allocated in this Cloudflare account before deploying."
+            exit 1
+          fi
 
       - name: Validate Cloudflare deployment secrets
         env:
