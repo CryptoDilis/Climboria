@@ -185,11 +185,23 @@ async function handlePumpCoin(request, env) {
     if (typeof value !== "string" || value.length > 2048) return null;
     try { const u = new URL(value); return u.protocol === "https:" ? u.href : null; } catch { return null; }
   };
+  // Do not coerce null, empty strings, booleans, or missing fields into numeric zero.
+  const finiteNumber = value => {
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value !== "string" || !value.trim()) return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  };
+  const holders = finiteNumber(data.holder_count ?? data.num_holders);
+  const curveProgress = finiteNumber(data.bonding_curve_progress);
+  const marketCap = finiteNumber(data.usd_market_cap);
+  const created = finiteNumber(data.created_timestamp);
+  const supply = finiteNumber(data.total_supply);
   return json({
     mint,
     name: typeof data.name === "string" ? data.name.slice(0, 100) : null,
     verified: data.verified === true || data.is_verified === true,
-    holderCount: Number.isSafeInteger(Number(data.holder_count ?? data.num_holders)) && Number(data.holder_count ?? data.num_holders) >= 0 ? Number(data.holder_count ?? data.num_holders) : null,
+    holderCount: holders !== null && Number.isSafeInteger(holders) && holders >= 0 ? holders : null,
     symbol: typeof data.symbol === "string" ? data.symbol.slice(0, 32) : null,
     description: typeof data.description === "string" ? data.description.slice(0, 2000) : null,
     image: safeUrl(data.image_uri || data.image),
@@ -199,11 +211,11 @@ async function handlePumpCoin(request, env) {
     creator: validPubkey(data.creator) ? data.creator : null,
     complete: typeof data.complete === "boolean" ? data.complete : null,
     bondingCurve: validPubkey(data.bonding_curve) ? data.bonding_curve : null,
-    bondingCurveProgress: Number.isFinite(Number(data.bonding_curve_progress)) && Number(data.bonding_curve_progress) >= 0 && Number(data.bonding_curve_progress) <= 100 ? Number(data.bonding_curve_progress) : null,
+    bondingCurveProgress: curveProgress !== null && curveProgress >= 0 && curveProgress <= 100 ? curveProgress : null,
     pumpSwapPool: validPubkey(data.pump_swap_pool) ? data.pump_swap_pool : null,
-    totalSupply: data.total_supply ?? null,
-    usdMarketCap: Number.isFinite(Number(data.usd_market_cap)) ? Number(data.usd_market_cap) : null,
-    createdTimestamp: Number.isFinite(Number(data.created_timestamp)) ? Number(data.created_timestamp) : null,
+    totalSupply: supply !== null && supply >= 0 ? String(supply) : null,
+    usdMarketCap: marketCap !== null && marketCap >= 0 ? marketCap : null,
+    createdTimestamp: created !== null && created >= 0 ? created : null,
     source: "pump.fun"
   });
 }
