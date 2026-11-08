@@ -197,6 +197,7 @@ async function handlePumpCoin(request, env) {
     creator: validPubkey(data.creator) ? data.creator : null,
     complete: typeof data.complete === "boolean" ? data.complete : null,
     bondingCurve: validPubkey(data.bonding_curve) ? data.bonding_curve : null,
+    bondingCurveProgress: Number.isFinite(Number(data.bonding_curve_progress)) && Number(data.bonding_curve_progress) >= 0 && Number(data.bonding_curve_progress) <= 100 ? Number(data.bonding_curve_progress) : null,
     pumpSwapPool: validPubkey(data.pump_swap_pool) ? data.pump_swap_pool : null,
     totalSupply: data.total_supply ?? null,
     usdMarketCap: Number.isFinite(Number(data.usd_market_cap)) ? Number(data.usd_market_cap) : null,
