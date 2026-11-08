@@ -278,7 +278,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .major-row:after{content:none!important;display:none!important;pointer-events:none!important}
 .major-row:hover:after,.major-row:focus-visible:after{content:none!important;display:none!important}
 .major-row[disabled]{cursor:not-allowed;opacity:.5}
-.major-row{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.major-row{cursor:pointer;pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .major-row *{pointer-events:none}
 .major-row:hover,.major-row:focus-visible{transform:none}
 .major-row[disabled]{cursor:not-allowed;opacity:.5}
@@ -591,7 +591,7 @@ async function loadMajorMarkets(){
   const data=await fetchMarketJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+assets.map(x=>x.id).join(',')+'&order=market_cap_desc&per_page=6&page=1&sparkline=true&price_change_percentage=24h');
   if(!Array.isArray(data)||!data.length)throw new Error('No major market records returned');
   const byId=new Map(data.map(x=>[x.id,x]));
-  render(assets.map(a=>byId.get(a.id)).filter(Boolean), 'CoinGecko live price and 24h market data');
+  render(assets.map(a=>byId.get(a.id)||({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'CoinGecko live price and 24h market data; unavailable prices shown as —');
  }catch(error){
   render(assets.map(a=>({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'Live price provider unavailable; asset selection remains enabled');
  }
