@@ -151,6 +151,17 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 @media(min-width:761px){.trade-layout{max-width:1180px;grid-template-columns:minmax(0,1fr) 330px}.card{min-width:0}}
 @media(max-width:760px){.trade-layout{grid-template-columns:1fr}.swap-sidebar{grid-template-columns:1fr}.major-panel{order:1}.selected-panel{order:2}.trust-panel{order:3}.selected-chart-wrap{height:230px}}
 
+
+.major-row{grid-template-columns:minmax(55px,.9fr) 72px auto;column-gap:7px;padding:9px 4px}
+.major-spark{width:72px;height:27px;display:flex;align-items:center}
+.mini-spark{width:72px;height:27px;overflow:visible}
+.spark-empty{color:#74859b;font-size:9px}
+.major-extra{grid-column:1/-1;display:flex;justify-content:space-between;gap:5px;padding-left:33px;margin-top:-2px}
+.major-extra span{font-size:7px;color:#8394a9;white-space:nowrap}
+.major-extra b{color:#cbd5e2;font-size:8px;font-weight:700;margin-left:2px}
+.major-values b{font-size:10px}
+@media(max-width:760px){.major-row{grid-template-columns:minmax(55px,.9fr) 72px auto}.major-extra{padding-left:33px}}
+
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a></nav></header>
@@ -734,14 +745,28 @@ $('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
 $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('from',$('fromResults')._tokens?.[Number(b.dataset.index)])});
 $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
 </script></body></html>+n.toFixed(0)};
+function miniSparkline(values){
+ const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">—</span>';
+ const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;
+ const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');
+ return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 async function loadMajorMarkets(){
  const ids='bitcoin,ethereum,solana,binancecoin,ripple,usd-coin';
  try{
-  const r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+ids+'&order=market_cap_desc&per_page=6&page=1&sparkline=false&price_change_percentage=24h',{headers:{accept:'application/json'}});
+  const r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+ids+'&order=market_cap_desc&per_page=6&page=1&sparkline=true&price_change_percentage=24h',{headers:{accept:'application/json'}});
   if(!r.ok)throw new Error('CoinGecko HTTP '+r.status);
   const data=await r.json();
-  $('majorCoins').innerHTML=data.map(c=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<div class="major-row"><div class="major-identity"><span class="major-icon">'+esc((c.symbol||'?').slice(0,1).toUpperCase())+'</span><div class="major-name"><b>'+esc((c.symbol||'').toUpperCase())+'</b><small>'+esc(c.name||'')+'</small></div></div><div class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></div></div>'}).join('');
-  $('majorStatus').textContent='CoinGecko market data · 24h volume and market cap shown on selected asset panel where available.';
+  const liquidityResults=await Promise.all(data.map(c=>fetch('https://api.dexscreener.com/latest/dex/search?q='+encodeURIComponent(c.symbol)).then(x=>x.ok?x.json():{pairs:[]}).catch(()=>({pairs:[]}))));
+  if(!Array.isArray(data)||!data.length)throw new Error('No major market records returned');
+  $('majorCoins').innerHTML=data.map((c,i)=>{
+   const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';
+   const candidates=(liquidityResults[i]?.pairs||[]).filter(p=>p&&p.baseToken&&String(p.baseToken.symbol||'').toLowerCase()===String(c.symbol||'').toLowerCase()&&p.liquidity?.usd!=null);
+   candidates.sort((a,b)=>(Number(b.liquidity.usd)||0)-(Number(a.liquidity.usd)||0));
+   const liq=candidates[0]?.liquidity?.usd;
+   return '<div class="major-row"><div class="major-identity"><span class="major-icon">'+esc((c.symbol||'?').slice(0,1).toUpperCase())+'</span><div class="major-name"><b>'+esc((c.symbol||'').toUpperCase())+'</b><small>'+esc(c.name||'')+'</small></div></div><div class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</div><div class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></div><div class="major-extra"><span>VOL <b>'+compactUsd(c.total_volume)+'</b></span><span>MCAP <b>'+compactUsd(c.market_cap)+'</b></span><span>LIQ <b>'+compactUsd(liq)+'</b></span></div></div>';
+  }).join('');
+  $('majorStatus').textContent='CoinGecko price, 24h volume, market cap and 7D sparkline · best discovered DexScreener pool liquidity. Liquidity may be unavailable.';
   window.__climboriaMajor=data;
  }catch(e){$('majorCoins').innerHTML='<div class="market-loading">Major market data unavailable right now. '+esc(e.message)+'</div>';$('majorStatus').textContent='Live provider unavailable; no cached values substituted.'}
 }
