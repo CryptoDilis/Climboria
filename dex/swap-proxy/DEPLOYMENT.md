@@ -7,19 +7,19 @@ This Worker is prepared but **not deployed**. The deployment workflow now target
 - Access to the Cloudflare account that manages the Climboria zone.
 - A Jupiter Developer Platform server API key. Do not paste it into chat, GitHub source, Wrangler config, or a frontend file.
 - Wrangler CLI 4.36.0 or later.
-- A dedicated Worker hostname, preferably `api.climboria.fun`, configured through Cloudflare Workers custom domains after deployment.
+- A dedicated Worker hostname, `api.climboria.fun`, attached to the Worker in Cloudflare before the first deployment workflow run. The workflow performs its health check against this hostname immediately after deployment.
 - A unique positive integer rate-limit namespace ID for this Cloudflare account.
 - GitHub repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` containing that positive integer.
 - GitHub Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY` (encrypted; never commit or paste them into chat).
 
 ## Configure
 
-1. In Cloudflare Workers & Pages, create/configure the Worker named `climboria-swap-proxy` using this directory and `wrangler.toml`.
+1. In Cloudflare Workers & Pages, create the Worker named `climboria-swap-proxy` using this directory and `wrangler.toml`. Before running GitHub Actions, attach the custom domain `api.climboria.fun` to this Worker (Workers & Pages → Worker → Settings → Domains & Routes → Add → Custom Domain). Confirm Cloudflare has provisioned the hostname and TLS. The checked-in config currently enables `workers_dev`; it does not itself declare the custom domain.
 2. Allocate/confirm a positive integer rate-limit namespace unique to this Cloudflare account. For the GitHub Actions deployment, save it as repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID`; the workflow injects it into `wrangler.toml` during the run. The checked-in value is only a local/manual-deploy placeholder and must not be assumed valid for the account.
 3. Set the exact website origin(s) in `ALLOWED_ORIGINS`. Do not use a wildcard.
 4. In GitHub repository Settings, add encrypted Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`. The workflow writes the Jupiter key to the Worker secret store using Wrangler; it never prints the key.
 5. Run **Actions → Deploy Climboria API → Run workflow**. The workflow runs the Worker tests, validates the namespace/configuration/secrets, writes `JUPITER_API_KEY` as a Worker secret, deploys the Worker, then checks production health and CORS.
-6. Add/confirm the custom Worker domain `api.climboria.fun` in Cloudflare and verify TLS, CORS, and `GET https://api.climboria.fun/health`.
+6. After the workflow completes, verify the already-attached custom domain, TLS, CORS, and `GET https://api.climboria.fun/health`. If the domain is not attached or DNS/TLS is not ready before the run, the workflow's final health check will fail even if Wrangler deployed the Worker successfully.
 7. Verify unauthorised origins are rejected, missing secrets/rate limiter fail closed, and order/execute upstream failures are returned without being misreported as successful swaps.
 
 For a local/manual deployment, replace `namespace_id` in `wrangler.toml` with the account-specific value, then run `node --test test/worker.test.mjs`, `npx wrangler@latest secret put JUPITER_API_KEY`, and `npx wrangler@latest deploy` from this directory.
