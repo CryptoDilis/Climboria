@@ -2709,3 +2709,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+## 2026-11-09 — Premium Swap and gameplay visual checkpoint
+
+- [x] Full Browser Smoke run `42516855013` completed successfully on commit `23d8350`: homepage/mobile navigation, Cloudflare DEX proxy smoke, fail-closed execution gate, premium Swap desktop/mobile, DEX market/quote-preview, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload all passed. [View run](https://github.com/CryptoDilis/Climboria/actions/runs/42516855013).
+- [x] Retrieved and reviewed the 12-image browser artifact `13632026203`, including premium Swap desktop/mobile and Jarrell's Peak desktop/mobile gameplay captures.
+- [x] Mobile screenshot review found the receive placeholder text visually clipped at narrow widths; added a smaller responsive receive-amount font rule on the PR branch. Commit: `02de2a3`. Fresh Validate and Browser Smoke are required before closing this visual follow-up.
+- [ ] Re-review the new mobile Swap screenshot after the responsive type adjustment; confirm amount/placeholder, token pills, quick controls and quote states remain readable at 390px and narrower.
+- [ ] Gameplay smoke passes as a boot/control regression test, but the captured Sanctuary start view shows a broad uninterrupted green foreground and the player relatively small. Inspect actual spawn terrain, camera framing, paths and vegetation in a normal player session; do not call the world visually finished based on smoke success.
+- [ ] Production Cloudflare Worker remains a separate blocker: configure the account-specific rate-limit namespace and encrypted Cloudflare/Jupiter Actions secrets, deploy the Worker, and verify production health/CORS/rate limiting. Keep public Swap execution disabled until all backend and transaction-security gates pass.
+- PR #219 remains open and unmerged; do not merge until the latest checks and visual follow-ups are reviewed.
