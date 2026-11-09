@@ -2695,4 +2695,13 @@ For every integrated asset or borrowed technique, record:
 6. Record changed files, commit SHA, test run URLs/results, unresolved risks, and the exact next task here before ending the session.
 7. Never merge PRs, change `main`, enable live swap execution, or deploy production without explicit user approval.
 
-**Exact next job:** Continue PR #219 by inspecting its latest branch head and Actions runs, then diagnose the outstanding Worker deployment failure and verify the reported Major Assets → Swap input → exact-mint chart flow before any new implementation.
+
+### Follow-up diagnosis — PR #219 Worker deployment
+- [x] Inspected both failed Deploy Climboria API runs [42547911329](https://github.com/CryptoDilis/Climboria/actions/runs/42547911329) and [42548163117](https://github.com/CryptoDilis/Climboria/actions/runs/42548163117).
+- [x] Root cause is after deployment, not in Worker build/configuration: all 27 Worker tests, account-specific namespace validation, Wrangler config validation, secret validation, Jupiter secret upload, and `wrangler deploy` succeeded. Wrangler reported the Worker and custom domain `api.climboria.fun` created.
+- [x] Both runs failed only at the production health/CORS verification because runner DNS returned `curl: (6) Could not resolve host: api.climboria.fun` on every retry. The CORS request was never reached.
+- [ ] Do not repeat deployment or alter Worker source as a speculative fix. First verify that `climboria.fun` is an Active Cloudflare zone and that the registrar's authoritative nameservers point to Cloudflare; then inspect the `api.climboria.fun` Custom Domain/DNS record and its certificate/activation status. Cloudflare's Custom Domain setup requires an active zone and provisions DNS/certificate; see [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+- [ ] Once authoritative DNS resolves `api.climboria.fun`, rerun the health/CORS verification. If DNS resolves but health fails, then diagnose the returned HTTP/JSON response separately.
+- [ ] Do not claim production API readiness or enable frontend execution until health, CORS, rate limiting, and security gates pass.
+
+**Exact next job:** Continue PR #219 by inspecting its latest branch head and Actions runs, then resolve the confirmed Cloudflare authoritative DNS/custom-domain activation issue (requires Cloudflare/registrar dashboard access), rerun health/CORS, and verify Major Assets → Swap input → exact-mint chart flow before any frontend implementation.
