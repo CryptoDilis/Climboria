@@ -2761,3 +2761,22 @@ For every integrated asset or borrowed technique, record:
 - [ ] Strategy: extend deterministic test coverage first; make no production selection change unless a new assertion reproduces a concrete product defect. Keep ambiguous wrapped/bridged assets explicit-choice only and Swap execution fail-closed.
 - [ ] After test changes, run Validate and full Browser Smoke; inspect exact failed step/log/artifact before any corrective commit. Record every verified outcome and the next task here.
 - Current verified head before this checkpoint: `2ca3ffb2683eccad827dc846997284e1afe2015b`. PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open/draft/unmerged; `main` remains untouched. No production deployment or live execution enabled.
+
+### Browser Smoke checkpoint — 2026-11-09 12:18 UTC
+
+- [x] Browser Smoke run [42615215979](https://github.com/CryptoDilis/Climboria/actions/runs/42615215979) completed with conclusion **success** on PR head `8f317d74fd8b58eb6b2582d98cc5093186509cb6`.
+- [x] Job `129153283212` completed successfully. All 16 primary steps passed, including DEX/Swap browser coverage, mobile market loading/provider-error/true-empty states, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload. Post-job cleanup also completed successfully.
+- [x] Downloadable screenshot artifact [13672736488](https://github.com/CryptoDilis/Climboria/actions/runs/42615215979/artifacts/13672736488) uploaded (7,765,592 bytes; expires 2026-11-16).
+- [x] Deep failure review: fetched the completed job logs and inspected the final gameplay diagnostics, artifact upload, cleanup, and warning lines. No failed step or product-test failure was present; no code fix is justified by this run.
+- [x] Non-blocking environment warnings observed: Node.js 20 action-runtime deprecation (actions/cache@v4, checkout@v4, setup-node@v4, upload-artifact@v4) and Node `punycode` / `url.parse()` deprecation notices. These did not fail the run and are not evidence for changing DEX/game code. Track action-runtime upgrades separately when supported.
+- [x] Jarrell's Peak smoke reported successful desktop/mobile rendering and controls; its diagnostic explicitly noted wildlife temporarily disabled. Do not interpret this run as wildlife-behavior validation.
+- [ ] **Exact next job — expand six-major-asset Swap acceptance (BTC, ETH, SOL, BNB, XRP, USDC), desktop and mobile.** This remains a verified test-coverage gap, not a proven production-code defect:
+  - Extend deterministic Playwright fixtures for BTC, ETH, BNB, and XRP with at least two plausible candidate mints each; require explicit candidate selection and never silently choose an arbitrary wrapped/bridged mint.
+  - Add direct canonical-mint acceptance for SOL and USDC. For USDC, first select a different To asset because the initial To asset is already USDC; verify safe duplicate-side handling.
+  - Use distinct per-mint Solana base-token pools, pair addresses, symbols, prices, and realistic RPC decimals (SOL 9, USDC 6, candidate fixtures per mint).
+  - For every asset verify major-row click/tap, correct From input/search state, exact selected mint, matching chart title/price/pair, URL serialization, reload restoration, and back/forward restoration.
+  - Cover ambiguous candidate choice, no-pool, quote-only-pool rejection, stale/out-of-order response, rapid selection, and stale-metric clearing. Repeat critical flows on mobile as well as desktop; confirm accessible tap targets and no hover-only SELECT overlay.
+  - Strategy: tests first. Do not change production selection logic unless an assertion reproduces a concrete defect with a documented root cause and fix strategy. Keep Swap execution fail-closed.
+  - After the test expansion, run Validate and full Browser Smoke; inspect exact failed job/step/log before any corrective commit. Record the resulting SHA, run URLs, artifact, and exact next task here.
+- Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open, draft, and unmerged. Branch `codex/diagnose-mobile-close-tap-42593894269`; verified head at this checkpoint: `8f317d74fd8b58eb6b2582d98cc5093186509cb6`; base `main` remains `d2084c9b5b02408f7eed5d75e45a2fbf89028014`. No merge, production deployment, or live Swap execution performed.
+
