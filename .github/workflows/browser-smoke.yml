@@ -642,6 +642,10 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test all six Swap major assets on desktop and mobile
+        timeout-minutes: 6
+        run: node .github/scripts/swap-major-assets-smoke.mjs
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
