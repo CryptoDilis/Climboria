@@ -194,6 +194,15 @@ jobs:
               await mobileSwap.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               const mobileChartState=await mobileSwap.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src')}));
               if(!mobileChartState.title.startsWith('BTC')||!mobileChartState.price.includes('65,000')||!mobileChartState.chart?.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe')) throw new Error('Mobile selected BTC mint did not synchronize chart and metrics: '+JSON.stringify(mobileChartState));
+              const assetLayout=await mobileSwap.locator('#majorCoins .major-row').first().evaluate(row=>{
+                const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+                const identity=row.querySelector('.major-identity'),spark=row.querySelector('.major-spark'),values=row.querySelector('.major-values');
+                const a=rect(identity),b=rect(spark),c=rect(values),style=getComputedStyle(row);
+                const overlaps=(x,y)=>x.left<y.right-1&&x.right>y.left+1&&x.top<y.bottom-1&&x.bottom>y.top+1;
+                return {columns:style.gridTemplateColumns,identity:a,spark:b,values:c,identitySparkOverlap:overlaps(a,b),sparkValuesOverlap:overlaps(b,c),rowWidth:rect(row).width,viewport:document.documentElement.clientWidth};
+              });
+              if(assetLayout.identitySparkOverlap||assetLayout.sparkValuesOverlap||assetLayout.spark.width>60||assetLayout.rowWidth>assetLayout.viewport) throw new Error('Mobile Major Assets columns overlap or exceed viewport: '+JSON.stringify(assetLayout));
+              await mobileSwap.screenshot({path:'climboria-major-assets-mobile.png',fullPage:true});
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
