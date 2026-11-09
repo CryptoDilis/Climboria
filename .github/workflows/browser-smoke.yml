@@ -479,7 +479,11 @@ jobs:
                 const dexMetrics=await dex.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,marketRows:document.querySelectorAll('#rows tr').length,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position}));
                 if(dexMetrics.scrollWidth>dexMetrics.width+1||dexMetrics.navPosition!=='fixed')throw new Error('DEX '+width+'px overflow/bottom-nav failure: '+JSON.stringify(dexMetrics));
                 if(dexMetrics.marketRows>12)throw new Error('DEX mobile first paint should show no more than 12 market rows: '+JSON.stringify(dexMetrics));
-                await dex.locator('#mobileMarketMore').isVisible().catch(()=>false);
+                if(await dex.locator('#mobileMarketMore').isVisible()){
+                  const before=await dex.locator('#rows tr').count();
+                  await dex.locator('#mobileMarketMore').tap();
+                  await dex.waitForFunction(previous=>document.querySelectorAll('#rows tr').length>previous,before,{timeout:5000});
+                }
                 await dex.close();
 
                 const swap=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
@@ -491,6 +495,7 @@ jobs:
                 if(await swap.locator('.hero').isVisible()||await swap.locator('.ad-slot').first().isVisible())throw new Error('Swap mobile view must remove the tall hero and ad placeholder from the primary trading fold');
                 const trade=swap.locator('.premium-trade-layout');
                 if(!await trade.locator('.card').isVisible())throw new Error('Swap should open directly on the compact swap form');
+                if(await trade.locator('.market-rail').isVisible())throw new Error('Swap tab must hide the Major Assets rail to avoid a long stacked mobile page');
                 await tabs.locator('[data-workspace-tab="market"]').tap();
                 if(!await trade.locator('.market-rail').isVisible()||await trade.locator('.card').isVisible())throw new Error('Markets tab should show only the major-asset feed');
                 await tabs.locator('[data-workspace-tab="chart"]').tap();
