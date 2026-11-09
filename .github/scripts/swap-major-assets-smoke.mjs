@@ -1,4 +1,4 @@
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
 
 const BASE = 'http://127.0.0.1:4173/swap/';
 const SOL = 'So11111111111111111111111111111111111111112';
