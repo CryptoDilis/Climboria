@@ -2977,3 +2977,23 @@ This is a standing project rule, not a one-time task:
 - [ ] Browser Smoke step 16 (Jarrell's Peak desktop/mobile gameplay) is still running at the time of this handoff; step 17 screenshot upload and cleanup are pending. Do not mark the full Browser Smoke successful until the run concludes.
 - [ ] The new guest → signed-in → token-refreshed event assertions are part of the gameplay smoke step and are not yet individually verified until that step completes.
 - **Next exact job:** poll run `42669889007` / job `129343348886`. If successful, record the final outcome and proceed to account/guest conflict UX design. If failed, fetch completed job logs and identify the exact assertion/root cause before making a targeted fix; do not repeat the same test/code change blindly.
+
+
+## 2026-11-10 — Browser Smoke cancellation diagnosed; auth transition assertions passed
+
+- [x] Validate run `42669888626` passed all validation steps.
+- [x] Browser Smoke run `42669889007` passed steps 1–15, including authentication UI/client, DEX/Swap, responsive mobile layouts, and market loading/error/empty states.
+- [x] Retrieved the completed Browser Smoke job log (`129343348886`) after the run was cancelled. The log explicitly records the new gameplay bridge diagnostics:
+  `SESSION_READY:guest` → `SIGNED_IN:smoke-player-001` → `TOKEN_REFRESHED:smoke-player-001`.
+  This confirms the newly added mocked guest/sign-in/refresh event assertions executed and produced the expected events before cancellation.
+- [ ] Step 16 (the broader Jarrell's Peak desktop/mobile gameplay smoke suite) was cancelled; screenshot upload succeeded. The log ends with GitHub Actions `The operation was canceled.`, not a Playwright assertion failure, thrown test error, or the configured 20-minute timeout. Therefore this is an externally cancelled/incomplete run, not evidence of a gameplay regression. No code fix is justified by this log.
+- [x] Deep diagnosis completed: the targeted auth-session transition portion ran successfully at 18:00:24Z; gameplay smoke continued through GLB movement-state diagnostics at 18:02:35Z; the operation was cancelled at 18:03:39Z. No failing assertion or stack trace precedes cancellation.
+- **Next exact job:** continue with account/guest conflict UX design before any cloud preference writes. First inspect the current game-page account controls and auth client APIs; define a safe, explicit guest-vs-account choice with no automatic local overwrite, no silent merge, and no inventory migration. Implement the UI and mocked browser coverage for signed-out guest, authenticated account, and conflicting local/account hero preference states. Keep `climboria_jarrell_inventory_v1` excluded. Run Validate and Browser Smoke after the implementation; diagnose actual failures from logs before fixing. Do not spend another run repeating the identical cancelled gameplay attempt without a specific reason.
+
+**Handoff after cancelled Browser Smoke:**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: open/draft/unmerged.
+- Latest code commit: `c3345910563ffc4325ae1e06c226f397ac23843f`
+- Latest README handoff before this update: `871409afee44bcf235555d7dd42cb6cf33bce21e`
+- Validate `42669888626`: success.
+- Browser Smoke `42669889007`: cancelled during broader Jarrell's Peak step 16; new auth event diagnostics passed before cancellation; not a full Browser Smoke pass.
