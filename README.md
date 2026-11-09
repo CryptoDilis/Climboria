@@ -2841,3 +2841,11 @@ This is a standing project rule, not a one-time task:
 - [x] Validate run `42656760627` passed on commit `0d3871cc251c2095b87ad7f1972d17a9dbf01440` (security/API contracts, homepage structure, launch copy, JavaScript syntax audits).
 - [ ] Latest browser and validate runs for commit `434107dcd9465648e7c2c269688c2e60f52624a7` must complete. Inspect the auth step log; do not mark authentication smoke passed until the full test finishes.
 - **Next exact job:** inspect the new-head Browser Smoke and Validate runs. If auth passes, continue with authenticated account-link UI and safe guest-save migration design; if it fails, retrieve logs and diagnose the actual failing assertion before another edit. Real Supabase OAuth/SMTP and SIWE/SIWS E2E remain owner-configuration-dependent. PR #228 stays draft/unmerged.
+
+
+## 2026-11-10 — Auth smoke mock response correction
+
+- [x] Rechecked retried Browser Smoke job `129299061231` and retrieved its log. The mobile menu navigation fix worked: the test opened the mobile menu and reached the auth modal, then progressed through the email signup/profile verification sequence. It timed out during that sequence; it did not reach provider tests.
+- [x] Reviewed the real auth client contract: Supabase `.maybeSingle()` resolves to `{ data: profile, error }`. The test mock incorrectly returned `ok({ data: profile })`, nesting the profile one level too deep (`data.data.player_id`) and making the Player ID assertion impossible. Corrected the mock to return `{ data: profile, error: null }` directly in commit `ad9d948925a7a3a3ec2d9b142f0047a7bf33b1c1`.
+- [ ] Re-run the new-head Browser Smoke and Validate workflows. If email status still times out, use the new log to inspect the exact wait and do not assume a production auth defect. The mock is still not a real provider E2E test.
+- **Next exact job:** verify the corrected profile mock passes email signup/session/profile/logout, then password recovery and OAuth/Web3 initiation tests; afterward add safe account-link UI and guest-save migration design. Live Supabase/provider configuration and callbacks remain outstanding. PR #228 remains draft/unmerged.
