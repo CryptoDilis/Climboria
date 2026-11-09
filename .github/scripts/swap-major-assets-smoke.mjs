@@ -135,6 +135,15 @@ async function runViewport(browser, options) {
         if (mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
       }
       const mint=await selectAsset(page,symbol,mobile);
+      if (symbol==='BTC') {
+        // Exercise actual browser Back/Forward, not only a synthetic popstate event.
+        await page.goBack();
+        await page.waitForFunction(()=>document.querySelector('#quoteFromSearch')?.value==='SOL'&&new URL(location.href).searchParams.get('from')==='So11111111111111111111111111111111111111112',{timeout:12000});
+        await assertChart(page,'SOL',SOL);
+        await page.goForward();
+        await page.waitForFunction(({symbol,mint})=>document.querySelector('#quoteFromSearch')?.value===symbol&&new URL(location.href).searchParams.get('from')===mint,{symbol,mint},{timeout:12000});
+        await assertChart(page,'BTC',mint);
+      }
       await page.reload({waitUntil:'domcontentloaded'});
       await page.waitForFunction(({symbol,mint})=>document.querySelector('#quoteFromSearch')?.value===symbol&&new URL(location.href).searchParams.get('from')===mint,{symbol,mint},{timeout:12000});
       if(mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="chart"]').tap();
