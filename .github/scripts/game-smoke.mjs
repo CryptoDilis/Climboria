@@ -426,11 +426,11 @@ try {
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
-  // The launch card performs a full document navigation. Playwright's click()
-  // already waits for that navigation; a concurrent waitForURL can miss the
-  // same-document/fast navigation edge and time out after the target URL loaded.
+  // click() may already complete a fast document navigation before the next
+  // assertion starts. waitForURL checks the current URL as well as future
+  // navigations, so this remains reliable in either timing order.
   await menu.locator('.card[data-level="11"]').click();
-  await menu.waitForLoadState('domcontentloaded');
+  await menu.waitForURL(url => url.pathname.endsWith('/game/play.html') && url.searchParams.get('level') === '11', { timeout: 10000 });
   const launchUrl=new URL(menu.url());
   if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
   if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
