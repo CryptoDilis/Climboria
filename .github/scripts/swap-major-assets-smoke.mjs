@@ -103,13 +103,14 @@ async function selectAsset(page, symbol, mobile) {
     await assertChart(page,symbol,mint);
     return mint;
   }
+  if (mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').tap();
   await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:12000});
   if (await page.locator('#fromResults button').count() !== 2) throw new Error(symbol + ' must expose both ambiguous candidate mints');
   const pre=await page.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,selected:document.querySelector('#fromSelected')?.textContent}));
   if (pre.input!==symbol || !pre.selected?.includes('Selection required')) throw new Error(symbol + ' was silently selected before explicit mint choice: ' + JSON.stringify(pre));
   const mint=assets[symbol].candidates[0];
-  if (mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').tap();
-  await page.locator('#fromResults button[data-index="0"]').click();
+  if (mobile) await page.locator('#fromResults button[data-index="0"]').tap();
+  else await page.locator('#fromResults button[data-index="0"]').click();
   await page.waitForFunction(m=>new URL(location.href).searchParams.get('from')===m,mint,{timeout:12000});
   await assertChart(page,symbol,mint);
   return mint;
