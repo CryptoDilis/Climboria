@@ -2712,3 +2712,21 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-09 — Continuity checkpoint: mobile close regression diagnosis complete
+
+- [x] Confirmed the previously pending Browser Smoke run `42611188661` completed with conclusion `success` on head `b0d71ffcd677d90cf27fbb286ab8839f179d54ea`: [run 42611188661](https://github.com/CryptoDilis/Climboria/actions/runs/42611188661).
+- [x] All 16 main Browser Smoke steps passed, including compact DEX/Swap layouts at 390px and 360px, mobile market loading/provider-error/true-empty states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload.
+- [x] Screenshot artifact `climboria-browser-smoke-screenshots` uploaded: [artifact 13670966381](https://github.com/CryptoDilis/Climboria/actions/runs/42611188661/artifacts/13670966381) (7.7 MB; expires 2026-11-16).
+- [x] Validate run `42611188660` completed successfully on the same commit: [run 42611188660](https://github.com/CryptoDilis/Climboria/actions/runs/42611188660).
+- [x] No failed step in this run; no product fix was justified or applied for this checkpoint. The earlier mobile close timeout was not reproduced in the follow-up full run; retain the diagnostic evidence and do not make an unsubstantiated UI change.
+- [ ] **Exact next job — complete six-major-assets DEX/Swap acceptance (BTC, ETH, SOL, BNB, XRP, USDC), desktop and mobile.** First inspect the current `swap/index.html` selection/resolution logic and existing Browser Smoke tests at the current PR head. Then extend deterministic provider fixtures so every major asset is exercised individually:
+  - SOL and USDC: verify direct known-mint resolution, exact From mint/input, selected market/chart title-price-pair, URL state, refresh and back/forward restoration.
+  - BTC, ETH, BNB and XRP: provide multiple plausible Jupiter candidates and prove no silent arbitrary wrapped/bridged mint selection; require an explicit candidate click, then verify exact From mint/input and matching base-mint chart/pair/price.
+  - For all six: verify ambiguous, no-pool, quote-only-pool, stale/out-of-order response and rapid-selection behavior; ensure stale chart metrics are cleared and no unrelated SOL chart is shown.
+  - Cover desktop and mobile interactions, accessibility/focus and readable candidate-card layout where feasible.
+  - Only change product code for a reproduced defect with a documented root cause and strategy. Keep Swap execution fail-closed.
+  - After changes, run Validate and the complete Browser Smoke; inspect each failed job/step/log and classify root cause before any corrective commit. Check Pages only if the workflow is triggered by an eligible event; do not claim a deployment from PR-only checks.
+- [ ] Production Cloudflare Worker remains a separate blocker: account-specific rate-limit namespace and encrypted Actions secrets are still required, followed by deployment and production health/CORS/rate-limit verification. Keep `swap-config.js` `proxyEnabled:false` and `enabled:false`; no live Swap execution.
+- Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open and unmerged; branch `codex/diagnose-mobile-close-tap-42593894269`; head `b0d71ffcd677d90cf27fbb286ab8839f179d54ea`; base `main` remains `d2084c9b5b02408f7eed5d75e45a2fbf89028014`. No merge or production deployment performed.
