@@ -2792,3 +2792,16 @@ This is a standing project rule, not a one-time task:
 - CI: Validate run `42652747661` passed. Browser Smoke run `42652747827` had steps 7–14 pass; at last check Jarrell's Peak desktop/mobile step 15 was still running, with screenshot upload and cleanup pending.
 - Live website still showed the legacy wallet-connect-only modal because PR #228 was not merged/deployed. Do not call wallet connection an authenticated Climboria account.
 - **Exact next action:** poll Browser Smoke run `42652747827`. If it fails, inspect logs and diagnose root cause before any fix. If it passes, inspect the final checks, mark PR #228 ready, merge/deploy, and verify the live auth modal and sign-in flows. Then continue Google/X OAuth and SMTP setup plus real end-to-end auth tests.
+
+
+## 2026-11-10 — Resume check: authentication PR CI still blocked on gameplay smoke
+
+- [x] Re-read the handoff before doing work; no database migration or prior provider setup was repeated.
+- [x] Confirmed PR #228 remains open, draft, and unmerged at head `6964e8510b54c0560b0b911a10a1971f2edb0d57`.
+- [x] Confirmed Validate Climboria run `42653155660` passed.
+- [x] Confirmed Browser Smoke run `42653155665`: steps 7–14 passed, including homepage, DEX, swap security, mobile workspace, 360px/390px, and market loading/error/empty states.
+- [ ] Step 15, Jarrell's Peak desktop/mobile gameplay smoke, remains `in_progress`; screenshot upload is pending. The previous browser run `42652747827` was cancelled during the same gameplay step, so this is a repeated slow/stalled point, not a proven test failure.
+- [ ] Attempted to retrieve the job log for job `129284585530`; GitHub returned a 404 BlobNotFound response. No root cause can be claimed from that response. Need inspect Actions UI/logs or wait for run completion; if it fails, diagnose from actual failing output before editing.
+- [x] Rechecked auth implementation files: `index.html` includes the EVM, Solana, Google, X, and email controls and loads `/auth-config.js` and `/auth/auth-client.js`; `auth-config.js` contains the owner-confirmed project URL and publishable key.
+- [ ] Still not production: PR unmerged; live site was previously confirmed to show legacy wallet-connect-only UI. Google/X OAuth credentials, SMTP, Supabase redirect URLs, end-to-end auth tests, cross-provider identity linking, and guest-save migration remain outstanding.
+- **Next exact job:** resolve the long-running Jarrell's Peak smoke step using the GitHub Actions run page (run `42653155665`); inspect logs if it fails. Do not repeat or alter gameplay code without failure evidence. Once all required CI is green, review PR diff and auth-specific tests, then mark PR ready and proceed with deployment verification. Keep README handoff current.
