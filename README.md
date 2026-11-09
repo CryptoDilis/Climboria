@@ -2761,3 +2761,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Do not treat the current live wallet connection as authenticated Climboria account. Do not ask players to use it for account creation yet.
 - [ ] Before deployment: inspect and fix auth integration/redirect behavior; configure Supabase Site URL + allowed redirects; complete provider credentials; run CI and real signup/wallet OAuth tests. Then merge/deploy PR #228 only after checks pass.
 - **Next exact job:** review PR #228 auth integration and latest-head CI; ensure `auth-config.js` and module scripts are included in Pages artifact, then validate on a preview before production rollout.
+
+
+## 2026-11-10 — Auth deployment gate rechecked
+
+- [x] Confirmed latest PR #228 head is `6f5f1a0f1d97bfe62f3bca2dd5c4d01d37ac0a04` and PR remains open/draft/unmerged.
+- [x] Latest `Validate Climboria` run `42652747661` completed successfully.
+- [x] Latest `Climboria Browser Smoke Test` run `42652747827`: homepage/DEX/mobile test steps 7–14 completed successfully.
+- [ ] Browser smoke is still running Jarrell's Peak desktop/mobile gameplay step 15; screenshot upload and cleanup steps remain pending. Do not merge/deploy until this run concludes and result is inspected.
+- [ ] The live-site login screenshot still reflects `main` because PR #228 has not been merged/deployed. After all checks pass, mark PR ready, merge, verify Pages/Cloudflare deployment and run live-site auth UI smoke. Keep Google/X labeled as provider-setup dependent until owner credentials are configured.
+- **Next exact job:** poll run `42652747827`; if step 15 fails, inspect its job logs and diagnose/fix root cause before rerunning. If all checks pass, mark PR #228 ready and merge/deploy, then verify live `https://climboria.fun/` auth modal exposes EVM, Solana, Google, X, and email controls.
