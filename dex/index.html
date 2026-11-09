@@ -1211,7 +1211,40 @@ $('watchToken').addEventListener('click',()=>{if(!activeCommunityMint)return;con
 $('closeDetail').addEventListener('click',()=>{$('tokenDetail').classList.remove('open');$('detailChart').src='about:blank'});$('refreshDetail').addEventListener('click',()=>{if(!activeDetailMint)return;const b=$('refreshDetail');b.disabled=true;b.textContent='Refreshing…';openToken(activeDetailMint,{refresh:true,fromUrl:true}).finally(()=>{b.disabled=false;b.textContent='↻ Refresh data'});});
 $('shareToken').addEventListener('click',async()=>{if(!activeDetailMint)return;const url=new URL(location.href);url.searchParams.set('token',activeDetailMint);const selected=new URLSearchParams(location.search).get('pool');if(selected)url.searchParams.set('pool',selected);try{await navigator.clipboard.writeText(url.href);$('shareToken').textContent='✓ Link copied';setTimeout(()=>$('shareToken').textContent='↗ Share',1800)}catch(e){$('shareToken').textContent='Copy blocked · copy address from URL'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-copy-mint]');if(!b)return;navigator.clipboard?.writeText(b.dataset.copyMint).then(()=>b.textContent='✓ Copied').catch(()=>b.textContent='Copy unavailable')});
-$('search').addEventListener('input',e=>{state.search=e.target.value;render()});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',renderBaseMarkets);$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
+let dexSearchRequestId=0,dexSearchTimer=null;
+async function discoverDexSearch(query,requestId){
+ const exactMint=/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(query);
+ $('status').textContent=exactMint?'Looking up exact Solana mint…':'Searching live Solana token names and symbols…';
+ try{
+  const path=exactMint?'/latest/dex/tokens/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
+  const payload=await get(path);
+  if(requestId!==dexSearchRequestId)return;
+  const raw=Array.isArray(payload)?payload:payload?.pairs;
+  let found=solPairs(raw);
+  if(exactMint)found=found.filter(pair=>pair.baseToken.address===query);
+  if(found.length){
+   state.pairs=bestByToken([...state.pairs,...found]);
+   render();
+   $('status').textContent=exactMint?'Exact mint lookup complete · '+found.length+' matching Solana pool(s)':'Live token search complete · '+found.length+' matching Solana pool(s)';
+  }else{
+   render();
+   $('status').textContent=exactMint?'No Solana pool found with this exact mint.':'No matching Solana token or pool found.';
+  }
+ }catch(error){
+  if(requestId!==dexSearchRequestId)return;
+  render();
+  $('status').textContent='Live token search unavailable: '+error.message+' · Showing only the currently loaded market dataset.';
+ }
+}
+$('search').addEventListener('input',e=>{
+ state.search=e.target.value;
+ render();
+ clearTimeout(dexSearchTimer);
+ const query=state.search.trim();
+ const requestId=++dexSearchRequestId;
+ if(query.length<2)return;
+ dexSearchTimer=setTimeout(()=>discoverDexSearch(query,requestId),350);
+});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',renderBaseMarkets);$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
 load();loadBaseMarkets();const dp=new URLSearchParams(location.search),im=dp.get('token');if(im&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(im))openToken(im,{fromUrl:true});setInterval(load,60000);setInterval(loadBaseMarkets,60000);setInterval(()=>{if(activeDetailMint&&document.visibilityState==='visible')openToken(activeDetailMint,{refresh:true,fromUrl:true});},20000);
 
 const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';
