@@ -2968,3 +2968,12 @@ This is a standing project rule, not a one-time task:
 - Latest code commit: `c3345910563ffc4325ae1e06c226f397ac23843f`
 - Previous verified Browser Smoke: `42665766190` success; previous Validate: `42665766166` success.
 - README verification record for the previous Browser Smoke: commit `45aec0f997273c6425f59524c805efd71c8d2081`.
+
+
+## 2026-11-10 — Auth-session transition test verification update
+
+- [x] Validate run `42669888626` completed successfully on the auth foundation branch. All validation steps passed, including Cloudflare swap proxy contracts, homepage controls, token launch copy, inline JS syntax, DEX/Swap syntax, gameplay script syntax, and remaining HTML script audit.
+- [x] Browser Smoke run `42669889007` has passed steps 1–15: auth UI/client, homepage and DEX routing, proxy and fail-closed checks, standalone Swap/DEX, desktop/mobile DEX layouts, compact 390px/360px layouts, and market loading/error/empty states.
+- [ ] Browser Smoke step 16 (Jarrell's Peak desktop/mobile gameplay) is still running at the time of this handoff; step 17 screenshot upload and cleanup are pending. Do not mark the full Browser Smoke successful until the run concludes.
+- [ ] The new guest → signed-in → token-refreshed event assertions are part of the gameplay smoke step and are not yet individually verified until that step completes.
+- **Next exact job:** poll run `42669889007` / job `129343348886`. If successful, record the final outcome and proceed to account/guest conflict UX design. If failed, fetch completed job logs and identify the exact assertion/root cause before making a targeted fix; do not repeat the same test/code change blindly.
