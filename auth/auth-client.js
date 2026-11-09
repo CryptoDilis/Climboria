@@ -27,6 +27,7 @@ if (!configured) {
   const password = document.getElementById("authPassword");
   const emailSubmit = document.getElementById("authEmailSubmit");
   const google = document.getElementById("authGoogle");
+  const xLogin = document.getElementById("authX");
   const evm = document.getElementById("authEvm");
   const logout = document.getElementById("authLogout");
   const modeToggle = document.getElementById("authModeToggle");
@@ -80,6 +81,13 @@ if (!configured) {
       chain: "ethereum",
       wallet: window.ethereum,
       statement: "Sign in to Climboria. This signature proves wallet ownership only; it does not authorize a transaction."
+    }));
+  });
+
+  xLogin?.addEventListener("click", async () => {
+    await reportAuth(() => supabase.auth.signInWithOAuth({
+      provider: "x",
+      options: { redirectTo: location.origin }
     }));
   });
 
