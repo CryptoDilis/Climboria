@@ -554,6 +554,38 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
+      - name: Test mobile market loading, provider-error, and true-empty states
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              for (const width of [390,360]) {
+                const failed = await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+                await failed.route('https://api.dexscreener.com/**',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'simulated provider outage'})}));
+                await failed.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+                await failed.waitForFunction(()=>document.querySelector('#solanaMobileCards .mobile-market-state')?.textContent.includes('provider unavailable'),null,{timeout:12000});
+                await failed.waitForFunction(()=>document.querySelector('#baseMobileCards .mobile-market-state')?.textContent.includes('provider unavailable'),null,{timeout:12000});
+                if(await failed.locator('#solanaMobileCards .mobile-market-card').count()||await failed.locator('#baseMobileCards .base-mobile-market-card').count())throw new Error('Provider failure must not fabricate market cards at '+width+'px');
+                await failed.close();
+
+                const empty = await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+                await empty.route('https://api.dexscreener.com/**',route=>route.fulfill({
+                  status:200,contentType:'application/json',
+                  body:JSON.stringify(new URL(route.request().url()).pathname==='/token-profiles/latest/v1'?[]:{pairs:[]})
+                }));
+                await empty.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+                await empty.waitForFunction(()=>document.querySelector('#solanaMobileCards .mobile-market-state')?.textContent.includes('No matching Solana pairs'),null,{timeout:12000});
+                await empty.waitForFunction(()=>document.querySelector('#baseMobileCards .mobile-market-state')?.textContent.includes('No Base pairs match'),null,{timeout:12000});
+                if(await empty.locator('#solanaMobileCards .mobile-market-state').textContent().then(t=>t.includes('provider unavailable'))||await empty.locator('#baseMobileCards .mobile-market-state').textContent().then(t=>t.includes('provider unavailable')))throw new Error('A valid empty provider response must not be labelled as an outage at '+width+'px');
+                await empty.close();
+              }
+              console.log('PASS mobile Solana/Base loading, provider outage, and valid-empty states at 390px and 360px without synthetic market data.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
