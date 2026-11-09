@@ -46,6 +46,8 @@ jobs:
           test -f wrangler.toml
           grep -q '^name = "climboria-swap-proxy"' wrangler.toml
           grep -q 'name = "RATE_LIMITER"' wrangler.toml
+          grep -q '^pattern = "api.climboria.fun"$' wrangler.toml
+          grep -q '^custom_domain = true$' wrangler.toml
           grep -q 'ALLOWED_ORIGINS = "https://climboria.fun,https://www.climboria.fun"' wrangler.toml
           namespace_id="$(sed -n 's/^namespace_id = "\([0-9][0-9]*\)"/\1/p' wrangler.toml)"
           if [ -z "$namespace_id" ] || [ "$namespace_id" = "20261108" ]; then

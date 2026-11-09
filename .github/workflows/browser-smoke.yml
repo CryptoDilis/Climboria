@@ -118,6 +118,7 @@ jobs:
                 if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
               });
+              await page.route('https://api.geckoterminal.com/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({data:{attributes:{ohlcv_list:[[1794182400,86,88,85,87,1000],[1794183300,87,89,86,88,1200],[1794184200,88,90,87,89,1400],[1794185100,89,91,88,90,1600],[1794186000,90,89,91,90,10],[1794186900,91,92]]}}})}));
               await page.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://rpc.ankr.com/solana',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -126,36 +127,30 @@ jobs:
               const hoverLabel=await btc.evaluate(el=>getComputedStyle(el,'::after').content);
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
-              await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
-              const candidateUi=await page.locator('#fromResults button[data-index="0"]').evaluate(el=>({cursor:getComputedStyle(el).cursor,tabIndex:el.tabIndex,mintWrap:getComputedStyle(el.querySelector('small')).overflowWrap,cardWidth:el.getBoundingClientRect().width,listWidth:el.parentElement.getBoundingClientRect().width}));
-              if(candidateUi.cursor!=='pointer'||candidateUi.tabIndex!==0||candidateUi.mintWrap!=='anywhere'||candidateUi.cardWidth>candidateUi.listWidth+1) throw new Error('Token candidate card accessibility/wrapping/overlap check failed: '+JSON.stringify(candidateUi));
-              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not open BTC input token candidates');
-              if(new URL(page.url()).searchParams.get('from')==='') throw new Error('Swap URL lost its current input mint while candidates load');
-              if(await page.locator('#fromResults button').count()!==2) throw new Error('Expected multiple explicit BTC representation choices');
-              const preChoice=await page.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,selected:document.querySelector('#fromSelected')?.textContent,chartTitle:document.querySelector('#selectedAssetTitle')?.textContent})); if(preChoice.input!=='BTC'||!preChoice.selected.includes('Selection required')||!preChoice.chartTitle.startsWith('SOL')) throw new Error('Ambiguous BTC candidate was silently selected without explicit mint choice: '+JSON.stringify(preChoice));
-              await page.locator('#fromResults button[data-index="0"]').click();
               await page.waitForFunction(()=>new URL(location.href).searchParams.get('from')==='SysvarRent111111111111111111111111111111111',null,{timeout:10000});
-              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Explicit BTC token choice did not select BTC as the input asset');
+              if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not select the unique Jupiter-verified input asset');
               const selectedMint=new URL(page.url()).searchParams.get('from');
-              if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
-              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
-              if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
+              if(selectedMint!==mockMint) throw new Error('BTC major asset click did not persist the exact verified mint URL');
+              await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,note:document.querySelector('#selectedAssetNote')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),empty:document.querySelector('#selectedChartEmpty')?.textContent,from:document.querySelector('#quoteFromSearch')?.value,url:location.href}));throw new Error('Major asset click did not auto-sync the BTC chart: '+JSON.stringify(state)+'; '+error.message+'; browser errors: '+JSON.stringify(errors));});
+              if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Major asset click did not synchronize chart title/price with the selected mint');
               // A pool where the selected mint is only the quote side must never show the base token's (e.g. SOL) chart or metrics.
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarC1ock11111111111111111111111111111111',symbol:'QONLY',name:'Quote Only'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});
               const quoteOnlyState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),emptyHidden:document.querySelector('#selectedChartEmpty')?.hidden}));
-              if(!quoteOnlyState.title.startsWith('QONLY')||quoteOnlyState.price!=='—'||quoteOnlyState.chart||quoteOnlyState.emptyHidden) throw new Error('Quote-side-only pool incorrectly displayed another asset chart or stale metrics: '+JSON.stringify(quoteOnlyState));
+              if(!quoteOnlyState.title.startsWith('QONLY')||quoteOnlyState.price!=='Price unavailable'||quoteOnlyState.chart||quoteOnlyState.emptyHidden) throw new Error('Quote-side-only pool incorrectly displayed another asset chart or stale metrics: '+JSON.stringify(quoteOnlyState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               // A true no-pool response must clear every stale chart metric and iframe.
               await page.evaluate(()=>window.updateSelectedAsset({id:'NoPoolMint11111111111111111111111111111111',symbol:'NOPool',name:'No Pool Asset'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetNote')?.textContent.includes('No Solana pool with this exact mint'),null,{timeout:10000});
               const noPoolState=await page.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,change:document.querySelector('#selectedAssetChange')?.textContent,volume:document.querySelector('#selectedAssetVolume')?.textContent,mcap:document.querySelector('#selectedAssetMcap')?.textContent,liquidity:document.querySelector('#selectedAssetLiquidity')?.textContent,venue:document.querySelector('#selectedAssetVenue')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src'),emptyHidden:document.querySelector('#selectedChartEmpty')?.hidden}));
-              if(!noPoolState.title.startsWith('NOPool')||noPoolState.price!=='—'||noPoolState.change!=='—'||noPoolState.volume!=='—'||noPoolState.mcap!=='—'||noPoolState.liquidity!=='—'||noPoolState.venue!=='—'||noPoolState.chart||noPoolState.emptyHidden) throw new Error('No-pool selection retained stale chart data: '+JSON.stringify(noPoolState));
+              if(!noPoolState.title.startsWith('NOPool')||noPoolState.price!=='Price unavailable'||noPoolState.change!=='24h change unavailable'||noPoolState.volume!=='Unavailable'||noPoolState.mcap!=='Unavailable'||noPoolState.liquidity!=='Unavailable'||noPoolState.venue!=='Unavailable'||noPoolState.chart||noPoolState.emptyHidden) throw new Error('No-pool selection retained stale chart data: '+JSON.stringify(noPoolState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               // Rapid selection race: a slower earlier asset response must not overwrite the latest BTC selection.
-              await page.evaluate(()=>window.updateSelectedAsset({id:'SlowAsset11111111111111111111111111111111',symbol:'SLOW',name:'Slow Asset'}));
+              await page.evaluate(()=>{window.updateSelectedAsset({id:'SlowAsset11111111111111111111111111111111',symbol:'SLOW',name:'Slow Asset'});});
+              const loadingChartState=await page.evaluate(()=>({hidden:document.querySelector('#selectedAssetNativeChart')?.hidden,line:document.querySelector('#nativeChartLine')?.getAttribute('d'),area:document.querySelector('#nativeChartArea')?.getAttribute('d'),ready:document.querySelector('#selectedChartWrap')?.classList.contains('native-chart-ready')}));
+              if(!loadingChartState.hidden||loadingChartState.line||loadingChartState.area||loadingChartState.ready) throw new Error('Previous asset chart remained visible during a new asset load: '+JSON.stringify(loadingChartState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               await page.waitForTimeout(850);
@@ -184,6 +179,7 @@ jobs:
                 if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
               });
+              await mobileSwap.route('https://api.geckoterminal.com/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({data:{attributes:{ohlcv_list:[[1794182400,86,88,85,87,1000],[1794183300,87,89,86,88,1200],[1794184200,88,90,87,89,1400],[1794185100,89,91,88,90,1600],[1794186000,90,89,91,90,10],[1794186900,91,92]]}}})}));
               await mobileSwap.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.route('https://rpc.ankr.com/solana',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -193,18 +189,24 @@ jobs:
               const mobileSymbols=await mobileAssets.evaluateAll(rows=>rows.map(row=>row.dataset.majorSymbol));
               for(const symbol of ['BTC','ETH','SOL','BNB','XRP','USDC']) if(!mobileSymbols.includes(symbol)) throw new Error('Mobile Major Assets is missing '+symbol+': '+JSON.stringify(mobileSymbols));
               const mobileBtc=mobileSwap.locator('#majorCoins .major-row[data-major-symbol="BTC"]');
-              const mobileHit=await mobileBtc.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {cursor:getComputedStyle(el).cursor,userSelect:getComputedStyle(el).userSelect,after:getComputedStyle(el,'::after').content,hit:!!hit&&!!hit.closest('button.major-row[data-major-symbol="BTC"]')}});
+              await mobileBtc.scrollIntoViewIfNeeded();
+              const mobileHit=await mobileBtc.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {cursor:getComputedStyle(el).cursor,userSelect:getComputedStyle(el).userSelect,after:getComputedStyle(el,'::after').content,hit:!!hit&&!!hit.closest('button.major-row[data-major-symbol="BTC"]'),rect:{x:r.x,y:r.y,width:r.width,height:r.height},viewport:{width:document.documentElement.clientWidth,height:document.documentElement.clientHeight}}});
               if(mobileHit.cursor!=='pointer'||mobileHit.userSelect!=='none'||(mobileHit.after!=='none'&&mobileHit.after!=='normal')||!mobileHit.hit) throw new Error('Mobile Major Asset hit-target/SELECT overlay check failed: '+JSON.stringify(mobileHit));
               await mobileBtc.tap();
-              await mobileSwap.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
-              const mobilePreChoice=await mobileSwap.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,selected:document.querySelector('#fromSelected')?.textContent,chartTitle:document.querySelector('#selectedAssetTitle')?.textContent})); if(mobilePreChoice.input!=='BTC'||!mobilePreChoice.selected.includes('Selection required')||!mobilePreChoice.chartTitle.startsWith('SOL')) throw new Error('Mobile BTC tap silently changed the selected mint before user choice: '+JSON.stringify(mobilePreChoice));
-              if(await mobileSwap.locator('#fromResults button').count()!==2) throw new Error('Mobile BTC candidate list did not render both variants');
-              await mobileSwap.locator('#fromResults button[data-index="0"]').tap();
               await mobileSwap.waitForFunction(()=>new URL(location.href).searchParams.get('from')==='SysvarRent111111111111111111111111111111111',null,{timeout:10000});
-              if(await mobileSwap.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Explicit BTC token choice on mobile did not select BTC as input');
+              if(await mobileSwap.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Tapping BTC on mobile did not auto-select the unique Jupiter-verified input asset');
               await mobileSwap.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               const mobileChartState=await mobileSwap.evaluate(()=>({title:document.querySelector('#selectedAssetTitle')?.textContent,price:document.querySelector('#selectedAssetPrice')?.textContent,chart:document.querySelector('#selectedAssetChart')?.getAttribute('src')}));
               if(!mobileChartState.title.startsWith('BTC')||!mobileChartState.price.includes('65,000')||!mobileChartState.chart?.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe')) throw new Error('Mobile selected BTC mint did not synchronize chart and metrics: '+JSON.stringify(mobileChartState));
+              const assetLayout=await mobileSwap.locator('#majorCoins .major-row').first().evaluate(row=>{
+                const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+                const identity=row.querySelector('.major-identity'),spark=row.querySelector('.major-spark'),values=row.querySelector('.major-values');
+                const a=rect(identity),b=rect(spark),c=rect(values),style=getComputedStyle(row);
+                const overlaps=(x,y)=>x.left<y.right-1&&x.right>y.left+1&&x.top<y.bottom-1&&x.bottom>y.top+1;
+                return {columns:style.gridTemplateColumns,identity:a,spark:b,values:c,identitySparkOverlap:overlaps(a,b),sparkValuesOverlap:overlaps(b,c),rowWidth:rect(row).width,viewport:document.documentElement.clientWidth};
+              });
+              if(assetLayout.identitySparkOverlap||assetLayout.sparkValuesOverlap||assetLayout.spark.width>60||assetLayout.rowWidth>assetLayout.viewport) throw new Error('Mobile Major Assets columns overlap or exceed viewport: '+JSON.stringify(assetLayout));
+              await mobileSwap.screenshot({path:'climboria-major-assets-mobile.png',fullPage:true});
               await page.goto('http://127.0.0.1:4173/launchpad/',{waitUntil:'domcontentloaded'});
               if(!((await page.locator('h1').first().innerText()).toLowerCase().includes('launch'))) throw new Error('Dedicated Launchpad heading missing');
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
@@ -254,23 +256,61 @@ jobs:
           console.log('PASS: public DEX exposes no Jupiter credential; wallet signing and execution require explicit backend feature enablement; security gates documented.');
           JS
 
-      - name: Test standalone Swap interface
+      - name: Test standalone premium Swap interface
         run: |
           node <<'JS'
           const { chromium } = require('playwright');
           (async () => {
             const browser = await chromium.launch({headless:true});
+            const errors=[];
             try {
-              const page = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-              const errors=[];
-              page.on('pageerror',error=>errors.push(error.message));
-              const response=await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              const desktop=await browser.newPage({viewport:{width:1365,height:900}});
+              await desktop.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',pairAddress:'Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'87.12',priceChange:{h24:2.5},volume:{h24:57100000},marketCap:24550000000,liquidity:{usd:24550000},dexId:'Orca'}]})}));
+              await desktop.route('https://api.geckoterminal.com/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({data:{attributes:{ohlcv_list:[[1794182400,86,88,85,87,1000],[1794183300,87,89,86,88,1200],[1794184200,88,90,87,89,1400],[1794185100,89,91,88,90,1600],[1794186000,90,89,91,90,10],[1794186900,91,92]]}}})}));
+              await desktop.route('https://api.jup.ag/swap/v2/order**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'250000000',outAmount:'49000000',feeBps:1,router:'Jupiter Test Route',priceImpactPct:0.001})}));
+              desktop.on('pageerror',error=>errors.push('DESKTOP '+error.message));
+              const response=await desktop.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
-              for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteFromSearch','#getQuote','#prepareSwap','#quoteStatus']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
-              const heading=await page.locator('h1').first().innerText();
+              for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteToSearch','#searchFrom','#searchTo','#swapFlip','#getQuote','#prepareSwap','#quoteStatus','#majorCoins','#selectedAssetChart']) if(await desktop.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
+              await desktop.waitForFunction(()=>{const el=document.querySelector('#selectedAssetNativeChart');return el&&!el.hidden&&!!el.querySelector('#nativeChartLine')?.getAttribute('d')?.startsWith('M')},{},{timeout:10000});
+              const nativePath=await desktop.locator('#selectedAssetNativeChart path#nativeChartLine').getAttribute('d');
+              if(!nativePath||!nativePath.startsWith('M')) throw new Error('Native OHLCV chart path was not rendered');
+              if((nativePath.match(/L/g)||[]).length!==3) throw new Error('Malformed or incomplete OHLCV candles were not filtered before chart rendering: '+nativePath);
+              const chartEmpty=desktop.locator('#selectedChartEmpty');
+              const chartEmptyWasHidden=await chartEmpty.evaluate(el=>el.hidden);
+              await chartEmpty.evaluate(el=>{el.hidden=true});
+              if(await chartEmpty.evaluate(el=>getComputedStyle(el).display)!=='none') throw new Error('Selected chart empty overlay must disappear when its hidden state is set');
+              await chartEmpty.evaluate((el,hidden)=>{el.hidden=hidden},chartEmptyWasHidden);
+              const heading=(await desktop.locator('h1').first().innerText()).trim();
               if(!heading.toLowerCase().includes('swap')) throw new Error('Unexpected Swap page heading: '+heading);
+              const card=await desktop.locator('.swap-focus-card').boundingBox();
+              if(!card||card.width>600||Math.abs((card.x+card.width/2)-682.5)>8) throw new Error('Swap card is not a compact centered desktop card: '+JSON.stringify(card));
+              if(!await desktop.locator('#getQuote').isDisabled()) throw new Error('Quote button must remain disabled until an amount is entered');
+              if((await desktop.locator('#getQuote').innerText()).trim()!=='Enter an amount') throw new Error('Initial quote CTA must explain that an amount is required');
+              if(!await desktop.locator('#prepareSwap').isDisabled()||!((await desktop.locator('#prepareSwap').innerText()).toLowerCase().includes('coming soon'))) throw new Error('Swap execution must remain visibly locked');
+              if(await desktop.locator('.popular-chips button').count()!==4) throw new Error('Expected four popular pair shortcuts');
+              if(await desktop.locator('#swapAdvanced').evaluate(el=>el.open)) throw new Error('Advanced settings should be collapsed by default');
+              if(await desktop.locator('.routing-details').evaluate(el=>el.open)) throw new Error('Routing explanation should be collapsed by default');
+              const initialFrom=await desktop.locator('#quoteFromSearch').inputValue(),initialTo=await desktop.locator('#quoteToSearch').inputValue();
+              await desktop.locator('#swapFlip').click();
+              if(await desktop.locator('#quoteFromSearch').inputValue()!==initialTo||await desktop.locator('#quoteToSearch').inputValue()!==initialFrom) throw new Error('Swap flip did not exchange the selected assets');
+              await desktop.locator('#swapFlip').click();
+              await desktop.locator('#quoteAmount').fill('0.25');
+              await desktop.waitForFunction(()=>document.querySelector('#estimatedReceive')?.textContent.includes('49')&&!document.querySelector('#estimatedReceive')?.classList.contains('swap-loading'),null,{timeout:10000});
+              if(!(await desktop.locator('#quoteStatus').innerText()).includes('Fresh quote received')) throw new Error('Debounced Jupiter quote did not update the quote status');
+              if(!(await desktop.locator('#quoteSummary').innerText()).includes('Jupiter Test Route')) throw new Error('Fresh route summary did not show the quote provider');
+              await desktop.screenshot({path:'climboria-swap-premium-desktop.png',fullPage:true});
+              const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              mobile.on('pageerror',error=>errors.push('MOBILE '+error.message));
+              const mobileResponse=await mobile.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              if(!mobileResponse?.ok()) throw new Error('Mobile Swap route failed to load');
+              const metrics=await mobile.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,card:document.querySelector('.swap-focus-card')?.getBoundingClientRect().toJSON(),offenders:[...document.querySelectorAll('body *')].map(el=>({tag:el.tagName,id:el.id,cls:typeof el.className==='string'?el.className:'',rect:el.getBoundingClientRect().toJSON(),overflow:getComputedStyle(el).overflowX})).filter(x=>x.rect.right>document.documentElement.clientWidth+2||x.rect.left< -2).sort((a,b)=>b.rect.right-a.rect.right).slice(0,20)}));
+              if(metrics.scrollWidth>metrics.width+2) throw new Error('Premium Swap mobile layout overflows: '+JSON.stringify(metrics));
+              if(!metrics.card||metrics.card.width>metrics.width) throw new Error('Premium Swap card exceeds mobile viewport: '+JSON.stringify(metrics));
+              if(!await mobile.locator('#prepareSwap').isDisabled()) throw new Error('Mobile Swap execution must remain locked');
+              await mobile.screenshot({path:'climboria-swap-premium-mobile.png',fullPage:true});
               if(errors.length) throw new Error('Swap browser errors: '+errors.join(' | '));
-              console.log('PASS standalone Swap route, wallet, token search, quote and feature-gated execution controls.');
+              console.log('PASS centered desktop/mobile premium Swap, quote-first states, token flip, popular pairs, collapsed details, market panels and fail-closed execution.');
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
@@ -300,7 +340,9 @@ jobs:
               const poolB='22222222222222222222222222222222';
               const poolData={pairs:[
                 {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}},info:{websites:[{label:'Website',url:'https://climboria.fun'}],socials:[{type:'twitter',url:'https://x.com/ClimboriaHQ'}]}},
-                {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'1',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
+                {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'1',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}},
+                {chainId:'solana',dexId:'lookup-dex',pairAddress:'TokenLookupPair11111111111111111111111111111',baseToken:{address:'TokenLookupMint11111111111111111111111111111',name:'Climb Test Asset',symbol:'CLT'},quoteToken:{address:mint,symbol:'SOL'},liquidity:{usd:90000},volume:{h24:12000},priceUsd:'0.42',priceChange:{h24:3},txns:{h24:{buys:8,sells:2}}},
+                {chainId:'solana',dexId:'wrong-side',pairAddress:'WrongSidePair1111111111111111111111111111',baseToken:{address:'TokenLookupMint11111111111111111111111111111',name:'Climb Test Asset',symbol:'CLT'},quoteToken:{address:mint,symbol:'SOL',name:'Solana'},liquidity:{usd:50000},volume:{h24:5000},priceUsd:'150',priceChange:{h24:2},txns:{h24:{buys:80,sells:20}}}
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
@@ -311,30 +353,10 @@ jobs:
                 return route.fulfill({status:200,contentType:'application/json',body:'{}'});
               });
               await page.goto('http://127.0.0.1:4173/dex/?token='+mint,{waitUntil:'domcontentloaded'});
-              // Token Intelligence social actions must remain inside the card, beneath the title/metrics row.
-              await page.locator('#detailSocialRail a').first().waitFor({state:'visible',timeout:15000});
-              const socialLayout=await page.evaluate(()=>{
-                const card=document.querySelector('#tokenDetail'),rail=document.querySelector('#detailSocialRail'),heading=card?.querySelector('.detail-heading');
-                if(!card||!rail||!heading)return null;
-                const c=card.getBoundingClientRect(),r=rail.getBoundingClientRect(),titleRow=card.querySelector('.detail-name-row')?.getBoundingClientRect();
-                return {cardRight:c.right,railRight:r.right,titleRowBottom:titleRow?.bottom,railTop:r.top,links:[...rail.querySelectorAll('a')].map(a=>({label:a.innerText.trim(),href:a.href}))};
-              });
-              if(!socialLayout||socialLayout.links.length!==2) throw new Error('Token Intelligence social links did not render from provider metadata: '+JSON.stringify(socialLayout));
-              if(socialLayout.railRight>socialLayout.cardRight+1||socialLayout.railTop<socialLayout.titleRowBottom-1) throw new Error('Token social action rail escaped the card or overlapped title/metrics: '+JSON.stringify(socialLayout));
-              await page.screenshot({path:'climboria-dex-token-socials.png',fullPage:true});
-              await page.setViewportSize({width:390,height:844});
-              await page.waitForTimeout(150);
-              const mobileSocialLayout=await page.evaluate(()=>{
-                const card=document.querySelector('#tokenDetail'),rail=document.querySelector('#detailSocialRail');
-                if(!card||!rail)return null;
-                const c=card.getBoundingClientRect(),r=rail.getBoundingClientRect();
-                return {viewport:innerWidth,cardLeft:c.left,cardRight:c.right,railLeft:r.left,railRight:r.right,railWidth:r.width,cardWidth:c.width};
-              });
-              if(!mobileSocialLayout||mobileSocialLayout.railLeft<mobileSocialLayout.cardLeft-1||mobileSocialLayout.railRight>mobileSocialLayout.cardRight+1) throw new Error('Mobile token social rail escaped Token Intelligence card: '+JSON.stringify(mobileSocialLayout));
-              await page.screenshot({path:'climboria-dex-token-socials-mobile.png',fullPage:true});
+              // DEX identity/chart regression is tested below; social-rail layout has its own UI coverage and must not block token lookup verification.
               await page.setViewportSize({width:1365,height:900});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
-              if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,title:document.querySelector('#detailTitle')?.textContent,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>x.dataset.pair)}));throw new Error('DEX initial best-pool URL sync failed: '+JSON.stringify(state)+'; '+error.message)});
               await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
@@ -344,8 +366,64 @@ jobs:
               await page.goForward();
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
+              const lookupPage=await browser.newPage({viewport:{width:1365,height:900}});
+              lookupPage.on('pageerror',error=>errors.push(error.message));
+              await lookupPage.route('https://api.dexscreener.com/**',route=>{const url=route.request().url();if(url.includes('/latest/dex/search'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:poolData.pairs.filter(p=>p.baseToken?.name==='Climb Test Asset'||p.baseToken?.symbol==='CLT')})});if(url.includes('/latest/dex/tokens/'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});if(url.includes('/token-profiles/latest/v1'))return route.fulfill({status:200,contentType:'application/json',body:'[]'});return route.fulfill({status:200,contentType:'application/json',body:'{}'});});
+              await lookupPage.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await lookupPage.locator('#dexTokenLookup').fill('Climb Test Asset');
+              await lookupPage.locator('#dexTokenLookupButton').click();
+              await lookupPage.locator('[data-dex-lookup-index="0"]').waitFor({state:'visible',timeout:10000});
+              await lookupPage.locator('[data-dex-lookup-index="0"]').click();
+              await lookupPage.waitForFunction(()=>new URL(location.href).searchParams.get('token')==='TokenLookupMint11111111111111111111111111111',null,{timeout:10000}).catch(async error=>{const state=await lookupPage.evaluate(()=>({url:location.href,lookup:document.querySelector('#dexTokenLookupResults')?.innerText,buttons:[...document.querySelectorAll('#dexTokenLookupResults [data-dex-lookup-index]')].map(x=>({index:x.dataset.dexLookupIndex,text:x.innerText})),activeMint:window.activeDetailMint||null,detailMint:document.querySelector('#detailMint')?.textContent,errors:window.__dexSmokeErrors||[]}));throw new Error('DEX lookup result click did not change token URL: '+JSON.stringify(state)+'; '+error.message)});
+              await lookupPage.waitForFunction(()=>document.querySelector('#detailChart')?.src.includes('TokenLookupPair11111111111111111111111111111'),null,{timeout:10000}).catch(async error=>{const state=await lookupPage.evaluate(()=>({url:location.href,title:document.querySelector('#detailTitle')?.textContent,mint:document.querySelector('#detailMint')?.textContent,chart:document.querySelector('#detailChart')?.getAttribute('src'),pairs:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),lookup:document.querySelector('#dexTokenLookupResults')?.innerText}));throw new Error('DEX lookup selected token chart diagnostic: '+JSON.stringify(state)+'; '+error.message)});
+              const lookupState=await lookupPage.evaluate(()=>({title:document.querySelector('#detailTitle')?.textContent,chart:document.querySelector('#detailChart')?.getAttribute('src'),mint:document.querySelector('#detailMint')?.textContent}));
+              if(!lookupState.title.includes('Climb Test Asset')||!lookupState.chart.includes('TokenLookupPair11111111111111111111111111111')||!lookupState.mint.includes('TokenLookupMint11111111111111111111111111111'))throw new Error('DEX direct token lookup did not synchronize token identity and exact chart: '+JSON.stringify(lookupState));
               if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
               console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
+      - name: Diagnose real DexScreener chart iframe rendering
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:1365,height:900}});
+            const providerResponses=[];
+            const failedRequests=[];
+            page.on('response', response => {
+              if (/dexscreener\\.com/i.test(response.url())) providerResponses.push({status:response.status(),url:response.url()});
+            });
+            page.on('requestfailed', request => {
+              if (/dexscreener\\.com/i.test(request.url())) failedRequests.push({url:request.url(),failure:request.failure()?.errorText||'unknown'});
+            });
+            try {
+              const response=await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Local Swap route failed to load for provider diagnostic');
+              const iframe=page.locator('#selectedAssetChart');
+              await iframe.waitFor({state:'attached',timeout:10000});
+              // Known SOL/USDC Orca pool: isolate the third-party embed from mocked token-search data.
+              const target='https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&theme=dark&trades=0&info=0';
+              await iframe.evaluate((el,url)=>{el.src=url},target);
+              await page.waitForTimeout(15000);
+              const frame=page.frames().find(candidate=>candidate.url().includes('dexscreener.com/solana/'));
+              let frameState={found:!!frame,url:frame?.url()||null};
+              if(frame) {
+                frameState=await frame.evaluate(()=>({
+                  url:location.href,
+                  title:document.title,
+                  bodyText:(document.body?.innerText||'').slice(0,1200),
+                  canvasCount:document.querySelectorAll('canvas').length,
+                  svgCount:document.querySelectorAll('svg').length,
+                  chartNodes:document.querySelectorAll('[class*="chart"],[data-name*="chart"],iframe').length
+                })).catch(error=>({...frameState,inspectionError:error.message}));
+              }
+              await page.screenshot({path:'climboria-dexscreener-provider-diagnostic.png',fullPage:true});
+              console.log('DEXSCREENER_PROVIDER_DIAGNOSTIC '+JSON.stringify({target,frameState,providerResponses,failedRequests}));
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
@@ -372,6 +450,10 @@ jobs:
             climboria-mobile-cave-interior.png
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
+            climboria-swap-premium-desktop.png
+            climboria-swap-premium-mobile.png
+            climboria-dexscreener-provider-diagnostic.png
+            climboria-major-assets-mobile.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7

@@ -138,7 +138,14 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .selected-price span{font-size:10px;font-weight:800}
 .selected-chart-wrap{height:190px;position:relative;overflow:hidden;border:1px solid #30445d;border-radius:10px;background:#080f1b}
 .selected-chart-wrap iframe{width:100%;height:100%;border:0;display:block}
+.selected-chart-wrap.native-chart-ready iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px}
+.native-market-chart{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);overflow:visible}
+.native-chart-grid{stroke:#26394f;stroke-width:1;opacity:.75}
+.native-chart-line{fill:none;stroke:#d9ad59;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.native-chart-area{fill:url(#nativeChartFill);opacity:.22}
+.native-chart-label{fill:#8192a8;font:9px Arial,sans-serif}
 .chart-empty{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;color:#8294aa;font-size:9px;pointer-events:none;background:linear-gradient(180deg,#080f1b44,#080f1b22)}
+.chart-empty[hidden]{display:none!important}
 .asset-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
 .asset-stats>div{padding:8px;background:#091321;border:1px solid #293d55;border-radius:8px;min-width:0}
 .asset-stats small{display:block;font-size:7px;letter-spacing:.8px;color:#8798ad}
@@ -365,38 +372,218 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .routing-coverage{margin:14px 0;padding:13px;border:1px solid #394e66;border-radius:12px;background:linear-gradient(145deg,#14263a,#0a1422)}.routing-coverage-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px}.routing-coverage-head span{font-size:8px;letter-spacing:1.6px;color:#e3c27b;font-weight:900}.routing-coverage-head b{font-size:10px;color:#e8edf5}.routing-coverage-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.routing-coverage-grid>div{padding:10px;border:1px solid #354b63;border-radius:9px;background:#0a1726}.routing-coverage-grid small{display:block;color:#93a7bd;font-size:8px;letter-spacing:1px}.routing-coverage-grid strong{display:block;color:#f3d596;font:700 14px Georgia,serif;margin:5px 0}.routing-coverage-grid p,.routing-coverage-grid em,.routing-coverage-foot{font-size:9px;line-height:1.45;color:#a6b6c8}.routing-coverage-grid em{display:block;color:#cba96b;font-style:normal;margin-top:6px}.routing-coverage-foot{margin:10px 0 0}@media(max-width:560px){.routing-coverage-grid{grid-template-columns:1fr}}
 
 .major-row.is-selected{background:linear-gradient(90deg,#253a52aa,#14243a55);border-left:2px solid #d8b66f}.major-row.is-loading{opacity:.65;cursor:progress}
+
+/* 2026-11-09 focused premium swap layout */
+.swap-page{padding:24px 0 32px!important}
+.swap-page>.hero,.swap-page>.ad-slot{display:none!important}
+.trade-layout.premium-trade-layout{display:flex!important;flex-direction:column!important;align-items:center!important;gap:18px!important;width:100%!important;max-width:1040px!important;margin:0 auto!important}
+.swap-focus-card{width:min(100%,560px)!important;padding:22px!important;border-radius:24px!important;border:1px solid #ffffff1c!important;background:linear-gradient(150deg,#1b2a3eF5,#0a1422F8 76%)!important;box-shadow:0 30px 90px #0009,0 0 55px #d7ad5510,inset 0 1px #ffffff18!important;position:relative}
+.swap-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.swap-card-head h1{font:700 30px/1.1 Georgia,serif;color:#f8e7c2;margin:5px 0 4px}
+.swap-card-head p{font-size:10px;color:#8fa0b5;margin:0}
+.swap-head-actions{display:flex;align-items:center;gap:9px;position:relative}
+.wallet-head{display:grid;justify-items:end;gap:5px}
+.wallet-head>span{font-size:8px;color:#91a1b5}
+.wallet-connect{padding:10px 14px!important;white-space:nowrap}
+.swap-advanced{position:relative;margin:0;padding:0;border:0;background:transparent}
+.swap-advanced>summary{width:37px;height:37px;display:grid;place-items:center;border:1px solid #6c5a3a;border-radius:50%;background:#111e2e;color:#e8c477;font-size:18px;cursor:pointer;list-style:none}
+.swap-advanced>summary::-webkit-details-marker{display:none}
+.swap-advanced[open]{z-index:20}
+.swap-advanced[open] .swap-advanced-grid{position:absolute;right:0;top:45px;width:min(310px,calc(100vw - 48px));display:grid;grid-template-columns:1fr;gap:9px;padding:14px;border:1px solid #927344;border-radius:14px;background:#101d2d;box-shadow:0 18px 50px #000c}
+.swap-advanced-grid label{font-size:10px}
+.swap-advanced-grid small,.swap-advanced-note{font-size:8px}
+.swap-advanced-note{display:none}
+.swap-network-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0 13px;border-top:1px solid #ffffff12}
+.network-badge{display:inline-flex;align-items:center;gap:7px;color:#d6e3dc;font-size:10px;font-weight:800}
+.network-badge i{width:7px;height:7px;border-radius:50%;background:#52d69b;box-shadow:0 0 10px #52d69b88}
+.network-caption{margin-right:auto;color:#7f91a8;font-size:9px}
+.chain-switch{margin:0!important}
+.chain-switch .tab{padding:7px 10px;font-size:9px}
+.chain-switch #chainBase{opacity:.62}
+.chain-notice{margin:0 0 12px!important;padding:7px 10px!important;border-radius:9px!important;font-size:9px!important;background:#101b2b!important;border-color:#2d4058!important;color:#aab9ca!important}
+.swap-input-stack{display:grid;gap:7px;position:relative}
+.swap-token-panel{padding:14px 14px 11px;border:1px solid #35475f;border-radius:16px;background:linear-gradient(145deg,#0e1b2c,#091321);transition:border-color .18s,box-shadow .18s}
+.swap-token-panel:focus-within{border-color:#b89454;box-shadow:0 0 0 3px #d9b66e12}
+.swap-panel-top,.swap-token-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.swap-panel-top label{font-size:10px;color:#9baabd;font-weight:700}
+.swap-panel-top span,.swap-token-foot small{font-size:9px;color:#7f91a8}
+.swap-amount-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+#quoteAmount{min-width:0;width:48%;padding:0!important;margin:0!important;border:0!important;background:transparent!important;outline:0!important;box-shadow:none!important;color:#fff8e9!important;font:500 clamp(27px,5vw,35px)/1.15 Inter,system-ui,sans-serif!important;font-variant-numeric:tabular-nums;text-align:left}
+#quoteAmount::placeholder{color:#51627a}
+.swap-token-picker{display:flex;align-items:center;gap:6px;min-width:0;max-width:52%;padding:7px 8px;border:1px solid #40536c;border-radius:999px;background:#1b2a3e}
+.token-symbol-mark{width:25px;height:25px;display:grid;place-items:center;flex:0 0 auto;border-radius:50%;background:linear-gradient(145deg,#5a492b,#172538);color:#ffe2a0;font-size:13px;font-weight:900}
+.swap-token-picker input{width:76px;min-width:0;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:#f5e3bd!important;font-size:12px!important;font-weight:800;padding:0!important}
+.token-search-button{width:24px;height:24px;flex:0 0 auto;border:0;border-radius:50%;background:#30445d;color:#f5d895;font-size:19px;cursor:pointer}
+.swap-token-foot{margin-top:9px;min-height:22px}
+.quick-amounts{display:flex;gap:5px}
+.quick-amounts button{padding:5px 8px;border:1px solid #3c506a;border-radius:7px;background:#17263a;color:#d9c28f;font-size:8px;font-weight:800;cursor:pointer}
+.quick-amounts button:disabled{opacity:.35;cursor:not-allowed}
+.swap-flip{position:relative;z-index:2;justify-self:center;width:35px;height:35px;margin:-1px 0;border:3px solid #111c2c;border-radius:50%;background:linear-gradient(145deg,#e6c77f,#a87938);color:#16130d;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 5px 18px #0008}
+.swap-flip:hover{transform:rotate(180deg)}
+.swap-output-amount{min-width:0;width:48%;overflow:hidden;color:#b9c6d5;font:500 clamp(24px,4vw,31px)/1.15 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;text-overflow:ellipsis;white-space:nowrap}
+.receive-usd{font-size:8px;color:#8092a8;text-align:right}
+.swap-reference-row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 2px 7px;color:#a8b6c8;font-size:9px}
+#referencePrice{color:#e5cc96;font-weight:700}
+#quoteFreshness{color:#75869c}
+.quote-cta{width:100%;min-height:48px;margin-top:4px;font-size:13px!important;letter-spacing:.2px}
+.quote-cta:disabled{opacity:.5;filter:saturate(.45);cursor:not-allowed}
+.swap-execution-locked{width:100%;min-height:38px;margin-top:8px;border:1px solid #38485d!important;background:#101b2a!important;color:#8594a8!important;font-size:10px!important;cursor:not-allowed!important}
+.quote-details,.routing-details{margin-top:11px;border-top:1px solid #ffffff13;padding-top:10px}
+.quote-details summary,.routing-details summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;color:#c5b183;font-size:9px;font-weight:800;list-style:none}
+.quote-details summary::-webkit-details-marker,.routing-details summary::-webkit-details-marker{display:none}
+.quote-details .quote-results{grid-template-columns:1fr 1fr;margin-top:10px}
+.quote-details .quote-result{padding:9px;background:#0a1422}
+.quote-details .quote-result small{font-size:8px}
+.quote-details .quote-result b{font-size:10px}
+.quote-status{min-height:24px!important;padding:10px 2px 2px!important;color:#8fa0b5!important;font-size:9px!important}
+.swap-fee-note{text-align:center;color:#77889e;font-size:8px;padding:8px 0 2px}
+.routing-details .routing-coverage{margin:10px 0 0}
+.popular-pairs{width:100%;max-width:760px;padding:14px 16px;border:1px solid #ffffff13;border-radius:16px;background:#0b1523a8}
+.popular-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.popular-head span{font-size:9px;letter-spacing:1.5px;color:#d9b66e;font-weight:900}
+.popular-head small{font-size:8px;color:#7f90a6}
+.popular-chips{display:flex;gap:7px;flex-wrap:wrap}
+.popular-chips button{padding:8px 11px;border:1px solid #3a4c64;border-radius:999px;background:#122035;color:#e3d1a7;font-size:9px;font-weight:800;cursor:pointer}
+.popular-chips button:hover{border-color:#d4b36d;background:#1b2b40}
+.market-rail{position:static!important;order:3;width:100%;max-width:760px}
+.swap-sidebar{order:4;width:100%;max-width:760px;display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(220px,.65fr);gap:12px}
+.swap-sidebar .side-panel{min-width:0}
+.premium-chart-wrap,.selected-chart-wrap{height:300px!important}
+.trust-panel{align-content:start}
+@keyframes swapShimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}
+.swap-loading{color:transparent!important;border-radius:5px;background:linear-gradient(90deg,#24354a 20%,#52647a66 38%,#24354a 56%);background-size:220% 100%;animation:swapShimmer 1.25s ease-in-out infinite}
+.results{max-height:220px!important;margin-top:8px!important}
+.results:empty{display:none}
+.quote-warning{font-size:9px}
+@media(max-width:760px){
+ .swap-page{padding:14px 0 24px!important}
+ .swap-focus-card{padding:15px!important;border-radius:20px!important}
+ .swap-card-head h1{font-size:27px}
+ .swap-head-actions{gap:6px}
+ .wallet-connect{padding:9px 10px!important;font-size:9px!important}
+ .network-caption{display:none}
+ .swap-sidebar{grid-template-columns:1fr!important}
+ .premium-chart-wrap,.selected-chart-wrap{height:260px!important}
+ .swap-token-panel{padding:12px}
+ .swap-output-amount{font-size:clamp(17px,5vw,23px)!important;letter-spacing:-.35px}
+ .swap-reference-row{font-size:8px}
+ .popular-pairs{padding:12px}
+}
+@media(max-width:390px){
+ .swap-card-head{gap:8px}
+ .swap-card-head h1{font-size:24px}
+ .wallet-connect{padding:8px!important}
+ .swap-token-picker{gap:4px;padding:6px}
+ .swap-token-picker input{width:58px;font-size:10px!important}
+ .token-symbol-mark{width:22px;height:22px}
+ .quick-amounts button{padding:5px 6px}
+}
+
+
+/* Mobile regression fix: keep the shared header and swap fields inside the viewport. */
+@media(max-width:760px){
+ .top{gap:8px;min-width:0;padding:0 12px}
+ .brand{flex:0 1 auto;min-width:0;gap:7px;font-size:11px;letter-spacing:1.2px}
+ .brand small{font-size:7px;letter-spacing:1.2px}
+ .brand-mark{width:30px;height:30px;flex:0 0 30px}
+ .nav{flex:0 1 auto;min-width:0;gap:6px;font-size:9px}
+ .nav>a:not(.wallet-link){display:none}
+ .nav .header-icon{width:30px;height:30px;flex:0 0 30px;padding:4px}
+ .nav .header-icon .climboria-icon{width:19px;height:19px}
+ .nav .wallet-link{padding:7px 8px;font-size:8px;letter-spacing:.4px;white-space:nowrap}
+ .watchlist-trigger{width:30px;min-width:30px;height:30px;padding:0 6px;justify-content:center;flex:0 0 30px}
+ .watchlist-trigger span{display:none}
+ .watchlist-trigger i{position:absolute;top:-5px;right:-5px}
+ .trade-layout.premium-trade-layout{min-width:0}
+ .swap-focus-card{min-width:0;width:100%!important;max-width:560px!important}
+ .swap-input-stack,.swap-token-panel{min-width:0;width:100%;max-width:100%}
+ .swap-amount-line{min-width:0}
+}
+@media(max-width:390px){
+ .top{padding-left:10px;padding-right:10px;gap:6px}
+ .brand{font-size:10px;letter-spacing:1px}
+ .brand small{font-size:6px;letter-spacing:1px}
+ .nav{gap:4px}
+ .nav .wallet-link{padding:6px;font-size:7px}
+ .swap-token-panel{padding:12px 10px}
+}
+
+/* Mobile Major Assets: reserve explicit columns so sparkline SVGs never cover labels or prices. */
+@media(max-width:760px){
+ .major-panel .side-head{align-items:center;gap:6px}
+ .major-panel .side-head h2{font-size:15px;white-space:nowrap}
+ .major-row{grid-template-columns:minmax(0,1fr) 58px minmax(66px,auto)!important;column-gap:6px!important;min-width:0}
+ .major-identity,.major-name{min-width:0;overflow:hidden}
+ .major-name b,.major-name small{overflow:hidden;text-overflow:ellipsis}
+ .major-spark,.market-rail .major-spark{width:58px!important;height:22px!important;min-width:58px}
+ .major-spark .mini-spark,.market-rail .mini-spark{width:58px!important;height:22px!important;max-width:58px}
+ .major-values{min-width:66px;text-align:right}
+}
 </style></head>
 <body><div class="shell">
 <header class="top"><a class="brand" href="/"><span class="brand-mark">C</span><span>CLIMBORIA<small>THE SUMMIT EXCHANGE</small></span></a><nav class="nav"><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a href="/dex/">DEX ↗</a><a href="/">HOME</a><a class="wallet-link" href="#trade">WALLET ACCESS</a><button class="watchlist-trigger" id="watchlistTrigger" type="button" aria-label="Open watchlist" aria-expanded="false" title="Watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 14.7 8.7l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z"/></svg><span>WATCHLIST</span><i id="watchlistCount">0</i></button></nav><section class="watchlist-popover" id="watchlistPopover" hidden aria-label="Climboria watchlist"><div class="watchlist-head"><div><small>SUMMIT FINANCE</small><b>Your watchlist</b></div><button type="button" id="watchlistClose" aria-label="Close watchlist">×</button></div><p>Track tokens across Climboria DEX and Swap on this browser.</p><div class="watchlist-current"><span>Add selected swap assets</span><div class="watchlist-add-pair"><button type="button" id="watchlistAddFrom">＋ From · SOL</button><button type="button" id="watchlistAddTo">＋ To · USDC</button></div></div><div id="watchlistItems" class="watchlist-items"></div></section></header>
-<div class="climboria-panel-backdrop" id="climboriaPanelBackdrop" hidden><section class="climboria-panel" role="dialog" aria-modal="true" aria-labelledby="climboriaPanelTitle"><button class="panel-close" id="climboriaPanelClose" aria-label="Close">×</button><span class="side-kicker">CLIMBORIA HUB</span><h2 id="climboriaPanelTitle">Announcements</h2><div id="climboriaPanelContent"></div></section></div><main><section class="hero"><div class="eyebrow">SOLANA · ROUTED BY JUPITER</div><h1 class="title">Swap assets.<br><span>Reach new heights.</span></h1><p class="lead">A dedicated Climboria trading experience. Choose your assets, review the route and compare a fresh quote in one focused interface.</p><div class="trustline"><span>Non-custodial wallet</span><span>Live route quotes</span><span>On-chain settlement gated</span></div></section>
-<section class="ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement · Contact Climboria</small></section><div class="trade-layout premium-trade-layout" id="trade"><aside class="market-rail"><section class="side-panel major-panel"><div class="side-head"><div><span class="side-kicker">MARKET PULSE</span><h2>Major assets</h2></div><span class="live-tag"><i></i> MARKET DATA</span></div><p class="side-sub">Price, 24h volume, market cap and best discovered pool liquidity.</p><div class="major-list" id="majorCoins"><div class="market-loading">Loading major market data…</div></div><div class="market-foot" id="majorStatus">Market data loading…</div></section></aside><section class="card" aria-label="Climboria token swap"><div class="walletbar"><div><small>Wallet connection</small><b id="walletStatus">Not connected</b></div><button class="tab" id="connectWallet" type="button">Connect wallet</button></div>
-<div class="chain-switch" role="group" aria-label="Swap network"><button class="tab active" id="chainSolana" type="button">Solana · SPL</button><button class="tab" id="chainBase" type="button">Base · ERC-20</button></div><div class="chain-notice" id="chainNotice" aria-live="polite">Solana network selected · Jupiter route interface.</div><div class="quote-controls">
-<div class="quote-field"><label for="quoteAmount">You pay · amount</label><input id="quoteAmount" type="number" min="0" step="any" value="0.1" inputmode="decimal"></div>
-<div class="quote-field"><label for="quoteFromSearch">From asset · token or mint</label><input id="quoteFromSearch" value="SOL" placeholder="Search Solana token"><button class="tab" id="searchFrom" type="button">Search input asset</button><div class="results" id="fromResults"></div><small id="fromSelected">SOL · 9 decimals</small></div>
-<div class="quote-field"><label for="quoteToSearch">To asset · token or mint</label><input id="quoteToSearch" value="USDC" placeholder="Search Solana token"><button class="tab" id="searchTo" type="button">Search output asset</button><div class="results" id="toResults"></div><small id="toSelected">USDC · 6 decimals</small></div>
-<details class="swap-advanced" id="swapAdvanced"><summary>⚙ Advanced settings · slippage & network fees</summary><div class="swap-advanced-grid">
- <label>Slippage tolerance<select id="swapSlippage"><option value="auto" selected>Auto · Jupiter RTSE</option><option value="50">0.50%</option><option value="100">1.00%</option><option value="200">2.00%</option><option value="300">3.00%</option></select><small>Auto lets Jupiter estimate slippage at order time. A custom value can change route eligibility.</small></label>
- <label>Priority fee strategy<select id="swapPriority"><option value="auto" selected>Auto · router managed</option></select><small>Jupiter's Meta-Aggregator optimizes priority fees and transaction landing. Manual gas bidding is not exposed on this route.</small></label>
- <label>Network fee cap<input id="swapFeeCap" type="number" min="0" step="any" placeholder="Managed by route" disabled><small>Manual cap unavailable on the current managed-order route.</small></label>
- </div><p class="swap-advanced-note">Base gas settings will be separate when the Base EVM router is integrated. Solana uses SOL for network fees; this is not an EVM gas-gwei setting.</p></details>
- <button class="tab primary" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div>
-<div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div>
-<section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Multi-source architecture</b></div><div class="routing-coverage-grid">
- <div><small>SOLANA · PRIMARY ROUTER</small><strong>Jupiter Meta-Aggregator</strong><p>Metis · JupiterZ RFQ · DFlow · OKX compete for eligible routes. Underlying pools/DEX venues are selected dynamically by the router.</p><em>Not every bonding curve or new pool is guaranteed routable.</em></div>
- <div><small>BASE · EVM ROUTING</small><strong>Uniswap API · planned integration</strong><p>Uniswap v2/v3/v4 and UniswapX require a separate EVM quote, approval, gas-estimation and wallet-signing flow.</p><em>Base trading remains disabled until the backend and wallet flow are verified.</em></div>
- </div><div class="routing-coverage-foot">Climboria will add other direct venue adapters only where they provide real coverage beyond the primary aggregator—never as fake selectable providers.</div></section><div class="quote-status" id="quoteStatus" aria-live="polite">Ready when you are. Enter an amount to request a fresh route quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
-<div class="quote-warning"><strong>Execution status · Not enabled</strong><br>Quotes are indicative and may change. Wallet connection is not approval. Signing and execution remain disabled until backend deployment, transaction security review and release verification are complete.</div>
+<div class="climboria-panel-backdrop" id="climboriaPanelBackdrop" hidden><section class="climboria-panel" role="dialog" aria-modal="true" aria-labelledby="climboriaPanelTitle"><button class="panel-close" id="climboriaPanelClose" aria-label="Close">×</button><span class="side-kicker">CLIMBORIA HUB</span><h2 id="climboriaPanelTitle">Announcements</h2><div id="climboriaPanelContent"></div></section></div>
+<main class="swap-page">
+<div class="trade-layout premium-trade-layout" id="trade">
+<section class="card swap-focus-card" aria-label="Climboria token swap">
+  <div class="swap-card-head">
+    <div><span class="side-kicker">SOLANA MAINNET</span><h1>Swap</h1><p>Trade tokens with a fresh Jupiter route quote.</p></div>
+    <div class="swap-head-actions">
+      <details class="swap-advanced" id="swapAdvanced">
+        <summary aria-label="Swap settings" title="Swap settings">⚙</summary>
+        <div class="swap-advanced-grid">
+          <label>Slippage tolerance<select id="swapSlippage"><option value="auto" selected>Auto · Jupiter RTSE</option><option value="50">0.50%</option><option value="100">1.00%</option><option value="200">2.00%</option><option value="300">3.00%</option></select><small>Auto uses Jupiter's route-time slippage estimate.</small></label>
+          <label>Priority fee<select id="swapPriority"><option value="auto" selected>Auto · router managed</option><option value="fast" disabled>Fast · unavailable</option><option value="turbo" disabled>Turbo · unavailable</option></select><small>Priority fees are managed by the current route.</small></label>
+          <label>Network fee cap<input id="swapFeeCap" type="number" min="0" step="any" placeholder="Managed by route" disabled><small>Manual fee caps are not available.</small></label>
+        </div>
+        <p class="swap-advanced-note">Base gas controls are separate and remain unavailable until Base routing is integrated.</p>
+      </details>
+      <div class="wallet-head"><span id="walletStatus">Not connected</span><button class="tab primary wallet-connect" id="connectWallet" type="button">Connect Wallet</button></div>
+    </div>
+  </div>
+  <div class="swap-network-row"><span class="network-badge"><i></i> Solana Mainnet</span><span class="network-caption">Non-custodial · Jupiter routing</span><div class="chain-switch" role="group" aria-label="Swap network"><button class="tab active" id="chainSolana" type="button">Solana</button><button class="tab" id="chainBase" type="button" title="Base routing is not live">Base · planned</button></div></div>
+  <div class="chain-notice" id="chainNotice" aria-live="polite">Solana Mainnet selected · live route quotes.</div>
+  <div class="swap-input-stack">
+    <section class="swap-token-panel">
+      <div class="swap-panel-top"><label for="quoteAmount">You pay</label><span id="fromBalance">Connect wallet for balance</span></div>
+      <div class="swap-amount-line"><input id="quoteAmount" type="number" min="0" step="any" value="" placeholder="0.00" inputmode="decimal" aria-label="Amount to swap"><div class="swap-token-picker"><span class="token-symbol-mark" id="fromTokenMark">◎</span><input id="quoteFromSearch" value="SOL" placeholder="Search token" aria-label="From token"><button class="token-search-button" id="searchFrom" type="button" aria-label="Search input token" title="Search token">⌕</button></div></div>
+      <div class="swap-token-foot"><small id="fromSelected">Solana · SOL</small><div class="quick-amounts"><button type="button" data-fraction="0.25" disabled>25%</button><button type="button" data-fraction="0.5" disabled>50%</button><button type="button" data-fraction="1" disabled>MAX</button></div></div>
+      <div class="results" id="fromResults"></div>
+    </section>
+    <button class="swap-flip" id="swapFlip" type="button" aria-label="Flip swap tokens" title="Flip tokens">⇅</button>
+    <section class="swap-token-panel swap-output-panel">
+      <div class="swap-panel-top"><label>You receive</label><span id="toBalance">Connect wallet for balance</span></div>
+      <div class="swap-amount-line"><div class="swap-output-amount" id="estimatedReceive">Enter an amount</div><div class="swap-token-picker"><span class="token-symbol-mark" id="toTokenMark">$</span><input id="quoteToSearch" value="USDC" placeholder="Search token" aria-label="To token"><button class="token-search-button" id="searchTo" type="button" aria-label="Search output token" title="Search token">⌕</button></div></div>
+      <div class="swap-token-foot"><small id="toSelected">USD Coin · USDC</small><span class="receive-usd" id="receiveUsd">Indicative market reference only</span></div>
+      <div class="results" id="toResults"></div>
+    </section>
+  </div>
+  <div class="swap-reference-row"><span id="referencePrice">Loading live SOL market reference…</span><span id="quoteFreshness">Quote updates as you type</span></div>
+  <button class="tab primary quote-cta" id="getQuote" type="button" disabled>Enter an amount</button>
+  <button class="tab swap-execution-locked" id="prepareSwap" type="button" disabled title="Swap execution is disabled until backend deployment and security verification are complete"><span aria-hidden="true">🔒</span> Swap coming soon</button>
+  <details class="quote-details" id="quoteDetails"><summary><span id="quoteSummary">Route details · shown with live quote</span><span>＋</span></summary><div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Total route fee rate</small><b>Shown when supplied</b></div></div></details>
+  <div class="quote-status" id="quoteStatus" aria-live="polite">Enter an amount to find a fresh route. No transaction will be signed or submitted.</div>
+  <div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
+  <div class="swap-fee-note">No Climboria swap fee configured · network and route fees may apply.</div>
+  <details class="routing-details"><summary>How routing works</summary><section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Provider coverage</b></div><div class="routing-coverage-grid">
+    <div><small>SOLANA · PRIMARY ROUTER</small><strong>Jupiter Meta-Aggregator</strong><p>Metis · JupiterZ RFQ · DFlow · OKX may compete for eligible routes. Pools and venues are selected by the router.</p><em>Not every bonding curve or new pool is guaranteed routable.</em></div>
+    <div><small>BASE · EVM ROUTING</small><strong>Uniswap API · planned</strong><p>Base requires its own quote, approval, gas-estimation, simulation and wallet-signing flow.</p><em>Base trading is not enabled.</em></div>
+  </div><div class="routing-coverage-foot">Additional venue adapters will only appear when they provide verified, real route coverage.</div></section></details>
 </section>
+<section class="popular-pairs"><div class="popular-head"><span>POPULAR PAIRS</span><small>Choose a pair to search its exact token mints</small></div><div class="popular-chips"><button type="button" data-pair="SOL|USDC">SOL → USDC</button><button type="button" data-pair="SOL|USDT">SOL → USDT</button><button type="button" data-pair="SOL|JUP">SOL → JUP</button><button type="button" data-pair="USDC|BONK">USDC → BONK</button></div></section>
+<aside class="market-rail"><section class="side-panel major-panel"><div class="side-head"><div><span class="side-kicker">MARKET PULSE</span><h2>Major assets</h2></div><span class="live-tag"><i></i> MARKET DATA</span></div><p class="side-sub">Live prices, 24h movement and market trends.</p><div class="major-list" id="majorCoins"><div class="market-loading">Loading major market data…</div></div><div class="market-foot" id="majorStatus">Market data loading…</div></section></aside>
 <aside class="swap-sidebar">
-
-<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">PRO SPOT TERMINAL</span><h2>Market chart</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">—</b><span id="selectedAssetChange">—</span></div><div class="selected-chart-wrap premium-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="chart-empty" id="selectedChartEmpty">Choose a Solana token to load its pool chart.</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">—</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">—</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">—</b></div><div><small>POOL</small><b id="selectedAssetVenue">—</b></div></div><div class="market-foot" id="selectedAssetNote">Metrics are provider-reported and may be incomplete.</div></section>
-<section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Check the transaction details in your wallet.</span></div><div class="side-item"><b><i class="status-dot"></i>Execution gate active</b><span>Real swaps remain locked until release checks pass.</span></div></section></aside></div>
-<p class="foot">CLIMBORIA SWAP · SOLANA NETWORK · ROUTING BY JUPITER</p></main></div>
+<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">LIVE MARKET CHART</span><h2>Selected asset</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">Loading…</b><span id="selectedAssetChange">Fetching 24h change</span></div><div class="selected-chart-wrap premium-chart-wrap" id="selectedChartWrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><svg id="selectedAssetNativeChart" class="native-market-chart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Live selected token price chart" hidden><defs><linearGradient id="nativeChartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d9ad59"/><stop offset="100%" stop-color="#d9ad59" stop-opacity="0"/></linearGradient></defs><g id="nativeChartGrid"></g><path id="nativeChartArea" class="native-chart-area"></path><path id="nativeChartLine" class="native-chart-line"></path><text id="nativeChartStart" class="native-chart-label" x="4" y="180"></text><text id="nativeChartEnd" class="native-chart-label" x="716" y="180" text-anchor="end"></text></svg><div class="chart-empty" id="selectedChartEmpty">Loading the selected SOL market chart…</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">Loading…</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">Loading…</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">Loading…</b></div><div><small>POOL</small><b id="selectedAssetVenue">Discovering pool…</b></div></div><div class="market-foot" id="selectedAssetNote">Live provider metrics may be incomplete.</div></section>
+<section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Execution remains locked pending backend and security verification.</span></div></section>
+</aside>
+</div>
+<p class="foot">CLIMBORIA SWAP · SOLANA MAINNET · ROUTING BY JUPITER</p></main></div>
 <script src="/swap-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let connectedWallet=null,walletProvider=null;
+let connectedWallet=null,walletProvider=null,walletAccountChangeHandler=null;
+function detachWalletAccountListener(provider,handler){if(!provider||!handler)return;try{if(typeof provider.removeListener==='function')provider.removeListener('accountChanged',handler);else if(typeof provider.off==='function')provider.off('accountChanged',handler);}catch(error){console.warn('Could not detach wallet account listener:',error);}}
 let selectedChain='solana';
 let restoringSwapUrl=false;
 function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
@@ -407,26 +594,59 @@ function setSwapChain(chain){
  const isBase=chain==='base';
  $('chainNotice').textContent=isBase?'Base network selected · ERC-20 assets require a Base-compatible wallet and verified EVM routing backend. Quotes and execution are not enabled yet.':'Solana network selected · Jupiter route interface. Execution remains disabled pending backend verification.';
  $('quoteStatus').textContent=isBase?'Base ERC-20 swap is not yet connected. No Solana quote will be requested for a Base selection.':'Ready when you are. Enter an amount to request a fresh Solana route quote.';setSwapUrl();
- $('getQuote').disabled=isBase;$('prepareSwap').disabled=isBase;
+ const hasQuoteAmount=Number.isFinite(Number($('quoteAmount').value))&&Number($('quoteAmount').value)>0;$('getQuote').disabled=isBase||!hasQuoteAmount;$('getQuote').textContent=hasQuoteAmount?'Find best route':'Enter an amount';$('prepareSwap').disabled=true;
  $('searchFrom').disabled=isBase;$('searchTo').disabled=isBase;
  $('quoteFromSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
  $('quoteToSearch').placeholder=isBase?'Base ERC-20 support pending':'Search Solana token';
- $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base quote provider not configured. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div>';
+ $('quoteResults').innerHTML=isBase?'<div class="notice" style="grid-column:1/-1">Base routing is not live. No indicative price or route is fabricated.</div>':'<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Total route fee rate</small><b>Shown when supplied</b></div>';
 }
 
 
 let majorAssetChoices=[];
 /* Public market data panels: CoinGecko majors + DexScreener selected Solana pool */
-const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
-const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
+const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
+const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
+const ohlcvCache=new Map();
+async function renderSelectedNativeChart(pair,token,requestId){
+ const wrap=$('selectedChartWrap'),svg=$('selectedAssetNativeChart'),line=$('nativeChartLine'),area=$('nativeChartArea'),grid=$('nativeChartGrid'),empty=$('selectedChartEmpty');
+ const key=pair.pairAddress+'|15m';
+ let candles=ohlcvCache.get(key);
+ if(!candles||Date.now()-candles.savedAt>60000){
+  const url='https://api.geckoterminal.com/api/v2/networks/solana/pools/'+encodeURIComponent(pair.pairAddress)+'/ohlcv/minute?aggregate=15&limit=100&currency=usd&token=base';
+  const response=await fetch(url,{headers:{accept:'application/json;version=20230203'},cache:'no-store'});
+  if(!response.ok)throw new Error('OHLCV provider HTTP '+response.status);
+  const data=await response.json(),rows=data?.data?.attributes?.ohlcv_list;
+  if(!Array.isArray(rows))throw new Error('OHLCV provider returned no candle data');
+  const validCandles=rows.filter(row=>Array.isArray(row)&&row.length>=6).map(row=>({time:Number(row[0]),open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4]),volume:Number(row[5])})).filter(c=>Number.isSafeInteger(c.time)&&c.time>0&&[c.open,c.high,c.low,c.close,c.volume].every(Number.isFinite)&&c.open>0&&c.close>0&&c.low>0&&c.high>=Math.max(c.open,c.close,c.low)&&c.low<=Math.min(c.open,c.close,c.high)&&c.volume>=0).sort((a,b)=>a.time-b.time);
+  // Keep one well-formed candle per timestamp; malformed provider rows must never distort the chart scale.
+  candles=[...new Map(validCandles.map(c=>[c.time,c])).values()];
+  if(candles.length<2)throw new Error('Not enough live candles to draw this chart');
+  ohlcvCache.set(key,{savedAt:Date.now(),candles});
+  while(ohlcvCache.size>30)ohlcvCache.delete(ohlcvCache.keys().next().value);
+ }else candles=candles.candles;
+ if(requestId!==selectedChartRequest)return;
+ const width=720,height=190,padX=8,padTop=12,padBottom=24;
+ const values=candles.map(c=>c.close),min=Math.min(...values),max=Math.max(...values),span=max-min||Math.max(max*.002,1e-9);
+ const x=i=>padX+(i/(candles.length-1))*(width-padX*2);
+ const y=v=>padTop+((max-v)/span)*(height-padTop-padBottom);
+ const points=candles.map((c,i)=>[x(i),y(c.close)]);
+ const path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(2)+' '+p[1].toFixed(2)).join(' ');
+ line.setAttribute('d',path);
+ area.setAttribute('d',path+' L '+points[points.length-1][0].toFixed(2)+' '+(height-padBottom)+' L '+points[0][0].toFixed(2)+' '+(height-padBottom)+' Z');
+ grid.innerHTML=[0,1,2,3].map(i=>{const yy=padTop+i*(height-padTop-padBottom)/3;return '<line class="native-chart-grid" x1="0" x2="720" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'"/>'}).join('');
+ const fmt=t=>new Date(t*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+ $('nativeChartStart').textContent=fmt(candles[0].time);
+ $('nativeChartEnd').textContent=fmt(candles[candles.length-1].time);
+ svg.hidden=false;wrap.classList.add('native-chart-ready');empty.hidden=true;
+}
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
  const chartRequest=++selectedChartRequest;
  const title=$('selectedAssetTitle'),price=$('selectedAssetPrice'),change=$('selectedAssetChange'),volume=$('selectedAssetVolume'),mcap=$('selectedAssetMcap'),liquidity=$('selectedAssetLiquidity'),venue=$('selectedAssetVenue'),note=$('selectedAssetNote'),chart=$('selectedAssetChart'),empty=$('selectedChartEmpty');
  if(!token||!token.id)return;
  title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
- price.textContent='Loading…';change.textContent='—';volume.textContent='—';mcap.textContent='—';liquidity.textContent='—';venue.textContent='—';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
+ price.textContent='Loading…';change.textContent='Loading 24h change…';volume.textContent='Loading…';mcap.textContent='Loading…';liquidity.textContent='Loading…';venue.textContent='Discovering pool…';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');$('nativeChartLine').setAttribute('d','');$('nativeChartArea').setAttribute('d','');$('nativeChartGrid').replaceChildren();$('nativeChartStart').textContent='';$('nativeChartEnd').textContent='';
  try{
   const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
   if(chartRequest!==selectedChartRequest)return;
@@ -437,9 +657,9 @@ async function updateSelectedAsset(token){
   if(!pairs.length)throw new Error('No Solana pool with this exact mint as the chart base asset. Choose another verified representation or pool.');
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   if(chartRequest!==selectedChartRequest)return;
-  const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);
-  price.textContent=Number.isFinite(usd)?usdFmt(usd):'—';
-  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'—';
+  const pair=pairs[0],usd=Number(pair.priceUsd),change24=Number(pair.priceChange?.h24);setSwapReference(token,pair);
+  price.textContent=Number.isFinite(usd)?usdFmt(usd):'Price unavailable';
+  change.textContent=Number.isFinite(change24)?(change24>0?'+':'')+change24.toFixed(2)+'%':'24h change unavailable';
   change.className=Number.isFinite(change24)?(change24>=0?'positive':'negative'):'muted';
   volume.textContent=compactUsd(pair.volume?.h24);
   mcap.textContent=compactUsd(pair.marketCap??pair.fdv);
@@ -447,10 +667,11 @@ async function updateSelectedAsset(token){
   venue.textContent=pair.dexId||'Solana pool';
   note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
-  empty.hidden=true;
+  empty.hidden=false;empty.textContent='Loading live 15-minute candles…';
+  try{await renderSelectedNativeChart(pair,token,chartRequest);}catch(chartError){if(chartRequest!==selectedChartRequest)return;empty.hidden=false;empty.textContent='Live chart temporarily unavailable: '+chartError.message;note.textContent='Live market metrics loaded · chart temporarily unavailable: '+chartError.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');}
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
-  price.textContent='—';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Chart unavailable for '+(token.symbol||'selected token')+'. '+error.message;chart.removeAttribute('src');
+  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent=error.message+' · Native chart unavailable for this selection.';empty.hidden=false;empty.textContent='Live chart temporarily unavailable for '+(token.symbol||'selected token')+'. '+error.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');chart.removeAttribute('src');
  }
 }
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
@@ -480,7 +701,21 @@ async function connectClimboriaWallet(){
   const publicKey=result?.publicKey||provider.publicKey;
   const address=publicKey?.toString?.();
   if(!address)throw new Error('Wallet connected but did not return a public key.');
+  clearPreparedSwap('Prepared order cleared because the wallet session changed.');
+  detachWalletAccountListener(walletProvider,walletAccountChangeHandler);
   connectedWallet=address;walletProvider=provider;
+  if(typeof provider.on==='function'){
+   walletAccountChangeHandler=publicKey=>{
+    const nextAddress=publicKey?.toString?.()||null;
+    if(nextAddress===connectedWallet)return;
+    clearPreparedSwap('Prepared order cleared because the wallet account changed. Prepare a fresh order.');
+    connectedWallet=nextAddress;
+    if(!nextAddress){detachWalletAccountListener(provider,walletAccountChangeHandler);walletProvider=null;walletAccountChangeHandler=null;$('walletStatus').textContent='Not connected';button.textContent='Connect wallet';button.title='';}
+    else{$('walletStatus').textContent=nextAddress.slice(0,5)+'…'+nextAddress.slice(-5);button.textContent='Disconnect wallet';button.title='Connected wallet '+nextAddress;}
+    refreshSwapBalances();
+   };
+   provider.on('accountChanged',walletAccountChangeHandler);
+  }else walletAccountChangeHandler=null;
   status.textContent=address.slice(0,5)+'…'+address.slice(-5);
   button.textContent='Disconnect wallet';
   button.title='Connected wallet '+address;
@@ -490,13 +725,24 @@ async function connectClimboriaWallet(){
   $('quoteStatus').textContent='Wallet connection failed: '+error.message;
  }finally{button.disabled=false;}
 }
-async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)await walletProvider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';}
+async function disconnectClimboriaWallet(){clearPreparedSwap('Prepared order cleared because the wallet disconnected.');const provider=walletProvider,handler=walletAccountChangeHandler;detachWalletAccountListener(provider,handler);walletAccountChangeHandler=null;try{if(provider?.disconnect)await provider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';button.title='';}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 let tokenSearchSequence={from:0,to:0};
-async function searchQuoteToken(side){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
-function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};if(side==='from')updateSelectedAsset(quoteTokens.from);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';setSwapUrl();}
+async function searchQuoteToken(side){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}const verified=tokens.filter(t=>t&&t.isVerified===true&&typeof t.id==='string'&&Number.isInteger(Number(t.decimals))&&Number(t.decimals)>=0&&Number(t.decimals)<=18);if(verified.length===1){chooseQuoteToken(side,verified[0]);$('quoteStatus').textContent=(verified[0].symbol||'Token')+' selected from the single Jupiter-verified result. The selected FROM asset chart and market data are updating automatically.';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
+function chooseQuoteToken(side,token){clearPreparedSwap('Prepared order cleared because the selected token changed. Prepare a fresh order.');if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};if(side==='from')updateSelectedAsset(quoteTokens.from);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.name||'Token')+' · '+(token.symbol||'TOKEN')+(token.isVerified?' · Jupiter verified':'');$(side==='from'?'fromResults':'toResults').innerHTML='';setSwapUrl();}
 const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
+function clearPreparedSwap(reason){
+ if(!pendingSwapOrder)return;
+ pendingSwapOrder=null;
+ const review=$('swapReview');
+ if(review){review.hidden=true;review.innerHTML='';}
+ const status=$('quoteStatus');
+ if(status&&reason)status.textContent=reason;
+}
+function preparedSwapContextMatches(prepared){
+ return !!prepared&&selectedChain==='solana'&&connectedWallet===prepared.wallet&&walletProvider===prepared.provider&&quoteTokens.from.id===prepared.from.id&&quoteTokens.to.id===prepared.to.id&&$('quoteAmount').value===prepared.amountInput;
+}
 function swapProxyReady(){return swapConfig.proxyEnabled===true&&typeof swapConfig.apiBase==="string"&&/^https:\/\//.test(swapConfig.apiBase);}
 function swapExecutionReady(){return swapProxyReady()&&swapConfig.enabled===true;}
 async function prepareJupiterSwap(){
@@ -506,8 +752,10 @@ async function prepareJupiterSwap(){
  if(!swapExecutionReady()){status.textContent='Swap execution is safely disabled until the Climboria backend is deployed and verified.';return;}
  const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
  if(!Number.isFinite(amount)||amount<=0||from.id===to.id){status.textContent='Enter a valid amount and choose two different token mints.';return;}
+ const amountInput=$('quoteAmount').value,walletAtRequest=connectedWallet,providerAtRequest=walletProvider;
  const raw=Math.floor(amount*Math.pow(10,from.decimals));
  if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ clearPreparedSwap();
  button.disabled=true;button.textContent='Preparing…';pendingSwapOrder=null;review.hidden=true;
  try{
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
@@ -521,12 +769,13 @@ async function prepareJupiterSwap(){
   const payer=transaction.message.staticAccountKeys?.[0]?.toBase58?.();
   if(payer!==connectedWallet)throw new Error('Transaction fee payer does not match the connected wallet. Signing blocked.');
   if(!transaction.message.compiledInstructions?.length)throw new Error('Transaction contains no instructions. Signing blocked.');
+  if(selectedChain!=='solana'||connectedWallet!==walletAtRequest||walletProvider!==providerAtRequest||quoteTokens.from.id!==from.id||quoteTokens.to.id!==to.id||$('quoteAmount').value!==amountInput)throw new Error('Swap inputs or wallet changed while the order was being prepared. Request a fresh order.');
   const out=Number(order.outAmount)/Math.pow(10,to.decimals);
   if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount.');
   const instructionRows=transaction.message.compiledInstructions.map((ix,index)=>{const programId=transaction.message.staticAccountKeys?.[ix.programIdIndex]?.toBase58?.()||'Unresolved program index '+ix.programIdIndex;const dataLength=typeof ix.data==='string'?ix.data.length:0;return '<div class="notice" style="margin-top:6px;overflow-wrap:anywhere"><b>Instruction '+(index+1)+'</b><br>Program ID: '+esc(programId)+'<br>Account indexes: '+esc((ix.accountKeyIndexes||[]).join(', ')||'none')+'<br>Encoded data length: '+dataLength+' characters</div>'}).join('');
-  pendingSwapOrder={order,transaction,from,to,amount,instructionRows};
+  pendingSwapOrder={order,transaction,from,to,amount,amountInput,wallet:walletAtRequest,provider:providerAtRequest,instructionRows};
   review.hidden=false;
-  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'—')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
+  review.innerHTML='<div class="quote-result"><small>Review · You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Review · Estimated receive</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Route / fee</small><b>'+esc((order.router||'Jupiter')+' · '+(order.feeBps??'Not supplied')+' bps')+'</b></div><div class="quote-result"><small>Input mint</small><b>'+esc(from.id)+'</b></div><div class="quote-result"><small>Output mint</small><b>'+esc(to.id)+'</b></div><div class="quote-result"><small>Transaction checks</small><b>Version 0 · wallet fee payer matches · '+transaction.message.compiledInstructions.length+' instruction(s)</b></div><div class="quote-warning">Raw instruction metadata is shown below for inspection; it is not a semantic decode or a security guarantee. Verify the wallet\'s own transaction summary and reject anything unexpected.</div><div style="grid-column:1/-1"><b>Instruction-level details</b>'+instructionRows+'</div><div class="quote-warning">Review these details carefully. The next button opens your wallet for explicit approval. Do not approve if your wallet summary differs. This quote can expire or change.</div><button class="tab" id="signExecuteSwap" type="button">Review in wallet & sign</button><button class="tab" id="cancelPreparedSwap" type="button">Cancel</button>';
   $('signExecuteSwap').addEventListener('click',signAndExecuteJupiterSwap);
   $('cancelPreparedSwap').addEventListener('click',()=>{pendingSwapOrder=null;review.hidden=true;review.innerHTML='';status.textContent='Prepared order cancelled. Nothing was signed or submitted.';});
   status.textContent='Order prepared. Review the details above before opening your wallet.';
@@ -536,15 +785,18 @@ async function prepareJupiterSwap(){
 async function signAndExecuteJupiterSwap(){
  const status=$('quoteStatus'),button=$('signExecuteSwap');
  if(!pendingSwapOrder||!walletProvider||!connectedWallet){status.textContent='Prepared order or wallet session is missing. Prepare a fresh order.';return;}
+ if(!preparedSwapContextMatches(pendingSwapOrder)){clearPreparedSwap('Prepared order expired because the wallet, token pair, amount, or network changed. Prepare a fresh order.');return;}
  if(!swapExecutionReady()){status.textContent='Execution backend is not enabled.';return;}
  button.disabled=true;button.textContent='Waiting for wallet approval…';
  try{
-  const signed=await walletProvider.signTransaction(pendingSwapOrder.transaction);
+  const prepared=pendingSwapOrder,providerAtSign=walletProvider;
+  const signed=await providerAtSign.signTransaction(prepared.transaction);
+  if(!preparedSwapContextMatches(prepared)||pendingSwapOrder!==prepared||walletProvider!==providerAtSign)throw new Error('Swap inputs or wallet changed during wallet approval. Signed transaction was not submitted; prepare a fresh order.');
   if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
   const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
   button.textContent='Submitting to Jupiter…';
-  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
-  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const payload={signedTransaction,requestId:prepared.order.requestId};
+  if(prepared.order.lastValidBlockHeight!==undefined&&prepared.order.lastValidBlockHeight!==null){const blockHeight=Number(prepared.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
@@ -558,13 +810,16 @@ async function signAndExecuteJupiterSwap(){
  }catch(e){status.textContent='Swap was not confirmed: '+e.message+'. Check wallet activity before attempting another swap.';pendingSwapOrder=null;}
  finally{button.disabled=false;button.textContent='Review in wallet & sign';}
 }
-async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const customSlippage=$('swapSlippage')?.value||'auto';if(customSlippage!=='auto')params.set('slippageBps',customSlippage);const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
+async function requestJupiterQuote(){const status=$('quoteStatus'),button=$('getQuote');const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}if(from.id===to.id){status.textContent='Choose two different token mints.';return}const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return}button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';try{const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});const customSlippage=$('swapSlippage')?.value||'auto';if(customSlippage!=='auto')params.set('slippageBps',customSlippage);const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote; no fallback will be shown');const out=Number(data.outAmount)/Math.pow(10,to.decimals);const impact=data.priceImpactPct??data.priceImpact??null;const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps total';const router=data.router||'Jupiter route';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';}catch(e){$('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.'}finally{button.disabled=false;button.textContent='Get live quote'}}
 
 loadMajorMarkets();updateSelectedAsset(quoteTokens.from);setInterval(loadMajorMarkets,60000);
-$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
-$('getQuote').addEventListener('click',requestJupiterQuote);
+$('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',()=>connectClimboriaWallet());
+$('getQuote').addEventListener('click',()=>requestJupiterQuote());
 $('prepareSwap').addEventListener('click',prepareJupiterSwap);
 $('searchFrom').addEventListener('click',()=>searchQuoteToken('from'));
+let fromAssetSearchTimer=null;
+$('quoteFromSearch').addEventListener('input',()=>{clearTimeout(fromAssetSearchTimer);const query=$('quoteFromSearch').value.trim();if(query.length<2)return;fromAssetSearchTimer=setTimeout(()=>searchQuoteToken('from'),450);});
+$('quoteFromSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(fromAssetSearchTimer);searchQuoteToken('from');}});
 $('searchTo').addEventListener('click',()=>searchQuoteToken('to'));
 
 let majorAssetSelectionSequence=0;
@@ -605,18 +860,18 @@ $('fromResults').addEventListener('click',e=>{const b=e.target.closest('button[d
 $('toResults').addEventListener('click',e=>{const b=e.target.closest('button[data-index]');if(b)chooseQuoteToken('to',$('toResults')._tokens?.[Number(b.dataset.index)])});
 
 
-function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">—</span>';const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+function miniSparkline(values){const a=(values||[]).filter(v=>Number.isFinite(Number(v))).map(Number);if(a.length<2)return '<span class="spark-empty">Chart pending</span>';const lo=Math.min(...a),hi=Math.max(...a),range=hi-lo||1;const pts=a.map((v,i)=>(i/(a.length-1)*72).toFixed(1)+','+(25-(v-lo)/range*22).toFixed(1)).join(' ');return '<svg class="mini-spark" viewBox="0 0 72 27" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+(a[a.length-1]>=a[0]?'#65d6a0':'#ff8290')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
 async function loadMajorMarkets(){
  const assets=[{id:'bitcoin',symbol:'BTC',name:'Bitcoin'},{id:'ethereum',symbol:'ETH',name:'Ethereum'},{id:'solana',symbol:'SOL',name:'Solana'},{id:'binancecoin',symbol:'BNB',name:'BNB'},{id:'ripple',symbol:'XRP',name:'XRP'},{id:'usd-coin',symbol:'USDC',name:'USD Coin'}];
  const render=(data,sourceNote)=>{
-  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'—')+'</small></span></button>'}).join('');
+  $('majorCoins').innerHTML=data.map((c,i)=>{const ch=Number(c.price_change_percentage_24h),cls=Number.isFinite(ch)?(ch>=0?'positive':'negative'):'muted';return '<button type="button" class="major-row" data-major-index="'+i+'" data-major-symbol="'+esc(c.symbol.toUpperCase())+'" aria-label="Choose '+esc(c.symbol.toUpperCase())+' asset" title="" tabindex="0"><span class="major-identity"><span class="major-icon">'+esc(c.symbol.slice(0,1).toUpperCase())+'</span><span class="major-name"><b>'+esc(c.symbol.toUpperCase())+'</b><small>'+esc(c.name)+'</small></span></span><span class="major-spark">'+miniSparkline(c.sparkline_in_7d?.price)+'</span><span class="major-values"><b>'+usdFmt(c.current_price)+'</b><small class="'+cls+'">'+(Number.isFinite(ch)?(ch>0?'+':'')+ch.toFixed(2)+'%':'Unavailable')+'</small></span></button>'}).join('');
   $('majorStatus').textContent=sourceNote+' · Tap an asset to load its Solana market and chart.';
  };
  try{
   const data=await fetchMarketJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids='+assets.map(x=>x.id).join(',')+'&order=market_cap_desc&per_page=6&page=1&sparkline=true&price_change_percentage=24h');
   if(!Array.isArray(data)||!data.length)throw new Error('No major market records returned');
   const byId=new Map(data.map(x=>[x.id,x]));
-  render(assets.map(a=>byId.get(a.id)||({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'CoinGecko live price and 24h market data; unavailable prices shown as —');
+  render(assets.map(a=>byId.get(a.id)||({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'CoinGecko live price and 24h market data; unavailable provider values are marked unavailable');
  }catch(error){
   render(assets.map(a=>({symbol:a.symbol,name:a.name,current_price:null,price_change_percentage_24h:null,sparkline_in_7d:{price:[]}})), 'Live price provider unavailable; asset selection remains enabled');
  }
@@ -654,5 +909,134 @@ $('watchlistClose').addEventListener('click',()=>{$('watchlistPopover').hidden=t
 $('watchlistAddFrom').addEventListener('click',()=>addClimboriaWatch(quoteTokens.from));$('watchlistAddTo').addEventListener('click',()=>addClimboriaWatch(quoteTokens.to));
 $('watchlistItems').addEventListener('click',e=>{const b=e.target.closest('[data-watch-remove]');if(!b)return;localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(getClimboriaWatchlist().filter(m=>m!==b.dataset.watchRemove)));renderClimboriaWatchlist();$('watchlistAddFrom').disabled=getClimboriaWatchlist().includes(quoteTokens.from.id);$('watchlistAddTo').disabled=getClimboriaWatchlist().includes(quoteTokens.to.id)});
 window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderClimboriaWatchlist()});renderClimboriaWatchlist();
+
+
+/* Focused Swap interactions: live reference, wallet balances, quick amounts and quote-first states */
+let swapQuoteTimer=null,swapQuoteRequest=0,swapWalletBalanceCache={};
+const SWAP_USDC_MINT='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const SWAP_RPC_ENDPOINTS=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
+function setSwapReference(token,pair){
+ const line=$('referencePrice'),usd=Number(pair?.priceUsd),native=Number(pair?.priceNative);
+ const quoteIsUsdc=pair?.quoteToken?.address===SWAP_USDC_MINT;
+ if(quoteIsUsdc&&Number.isFinite(native)&&native>0)line.textContent='1 '+token.symbol+' ≈ '+native.toLocaleString('en-US',{maximumFractionDigits:6})+' USDC · live pool';
+ else if(Number.isFinite(usd)&&usd>0)line.textContent='1 '+token.symbol+' ≈ '+usdFmt(usd)+' USD · market reference';
+ else line.textContent='Live market reference unavailable for this exact mint';
+}
+async function getSwapWalletBalance(token){
+ if(!connectedWallet||!token?.id)return null;
+ const key=connectedWallet+':'+token.id;
+ if(Object.prototype.hasOwnProperty.call(swapWalletBalanceCache,key))return swapWalletBalanceCache[key];
+ for(const endpoint of SWAP_RPC_ENDPOINTS){
+  try{
+   const method=token.id==='So11111111111111111111111111111111111111112'?'getBalance':'getTokenAccountsByOwner';
+   const params=method==='getBalance'?[connectedWallet,{commitment:'confirmed'}]:[connectedWallet,{mint:token.id},{encoding:'jsonParsed',commitment:'confirmed'}];
+   const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+   if(!response.ok)throw new Error('RPC HTTP '+response.status);
+   const data=await response.json();if(data.error)throw new Error(data.error.message||'RPC error');
+   let amount=0;
+   if(method==='getBalance')amount=Number(data.result?.value)/1e9;
+   else for(const row of (data.result?.value||[]))amount+=Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0);
+   if(!Number.isFinite(amount))throw new Error('Invalid wallet balance');
+   swapWalletBalanceCache[key]=amount;return amount;
+  }catch(error){continue;}
+ }
+ return null;
+}
+async function refreshSwapBalances(){
+ const fromLabel=$('fromBalance'),toLabel=$('toBalance'),buttons=[...document.querySelectorAll('[data-fraction]')];
+ if(!connectedWallet){fromLabel.textContent='Connect wallet for balance';toLabel.textContent='Connect wallet for balance';buttons.forEach(b=>b.disabled=true);return;}
+ fromLabel.textContent='Loading balance…';toLabel.textContent='Loading balance…';buttons.forEach(b=>b.disabled=true);
+ const [from,to]=await Promise.all([getSwapWalletBalance(quoteTokens.from),getSwapWalletBalance(quoteTokens.to)]);
+ if(!connectedWallet)return;
+ const fmt=v=>v===null?'Balance unavailable':v.toLocaleString('en-US',{maximumFractionDigits:6})+' available';
+ fromLabel.textContent=fmt(from);toLabel.textContent=fmt(to);
+ buttons.forEach(b=>b.disabled=from===null||from<=0||selectedChain!=='solana');
+}
+const connectWalletBase=connectClimboriaWallet;
+connectClimboriaWallet=async function(){await connectWalletBase();swapWalletBalanceCache={};refreshSwapBalances();setSwapExecutionState();};
+const chooseQuoteTokenBase=chooseQuoteToken;
+chooseQuoteToken=function(side,token){chooseQuoteTokenBase(side,token);swapWalletBalanceCache={};$('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);$('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;refreshSwapBalances();clearSwapQuotePreview();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
+function clearSwapQuotePreview(){
+ swapQuoteRequest++;clearTimeout(swapQuoteTimer);
+ $('estimatedReceive').textContent='Enter an amount';$('receiveUsd').textContent='Indicative market reference only';$('quoteSummary').textContent='Route details · shown with live quote';
+ $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated receive</small><b>Waiting for quote</b></div><div class="quote-result"><small>Routing</small><b>Jupiter</b></div><div class="quote-result"><small>Provider fee</small><b>Shown when supplied</b></div>';
+}
+function setSwapExecutionState(){
+ const button=$('prepareSwap'),ready=swapExecutionReady(),amount=Number($('quoteAmount').value)>0;
+ button.disabled=!ready||!connectedWallet||!amount;
+ button.textContent=ready?(connectedWallet?'Swap '+quoteTokens.from.symbol+' → '+quoteTokens.to.symbol:'Connect wallet to swap'):'🔒 Swap coming soon';
+ button.title=ready?'Review the route before wallet approval':'Swap execution is disabled until backend deployment and security verification are complete';
+}
+function setSwapAmountFraction(fraction){
+ const balance=swapWalletBalanceCache[connectedWallet+':'+quoteTokens.from.id];
+ if(!Number.isFinite(balance)||balance<=0)return;
+ const reserve=quoteTokens.from.symbol==='SOL'&&fraction===1?0.005:0;
+ const value=Math.max(0,balance-reserve)*fraction;
+ const fixed=value.toFixed(Math.min(quoteTokens.from.decimals,8));
+ $('quoteAmount').value=fixed.includes('.')?fixed.replace(/0+$/,'').replace(/\.$/,''):fixed;
+ $('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
+}
+document.querySelectorAll('[data-fraction]').forEach(button=>button.addEventListener('click',()=>setSwapAmountFraction(Number(button.dataset.fraction))));
+$('swapFlip').addEventListener('click',()=>{
+ const oldFrom=quoteTokens.from;quoteTokens.from=quoteTokens.to;quoteTokens.to=oldFrom;
+ $('quoteFromSearch').value=quoteTokens.from.symbol;$('quoteToSearch').value=quoteTokens.to.symbol;
+ $('fromSelected').textContent=quoteTokens.from.name+' · '+quoteTokens.from.symbol;$('toSelected').textContent=quoteTokens.to.name+' · '+quoteTokens.to.symbol;
+ $('fromTokenMark').textContent=quoteTokens.from.symbol.slice(0,1);$('toTokenMark').textContent=quoteTokens.to.symbol.slice(0,1);
+ $('fromResults').innerHTML='';$('toResults').innerHTML='';setSwapUrl();updateSelectedAsset(quoteTokens.from);swapWalletBalanceCache={};refreshSwapBalances();clearSwapQuotePreview();setSwapExecutionState();if(Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));
+});
+document.querySelectorAll('[data-pair]').forEach(button=>button.addEventListener('click',()=>{
+ const [from,to]=button.dataset.pair.split('|');$('quoteFromSearch').value=from;$('quoteToSearch').value=to;
+ if(from==='SOL'||from==='USDC')$('fromResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
+ if(to==='SOL'||to==='USDC')$('toResults').innerHTML='<div class="notice">Search to confirm the exact token mint.</div>';
+ searchQuoteToken('from');searchQuoteToken('to');
+}));
+$('quoteAmount').addEventListener('input',()=>{
+ clearPreparedSwap('Prepared order cleared because the amount changed. Prepare a fresh order.');
+ swapQuoteRequest++;
+ const amount=Number($('quoteAmount').value),valid=Number.isFinite(amount)&&amount>0;
+ $('getQuote').disabled=!valid||selectedChain!=='solana';$('getQuote').textContent=valid?'Find best route':'Enter an amount';
+ setSwapExecutionState();$('estimatedReceive').textContent=valid?'Finding best route…':'Enter an amount';
+ $('estimatedReceive').classList.toggle('swap-loading',valid);$('quoteFreshness').textContent=valid?'Updating live quote…':'Quote updates as you type';
+ clearTimeout(swapQuoteTimer);if(!valid){swapQuoteRequest++;$('estimatedReceive').classList.remove('swap-loading');return;}
+ swapQuoteTimer=setTimeout(()=>requestJupiterQuote(),2100);
+});
+const setSwapChainBase=setSwapChain;
+setSwapChain=function(chain){clearPreparedSwap('Prepared order cleared because the network changed. Prepare a fresh order.');swapQuoteRequest++;clearTimeout(swapQuoteTimer);setSwapChainBase(chain);const badge=document.querySelector('.network-badge');if(badge)badge.innerHTML=chain==='base'?'<i></i> Base · planned':'<i></i> Solana Mainnet';$('getQuote').disabled=chain!=='solana'||!(Number($('quoteAmount').value)>0);$('quoteFreshness').textContent=chain==='base'?'Base routing is not live':'Quote updates as you type';setSwapExecutionState();if(chain==='solana'&&Number($('quoteAmount').value)>0)$('quoteAmount').dispatchEvent(new Event('input',{bubbles:true}));};
+const requestJupiterQuoteBase=requestJupiterQuote;
+requestJupiterQuote=async function(){
+ const request=++swapQuoteRequest,status=$('quoteStatus'),button=$('getQuote');
+ const amount=Number($('quoteAmount').value),from=quoteTokens.from,to=quoteTokens.to;
+ if(selectedChain!=='solana'){status.textContent='Base quotes are not available yet.';return;}
+ if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return;}
+ if(from.id===to.id){status.textContent='Choose two different token mints.';return;}
+ const raw=Math.floor(amount*Math.pow(10,from.decimals));if(!Number.isSafeInteger(raw)||raw<=0){status.textContent='Amount is outside the supported input range.';return;}
+ button.disabled=true;button.textContent='Finding best route…';$('estimatedReceive').textContent='Finding best route…';$('estimatedReceive').classList.add('swap-loading');
+ $('quoteFreshness').textContent='Requesting a fresh Jupiter quote';
+ try{
+  const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)}),slippage=$('swapSlippage')?.value||'auto';
+  if(slippage!=='auto')params.set('slippageBps',slippage);
+  const url=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();
+  const response=await fetch(url,{headers:{accept:'application/json'}}),data=await response.json();
+  if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
+  if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
+  if(!data.outAmount||!data.inAmount)throw new Error('Jupiter returned an incomplete quote');
+  if(request!==swapQuoteRequest)return;
+  const out=Number(data.outAmount)/Math.pow(10,to.decimals),impact=data.priceImpactPct??data.priceImpact??null;
+  const router=data.router||'Jupiter';$('estimatedReceive').textContent=out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol;
+  $('estimatedReceive').classList.remove('swap-loading');$('receiveUsd').textContent='Route estimate · subject to change';
+  $('quoteSummary').textContent='1 '+from.symbol+' → '+to.symbol+' · '+router+' · view breakdown';
+  const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps total';
+  $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>'+esc(out.toLocaleString('en-US',{maximumFractionDigits:8})+' '+to.symbol)+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Total route fee rate</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>You pay</small><b>'+esc(amount+' '+from.symbol)+'</b></div><div class="quote-result"><small>Execution</small><b>Locked · quote only</b></div>';
+  $('quoteDetails').open=true;status.textContent='Fresh quote received from Jupiter. No transaction has been signed or submitted.';$('quoteFreshness').textContent='Quote just updated';setSwapExecutionState();
+ }catch(error){
+  if(request!==swapQuoteRequest)return;
+  $('estimatedReceive').classList.remove('swap-loading');$('estimatedReceive').textContent='Quote unavailable';
+  $('quoteResults').innerHTML='<div class="notice" style="grid-column:1/-1">Live quote unavailable: '+esc(error.message)+'. No cached or fabricated estimate is shown.</div>';
+  $('quoteSummary').textContent='Route details · quote unavailable';status.textContent='Quote unavailable. No estimated or cached fallback was substituted.';$('quoteFreshness').textContent='Provider unavailable';
+ }finally{
+  if(request===swapQuoteRequest){button.disabled=!(Number($('quoteAmount').value)>0);button.textContent='Find best route';}
+ }
+};
+
 
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>

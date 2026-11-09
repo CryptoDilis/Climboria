@@ -19,3 +19,8 @@ namespace_id = "20261108"
   [ratelimits.simple]
   limit = 30
   period = 60
+
+# Provision the production API hostname as a Worker Custom Domain on deploy.
+[[routes]]
+pattern = "api.climboria.fun"
+custom_domain = true

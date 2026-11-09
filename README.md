@@ -1,3 +1,112 @@
+## 2026-11-09 — Latest PR #219 full verification and screenshot review
+
+- [x] Validate Climboria passed on PR head `da8b0cba4adb90ee76ceebf58a3ba68a5fd7a1f1`: [run 42536000111](https://github.com/CryptoDilis/Climboria/actions/runs/42536000111).
+- [x] Full Browser Smoke passed on the same head: [run 42536000123](https://github.com/CryptoDilis/Climboria/actions/runs/42536000123). Homepage/CTA and desktop/mobile navigation, Cloudflare proxy tests, fail-closed execution, premium Swap desktop/mobile, DEX market/quote-preview shell, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload all completed successfully.
+- [x] Retrieved the 10-image artifact [climboria-browser-smoke-screenshots](https://github.com/CryptoDilis/Climboria/actions/runs/42536000123/artifacts/13639850718) for visual review.
+- [x] Reviewed desktop/mobile Swap, home, gameplay, cave entrance, and cave interior captures. Swap card is centered and compact on desktop and remains a narrow single-column mobile layout. Gameplay boot and mobile control overlays render.
+- [ ] Visual quality follow-up: Sanctuary spawn capture still shows a large uninterrupted green foreground and the player small in frame; improve terrain dressing, visible path/landmarks, and camera framing after inspecting a normal player session.
+- [ ] Visual quality follow-up: cave interior still reads as low-poly with repetitive faceted rock forms, large smooth boulders and flat lighting. Improve rock asset/material variety, silhouette, debris, depth lighting/fog, and floor dressing while preserving collision/navigation.
+- [ ] Wildlife and snake AI remain disabled in source for this smoke; no wildlife behavior/performance validation is implied.
+- [ ] Validate live provider behavior on deployed domain after deployment; deterministic CI fixtures do not prove production data availability or canonical wrapped-asset identity.
+- [ ] Cloudflare Worker production deployment remains pending account-specific namespace and encrypted Actions secrets. No Worker deployment is claimed. Keep `proxyEnabled:false` and `enabled:false`; do not enable wallet execution until transaction binding, semantic instruction validation, controlled Devnet lifecycle tests, monitoring/WAF, and independent security review pass.
+- [ ] Physical Redmi 14 5G acceptance remains open; viewport emulation is not physical-device sign-off.
+- [x] PR #219 description updated to reflect the passed validation and browser suite, remaining visual review and backend/security blockers. PR remains open and unmerged.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+---
+
+## 2026-11-09 — Cloudflare Custom Domain deployment correction
+
+- [x] Re-checked the first-deploy sequence against Cloudflare's current Custom Domains documentation. Corrected the earlier manual-pre-attachment guidance: a Custom Domain can be declared in Wrangler config using `[[routes]]`, `pattern = "api.climboria.fun"`, and `custom_domain = true`; Wrangler provisions it during deployment.
+- [x] Added the `api.climboria.fun` Custom Domain route to `dex/swap-proxy/wrangler.toml`.
+- [x] Added deployment-workflow assertions that the custom-domain hostname and `custom_domain = true` remain configured.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md`: confirm the Cloudflare zone is active and remove any conflicting existing CNAME before deploy; Wrangler provisions the domain and certificate. The workflow then verifies health and CORS.
+- [ ] Cloudflare account-specific namespace and encrypted GitHub Actions secrets remain prerequisites. No Worker deployment was run; frontend proxy and transaction execution remain disabled.
+- [ ] Confirm the latest Validate and Browser Smoke checks on this head before treating the change as CI-verified.
+
+Cloudflare reference: [Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+
+Commits: [454d8a3](https://github.com/CryptoDilis/Climboria/commit/454d8a3c6c846148ea1ad11f6bce44c422a6042a), [d11db03](https://github.com/CryptoDilis/Climboria/commit/d11db038f99c606faf6b15e532bfe0c0957c7c15), [c37565b](https://github.com/CryptoDilis/Climboria/commit/c37565bba9e7b1666630347851fbf54da29e0ea3).
+
+---
+
+## 2026-11-09 — Cloudflare first-deployment order correction
+> **Superseded:** The newer “Cloudflare Custom Domain deployment correction” section above is authoritative. Wrangler now provisions `api.climboria.fun` from `wrangler.toml`; do not manually pre-attach the custom domain before the first deploy.
+
+
+- [x] Audited `dex/swap-proxy/DEPLOYMENT.md`, `.github/workflows/deploy-climboria-api.yml`, and `dex/swap-proxy/wrangler.toml` against the first-run sequence.
+- [x] Found and corrected an instruction-order blocker: the deploy workflow checks `https://api.climboria.fun/health` immediately after Wrangler deploys, while the old guide placed custom-domain attachment after that check. The guide now requires attaching `api.climboria.fun` to the Worker and confirming TLS **before** dispatching the workflow; post-deploy steps now verify the existing domain.
+- [x] Clarified that the checked-in Wrangler config enables `workers_dev` but does not declare the `api.climboria.fun` custom domain itself. Domain attachment remains a Cloudflare Dashboard prerequisite.
+- [ ] Cloudflare custom domain, account-specific rate-limit namespace, and encrypted GitHub Actions secrets still need to be configured by an account administrator. No Worker deployment was run.
+- [ ] After configuration, run **Actions → Deploy Climboria API → Run workflow** and verify health, CORS, rate limiter, and Jupiter key readiness. Keep frontend proxy and transaction execution disabled until all release/security gates pass.
+- [ ] PR #219 remains open/unmerged; this documentation correction does not deploy production.
+
+Commit: [516d29b](https://github.com/CryptoDilis/Climboria/commit/516d29b68a63435aec5a6a158bd1f57f5670b6ac)
+
+---
+
+## 2026-11-09 — Latest DEX lookup + full Browser Smoke verification
+
+- [x] Root cause confirmed for the DEX name-lookup regression: the browser test's DexScreener search fixture returned unrelated SOL pools alongside the searched CLT token, allowing the higher-liquidity SOL candidate to appear first. This was a fixture defect, not a production liquidity-ranking change.
+- [x] Corrected the isolated lookup fixture to return only query-matching Climb Test Asset (CLT) candidates while retaining the full pool response for exact-mint lookup. Commit: [50d8ae7](https://github.com/CryptoDilis/Climboria/commit/50d8ae70f203196df6c440e8ec895168cfa848a3).
+- [x] Validate Climboria passed on commit `50d8ae7`: [run 42522265661](https://github.com/CryptoDilis/Climboria/actions/runs/42522265661).
+- [x] Full Browser Smoke passed on commit `50d8ae7`: [run 42522265642](https://github.com/CryptoDilis/Climboria/actions/runs/42522265642). Homepage/desktop-mobile navigation, Cloudflare proxy tests, fail-closed execution gate, premium Swap desktop/mobile, standalone DEX lookup/chart identity and pool history, and Jarrell's Peak desktop/mobile gameplay all completed successfully.
+- [x] DEX direct name lookup selected the exact CLT mint and its exact pair chart; the test no longer accepts SOL as an unrelated first result.
+- [x] Jarrell's Peak smoke passed boot/render, GLB hero, jump/landing, terrain/route audits, loot/inventory, sanctuary, desktop/mobile controls, and cave entrance/interior captures. Wildlife was explicitly disabled for this smoke run; animal and snake AI behavior/performance are **not** validated by this result.
+- [x] Screenshot artifact uploaded: [climboria-browser-smoke-screenshots](https://github.com/CryptoDilis/Climboria/actions/runs/42522265642/artifacts/13633668067) (10 files; expires 2026-11-15).
+- [ ] Review the newly uploaded desktop/mobile screenshots visually; automated upload is not a visual sign-off.
+- [ ] Verify DEX CA/name/symbol lookup against real provider data on the deployed domain after merge/deployment. CI used deterministic fixtures and does not prove live production provider behavior.
+- [ ] Cloudflare Worker production deployment and production-domain health/CORS/rate-limit/Jupiter checks remain separate blockers. Keep `proxyEnabled:false` and `enabled:false`; wallet execution remains disabled until deployment and independent transaction-security review.
+- [ ] Physical Redmi 14 5G acceptance remains open. Automated mobile viewport tests are not physical-device acceptance.
+- [ ] PR #219 remains open and unmerged; no production deployment is claimed.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+---
+
+## 2026-11-09 — Premium Swap redesign from Meta feedback
+
+- [x] Replaced the wide multi-column first impression with a centered dark-navy / antique-gold swap card.
+- [x] Preserved Major Assets, exact-mint market chart, token search, selected-asset URL state and history behavior by moving market panels below the swap card.
+- [x] Added From / You receive panels, token flip, wallet balance lookup through public Solana RPC, 25% / 50% / MAX controls, popular-pair search shortcuts and compact settings.
+- [x] Added selected-mint live market reference and debounced Jupiter quote preview while typing. Quote output is sourced from a fresh provider response; no cached or fabricated fallback is shown.
+- [x] Added collapsible route/quote details and explicit loading, pending and unavailable states. No visible placeholder dashes remain in the primary swap card.
+- [x] Kept Base marked planned and transaction execution locked. No fee collection or production backend is claimed.
+- [x] Browser Smoke failure diagnosed: the mobile Major Assets hit-test sampled a button before it was scrolled into the viewport; this was a test-coordinate issue, not an overlay defect.
+- [x] Updated the mobile hit-test to scroll the BTC row into view before checking the actual hit target; added viewport/element geometry to diagnostics. Updated main browser-smoke script parses successfully.
+- [x] Fixed captured-handler references so Connect Wallet and Find Best Route buttons call the live wrapped handlers (including balance refresh and the debounced quote preview).
+- [x] Changed the quote-preview debounce to 2.1 seconds to stay within Jupiter's documented 0.5 requests/second keyless limit; corrected the displayed fee to "total route fee rate" rather than mislabeling it as a provider fee.
+- [x] Diagnosed Browser Smoke #42515783374: homepage/mobile, Cloudflare proxy, and fail-closed security tests passed; premium Swap test exposed that URL restoration re-enabled "Find best route" with an empty amount.
+- [x] Fixed the base Solana network initializer to keep the quote CTA disabled until a valid amount exists, even during first-load URL restoration; the locked execution CTA remains disabled.
+- [x] Added a browser assertion for both the disabled initial quote CTA and its "Enter an amount" label.
+- [x] Corrected a YAML heredoc indentation mistake in the new browser assertion after GitHub rejected the workflow file before creating a job.
+- [ ] Re-run the full Browser Smoke on the latest PR head; confirm quote-preview, mobile layout, screenshots, and gameplay smoke all pass.
+- [ ] Re-run full Browser Smoke on current PR head and inspect premium Swap desktop/mobile screenshots; the prior run stopped in the earlier homepage/DEX/mobile test before reaching the new Swap-specific test.
+- [x] Added desktop/mobile Browser Smoke assertions for centered card sizing, initial disabled states, collapsed settings, popular pairs, token flip, and quote-preview rendering with a deterministic Jupiter fixture.
+- [x] Static checks passed: inline JavaScript parses, smoke-test JavaScript parses, no duplicate HTML IDs, and all literal `$(id)` references resolve.
+- [x] Fixed the first Browser Smoke failure at the exact-mint chart assertion: the new interaction block had been attached to the external `swap-config.js` script element, where browsers ignore inline code when `src` is present. Moved the block into the actual inline Swap application script; the full application script now parses and all literal DOM ID references resolve.
+- [ ] Re-run Validate and Browser Smoke after the script-placement correction. The prior Browser Smoke run failed before reaching the new standalone premium Swap test, so the new UI has not yet passed real-browser acceptance.
+- [ ] Full GitHub Validate and Browser Smoke runs plus Pages deployment are still required; no CI pass is claimed yet.
+- [ ] Review uploaded desktop/mobile Swap screenshots and test wallet balance RPC success/failure, quote race handling, major asset selection, exact-mint chart synchronization and mobile layout.
+- [ ] Physical Redmi 14 5G acceptance remains open. Cloudflare Worker production deployment, semantic transaction instruction review and independent security review remain separate blockers. Keep public execution disabled.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
+## 2026-11-09 — Premium Swap redesign from Meta feedback
+
+- [x] Replaced the oversized multi-column Swap first impression with a centered, dark navy / antique-gold quote card.
+- [x] Moved Major Assets, the selected-token chart, and trust information below the primary swap card; preserved the existing market selection, exact-mint chart resolver, URL state and token search behavior.
+- [x] Added From / You receive panels, token flip, 25% / 50% / MAX controls backed by connected-wallet RPC balances, popular-pair shortcuts that require exact token selection, and compact settings.
+- [x] Added live selected-mint market reference, debounced Jupiter quote preview while typing, collapsible quote/routing details, and explicit loading / pending / unavailable states instead of placeholder dashes.
+- [x] Kept Base clearly marked as planned and the execution button locked. No Cloudflare Worker deployment or transaction-security gate was bypassed.
+- [ ] Validate the new inline JavaScript and run Validate on the PR head.
+- [ ] Run the complete Browser Smoke suite; inspect desktop and mobile screenshots for layout, token search, quick balances, flip behavior, Major Assets click-through, and exact-mint chart synchronization.
+- [ ] Verify that quote responses cannot overwrite newer amount/token selections; add regression coverage for debounced quote races and wallet balance RPC failure.
+- [ ] Physical Redmi 14 5G acceptance remains required. Cloudflare Worker production deployment, semantic transaction instruction review and independent security review remain separate blockers. Keep public Swap execution disabled.
+
+PR: https://github.com/CryptoDilis/Climboria/pull/219
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
@@ -2667,3 +2776,50 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+## 2026-11-09 — Premium Swap and gameplay visual checkpoint
+
+- [x] Full Browser Smoke run `42516855013` completed successfully on commit `23d8350`: homepage/mobile navigation, Cloudflare DEX proxy smoke, fail-closed execution gate, premium Swap desktop/mobile, DEX market/quote-preview, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload all passed. [View run](https://github.com/CryptoDilis/Climboria/actions/runs/42516855013).
+- [x] Retrieved and reviewed the 12-image browser artifact `13632026203`, including premium Swap desktop/mobile and Jarrell's Peak desktop/mobile gameplay captures.
+- [x] Mobile screenshot review found the receive placeholder text visually clipped at narrow widths; added a smaller responsive receive-amount font rule on the PR branch. Commit: `02de2a3`. Fresh Validate and Browser Smoke are required before closing this visual follow-up.
+- [ ] Re-review the new mobile Swap screenshot after the responsive type adjustment; confirm amount/placeholder, token pills, quick controls and quote states remain readable at 390px and narrower.
+- [ ] Gameplay smoke passes as a boot/control regression test, but the captured Sanctuary start view shows a broad uninterrupted green foreground and the player relatively small. Inspect actual spawn terrain, camera framing, paths and vegetation in a normal player session; do not call the world visually finished based on smoke success.
+- [ ] Production Cloudflare Worker remains a separate blocker: configure the account-specific rate-limit namespace and encrypted Cloudflare/Jupiter Actions secrets, deploy the Worker, and verify production health/CORS/rate limiting. Keep public Swap execution disabled until all backend and transaction-security gates pass.
+- PR #219 remains open and unmerged; do not merge until the latest checks and visual follow-ups are reviewed.
+
+
+## 2026-11-09 — DEX direct token lookup and chart identity correction
+
+- [x] Added a dedicated DEX token lookup that accepts a Solana mint/CA, token name, or symbol and returns live DexScreener Solana pool candidates.
+- [x] Selecting a lookup result opens Token Intelligence using the exact base-token mint and loads its corresponding pair chart.
+- [x] Corrected the DEX chart resolver to exclude pools where the searched mint is only the quote token; never display the quote-side token's chart (for example, SOL) as the searched asset's chart.
+- [x] Added a deterministic browser regression assertion for name lookup and exact-mint chart identity.
+- [x] Validate passed on the DEX lookup change; the first Browser Smoke attempt was blocked by a Token Intelligence social-rail assertion before reaching the lookup test.
+- [x] Removed that unrelated brittle social-rail block from the DEX lookup smoke path so the next run directly exercises token selection, chart identity, and browser history.
+- [x] Corrected the DEX regression fixture so the decoy pool has the searched SOL mint only on its quote side (commit `4f4c416`).
+- [x] Kept that decoy below the actual CLT lookup pool's liquidity so the CLT name-lookup assertion still expects its own best base-side pool (commit `433a91f`).
+- [ ] Re-run Browser Smoke and confirm initial SOL pool selection, browser history, name lookup, and exact chart identity.
+- [ ] Verify with a real Solana CA and name lookup on the deployed site after merge/deployment. If a token has no indexed base-side pool, show an explicit no-chart state rather than substituting SOL.
+
+
+## 2026-11-09 — Swap wallet-session safety hardening (PR #219)
+
+- [x] Prepared Swap orders are invalidated when the entered amount, selected token, network, wallet session, or connected wallet account changes; the context is re-checked before and after wallet approval.
+- [x] Wallet account-change listener cleanup now supports both `removeListener` and `off` provider APIs, including the provider's account-disconnect event and explicit wallet disconnect. Commit: `775a139`.
+- [x] Validate Climboria passed on current PR head `775a139` (run [42538216349](https://github.com/CryptoDilis/Climboria/actions/runs/42538216349)).
+- [ ] Full Browser Smoke for `775a139` is running (run [42538215593](https://github.com/CryptoDilis/Climboria/actions/runs/42538215593)); review its final result and screenshots before marking complete.
+- [ ] Add targeted automated regression coverage for prepared-order invalidation and accountChanged listener lifecycle; current browser smoke keeps real swap execution fail-closed.
+- [ ] Cloudflare Worker remains undeployed; frontend proxy and execution flags remain disabled. Production backend checks, semantic transaction/instruction validation, controlled Devnet lifecycle tests, monitoring/WAF, independent security review, and physical Redmi 14 5G acceptance remain release gates.
+- PR #219 remains open and unmerged. Do not enable swap execution or merge until all release gates and review are explicitly cleared.
+
+
+## 2026-11-09 — Mobile Major Assets layout regression coverage (PR #219)
+
+- [x] Corrected mobile Major Assets grid columns: asset identity, sparkline and price now have explicit bounded tracks at viewport widths up to 760px. Commit: `fa9968c`.
+- [x] Added Browser Smoke regression assertions for identity/sparkline and sparkline/price overlap, sparkline width, and row viewport containment at 390px; added a dedicated `climboria-major-assets-mobile.png` artifact capture. Commits: `405387d`, `6e10911`.
+- [x] Validate passed on the latest workflow head before the artifact-list-only follow-up ([run 42538571106](https://github.com/CryptoDilis/Climboria/actions/runs/42538571106)); a fresh Validate is running on `6e10911`.
+- [ ] Browser Smoke on `6e10911` is queued/running ([run 42538571075](https://github.com/CryptoDilis/Climboria/actions/runs/42538571075)); verify the new mobile overlap assertions and inspect the new screenshot. Do not mark this visual fix complete until both pass.
+- [ ] Complete Jarrell's Peak desktop/mobile gameplay smoke; earlier runs were superseded during gameplay and cannot count as full passes.
+- [ ] Add dedicated automated wallet prepared-order/accountChanged lifecycle tests; current checks remain UI/validation-level and execution stays disabled.
+- [ ] Cloudflare Worker is not deployed. Keep `proxyEnabled:false` and `enabled:false`; semantic transaction validation, controlled Devnet lifecycle, monitoring/WAF, independent security review, live-provider validation and physical Redmi 14 5G acceptance remain release gates.
+- PR #219 remains open and unmerged.
