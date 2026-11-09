@@ -1006,7 +1006,7 @@ document.addEventListener('click',e=>{
 function setDexUrl(mint,pairAddress,options={}){const u=new URL(location.href);if(mint)u.searchParams.set('token',mint);else u.searchParams.delete('token');if(pairAddress)u.searchParams.set('pool',pairAddress);else u.searchParams.delete('pool');const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(options.fromUrl)history.replaceState({climboriaDex:true},'',u);else history.pushState({climboriaDex:true},'',u);}
 let activeDetailMint=null,activeDetailPairs=[],detailRequestId=0;
 function applySelectedPoolState(p,pairs,mint){
-  dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
+  dexTradeSyncToken(p);const chartSrc='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';if($('detailChart').getAttribute('src')!==chartSrc)$('detailChart').src=chartSrc;
   $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
   const priceValue=Number(p.priceUsd),volumeValue=Number(p.volume?.h24),liquidityValue=Number(p.liquidity?.usd),changeValue=Number(p.priceChange?.h24);
   $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
