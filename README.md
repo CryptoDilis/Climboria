@@ -212,6 +212,9 @@
 - [x] Owner explicitly changed priority on 2026-11-09: begin real player-account implementation now, ahead of remaining Jarrell's Peak P0 work.
 - [x] Selected Supabase Auth + Postgres as the initial integration target after checking current official docs: email/password and Google OAuth are supported; Singapore is an available APAC region; Free projects may pause after a low-activity week.
 - [x] Added the initial player identity/RLS migration, public-config placeholder, browser auth client, and provider setup guide on branch `codex/real-player-auth-foundation-20261109`.
+- [x] Added the requested EVM wallet sign-in alongside Google/Gmail OAuth and email/password, using Supabase Sign in with Web3 (EIP-4361 / SIWE); wallet login signs a domain-bound message and does not submit a blockchain transaction.
+- [ ] Enable the Ethereum Web3 provider in Supabase and allowlist the exact Climboria sign-in redirect URL. Apply Web3 rate limits and CAPTCHA/abuse controls before public launch.
+- [ ] Add verified identity linking so EVM wallet, Google and email methods can resolve to one existing Player ID without creating duplicate player accounts.
 - [ ] Supabase project has not yet been provisioned or configured by the owner; no production login is live. Do not claim account activation until real provider credentials/configuration and end-to-end tests pass.
 - [ ] Finish auth UI integration checks, email verification/password recovery, Google OAuth callback, immutable Player ID creation, profile RLS tests, logout/session refresh, and accessible error states.
 - [ ] Implement and test safe Guest-to-account migration; never overwrite guest saves or merge duplicate inventory blindly.
