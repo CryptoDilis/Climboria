@@ -2703,3 +2703,12 @@ For every integrated asset or borrowed technique, record:
 - [x] Corrected `auth-config.js` to use this exact URL (commit aabbb4ffb08ad4df5aac36887d89ab8577dd8e20). This supersedes the earlier URL transcribed from the screenshot; use the owner-confirmed URL as authoritative.
 - [ ] Still required: owner-provided public publishable/anon key; run the player account SQL migration; enable Solana/Ethereum and social/email providers; then run end-to-end tests.
 - **Next exact job:** finish `auth-config.js` once the publishable/anon key is safely available, then apply and verify the database migration.
+
+
+## 2026-11-09 — Supabase public client configuration completed
+
+- [x] Owner supplied a key with the `sb_publishable_` prefix. Confirmed it is the publishable/public browser key type (not a `service_role`/secret key).
+- [x] Configured `auth-config.js` with the owner-confirmed Supabase project URL and publishable key (commit 37e376aa9692a6dab9bc3f618a4d6d76ce658d67). This key is intended for browser use; database RLS and least-privilege policies remain mandatory.
+- [ ] Owner must now apply `supabase/migrations/202611090001_player_accounts.sql` in Supabase Dashboard → SQL Editor → New query → Run. Review the SQL before execution; do not run it in production if it shows unexpected destructive statements.
+- [ ] Verify `player_profiles` and `player_saves` tables and RLS policies exist. Then enable Solana and Ethereum Web3 providers and configure Google, X OAuth2, and SMTP/email confirmation.
+- **Next exact job:** after the owner applies the migration, inspect table/RLS results and then continue provider setup and auth tests. Latest commit is not production-live until PR merge/deployment and end-to-end tests.
