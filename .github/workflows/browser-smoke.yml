@@ -148,7 +148,7 @@ jobs:
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
               // Rapid selection race: a slower earlier asset response must not overwrite the latest BTC selection.
-              await page.evaluate(()=>window.updateSelectedAsset({id:'SlowAsset11111111111111111111111111111111',symbol:'SLOW',name:'Slow Asset'}));
+              await page.evaluate(()=>{window.updateSelectedAsset({id:'SlowAsset11111111111111111111111111111111',symbol:'SLOW',name:'Slow Asset'});});
               const loadingChartState=await page.evaluate(()=>({hidden:document.querySelector('#selectedAssetNativeChart')?.hidden,line:document.querySelector('#nativeChartLine')?.getAttribute('d'),area:document.querySelector('#nativeChartArea')?.getAttribute('d'),ready:document.querySelector('#selectedChartWrap')?.classList.contains('native-chart-ready')}));
               if(!loadingChartState.hidden||loadingChartState.line||loadingChartState.area||loadingChartState.ready) throw new Error('Previous asset chart remained visible during a new asset load: '+JSON.stringify(loadingChartState));
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarRent111111111111111111111111111111111',symbol:'BTC',name:'Bitcoin'}));
