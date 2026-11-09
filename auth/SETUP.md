@@ -10,12 +10,14 @@ The first implementation targets Supabase Auth + Postgres. Its current documente
 4. In Authentication → URL Configuration, set Site URL to `https://climboria.fun` and add the exact production redirect URL `https://climboria.fun/` plus the local preview URLs used during testing. EVM sign-in validates the message domain/URI against these allowlisted URLs.
 5. In Authentication → Providers → Web3 Wallet, enable **Ethereum**. If managing config as code, set `[auth.web3.ethereum]` and `enabled = true` in Supabase Auth config. Set Web3 rate limits and CAPTCHA/abuse controls before public launch. Keep email confirmation enabled. Configure a real SMTP provider before public registration/password-reset rollout; Supabase's default email sender is rate-limited and best-effort.
 6. In Authentication → Providers → Google, enable Google and enter the Google OAuth client ID/secret from Google Cloud Console. Add the exact Supabase callback URL to the Google OAuth client. Complete Google's consent-screen branding/verification before broad public rollout.
-7. Put only the Project URL and publishable/anon key into `auth-config.js`. Never paste the service-role key into GitHub or chat.
-8. Verify signup, email confirmation, login, logout, expired-session refresh, password recovery, Google OAuth, profile RLS, and cross-device account access.
+7. In the X Developer Portal, create an X OAuth 2.0 app. Configure it as a Web App, enable **Request email from users**, and add the Supabase callback URL shown under Authentication → Providers → X / Twitter (OAuth 2.0). Add the Climboria website, Terms of Service, and Privacy Policy URLs to the X app settings. Copy the X OAuth 2.0 Client ID and Client Secret into Supabase → Authentication → Providers → X / Twitter (OAuth 2.0), then enable the provider. Do not use the legacy OAuth 1.0a credentials/provider; Supabase recommends OAuth 2.0.
+8. Put only the Project URL and publishable/anon key into `auth-config.js`. Never paste the service-role key into GitHub or chat.
+9. Verify signup, email confirmation, login, logout, expired-session refresh, password recovery, Google OAuth, X OAuth 2.0, EVM SIWE, profile RLS, and cross-device account access.
 
 ## Supported sign-in methods
 - EVM wallet: Supabase Sign in with Web3 using EIP-4361 / SIWE. The player signs a domain-bound message; no transaction is sent and no private key is exposed to Climboria.
 - Gmail: Google OAuth (not merely typing a Gmail address into the email form).
+- X.com: X OAuth 2.0 (provider ID `x`); requires an X Developer app and provider credentials configured in Supabase.
 - Email: email/password with verification and recovery.
 - These methods may initially create separate auth identities. A verified account-linking flow must connect them to one immutable Player ID before we claim seamless multi-method identity.
 
