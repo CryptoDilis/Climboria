@@ -1,8 +1,9 @@
 /* Public frontend configuration only. Never put secrets in this file. */
 window.CLIMBORIA_SWAP_CONFIG = Object.freeze({
-  // Enable proxy-backed quotes/search only after the Worker is deployed and verified.
-  proxyEnabled: false,
-  // Transaction signing and execution remain independently disabled until all release gates pass.
+  // Route token search and quote previews through the deployed Cloudflare Worker.
+  // This does not enable wallet signing or transaction execution.
+  proxyEnabled: true,
+  // Keep transaction signing and execution disabled until the separate security release gates pass.
   enabled: false,
   apiBase: "https://api.climboria.fun"
 });
