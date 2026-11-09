@@ -1,3 +1,15 @@
+## 2026-11-09 — Major Assets click-to-input/chart audit
+
+- [x] Traced the actual click handler in `swap/index.html`: it delegates through the `#majorCoins` click listener and uses a selection request sequence to prevent stale clicks from overwriting a newer selection.
+- [x] Confirmed SOL and USDC use known Solana mint addresses and call `chooseQuoteToken('from', token)` directly; this should update the From input, selected-market chart and URL together.
+- [x] Confirmed BTC, ETH, BNB and XRP do **not** silently choose a mint by ticker. The row click writes the ticker into the From search field and opens Jupiter token candidates; until the user taps an exact candidate, the previous selected mint/chart intentionally remains active. This is a token-identity safety guard, not proof that the row click failed.
+- [x] Confirmed `chooseQuoteToken('from', token)` is the state transition that changes `quoteTokens.from`, invalidates stale quotes, calls `updateSelectedAsset()`, writes the input field and persists the exact mint in the URL. The chart resolver accepts only pools whose base-token address exactly equals the selected mint.
+- [x] Existing Browser Smoke coverage thoroughly exercises BTC candidate disambiguation, exact mint, chart title/price/pair, no-pool and quote-only-pool states, stale response ordering, refresh and history restoration. Mobile coverage currently exercises BTC tap and explicit candidate selection.
+- [ ] Coverage gap: ETH, BNB, XRP and direct SOL/USDC row selections are not individually asserted end-to-end. The exact behavior must be tested for all six symbols before calling the whole Major Assets feature complete.
+- [ ] UX verification gap: confirm the candidate panel makes it unmistakable that BTC/ETH/BNB/XRP require one more explicit exact-mint choice, so users do not mistake the still-selected SOL chart for a failed click. Preserve the no-silent-wrapped-token-selection safety rule.
+- [ ] No product-code change made during this audit. No evidence yet of a broken click handler; the remaining issue is incomplete six-asset acceptance coverage and possible candidate-selection clarity.
+- [ ] Keep Swap execution disabled. PR #227 remains draft/unmerged; no production deployment.
+
 ## 2026-11-09 — Mobile DEX close regression diagnostic result and handoff
 
 - [x] Diagnostic Browser Smoke passed on head `633670f8c833e2360f7920142d006b8e5adc8e20`: run [42610242122](https://github.com/CryptoDilis/Climboria/actions/runs/42610242122). The test now requires the close button to be visible/enabled and the center hit-test to resolve inside `#closeDetail`; it then waits for `body.mobile-token-view` to clear. Passing proves the tap target and close-state transition both worked at 390px and 360px in this run.
@@ -5,8 +17,8 @@
 - [x] Browser Smoke continued beyond the prior failure: mobile provider-loading/error/empty-state checks passed, and the Jarrell's Peak desktop/mobile gameplay smoke executed (including jump/land diagnostics and chest/cave checks). It was no longer skipped.
 - [x] Conclusion: the earlier close timeout was not reproduced. Current evidence supports an intermittent test/runtime timing issue or transient interaction failure; it does not justify changing the close-button UI. No product UI fix was made.
 - [x] Diagnostic workflow and handoff are committed on this PR branch: workflow diagnostic commit `78c2bf440654184c839a054ff182e414979465c4`; README handoff commit `633670f8c833e2360f7920142d006b8e5adc8e20`.
-- [ ] Next exact task: audit the reported DEX major-asset flow end-to-end: selecting each major asset must set the exact mint in the Swap input and synchronize the chart to that same mint; verify search selection and visual states at mobile and desktop. Trace the event/state/data path first, add targeted regression coverage, and only then fix a proven defect. Do not make cosmetic or speculative changes.
-- [ ] After that DEX audit, run Validate + Browser Smoke and inspect Pages workflow/deployment status for the relevant commit. PR #227 remains draft and unmerged; do not merge, deploy production, or enable Swap execution without explicit approval.
+- [x] Began the DEX major-asset source audit on `main` (`swap/index.html`, lines 643–679; `.github/workflows/browser-smoke.yml`, lines 138–225; existing DEX checklist at README lines 2561–2577). Confirmed the row click handler is wired and the regression fixture exercises BTC desktop + mobile, exact-mint chart selection, URL restore and stale-response protection.
+- [ ] Next exact task: extend deterministic Browser Smoke coverage for all six Major Assets. SOL/USDC use known direct mints; BTC/ETH/BNB/XRP intentionally require explicit token-candidate selection because ticker symbols can represent multiple wrapped/bridged mints. Assert the exact selected From mint, matching chart title/price/pair, URL refresh/back restoration, and safe no-pool/ambiguous outcomes for each supported path. Fix only any reproduced mismatch.
 - [ ] Keep Swap execution fail-closed/disabled.
 
 ## 2026-11-09 — Mobile DEX token-detail close regression diagnosis
