@@ -2951,3 +2951,20 @@ This is a standing project rule, not a one-time task:
 - Previous Validate run: `42665766166` — success.
 - Latest verified source head before this README handoff: `b828ff9c57463acc955bcd702e72258273752388`.
 - This README handoff itself must be checked by its resulting commit's CI before treating the documentation update as part of a fully verified head.
+
+
+## 2026-11-10 — Gameplay auth-session transition smoke coverage added
+
+- [x] Extended the mocked Supabase module in `.github/scripts/game-smoke.mjs` to emit controlled auth events with explicit session payloads.
+- [x] Added an early page listener to capture the gameplay bridge's initial `SESSION_READY` guest event.
+- [x] Added assertions that the gameplay page receives `SIGNED_IN` and `TOKEN_REFRESHED` events for the same mock player identity after initial guest initialization.
+- [x] Change committed as `c3345910563ffc4325ae1e06c226f397ac23843f`.
+- [ ] These are mocked transition tests only; no real Supabase provider, OAuth, wallet, or token-refresh network flow is claimed as verified.
+- **Next exact job:** inspect the Validate and Browser Smoke workflows triggered by this test commit. If any step fails, fetch the completed job logs, identify the exact failing assertion or environment cause, implement a targeted correction, and rerun. If both pass, update this handoff with run IDs/results and proceed to design the account/guest conflict UX before any hero preference cloud write. Keep PR #228 draft/unmerged and keep inventory/economic state excluded from cloud sync.
+
+**Current handoff:**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 (draft/open/unmerged)
+- Latest code commit: `c3345910563ffc4325ae1e06c226f397ac23843f`
+- Previous verified Browser Smoke: `42665766190` success; previous Validate: `42665766166` success.
+- README verification record for the previous Browser Smoke: commit `45aec0f997273c6425f59524c805efd71c8d2081`.
