@@ -412,10 +412,10 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
  </div><p class="swap-advanced-note">Base gas settings will be separate when the Base EVM router is integrated. Solana uses SOL for network fees; this is not an EVM gas-gwei setting.</p></details>
  <button class="tab primary" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div>
 <div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div>
-<section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Multi-source architecture</b></div><div class="routing-coverage-grid">
+<details class="mobile-routing-details"><summary>Routing & network coverage</summary><section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Multi-source architecture</b></div><div class="routing-coverage-grid">
  <div><small>SOLANA · PRIMARY ROUTER</small><strong>Jupiter Meta-Aggregator</strong><p>Metis · JupiterZ RFQ · DFlow · OKX compete for eligible routes. Underlying pools/DEX venues are selected dynamically by the router.</p><em>Not every bonding curve or new pool is guaranteed routable.</em></div>
  <div><small>BASE · EVM ROUTING</small><strong>Uniswap API · planned integration</strong><p>Uniswap v2/v3/v4 and UniswapX require a separate EVM quote, approval, gas-estimation and wallet-signing flow.</p><em>Base trading remains disabled until the backend and wallet flow are verified.</em></div>
- </div><div class="routing-coverage-foot">Climboria will add other direct venue adapters only where they provide real coverage beyond the primary aggregator—never as fake selectable providers.</div></section><div class="quote-status" id="quoteStatus" aria-live="polite">Ready when you are. Enter an amount to request a fresh route quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
+ </div><div class="routing-coverage-foot">Climboria will add other direct venue adapters only where they provide real coverage beyond the primary aggregator—never as fake selectable providers.</div></section></details><div class="quote-status" id="quoteStatus" aria-live="polite">Ready when you are. Enter an amount to request a fresh route quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
 <div class="quote-warning"><strong>Execution status · Not enabled</strong><br>Quotes are indicative and may change. Wallet connection is not approval. Signing and execution remain disabled until backend deployment, transaction security review and release verification are complete.</div>
 </section>
 <aside class="swap-sidebar">
@@ -477,7 +477,7 @@ async function updateSelectedAsset(token){
   liquidity.textContent=compactUsd(pair.liquidity?.usd);
   venue.textContent=pair.dexId||'Solana pool';
   note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
-  chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
+  chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
   empty.hidden=true;
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
@@ -749,4 +749,84 @@ if(mobileWorkspaceTabs&&mobileWorkspace){
   setMobileWorkspaceTab(button.dataset.workspaceTab);
  });
 }
-</script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body></html>
+</script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg>
+<style id="climboria-mobile-compact-swap-v1">
+@media(max-width:760px){
+ body{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+ .top{height:54px!important;position:sticky!important;top:0!important}
+ .shell{padding-left:12px!important;padding-right:12px!important}
+ .brand{font-size:13px!important;letter-spacing:1.4px!important}
+ .brand-mark{width:30px!important;height:30px!important}
+ .nav{gap:8px!important}
+ .nav a:not(.wallet-link),.nav .header-icon{display:none!important}
+ main{padding:8px 0 18px!important;gap:8px!important}
+ .hero,.ad-slot{display:none!important}
+ .mobile-workspace-tabs{position:fixed!important;left:10px!important;right:10px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;z-index:60!important;margin:0!important;padding:6px!important;border-radius:16px!important;box-shadow:0 12px 38px #000b!important;backdrop-filter:blur(18px)!important}
+ .mobile-workspace-tabs button{min-height:42px!important;font-size:11px!important}
+ .trade-layout{gap:8px!important}
+ .trade-layout .card{padding:12px!important;border-radius:16px!important}
+ .walletbar{margin-bottom:8px!important;padding:8px 10px!important;align-items:center!important}
+ .walletbar small{font-size:8px!important}
+ .walletbar b{font-size:10px!important}
+ .walletbar .tab{padding:7px 10px!important;font-size:10px!important}
+ .chain-switch{margin-bottom:7px!important;gap:6px!important}
+ .chain-switch .tab{flex:1;min-height:34px!important;padding:7px!important;font-size:10px!important}
+ .chain-notice{margin-bottom:8px!important;padding:7px 9px!important;font-size:9px!important;line-height:1.35!important}
+ .quote-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .quote-field{min-width:0!important;padding:9px!important;border-radius:11px!important}
+ .quote-field:first-child{grid-column:1/-1}
+ .quote-field label{font-size:8px!important;letter-spacing:.7px!important}
+ .quote-field input{font-size:18px!important;margin-top:5px!important}
+ .quote-field .tab{width:100%;min-height:34px!important;padding:6px 4px!important;font-size:9px!important;white-space:normal!important}
+ .quote-field small{font-size:8px!important;margin-top:5px!important}
+ .quote-controls>.tab{min-height:40px!important;padding:9px!important;font-size:10px!important}
+ .swap-advanced{grid-column:1/-1}
+ .quote-results{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin-top:8px!important}
+ .quote-result{padding:8px!important}
+ .quote-result small{font-size:8px!important}
+ .quote-result b{font-size:11px!important}
+ .quote-status{min-height:28px!important;padding:7px 1px!important;font-size:10px!important}
+ .quote-warning{margin-top:8px!important;padding:8px 9px!important;font-size:9px!important;line-height:1.4!important}
+ .mobile-routing-details{margin-top:8px;border:1px solid #354b63;border-radius:10px;background:#0a1726}
+ .mobile-routing-details summary{padding:9px 10px;color:#e8c477;font-size:10px;font-weight:800;cursor:pointer}
+ .mobile-routing-details .routing-coverage{margin:0!important;padding:0 9px 9px!important}
+ .mobile-routing-details .routing-coverage-grid{grid-template-columns:1fr!important;gap:6px!important}
+ .mobile-routing-details .routing-coverage-grid>div{padding:8px!important}
+ .mobile-routing-details .routing-coverage-grid p,.mobile-routing-details .routing-coverage-grid em{font-size:8px!important}
+ .trade-layout .major-panel,.trade-layout .selected-panel,.trade-layout .trust-panel{padding:11px!important;border-radius:15px!important}
+ .major-panel .side-sub{margin:4px 0 7px!important;font-size:9px!important}
+ .major-list{gap:0!important}
+ .major-row{padding:7px 3px!important;grid-template-columns:minmax(0,1fr) 58px auto!important;gap:5px!important}
+ .major-icon{width:23px!important;height:23px!important}
+ .major-name b,.major-values b{font-size:9px!important}
+ .major-name small,.major-values small{font-size:7px!important}
+ .major-spark{width:58px!important;height:22px!important}
+ .market-foot{font-size:8px!important;margin-top:5px!important}
+ .trade-layout .selected-chart-wrap{height:clamp(390px,58vh,520px)!important;min-height:360px!important}
+ .trade-layout .selected-price{margin:5px 0!important}
+ .trade-layout .selected-price b{font-size:20px!important}
+ .trade-layout .asset-stats{gap:5px!important;margin-top:6px!important}
+ .trade-layout .asset-stats>div{padding:7px!important}
+ .trade-layout .asset-stats small{font-size:7px!important}
+ .trade-layout .asset-stats b{font-size:9px!important}
+ .trade-layout .trust-panel{display:grid!important;grid-template-columns:1fr 1fr;gap:0 10px}
+ .trade-layout .trust-panel h2,.trade-layout .trust-panel>p{grid-column:1/-1}
+ .trade-layout .trust-panel h2{font-size:16px!important;margin-bottom:5px!important}
+ .trade-layout .trust-panel>p{font-size:9px!important;margin-bottom:7px!important}
+ .trade-layout .trust-panel .side-item{padding:7px 0!important}
+ .trade-layout .trust-panel .side-item b{font-size:9px!important}
+ .trade-layout .trust-panel .side-item span{font-size:8px!important}
+ .foot{display:none!important}
+}
+@media(max-width:390px){
+ .quote-controls{gap:6px!important}
+ .quote-field{padding:8px!important}
+ .quote-field .tab{font-size:8px!important}
+ .trade-layout .selected-chart-wrap{height:clamp(370px,56vh,480px)!important}
+ .mobile-workspace-tabs button{font-size:10px!important}
+}
+@media(min-width:761px){
+ .mobile-routing-details{display:contents}
+ .mobile-routing-details>summary{display:none}
+}
+</style></body></html>
