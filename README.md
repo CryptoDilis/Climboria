@@ -1,3 +1,11 @@
+## 2026-11-09 — Mobile DEX close-control diagnostic retest
+
+- [x] Previous Browser Smoke run [42593894269](https://github.com/CryptoDilis/Climboria/actions/runs/42593894269) failed in the 390px/360px compact DEX path while waiting for `body.mobile-token-view` to be removed after tapping `#closeDetail`.
+- [x] Added diagnostic-only browser evidence before the tap: close-button bounding box, visibility/disabled state, center hit target, and body/detail classes; on timeout, capture the resulting DOM state and chart URL. No blind product-UI change was made because the failure did not establish whether the cause was hit-testing or an application transition.
+- [x] Instrumented Browser Smoke [42644422516](https://github.com/CryptoDilis/Climboria/actions/runs/42644422516) completed `success`; the compact 390px/360px DEX/Swap tests, all six major-asset selection checks, and Jarrell's Peak desktop/mobile gameplay smoke completed successfully. Validate [42644422391](https://github.com/CryptoDilis/Climboria/actions/runs/42644422391) also completed `success` on `182a7770380c498bf69c7e895947590460135251`.
+- [x] The close regression did not reproduce in the instrumented run. This is a successful automated retest, not proof of physical-device acceptance or a confirmed root cause; keep the diagnostic guard and do not invent a product fix.
+- [ ] **Exact next job:** inspect the successful Browser Smoke screenshots and logs for the 390px/360px DEX detail close interaction and six major assets; then perform physical Redmi 14 5G acceptance for close/tap behavior, major-asset-to-input selection, exact-mint chart/price matching, and search-field usability. Record pass/fail separately from automated CI. If it reproduces, use the captured hit-target/state evidence to isolate and fix the actual cause before rerunning. After this DEX acceptance checkpoint, resume the wildlife binary/licence acquisition task recorded below.
+
 ## 2026-11-09 — Wildlife candidate source review checkpoint
 
 - [x] Completed the source-level review requested by the previous handoff and recorded candidate decisions in `game/assets/JARRELL_NATURE_ATTRIBUTION.md`, commit [f29714a](https://github.com/CryptoDilis/Climboria/commit/f29714a232e0ad88041f05091fba6e6905f8c2f8).
