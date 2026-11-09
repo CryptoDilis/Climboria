@@ -2712,3 +2712,10 @@ For every integrated asset or borrowed technique, record:
 - [ ] Owner must now apply `supabase/migrations/202611090001_player_accounts.sql` in Supabase Dashboard → SQL Editor → New query → Run. Review the SQL before execution; do not run it in production if it shows unexpected destructive statements.
 - [ ] Verify `player_profiles` and `player_saves` tables and RLS policies exist. Then enable Solana and Ethereum Web3 providers and configure Google, X OAuth2, and SMTP/email confirmation.
 - **Next exact job:** after the owner applies the migration, inspect table/RLS results and then continue provider setup and auth tests. Latest commit is not production-live until PR merge/deployment and end-to-end tests.
+
+
+## 2026-11-10 — Supabase player-account migration executed
+
+- [x] Owner ran the full `supabase/migrations/202611090001_player_accounts.sql` in the Climboria Supabase SQL Editor. Screenshot showed `Success. No rows returned` and the editor contained the migration through its final GRANT statements.
+- [ ] Still verify catalog state: confirm `public.player_profiles`, `public.player_saves`, RLS enabled on both, expected policies, and auth-user profile trigger. Do not assume success text alone proves every object is present.
+- **Next exact job:** run the read-only SQL catalog verification query in Supabase SQL Editor; inspect its result before enabling providers or testing sign-in.
