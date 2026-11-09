@@ -426,11 +426,24 @@ try {
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
-  // click() may already complete a fast document navigation before the next
-  // assertion starts. waitForURL checks the current URL as well as future
-  // navigations, so this remains reliable in either timing order.
-  await menu.locator('.card[data-level="11"]').click();
-  await menu.waitForURL(url => url.pathname.endsWith('/game/play.html') && url.searchParams.get('level') === '11', { timeout: 10000 });
+  // Capture navigation and runtime evidence before clicking. The previous
+  // post-click waitForURL still timed out, so the failure is not yet proven to
+  // be a fast-navigation race. Preserve the actual page state for diagnosis.
+  const menuErrors=[];
+  const menuNavigations=[];
+  menu.on('pageerror', error => menuErrors.push(error.message));
+  menu.on('console', message => { if(message.type()==='error') menuErrors.push('console: '+message.text()); });
+  menu.on('framenavigated', frame => { if(frame===menu.mainFrame()) menuNavigations.push(frame.url()); });
+  const launchCard=menu.locator('.card[data-level="11"]');
+  const launchTarget=await launchCard.evaluate(el=>({tag:el.tagName,disabled:el.disabled,ariaDisabled:el.getAttribute('aria-disabled'),level:el.dataset.level,html:el.outerHTML.slice(0,500)}));
+  const expectedLaunchUrl=url => url.pathname.endsWith('/game/play.html') && url.searchParams.get('level') === '11';
+  const launchNavigation=menu.waitForURL(expectedLaunchUrl,{timeout:10000}).then(()=>({ok:true})).catch(error=>({ok:false,error:error.message}));
+  await launchCard.click();
+  const navigationResult=await launchNavigation;
+  if(!navigationResult.ok){
+    const launchState=await menu.evaluate(()=>({url:location.href,readyState:document.readyState,card:document.querySelector('.card[data-level="11"]')?.outerHTML,bodyClass:document.body.className}));
+    throw new Error('Jarrell launch navigation did not reach level 11: '+JSON.stringify({navigationResult,launchTarget,launchState,menuNavigations,menuErrors}));
+  }
   const launchUrl=new URL(menu.url());
   if(!launchUrl.pathname.endsWith('/game/play.html')||launchUrl.searchParams.get('level')!=='11') errors.push('Jarrell’s Peak launch card did not navigate to level 11: '+menu.url());
   if(launchUrl.searchParams.has('hero')) errors.push('Launch menu still forces a retired character selection query');
