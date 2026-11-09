@@ -20,9 +20,16 @@ export function resolveSaveChoice({ guestRaw = null, accountRow = null, accountE
     const data = accountRow.save_data;
     if (version !== SAVE_SCHEMA_VERSION || !data || typeof data !== "object" || Array.isArray(data)) {
       accountInvalid = true;
-    } else if (Object.prototype.hasOwnProperty.call(data, "selectedHero")) {
-      accountHero = normalizeHero(data.selectedHero);
-      accountInvalid = !accountHero;
+    } else {
+      // Version 1 permits exactly one optional cosmetic field. Economic, inventory,
+      // progression, and unknown client-controlled keys must never be accepted.
+      const keys = Object.keys(data);
+      if (keys.some(key => key !== "selectedHero")) {
+        accountInvalid = true;
+      } else if (Object.prototype.hasOwnProperty.call(data, "selectedHero")) {
+        accountHero = normalizeHero(data.selectedHero);
+        accountInvalid = !accountHero;
+      }
     }
   }
 
