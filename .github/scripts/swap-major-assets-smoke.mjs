@@ -121,8 +121,8 @@ async function runViewport(browser, options) {
   try {
     await installFixtures(page);
     await page.goto(BASE,{waitUntil:'domcontentloaded'});
-    await page.locator('#majorCoins .major-row[data-major-symbol="BTC"]').waitFor({state:'visible',timeout:15000});
     if(mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
+    await page.locator('#majorCoins .major-row[data-major-symbol="BTC"]').waitFor({state:'visible',timeout:15000});
     for (const symbol of ['BTC','ETH','SOL','BNB','XRP','USDC']) {
       if (mobile && symbol!=='BTC') await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
       if (symbol==='USDC') {
