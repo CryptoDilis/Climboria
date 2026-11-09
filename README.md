@@ -2734,3 +2734,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Screenshot shows the `climboria_auth_user_created` trigger row exists on `auth.users`.
 - [ ] Trigger `status` cell is obscured by the mobile floating toolbar in the screenshot, so enabled state is not yet confirmed. Need a clearer screenshot or a focused query returning only `tgname` and `tgenabled`.
 - **Next exact job:** confirm trigger enabled status; then configure email provider and test a real email signup/profile auto-creation. After that configure Solana/EVM and social OAuth providers.
+
+
+## 2026-11-10 — Supabase auth profile trigger confirmed enabled
+
+- [x] Focused trigger query returned exactly one row for `climboria_auth_user_created` with `tgenabled = 'O'` and `trigger_status = 'ENABLED'`.
+- [x] Combined with prior owner screenshots: both player tables exist with RLS enabled, and all five expected policies are present.
+- [ ] Next: configure email auth/SMTP and verify actual signup creates a `player_profiles` row; then configure and test Solana/EVM wallet providers and Google/X OAuth. No production auth claim until real end-to-end checks pass.
+- **Next exact job:** guide owner through Supabase Authentication → Providers → Email settings; confirm email/password enabled and email confirmation policy, then test signup on the configured Climboria branch/deployment.
