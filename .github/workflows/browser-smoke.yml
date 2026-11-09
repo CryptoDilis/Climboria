@@ -271,7 +271,9 @@ jobs:
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
               for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteToSearch','#searchFrom','#searchTo','#swapFlip','#getQuote','#prepareSwap','#quoteStatus','#majorCoins','#selectedAssetChart']) if(await desktop.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               await desktop.waitForFunction(()=>{const el=document.querySelector('#selectedAssetNativeChart');return el&&!el.hidden&&!!el.querySelector('#nativeChartLine')?.getAttribute('d')?.startsWith('M')},{},{timeout:10000});
-              if(await desktop.locator('#selectedAssetNativeChart path#nativeChartLine').getAttribute('d')===null) throw new Error('Native OHLCV chart path was not rendered');
+              const nativePath=await desktop.locator('#selectedAssetNativeChart path#nativeChartLine').getAttribute('d');
+              if(!nativePath||!nativePath.startsWith('M')) throw new Error('Native OHLCV chart path was not rendered');
+              if((nativePath.match(/L/g)||[]).length!==3) throw new Error('Malformed or incomplete OHLCV candles were not filtered before chart rendering: '+nativePath);
               const chartEmpty=desktop.locator('#selectedChartEmpty');
               const chartEmptyWasHidden=await chartEmpty.evaluate(el=>el.hidden);
               await chartEmpty.evaluate(el=>{el.hidden=true});
