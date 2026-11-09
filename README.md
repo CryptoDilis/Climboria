@@ -2997,3 +2997,17 @@ This is a standing project rule, not a one-time task:
 - Latest README handoff before this update: `871409afee44bcf235555d7dd42cb6cf33bce21e`
 - Validate `42669888626`: success.
 - Browser Smoke `42669889007`: cancelled during broader Jarrell's Peak step 16; new auth event diagnostics passed before cancellation; not a full Browser Smoke pass.
+
+
+## 2026-11-10 — Account/guest save-choice foundation
+
+- [x] Inspected homepage auth entry points, Supabase auth client/session events, gameplay hero loader, actual hero asset map, guest localStorage reads, and the `player_saves` migration.
+- [x] Confirmed the current explicit hero allowlist is only `Adventurer` (`../assets/characters/Climboria_Hero.glb`). Legacy `ClimboriaHero` is normalized by the current gameplay loader to `Adventurer`.
+- [x] Added `auth/ACCOUNT-GUEST-CHOICE.md` with the account-vs-guest decision states, safety contract, test matrix, and implementation sequence.
+- [x] Added pure resolver `auth/save-choice.js`. It validates schema version 1 and the current hero allowlist; distinguishes guest-only, account-only, same-choice, invalid-data, and read-error states; it never reads storage or calls Supabase itself.
+- [x] Added `.github/scripts/save-choice.test.mjs` covering legacy normalization, invalid payload/version, read failure, and explicit local-only choice behavior. The account-choice helper can write only the validated hero preference after an explicit call; the guest-choice path performs no write.
+- [x] Added a dedicated Browser Smoke workflow step to run the resolver tests with Node's module default enabled.
+- [ ] **Not yet implemented:** gameplay decision panel, account save read/inspection, and Playwright state-matrix coverage. No account save query or cloud preference write has been introduced. No inventory data is included.
+- [ ] **Next exact job:** implement an accessible, mobile-safe gameplay account/guest choice panel. Query only the signed-in user's `player_saves` row after the player explicitly opens “Save options”; validate through `resolveSaveChoice`; expose “Keep this device”, “Use account choice on this device”, and “Decide later” where applicable. Keep it local/session-only and preserve both copies. Add mocked tests for guest, account-only, same-choice, invalid payload, read failure, and explicit choice; assert the inventory key is unchanged and no insert/update/upsert request occurs. Since the allowlist currently has one hero, a differing valid-hero conflict cannot currently occur; do not invent a second hero to force a conflict. Run Browser Smoke and Validate after integration, then diagnose any actual failure from logs.
+- Branch: `codex/real-player-auth-foundation-20261109`; PR #228 remains draft/unmerged.
+- Latest code/workflow commit: `8e5f7905aaf95fe4c9f48688b1c6af136ee6e727` (workflow test step; resolver/test/docs commits precede it: `c1098db`, `4a9f3b9`, `9608b47`).
