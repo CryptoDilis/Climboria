@@ -2896,3 +2896,23 @@ This is a standing project rule, not a one-time task:
 - Latest branch commit: `520993fe9f87036c60a7dfb1fe1d936f9f0af2de` (README audit record; Browser Smoke run `42658547371` passed on parent code commit `983daadf79c28a90679ed30ff4f204db45b81dd8`).
 - PR #228 remains draft/open/unmerged; real provider E2E remains a release gate.
 - Next implementation is shared auth bootstrap/session bridge, not inventory migration or direct cloud-save writes.
+
+
+## 2026-11-10 — Guest-save storage audit completed; migration design documented
+
+- [x] Audited the active game entry point `game/play.html` on the auth branch. The current persistent gameplay data is `climboria_jarrell_inventory_v1` (array of `{name, qty}` records; UI caps distinct entries at 50) and `climboria-selected-hero` (string cosmetic selection).
+- [x] Confirmed the legacy inventory parser only filters basic shape/positive finite quantity; it does not enforce an item allowlist, quantity ceiling, or serialized-size limit. It is therefore untrusted client state and must not be used as authoritative inventory, rewards, crafting, marketplace, NFT, or token state.
+- [x] Distinguished unrelated DEX local data: `climboria:dex:watchlist:v1` and `climboria:token-room:v1:<mint>`; these are not player progression and are excluded from migration by default.
+- [x] No general-purpose player save object or IndexedDB usage was identified in the inspected gameplay entry point. Current inventory persistence does not save player position/progression.
+- [x] Added `auth/GUEST-MIGRATION.md` (commit `010158f3e87ba8ac311db1255130495d1767e057`) documenting storage shapes, trust boundaries, validation, explicit conflict choice, idempotency, verification, rollback, and unresolved product decisions.
+- [x] Existing Supabase `player_saves` contract remains limited to non-authoritative convenience data, one row per user, RLS, schema version, and 65,536-byte JSON constraint.
+- [ ] Do not implement inventory migration until the owner confirms whether Jarrell's Peak items are purely non-economic or can affect crafting, rewards, minting, or marketplace value. Any economic inventory must be server-authoritative.
+- [ ] Before writing migration code, inspect the official hero asset manifest and create an allowlist for `climboria-selected-hero`; define the actual non-economic progression fields that need cloud persistence.
+- **Next exact job:** implement the first safe cloud-save slice for the allowlisted cosmetic hero preference only (after confirming the valid hero IDs from the asset manifest). Keep guest storage unchanged on sign-in; use authenticated RLS-bound upsert, schema validation, explicit conflict handling, read-back verification, and rollback. Do not migrate the inventory array in this slice.
+
+**Current handoff (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: open/draft/unmerged; latest CI before this documentation-only work: Browser Smoke `42658547371` success.
+- Latest work commits: README/browser-smoke handoff `1fc2ac3f027b21f345aa0b0e4d92b6cd8af9edc7`; guest audit document `010158f3e87ba8ac311db1255130495d1767e057`.
+- New commits have not yet been workflow-verified; check latest-head Validate and Browser Smoke before relying on them.
+- Real auth provider E2E and owner-side Google/X OAuth + SMTP setup remain outstanding.
