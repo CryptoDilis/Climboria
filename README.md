@@ -3011,3 +3011,24 @@ This is a standing project rule, not a one-time task:
 - [ ] **Next exact job:** implement an accessible, mobile-safe gameplay account/guest choice panel. Query only the signed-in user's `player_saves` row after the player explicitly opens “Save options”; validate through `resolveSaveChoice`; expose “Keep this device”, “Use account choice on this device”, and “Decide later” where applicable. Keep it local/session-only and preserve both copies. Add mocked tests for guest, account-only, same-choice, invalid payload, read failure, and explicit choice; assert the inventory key is unchanged and no insert/update/upsert request occurs. Since the allowlist currently has one hero, a differing valid-hero conflict cannot currently occur; do not invent a second hero to force a conflict. Run Browser Smoke and Validate after integration, then diagnose any actual failure from logs.
 - Branch: `codex/real-player-auth-foundation-20261109`; PR #228 remains draft/unmerged.
 - Latest code/workflow commit: `8e5f7905aaf95fe4c9f48688b1c6af136ee6e727` (workflow test step; resolver/test/docs commits precede it: `c1098db`, `4a9f3b9`, `9608b47`).
+
+## 2026-11-10 — Latest CI failure investigation and durable handoff
+
+- [x] Rechecked PR #228 metadata: still open, draft, unmerged; head remains `6760df65ee945ea99d432002cad5be5d50386b7b`.
+- [x] Confirmed Browser Smoke run `42673871882` is a completed `pull_request` run for workflow `.github/workflows/browser-smoke.yml`, conclusion **failure**.
+- [x] Confirmed Validate run `42673872152` is a completed `pull_request` run for workflow `.github/workflows/validate-climboria.yml`, conclusion **failure**.
+- [x] Retrieved both run metadata records and requested the latest-attempt jobs through the GitHub Actions jobs API. Both job responses returned an empty `jobs: []` array. The jobs endpoint for the Validate run also exposed zero jobs. Therefore there is no job ID, step summary, or downloadable job log available through the connected GitHub API for either failed run.
+- [x] Inspected the current Browser Smoke workflow: the new resolver test step is present after local-server startup; the workflow has a single `browser-smoke` job. Inspected the Validate workflow: it has a single `validate` job and the expected syntax/security checks. Workflow source inspection alone does not establish which job/step failed.
+- [ ] **Root cause remains unconfirmed.** Do not attribute these failures to the save-choice tests, YAML, runner, or application code without a failing step/log. Do not repeat the same fix or make a speculative code change.
+- [ ] Earlier Browser Smoke run `42673829490` passed on parent commit `8e5f7905aaf95fe4c9f48688b1c6af136ee6e727`; this is useful comparison evidence but does not prove latest-head status.
+- **Next exact job:** recover the missing job/check-suite diagnostics for runs `42673871882` and `42673872152` (including checking run attempts and the associated check-suite/check-runs endpoints through an available GitHub API route). If GitHub continues returning no jobs, run the existing resolver tests and relevant Validate checks locally against the exact `6760df65` source snapshot, then trigger a fresh PR workflow only after identifying a justified trigger/change. Record the exact commands/results and compare the new run. Do not start the gameplay save-options panel until CI failure triage is resolved or explicitly documented as an external GitHub observability limitation.
+- After CI triage, implement the accessible gameplay “Save options” panel exactly as specified in `auth/ACCOUNT-GUEST-CHOICE.md`: read-only own-row query only on explicit open; guest play stays non-blocking; explicit local choice; no cloud writes; no inventory migration; mocked Playwright matrix and zero insert/update/upsert assertions.
+- Keep `climboria_jarrell_inventory_v1` local and untrusted. Current approved hero allowlist remains only `Adventurer`; do not invent a second hero to force a conflict.
+- Keep PR #228 draft/unmerged until owner-side provider setup and real provider E2E gates are complete.
+
+**Handoff state (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- Latest code/documentation head: `6760df65ee945ea99d432002cad5be5d50386b7b`
+- Latest Browser Smoke: `42673871882` — failure; jobs/logs unavailable through current API response.
+- Latest Validate: `42673872152` — failure; jobs/logs unavailable through current API response.
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 — open/draft/unmerged.
