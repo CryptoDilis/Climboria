@@ -111,10 +111,13 @@ jobs:
               const btcSearchFixture=[{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}];
               // Match the proxy endpoint independent of query-string ordering/encoding. The live config intentionally routes searches through Cloudflare.
               let btcProxySearchIntercepted=false;
-              await page.route('**/api/tokens/search**',async route=>{
+              const btcSearchRequests=[];
+              page.on('request',request=>{if(request.url().includes('/api/tokens/search')||request.url().includes('/tokens/v2/search'))btcSearchRequests.push(request.url());});
+              await page.route('**/*tokens/search**',async route=>{
                 const requestUrl=new URL(route.request().url());
                 if(requestUrl.searchParams.get('query')!=='BTC')return route.continue();
                 btcProxySearchIntercepted=true;
+                console.log('Intercepted BTC token search:',requestUrl.origin+requestUrl.pathname);
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)});
               });
               // Direct Jupiter is only the fallback when the proxy is explicitly disabled.
@@ -136,7 +139,7 @@ jobs:
               const hoverLabel=await btc.evaluate(el=>getComputedStyle(el,'::after').content);
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
-              await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
+              try{await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});}catch(error){const diagnostics=await page.evaluate(()=>({input:document.querySelector('#quoteFromSearch')?.value,results:document.querySelector('#fromResults')?.innerText,config:window.CLIMBORIA_SWAP_CONFIG,selected:document.querySelector('#fromSelected')?.innerText}));throw new Error('BTC token candidates did not render. ProxyIntercepted='+btcProxySearchIntercepted+' requests='+JSON.stringify(btcSearchRequests)+' ui='+JSON.stringify(diagnostics)+' cause='+error.message);}
               if(!btcProxySearchIntercepted)throw new Error('BTC search did not use the configured Cloudflare proxy route; check swap-config.js and token-search URL selection.');
               const candidateUi=await page.locator('#fromResults button[data-index="0"]').evaluate(el=>({cursor:getComputedStyle(el).cursor,tabIndex:el.tabIndex,mintWrap:getComputedStyle(el.querySelector('small')).overflowWrap,cardWidth:el.getBoundingClientRect().width,listWidth:el.parentElement.getBoundingClientRect().width}));
               if(candidateUi.cursor!=='pointer'||candidateUi.tabIndex!==0||candidateUi.mintWrap!=='anywhere'||candidateUi.cardWidth>candidateUi.listWidth+1) throw new Error('Token candidate card accessibility/wrapping/overlap check failed: '+JSON.stringify(candidateUi));
