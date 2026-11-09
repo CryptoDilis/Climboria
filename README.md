@@ -2771,3 +2771,24 @@ For every integrated asset or borrowed technique, record:
 - [ ] Browser smoke is still running Jarrell's Peak desktop/mobile gameplay step 15; screenshot upload and cleanup steps remain pending. Do not merge/deploy until this run concludes and result is inspected.
 - [ ] The live-site login screenshot still reflects `main` because PR #228 has not been merged/deployed. After all checks pass, mark PR ready, merge, verify Pages/Cloudflare deployment and run live-site auth UI smoke. Keep Google/X labeled as provider-setup dependent until owner credentials are configured.
 - **Next exact job:** poll run `42652747827`; if step 15 fails, inspect its job logs and diagnose/fix root cause before rerunning. If all checks pass, mark PR #228 ready and merge/deploy, then verify live `https://climboria.fun/` auth modal exposes EVM, Solana, Google, X, and email controls.
+
+
+## Permanent handoff rule — Climboria development continuity
+
+This is a standing project rule, not a one-time task:
+
+- Record every meaningful task completed, the exact files/areas changed, commit SHA, verification performed, and actual result.
+- Record every failed check with its run ID, failing step, diagnosed root cause, attempted fix, and rerun result. Never repeat an identical attempted fix without new evidence and a reasoned strategy.
+- Always record the exact next unfinished task, its prerequisites, and the current branch/PR/commit so work can resume from the true stopping point after a chat ends.
+- Before starting any new task, inspect this handoff and current GitHub state first. Do not redo verified work.
+- Update this README in the same working branch after each substantial milestone and before ending a work session. Do not mark work complete based only on an attempted action; require a confirmed result.
+- If the work is blocked on an owner-only dashboard action, record exactly what the owner completed, what remains, and the next precise instruction.
+
+**Current handoff (2026-11-10):**
+- Active auth branch: `codex/real-player-auth-foundation-20261109`; PR #228 remains open, draft, unmerged.
+- Latest auth PR head at last inspection: `6f5f1a0f1d97bfe62f3bca2dd5c4d01d37ac0a04`.
+- Supabase owner setup: project URL and publishable key configured in branch; migration executed; `player_profiles` and `player_saves` confirmed with RLS enabled; five expected RLS policies found; `climboria_auth_user_created` trigger confirmed enabled.
+- Supabase dashboard: Email provider enabled; Web3 Wallet provider enabled (Ethereum and Solana toggles were requested ON; verify both toggles remain ON before testing). Email signup allowed and email confirmation ON. Google/X OAuth credentials and SMTP remain owner setup tasks.
+- CI: Validate run `42652747661` passed. Browser Smoke run `42652747827` had steps 7–14 pass; at last check Jarrell's Peak desktop/mobile step 15 was still running, with screenshot upload and cleanup pending.
+- Live website still showed the legacy wallet-connect-only modal because PR #228 was not merged/deployed. Do not call wallet connection an authenticated Climboria account.
+- **Exact next action:** poll Browser Smoke run `42652747827`. If it fails, inspect logs and diagnose root cause before any fix. If it passes, inspect the final checks, mark PR #228 ready, merge/deploy, and verify the live auth modal and sign-in flows. Then continue Google/X OAuth and SMTP setup plus real end-to-end auth tests.
