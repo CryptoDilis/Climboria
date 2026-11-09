@@ -27,6 +27,7 @@ if (!configured) {
   const password = document.getElementById("authPassword");
   const emailSubmit = document.getElementById("authEmailSubmit");
   const google = document.getElementById("authGoogle");
+  const evm = document.getElementById("authEvm");
   const logout = document.getElementById("authLogout");
   const modeToggle = document.getElementById("authModeToggle");
 
@@ -68,6 +69,18 @@ if (!configured) {
     const label = modeToggle.querySelector("span");
     if (label) label.textContent = signingUp ? "I already have an account" : "Create a new account instead";
     setStatus(signingUp ? "Create your account with email. Verification may be required." : "Sign in with your existing Climboria account.");
+  });
+
+  evm?.addEventListener("click", async () => {
+    if (!window.ethereum || typeof window.ethereum.request !== "function") {
+      setStatus("No EVM wallet detected. Open Climboria in MetaMask or another EVM wallet browser.");
+      return;
+    }
+    await reportAuth(() => supabase.auth.signInWithWeb3({
+      chain: "ethereum",
+      wallet: window.ethereum,
+      statement: "Sign in to Climboria. This signature proves wallet ownership only; it does not authorize a transaction."
+    }));
   });
 
   google?.addEventListener("click", async () => {
