@@ -2831,3 +2831,13 @@ This is a standing project rule, not a one-time task:
 - [ ] Real provider E2E still outstanding: email verification and SMTP, password reset email callback, Google OAuth callback, X OAuth 2.0 callback, Solana SIWS, EVM SIWE, session refresh, RLS isolation, and account identity linking. The new browser test mocks Supabase and cannot certify those provider-side flows.
 - [ ] Owner setup remains required for Google/X client credentials, SMTP, exact Supabase Site URL/redirect allowlist, CAPTCHA/rate limits, and confirmation that both Ethereum and Solana Web3 provider toggles are saved ON.
 - **Next exact job:** inspect the latest-head browser run and its new “Test Climboria authentication UI and client flows” step. If it fails, retrieve actionable logs and diagnose the actual cause before editing. If it passes, build a safe real-provider test checklist and continue identity-linking/guest-save migration work without claiming production-ready authentication prematurely.
+
+
+## 2026-11-10 — Authentication browser smoke selector diagnosis
+
+- [x] Inspected failed Browser Smoke run `42656334643` and retrieved the full job log for job `129295724908`. Root cause: the first matching desktop sign-in button was hidden at 390px; the next `:visible` match was the mobile-menu account button, which Playwright considered outside the viewport because the hamburger menu had not been opened. This is a test interaction/selector issue, not evidence of an auth client failure.
+- [x] The first targeted attempt `0d3871cc251c2095b87ad7f1972d17a9dbf01440` changed the selector to `:visible`, but the next run `42656760463` proved that alone was insufficient: the selected button was outside the viewport. Do not repeat that approach.
+- [x] Updated the smoke test in commit `434107dcd9465648e7c2c269688c2e60f52624a7` to open `#hamburger` first and then click `.mobile-menu [data-open-auth]`, exercising the actual mobile account entry path.
+- [x] Validate run `42656760627` passed on commit `0d3871cc251c2095b87ad7f1972d17a9dbf01440` (security/API contracts, homepage structure, launch copy, JavaScript syntax audits).
+- [ ] Latest browser and validate runs for commit `434107dcd9465648e7c2c269688c2e60f52624a7` must complete. Inspect the auth step log; do not mark authentication smoke passed until the full test finishes.
+- **Next exact job:** inspect the new-head Browser Smoke and Validate runs. If auth passes, continue with authenticated account-link UI and safe guest-save migration design; if it fails, retrieve logs and diagnose the actual failing assertion before another edit. Real Supabase OAuth/SMTP and SIWE/SIWS E2E remain owner-configuration-dependent. PR #228 stays draft/unmerged.
