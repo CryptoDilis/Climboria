@@ -374,6 +374,50 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Diagnose real DexScreener chart iframe rendering
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:1365,height:900}});
+            const providerResponses=[];
+            const failedRequests=[];
+            page.on('response', response => {
+              if (/dexscreener\\.com/i.test(response.url())) providerResponses.push({status:response.status(),url:response.url()});
+            });
+            page.on('requestfailed', request => {
+              if (/dexscreener\\.com/i.test(request.url())) failedRequests.push({url:request.url(),failure:request.failure()?.errorText||'unknown'});
+            });
+            try {
+              const response=await page.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Local Swap route failed to load for provider diagnostic');
+              const iframe=page.locator('#selectedAssetChart');
+              await iframe.waitFor({state:'attached',timeout:10000});
+              // Known SOL/USDC Orca pool: isolate the third-party embed from mocked token-search data.
+              const target='https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&theme=dark&trades=0&info=0';
+              await iframe.evaluate((el,url)=>{el.src=url},target);
+              await page.waitForTimeout(15000);
+              const frame=page.frames().find(candidate=>candidate.url().includes('dexscreener.com/solana/'));
+              let frameState={found:!!frame,url:frame?.url()||null};
+              if(frame) {
+                frameState=await frame.evaluate(()=>({
+                  url:location.href,
+                  title:document.title,
+                  bodyText:(document.body?.innerText||'').slice(0,1200),
+                  canvasCount:document.querySelectorAll('canvas').length,
+                  svgCount:document.querySelectorAll('svg').length,
+                  chartNodes:document.querySelectorAll('[class*="chart"],[data-name*="chart"],iframe').length
+                })).catch(error=>({...frameState,inspectionError:error.message}));
+              }
+              await page.screenshot({path:'climboria-dexscreener-provider-diagnostic.png',fullPage:true});
+              console.log('DEXSCREENER_PROVIDER_DIAGNOSTIC '+JSON.stringify({target,frameState,providerResponses,failedRequests}));
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
@@ -398,6 +442,7 @@ jobs:
             climboria-dex-token-socials-mobile.png
             climboria-swap-premium-desktop.png
             climboria-swap-premium-mobile.png
+            climboria-dexscreener-provider-diagnostic.png
             climboria-major-assets-mobile.png
             freshwater-*.png
           if-no-files-found: warn
