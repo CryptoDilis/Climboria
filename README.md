@@ -1,3 +1,13 @@
+## 2026-11-10 — Auth foundation CI verification and next implementation
+
+- [x] Validate run [42678416740](https://github.com/CryptoDilis/Climboria/actions/runs/42678416740) completed successfully for commit `859ba7f6e7cf32abed9f182a45f3bee828c9d2ba`.
+- [x] Browser Smoke run [42678416998](https://github.com/CryptoDilis/Climboria/actions/runs/42678416998) completed successfully on the same commit (run #2279, attempt 1). Job `129365989487` passed every step, including save-choice resolver tests, auth UI/client flows, homepage/DEX routing, Cloudflare proxy fail-closed checks, standalone Swap/DEX, 390px/360px mobile regressions, market loading/error/empty states, and Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] No new CI failure was observed in these latest runs; no speculative code change or repeated fix was made.
+- [ ] **Exact next implementation job:** build the in-game, mobile-safe **Save options** panel for signed-in players. It must query only the signed-in user's own `player_saves` row on explicit panel open; read only the approved cosmetic hero key; never read/migrate `climboria_jarrell_inventory_v1`; never insert/update/upsert cloud saves; never auto-upload on sign-in/session refresh; preserve both copies unless the player explicitly chooses; and keep guest play non-blocking.
+- [ ] Add mocked browser state-matrix coverage for guest, account-only, same-choice, invalid payload and read failure. Assert the inventory key is unchanged byte-for-byte and that zero `player_saves` insert/update/upsert requests occur.
+- [ ] After implementation, run Browser Smoke and Validate, inspect actual failed-step logs if either fails, diagnose root cause before editing, then record exact commit SHA, run IDs/results, unresolved gates and the next exact task here.
+- [ ] Keep PR #228 draft/unmerged until owner OAuth/SMTP/provider setup and real-provider E2E/security gates are complete.
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
