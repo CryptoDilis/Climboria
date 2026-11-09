@@ -2929,3 +2929,25 @@ This is a standing project rule, not a one-time task:
 - [ ] Confirm a fresh Browser Smoke run for commit `36bd5d7be972d97ca1b36b1d6aaa308a7713ee81` starts and completes. Inspect the actual gameplay step and logs if it fails or times out; do not repeat the same long-running attempt without diagnosing the cause.
 - [ ] After bridge verification, add account/guest conflict UX and implement hero-only cloud preference sync with strict allowlist validation, explicit user choice, local backup, idempotent write, read-back verification, and rollback. Do not sync inventory or economic/reward state.
 - **Next exact job:** verify latest-head Browser Smoke and Validate runs, then add focused tests for the gameplay auth-session event on initial guest session and signed-in/session-refresh events. Keep PR #228 draft/unmerged until real provider setup and E2E release gates are complete.
+
+
+## 2026-11-10 — Shared gameplay auth bridge Browser Smoke verified
+
+- [x] Browser Smoke run `42665766190` completed with **success** on branch `codex/real-player-auth-foundation-20261109` (job `129328930262`).
+- [x] Auth UI/client flows passed.
+- [x] Homepage CTAs, DEX routing, and mobile navigation passed.
+- [x] Cloudflare DEX swap proxy and fail-closed execution checks passed.
+- [x] Standalone Swap and DEX market/quote-preview shell passed.
+- [x] DEX mobile workspace, desktop regression, compact 390px/360px layouts, and mobile loading/provider-error/true-empty states passed.
+- [x] Jarrell's Peak desktop and mobile gameplay smoke tests passed (step 16); browser screenshot upload also passed (step 17).
+- [x] All post-job cleanup steps completed successfully. No failed step was reported in this run; no corrective commit was necessary.
+- [ ] Mocked bridge coverage does not prove live provider behavior. Keep real Supabase provider E2E and owner configuration as release gates; PR #228 remains draft/open/unmerged.
+- **Next exact job:** extend `.github/scripts/game-smoke.mjs` with focused gameplay auth-session bridge tests for initial guest mode, configured signed-in session delivery, and subsequent token/session refresh events. Assert listener registration and event ordering without relying on live credentials; then run Validate and Browser Smoke, diagnose any failures from logs, and record the exact outcomes/next task here. Do not start hero cloud preference writes until these bridge tests pass. Continue excluding `climboria_jarrell_inventory_v1` and all economic/reward state from cloud sync.
+
+**Handoff after Browser Smoke success (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 (draft/open/unmerged)
+- Verified Browser Smoke run: `42665766190` — success, including Jarrell's Peak desktop/mobile.
+- Previous Validate run: `42665766166` — success.
+- Latest verified source head before this README handoff: `b828ff9c57463acc955bcd702e72258273752388`.
+- This README handoff itself must be checked by its resulting commit's CI before treating the documentation update as part of a fully verified head.
