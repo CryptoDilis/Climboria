@@ -25,6 +25,9 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "auth/**"
+      - "auth-config.js"
+      - "supabase/migrations/**"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
