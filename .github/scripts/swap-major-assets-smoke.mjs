@@ -127,9 +127,12 @@ async function runViewport(browser, options) {
     for (const symbol of ['BTC','ETH','SOL','BNB','XRP','USDC']) {
       if (mobile && symbol!=='BTC') await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
       if (symbol==='USDC') {
+        // The mobile output-token search lives in the Swap workspace, not the Markets rail.
+        if (mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="swap"]').tap();
         await page.locator('#quoteToSearch').fill('ALT');
         await page.locator('#searchTo').click();
         await page.waitForFunction(()=>document.querySelector('#toSelected')?.textContent.includes('ALT'),null,{timeout:12000});
+        if (mobile) await page.locator('#mobileWorkspaceTabs [data-workspace-tab="market"]').tap();
       }
       const mint=await selectAsset(page,symbol,mobile);
       await page.reload({waitUntil:'domcontentloaded'});
