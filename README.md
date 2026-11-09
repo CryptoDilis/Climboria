@@ -2868,3 +2868,16 @@ This is a standing project rule, not a one-time task:
 - Latest Browser Smoke: `42658547371` — **success**, all 17 work steps including Jarrell's Peak and screenshot upload.
 - Auth browser coverage is mocked; no live provider E2E claim.
 - Next task: inspect and document the actual guest save storage format before designing migration.
+
+
+## 2026-11-10 — Guest save storage audit (read-only)
+
+- [x] Audited `game/play.html` on the current auth branch. The only persistent gameplay inventory key found is `climboria_jarrell_inventory_v1`; it stores a JSON array of up to 50 entries shaped as `{ name: string, qty: positive number }`. Invalid JSON is caught and treated as an empty array; entries are filtered for a string name and finite positive quantity.
+- [x] Confirmed the game writes this array directly from `addInventoryItem()` and emits `climboria:inventory` after local mutation. The current UI renders equipment slots as placeholders; it does not persist equipped item slots.
+- [x] Found `climboria-selected-hero` as a separate localStorage preference for the selected hero asset. It is cosmetic selection, not player progression.
+- [x] No IndexedDB usage, cloud-save adapter, or persisted player-position/level-completion save was found in the inspected game page. Other localStorage keys found in DEX/Swap are watchlist/token-room preferences, not game progress.
+- [ ] **Safety decision:** do not migrate `climboria_jarrell_inventory_v1` into the current client-writable `player_saves` table as authoritative inventory. The inventory can contain gameplay/reward items and is trivially user-editable in browser storage; uploading it would create a false trust boundary. Keep it local and label it provisional until a server-authoritative inventory/reward system exists.
+- [ ] Safe candidate for a first cloud preference migration: `climboria-selected-hero` only, after validating it against an explicit allowlist of available hero asset IDs. It is cosmetic and can be safely overwritten by a user-confirmed preference choice.
+- [ ] Before any migration implementation, add a versioned save envelope and a preview/consent step; back up raw guest values, validate schema/size, never silently merge inventory, and make migration idempotent. The current `player_saves` table's 64 KiB limit is a hard upper bound, not a target.
+- **Next exact job:** implement a minimal, user-consented cloud preference sync for the selected hero only (schema version + allowlist validation + explicit guest/account conflict choice + rollback-safe local backup), with browser tests for signed-out, signed-in, malformed local value, unknown hero ID, and conflicting account preference. Do not include inventory or economic/reward state.
+
