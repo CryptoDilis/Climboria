@@ -441,7 +441,7 @@ footer:first-of-type>div{
  <div class="auth-panel">
   <button class="auth-close" id="authClose">×</button>
   <h2 id="authTitle">Enter Climboria</h2>
-  <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
+  <p>Sign in or create your Climboria Player Account. Guest progress stays on this device until a safe account migration is completed.</p>
   <button class="auth-option" id="authEvm" type="button"><span>Sign in with EVM wallet</span><span class="auth-tag">MetaMask / EVM</span></button>
   <button class="auth-option" id="authSolana" type="button"><span>Sign in with Solana</span><span class="auth-tag">Phantom / Solflare / Backpack</span></button>
   <button class="auth-option" id="authGoogle" type="button"><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth</span></button>
@@ -451,6 +451,14 @@ footer:first-of-type>div{
   <label for="authPassword" style="display:block;color:#e8d8b7;font-size:12px;margin:10px 0 5px">Password</label>
   <input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff30;background:#080d18;color:#fff">
   <button class="auth-option" id="authEmailSubmit" data-mode="signin" type="button"><span>Sign in with email</span><span class="auth-tag">Secure account</span></button>
+  <button class="auth-option" id="authForgotPassword" type="button"><span>Forgot password?</span><span class="auth-tag">Email recovery</span></button>
+  <section id="authRecoveryPanel" hidden aria-label="Set a new password">
+   <label for="authNewPassword" style="display:block;color:#e8d8b7;font-size:12px;margin:10px 0 5px">New password</label>
+   <input id="authNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff30;background:#080d18;color:#fff">
+   <button class="auth-option" id="authSavePassword" type="button"><span>Save new password</span><span class="auth-tag">Update</span></button>
+  </section>
+  <p id="authAccountStatus" class="auth-note">Guest session</p>
+  <button class="auth-option" id="authLogout" type="button" hidden><span>Sign out</span><span class="auth-tag">Account</span></button>
   <button class="auth-option" id="authModeToggle" type="button"><span>Create a new account instead</span><span class="auth-tag">Sign up</span></button>
   <p class="auth-note" id="authStatus">Account service setup is required before sign-in is available. Guest play remains available.</p>
   <p style="font-size:10px;color:#aab2be">Wallet-based sign-in uses a signature only; it never sends a blockchain transaction.</p>
