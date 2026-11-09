@@ -666,7 +666,7 @@ async function updateSelectedAsset(token){
   note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
   empty.hidden=false;empty.textContent='Loading live 15-minute candles…';
-  await renderSelectedNativeChart(pair,token,chartRequest);
+  try{await renderSelectedNativeChart(pair,token,chartRequest);}catch(chartError){if(chartRequest!==selectedChartRequest)return;empty.hidden=false;empty.textContent='Live chart temporarily unavailable: '+chartError.message;note.textContent='Live market metrics loaded · chart temporarily unavailable: '+chartError.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');}
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
   price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent=error.message+' · Native chart unavailable for this selection.';empty.hidden=false;empty.textContent='Live chart temporarily unavailable for '+(token.symbol||'selected token')+'. '+error.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');chart.removeAttribute('src');
