@@ -1947,5 +1947,10 @@ initChunks();
     }));
   }
 </script>
+<script type="module">
+  import { installGameSaveOptions } from "../auth/game-save-options.js";
+  import { getClimboriaSupabase } from "../auth/supabase-client.js";
+  installGameSaveOptions({ client: getClimboriaSupabase() });
+</script>
 </body>
 </html>
