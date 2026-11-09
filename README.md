@@ -2719,3 +2719,10 @@ For every integrated asset or borrowed technique, record:
 - [x] Owner ran the full `supabase/migrations/202611090001_player_accounts.sql` in the Climboria Supabase SQL Editor. Screenshot showed `Success. No rows returned` and the editor contained the migration through its final GRANT statements.
 - [ ] Still verify catalog state: confirm `public.player_profiles`, `public.player_saves`, RLS enabled on both, expected policies, and auth-user profile trigger. Do not assume success text alone proves every object is present.
 - **Next exact job:** run the read-only SQL catalog verification query in Supabase SQL Editor; inspect its result before enabling providers or testing sign-in.
+
+
+## 2026-11-10 — Supabase tables and RLS verified
+
+- [x] Owner ran read-only catalog query in Supabase. Screenshot confirms `public.player_profiles` exists with `rls_enabled = true` and `public.player_saves` exists with `rls_enabled = true`.
+- [ ] Still verify policy definitions and `climboria_auth_user_created` trigger exist and are enabled; then test an actual email signup to confirm profile auto-creation and RLS isolation.
+- **Next exact job:** run the read-only SQL query checking policies and the auth.users trigger; review results before configuring provider login tests.
