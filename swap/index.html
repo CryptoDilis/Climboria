@@ -646,7 +646,7 @@ async function updateSelectedAsset(token){
  const title=$('selectedAssetTitle'),price=$('selectedAssetPrice'),change=$('selectedAssetChange'),volume=$('selectedAssetVolume'),mcap=$('selectedAssetMcap'),liquidity=$('selectedAssetLiquidity'),venue=$('selectedAssetVenue'),note=$('selectedAssetNote'),chart=$('selectedAssetChart'),empty=$('selectedChartEmpty');
  if(!token||!token.id)return;
  title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
- price.textContent='Loading…';change.textContent='Loading 24h change…';volume.textContent='Loading…';mcap.textContent='Loading…';liquidity.textContent='Loading…';venue.textContent='Discovering pool…';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
+ price.textContent='Loading…';change.textContent='Loading 24h change…';volume.textContent='Loading…';mcap.textContent='Loading…';liquidity.textContent='Loading…';venue.textContent='Discovering pool…';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');$('nativeChartLine').setAttribute('d','');$('nativeChartArea').setAttribute('d','');$('nativeChartGrid').replaceChildren();$('nativeChartStart').textContent='';$('nativeChartEnd').textContent='';
  try{
   const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
   if(chartRequest!==selectedChartRequest)return;
