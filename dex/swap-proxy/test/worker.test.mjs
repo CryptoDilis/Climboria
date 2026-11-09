@@ -61,7 +61,7 @@ test("rejects malformed execute payload", async () => {
 
 test("fails closed when edge rate limiter is not configured", async () => {
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), requestId: "request-123456" }) });
-  const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key" });
+  const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true" });
   assert.equal(res.status, 503);
 });
 test("rejects requests over the configured edge rate limit", async () => {
