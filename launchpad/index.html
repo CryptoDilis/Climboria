@@ -156,6 +156,47 @@ footer{border-top-color:#d4af3725}
 .nav .back:hover{color:#080d16!important;filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 8px 24px #e0b45a55,inset 0 1px #fff}
 @media(max-width:760px){.nav .back{min-height:34px;padding:0 12px;font-size:10px;letter-spacing:1px}}
 
+
+/* Mobile app-style card rhythm: compact summaries, no oversized stacked panels. */
+@media(max-width:760px){
+ .wrap{width:min(100% - 24px,600px)}
+ .head{align-items:center;gap:10px}
+ .brand{font-size:16px!important;letter-spacing:1.5px}
+ .brand small{font-size:7px;letter-spacing:1.8px}
+ .nav{gap:6px}
+ .nav .back{min-height:36px;padding:0 11px;font-size:9px}
+ .hero{padding:42px 4px 24px}
+ .hero:before{inset:0 -2px 0;border-radius:18px}
+ .hero:after{top:14px}
+ .eyebrow{font-size:8px;letter-spacing:2.2px;padding:7px 10px}
+ h1{font-size:clamp(31px,9vw,43px);line-height:1.08;letter-spacing:-.8px;margin:14px auto 10px}
+ .lead{font-size:13px;line-height:1.6;padding:0 5px}
+ .statusline{font-size:8px;letter-spacing:.7px;gap:7px;margin-top:16px;padding:8px 11px;line-height:1.4}
+ .section-head{display:flex;align-items:flex-start;flex-direction:column;gap:5px;margin:26px 0 12px}
+ .section-head h2{font-size:20px;line-height:1.2}
+ .section-head p{font-size:11px;line-height:1.5;margin:0}
+ .grid{grid-template-columns:1fr;gap:9px}
+ .card{min-height:0;padding:15px 15px 13px;border-radius:15px;display:grid;grid-template-columns:38px minmax(0,1fr);column-gap:11px;align-items:start}
+ .card-icon{grid-column:1;grid-row:1/4;width:36px;height:36px;border-radius:11px;font-size:17px;margin:0}
+ .card .tag{grid-column:2;font-size:8px;letter-spacing:1.3px;line-height:1.3}
+ .card h3{grid-column:2;font-size:17px;line-height:1.2;margin:4px 0 5px}
+ .card p{grid-column:2;font-size:11px;line-height:1.5;margin:0 0 8px}
+ .features{grid-column:2;display:grid;grid-template-columns:1fr 1fr;column-gap:10px;row-gap:1px;font-size:9px;line-height:1.55;margin:0 0 9px}
+ .features li:before{margin-right:5px}
+ .card-foot{grid-column:1/-1;margin-top:2px;padding-top:9px;gap:8px;flex-wrap:wrap}
+ .card-foot small{font-size:9px;line-height:1.4}
+ .pill{font-size:8px;padding:6px 8px}
+ .notice{margin:14px 0 32px;padding:13px 14px;border-radius:13px;font-size:10px;line-height:1.6}
+ footer{padding:17px 0 24px;font-size:9px}
+ .foot{gap:8px}
+}
+@media(max-width:380px){
+ .card{grid-template-columns:32px minmax(0,1fr);column-gap:9px;padding:13px}
+ .card-icon{width:32px;height:32px;font-size:15px}
+ .features{grid-template-columns:1fr}
+ .card-foot{align-items:flex-start}
+}
+
 </style>
 </head>
 <body>
