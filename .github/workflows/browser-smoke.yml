@@ -10,6 +10,7 @@ on:
     paths:
       - "index.html"
       - "auth/**"
+      - ".github/scripts/game-save-options-smoke.mjs"
       - "auth-config.js"
       - "supabase/migrations/**"
       - "dex/**"
@@ -707,6 +708,9 @@ jobs:
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
+
+      - name: Test in-game save options safety matrix
+        run: node .github/scripts/game-save-options-smoke.mjs
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
