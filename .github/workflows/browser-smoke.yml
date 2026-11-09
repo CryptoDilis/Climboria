@@ -404,8 +404,8 @@ jobs:
                 const checks={pool:state.pool===pool,chart:state.chartPath?.endsWith('/'+pool),chartStyle:state.chartStyle==='1',interval:state.interval==='15',external:state.external?.endsWith('/'+pool),price:state.price===expected.price,volume:state.volume===expected.volume,liquidity:state.liquidity===expected.liquidity,change:state.change===expected.change,flow:state.flow===expected.flow,hint:state.hint.includes(pool.slice(0,7))};
                 return {state,checks,passed:Object.values(checks).every(Boolean)};
               },{pool,expected});
-              const poolBExpected={price:'$2.50000',volume:'$25.0K',liquidity:'$100.0K',change:'0.50%',flow:'6 / 3'};
-              const poolAExpected={price:'$1.00000',volume:'$50.0K',liquidity:'$200.0K',change:'1.00%',flow:'10 / 5'};
+              const poolBExpected={price:'$2.50000',volume:'$25.0K',liquidity:'$100.0K',change:'+0.50%',flow:'6 / 3'};
+              const poolAExpected={price:'$1.00000',volume:'$50.0K',liquidity:'$200.0K',change:'+1.00%',flow:'10 / 5'};
               const poolBState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBState.passed)throw new Error('Selecting pool B did not synchronize chart, external link and provider metrics: '+JSON.stringify(poolBState));
               await page.goBack();
