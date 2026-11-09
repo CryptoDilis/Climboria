@@ -1,3 +1,12 @@
+## 2026-11-09 — Mobile DEX token-detail close regression diagnosis
+
+- [x] Audited latest `main` workflow run `42593894269` on commit `d2084c9b5b02408f7eed5d75e45a2fbf89028014`; Validate run `42593894023` passed, while Browser Smoke failed in the 390px/360px compact-layout step.
+- [x] Read the failed job log: DEX mobile workspace-tab, touch, ARIA and desktop regression assertions passed. The failure occurred after tapping `#closeDetail`; the test timed out waiting for `body.mobile-token-view` to be removed. Later Base-market and gameplay checks were skipped.
+- [x] Confirmed the source has a `#closeDetail` click handler that removes `mobile-token-view`, closes the detail panel and resets the chart. The current failure does not yet prove whether the physical tap missed the control, an overlay intercepted it, or the close handler/state transition failed.
+- [x] Strategy: add a bounded center-hit-target/visibility diagnostic before the tap and capture post-tap body/detail/chart/URL state on timeout. This distinguishes touch hit-testing from application event/state failure; do not change the close UI or repeat the same test edit without this evidence.
+- [ ] Next exact task: run Browser Smoke on the diagnostic branch, inspect the new hit-target and post-tap state, then apply only the root-cause fix. Re-run Validate + full Browser Smoke + Pages on the resulting head; confirm gameplay smoke is no longer skipped.
+- [ ] Keep Swap execution disabled. No merge or production deployment is authorized by this diagnostic checkpoint.
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
