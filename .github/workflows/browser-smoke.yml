@@ -105,7 +105,7 @@ jobs:
                     signInWithOAuth:async({provider})=>ok({provider}), signInWithWeb3:async({chain})=>{session={user:{id:'wallet-user'}};listener?.('SIGNED_IN',session);return ok({session,user:session.user,chain})},
                     signOut:async()=>{session=null;listener?.('SIGNED_OUT',null);return ok({})}
                   };
-                  return {auth,from:()=>({select:()=>({eq:()=>({maybeSingle:()=>ok({data:{player_id:'CLB-TEST123',username:'Tester'}})})})})};
+                  return {auth,from:()=>({select:()=>({eq:()=>({maybeSingle:()=>Promise.resolve({data:{player_id:'CLB-TEST123',username:'Tester'},error:null})})})})};
                 }`
             }));
             await page.addInitScript(()=>{window.ethereum={request:async()=>[]};window.solana={isConnected:true,connect:async()=>({publicKey:{toString:()=> 'So11111111111111111111111111111111111111112'}})};});
