@@ -2811,3 +2811,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] Add targeted automated regression coverage for prepared-order invalidation and accountChanged listener lifecycle; current browser smoke keeps real swap execution fail-closed.
 - [ ] Cloudflare Worker remains undeployed; frontend proxy and execution flags remain disabled. Production backend checks, semantic transaction/instruction validation, controlled Devnet lifecycle tests, monitoring/WAF, independent security review, and physical Redmi 14 5G acceptance remain release gates.
 - PR #219 remains open and unmerged. Do not enable swap execution or merge until all release gates and review are explicitly cleared.
+
+
+## 2026-11-09 — Mobile Major Assets layout regression coverage (PR #219)
+
+- [x] Corrected mobile Major Assets grid columns: asset identity, sparkline and price now have explicit bounded tracks at viewport widths up to 760px. Commit: `fa9968c`.
+- [x] Added Browser Smoke regression assertions for identity/sparkline and sparkline/price overlap, sparkline width, and row viewport containment at 390px; added a dedicated `climboria-major-assets-mobile.png` artifact capture. Commits: `405387d`, `6e10911`.
+- [x] Validate passed on the latest workflow head before the artifact-list-only follow-up ([run 42538571106](https://github.com/CryptoDilis/Climboria/actions/runs/42538571106)); a fresh Validate is running on `6e10911`.
+- [ ] Browser Smoke on `6e10911` is queued/running ([run 42538571075](https://github.com/CryptoDilis/Climboria/actions/runs/42538571075)); verify the new mobile overlap assertions and inspect the new screenshot. Do not mark this visual fix complete until both pass.
+- [ ] Complete Jarrell's Peak desktop/mobile gameplay smoke; earlier runs were superseded during gameplay and cannot count as full passes.
+- [ ] Add dedicated automated wallet prepared-order/accountChanged lifecycle tests; current checks remain UI/validation-level and execution stays disabled.
+- [ ] Cloudflare Worker is not deployed. Keep `proxyEnabled:false` and `enabled:false`; semantic transaction validation, controlled Devnet lifecycle, monitoring/WAF, independent security review, live-provider validation and physical Redmi 14 5G acceptance remain release gates.
+- PR #219 remains open and unmerged.
