@@ -564,6 +564,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let connectedWallet=null,walletProvider=null,walletAccountChangeHandler=null;
+function detachWalletAccountListener(provider,handler){if(!provider||!handler)return;try{if(typeof provider.removeListener==='function')provider.removeListener('accountChanged',handler);else if(typeof provider.off==='function')provider.off('accountChanged',handler);}catch(error){console.warn('Could not detach wallet account listener:',error);}}
 let selectedChain='solana';
 let restoringSwapUrl=false;
 function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
@@ -648,7 +649,7 @@ async function connectClimboriaWallet(){
   const address=publicKey?.toString?.();
   if(!address)throw new Error('Wallet connected but did not return a public key.');
   clearPreparedSwap('Prepared order cleared because the wallet session changed.');
-  if(walletProvider&&walletAccountChangeHandler&&typeof walletProvider.removeListener==='function')walletProvider.removeListener('accountChanged',walletAccountChangeHandler);
+  detachWalletAccountListener(walletProvider,walletAccountChangeHandler);
   connectedWallet=address;walletProvider=provider;
   if(typeof provider.on==='function'){
    walletAccountChangeHandler=publicKey=>{
@@ -656,7 +657,7 @@ async function connectClimboriaWallet(){
     if(nextAddress===connectedWallet)return;
     clearPreparedSwap('Prepared order cleared because the wallet account changed. Prepare a fresh order.');
     connectedWallet=nextAddress;
-    if(!nextAddress){walletProvider=null;walletAccountChangeHandler=null;$('walletStatus').textContent='Not connected';button.textContent='Connect wallet';button.title='';}
+    if(!nextAddress){detachWalletAccountListener(provider,walletAccountChangeHandler);walletProvider=null;walletAccountChangeHandler=null;$('walletStatus').textContent='Not connected';button.textContent='Connect wallet';button.title='';}
     else{$('walletStatus').textContent=nextAddress.slice(0,5)+'…'+nextAddress.slice(-5);button.textContent='Disconnect wallet';button.title='Connected wallet '+nextAddress;}
     refreshSwapBalances();
    };
@@ -671,7 +672,7 @@ async function connectClimboriaWallet(){
   $('quoteStatus').textContent='Wallet connection failed: '+error.message;
  }finally{button.disabled=false;}
 }
-async function disconnectClimboriaWallet(){clearPreparedSwap('Prepared order cleared because the wallet disconnected.');const provider=walletProvider,handler=walletAccountChangeHandler;if(provider&&handler&&typeof provider.removeListener==='function')provider.removeListener('accountChanged',handler);walletAccountChangeHandler=null;try{if(provider?.disconnect)await provider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';button.title='';}
+async function disconnectClimboriaWallet(){clearPreparedSwap('Prepared order cleared because the wallet disconnected.');const provider=walletProvider,handler=walletAccountChangeHandler;detachWalletAccountListener(provider,handler);walletAccountChangeHandler=null;try{if(provider?.disconnect)await provider.disconnect();}catch(e){}connectedWallet=null;walletProvider=null;$('walletStatus').textContent='Not connected';const button=$('connectWallet');button.textContent='Connect wallet';button.title='';}
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 let tokenSearchSequence={from:0,to:0};
 async function searchQuoteToken(side){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Searching Jupiter token metadata…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}const verified=tokens.filter(t=>t&&t.isVerified===true&&typeof t.id==='string'&&Number.isInteger(Number(t.decimals))&&Number(t.decimals)>=0&&Number(t.decimals)<=18);if(verified.length===1){chooseQuoteToken(side,verified[0]);$('quoteStatus').textContent=(verified[0].symbol||'Token')+' selected from the single Jupiter-verified result. The selected FROM asset chart and market data are updating automatically.';return}box.innerHTML=tokens.slice(0,8).map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');box._tokens=tokens.slice(0,8);}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
