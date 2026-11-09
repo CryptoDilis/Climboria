@@ -1,3 +1,21 @@
+## 2026-11-10 — In-game Save Options implementation handoff (PR #229)
+
+- [x] Latest baseline CI was rechecked before implementation: Validate `42684644668` and Browser Smoke `42684644556` both passed on PR #228 head `8b3280db16479539cda7582755f1db192020bfde`.
+- [x] Created draft PR [#229](https://github.com/CryptoDilis/Climboria/pull/229), branch `codex/game-save-options-panel-v2-20261110`.
+- [x] Added `auth/game-save-options.js` and mounted it from `game/play.html`. Save options query `player_saves` only after the player opens the panel; it selects only `schema_version,save_data` and relies on own-row RLS. Guest mode remains playable and provides a homepage sign-in path.
+- [x] Account hero selection is applied to this device only after an explicit button click. No cloud save insert/update/upsert, automatic upload, sign-in-triggered save read, or inventory migration is implemented. `climboria_jarrell_inventory_v1` is not read by the feature.
+- [x] Added `.github/scripts/game-save-options-smoke.mjs` and a Browser Smoke workflow step. The state matrix covers guest, account-only, same-choice, invalid payload and read failure; asserts inventory byte-preservation and zero cloud writes.
+- [x] Follow-up code hardening handles `account-save-no-hero` and unexpected conflict states without silently changing either copy.
+- [x] Validate run [42711389612](https://github.com/CryptoDilis/Climboria/actions/runs/42711389612) passed on code commit `4af2818c0f8b03e4e6c8cb964da93941046e0f22`.
+- [x] Browser Smoke run [42711389649](https://github.com/CryptoDilis/Climboria/actions/runs/42711389649): steps 1–16 passed; **new Save Options safety matrix step 17 passed**. Jarrell's Peak desktop/mobile gameplay step 18 is still running at handoff update time. Do not mark the full Browser Smoke as passed until run conclusion is success.
+- [ ] **Next exact job:** finish/poll Browser Smoke run `42711389649`. If it fails, fetch job logs and identify the actual failing step/root cause before changing code; do not repeat the same attempted fix. If it passes, record final conclusion and review screenshot artifact.
+- [ ] Then add tests for `account-save-no-hero` and explicit close/keyboard/mobile interaction if needed; review the live panel screenshot/behavior and confirm no overlay collision with gameplay controls.
+- [ ] Keep PR #229 draft/unmerged until CI is fully green and owner-side auth provider/RLS real-user checks are complete. PR #228 also remains draft/unmerged pending real provider E2E and identity-linking verification.
+
+**Current implementation commit:** `4af2818c0f8b03e4e6c8cb964da93941046e0f22`  
+**PR #229:** https://github.com/CryptoDilis/Climboria/pull/229  
+**Active Browser Smoke:** https://github.com/CryptoDilis/Climboria/actions/runs/42711389649
+
 ## 2026-11-10 — Auth foundation CI verification and next implementation
 
 - [x] Validate run [42678416740](https://github.com/CryptoDilis/Climboria/actions/runs/42678416740) completed successfully for commit `859ba7f6e7cf32abed9f182a45f3bee828c9d2ba`.
