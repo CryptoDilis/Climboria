@@ -1090,32 +1090,52 @@ function renderPoolFailure(mint,message,meta){
  if(meta)renderPumpProfile(mint,meta);
 }
 async function openToken(mint,options={}){
- const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrfunction selectPool(p,fromUrl=false){
+ const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
+ const box=$('tokenDetail');box.classList.add('open');document.body.classList.add('mobile-token-view');document.body.classList.remove('mobile-base-view');$('tokenLoadState').hidden=true;
+ if(!options.refresh)box.scrollIntoView({behavior:'smooth',block:'start'});
+ $('detailTitle').textContent='Loading token…';$('detailMint').textContent='Mint: '+mint;
+ $('detailUpdated').textContent='Loading live market and token metadata…';
+ ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange'].forEach(id=>{const el=$(id);if(el)el.classList.add('skeleton-value')});
+ $('detailPairs').innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+ $('tokenProfile').innerHTML='<div class="skeleton"></div><div class="skeleton"></div>';
+ const [dexResult,pumpResult]=await Promise.allSettled([
+  get('/latest/dex/tokens/'+encodeURIComponent(mint)),
+  fetchPumpCoin(mint)
+ ]);
+ if(requestId!==detailRequestId)return;
+ const pumpMeta=pumpResult.status==='fulfilled'?pumpResult.value:pumpCoinCache.get(mint)||null;
+ if(dexResult.status!=='fulfilled'){
+  activeDetailPairs=[];$('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token market unavailable';
+  $('detailUpdated').textContent='DexScreener lookup failed · '+new Date().toLocaleTimeString();
+  $('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);
+  $('detailPairs').innerHTML='<div class="notice">No pool candidates returned. Check again after liquidity migration or provider indexing.</div>';
+  $('trailHint').textContent='Pool list unavailable; token metadata may still be shown below.';
+  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until a pool is discovered.</div>';
+  renderPoolFailure(mint,dexResult.reason?.message||'Market request timed out or failed.',pumpMeta);
+  if(!pumpMeta)$('tokenProfile').innerHTML='<div class="notice">pump.fun metadata fallback unavailable. The server-side metadata proxy must be deployed and healthy; no token details are invented.</div>';
+  return;
+ }
+ const data=dexResult.value;
+ const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ activeDetailPairs=pairs;
+ if(!pairs.length){
+  $('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token metadata';
+  $('detailUpdated').textContent='No indexed Solana pool · '+new Date().toLocaleTimeString();
+  $('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);
+  $('detailPairs').innerHTML='<div class="notice">No active Solana pools were returned for this mint.</div>';
+  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until a pool is discovered.</div>';
+  renderPoolFailure(mint,'No Solana pools returned for this mint.',pumpMeta);
+  if(!pumpMeta)$('tokenProfile').innerHTML='<div class="notice">pump.fun metadata fallback unavailable. No unverified metadata is guessed.</div>';
+  return;
+ }
+ const requestedPool=new URLSearchParams(location.search).get('pool'),best=pairs.find(p=>p.pairAddress===requestedPool)||pairs[0];
+ $('tokenLoadState').hidden=true;
+ $('detailTitle').textContent=(best.baseToken?.name||pumpMeta?.name||'Unknown token')+' ('+(best.baseToken?.symbol||pumpMeta?.symbol||'TOKEN')+')';
+ $('detailMint').textContent='Mint: '+mint+' · '+pairs.length+' pool(s) discovered';
+ $('detailUpdated').textContent='Updated '+new Date().toLocaleTimeString()+' · DexScreener provider';
+ function selectPool(p,fromUrl=false){
   if(fromUrl){if(!requestedPool)setDexUrl(mint,p.pairAddress,{fromUrl:true});}else setDexUrl(mint,p.pairAddress);
   applySelectedPoolState(p,pairs,mint);
- }ange?.h24);
-  $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
-  $("detailVolume").textContent=Number.isFinite(volumeValue)?fmt(volumeValue):"Unavailable";
-  $("detailLiquidity").textContent=Number.isFinite(liquidityValue)?fmt(liquidityValue):"Unavailable";
-  $("detailChange").textContent=Number.isFinite(changeValue)?(changeValue>0?"+":"")+changeValue.toFixed(2)+"%":"Unavailable";
-  const buys=Number(p.txns?.h24?.buys),sells=Number(p.txns?.h24?.sells),totalTx=buys+sells;
-  $("flowBuySell").textContent=Number.isFinite(totalTx)?buys+" / "+sells:"N/A";
-  $("flowImbalance").textContent=Number.isFinite(totalTx)&&totalTx>0?(((buys-sells)/totalTx)*100).toFixed(1)+"%":"N/A";
-  ["detailPrice","detailVolume","detailLiquidity","detailChange","flowBuySell","flowImbalance","flowTurnover","flowShare"].forEach(id=>$(id).classList.remove("skeleton-value"));
-  document.querySelectorAll(".routecandidate").forEach(el=>el.classList.toggle("selected",el.dataset.pair===p.pairAddress));
-  $('trailHint').textContent='Selected pool: '+p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5)+' · '+p.dexId+' · '+p.quoteToken.symbol;
-  const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
-  const liqValues=pairs.map(x=>Number(x.liquidity?.usd)).filter(Number.isFinite),maxLiq=Math.max(0,...liqValues),selectedLiq=Number(p.liquidity?.usd),liqDepth=Number.isFinite(selectedLiq)&&maxLiq>0?Math.round(selectedLiq/maxLiq*100):null;
-  const signalBuys=Number(p.txns?.h24?.buys),signalSells=Number(p.txns?.h24?.sells),signalTxTotal=signalBuys+signalSells,buyImbalance=Number.isFinite(signalTxTotal)&&signalTxTotal>0?((signalBuys-signalSells)/signalTxTotal)*100:null;
-  const ageText=age===null?'Unavailable':age<1?(age*24).toFixed(1)+' hours':age.toFixed(1)+' days';
-  const signalCards=[['Liquidity depth',liqDepth===null?'Insufficient data':liqDepth+'/100',liqDepth===null?'No comparable liquidity value':'Relative to the deepest discovered pool for this mint · not a safety rating'],['Holder concentration','Not loaded','Expand Top holders to fetch live owner concentration from Solana RPC'],['Pool age',ageText,age===null?'Creation timestamp not supplied':'Calculated from DexScreener pairCreatedAt'],['Buy imbalance',buyImbalance===null?'Insufficient data':(buyImbalance>0?'+':'')+buyImbalance.toFixed(1)+'%',buyImbalance===null?'Buy/sell counts unavailable':'(buys − sells) ÷ total transactions · 24h provider counts']];
-  $('signalGrid').innerHTML=signalCards.map(([name,value,desc])=>'<div class="signalitem '+(value==='Insufficient data'||value==='Not loaded'?'missing':'good')+'" title="'+esc(desc)+'"><b>'+esc(name)+'</b><strong class="signal-value">'+esc(value)+'</strong><small>'+esc(desc)+'</small></div>').join('');
-  $('signalFoot').textContent='Transparent evidence only. Liquidity depth is relative within this token’s discovered pools; holder concentration requires the on-chain holder lookup. No composite safety score is issued while evidence is incomplete.';
-  loadMintAuthorityEvidence(mint);
-  const liq=pairs.reduce((sum,x)=>sum+(Number(x.liquidity?.usd)||0),0),share=liq>0?(Number(p.liquidity?.usd)||0)/liq*100:null,vol=Number(p.volume?.h24),pl=Number(p.liquidity?.usd),turn=Number.isFinite(vol)&&pl>0?vol/pl:null;
-  $('poolShareBarLabel').textContent=share===null?'Unavailable':share.toFixed(1)+'%';$('poolShareBar').style.width=(share===null?0:Math.max(0,Math.min(100,share)))+'%';
-  $('turnoverBarLabel').textContent=turn===null?'Unavailable':turn.toFixed(2)+'×';$('turnoverBar').style.width=(turn===null?0:Math.max(0,Math.min(100,turn*25)))+'%';
-  $('flowShare').textContent=share===null?'N/A':share.toFixed(1)+'%';$('flowTurnover').textContent=turn===null?'N/A':turn.toFixed(2)+'×';
  }
  selectPool(best,!!options.fromUrl);
  loadAdvancedIntel(mint,best);if(pumpMeta)renderPumpProfile(mint,pumpMeta);
