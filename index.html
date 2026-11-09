@@ -443,6 +443,7 @@ footer:first-of-type>div{
   <h2 id="authTitle">Enter Climboria</h2>
   <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
   <button class="auth-option" id="authEvm" type="button"><span>Sign in with EVM wallet</span><span class="auth-tag">MetaMask / EVM</span></button>
+  <button class="auth-option" id="authSolana" type="button"><span>Sign in with Solana</span><span class="auth-tag">Phantom / Solflare / Backpack</span></button>
   <button class="auth-option" id="authGoogle" type="button"><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth</span></button>
   <button class="auth-option" id="authX" type="button"><span>Continue with X</span><span class="auth-tag">X OAuth 2.0</span></button>
   <label for="authEmail" style="display:block;color:#e8d8b7;font-size:12px;margin:14px 0 5px">Email</label>
@@ -452,7 +453,7 @@ footer:first-of-type>div{
   <button class="auth-option" id="authEmailSubmit" data-mode="signin" type="button"><span>Sign in with email</span><span class="auth-tag">Secure account</span></button>
   <button class="auth-option" id="authModeToggle" type="button"><span>Create a new account instead</span><span class="auth-tag">Sign up</span></button>
   <p class="auth-note" id="authStatus">Account service setup is required before sign-in is available. Guest play remains available.</p>
-  <p style="font-size:10px;color:#aab2be">Wallet linking and X sign-in will be added only after their secure provider flows are configured.</p>
+  <p style="font-size:10px;color:#aab2be">Wallet-based sign-in uses a signature only; it never sends a blockchain transaction.</p>
  </div>
 </div>
 
