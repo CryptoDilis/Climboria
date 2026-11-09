@@ -2687,3 +2687,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] Test browser injection on Android wallet in-app browsers; desktop extension smoke tests do not prove mobile wallet compatibility.
 - [ ] Continue verified cross-provider identity linking and safe guest-save migration; do not claim a single unified Player ID across providers until tested.
 - **Next exact job:** inspect latest PR #228 workflow results, then implement/test provider-session identity linking without allowing account takeover or overwriting guest progress.
+
+
+## 2026-11-09 — Supabase project created by owner; public URL configured
+
+- [x] Owner created the `Climboria` Supabase project; dashboard screenshot showed project status Healthy and the project endpoint `https://unadepiwbovblkjfljksk.supabase.co`.
+- [x] Added that project URL to `auth-config.js` on `codex/real-player-auth-foundation-20261109` (commit `db749c833da4febbce47ffc51434267403a3e51e`). The public anon/publishable key remains intentionally blank until owner retrieves it; no secret key was requested or stored.
+- [ ] Owner: open Project Settings → API Keys (or API), copy the **publishable key** / legacy **anon public** key only, and provide it through a safe channel so the browser config can be completed. Never use the `service_role` or secret key in the website.
+- [ ] Next exact job: complete the public key config, then run `supabase/migrations/202611090001_player_accounts.sql` in SQL Editor and verify the tables/RLS before configuring auth providers and testing sign-in.
