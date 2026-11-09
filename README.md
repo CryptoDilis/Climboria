@@ -1,3 +1,18 @@
+## 2026-11-10 — Save Options follow-up: accessibility and empty account save
+
+- [x] Rechecked Browser Smoke run [42711389649](https://github.com/CryptoDilis/Climboria/actions/runs/42711389649) for code commit `4af2818c0f8b03e4e6c8cb964da93941046e0f22`. Steps 1–17 were successful, including the new Save Options safety matrix. Step 18 (Jarrell's Peak desktop/mobile gameplay) remained reported as in progress.
+- [x] Attempted to retrieve job logs for job `129481534028`; GitHub returned `BlobNotFound`. This is an observability/log-retention result, not evidence of a gameplay test failure. No unsupported root cause is assigned.
+- [x] Added keyboard Escape close behavior to the Save Options panel.
+- [x] Extended the mocked browser matrix with `account-save-no-hero`; it verifies the safe explanatory state and no cloud writes/inventory mutation.
+- [ ] **Next exact job:** inspect the fresh CI runs triggered by this follow-up commit. Confirm Validate and Browser Smoke; inspect step 17 and Jarrell's Peak step 18. If any failure occurs, retrieve the failing step logs and diagnose its actual root cause before editing. Do not repeat prior fixes.
+- [ ] If the old run `42711389649` remains stuck/inaccessible, record it as a GitHub run/log observability issue and rely only on fresh run results; do not claim its step 18 passed.
+- [ ] Review Save Options screenshot and interaction on desktop/mobile, including Escape close, account-save-no-hero, and the player-control overlay position.
+- [ ] Keep PR #229 draft/unmerged until all fresh CI checks pass and owner-side real-provider/RLS tests are completed.
+
+**Latest follow-up commit:** `af0e730d08514fcaa8799ee9c8af2b91f2ac500d`  
+**PR #229:** https://github.com/CryptoDilis/Climboria/pull/229  
+**Prior Browser Smoke:** https://github.com/CryptoDilis/Climboria/actions/runs/42711389649
+
 ## 2026-11-10 — Auth foundation CI verification and next implementation
 
 - [x] Validate run [42678416740](https://github.com/CryptoDilis/Climboria/actions/runs/42678416740) completed successfully for commit `859ba7f6e7cf32abed9f182a45f3bee828c9d2ba`.
