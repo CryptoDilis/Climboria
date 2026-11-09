@@ -2751,3 +2751,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] Next: configure Google and X OAuth providers (requires owner-created OAuth apps and credentials); configure custom SMTP for reliable confirmation email; set auth abuse protection/rate limits.
 - [ ] Then run end-to-end signup/sign-in tests for email, Solana and EVM wallets, verify each creates a profile and that identity linking is secure. Do not claim production-ready until tests pass and PR is merged/deployed.
 - **Next exact job:** open Web3 Wallet provider once more and visually confirm both Ethereum and Solana toggles are ON; then return to Auth Providers list and proceed to Google OAuth setup.
+
+
+## 2026-11-10 — Owner screenshot: production login modal is still the old wallet-connect UI
+
+- [x] Reviewed owner screenshot of the live Climboria login modal. It still shows the legacy `Connect crypto wallet` button and explicitly says `Wallet connected ... This is not yet a Climboria account login`; X/Google/email appear disabled with setup-needed labels.
+- [x] Compared against auth branch `index.html`: the branch has separate EVM and Solana sign-in buttons, active Google/X OAuth buttons, email/password controls, and loads `auth-config.js` plus `auth/auth-client.js`. Therefore the screenshot is consistent with the current `main`/production deployment not yet containing PR #228 changes.
+- [x] Confirmed PR #228 is still open, draft, unmerged; latest head `d2cfec1ccc5bde0d98d4943a2881f1f6616b8cab`.
+- [ ] Do not treat the current live wallet connection as authenticated Climboria account. Do not ask players to use it for account creation yet.
+- [ ] Before deployment: inspect and fix auth integration/redirect behavior; configure Supabase Site URL + allowed redirects; complete provider credentials; run CI and real signup/wallet OAuth tests. Then merge/deploy PR #228 only after checks pass.
+- **Next exact job:** review PR #228 auth integration and latest-head CI; ensure `auth-config.js` and module scripts are included in Pages artifact, then validate on a preview before production rollout.
