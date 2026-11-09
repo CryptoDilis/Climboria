@@ -429,6 +429,9 @@ jobs:
               await mobileNav.locator('[data-dex-mobile-view="solana"]').tap();
               await mobile.locator('#tokenDetail').evaluate(el=>{el.classList.add('open');document.body.classList.add('mobile-token-view')});
               if(await mobile.locator('#dexMobileNav').isVisible()||!await mobile.locator('#tokenDetail').isVisible())throw new Error('Selected-token view should replace market explorer and main mobile navigation');
+              const chartContext=await mobile.evaluate(()=>({overview:getComputedStyle(document.querySelector('.chart-overview')).display,metrics:getComputedStyle(document.querySelector('.chart-overview .detail-metrics')).display,columns:getComputedStyle(document.querySelector('.chart-overview .detail-metrics')).gridTemplateColumns.split(' ').length,marketNav:getComputedStyle(document.querySelector('#dexMobileNav')).display,detailNav:getComputedStyle(document.querySelector('#detailMobileTabs')).position}));
+              if(chartContext.overview==='none'||chartContext.metrics!=='grid'||chartContext.columns!==2)throw new Error('Mobile chart must show four provider-backed metrics in a compact 2x2 strip: '+JSON.stringify(chartContext));
+              if(chartContext.marketNav!=='none'||chartContext.detailNav!=='fixed')throw new Error('Mobile token detail must show only its single fixed detail navigation: '+JSON.stringify(chartContext));
               const tabs=mobile.locator('#detailMobileTabs');
               const workspace=mobile.locator('#detailWorkspace');
               if(!await tabs.isVisible()) throw new Error('Mobile DEX tablist is not visible');
