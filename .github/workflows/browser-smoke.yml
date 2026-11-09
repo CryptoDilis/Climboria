@@ -114,6 +114,8 @@ jobs:
                 if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
                 return route.continue();
               });
+              // Keep Pump metadata local to the browser fixture; production CORS must not be weakened for localhost tests.
+              await dexPage.route('https://api.climboria.fun/api/pump/coin**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({mint:dexMint,name:'Climboria Search Fixture',symbol:'CLIMBTEST',complete:false,source:'browser-smoke-fixture'})}));
               await dexPage.locator('#search').fill('CLIMBTEST');
               await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:12000});
               if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
