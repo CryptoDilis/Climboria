@@ -393,6 +393,7 @@ jobs:
             climboria-dex-token-socials-mobile.png
             climboria-swap-premium-desktop.png
             climboria-swap-premium-mobile.png
+            climboria-major-assets-mobile.png
             freshwater-*.png
           if-no-files-found: warn
           retention-days: 7
