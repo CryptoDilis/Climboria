@@ -537,9 +537,9 @@ jobs:
                 if(!await dex.locator('#tokenDetail').isVisible())throw new Error('Tapping a Solana mobile card did not open the existing token detail flow');
                 if(await dex.locator('#detailMint').textContent().then(t=>!t.includes(selectedMint)))throw new Error('Mobile card tap opened a different mint than the selected card');
                 if(await dex.locator('#mobileMarketMore').isVisible()){
-                  const before=await dex.locator('#rows tr').count();
+                  const before=await dex.locator('#solanaMobileCards .mobile-market-card').count();
                   await dex.locator('#mobileMarketMore').tap();
-                  await dex.waitForFunction(previous=>document.querySelectorAll('#rows tr').length>previous,before,{timeout:5000});
+                  await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 await dex.locator('#closeDetail').tap();
