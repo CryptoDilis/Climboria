@@ -704,11 +704,11 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume" class="skeleton-value">Loading</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section><section class="premium-trending" aria-labelledby="premiumTrendingTitle"><div class="premium-section-head"><div><small>LIVE SOLANA DISCOVERY</small><h2 id="premiumTrendingTitle">Trending on Solana</h2><p>Curated from current DexScreener pair responses · not endorsements</p></div><span id="premiumTrendingUpdated">Fetching live pairs…</span></div><div class="premium-trending-grid" id="premiumTrendingGrid"><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div></div></section>
 <section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div></div><div class="detail-social-rail" id="detailSocialRail" aria-label="Token social links"><span class="social-empty">Official links appear when supplied by token metadata.</span></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="shareToken" type="button">↗ Share</button><button class="tab" id="closeDetail" type="button">Close</button></div></div>
-<nav class="detail-mobile-tabs" id="detailMobileTabs" aria-label="Token workspace sections">
- <button type="button" data-detail-tab="chart" class="active">Chart</button><button type="button" data-detail-tab="trade">Trade</button><button type="button" data-detail-tab="chat">Chat</button><button type="button" data-detail-tab="pools">Pools</button>
+<nav class="detail-mobile-tabs" id="detailMobileTabs" role="tablist" aria-label="Token workspace sections">
+ <button type="button" id="detailTabChart" role="tab" aria-controls="detailWorkspace" aria-selected="true" tabindex="0" data-detail-tab="chart" class="active">Chart</button><button type="button" id="detailTabTrade" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="trade">Trade</button><button type="button" id="detailTabChat" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="chat">Chat</button><button type="button" id="detailTabPools" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="pools">Pools</button>
 </nav>
 <div class="token-load-state" id="tokenLoadState" hidden></div>
-<div class="detail-content"><div class="detail-main"><div class="chart-workspace">
+<div class="detail-content" id="detailWorkspace" role="tabpanel" aria-labelledby="detailTabChart" tabindex="0"><div class="detail-main"><div class="chart-workspace">
 <iframe class="detailchart" id="detailChart" title="Selected Solana pool chart" loading="eager" referrerpolicy="origin"></iframe>
 <div class="chart-overview" aria-label="Selected pool overview">
 <div class="detail-metrics" aria-label="Selected pool live metrics">
@@ -1311,10 +1311,41 @@ $('dexTradePrepare').addEventListener('click',async()=>{
  await prepareJupiterSwap();dexTradeSetStatus($('quoteStatus').textContent);
 });
 
-const mobileDetailTabs=$('detailMobileTabs'),mobileDetailContent=document.querySelector('.detail-content');
+const mobileDetailTabs=$('detailMobileTabs'),mobileDetailContent=$('detailWorkspace');
 if(mobileDetailTabs&&mobileDetailContent){
- mobileDetailContent.classList.add('mobile-tab-chart');
- mobileDetailTabs.addEventListener('click',e=>{const b=e.target.closest('[data-detail-tab]');if(!b)return;const tab=b.dataset.detailTab;mobileDetailContent.classList.remove('mobile-tab-chart','mobile-tab-trade','mobile-tab-chat','mobile-tab-pools');mobileDetailContent.classList.add('mobile-tab-'+tab);mobileDetailTabs.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));});
+ const detailTabButtons=[...mobileDetailTabs.querySelectorAll('[role="tab"][data-detail-tab]')];
+ const activateDetailTab=(button,{focus=false}={})=>{
+  if(!button)return;
+  const tab=button.dataset.detailTab;
+  mobileDetailContent.classList.remove('mobile-tab-chart','mobile-tab-trade','mobile-tab-chat','mobile-tab-pools');
+  mobileDetailContent.classList.add('mobile-tab-'+tab);
+  mobileDetailContent.setAttribute('aria-labelledby',button.id);
+  detailTabButtons.forEach(item=>{
+   const active=item===button;
+   item.classList.toggle('active',active);
+   item.setAttribute('aria-selected',String(active));
+   item.tabIndex=active?0:-1;
+  });
+  if(focus)button.focus();
+ };
+ activateDetailTab(detailTabButtons.find(button=>button.dataset.detailTab==='chart'));
+ mobileDetailTabs.addEventListener('click',event=>{
+  const button=event.target.closest('[role="tab"][data-detail-tab]');
+  if(button&&mobileDetailTabs.contains(button))activateDetailTab(button);
+ });
+ mobileDetailTabs.addEventListener('keydown',event=>{
+  const current=event.target.closest('[role="tab"][data-detail-tab]');
+  if(!current)return;
+  const index=detailTabButtons.indexOf(current);
+  let nextIndex=index;
+  if(event.key==='ArrowRight')nextIndex=(index+1)%detailTabButtons.length;
+  else if(event.key==='ArrowLeft')nextIndex=(index-1+detailTabButtons.length)%detailTabButtons.length;
+  else if(event.key==='Home')nextIndex=0;
+  else if(event.key==='End')nextIndex=detailTabButtons.length-1;
+  else return;
+  event.preventDefault();
+  activateDetailTab(detailTabButtons[nextIndex],{focus:true});
+ });
 }
 window.addEventListener('popstate',async()=>{const p=new URLSearchParams(location.search),m=p.get('token');if(m&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(m)){/* This listener is inside the token-detail scope. Reuse the current pool set when possible so Back/Forward updates the selected row and chart without creating new history entries. */if(activeDetailMint===m&&restoreDexPoolFromUrl())return;await openToken(m,{fromUrl:true,refresh:true});if(activeDetailMint!==m)return;restoreDexPoolFromUrl();}else{detailRequestId++;activeDetailMint=null;activeDetailPairs=[];$('tokenDetail').classList.remove('open');$('detailChart').src='about:blank';}});
 })();
