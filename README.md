@@ -2716,7 +2716,7 @@ For every integrated asset or borrowed technique, record:
 
 ## 2026-11-09 — Continuity checkpoint: mobile close regression diagnosis complete
 
-- [x] Confirmed the previously pending Browser Smoke run `42611188661` completed with conclusion `success` on head `b0d71ffcd677d90cf27fbb286ab8839f179d54ea`: [run 42611188661](https://github.com/CryptoDilis/Climboria/actions/runs/42611188661).
+- [x] Confirmed the previously pending Browser Smoke run `42611188661` completed with conclusion `success` on head `2ca3ffb2683eccad827dc846997284e1afe2015b`: [run 42611188661](https://github.com/CryptoDilis/Climboria/actions/runs/42611188661).
 - [x] All 16 main Browser Smoke steps passed, including compact DEX/Swap layouts at 390px and 360px, mobile market loading/provider-error/true-empty states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload.
 - [x] Screenshot artifact `climboria-browser-smoke-screenshots` uploaded: [artifact 13670966381](https://github.com/CryptoDilis/Climboria/actions/runs/42611188661/artifacts/13670966381) (7.7 MB; expires 2026-11-16).
 - [x] Validate run `42611188660` completed successfully on the same commit: [run 42611188660](https://github.com/CryptoDilis/Climboria/actions/runs/42611188660).
@@ -2740,3 +2740,24 @@ For every integrated asset or borrowed technique, record:
 - [x] Confirmed `updateSelectedAsset()` accepts only a Solana pair whose `baseToken.address` exactly equals the selected mint; quote-side-only pools are rejected and stale metrics are cleared before lookup.
 - [ ] Coverage gap: the existing end-to-end major-asset browser acceptance is BTC-centric. ETH/BNB/XRP candidate selection and SOL/USDC direct mint flows are not each independently asserted end-to-end. This is a test-coverage gap, not yet evidence of a product-code defect.
 - [ ] Next implementation action: expand deterministic Playwright fixtures and assertions for all six assets, including exact mint, chart pair/title/price, URL and history restoration, ambiguous/no-pool/quote-only behavior, and mobile taps. Keep test fixtures distinct per mint and return realistic per-mint decimals from mocked Solana RPC. Do not alter production selection logic unless an assertion reproduces a real defect.
+
+
+### Browser Smoke checkpoint — 2026-11-09 12:06 UTC
+
+- [x] Browser Smoke run [42612969181](https://github.com/CryptoDilis/Climboria/actions/runs/42612969181) completed with conclusion **success** on head `2ca3ffb2683eccad827dc846997284e1afe2015b`.
+- [x] All 16 primary steps passed, including compact mobile DEX/Swap layouts (390px and 360px), market loading/provider-error/true-empty states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload. Post-job cleanup steps also passed.
+- [x] Screenshot artifact [13672096122](https://github.com/CryptoDilis/Climboria/actions/runs/42612969181/artifacts/13672096122) uploaded (7.73 MB; expires 2026-11-16).
+- [x] Validate run [42612969188](https://github.com/CryptoDilis/Climboria/actions/runs/42612969188) completed successfully on the same head.
+- [x] Deep failure review: no failed or skipped primary test step; no failure root cause to remediate. The prior close-tap timeout was not reproduced. No product-code fix is justified by this run; do not alter that UI code without new evidence.
+
+### Exact active next job — six-asset Swap acceptance
+
+- [ ] Extend the existing Playwright Browser Smoke major-assets test. Current test fixture and end-to-end assertions are BTC-only; this is the verified coverage gap.
+- [ ] Replace BTC-specific search fixtures/intercepts with deterministic per-symbol fixtures for BTC, ETH, BNB, XRP, each containing at least two distinct candidate mints. Assert that multi-candidate search never silently changes the selected From mint; candidate selection must be explicit.
+- [ ] Give each fixture a distinct Solana base-token pool, pair address, symbol, and price. Mock RPC decimals by mint (SOL 9, USDC 6, wrapped candidates per fixture) so invalid fixture metadata cannot mask product behavior.
+- [ ] Add direct canonical-mint flows for SOL and USDC. For USDC, first select a different To asset because the initial To asset is already USDC; assert duplicate-side rejection remains safe.
+- [ ] For every asset assert major-row click, correct search/input state, exact selected mint, selected chart title/price/pair, URL serialization, refresh restoration, and back/forward restoration. Assert quote-only pools cannot render a counter-asset chart, no-pool clears stale metrics, and delayed/out-of-order responses cannot overwrite the latest choice.
+- [ ] Run the same critical acceptance on mobile (including all six rows, tap hit-target, explicit candidate choice, and chart/input synchronization) and desktop.
+- [ ] Strategy: extend deterministic test coverage first; make no production selection change unless a new assertion reproduces a concrete product defect. Keep ambiguous wrapped/bridged assets explicit-choice only and Swap execution fail-closed.
+- [ ] After test changes, run Validate and full Browser Smoke; inspect exact failed step/log/artifact before any corrective commit. Record every verified outcome and the next task here.
+- Current verified head before this checkpoint: `2ca3ffb2683eccad827dc846997284e1afe2015b`. PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open/draft/unmerged; `main` remains untouched. No production deployment or live execution enabled.
