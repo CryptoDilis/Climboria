@@ -567,7 +567,7 @@ jobs:
                 await dex.waitForTimeout(150);
                 const closeAfter=await dex.evaluate(()=>({trace:window.__closeDetailTrace,bodyClass:document.body.className,detailOpen:document.querySelector('#tokenDetail')?.className,navDisplay:getComputedStyle(document.querySelector('#dexMobileNav')).display,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position,navRect:(()=>{const r=document.querySelector('#dexMobileNav').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})(),detailDisplay:getComputedStyle(document.querySelector('#tokenDetail')).display}));
                 console.log('MOBILE CLOSE AFTER '+JSON.stringify(closeAfter));
-                if(document.body.classList.contains('mobile-token-view'))throw new Error('Close detail tap left mobile-token-view active; captured state above');
+                if(closeAfter.bodyClass.split(/\\s+/).includes('mobile-token-view'))throw new Error('Close detail tap left mobile-token-view active; captured state above');
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
                 await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
                 await dex.waitForFunction(()=>document.querySelectorAll('#baseMobileCards a.base-mobile-market-card').length>0,null,{timeout:15000});
