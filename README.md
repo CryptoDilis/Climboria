@@ -2916,3 +2916,16 @@ This is a standing project rule, not a one-time task:
 - Latest work commits: README/browser-smoke handoff `1fc2ac3f027b21f345aa0b0e4d92b6cd8af9edc7`; guest audit document `010158f3e87ba8ac311db1255130495d1767e057`.
 - New commits have not yet been workflow-verified; check latest-head Validate and Browser Smoke before relying on them.
 - Real auth provider E2E and owner-side Google/X OAuth + SMTP setup remain outstanding.
+
+
+## 2026-11-10 — Shared Supabase client bridge added to gameplay
+
+- [x] Latest pre-bridge Validate run `42664896758` passed.
+- [x] Shared singleton Supabase client factory added at `auth/supabase-client.js`; homepage auth UI now consumes this factory rather than initializing a separate client.
+- [x] Added a same-origin module bridge to `game/play.html`. It loads public auth config, exposes the shared page client as `window.climboriaSupabase`, and emits `climboria:auth-session` events for session changes and initial session resolution. If auth is unconfigured, the game remains in guest mode and continues without a client.
+- [x] Extended `.github/scripts/game-smoke.mjs` to mock Supabase and assert gameplay bridge initialization in guest mode before the Jarrell's Peak checks.
+- [x] Added the auth foundation branch to Browser Smoke push triggers so future gameplay/auth changes on this branch are tested.
+- [ ] Latest gameplay bridge browser test is not yet verified. The previous Browser Smoke run `42664896588` was cancelled while its 20-minute Jarrell's Peak gameplay step was still running; cancellation is not a pass or a code failure.
+- [ ] Confirm a fresh Browser Smoke run for commit `36bd5d7be972d97ca1b36b1d6aaa308a7713ee81` starts and completes. Inspect the actual gameplay step and logs if it fails or times out; do not repeat the same long-running attempt without diagnosing the cause.
+- [ ] After bridge verification, add account/guest conflict UX and implement hero-only cloud preference sync with strict allowlist validation, explicit user choice, local backup, idempotent write, read-back verification, and rollback. Do not sync inventory or economic/reward state.
+- **Next exact job:** verify latest-head Browser Smoke and Validate runs, then add focused tests for the gameplay auth-session event on initial guest session and signed-in/session-refresh events. Keep PR #228 draft/unmerged until real provider setup and E2E release gates are complete.
