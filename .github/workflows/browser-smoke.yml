@@ -98,7 +98,7 @@ jobs:
                   const auth={
                     getSession:()=>ok({session}), getUser:()=>ok({user:session?.user||null}),
                     getUserIdentities:()=>ok({identities:[]}),
-                    onAuthStateChange:(fn)=>{listener=fn;return {data:{subscription:{unsubscribe(){}}}}},
+                    onAuthStateChange:(fn)=>{listener=fn;globalThis.__emitAuthEvent=(event)=>listener?.(event,session);return {data:{subscription:{unsubscribe(){}}}}},
                     signUp:async()=>{session={user:{id:'test-user',email:'test@example.com'}};listener?.('SIGNED_IN',session);return ok({user:session.user,session})},
                     signInWithPassword:async()=>{session={user:{id:'test-user',email:'test@example.com'}};listener?.('SIGNED_IN',session);return ok({user:session.user,session})},
                     resetPasswordForEmail:async()=>ok({}), updateUser:async()=>ok({user:{id:'test-user'}}),
@@ -128,6 +128,9 @@ jobs:
             await page.waitForFunction(()=>document.querySelector('#authAccountStatus')?.textContent==='Guest session',null,{timeout:5000});
             await page.locator('#authForgotPassword').click();
             await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('password reset email'),null,{timeout:5000});
+            if(await page.locator('#authRecoveryPanel').isVisible())throw new Error('Recovery form must stay hidden until the recovery callback arrives');
+            await page.evaluate(()=>window.__emitAuthEvent('PASSWORD_RECOVERY'));
+            await page.locator('#authRecoveryPanel').waitFor({state:'visible',timeout:5000});
             await page.locator('#authNewPassword').fill('NewClimboria123!');
             await page.locator('#authSavePassword').click();
             await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Password updated'),null,{timeout:5000});
