@@ -58,6 +58,12 @@ export function installGameSaveOptions({ client, documentRef = document, storage
   };
 
   panel.querySelector("[data-save-close]").addEventListener("click", close);
+  panel.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+    }
+  });
   trigger.addEventListener("click", async () => {
     panel.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
