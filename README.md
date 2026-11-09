@@ -1,3 +1,14 @@
+## 2026-11-09 — Mobile DEX close regression diagnostic result and handoff
+
+- [x] Diagnostic Browser Smoke passed on head `633670f8c833e2360f7920142d006b8e5adc8e20`: run [42610242122](https://github.com/CryptoDilis/Climboria/actions/runs/42610242122). The test now requires the close button to be visible/enabled and the center hit-test to resolve inside `#closeDetail`; it then waits for `body.mobile-token-view` to clear. Passing proves the tap target and close-state transition both worked at 390px and 360px in this run.
+- [x] Full Validate passed on the same head: run [42610242180](https://github.com/CryptoDilis/Climboria/actions/runs/42610242180).
+- [x] Browser Smoke continued beyond the prior failure: mobile provider-loading/error/empty-state checks passed, and the Jarrell's Peak desktop/mobile gameplay smoke executed (including jump/land diagnostics and chest/cave checks). It was no longer skipped.
+- [x] Conclusion: the earlier close timeout was not reproduced. Current evidence supports an intermittent test/runtime timing issue or transient interaction failure; it does not justify changing the close-button UI. No product UI fix was made.
+- [x] Diagnostic workflow and handoff are committed on this PR branch: workflow diagnostic commit `78c2bf440654184c839a054ff182e414979465c4`; README handoff commit `633670f8c833e2360f7920142d006b8e5adc8e20`.
+- [ ] Next exact task: audit the reported DEX major-asset flow end-to-end: selecting each major asset must set the exact mint in the Swap input and synchronize the chart to that same mint; verify search selection and visual states at mobile and desktop. Trace the event/state/data path first, add targeted regression coverage, and only then fix a proven defect. Do not make cosmetic or speculative changes.
+- [ ] After that DEX audit, run Validate + Browser Smoke and inspect Pages workflow/deployment status for the relevant commit. PR #227 remains draft and unmerged; do not merge, deploy production, or enable Swap execution without explicit approval.
+- [ ] Keep Swap execution fail-closed/disabled.
+
 ## 2026-11-09 — Mobile DEX token-detail close regression diagnosis
 
 - [x] Audited latest `main` workflow run `42593894269` on commit `d2084c9b5b02408f7eed5d75e45a2fbf89028014`; Validate run `42593894023` passed, while Browser Smoke failed in the 390px/360px compact-layout step.
