@@ -2812,3 +2812,11 @@ For every integrated asset or borrowed technique, record:
 - [ ] After verified tests, update this README with final run URLs, artifact, commit SHA, exact remaining work. Keep PR #227 open/draft/unmerged; no production deployment or live Swap execution without explicit approval.
 - Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227), branch `codex/diagnose-mobile-close-tap-42593894269`, latest code head `eab604619af3a19788288d547e2e2ba870de10a4`, base `main` `d2084c9b5b02408f7eed5d75e45a2fbf89028014`.
 
+### Six-asset mobile candidate-panel preflight correction — 2026-11-09 12:42 UTC
+
+- [x] Second preflight review of `.github/scripts/swap-major-assets-smoke.mjs` found another deterministic mobile harness ordering issue: candidate buttons are inside the Swap workspace, so the test must switch from Market to Swap before waiting for or tapping a candidate. Updated the mobile path to tap the Swap tab first and use a touch tap on the explicit candidate.
+- [x] This is a test-harness correction based on the existing mobile workspace behavior and existing Browser Smoke interaction pattern; no production UI/selection code was changed. Commit: `14871f2758e606f4a542be1774d04e8f0a9d0ee3`.
+- [ ] Latest-head Validate [42618936772](https://github.com/CryptoDilis/Climboria/actions/runs/42618936772) is queued; latest-head Browser Smoke [42618936780](https://github.com/CryptoDilis/Climboria/actions/runs/42618936780) is pending on code head `14871f2758e606f4a542be1774d04e8f0a9d0ee3`. Allow these to complete before further edits.
+- [ ] Prior Browser Smoke run [42618874579](https://github.com/CryptoDilis/Climboria/actions/runs/42618874579) was still in progress on the earlier README-only head `be90c0f`; it may be cancelled by the latest-head run due to workflow concurrency. Treat cancellation caused by a newer PR commit as expected orchestration, not a test failure.
+- **Exact next action:** inspect the latest-head six-asset test step and its logs. If it fails, identify whether the failure is in fixture routing, mobile workspace sequencing, UI behavior, or assertion assumptions; reproduce and fix only that proven cause. If it passes, verify all six asset flows on both viewports and extend any missing back/forward, no-pool, quote-only, or stale-response acceptance before closing the task.
+
