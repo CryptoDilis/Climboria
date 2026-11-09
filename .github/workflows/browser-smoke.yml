@@ -114,7 +114,7 @@ jobs:
             for(const id of ['authEvm','authSolana','authGoogle','authX','authEmail','authPassword','authEmailSubmit','authModeToggle','authForgotPassword','authNewPassword','authSavePassword','authAccountStatus','authLogout']){
               if(await page.locator('#'+id).count()!==1)throw new Error('Missing auth control #'+id);
             }
-            await page.locator('[data-open-auth]').first().click();
+            await page.locator('[data-open-auth]:visible').first().click();
             if(!await page.locator('#authModal').isVisible())throw new Error('Account modal did not open');
             await page.locator('#authModeToggle').click();
             if(await page.locator('#authEmailSubmit').getAttribute('data-mode')!=='signup')throw new Error('Email signup mode did not toggle');
