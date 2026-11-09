@@ -81,6 +81,9 @@ jobs:
           cat /tmp/climboria-http.log
           exit 1
 
+      - name: Test guest and account save-choice resolver
+        run: node --experimental-default-type=module --test .github/scripts/save-choice.test.mjs
+
       - name: Test Climboria authentication UI and client flows
         run: |
           node <<'JS'
