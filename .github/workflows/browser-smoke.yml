@@ -125,6 +125,8 @@ jobs:
               if(await exactRow.count()!==1)throw new Error('DEX exact contract-address search did not return the exact base-token mint');
               await exactRow.click();
               await dexPage.waitForFunction(pair=>document.querySelector('#detailChart')?.src.includes(pair),dexPair.pairAddress,{timeout:12000});
+              const chartUrl=new URL(await dexPage.locator('#detailChart').getAttribute('src'));
+              if(chartUrl.searchParams.get('chartStyle')!=='1'||chartUrl.searchParams.get('interval')!=='15')throw new Error('DEX chart must default to visible 15-minute candlesticks: '+chartUrl.href);
               if(!(await dexPage.locator('#detailTitle').innerText()).includes('CLIMBTEST'))throw new Error('DEX chart detail did not match the exact searched token');
               await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
@@ -406,7 +408,16 @@ jobs:
               mobile.on('pageerror',error=>errors.push(error.message));
               const response=await mobile.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Mobile DEX route failed to load');
-              await mobile.locator('#tokenDetail').evaluate(el=>el.classList.add('open'));
+              await mobile.locator('#dexMobileNav').waitFor({state:'visible',timeout:10000});
+              if(await mobile.locator('#evmMarkets').isVisible())throw new Error('Base market explorer should not stack below Solana by default on mobile');
+              if(!await mobile.locator('#markets').isVisible())throw new Error('Solana markets should be the default mobile DEX view');
+              const mobileNav=mobile.locator('#dexMobileNav');
+              if(await mobileNav.evaluate(el=>getComputedStyle(el).position)!=='fixed')throw new Error('DEX mobile navigation must stay fixed at the bottom');
+              await mobileNav.locator('[data-dex-mobile-view="base"]').tap();
+              if(!await mobile.locator('#evmMarkets').isVisible()||await mobile.locator('#markets').isVisible())throw new Error('Base mobile view must replace, not stack under, Solana markets');
+              await mobileNav.locator('[data-dex-mobile-view="solana"]').tap();
+              await mobile.locator('#tokenDetail').evaluate(el=>{el.classList.add('open');document.body.classList.add('mobile-token-view')});
+              if(await mobile.locator('#dexMobileNav').isVisible()||!await mobile.locator('#tokenDetail').isVisible())throw new Error('Selected-token view should replace market explorer and main mobile navigation');
               const tabs=mobile.locator('#detailMobileTabs');
               const workspace=mobile.locator('#detailWorkspace');
               if(!await tabs.isVisible()) throw new Error('Mobile DEX tablist is not visible');
@@ -450,6 +461,49 @@ jobs:
               console.log('PASS DEX mobile Chart/Trade/Chat/Pools touch, panel visibility, ARIA, arrow/Home/End keyboard navigation, and desktop three-column regression.');
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
+      - name: Test compact mobile DEX and Swap layouts at 390px and 360px
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser=await chromium.launch({headless:true});
+            try {
+              for(const width of [390,360]){
+                const dex=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+                const errors=[];
+                dex.on('pageerror',e=>errors.push('DEX '+e.message));
+                await dex.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+                await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:10000});
+                const dexMetrics=await dex.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,marketRows:document.querySelectorAll('#rows tr').length,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position}));
+                if(dexMetrics.scrollWidth>dexMetrics.width+1||dexMetrics.navPosition!=='fixed')throw new Error('DEX '+width+'px overflow/bottom-nav failure: '+JSON.stringify(dexMetrics));
+                if(dexMetrics.marketRows>12)throw new Error('DEX mobile first paint should show no more than 12 market rows: '+JSON.stringify(dexMetrics));
+                await dex.locator('#mobileMarketMore').isVisible().catch(()=>false);
+                await dex.close();
+
+                const swap=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
+                swap.on('pageerror',e=>errors.push('Swap '+e.message));
+                await swap.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
+                const tabs=swap.locator('#mobileWorkspaceTabs');
+                await tabs.waitFor({state:'visible',timeout:10000});
+                if(await tabs.evaluate(el=>getComputedStyle(el).position)!=='fixed')throw new Error('Swap mobile navigation must stay fixed at the bottom');
+                if(await swap.locator('.hero').isVisible()||await swap.locator('.ad-slot').first().isVisible())throw new Error('Swap mobile view must remove the tall hero and ad placeholder from the primary trading fold');
+                const trade=swap.locator('.premium-trade-layout');
+                if(!await trade.locator('.card').isVisible())throw new Error('Swap should open directly on the compact swap form');
+                await tabs.locator('[data-workspace-tab="market"]').tap();
+                if(!await trade.locator('.market-rail').isVisible()||await trade.locator('.card').isVisible())throw new Error('Markets tab should show only the major-asset feed');
+                await tabs.locator('[data-workspace-tab="chart"]').tap();
+                if(!await trade.locator('.selected-panel').isVisible()||await trade.locator('.card').isVisible())throw new Error('Chart tab should show only selected-asset chart workspace');
+                await tabs.locator('[data-workspace-tab="swap"]').tap();
+                const swapMetrics=await swap.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,navPosition:getComputedStyle(document.querySelector('#mobileWorkspaceTabs')).position}));
+                if(swapMetrics.scrollWidth>swapMetrics.width+1||swapMetrics.navPosition!=='fixed'||swapMetrics.scrollHeight>1600)throw new Error('Swap '+width+'px compact layout/overflow failure: '+JSON.stringify(swapMetrics));
+                if(errors.length)throw new Error(errors.join(' | '));
+                await swap.close();
+              }
+              console.log('PASS compact mobile DEX/Swap navigation, single-panel workspaces, candlestick defaults, 390px and 360px overflow and first-fold checks.');
+            } finally {await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1)});
           JS
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
