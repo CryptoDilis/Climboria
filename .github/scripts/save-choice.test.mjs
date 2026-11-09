@@ -36,6 +36,13 @@ test("account payloads with unknown versions and malformed shapes are rejected",
   assert.equal(resolveSaveChoice({ accountRow: { schema_version: 1, save_data: [] } }).state, "invalid-data");
 });
 
+test("version 1 account payload rejects every key except selectedHero", () => {
+  assert.equal(resolveSaveChoice({ accountRow: { schema_version: 1, save_data: { inventory: [] } } }).state, "invalid-data");
+  assert.equal(resolveSaveChoice({ accountRow: { schema_version: 1, save_data: { selectedHero: "Adventurer", tokenBalance: 100 } } }).state, "invalid-data");
+  assert.equal(resolveSaveChoice({ accountRow: { schema_version: 1, save_data: { selectedHero: "Adventurer", progression: { level: 9 } } } }).state, "invalid-data");
+  assert.equal(resolveSaveChoice({ accountRow: { schema_version: 1, save_data: {} } }).state, "account-save-no-hero");
+});
+
 test("read failures preserve a valid guest snapshot", () => {
   const result = resolveSaveChoice({ guestRaw: "Adventurer", accountError: new Error("offline") });
   assert.equal(result.state, "read-error");
