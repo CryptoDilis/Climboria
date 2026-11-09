@@ -1,3 +1,19 @@
+## 2026-11-10 — Save Options keyboard accessibility verification follow-up
+
+- [x] Investigated prior Browser Smoke run `42711389649`: step 18 remained `in_progress` in GitHub's job response after a long interval; retrieving job logs for `129481534028` returned `BlobNotFound`. No test failure evidence or root cause was available. Treat this as stale/unavailable CI telemetry, not as a confirmed game regression.
+- [x] Fresh follow-up CI check for documentation/test update commit `dbb9e584d004a998ee5babeadfe9583350ea5cbd` exposed Browser Smoke check `129483212194` queued. Validate check was not present in the returned check-runs list for that docs-only commit.
+- [x] Added the account-save-without-supported-hero state to the mocked save options matrix.
+- [x] Improved keyboard accessibility: focus the close control when opening, restore focus to the trigger on close, and handle Escape at document level while the panel is open.
+- [x] Extended the browser test matrix to verify Escape closes the panel and resets `aria-expanded`.
+- [ ] **Next exact job:** inspect fresh Browser Smoke for the latest code/test commit (current branch head is expected to be `491ca11001a6b3dbc3dc97f44389f32f2a2e7d94`). Confirm the added account-save-no-hero and Escape assertions pass. If a failure appears, fetch logs for the failed step and diagnose evidence before changing code.
+- [ ] Verify Validate on latest code head; if no Validate check was triggered, inspect workflow path filters and run the appropriate workflow rather than assuming success.
+- [ ] If full gameplay smoke still remains stuck or logs unavailable, rely on a fresh completed run; do not mark the old step 18 as passed.
+- [ ] Review desktop/mobile screenshots and ensure the Save Options panel does not cover essential gameplay controls. Keep PR #229 draft/unmerged until all checks and real provider/RLS gates pass.
+
+**Latest code/test commit before this handoff:** `491ca11001a6b3dbc3dc97f44389f32f2a2e7d94`  
+**Prior README/CI handoff commit:** `dbb9e584d004a998ee5babeadfe9583350ea5cbd`  
+**PR #229:** https://github.com/CryptoDilis/Climboria/pull/229
+
 ## 2026-11-10 — Save Options follow-up: accessibility and empty account save
 
 - [x] Rechecked Browser Smoke run [42711389649](https://github.com/CryptoDilis/Climboria/actions/runs/42711389649) for code commit `4af2818c0f8b03e4e6c8cb964da93941046e0f22`. Steps 1–17 were successful, including the new Save Options safety matrix. Step 18 (Jarrell's Peak desktop/mobile gameplay) remained reported as in progress.
