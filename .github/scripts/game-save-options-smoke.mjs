@@ -63,6 +63,9 @@ try {
     if (result.calls.select !== scenario.queries) failures.push(scenario.name + ": expected " + scenario.queries + " player_saves read(s), got " + result.calls.select);
     if (result.calls.insert || result.calls.update || result.calls.upsert) failures.push(scenario.name + ": unexpected cloud write " + JSON.stringify(result.calls));
     if (result.inventory !== inventoryBefore) failures.push(scenario.name + ": inventory changed");
+    await page.keyboard.press("Escape");
+    if (await page.locator("#climboria-save-options").isVisible()) failures.push(scenario.name + ": Escape did not close the panel");
+    if (await page.getByRole("button", { name: "SAVE OPTIONS" }).getAttribute("aria-expanded") !== "false") failures.push(scenario.name + ": trigger aria-expanded was not reset");
     await page.close();
   }
   if (failures.length) throw new Error(failures.join("\n"));
