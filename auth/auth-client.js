@@ -29,6 +29,7 @@ if (!configured) {
   const google = document.getElementById("authGoogle");
   const xLogin = document.getElementById("authX");
   const evm = document.getElementById("authEvm");
+  const solana = document.getElementById("authSolana");
   const logout = document.getElementById("authLogout");
   const modeToggle = document.getElementById("authModeToggle");
 
@@ -82,6 +83,22 @@ if (!configured) {
       wallet: window.ethereum,
       statement: "Sign in to Climboria. This signature proves wallet ownership only; it does not authorize a transaction."
     }));
+  });
+
+  solana?.addEventListener("click", async () => {
+    const wallet = window.phantom?.solana || window.solana;
+    if (!wallet || typeof wallet.connect !== "function") {
+      setStatus("No Solana wallet detected. Open Climboria in Phantom, Solflare, Backpack, or another Solana wallet browser.");
+      return;
+    }
+    await reportAuth(async () => {
+      if (!wallet.isConnected) await wallet.connect();
+      return supabase.auth.signInWithWeb3({
+        chain: "solana",
+        wallet,
+        statement: "Sign in to Climboria. This signature proves wallet ownership only; it does not authorize a transaction."
+      });
+    });
   });
 
   xLogin?.addEventListener("click", async () => {
