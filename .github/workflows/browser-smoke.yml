@@ -493,6 +493,16 @@ jobs:
                 const dexMetrics=await dex.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,marketRows:document.querySelectorAll('#rows tr').length,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position}));
                 if(dexMetrics.scrollWidth>dexMetrics.width+1||dexMetrics.navPosition!=='fixed')throw new Error('DEX '+width+'px overflow/bottom-nav failure: '+JSON.stringify(dexMetrics));
                 if(dexMetrics.marketRows>12)throw new Error('DEX mobile first paint should show no more than 12 market rows: '+JSON.stringify(dexMetrics));
+                const mobileCards=dex.locator('#solanaMobileCards .mobile-market-card');
+                await dex.waitForFunction(()=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>0,null,{timeout:15000});
+                if(!await dex.locator('#solanaMobileCards').isVisible()||await dex.locator('#markets .tablewrap').isVisible())throw new Error('Solana mobile cards must replace the desktop table at '+width+'px');
+                if(await mobileCards.count()>12)throw new Error('Solana mobile first paint should show at most 12 cards');
+                const firstCard=mobileCards.first(),selectedMint=await firstCard.getAttribute('data-mint');
+                if(!selectedMint||selectedMint.length<32)throw new Error('Solana mobile card is missing a valid mint address');
+                await firstCard.tap();
+                await dex.waitForFunction(()=>document.body.classList.contains('mobile-token-view'),null,{timeout:10000});
+                if(!await dex.locator('#tokenDetail').isVisible())throw new Error('Tapping a Solana mobile card did not open the existing token detail flow');
+                if(await dex.locator('#detailMint').textContent().then(t=>!t.includes(selectedMint)))throw new Error('Mobile card tap opened a different mint than the selected card');
                 if(await dex.locator('#mobileMarketMore').isVisible()){
                   const before=await dex.locator('#rows tr').count();
                   await dex.locator('#mobileMarketMore').tap();
@@ -520,7 +530,14 @@ jobs:
                 if(errors.length)throw new Error(errors.join(' | '));
                 await swap.close();
               }
-              console.log('PASS compact mobile DEX/Swap navigation, single-panel workspaces, candlestick defaults, 390px and 360px overflow and first-fold checks.');
+              const desktopDex=await browser.newPage({viewport:{width:1365,height:900}});
+              await desktopDex.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await desktopDex.waitForFunction(()=>document.querySelectorAll('#rows tr').length>0,null,{timeout:15000});
+              if(!await desktopDex.locator('#markets .tablewrap').isVisible()||await desktopDex.locator('#solanaMobileCards').isVisible())throw new Error('Desktop market table must remain visible and mobile cards hidden');
+              const desktopTable=await desktopDex.locator('#markets .tablewrap table').evaluate(el=>({width:el.getBoundingClientRect().width,minWidth:getComputedStyle(el).minWidth}));
+              if(desktopTable.width<600)throw new Error('Desktop market table width unexpectedly changed: '+JSON.stringify(desktopTable));
+              await desktopDex.close();
+              console.log('PASS compact mobile DEX/Swap navigation, Solana card tap/mint selection, desktop market table regression, candlestick defaults, 390px and 360px overflow and first-fold checks.');
             } finally {await browser.close();}
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
