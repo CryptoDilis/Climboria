@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import worker from "../src/index.mjs";
 
 const origin = "https://climboria.fun";
-const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: { limit: async () => ({ success: true }) } };
+const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) } };
 const valid = "So11111111111111111111111111111111111111112";
 
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "jupiter-order-execute", configured: { jupiterKey: true, rateLimiter: true } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: true } });
 });
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
@@ -46,6 +46,13 @@ test("does not proxy order when API key is missing", async () => {
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin });
   assert.equal(res.status, 503);
 });
+test("blocks swap execution by default even when a signed payload is supplied", async () => {
+  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), requestId: "request-123456" }) });
+  const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: env.RATE_LIMITER });
+  assert.equal(res.status, 503);
+  assert.match((await res.json()).error, /disabled pending security review/i);
+});
+
 test("rejects malformed execute payload", async () => {
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "not-base64", requestId: "request-123456" }) });
   const res = await worker.fetch(req, env);
