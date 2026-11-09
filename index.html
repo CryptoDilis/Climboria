@@ -678,18 +678,7 @@ footer:first-of-type>div{
   document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
   document.getElementById('authClose').addEventListener('click',closeAuth);
   authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
-  document.getElementById('authWallet').addEventListener('click',async()=>{
-    authStatus.textContent='Looking for an installed wallet…';
-    try {
-      let address='';
-      if(window.solana && window.solana.isPhantom){
-        const r=await window.solana.connect(); address=r?.publicKey?.toString()||'';
-      } else if(window.ethereum){
-        const a=await window.ethereum.request({method:'eth_requestAccounts'}); address=a?.[0]||'';
-      } else { authStatus.textContent='No compatible wallet detected. Install Phantom then retry.';return;}
-      authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
-    } catch { authStatus.textContent='Wallet connection failed.'; }
-  });
+  // Wallet linking is intentionally deferred until nonce/signature verification exists.
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
