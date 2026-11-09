@@ -109,9 +109,16 @@ jobs:
               const mockMint='SysvarRent111111111111111111111111111111111';
               const mockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               const btcSearchFixture=[{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}];
-              // swap-config.js enables the production Cloudflare proxy; intercept that exact route in browser tests.
-              await page.route('https://api.climboria.fun/api/tokens/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
-              await page.route('https://api.jup.ag/tokens/v2/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
+              // Match the proxy endpoint independent of query-string ordering/encoding. The live config intentionally routes searches through Cloudflare.
+              let btcProxySearchIntercepted=false;
+              await page.route('**/api/tokens/search**',async route=>{
+                const requestUrl=new URL(route.request().url());
+                if(requestUrl.searchParams.get('query')!=='BTC')return route.continue();
+                btcProxySearchIntercepted=true;
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)});
+              });
+              // Direct Jupiter is only the fallback when the proxy is explicitly disabled.
+              await page.route('https://api.jup.ag/tokens/v2/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
               await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
@@ -130,6 +137,7 @@ jobs:
               if(hoverLabel!=='none'&&hoverLabel!=='normal') throw new Error('Major asset hover overlay must be absent, got '+hoverLabel);
               await btc.click();
               await page.locator('#fromResults button[data-index="0"]').waitFor({state:'visible',timeout:10000});
+              if(!btcProxySearchIntercepted)throw new Error('BTC search did not use the configured Cloudflare proxy route; check swap-config.js and token-search URL selection.');
               const candidateUi=await page.locator('#fromResults button[data-index="0"]').evaluate(el=>({cursor:getComputedStyle(el).cursor,tabIndex:el.tabIndex,mintWrap:getComputedStyle(el.querySelector('small')).overflowWrap,cardWidth:el.getBoundingClientRect().width,listWidth:el.parentElement.getBoundingClientRect().width}));
               if(candidateUi.cursor!=='pointer'||candidateUi.tabIndex!==0||candidateUi.mintWrap!=='anywhere'||candidateUi.cardWidth>candidateUi.listWidth+1) throw new Error('Token candidate card accessibility/wrapping/overlap check failed: '+JSON.stringify(candidateUi));
               if(await page.locator('#quoteFromSearch').inputValue()!=='BTC') throw new Error('Clicking BTC did not open BTC input token candidates');
