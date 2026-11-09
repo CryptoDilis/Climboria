@@ -9,6 +9,18 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
+  await page.route('https://esm.sh/@supabase/supabase-js@2', route => route.fulfill({
+    status: 200,
+    contentType: 'application/javascript',
+    body: `let session = null; let listener;
+      export function createClient() {
+        return { auth: {
+          getSession: async () => ({ data: { session }, error: null }),
+          onAuthStateChange: fn => { listener = fn; return { data: { subscription: { unsubscribe() {} } } }; },
+          emitForSmoke: event => listener?.(event, session)
+        } };
+      }`
+  }));
   page.on('pageerror', error => errors.push('desktop pageerror: ' + (error.stack || error.message)));
   page.on('console', message => { if (message.type() === 'error') errors.push('desktop console: ' + message.text()); });
   await page.goto('http://127.0.0.1:4173/game/play.html?smoke=1', {
@@ -16,6 +28,15 @@ try {
     timeout: 90000,
   });
   await page.waitForSelector('#game canvas, canvas', { timeout: 45000 });
+  await page.waitForFunction(() => window.climboriaSupabaseBridgeReady === true, undefined, { timeout: 15000 });
+  const authBridge = await page.evaluate(async () => ({
+    clientAvailable: !!window.climboriaSupabase,
+    sessionResult: await window.climboriaSupabase?.auth.getSession(),
+    guestModeEventSupported: typeof window.climboriaSupabase?.auth.onAuthStateChange === 'function',
+  }));
+  if (!authBridge.clientAvailable || authBridge.sessionResult?.error || authBridge.sessionResult?.data?.session !== null || !authBridge.guestModeEventSupported) {
+    errors.push('Gameplay shared auth bridge failed to initialize in mocked guest mode: ' + JSON.stringify(authBridge));
+  }
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
