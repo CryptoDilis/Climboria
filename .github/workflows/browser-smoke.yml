@@ -120,6 +120,8 @@ jobs:
                 console.log('Intercepted BTC token search:',requestUrl.origin+requestUrl.pathname);
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)});
               });
+              // Keep quote-preview requests deterministic and same-origin-safe in browser tests; production CORS is tested separately.
+              await page.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
               // Direct Jupiter is only the fallback when the proxy is explicitly disabled.
               await page.route('https://api.jup.ag/tokens/v2/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
@@ -194,6 +196,7 @@ jobs:
               const mobileMockMint='SysvarRent111111111111111111111111111111111';
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               await mobileSwap.route('https://api.climboria.fun/api/tokens/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mobileMockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
+              await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
               await mobileSwap.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
