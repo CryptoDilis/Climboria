@@ -357,7 +357,7 @@ jobs:
               const poolB='22222222222222222222222222222222';
               const poolData={pairs:[
                 {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}},info:{websites:[{label:'Website',url:'https://climboria.fun'}],socials:[{type:'twitter',url:'https://x.com/ClimboriaHQ'}]}},
-                {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'1',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
+                {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'2.5',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
@@ -395,12 +395,29 @@ jobs:
               await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
+              const assertSelectedPool=(pool,expected)=>page.evaluate(({pool,expected})=>{
+                const chart=document.querySelector('#detailChart'),external=document.querySelector('#detailChartExternal');
+                const src=chart?.getAttribute('src')||'',chartUrl=src?new URL(src):null;
+                const text=id=>document.querySelector('#'+id)?.textContent?.trim()||'';
+                const row=document.querySelector('#detailPairs .routecandidate.selected');
+                const state={pool:row?.dataset.pair,chartPath:chartUrl?.pathname,chartStyle:chartUrl?.searchParams.get('chartStyle'),interval:chartUrl?.searchParams.get('interval'),external:external?.getAttribute('href'),price:text('detailPrice'),volume:text('detailVolume'),liquidity:text('detailLiquidity'),change:text('detailChange'),flow:text('flowBuySell'),hint:text('trailHint')};
+                const checks={pool:state.pool===pool,chart:state.chartPath?.endsWith('/'+pool),chartStyle:state.chartStyle==='1',interval:state.interval==='15',external:state.external?.endsWith('/'+pool),price:state.price===expected.price,volume:state.volume===expected.volume,liquidity:state.liquidity===expected.liquidity,change:state.change===expected.change,flow:state.flow===expected.flow,hint:state.hint.includes(pool.slice(0,7))};
+                return {state,checks,passed:Object.values(checks).every(Boolean)};
+              },{pool,expected});
+              const poolBExpected={price:'$2.50000',volume:'$25.0K',liquidity:'$100.0K',change:'+0.50%',flow:'6 / 3'};
+              const poolAExpected={price:'$1.00000',volume:'$50.0K',liquidity:'$200.0K',change:'+1.00%',flow:'10 / 5'};
+              const poolBState=await assertSelectedPool(poolB,poolBExpected);
+              if(!poolBState.passed)throw new Error('Selecting pool B did not synchronize chart, external link and provider metrics: '+JSON.stringify(poolBState));
               await page.goBack();
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Back selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
+              const poolABackState=await assertSelectedPool(poolA,poolAExpected);
+              if(!poolABackState.passed)throw new Error('Browser Back restored pool A URL/row but not its chart and metrics: '+JSON.stringify(poolABackState));
               await page.goForward();
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
+              const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
+              if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
               if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
               console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
             } finally { await browser.close(); }

@@ -1005,7 +1005,42 @@ document.addEventListener('click',e=>{
 });
 function setDexUrl(mint,pairAddress,options={}){const u=new URL(location.href);if(mint)u.searchParams.set('token',mint);else u.searchParams.delete('token');if(pairAddress)u.searchParams.set('pool',pairAddress);else u.searchParams.delete('pool');const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(options.fromUrl)history.replaceState({climboriaDex:true},'',u);else history.pushState({climboriaDex:true},'',u);}
 let activeDetailMint=null,activeDetailPairs=[],detailRequestId=0;
-function restoreDexPoolFromUrl(){const selected=new URLSearchParams(location.search).get('pool');if(!selected)return false;const pair=activeDetailPairs.find(p=>p.pairAddress===selected);if(!pair)return false;document.querySelectorAll('#detailPairs .routecandidate').forEach(row=>row.classList.toggle('selected',row.dataset.pair===selected));$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress);$('trailHint').textContent='Selected pool: '+pair.dexId+' · '+pair.quoteToken.symbol+'. Chart and values are provider-reported.';dexTradeSyncToken(pair);return true;}
+function applySelectedPoolState(p,pairs,mint){
+  dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
+  $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
+  const priceValue=Number(p.priceUsd),volumeValue=Number(p.volume?.h24),liquidityValue=Number(p.liquidity?.usd),changeValue=Number(p.priceChange?.h24);
+  $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
+  $("detailVolume").textContent=Number.isFinite(volumeValue)?fmt(volumeValue):"Unavailable";
+  $("detailLiquidity").textContent=Number.isFinite(liquidityValue)?fmt(liquidityValue):"Unavailable";
+  $("detailChange").textContent=Number.isFinite(changeValue)?(changeValue>0?"+":"")+changeValue.toFixed(2)+"%":"Unavailable";
+  const buys=Number(p.txns?.h24?.buys),sells=Number(p.txns?.h24?.sells),totalTx=buys+sells;
+  $("flowBuySell").textContent=Number.isFinite(totalTx)?buys+" / "+sells:"N/A";
+  $("flowImbalance").textContent=Number.isFinite(totalTx)&&totalTx>0?(((buys-sells)/totalTx)*100).toFixed(1)+"%":"N/A";
+  ["detailPrice","detailVolume","detailLiquidity","detailChange","flowBuySell","flowImbalance","flowTurnover","flowShare"].forEach(id=>$(id).classList.remove("skeleton-value"));
+  document.querySelectorAll(".routecandidate").forEach(el=>el.classList.toggle("selected",el.dataset.pair===p.pairAddress));
+  $('trailHint').textContent='Selected pool: '+p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5)+' · '+p.dexId+' · '+p.quoteToken.symbol;
+  const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
+  const liqValues=pairs.map(x=>Number(x.liquidity?.usd)).filter(Number.isFinite),maxLiq=Math.max(0,...liqValues),selectedLiq=Number(p.liquidity?.usd),liqDepth=Number.isFinite(selectedLiq)&&maxLiq>0?Math.round(selectedLiq/maxLiq*100):null;
+  const signalBuys=Number(p.txns?.h24?.buys),signalSells=Number(p.txns?.h24?.sells),signalTxTotal=signalBuys+signalSells,buyImbalance=Number.isFinite(signalTxTotal)&&signalTxTotal>0?((signalBuys-signalSells)/signalTxTotal)*100:null;
+  const ageText=age===null?'Unavailable':age<1?(age*24).toFixed(1)+' hours':age.toFixed(1)+' days';
+  const signalCards=[['Liquidity depth',liqDepth===null?'Insufficient data':liqDepth+'/100',liqDepth===null?'No comparable liquidity value':'Relative to the deepest discovered pool for this mint · not a safety rating'],['Holder concentration','Not loaded','Expand Top holders to fetch live owner concentration from Solana RPC'],['Pool age',ageText,age===null?'Creation timestamp not supplied':'Calculated from DexScreener pairCreatedAt'],['Buy imbalance',buyImbalance===null?'Insufficient data':(buyImbalance>0?'+':'')+buyImbalance.toFixed(1)+'%',buyImbalance===null?'Buy/sell counts unavailable':'(buys − sells) ÷ total transactions · 24h provider counts']];
+  $('signalGrid').innerHTML=signalCards.map(([name,value,desc])=>'<div class="signalitem '+(value==='Insufficient data'||value==='Not loaded'?'missing':'good')+'" title="'+esc(desc)+'"><b>'+esc(name)+'</b><strong class="signal-value">'+esc(value)+'</strong><small>'+esc(desc)+'</small></div>').join('');
+  $('signalFoot').textContent='Transparent evidence only. Liquidity depth is relative within this token’s discovered pools; holder concentration requires the on-chain holder lookup. No composite safety score is issued while evidence is incomplete.';
+  loadMintAuthorityEvidence(mint);
+  const liq=pairs.reduce((sum,x)=>sum+(Number(x.liquidity?.usd)||0),0),share=liq>0?(Number(p.liquidity?.usd)||0)/liq*100:null,vol=Number(p.volume?.h24),pl=Number(p.liquidity?.usd),turn=Number.isFinite(vol)&&pl>0?vol/pl:null;
+  $('poolShareBarLabel').textContent=share===null?'Unavailable':share.toFixed(1)+'%';$('poolShareBar').style.width=(share===null?0:Math.max(0,Math.min(100,share)))+'%';
+  $('turnoverBarLabel').textContent=turn===null?'Unavailable':turn.toFixed(2)+'×';$('turnoverBar').style.width=(turn===null?0:Math.max(0,Math.min(100,turn*25)))+'%';
+  $('flowShare').textContent=share===null?'N/A':share.toFixed(1)+'%';$('flowTurnover').textContent=turn===null?'N/A':turn.toFixed(2)+'×';
+}
+function restoreDexPoolFromUrl(){
+ const selected=new URLSearchParams(location.search).get('pool');
+ if(!selected)return false;
+ const pair=activeDetailPairs.find(p=>p.pairAddress===selected);
+ if(!pair)return false;
+ applySelectedPoolState(pair,activeDetailPairs,activeDetailMint);
+ return true;
+}
+
 let pumpCoinCache=new Map();
 function safeHttps(value){try{const u=new URL(value);return u.protocol==='https:'?u.href:null}catch(e){return null}}
 async function fetchPumpCoin(mint){
@@ -1100,31 +1135,7 @@ async function openToken(mint,options={}){
  $('detailUpdated').textContent='Updated '+new Date().toLocaleTimeString()+' · DexScreener provider';
  function selectPool(p,fromUrl=false){
   if(fromUrl){if(!requestedPool)setDexUrl(mint,p.pairAddress,{fromUrl:true});}else setDexUrl(mint,p.pairAddress);
-  dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
-  $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
-  const priceValue=Number(p.priceUsd),volumeValue=Number(p.volume?.h24),liquidityValue=Number(p.liquidity?.usd),changeValue=Number(p.priceChange?.h24);
-  $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
-  $("detailVolume").textContent=Number.isFinite(volumeValue)?fmt(volumeValue):"Unavailable";
-  $("detailLiquidity").textContent=Number.isFinite(liquidityValue)?fmt(liquidityValue):"Unavailable";
-  $("detailChange").textContent=Number.isFinite(changeValue)?(changeValue>0?"+":"")+changeValue.toFixed(2)+"%":"Unavailable";
-  const buys=Number(p.txns?.h24?.buys),sells=Number(p.txns?.h24?.sells),totalTx=buys+sells;
-  $("flowBuySell").textContent=Number.isFinite(totalTx)?buys+" / "+sells:"N/A";
-  $("flowImbalance").textContent=Number.isFinite(totalTx)&&totalTx>0?(((buys-sells)/totalTx)*100).toFixed(1)+"%":"N/A";
-  ["detailPrice","detailVolume","detailLiquidity","detailChange","flowBuySell","flowImbalance","flowTurnover","flowShare"].forEach(id=>$(id).classList.remove("skeleton-value"));
-  document.querySelectorAll(".routecandidate").forEach(el=>el.classList.toggle("selected",el.dataset.pair===p.pairAddress));
-  $('trailHint').textContent='Selected pool: '+p.pairAddress.slice(0,7)+'…'+p.pairAddress.slice(-5)+' · '+p.dexId+' · '+p.quoteToken.symbol;
-  const age=p.pairCreatedAt?Math.max(0,(Date.now()-Number(p.pairCreatedAt))/86400000):null;
-  const liqValues=pairs.map(x=>Number(x.liquidity?.usd)).filter(Number.isFinite),maxLiq=Math.max(0,...liqValues),selectedLiq=Number(p.liquidity?.usd),liqDepth=Number.isFinite(selectedLiq)&&maxLiq>0?Math.round(selectedLiq/maxLiq*100):null;
-  const signalBuys=Number(p.txns?.h24?.buys),signalSells=Number(p.txns?.h24?.sells),signalTxTotal=signalBuys+signalSells,buyImbalance=Number.isFinite(signalTxTotal)&&signalTxTotal>0?((signalBuys-signalSells)/signalTxTotal)*100:null;
-  const ageText=age===null?'Unavailable':age<1?(age*24).toFixed(1)+' hours':age.toFixed(1)+' days';
-  const signalCards=[['Liquidity depth',liqDepth===null?'Insufficient data':liqDepth+'/100',liqDepth===null?'No comparable liquidity value':'Relative to the deepest discovered pool for this mint · not a safety rating'],['Holder concentration','Not loaded','Expand Top holders to fetch live owner concentration from Solana RPC'],['Pool age',ageText,age===null?'Creation timestamp not supplied':'Calculated from DexScreener pairCreatedAt'],['Buy imbalance',buyImbalance===null?'Insufficient data':(buyImbalance>0?'+':'')+buyImbalance.toFixed(1)+'%',buyImbalance===null?'Buy/sell counts unavailable':'(buys − sells) ÷ total transactions · 24h provider counts']];
-  $('signalGrid').innerHTML=signalCards.map(([name,value,desc])=>'<div class="signalitem '+(value==='Insufficient data'||value==='Not loaded'?'missing':'good')+'" title="'+esc(desc)+'"><b>'+esc(name)+'</b><strong class="signal-value">'+esc(value)+'</strong><small>'+esc(desc)+'</small></div>').join('');
-  $('signalFoot').textContent='Transparent evidence only. Liquidity depth is relative within this token’s discovered pools; holder concentration requires the on-chain holder lookup. No composite safety score is issued while evidence is incomplete.';
-  loadMintAuthorityEvidence(mint);
-  const liq=pairs.reduce((sum,x)=>sum+(Number(x.liquidity?.usd)||0),0),share=liq>0?(Number(p.liquidity?.usd)||0)/liq*100:null,vol=Number(p.volume?.h24),pl=Number(p.liquidity?.usd),turn=Number.isFinite(vol)&&pl>0?vol/pl:null;
-  $('poolShareBarLabel').textContent=share===null?'Unavailable':share.toFixed(1)+'%';$('poolShareBar').style.width=(share===null?0:Math.max(0,Math.min(100,share)))+'%';
-  $('turnoverBarLabel').textContent=turn===null?'Unavailable':turn.toFixed(2)+'×';$('turnoverBar').style.width=(turn===null?0:Math.max(0,Math.min(100,turn*25)))+'%';
-  $('flowShare').textContent=share===null?'N/A':share.toFixed(1)+'%';$('flowTurnover').textContent=turn===null?'N/A':turn.toFixed(2)+'×';
+  applySelectedPoolState(p,pairs,mint);
  }
  selectPool(best,!!options.fromUrl);
  loadAdvancedIntel(mint,best);if(pumpMeta)renderPumpProfile(mint,pumpMeta);
