@@ -2800,3 +2800,14 @@ For every integrated asset or borrowed technique, record:
 - [x] Kept that decoy below the actual CLT lookup pool's liquidity so the CLT name-lookup assertion still expects its own best base-side pool (commit `433a91f`).
 - [ ] Re-run Browser Smoke and confirm initial SOL pool selection, browser history, name lookup, and exact chart identity.
 - [ ] Verify with a real Solana CA and name lookup on the deployed site after merge/deployment. If a token has no indexed base-side pool, show an explicit no-chart state rather than substituting SOL.
+
+
+## 2026-11-09 — Swap wallet-session safety hardening (PR #219)
+
+- [x] Prepared Swap orders are invalidated when the entered amount, selected token, network, wallet session, or connected wallet account changes; the context is re-checked before and after wallet approval.
+- [x] Wallet account-change listener cleanup now supports both `removeListener` and `off` provider APIs, including the provider's account-disconnect event and explicit wallet disconnect. Commit: `775a139`.
+- [x] Validate Climboria passed on current PR head `775a139` (run [42538216349](https://github.com/CryptoDilis/Climboria/actions/runs/42538216349)).
+- [ ] Full Browser Smoke for `775a139` is running (run [42538215593](https://github.com/CryptoDilis/Climboria/actions/runs/42538215593)); review its final result and screenshots before marking complete.
+- [ ] Add targeted automated regression coverage for prepared-order invalidation and accountChanged listener lifecycle; current browser smoke keeps real swap execution fail-closed.
+- [ ] Cloudflare Worker remains undeployed; frontend proxy and execution flags remain disabled. Production backend checks, semantic transaction/instruction validation, controlled Devnet lifecycle tests, monitoring/WAF, independent security review, and physical Redmi 14 5G acceptance remain release gates.
+- PR #219 remains open and unmerged. Do not enable swap execution or merge until all release gates and review are explicitly cleared.
