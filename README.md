@@ -2780,3 +2780,22 @@ For every integrated asset or borrowed technique, record:
   - After the test expansion, run Validate and full Browser Smoke; inspect exact failed job/step/log before any corrective commit. Record the resulting SHA, run URLs, artifact, and exact next task here.
 - Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open, draft, and unmerged. Branch `codex/diagnose-mobile-close-tap-42593894269`; verified head at this checkpoint: `8f317d74fd8b58eb6b2582d98cc5093186509cb6`; base `main` remains `d2084c9b5b02408f7eed5d75e45a2fbf89028014`. No merge, production deployment, or live Swap execution performed.
 
+### Browser Smoke checkpoint — 2026-11-09 12:31 UTC
+
+- [x] Browser Smoke run [42616324351](https://github.com/CryptoDilis/Climboria/actions/runs/42616324351) completed with conclusion **success** on head `cba4c3188f3c3871461f0724aa0c41e34d722b24`.
+- [x] Job `129156966295` completed successfully; all 16 primary steps and post-job cleanup passed, including homepage/DEX/Swap checks, compact mobile market states, Jarrell's Peak desktop/mobile smoke, and screenshot upload.
+- [x] Validate run [42616324541](https://github.com/CryptoDilis/Climboria/actions/runs/42616324541) completed successfully on the same head; all validation and JavaScript syntax checks passed.
+- [x] Screenshot artifact [13673671542](https://github.com/CryptoDilis/Climboria/actions/runs/42616324351/artifacts/13673671542) uploaded (7,714,467 bytes; expires 2026-11-16).
+- [x] Deep failure review: fetched the completed Browser Smoke job logs and inspected the final Jarrell mobile diagnostics, explicit PASS line, artifact finalization, and cleanup. No failed step or product-test failure exists in this run; no code fix is justified.
+- [x] Non-blocking warnings: Node.js 20 action-runtime deprecation for the current Actions v4 dependencies and Node `punycode` deprecation. These did not fail validation or Browser Smoke. Track compatible action upgrades separately; do not conflate them with a DEX/game regression.
+- [x] Gameplay test scope remains bounded: the successful Jarrell smoke explicitly says all wildlife temporarily disabled. Wildlife/animal AI behavior is not validated by this run.
+- [ ] **Exact next job — expand six-major-asset Swap acceptance (BTC, ETH, SOL, BNB, XRP, USDC), desktop and mobile.** Source audit confirms the remaining gap is test coverage rather than a reproduced production-code defect:
+  - Expand deterministic Jupiter fixtures for BTC, ETH, BNB, XRP with at least two distinct candidate mints each; verify candidate selection is explicit and no ambiguous wrapped/bridged mint is silently selected.
+  - Exercise direct canonical SOL and USDC mint selection. For USDC, first change the To asset away from USDC, then test the major-asset row.
+  - Give each candidate/direct mint its own Solana base-token pair, pair address, title, price, and realistic decimals (SOL 9, USDC 6, candidate fixtures by mint).
+  - Assert each symbol's click/tap, From input, exact URL mint, matching chart title/price/pair, reload restoration, and deterministic popstate restoration.
+  - Exercise all six on desktop and mobile; preserve quote-only-pool rejection, no-pool stale-metric clearing, and out-of-order response protection.
+  - **Strategy:** add a dedicated Playwright test module and invoke it from Browser Smoke after the existing server/Playwright setup, rather than expanding the already-large BTC-only inline block. Keep production code unchanged unless a new assertion reproduces a concrete defect; if one does, record its exact root cause and strategy before editing.
+  - Run Validate + full Browser Smoke, deeply inspect any failed step/log/artifact, then update this README with the resulting commit, outcomes, and next exact task.
+- Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open, draft, and unmerged. Branch `codex/diagnose-mobile-close-tap-42593894269`; verified head at this checkpoint: `cba4c3188f3c3871461f0724aa0c41e34d722b24`; base `main` remains `d2084c9b5b02408f7eed5d75e45a2fbf89028014`. No merge, production deployment, or live Swap execution performed.
+
