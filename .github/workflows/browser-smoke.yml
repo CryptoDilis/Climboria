@@ -104,9 +104,11 @@ jobs:
               // Verify live DEX search discovers tokens outside the boot-time market sample by name/symbol and exact mint.
               const dexMint='SysvarRent111111111111111111111111111111111';
               const dexPair={chainId:'solana',dexId:'search-fixture',pairAddress:'DexSearchPair11111111111111111111111111111',baseToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},priceUsd:'0.125',priceChange:{h24:4.2},volume:{h24:45678},liquidity:{usd:23456}};
-              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{
+              const dexSearchRequests=[];
+              dexPage.on('request',request=>{if(request.url().includes('/latest/dex/search'))dexSearchRequests.push(request.url())});
+              await dexPage.route(/https:\/\/api\.dexscreener\.com\/latest\/dex\/search(?:\?.*)?$/,async route=>{
                 const url=new URL(route.request().url());
-                if(url.searchParams.get('q')==='CLIMBTEST')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
+                if(url.searchParams.get('q')==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
                 return route.continue();
               });
               await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
@@ -117,7 +119,10 @@ jobs:
               // Keep Pump metadata local to the browser fixture; production CORS must not be weakened for localhost tests.
               await dexPage.route('https://api.climboria.fun/api/pump/coin**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({mint:dexMint,name:'Climboria Search Fixture',symbol:'CLIMBTEST',complete:false,source:'browser-smoke-fixture'})}));
               await dexPage.locator('#search').fill('CLIMBTEST');
-              await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:12000});
+              const dexSearchResponse=await dexPage.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/latest/dex/search'&&url.searchParams.get('q')==='CLIMBTEST'},{timeout:10000}).catch(()=>null);
+              if(!dexSearchResponse){const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText,handler:typeof window.discoverDexSearch}));throw new Error('DEX name search request did not complete. Requests='+JSON.stringify(dexSearchRequests)+' UI='+JSON.stringify(diagnostics)+' pageErrors='+JSON.stringify(errors));}
+              if(!dexSearchResponse.ok())throw new Error('DEX name search fixture returned HTTP '+dexSearchResponse.status());
+              await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:5000}).catch(async error=>{const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText}));throw new Error('DEX name search response succeeded but row did not render. UI='+JSON.stringify(diagnostics)+' requests='+JSON.stringify(dexSearchRequests)+' cause='+error.message)});
               if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
               await dexPage.locator('#search').fill(dexMint);
               await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
