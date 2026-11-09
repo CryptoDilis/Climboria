@@ -1104,6 +1104,7 @@ async function openToken(mint,options={}){
  ]);
  if(requestId!==detailRequestId)return;
  const pumpMeta=pumpResult.status==='fulfilled'?pumpResult.value:pumpCoinCache.get(mint)||null;
+ if(pumpMeta?.symbol)rememberClimboriaTokenMeta(mint,pumpMeta.symbol,pumpMeta.name||'');
  if(dexResult.status!=='fulfilled'){
   activeDetailPairs=[];$('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token market unavailable';
   $('detailUpdated').textContent='DexScreener lookup failed · '+new Date().toLocaleTimeString();
@@ -1118,6 +1119,7 @@ async function openToken(mint,options={}){
  const data=dexResult.value;
  const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
  activeDetailPairs=pairs;
+ if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
   $('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token metadata';
   $('detailUpdated').textContent='No indexed Solana pool · '+new Date().toLocaleTimeString();
@@ -1275,10 +1277,14 @@ $('search').addEventListener('input',e=>{
 load();loadBaseMarkets();const dp=new URLSearchParams(location.search),im=dp.get('token');if(im&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(im))openToken(im,{fromUrl:true});setInterval(load,60000);setInterval(loadBaseMarkets,60000);setInterval(()=>{if(activeDetailMint&&document.visibilityState==='visible')openToken(activeDetailMint,{refresh:true,fromUrl:true});},20000);
 
 const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';
+const CLIMBORIA_WATCHLIST_META_KEY='climboria:dex:watchlist-meta:v1';
+function getClimboriaWatchlistMeta(){try{const value=JSON.parse(localStorage.getItem(CLIMBORIA_WATCHLIST_META_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(e){return {}}}
+function rememberClimboriaTokenMeta(mint,symbol,name){if(!mint||!symbol)return;try{const meta=getClimboriaWatchlistMeta();meta[mint]={symbol:String(symbol).trim().slice(0,32),name:String(name||'').trim().slice(0,80)};localStorage.setItem(CLIMBORIA_WATCHLIST_META_KEY,JSON.stringify(meta));if(getClimboriaWatchlist().includes(mint))renderClimboriaWatchlist()}catch(e){}}
+function climboriaWatchlistLabel(mint){const meta=getClimboriaWatchlistMeta()[mint];return meta?.symbol?meta.symbol+' · '+(meta.name||'Token'):mint.slice(0,7)+'…'+mint.slice(-5)}
 function getClimboriaWatchlist(){try{const v=JSON.parse(localStorage.getItem(CLIMBORIA_WATCHLIST_KEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'):[]}catch(e){return []}}
-function renderClimboriaWatchlist(){const list=getClimboriaWatchlist(),box=$('watchlistItems');$('watchlistCount').textContent=String(list.length);box.innerHTML=list.length?list.map(m=>'<div class="watchlist-item"><a href="/dex/?token='+encodeURIComponent(m)+'" title="'+esc(m)+'">'+esc(m.slice(0,7)+'…'+m.slice(-5))+'</a><button type="button" data-watch-remove="'+esc(m)+'" aria-label="Remove token">×</button></div>').join(''):'<div class="watchlist-empty">No saved tokens yet. Add a selected token to start tracking.</div>';}
+function renderClimboriaWatchlist(){const list=getClimboriaWatchlist(),box=$('watchlistItems');$('watchlistCount').textContent=String(list.length);box.innerHTML=list.length?list.map(m=>'<div class="watchlist-item"><a href="/dex/?token='+encodeURIComponent(m)+'" title="'+esc((getClimboriaWatchlistMeta()[m]?.name||'Token')+' · '+m)+'">'+esc(climboriaWatchlistLabel(m))+'</a><button type="button" data-watch-remove="'+esc(m)+'" aria-label="Remove token">×</button></div>').join(''):'<div class="watchlist-empty">No saved tokens yet. Add a selected token to start tracking.</div>'; }
 function addClimboriaWatch(mint){if(!mint)return;const list=getClimboriaWatchlist();if(!list.includes(mint))list.unshift(mint);try{localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list.slice(0,100)));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='✓ Added to watchlist';}catch(e){$('watchlistAddCurrent').textContent='Storage unavailable';}}
-$('watchlistTrigger').addEventListener('click',()=>{const panel=$('watchlistPopover'),open=panel.hidden;panel.hidden=!open;$('watchlistTrigger').setAttribute('aria-expanded',String(open));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='＋ Add selected token';$('watchlistCurrentLabel').textContent=activeDetailMint?'Selected: '+activeDetailMint.slice(0,7)+'…'+activeDetailMint.slice(-5):'No token selected yet';$('watchlistAddCurrent').disabled=!activeDetailMint;});
+$('watchlistTrigger').addEventListener('click',()=>{const panel=$('watchlistPopover'),open=panel.hidden;panel.hidden=!open;$('watchlistTrigger').setAttribute('aria-expanded',String(open));renderClimboriaWatchlist();$('watchlistAddCurrent').textContent='＋ Add selected token';$('watchlistCurrentLabel').textContent=activeDetailMint?'Selected: '+climboriaWatchlistLabel(activeDetailMint):'No token selected yet';$('watchlistAddCurrent').disabled=!activeDetailMint;});
 $('watchlistClose').addEventListener('click',()=>{$('watchlistPopover').hidden=true;$('watchlistTrigger').setAttribute('aria-expanded','false')});
 $('watchlistAddCurrent').addEventListener('click',()=>addClimboriaWatch(activeDetailMint));
 $('watchlistItems').addEventListener('click',e=>{const b=e.target.closest('[data-watch-remove]');if(!b)return;const list=getClimboriaWatchlist().filter(m=>m!==b.dataset.watchRemove);localStorage.setItem(CLIMBORIA_WATCHLIST_KEY,JSON.stringify(list));renderClimboriaWatchlist()});

@@ -418,7 +418,23 @@ jobs:
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
-              if(errors.length) throw new Error('DEX history browser errors: '+errors.join(' | '));
+              // Watchlist labels must show provider ticker/name, while href/storage keep the full mint.
+              await page.locator('#watchlistTrigger').click();
+              const selectedLabel=await page.locator('#watchlistCurrentLabel').innerText();
+              if(!selectedLabel.includes('TST')||!selectedLabel.includes('Test Solana')||selectedLabel.includes(mint.slice(0,7))) throw new Error('Watchlist selected-token label did not prefer provider symbol/name: '+selectedLabel);
+              await page.locator('#watchlistAddCurrent').click();
+              const savedLink=page.locator('#watchlistItems a').first();
+              await savedLink.waitFor({state:'visible'});
+              const savedLabel=await savedLink.innerText(),savedHref=await savedLink.getAttribute('href');
+              if(!savedLabel.includes('TST')||!savedLabel.includes('Test Solana')) throw new Error('Saved watchlist row did not show provider symbol/name: '+savedLabel);
+              if(savedHref!=='/dex/?token='+mint) throw new Error('Saved watchlist row lost its exact mint navigation target: '+savedHref);
+              await page.reload({waitUntil:'domcontentloaded'});
+              await page.locator('#watchlistTrigger').click();
+              const persistedLabel=await page.locator('#watchlistItems a').first().innerText();
+              if(!persistedLabel.includes('TST')||!persistedLabel.includes('Test Solana')) throw new Error('Watchlist symbol metadata did not persist after reload: '+persistedLabel);
+              await page.locator('#watchlistItems [data-watch-remove="'+mint+'"]').click();
+              if(await page.locator('#watchlistItems a').count()!==0) throw new Error('Watchlist remove action did not remove saved mint');
+              if(errors.length) throw new Error('DEX history/watchlist browser errors: '+errors.join(' | '));
               console.log('PASS local DEX route, market explorer, search, wallet and quote-preview controls; token/pool URL and browser back/forward restore.');
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
@@ -521,9 +537,9 @@ jobs:
                 if(!await dex.locator('#tokenDetail').isVisible())throw new Error('Tapping a Solana mobile card did not open the existing token detail flow');
                 if(await dex.locator('#detailMint').textContent().then(t=>!t.includes(selectedMint)))throw new Error('Mobile card tap opened a different mint than the selected card');
                 if(await dex.locator('#mobileMarketMore').isVisible()){
-                  const before=await dex.locator('#rows tr').count();
+                  const before=await dex.locator('#solanaMobileCards .mobile-market-card').count();
                   await dex.locator('#mobileMarketMore').tap();
-                  await dex.waitForFunction(previous=>document.querySelectorAll('#rows tr').length>previous,before,{timeout:5000});
+                  await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 await dex.locator('#closeDetail').tap();
