@@ -426,9 +426,9 @@ try {
   if(await menu.locator('.grid > .card').count()!==4) errors.push('Hub must contain exactly four destination cards');
   if(await menu.locator('.grid #menuCreateHero, .grid .create-hero-card').count()) errors.push('Create Hero must not appear as a destination grid card');
   if(await menu.locator('.card[data-level="11"]').count()!==1) errors.push('Jarrell’s Peak launch card is missing');
-  // Capture navigation and runtime evidence before clicking. The previous
-  // post-click waitForURL still timed out, so the failure is not yet proven to
-  // be a fast-navigation race. Preserve the actual page state for diagnosis.
+  // Capture navigation and runtime evidence before clicking. URL confirmation
+  // waits only for the navigation commit: the destination can remain in
+  // readyState=interactive while a slow resource delays the window load event.
   const menuErrors=[];
   const menuNavigations=[];
   menu.on('pageerror', error => menuErrors.push(error.message));
@@ -437,7 +437,7 @@ try {
   const launchCard=menu.locator('.card[data-level="11"]');
   const launchTarget=await launchCard.evaluate(el=>({tag:el.tagName,disabled:el.disabled,ariaDisabled:el.getAttribute('aria-disabled'),level:el.dataset.level,html:el.outerHTML.slice(0,500)}));
   const expectedLaunchUrl=url => url.pathname.endsWith('/game/play.html') && url.searchParams.get('level') === '11';
-  const launchNavigation=menu.waitForURL(expectedLaunchUrl,{timeout:10000}).then(()=>({ok:true})).catch(error=>({ok:false,error:error.message}));
+  const launchNavigation=menu.waitForURL(expectedLaunchUrl,{timeout:10000,waitUntil:'commit'}).then(()=>({ok:true})).catch(error=>({ok:false,error:error.message}));
   await launchCard.click();
   const navigationResult=await launchNavigation;
   if(!navigationResult.ok){
