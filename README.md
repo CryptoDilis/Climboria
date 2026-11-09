@@ -2695,3 +2695,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Added that project URL to `auth-config.js` on `codex/real-player-auth-foundation-20261109` (commit `db749c833da4febbce47ffc51434267403a3e51e`). The public anon/publishable key remains intentionally blank until owner retrieves it; no secret key was requested or stored.
 - [ ] Owner: open Project Settings → API Keys (or API), copy the **publishable key** / legacy **anon public** key only, and provide it through a safe channel so the browser config can be completed. Never use the `service_role` or secret key in the website.
 - [ ] Next exact job: complete the public key config, then run `supabase/migrations/202611090001_player_accounts.sql` in SQL Editor and verify the tables/RLS before configuring auth providers and testing sign-in.
+
+
+## 2026-11-09 — Supabase project URL corrected from owner confirmation
+
+- [x] Owner supplied the exact project URL: `https://unadepiwbovblkfjlksk.supabase.co`.
+- [x] Corrected `auth-config.js` to use this exact URL (commit aabbb4ffb08ad4df5aac36887d89ab8577dd8e20). This supersedes the earlier URL transcribed from the screenshot; use the owner-confirmed URL as authoritative.
+- [ ] Still required: owner-provided public publishable/anon key; run the player account SQL migration; enable Solana/Ethereum and social/email providers; then run end-to-end tests.
+- **Next exact job:** finish `auth-config.js` once the publishable/anon key is safely available, then apply and verify the database migration.
