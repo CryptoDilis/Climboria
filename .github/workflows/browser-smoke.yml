@@ -418,6 +418,17 @@ jobs:
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
+              // Same-pool market refreshes must update provider metrics without reloading the embedded chart.
+              await page.evaluate(()=>{window.__chartSrcChanges=0;const chart=document.querySelector('#detailChart');window.__chartSrcObserver=new MutationObserver(records=>{window.__chartSrcChanges+=records.filter(record=>record.attributeName==='src').length});window.__chartSrcObserver.observe(chart,{attributes:true,attributeFilter:['src']});});
+              poolData.pairs[1].priceUsd='2.75';
+              await page.evaluate(async mint=>{await window.openToken(mint,{refresh:true,fromUrl:true})},mint);
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.75000',{},{timeout:10000});
+              poolData.pairs[1].priceUsd='2.80';
+              await page.evaluate(async mint=>{await window.openToken(mint,{refresh:true,fromUrl:true})},mint);
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',{},{timeout:10000});
+              const chartRefreshState=await page.evaluate(()=>({srcChanges:window.__chartSrcChanges,chartSrc:document.querySelector('#detailChart')?.getAttribute('src'),price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool')}));
+              if(chartRefreshState.srcChanges!==0||!chartRefreshState.chartSrc?.includes(poolB)||chartRefreshState.price!=='$2.80000'||chartRefreshState.pool!==poolB)throw new Error('Same-pool market refresh reloaded the chart or failed to update live metrics: '+JSON.stringify(chartRefreshState));
+              window.__chartSrcObserver?.disconnect?.();
               // Watchlist labels must show provider ticker/name, while href/storage keep the full mint.
               await page.locator('#watchlistTrigger').click();
               const selectedLabel=await page.locator('#watchlistCurrentLabel').innerText();
