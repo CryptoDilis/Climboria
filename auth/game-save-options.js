@@ -129,6 +129,17 @@ export function installGameSaveOptions({ client, documentRef = document, storage
       addAction("DECIDE LATER", close);
       return;
     }
+    if (resolution.state === "account-save-no-hero") {
+      status.textContent = "Your account save has no supported cosmetic hero choice. Nothing was changed.";
+      addAction("DECIDE LATER", close);
+      return;
+    }
+    if (resolution.state === "conflict") {
+      status.textContent = "The local and account hero choices differ. This version cannot safely resolve that conflict automatically, so both copies are preserved.";
+      addAction("KEEP THIS DEVICE", close);
+      addAction("DECIDE LATER", close);
+      return;
+    }
     if (resolution.state === "same-choice") {
       status.textContent = "Your local and account hero choices match. Both copies are preserved.";
       addAction("KEEP THIS DEVICE", close);
