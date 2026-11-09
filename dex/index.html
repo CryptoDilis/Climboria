@@ -705,6 +705,12 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <section class="quote-panel" id="swapQuote" hidden><h2>Jupiter Swap · Live quote preview</h2><p>Solana-wide routing quote from Jupiter Swap API V2. Wallet connection is read-only; this stage does not sign or submit transactions.</p><div class="walletbar"><div><small>Connected wallet</small><b id="walletStatus">Not connected</b></div><button class="tab" id="connectWallet" type="button">Connect wallet</button></div><div class="quote-controls"><div class="quote-field"><label for="quoteAmount">Amount</label><input id="quoteAmount" type="number" min="0" step="any" value="0.1" inputmode="decimal"></div><div class="quote-field"><label for="quoteFromSearch">From token · name, symbol or mint</label><input id="quoteFromSearch" value="SOL" placeholder="Search any Solana token"><button class="tab" id="searchFrom" type="button">Find input token</button><div id="fromResults"></div><small id="fromSelected">SOL · 9 decimals</small></div><div class="quote-field"><label for="quoteToSearch">To token · name, symbol or mint</label><input id="quoteToSearch" value="USDC" placeholder="Search any Solana token"><button class="tab" id="searchTo" type="button">Find output token</button><div id="toResults"></div><small id="toSelected">USDC · 6 decimals</small></div><button class="tab" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div><div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Router</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div><div class="quote-status" id="quoteStatus">Ready. Enter an amount and request a fresh quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div><div class="quote-warning">Quotes are indicative and expire/change with market conditions. Quote preview is read-only. Wallet-reviewed execution requires the separately deployed Climboria backend and remains disabled until explicitly configured and verified.</div></section><section class="stats">
 <div class="stat"><label>Solana pairs loaded</label><strong id="pairCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Tracked profiles</label><strong id="profileCount" class="skeleton-value">Loading</strong></div><div class="stat"><label>Top pair 24h volume</label><strong id="topVolume" class="skeleton-value">Loading</strong></div><div class="stat"><label>Data refresh</label><strong>60 sec</strong></div>
 </section><section class="premium-trending" aria-labelledby="premiumTrendingTitle"><div class="premium-section-head"><div><small>LIVE SOLANA DISCOVERY</small><h2 id="premiumTrendingTitle">Trending on Solana</h2><p>Curated from current DexScreener pair responses · not endorsements</p></div><span id="premiumTrendingUpdated">Fetching live pairs…</span></div><div class="premium-trending-grid" id="premiumTrendingGrid"><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div><div class="premium-asset-skeleton"></div></div></section>
+<nav class="dex-mobile-nav" id="dexMobileNav" aria-label="DEX mobile navigation">
+ <button type="button" data-dex-mobile-view="solana" class="active" aria-current="page">Markets</button>
+ <button type="button" data-dex-mobile-view="base">Base</button>
+ <a href="/swap/">Swap</a>
+ <button type="button" id="dexMobileWatchlist">Saved</button>
+</nav>
 <section class="detail" id="tokenDetail" aria-live="polite"><div class="detailtop"><div class="detail-heading"><div class="eyebrow">TOKEN INTELLIGENCE · TRAILMAP PREVIEW</div><div class="detail-name-row"><h2 id="detailTitle">Token details</h2><div class="token-intro" id="tokenIntro"><div class="token-overview-copy">Live token overview · market data and pool statistics update with the selected liquidity pool.</div><div class="token-overview-stats"><span><small>PRICE</small><b id="tokenOverviewPrice">—</b></span><span><small>24H CHANGE</small><b id="tokenOverviewChange">—</b></span><span><small>24H VOLUME</small><b id="tokenOverviewVolume">—</b></span><span><small>LIQUIDITY</small><b id="tokenOverviewLiquidity">—</b></span><span><small>VENUE</small><b id="tokenOverviewVenue">—</b></span></div></div></div><div class="detail-social-rail" id="detailSocialRail" aria-label="Token social links"><span class="social-empty">Official links appear when supplied by token metadata.</span></div><div class="source" id="detailMint"></div></div></div><div class="detail-actions"><span class="detail-updated" id="detailUpdated">Live provider data · awaiting selection</span><button class="tab" id="refreshDetail" type="button">↻ Refresh data</button><button class="tab" id="shareToken" type="button">↗ Share</button><button class="tab" id="closeDetail" type="button">Close</button></div></div>
 <nav class="detail-mobile-tabs" id="detailMobileTabs" role="tablist" aria-label="Token workspace sections">
  <button type="button" id="detailTabChart" role="tab" aria-controls="detailWorkspace" aria-selected="true" tabindex="0" data-detail-tab="chart" class="active">Chart</button><button type="button" id="detailTabTrade" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="trade">Trade</button><button type="button" id="detailTabChat" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="chat">Chat</button><button type="button" id="detailTabPools" role="tab" aria-controls="detailWorkspace" aria-selected="false" tabindex="-1" data-detail-tab="pools">Pools</button>
@@ -991,7 +997,7 @@ document.addEventListener('click',e=>{
 });
 function setDexUrl(mint,pairAddress,options={}){const u=new URL(location.href);if(mint)u.searchParams.set('token',mint);else u.searchParams.delete('token');if(pairAddress)u.searchParams.set('pool',pairAddress);else u.searchParams.delete('pool');const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(options.fromUrl)history.replaceState({climboriaDex:true},'',u);else history.pushState({climboriaDex:true},'',u);}
 let activeDetailMint=null,activeDetailPairs=[],detailRequestId=0;
-function restoreDexPoolFromUrl(){const selected=new URLSearchParams(location.search).get('pool');if(!selected)return false;const pair=activeDetailPairs.find(p=>p.pairAddress===selected);if(!pair)return false;document.querySelectorAll('#detailPairs .routecandidate').forEach(row=>row.classList.toggle('selected',row.dataset.pair===selected));$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress);$('trailHint').textContent='Selected pool: '+pair.dexId+' · '+pair.quoteToken.symbol+'. Chart and values are provider-reported.';dexTradeSyncToken(pair);return true;}
+function restoreDexPoolFromUrl(){const selected=new URLSearchParams(location.search).get('pool');if(!selected)return false;const pair=activeDetailPairs.find(p=>p.pairAddress===selected);if(!pair)return false;document.querySelectorAll('#detailPairs .routecandidate').forEach(row=>row.classList.toggle('selected',row.dataset.pair===selected));$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress);$('trailHint').textContent='Selected pool: '+pair.dexId+' · '+pair.quoteToken.symbol+'. Chart and values are provider-reported.';dexTradeSyncToken(pair);return true;}
 let pumpCoinCache=new Map();
 function safeHttps(value){try{const u=new URL(value);return u.protocol==='https:'?u.href:null}catch(e){return null}}
 async function fetchPumpCoin(mint){
@@ -1042,7 +1048,7 @@ function renderPoolFailure(mint,message,meta){
 }
 async function openToken(mint,options={}){
  const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
- const box=$('tokenDetail');box.classList.add('open');$('tokenLoadState').hidden=true;
+ const box=$('tokenDetail');box.classList.add('open');document.body.classList.add('mobile-token-view');document.body.classList.remove('mobile-base-view');$('tokenLoadState').hidden=true;
  if(!options.refresh)box.scrollIntoView({behavior:'smooth',block:'start'});
  $('detailTitle').textContent='Loading token…';$('detailMint').textContent='Mint: '+mint;
  $('detailUpdated').textContent='Loading live market and token metadata…';
@@ -1086,7 +1092,7 @@ async function openToken(mint,options={}){
  $('detailUpdated').textContent='Updated '+new Date().toLocaleTimeString()+' · DexScreener provider';
  function selectPool(p,fromUrl=false){
   if(fromUrl){if(!requestedPool)setDexUrl(mint,p.pairAddress,{fromUrl:true});}else setDexUrl(mint,p.pairAddress);
-  dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
+  dexTradeSyncToken(p);$('detailChart').src='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress)+'?embed=1&theme=dark&trades=0&info=0&loadChartSettings=0&chartStyle=1&interval=15&chartType=price&chartLeftToolbar=0';
   $('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(p.pairAddress);
   const priceValue=Number(p.priceUsd),volumeValue=Number(p.volume?.h24),liquidityValue=Number(p.liquidity?.usd),changeValue=Number(p.priceChange?.h24);
   $("detailPrice").textContent=Number.isFinite(priceValue)?"$"+priceValue.toPrecision(6):"Unavailable";
@@ -1208,7 +1214,7 @@ $('communityMessage').addEventListener('input',e=>{$('communityCount').textConte
 $('exportCommunity').addEventListener('click',exportTokenRoom);
 $('copyTokenMint').addEventListener('click',async()=>{if(!activeCommunityMint)return;try{await navigator.clipboard.writeText(activeCommunityMint);$('copyTokenMint').textContent='Copied';setTimeout(()=>{$('copyTokenMint').textContent='Copy token mint'},1500)}catch(e){$('copyTokenMint').textContent='Copy unavailable'}});
 $('watchToken').addEventListener('click',()=>{if(!activeCommunityMint)return;const list=readWatchlist();const i=list.indexOf(activeCommunityMint);if(i>=0)list.splice(i,1);else list.push(activeCommunityMint);try{localStorage.setItem(WATCHLIST_KEY,JSON.stringify(list));openTokenRoom(activeCommunityMint)}catch(e){$('watchTokenNote').textContent='Browser storage unavailable.'}});
-$('closeDetail').addEventListener('click',()=>{$('tokenDetail').classList.remove('open');$('detailChart').src='about:blank'});$('refreshDetail').addEventListener('click',()=>{if(!activeDetailMint)return;const b=$('refreshDetail');b.disabled=true;b.textContent='Refreshing…';openToken(activeDetailMint,{refresh:true,fromUrl:true}).finally(()=>{b.disabled=false;b.textContent='↻ Refresh data'});});
+$('closeDetail').addEventListener('click',()=>{$('tokenDetail').classList.remove('open');document.body.classList.remove('mobile-token-view','mobile-base-view');$('detailChart').src='about:blank';setDexMobileView('solana')});$('refreshDetail').addEventListener('click',()=>{if(!activeDetailMint)return;const b=$('refreshDetail');b.disabled=true;b.textContent='Refreshing…';openToken(activeDetailMint,{refresh:true,fromUrl:true}).finally(()=>{b.disabled=false;b.textContent='↻ Refresh data'});});
 $('shareToken').addEventListener('click',async()=>{if(!activeDetailMint)return;const url=new URL(location.href);url.searchParams.set('token',activeDetailMint);const selected=new URLSearchParams(location.search).get('pool');if(selected)url.searchParams.set('pool',selected);try{await navigator.clipboard.writeText(url.href);$('shareToken').textContent='✓ Link copied';setTimeout(()=>$('shareToken').textContent='↗ Share',1800)}catch(e){$('shareToken').textContent='Copy blocked · copy address from URL'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-copy-mint]');if(!b)return;navigator.clipboard?.writeText(b.dataset.copyMint).then(()=>b.textContent='✓ Copied').catch(()=>b.textContent='Copy unavailable')});
 let dexSearchRequestId=0,dexSearchTimer=null;
@@ -1346,6 +1352,25 @@ $('dexTradePrepare').addEventListener('click',async()=>{
  await prepareJupiterSwap();dexTradeSetStatus($('quoteStatus').textContent);
 });
 
+function setDexMobileView(view){
+ document.body.classList.toggle('mobile-base-view',view==='base');
+ document.body.classList.toggle('mobile-solana-view',view==='solana');
+ const nav=$('dexMobileNav');
+ if(nav)nav.querySelectorAll('[data-dex-mobile-view]').forEach(button=>{
+  const active=button.dataset.dexMobileView===view;
+  button.classList.toggle('active',active);
+  if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+ });
+}
+const dexMobileNav=$('dexMobileNav');
+if(dexMobileNav){
+ setDexMobileView('solana');
+ dexMobileNav.addEventListener('click',event=>{
+  const button=event.target.closest('[data-dex-mobile-view]');
+  if(button){setDexMobileView(button.dataset.dexMobileView);window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(event.target.closest('#dexMobileWatchlist'))$('watchlistTrigger')?.click();
+ });
+}
 const mobileDetailTabs=$('detailMobileTabs'),mobileDetailContent=$('detailWorkspace');
 if(mobileDetailTabs&&mobileDetailContent){
  const detailTabButtons=[...mobileDetailTabs.querySelectorAll('[role="tab"][data-detail-tab]')];
@@ -1382,7 +1407,7 @@ if(mobileDetailTabs&&mobileDetailContent){
   activateDetailTab(detailTabButtons[nextIndex],{focus:true});
  });
 }
-window.addEventListener('popstate',async()=>{const p=new URLSearchParams(location.search),m=p.get('token');if(m&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(m)){/* This listener is inside the token-detail scope. Reuse the current pool set when possible so Back/Forward updates the selected row and chart without creating new history entries. */if(activeDetailMint===m&&restoreDexPoolFromUrl())return;await openToken(m,{fromUrl:true,refresh:true});if(activeDetailMint!==m)return;restoreDexPoolFromUrl();}else{detailRequestId++;activeDetailMint=null;activeDetailPairs=[];$('tokenDetail').classList.remove('open');$('detailChart').src='about:blank';}});
+window.addEventListener('popstate',async()=>{const p=new URLSearchParams(location.search),m=p.get('token');if(m&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(m)){/* This listener is inside the token-detail scope. Reuse the current pool set when possible so Back/Forward updates the selected row and chart without creating new history entries. */if(activeDetailMint===m&&restoreDexPoolFromUrl())return;await openToken(m,{fromUrl:true,refresh:true});if(activeDetailMint!==m)return;restoreDexPoolFromUrl();}else{detailRequestId++;activeDetailMint=null;activeDetailPairs=[];$('tokenDetail').classList.remove('open');document.body.classList.remove('mobile-token-view','mobile-base-view');$('detailChart').src='about:blank';setDexMobileView('solana');}});
 })();
 
 const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');document.querySelectorAll('[data-panel]').forEach(button=>button.addEventListener('click',()=>{const type=button.dataset.panel;document.getElementById('climboriaPanelTitle').textContent=type==='announcements'?'Announcements':'Notifications';document.getElementById('climboriaPanelContent').innerHTML=type==='announcements'?'<p>Official Climboria ecosystem updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Market and account alerts will appear here when notification services are enabled.';climboriaPanelBackdrop.hidden=false}));document.getElementById('climboriaPanelClose').addEventListener('click',()=>climboriaPanelBackdrop.hidden=true);climboriaPanelBackdrop.addEventListener('click',e=>{if(e.target===climboriaPanelBackdrop)climboriaPanelBackdrop.hidden=true});
@@ -1439,4 +1464,50 @@ const climboriaPanelBackdrop=document.getElementById('climboriaPanelBackdrop');d
 #tokenDetail .detail-social-rail .social-empty{font-size:9px;color:#8395aa}
 @media(max-width:640px){#tokenDetail .detail-social-rail{margin-top:8px;padding-top:8px}}
 </style>
-</body></html>
+
+<style id="climboria-mobile-compact-terminal-v1">
+@media(max-width:760px){
+ body{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+ .top{height:54px!important}.topin{padding:0 12px!important}.brand{font-size:15px!important}
+ .toplinks{gap:7px!important}.toplinks a{display:none!important}
+ .hero{padding:10px 0 8px!important;display:block!important}
+ .hero .eyebrow,.hero h1,.hero>p{display:none!important}
+ .hero-market{margin:0!important;display:flex!important;align-items:center!important;gap:9px!important;flex-wrap:wrap}
+ .status{margin-top:5px!important;font-size:9px!important}
+ .dex-ad-slot,.execution-status,.stats{display:none!important}
+ .dex-mobile-nav{position:fixed;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:60;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:6px;border:1px solid #65758d;background:rgba(8,15,27,.96);border-radius:16px;box-shadow:0 12px 38px #000b;backdrop-filter:blur(18px)}
+ .dex-mobile-nav button,.dex-mobile-nav a{min-width:0;min-height:40px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:10px;background:transparent;color:#b9c7d9;font-size:11px;font-weight:850;text-decoration:none}
+ .dex-mobile-nav button.active,.dex-mobile-nav button[aria-current=page]{background:linear-gradient(135deg,#49381e,#211c16);border-color:#c6a05a;color:#ffe2a0}
+ body.mobile-base-view #markets,body.mobile-base-view .layout>.side{display:none!important}
+ body.mobile-base-view #evmMarkets{display:block!important;width:100%!important}
+ body.mobile-solana-view #evmMarkets{display:none!important}
+ body.mobile-token-view .hero,body.mobile-token-view .dex-ad-slot,body.mobile-token-view .execution-status,body.mobile-token-view .stats,body.mobile-token-view .layout,body.mobile-token-view #dexMobileNav{display:none!important}
+ body.mobile-token-view #tokenDetail{display:block!important;margin:8px 0 0!important;padding:10px!important}
+ .detailtop{gap:8px!important;align-items:flex-start!important}.detailtop h2{font-size:20px!important}
+ .detail-actions{display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+ .detail-actions .tab{padding:7px 9px!important;font-size:10px!important}
+ .detail-mobile-tabs{position:fixed!important;left:10px!important;right:10px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;z-index:65!important;margin:0!important;padding:6px!important;box-shadow:0 12px 38px #000b!important;backdrop-filter:blur(18px)!important}
+ .detail-content{margin-top:8px!important;gap:8px!important}
+ .detail-main .detailchart,.chart-workspace .detailchart{height:clamp(410px,64vh,560px)!important;min-height:380px!important}
+ .chart-overview{display:none!important}
+ .detail-content.mobile-tab-chart .detail-main{padding-bottom:8px}
+ .detail-content.mobile-tab-chart .detail-main .intel-accordion,.detail-content.mobile-tab-chart .detail-main .trailmap,.detail-content.mobile-tab-chart .detail-main .signalbox{display:none!important}
+ .detail-content.mobile-tab-pools .detail-main .trailmap,.detail-content.mobile-tab-pools .detail-main .signalbox{display:block!important}
+ .detail-content.mobile-tab-pools .detail-main .trailmap{margin-top:0!important}
+ .detail-content.mobile-tab-trade .dex-trade-terminal,.detail-content.mobile-tab-chat .token-community{padding:12px!important}
+ #markets,#evmMarkets{padding:11px!important}
+ #markets .panelhead,#evmMarkets .panelhead{margin-bottom:8px!important}
+ #markets .panelhead h2,#evmMarkets .panelhead h2{font-size:16px!important}
+ #markets .tabs,#evmMarkets .tabs{gap:5px!important;flex-wrap:nowrap!important;overflow-x:auto!important;max-width:100%!important;padding-bottom:5px!important}
+ #markets .tab,#evmMarkets .tab{flex:0 0 auto!important;padding:7px 9px!important;font-size:9px!important}
+ #markets .controls,#evmMarkets .controls{grid-template-columns:minmax(0,1fr) 105px!important;gap:6px!important;margin:8px 0!important}
+ #markets .search,#evmMarkets .search,#markets .select,#evmMarkets .select{padding:8px!important;font-size:10px!important}
+ #markets .tablewrap table,#evmMarkets .tablewrap table{min-width:650px!important}
+ .layout>.side{display:none!important}
+}
+@media(max-width:390px){
+ .detail-main .detailchart,.chart-workspace .detailchart{height:clamp(390px,62vh,500px)!important}
+ .detail-mobile-tabs button{font-size:10px!important;padding:9px 2px!important}
+ .dex-mobile-nav button,.dex-mobile-nav a{font-size:10px!important}
+}
+</style></body></html>
