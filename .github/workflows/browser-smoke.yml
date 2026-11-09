@@ -429,7 +429,7 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',{},{timeout:10000});
               const chartRefreshState=await page.evaluate(()=>({srcChanges:window.__chartSrcChanges,chartSrc:document.querySelector('#detailChart')?.getAttribute('src'),price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool')}));
               if(chartRefreshState.srcChanges!==0||!chartRefreshState.chartSrc?.includes(poolB)||chartRefreshState.price!=='$2.80000'||chartRefreshState.pool!==poolB)throw new Error('Same-pool market refresh reloaded the chart or failed to update live metrics: '+JSON.stringify(chartRefreshState));
-              window.__chartSrcObserver?.disconnect?.();
+              await page.evaluate(()=>window.__chartSrcObserver?.disconnect?.());
               // Watchlist labels must show provider ticker/name, while href/storage keep the full mint.
               await page.locator('#watchlistTrigger').click();
               const selectedLabel=await page.locator('#watchlistCurrentLabel').innerText();
