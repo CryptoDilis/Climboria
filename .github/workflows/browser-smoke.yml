@@ -508,6 +508,17 @@ jobs:
                   await dex.locator('#mobileMarketMore').tap();
                   await dex.waitForFunction(previous=>document.querySelectorAll('#rows tr').length>previous,before,{timeout:5000});
                 }
+                // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
+                await dex.locator('#closeDetail').tap();
+                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
+                await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
+                await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
+                await dex.waitForFunction(()=>document.querySelectorAll('#baseMobileCards a.base-mobile-market-card').length>0,null,{timeout:15000});
+                const baseCards=dex.locator('#baseMobileCards a.base-mobile-market-card');
+                if(!await dex.locator('#baseMobileCards').isVisible()||await dex.locator('#evmMarkets .tablewrap').isVisible())throw new Error('Base mobile cards must replace the desktop Base table at '+width+'px');
+                const baseCard=baseCards.first(),baseHref=await baseCard.getAttribute('href');
+                if(!baseHref||!baseHref.startsWith('https://dexscreener.com/base/')||await baseCard.getAttribute('target')!=='_blank')throw new Error('Base mobile card must open its own Base pool read-only on DexScreener: '+baseHref);
+                if(await baseCard.getAttribute('data-mint'))throw new Error('Base cards must not be wired to Solana mint selection');
                 await dex.close();
 
                 const swap=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});
@@ -536,6 +547,7 @@ jobs:
               if(!await desktopDex.locator('#markets .tablewrap').isVisible()||await desktopDex.locator('#solanaMobileCards').isVisible())throw new Error('Desktop market table must remain visible and mobile cards hidden');
               const desktopTable=await desktopDex.locator('#markets .tablewrap table').evaluate(el=>({width:el.getBoundingClientRect().width,minWidth:getComputedStyle(el).minWidth}));
               if(desktopTable.width<600)throw new Error('Desktop market table width unexpectedly changed: '+JSON.stringify(desktopTable));
+              if(!await desktopDex.locator('#evmMarkets .tablewrap').isVisible()||await desktopDex.locator('#baseMobileCards').isVisible())throw new Error('Desktop Base market table must remain visible and Base mobile cards hidden');
               await desktopDex.close();
               console.log('PASS compact mobile DEX/Swap navigation, Solana card tap/mint selection, desktop market table regression, candlestick defaults, 390px and 360px overflow and first-fold checks.');
             } finally {await browser.close();}
