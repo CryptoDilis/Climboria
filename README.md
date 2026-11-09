@@ -1,3 +1,16 @@
+## Climboria development continuity protocol — standing rule
+
+This protocol applies to every Climboria development session and must be followed before ending a work session:
+
+1. **Record every completed fix in this root README**: date, verified root cause, strategy, changed files, commit SHA, relevant test/workflow run URLs and final outcomes. Mark an item complete only after the evidence supports it.
+2. **Record the exact next unfinished task**: name the target area/files, expected behavior, acceptance tests, known dependencies/blockers and the first action to resume. Keep this handoff at the top of the README.
+3. **Failed workflow response**: identify the exact failed run, job and step; read the full relevant logs/artifacts; reproduce where practical; classify product defect vs test-harness defect vs configuration/provider/infrastructure failure; state the evidence-backed root cause before editing.
+4. **No blind/repeated fixes**: do not reapply a previous change or commit the same attempted solution without new evidence and a materially justified strategy. If a diagnostic run does not reproduce the failure, record that outcome and avoid speculative product changes.
+5. **Verify and continue**: after a fix, run the relevant validation, browser smoke and deployment checks; inspect every failure deeply; then move to the next unfinished checklist item and update this README again.
+6. **Truthful release status**: never claim fixed, passed, deployed or recorded without verifying the corresponding GitHub commit/run. Keep production deployment, merge and Swap execution disabled unless explicitly approved.
+
+The root README is the durable handoff/source of truth. A chat ending must never reset completed work or the next-job pointer.
+
 ## 2026-11-09 — Major Assets click-to-input/chart audit
 
 - [x] Traced the actual click handler in `swap/index.html`: it delegates through the `#majorCoins` click listener and uses a selection request sequence to prevent stale clicks from overwriting a newer selection.
