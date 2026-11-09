@@ -28,6 +28,7 @@ if (!configured) {
   const emailSubmit = document.getElementById("authEmailSubmit");
   const google = document.getElementById("authGoogle");
   const logout = document.getElementById("authLogout");
+  const modeToggle = document.getElementById("authModeToggle");
 
   const reportAuth = async (operation) => {
     setStatus("Please wait…");
@@ -55,6 +56,18 @@ if (!configured) {
     await reportAuth(() => mode === "signup"
       ? supabase.auth.signUp({ email: address, password: secret, options: { emailRedirectTo: location.origin } })
       : supabase.auth.signInWithPassword({ email: address, password: secret }));
+  });
+
+  modeToggle?.addEventListener("click", () => {
+    const signingUp = emailSubmit?.dataset.mode !== "signup";
+    if (emailSubmit) {
+      emailSubmit.dataset.mode = signingUp ? "signup" : "signin";
+      emailSubmit.querySelector("span").textContent = signingUp ? "Create account" : "Sign in with email";
+    }
+    if (password) password.autocomplete = signingUp ? "new-password" : "current-password";
+    const label = modeToggle.querySelector("span");
+    if (label) label.textContent = signingUp ? "I already have an account" : "Create a new account instead";
+    setStatus(signingUp ? "Create your account with email. Verification may be required." : "Sign in with your existing Climboria account.");
   });
 
   google?.addEventListener("click", async () => {
