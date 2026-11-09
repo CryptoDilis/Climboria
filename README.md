@@ -1,3 +1,15 @@
+## 2026-11-09 — Wildlife candidate source review checkpoint
+
+- [x] Completed the source-level review requested by the previous handoff and recorded candidate decisions in `game/assets/JARRELL_NATURE_ATTRIBUTION.md`, commit [f29714a](https://github.com/CryptoDilis/Climboria/commit/f29714a232e0ad88041f05091fba6e6905f8c2f8).
+- [x] 3D Valley surfaced animated animal examples are largely Gobkit low-poly models (roughly 300–830 tris in the examples). Its aggregate 705-rigged/681-animated CC0 catalogue claim is not per-asset acceptance; no currently surfaced model passed Climboria's realism bar.
+- [x] Vuena free fox/owl sample has rigs, 12 clips and mobile LOD but is explicitly low-poly designer-toy style; rejected for current realism target.
+- [x] Soltorch American Robin has source-listed rig/20 clips/1,424 tris/256px texture, but is tagged low-poly and full terms are in the archive; not approved pending binary and license inspection.
+- [x] Dire Wolf Lite is a promising higher-detail candidate (35-bone rig, 4 clips, 9,991 tris, 2K PBR, 24 MB ZIP), but its no-reupload/no-resale clause leaves embedded-game redistribution unclear. Do not bundle until creator clarification. Source: https://literock-studios.itch.io/direwolf-lite.
+- [x] No candidate binary was acquired, hashed, structurally inspected or rendered in this pass. No wildlife code was changed; keep wildlife disabled and preserve zero-animal/zero-snake smoke guardrails.
+- [ ] **Exact next job:** pursue binary acquisition and license clarification. First contact Literock Studios to ask whether the Dire Wolf Lite GLB may be embedded in and distributed as part of a downloadable/browser game (not as a standalone asset). In parallel, identify a realistic bird/mammal and a snake with explicit commercial + embedded redistribution permission. Once binaries are available, record SHA-256/bytes, inspect GLB chunks/dependencies, skins/joints, animation clips, axes/scale/bounds, mesh/material/texture budgets, render previews and mobile decode/frame cost; update the attribution ledger with pass/fail. If no suitable free snake clears these gates, record the blocker and keep snake AI disabled.
+- [ ] After at least one species passes, design and test a bounded actor lifecycle before implementing: habitat spawn, chunk activation/deactivation, idle/roam/flee or warning/chase/bite/recovery, terrain/prop collision, damage cooldown, cleanup, active-count cap, distance culling/LOD and mobile frame budget. Only then replace zero-count assertions with meaningful actor acceptance.
+- PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains draft/open/unmerged. No merge, production deployment or live Swap execution without explicit approval.
+
 ## 2026-11-09 — Browser Smoke #42639359855 completed; wildlife validation handoff
 
 - [x] Validate [42639359688](https://github.com/CryptoDilis/Climboria/actions/runs/42639359688) completed `success` on PR head `7279f08b30b83c4395aad28daf4398bb22390ca9`.
