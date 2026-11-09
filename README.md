@@ -2881,3 +2881,18 @@ This is a standing project rule, not a one-time task:
 - [ ] Before any migration implementation, add a versioned save envelope and a preview/consent step; back up raw guest values, validate schema/size, never silently merge inventory, and make migration idempotent. The current `player_saves` table's 64 KiB limit is a hard upper bound, not a target.
 - **Next exact job:** implement a minimal, user-consented cloud preference sync for the selected hero only (schema version + allowlist validation + explicit guest/account conflict choice + rollback-safe local backup), with browser tests for signed-out, signed-in, malformed local value, unknown hero ID, and conflicting account preference. Do not include inventory or economic/reward state.
 
+
+
+## 2026-11-10 — Cloud preference sync sequencing correction
+
+- [x] Confirmed `game/play.html` is a standalone gameplay page and currently does not load the Supabase auth bootstrap. The account modal/auth client is on the main site page; therefore the game cannot yet safely read the authenticated Supabase session.
+- [x] Avoided implementing a cosmetic cloud sync against a nonexistent game-page auth session. No speculative duplicate Supabase client or localStorage-to-cloud write was added.
+- [ ] First prerequisite: design and implement one shared auth bootstrap/session bridge that both the main site and `game/play.html` can use without creating competing Supabase clients or exposing credentials. Preserve PKCE/session persistence and verify refresh behavior on same-origin navigation.
+- [ ] Add a minimal account status/link entry in the game UI only after the shared auth bridge is available. Then implement the selected-hero preference sync with an explicit guest/account conflict choice, hero-ID allowlist validation, versioned payload, backup/rollback, and idempotent writes.
+- [ ] Keep `climboria_jarrell_inventory_v1` local/provisional. Do not cloud-sync it or represent it as trusted inventory until server-authoritative inventory/reward APIs exist.
+- **Next exact job:** inspect all HTML entry points and script-loading conventions, then refactor the Supabase initialization into a shared same-origin module consumed by both `index.html` and `game/play.html`; add regression tests proving there is one session/client per page, auth state survives navigation/refresh, and guest play still works with auth unconfigured. Do not start hero preference writes until that bridge passes.
+
+**Handoff update after storage audit:**
+- Latest branch commit: `520993fe9f87036c60a7dfb1fe1d936f9f0af2de` (README audit record; Browser Smoke run `42658547371` passed on parent code commit `983daadf79c28a90679ed30ff4f204db45b81dd8`).
+- PR #228 remains draft/open/unmerged; real provider E2E remains a release gate.
+- Next implementation is shared auth bootstrap/session bridge, not inventory migration or direct cloud-save writes.
