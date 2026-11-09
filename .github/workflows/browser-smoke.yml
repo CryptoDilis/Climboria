@@ -414,7 +414,7 @@ jobs:
               const poolABackState=await assertSelectedPool(poolA,poolAExpected);
               if(!poolABackState.passed)throw new Error('Browser Back restored pool A URL/row but not its chart and metrics: '+JSON.stringify(poolABackState));
               await page.goForward();
-              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===poolB,poolB,{timeout:10000});
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===poolB,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
