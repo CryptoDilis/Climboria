@@ -618,7 +618,9 @@ async function renderSelectedNativeChart(pair,token,requestId){
   if(!response.ok)throw new Error('OHLCV provider HTTP '+response.status);
   const data=await response.json(),rows=data?.data?.attributes?.ohlcv_list;
   if(!Array.isArray(rows))throw new Error('OHLCV provider returned no candle data');
-  candles=rows.map(row=>({time:Number(row[0]),open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(c=>Number.isFinite(c.time)&&Number.isFinite(c.close)&&c.close>0).sort((a,b)=>a.time-b.time);
+  const validCandles=rows.filter(row=>Array.isArray(row)&&row.length>=6).map(row=>({time:Number(row[0]),open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4]),volume:Number(row[5])})).filter(c=>Number.isSafeInteger(c.time)&&c.time>0&&[c.open,c.high,c.low,c.close,c.volume].every(Number.isFinite)&&c.open>0&&c.close>0&&c.low>0&&c.high>=Math.max(c.open,c.close,c.low)&&c.low<=Math.min(c.open,c.close,c.high)&&c.volume>=0).sort((a,b)=>a.time-b.time);
+  // Keep one well-formed candle per timestamp; malformed provider rows must never distort the chart scale.
+  candles=[...new Map(validCandles.map(c=>[c.time,c])).values()];
   if(candles.length<2)throw new Error('Not enough live candles to draw this chart');
   ohlcvCache.set(key,{savedAt:Date.now(),candles});
   while(ohlcvCache.size>30)ohlcvCache.delete(ohlcvCache.keys().next().value);
