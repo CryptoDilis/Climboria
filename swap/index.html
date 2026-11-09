@@ -412,7 +412,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
  </div><p class="swap-advanced-note">Base gas settings will be separate when the Base EVM router is integrated. Solana uses SOL for network fees; this is not an EVM gas-gwei setting.</p></details>
  <button class="tab primary" id="getQuote" type="button">Get live quote</button><button class="tab" id="prepareSwap" type="button">Prepare wallet-reviewed swap</button></div>
 <div class="quote-results" id="quoteResults"><div class="quote-result"><small>Estimated receive</small><b>—</b></div><div class="quote-result"><small>Routing provider</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div></div>
-<details class="mobile-routing-details"><summary>Routing & network coverage</summary><section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Multi-source architecture</b></div><div class="routing-coverage-grid">
+<details class="mobile-routing-details" open><summary>Routing & network coverage</summary><section class="routing-coverage" aria-label="Climboria routing coverage"><div class="routing-coverage-head"><span>ROUTING NETWORK</span><b>Multi-source architecture</b></div><div class="routing-coverage-grid">
  <div><small>SOLANA · PRIMARY ROUTER</small><strong>Jupiter Meta-Aggregator</strong><p>Metis · JupiterZ RFQ · DFlow · OKX compete for eligible routes. Underlying pools/DEX venues are selected dynamically by the router.</p><em>Not every bonding curve or new pool is guaranteed routable.</em></div>
  <div><small>BASE · EVM ROUTING</small><strong>Uniswap API · planned integration</strong><p>Uniswap v2/v3/v4 and UniswapX require a separate EVM quote, approval, gas-estimation and wallet-signing flow.</p><em>Base trading remains disabled until the backend and wallet flow are verified.</em></div>
  </div><div class="routing-coverage-foot">Climboria will add other direct venue adapters only where they provide real coverage beyond the primary aggregator—never as fake selectable providers.</div></section></details><div class="quote-status" id="quoteStatus" aria-live="polite">Ready when you are. Enter an amount to request a fresh route quote.</div><div id="swapReview" class="quote-results" hidden aria-live="polite"></div>
@@ -749,6 +749,8 @@ if(mobileWorkspaceTabs&&mobileWorkspace){
   setMobileWorkspaceTab(button.dataset.workspaceTab);
  });
 }
+</script><script>
+(()=>{const details=document.querySelector('.mobile-routing-details');if(!details)return;const media=window.matchMedia('(max-width:760px)');const sync=()=>{if(media.matches)details.removeAttribute('open');else details.setAttribute('open','')};sync();media.addEventListener?.('change',sync)})();
 </script><svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg>
 <style id="climboria-mobile-compact-swap-v1">
 @media(max-width:760px){
