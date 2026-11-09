@@ -266,6 +266,11 @@ jobs:
               const response=await desktop.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
               for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteToSearch','#searchFrom','#searchTo','#swapFlip','#getQuote','#prepareSwap','#quoteStatus','#majorCoins','#selectedAssetChart']) if(await desktop.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
+              const chartEmpty=desktop.locator('#selectedChartEmpty');
+              const chartEmptyWasHidden=await chartEmpty.evaluate(el=>el.hidden);
+              await chartEmpty.evaluate(el=>{el.hidden=true});
+              if(await chartEmpty.evaluate(el=>getComputedStyle(el).display)!=='none') throw new Error('Selected chart empty overlay must disappear when its hidden state is set');
+              await chartEmpty.evaluate((el,hidden)=>{el.hidden=hidden},chartEmptyWasHidden);
               const heading=(await desktop.locator('h1').first().innerText()).trim();
               if(!heading.toLowerCase().includes('swap')) throw new Error('Unexpected Swap page heading: '+heading);
               const card=await desktop.locator('.swap-focus-card').boundingBox();
