@@ -101,6 +101,29 @@ jobs:
               if(new URL(page.url()).pathname!=='/dex/') throw new Error('Homepage DEX CTA did not navigate to /dex/');
               const dexPage=page;
               if(!await dexPage.locator('#markets').count()) throw new Error('DEX CTA did not open the market explorer');
+              // Verify live DEX search discovers tokens outside the boot-time market sample by name/symbol and exact mint.
+              const dexMint='SysvarRent111111111111111111111111111111111';
+              const dexPair={chainId:'solana',dexId:'search-fixture',pairAddress:'DexSearchPair11111111111111111111111111111',baseToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},priceUsd:'0.125',priceChange:{h24:4.2},volume:{h24:45678},liquidity:{usd:23456}};
+              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{
+                const url=new URL(route.request().url());
+                if(url.searchParams.get('q')==='CLIMBTEST')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
+                return route.continue();
+              });
+              await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
+                const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
+                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
+                return route.continue();
+              });
+              await dexPage.locator('#search').fill('CLIMBTEST');
+              await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:12000});
+              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
+              await dexPage.locator('#search').fill(dexMint);
+              await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
+              const exactRow=dexPage.locator('#rows button[data-mint="'+dexMint+'"]');
+              if(await exactRow.count()!==1)throw new Error('DEX exact contract-address search did not return the exact base-token mint');
+              await exactRow.click();
+              await dexPage.waitForFunction(pair=>document.querySelector('#detailChart')?.src.includes(pair),dexPair.pairAddress,{timeout:12000});
+              if(!(await dexPage.locator('#detailTitle').innerText()).includes('CLIMBTEST'))throw new Error('DEX chart detail did not match the exact searched token');
               await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
