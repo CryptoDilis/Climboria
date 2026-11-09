@@ -2817,3 +2817,17 @@ This is a standing project rule, not a one-time task:
 - [ ] Owner-side prerequisites remain: confirm Supabase Ethereum and Solana chain toggles are saved ON; configure Google OAuth app credentials, X OAuth 2.0 app credentials with email scope, custom SMTP, Site URL and allowed redirects; add CAPTCHA/rate limits before public signup.
 - [ ] Still required for completion: auth-specific automated/browser tests; signup + email confirmation + profile auto-creation; sign-in/out + session refresh; password recovery; Google/X callback and linking; Solana/EVM SIWS/SIWE on desktop and mobile wallet browsers; RLS isolation; guest-save migration design and tests.
 - **Next exact job:** inspect latest commit CI after trigger propagation, then add dedicated auth browser tests and fix any failures from actual logs. Do not merge/deploy until auth tests and owner provider setup are complete. Keep cross-provider wallet identity linking explicitly gated until safely implemented and verified.
+
+
+## 2026-11-10 — Dedicated authentication browser smoke coverage added
+
+- [x] Reviewed latest auth PR and previous workflow state before editing; PR #228 remains open/draft/unmerged.
+- [x] Added a dedicated Playwright browser step to `.github/workflows/browser-smoke.yml` covering auth modal controls, email signup/session, Player ID profile display, logout, password recovery request/update, Google/X OAuth initiation, and EVM/Solana Web3 initiation with a mocked Supabase client. This is a deterministic UI/client contract test, **not** a real Supabase/provider E2E test.
+- [x] Added auth source paths (`auth/**`, `auth-config.js`, `supabase/migrations/**`) to both push and pull-request path filters so future auth-only changes trigger browser smoke.
+- [x] Workflow commits: test step `17ded53e2df1331880bf013dbcbd73199935420b`; path-filter correction `664a6971b0750dd4f92f554608ae5eeaa8d674d7`.
+- [x] Latest known Validate run `42656157591` passed on the test-step commit. Browser run `42656157774` started; at last inspection it was still in setup/install, before the new auth test step. Its job-log download returned GitHub 404 BlobNotFound, so no log-based diagnosis is available yet.
+- [ ] Latest branch head is `664a6971b0750dd4f92f554608ae5eeaa8d674d7`; workflow lookup for this latest head had not yet surfaced a new run at the time of this note. Recheck Actions and wait for the run associated with this exact head; inspect the auth step result before changing code.
+- [ ] Previous Browser Smoke run `42654455173` passed overall but gameplay step 15 was cancelled; do not claim the Jarrell's Peak gameplay smoke passed.
+- [ ] Real provider E2E still outstanding: email verification and SMTP, password reset email callback, Google OAuth callback, X OAuth 2.0 callback, Solana SIWS, EVM SIWE, session refresh, RLS isolation, and account identity linking. The new browser test mocks Supabase and cannot certify those provider-side flows.
+- [ ] Owner setup remains required for Google/X client credentials, SMTP, exact Supabase Site URL/redirect allowlist, CAPTCHA/rate limits, and confirmation that both Ethereum and Solana Web3 provider toggles are saved ON.
+- **Next exact job:** inspect the latest-head browser run and its new “Test Climboria authentication UI and client flows” step. If it fails, retrieve actionable logs and diagnose the actual cause before editing. If it passes, build a safe real-provider test checklist and continue identity-linking/guest-save migration work without claiming production-ready authentication prematurely.
