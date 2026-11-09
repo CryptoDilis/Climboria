@@ -2849,3 +2849,22 @@ This is a standing project rule, not a one-time task:
 - [x] Reviewed the real auth client contract: Supabase `.maybeSingle()` resolves to `{ data: profile, error }`. The test mock incorrectly returned `ok({ data: profile })`, nesting the profile one level too deep (`data.data.player_id`) and making the Player ID assertion impossible. Corrected the mock to return `{ data: profile, error: null }` directly in commit `ad9d948925a7a3a3ec2d9b142f0047a7bf33b1c1`.
 - [ ] Re-run the new-head Browser Smoke and Validate workflows. If email status still times out, use the new log to inspect the exact wait and do not assume a production auth defect. The mock is still not a real provider E2E test.
 - **Next exact job:** verify the corrected profile mock passes email signup/session/profile/logout, then password recovery and OAuth/Web3 initiation tests; afterward add safe account-link UI and guest-save migration design. Live Supabase/provider configuration and callbacks remain outstanding. PR #228 remains draft/unmerged.
+
+
+## 2026-11-10 — Latest full Browser Smoke passed on auth branch head
+
+- [x] Rechecked PR #228: still open, draft, unmerged; head commit `983daadf79c28a90679ed30ff4f204db45b81dd8`.
+- [x] Browser Smoke run `42658547371` completed with conclusion **success** (job `129303548543`). All steps passed, including the dedicated mocked authentication UI/client-flow test, homepage/mobile navigation, Cloudflare DEX proxy, fail-closed DEX execution, standalone Swap and DEX shells, mobile workspace/layout states at 390px and 360px, market loading/provider-error/empty states, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload.
+- [x] The password-recovery smoke now correctly asserts the recovery panel remains hidden after requesting a reset email and only opens after a simulated Supabase `PASSWORD_RECOVERY` event. This test models the provider callback; it does not prove a real email callback.
+- [ ] Real Supabase/provider E2E remains outstanding: email confirmation/SMTP and recovery callback, Google OAuth callback, X OAuth 2.0 callback, Solana SIWS, EVM SIWE, session refresh, RLS isolation, and verified identity linking. The browser auth test uses a mocked Supabase client and must not be described as live provider verification.
+- [ ] Owner-side configuration remains: Google and X OAuth app credentials, custom SMTP, Supabase Site URL/allowed redirects, abuse controls/CAPTCHA, and explicit confirmation that Ethereum and Solana Web3 chain toggles are both enabled.
+- [ ] Guest-to-account save migration, cross-provider identity linking (including wallet linking), and cloud-save integration are not implemented. Do not silently overwrite or merge guest saves; do not trust client-writable saves for economic/reward state.
+- **Next exact job:** audit the current game's localStorage/IndexedDB save keys and data schema on this branch, then document a safe, versioned guest-to-account migration design (backup first, size/schema validation, explicit conflict choice, idempotent upload, and rollback). Do not implement cloud save or migration writes until the actual legacy save format and conflict behavior are understood. Keep PR #228 draft/unmerged until real provider setup and E2E gates are complete.
+
+**Current handoff (2026-11-10, latest):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR: [#228](https://github.com/CryptoDilis/Climboria/pull/228), open/draft/unmerged
+- Head: `983daadf79c28a90679ed30ff4f204db45b81dd8`
+- Latest Browser Smoke: `42658547371` — **success**, all 17 work steps including Jarrell's Peak and screenshot upload.
+- Auth browser coverage is mocked; no live provider E2E claim.
+- Next task: inspect and document the actual guest save storage format before designing migration.
