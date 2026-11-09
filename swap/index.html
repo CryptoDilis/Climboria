@@ -669,7 +669,7 @@ async function updateSelectedAsset(token){
   await renderSelectedNativeChart(pair,token,chartRequest);
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
-  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent='Live market metrics loaded; native chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Live chart temporarily unavailable for '+(token.symbol||'selected token')+'. '+error.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');chart.removeAttribute('src');
+  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent=error.message+' · Native chart unavailable for this selection.';empty.hidden=false;empty.textContent='Live chart temporarily unavailable for '+(token.symbol||'selected token')+'. '+error.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');chart.removeAttribute('src');
  }
 }
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
