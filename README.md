@@ -2676,3 +2676,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-09 — Solana wallet login added to real account foundation
+
+- [x] Added a dedicated **Sign in with Solana** option to the account modal alongside EVM, Google, X and email.
+- [x] Implemented Supabase Auth Web3 sign-in with `chain: "solana"`, explicit wallet discovery (`window.phantom.solana` / `window.solana`), wallet connect, and a clear sign-in-only consent statement. No transaction is sent and no private key is requested.
+- [x] Updated owner setup guide to enable both Solana and Ethereum Web3 providers and documented Phantom/Solflare/Backpack compatibility where their injected provider API is available.
+- [ ] Verify latest branch CI and run a real Phantom/Solflare sign-in after the Supabase project is configured. Provider enablement and Supabase public URL/anon key remain owner-side release prerequisites.
+- [ ] Test browser injection on Android wallet in-app browsers; desktop extension smoke tests do not prove mobile wallet compatibility.
+- [ ] Continue verified cross-provider identity linking and safe guest-save migration; do not claim a single unified Player ID across providers until tested.
+- **Next exact job:** inspect latest PR #228 workflow results, then implement/test provider-session identity linking without allowing account takeover or overwriting guest progress.
