@@ -261,11 +261,15 @@ jobs:
             const errors=[];
             try {
               const desktop=await browser.newPage({viewport:{width:1365,height:900}});
+              await desktop.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',pairAddress:'Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'87.12',priceChange:{h24:2.5},volume:{h24:57100000},marketCap:24550000000,liquidity:{usd:24550000},dexId:'Orca'}]})}));
+              await desktop.route('https://api.geckoterminal.com/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({data:{attributes:{ohlcv_list:[[1794182400,86,88,85,87,1000],[1794183300,87,89,86,88,1200],[1794184200,88,90,87,89,1400],[1794185100,89,91,88,90,1600]]}}})}));
               await desktop.route('https://api.jup.ag/swap/v2/order**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'250000000',outAmount:'49000000',feeBps:1,router:'Jupiter Test Route',priceImpactPct:0.001})}));
               desktop.on('pageerror',error=>errors.push('DESKTOP '+error.message));
               const response=await desktop.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               if(!response?.ok()) throw new Error('Local Swap route failed to load');
               for(const selector of ['#connectWallet','#quoteAmount','#quoteFromSearch','#quoteToSearch','#searchFrom','#searchTo','#swapFlip','#getQuote','#prepareSwap','#quoteStatus','#majorCoins','#selectedAssetChart']) if(await desktop.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
+              await desktop.waitForFunction(()=>{const el=document.querySelector('#selectedAssetNativeChart');return el&&!el.hidden&&!!el.querySelector('#nativeChartLine')?.getAttribute('d')?.startsWith('M')},{},{timeout:10000});
+              if(await desktop.locator('#selectedAssetNativeChart path#nativeChartLine').getAttribute('d')===null) throw new Error('Native OHLCV chart path was not rendered');
               const chartEmpty=desktop.locator('#selectedChartEmpty');
               const chartEmptyWasHidden=await chartEmpty.evaluate(el=>el.hidden);
               await chartEmpty.evaluate(el=>{el.hidden=true});
