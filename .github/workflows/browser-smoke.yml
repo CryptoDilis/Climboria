@@ -553,9 +553,21 @@ jobs:
                   await dex.locator('#mobileMarketMore').tap();
                   await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
-                // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
+                // Instrument the actual close-button interaction before asserting the mobile transition.
+                await dex.evaluate(()=>{
+                  window.__closeDetailTrace=[];
+                  document.addEventListener('click',event=>{
+                    const target=event.target?.closest?.('#closeDetail');
+                    if(target)window.__closeDetailTrace.push({type:'captured-click',time:performance.now(),targetId:target.id,disabled:target.disabled,rect:(()=>{const r=target.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})(),bodyClass:document.body.className});
+                  },true);
+                });
+                const closeBefore=await dex.evaluate(()=>({bodyClass:document.body.className,detailOpen:document.querySelector('#tokenDetail')?.className,closeText:document.querySelector('#closeDetail')?.textContent,navDisplay:getComputedStyle(document.querySelector('#dexMobileNav')).display,detailDisplay:getComputedStyle(document.querySelector('#tokenDetail')).display}));
+                console.log('MOBILE CLOSE BEFORE '+JSON.stringify(closeBefore));
                 await dex.locator('#closeDetail').tap();
-                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
+                await dex.waitForTimeout(150);
+                const closeAfter=await dex.evaluate(()=>({trace:window.__closeDetailTrace,bodyClass:document.body.className,detailOpen:document.querySelector('#tokenDetail')?.className,navDisplay:getComputedStyle(document.querySelector('#dexMobileNav')).display,navPosition:getComputedStyle(document.querySelector('#dexMobileNav')).position,navRect:(()=>{const r=document.querySelector('#dexMobileNav').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})(),detailDisplay:getComputedStyle(document.querySelector('#tokenDetail')).display}));
+                console.log('MOBILE CLOSE AFTER '+JSON.stringify(closeAfter));
+                if(document.body.classList.contains('mobile-token-view'))throw new Error('Close detail tap left mobile-token-view active; captured state above');
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
                 await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
                 await dex.waitForFunction(()=>document.querySelectorAll('#baseMobileCards a.base-mobile-market-card').length>0,null,{timeout:15000});
