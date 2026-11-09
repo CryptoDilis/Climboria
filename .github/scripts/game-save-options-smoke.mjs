@@ -6,6 +6,7 @@ try {
   const scenarios = [
     { name: "guest", session: null, row: null, guest: "Adventurer", expected: "You are playing as a guest", queries: 0 },
     { name: "account-only", session: { user: { id: "player-1" } }, row: { schema_version: 1, save_data: { selectedHero: "Adventurer" } }, guest: null, expected: "An account hero choice is available", queries: 1, chooseAccount: true },
+    { name: "account-save-no-hero", session: { user: { id: "player-1" } }, row: { schema_version: 1, save_data: {} }, guest: null, expected: "no supported cosmetic hero choice", queries: 1 },
     { name: "same-choice", session: { user: { id: "player-1" } }, row: { schema_version: 1, save_data: { selectedHero: "Adventurer" } }, guest: "Adventurer", expected: "choices match", queries: 1 },
     { name: "invalid-payload", session: { user: { id: "player-1" } }, row: { schema_version: 99, save_data: { selectedHero: "Adventurer" } }, guest: "Adventurer", expected: "cannot safely use", queries: 1 },
     { name: "read-failure", session: { user: { id: "player-1" } }, row: null, readError: { message: "fixture read failure" }, guest: "Adventurer", expected: "could not be read", queries: 1 }
