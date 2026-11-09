@@ -2730,3 +2730,13 @@ For every integrated asset or borrowed technique, record:
   - After changes, run Validate and the complete Browser Smoke; inspect each failed job/step/log and classify root cause before any corrective commit. Check Pages only if the workflow is triggered by an eligible event; do not claim a deployment from PR-only checks.
 - [ ] Production Cloudflare Worker remains a separate blocker: account-specific rate-limit namespace and encrypted Actions secrets are still required, followed by deployment and production health/CORS/rate-limit verification. Keep `swap-config.js` `proxyEnabled:false` and `enabled:false`; no live Swap execution.
 - Current handoff: PR [#227](https://github.com/CryptoDilis/Climboria/pull/227) remains open and unmerged; branch `codex/diagnose-mobile-close-tap-42593894269`; head `b0d71ffcd677d90cf27fbb286ab8839f179d54ea`; base `main` remains `d2084c9b5b02408f7eed5d75e45a2fbf89028014`. No merge or production deployment performed.
+
+
+### Six-asset acceptance — source audit started (2026-11-09)
+
+- [x] Re-read current `swap/index.html` and `.github/workflows/browser-smoke.yml` at PR branch head after the successful checkpoint.
+- [x] Confirmed the major-assets click handler delegates from `#majorCoins`; SOL/USDC resolve their fixed Solana mint, while BTC/ETH/BNB/XRP invoke Jupiter token search with `autoSelect:true`.
+- [x] Confirmed `chooseBestSolanaCandidate()` refuses to auto-select when the search returns more than one candidate; it only returns a candidate when exactly one result has an exact-mint Solana base-asset pool. Multiple candidates remain visible and require explicit selection.
+- [x] Confirmed `updateSelectedAsset()` accepts only a Solana pair whose `baseToken.address` exactly equals the selected mint; quote-side-only pools are rejected and stale metrics are cleared before lookup.
+- [ ] Coverage gap: the existing end-to-end major-asset browser acceptance is BTC-centric. ETH/BNB/XRP candidate selection and SOL/USDC direct mint flows are not each independently asserted end-to-end. This is a test-coverage gap, not yet evidence of a product-code defect.
+- [ ] Next implementation action: expand deterministic Playwright fixtures and assertions for all six assets, including exact mint, chart pair/title/price, URL and history restoration, ambiguous/no-pool/quote-only behavior, and mobile taps. Keep test fixtures distinct per mint and return realistic per-mint decimals from mocked Solana RPC. Do not alter production selection logic unless an assertion reproduces a real defect.
