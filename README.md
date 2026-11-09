@@ -2742,3 +2742,12 @@ For every integrated asset or borrowed technique, record:
 - [x] Combined with prior owner screenshots: both player tables exist with RLS enabled, and all five expected policies are present.
 - [ ] Next: configure email auth/SMTP and verify actual signup creates a `player_profiles` row; then configure and test Solana/EVM wallet providers and Google/X OAuth. No production auth claim until real end-to-end checks pass.
 - **Next exact job:** guide owner through Supabase Authentication → Providers → Email settings; confirm email/password enabled and email confirmation policy, then test signup on the configured Climboria branch/deployment.
+
+
+## 2026-11-10 — Supabase Web3 wallet provider enabled
+
+- [x] Owner enabled the Supabase **Web3 Wallet** auth provider; dashboard screenshot now shows Web3 Wallet `ENABLED` and Email `ENABLED`.
+- [x] Earlier Web3 Wallet settings showed separate toggles for Ethereum and Solana; owner was instructed to enable both and save. The list-level screenshot confirms the provider is enabled, but does not independently expose each chain toggle's saved state. Confirm both chain toggles remain ON before live tests.
+- [ ] Next: configure Google and X OAuth providers (requires owner-created OAuth apps and credentials); configure custom SMTP for reliable confirmation email; set auth abuse protection/rate limits.
+- [ ] Then run end-to-end signup/sign-in tests for email, Solana and EVM wallets, verify each creates a profile and that identity linking is secure. Do not claim production-ready until tests pass and PR is merged/deployed.
+- **Next exact job:** open Web3 Wallet provider once more and visually confirm both Ethereum and Solana toggles are ON; then return to Auth Providers list and proceed to Google OAuth setup.
