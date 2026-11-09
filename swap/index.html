@@ -138,6 +138,12 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 .selected-price span{font-size:10px;font-weight:800}
 .selected-chart-wrap{height:190px;position:relative;overflow:hidden;border:1px solid #30445d;border-radius:10px;background:#080f1b}
 .selected-chart-wrap iframe{width:100%;height:100%;border:0;display:block}
+.selected-chart-wrap.native-chart-ready iframe{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px}
+.native-market-chart{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);overflow:visible}
+.native-chart-grid{stroke:#26394f;stroke-width:1;opacity:.75}
+.native-chart-line{fill:none;stroke:#d9ad59;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.native-chart-area{fill:url(#nativeChartFill);opacity:.22}
+.native-chart-label{fill:#8192a8;font:9px Arial,sans-serif}
 .chart-empty{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;color:#8294aa;font-size:9px;pointer-events:none;background:linear-gradient(180deg,#080f1b44,#080f1b22)}
 .chart-empty[hidden]{display:none!important}
 .asset-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
@@ -567,7 +573,7 @@ input:focus,select:focus{outline:1px solid #d8b66d!important;box-shadow:0 0 0 3p
 <section class="popular-pairs"><div class="popular-head"><span>POPULAR PAIRS</span><small>Choose a pair to search its exact token mints</small></div><div class="popular-chips"><button type="button" data-pair="SOL|USDC">SOL → USDC</button><button type="button" data-pair="SOL|USDT">SOL → USDT</button><button type="button" data-pair="SOL|JUP">SOL → JUP</button><button type="button" data-pair="USDC|BONK">USDC → BONK</button></div></section>
 <aside class="market-rail"><section class="side-panel major-panel"><div class="side-head"><div><span class="side-kicker">MARKET PULSE</span><h2>Major assets</h2></div><span class="live-tag"><i></i> MARKET DATA</span></div><p class="side-sub">Live prices, 24h movement and market trends.</p><div class="major-list" id="majorCoins"><div class="market-loading">Loading major market data…</div></div><div class="market-foot" id="majorStatus">Market data loading…</div></section></aside>
 <aside class="swap-sidebar">
-<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">LIVE MARKET CHART</span><h2>Selected asset</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">Loading…</b><span id="selectedAssetChange">Fetching 24h change</span></div><div class="selected-chart-wrap premium-chart-wrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><div class="chart-empty" id="selectedChartEmpty">Loading the selected SOL market chart…</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">Loading…</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">Loading…</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">Loading…</b></div><div><small>POOL</small><b id="selectedAssetVenue">Discovering pool…</b></div></div><div class="market-foot" id="selectedAssetNote">Live provider metrics may be incomplete.</div></section>
+<section class="side-panel selected-panel"><div class="chart-terminal-head"><div><span class="side-kicker">LIVE MARKET CHART</span><h2>Selected asset</h2></div><span class="live-tag"><i></i> LIVE POOL</span></div><div class="side-head"><div><span class="side-kicker">ASSET INTELLIGENCE</span><h2 id="selectedAssetTitle">SOL · Solana</h2></div><span class="live-tag">SELECTED</span></div><div class="selected-price"><b id="selectedAssetPrice">Loading…</b><span id="selectedAssetChange">Fetching 24h change</span></div><div class="selected-chart-wrap premium-chart-wrap" id="selectedChartWrap"><iframe id="selectedAssetChart" title="Selected token price chart" loading="lazy" referrerpolicy="no-referrer"></iframe><svg id="selectedAssetNativeChart" class="native-market-chart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Live selected token price chart" hidden><defs><linearGradient id="nativeChartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d9ad59"/><stop offset="100%" stop-color="#d9ad59" stop-opacity="0"/></linearGradient></defs><g id="nativeChartGrid"></g><path id="nativeChartArea" class="native-chart-area"></path><path id="nativeChartLine" class="native-chart-line"></path><text id="nativeChartStart" class="native-chart-label" x="4" y="180"></text><text id="nativeChartEnd" class="native-chart-label" x="716" y="180" text-anchor="end"></text></svg><div class="chart-empty" id="selectedChartEmpty">Loading the selected SOL market chart…</div></div><div class="asset-stats"><div><small>24H VOLUME</small><b id="selectedAssetVolume">Loading…</b></div><div><small>MARKET CAP / FDV</small><b id="selectedAssetMcap">Loading…</b></div><div><small>POOL LIQUIDITY</small><b id="selectedAssetLiquidity">Loading…</b></div><div><small>POOL</small><b id="selectedAssetVenue">Discovering pool…</b></div></div><div class="market-foot" id="selectedAssetNote">Live provider metrics may be incomplete.</div></section>
 <section class="side-panel trust-panel"><h2>Trade with clarity.</h2><p>Non-custodial by design. Quotes first, transaction review before any wallet approval.</p><div class="side-item"><b><i class="status-dot"></i>Wallet stays yours</b><span>Climboria never asks for your seed phrase or private key.</span></div><div class="side-item"><b><i class="status-dot"></i>Review before approval</b><span>Execution remains locked pending backend and security verification.</span></div></section>
 </aside>
 </div>
@@ -601,6 +607,37 @@ let majorAssetChoices=[];
 const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
 const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return 'Unavailable';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
+const ohlcvCache=new Map();
+async function renderSelectedNativeChart(pair,token,requestId){
+ const wrap=$('selectedChartWrap'),svg=$('selectedAssetNativeChart'),line=$('nativeChartLine'),area=$('nativeChartArea'),grid=$('nativeChartGrid'),empty=$('selectedChartEmpty');
+ const key=pair.pairAddress+'|15m';
+ let candles=ohlcvCache.get(key);
+ if(!candles||Date.now()-candles.savedAt>60000){
+  const url='https://api.geckoterminal.com/api/v2/networks/solana/pools/'+encodeURIComponent(pair.pairAddress)+'/ohlcv/minute?aggregate=15&limit=100&currency=usd&token=base';
+  const response=await fetch(url,{headers:{accept:'application/json;version=20230203'},cache:'no-store'});
+  if(!response.ok)throw new Error('OHLCV provider HTTP '+response.status);
+  const data=await response.json(),rows=data?.data?.attributes?.ohlcv_list;
+  if(!Array.isArray(rows))throw new Error('OHLCV provider returned no candle data');
+  candles=rows.map(row=>({time:Number(row[0]),open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4])})).filter(c=>Number.isFinite(c.time)&&Number.isFinite(c.close)&&c.close>0).sort((a,b)=>a.time-b.time);
+  if(candles.length<2)throw new Error('Not enough live candles to draw this chart');
+  ohlcvCache.set(key,{savedAt:Date.now(),candles});
+  while(ohlcvCache.size>30)ohlcvCache.delete(ohlcvCache.keys().next().value);
+ }else candles=candles.candles;
+ if(requestId!==selectedChartRequest)return;
+ const width=720,height=190,padX=8,padTop=12,padBottom=24;
+ const values=candles.map(c=>c.close),min=Math.min(...values),max=Math.max(...values),span=max-min||Math.max(max*.002,1e-9);
+ const x=i=>padX+(i/(candles.length-1))*(width-padX*2);
+ const y=v=>padTop+((max-v)/span)*(height-padTop-padBottom);
+ const points=candles.map((c,i)=>[x(i),y(c.close)]);
+ const path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(2)+' '+p[1].toFixed(2)).join(' ');
+ line.setAttribute('d',path);
+ area.setAttribute('d',path+' L '+points[points.length-1][0].toFixed(2)+' '+(height-padBottom)+' L '+points[0][0].toFixed(2)+' '+(height-padBottom)+' Z');
+ grid.innerHTML=[0,1,2,3].map(i=>{const yy=padTop+i*(height-padTop-padBottom)/3;return '<line class="native-chart-grid" x1="0" x2="720" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'"/>'}).join('');
+ const fmt=t=>new Date(t*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+ $('nativeChartStart').textContent=fmt(candles[0].time);
+ $('nativeChartEnd').textContent=fmt(candles[candles.length-1].time);
+ svg.hidden=false;wrap.classList.add('native-chart-ready');empty.hidden=true;
+}
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
  const chartRequest=++selectedChartRequest;
@@ -628,10 +665,11 @@ async function updateSelectedAsset(token){
   venue.textContent=pair.dexId||'Solana pool';
   note.textContent='Live DexScreener data · exact selected FROM mint is the chart base asset · '+pairs.length+' matching pool(s). Values may be incomplete.';
   chart.src='https://dexscreener.com/solana/'+encodeURIComponent(pair.pairAddress)+'?embed=1&theme=dark&trades=0&info=0';
-  empty.hidden=true;
+  empty.hidden=false;empty.textContent='Loading live 15-minute candles…';
+  await renderSelectedNativeChart(pair,token,chartRequest);
  }catch(error){
   if(chartRequest!==selectedChartRequest)return;
-  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent='Chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Chart unavailable for '+(token.symbol||'selected token')+'. '+error.message;chart.removeAttribute('src');
+  price.textContent='Price unavailable';change.textContent='24h change unavailable';volume.textContent='Unavailable';mcap.textContent='Unavailable';liquidity.textContent='Unavailable';venue.textContent='Unavailable';$('referencePrice').textContent='Live market reference unavailable for this exact mint';note.textContent='Live market metrics loaded; native chart unavailable: '+error.message;empty.hidden=false;empty.textContent='Live chart temporarily unavailable for '+(token.symbol||'selected token')+'. '+error.message;$('selectedAssetNativeChart').hidden=true;$('selectedChartWrap').classList.remove('native-chart-ready');chart.removeAttribute('src');
  }
 }
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
