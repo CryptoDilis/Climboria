@@ -369,6 +369,64 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test DEX mobile workspace tabs and desktop regression
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const mobile = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              const errors=[];
+              mobile.on('pageerror',error=>errors.push(error.message));
+              const response=await mobile.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Mobile DEX route failed to load');
+              await mobile.locator('#tokenDetail').evaluate(el=>el.classList.add('open'));
+              const tabs=mobile.locator('#detailMobileTabs');
+              const workspace=mobile.locator('#detailWorkspace');
+              if(!await tabs.isVisible()) throw new Error('Mobile DEX tablist is not visible');
+              const cases=[
+                {name:'chart',button:'#detailTabChart',visible:'.detail-main',hidden:'.dex-trade-terminal'},
+                {name:'trade',button:'#detailTabTrade',visible:'.dex-trade-terminal',hidden:'.token-community'},
+                {name:'chat',button:'#detailTabChat',visible:'.token-community',hidden:'.dex-trade-terminal'},
+                {name:'pools',button:'#detailTabPools',visible:'.trailmap',hidden:'.token-community'}
+              ];
+              async function assertTab(item){
+                const button=mobile.locator(item.button);
+                if(await button.getAttribute('aria-selected')!=='true'||await button.getAttribute('tabindex')!=='0') throw new Error(item.name+' tab ARIA selection/focus state is incorrect');
+                if(await workspace.getAttribute('aria-labelledby')!==await button.getAttribute('id')) throw new Error(item.name+' tab is not associated with the workspace panel');
+                if(!await workspace.locator(item.visible).first().isVisible()) throw new Error(item.name+' panel content is not visible: '+item.visible);
+                if(await workspace.locator(item.hidden).first().isVisible()) throw new Error(item.name+' panel is showing content from another tab: '+item.hidden);
+                for(const other of cases){if(other.name!==item.name&&await mobile.locator(other.button).getAttribute('aria-selected')==='true')throw new Error('Multiple DEX tabs are selected');}
+              }
+              for(const item of cases){await mobile.locator(item.button).tap();await assertTab(item);}
+              await mobile.locator('#detailTabChart').focus();
+              await mobile.keyboard.press('ArrowRight');
+              await assertTab(cases[1]);
+              await mobile.keyboard.press('ArrowLeft');
+              await assertTab(cases[0]);
+              await mobile.keyboard.press('End');
+              await assertTab(cases[3]);
+              await mobile.keyboard.press('Home');
+              await assertTab(cases[0]);
+              if(await workspace.locator('.signalbox').count()!==1) throw new Error('Pools tab signal panel missing');
+              if(errors.length) throw new Error('Mobile DEX tab JavaScript errors: '+errors.join(' | '));
+
+              const desktop=await browser.newPage({viewport:{width:1365,height:900}});
+              desktop.on('pageerror',error=>errors.push(error.message));
+              const desktopResponse=await desktop.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              if(!desktopResponse?.ok()) throw new Error('Desktop DEX route failed to load');
+              await desktop.locator('#tokenDetail').evaluate(el=>el.classList.add('open'));
+              if(await desktop.locator('#detailMobileTabs').isVisible()) throw new Error('Mobile-only DEX tabs leaked into desktop layout');
+              for(const selector of ['.detail-main','.dex-trade-terminal','.token-community']){
+                if(!await desktop.locator('#detailWorkspace '+selector).first().isVisible()) throw new Error('Desktop workspace column is hidden: '+selector);
+              }
+              if(errors.length) throw new Error('DEX tab regression browser errors: '+errors.join(' | '));
+              console.log('PASS DEX mobile Chart/Trade/Chat/Pools touch, panel visibility, ARIA, arrow/Home/End keyboard navigation, and desktop three-column regression.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
