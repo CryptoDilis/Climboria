@@ -209,10 +209,14 @@
 
 ## 2026-11-06 — account-system requirements clarified (documentation only)
 
-- [x] Re-read the canonical account/cloud-save section and confirmed that the account system is already sequenced as P2, frozen until Jarrell's Peak is accepted.
-- [x] Expanded the account requirements to explicitly include Guest play with later account upgrade, logout/session revocation, password reset, unique immutable Player ID, username, and cross-device progress recovery.
-- [ ] No login, registration, OAuth, backend, or cloud-save implementation is claimed by this documentation update. Keep the account system planned/frozen until the P2 gate.
-- [ ] After Jarrell's Peak acceptance, choose the auth/database provider only after checking current pricing, free-tier limits, region availability, backup/export options, and security controls. Implement and test Guest-to-account migration without losing or duplicating progress.
+- [x] Owner explicitly changed priority on 2026-11-09: begin real player-account implementation now, ahead of remaining Jarrell's Peak P0 work.
+- [x] Selected Supabase Auth + Postgres as the initial integration target after checking current official docs: email/password and Google OAuth are supported; Singapore is an available APAC region; Free projects may pause after a low-activity week.
+- [x] Added the initial player identity/RLS migration, public-config placeholder, browser auth client, and provider setup guide on branch `codex/real-player-auth-foundation-20261109`.
+- [ ] Supabase project has not yet been provisioned or configured by the owner; no production login is live. Do not claim account activation until real provider credentials/configuration and end-to-end tests pass.
+- [ ] Finish auth UI integration checks, email verification/password recovery, Google OAuth callback, immutable Player ID creation, profile RLS tests, logout/session refresh, and accessible error states.
+- [ ] Implement and test safe Guest-to-account migration; never overwrite guest saves or merge duplicate inventory blindly.
+- [ ] Implement cloud-save adapter only after auditing the existing local save keys/data structures; client-writable saves are not authoritative inventory, token balances, NFT ownership, or reward claims.
+- [ ] Owner setup required: create the Supabase project in Singapore, run `supabase/migrations/202611090001_player_accounts.sql`, configure email/SMTP and Google OAuth, then populate `auth-config.js` with the public project URL and publishable/anon key only. Never put service-role secrets in browser code, Git, or chat.
 - [ ] Continue P0 Jarrell's Peak work first; the next gameplay task remains the first confirmed open world/performance blocker, with desktop/mobile verification and physical Redmi 14 5G acceptance tracked separately.
 
 ---
@@ -408,7 +412,7 @@
 
 ## 3. Universal Player Account, wallet linking and Cloud Save — future phase
 
-**Status: PLANNED / FROZEN until Jarrell's Peak is accepted.**
+**Status: ACTIVE IMPLEMENTATION (owner priority override 2026-11-09); provider provisioning and production enablement still pending.**
 
 ### Guest play, account creation and authentication
 - [ ] Let players start in Guest mode without email, password or crypto wallet; clearly explain that guest progress is device/browser-local until an account is linked.
