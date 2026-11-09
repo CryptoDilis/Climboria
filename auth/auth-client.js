@@ -1,18 +1,12 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getClimboriaSupabase } from "./supabase-client.js";
 
-const config = window.CLIMBORIA_AUTH_CONFIG || {};
 const statusNode = document.getElementById("authStatus");
 const setStatus = (message) => { if (statusNode) statusNode.textContent = message; };
-const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(config.supabaseUrl || "")
-  && typeof config.supabaseAnonKey === "string"
-  && config.supabaseAnonKey.length > 20;
+const supabase = getClimboriaSupabase();
 
-if (!configured) {
+if (!supabase) {
   setStatus("Account sign-in is not configured yet. Guest play remains available.");
 } else {
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" }
-  });
   const byId = (id) => document.getElementById(id);
   const email = byId("authEmail");
   const password = byId("authPassword");
