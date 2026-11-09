@@ -2726,3 +2726,11 @@ For every integrated asset or borrowed technique, record:
 - [x] Owner ran read-only catalog query in Supabase. Screenshot confirms `public.player_profiles` exists with `rls_enabled = true` and `public.player_saves` exists with `rls_enabled = true`.
 - [ ] Still verify policy definitions and `climboria_auth_user_created` trigger exist and are enabled; then test an actual email signup to confirm profile auto-creation and RLS isolation.
 - **Next exact job:** run the read-only SQL query checking policies and the auth.users trigger; review results before configuring provider login tests.
+
+
+## 2026-11-10 — Supabase policy and auth trigger catalog check
+
+- [x] Owner ran the read-only catalog query. Screenshot shows five policies returned: two on `player_profiles` (read own profile, update own username) and three on `player_saves` (read/create/update own save).
+- [x] Screenshot shows the `climboria_auth_user_created` trigger row exists on `auth.users`.
+- [ ] Trigger `status` cell is obscured by the mobile floating toolbar in the screenshot, so enabled state is not yet confirmed. Need a clearer screenshot or a focused query returning only `tgname` and `tgenabled`.
+- **Next exact job:** confirm trigger enabled status; then configure email provider and test a real email signup/profile auto-creation. After that configure Solana/EVM and social OAuth providers.
