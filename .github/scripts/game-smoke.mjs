@@ -9,6 +9,12 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await desktop.newPage();
+  await page.addInitScript(() => {
+    window.__climboriaAuthEvents = [];
+    window.addEventListener('climboria:auth-session', event => {
+      window.__climboriaAuthEvents.push({ event: event.detail?.event, userId: event.detail?.session?.user?.id ?? null });
+    });
+  });
   await page.route('https://esm.sh/@supabase/supabase-js@2', route => route.fulfill({
     status: 200,
     contentType: 'application/javascript',
@@ -17,7 +23,7 @@ try {
         return { auth: {
           getSession: async () => ({ data: { session }, error: null }),
           onAuthStateChange: fn => { listener = fn; return { data: { subscription: { unsubscribe() {} } } }; },
-          emitForSmoke: event => listener?.(event, session)
+          emitForSmoke: (event, nextSession) => { session = nextSession; listener?.(event, session); }
         } };
       }`
   }));
@@ -37,6 +43,23 @@ try {
   if (!authBridge.clientAvailable || authBridge.sessionResult?.error || authBridge.sessionResult?.data?.session !== null || !authBridge.guestModeEventSupported) {
     errors.push('Gameplay shared auth bridge failed to initialize in mocked guest mode: ' + JSON.stringify(authBridge));
   }
+  await page.waitForFunction(() => window.__climboriaAuthEvents?.some(item => item.event === 'SESSION_READY' && item.userId === null), undefined, { timeout: 10000 });
+  const sessionTransitions = await page.evaluate(() => {
+    const client = window.climboriaSupabase;
+    const signedIn = { access_token: 'smoke-access-token', refresh_token: 'smoke-refresh-token', user: { id: 'smoke-player-001' } };
+    const refreshed = { access_token: 'smoke-refreshed-access-token', refresh_token: 'smoke-refresh-token-2', user: { id: 'smoke-player-001' } };
+    client.auth.emitForSmoke('SIGNED_IN', signedIn);
+    client.auth.emitForSmoke('TOKEN_REFRESHED', refreshed);
+    return {
+      events: window.__climboriaAuthEvents.slice(),
+      finalSession: null
+    };
+  });
+  const transitionEvents = sessionTransitions.events.map(item => item.event + ':' + (item.userId || 'guest'));
+  if (!transitionEvents.includes('SESSION_READY:guest') || !transitionEvents.includes('SIGNED_IN:smoke-player-001') || !transitionEvents.includes('TOKEN_REFRESHED:smoke-player-001')) {
+    errors.push('Gameplay auth-session bridge did not deliver guest, signed-in, and refreshed session events: ' + JSON.stringify(sessionTransitions));
+  }
+  console.log('Gameplay auth-session transition diagnostics:', JSON.stringify(sessionTransitions));
   try {
     await page.waitForFunction(() => window.__climboriaGameReady === true, undefined, { timeout: 90000 });
   } catch (error) {
