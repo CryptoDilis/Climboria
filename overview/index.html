@@ -198,6 +198,62 @@
       .roadmap-period-footer b{font-size:13px}
     }
 
+
+/* Mobile-first overview: reduce tall card stacks and make roadmap content scannable. */
+@media(max-width:720px){
+ .shell{padding:10px 11px 28px}
+ header{padding-bottom:13px}
+ .hero{padding:20px 15px;border-radius:14px}
+ .hero h1{font-size:clamp(30px,8.5vw,40px);line-height:1.08}
+ .hero p{font-size:13px;line-height:1.6}
+ .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .actions .btn{min-width:0;min-height:42px;padding:9px 10px;font-size:10px}
+ .section{margin-top:22px}
+ .section-head{display:flex;align-items:flex-start;flex-direction:column;gap:5px;margin-bottom:11px}
+ .section-head h2{font-size:19px;line-height:1.2}
+ .section-head p{font-size:11px;line-height:1.5}
+ .grid{grid-template-columns:1fr;gap:8px}
+ .card{padding:14px;border-radius:13px}
+ .card h3{font-size:14px;line-height:1.3}
+ .card p{font-size:11px;line-height:1.55}
+ .tag{font-size:8px;letter-spacing:.7px}
+ .roadmap-feature{grid-template-columns:1fr}
+ .roadmap-feature-copy{padding:17px 15px}
+ .roadmap-feature-copy h3{font-size:23px;line-height:1.15}
+ .roadmap-feature-copy>p{font-size:12px;line-height:1.6}
+ .roadmap-art{min-height:0}
+ .roadmap-art img{width:100%;height:auto;max-height:220px;object-fit:contain}
+ .roadmap-principles{grid-template-columns:1fr;gap:7px}
+ .roadmap-timeline{padding:14px 11px;margin-top:16px}
+ .roadmap-timeline-head{gap:7px}
+ .roadmap-timeline-head h3{font-size:21px}
+ .roadmap-timeline-head>p{font-size:11px;line-height:1.5}
+ .roadmap-timeline-grid{grid-template-columns:1fr;gap:8px}
+ .roadmap-period{padding:13px;border-radius:12px}
+ .roadmap-period-top{gap:8px}
+ .roadmap-period h4{font-size:14px}
+ .roadmap-period p,.roadmap-period li{font-size:11px;line-height:1.5}
+ .roadmap{grid-template-columns:1fr;gap:8px}
+ .step{padding:13px;gap:10px}
+ .step-copy h3{font-size:13px;line-height:1.3}
+ .step-copy p{font-size:11px;line-height:1.5}
+ .whitepaper-section{padding:15px!important;border-radius:13px}
+ .whitepaper-section h2{font-size:20px;line-height:1.2}
+ .whitepaper-section p,.whitepaper-section li{font-size:12px;line-height:1.6}
+ .whitepaper-columns{grid-template-columns:1fr;gap:8px}
+ .whitepaper-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .whitepaper-actions a{min-width:0;text-align:center}
+ footer{gap:8px;line-height:1.6}
+}
+@media(max-width:380px){
+ .shell{padding-inline:9px}
+ .hero{padding:17px 12px}
+ .actions{grid-template-columns:1fr}
+ .roadmap-feature-copy{padding:15px 12px}
+ .roadmap-timeline{padding:12px 9px}
+ .whitepaper-actions{grid-template-columns:1fr}
+}
+
 </style>
 <style id="climboria-overview-navigation-v1">
   .overview-jump{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 30px;padding:14px;border:1px solid #a6cce42b;border-radius:15px;background:linear-gradient(120deg,#0e2033,#081321)}
