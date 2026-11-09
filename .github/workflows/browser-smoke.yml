@@ -108,7 +108,10 @@ jobs:
               await page.locator('#majorCoins .major-row').first().waitFor({state:'visible',timeout:15000});
               const mockMint='SysvarRent111111111111111111111111111111111';
               const mockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
-              await page.route('https://api.jup.ag/tokens/v2/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
+              const btcSearchFixture=[{id:mockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}];
+              // swap-config.js enables the production Cloudflare proxy; intercept that exact route in browser tests.
+              await page.route('https://api.climboria.fun/api/tokens/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
+              await page.route('https://api.jup.ag/tokens/v2/search?query=BTC',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
               await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
