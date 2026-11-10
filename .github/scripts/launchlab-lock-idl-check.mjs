@@ -41,13 +41,13 @@ const expectedLockAccounts = [
   ["metadataProgram", false, false],
 ];
 const expectedCollectAccounts = [
-  ["auth", false, false], ["nft_owner", true, false], ["nftAccount", false, true],
+  ["auth", false, false], ["nftOwner", true, false], ["nftAccount", false, true],
   ["lockedLiquidity", false, true], ["cpmmProgram", false, false], ["cpmmAuth", false, false],
-  ["pool_state", false, true], ["lp_mint", false, true], ["userVault0", false, true],
+  ["poolState", false, true], ["lpMint", false, true], ["userVault0", false, true],
   ["userVault1", false, true], ["poolVault0", false, true], ["poolVault1", false, true],
   ["token0Mint", false, false], ["token1Mint", false, false],
   ["lockedLpVault", false, true], ["tokenProgram", false, false],
-  ["token2022Program", false, false], ["memo_program", false, false],
+  ["token2022Program", false, false], ["memoProgram", false, false],
 ];
 function pdaSeedText(seed) {
   if (seed?.kind !== "const" || !Array.isArray(seed.value)) return null;
@@ -92,7 +92,7 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   if (JSON.stringify(lockArgs) !== JSON.stringify([["lpAmount", "u64"], ["withMetadata", "bool"]])) fail("LP Lock lock_cp_liquidity arguments differ from pinned SDK encoding");
   if (JSON.stringify(collectArgs) !== JSON.stringify([["lpFeeAmount", "u64"]])) fail("LP Lock collect_cp_fees arguments differ from pinned SDK encoding");
   const auth = lock.accounts.find(item => item.name === "auth");
-  const locked = lock.accounts.find(item => item.name === "locked_liquidity");
+  const locked = lock.accounts.find(item => item.name === "lockedLiquidity");
   const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
   const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
   if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK");
