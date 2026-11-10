@@ -142,6 +142,7 @@ test("marks reached-but-truncated ProgramData history as partial, never complete
     connection: f.connection,
     programDataPublicKey: f.derivedAddress,
     stateSlot: 123456,
+    pageSize: 250,
     maxHistoricalTransactions: 1,
   });
   assert.equal(result.reachedStateSlot, true);
