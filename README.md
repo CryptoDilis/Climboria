@@ -3200,3 +3200,9 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - The exact public config remains proxyEnabled: true, enabled: false, API base https://api.climboria.fun. This permits proxy-backed discovery/quote routing only; it does not enable signing or execution.
 - Found a stale secondary handoff: docs/ACTIVE-HANDOFF-2026-11-11.md still records PR #234 head 47fa08125048a9978dd6ea116172ab818425fefc, whereas the live PR head is 7f5d3451c7c99356fd46502691f0c24f92a96ade. Use the root README and live GitHub PR metadata as the current source of truth; do not use the stale handoff SHA to validate or resume work.
 - These checks were source inspection only. No production endpoint health, chart rendering, wallet signature, swap settlement, Launchpad mint, or authentication session was exercised.
+
+
+### Final post-checkpoint ref refresh
+
+- The source-verification note itself advanced main to `bd42693de1b957445708196f9438b30111460010`; after that commit, a fresh compare reports PR #234 at **42 ahead / 51 behind** and PR #231 at **350 ahead / 90 behind**. Both PR source heads remain unchanged and both remain draft/non-mergeable.
+- This is the exact latest comparison; counts in earlier paragraphs above are historical snapshots from before the final README commits. Refresh again before the next integration attempt.
