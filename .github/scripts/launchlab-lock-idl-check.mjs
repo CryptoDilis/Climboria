@@ -104,7 +104,11 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
   const collectArgs = (collect.args ?? []).map(arg => [arg.name, arg.type]);
   if (JSON.stringify(lockArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpamount", "u64"], ["withmetadata", "bool"]])) fail("LP Lock lockCpLiquidity arguments differ from pinned SDK encoding");
-  if (JSON.stringify(collectArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpfeeamount", "u64"]])) fail("LP Lock collectCpFees arguments differ from pinned SDK encoding");
+  const normalizedCollectArgs = collectArgs.map(([name, type]) => [normalizeName(name), type]);
+  const collectArgumentWireCompatible = normalizedCollectArgs.length === 1 &&
+    ["lpfeeamount", "feelpamount"].includes(normalizedCollectArgs[0][0]) && normalizedCollectArgs[0][1] === "u64";
+  if (!collectArgumentWireCompatible) fail("LP Lock collectCpFees argument wire layout differs from pinned SDK; live=" + JSON.stringify(collectArgs) + "; expected one u64 fee amount");
+
   const auth = lock.accounts.find(item => normalizeName(item.name) === "authority");
   const locked = lock.accounts.find(item => normalizeName(item.name) === "lockedliquidity");
   const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
@@ -118,7 +122,7 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
     metadataName: idlName,
     instructionCount: idl.instructions.length,
     lockCpLiquidity: { discriminator: lockDiscriminator, discriminatorSource: lock.discriminator ? "live IDL field" : "Anchor global:lock_cp_liquidity derived because legacy IDL omits discriminators", accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed, sdkPrivilegeDivergences: lockPrivilegeDivergences },
-    collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs, sdkPrivilegeDivergences: collectPrivilegeDivergences, safeToUsePinnedSdkBuilder: collectPrivilegeDivergences.length === 0 },
+    collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs, argumentWireCompatible: collectArgumentWireCompatible, sdkArgumentName: "lpFeeAmount", sdkPrivilegeDivergences: collectPrivilegeDivergences, safeToUsePinnedSdkBuilder: collectPrivilegeDivergences.length === 0 },
     lockAuthority: derivedAuthority.toBase58(),
     lockLpVaultDerivation: "Associated Token Account PDA [lock_authority, SPL Token program, CPMM LP mint] under Associated Token Program",
     sourceAvailability: "LP Lock program source is not publicly available; live on-chain Anchor IDL and pinned SDK interface are compared, but IDL does not prove deployed bytecode behavior.",
