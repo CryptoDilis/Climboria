@@ -146,3 +146,12 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - Current source evidence: dedicated Launchpad is static preview; homepage buttons navigate to `/launchpad/`; the separate uploaded bundled HTML audit is not conflated with this page; no Launchpad API/program or Devnet transaction was verified.
 - **Tests:** documentation-only change; no CI run triggered and no runtime/chain behavior changed.
 - **Exact next job:** resolve the specification's owner-decision table, starting with launch mechanism, direct launch vs fundraising, liquidity funding and LP ownership/lock, Launchpad fee base/asset/recipient/refunds, token supply/allocation and authority policy. Once decisions are explicit, select and map audited Solana programs/instructions and produce a Devnet architecture before implementation.
+
+
+## 2026-11-10 — Solana Launchpad protocol options researched
+- Added `docs/SIGNATURE-LAUNCHPAD-PROTOCOL-OPTIONS-2026-11-10.md` at commit `d07ce13aaf9e72f3acfd9fa48133a022b7df193b`.
+- Compared three architecture paths using official Solana, Metaplex and Raydium documentation: direct SPL mint + separate pool; Metaplex Genesis (Launch Pool, Presale, Uniform Price Auction); Raydium LaunchLab bonding curve + CPMM graduation.
+- Key finding: direct mint is not a launchpad sale; Genesis is relevant for timed/fair launch or presale; LaunchLab is relevant for instant bonding-curve trading. These product choices have materially different custody, fees, claims, liquidity and LP ownership.
+- Raydium's current docs describe an Aug 17, 2026 LP migration behavior change; do not promise creator-owned graduated LP based on older documentation. Exact current state/config must be inspected.
+- No protocol selected; no SDK installed; no program source changed; no Devnet/Mainnet transaction; no security audit performed. Documentation/research only.
+- **Exact next job:** owner decision required: select intended product (direct mint only, fair launch/sale, or instant bonding curve) and explicitly decide whether Climboria accepts user deposits/fundraising. Then verify exact current program/version, fee/custody/LP rules and design Devnet-only implementation.
