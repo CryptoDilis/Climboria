@@ -6,7 +6,9 @@
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { inflateSync } from "node:zlib";
-import { PublicKey } from "@solana/web3.js";
+import { createRequire } from "node:module";
+const require = createRequire(`${process.env.LAUNCHLAB_TOOLS_PREFIX || "/tmp/launchlab-tools"}/package.json`);
+const { PublicKey } = require("@solana/web3.js");
 
 const PROGRAMS = {
   mainnet: { id: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj", rpc: "https://api.mainnet-beta.solana.com" },
