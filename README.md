@@ -2872,3 +2872,34 @@ No live Launchpad or social/email login is claimed. No swap execution switch has
 4. Implement real account/session authentication (guest, email/password, Google OAuth, X OAuth) only after selecting/configuring the auth provider and verifying account linking/session lifecycle. Wallet connect alone is not account login.
 
 No production Swap execution, Launchpad token creation, or Google/X/email login activation is claimed.
+
+
+## 2026-11-11 — Swap settlement hardening and CI diagnosis
+
+### New PR #234 change
+- Latest branch head is `7f5d3451c7c99356fd46502691f0c24f92a96ade` (`fix(swap): report uncertain settlement persistence on HTTP errors`).
+- On a non-2xx Jupiter execution response, the Worker still conservatively marks the order `uncertain` and keeps it replay-locked. It now catches a failed Durable Object settlement write and includes `settlementRecorded: false` in the response rather than allowing a settlement-write exception to replace the provider-error response with an ambiguous generic 503.
+- Added regression test: `reports failed uncertainty settlement after a non-2xx Jupiter response`.
+- Commit diff was inspected and confirms exactly two files changed: `dex/swap-proxy/src/index.mjs` and `dex/swap-proxy/test/worker.test.mjs`.
+- **Not yet validated:** no PR workflow run or check run is registered for latest head `7f5d345`. Do not call this test passing until CI executes on this SHA.
+
+### Historical Browser Smoke failure diagnosis
+- Older Browser Smoke run `42879777254` failed at the homepage/DEX step with: `DEX exact contract-address search did not return the exact base-token mint`.
+- The log shows the fixture provider request was intercepted, but the assertion ran before the asynchronous DEX search result had populated the exact-mint row. This was a test synchronization/race issue, not a live provider contract mismatch.
+- The follow-up commit `32ec6ca` changed the browser smoke to wait for the exact-mint provider request and exact `button[data-mint]` row. Full Browser Smoke `42880044279` subsequently completed SUCCESS across all 20 steps, including DEX/Swap, mobile layouts, and Jarrell's Peak desktop/mobile gameplay. That successful run tested `32ec6ca`, not current `7f5d345`.
+
+### Current branch integration state
+- PR #234 remains draft/open. Its head is `7f5d345`; base remains `28180c2`; GitHub reports `mergeable_state=dirty`.
+- Comparing current main `b990752` to PR head shows a divergent history (PR side 42 commits ahead and 15 commits behind). No branch merge/rebase was attempted because it requires a real conflict-aware integration; creating an artificial merge commit without the main tree changes would be unsafe.
+- The repository's available GitHub actions do not expose a workflow-dispatch operation. Latest-head validation must be manually started through [Validate Climboria Actions](https://github.com/CryptoDilis/Climboria/actions/workflows/validate-climboria.yml), selecting `codex/swap-order-binding-durable-object`. Verify the run SHA is exactly `7f5d3451c7c99356fd46502691f0c24f92a96ade`.
+
+### Current Pages deployment
+- Pages run `42882965530` for main `b99075205dc0c329ea837b91d5f1e0710edfa9a3` has built successfully; the deploy job was still in progress at the last poll. Do not claim the newest docs are published until the run completes SUCCESS.
+
+### Exact next tasks
+1. Manually dispatch Validate Climboria against PR #234 head `7f5d345`; inspect test output and Wrangler dry-run result. Then run Browser Smoke against the same updated code where applicable.
+2. Reconcile PR #234's 15-commit base divergence through a genuine merge/rebase with conflict resolution, then rerun both workflows on the resulting head. Keep Worker and frontend execution flags disabled pending independent review and controlled Devnet lifecycle validation.
+3. Continue LaunchLab provenance blockers: canonical Devnet LP Lock IDL publication and exact on-chain LaunchLab type-definition reconciliation. Do not enable token creation/fundraising before verified Devnet lifecycle.
+4. Implement account/session login only after a real auth provider is configured; validate guest upgrade, email/password, Google/X OAuth, account linking, verification/reset, logout, and session persistence.
+
+No production Swap execution, Launchpad service, or Google/X/email account login is claimed live.
