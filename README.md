@@ -2911,3 +2911,11 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] ALT decoder now requires the referenced table's 32-byte account key and returns it with decoded account contents; missing identity has a regression test.
 - [ ] Fresh CI on the new workflow/code head is still not observed. Existing run `42852192636` succeeded on older head `e36446d4` with the previous workflow command; do not count it as parser-suite verification. PR close/reopen did not trigger a new run for the latest head.
 - [ ] Next: obtain fresh Validate run on latest PR #233 head, inspect all parser test results and fix failures; then implement trusted server-side RPC binding and semantic instruction allowlists. Keep execution gate closed.
+
+
+## 2026-11-11 — First full Swap parser CI run diagnosed
+
+- [x] CI coverage fix exposed two invalid parser-test fixtures rather than a parser implementation regression: Base64 fixture was being read as UTF-8 bytes, and ALT warmup fixture marked a nonexistent newly-added address index.
+- [x] Corrected Base64 decoding and set the ALT extension start index to the actual first address.
+- [ ] PR #233 Validate run `42852777038` failed on the earlier head with 38 passing / 2 failing tests. Fixes are committed on the latest PR #233 branch, but no fresh verification run exists yet. Browser Smoke remains tied to the pre-fix head.
+- [ ] Next: fresh CI against latest PR #233 head, then trusted RPC ALT integration and instruction semantic validation. Keep Swap execution disabled until independent review and controlled Devnet lifecycle tests.
