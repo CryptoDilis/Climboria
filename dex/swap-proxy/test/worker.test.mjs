@@ -2,21 +2,35 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "../src/index.mjs";
 
+const orderStoreCalls = [];
+const orderStoreStub = {
+  async fetch(input, init = {}) {
+    const pathname = new URL(input).pathname;
+    const body = init.body ? JSON.parse(init.body) : null;
+    orderStoreCalls.push({ pathname, body });
+    if (pathname === "/store") return Response.json({ ok: true, state: "ready" }, { status: 201 });
+    if (pathname === "/claim") return Response.json({ ok: true, record: { requestId: "request-123456", lastValidBlockHeight: 12345 } });
+    if (pathname === "/settle") return Response.json({ ok: true, state: body?.state });
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+};
+const orderNamespace = { idFromName: value => value, get: () => orderStoreStub };
+
 const origin = "https://climboria.fun";
-const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) } };
+const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace };
 const valid = "So11111111111111111111111111111111111111112";
 
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: true } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: true } });
 });
 
 test("health endpoint reports execution disabled when the production kill switch is off", async () => {
   const safeEnv = { ...env, EXECUTION_ENABLED: "false" };
   const res = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: false } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: false } });
 });
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
@@ -54,7 +68,7 @@ test("does not proxy order when API key is missing", async () => {
   assert.equal(res.status, 503);
 });
 test("blocks swap execution by default even when a signed payload is supplied", async () => {
-  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), requestId: "request-123456" }) });
+  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: env.RATE_LIMITER });
   assert.equal(res.status, 503);
   assert.match((await res.json()).error, /disabled pending security review/i);
@@ -67,7 +81,7 @@ test("rejects malformed execute payload", async () => {
 });
 
 test("fails closed when edge rate limiter is not configured", async () => {
-  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), requestId: "request-123456" }) });
+  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true" });
   assert.equal(res.status, 503);
 });
@@ -107,6 +121,9 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
     assert.equal(body.requestId, "jupiter-request-123");
     assert.equal(body.transaction, "AQID");
     assert.equal(body.lastValidBlockHeight, 12345);
+    assert.match(body.orderToken, /^[0-9a-f-]{36}$/i);
+    assert.equal(orderStoreCalls.at(-1).pathname, "/store");
+    assert.equal(orderStoreCalls.at(-1).body.taker, valid);
     assert.equal(upstreamHeaders.get("x-api-key"), "test-server-key");
     assert.match(upstreamUrl, /^https:\/\/api\.jup\.ag\/swap\/v2\/order\?/);
     assert.match(upstreamUrl, /maxSupportedTransactionVersion=0/);
@@ -182,7 +199,7 @@ test("executes only with a valid Jupiter success response and matching request p
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456", lastValidBlockHeight: 12345 })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
@@ -205,7 +222,7 @@ test("rejects Jupiter Success when execution code is nonzero", async () => {
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
