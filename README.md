@@ -2845,3 +2845,6 @@ Implement a separately tested server-side transaction security layer before any 
 - The earlier failed run `42849242160` is for previous head `16626574ce2defddec21c8cf4f3c4386834ead2c`, before test expectation corrections; do not attribute that failure to the current head.
 - No production Worker deployment, real wallet transaction, or Mainnet execution was performed. Both production execution switches remain OFF.
 - Next: complete the current browser run, then implement the actual Solana v0 semantic validator and durable expiring order-wallet binding with replay/idempotency controls and adversarial/Devnet tests. Keep the code-level hard gate false until the entire review is complete.
+
+
+- Browser Smoke attempt 1 on corrected source passed every DEX/Swap step (including execution fail-closed and mobile/desktop layouts) but the unrelated Jarrell's Peak gameplay step was cancelled by the runner, so the overall job was cancelled. Reran the browser job as attempt 2; GitHub reports it pending/queued at the latest check. Do not report the whole browser suite green until attempt 2 completes.
