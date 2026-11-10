@@ -338,7 +338,13 @@ export function summarizeMetaplexGovernanceHistory(signatures = []) {
       }
     }
   }
-  return { events };
+  return {
+    successfulLoaderUpgradeExecutionCount: events.filter(event =>
+      event.instruction === "executeTransaction" &&
+      event.innerProgramId === BPF_UPGRADEABLE_LOADER_ID &&
+      event.success).length,
+    events,
+  };
 }
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
