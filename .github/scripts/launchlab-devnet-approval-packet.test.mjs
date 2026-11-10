@@ -10,6 +10,9 @@ const feePayer = "DedicatedFeePayer111111111111111111111111111";
 const creator = "ClimboriaCreator111111111111111111111111111";
 const mint = "ClimboriaMint111111111111111111111111111111";
 const pool = "ClimboriaPool111111111111111111111111111111";
+const baseVault = "ClimboriaBaseVault111111111111111111111111";
+const quoteVault = "ClimboriaQuoteVault1111111111111111111111";
+const metadata = "ClimboriaMetadata111111111111111111111111";
 const bytes = Buffer.from("exact-unsigned-versioned-message");
 function fixture({ cluster = "devnet", balance = 10_000_000, fee = 5000, existing = [feePayer], signed = false, count = 1 } = {}) {
   const calls = { account: [], rent: [], balance: 0, fee: 0, simulation: 0 };
@@ -35,6 +38,9 @@ function fixture({ cluster = "devnet", balance = 10_000_000, fee = 5000, existin
         { name: "payer", pubkey: feePayer, isWritable: true },
         { name: "base_mint", pubkey: mint, isWritable: true },
         { name: "pool_state", pubkey: pool, isWritable: true },
+        { name: "base_vault", pubkey: baseVault, isWritable: true },
+        { name: "quote_vault", pubkey: quoteVault, isWritable: true },
+        { name: "metadata_account", pubkey: metadata, isWritable: true },
         { name: "global_config", pubkey: "GlobalConfig1111111111111111111111111111", isWritable: false },
       ],
     }] : [],
@@ -58,13 +64,9 @@ function fixture({ cluster = "devnet", balance = 10_000_000, fee = 5000, existin
   return { raydium, prepared, calls, transaction };
 }
 const sdk = { PublicKey };
-const specs = [
-  { address: mint, space: 82, purpose: "SPL Token mint account", sourceRef: "pinned SPL Token account layout: Mint::LEN=82" },
-  { address: pool, space: 512, purpose: "LaunchLab pool state", sourceRef: "reviewed pinned LaunchLab IDL account layout" },
-];
-const args = f => ({ raydium: f.raydium, sdk, prepared: f.prepared, rentAccountSpecs: specs, feeBufferLamports: 100_000 });
+const args = f => ({ raydium: f.raydium, sdk, prepared: f.prepared, feeBufferLamports: 100_000 });
 
-test("builds an unapproved owner packet from exact unsigned message and finalized fee/rent quotes", async () => {
+test("builds an unapproved owner packet from source-backed rent layouts and finalized fee quotes", async () => {
   const f = fixture();
   const result = await prepareDevnetOwnerApprovalPacket(args(f));
   assert.equal(result.status, "ready_for_owner_review");
@@ -72,10 +74,10 @@ test("builds an unapproved owner packet from exact unsigned message and finalize
   assert.notEqual(result.creatorWallet, result.feePayer);
   assert.equal(result.messageSha256.length, 64);
   assert.deepEqual(result.requiredSignerKeys, [feePayer, mint]);
-  assert.deepEqual(result.rentAccounts.map(x => x.address), [mint, pool]);
-  assert.equal(result.rentReserveLamports, (82 + 512) * 1000);
+  assert.deepEqual(result.rentAccounts.map(x => x.address), [mint, pool, baseVault, quoteVault, metadata]);
+  assert.equal(result.rentReserveLamports, (82 + 421 + 165 + 165 + 607) * 1000);
   assert.equal(result.networkFeeLamports, 5000);
-  assert.equal(result.requiredLamports, 699000);
+  assert.equal(result.requiredLamports, 1_545_000);
   assert.equal(result.finalizedFeePayerBalanceLamports, 10_000_000);
   assert.equal(result.ownerApproval.approved, false);
   assert.equal(result.ownerApproval.reference, null);
@@ -84,20 +86,28 @@ test("builds an unapproved owner packet from exact unsigned message and finalize
   assert.equal(result.transactionSimulated, false);
   assert.equal(result.transactionSubmitted, false);
   assert.equal(f.calls.simulation, 0);
-  assert.deepEqual(f.calls.rent, [{ space: 82, commitment: "finalized" }, { space: 512, commitment: "finalized" }]);
+  assert.deepEqual(f.calls.rent, [82, 421, 165, 165, 607].map(space => ({ space, commitment: "finalized" })));
+  assert.ok(result.rentAccounts.every(x => x.sourceRef && x.verificationScope));
+  assert.equal(result.rentAccounts[4].dataSpaceBytes, 607);
 });
-test("blocks when rent-account size/source evidence is missing instead of guessing", async () => {
+test("blocks unknown missing writable account names instead of guessing their size", async () => {
   const f = fixture();
-  const result = await prepareDevnetOwnerApprovalPacket({ ...args(f), rentAccountSpecs: [specs[0]] });
+  f.prepared.transactionReviews[0].launchpadAccounts.push({
+    name: "future_unknown_account", pubkey: "UnknownWritable11111111111111111111111111", isWritable: true,
+  });
+  const result = await prepareDevnetOwnerApprovalPacket(args(f));
   assert.equal(result.status, "blocked");
+  assert.match(result.reason, /No source-backed rent layout/);
   assert.equal(result.ownerApprovalCreated, false);
-  assert.deepEqual(result.missingRentSpecs.map(x => x.address), [pool]);
   assert.equal(f.calls.rent.length, 0);
   assert.equal(f.calls.simulation, 0);
 });
-test("rejects a rent spec for an account that already exists", async () => {
-  const f = fixture({ existing: [feePayer, mint, pool] });
-  await assert.rejects(() => prepareDevnetOwnerApprovalPacket(args(f)), /does not match a currently missing writable account/);
+test("only requests rent for missing accounts and excludes already-created writable accounts", async () => {
+  const f = fixture({ existing: [feePayer, mint, pool, baseVault] });
+  const result = await prepareDevnetOwnerApprovalPacket(args(f));
+  assert.equal(result.status, "ready_for_owner_review");
+  assert.deepEqual(result.rentAccounts.map(x => x.address), [quoteVault, metadata]);
+  assert.deepEqual(f.calls.rent, [{ space: 165, commitment: "finalized" }, { space: 607, commitment: "finalized" }]);
 });
 test("blocks multi-transaction sets before RPC account reads", async () => {
   const f = fixture({ count: 2 });
@@ -128,9 +138,7 @@ test("fails closed when exact finalized network fee quote is unavailable", async
   await assert.rejects(() => prepareDevnetOwnerApprovalPacket(args(f)), /fee quote is unavailable/);
   assert.equal(f.calls.simulation, 0);
 });
-test("rejects Mainnet RPC and malformed rent evidence", async () => {
+test("rejects Mainnet RPC", async () => {
   const f = fixture({ cluster: "mainnet" });
   await assert.rejects(() => prepareDevnetOwnerApprovalPacket(args(f)), /restricted to an explicitly initialized Devnet/);
-  const g = fixture();
-  await assert.rejects(() => prepareDevnetOwnerApprovalPacket({ ...args(g), rentAccountSpecs: [{ address: mint, space: 82, purpose: "mint" }] }), /source reference/);
 });
