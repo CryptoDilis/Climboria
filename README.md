@@ -2780,3 +2780,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Fresh CI still not observed:** latest branch head is `96967b99d5fe46cace66486feb2d39b0f8dc9bcd`. Available Validate run `42852192636` and Browser Smoke `42852192411` were on older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`; prior workflow results did not execute parser tests. The repository connection's PR close/reopen did not produce a new run on the latest SHA. Do not claim latest tests passed.
 - [ ] **Exact next task:** get a fresh Validate run on `96967b99d5fe46cace66486feb2d39b0f8dc9bcd` and inspect the parser test output; fix root cause if anything fails. Then implement trusted server-side RPC ALT fetch/context binding and semantic program/instruction allowlists.
 - Execution remains hard-disabled and parser remains outside execute route. No Worker deployment, live transaction, or release approval.
+
+
+## 2026-11-11 — Diagnose and fix first full parser-suite CI failures
+
+- [x] Fresh Validate run `42852777038` finally exercised the parser suite on PR merge commit `be619ce7b8053b8c5d2d8fb57f2746cb440a48a7` (PR head at that time: `964c0a2a0a741dcd1fc56c648a01c077d48da125`).
+- [x] **Failure 1 root cause:** the unsupported-version test used `Buffer.from(fixture())` on a Base64 string, producing UTF-8 text bytes instead of decoding the serialized transaction. Changed it to `Buffer.from(fixture(), "base64")`, so byte 65 is actually the message version byte.
+- [x] **Failure 2 root cause:** the ALT same-slot warmup fixture set `lastExtendedSlotStartIndex = 1` while the table contained exactly one address. That means no newly appended address existed at index 1, so expecting a warmup rejection was invalid. Changed the fixture index to `0`, correctly marking the sole address as newly extended in slot 100.
+- [ ] **Verification pending:** these fixes are committed, but no new Validate run has appeared for the current branch head `a33ac53b0be148f28c1699f981368a5c0d65fc4f`. The failed run had 38 passing and 2 failing tests; it must not be described as a pass. Browser Smoke run `42852776852` is still attached to the pre-fix head and does not validate these changes.
+- [ ] **Exact next task:** obtain a fresh Validate run for the current head and inspect all test results; then address any genuine code defects. After tests pass, implement trusted RPC account retrieval/context binding and program-specific semantic instruction allowlists.
+- Execution remains hard-disabled. No execute-route integration, Worker deployment, wallet signing, or live trading.
