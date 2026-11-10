@@ -1,3 +1,14 @@
+
+
+### Verification update — 2026-11-10 (PR #231 head `5dfae8e0e37fa52d6f02b995dfbd6de5ce251091`)
+- [x] LaunchLab Live Provenance workflow `42754738138`: SUCCESS. The new unsigned simulation preflight suite passed 11/11 tests; all provenance, SDK/IDL, live API/config, Devnet preparation, real builder smoke, and LP Lock audit steps passed.
+- [x] Validate Climboria workflow `42754737902`: SUCCESS.
+- [x] Real pinned SDK `0.2.84-alpha` builder smoke returned one ordered Devnet `initializeV2` transaction; CI used ephemeral test-only keys and explicit test metadata/economics. It did not sign, simulate, submit, or execute.
+- [x] Correction: the two-transaction count is only the deterministic mocked unit fixture; the live SDK builder smoke returned one transaction. The preflight's multi-transaction guard remains as a fail-closed defense for future SDK changes.
+- [ ] No real unsigned simulation has been run. Still require a dedicated funded Devnet fee-payer wallet, exact production-intended unsigned message hash, trusted owner approval record, and owner-approved rent reserve/fee buffer. CI synthetic keys are prohibited for simulation.
+- [ ] **Next P0:** add an integration handoff that takes the real one-transaction builder result, derives the exact message hash and required rent accounts/reserve from verified transaction/account data, and prepares (but does not run) an owner-review approval packet. Then wait for explicit owner approval and a dedicated funded Devnet wallet before any live simulation.
+- [ ] Independently resolve Devnet LP Lock IDL publication and Devnet CPMM fee-receiver custody; these remain migration blockers regardless of simulation success.
+
 ## 2026-11-10 — approval-gated unsigned Devnet simulation preflight
 
 **Status:** Implemented — CI verification pending. Work continues on PR #231 branch `codex/launchlab-live-provenance-probe`.
@@ -7,7 +18,7 @@
 - [x] Requires a finalized fee-payer balance, exact finalized message-fee quote, explicit positive rent reserve and fee buffer; fails closed if any value is missing or the wallet lacks headroom.
 - [x] Requires every signature slot to be exactly zero and calls only `simulateTransaction` with `sigVerify:false`, `replaceRecentBlockhash:true`, and finalized commitment.
 - [x] Added deterministic mock-RPC tests for missing/expired/tampered approval, wrong payer, signed transaction, insufficient balance, missing fee quote, RPC simulation failure, Mainnet rejection, and successful unsigned simulation.
-- [x] Explicitly blocks multi-transaction SDK sets before any RPC call. Current LaunchLab builder smoke reports a two-transaction set; do not pretend separate simulations are equivalent to ordered/atomic simulation. Resolve transaction dependency and state-transition semantics before enabling this gate for the real builder output.
+- [x] Explicitly blocks multi-transaction SDK sets before any RPC call. The mocked preparation unit fixture exercises a two-transaction set and proves it is blocked before RPC; the real pinned-SDK Devnet builder smoke on run `42754738138` returned exactly **one** `initializeV2` transaction. The real builder result is therefore structurally eligible for the single-transaction preflight, but it was not simulated.
 - [x] Added the safety test to the LaunchLab provenance workflow. CI uses only mock RPC fixtures for this new test; it does not contact a wallet or run a live simulation.
 - [ ] **Verification pending:** wait for the exact PR #231 LaunchLab Provenance and Validate runs triggered by these commits, inspect all jobs and logs, and only then mark tests passed.
 - [ ] **Owner action required:** no real simulation is approved or run by this code change. A dedicated funded Devnet fee-payer address, exact unsigned transaction message hash, explicit owner approval reference, and approved rent reserve/fee buffer must be supplied through a trusted operator process before any simulation.
