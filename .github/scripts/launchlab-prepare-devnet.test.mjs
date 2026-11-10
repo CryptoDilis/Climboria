@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { prepareDevnetLaunch, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
+import { prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
 
 class PublicKey {
   constructor(value) { if (typeof value !== "string" || value.length < 32) throw new Error("invalid public key"); this.value = value; }
@@ -67,6 +67,17 @@ test("requires explicit economic values and refuses silent provider defaults", (
   const bad = input({ supply: undefined });
   assert.throws(() => validateDevnetLaunchInput(bad, sdk), /supply must be an explicit/);
 });
+test("preflights the pinned constant-product formula and rejects a zero denominator", () => {
+  assert.throws(() => validateConstantProductInitFormula({
+    supply: "100000000000000", totalSellA: "50000000000000",
+    totalFundRaisingB: "30000000000", totalLockedAmount: "0", migrateFee: "0",
+  }), /denominator must be positive/);
+  const valid = validateConstantProductInitFormula({
+    supply: "100000000000000", totalSellA: "60000000000000",
+    totalFundRaisingB: "30000000000", totalLockedAmount: "0", migrateFee: "100000000",
+  });
+  assert.equal(valid.denominator, "14850000000");
+});
 test("rejects Mainnet and unapproved program/config/platform IDs", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ cluster: "mainnet" }), sdk), /restricted to Solana Devnet/);
   assert.throws(() => validateDevnetLaunchInput(input({ platformId: ids.configId }), sdk), /verified Devnet allowlist/);
@@ -89,7 +100,7 @@ test("rejects metadata bytes whose declared hash does not match", () => {
 });
 test("validates raw u64 amounts and supply bounds", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ totalSellA: "1.5" }), sdk), /unsigned integer string/);
-  assert.throws(() => validateDevnetLaunchInput(input({ totalSellA: "1000000000000001" }), sdk), /cannot exceed total supply/);
+  assert.throws(() => validateDevnetLaunchInput(input({ totalSellA: "1000000000000001" }), sdk), /must be less than total supply/);
 });
 test("prepares ordered Devnet transactions with explicit settings and never executes", async () => {
   const mock = client();
