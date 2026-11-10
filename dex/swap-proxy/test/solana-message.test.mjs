@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeSolanaTransaction, hashSolanaMessage, reconstructAccountMetas } from "../src/solana-message.mjs";
+import { decodeSolanaTransaction, hashSolanaMessage, reconstructAccountMetas, decodeAddressLookupTableAccount } from "../src/solana-message.mjs";
 
 function shortVec(value) {
   const out = [];
@@ -118,4 +118,42 @@ test("accepts an instruction program ID loaded from a v0 readonly ALT", () => {
   assert.equal(resolved.instructions[0].program.key, "07".repeat(32));
   assert.equal(resolved.instructions[0].program.writable, false);
   assert.equal(resolved.instructions[0].program.signer, false);
+});
+
+
+test("decodes active lookup-table account data with owner and RPC slot checks", () => {
+  const owner = "AddressLookupTab1e1111111111111111111111111";
+  const data = new Uint8Array(56 + 2 * 32);
+  const view = new DataView(data.buffer);
+  view.setUint32(0, 1, true);
+  view.setBigUint64(4, 0xffffffffffffffffn, true);
+  view.setBigUint64(12, 100n, true);
+  data[20] = 1;
+  data[21] = 0;
+  data.set(new Uint8Array(32).fill(8), 56);
+  data.set(new Uint8Array(32).fill(9), 88);
+  const table = decodeAddressLookupTableAccount({ data, owner, executable: false, contextSlot: 101 });
+  assert.equal(table.addresses.length, 2);
+  assert.equal(table.lastExtendedSlot, "100");
+  assert.equal(table.authority, null);
+  assert.equal(table.addresses[1][0], 9);
+});
+
+test("rejects untrusted, malformed, deactivated and not-yet-warmed lookup tables", () => {
+  const owner = "AddressLookupTab1e1111111111111111111111111";
+  const data = new Uint8Array(56 + 32);
+  const view = new DataView(data.buffer);
+  view.setUint32(0, 1, true);
+  view.setBigUint64(4, 0xffffffffffffffffn, true);
+  view.setBigUint64(12, 100n, true);
+  data[20] = 1;
+  assert.throws(() => decodeAddressLookupTableAccount({ data, owner: "11111111111111111111111111111111", contextSlot: 101 }), /unexpected owner/);
+  assert.throws(() => decodeAddressLookupTableAccount({ data, owner, executable: true, contextSlot: 101 }), /must not be executable/);
+  assert.throws(() => decodeAddressLookupTableAccount({ data, owner, contextSlot: 100 }), /not active until a later slot/);
+  const inactive = data.slice();
+  new DataView(inactive.buffer).setBigUint64(4, 99n, true);
+  assert.throws(() => decodeAddressLookupTableAccount({ data: inactive, owner, contextSlot: 101 }), /Deactivated/);
+  const badPadding = data.slice(); badPadding[55] = 1;
+  assert.throws(() => decodeAddressLookupTableAccount({ data: badPadding, owner, contextSlot: 101 }), /padding/);
+  assert.throws(() => decodeAddressLookupTableAccount({ data: data.slice(0, 55), owner, contextSlot: 101 }), /data length/);
 });
