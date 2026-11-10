@@ -2932,3 +2932,21 @@ Production Swap execution, production Launchpad token creation/fundraising, and 
 - Exact next action remains: owner manually runs Validate on branch `codex/swap-order-binding-durable-object`, confirms SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`, and shares/permits inspection of the run result; then reconcile branch divergence in a real worktree and repeat Validate + Browser Smoke. Keep both execution flags false.
 
 No production Worker deployment, live swap execution, Launchpad token creation, or social/email login activation is verified.
+
+
+## 2026-11-11 — Recheck, CI workflow audit, and correction
+
+- Confirmed Pages run `42885147152` completed **SUCCESS** on main SHA `97ff3c71ed390ce58f4cf40c976710a07d24a1d8`. The preceding README/release-priority records are deployed.
+- Rechecked PR #234: latest head remains `7f5d3451c7c99356fd46502691f0c24f92a96ade`; base remains `28180c2a277e0c4bd093a40462032e7f536989e6`; open/draft; latest-head check-runs count remains zero. Existing PR workflow runs are on `32ec6ca` or earlier and do not validate `7f5d345`.
+- Audited the actual PR-branch `.github/workflows/validate-climboria.yml` (blob `c2c1c8ec930a900b7b696d7c5ac2bf507a4f5224`). **Correction to the previous working note:** the PR branch already runs `node --test dex/swap-proxy/test/*.test.mjs` (not only `worker.test.mjs`) and performs a Wrangler Durable Object dry-run. This includes worker, order-store, and transaction-validation test files. No workflow edit was needed or made; the earlier narrower observation came from reading the main-branch version rather than the PR branch.
+- Inspected the PR-branch transaction parser, signature validation, order store, and associated regression tests. They enforce canonical base64 and v0-only bounded parsing, exact server-issued message equality, taker fee-payer match, Ed25519 signature verification, preservation of additional JupiterZ signer slots, and one-time atomic order claims. This source inspection is not a substitute for executing the test suite or independent security review.
+- Attempted a local shallow Git clone for running the suite, but this environment could not resolve `github.com`; no local test result is claimed. The PR workflow has a manual dispatch trigger, but the connected GitHub actions exposed here do not include a dispatch action. No fake/no-op code change was committed merely to force a run.
+- PR #234 remains unmerged and execution flags remain disabled. No Cloudflare production deployment, production swap execution, or Devnet lifecycle was verified.
+
+### Exact next job
+1. Owner manually dispatches [Validate Climboria Actions](https://github.com/CryptoDilis/Climboria/actions/workflows/validate-climboria.yml) on `codex/swap-order-binding-durable-object`, confirms run head SHA exactly `7f5d3451c7c99356fd46502691f0c24f92a96ade`, and checks all test files plus Wrangler dry-run.
+2. Reconcile the PR's 42-ahead/19-behind divergence with current main using a real worktree and conflict-aware merge/rebase. Then rerun Validate and Browser Smoke on the integrated head.
+3. Complete independent security review and controlled Devnet lifecycle; only then consider Worker deployment and a separately approved execution-enable decision.
+4. Continue Launchpad IDL/Devnet blockers and real account authentication as separate release gates.
+
+Production Swap execution, Launchpad token creation/fundraising, and Google/X/email account login remain not live.
