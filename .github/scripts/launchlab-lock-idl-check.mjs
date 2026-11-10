@@ -84,8 +84,8 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const lock = instructions.get("lockcpliquidity");
   const collect = instructions.get("collectcpfees");
   if (!lock || !collect) fail("LP Lock IDL is missing lockCpLiquidity/collectCpFees; IDL name=" + idlName + "; available=" + (idl.instructions ?? []).map(item => item.name).join(", "));
-  if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK");
-  if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK");
+  if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK; live=" + JSON.stringify(lock.discriminator) + "; SDK=" + JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR));
+  if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK; live=" + JSON.stringify(collect.discriminator) + "; SDK=" + JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR));
   checkAccounts(lock, expectedLockAccounts, "lockCpLiquidity");
   checkAccounts(collect, expectedCollectAccounts, "collectCpFees");
   const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
