@@ -881,7 +881,8 @@ jobs:
                 if (!adapter.restore({version:1,player:{x:13,z:-27,yaw:0.75},inventory:[{name:'CloudUpdatedFixture',qty:5}]})) throw new Error('Could not seed changed cloud-save state');
                 window.dispatchEvent(new CustomEvent('climboria:inventory'));
               });
-              await page.waitForFunction(() => window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'update'), null, {timeout:10000});
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'synced' &&
+                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'update'), null, {timeout:10000});
               const updated = await page.evaluate(() => ({
                 status: window.__CLIMBORIA_GAME_SAVE?.status,
                 request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'update'),
@@ -920,8 +921,14 @@ jobs:
               await newPage.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', route => route.fulfill({status:200,contentType:'application/javascript',body:mockSdk}));
               const newResponse = await newPage.goto('http://127.0.0.1:4173/game/play.html', {waitUntil:'domcontentloaded'});
               if (!newResponse?.ok()) throw new Error('Game page did not load for first-save insert fixture');
+              await newPage.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'ready', null, {timeout:30000});
+              await newPage.evaluate(() => {
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:6,z:-14,yaw:0.5},inventory:[{name:'FirstSaveFixture',qty:1}]})) throw new Error('Could not seed first-save walk-mode fixture');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
               await newPage.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'synced' &&
-                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'insert'), null, {timeout:30000});
+                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'insert'), null, {timeout:10000});
               const inserted = await newPage.evaluate(() => ({
                 userId: window.__CLIMBORIA_GAME_SAVE?.userId,
                 request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'insert'),
