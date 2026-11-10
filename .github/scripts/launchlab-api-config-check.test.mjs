@@ -151,3 +151,25 @@ test("fails closed when PlatformConfig migration scales do not sum to one millio
   platformData.writeBigUInt64LE(700000n, 96);
   assert.throws(() => decodeConfigDestinations({ globalData, platformData, PublicKey, programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a", mintB: "So11111111111111111111111111111111111111112" }), /sum exactly to 1,000,000/);
 });
+
+test("inspects finalized authority account metadata and recent transaction history without inferring ownership", async () => {
+  const authority = "DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW";
+  const report = await (await import("./launchlab-api-config-check.mjs")).inspectAuthorityHistory({
+    rpc: "https://api.devnet.solana.com", authority, limit: 2,
+    getAccount: async () => ({ value: { owner: "11111111111111111111111111111111", executable: false, lamports: 1234, data: ["", "base64"] } }),
+    getSignatures: async () => [{ signature: "sig-one", slot: 10, blockTime: 100, confirmationStatus: "finalized", err: null }, { signature: "sig-two", slot: 9, blockTime: 90, confirmationStatus: "finalized", err: null }],
+    getTransaction: async (_rpc, signature) => ({ transaction: { message: { accountKeys: [{ pubkey: authority, signer: true }, { pubkey: "Program1111111111111111111111111111111111" }], instructions: [{ programId: "Program1111111111111111111111111111111111" }] } }, meta: { fee: 5000 } })
+  });
+  assert.equal(report.accountExists, true); assert.equal(report.accountOwner, "11111111111111111111111111111111");
+  assert.equal(report.accountDataLength, 0); assert.equal(report.recentSignatureCount, 2);
+  assert.equal(report.recentSignatures[0].signers[0], authority); assert.equal(report.recentSignatures[0].feeLamports, 5000);
+  assert.equal(report.classification, "unclassified"); assert.match(report.note, /do not prove beneficial ownership/);
+});
+test("reports a missing finalized authority account without fabricating history", async () => {
+  const report = await (await import("./launchlab-api-config-check.mjs")).inspectAuthorityHistory({
+    rpc: "https://api.devnet.solana.com", authority: "11111111111111111111111111111111",
+    getAccount: async () => ({ value: null }),
+    getSignatures: async () => { throw new Error("must not query history for missing account"); }
+  });
+  assert.equal(report.accountExists, false); assert.deepEqual(report.recentSignatures, []); assert.equal(report.historyComplete, false);
+});
