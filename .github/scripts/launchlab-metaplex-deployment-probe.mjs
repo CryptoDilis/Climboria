@@ -143,7 +143,7 @@ async function inspectUpgradeableAccountHistory({
   if (typeof connection?.getSignaturesForAddress !== "function" ||
       typeof connection?.getTransaction !== "function" || !accountPublicKey ||
       !Number.isSafeInteger(stateSlot) || stateSlot < 1) {
-    return { status: "${accountLabel}_history_rpc_unavailable", signatures: [] };
+    return { status: `${accountLabel}_history_rpc_unavailable`, signatures: [] };
   }
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000 ||
       !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50 ||
@@ -179,7 +179,7 @@ async function inspectUpgradeableAccountHistory({
       before = lastSignature;
     }
   } catch (error) {
-    return { status: "${accountLabel}_history_fetch_failed", reason: String(error.message || error),
+    return { status: `${accountLabel}_history_fetch_failed`, reason: String(error.message || error),
       pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot, signatures: [] };
   }
   // Prefer the oldest signatures in the bounded window: the initial deploy
@@ -236,7 +236,7 @@ async function inspectUpgradeableAccountHistory({
     history.push(...batch);
   }
   return {
-    status: reachedStateSlot ? "${accountLabel}_state_slot_reached" : "${accountLabel}_history_incomplete",
+    status: reachedStateSlot ? `${accountLabel}_state_slot_reached` : `${accountLabel}_history_incomplete`,
     stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
     historicalCandidateCount: selectedHistoricalCandidates.length,
     availableHistoricalSignatureCount: historicalCandidates.length,
