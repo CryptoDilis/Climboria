@@ -23,7 +23,7 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   const feeData = Buffer.alloc(165);
   const cpmmConfigData = Buffer.alloc(236);
   new PublicKey(target.cpmmProtocolOwner).toBuffer().copy(cpmmConfigData, 44);
-  new PublicKey("11111111111111111111111111111112").toBuffer().copy(cpmmConfigData, 76);
+  new PublicKey(target.cpmmFundOwner).toBuffer().copy(cpmmConfigData, 76);
   cpmmConfigData.writeBigUInt64LE(99n, 36);
   new PublicKey("So11111111111111111111111111111111111111112").toBuffer().copy(feeData, 0);
   new PublicKey(target.cpmmAdmin).toBuffer().copy(feeData, 32);
