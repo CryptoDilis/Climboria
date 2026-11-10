@@ -1,3 +1,17 @@
+### Latest checkpoint — 2026-11-10 (Additional provenance run completed; current-head CI rechecked)
+
+- [x] Reconnected and verified branch, PR #231 and canonical README before resuming. Starting head was `689add40ca50ae050a0d66d8e7b2e8a89e7a7316`; PR remains open, Draft, unmerged.
+- [x] Older LaunchLab Live Provenance run [42767645816](https://github.com/CryptoDilis/Climboria/actions/runs/42767645816) has now completed SUCCESS on code head `36b84f8c84f7463b6d9f755b2742ca95ee88bb49`; job `129667796564`. Inspected its full 1,083,115-character job log. Live provenance output again reports Mainnet LP Lock IDL verified, Devnet legacy Anchor IDL publication missing, and the overall read-only audit pass=true with that explicit limitation. Governance upgrade verification again reports 39/39 verified, zero failed.
+- [x] Run `42767645816` reconfirmed Devnet CPMM fee-authority history: authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`, two finalized successful transactions, both including signer `B8o53m9qdXsUFHikHbGCCAskft2EmVVApm2Vi7zx89eZ`; the second also lists the authority as signer. The logged summaries expose only signer/program IDs/fee/instruction count, not complete instruction payloads or balance deltas. Custody remains unclassified; no ownership or Climboria fee entitlement inferred.
+- [x] Current-head Validate Climboria run [42768425781](https://github.com/CryptoDilis/Climboria/actions/runs/42768425781) on commit `689add40ca50ae050a0d66d8e7b2e8a89e7a7316` completed SUCCESS.
+- [ ] Current-head LaunchLab Live Provenance run [42768425726](https://github.com/CryptoDilis/Climboria/actions/runs/42768425726), job `129670294959`, was IN PROGRESS at last poll: 18 of 29 steps completed; rebuilding the deployment-era Metaplex Token Metadata program. Wait for live capture and inspect final logs.
+- [ ] Previous-head LaunchLab run [42768072558](https://github.com/CryptoDilis/Climboria/actions/runs/42768072558), job `129669169482`, was IN PROGRESS at last poll: 19 of 29 steps completed; at read-only Metaplex Devnet deployment-provenance capture. Poll and inspect final logs.
+- [ ] The two Devnet authority transactions still require full finalized `getTransaction` JSON (account keys, outer/inner instructions and data, pre/post lamport and token balances) and signer/controller tracing. The connected GitHub tools expose only summarized transaction fields and no direct Solana JSON-RPC method; do not fabricate missing details.
+- [ ] Continue Mainnet signature pagination beyond the 12-signature probe cap if provider permits; continue Devnet LP Lock Program/ProgramData and deployed-interface investigation. Mainnet IDL is verified; Devnet IDL remains missing and source-to-bytecode reproducibility remains unestablished.
+- [ ] PR #231 remains Draft and unmerged. Keep wallet signing, transaction submission, simulation, migration, fee collection and Mainnet execution disabled.
+
+Evidence: run `42767645816`, job `129667796564`, full decoded job log; run `42768425781` SUCCESS; runs `42768425726` and `42768072558` still in progress at last poll. Chain evidence is point-in-time finalized RPC output.
+
 ### Latest checkpoint — 2026-11-10 (Post-checkpoint CI verified; prior provenance run green; live custody remains unresolved)
 
 - [x] Reconnected to the actual repository and verified branch ref, PR #231, and canonical README before continuing. Branch head is `8bfa5c3585a219dcec9ff9d421afea9d442864f0`; README blob before this checkpoint was `8eb0257b9867fcc21ddea91c7d0d76e84e40fe9a`.
