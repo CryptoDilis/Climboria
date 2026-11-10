@@ -629,3 +629,34 @@ No production-live or real-swap claims are made by this entry.
 2. Watch new run to terminal success/failure; inspect actual failing step logs and fix the root cause before retrying. Do not merge PR #234 while latest-head CI is unverified.
 3. Poll Browser Smoke run `42880044279` (previous head), especially the long-running Jarrell gameplay step. If it fails, diagnose its logs separately; do not conflate gameplay with DEX/Swap regressions.
 4. Recheck Pages deployment for latest main head; production Cloudflare Worker, Devnet execution, Mainnet execution, Launchpad execution and Google/X/email auth remain unverified. Keep `EXECUTION_ENABLED=false` and frontend execution disabled.
+
+
+## 2026-11-11 — Swap settlement regressions and LaunchLab provenance recheck
+
+### Swap PR #234
+- Added two additional Worker regression tests on `codex/swap-order-binding-durable-object`:
+  1. Non-2xx Jupiter execution response attempts an `uncertain` settlement and returns replay-locked failure.
+  2. If the uncertainty settlement write itself returns failure, the API reports `settlementRecorded: false` while preserving the previously claimed/replay-locked order.
+- Commit: `43b514c2770b4717a4146b173fe4ce7529375d7a` (current PR #234 head at time of record).
+- No CI check run is registered on the latest PR head. The successful validation run `42881099416` tested **main** commit `3eebddfb86ab05b994d7f3cd221f6519ef3aa0ef`, not PR #234. The previous PR validation `42880044395` tested older head `32ec6ca`. Do not attribute either result to `43b514c`.
+- PR #234 is still draft/open and currently reports `mergeable_state=dirty`; main has advanced beyond its base. It must be updated with current main (merge/rebase) before merge review.
+- Browser Smoke `42880044279` remains in progress at Jarrell's Peak desktop/mobile gameplay smoke; its earlier DEX, Swap, and mobile steps passed. It is not a completed full smoke run.
+
+### Launchpad PR #231 — live provenance evidence
+- PR #231 branch `codex/launchlab-live-provenance-probe`, head `281209c66e2e69fa14c973867086947a2dc47000`, remains draft/open.
+- Latest Validate run `42866535160` and LaunchLab Live Provenance run `42866535205` both completed SUCCESS on that exact head.
+- Inspected the completed provenance job log `130006251731`. It confirms Devnet LaunchLab and CPMM programs are executable and owned by the upgradeable loader, with program-data hashes/upgrade authorities captured; Mainnet LP Lock IDL is verified. However, the output explicitly reports `devnetIdlPublishedAndVerified: false`: the canonical Devnet LP Lock Anchor IDL account is missing, so Devnet LP-lock instruction semantics remain pinned-SDK-only and no migration transaction may be submitted until resolved.
+- The live on-chain LaunchLab IDL comparison reports `repoIdlTypeDefinitionsExactlyMatch: false` and critical type mismatches (GlobalConfig, PlatformConfig, PlatformConfigParam, plus missing BondingCurveParam and PlatformCurveParam definitions). The probe says selected discriminators match and SDK binary layout is compatible, but these type-definition differences remain a material audit/revalidation gate. Do not interpret a green provenance workflow as Launchpad production readiness.
+- PR #231's preparation module constructs ordered unsigned Devnet create-only transactions and enforces caller-supplied mint signer; it is not a live public token-creation endpoint. No wallet signature, transaction submission, token mint, pool creation, or production launch has been verified.
+
+### Main deployment/docs verification
+- Pages deployment run `42881165517` completed SUCCESS for main commit `f002cceeafd406ee54a0e834da4c08a8815a33e5`.
+- Main validation run `42881099416` completed SUCCESS for `3eebddf` (main branch only).
+
+### Exact next tasks
+1. Run Validate Climboria manually on latest PR #234 branch `codex/swap-order-binding-durable-object` using the workflow_dispatch entry. Verify the exact latest head and test output; do not call previous main/PR checks equivalent.
+2. Update PR #234 with current main to resolve dirty/behind state, rerun Validate and Browser Smoke on the updated head, and complete independent security review before merge.
+3. Continue PR #231 provenance resolution: investigate canonical Devnet LP Lock IDL publication and reconcile live LaunchLab GlobalConfig/PlatformConfig type layouts against pinned SDK/source. Keep launch prep unsigned and Devnet-only until independently reviewed.
+4. Only after the above, controlled Devnet lifecycle tests; then production Worker deployment and feature-gate review. Production Swap, Launchpad token creation, and Guest/email/Google/X login are not verified live.
+
+No production transaction, deployment, or login activation is claimed by this record.
