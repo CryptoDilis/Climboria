@@ -19,7 +19,7 @@ function fixture() {
     discriminator: [216,157,29,78,38,51,31,26],
     accounts: makeAccounts(lockNames, lockFlags).map(account => {
       if (account.name === "auth") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("lock_cp_authority_seed")] }] };
-      if (account.name === "lockedLiquidity") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("lockedLiquidity")] }, { kind: "account", path: "nftMint" }] };
+      if (account.name === "lockedLiquidity") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("locked_liquidity")] }, { kind: "account", path: "nftMint" }] };
       return account;
     }),
     args: [{ name: "lpAmount", type: "u64" }, { name: "withMetadata", type: "bool" }],
