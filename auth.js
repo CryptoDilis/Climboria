@@ -49,7 +49,7 @@
   const friendlyError = (error, provider) => {
     const message = String(error?.message || error || 'Unknown authentication error');
     if (/provider.*not enabled|unsupported provider/i.test(message)) {
-      const name = provider === 'twitter' ? 'X (Twitter)' : provider === 'google' ? 'Google' : provider;
+      const name = provider === 'x' ? 'X (Twitter)' : provider === 'google' ? 'Google' : provider;
       return name + ' sign-in is not enabled in the Climboria Supabase Auth provider settings yet.';
     }
     if (/captcha/i.test(message)) {
@@ -158,7 +158,7 @@
         options: { redirectTo: new URL('/?auth=callback', window.location.origin).toString() }
       });
       if (error) throw error;
-      setStatus('Redirecting to ' + (provider === 'twitter' ? 'X' : 'Google') + ' to finish sign-in…');
+      setStatus('Redirecting to ' + (provider === 'x' ? 'X' : 'Google') + ' to finish sign-in…');
     } catch (error) {
       setStatus(friendlyError(error, provider));
       setBusy(false);
@@ -166,7 +166,7 @@
   };
 
   googleButton?.addEventListener('click', () => startOAuth('google'));
-  xButton?.addEventListener('click', () => startOAuth('twitter'));
+  xButton?.addEventListener('click', () => startOAuth('x'));
 
   // Anonymous sign-in is intentionally gated until both a Turnstile site key and
   // Supabase Auth CAPTCHA verification are configured to prevent automated user creation.

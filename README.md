@@ -3244,3 +3244,8 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - Browser Smoke run `42899334232` was in progress on the prior PR head while this diagnosis was recorded. A new code commit will cause the branch's cancel-in-progress browser workflow to restart on the corrected exact head; do not reuse the old run as final-head evidence.
 
 - Follow-up diagnosis on the first attempted correction: run `42899570660` failed because the Python regular expression in the generated YAML was over-escaped and produced a Python syntax error. Replaced that regex with literal extraction of `SUPABASE_PUBLISHABLE_KEY` and an exact `sb_publishable_` prefix check; this removes escaping ambiguity and validates the configured value itself.
+
+
+### X OAuth provider-name correction
+
+- Verified the current Supabase X/Twitter (OAuth 2.0) documentation (updated Oct 22, 2026): the supported JavaScript SDK provider identifier for the newer X OAuth 2.0 flow is `x`. Updated the homepage OAuth handler and CI assertion from legacy `twitter` to `x`. This does not enable X provider credentials in the Supabase Dashboard; client ID/secret and callback setup are still required.

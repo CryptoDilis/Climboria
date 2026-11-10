@@ -116,7 +116,7 @@ jobs:
               raise SystemExit(f"Missing Auth UI wiring: {missing}")
           required_auth = [
               'sb_publishable_', 'auth.signInWithPassword', 'auth.signUp',
-              'auth.signInWithOAuth', "startOAuth('twitter')", "startOAuth('google')",
+              'auth.signInWithOAuth', "startOAuth('x')", "startOAuth('google')",
               "auth.signOut({ scope: 'local' })", 'onAuthStateChange',
           ]
           missing = [item for item in required_auth if item not in auth]
