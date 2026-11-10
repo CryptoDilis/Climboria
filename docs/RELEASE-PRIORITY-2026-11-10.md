@@ -848,3 +848,10 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 3. Complete independent security review and controlled Devnet lifecycle; deploy/verify Worker only after secrets, namespace, zone, health/TLS/CORS/rate limits are configured. Keep execution disabled until separately approved.
 4. Resolve PR #231 Devnet LP Lock IDL and fee-receiver custody/provenance blockers; keep launch/migration disabled.
 5. Configure a real auth provider and implement/verify account/session flows before enabling Guest, email/password, Google or X login.
+
+
+## 2026-11-11 — Documentation-commit compare adjustment
+
+- A fresh compare immediately before this note showed PR #234 at 42 commits ahead / 33 behind main. The prior 31-behind figure was correct at its recorded instant; the two progress-document commits made afterward advanced main by two commits. The merge base and PR head are unchanged. This entry is explicitly time-scoped so historical counts are not mistaken for a later live comparison.
+- The PR #234 head still has zero combined status checks and zero matching PR-triggered workflow runs. No tests have been executed on the current head from this session.
+- Exact next action remains: owner manually dispatches Validate on `codex/swap-order-binding-durable-object`, confirms SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`, then provides a network-enabled worktree for conflict-aware reconciliation against current main. Keep execution flags off.
