@@ -254,7 +254,7 @@ test("does not treat an unknown Jupiter execution status as success", async () =
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
@@ -408,7 +408,7 @@ test("preserves Jupiter Failed status without converting it to success", async (
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
