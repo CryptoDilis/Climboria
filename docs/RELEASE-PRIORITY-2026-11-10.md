@@ -164,3 +164,11 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - Earlier 100 bps fee on gross contributions does not apply to a no-fundraising design; fee model remains unapproved. LP ownership, lock, supply, authority, creator allocation and migration behavior remain pending.
 - No code, protocol integration, tests or transactions in this architecture work unit. Launchpad stays preview-only.
 - **Exact next job:** inspect and pin official current Raydium LaunchLab SDK/program IDs/config accounts and Devnet availability, verify fee/migration/LP rules, and collect read-only fixtures before writing signing/execution code.
+
+
+## 2026-11-10 — Raydium LaunchLab protocol provenance research
+- Added `docs/LAUNCHLAB-PROVENANCE-DEVNET-GATE.md` at commit `06da4f13c3234773222d307787e379fcf8719b1f`.
+- Recorded official-doc candidate LaunchLab program IDs: mainnet `LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj`, devnet `DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6`; reference SDK `@raydium-io/raydium-sdk-v2@0.2.64-alpha` (official demo last verified 2026-09-09). These are **not** independently RPC-verified or pinned in code.
+- Source-backed constraints: new launches use `InitializeV2`/`InitializeWithToken2022` and CPMM migration; older demo shows `migrateType: "amm"` and must not be copied unverified; quote mint/curve/fees depend on on-chain configs; post-2026-08-17 LP migration ownership behavior changed.
+- Documentation-only; no CI, RPC account read, SDK installation, code change, wallet signature or transaction. Launchpad preview-only and all fees disabled.
+- **Exact next job:** implement a dedicated **read-only** Gate A provenance probe: compare live Raydium mainnet/devnet APIs and Solana program accounts/upgrade authorities against official docs, pin SDK and IDL hashes, verify Devnet GlobalConfig/PlatformConfig existence, record reproducible fixtures and tests. No signing or submission code until verified.
