@@ -235,8 +235,9 @@ async function handlePumpCoin(request, env) {
   });
 }
 async function handleExecute(request, env) {
-  // Execution is a server-side kill switch, independent of frontend controls.
-  // Keep it disabled until signed-transaction semantic validation and wallet/order binding are reviewed.
+  // The hard code gate is intentionally independent of deployment configuration.
+  // A mistaken Wrangler flag must not bypass missing transaction validation.
+  if (!EXECUTION_SECURITY_REVIEW_COMPLETE) return json({ error: "Swap execution is blocked: server-side transaction validation and order-wallet binding are not implemented and security-reviewed" }, 503);
   if (env.EXECUTION_ENABLED !== "true") return json({ error: "Swap execution is disabled pending security review" }, 503);
   const limited = await enforceRateLimit(request, env);
   if (limited) return limited;
