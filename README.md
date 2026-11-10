@@ -2805,3 +2805,27 @@ For every integrated asset or borrowed technique, record:
 6. Design and implement Base execution as a separately reviewed integration; do not label it live before real chain-specific tests.
 
 **Checkpoint rule:** update this README after each verified engineering change with commit SHA, exact workflow IDs/results, unresolved blockers, and the next single task. Do not toggle execution or accept deposits to make a status indicator appear live.
+
+
+## 2026-11-10 — Release continuation audit (fresh repository check)
+
+- [x] Re-checked `main`: still `037f251048e6aecaf12675be1cd11fa9dd8fb6cd`. Latest main commit checks are green: `report-build-status`, `build`, `deploy`, and `live-site-smoke` all SUCCESS.
+- [x] Re-checked PR #232: open/draft, head `f9749946ca70b974f3ffca4d21afe1cc195d8e54`, based on the current main SHA. It is still a documentation-only release checkpoint.
+- [x] Re-checked PR #228: open/draft at `fde34340a4bcb6ccac5b94efdb5bc93201013b3e`; it has not been merged to main. Auth foundation remains separate from live provider setup.
+- [x] Re-checked PR #231: open/draft at `5b475670533b4d8e067ce40f6140d3b6118f56d0`; latest LaunchLab provenance `42804471690` and Validate `42804471585` both SUCCESS. These are read-only provenance/preparation checks, not creator launch transactions.
+- [x] Confirmed the Pages deployment run `42744080549` completed SUCCESS, with build, deploy, and report jobs all SUCCESS.
+- [x] Re-read `dex/swap-proxy/src/index.mjs`, `wrangler.toml`, `swap-config.js`, `DEPLOYMENT.md`, and `launchpad/index.html` from main. Frontend execution remains `enabled: false`; Worker execution remains `EXECUTION_ENABLED = "false"`; rate-limit namespace remains a placeholder; Launchpad remains informational.
+- [x] Re-read `.github/workflows/deploy-climboria-api.yml`: it is `workflow_dispatch` only and requires the owner-provisioned Cloudflare namespace variable plus encrypted Cloudflare API token, Cloudflare account ID, and Jupiter key. The workflow's health check only verifies Worker readiness and CORS; execution must remain disabled until semantic transaction validation and order-wallet binding are independently tested.
+- [x] Current repository connector exposes read-only GitHub fetch and file writes, but no workflow-dispatch action and no secrets read/write endpoint. No secret values were accessed. Therefore no claim is made that the Worker was deployed or that the external credentials exist.
+- [ ] No production endpoint response or live wallet transaction was verified in this audit. Do not equate a green Pages smoke test with DEX/Swap/Launchpad/auth readiness.
+
+**Current exact next engineering task**
+Implement a separately tested server-side transaction security layer before any execution enablement: decode and validate the complete signed Solana v0 transaction (including address lookup table resolution), enforce signer/fee-payer, mint, amount, destination, program and instruction allowlists, reject unexpected writable accounts/authority changes, and bind each one-time expiring order ID to the exact wallet + input/output mints + amount + transaction message hash. Use durable atomic storage and replay/idempotency protection. Add adversarial tests for tampering, substitution, expired blockhash, replay, missing/extra instructions, malicious lookup-table addresses, and Jupiter mismatch. Keep both execution switches false until controlled Devnet lifecycle tests and independent security review pass.
+
+**After the security layer**
+- Provision Worker secrets/namespace outside chat and run the manual deploy workflow; verify real health, CORS, limiter, Jupiter token search/order/quote against production.
+- Resolve the remaining LaunchLab Devnet fee receiver / LP Lock IDL / deployed-program provenance / migration custody gaps; then run the approved Devnet creator lifecycle only.
+- Complete Supabase, SMTP, Google, X OAuth, Solana/EVM provider configuration; apply migration and run actual provider callbacks and account-linking tests.
+- Build Base as a separate chain-specific integration with its own verification; do not call it live until proven.
+
+**Release status remains:** Pages SUCCESS; DEX discovery provider-backed; Swap execution OFF; Launchpad creation NOT LIVE; five production login methods NOT VERIFIED; Base execution NOT LIVE.
