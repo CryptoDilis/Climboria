@@ -797,3 +797,20 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 4. Resolve PR #231 canonical Devnet LP Lock IDL publication and live LaunchLab IDL type-definition mismatches. Keep Launchpad signing/submission/migration disabled.
 5. Implement and verify real account/session auth (Guest, email/password, Google OAuth, X OAuth), account linking, email verification/reset, logout, persistence and cross-device progress before enabling login UI.
 
+
+
+## 2026-11-11 — PR #234 source-level re-review
+
+- Re-read current PR-head `transaction-validation.mjs`, `order-store.mjs`, Worker order/execute flow, Wrangler binding and order-store tests at `7f5d3451c7c99356fd46502691f0c24f92a96ade`.
+- Source-level controls confirmed: canonical bounded v0 parser; exact message binding; taker/fee-payer match; Ed25519 verification; preserved JupiterZ non-taker signature slots; server-generated UUID token; 120-second expiry; transactional one-time claim; terminal replay lock; cleanup alarm; fail-closed Worker kill switch, rate limiter and Durable Object binding.
+- Concurrent claim design appears serialized by the synchronous storage transaction after signature verification; this has not been proven against actual Cloudflare runtime concurrency in this session.
+- No definite new source defect was established in this pass. Do not describe this as independent security approval or runtime validation. Exact-head CI, Wrangler dry-run, real Durable Object behavior, JupiterZ signing compatibility, timeout settlement and controlled Devnet lifecycle remain open.
+- Latest-head workflow lookup found no PR-triggered run for `7f5d345`; no local test run was possible because GitHub DNS resolution failed in the local environment. No test pass is claimed.
+- PR #234 remains open/draft, no reviews, mergeable=false, and 42 ahead / 25 behind main. No merge/rebase was attempted. Worker is prepared but not deployed. Production execution flags remain false.
+
+### Exact next task
+1. Manually run Validate on `codex/swap-order-binding-durable-object` and verify exact head SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`.
+2. Reconcile the PR with current main in a real local worktree, resolve conflicts, and rerun Validate + Browser Smoke on the resulting head.
+3. Obtain independent security review and controlled Devnet lifecycle evidence before Cloudflare deployment or any execution enablement.
+4. Keep Launchpad IDL/Devnet gates and real account/session authentication as separate release blockers.
+
