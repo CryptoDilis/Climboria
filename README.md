@@ -1,3 +1,26 @@
+### Latest checkpoint — 2026-11-10 (Governance-executed upgrade chain enumerated)
+
+- [x] Recomputed the complete 93-transaction ProgramData capture from successful LaunchLab run `42760805818` (all 93 transaction details available). Exact event counts:
+  - 30 successful top-level upgradeable-loader `Upgrade` instructions (opcode 3), zero failed.
+  - 1 successful `SetAuthority` (opcode 4).
+  - 3 successful `ExtendProgram` (opcode 6).
+  - No `DeployWithMaxDataLen` (opcode 2) observed in this returned ProgramData history.
+  - In addition, 39 successful governance `ExecuteTransaction` instructions invoke the loader and log `Upgraded program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`. These are inner CPI loader upgrades, so they do not appear as top-level loader opcode 3 in the transaction message. Total observed successful upgrades across the 93 records: 69 (30 direct + 39 governance-executed).
+- [x] Verified the Program Governance account mapping against the official Solana Program Library `governance-v2.2.x` source: `CreateProgramGovernance` uses account 1 for Program Governance PDA, account 2 for governed program, account 3 for ProgramData, and account 4 for current upgrade authority; `ExecuteTransaction` uses accounts 0–2 for governance, proposal, and proposal-transaction, then account 3 for the inner program ID and remaining accounts for its instruction.
+- [x] Enumerated the five most recent successful governance-executed upgrades in the current capture:
+  | Slot | Proposal | Proposal transaction |
+  |---:|---|---|
+  | 335003496 | `AmwHhcAfiZYfr4s1u1XZwPqW4byVHz4JpbmdTzVEh9eS` | `J1dJLEkJ35VHSW7S82WU6DvBoi5PX8MaExQgBFwAbvcT` |
+  | 337054580 | `9XHBEDpXZcir99JhDj3UFXRYHAJGJTh3P8tsNSejcN3F` | `H7j49EWU6ZFSUDvA1rVy63aRZT1iHAcnhaEWafTdMWL5` |
+  | 337099368 | `6VromD6VF6oKjYJfA6rNvtkM9SekB5yHapCofHEBJHM1` | `B2FQvA6Z3VxdnFDR5vWMUoZPvfuV9bArTgwGcByqevJK` |
+  | 337839463 | `9dU7CjKseFsXxUNQAEGbdATr6he1QmD2vEj7oSTAX3Pa` | `4Lu1fnp3TzBp4b3tb7fdk938BJoWGz85HoM4vyg1Hp7G` |
+  | 354765528 | `5WvS7C55UrNgB2s5rz3yDsdfUPodaTi7t5gFek6SnK2N` | `4jMPtBZ8V3TUChX8kmkxEDwSVWE2oQAVkTv9nqZ7T6FR` |
+- [x] Added an explicit `successfulLoaderUpgradeExecutionCount` to the governance-history summary and fail-closed transaction-success checks: an unavailable RPC transaction detail can no longer be counted as a successful loader or governance event.
+- [x] Validate run `42762740096` on commit `1b140ff3746730654403a0c630491b863993e702`: SUCCESS. LaunchLab run `42762739865` on the same commit: still running at last inspection (historical rebuild step); no live result claimed yet.
+- [ ] **Next P0:** finish the live run and confirm the decoded counts against the latest RPC capture. Then read the 39 governance proposal and proposal-transaction accounts in bounded batches, decode proposal name/state and the embedded loader instruction, and verify that each executed proposal actually targets this ProgramData and program.
+- [ ] Original `DeployWithMaxDataLen` remains unlocated in the available RPC history; do not infer original deployment date. Exact deployed source lineage remains unresolved.
+- [ ] Metadata account serialized size, Devnet LP Lock IDL publication, and CPMM fee-receiver custody remain migration blockers. PR #231 remains Draft and unmerged. No wallet signing, transaction simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (Metaplex loader lifecycle and governance handoff)
 
 - [x] Diagnosed the executable Program-account history experiment: the live Devnet RPC returned 10,000 recent signatures in 10 pages, but the oldest was slot `518160448`, later than ProgramData state slot `363279440`. The Program account is referenced by ordinary metadata invocations, so this scan does not isolate deploy/upgrade events. Removed this noisy scan rather than extending an unbounded high-volume history walk.
