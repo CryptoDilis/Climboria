@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/scripts/launchlab-sdk-idl-check.mjs"
       - ".github/workflows/launchlab-provenance.yml"
   pull_request:
     branches: [main]
@@ -29,5 +30,13 @@ jobs:
           node-version: 22
       - name: Test read-only probe and fail-closed behavior
         run: node --test .github/scripts/launchlab-provenance.test.mjs
+      - name: Fetch pinned official SDK and LaunchLab IDL sources
+        run: |
+          mkdir -p /tmp/launchlab-provenance
+          curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/package.json -o /tmp/launchlab-provenance/package.json
+          curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts -o /tmp/launchlab-provenance/instrument.ts
+          curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json -o /tmp/launchlab-provenance/launchpad-idl.json
+      - name: Verify pinned SDK, IDL hashes and instruction discriminators
+        run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts
       - name: Query live Raydium APIs and finalized Solana program accounts
         run: node .github/scripts/launchlab-provenance.mjs
