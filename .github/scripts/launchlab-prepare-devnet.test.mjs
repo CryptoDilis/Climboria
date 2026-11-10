@@ -178,6 +178,31 @@ test("rejects a transaction fee payer that differs from the creator", async () =
   });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /fee payer does not match/);
 });
+test("resolves and reports V0 Address Lookup Table account metas", async () => {
+  const mock = client();
+  const lookupKey = new PublicKey("Lookup111111111111111111111111111111111");
+  const loadedWritable = new PublicKey("LoadedWritable11111111111111111111111111");
+  mock.raydium.connection.getAddressLookupTable = async () => ({
+    value: { state: { addresses: [loadedWritable] } },
+  });
+  mock.raydium.launchpad.createLaunchpad = async options => ({
+    transactions: [{
+      message: {
+        staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
+        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
+        addressTableLookups: [{ accountKey: lookupKey, writableIndexes: [0], readonlyIndexes: [] }],
+        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1, 3] }],
+      },
+    }],
+    signers: [[options.extraSigners[0]]],
+  });
+  const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
+  const review = result.transactionReviews[0];
+  assert.equal(review.accountMetaDetails[0][2].pubkey, loadedWritable.toBase58());
+  assert.equal(review.accountMetaDetails[0][2].isWritable, true);
+  assert.equal(review.lookupTables[0].address, lookupKey.toBase58());
+  assert.deepEqual(review.lookupTables[0].writableAddresses, [loadedWritable.toBase58()]);
+});
 test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => {
   const mock = client({ apiEpoch: 8 });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /API \/ finalized GlobalConfig mismatch: epoch/);
