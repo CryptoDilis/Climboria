@@ -184,7 +184,8 @@ const U64_MAX = 0xffffffffffffffffn;
  * owner/executable/context slot, and bind this result to that exact response.
  * This parser alone is not proof that RPC data is trustworthy.
  */
-export function decodeAddressLookupTableAccount({ data, owner, executable = false, contextSlot }) {
+export function decodeAddressLookupTableAccount({ accountKey, data, owner, executable = false, contextSlot }) {
+  if (!(accountKey instanceof Uint8Array) || accountKey.length !== 32) throw new Error("Missing or invalid lookup table account public key");
   if (owner !== ADDRESS_LOOKUP_TABLE_PROGRAM_ID) throw new Error("Address lookup table has an unexpected owner program");
   if (executable !== false) throw new Error("Address lookup table account must not be executable");
   if (!Number.isSafeInteger(contextSlot) || contextSlot < 0) throw new Error("Missing trusted RPC context slot");
@@ -210,7 +211,7 @@ export function decodeAddressLookupTableAccount({ data, owner, executable = fals
     throw new Error("Lookup table contains addresses that are not active until a later slot");
   }
   return {
-    accountKey: null,
+    accountKey: accountKey.slice(),
     addresses,
     authority: authorityOption === 1 ? authorityBytes : null,
     deactivationSlot: deactivationSlot.toString(),
