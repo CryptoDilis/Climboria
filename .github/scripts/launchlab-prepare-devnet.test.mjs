@@ -92,14 +92,14 @@ const input = overrides => ({
   totalFundRaisingB: "85000000000", totalLockedAmount: "0",
   ...overrides,
 });
-function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restrictGlobalConfig = false, missingRule = false, ruleIdentityMismatch = false } = {}) {
+function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restrictGlobalConfig = false, missingRule = false, ruleIdentityMismatch = false, wrongRuleDiscriminator = false, wrongRuleBump = false, missingBlockTime = false } = {}) {
   let captured, executeCalled = false;
   const rulePda = new PublicKey("Rule111111111111111111111111111111111111");
   const ruleDiscriminator = Buffer.from([1,2,3,4,5,6,7,8]);
   const ruleData = {
     platformId: new PublicKey(ruleIdentityMismatch ? ids.creator : ids.platformId),
     configId: new PublicKey(ids.configId),
-    bump: 9,
+    bump: wrongRuleBump ? 8 : 9,
     epoch: new BN("4"),
     groups: [{ groupId: 0, constraints: [{ field: 3, op: 1, value: new BN("1") }] }],
   };
@@ -109,12 +109,12 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restr
     connection: {
       getAccountInfo: async key => {
         if (key?.toBase58?.() === rulePda.toBase58()) {
-          return missingRule ? null : { owner: new PublicKey(ids.programId), data: Buffer.concat([ruleDiscriminator, Buffer.alloc(32)]) };
+          return missingRule ? null : { owner: new PublicKey(ids.programId), data: Buffer.concat([wrongRuleDiscriminator ? Buffer.from([8,7,6,5,4,3,2,1]) : ruleDiscriminator, Buffer.alloc(32)]) };
         }
         return { owner: new PublicKey(ids.programId), data: Buffer.from("fixture") };
       },
       getSlot: async commitment => { assert.equal(commitment, "finalized"); return 123; },
-      getBlockTime: async slot => { assert.equal(slot, 123); return 1700000000; },
+      getBlockTime: async slot => { assert.equal(slot, 123); return missingBlockTime ? null : 1700000000; },
     },
     api: { fetchLaunchConfigs: async () => [{ key: { pubKey: ids.configId, mintB: apiMint, curveType: 0, index: 0, epoch: apiEpoch, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }, defaultParams: { supplyInit: "1", totalSellA: "1", totalFundRaisingB: "1" } }] },
     launchpad: {
@@ -401,6 +401,16 @@ test("fails closed when the restricted PlatformCurveRule account is missing", as
 test("fails closed when the PlatformCurveRule identity does not match the verified platform/config", async () => {
   const mock = client({ restrict: true, ruleIdentityMismatch: true });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /identity does not match/);
+});
+test("fails closed when PlatformCurveRule discriminator or PDA bump is invalid", async () => {
+  const badDiscriminator = client({ restrict: true, wrongRuleDiscriminator: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...badDiscriminator, input: input({}) }), /discriminator does not match/);
+  const badBump = client({ restrict: true, wrongRuleBump: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...badBump, input: input({}) }), /bump does not match/);
+});
+test("fails closed when finalized block time is unavailable for PlatformCurveRule evaluation", async () => {
+  const mock = client({ restrict: true, missingBlockTime: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /finalized Solana block time/);
 });
 test("fails closed when explicit launch parameters do not satisfy any PlatformCurveRule group", async () => {
   const mock = client({ restrict: true });
