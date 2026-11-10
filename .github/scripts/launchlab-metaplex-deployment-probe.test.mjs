@@ -243,10 +243,45 @@ test("selects the oldest signatures when the historical transaction inspection c
     connection, programDataPublicKey: new PublicKey(programDataAddress),
     stateSlot: 100, pageSize: 10, maxPages: 1, maxHistoricalTransactions: 2,
   });
-  assert.deepEqual(fetched, ["state", "oldest"]);
+  assert.deepEqual(fetched, ["oldest", "state"]);
   assert.equal(result.availableHistoricalSignatureCount, 2);
   assert.equal(result.historicalCandidateCount, 2);
   assert.equal(result.complete, true);
   assert.equal(result.selectedRangeOldestSlot, 50);
   assert.equal(result.selectedRangeNewestSlot, 100);
+});
+
+test("retries rate-limited historical transaction reads and captures loader instruction evidence", async () => {
+  let attempts = 0;
+  const loader = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+  const programData = new PublicKey(programDataAddress);
+  const connection = {
+    getSignaturesForAddress: async () => [
+      { signature: "oldest-loader", slot: 50 },
+    ],
+    getTransaction: async () => {
+      attempts++;
+      if (attempts === 1) throw Error("429 Too Many Requests");
+      return {
+        transaction: {
+          message: {
+            staticAccountKeys: [loader, programData],
+            compiledInstructions: [
+              { programIdIndex: 0, accountKeyIndexes: [1], data: "AQID" },
+            ],
+          },
+        },
+        meta: { err: null, logMessages: ["Upgraded program"] },
+      };
+    },
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress),
+    stateSlot: 100, pageSize: 10, maxPages: 1, maxHistoricalTransactions: 1,
+  });
+  assert.equal(attempts, 2);
+  assert.equal(result.signatures[0].transactionAvailable, true);
+  assert.equal(result.signatures[0].instructionEvidence[0].programId, loader.toBase58());
+  assert.deepEqual(result.signatures[0].instructionEvidence[0].accounts, [programData.toBase58()]);
+  assert.equal(result.signatures[0].instructionEvidence[0].data, "AQID");
 });
