@@ -94,6 +94,12 @@ test("rejects LP lock signer privilege escalation", () => {
   idl.instructions[0].accounts[3].signer = true;
   assert.throws(() => validateLockProgramIdl(idl, target, PublicKey), /signer privilege mismatch/);
 });
+test("rejects changed lock authority PDA seed supplied by source review", () => {
+  assert.throws(() => validateLockProgramIdl(fixture(), target, PublicKey, {
+    lockAuthoritySeed: "wrong_seed",
+    lockedLiquiditySeed: "locked_liquidity",
+  }), /authority seed differs/);
+});
 test("derives distinct locked LP ATAs for different CPMM LP mints", () => {
   const a = deriveLockProgramAddresses({ programId: target.id, lpMint: "So11111111111111111111111111111111111111112", PublicKey });
   const b = deriveLockProgramAddresses({ programId: target.id, lpMint: "11111111111111111111111111111112", PublicKey });
