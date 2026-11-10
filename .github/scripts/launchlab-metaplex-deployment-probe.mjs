@@ -137,34 +137,68 @@ export async function inspectProgramDataStateSlotBlock({
   };
 }
 
-export async function inspectProgramDataHistory({ connection, programDataPublicKey }) {
-  if (typeof connection?.getSignaturesForAddress !== "function" || typeof connection?.getTransaction !== "function" || !programDataPublicKey) {
+export async function inspectProgramDataHistory({
+  connection, programDataPublicKey, stateSlot, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 30,
+}) {
+  if (typeof connection?.getSignaturesForAddress !== "function" ||
+      typeof connection?.getTransaction !== "function" || !programDataPublicKey ||
+      !Number.isSafeInteger(stateSlot) || stateSlot < 1) {
     return { status: "programdata_history_rpc_unavailable", signatures: [] };
   }
-  let signatureInfo;
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000 ||
+      !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50 ||
+      !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 100) {
+    throw new Error("Invalid bounded ProgramData history scan configuration");
+  }
+  let before;
+  let pagesScanned = 0;
+  let signaturesScanned = 0;
+  let oldestScannedSlot = null;
+  let reachedStateSlot = false;
+  const historicalCandidates = [];
   try {
-    signatureInfo = await connection.getSignaturesForAddress(programDataPublicKey, { limit: 100 }, "finalized");
+    for (let page = 0; page < maxPages; page++) {
+      const options = { limit: pageSize };
+      if (before) options.before = before;
+      const infos = await connection.getSignaturesForAddress(programDataPublicKey, options, "finalized");
+      pagesScanned++;
+      if (!Array.isArray(infos) || infos.length === 0) break;
+      signaturesScanned += infos.length;
+      for (const info of infos) {
+        if (!Number.isSafeInteger(info.slot)) continue;
+        oldestScannedSlot = oldestScannedSlot === null ? info.slot : Math.min(oldestScannedSlot, info.slot);
+        if (info.slot <= stateSlot && historicalCandidates.length < maxHistoricalTransactions) {
+          historicalCandidates.push(info);
+        }
+      }
+      if (oldestScannedSlot !== null && oldestScannedSlot <= stateSlot) {
+        reachedStateSlot = true;
+        break;
+      }
+      if (infos.length < pageSize) break;
+      const lastSignature = infos[infos.length - 1]?.signature;
+      if (!lastSignature || lastSignature === before) break;
+      before = lastSignature;
+    }
   } catch (error) {
-    return { status: "programdata_history_fetch_failed", reason: String(error.message || error), signatures: [] };
+    return { status: "programdata_history_fetch_failed", reason: String(error.message || error),
+      pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot, signatures: [] };
   }
   const history = [];
-  const infos = signatureInfo ?? [];
-  for (let offset = 0; offset < infos.length; offset += 10) {
-    const batch = await Promise.all(infos.slice(offset, offset + 10).map(async info => {
+  for (let offset = 0; offset < historicalCandidates.length; offset += 10) {
+    const batch = await Promise.all(historicalCandidates.slice(offset, offset + 10).map(async info => {
       let transaction = null;
       let fetchError = null;
       try {
         transaction = await connection.getTransaction(info.signature, {
-          commitment: "finalized",
-          maxSupportedTransactionVersion: 0,
+          commitment: "finalized", maxSupportedTransactionVersion: 0,
         });
       } catch (error) {
         fetchError = String(error.message || error);
       }
       const logs = transaction?.meta?.logMessages ?? [];
       return {
-        signature: info.signature,
-        slot: info.slot,
+        signature: info.signature, slot: info.slot,
         blockTime: info.blockTime ?? transaction?.blockTime ?? null,
         transactionAvailable: Boolean(transaction),
         transactionError: transaction?.meta?.err ?? info.err ?? null,
@@ -174,7 +208,12 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
     }));
     history.push(...batch);
   }
-  return { status: "programdata_history_inspected", signatureCount: history.length, complete: history.length < 100, signatures: history };
+  return {
+    status: reachedStateSlot ? "programdata_state_slot_reached" : "programdata_history_incomplete",
+    stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
+    historicalCandidateCount: historicalCandidates.length, signatures: history,
+    complete: reachedStateSlot && historicalCandidates.length < maxHistoricalTransactions,
+  };
 }
 
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
@@ -246,6 +285,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   const programDataHistory = await inspectProgramDataHistory({
     connection,
     programDataPublicKey: programDataAddress,
+    stateSlot: programDataStateSlot,
   });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
