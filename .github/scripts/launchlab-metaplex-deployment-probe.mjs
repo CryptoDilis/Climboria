@@ -105,6 +105,15 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   }
   const executableBytes = bytes.subarray(codeOffset);
   if (executableBytes.length === 0) fail("Metaplex ProgramData contains no executable bytecode");
+  let deploymentBlockTimeUnix = null;
+  if (typeof connection.getBlockTime === "function") {
+    try {
+      const blockTime = await connection.getBlockTime(deploymentSlot);
+      if (Number.isSafeInteger(blockTime) && blockTime > 0) deploymentBlockTimeUnix = blockTime;
+    } catch {
+      // The slot timestamp is supplementary provenance; account/hash checks remain authoritative.
+    }
+  }
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: PINNED_METAPLEX_BUILD_ARTIFACT.byteLength,
     artifactSha256: PINNED_METAPLEX_BUILD_ARTIFACT.sha256,
@@ -121,6 +130,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataAddress: programDataAddress.toBase58(),
     programDataOwner: dataAccount.owner.toBase58(),
     deploymentSlot,
+    deploymentBlockTimeUnix,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
