@@ -785,6 +785,160 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test authenticated cloud-save load, insert, update, and conflict paths with REST fixtures
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const mockSdk = `(() => {
+            const config = window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ || {};
+            const copy = value => value == null ? null : JSON.parse(JSON.stringify(value));
+            const state = {
+              user: { id: config.userId || 'cloud-user-A', is_anonymous: false, email: 'cloud-fixture@example.test' },
+              row: copy(config.row || null),
+              conflictNextUpdate: false,
+              requests: []
+            };
+            window.__CLIMBORIA_SUPABASE_MOCK_STATE__ = state;
+            const makeQuery = table => {
+              if (table !== 'player_saves') throw new Error('Unexpected mocked table: ' + table);
+              let action = 'select', payload = null, filters = {};
+              const query = {
+                select(fields) { query.fields = fields; return query; },
+                eq(key, value) { filters[key] = value; return query; },
+                update(value) { action = 'update'; payload = copy(value); return query; },
+                insert(value) { action = 'insert'; payload = copy(value); return query; },
+                async maybeSingle() {
+                  if (action === 'select') {
+                    state.requests.push({ method: 'select', filters: copy(filters) });
+                    return { data: copy(state.row), error: null };
+                  }
+                  if (action === 'update') {
+                    state.requests.push({ method: 'update', payload: copy(payload), filters: copy(filters) });
+                    if (state.conflictNextUpdate) {
+                      state.conflictNextUpdate = false;
+                      return { data: null, error: null };
+                    }
+                    const savedAt = '2026-11-11T00:00:01.000Z';
+                    state.row = { ...(state.row || {}), ...copy(payload), user_id: filters.user_id, saved_at: savedAt };
+                    return { data: { saved_at: savedAt }, error: null };
+                  }
+                  throw new Error('Unexpected maybeSingle action: ' + action);
+                },
+                async single() {
+                  if (action !== 'insert') throw new Error('Unexpected single action: ' + action);
+                  state.requests.push({ method: 'insert', payload: copy(payload) });
+                  const savedAt = '2026-11-11T00:00:02.000Z';
+                  state.row = { ...copy(payload), saved_at: savedAt };
+                  return { data: { saved_at: savedAt }, error: null };
+                }
+              };
+              return query;
+            };
+            window.supabase = {
+              createClient() {
+                return {
+                  from: makeQuery,
+                  auth: {
+                    onAuthStateChange(callback) {
+                      setTimeout(() => callback('INITIAL_SESSION', { user: state.user }), 0);
+                      return { data: { subscription: { unsubscribe() {} } } };
+                    },
+                    async getSession() { return { data: { session: { user: state.user } }, error: null }; }
+                  }
+                };
+              }
+            };
+          })();`;
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const existingSavedAt = '2026-11-10T22:00:00.000Z';
+              const existingRow = {
+                user_id: 'cloud-user-A', schema_version: 1, saved_at: existingSavedAt,
+                save_data: { version: 1, player: { x: 4, z: -18, yaw: 0.25 }, inventory: [{ name: 'CloudFixture', qty: 3 }] }
+              };
+              const page = await browser.newPage({viewport:{width:1280,height:800}});
+              const errors = [];
+              page.on('pageerror', error => errors.push(error.message));
+              await page.addInitScript(config => { window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ = config; }, { userId: 'cloud-user-A', row: existingRow });
+              await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', route => route.fulfill({status:200,contentType:'application/javascript',body:mockSdk}));
+              const response = await page.goto('http://127.0.0.1:4173/game/play.html', {waitUntil:'domcontentloaded'});
+              if (!response?.ok()) throw new Error('Game page did not load for authenticated cloud-save fixture');
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'loaded', null, {timeout:30000});
+              const restored = await page.evaluate(() => ({
+                userId: window.__CLIMBORIA_GAME_SAVE?.userId,
+                snapshot: window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.capture(),
+                requests: window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests
+              }));
+              if (restored.userId !== 'cloud-user-A' || restored.snapshot?.player?.x !== 4 ||
+                  !restored.snapshot?.inventory?.some(item => item.name === 'CloudFixture' && item.qty === 3) ||
+                  !restored.requests?.some(request => request.method === 'select' && request.filters.user_id === 'cloud-user-A')) {
+                throw new Error('Authenticated cloud save did not load the owner-filtered row: ' + JSON.stringify(restored));
+              }
+
+              await page.evaluate(() => {
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:13,z:-27,yaw:0.75},inventory:[{name:'CloudUpdatedFixture',qty:5}]})) throw new Error('Could not seed changed cloud-save state');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
+              await page.waitForFunction(() => window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'update'), null, {timeout:10000});
+              const updated = await page.evaluate(() => ({
+                status: window.__CLIMBORIA_GAME_SAVE?.status,
+                request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'update'),
+                row: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.row
+              }));
+              if (updated.status !== 'synced' || updated.request?.filters?.user_id !== 'cloud-user-A' ||
+                  updated.request?.filters?.saved_at !== existingSavedAt ||
+                  updated.request?.payload?.save_data?.player?.x !== 13 ||
+                  !updated.request?.payload?.save_data?.inventory?.some(item => item.name === 'CloudUpdatedFixture' && item.qty === 5) ||
+                  updated.row?.saved_at !== '2026-11-11T00:00:01.000Z') {
+                throw new Error('Optimistic cloud-save update did not use the last observed saved_at or persist the new snapshot: ' + JSON.stringify(updated));
+              }
+
+              await page.evaluate(() => {
+                const state = window.__CLIMBORIA_SUPABASE_MOCK_STATE__;
+                state.conflictNextUpdate = true;
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:31,z:-44,yaw:1.25},inventory:[{name:'ConflictFixture',qty:1}]})) throw new Error('Could not seed conflict fixture');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'conflict', null, {timeout:10000});
+              const conflict = await page.evaluate(() => ({
+                status: window.__CLIMBORIA_GAME_SAVE?.status,
+                ready: document.documentElement.dataset.climboriaCloudSave,
+                lastRequest: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.filter(request => request.method === 'update').slice(-1)[0]
+              }));
+              if (conflict.status !== 'conflict' || conflict.ready !== 'conflict' ||
+                  conflict.lastRequest?.filters?.saved_at !== '2026-11-11T00:00:01.000Z') {
+                throw new Error('A competing cloud save was not blocked using the last known version: ' + JSON.stringify(conflict));
+              }
+              if (errors.length) throw new Error('Authenticated cloud-save runtime errors: ' + errors.join(' | '));
+              await page.close();
+
+              const newPage = await browser.newPage({viewport:{width:1280,height:800}});
+              await newPage.addInitScript(config => { window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ = config; }, { userId: 'cloud-user-B', row: null });
+              await newPage.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', route => route.fulfill({status:200,contentType:'application/javascript',body:mockSdk}));
+              const newResponse = await newPage.goto('http://127.0.0.1:4173/game/play.html', {waitUntil:'domcontentloaded'});
+              if (!newResponse?.ok()) throw new Error('Game page did not load for first-save insert fixture');
+              await newPage.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'synced' &&
+                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'insert'), null, {timeout:30000});
+              const inserted = await newPage.evaluate(() => ({
+                userId: window.__CLIMBORIA_GAME_SAVE?.userId,
+                request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'insert'),
+                status: window.__CLIMBORIA_GAME_SAVE?.status
+              }));
+              if (inserted.userId !== 'cloud-user-B' || inserted.status !== 'synced' ||
+                  inserted.request?.payload?.user_id !== 'cloud-user-B' ||
+                  inserted.request?.payload?.schema_version !== 1 ||
+                  !inserted.request?.payload?.save_data?.player) {
+                throw new Error('First authenticated save did not insert the session owner's schema-v1 row: ' + JSON.stringify(inserted));
+              }
+              console.log('PASS authenticated cloud-save fixture: owner-filtered load, saved_at optimistic update, conflict lock, and first-row insert.');
+              await newPage.close();
+            } finally { await browser.close(); }
+          })().catch(error => { console.error(error); process.exit(1); });
+          JS
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
