@@ -364,7 +364,7 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
       governanceLogs: ["Program log: GOVERNANCE-INSTRUCTION: CreateProgramGovernance { transfer_upgrade_authority: true }"],
       instructionEvidence: [{
         programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
-        data: Buffer.from([5, 0, 0, 0]).toString("base64"), dataEncoding: "base64",
+        data: Buffer.from([5]).toString("base64"), dataEncoding: "base64",
         accounts: [realm, governance, METAPLEX_TOKEN_METADATA_PROGRAM_ID, programDataAddress, currentAuthority, "TokenOwnerRecord", "Payer", loader, "System", "CreateAuthority"],
       }],
     },
@@ -372,7 +372,7 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
       slot: 200, signature: "execute-upgrade", transactionAvailable: true, transactionError: null,
       instructionEvidence: [{
         programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
-        data: Buffer.from([16, 0, 0, 0]).toString("base64"), dataEncoding: "base64",
+        data: Buffer.from([16]).toString("base64"), dataEncoding: "base64",
         accounts: [governance, proposal, proposalTransaction, loader, programDataAddress, METAPLEX_TOKEN_METADATA_PROGRAM_ID, "Buffer", "Spill", "Rent", "Clock", governance],
       }],
     },
