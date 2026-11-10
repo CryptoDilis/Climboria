@@ -678,6 +678,12 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   const governanceProposalAccounts = await inspectGovernanceProposalAccounts({
     connection, sdk, governanceHistory, commitment,
   });
+  const governanceProposalDetails = decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk);
+  const governanceUpgradeVerification = verifyGovernanceUpgradeProposalEvidence({
+    governanceHistory, proposalDetails: governanceProposalDetails,
+    programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
+    programDataAddress: programDataAddress.toBase58(),
+  });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
     artifactSha256: artifactMetadata.sha256,
@@ -700,13 +706,8 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
     governanceHistory,
     governanceProposalAccounts,
-    governanceProposalDetails: decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk),
-    governanceUpgradeVerification: verifyGovernanceUpgradeProposalEvidence({
-      governanceHistory,
-      proposalDetails: decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk),
-      programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
-      programDataAddress: programDataAddress.toBase58(),
-    }),
+    governanceProposalDetails,
+    governanceUpgradeVerification,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
