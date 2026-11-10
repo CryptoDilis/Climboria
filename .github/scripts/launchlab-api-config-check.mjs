@@ -45,6 +45,25 @@ async function getAccount(rpc, address) {
   if (json.error) throw new Error(json.error.message || "Solana RPC error");
   return json.result?.value ?? null;
 }
+export function decodeConfigDestinations({ globalData, platformData, PublicKey, programId, platformId, mintB }) {
+  if (!Buffer.isBuffer(globalData) || globalData.length !== 371 || !Buffer.isBuffer(platformData) || platformData.length !== 944) {
+    throw new Error("GlobalConfig/PlatformConfig byte lengths do not match the pinned SDK layouts");
+  }
+  const key = (data, offset) => new PublicKey(data.subarray(offset, offset + 32)).toBase58();
+  const global = { protocolFeeOwner: key(globalData, 115), migrateFeeOwner: key(globalData, 147), migrateToAmmWallet: key(globalData, 179), migrateToCpmmWallet: key(globalData, 211) };
+  const platform = {
+    platformClaimFeeWallet: key(platformData, 16),
+    platformLockNftWallet: key(platformData, 48),
+    platformScale: u64(platformData, 80).toString(), creatorScale: u64(platformData, 88).toString(), burnScale: u64(platformData, 96).toString(), feeRate: u64(platformData, 104).toString(),
+    cpConfigId: key(platformData, 688), creatorFeeRate: u64(platformData, 720).toString(),
+    transferFeeExtensionAuth: key(platformData, 728), platformVestingWallet: key(platformData, 760).toString(), platformVestingScale: u64(platformData, 792).toString(),
+    platformCpCreator: key(platformData, 800), restrictGlobalConfig: platformData.readUInt8(832), restrictCurveParam: platformData.readUInt8(833), curveRuleManager: key(platformData, 834),
+  };
+  const pid = new PublicKey(programId);
+  const [platformFeeVault] = PublicKey.findProgramAddressSync([new PublicKey(platformId).toBuffer(), new PublicKey(mintB).toBuffer()], pid);
+  const [platformFeeVaultAuthority] = PublicKey.findProgramAddressSync([Buffer.from("platform_fee_vault_auth_seed", "utf8")], pid);
+  return { globalConfigDestinations: global, platformConfigDestinations: platform, derivedPlatformFeeVault: platformFeeVault.toBase58(), derivedPlatformFeeVaultAuthority: platformFeeVaultAuthority.toBase58(), creatorFeeVaultDerivation: { seedDescription: "[creator_wallet_pubkey, quote_mint_pubkey]", authoritySeed: "creator_fee_vault_auth_seed", note: "Creator vault is creator-specific and requires an approved creator wallet." } };
+}
 export function validateCurveDefaults({ config, global, platform, baseDecimals = 6, totalLockedAmount = 0n, shareFeeRate = 0n }) {
   const p = config.defaultParams;
   const supply = BigInt(p.supplyInit), totalSell = BigInt(p.totalSellA), totalRaise = BigInt(p.totalFundRaisingB);
@@ -94,6 +113,7 @@ async function verifyCluster(cluster) {
     minFundRaisingB: u64(gd, 75).toString(), mintB: new PublicKey(gd.subarray(83,115)).toBase58(), requiresPlatformAuth: gd.readUInt8(243) === 1
   };
   const platform = { platformScale: u64(pd,80).toString(), creatorScale: u64(pd,88).toString(), burnScale: u64(pd,96).toString(), feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
+  const destinations = decodeConfigDestinations({ globalData: gd, platformData: pd, PublicKey, programId: target.program, platformId: target.platformConfig, mintB: global.mintB });
   for (const key of ["epoch","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
@@ -105,6 +125,7 @@ async function verifyCluster(cluster) {
     quoteMint: global.mintB, quoteSymbol: config.mintInfoB?.symbol, quoteDecimals: config.mintInfoB?.decimals,
     baseDecimalsDefaultedBySdk: 6, defaultParams: config.defaultParams,
     onchainGlobalConfigMatchesApi: true, onchainPlatformConfig: platform,
+    ...destinations,
     feeDenominator: DENOMINATOR.toString(), validation,
     transactionSubmitted: false
   };
