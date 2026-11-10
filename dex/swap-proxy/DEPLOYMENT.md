@@ -9,6 +9,7 @@ This Worker is prepared but **not deployed**. The deployment workflow now target
 - Wrangler CLI 4.36.0 or later.
 - An active Cloudflare zone for `climboria.fun`. Wrangler provisions `api.climboria.fun` as a Worker Custom Domain from the checked-in config during deployment. Remove any conflicting CNAME at `api.climboria.fun` first; Cloudflare cannot create a Custom Domain over an existing CNAME.
 - A unique positive integer rate-limit namespace ID for this Cloudflare account.
+- The SQLite-backed `SwapOrderStore` Durable Object namespace provisioned by the checked-in Wrangler migration (`new_sqlite_classes`). No separate namespace ID or secret is required.
 - GitHub repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` containing that positive integer.
 - GitHub Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY` (encrypted; never commit or paste them into chat).
 
@@ -29,16 +30,16 @@ For a local/manual deployment, replace `namespace_id` in `wrangler.toml` with th
 - `GET /api/tokens/search?query=SOL`: Jupiter Tokens V2 search through the server-side key.
 - `GET /api/swap/quote?inputMint=...&outputMint=...&amount=...`: quote-only Jupiter Order request; does not create a signable transaction because no taker is supplied.
 - `POST /api/swap/order`: JSON `{ inputMint, outputMint, amount, taker }`. Amount is an integer string in the input token's base units.
-- `POST /api/swap/execute`: JSON `{ signedTransaction, requestId, lastValidBlockHeight? }`.
+- `POST /api/swap/execute`: JSON `{ signedTransaction, orderToken }`. The server-issued opaque order token resolves the original taker, transaction message, Jupiter request ID and block-height record; the browser cannot substitute those values.
 - `GET /health`: non-secret service readiness response.
 
 ## Important controls
 
 - The Worker never holds a user wallet private key or seed phrase. The user signs in their own wallet.
 - The server key is stored as a Cloudflare Worker secret and added only to upstream Jupiter requests.
-- The configured Cloudflare Rate Limiting binding is mandatory; requests fail closed if it is absent. The configured 30 requests per 60 seconds is an approximate per-IP baseline, not a strict global quota. Cloudflare documents that built-in limits are regional and eventually consistent; add account-level firewall rules/monitoring and tune limits against Jupiter's API plan.
+- The configured Cloudflare Rate Limiting binding and SQLite-backed `ORDER_STORE` Durable Object binding are mandatory; requests fail closed if either is absent. The order store validates the exact signed v0 message against the server-issued order, verifies the taker's Ed25519 signature, preserves non-taker signature slots for JupiterZ partial-signing, and atomically transitions each order from ready to executing once. Ambiguous upstream outcomes remain locked against replay. The configured 30 requests per 60 seconds is an approximate per-IP baseline, not a strict global quota. Cloudflare documents that built-in limits are regional and eventually consistent; add account-level firewall rules/monitoring and tune limits against Jupiter's API plan.
 - CORS is a browser-origin control, not authentication. The Worker remains a public endpoint and must have edge rate limits, monitoring, and abuse controls.
-- The Worker has an independent server-side execution kill switch: `EXECUTION_ENABLED` must be exactly `"true"` before `/api/swap/execute` will proxy anything. Production `wrangler.toml` sets it to `"false"` by default. Keep both the Worker switch and frontend `swap-config.js` (`enabled: false`) disabled until transaction instruction validation, request/order-to-wallet binding, independent security review, and controlled Devnet lifecycle tests pass.
+- The Worker has an independent server-side execution kill switch: `EXECUTION_ENABLED` must be exactly `"true"` before `/api/swap/execute` will proxy anything. Production `wrangler.toml` sets it to `"false"` by default. Keep both the Worker switch and frontend `swap-config.js` (`enabled: false`) disabled until transaction message binding, taker signature verification, one-time order state, independent security review, and controlled Devnet lifecycle tests pass.
 - The frontend wallet-reviewed Order/Execute flow is implemented in `/swap/` and `/dex/`, but remains feature-gated by public `swap-config.js` (`enabled: false`). It deserializes v0 transactions, checks the fee payer against the connected wallet, displays route/mint/amount/fee and instruction metadata, requests explicit wallet signing, and requires Jupiter `status: Success`, `code: 0`, plus a signature before showing success. This metadata is not a semantic instruction audit or a security guarantee. Mainnet execution must remain disabled until the Worker is deployed, independently security-reviewed, and Devnet/controlled-validator test cases pass.
 - Never claim a swap succeeded unless Jupiter returns `status: "Success"` and `code: 0`.
 
