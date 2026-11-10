@@ -206,3 +206,18 @@ export async function validateSignedOrderTransaction({
     return { ok: false, error: error instanceof Error ? error.message : "Invalid Solana transaction" };
   }
 }
+
+export function validateUnsignedOrderTransaction({ transaction, taker }) {
+  try {
+    const parsed = parseSolanaV0Transaction(transaction);
+    if (!equalBytes(parsed.staticAccountKeys[0], decodeBase58(taker))) {
+      return { ok: false, error: "Jupiter order fee payer does not match the requested taker wallet" };
+    }
+    if (!allZero(parsed.signatures[0])) {
+      return { ok: false, error: "Jupiter order unexpectedly contains a pre-existing taker signature" };
+    }
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Invalid unsigned order transaction" };
+  }
+}
