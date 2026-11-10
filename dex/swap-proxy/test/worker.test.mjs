@@ -50,13 +50,14 @@ test("blocks swap execution by default even when a signed payload is supplied", 
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), requestId: "request-123456" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: env.RATE_LIMITER });
   assert.equal(res.status, 503);
-  assert.match((await res.json()).error, /disabled pending security review/i);
+  assert.match((await res.json()).error, /transaction validation and order-wallet binding are not implemented/i);
 });
 
-test("rejects malformed execute payload", async () => {
+test("blocks malformed execute payload before parsing while the hard security gate is closed", async () => {
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "not-base64", requestId: "request-123456" }) });
   const res = await worker.fetch(req, env);
-  assert.equal(res.status, 400);
+  assert.equal(res.status, 503);
+  assert.match((await res.json()).error, /transaction validation and order-wallet binding are not implemented/i);
 });
 
 test("fails closed when edge rate limiter is not configured", async () => {
@@ -319,10 +320,14 @@ test("rejects an incomplete Jupiter order response without a request ID", async 
   }
 });
 
-test("preserves Jupiter Failed status without converting it to success", async () => {
+test("does not proxy a Jupiter Failed response while the hard execution gate is closed", async () => {
   const originalFetch = globalThis.fetch;
+  let upstreamCalled = false;
   try {
-    globalThis.fetch = async () => Response.json({ status: "Failed", code: 6001, signature: null, error: "Slippage tolerance exceeded" });
+    globalThis.fetch = async () => {
+      upstreamCalled = true;
+      return Response.json({ status: "Failed", code: 6001, signature: null, error: "Slippage tolerance exceeded" });
+    };
     const signedTransaction = Buffer.alloc(100, 7).toString("base64");
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
@@ -330,17 +335,12 @@ test("preserves Jupiter Failed status without converting it to success", async (
       body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
     });
     const res = await worker.fetch(req, env);
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.status, "Failed");
-    assert.equal(body.code, 6001);
-    assert.equal(body.signature, null);
-    assert.equal(body.error, "Slippage tolerance exceeded");
+    assert.equal(res.status, 503);
+    assert.equal(upstreamCalled, false);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
-
 
 test("bounds Jupiter upstream requests with a 12-second abort signal", async () => {
   const originalFetch = globalThis.fetch;
