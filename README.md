@@ -2841,3 +2841,14 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Production blockers remain:** Worker not deployed/configured; trusted ALT resolver is not wired into the execute route; semantic instruction validation and immutable order-wallet-message binding/replay protection are not implemented; no live RPC provider verification, controlled Devnet transaction lifecycle, or independent security review.
 - [ ] **Exact next task:** finish and inspect Browser Smoke run `42854701917`, including Jarrell's Peak step and screenshot artifact. Then implement the first audited, fail-closed semantic validator for a deliberately narrow supported instruction set; do not guess program IDs/layouts and do not connect it to execution until order binding, replay protection, adversarial tests, Devnet validation, and independent security review are complete.
 - Execution remains disabled. No production funds, signing, submission, Worker deployment, or live trading was enabled by this checkpoint.
+
+
+## 2026-11-11 — Trusted RPC response-boundary correction
+
+- [x] Corrected the resolver's endpoint error wording: it now says "configured HTTPS endpoint" rather than claiming the URL is a fully validated public endpoint.
+- [x] Tightened the response-size guarantee: the resolver now requires a streaming response body and rejects non-streaming response implementations instead of falling back to `.text()`, which could buffer an oversized body before enforcing the cap.
+- [x] Added a regression test proving that a response without a streaming reader is rejected. Updated the endpoint validation test to match the corrected wording.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md`: basic URL checks are explicitly not a complete SSRF defense; DNS resolution and every private address range are not comprehensively classified. Production deployment must restrict the server-side RPC hostname through deployment/network policy, and clients must never supply it.
+- [ ] **Verification pending:** these follow-up commits have not yet been covered by a fresh Validate run. Earlier green run `42854701949` is for pre-follow-up head `009c0940...` only. Do not infer test success from the earlier run.
+- [ ] Browser Smoke `42854701917` still had Jarrell's Peak gameplay step running at last inspection; all preceding DEX/Swap browser steps passed. This run does not validate the resolver follow-up commits.
+- [ ] **Exact next task:** run/obtain Validate on the latest PR #233 head and inspect the new streaming-response regression plus full parser suite. Then finish Browser Smoke gameplay/artifact review. Keep execution disabled; the RPC resolver remains a foundation and is not wired into `/api/swap/execute`.
