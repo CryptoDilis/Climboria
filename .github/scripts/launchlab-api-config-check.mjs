@@ -91,10 +91,10 @@ async function verifyCluster(cluster) {
     tradeFeeRate: u64(gd, 27).toString(), maxShareFeeRate: u64(gd, 35).toString(),
     minSupplyA: u64(gd, 43).toString(), maxLockRate: u64(gd, 51).toString(),
     minSellRateA: u64(gd, 59).toString(), minMigrateRateA: u64(gd, 67).toString(),
-    minFundRaisingB: u64(gd, 75).toString(), mintB: new PublicKey(gd.subarray(83,115)).toBase58()
+    minFundRaisingB: u64(gd, 75).toString(), mintB: new PublicKey(gd.subarray(83,115)).toBase58(), requiresPlatformAuth: gd.readUInt8(243) === 1
   };
-  const platform = { feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
-  for (const key of ["epoch","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB"]) {
+  const platform = { platformScale: u64(pd,80).toString(), creatorScale: u64(pd,88).toString(), burnScale: u64(pd,96).toString(), feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
+  for (const key of ["epoch","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
   const validation = validateCurveDefaults({ config, global, platform });
