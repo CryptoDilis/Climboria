@@ -21,6 +21,7 @@ on:
       - "game/play.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/game-save-options-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
