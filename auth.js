@@ -79,7 +79,8 @@
 
   const confirmLeavingGuest = () => {
     if (!currentSession?.user?.is_anonymous) return true;
-    return window.confirm('This is a guest account. Its progress is not linked to another login yet. Continue and switch accounts?');
+    setStatus('Guest progress is not linked to another login yet. Sign-in is blocked to protect this guest save until account linking is ready.');
+    return false;
   };
 
   const runPasswordSignIn = async () => {
@@ -123,8 +124,10 @@
         setStatus('Use a password with at least 8 characters.');
         return;
       }
-      if (currentSession?.user?.is_anonymous) {
-        setStatus('Guest-to-email account linking is not configured yet. Keep this guest session; do not create a separate account until linking is ready.');
+      if (currentSession) {
+        setStatus(currentSession.user?.is_anonymous
+          ? 'Guest-to-email account linking is not configured yet. Keep this guest session; do not create a separate account until linking is ready.'
+          : 'You are already signed in. Sign out on this device before creating a separate Climboria account.');
         return;
       }
       setBusy(true);

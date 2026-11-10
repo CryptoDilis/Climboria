@@ -118,6 +118,8 @@ jobs:
               'sb_publishable_', 'auth.signInWithPassword', 'auth.signUp',
               'auth.signInWithOAuth', "startOAuth('x')", "startOAuth('google')",
               "auth.signOut({ scope: 'local' })", 'onAuthStateChange',
+              'Guest progress is not linked to another login yet.',
+              "provider === 'x'",
           ]
           missing = [item for item in required_auth if item not in auth]
           if missing:
@@ -279,3 +281,4 @@ jobs:
           print(f"Audit passed for {len(files)} HTML files; extracted {count} inline scripts.")
           PY
           find /tmp/climboria-other-html-scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | while IFS= read -r -d '' file; do node --check "$file"; done
+

@@ -3249,3 +3249,5 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 ### X OAuth provider-name correction
 
 - Verified the current Supabase X/Twitter (OAuth 2.0) documentation (updated Oct 22, 2026): the supported JavaScript SDK provider identifier for the newer X OAuth 2.0 flow is `x`. Updated the homepage OAuth handler and CI assertion from legacy `twitter` to `x`. This does not enable X provider credentials in the Supabase Dashboard; client ID/secret and callback setup are still required.
+
+- Hardened the account-switch edge case: active guest sessions now cannot sign in to a different account or start an unrelated sign-up, because the current implementation does not yet merge/transfer guest player saves. A signed-in user must sign out locally before creating a separate account. This avoids orphaning or silently abandoning guest progress.
