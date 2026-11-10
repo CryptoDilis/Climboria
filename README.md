@@ -1,3 +1,13 @@
+### Latest checkpoint — 2026-11-10 (Fail-closed proposal evidence decoding)
+
+- [x] Hardened proposal decoding so an unavailable or unsuccessful RPC account batch returns `governance_proposal_account_evidence_unavailable`, never a misleading zero-error decoded status.
+- [x] Diagnosed LaunchLab run `42764121956`: mock parser test omitted the explicit `governance_proposal_accounts_captured` status after the decoder was correctly made fail-closed. Updated the fixture to model a successful RPC batch; no production-code rollback.
+- [x] Diagnosed earlier run `42763973918`: mock verification fixture omitted the current ProgramData upgrade authority after the new PDA-authority check. Updated fixture to include the current authority; Validate `42763992790` passed.
+- [x] Latest Validate run `42764199050` on commit `695a60a2c13495e7aa6e77a404f5b87fc42f9309`: SUCCESS.
+- [ ] Latest LaunchLab run `42764199217` on the same head: running; historical rebuild/live read-only capture not yet complete. Older run `42763993138` on commit `2acfd51b3801245ff03838b21e5cb43cdbd44cd9` remains in the read-only Devnet capture step.
+- [ ] **Next P0:** obtain the live proposal account batch, decode proposal names/states and transaction instructions, then report the exact verified count for the 39 governance executions. Do not mark them verified until proposal state, transaction status, loader opcode, ProgramData, Program ID, and current governance authority all match.
+- [ ] Historical deployment/source lineage remains unresolved; no `DeployWithMaxDataLen` was observed in the available ProgramData history. PR #231 remains Draft and unmerged. No signing, simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (Proposal-to-loader verification checks)
 
 - [x] Added a cross-check joining each successful governance `ExecuteTransaction` to its decoded Proposal and Proposal-transaction account. It verifies: governance PDA matches, Proposal state is `Completed`, Proposal-transaction points back to that Proposal, execution status is `Success`, exactly one embedded loader instruction exists, loader opcode is `Upgrade` (3), ProgramData and governed Program addresses match the live Metaplex addresses, and the final loader authority is the Program Governance PDA.
