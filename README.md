@@ -2810,3 +2810,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Integration pending:** helper is not imported by `src/index.mjs` and is not called from `/api/swap/execute`. Do not configure or accept an RPC endpoint from client input. Next implementation: wire a server-owned `SOLANA_RPC_URL` into a dedicated validation service without opening execution, then implement program-specific instruction semantics and immutable order-wallet-message binding.
 - [ ] **Exact next task:** obtain manual Validate run on current branch `codex/swap-semantic-execution-gate`; inspect all TAP tests (including `solana-rpc.test.mjs`). Then implement a fail-closed server-side semantic validator consuming the trusted ALT results, with allowlisted program IDs/instruction layouts and exact mint/authority/destination/amount constraints.
 - Execution remains hard-disabled; no Worker deployment, live RPC provider verification, wallet signing, transaction submission, or production trading.
+
+
+## 2026-11-11 — Validate CI green; RPC redirect hardening follow-up
+
+- [x] Fresh Validate run `42854007949` completed **SUCCESS** on PR #233 head `4d989326dc08bbfae9562bd53120f2603c9053c4`. The workflow ran `node --test dex/swap-proxy/test/*.test.mjs`, so the full Worker + Solana parser + trusted RPC resolver suite passed on that exact SHA.
+- [x] Inspected Browser Smoke run `42854007897` on the same SHA. Homepage CTA/DEX routing/mobile navigation, Worker proxy, fail-closed execution, standalone Swap, DEX shell, and mobile workspace/desktop regression steps had passed at the last check; compact 390px/360px layouts and remaining mobile/gameplay checks were still running.
+- [x] Additional SSRF/endpoint hardening: configured RPC fetch now sets `redirect: "error"`, preventing a trusted endpoint URL from silently redirecting the server request. Added a regression assertion and documented the control.
+- [ ] **Verification pending for follow-up commits:** redirect hardening commits `19f90962`, `f2e14d3b`, and docs `45cae0d0` were made after the successful run above. They require a new Validate run; do not extend the earlier green result to these commits.
+- [ ] **Exact next task:** verify fresh Validate and Browser Smoke results on the new head; then implement a server-only, fail-closed semantic transaction validator consuming trusted ALT results, followed by order-wallet-message binding/replay protection. Keep execution disabled.
+- Execution remains hard-disabled; resolver is not wired into `/api/swap/execute`, no live RPC provider verification or Worker deployment has been performed, and no production trades are enabled.
