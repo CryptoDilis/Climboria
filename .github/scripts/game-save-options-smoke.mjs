@@ -13,7 +13,7 @@ try {
   ];
 
   for (const scenario of scenarios) {
-    const page = await browser.newPage();
+    const page = await browser.newPage(scenario.name === "guest"\n      ? { viewport: { width: 1365, height: 900 } }\n      : scenario.name === "account-only"\n        ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }\n        : {});
     await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => {
       localStorage.setItem("climboria_jarrell_inventory_v1", '[{"name":"Quartz","qty":7}]');
@@ -43,7 +43,7 @@ try {
       installGameSaveOptions({ client });
     }, scenario);
     await page.getByRole("button", { name: "SAVE OPTIONS" }).click();
-    await page.locator("#climboria-save-options .save-status").waitFor({ state: "visible" });
+    await page.locator("#climboria-save-options .save-status").waitFor({ state: "visible" });\n    if (scenario.name === "guest" || scenario.name === "account-only") {\n      const panelBox = await page.locator("#climboria-save-options").boundingBox();\n      const viewport = page.viewportSize();\n      if (!panelBox || panelBox.x < 0 || panelBox.y < 0 || panelBox.x + panelBox.width > viewport.width + 1 || panelBox.y + panelBox.height > viewport.height + 1) {\n        failures.push(scenario.name + ": Save Options panel exceeds viewport bounds: " + JSON.stringify({ panelBox, viewport }));\n      }\n      await page.screenshot({ path: scenario.name === "guest" ? "climboria-save-options-desktop.png" : "climboria-save-options-mobile.png" });\n    }
     await page.waitForFunction(expected => document.querySelector("#climboria-save-options .save-status")?.textContent.includes(expected), scenario.expected);
     const inventoryBefore = await page.evaluate(() => localStorage.getItem("climboria_jarrell_inventory_v1"));
     if (scenario.chooseAccount) {
@@ -67,7 +67,7 @@ try {
     if (result.inventory !== inventoryBefore) failures.push(scenario.name + ": inventory changed");
     await page.keyboard.press("Escape");
     if (await page.locator("#climboria-save-options").isVisible()) failures.push(scenario.name + ": Escape did not close the panel");
-    if (await page.getByRole("button", { name: "SAVE OPTIONS" }).getAttribute("aria-expanded") !== "false") failures.push(scenario.name + ": trigger aria-expanded was not reset");
+    if (await page.getByRole("button", { name: "SAVE OPTIONS" }).getAttribute("aria-expanded") !== "false") failures.push(scenario.name + ": trigger aria-expanded was not reset");\n    if (await page.evaluate(() => document.activeElement?.id) !== "climboria-save-options-trigger") failures.push(scenario.name + ": Escape did not restore focus to the Save Options trigger");
     await page.close();
   }
   if (failures.length) throw new Error(failures.join("\n"));
