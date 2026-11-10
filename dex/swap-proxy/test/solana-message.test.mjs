@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeSolanaTransaction, hashSolanaMessage } from "../src/solana-message.mjs";
+import { decodeSolanaTransaction, hashSolanaMessage, reconstructAccountMetas } from "../src/solana-message.mjs";
 
 function shortVec(value) {
   const out = [];
@@ -47,7 +47,7 @@ test("rejects malformed base64, truncated transactions, and zero signatures", ()
 test("rejects trailing bytes instead of silently accepting a different wire message", () => {
   assert.throws(() => decodeSolanaTransaction(fixture({ trailing: [99] })), /trailing transaction bytes/);
 });
-test("rejects instruction program indexes outside static account keys", () => {
+test("rejects instruction program indexes outside the full account range", () => {
   assert.throws(() => decodeSolanaTransaction(fixture({ programIndex: 1, accountIndex: 0 })), /program index/);
 });
 test("rejects instruction account indexes outside the combined key range", () => {
@@ -59,4 +59,41 @@ test("hashes the exact serialized message, excluding signatures", async () => {
   const bytes = Buffer.from(tx, "base64");
   bytes[1] ^= 1;
   assert.equal(await hashSolanaMessage(bytes.toString("base64")), first);
+});
+
+
+test("reconstructs canonical static and ALT writable-then-readonly account ordering", () => {
+  const key = n => Uint8Array.from({ length: 32 }, () => n);
+  const parsed = {
+    staticAccountKeys: [key(1), key(2), key(3)],
+    requiredSignatures: 1, readonlySigned: 0, readonlyUnsigned: 1,
+    addressTableLookups: [
+      { accountKey: key(10), writableIndexes: [0], readonlyIndexes: [1] },
+      { accountKey: key(11), writableIndexes: [1], readonlyIndexes: [0] }
+    ],
+    totalKeyCount: 7,
+    instructions: [{ programIdIndex: 6, accountIndexes: [0, 3, 4, 5], data: Uint8Array.of(1) }]
+  };
+  const tables = [
+    { accountKey: key(10), addresses: [key(20), key(21)] },
+    { accountKey: key(11), addresses: [key(22), key(23)] }
+  ];
+  const resolved = reconstructAccountMetas(parsed, tables);
+  assert.deepEqual(resolved.metas.map(x => x.key.slice(0, 2)), ["01", "02", "03", "14", "17", "15", "16"]);
+  assert.deepEqual(resolved.metas.map(x => x.writable), [true, true, false, true, true, false, false]);
+  assert.equal(resolved.instructions[0].program.key, resolved.metas[6].key);
+});
+
+test("fails closed on missing, mismatched, duplicated or out-of-bounds ALT data", () => {
+  const key = n => Uint8Array.from({ length: 32 }, () => n);
+  const parsed = {
+    staticAccountKeys: [key(1)], requiredSignatures: 1, readonlySigned: 0, readonlyUnsigned: 0,
+    addressTableLookups: [{ accountKey: key(10), writableIndexes: [0], readonlyIndexes: [1] }],
+    totalKeyCount: 3, instructions: []
+  };
+  assert.throws(() => reconstructAccountMetas(parsed), /trusted resolution/);
+  assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: key(11), addresses: [key(20), key(21)] }]), /identity mismatch/);
+  assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: key(10), addresses: [key(20)] }]), /lookup table index/);
+  assert.throws(() => reconstructAccountMetas({ ...parsed, addressTableLookups: [{ ...parsed.addressTableLookups[0], readonlyIndexes: [0] }] }, [{ accountKey: key(10), addresses: [key(20), key(21)] }]), /duplicated lookup table index/);
+  assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: key(10), addresses: [key(1), key(21)] }]), /Duplicate resolved account/);
 });
