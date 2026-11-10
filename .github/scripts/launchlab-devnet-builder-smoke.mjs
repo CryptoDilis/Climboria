@@ -20,6 +20,7 @@ const {
   PlatformCurveRule,
   PLATFORM_CURVE_RULE_DISCRIMINATOR,
   getPdaPlatformCurveRule,
+  getPdaPlatformAllowConfig,
   checkLaunchAgainstCurveRule,
   TxVersion,
 } = sdkPackage;
@@ -27,6 +28,7 @@ const {
 if (!Raydium || !LaunchpadConfig || !PlatformConfig || !PlatformCurveRule ||
     !Buffer.isBuffer(PLATFORM_CURVE_RULE_DISCRIMINATOR) ||
     typeof getPdaPlatformCurveRule !== "function" ||
+    typeof getPdaPlatformAllowConfig !== "function" ||
     typeof checkLaunchAgainstCurveRule !== "function" || !TxVersion || !BN) {
   throw new Error("Pinned Raydium SDK exports required by the Devnet builder are missing");
 }
@@ -76,7 +78,7 @@ raydium.launchpad.createLaunchpad = async params => {
 
 const result = await prepareDevnetLaunch({
   raydium,
-  sdk: { PublicKey, BN, LaunchpadConfig, PlatformConfig, PlatformCurveRule, PLATFORM_CURVE_RULE_DISCRIMINATOR, getPdaPlatformCurveRule, checkLaunchAgainstCurveRule, TxVersion },
+  sdk: { PublicKey, BN, LaunchpadConfig, PlatformConfig, PlatformCurveRule, PLATFORM_CURVE_RULE_DISCRIMINATOR, getPdaPlatformCurveRule, getPdaPlatformAllowConfig, checkLaunchAgainstCurveRule, TxVersion },
   input: {
     cluster: "devnet",
     programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
@@ -117,6 +119,7 @@ process.stdout.write(JSON.stringify({
   migration: result.migration,
   signerRequirements: result.signerRequirements,
   feeVaults: result.feeVaults,
+  platformAllowConfig: result.platformAllowConfig,
   platformCurveRule: result.platformCurveRule,
   feeAndMigrationDestinations: result.feeAndMigrationDestinations,
   transactionReviews: result.transactionReviews,
