@@ -152,6 +152,72 @@ test("marks reached-but-truncated ProgramData history as partial, never complete
   assert.equal(result.status, "programdata_state_slot_reached_with_bounded_partial_history");
 });
 
+test("fetches all 93 historical candidates with bounded concurrency and complete coverage", async () => {
+  const candidates = Array.from({ length: 93 }, (_, index) => ({
+    signature: `HistorySignature${index}`, slot: 2000 - index, blockTime: 1794000000 + index, err: null,
+  }));
+  let active = 0;
+  let maxActive = 0;
+  const connection = {
+    getSignaturesForAddress: async (_key, options, commitment) => {
+      assert.equal(options.limit, 250);
+      assert.equal(commitment, "finalized");
+      return candidates;
+    },
+    getTransaction: async signature => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      await new Promise(resolve => setTimeout(resolve, 2));
+      active--;
+      return {
+        transaction: { message: { staticAccountKeys: [], header: { numRequiredSignatures: 0 }, compiledInstructions: [] } },
+        meta: { err: null, logMessages: [] },
+        blockTime: 1794000000,
+      };
+    },
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress), stateSlot: 3000,
+    pageSize: 250, maxPages: 8, maxHistoricalTransactions: 100,
+    maxHistoryConcurrency: 4, historyFetchDeadlineMs: 180000,
+  });
+  assert.equal(result.reachedStateSlot, true);
+  assert.equal(result.availableHistoricalSignatureCount, 93);
+  assert.equal(result.historicalCandidateCount, 93);
+  assert.equal(result.signatures.length, 93);
+  assert.equal(result.historyFetchCoverage.requestedTransactionCount, 93);
+  assert.equal(result.historyFetchCoverage.fetchedTransactionCount, 93);
+  assert.equal(result.historyFetchCoverage.unavailableTransactionCount, 0);
+  assert.equal(result.historyFetchCoverage.complete, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.status, "programdata_state_slot_reached");
+  assert.ok(maxActive > 1 && maxActive <= 4, `unexpected concurrency: ${maxActive}`);
+});
+
+test("keeps history incomplete when any selected transaction cannot be fetched", async () => {
+  const candidates = Array.from({ length: 3 }, (_, index) => ({
+    signature: `PartialSignature${index}`, slot: 2000 - index, err: null,
+  }));
+  const connection = {
+    getSignaturesForAddress: async () => candidates,
+    getTransaction: async signature => signature === "PartialSignature1" ? null : ({
+      transaction: { message: { staticAccountKeys: [], header: { numRequiredSignatures: 0 }, compiledInstructions: [] } },
+      meta: { err: null, logMessages: [] },
+    }),
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress), stateSlot: 3000,
+    pageSize: 250, maxHistoricalTransactions: 10, maxHistoryConcurrency: 2,
+    historyFetchDeadlineMs: 10000,
+  });
+  assert.equal(result.historyFetchCoverage.requestedTransactionCount, 3);
+  assert.equal(result.historyFetchCoverage.fetchedTransactionCount, 2);
+  assert.equal(result.historyFetchCoverage.unavailableTransactionCount, 1);
+  assert.equal(result.historyFetchCoverage.complete, false);
+  assert.equal(result.complete, false);
+  assert.equal(result.status, "programdata_state_slot_reached_with_bounded_partial_history");
+});
+
 test("captures immutable ProgramData when upgrade authority is absent", async () => {
   const f = fixture({ authorityOption: 0 });
   const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
