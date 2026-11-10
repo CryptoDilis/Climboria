@@ -75,9 +75,9 @@ test("builds an unapproved owner packet from source-backed rent layouts and fina
   assert.equal(result.messageSha256.length, 64);
   assert.deepEqual(result.requiredSignerKeys, [feePayer, mint]);
   assert.deepEqual(result.rentAccounts.map(x => x.address), [mint, pool, baseVault, quoteVault, metadata]);
-  assert.equal(result.rentReserveLamports, (82 + 421 + 165 + 165 + 607) * 1000);
+  assert.equal(result.rentReserveLamports, (82 + 429 + 165 + 165 + 607) * 1000);
   assert.equal(result.networkFeeLamports, 5000);
-  assert.equal(result.requiredLamports, 1_545_000);
+  assert.equal(result.requiredLamports, 1_553_000);
   assert.equal(result.finalizedFeePayerBalanceLamports, 10_000_000);
   assert.equal(result.ownerApproval.approved, false);
   assert.equal(result.ownerApproval.reference, null);
@@ -86,7 +86,7 @@ test("builds an unapproved owner packet from source-backed rent layouts and fina
   assert.equal(result.transactionSimulated, false);
   assert.equal(result.transactionSubmitted, false);
   assert.equal(f.calls.simulation, 0);
-  assert.deepEqual(f.calls.rent, [82, 421, 165, 165, 607].map(space => ({ space, commitment: "finalized" })));
+  assert.deepEqual(f.calls.rent, [82, 429, 165, 165, 607].map(space => ({ space, commitment: "finalized" })));
   assert.ok(result.rentAccounts.every(x => x.sourceRef && x.verificationScope));
   assert.equal(result.rentAccounts[4].dataSpaceBytes, 607);
 });
