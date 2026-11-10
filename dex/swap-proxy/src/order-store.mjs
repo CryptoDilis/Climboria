@@ -118,7 +118,7 @@ export class SwapOrderStore {
 
       return json({ error: "Not found" }, 404);
     } catch (error) {
-      return json({ error: error instanceof Error ? error.message : "Order store failed" }, 400);
+      return json({ error: error instanceof Error ? error.message : "Order store failed" }, 503);
     }
   }
 
