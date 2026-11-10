@@ -2919,3 +2919,7 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] Corrected Base64 decoding and set the ALT extension start index to the actual first address.
 - [ ] PR #233 Validate run `42852777038` failed on the earlier head with 38 passing / 2 failing tests. Fixes are committed on the latest PR #233 branch, but no fresh verification run exists yet. Browser Smoke remains tied to the pre-fix head.
 - [ ] Next: fresh CI against latest PR #233 head, then trusted RPC ALT integration and instruction semantic validation. Keep Swap execution disabled until independent review and controlled Devnet lifecycle tests.
+
+
+- [x] Added a manual `workflow_dispatch` trigger to PR #233's Validate workflow so maintainers can run the complete parser/Worker suite on the selected branch.
+- [ ] The connected GitHub actions do not expose workflow dispatch. A maintainer needs to select `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow and verify it checks out the latest commit.
