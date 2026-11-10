@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateCurveDefaults } from "./launchlab-api-config-check.mjs";
+import { createRequire } from "node:module";
+import { decodeConfigDestinations, validateCurveDefaults } from "./launchlab-api-config-check.mjs";
+const require = createRequire("/tmp/launchlab-tools/package.json");
+const { PublicKey } = require("@solana/web3.js");
 
 const valid = {
   config: { defaultParams: { supplyInit: "1000000000000000", totalSellA: "793100000000000", totalFundRaisingB: "85000000000" } },
@@ -33,4 +36,41 @@ test("rejects fee totals above the protocol denominator", () => {
   const result = validateCurveDefaults(invalid);
   assert.equal(result.pass, false);
   assert.equal(result.checks.totalFeeRateWithinDenominator, false);
+});
+
+test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock destinations from pinned SDK offsets", () => {
+  const globalData = Buffer.alloc(371);
+  const platformData = Buffer.alloc(944);
+  const wallet = (n) => Keypair.generate().publicKey;
+  const { Keypair } = require("@solana/web3.js");
+  const addresses = Array.from({ length: 9 }, () => Keypair.generate().publicKey);
+  const putKey = (buffer, offset, key) => key.toBuffer().copy(buffer, offset);
+  [115,147,179,211].forEach((offset, i) => putKey(globalData, offset, addresses[i]));
+  [16,48,688,728,760,800,834].forEach((offset, i) => putKey(platformData, offset, addresses[i+4]));
+  const result = decodeConfigDestinations({
+    globalData, platformData, PublicKey,
+    programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
+    platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
+    mintB: "So11111111111111111111111111111111111111112",
+  });
+  assert.equal(result.globalConfigDestinations.protocolFeeOwner, addresses[0].toBase58());
+  assert.equal(result.globalConfigDestinations.migrateFeeOwner, addresses[1].toBase58());
+  assert.equal(result.globalConfigDestinations.migrateToAmmWallet, addresses[2].toBase58());
+  assert.equal(result.globalConfigDestinations.migrateToCpmmWallet, addresses[3].toBase58());
+  assert.equal(result.platformConfigDestinations.platformClaimFeeWallet, addresses[4].toBase58());
+  assert.equal(result.platformConfigDestinations.platformLockNftWallet, addresses[5].toBase58());
+  assert.equal(result.platformConfigDestinations.cpConfigId, addresses[6].toBase58());
+  assert.equal(result.platformConfigDestinations.transferFeeExtensionAuth, addresses[7].toBase58());
+  assert.equal(result.platformConfigDestinations.platformVestingWallet, addresses[8].toBase58());
+  assert.ok(result.derivedPlatformFeeVault);
+  assert.ok(result.derivedPlatformFeeVaultAuthority);
+  assert.match(result.creatorFeeVaultDerivation.seedDescription, /creator_wallet_pubkey/);
+});
+test("rejects config destination decoding when byte lengths do not match pinned SDK layouts", () => {
+  assert.throws(() => decodeConfigDestinations({
+    globalData: Buffer.alloc(370), platformData: Buffer.alloc(944), PublicKey,
+    programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
+    platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
+    mintB: "So11111111111111111111111111111111111111112",
+  }), /byte lengths do not match/);
 });
