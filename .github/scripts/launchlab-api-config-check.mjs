@@ -144,8 +144,9 @@ export function decodeConfigDestinations({ globalData, platformData, PublicKey, 
       effectiveBurnScale: burnScale.toString(),
       platformNftRecipient: platform.platformLockNftWallet,
       separateCreatorFeeKeyForPostUpgradeMigration: false,
-      formula: "platformLockedLp = floor(totalLp * (platformScale + creatorScale) / 1,000,000); burnedLp = totalLp - platformLockedLp",
-      note: "Creator scale is folded into the platform Fee Key for migrations executed after the 2026-08-17 upgrade; do not promise it as a creator-owned LP fee entitlement."
+      scaleApplicationVerifiedAgainstDeployedBytecode: false,
+      interpretation: "After the 2026-08-17 LaunchLab migration update, legacy creatorScale is treated as part of the platform Fee Key share; burnScale remains the burn share.",
+      note: "This reports the configured scale split and documented post-upgrade interpretation only. Exact LP token rounding, NFT mint count and custody must be checked against the deployed LaunchLab bytecode or a separately approved migration preview; do not promise creator-owned LP fee entitlement."
     },
     derivedPlatformFeeVault: platformFeeVault.toBase58(),
     derivedPlatformFeeVaultAuthority: platformFeeVaultAuthority.toBase58(),
