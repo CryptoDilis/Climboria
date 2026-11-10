@@ -12,7 +12,7 @@ class PublicKey {
     return [new PublicKey("PDA" + digest), 255];
   }
 }
-class BN { constructor(value) { this.value = String(value); } }
+class BN { constructor(value) { this.value = String(value); } toString() { return this.value; } }
 const ids = {
   programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
   configId: "7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt",
