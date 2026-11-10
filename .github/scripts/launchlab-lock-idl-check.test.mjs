@@ -63,7 +63,7 @@ test("validates pinned official source PDA seeds and LP custody constraints", ()
     libSource: libSource.replace("lock_cp_authority_seed", "wrong_seed"),
     statesSource,
     contextSource,
-  }, target, PublicKey), /authority seed differs/);
+  }, target, PublicKey), /authority PDA seed differs/);
 });
 test("validates live-style CPMM LP lock and fee collection schemas against pinned SDK account order", () => {
   const result = validateLockProgramIdl(fixture(), target, PublicKey);
