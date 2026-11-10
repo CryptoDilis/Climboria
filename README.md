@@ -2760,3 +2760,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Next P0:** implement read-only `PlatformAllowConfig` PDA/account decoding and identity/owner/bump checks for `restrictGlobalConfig`; append its optional instruction account to the exact initializeV2 account review and add positive/tampering fixtures. Until that passes, this mode remains blocked.
 - [ ] Then review a funded, separately controlled Devnet simulation gate only after explicit user approval. No synthetic CI key may sign, simulate, or submit.
 - [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled pending approved Climboria launch settings and independent security review.
+
+### Signature LaunchLab PlatformAllowConfig gate — 2026-11-10
+
+- [x] Implemented finalized read-only PlatformAllowConfig PDA derivation via the pinned SDK's `getPdaPlatformAllowConfig` and checked LaunchLab program ownership.
+- [x] Validates the exact pinned Anchor `PlatformGlobalAccess` discriminator, 137-byte account layout, stored bump, GlobalConfig pubkey, and PlatformConfig pubkey.
+- [x] When `restrictGlobalConfig` is enabled, the verified PlatformAllowConfig PDA is passed to the SDK builder and appended in the correct optional initializeV2 account order, before PlatformCurveRule. Both optional accounts are covered together by tests (20 account metas).
+- [x] Pinned SDK/IDL verifier now checks the PlatformGlobalAccess discriminator, field layout, and PlatformAllowConfig PDA seed/order against the immutable SDK/IDL commits.
+- [x] Added fixtures for successful allow-config validation plus missing account, wrong owner, wrong identity, wrong discriminator, wrong bump, and combined allow-config/curve-rule optional account placement.
+- [x] Latest LaunchLab Live Provenance run `42754268911` — SUCCESS on PR head `9ff6aff5f947636faf1084b166a7b498c6d88b89`. Latest Validate Climboria run `42754268541` — SUCCESS.
+- [x] Real pinned-SDK Devnet builder smoke passed and reported current live Devnet flags: `restrictGlobalConfig=false`, `restrictCurveParam=false`. Therefore no live PlatformAllowConfig or PlatformCurveRule account was required/claimed in this live run; restricted branches are covered by deterministic fixtures.
+- [x] No wallet signature, simulation, submission, migration, fee collection, or Mainnet execution occurred.
+- [ ] **Next P0:** prepare a separate, explicitly gated Devnet simulation preflight using a dedicated funded Devnet fee-payer wallet. It must verify the wallet balance and rent/fee headroom, use unsigned simulation only, and fail closed unless a dedicated approval flag and wallet address are explicitly provided. Do not run it or use CI synthetic keys without explicit approval.
+- [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until a dedicated Devnet simulation is reviewed, production launch settings are approved, and independent security review is complete.
