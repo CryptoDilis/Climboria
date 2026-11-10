@@ -3291,3 +3291,19 @@ For every integrated asset or borrowed technique, record:
 - [x] No wallet signature, simulation, submission, migration, fee collection, or Mainnet execution occurred.
 - [ ] **Next P0:** prepare a separate, explicitly gated Devnet simulation preflight using a dedicated funded Devnet fee-payer wallet. It must verify the wallet balance and rent/fee headroom, use unsigned simulation only, and fail closed unless a dedicated approval flag and wallet address are explicitly provided. Do not run it or use CI synthetic keys without explicit approval.
 - [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until a dedicated Devnet simulation is reviewed, production launch settings are approved, and independent security review is complete.
+
+
+## 2026-11-11 — Fresh LaunchLab release-state recheck
+
+- [x] Refreshed PR #231 against the current `main` snapshot `bd1d5d45a6a68cdc0f40f98176568f86d103167c`: the LaunchLab branch remains **350 commits ahead / 92 behind**, diverged, merge base `9709b0301c97445e05c1ac0dec6b4c7ae1ade4ed`. No rebase, force-push, or merge was attempted; the 92-commit integration gap includes site/game/DEX and CI changes and needs a conflict-aware worktree.
+- [x] Exact PR head remains `281209c66e2e69fa14c973867086947a2dc47000`. GitHub reports exact-head Validate run `42866535160` and LaunchLab Live Provenance run `42866535205` both SUCCESS. These are read-only source/provenance and builder-preparation checks, not transaction execution or Mainnet readiness.
+- [x] Reconfirmed the current `main` Launchpad page is still informational/static: `launchpad/index.html` has no script or form elements. The live Launchpad UI is therefore not a production token-creation or fundraising service yet.
+- [!] Do not claim live launch creation, deposits, fundraising, LP migration, fee collection, or Mainnet execution. Do not create a wallet signing/simulation step from a CI fixture or synthetic key.
+
+### Exact next task
+1. Resolve custody/governance of the Devnet CPMM fixed create-pool fee receiver using authoritative owner-controlled documentation or a verifiable on-chain governance source; do not infer custody from the token account owner alone.
+2. Obtain the canonical Devnet LP Lock legacy Anchor IDL at the expected program-derived address, or maintain an explicitly source-verified fallback with a documented limitation; do not claim live-IDL verification without the account.
+3. Establish deployed-program provenance for CPMM, LP Lock and LaunchLab: immutable build/source hashes, deployed bytecode comparison, upgrade authorities and governance. Source pinning alone is not proof that deployed bytecode matches.
+4. Verify migration scale/rounding, LP lock result, Fee Key NFT count and custody against deployed bytecode or an approved read-only migration preview.
+5. Only after these read-only gates, prepare a funded Devnet simulation plan. The simulation must remain unrun until the owner supplies a dedicated funded Devnet fee payer and explicit approval; no Mainnet transaction or public deposits.
+6. Obtain a writable network worktree and reconcile the 350-ahead/92-behind branch conflict-aware against current main; rerun LaunchLab Live Provenance and Validate on the integrated exact head. Keep PR #231 draft until that is green and independently reviewed.
