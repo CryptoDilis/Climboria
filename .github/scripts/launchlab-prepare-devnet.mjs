@@ -6,6 +6,8 @@
  * The caller must supply the ephemeral mint Keypair and every economic amount;
  * provider defaults are deliberately never read as launch settings.
  */
+import { createHash } from "node:crypto";
+
 const DEVNET = Object.freeze({
   programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
   configId: "7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt",
@@ -46,7 +48,12 @@ export function validateDevnetLaunchInput(input, sdk) {
   let parsedUri;
   try { parsedUri = new URL(uri); } catch { fail("Metadata URI must be a valid HTTPS URL"); }
   if (parsedUri.protocol !== "https:") fail("Metadata URI must use HTTPS");
-  if (typeof contentHash !== "string" || !/^[a-f0-9]{64}$/i.test(contentHash)) fail("Metadata SHA-256 content hash is required");
+  if (typeof input.metadata.contentJson !== "string" || !input.metadata.contentJson.trim()) fail("Exact metadata JSON content is required for integrity verification");
+  let metadataObject;
+  try { metadataObject = JSON.parse(input.metadata.contentJson); } catch { fail("Metadata content must be valid JSON"); }
+  const actualHash = createHash("sha256").update(input.metadata.contentJson, "utf8").digest("hex");
+  if (typeof contentHash !== "string" || actualHash !== contentHash.toLowerCase()) fail("Metadata SHA-256 does not match the exact metadata JSON bytes");
+  if (metadataObject.name !== name || metadataObject.symbol !== symbol) fail("Metadata JSON name/symbol must match the reviewed launch fields");
   if (input.migrateType !== "cpmm") fail("New LaunchLab launches must explicitly use CPMM migration");
   if (input.createOnly !== true) fail("Creator preparation must use create-only mode; no initial buy");
   if (input.token2022 === true || input.transferFeeExtensionParams) fail("Token-2022 transfer-fee launches are not enabled in this Devnet preparation path");
