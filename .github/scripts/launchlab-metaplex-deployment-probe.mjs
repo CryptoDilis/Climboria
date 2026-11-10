@@ -139,7 +139,8 @@ export async function inspectProgramDataStateSlotBlock({
 }
 
 async function inspectUpgradeableAccountHistory({
-  connection, accountPublicKey, stateSlot, accountLabel, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 100,
+  connection, accountPublicKey, stateSlot, accountLabel, pageSize = 1000, maxPages = 10,
+  maxHistoricalTransactions = 100, maxHistoryConcurrency = 4, historyFetchDeadlineMs = 180000,
 }) {
   if (typeof connection?.getSignaturesForAddress !== "function" ||
       typeof connection?.getTransaction !== "function" || !accountPublicKey ||
@@ -148,7 +149,9 @@ async function inspectUpgradeableAccountHistory({
   }
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000 ||
       !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50 ||
-      !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 200) {
+      !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 200 ||
+      !Number.isSafeInteger(maxHistoryConcurrency) || maxHistoryConcurrency < 1 || maxHistoryConcurrency > 8 ||
+      !Number.isSafeInteger(historyFetchDeadlineMs) || historyFetchDeadlineMs < 1000 || historyFetchDeadlineMs > 240000) {
     throw new Error("Invalid bounded account history scan configuration");
   }
   let before;
@@ -187,11 +190,17 @@ async function inspectUpgradeableAccountHistory({
   // is more likely to be earlier than the recent upgrades and extensions.
   const selectedHistoricalCandidates = historicalCandidates.slice(-maxHistoricalTransactions).reverse();
   const history = [];
-  for (let offset = 0; offset < selectedHistoricalCandidates.length; offset += 2) {
-    const batch = await Promise.all(selectedHistoricalCandidates.slice(offset, offset + 2).map(async info => {
+  const historyDeadline = Date.now() + historyFetchDeadlineMs;
+  for (let offset = 0; offset < selectedHistoricalCandidates.length; offset += maxHistoryConcurrency) {
+    if (Date.now() >= historyDeadline) break;
+    const batch = await Promise.all(selectedHistoricalCandidates.slice(offset, offset + maxHistoryConcurrency).map(async info => {
       let transaction = null;
       let fetchError = null;
       for (let attempt = 0; attempt < 4; attempt++) {
+        if (Date.now() >= historyDeadline) {
+          fetchError = "history_fetch_deadline_exceeded";
+          break;
+        }
         try {
           transaction = await connection.getTransaction(info.signature, {
             commitment: "finalized", maxSupportedTransactionVersion: 1,
@@ -202,7 +211,12 @@ async function inspectUpgradeableAccountHistory({
           fetchError = String(error.message || error);
           const rateLimited = /429|too many requests|rate limit/i.test(fetchError);
           if (!rateLimited || attempt === 3) break;
-          await new Promise(resolve => setTimeout(resolve, 500 * (2 ** attempt)));
+          const delayMs = Math.min(500 * (2 ** attempt), Math.max(0, historyDeadline - Date.now()));
+          if (delayMs <= 0) {
+            fetchError = "history_fetch_deadline_exceeded";
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, delayMs));
         }
       }
       const logs = transaction?.meta?.logMessages ?? [];
@@ -237,7 +251,11 @@ async function inspectUpgradeableAccountHistory({
     }));
     history.push(...batch);
   }
-  const historyComplete = reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions;
+  const historyFetchComplete = history.length === selectedHistoricalCandidates.length &&
+    history.every(entry => entry.transactionAvailable);
+  const historyComplete = reachedStateSlot &&
+    historicalCandidates.length <= maxHistoricalTransactions && historyFetchComplete;
+  const historyFetchFailureCount = history.filter(entry => !entry.transactionAvailable).length;
   return {
     status: !reachedStateSlot ? `${accountLabel}_history_incomplete`
       : historyComplete ? `${accountLabel}_state_slot_reached`
@@ -248,6 +266,15 @@ async function inspectUpgradeableAccountHistory({
     selectedRangeOldestSlot: selectedHistoricalCandidates[0]?.slot ?? null,
     selectedRangeNewestSlot: selectedHistoricalCandidates.at(-1)?.slot ?? null,
     signatures: history,
+    historyFetchCoverage: {
+      complete: historyFetchComplete,
+      requestedTransactionCount: selectedHistoricalCandidates.length,
+      fetchedTransactionCount: history.filter(entry => entry.transactionAvailable).length,
+      unavailableTransactionCount: historyFetchFailureCount,
+      concurrency: maxHistoryConcurrency,
+      deadlineMs: historyFetchDeadlineMs,
+      deadlineReached: Date.now() >= historyDeadline,
+    },
     complete: historyComplete,
   };
 }
@@ -690,7 +717,9 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     stateSlot: programDataStateSlot,
     pageSize: 250,
     maxPages: 8,
-    maxHistoricalTransactions: 20,
+    maxHistoricalTransactions: 100,
+    maxHistoryConcurrency: 4,
+    historyFetchDeadlineMs: 180000,
   });
   const governanceHistory = summarizeMetaplexGovernanceHistory(programDataHistory.signatures);
   const governanceProposalAccounts = await inspectGovernanceProposalAccounts({
