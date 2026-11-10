@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { decodeConfigDestinations, validateCurveDefaults } from "./launchlab-api-config-check.mjs";
+import { decodeConfigDestinations, validateCpmmMigrationAccounts, validateCurveDefaults } from "./launchlab-api-config-check.mjs";
 const require = createRequire("/tmp/launchlab-tools/package.json");
 const { PublicKey } = require("@solana/web3.js");
 
@@ -10,6 +10,31 @@ const valid = {
   global: { minSupplyA: "10000000", maxLockRate: "800000", minSellRateA: "200000", minMigrateRateA: "150000", minFundRaisingB: "24000000000", migrateFee: "100000000", mintB: "So11111111111111111111111111111111111111112", curveType: 0, tradeFeeRate: "2500" },
   platform: { feeRate: "7500", creatorFeeRate: "500" }
 };
+test("requires executable CPMM and LP-lock programs plus a present CPMM create-pool fee account", () => {
+  const target = {
+    cpmmProgram: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+    cpmmFeeAccount: "DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8",
+    lockProgram: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
+    lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
+  };
+  const result = validateCpmmMigrationAccounts({
+    cpmmProgramAccount: { executable: true },
+    lockProgramAccount: { executable: true },
+    cpmmFeeAccount: { owner: "11111111111111111111111111111111", lamports: 123 },
+    target,
+  });
+  assert.equal(result.cpmmProgramExecutable, true);
+  assert.equal(result.lockProgramExecutable, true);
+  assert.equal(result.cpmmCreatePoolFeeAccount, target.cpmmFeeAccount);
+  assert.equal(result.cpmmCreatePoolFeeAccountLamports, "123");
+  assert.equal(result.lockAuthority, target.lockAuthority);
+});
+test("rejects a missing CPMM migration fee destination account", () => {
+  assert.throws(() => validateCpmmMigrationAccounts({
+    cpmmProgramAccount: { executable: true }, lockProgramAccount: { executable: true },
+    cpmmFeeAccount: null, target: {},
+  }), /fee destination account is missing/);
+});
 test("accepts actual WSOL constant-product defaults that satisfy curve constraints", () => {
   const result = validateCurveDefaults(valid);
   assert.equal(result.pass, true);
