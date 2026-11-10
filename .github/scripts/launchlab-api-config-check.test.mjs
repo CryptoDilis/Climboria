@@ -14,22 +14,24 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   const target = {
     cpmmProgram: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
     cpmmFeeAccount: "DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8",
-    cpmmFeeAuthority: "GpMZbSM2GgvTKHJirzeGfMFoaZ8UR2X7F4v8vHTvxFbL",
+    cpmmAdmin: "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
+    cpmmProtocolOwner: "ProCXqRcXJjoUd1RNoo28bSizAA6EEqt9wURZYPDc5u",
+    cpmmFundOwner: "FUNDduJTA7XcckKHKfAoEnnhuSud2JUCUZv6opWEjrBU",
     lockProgram: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
     lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
   };
   const feeData = Buffer.alloc(165);
   const cpmmConfigData = Buffer.alloc(236);
-  new PublicKey(target.cpmmFeeAuthority).toBuffer().copy(cpmmConfigData, 44);
+  new PublicKey(target.cpmmProtocolOwner).toBuffer().copy(cpmmConfigData, 44);
   new PublicKey("11111111111111111111111111111112").toBuffer().copy(cpmmConfigData, 76);
   cpmmConfigData.writeBigUInt64LE(99n, 36);
   new PublicKey("So11111111111111111111111111111111111111112").toBuffer().copy(feeData, 0);
-  new PublicKey(target.cpmmFeeAuthority).toBuffer().copy(feeData, 32);
+  new PublicKey(target.cpmmAdmin).toBuffer().copy(feeData, 32);
   feeData.writeBigUInt64LE(42n, 64);
   feeData.writeUInt8(1, 108);
   const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
   const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-  const [expectedFeeAta] = PublicKey.findProgramAddressSync([new PublicKey(target.cpmmFeeAuthority).toBuffer(), tokenProgram.toBuffer(), new PublicKey("So11111111111111111111111111111111111111112").toBuffer()], associatedProgram);
+  const [expectedFeeAta] = PublicKey.findProgramAddressSync([new PublicKey(target.cpmmAdmin).toBuffer(), tokenProgram.toBuffer(), new PublicKey("So11111111111111111111111111111111111111112").toBuffer()], associatedProgram);
   target.cpmmFeeAccount = expectedFeeAta.toBase58();
   const result = validateCpmmMigrationAccounts({
     cpmmProgramAccount: { executable: true },
@@ -44,7 +46,7 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   assert.equal(result.cpmmCreatePoolFeeAccount, target.cpmmFeeAccount);
   assert.equal(result.cpmmCreatePoolFeeAccountLamports, "123");
   assert.equal(result.cpmmCreatePoolFeeTokenAmount, "42");
-  assert.equal(result.cpmmCreatePoolFeeTokenAuthorityMatchesPinnedSdk, true);
+  assert.equal(result.cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin, true);
   assert.equal(result.cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds, true);
   assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner, true);
   assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner, false);
