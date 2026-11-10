@@ -53,3 +53,8 @@ For a local/manual deployment, replace `namespace_id` in `wrangler.toml` with th
 ## Frontend backend switch
 
 Both `/dex/` and `/swap/` load the public `/swap-config.js` file. It contains no secret. Keep `enabled: false` until the Worker is deployed and all security/release checks pass. Once ready, set `enabled: true` in that file; token search and quote previews will then use the Worker routes, and order/execute will become available behind the wallet-review flow. Never set this flag merely because a Worker exists: verify `/health`, CORS, rate limits, API key handling, and transaction security first.
+
+
+## Deployment kill-switch verification
+
+The quote/search API deployment workflow must not enable swap execution. It asserts `EXECUTION_ENABLED = "false"` in `wrangler.toml` before deployment and requires the production `/health` response to report both `execution: "disabled"` and `configured.executionEnabled: false`. A deployment that exposes an enabled execution switch fails its post-deploy health gate. This is an additional safeguard, not a substitute for transaction semantic validation, request/order-to-wallet binding, Devnet lifecycle tests, or independent security review.
