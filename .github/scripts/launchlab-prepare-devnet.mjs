@@ -88,6 +88,117 @@ export function validateConstantProductInitFormula({ supply, totalSellA, totalFu
   return { remaining: remaining.toString(), raiseAfterMigrationFee: raiseAfterMigrationFee.toString(), denominator: denominator.toString() };
 }
 
+
+const INITIALIZE_V2_DISCRIMINATOR = Buffer.from([67, 153, 175, 39, 218, 16, 38, 32]);
+const METADATA_PROGRAM_ID = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
+const RENT_SYSVAR_ID = "SysvarRent111111111111111111111111111111111";
+
+function decodeBase58(value) {
+  if (value instanceof Uint8Array) return Buffer.from(value);
+  if (typeof value !== "string" || !value.length) fail("LaunchLab instruction data is missing or malformed");
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  let number = 0n;
+  for (const char of value) {
+    const digit = alphabet.indexOf(char);
+    if (digit < 0) fail("LaunchLab instruction data is not valid base58");
+    number = number * 58n + BigInt(digit);
+  }
+  let hex = number.toString(16);
+  if (hex.length % 2) hex = `0${hex}`;
+  const body = number === 0n ? Buffer.alloc(0) : Buffer.from(hex, "hex");
+  let leading = 0;
+  while (leading < value.length && value[leading] === "1") leading++;
+  return Buffer.concat([Buffer.alloc(leading), body]);
+}
+
+function expectedInitializeV2Accounts({ sdk, input, programId }) {
+  const PublicKey = sdk.PublicKey;
+  const creator = new PublicKey(input.creatorWallet);
+  const mintA = input.mintKeypair.publicKey;
+  const mintB = new PublicKey(DEVNET.quoteMint);
+  const metadataProgram = new PublicKey(METADATA_PROGRAM_ID);
+  const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+  const systemProgram = new PublicKey(SYSTEM_PROGRAM_ID);
+  const rentSysvar = new PublicKey(RENT_SYSVAR_ID);
+  const [auth] = PublicKey.findProgramAddressSync([Buffer.from("vault_auth_seed")], programId);
+  const [pool] = PublicKey.findProgramAddressSync([Buffer.from("pool"), mintA.toBuffer(), mintB.toBuffer()], programId);
+  const [vaultA] = PublicKey.findProgramAddressSync([Buffer.from("pool_vault"), pool.toBuffer(), mintA.toBuffer()], programId);
+  const [vaultB] = PublicKey.findProgramAddressSync([Buffer.from("pool_vault"), pool.toBuffer(), mintB.toBuffer()], programId);
+  const [metadata] = PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), metadataProgram.toBuffer(), mintA.toBuffer()],
+    metadataProgram,
+  );
+  const [eventAuthority] = PublicKey.findProgramAddressSync([Buffer.from("__event_authority")], programId);
+
+  // Ordered from the pinned official Anchor IDL initialize_v2 account list.
+  // The final IDL "program" entry is the compiled instruction's programIdIndex,
+  // not an entry in accountKeyIndexes.
+  return [
+    { name: "payer", pubkey: creator, isSigner: true, isWritable: true },
+    { name: "creator", pubkey: creator, isSigner: false, isWritable: false },
+    { name: "global_config", pubkey: new PublicKey(DEVNET.configId), isSigner: false, isWritable: false },
+    { name: "platform_config", pubkey: new PublicKey(DEVNET.platformId), isSigner: false, isWritable: false },
+    { name: "authority", pubkey: auth, isSigner: false, isWritable: false },
+    { name: "pool_state", pubkey: pool, isSigner: false, isWritable: true },
+    { name: "base_mint", pubkey: mintA, isSigner: true, isWritable: true },
+    { name: "quote_mint", pubkey: mintB, isSigner: false, isWritable: false },
+    { name: "base_vault", pubkey: vaultA, isSigner: false, isWritable: true },
+    { name: "quote_vault", pubkey: vaultB, isSigner: false, isWritable: true },
+    { name: "metadata_account", pubkey: metadata, isSigner: false, isWritable: true },
+    { name: "base_token_program", pubkey: tokenProgram, isSigner: false, isWritable: false },
+    { name: "quote_token_program", pubkey: tokenProgram, isSigner: false, isWritable: false },
+    { name: "metadata_program", pubkey: metadataProgram, isSigner: false, isWritable: false },
+    { name: "system_program", pubkey: systemProgram, isSigner: false, isWritable: false },
+    { name: "rent_program", pubkey: rentSysvar, isSigner: false, isWritable: false },
+    { name: "event_authority", pubkey: eventAuthority, isSigner: false, isWritable: false },
+  ];
+}
+
+function validateInitializeV2Instruction({ instruction, allKeys, expectedAccounts, programId, index }) {
+  const actualProgram = allKeys[instruction.programIdIndex];
+  if (!sameKey(actualProgram, programId)) fail(`SDK transaction ${index} initializeV2 program ID mismatch`);
+  const data = decodeBase58(instruction.data);
+  if (data.length < INITIALIZE_V2_DISCRIMINATOR.length ||
+      !data.subarray(0, INITIALIZE_V2_DISCRIMINATOR.length).equals(INITIALIZE_V2_DISCRIMINATOR)) {
+    fail(`SDK transaction ${index} LaunchLab instruction is not the pinned initializeV2 discriminator`);
+  }
+  const indexes = Array.from(instruction.accountKeyIndexes ?? []);
+  if (indexes.length !== expectedAccounts.length) {
+    fail(`SDK transaction ${index} initializeV2 account count differs from the pinned 18-entry IDL (17 metas plus program ID)`);
+  }
+
+  // Compiled-message privileges are global per key. Union the IDL privileges
+  // where the creator and payer alias the same public key, then compare exactly.
+  const effectivePrivileges = new Map();
+  for (const account of expectedAccounts) {
+    const key = account.pubkey.toBase58();
+    const current = effectivePrivileges.get(key) ?? { isSigner: false, isWritable: false };
+    effectivePrivileges.set(key, {
+      isSigner: current.isSigner || account.isSigner,
+      isWritable: current.isWritable || account.isWritable,
+    });
+  }
+  return indexes.map((keyIndex, accountIndex) => {
+    const actual = allKeys[keyIndex];
+    if (!actual) fail(`SDK transaction ${index} initializeV2 has unresolved account index at position ${accountIndex}`);
+    const expected = expectedAccounts[accountIndex];
+    const actualKey = actual.toBase58();
+    const expectedKey = expected.pubkey.toBase58();
+    if (actualKey !== expectedKey) {
+      fail(`SDK transaction ${index} initializeV2 account mismatch at position ${accountIndex} (${expected.name})`);
+    }
+    return {
+      position: accountIndex,
+      name: expected.name,
+      pubkey: actualKey,
+      isSigner: effectivePrivileges.get(expectedKey).isSigner,
+      isWritable: effectivePrivileges.get(expectedKey).isWritable,
+    };
+  });
+}
+
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   const { amounts } = validateDevnetLaunchInput(input, sdk);
   if (!raydium?.connection || !raydium?.api || !raydium?.launchpad) fail("Initialized read-only Devnet Raydium SDK client is required");
@@ -171,6 +282,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
     "ComputeBudget111111111111111111111111111111",
   ]);
+  const expectedAccounts = expectedInitializeV2Accounts({ sdk, input, programId });
   const transactionReviews = await Promise.all(prepared.transactions.map(async (transaction, index) => {
     const message = transaction?.message;
     const keys = message?.staticAccountKeys;
@@ -234,8 +346,35 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       else if (keyIndex < keys.length + loadedWritable.length) isWritable = true;
       return { index: keyIndex, pubkey: account.toBase58(), isSigner, isWritable };
     }));
+    const launchpadInstructions = instructions.filter(instruction => allKeys[instruction.programIdIndex]?.toBase58() === DEVNET.programId);
+    if (launchpadInstructions.length !== 1) fail(`SDK transaction ${index} must contain exactly one LaunchLab initializeV2 instruction`);
+    const launchpadAccounts = validateInitializeV2Instruction({
+      instruction: launchpadInstructions[0],
+      allKeys,
+      expectedAccounts,
+      programId,
+      index,
+    });
     if (!accountMetaDetails.flat().some(meta => meta.pubkey === input.mintKeypair.publicKey.toBase58() && meta.isSigner && meta.isWritable)) {
       fail(`SDK transaction ${index} does not mark the supplied mint Keypair as a writable signer account`);
+    }
+    const effectiveMessagePrivileges = new Map();
+    for (let keyIndex = 0; keyIndex < allKeys.length; keyIndex++) {
+      const isSigner = keyIndex < requiredCount;
+      let isWritable = false;
+      if (keyIndex < requiredCount) isWritable = keyIndex < requiredCount - readonlySigned;
+      else if (keyIndex < keys.length) isWritable = keyIndex < keys.length - readonlyUnsigned;
+      else if (keyIndex < keys.length + loadedWritable.length) isWritable = true;
+      effectiveMessagePrivileges.set(allKeys[keyIndex].toBase58(), { isSigner, isWritable });
+    }
+    for (const account of expectedAccounts) {
+      const expectedPrivilege = effectiveMessagePrivileges.get(account.pubkey.toBase58());
+      const expectedEffective = expectedAccounts
+        .filter(item => item.pubkey.toBase58() === account.pubkey.toBase58())
+        .reduce((value, item) => ({ isSigner: value.isSigner || item.isSigner, isWritable: value.isWritable || item.isWritable }), { isSigner: false, isWritable: false });
+      if (!expectedPrivilege || expectedPrivilege.isSigner !== expectedEffective.isSigner || expectedPrivilege.isWritable !== expectedEffective.isWritable) {
+        fail(`SDK transaction ${index} initializeV2 signer/writable privilege mismatch at ${account.name}`);
+      }
     }
     return {
       index,
