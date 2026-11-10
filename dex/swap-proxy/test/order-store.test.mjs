@@ -127,3 +127,15 @@ test("settles only a claimed order and preserves terminal replay protection", as
   const replay = await claimOrder(object, fixture.signed);
   assert.equal(replay.status, 409);
 });
+
+
+test("concurrent claims atomically allow exactly one execution", async () => {
+  const fixture = makeFixture(2);
+  const { object } = createStore();
+  assert.equal((await storeOrder(object, fixture)).status, 201);
+  const results = await Promise.all([
+    claimOrder(object, fixture.signed),
+    claimOrder(object, fixture.signed)
+  ]);
+  assert.deepEqual(results.map(response => response.status).sort(), [200, 409]);
+});
