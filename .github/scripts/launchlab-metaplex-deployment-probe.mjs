@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 
 export const METAPLEX_TOKEN_METADATA_PROGRAM_ID = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 export const BPF_UPGRADEABLE_LOADER_ID = "BPFLoaderUpgradeab1e11111111111111111111111";
+export const METAPLEX_GOVERNANCE_PROGRAM_ID = "mrgTA4fqsDqtvizQBoTMGXosiwruTmu2yXZxmPNLKiJ";
 export const PINNED_METAPLEX_BUILD_ARTIFACT = Object.freeze({
   sourceCommit: "7ce760f9e010cb9819ffd7dd86986a44691bd1f8",
   workflowRunId: 42729492423,
@@ -314,11 +315,31 @@ export function summarizeUpgradeableLoaderHistory(signatures = []) {
   return {
     counts,
     deployWithMaxDataLenObserved: deployObserved,
-    initialDeploymentProven: deployObserved,
     events,
   };
 }
 
+export function summarizeMetaplexGovernanceHistory(signatures = []) {
+  const events = [];
+  for (const transaction of signatures) {
+    for (const instruction of transaction.instructionEvidence ?? []) {
+      if (instruction.programId !== METAPLEX_GOVERNANCE_PROGRAM_ID || instruction.dataEncoding !== "base64" || typeof instruction.data !== "string") continue;
+      const bytes = Buffer.from(instruction.data, "base64");
+      if (bytes.length < 4) continue;
+      const discriminator = bytes.readUInt32LE(0);
+      const accounts = instruction.accounts ?? [];
+      if (discriminator === 5) {
+        const log = (transaction.governanceLogs ?? []).find(line => line.includes("CreateProgramGovernance")) ?? "";
+        const transferMatch = /transfer_upgrade_authority:\\s*(true|false)/.exec(log);
+        events.push({ slot: transaction.slot, signature: transaction.signature, instruction: "createProgramGovernance", realm: accounts[0] ?? null, programGovernance: accounts[1] ?? null, governedProgram: accounts[2] ?? null, programData: accounts[3] ?? null, currentUpgradeAuthority: accounts[4] ?? null, tokenOwnerRecord: accounts[5] ?? null, payer: accounts[6] ?? null, createAuthority: accounts[9] ?? null, transferUpgradeAuthority: transferMatch ? transferMatch[1] === "true" : null, success: transaction.transactionError === null, transactionError: transaction.transactionError ?? null });
+      } else if (discriminator === 16) {
+        const isLoader = accounts[3] === BPF_UPGRADEABLE_LOADER_ID;
+        events.push({ slot: transaction.slot, signature: transaction.signature, instruction: "executeTransaction", governance: accounts[0] ?? null, proposal: accounts[1] ?? null, proposalTransaction: accounts[2] ?? null, innerProgramId: accounts[3] ?? null, innerProgramData: isLoader ? accounts[4] ?? null : null, innerGovernedProgram: isLoader ? accounts[5] ?? null : null, innerBuffer: isLoader ? accounts[6] ?? null : null, innerUpgradeAuthority: isLoader ? accounts[10] ?? null : null, success: transaction.transactionError === null, transactionError: transaction.transactionError ?? null });
+      }
+    }
+  }
+  return { events };
+}
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -410,6 +431,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockEvidence,
     programDataHistory,
     programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
+    governanceHistory: summarizeMetaplexGovernanceHistory(programDataHistory.signatures),
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
