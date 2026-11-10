@@ -1,5 +1,6 @@
 const MAX_TRANSACTION_BYTES = 1232;
 const MAX_SIGNATURES = 64;
+const MAX_RESOLVED_ACCOUNT_KEYS = 128;
 
 function readShortVec(bytes, cursor, label) {
   let value = 0;
@@ -92,13 +93,14 @@ export function decodeSolanaTransaction(encoded) {
       const writableIndexes = [...take(bytes, cursor, writableCount, "writable lookup indexes")];
       const readonlyCount = readShortVec(bytes, cursor, "readonly lookup index count");
       const readonlyIndexes = [...take(bytes, cursor, readonlyCount, "readonly lookup indexes")];
+      if (writableIndexes.length + readonlyIndexes.length === 0) throw new Error("Address table lookup must select at least one address");
       addressTableLookups.push({ accountKey, writableIndexes, readonlyIndexes });
     }
   }
   if (cursor.offset !== bytes.length) throw new Error("Unexpected trailing transaction bytes");
   const loadedKeyCount = addressTableLookups.reduce((sum, lookup) => sum + lookup.writableIndexes.length + lookup.readonlyIndexes.length, 0);
   const totalKeyCount = staticKeyCount + loadedKeyCount;
-  if (totalKeyCount > 256) throw new Error("Too many resolved transaction account keys");
+  if (totalKeyCount > MAX_RESOLVED_ACCOUNT_KEYS) throw new Error("Transaction exceeds the runtime account-lock limit");
   for (const instruction of instructions) {
     if (instruction.programIdIndex >= totalKeyCount) throw new Error("Instruction program index is outside resolved account-key range");
     if (instruction.accountIndexes.some(index => index >= totalKeyCount)) throw new Error("Instruction account index is outside resolved account-key range");
