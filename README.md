@@ -3073,3 +3073,20 @@ This is a standing project rule, not a one-time task:
 - Latest Browser Smoke: `42673871882` — failure; jobs/logs unavailable through current API response.
 - Latest Validate: `42673872152` — failure; jobs/logs unavailable through current API response.
 - PR #228: https://github.com/CryptoDilis/Climboria/pull/228 — open/draft/unmerged.
+
+
+## 2026-11-10 — Save Options browser verification and screenshot coverage
+
+- [x] PR #229 head `35a97dbad1eecbea357a7fb95ebe614850fd2863`: Validate run `42726920736` SUCCESS and Browser Smoke run `42726920974` SUCCESS; all 19 steps passed, including desktop/mobile Jarrell gameplay and screenshot upload.
+- [x] Reviewed artifact `climboria-browser-smoke-screenshots` (ID `13723566997`, 10 images). It contained desktop/mobile gameplay and cave views, homepage and DEX token/social views, but no screenshot with Save Options actually open.
+- [x] Root cause of screenshot gap: `.github/scripts/game-save-options-smoke.mjs` exercised the Save Options state/safety matrix but never captured the open panel; artifact upload workflow therefore had no Save Options screenshot files.
+- [x] Strategy: add a desktop guest-state and 390px mobile account-state screenshot to the existing deterministic mocked smoke test; assert panel geometry stays within viewport; assert Escape restores focus to the trigger. No gameplay data, Supabase rows, inventory, or cloud writes are touched.
+- [x] Commit `5c8e5e0ec5d0333165ae31124bb2b3a3d1d4845d`: add Save Options desktop/mobile panel captures, viewport bounds assertion, and focus restoration assertion.
+- [x] Commit `576780deb24459a6f17224f8e24f1bb6b7179eeb`: include both new screenshots in Browser Smoke artifact upload.
+- [ ] New Validate run `42729049964` and Browser Smoke run `42729050043` are IN_PROGRESS on PR #229 head `576780deb24459a6f17224f8e24f1bb6b7179eeb`. Do not treat in-progress as failure.
+- [ ] **Exact next job:** poll runs `42729049964` and `42729050043`; if either fails, inspect failed steps/logs, diagnose root cause, and implement only a targeted fix. If both pass, download artifact and visually inspect `climboria-save-options-desktop.png` and `climboria-save-options-mobile.png`. Record final conclusions and next job here and in PR #229 checkpoint comment.
+- [ ] Keep PR #229 OPEN / DRAFT pending live Supabase schema/RLS inspection and adversarial owner-row tests.
+
+### Separate authentication activation blocker
+- PR #228 remains OPEN / DRAFT / unmerged at `fde34340a4bcb6ccac5b94efdb5bc93201013b3e`. Its auth implementation and `auth-config.js` are on the feature branch; `auth-config.js` on `main` returned 404. PR #228 mocked CI passed, but real Google/X/email/Web3 provider E2E remains unverified.
+- Next auth job: inspect existing Supabase Auth provider settings and production redirect allowlist, then test real email confirmation/recovery, Google OAuth, X OAuth2, Ethereum SIWE, Solana SIWS, session refresh/logout, profile RLS and identity linking. Do not recreate the project or rerun the applied migration; never commit secrets or paste them into chat.
