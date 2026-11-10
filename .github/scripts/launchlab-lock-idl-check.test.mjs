@@ -59,7 +59,7 @@ test("rejects LP lock account reordering", () => {
 test("rejects LP lock signer privilege escalation", () => {
   const idl = fixture();
   idl.instructions[0].accounts[3].signer = true;
-  assert.throws(() => validateLockProgramIdl(idl, target, PublicKey), /signer\/writable flags mismatch/);
+  assert.throws(() => validateLockProgramIdl(idl, target, PublicKey), /signer privilege mismatch/);
 });
 test("rejects changed lock authority PDA seed", () => {
   const idl = fixture();
