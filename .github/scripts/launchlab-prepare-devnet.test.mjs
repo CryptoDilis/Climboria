@@ -228,8 +228,9 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.deepEqual(result.transactions.map(x => x.label), ["init-1", "init-2"]);
   assert.equal(result.transactionReviews.length, 2);
   assert.deepEqual(result.transactionReviews[0].programIds, [ids.programId]);
-  assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, true);
-  assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isWritable, true);
+  assert.equal(result.transactionReviews[0].accountMetaDetails[0][0].isSigner, true);
+  assert.equal(result.transactionReviews[0].accountMetaDetails[0][0].isWritable, true);
+  assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, false);
   assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
   assert.equal(result.transactionReviews[0].feePayer, ids.feePayer);
   assert.deepEqual(result.transactionReviews[0].requiredSignerKeys, [ids.feePayer, input({}).mintKeypair.publicKey.toBase58()]);
@@ -238,7 +239,7 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.transactionReviews[0].launchpadAccounts[0].pubkey, ids.feePayer);
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].pubkey, ids.creator);
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].name, "creator");
-  assert.equal(result.transactionReviews[0].launchpadAccounts[1].isSigner, true);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[1].isSigner, false);
   assert.equal(result.transactionReviews[0].launchpadAccounts[5].name, "pool_state");
   assert.equal(result.transactionReviews[0].launchpadAccounts[17].name, "program");
   assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
@@ -309,6 +310,15 @@ test("rejects an initializeV2 readonly config account promoted to writable in th
   const mock = client();
   mock.raydium.launchpad.createLaunchpad = async options => {
     const tx = makeInitializeV2Transaction(options);
+    const keys = tx.message.staticAccountKeys;
+    const targetIndex = keys.findIndex(key => key.toBase58() === ids.configId);
+    const readonlyStart = keys.length - tx.message.header.numReadonlyUnsignedAccounts;
+    const swapIndex = readonlyStart - 1;
+    assert.ok(targetIndex >= readonlyStart);
+    [keys[targetIndex], keys[swapIndex]] = [keys[swapIndex], keys[targetIndex]];
+    tx.message.compiledInstructions[0].accountKeyIndexes = tx.message.compiledInstructions[0].accountKeyIndexes.map(index =>
+      index === targetIndex ? swapIndex : index === swapIndex ? targetIndex : index
+    );
     tx.message.header.numReadonlyUnsignedAccounts -= 1;
     return { transactions: [tx], signers: [[options.extraSigners[0]]] };
   };
@@ -364,19 +374,14 @@ test("rejects an unapproved program in a prepared SDK transaction", async () => 
   });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /unapproved program/);
 });
-test("rejects a transaction fee payer that differs from the creator", async () => {
+test("rejects a transaction fee payer that differs from the dedicated fee payer", async () => {
   const mock = client();
-  mock.raydium.launchpad.createLaunchpad = async options => ({
-    transactions: [{
-      message: {
-        staticAccountKeys: [new PublicKey("11111111111111111111111111111112"), options.mintA, new PublicKey(ids.programId)],
-        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
-        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
-      },
-    }],
-    signers: [[options.extraSigners[0]]],
-  });
-  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /fee payer does not match/);
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    tx.message.staticAccountKeys[0] = new PublicKey(ids.creator);
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /fee payer does not match the approved dedicated Devnet fee payer/);
 });
 test("resolves and reports V0 Address Lookup Table account metas", async () => {
   const mock = client();
