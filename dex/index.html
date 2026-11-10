@@ -1117,7 +1117,7 @@ async function openToken(mint,options={}){
   return;
  }
  const data=dexResult.value;
- const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const pairs=solPairs(data.pairs||[]).filter(pair=>pair.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
  activeDetailPairs=pairs;
  if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
