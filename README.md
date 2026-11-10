@@ -3100,3 +3100,14 @@ This is a standing project rule, not a one-time task:
 - [x] Commit `78141f5731610238f3d3106c7f55fba05893b8d3`: targeted syntax correction.
 - [ ] **Exact next job:** wait for and inspect CI on head `78141f5731610238f3d3106c7f55fba05893b8d3`. Validate and Browser Smoke must both complete. If Save Options test fails again, inspect the exact assertion/log and make a separate reasoned fix. If it passes, confirm Jarrell gameplay step 18 runs, then download and inspect the two Save Options screenshots from artifact upload.
 - [ ] Do not claim the new screenshot coverage passes until the artifact is inspected. Keep PR #229 OPEN / DRAFT pending live Supabase schema/RLS inspection and adversarial owner-row tests.
+
+
+## 2026-11-10 — Second Save Options smoke diagnosis and CI path-filter fix
+
+- [x] Validate run `42730442291`: SUCCESS, all 13 steps passed.
+- [x] Browser Smoke run `42730442376`: FAILED at Save Options test step 17; steps 1–16 passed; Jarrell gameplay was skipped.
+- [x] Job log exact second syntax failure: `SyntaxError: Invalid or unexpected token` at `.github/scripts/game-save-options-smoke.mjs:50`. The prior test-edit script had also inserted literal escaped-newline sequences in the screenshot assertion block; the earlier fix corrected only the viewport ternary. This was another test-source syntax defect, not a game runtime assertion.
+- [x] Corrected screenshot assertion block in commit `98ecd60e343d0ca60d9c788ca49a5714395f53c7`, and corrected Escape/focus assertion block in commit `19983b190ede962f3f84f010167f061a14bc7451`. Re-fetched the file and verified there are no remaining literal `\\n` source lines except the intentional `failures.join("\\n")` string.
+- [x] Further workflow audit found the pull_request path filter omitted `.github/scripts/game-save-options-smoke.mjs`, so changes to this test alone would not trigger Browser Smoke on PR events. Commit `83ebf65ba7bc8c966f483740f719bd4a1981cff7` adds the missing path to pull_request filters.
+- [ ] **Exact next job:** confirm Browser Smoke is triggered on current PR head `83ebf65ba7bc8c966f483740f719bd4a1981cff7`; poll Validate and Browser Smoke. If step 17 passes, verify gameplay step 18 and download the artifact to inspect both Save Options screenshots. If there is another failure, inspect its exact log before editing.
+- [ ] Keep PR #229 OPEN / DRAFT pending live Supabase schema/RLS inspection and adversarial own-row/other-row/anonymous tests. PR #228 real provider activation remains separately blocked on Supabase provider dashboard and real E2E verification.
