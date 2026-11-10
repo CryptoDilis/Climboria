@@ -1,3 +1,10 @@
+### CI status refresh — 2026-11-10
+
+- [x] Validate Climboria run `42760065656` on the immediately prior checkpoint commit `ca7a5ba0ea4cca035b9e7a9dc7837ae7035fae35`: SUCCESS.
+- [ ] LaunchLab Live Provenance run `42760065577` on that same checkpoint commit is still in progress.
+- [ ] Earlier LaunchLab run `42759807542` has rebuilt the historical Metaplex artifact successfully and is currently at the live read-only Devnet provenance capture step. Its head is `8f994b7b2d4140ab7cd5ce453f063a49fa357c6f`.
+- [ ] Current PR head is `b655c534f61bd0cdb57f419770a69d930b75cb91`; its Validate/LaunchLab runs will be checked after this checkpoint commit. PR #231 remains open and Draft.
+
 ### Live run update — 2026-11-10 (LaunchLab #42759807542)
 
 - [x] LaunchLab run `42759807542` (head `8f994b7b2d4140ab7cd5ce453f063a49fa357c6f`) passed the Metaplex read-only provenance parser tests and successfully rebuilt the deployment-era candidate Metaplex Token Metadata program with the historical toolchain.
