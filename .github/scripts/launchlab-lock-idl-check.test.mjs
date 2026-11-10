@@ -107,3 +107,24 @@ test("derives distinct locked LP ATAs for different CPMM LP mints", () => {
   assert.notEqual(a.lockedLiquidity, b.lockedLiquidity);
   assert.notEqual(a.lockLpVault, b.lockLpVault);
 });
+
+test("keeps the pinned SDK collectCpFees builder blocked when it overgrants Fee NFT account writability", () => {
+  const result = validateLockProgramIdl(fixture(), target, PublicKey);
+  assert.equal(result.collectCpFees.sdkPrivilegeDivergences.length, 1);
+  assert.deepEqual(result.collectCpFees.sdkPrivilegeDivergences[0], {
+    account: "feeNftAccount",
+    liveIdlWritable: false,
+    sdkBuilderWritable: true,
+    severity: "unnecessary-writable-privilege",
+  });
+  assert.equal(result.collectCpFees.safeToUsePinnedSdkBuilder, false);
+});
+
+test("rejects privilege divergence outside the explicitly documented Fee NFT overgrant", () => {
+  const idl = fixture();
+  idl.instructions[1].accounts[3].writable = false;
+  assert.throws(
+    () => validateLockProgramIdl(idl, target, PublicKey),
+    /writable privilege mismatch for lockedLiquidity/,
+  );
+});
