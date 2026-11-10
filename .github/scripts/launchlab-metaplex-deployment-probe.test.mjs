@@ -473,6 +473,7 @@ test("decodes SPL Governance ProposalV2 title/state and embedded loader upgrade 
     toBase58() { return BPF_UPGRADEABLE_LOADER_ID; }
   }
   const decoded = decodeGovernanceProposalAccountEvidence({
+    status: "governance_proposal_accounts_captured",
     accounts: [
       { address: "proposal-account", exists: true, dataBase64: proposalData.toString("base64") },
       { address: "proposal-transaction-account", exists: true, dataBase64: transactionData.toString("base64") },
