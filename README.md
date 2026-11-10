@@ -2707,3 +2707,14 @@ For every integrated asset or borrowed technique, record:
 - Latest corrected-head Browser Smoke workflow `42849331112`: still running at checkpoint time. All DEX/Swap browser checks completed SUCCESS: proxy API, fail-closed execution, standalone Swap, DEX quote shell, mobile workspace, narrow 390px/360px layouts, and provider error/empty states. The unrelated Jarrell's Peak gameplay smoke step was still running.
 - Earlier failures were caused by an initial source-patch mismatch and stale tests asserting the previous execute path. Both were traced in the logs and corrected; latest Validate run passed.
 - Do not enable execution. The hard gate remains intentionally false.
+
+
+## 2026-11-10 — Solana transaction wire-decoder foundation (not an execution validator)
+
+- [x] Added `dex/swap-proxy/src/solana-message.mjs`: bounded canonical base64 decoding (Solana packet limit), strict legacy/v0 message structure parsing, signature/header count checks, static account key and recent blockhash extraction, compiled instruction index bounds, v0 address-lookup descriptor parsing, trailing-byte rejection, and SHA-256 hashing of the exact message bytes excluding signatures.
+- [x] Added `dex/swap-proxy/test/solana-message.test.mjs` with focused fixtures for legacy/v0 decoding, unsupported versions, malformed/truncated base64, zero signatures, trailing bytes, invalid program/account indexes, and signature-independent message hashes.
+- [x] Kept this parser isolated from `handleExecute`. It is intentionally not wired into execution and does not establish safe instruction semantics, resolve lookup tables against trusted RPC state, bind an order to a wallet, or prevent replay.
+- [x] Added an explicit security-boundary section to `dex/swap-proxy/DEPLOYMENT.md` so this structural decoder cannot be misrepresented as a complete validator.
+- [ ] **Verification pending:** the GitHub Actions run for the new parser tests has not yet been observed. Existing Browser Smoke run `42849331112` remains in progress on its retry; do not mark it green prematurely.
+- [ ] **Exact next task:** execute the parser unit tests and fix any fixture/parser mismatch; then implement trusted address-lookup-table resolution and account-meta reconstruction. Follow with protocol-specific instruction decoders/allowlists and durable atomic expiring order-wallet-message binding. Keep the hard execution gate false throughout.
+- No production deployment, wallet signing, live transaction, Devnet submission, Mainnet action, or execution flag change occurred.
