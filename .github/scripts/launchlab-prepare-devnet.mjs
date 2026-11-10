@@ -56,6 +56,7 @@ export function validateDevnetLaunchInput(input, sdk) {
   if (input.migrateType !== "cpmm") fail("New LaunchLab launches must explicitly use CPMM migration");
   if (input.createOnly !== true) fail("Creator preparation must use create-only mode; no initial buy");
   if (input.token2022 === true || input.transferFeeExtensionParams) fail("Token-2022 transfer-fee launches are not enabled in this Devnet preparation path");
+  if (input.creatorFeeOn !== 0 && input.creatorFeeOn !== 1) fail("Creator fee mode must be explicitly selected as 0 (OnlyTokenB) or 1 (BothToken)");
   if (!sdk?.PublicKey || !sdk?.BN || !sdk?.LaunchpadConfig || !sdk?.PlatformConfig || !sdk?.TxVersion) {
     fail("Pinned Raydium SDK primitives are required");
   }
@@ -157,13 +158,67 @@ export function expectedInitializeV2Accounts({ sdk, input, programId }) {
   ];
 }
 
-function validateInitializeV2Instruction({ instruction, allKeys, expectedAccounts, programId, index }) {
+function decodeInitializeV2Data(data, index) {
+  let offset = INITIALIZE_V2_DISCRIMINATOR.length;
+  const need = size => {
+    if (offset + size > data.length) fail("SDK transaction " + index + " initializeV2 data is truncated");
+  };
+  const readU8 = () => { need(1); return data.readUInt8(offset++); };
+  const readU64 = () => { need(8); const value = data.readBigUInt64LE(offset); offset += 8; return value.toString(); };
+  const readString = () => {
+    need(4);
+    const length = data.readUInt32LE(offset);
+    offset += 4;
+    need(length);
+    const value = data.toString("utf8", offset, offset + length);
+    offset += length;
+    return value;
+  };
+  const decoded = {
+    decimals: readU8(),
+    name: readString(),
+    symbol: readString(),
+    uri: readString(),
+    curveIndex: readU8(),
+    supply: readU64(),
+    totalSellA: readU64(),
+    totalFundRaisingB: readU64(),
+    migrateType: readU8(),
+    totalLockedAmount: readU64(),
+    cliffPeriod: readU64(),
+    unlockPeriod: readU64(),
+    creatorFeeOn: readU8(),
+  };
+  if (offset !== data.length) fail("SDK transaction " + index + " initializeV2 data contains unexpected trailing bytes");
+  return decoded;
+}
+
+function validateInitializeV2Instruction({ instruction, allKeys, expectedAccounts, programId, input, index }) {
   const actualProgram = allKeys[instruction.programIdIndex];
   if (!sameKey(actualProgram, programId)) fail(`SDK transaction ${index} initializeV2 program ID mismatch`);
   const data = decodeBase58(instruction.data);
   if (data.length < INITIALIZE_V2_DISCRIMINATOR.length ||
       !data.subarray(0, INITIALIZE_V2_DISCRIMINATOR.length).equals(INITIALIZE_V2_DISCRIMINATOR)) {
     fail(`SDK transaction ${index} LaunchLab instruction is not the pinned initializeV2 discriminator`);
+  }
+  const decodedData = decodeInitializeV2Data(data, index);
+  const expectedData = {
+    decimals: input.decimals,
+    name: input.metadata.name,
+    symbol: input.metadata.symbol,
+    uri: input.metadata.uri,
+    curveIndex: 0,
+    supply: input.supply,
+    totalSellA: input.totalSellA,
+    totalFundRaisingB: input.totalFundRaisingB,
+    migrateType: 1,
+    totalLockedAmount: input.totalLockedAmount,
+    cliffPeriod: "0",
+    unlockPeriod: "0",
+    creatorFeeOn: input.creatorFeeOn,
+  };
+  for (const [field, expected] of Object.entries(expectedData)) {
+    if (String(decodedData[field]) !== String(expected)) fail("SDK transaction " + index + " initializeV2 argument mismatch: " + field);
   }
   const indexes = Array.from(instruction.accountKeyIndexes ?? []);
   if (indexes.length !== expectedAccounts.length) {
@@ -181,7 +236,7 @@ function validateInitializeV2Instruction({ instruction, allKeys, expectedAccount
       isWritable: current.isWritable || account.isWritable,
     });
   }
-  return indexes.map((keyIndex, accountIndex) => {
+  const accountReview = indexes.map((keyIndex, accountIndex) => {
     const actual = allKeys[keyIndex];
     if (!actual) fail(`SDK transaction ${index} initializeV2 has unresolved account index at position ${accountIndex}`);
     const expected = expectedAccounts[accountIndex];
@@ -198,6 +253,7 @@ function validateInitializeV2Instruction({ instruction, allKeys, expectedAccount
       isWritable: effectivePrivileges.get(expectedKey).isWritable,
     };
   });
+  return { accounts: accountReview, data: decodedData };
 }
 
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
@@ -249,6 +305,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     totalSellA: new sdk.BN(amounts.totalSellA),
     totalFundRaisingB: new sdk.BN(amounts.totalFundRaisingB),
     totalLockedAmount: new sdk.BN(amounts.totalLockedAmount),
+    creatorFeeOn: input.creatorFeeOn,
     buyAmount: new sdk.BN(0),
     createOnly: true,
     feePayer: new sdk.PublicKey(input.creatorWallet),
@@ -349,11 +406,12 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     }));
     const launchpadInstructions = instructions.filter(instruction => allKeys[instruction.programIdIndex]?.toBase58() === DEVNET.programId);
     if (launchpadInstructions.length !== 1) fail(`SDK transaction ${index} must contain exactly one LaunchLab initializeV2 instruction`);
-    const launchpadAccounts = validateInitializeV2Instruction({
+    const launchpadReview = validateInitializeV2Instruction({
       instruction: launchpadInstructions[0],
       allKeys,
       expectedAccounts,
       programId,
+      input,
       index,
     });
     if (!accountMetaDetails.flat().some(meta => meta.pubkey === input.mintKeypair.publicKey.toBase58() && meta.isSigner && meta.isWritable)) {
@@ -385,7 +443,8 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       instructionCount: instructions.length,
       accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
       accountMetaDetails,
-      launchpadAccounts,
+      launchpadAccounts: launchpadReview.accounts,
+      launchpadInstructionData: launchpadReview.data,
       lookupTables: lookupTableReviews,
     };
   }));
@@ -399,6 +458,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     metadataHash: input.metadata.contentHash.toLowerCase(),
     amounts,
     curveFormula,
+    creatorFeeOn: input.creatorFeeOn,
     migration: "cpmm",
     instructionPath: "initializeV2",
     createOnly: true,
