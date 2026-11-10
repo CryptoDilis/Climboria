@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   captureDevnetMetaplexProgramProvenance,
   inspectProgramDataHistory,
-  inspectProgramAccountHistory,
+  summarizeUpgradeableLoaderHistory,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
   BPF_UPGRADEABLE_LOADER_ID,
@@ -291,45 +291,45 @@ test("retries rate-limited historical transaction reads and captures loader inst
   assert.equal(result.signatures[0].instructionEvidence[0].data, "AQID");
 });
 
-test("inspects the executable Program account history and preserves instruction bytes and signer keys", async () => {
-  const programKey = new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID);
-  const payer = new PublicKey("HistoryPayer111111111111111111111111111111");
-  const programData = new PublicKey(programDataAddress);
-  const result = await inspectProgramAccountHistory({
-    connection: {
-      getSignaturesForAddress: async (key, options, commitment) => {
-        assert.equal(key.toBase58(), programKey.toBase58());
-        assert.equal(options.limit, 10);
-        assert.equal(commitment, "finalized");
-        return [
-          { signature: "later-upgrade", slot: 200 },
-          { signature: "initial-deploy-candidate", slot: 100 },
-        ];
-      },
-      getTransaction: async signature => ({
-        transaction: {
-          message: {
-            staticAccountKeys: [payer, programKey, programData],
-            header: { numRequiredSignatures: 1 },
-            compiledInstructions: [{
-              programIdIndex: 1,
-              accountKeyIndexes: [2],
-              data: Uint8Array.from([1, 2, 3, 4]),
-            }],
-          },
-        },
-        meta: { err: null, logMessages: [signature === "initial-deploy-candidate" ? "Program deployed" : "Upgraded program"] },
-      }),
+test("decodes ProgramData loader operations and does not claim deployment from upgrade-only history", () => {
+  const loader = "BPFLoaderUpgradeab1e11111111111111111111111";
+  const programData = programDataAddress;
+  const program = METAPLEX_TOKEN_METADATA_PROGRAM_ID;
+  const oldAuthority = "OldAuthority111111111111111111111111111111";
+  const newAuthority = "NewAuthority111111111111111111111111111111";
+  const lifecycle = summarizeUpgradeableLoaderHistory([
+    {
+      slot: 10, signature: "upgrade-signature", transactionError: null,
+      signerKeys: [oldAuthority],
+      instructionEvidence: [{
+        programId: loader, data: Buffer.from([3, 0, 0, 0]).toString("base64"),
+        dataEncoding: "base64",
+        accounts: [programData, program, "buffer", "spill", "rent", "clock", oldAuthority],
+      }],
     },
-    programPublicKey: programKey,
-    stateSlot: 200,
-    pageSize: 10,
-    maxPages: 1,
+    {
+      slot: 11, signature: "authority-transfer-signature", transactionError: null,
+      signerKeys: [oldAuthority],
+      instructionEvidence: [{
+        programId: loader, data: Buffer.from([4, 0, 0, 0]).toString("base64"),
+        dataEncoding: "base64", accounts: [programData, oldAuthority, newAuthority],
+      }],
+    },
+    {
+      slot: 12, signature: "extend-signature", transactionError: null,
+      signerKeys: ["payer"],
+      instructionEvidence: [{
+        programId: loader, data: Buffer.from([6, 0, 0, 0, 160, 5, 0, 0]).toString("base64"),
+        dataEncoding: "base64", accounts: [programData, program, "system", "payer"],
+      }],
+    },
+  ]);
+  assert.deepEqual(lifecycle.counts, { upgrade: 1, setAuthority: 1, extendProgram: 1 });
+  assert.equal(lifecycle.deployWithMaxDataLenObserved, false);
+  assert.equal(lifecycle.initialDeploymentProven, false);
+  assert.deepEqual(lifecycle.events.map(event => event.operation), ["upgrade", "setAuthority", "extendProgram"]);
+  assert.deepEqual(lifecycle.events[1].accountRoles, {
+    governedAccount: programData, currentAuthority: oldAuthority, newAuthority,
   });
-  assert.equal(result.status, "program_state_slot_reached");
-  assert.deepEqual(result.signatures.map(x => x.signature), ["initial-deploy-candidate", "later-upgrade"]);
-  assert.deepEqual(result.signatures[0].signerKeys, [payer.toBase58()]);
-  assert.equal(result.signatures[0].instructionEvidence[0].programId, programKey.toBase58());
-  assert.equal(result.signatures[0].instructionEvidence[0].data, Buffer.from([1, 2, 3, 4]).toString("base64"));
-  assert.equal(result.signatures[0].instructionEvidence[0].dataEncoding, "base64");
+  assert.equal(lifecycle.events[2].accountRoles.additionalBytes, 1440);
 });
