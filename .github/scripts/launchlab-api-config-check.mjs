@@ -20,6 +20,7 @@ const CLUSTERS = {
     platformConfig: "4Bu96XjU84XjPDSpveTVf6LYGCkfW5FK7SNkREWcEfV4",
     cpmmProgram: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
     cpmmFeeAccount: "DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8",
+    cpmmFeeAuthority: "GpMZbSM2GgvTKHJirzeGfMFoaZ8UR2X7F4v8vHTvxFbL",
     lockProgram: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
     lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH"
   },
@@ -31,6 +32,7 @@ const CLUSTERS = {
     platformConfig: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
     cpmmProgram: "DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb",
     cpmmFeeAccount: "3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy",
+    cpmmFeeAuthority: "CXniRufdq5xL8t8jZAPxsPZDpuudwuJSPWnbcD5Y5Nxq",
     lockProgram: "DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX",
     lockAuthority: "7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3"
   }
@@ -53,11 +55,31 @@ async function getAccount(rpc, address) {
   if (json.error) throw new Error(json.error.message || "Solana RPC error");
   return json.result?.value ?? null;
 }
-export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target }) {
+export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target, PublicKey }) {
   if (!cpmmProgramAccount?.executable) throw new Error("CPMM migration program is missing or not executable");
   if (!lockProgramAccount?.executable) throw new Error("CPMM LP lock program is missing or not executable");
   if (!cpmmFeeAccount) throw new Error("CPMM create-pool fee destination account is missing");
-  return { cpmmProgramId: target.cpmmProgram, cpmmProgramExecutable: true, cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner, cpmmCreatePoolFeeAccountLamports: String(cpmmFeeAccount.lamports), lockProgramId: target.lockProgram, lockProgramExecutable: true, lockAuthority: target.lockAuthority };
+  if (cpmmFeeAccount.owner !== "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA") throw new Error("CPMM create-pool fee destination is not owned by the standard SPL Token program");
+  const feeData = Buffer.from(cpmmFeeAccount.data?.[0] ?? "", "base64");
+  if (feeData.length !== 165) throw new Error("CPMM create-pool fee destination is not a valid 165-byte SPL Token account");
+  const feeMint = new PublicKey(feeData.subarray(0, 32));
+  const feeTokenAuthority = new PublicKey(feeData.subarray(32, 64));
+  const feeAmount = feeData.readBigUInt64LE(64).toString();
+  const state = feeData.readUInt8(108);
+  if (state !== 1) throw new Error("CPMM create-pool fee token account is not initialized");
+  if (feeTokenAuthority.toBase58() !== target.cpmmFeeAuthority) throw new Error("CPMM create-pool fee token authority differs from pinned SDK constant");
+  const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+  const [expectedFeeAta] = PublicKey.findProgramAddressSync([feeTokenAuthority.toBuffer(), tokenProgram.toBuffer(), feeMint.toBuffer()], associatedProgram);
+  if (expectedFeeAta.toBase58() !== target.cpmmFeeAccount) throw new Error("CPMM create-pool fee account is not the pinned authority/mint associated token account");
+  return {
+    cpmmProgramId: target.cpmmProgram, cpmmProgramExecutable: true,
+    cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner,
+    cpmmCreatePoolFeeMint: feeMint.toBase58(), cpmmCreatePoolFeeTokenAuthority: feeTokenAuthority.toBase58(),
+    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeAssociatedTokenAccountVerified: true,
+    cpmmCreatePoolFeeAccountLamports: String(cpmmFeeAccount.lamports),
+    lockProgramId: target.lockProgram, lockProgramExecutable: true, lockAuthority: target.lockAuthority
+  };
 }
 export function decodeConfigDestinations({ globalData, platformData, PublicKey, programId, platformId, mintB }) {
   if (!Buffer.isBuffer(globalData) || globalData.length !== 371 || !Buffer.isBuffer(platformData) || platformData.length !== 944) {
@@ -130,7 +152,7 @@ async function verifyCluster(cluster) {
   };
   const platform = { platformScale: u64(pd,80).toString(), creatorScale: u64(pd,88).toString(), burnScale: u64(pd,96).toString(), feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
   const destinations = decodeConfigDestinations({ globalData: gd, platformData: pd, PublicKey, programId: target.program, platformId: target.platformConfig, mintB: global.mintB });
-  const cpmmMigrationAccounts = validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target });
+  const cpmmMigrationAccounts = validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target, PublicKey });
   for (const key of ["epoch","migrateFee","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
