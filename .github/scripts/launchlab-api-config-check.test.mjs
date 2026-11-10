@@ -129,3 +129,22 @@ test("rejects config destination decoding when byte lengths do not match pinned 
     mintB: "So11111111111111111111111111111111111111112",
   }), /byte lengths do not match/);
 });
+
+test("decodes post-upgrade LP migration scales as platform-locked plus burned shares", () => {
+  const globalData = Buffer.alloc(371), platformData = Buffer.alloc(944);
+  platformData.writeBigUInt64LE(0n, 80);
+  platformData.writeBigUInt64LE(100000n, 88);
+  platformData.writeBigUInt64LE(900000n, 96);
+  const result = decodeConfigDestinations({ globalData, platformData, PublicKey, programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a", mintB: "So11111111111111111111111111111111111111112" });
+  assert.equal(result.migrationLpDistribution.denominator, "1000000");
+  assert.equal(result.migrationLpDistribution.effectivePlatformLockedScaleAfter2026_08_17, "100000");
+  assert.equal(result.migrationLpDistribution.effectiveBurnScale, "900000");
+  assert.equal(result.migrationLpDistribution.separateCreatorFeeKeyForPostUpgradeMigration, false);
+});
+test("fails closed when PlatformConfig migration scales do not sum to one million", () => {
+  const globalData = Buffer.alloc(371), platformData = Buffer.alloc(944);
+  platformData.writeBigUInt64LE(100000n, 80);
+  platformData.writeBigUInt64LE(100000n, 88);
+  platformData.writeBigUInt64LE(700000n, 96);
+  assert.throws(() => decodeConfigDestinations({ globalData, platformData, PublicKey, programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a", mintB: "So11111111111111111111111111111111111111112" }), /sum exactly to 1,000,000/);
+});
