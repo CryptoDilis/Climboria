@@ -32,9 +32,9 @@ const REQUIRED = {
 };
 function sha(content) { return createHash("sha256").update(content, "utf8").digest("hex"); }
 function assert(condition, message) { if (!condition) throw new Error(message); }
-export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath }) {
-  const [packageText, idlText, instrumentText, layoutText, launchpadText, pdaText, cpmmIdlText, programIdText, cpmmLibText] = await Promise.all([
-    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8"), readFile(launchpadPath, "utf8"), readFile(pdaPath, "utf8"), readFile(cpmmIdlPath, "utf8"), readFile(programIdPath, "utf8"), readFile(cpmmLibPath, "utf8")
+export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath, cpmmInitializePath }) {
+  const [packageText, idlText, instrumentText, layoutText, launchpadText, pdaText, cpmmIdlText, programIdText, cpmmLibText, cpmmInitializeText] = await Promise.all([
+    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8"), readFile(launchpadPath, "utf8"), readFile(pdaPath, "utf8"), readFile(cpmmIdlPath, "utf8"), readFile(programIdPath, "utf8"), readFile(cpmmLibPath, "utf8"), readFile(cpmmInitializePath, "utf8")
   ]);
   const pkg = JSON.parse(packageText), idl = JSON.parse(idlText), cpmmIdl = JSON.parse(cpmmIdlText);
   const packageHash = sha(packageText), idlHash = sha(idlText), instrumentHash = sha(instrumentText), layoutHash = sha(layoutText), launchpadHash = sha(launchpadText), pdaHash = sha(pdaText);
@@ -81,6 +81,8 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
   const collectMigrationFee = idlInstructions.get("collect_migrate_fee");
   assert(collectMigrationFee && (collectMigrationFee.accounts[0].docs || []).join(" ").includes("migrate_fee_owner"), "collect_migrate_fee owner authority rule missing");
   assert(cpmmIdl.address === "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", "Unexpected Raydium CPMM program IDL address");
+  assert(cpmmInitializeText.includes("address= crate::create_pool_fee_reveiver::ID"), "CPMM initialize source no longer binds create_pool_fee to the fixed receiver account");
+  assert(cpmmInitializeText.includes("create_pool_fee: Box<InterfaceAccount") && cpmmInitializeText.includes("TokenAccount"), "CPMM initialize fee receiver is no longer a token account");
   for (const constant of [
     'declare_id!("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C")',
     'declare_id!("DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb")',
@@ -128,15 +130,15 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
     idl: { commit: EXPECTED.idlCommit, sha256: idlHash, address: idl.address, metadata: idl.metadata, instructionCount: idl.instructions.length },
     checkedDiscriminators: checked,
     creatorLaunchPath: { mintAKeypairIsRequiredSigner: true, callerMustSupplyExtraSigner: true, token2022SelectedByTransferFeeExtension: true, token2022ForcesCpmmMigration: true, createOnlySkipsInitialBuy: true, multiTransactionBuilder: true },
-    migrationAudit: { cpSwapProgramId: cpmmIdl.address, cpSwapSourceCommit: "3d69122790e97cd6aff24e8ba95940793773f58c", cpSwapInitializeAccountOrderVerified: true, cpSwapCreatePoolFeeAccountVerified: true, cpswapInstructionAccountOrderVerified: true, payerMustMatchGlobalConfigMigrateToCpmmWallet: true, createPoolFeeAndLockLpVaultAreExplicitAccounts: true, migrateFeeCollectionRestrictedToGlobalConfigMigrateFeeOwner: true, platformAndCreatorFeeVaultPdaSeedsVerified: true, feeDestinationFieldsVerifiedInPinnedSdkLayout: true },
+    migrationAudit: { cpSwapProgramId: cpmmIdl.address, cpSwapSourceCommit: "3d69122790e97cd6aff24e8ba95940793773f58c", cpSwapInitializeSourceVerified: true, cpSwapInitializeAccountOrderVerified: true, cpSwapCreatePoolFeeAccountVerified: true, cpswapInstructionAccountOrderVerified: true, payerMustMatchGlobalConfigMigrateToCpmmWallet: true, createPoolFeeAndLockLpVaultAreExplicitAccounts: true, migrateFeeCollectionRestrictedToGlobalConfigMigrateFeeOwner: true, platformAndCreatorFeeVaultPdaSeedsVerified: true, feeDestinationFieldsVerifiedInPinnedSdkLayout: true },
     cpswapMigrationInstructionPresent: true,
     legacyInitializeMarkedDeprecated: true,
     transactionSubmitted: false
   };
 }
 if (process.argv[1]?.endsWith("launchlab-sdk-idl-check.mjs")) {
-  const [packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath] = process.argv.slice(2);
-  if (!packagePath || !idlPath || !instrumentPath || !layoutPath || !launchpadPath || !pdaPath || !cpmmIdlPath || !programIdPath || !cpmmLibPath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts launchpad.ts pda.ts cp-swap-idl.json programId.ts cp-swap-lib.rs");
-  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath });
+  const [packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath, cpmmInitializePath] = process.argv.slice(2);
+  if (!packagePath || !idlPath || !instrumentPath || !layoutPath || !launchpadPath || !pdaPath || !cpmmIdlPath || !programIdPath || !cpmmLibPath || !cpmmInitializePath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts launchpad.ts pda.ts cp-swap-idl.json programId.ts cp-swap-lib.rs cp-swap-initialize-v2.rs");
+  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath, programIdPath, cpmmLibPath, cpmmInitializePath });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
