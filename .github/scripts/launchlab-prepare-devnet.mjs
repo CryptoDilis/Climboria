@@ -74,7 +74,7 @@ export function validateDevnetLaunchInput(input, sdk) {
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   const { amounts } = validateDevnetLaunchInput(input, sdk);
   if (!raydium?.connection || !raydium?.api || !raydium?.launchpad) fail("Initialized read-only Devnet Raydium SDK client is required");
-  if (raydium.scope?.cluster !== "devnet") fail("Raydium SDK client must be explicitly initialized for Devnet");
+  if (raydium.cluster !== "devnet") fail("Raydium SDK client must be explicitly initialized for Devnet");
   if (!sameKey(raydium.ownerPubKey, new sdk.PublicKey(input.creatorWallet))) fail("Connected SDK owner does not match the approved creator wallet");
 
   const programId = new sdk.PublicKey(DEVNET.programId);
