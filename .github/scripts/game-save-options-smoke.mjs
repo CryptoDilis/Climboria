@@ -54,6 +54,8 @@ try {
       await button.click();
       const heroAfter = await page.evaluate(() => localStorage.getItem("climboria-selected-hero"));
       if (heroAfter !== "Adventurer") failures.push(scenario.name + ": explicit account choice did not apply validated hero locally");
+      const appliedMessage = await page.locator("#climboria-save-options .save-status").textContent();
+      if (!appliedMessage.includes("Reload the game to apply it")) failures.push(scenario.name + ": account choice must explain that the already-loaded hero needs a reload");
     }
     const result = await page.evaluate(() => ({
       calls: window.__saveCalls,
