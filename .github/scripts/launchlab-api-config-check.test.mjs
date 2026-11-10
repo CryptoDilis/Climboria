@@ -7,7 +7,7 @@ const { PublicKey } = require("@solana/web3.js");
 
 const valid = {
   config: { defaultParams: { supplyInit: "1000000000000000", totalSellA: "793100000000000", totalFundRaisingB: "85000000000" } },
-  global: { minSupplyA: "10000000", maxLockRate: "800000", minSellRateA: "200000", minMigrateRateA: "150000", minFundRaisingB: "24000000000", mintB: "So11111111111111111111111111111111111111112", curveType: 0, tradeFeeRate: "2500" },
+  global: { minSupplyA: "10000000", maxLockRate: "800000", minSellRateA: "200000", minMigrateRateA: "150000", minFundRaisingB: "24000000000", migrateFee: "100000000", mintB: "So11111111111111111111111111111111111111112", curveType: 0, tradeFeeRate: "2500" },
   platform: { feeRate: "7500", creatorFeeRate: "500" }
 };
 test("accepts actual WSOL constant-product defaults that satisfy curve constraints", () => {
@@ -22,6 +22,13 @@ test("rejects defaults below minimum quote raise", () => {
   const result = validateCurveDefaults(invalid);
   assert.equal(result.pass, false);
   assert.equal(result.checks.quoteRaiseAtLeastMinimum, false);
+});
+test("rejects a quote raise that does not exceed the configured migration fee", () => {
+  const invalid = structuredClone(valid);
+  invalid.config.defaultParams.totalFundRaisingB = "100000000";
+  const result = validateCurveDefaults(invalid);
+  assert.equal(result.pass, false);
+  assert.equal(result.checks.quoteRaiseExceedsMigrationFee, false);
 });
 test("rejects defaults with insufficient migration amount", () => {
   const invalid = structuredClone(valid);
