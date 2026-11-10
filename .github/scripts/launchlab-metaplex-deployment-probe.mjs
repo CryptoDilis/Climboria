@@ -62,19 +62,19 @@ export function compareExecutableToPinnedBuildArtifact(executableBytes, {
   };
 }
 
-export async function inspectMetaplexDeploymentBlock({
+export async function inspectProgramDataStateSlotBlock({
   connection,
-  deploymentSlot,
+  stateSlot,
   programId,
   programDataAddress,
   loaderId = BPF_UPGRADEABLE_LOADER_ID,
 }) {
   if (typeof connection?.getBlock !== "function") {
-    return { status: "block_rpc_unavailable", deploymentSlot, candidateTransactions: [] };
+    return { status: "block_rpc_unavailable", stateSlot, candidateTransactions: [] };
   }
   let block;
   try {
-    block = await connection.getBlock(deploymentSlot, {
+    block = await connection.getBlock(stateSlot, {
       commitment: "finalized",
       transactionDetails: "full",
       rewards: false,
@@ -83,12 +83,12 @@ export async function inspectMetaplexDeploymentBlock({
   } catch (error) {
     return {
       status: "deployment_block_fetch_failed",
-      deploymentSlot,
+      stateSlot,
       reason: String(error.message || error),
       candidateTransactions: [],
     };
   }
-  if (!block) return { status: "deployment_block_unavailable", deploymentSlot, candidateTransactions: [] };
+  if (!block) return { status: "state_slot_block_unavailable", stateSlot, candidateTransactions: [] };
   const candidates = [];
   for (const entry of block.transactions ?? []) {
     const tx = entry.transaction ?? {};
@@ -128,12 +128,48 @@ export async function inspectMetaplexDeploymentBlock({
     });
   }
   return {
-    status: "deployment_block_inspected",
-    deploymentSlot,
+    status: "programdata_state_slot_block_inspected",
+    stateSlot,
     blockTime: block.blockTime ?? null,
     transactionCount: block.transactions?.length ?? 0,
     candidateTransactions: candidates,
   };
+}
+
+export async function inspectProgramDataHistory({ connection, programDataPublicKey }) {
+  if (typeof connection?.getSignaturesForAddress !== "function" || typeof connection?.getTransaction !== "function" || !programDataPublicKey) {
+    return { status: "programdata_history_rpc_unavailable", signatures: [] };
+  }
+  let signatureInfo;
+  try {
+    signatureInfo = await connection.getSignaturesForAddress(programDataPublicKey, { limit: 1000 }, "finalized");
+  } catch (error) {
+    return { status: "programdata_history_fetch_failed", reason: String(error.message || error), signatures: [] };
+  }
+  const history = [];
+  for (const info of signatureInfo ?? []) {
+    let transaction = null;
+    let fetchError = null;
+    try {
+      transaction = await connection.getTransaction(info.signature, {
+        commitment: "finalized",
+        maxSupportedTransactionVersion: 0,
+      });
+    } catch (error) {
+      fetchError = String(error.message || error);
+    }
+    const logs = transaction?.meta?.logMessages ?? [];
+    history.push({
+      signature: info.signature,
+      slot: info.slot,
+      blockTime: info.blockTime ?? transaction?.blockTime ?? null,
+      transactionAvailable: Boolean(transaction),
+      transactionError: transaction?.meta?.err ?? info.err ?? null,
+      loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
+      fetchError,
+    });
+  }
+  return { status: "programdata_history_inspected", signatureCount: history.length, signatures: history };
 }
 
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
@@ -164,7 +200,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   if (bytes.length < 13 || bytes.readUInt32LE(0) !== 3) {
     fail("Upgradeable-loader ProgramData account has an unexpected state layout");
   }
-  const deploymentSlot = Number(bytes.readBigUInt64LE(4));
+  const programDataStateSlot = Number(bytes.readBigUInt64LE(4));
   const authorityOption = bytes[12];
   let upgradeAuthority = null;
   let codeOffset;
@@ -182,7 +218,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   let deploymentBlockTimeUnix = null;
   if (typeof connection.getBlockTime === "function") {
     try {
-      const blockTime = await connection.getBlockTime(deploymentSlot);
+      const blockTime = await connection.getBlockTime(programDataStateSlot);
       if (Number.isSafeInteger(blockTime) && blockTime > 0) deploymentBlockTimeUnix = blockTime;
     } catch {
       // The slot timestamp is supplementary provenance; account/hash checks remain authoritative.
@@ -196,11 +232,15 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     byteLength: buildArtifact.byteLength,
     sha256: buildArtifact.sha256,
   };
-  const deploymentTransactionEvidence = await inspectMetaplexDeploymentBlock({
+  const programDataStateSlotBlockEvidence = await inspectProgramDataStateSlotBlock({
     connection,
-    deploymentSlot,
+    stateSlot: programDataStateSlot,
     programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
     programDataAddress: programDataAddress.toBase58(),
+  });
+  const programDataHistory = await inspectProgramDataHistory({
+    connection,
+    programDataPublicKey: programDataAddress,
   });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
@@ -217,9 +257,10 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     executable: program.executable,
     programDataAddress: programDataAddress.toBase58(),
     programDataOwner: dataAccount.owner.toBase58(),
-    deploymentSlot,
-    deploymentBlockTimeUnix,
-    deploymentTransactionEvidence,
+    programDataStateSlot,
+    programDataStateSlotBlockTimeUnix: deploymentBlockTimeUnix,
+    programDataStateSlotBlockEvidence,
+    programDataHistory,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
