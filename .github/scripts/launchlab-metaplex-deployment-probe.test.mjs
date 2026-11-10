@@ -38,7 +38,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
         blockTime: 1794270000,
         transactions: [{
           transaction: {
-            signatures: ["DeployOrUpgradeSignature"],
+            signatures: ["ExtendSignature"],
             message: {
               staticAccountKeys: [
                 new PublicKey(BPF_UPGRADEABLE_LOADER_ID),
@@ -47,10 +47,26 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
               compiledInstructions: [{ programIdIndex: 0, accountKeyIndexes: [1] }],
             },
           },
-          meta: { err: null, logMessages: ["Program upgraded successfully"] },
+          meta: { err: null, logMessages: ["Extended ProgramData account by 300000 bytes"] },
         }],
       };
     },
+    getSignaturesForAddress: async (key, options, commitment) => {
+      assert.equal(key.toBase58(), derivedAddress.toBase58());
+      assert.equal(options.limit, 100);
+      assert.equal(commitment, "finalized");
+      return [
+        { signature: "ExtendSignature", slot: 123456, blockTime: 1794270000, err: null },
+        { signature: "OriginalDeploySignature", slot: 120000, blockTime: 1794000000, err: null },
+      ];
+    },
+    getTransaction: async signature => ({
+      blockTime: signature === "ExtendSignature" ? 1794270000 : 1794000000,
+      meta: {
+        err: null,
+        logMessages: [signature === "ExtendSignature" ? "Extended ProgramData account by 300000 bytes" : "Program deployed"],
+      },
+    }),
     getAccountInfo: async (key, commitment) => {
       calls.push({ key: key.toBase58(), commitment });
       if (key.toBase58() === METAPLEX_TOKEN_METADATA_PROGRAM_ID) {
@@ -66,17 +82,21 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
 }
 const sdk = { PublicKey };
 
-test("captures finalized Devnet program-data slot, authority, and bytecode hash without source-match claim", async () => {
+test("captures finalized ProgramData state slot, loader history, authority, and bytecode hash", async () => {
   const f = fixture();
   const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
   assert.equal(result.status, "deployment_provenance_captured_source_match_unverified");
   assert.equal(result.programId, METAPLEX_TOKEN_METADATA_PROGRAM_ID);
   assert.equal(result.programDataAddress, f.derivedAddress.toBase58());
-  assert.equal(result.deploymentSlot, 123456);
-  assert.equal(result.deploymentBlockTimeUnix, 1794270000);
-  assert.equal(result.deploymentTransactionEvidence.status, "deployment_block_inspected");
-  assert.equal(result.deploymentTransactionEvidence.candidateTransactions[0].signature, "DeployOrUpgradeSignature");
-  assert.equal(result.deploymentTransactionEvidence.candidateTransactions[0].loaderInstructionCount, 1);
+  assert.equal(result.programDataStateSlot, 123456);
+  assert.equal(result.programDataStateSlotBlockTimeUnix, 1794270000);
+  assert.equal(result.programDataStateSlotBlockEvidence.status, "programdata_state_slot_block_inspected");
+  assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
+  assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
+  assert.equal(result.programDataHistory.status, "programdata_history_inspected");
+  assert.equal(result.programDataHistory.signatureCount, 2);
+  assert.equal(result.programDataHistory.signatures[0].loaderLogs[0], "Extended ProgramData account by 300000 bytes");
+  assert.equal(result.programDataHistory.signatures[1].loaderLogs[0], "Program deployed");
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
   assert.equal(result.immutable, false);
   assert.equal(result.executableByteLength, 24);
@@ -149,6 +169,6 @@ test("reports unavailable deployment block history without inventing a transacti
   const f = fixture();
   f.connection.getBlock = async () => null;
   const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
-  assert.equal(result.deploymentTransactionEvidence.status, "deployment_block_unavailable");
-  assert.deepEqual(result.deploymentTransactionEvidence.candidateTransactions, []);
+  assert.equal(result.programDataStateSlotBlockEvidence.status, "state_slot_block_unavailable");
+  assert.deepEqual(result.programDataStateSlotBlockEvidence.candidateTransactions, []);
 });
