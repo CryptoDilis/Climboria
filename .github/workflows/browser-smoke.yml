@@ -114,7 +114,7 @@ jobs:
               const quoteSidePair={chainId:'solana',dexId:'quote-side-fixture',pairAddress:'QuoteSidePair1111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},priceUsd:'150',priceNative:'1200',priceChange:{h24:1},volume:{h24:999999},liquidity:{usd:999999}};
               await dexPage.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair,quoteSidePair]})});
+                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([dexPair,quoteSidePair])});
                 return route.continue();
               });
               // The selected DEX token is synthetic. Keep its holder-intel RPC reads deterministic
@@ -184,7 +184,7 @@ jobs:
               // Base search must discover tokens outside the finite boot-time query sample by name and exact ERC-20 contract.
               const baseMint='0x1234567890abcdef1234567890abcdef12345678';
               const basePair={chainId:'base',dexId:'base-search-fixture',pairAddress:'0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',baseToken:{address:baseMint,symbol:'BASEFIX',name:'Climboria Base Search Fixture'},quoteToken:{address:'0x4200000000000000000000000000000000000006',symbol:'WETH',name:'Wrapped Ether'},priceUsd:'1.25',priceChange:{h24:3.5},volume:{h24:76543},liquidity:{usd:45678},pairCreatedAt:Date.now()-86400000};
-              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')==='BASEFIX')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
+              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')==='BASEFIX')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([basePair])});return route.continue();});
               await dexPage.route('https://api.dexscreener.com/token-pairs/v1/base/**',async route=>{const address=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');if(address.toLowerCase()===baseMint.toLowerCase())return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
               await dexPage.locator('#baseSearch').fill('BASEFIX');
               await dexPage.waitForFunction(()=>document.querySelector('#baseRows')?.innerText.includes('BASEFIX'),null,{timeout:10000});
@@ -458,7 +458,7 @@ jobs:
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
-                if(url.includes('/token-pairs/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
+                if(url.includes('/token-pairs/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
                 if(url.includes('/latest/dex/search')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
                 if(url.includes('/token-profiles/latest/v1')) return route.fulfill({status:200,contentType:'application/json',body:'[]'});
                 if(url.includes('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
