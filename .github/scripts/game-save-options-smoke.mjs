@@ -79,7 +79,8 @@ try {
     if (result.inventory !== inventoryBefore) failures.push(scenario.name + ": inventory changed");
     await page.keyboard.press("Escape");
     if (await page.locator("#climboria-save-options").isVisible()) failures.push(scenario.name + ": Escape did not close the panel");
-    if (await page.getByRole("button", { name: "SAVE OPTIONS" }).getAttribute("aria-expanded") !== "false") failures.push(scenario.name + ": trigger aria-expanded was not reset");\n    if (await page.evaluate(() => document.activeElement?.id) !== "climboria-save-options-trigger") failures.push(scenario.name + ": Escape did not restore focus to the Save Options trigger");
+    if (await page.getByRole("button", { name: "SAVE OPTIONS" }).getAttribute("aria-expanded") !== "false") failures.push(scenario.name + ": trigger aria-expanded was not reset");
+    if (await page.evaluate(() => document.activeElement?.id) !== "climboria-save-options-trigger") failures.push(scenario.name + ": Escape did not restore focus to the Save Options trigger");
     await page.close();
   }
   if (failures.length) throw new Error(failures.join("\n"));
