@@ -2718,3 +2718,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Verification pending:** the GitHub Actions run for the new parser tests has not yet been observed. Existing Browser Smoke run `42849331112` remains in progress on its retry; do not mark it green prematurely.
 - [ ] **Exact next task:** execute the parser unit tests and fix any fixture/parser mismatch; then implement trusted address-lookup-table resolution and account-meta reconstruction. Follow with protocol-specific instruction decoders/allowlists and durable atomic expiring order-wallet-message binding. Keep the hard execution gate false throughout.
 - No production deployment, wallet signing, live transaction, Devnet submission, Mainnet action, or execution flag change occurred.
+
+
+## Decoder verification update — 2026-11-10
+
+- [x] Validate workflow [42850672329](https://github.com/CryptoDilis/Climboria/actions/runs/42850672329) completed **SUCCESS** on code head `4f96240648f421c0ddb9768b5e121a45aeaccf9d`. The job's “Test Cloudflare swap proxy security and API contracts” step passed, along with homepage/DEX/Swap syntax and structural checks. This validates the repository test command including the new parser test file.
+- [ ] Browser Smoke workflow [42850672349](https://github.com/CryptoDilis/Climboria/actions/runs/42850672349) remains **IN PROGRESS**; Playwright browser-cache setup was running at last inspection.
+- Parser remains a structural wire decoder only; no ALT account resolution, semantic instruction allowlist, order-wallet binding or execute-route integration exists yet.
+- Hard execution gate remains false.
+- **Next exact task:** wait for Browser Smoke result; then implement trusted ALT resolution/account-meta reconstruction and instruction-level semantic validation, with tests. Keep execution disabled.
