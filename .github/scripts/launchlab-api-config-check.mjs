@@ -59,6 +59,27 @@ async function getAccount(rpc, address) {
   if (json.error) throw new Error(json.error.message || "Solana RPC error");
   return json.result?.value ?? null;
 }
+async function rpcCall(rpc, method, params) {
+  const res = await fetch(rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: `climboria-${method}`, method, params }), signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw new Error(`RPC HTTP ${res.status} for ${method}`);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || `Solana RPC error for ${method}`);
+  return json.result;
+}
+export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized" }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 0 }]) }) {
+  const accountResult = await getAccount(rpc, authority);
+  const account = accountResult?.value ?? accountResult;
+  if (!account) return { authority, accountExists: false, recentSignatures: [], historyComplete: false, note: "Authority account is not present at finalized commitment." };
+  const signatures = await getSignatures(rpc, authority, limit);
+  const transactions = [];
+  for (const item of (Array.isArray(signatures) ? signatures : []).slice(0, limit)) {
+    let tx = null, fetchError = null;
+    try { tx = await getTransaction(rpc, item.signature); } catch (error) { fetchError = String(error?.message || error); }
+    const message = tx?.transaction?.message, keys = message?.accountKeys ?? [];
+    transactions.push({ signature: item.signature, slot: item.slot, blockTime: item.blockTime ?? null, confirmationStatus: item.confirmationStatus ?? null, err: item.err ?? null, transactionFetched: Boolean(tx), transactionFetchError: fetchError, feeLamports: tx?.meta?.fee ?? null, signers: keys.filter(key => typeof key === "object" && key.signer).map(key => key.pubkey), programIds: [...new Set((message?.instructions ?? []).map(ix => ix.programId ?? ix.program ?? "unknown"))], instructionCount: message?.instructions?.length ?? null });
+  }
+  return { authority, accountExists: true, accountOwner: account.owner, accountExecutable: Boolean(account.executable), accountDataLength: account.data?.[0] ? Buffer.from(account.data[0], "base64").length : null, accountLamports: String(account.lamports ?? "0"), recentSignatureCount: Array.isArray(signatures) ? signatures.length : 0, recentSignatures: transactions, historyLimit: limit, historyComplete: Array.isArray(signatures) && signatures.length < limit, classification: "unclassified", note: "System-owned, zero-data accounts may still be PDA-controlled; ownership/executable/data shape and recent signatures alone do not prove beneficial ownership or governance." };
+}
 export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, cpmmConfigAccount, target, PublicKey }) {
   if (!cpmmProgramAccount?.executable) throw new Error("CPMM migration program is missing or not executable");
   if (!lockProgramAccount?.executable) throw new Error("CPMM LP lock program is missing or not executable");
@@ -208,6 +229,7 @@ async function verifyCluster(cluster) {
   const cpmmConfigId = destinations.platformConfigDestinations.cpConfigId;
   const cpmmConfigAccount = await getAccount(target.rpc, cpmmConfigId);
   const cpmmMigrationAccounts = validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, cpmmConfigAccount, target: { ...target, cpmmConfigId }, PublicKey });
+  const feeAuthorityHistory = await inspectAuthorityHistory({ rpc: target.rpc, authority: cpmmMigrationAccounts.cpmmCreatePoolFeeTokenAuthority });
   for (const key of ["epoch","migrateFee","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
@@ -221,6 +243,7 @@ async function verifyCluster(cluster) {
     onchainGlobalConfigMatchesApi: true, onchainPlatformConfig: platform,
     ...destinations,
     cpmmMigrationAccounts,
+    cpmmFeeAuthorityHistory: feeAuthorityHistory,
     feeDenominator: DENOMINATOR.toString(), validation,
     transactionSubmitted: false
   };
