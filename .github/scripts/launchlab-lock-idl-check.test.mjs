@@ -8,8 +8,8 @@ const target = {
   id: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
   authority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
 };
-const lockNames = ["auth","payer","liquidityOwner","nftOwner","nftMint","nftAccount","poolState","lockedLiquidity","lpMint","liquidityOwnerLp","lockedLpVault","tokenVault0","tokenVault1","metadataAccount","rent","systemProgram","tokenProgram","associatedTokenProgram","metadataProgram"];
-const collectNames = ["auth","nftOwner","nftAccount","lockedLiquidity","cpmmProgram","cpmmAuth","poolState","lpMint","userVault0","userVault1","poolVault0","poolVault1","token0Mint","token1Mint","lockedLpVault","tokenProgram","token2022Program","memoProgram"];
+const lockNames = ["authority","payer","liquidityOwner","feeNftOwner","feeNftMint","feeNftAccount","poolState","lockedLiquidity","lpMint","liquidityOwnerLp","lockedLpVault","token0Vault","token1Vault","metadataAccount","rent","systemProgram","tokenProgram","associatedTokenProgram","metadataProgram"];
+const collectNames = ["authority","feeNftOwner","feeNftAccount","lockedLiquidity","cpSwapProgram","cpAuthority","poolState","lpMint","recipientToken0Account","recipientToken1Account","token0Vault","token1Vault","vault0Mint","vault1Mint","lockedLpVault","tokenProgram","tokenProgram2022","memoProgram"];
 const lockFlags = [[false,false],[true,true],[true,false],[false,false],[true,true],[false,true],[false,false],[false,true],[false,false],[false,true],[false,true],[false,true],[false,true],[false,true],[false,false],[false,false],[false,false],[false,false],[false,false]];
 const collectFlags = [[false,false],[true,false],[false,true],[false,true],[false,false],[false,false],[false,true],[false,true],[false,true],[false,true],[false,true],[false,true],[false,false],[false,false],[false,true],[false,false],[false,false],[false,false]];
 const makeAccounts = (names, flags) => names.map((name, i) => ({ name, signer: flags[i][0], writable: flags[i][1] }));
@@ -18,8 +18,8 @@ function fixture() {
     name: "lockCpLiquidity",
     discriminator: [216,157,29,78,38,51,31,26],
     accounts: makeAccounts(lockNames, lockFlags).map(account => {
-      if (account.name === "auth") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("lock_cp_authority_seed")] }] };
-      if (account.name === "lockedLiquidity") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("locked_liquidity")] }, { kind: "account", path: "nftMint" }] };
+      if (account.name === "authority") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("lock_cp_authority_seed")] }] };
+      if (account.name === "lockedLiquidity") account.pda = { seeds: [{ kind: "const", value: [...Buffer.from("locked_liquidity")] }, { kind: "account", path: "feeNftMint" }] };
       return account;
     }),
     args: [{ name: "lpAmount", type: "u64" }, { name: "withMetadata", type: "bool" }],
