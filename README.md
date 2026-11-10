@@ -2820,3 +2820,12 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Verification pending for follow-up commits:** redirect hardening commits `19f90962`, `f2e14d3b`, and docs `45cae0d0` were made after the successful run above. They require a new Validate run; do not extend the earlier green result to these commits.
 - [ ] **Exact next task:** verify fresh Validate and Browser Smoke results on the new head; then implement a server-only, fail-closed semantic transaction validator consuming trusted ALT results, followed by order-wallet-message binding/replay protection. Keep execution disabled.
 - Execution remains hard-disabled; resolver is not wired into `/api/swap/execute`, no live RPC provider verification or Worker deployment has been performed, and no production trades are enabled.
+
+
+### 2026-11-11 — Follow-up browser smoke and latest-head status
+
+- [x] Browser Smoke run `42854007897` (head `4d989326dc08bbfae9562bd53120f2603c9053c4`) has passed homepage CTA/DEX routing/mobile navigation, Worker proxy, execution fail-closed, standalone Swap, DEX shell, mobile workspace tabs/desktop regression, compact 390px/360px layouts, and mobile market loading/provider-error/empty-state checks.
+- [ ] Jarrell's Peak desktop/mobile gameplay smoke step was still running at last inspection; screenshot upload and post-job cleanup had not completed. This run is on the earlier head and does not cover the subsequent RPC redirect-hardening commits.
+- [x] Current PR #233 head after redirect hardening and documentation: `8a71f48480e091b92ae95629ac811528128a16e4`.
+- [ ] No new Actions run has appeared for that newer head yet. The green Validate result `42854007949` is valid for `4d989326...` only. Do not claim the redirect change passed CI until a fresh run is observed.
+- [ ] Exact next task: refresh Actions until fresh Validate runs on `8a71f484...`; inspect the completed Browser Smoke run and remaining gameplay step. Then implement semantic instruction policy using an audited, explicit supported-program/instruction set. Do not integrate into execution or enable user funds before order binding/replay protection and independent security review.
