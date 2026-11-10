@@ -18,6 +18,8 @@ on:
       - ".github/scripts/launchlab-devnet-simulation-preflight.test.mjs"
       - ".github/scripts/launchlab-devnet-approval-packet.mjs"
       - ".github/scripts/launchlab-devnet-approval-packet.test.mjs"
+      - ".github/scripts/launchlab-devnet-rent-layouts.mjs"
+      - ".github/scripts/launchlab-devnet-rent-layouts.test.mjs"
       - ".github/scripts/launchlab-lock-idl-check.mjs"
       - ".github/scripts/launchlab-lock-idl-check.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
@@ -37,6 +39,8 @@ on:
       - ".github/scripts/launchlab-devnet-simulation-preflight.test.mjs"
       - ".github/scripts/launchlab-devnet-approval-packet.mjs"
       - ".github/scripts/launchlab-devnet-approval-packet.test.mjs"
+      - ".github/scripts/launchlab-devnet-rent-layouts.mjs"
+      - ".github/scripts/launchlab-devnet-rent-layouts.test.mjs"
       - ".github/scripts/launchlab-lock-idl-check.mjs"
       - ".github/scripts/launchlab-lock-idl-check.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
@@ -84,6 +88,8 @@ jobs:
         run: node --test .github/scripts/launchlab-devnet-simulation-preflight.test.mjs
       - name: Test read-only Devnet owner approval packet builder (mock RPC only)
         run: node --test .github/scripts/launchlab-devnet-approval-packet.test.mjs
+      - name: Test source-backed Devnet rent account layouts (offline fixtures only)
+        run: node --test .github/scripts/launchlab-devnet-rent-layouts.test.mjs
       - name: Build and inspect real pinned-SDK Devnet transactions (no signing or submission)
         env:
           LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
