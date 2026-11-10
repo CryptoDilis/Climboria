@@ -248,8 +248,8 @@ test("resolves and reports V0 Address Lookup Table account metas", async () => {
   };
   const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
   const review = result.transactionReviews[0];
-  assert.equal(review.accountMetaDetails[0][2].pubkey, loadedWritable.toBase58());
-  assert.equal(review.accountMetaDetails[0][2].isWritable, true);
+  assert.equal(review.accountMetaDetails[1][0].pubkey, loadedWritable.toBase58());
+  assert.equal(review.accountMetaDetails[1][0].isWritable, true);
   assert.equal(review.lookupTables[0].address, lookupKey.toBase58());
   assert.deepEqual(review.lookupTables[0].writableAddresses, [loadedWritable.toBase58()]);
 });
