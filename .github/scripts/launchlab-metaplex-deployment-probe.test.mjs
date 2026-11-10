@@ -49,7 +49,7 @@ test("captures finalized Devnet program-data slot, authority, and bytecode hash 
   assert.equal(result.deploymentSlot, 123456);
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
   assert.equal(result.immutable, false);
-  assert.equal(result.executableByteLength, 19);
+  assert.equal(result.executableByteLength, 24);
   assert.equal(result.executableSha256.length, 64);
   assert.equal(result.sourceMatchStatus, "not_verified_no_reproducible_build_comparison");
   assert.equal(result.transactionSubmitted, false);
