@@ -14,6 +14,8 @@ on:
       - ".github/scripts/launchlab-prepare-devnet.mjs"
       - ".github/scripts/launchlab-prepare-devnet.test.mjs"
       - ".github/scripts/launchlab-devnet-builder-smoke.mjs"
+      - ".github/scripts/launchlab-lock-idl-check.mjs"
+      - ".github/scripts/launchlab-lock-idl-check.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
   pull_request:
     branches: [main]
@@ -27,6 +29,8 @@ on:
       - ".github/scripts/launchlab-prepare-devnet.mjs"
       - ".github/scripts/launchlab-prepare-devnet.test.mjs"
       - ".github/scripts/launchlab-devnet-builder-smoke.mjs"
+      - ".github/scripts/launchlab-lock-idl-check.mjs"
+      - ".github/scripts/launchlab-lock-idl-check.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
 
 permissions:
@@ -60,6 +64,8 @@ jobs:
         run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json /tmp/launchlab-provenance/programId.ts /tmp/launchlab-provenance/cp-swap-lib.rs /tmp/launchlab-provenance/cp-swap-initialize-v2.rs
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
         run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json /tmp/launchlab-provenance/programId.ts /tmp/launchlab-provenance/cp-swap-lib.rs /tmp/launchlab-provenance/cp-swap-initialize-v2.rs
+      - name: Test LP Lock IDL account and PDA validation
+        run: node --test .github/scripts/launchlab-lock-idl-check.test.mjs
       - name: Install temporary Solana RPC client dependency
         run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4 @raydium-io/raydium-sdk-v2@0.2.84-alpha
       - name: Test live Launch Config parameter validation
@@ -80,3 +86,7 @@ jobs:
         run: node --experimental-default-type=module .github/scripts/launchlab-onchain-idl-check.mjs /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/layout.ts
       - name: Query live Raydium APIs and finalized Solana program accounts
         run: node .github/scripts/launchlab-provenance.mjs
+      - name: Verify live Mainnet and Devnet LP Lock Anchor IDLs
+        env:
+          LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
+        run: node .github/scripts/launchlab-lock-idl-check.mjs
