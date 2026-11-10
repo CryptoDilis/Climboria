@@ -185,3 +185,7 @@ No implementation may silently choose defaults for these economic/custody decisi
 - No Devnet or Mainnet transaction was performed in this work unit.
 - No test run was triggered: this commit adds documentation only.
 - **Exact next job:** obtain owner decisions for the 11 rows in section 7, prioritizing launch mechanism, LP ownership/funding, sale vs direct launch, fee base/asset/recipient, and authority policy. Then map selected audited Solana protocol/program instructions and define the devnet architecture before coding.
+
+
+## Owner decision update — 2026-11-10
+**APPROVED:** bonding-curve launch architecture with Raydium LaunchLab as the intended integration; **NO public deposits/fundraising** (no presale, auction, contribution escrow or allocation claims from public deposits). This supersedes the open mechanism/fundraising questions above. Other economics, fee, authority and LP questions remain unresolved. See [bonding architecture](./SIGNATURE-LAUNCHPAD-BONDING-ARCHITECTURE.md). The earlier generic sale/escrow/claim flow is an unselected alternative, not the approved implementation scope.
