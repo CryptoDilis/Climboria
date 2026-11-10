@@ -2748,3 +2748,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] **CI pending on latest code head** `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`. Current visible Validate run `42851432127` and Browser Smoke `42851432268` ran on older head `1e8fd34849319e541923eee8403fb922e1838742`; Browser Smoke remains in progress. Do not treat these as verification of the latest changes.
 - [ ] **Exact next task:** obtain fresh CI for latest head; inspect logs and repair any failures. Then connect trusted RPC fetch/context/owner validation to ALT parsing without trusting client-supplied account data. Continue instruction allowlists, transfer semantics, order-wallet-message binding, replay/idempotency, adversarial and Devnet tests.
 - **Hard safety boundary:** ALT parser is a pure decoder; caller must bind its inputs to a trusted RPC response. It is not connected to `/api/swap/execute`. Execution security constant remains false; no production deployment or transaction submission occurred.
+
+
+## 2026-11-11 — ALT parser hardening follow-up
+
+- [x] Added v0 regression coverage for program IDs loaded from readonly ALT entries.
+- [x] Added ALT account-state metadata decoder with owner/executable/state/authority/padding/address-count/deactivation/warmup checks. This remains a pure parser; the caller must authenticate the exact RPC response and context slot.
+- [x] Tightened lookup descriptors: reject a table lookup that selects zero addresses.
+- [x] Enforce a 128-account resolved-key cap both after decode and after ALT reconstruction; added oversized-account-set regression test.
+- [x] Documented these constraints in `dex/swap-proxy/DEPLOYMENT.md`.
+- [ ] **Latest CI remains pending:** latest engineering changes are after commit `1e8fd34849319e541923eee8403fb922e1838742`, which is the head used by visible Validate `42851432127` (success) and Browser Smoke `42851432268` (still in progress). These runs do not validate current source. GitHub Actions did not produce a fresh run for the latest code commits through the available repository connection; do not claim tests pass.
+- [ ] **Exact next task:** obtain a fresh Validate run for current PR head and inspect result; then add trusted RPC fetch integration binding owner/executable/data/context slot to the same account response. Continue semantic instruction allowlists, exact order-wallet-message binding, replay/idempotency and controlled Devnet tests.
+- **Safety:** parser not integrated into execute route; execution security constant remains false. No Worker deployment, wallet signing, live transaction, or production switch change.
