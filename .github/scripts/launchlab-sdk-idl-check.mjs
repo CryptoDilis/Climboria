@@ -7,6 +7,8 @@ const EXPECTED = {
   sdkPackageSha256: "38c593087c874cf5ede8847e45dc5fc9d6c1f670805c9f7b0e9fc83eac6a6d86",
   sdkInstrumentSha256: "177d418defd36a173d43fafb29a06019a8754c7abe599365885d0b46c1fd8274",
   sdkLayoutSha256: "a422af7572b3b0f567ff7ad39f4b099eaf8a551257a77f89a61a3fe603ec2256",
+  sdkLaunchpadSha256: "32628b92cbb7fe96f15b9fc8c56c2baa503efccdfa7b889d7ab8a9332189127f",
+  sdkPdaSha256: "bfa801c13f842c374e27d3e34007a75520094cbb71a82ca24c69882415932522",
   sdkCommit: "1cf5bb129dbbb1c76dab67819c3d478349c8ed25",
   idlCommit: "e7e0c96fe77bcf6a020b84a44c47a722aac8e359",
   idlSha256: "963189409945069409f32e345d4adf2892e0b3ca1be504372577fe34a23c6cdb",
@@ -30,17 +32,19 @@ const REQUIRED = {
 };
 function sha(content) { return createHash("sha256").update(content, "utf8").digest("hex"); }
 function assert(condition, message) { if (!condition) throw new Error(message); }
-export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath }) {
-  const [packageText, idlText, instrumentText, layoutText] = await Promise.all([
-    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8")
+export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath }) {
+  const [packageText, idlText, instrumentText, layoutText, launchpadText, pdaText] = await Promise.all([
+    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8"), readFile(launchpadPath, "utf8"), readFile(pdaPath, "utf8")
   ]);
   const pkg = JSON.parse(packageText), idl = JSON.parse(idlText);
-  const packageHash = sha(packageText), idlHash = sha(idlText), instrumentHash = sha(instrumentText), layoutHash = sha(layoutText);
+  const packageHash = sha(packageText), idlHash = sha(idlText), instrumentHash = sha(instrumentText), layoutHash = sha(layoutText), launchpadHash = sha(launchpadText), pdaHash = sha(pdaText);
   assert(pkg.name === "@raydium-io/raydium-sdk-v2", "Unexpected SDK package name");
   assert(pkg.version === EXPECTED.sdkVersion, `SDK version mismatch: ${pkg.version}`);
   assert(packageHash === EXPECTED.sdkPackageSha256, `SDK package hash mismatch: ${packageHash}`);
   assert(instrumentHash === EXPECTED.sdkInstrumentSha256, `SDK instrument source hash mismatch: ${instrumentHash}`);
   assert(layoutHash === EXPECTED.sdkLayoutSha256, `SDK layout source hash mismatch: ${layoutHash}`);
+  assert(launchpadHash === EXPECTED.sdkLaunchpadSha256, `SDK launchpad source hash mismatch: ${launchpadHash}`);
+  assert(pdaHash === EXPECTED.sdkPdaSha256, `SDK PDA source hash mismatch: ${pdaHash}`);
   assert(idlHash === EXPECTED.idlSha256, `LaunchLab IDL hash mismatch: ${idlHash}`);
   assert(idl.address === EXPECTED.programId, `IDL program address mismatch: ${idl.address}`);
   assert(idl.metadata?.name === "raydium_launchpad", "Unexpected LaunchLab IDL metadata name");
@@ -63,19 +67,26 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
   assert(idlInstructions.has("migrate_to_cpswap"), "IDL missing migrate_to_cpswap");
   assert(instrumentText.includes('please use initializeV2 instead'), "SDK legacy initialize deprecation guard missing");
   assert(instrumentText.includes('initializeV2: Buffer.from([67, 153, 175, 39, 218, 16, 38, 32])'), "SDK initializeV2 discriminator mismatch");
+  assert(instrumentText.includes("{ pubkey: mintA, isSigner: true, isWritable: true }"), "Mint keypair signer requirement not found in SDK instruction");
+  assert(launchpadText.includes("mintA,") && launchpadText.includes("extraSigners,") && launchpadText.includes("if (extraSigners?.length) txBuilder.addInstruction({ signers: extraSigners });"), "SDK caller-supplied mint signer path changed");
+  assert(launchpadText.includes("if (token2022) migrateType = \"cpmm\";"), "Token-2022 CPMM migration selection changed");
+  assert(launchpadText.includes("if (!extraConfigs.createOnly)"), "Create-only path / optional initial buy behavior changed");
+  assert(launchpadText.includes("versionSizeCheckBuild"), "Multi-transaction builder path not found");
+  assert(pdaText.includes('Buffer.from("global_config", "utf8")') && pdaText.includes("mintB.toBuffer(), u8ToBytes(curveType), u16ToBytes(index)"), "GlobalConfig PDA derivation source changed");
   return {
     pass: true,
-    sdk: { version: pkg.version, commit: EXPECTED.sdkCommit, packageSha256: packageHash, instrumentSha256: instrumentHash, layoutSha256: layoutHash },
+    sdk: { version: pkg.version, commit: EXPECTED.sdkCommit, packageSha256: packageHash, instrumentSha256: instrumentHash, layoutSha256: layoutHash, launchpadSha256: launchpadHash, pdaSha256: pdaHash },
     idl: { commit: EXPECTED.idlCommit, sha256: idlHash, address: idl.address, metadata: idl.metadata, instructionCount: idl.instructions.length },
     checkedDiscriminators: checked,
+    creatorLaunchPath: { mintAKeypairIsRequiredSigner: true, callerMustSupplyExtraSigner: true, token2022SelectedByTransferFeeExtension: true, token2022ForcesCpmmMigration: true, createOnlySkipsInitialBuy: true, multiTransactionBuilder: true },
     cpswapMigrationInstructionPresent: true,
     legacyInitializeMarkedDeprecated: true,
     transactionSubmitted: false
   };
 }
 if (process.argv[1]?.endsWith("launchlab-sdk-idl-check.mjs")) {
-  const [packagePath, idlPath, instrumentPath, layoutPath] = process.argv.slice(2);
-  if (!packagePath || !idlPath || !instrumentPath || !layoutPath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts");
-  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath });
+  const [packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath] = process.argv.slice(2);
+  if (!packagePath || !idlPath || !instrumentPath || !layoutPath || !launchpadPath || !pdaPath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts launchpad.ts pda.ts");
+  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
