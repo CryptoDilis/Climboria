@@ -181,6 +181,16 @@ jobs:
               if(!(await dexPage.locator('#detailTitle').innerText()).includes('CLIMBTEST'))throw new Error('DEX chart detail did not match the exact searched token');
               const detailPoolIds=await dexPage.locator('#detailPairs [data-pool]').evaluateAll(rows=>rows.map(row=>row.getAttribute('data-pool')));
               if(!detailPoolIds.includes(dexPair.pairAddress)||detailPoolIds.includes(quoteSidePair.pairAddress))throw new Error('DEX token detail must include the requested mint as base token and exclude quote-side-only pools: '+JSON.stringify(detailPoolIds));
+              // Base search must discover tokens outside the finite boot-time query sample by name and exact ERC-20 contract.
+              const baseMint='0x1234567890abcdef1234567890abcdef12345678';
+              const basePair={chainId:'base',dexId:'base-search-fixture',pairAddress:'0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',baseToken:{address:baseMint,symbol:'BASEFIX',name:'Climboria Base Search Fixture'},quoteToken:{address:'0x4200000000000000000000000000000000000006',symbol:'WETH',name:'Wrapped Ether'},priceUsd:'1.25',priceChange:{h24:3.5},volume:{h24:76543},liquidity:{usd:45678},pairCreatedAt:Date.now()-86400000};
+              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')==='BASEFIX')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
+              await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{const address=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');if(address.toLowerCase()===baseMint.toLowerCase())return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
+              await dexPage.locator('#baseSearch').fill('BASEFIX');
+              await dexPage.waitForFunction(()=>document.querySelector('#baseRows')?.innerText.includes('BASEFIX'),null,{timeout:10000});
+              await dexPage.locator('#baseSearch').fill(baseMint);
+              await dexPage.waitForFunction(mint=>document.querySelector('#baseRows')?.innerText.includes(mint.slice(0,8)),baseMint,{timeout:10000});
+              if(!(await dexPage.locator('#baseRows').innerText()).includes('BASEFIX'))throw new Error('Base exact-contract search did not render the matching token pool');
               await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
