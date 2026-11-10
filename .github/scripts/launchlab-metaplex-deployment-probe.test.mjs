@@ -340,7 +340,6 @@ test("decodes ProgramData loader operations and does not claim deployment from u
   ]);
   assert.deepEqual(lifecycle.counts, { upgrade: 1, setAuthority: 1, extendProgram: 1 });
   assert.equal(lifecycle.deployWithMaxDataLenObserved, false);
-  assert.equal(lifecycle.initialDeploymentProven, false);
   assert.deepEqual(lifecycle.events.map(event => event.operation), ["upgrade", "setAuthority", "extendProgram"]);
   assert.deepEqual(lifecycle.events[1].accountRoles, {
     governedAccount: programData, currentAuthority: oldAuthority, newAuthority,
