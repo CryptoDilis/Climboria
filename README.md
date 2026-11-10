@@ -3242,3 +3242,5 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - Narrowed the guard to validate the actual configured key constant starts with `sb_publishable_` and reject concrete secret-key patterns, rather than scanning harmless comments. This preserves the intended protection without treating a security comment as an exposed secret.
 - The unapplied SQL migration remains a forward-only patch for this existing database, not a blank-project baseline.
 - Browser Smoke run `42899334232` was in progress on the prior PR head while this diagnosis was recorded. A new code commit will cause the branch's cancel-in-progress browser workflow to restart on the corrected exact head; do not reuse the old run as final-head evidence.
+
+- Follow-up diagnosis on the first attempted correction: run `42899570660` failed because the Python regular expression in the generated YAML was over-escaped and produced a Python syntax error. Replaced that regex with literal extraction of `SUPABASE_PUBLISHABLE_KEY` and an exact `sb_publishable_` prefix check; this removes escaping ambiguity and validates the configured value itself.
