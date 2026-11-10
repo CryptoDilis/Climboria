@@ -7,6 +7,7 @@ import {
   summarizeUpgradeableLoaderHistory,
   summarizeMetaplexGovernanceHistory,
   inspectGovernanceProposalAccounts,
+  decodeGovernanceProposalAccountEvidence,
   METAPLEX_GOVERNANCE_PROGRAM_ID,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
@@ -441,4 +442,49 @@ test("fails closed when governance account history is unavailable", async () => 
   assert.equal(evidence.status, "multiple_accounts_rpc_unavailable");
   assert.equal(evidence.requestedCount, 3);
   assert.deepEqual(evidence.accounts, []);
+});
+
+test("decodes SPL Governance ProposalV2 title/state and embedded loader upgrade transaction", () => {
+  const u8 = value => Buffer.from([value]);
+  const u16 = value => { const b = Buffer.alloc(2); b.writeUInt16LE(value); return b; };
+  const u32 = value => { const b = Buffer.alloc(4); b.writeUInt32LE(value); return b; };
+  const u64 = value => { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(value)); return b; };
+  const i64 = value => { const b = Buffer.alloc(8); b.writeBigInt64LE(BigInt(value)); return b; };
+  const str = value => Buffer.concat([u32(Buffer.byteLength(value)), Buffer.from(value)]);
+  const proposalData = Buffer.concat([
+    u8(14), Buffer.alloc(32, 1), Buffer.alloc(32, 2), u8(5), Buffer.alloc(32, 3),
+    u8(0), u8(0), u8(0), u32(1),
+    str("Yes"), u64(10), u8(1), u16(1), u16(1), u16(1),
+    u8(0), u8(0), u8(0), u8(0), i64(1234),
+    u8(0), u8(0), u8(0), u8(0), u8(0), u8(0),
+    u8(0), u8(0), u8(0), u8(1), u8(0), u8(60),
+    Buffer.alloc(64), str("Metaplex Devnet upgrade"), str("https://example.invalid/proposal"),
+  ]);
+  const instructionAccounts = Array.from({ length: 7 }, (_, index) =>
+    Buffer.concat([Buffer.alloc(32, index), u8(0), u8(1)]));
+  const transactionData = Buffer.concat([
+    u8(13), Buffer.alloc(32, 4), u8(0), u16(0), u32(0), u32(1),
+    Buffer.alloc(32), u32(instructionAccounts.length), ...instructionAccounts,
+    u32(4), Buffer.from([3, 0, 0, 0]), u8(1), i64(2000), u8(1), Buffer.alloc(8),
+  ]);
+  class GovernanceTestPublicKey {
+    constructor(value) { this.value = value; }
+    toBase58() { return BPF_UPGRADEABLE_LOADER_ID; }
+  }
+  const decoded = decodeGovernanceProposalAccountEvidence({
+    accounts: [
+      { address: "proposal-account", exists: true, dataBase64: proposalData.toString("base64") },
+      { address: "proposal-transaction-account", exists: true, dataBase64: transactionData.toString("base64") },
+    ],
+  }, { PublicKey: GovernanceTestPublicKey });
+  assert.equal(decoded.status, "governance_proposal_accounts_decoded");
+  assert.equal(decoded.proposalCount, 1);
+  assert.equal(decoded.proposalTransactionCount, 1);
+  assert.equal(decoded.proposals[0].name, "Metaplex Devnet upgrade");
+  assert.equal(decoded.proposals[0].state, "Completed");
+  assert.equal(decoded.proposals[0].descriptionLink, "https://example.invalid/proposal");
+  assert.equal(decoded.proposalTransactions[0].instructions[0].loaderOpcode, 3);
+  assert.equal(decoded.proposalTransactions[0].instructions[0].loaderOperation, "upgrade");
+  assert.equal(decoded.proposalTransactions[0].executionStatus, 1);
+  assert.deepEqual(decoded.failures, []);
 });
