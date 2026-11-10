@@ -109,6 +109,8 @@ process.stdout.write(JSON.stringify({
   instructionPath: result.instructionPath,
   migration: result.migration,
   signerRequirements: result.signerRequirements,
+  feeVaults: result.feeVaults,
+  feeAndMigrationDestinations: result.feeAndMigrationDestinations,
   transactionReviews: result.transactionReviews,
   transactionSubmitted: false,
   creatorWalletSigned: false,
