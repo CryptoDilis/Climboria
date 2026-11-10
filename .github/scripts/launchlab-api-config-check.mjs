@@ -66,6 +66,28 @@ async function rpcCall(rpc, method, params) {
   if (json.error) throw new Error(json.error.message || `Solana RPC error for ${method}`);
   return json.result;
 }
+function transactionDetails(tx) {
+  const message = tx?.transaction?.message;
+  if (!message) return null;
+  const accountKeys = (message.accountKeys ?? []).map(key => typeof key === "string"
+    ? { pubkey: key, signer: null, writable: null, source: null }
+    : { pubkey: key.pubkey, signer: key.signer ?? null, writable: key.writable ?? null, source: key.source ?? null });
+  return {
+    version: tx.version ?? null,
+    recentBlockhash: message.recentBlockhash ?? null,
+    accountKeys,
+    instructions: message.instructions ?? [],
+    innerInstructions: tx.meta?.innerInstructions ?? [],
+    loadedAddresses: tx.meta?.loadedAddresses ?? null,
+    preBalances: tx.meta?.preBalances ?? [],
+    postBalances: tx.meta?.postBalances ?? [],
+    preTokenBalances: tx.meta?.preTokenBalances ?? [],
+    postTokenBalances: tx.meta?.postTokenBalances ?? [],
+    feeLamports: tx.meta?.fee ?? null,
+    executionError: tx.meta?.err ?? null,
+    logMessages: tx.meta?.logMessages ?? []
+  };
+}
 export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized" }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 0 }]) }) {
   const accountResult = await getAccount(rpc, authority);
   // Preserve explicit RPC value:null (account missing); nullish coalescing would
@@ -80,7 +102,7 @@ export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getA
     let tx = null, fetchError = null;
     try { tx = await getTransaction(rpc, item.signature); } catch (error) { fetchError = String(error?.message || error); }
     const message = tx?.transaction?.message, keys = message?.accountKeys ?? [];
-    transactions.push({ signature: item.signature, slot: item.slot, blockTime: item.blockTime ?? null, confirmationStatus: item.confirmationStatus ?? null, err: item.err ?? null, transactionFetched: Boolean(tx), transactionFetchError: fetchError, feeLamports: tx?.meta?.fee ?? null, signers: keys.filter(key => typeof key === "object" && key.signer).map(key => key.pubkey), programIds: [...new Set((message?.instructions ?? []).map(ix => ix.programId ?? ix.program ?? "unknown"))], instructionCount: message?.instructions?.length ?? null });
+    transactions.push({ signature: item.signature, slot: item.slot, blockTime: item.blockTime ?? null, confirmationStatus: item.confirmationStatus ?? null, err: item.err ?? null, transactionFetched: Boolean(tx), transactionFetchError: fetchError, feeLamports: tx?.meta?.fee ?? null, signers: keys.filter(key => typeof key === "object" && key.signer).map(key => key.pubkey), programIds: [...new Set((message?.instructions ?? []).map(ix => ix.programId ?? ix.program ?? "unknown"))], instructionCount: message?.instructions?.length ?? null, transactionDetails: transactionDetails(tx) });
   }
   return { authority, accountExists: true, accountOwner: account.owner, accountExecutable: Boolean(account.executable), accountDataLength: Array.isArray(account.data) ? Buffer.from(account.data[0] ?? "", "base64").length : null, accountLamports: String(account.lamports ?? "0"), recentSignatureCount: Array.isArray(signatures) ? signatures.length : 0, recentSignatures: transactions, historyLimit: limit, historyComplete: Array.isArray(signatures) && signatures.length < limit, classification: "unclassified", note: "System-owned, zero-data accounts may still be PDA-controlled; ownership/executable/data shape and recent signatures alone do not prove beneficial ownership or governance." };
 }
