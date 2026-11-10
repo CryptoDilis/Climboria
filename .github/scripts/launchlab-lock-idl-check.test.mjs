@@ -59,6 +59,11 @@ test("validates pinned official source PDA seeds and LP custody constraints", ()
   assert.equal(result.lockedLiquiditySeed, "locked_liquidity");
   assert.equal(result.mainnetLockAuthority, target.authority);
   assert.equal(result.collectCpFeeFeeNftAccountIsReadonly, true);
+  assert.throws(() => validateLockProgramSource({
+    libSource: libSource.replace("lock_cp_authority_seed", "wrong_seed"),
+    statesSource,
+    contextSource,
+  }, target, PublicKey), /authority seed differs/);
 });
 test("validates live-style CPMM LP lock and fee collection schemas against pinned SDK account order", () => {
   const result = validateLockProgramIdl(fixture(), target, PublicKey);
@@ -88,11 +93,6 @@ test("rejects LP lock signer privilege escalation", () => {
   const idl = fixture();
   idl.instructions[0].accounts[3].signer = true;
   assert.throws(() => validateLockProgramIdl(idl, target, PublicKey), /signer privilege mismatch/);
-});
-test("rejects changed lock authority PDA seed", () => {
-  const idl = fixture();
-  idl.instructions[0].accounts[0].pda.seeds[0].value = [...Buffer.from("wrong_seed")];
-  assert.throws(() => validateLockProgramIdl(idl, target, PublicKey), /authority PDA seed differs/);
 });
 test("derives distinct locked LP ATAs for different CPMM LP mints", () => {
   const a = deriveLockProgramAddresses({ programId: target.id, lpMint: "So11111111111111111111111111111111111111112", PublicKey });
