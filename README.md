@@ -1,3 +1,17 @@
+### Latest checkpoint — 2026-11-10 (PR #231, oldest-first loader transaction evidence)
+
+- [x] Rechecked PR #231: open, Draft; current code branch remains isolated from main.
+- [x] Latest completed Validate Climboria run `42759670704` on code commit `037d3406947b1bc94ffbb4c59b46080ba5ce46c9`: SUCCESS. The LaunchLab run for that intermediate commit `42759670767` is still in progress; its last observed active step was fetching pinned official SDK/IDL sources. Do not count it as complete.
+- [x] Previous complete LaunchLab run `42759070388`: SUCCESS. Its read-only finalized ProgramData scan reached state slot `363279440` with 149 signatures; the oldest scanned slot was `126114444`. Historical detail retrieval exposed 429 rate limits, leaving several older transactions without detail.
+- [x] Confirmed upgrade evidence includes a successful `Upgraded program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s` log at slot `354765528`, signature `2Juf2fcXsmQZgcQaVjbcx5rd3UYgJz9Z2HgB99hDetBfJ9kYaqtdzdtGND3mLtYymjvNfUnW7PSFnb2WrmWGjrJj`; other successful upgrade logs at slots `337839463`, `337099368`, `337054580`, and `335003496`. None is proven to be the original deployment.
+- [x] Hardened the historical reader with max-two concurrency, four bounded 429 retries with exponential backoff, and instruction-level evidence (program ID, account keys, encoded instruction data).
+- [x] Changed the selected historical transaction subset to be inspected oldest-first, not merely selected oldest-first. This makes original deployment evidence available earlier in the scan and preserves the selected slot range in output.
+- [x] Added a regression test that verifies rate-limit retry and loader instruction evidence extraction. The oldest-first selection test now asserts oldest transaction fetched first.
+- [ ] **CI verification pending for newest test/source commit:** `d356fd05357e45e60548658a6ef57bca4a66bd34`. Validate run `42759670704` passed on the immediately prior source commit `037d3406947b1bc94ffbb4c59b46080ba5ce46c9`; LaunchLab run `42759670767` was still running at last inspection. The new retry/instruction test commit needs its own LaunchLab result.
+- [ ] **Next P0:** inspect latest LaunchLab CI outcome and the new oldest-first live history result. Verify any candidate initial deployment/upgrade instruction by program ID, account roles, instruction discriminator/data, transaction error, and governance evidence. If 429s remain, retain explicit unavailable evidence and reduce request rate rather than inferring missing transactions.
+- [ ] Metaplex deployed executable still does not match the reproducible candidate build; exact deployment source lineage and metadata allocation compatibility remain unresolved. Devnet LP Lock IDL publication and CPMM fee-receiver custody remain independent migration blockers.
+- [ ] No wallet signing, simulation, transaction submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, historical loader evidence and rate-limit hardening)
 
 - [x] Latest fully completed LaunchLab run `42759070388` **SUCCESS**; Validate Climboria `42759070542` **SUCCESS**. The mock pagination tests and full live provenance workflow completed.
