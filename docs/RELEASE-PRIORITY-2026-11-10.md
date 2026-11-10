@@ -418,3 +418,11 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - [ ] PR #231 remains draft. Recheck shows GitHub now reports `mergeable=true` on the latest branch state, but branch divergence/history review and unresolved ownership/IDL/provenance gates remain; do not merge wholesale.
 - [ ] **Exact next task:** poll run `42861770419` through completion. Confirm the LP Lock tests and all later live checks pass; inspect the bounded Devnet provenance report for `history.complete`, pinned build bytecode match, upgrade authority and governance evidence. If the hard timeout fires, inspect the new run's available logs and refine the RPC history strategy from observed errors.
 - [ ] Keep Launchpad execution blocked pending the Devnet LP Lock IDL or independently reviewed equivalent, Fee NFT SDK privilege resolution, confirmed CPMM fee authority governance/custody, and bytecode provenance. No wallet signing, simulation, or transaction submission occurred.
+
+### Follow-up observation — latest LaunchLab attempt
+
+- Latest-head LaunchLab run `42861770419` is still `in_progress`; job `129989492472` had reached the historical Metaplex rebuild step at the last check. The newly bounded ProgramData RPC step has not started yet, so its timeout mitigation is not yet verified.
+- Latest-head Validate Climboria run `42861770396` completed successfully.
+- An earlier intermediate-head run `42861748997` remains separate from the final-head run; do not use its result as proof for the final branch head.
+- The original run `42860373856` remains a stale GitHub Actions record with no downloadable job logs. It is not evidence of success or failure.
+- Exact next action remains: wait for run `42861770419` to reach the bounded RPC step and terminal conclusion; inspect the actual report/logs before changing further code.
