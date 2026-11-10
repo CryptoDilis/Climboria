@@ -6,9 +6,11 @@
 - [x] Real pinned SDK `0.2.84-alpha` builder smoke run `42755306368` produced exactly one `initializeV2` transaction and reported `separateFeePayer: true`; this is still a build/inspect-only CI test, not a simulation.
 - [x] LaunchLab Live Provenance `42755306368`: SUCCESS. All 34 Devnet preparation tests passed; all 11 unsigned simulation preflight tests passed; real SDK builder, live config/API checks, SDK/IDL checks, and LP Lock audit passed.
 - [x] Validate Climboria `42755306289`: SUCCESS.
+- [x] Latest LaunchLab workflow with approval-packet tests `42755495574`: SUCCESS (9/9 packet tests passed).
+- [ ] Validate Climboria for the latest README/workflow head: run `42755495614` was still pending at this checkpoint; do not mark it green until completed.
 - [x] Added `.github/scripts/launchlab-devnet-approval-packet.mjs`: read-only finalized account/rent/fee/balance review; hashes the exact unsigned message; emits an explicitly unapproved owner-review packet; never signs, simulates, submits, or executes.
 - [x] Packet builder fails closed if any missing writable account lacks an explicit data-space, purpose, and source reference; it never guesses rent.
-- [ ] **CI pending for newest packet module:** run the packet test suite and confirm the latest LaunchLab workflow before marking this addition verified.
+- [x] Approval packet builder test suite passed 9/9 in LaunchLab run `42755495574`; the complete LaunchLab workflow also passed. The preceding full run `42755462864` passed after the packet test and workflow wiring were added.
 - [ ] **Owner review still required:** provide source-verified rent account sizes/source references for every missing writable account, then use a dedicated funded Devnet fee payer and explicit approval bound to the exact message hash. The packet builder does not create approval.
 - [ ] No real wallet has been used; no live transaction has been signed, simulated, submitted, migrated, or executed.
 - [ ] Devnet LP Lock IDL publication remains missing; do not submit migration until this and fee-receiver custody are independently resolved.
