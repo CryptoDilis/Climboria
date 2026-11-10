@@ -64,7 +64,26 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
       `Instruction discriminator mismatch: ${idlName}`);
     checked.push(idlName);
   }
-  assert(idlInstructions.has("migrate_to_cpswap"), "IDL missing migrate_to_cpswap");
+  const initializeAccounts = ["payer","creator","global_config","platform_config","authority","pool_state","base_mint","quote_mint","base_vault","quote_vault","metadata_account","base_token_program","quote_token_program","metadata_program","system_program","rent_program","event_authority","program"];
+  assert(JSON.stringify(idlInstructions.get("initialize_v2").accounts.map(x => x.name)) === JSON.stringify(initializeAccounts), "initialize_v2 account order differs from the approved 18-entry schema");
+  const migration = idlInstructions.get("migrate_to_cpswap");
+  assert(migration, "IDL missing migrate_to_cpswap");
+  const migrationAccounts = ["payer","base_mint","quote_mint","platform_config","cpswap_program","cpswap_pool","cpswap_authority","cpswap_lp_mint","cpswap_base_vault","cpswap_quote_vault","cpswap_config","cpswap_create_pool_fee","cpswap_observation","lock_program","lock_authority","lock_lp_vault","authority","pool_state","global_config","base_vault","quote_vault","pool_lp_token","base_token_program","quote_token_program","associated_token_program","system_program","rent_program","metadata_program"];
+  assert(JSON.stringify(migration.accounts.map(x => x.name)) === JSON.stringify(migrationAccounts), "migrate_to_cpswap account order differs from the pinned IDL");
+  assert(migration.args.length === 0, "migrate_to_cpswap argument schema changed; manual review required");
+  const migrationPayer = migration.accounts[0];
+  assert(migrationPayer.signer === true && migrationPayer.writable === true, "migrate_to_cpswap payer must be writable signer");
+  assert((migrationPayer.docs || []).join(" ").includes("migrate_to_cpswap_wallet"), "migrate_to_cpswap payer destination authority rule missing");
+  for (const name of ["cpswap_pool","cpswap_lp_mint","cpswap_base_vault","cpswap_quote_vault","cpswap_create_pool_fee","cpswap_observation","lock_lp_vault","pool_state","base_vault","quote_vault","pool_lp_token"]) {
+    const account = migration.accounts.find(x => x.name === name);
+    assert(account?.writable === true, "migrate_to_cpswap " + name + " must be writable per pinned IDL");
+  }
+  const collectMigrationFee = idlInstructions.get("collect_migrate_fee");
+  assert(collectMigrationFee && (collectMigrationFee.accounts[0].docs || []).join(" ").includes("migrate_fee_owner"), "collect_migrate_fee owner authority rule missing");
+  assert(layoutText.includes('publicKey("protocolFeeOwner")') && layoutText.includes('publicKey("migrateFeeOwner")') && layoutText.includes('publicKey("migrateToCpmmWallet")'), "GlobalConfig fee/migration destination fields missing from pinned SDK layout");
+  assert(layoutText.includes('publicKey("platformClaimFeeWallet")') && layoutText.includes('publicKey("platformLockNftWallet")') && layoutText.includes('publicKey("platformVestingWallet")'), "PlatformConfig claim/lock/vesting destination fields missing from pinned SDK layout");
+  assert(pdaText.includes("getPdaPlatformVault") && pdaText.includes("platformId.toBuffer(), mintB.toBuffer()"), "Platform fee-vault PDA seed derivation changed");
+  assert(pdaText.includes("getPdaCreatorVault") && pdaText.includes("creator.toBuffer(), mintB.toBuffer()"), "Creator fee-vault PDA seed derivation changed");
   assert(instrumentText.includes('please use initializeV2 instead'), "SDK legacy initialize deprecation guard missing");
   assert(instrumentText.includes('initializeV2: Buffer.from([67, 153, 175, 39, 218, 16, 38, 32])'), "SDK initializeV2 discriminator mismatch");
   assert(instrumentText.includes("{ pubkey: mintA, isSigner: true, isWritable: true }"), "Mint keypair signer requirement not found in SDK instruction");
@@ -79,6 +98,7 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
     idl: { commit: EXPECTED.idlCommit, sha256: idlHash, address: idl.address, metadata: idl.metadata, instructionCount: idl.instructions.length },
     checkedDiscriminators: checked,
     creatorLaunchPath: { mintAKeypairIsRequiredSigner: true, callerMustSupplyExtraSigner: true, token2022SelectedByTransferFeeExtension: true, token2022ForcesCpmmMigration: true, createOnlySkipsInitialBuy: true, multiTransactionBuilder: true },
+    migrationAudit: { cpswapInstructionAccountOrderVerified: true, payerMustMatchGlobalConfigMigrateToCpmmWallet: true, createPoolFeeAndLockLpVaultAreExplicitAccounts: true, migrateFeeCollectionRestrictedToGlobalConfigMigrateFeeOwner: true, platformAndCreatorFeeVaultPdaSeedsVerified: true, feeDestinationFieldsVerifiedInPinnedSdkLayout: true },
     cpswapMigrationInstructionPresent: true,
     legacyInitializeMarkedDeprecated: true,
     transactionSubmitted: false
