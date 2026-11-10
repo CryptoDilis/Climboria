@@ -91,7 +91,9 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
   const feeMintIsWsol = feeMint.toBase58() === "So11111111111111111111111111111111111111112";
   // CPMM source constrains this to the program's fixed create_pool_fee_reveiver::ID.
   // It is a fixed SPL token account, not an ATA; do not apply ATA seed derivation here.
-  if (!feeAuthorityMatchesProgramAdmin) throw new Error("CPMM fixed create-pool fee receiver authority differs from the pinned program admin");
+  // The pinned CPMM source constrains the fixed receiver address and token-account type,
+  // but does not require the token-account owner to equal the program admin. Report it
+  // as observed state rather than inventing an authority invariant.
   if (!feeMintIsWsol) throw new Error("CPMM fixed create-pool fee receiver must hold WSOL");
   if (cpmmConfig.disableCreatePool) throw new Error("CPMM AMM config currently disables pool creation");
   return {
