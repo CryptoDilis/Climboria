@@ -1,3 +1,13 @@
+### Latest checkpoint — 2026-11-10 (Devnet CPMM fee-authority history probe added)
+
+- [x] Rechecked PR #231 and branch head before continuing: PR remains open, Draft, unmerged; GitHub reports mergeable. Existing successful LaunchLab/Validate run evidence predates this change.
+- [x] Added a read-only finalized fee-authority probe to the live config audit. It fetches token-authority account metadata, up to 12 recent finalized signatures, and parsed transaction summaries (slot, block time, error, fee, signers, program IDs and instruction count).
+- [x] Added tests verifying account shape/history is reported without asserting that a system-owned zero-data account is a wallet or proving beneficial ownership; missing accounts return an explicit empty-history result.
+- [ ] Pending verification: updated probe must run in PR CI against live RPC. Its output is evidence for custody review, not a custody conclusion. If RPC/provider history is truncated or unavailable, record that limitation and do not classify the authority.
+- [ ] Exact next P0: inspect the new cpmmFeeAuthorityHistory output from the next successful LaunchLab Live Provenance run. Follow the authority's earliest available signatures and relevant account-creation/authority-change transactions; classify it as PDA, multisig-controlled vault, or dedicated receiver authority only if controlling program/state supports that conclusion.
+- [ ] Continue independent Devnet LP Lock Program/ProgramData upgrade-history and deployed-interface investigation. Keep migration, LP lock, fee collection, signing, simulation and Mainnet execution disabled.
+- [ ] PR #231 remains Draft and unmerged pending independent review and all documented security gates.
+
 ### Latest checkpoint — 2026-11-10 (Finalized Devnet CPMM fee receiver custody observation)
 
 - [x] Inspected the latest successful PR-head LaunchLab provenance job output (`42764682766`, job `129658267270`) for the actual finalized Devnet CPMM fixed pool-creation fee receiver.
