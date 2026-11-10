@@ -83,6 +83,7 @@ test("rejects failed, malformed, mismatched and underspecified RPC responses", a
   const rpcUrl = "https://rpc.example.com";
   await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => new Response("{}", { status: 503 }) }), /request failed/);
   await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => new Response("{", { status: 200 }) }), /invalid JSON/);
+  await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => new Response(" ".repeat(128 * 1024 + 1), { status: 200 }) }), /exceeded size limit/);
   await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => rpcResponse([account()], 89), minContextSlot: 90 }), /context or account count/);
   await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => rpcResponse([]) }), /context or account count/);
   await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl, fetchImpl: async () => rpcResponse([account({ owner: "11111111111111111111111111111111" })]) }), /unexpected owner/);
