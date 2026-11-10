@@ -9,7 +9,7 @@ const valid = "So11111111111111111111111111111111111111112";
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: true } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: false } });
 });
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
@@ -160,16 +160,13 @@ test("rejects a Jupiter quote-only order instead of returning it as executable",
   }
 });
 
-test("executes only with a valid Jupiter success response and matching request payload", async () => {
+test("hard-blocks execution even when deployment flag is true until semantic validation ships", async () => {
   const originalFetch = globalThis.fetch;
-  let upstreamPayload;
-  let upstreamHeaders;
+  let upstreamCalled = false;
   try {
-    globalThis.fetch = async (url, init) => {
-      assert.equal(String(url), "https://api.jup.ag/swap/v2/execute");
-      upstreamHeaders = new Headers(init?.headers);
-      upstreamPayload = JSON.parse(init.body);
-      return Response.json({ status: "Success", code: 0, signature: "5".repeat(88), totalInputAmount: "100", totalOutputAmount: "250" });
+    globalThis.fetch = async () => {
+      upstreamCalled = true;
+      throw new Error("Jupiter execution must never be reached while the code-level security gate is closed");
     };
     const signedTransaction = Buffer.alloc(100, 7).toString("base64");
     const req = new Request("https://worker.test/api/swap/execute", {
@@ -178,63 +175,9 @@ test("executes only with a valid Jupiter success response and matching request p
       body: JSON.stringify({ signedTransaction, requestId: "request-123456", lastValidBlockHeight: 12345 })
     });
     const res = await worker.fetch(req, env);
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.status, "Success");
-    assert.equal(body.code, 0);
-    assert.equal(body.signature, "5".repeat(88));
-    assert.equal(upstreamHeaders.get("x-api-key"), "test-server-key");
-    assert.deepEqual(upstreamPayload, { signedTransaction, requestId: "request-123456", lastValidBlockHeight: 12345 });
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test("rejects Jupiter Success when execution code is nonzero", async () => {
-  const originalFetch = globalThis.fetch;
-  try {
-    globalThis.fetch = async () => Response.json({ status: "Success", code: 6001, signature: "5".repeat(88) });
-    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
-    const req = new Request("https://worker.test/api/swap/execute", {
-      method: "POST",
-      headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
-    });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 502);
-    assert.match((await res.json()).error, /incomplete or inconsistent success/i);
-  } finally { globalThis.fetch = originalFetch; }
-});
-
-test("rejects Jupiter Success without a transaction signature", async () => {
-  const originalFetch = globalThis.fetch;
-  try {
-    globalThis.fetch = async () => Response.json({ status: "Success", code: 0, signature: null });
-    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
-    const req = new Request("https://worker.test/api/swap/execute", {
-      method: "POST",
-      headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
-    });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 502);
-    assert.match((await res.json()).error, /incomplete or inconsistent success/i);
-  } finally { globalThis.fetch = originalFetch; }
-});
-
-test("does not treat an unknown Jupiter execution status as success", async () => {
-  const originalFetch = globalThis.fetch;
-  try {
-    globalThis.fetch = async () => Response.json({ status: "Pending", code: 0, signature: "5".repeat(88) });
-    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
-    const req = new Request("https://worker.test/api/swap/execute", {
-      method: "POST",
-      headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
-    });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 502);
-    assert.match((await res.json()).error, /unknown execution status/i);
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /transaction validation and order-wallet binding are not implemented/i);
+    assert.equal(upstreamCalled, false);
   } finally {
     globalThis.fetch = originalFetch;
   }
