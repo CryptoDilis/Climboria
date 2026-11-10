@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import {
   captureDevnetMetaplexProgramProvenance,
+  inspectProgramDataHistory,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
   BPF_UPGRADEABLE_LOADER_ID,
@@ -53,7 +54,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
     },
     getSignaturesForAddress: async (key, options, commitment) => {
       assert.equal(key.toBase58(), derivedAddress.toBase58());
-      assert.equal(options.limit, 100);
+      assert.equal(options.limit, 1000);
       assert.equal(commitment, "finalized");
       return [
         { signature: "ExtendSignature", slot: 123456, blockTime: 1794270000, err: null },
@@ -93,8 +94,9 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataStateSlotBlockEvidence.status, "programdata_state_slot_block_inspected");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
-  assert.equal(result.programDataHistory.status, "programdata_history_inspected");
-  assert.equal(result.programDataHistory.signatureCount, 2);
+  assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
+  assert.equal(result.programDataHistory.signaturesScanned, 2);
+  assert.equal(result.programDataHistory.reachedStateSlot, true);
   assert.equal(result.programDataHistory.signatures[0].loaderLogs[0], "Extended ProgramData account by 300000 bytes");
   assert.equal(result.programDataHistory.signatures[1].loaderLogs[0], "Program deployed");
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
@@ -171,4 +173,54 @@ test("reports unavailable deployment block history without inventing a transacti
   const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
   assert.equal(result.programDataStateSlotBlockEvidence.status, "state_slot_block_unavailable");
   assert.deepEqual(result.programDataStateSlotBlockEvidence.candidateTransactions, []);
+});
+
+test("paginates backward to the state slot without fetching unrelated recent transactions", async () => {
+  const pages = [];
+  const fetched = [];
+  const connection = {
+    getSignaturesForAddress: async (_key, options, commitment) => {
+      assert.equal(commitment, "finalized");
+      pages.push(options);
+      if (!options.before) return [
+        { signature: "recent1", slot: 500 },
+        { signature: "recent2", slot: 450 },
+      ];
+      assert.equal(options.before, "recent2");
+      return [
+        { signature: "extension", slot: 100 },
+        { signature: "deploy", slot: 90 },
+      ];
+    },
+    getTransaction: async signature => {
+      fetched.push(signature);
+      return { meta: { err: null, logMessages: ["Program deployed"] } };
+    },
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress),
+    stateSlot: 100, pageSize: 2, maxPages: 3,
+  });
+  assert.equal(result.status, "programdata_state_slot_reached");
+  assert.equal(result.pagesScanned, 2);
+  assert.equal(result.signaturesScanned, 4);
+  assert.deepEqual(fetched, ["extension", "deploy"]);
+  assert.equal(result.complete, true);
+});
+
+test("reports bounded incomplete history without claiming the deployment was found", async () => {
+  const connection = {
+    getSignaturesForAddress: async (_key, options) => [
+      { signature: options.before ? "recent4" : "recent2", slot: 500 },
+    ],
+    getTransaction: async () => { throw Error("must not fetch recent transactions"); },
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress),
+    stateSlot: 100, pageSize: 1, maxPages: 2,
+  });
+  assert.equal(result.status, "programdata_history_incomplete");
+  assert.equal(result.reachedStateSlot, false);
+  assert.equal(result.signatures.length, 0);
+  assert.equal(result.pagesScanned, 2);
 });
