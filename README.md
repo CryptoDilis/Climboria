@@ -2969,3 +2969,21 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 4. Continue Launchpad's missing canonical Devnet LP Lock IDL and live LaunchLab type-definition reconciliation; keep all signing/submission/migration paths disabled.
 5. Implement real Guest/email/Google/X account sessions only with a configured auth provider and verified account-linking/session lifecycle.
 
+
+
+## 2026-11-11 — PR #234 source-level security re-review
+
+- Re-fetched current PR #234 metadata and source files from branch `codex/swap-order-binding-durable-object` at head `7f5d3451c7c99356fd46502691f0c24f92a96ade`; the PR remains open/draft, unreviewed, and GitHub reports it is not mergeable.
+- Re-read `transaction-validation.mjs`, `order-store.mjs`, the Worker order/execute path, Wrangler Durable Object binding, and order-store tests.
+- Confirmed source-level controls: canonical base64 and bounded v0 parsing; exact signed-message equality; stored taker/fee-payer match; Ed25519 verification; preservation of JupiterZ additional signer slots; server-generated UUID order token; 120-second order expiry; atomic one-time claim; terminal replay lock; 24-hour cleanup alarm; Worker execution kill switch; rate-limiter and order-store fail-closed checks.
+- Reviewed claim sequencing: signature verification occurs before a synchronous transactional state transition; concurrent claims are serialized by the transaction and only one can move `ready -> executing`. This conclusion is source inspection only, not runtime concurrency evidence.
+- No definite new source defect was established in this pass. This is **not** an independent security audit or proof of safe execution; parser edge cases, real Cloudflare Durable Object semantics, JupiterZ partial-signing behavior, and upstream timeout/settlement behavior still require exact-head automated tests and controlled Devnet validation.
+- Latest-head workflow lookup still returned no PR-triggered runs for `7f5d345`; historical green runs on older SHAs are not equivalent. Local test execution remains unavailable because the environment cannot resolve GitHub for a clone. No test pass is claimed.
+- Current PR/main divergence remains 42 ahead / 25 behind; no reviews, no merge, and no branch rewrite. Production Worker deployment remains blocked by account-specific Cloudflare configuration/secrets and release verification.
+
+### Exact next job
+1. Run Validate Climboria manually on the exact PR branch/head and inspect every Swap test plus Wrangler dry-run.
+2. Obtain a working local Git worktree; reconcile PR #234 against current main with conflict-aware merge/rebase, then rerun Validate and Browser Smoke on the resulting SHA.
+3. Commission independent review of the v0 parser, Ed25519/WebCrypto verification, Durable Object state transitions, replay policy, JupiterZ signing slots, and ambiguous execution settlement.
+4. Keep execution disabled until the above plus controlled Devnet lifecycle and production Worker health/CORS/rate-limit checks pass.
+
