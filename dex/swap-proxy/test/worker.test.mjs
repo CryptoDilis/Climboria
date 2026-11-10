@@ -62,6 +62,21 @@ test("rejects malformed order input before calling Jupiter", async () => {
   const res = await worker.fetch(req, env);
   assert.equal(res.status, 400);
 });
+test("fails closed before requesting Jupiter when the order store is missing", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("Jupiter must not be called without order storage"); };
+    const req = new Request("https://worker.test/api/swap/order", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+    });
+    const res = await worker.fetch(req, { ...env, ORDER_STORE: undefined });
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /order store is not configured/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("does not proxy order when API key is missing", async () => {
   const req = new Request("https://worker.test/api/swap/order", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin });
