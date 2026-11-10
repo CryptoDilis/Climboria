@@ -17,7 +17,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
   const programState = Buffer.alloc(36);
   programState.writeUInt32LE(2, 0);
   Buffer.alloc(32, 7).copy(programState, 4);
-  const programData = Buffer.alloc(64);
+  const programData = Buffer.alloc(80);
   programData.writeUInt32LE(stateTag, 0);
   programData.writeBigUInt64LE(123456n, 4);
   programData[12] = authorityOption;
