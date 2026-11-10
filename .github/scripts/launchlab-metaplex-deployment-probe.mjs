@@ -184,7 +184,7 @@ export async function inspectProgramDataHistory({
   }
   // Prefer the oldest signatures in the bounded window: the initial deploy
   // is more likely to be earlier than the recent upgrades and extensions.
-  const selectedHistoricalCandidates = historicalCandidates.slice(-maxHistoricalTransactions);
+  const selectedHistoricalCandidates = historicalCandidates.slice(-maxHistoricalTransactions).reverse();
   const history = [];
   for (let offset = 0; offset < selectedHistoricalCandidates.length; offset += 2) {
     const batch = await Promise.all(selectedHistoricalCandidates.slice(offset, offset + 2).map(async info => {
@@ -234,8 +234,8 @@ export async function inspectProgramDataHistory({
     stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
     historicalCandidateCount: selectedHistoricalCandidates.length,
     availableHistoricalSignatureCount: historicalCandidates.length,
-    selectedRangeOldestSlot: selectedHistoricalCandidates.at(-1)?.slot ?? null,
-    selectedRangeNewestSlot: selectedHistoricalCandidates[0]?.slot ?? null,
+    selectedRangeOldestSlot: selectedHistoricalCandidates[0]?.slot ?? null,
+    selectedRangeNewestSlot: selectedHistoricalCandidates.at(-1)?.slot ?? null,
     signatures: history,
     complete: reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions,
   };
