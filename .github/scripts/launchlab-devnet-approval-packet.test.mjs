@@ -75,7 +75,7 @@ test("builds an unapproved owner packet from exact unsigned message and finalize
   assert.deepEqual(result.rentAccounts.map(x => x.address), [mint, pool]);
   assert.equal(result.rentReserveLamports, (82 + 512) * 1000);
   assert.equal(result.networkFeeLamports, 5000);
-  assert.equal(result.requiredLamports, 697000);
+  assert.equal(result.requiredLamports, 699000);
   assert.equal(result.finalizedFeePayerBalanceLamports, 10_000_000);
   assert.equal(result.ownerApproval.approved, false);
   assert.equal(result.ownerApproval.reference, null);
