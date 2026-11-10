@@ -1,3 +1,15 @@
+## 2026-11-10 — LaunchLab preparation hardening follow-up
+
+- [x] Hardened Devnet preparation to require the SDK's own `scope.cluster === "devnet"`; a Mainnet-configured SDK client now fails closed.
+- [x] Removed the caller-controlled curve-rule bypass. If the live PlatformConfig restricts curve parameters, preparation now blocks until the actual PlatformCurveRule is decoded and validated.
+- [x] Expanded fresh API vs finalized GlobalConfig comparisons to include fee rates, min supply/sell/migration/raise constraints and migrate fee.
+- [x] Removed the hard-coded Climboria token-decimal assumption. Token decimals must be explicitly supplied (0–9); WSOL quote decimals remain fixed at 9.
+- [x] Added regression coverage for Devnet cluster binding, explicit decimals and metadata-hash tampering; corrected the mock GlobalConfig fixture to include migrateFee.
+- [x] Corrected LaunchLab workflow PR path filters to include the new preparation module and tests. The previous path-filter omission was a real workflow wiring defect.
+- [ ] **CI still unverified:** latest PR head `08cf0a045296d9cccf4f712438dc3ab6d598dc54` currently has no GitHub Actions check-runs or commit statuses visible. Do not call the new tests passed. Existing `Validate Climboria` workflow on main watches `.github/scripts/**` and `.github/workflows/**`; investigate why Actions are not appearing rather than changing code blindly.
+- [ ] No Devnet transactions have been constructed with a real creator wallet or simulated. The tests use mocks; they do not prove live transaction correctness.
+- [ ] Exact next task: get a real CI run for PR #231 head `08cf0a0`; inspect logs, fix failures based on root cause, and only then integrate a pinned-SDK builder integration test with account-meta/signer inspection. Simulation remains read-only and must not call SDK `execute()`.
+
 ## 2026-11-10 — LaunchLab Devnet transaction-preparation checkpoint
 
 **Priority:** P0 — Raydium LaunchLab Devnet-only preparation. Work continues on PR #231 branch `codex/launchlab-live-provenance-probe`; do not restart the completed provenance investigation.
