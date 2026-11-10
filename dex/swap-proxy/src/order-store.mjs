@@ -54,6 +54,9 @@ export class SwapOrderStore {
           state: "ready",
           createdAt: Date.now()
         };
+        if (await this.ctx.storage.get("order")) return json({ error: "Order token has already been used" }, 409);
+        // Schedule cleanup before persisting so an alarm failure cannot orphan a stored order.
+        await this.ctx.storage.setAlarm(Date.now() + ORDER_CLEANUP_MS);
         const created = this.ctx.storage.transactionSync(() => {
           const existing = this.ctx.storage.kv.get("order");
           if (existing) return false;
@@ -61,7 +64,6 @@ export class SwapOrderStore {
           return true;
         });
         if (!created) return json({ error: "Order token has already been used" }, 409);
-        await this.ctx.storage.setAlarm(Date.now() + ORDER_CLEANUP_MS);
         return json({ ok: true, state: "ready" }, 201);
       }
 
