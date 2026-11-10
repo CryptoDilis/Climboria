@@ -2749,3 +2749,11 @@ Last checked: 2026-11-11 (Philippine time). This entry records repository work a
 3. After Swap release gates, implement production Launchpad and select/implement real Guest + email/password + Google + X auth with provider/session lifecycle and end-to-end tests. Current repository has no Supabase/Firebase auth client integration; login buttons are disabled, and no login method is live.
 
 No production-live claims are made by this entry.
+
+
+### Follow-up CI observation — 2026-11-11
+- [x] Validate run `42880044395` for PR #234 head `32ec6caee34e37a9f4d2afd0b491c840abc66034`: terminal SUCCESS, including all Worker security/API tests, Wrangler v4.36.0 dry-run bundle and Durable Object config checks, homepage/launch-copy checks, and JS syntax/site audits.
+- [x] Browser Smoke run `42880044279`: the previously failing first test step now completed SUCCESS. This specifically includes homepage CTA/DEX routing, live DEX name/symbol search, exact-mint request/row, token chart detail, standalone Swap controls, and fail-closed execution checks. Subsequent DEX/Swap market shell, mobile workspace, 390px/360px layouts, and mobile market error/empty-state steps also completed SUCCESS.
+- [!] Browser Smoke has not reached terminal state yet: step 15, Jarrell's Peak desktop/mobile gameplay smoke, remains in_progress; screenshot upload and cleanup steps are pending. Do not report the full Browser Smoke workflow as passed until run `42880044279` is completed SUCCESS.
+- [!] Main README progress deployment run `42880104246` was observed in_progress (runner wait then active); Pages deployment must be rechecked for terminal status.
+- [ ] Exact next task: poll Browser Smoke run `42880044279` and Pages run `42880104246`; inspect gameplay failure logs if any. After terminal CI, update PR #234 review record. Keep PR draft/open until independent security review; no production Cloudflare deployment or Devnet/Mainnet swap has occurred.
