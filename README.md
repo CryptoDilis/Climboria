@@ -2885,3 +2885,12 @@ Implement a separately tested server-side transaction security layer before any 
 - [ ] **Latest CI pending:** newest parser/test head at time of checkpoint `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`; visible Validate `42851432127` and Browser Smoke `42851432268` were triggered on older head `1e8fd34849319e541923eee8403fb922e1838742`. Browser run still in progress. Do not claim latest code is validated.
 - [ ] Next exact task: obtain fresh CI on current head; then wire ALT account fetch to trusted server-side RPC with owner/executable/context-slot binding. Continue instruction allowlists, token transfer/destination checks, durable order-wallet-message binding, replay protection, adversarial and Devnet tests.
 - ALT decoder is not wired into execute; no Worker deployment, live trade, launchpad transaction or production auth provisioning was performed. Execution hard gate remains false.
+
+
+## 2026-11-11 — Swap ALT/runtime guard follow-up
+
+- [x] PR #233 now validates ALT account metadata format and owner field, executable flag, initialization state, authority encoding, padding, deactivation and extension warmup; regression test covers v0 program IDs loaded from readonly ALT.
+- [x] Rejects empty lookup selections and caps reconstructed static + loaded account keys at 128, including a second guard after reconstruction.
+- [x] This is still a structural/account-state parsing foundation, not a full semantic transaction validator. Trusted RPC integration, exact instruction/program allowlists, token movement/destination validation, order-wallet-message binding, replay controls, Devnet lifecycle tests and independent security review remain open.
+- [ ] Latest CI has not run on current PR #233 source head; Validate `42851432127` passed on older `1e8fd348`, while Browser Smoke `42851432268` remained in progress on that older head. Do not use those results to certify newer code.
+- [ ] Next: obtain and verify CI on current source head, then continue trusted RPC ALT resolution and semantic instruction validator. Hard execution gate remains false; no production deployment or live trade.
