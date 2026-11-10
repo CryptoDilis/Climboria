@@ -2790,3 +2790,10 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Verification pending:** these fixes are committed, but no new Validate run has appeared for the current branch head `a33ac53b0be148f28c1699f981368a5c0d65fc4f`. The failed run had 38 passing and 2 failing tests; it must not be described as a pass. Browser Smoke run `42852776852` is still attached to the pre-fix head and does not validate these changes.
 - [ ] **Exact next task:** obtain a fresh Validate run for the current head and inspect all test results; then address any genuine code defects. After tests pass, implement trusted RPC account retrieval/context binding and program-specific semantic instruction allowlists.
 - Execution remains hard-disabled. No execute-route integration, Worker deployment, wallet signing, or live trading.
+
+
+### Manual verification trigger added
+
+- [x] Added `workflow_dispatch` to Validate Climboria so maintainers can manually run the complete test suite against the selected PR branch from GitHub Actions. This addresses the practical trigger gap where connector-authored commits did not result in a fresh run.
+- [ ] The available GitHub connection has no workflow-dispatch action, so I cannot invoke that manual run here. A maintainer must select branch `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow. Confirm the run checks out the latest branch SHA before accepting its result.
+- [ ] Exact next task remains: run validation on the latest head, inspect full TAP output, then continue trusted RPC ALT fetch/context binding and semantic instruction allowlists.
