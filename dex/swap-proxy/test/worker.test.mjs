@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "../src/index.mjs";
+import { validateUnsignedOrderTransaction } from "../src/transaction-validation.mjs";
+import { makeFixture } from "./solana-v0-fixture.mjs";
 
 const orderStoreCalls = [];
 const orderStoreStub = {
@@ -8,7 +10,11 @@ const orderStoreStub = {
     const pathname = new URL(input).pathname;
     const body = init.body ? JSON.parse(init.body) : null;
     orderStoreCalls.push({ pathname, body });
-    if (pathname === "/store") return Response.json({ ok: true, state: "ready" }, { status: 201 });
+    if (pathname === "/store") {
+      const validOrder = validateUnsignedOrderTransaction({ transaction: body?.transaction, taker: body?.taker });
+      if (!validOrder.ok) return Response.json({ ok: false, error: validOrder.error }, { status: 422 });
+      return Response.json({ ok: true, state: "ready" }, { status: 201 });
+    }
     if (pathname === "/claim") return Response.json({ ok: true, record: { requestId: "request-123456", lastValidBlockHeight: 12345 } });
     if (pathname === "/settle") return Response.json({ ok: true, state: body?.state });
     return Response.json({ error: "not found" }, { status: 404 });
@@ -95,6 +101,18 @@ test("rejects malformed execute payload", async () => {
   assert.equal(res.status, 400);
 });
 
+test("requires a server-issued order token even if a caller supplies a Jupiter request ID", async () => {
+  const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+  const req = new Request("https://worker.test/api/swap/execute", {
+    method: "POST",
+    headers: { origin, "content-type": "application/json" },
+    body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+  });
+  const res = await worker.fetch(req, env);
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /server-issued orderToken/i);
+});
+
 test("fails closed when edge rate limiter is not configured", async () => {
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true" });
@@ -107,6 +125,7 @@ test("rejects requests over the configured edge rate limit", async () => {
 });
 
 test("proxies a valid Jupiter order with server-side credentials and normalized response", async () => {
+  const fixture = makeFixture(1);
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
   let upstreamHeaders;
@@ -116,7 +135,7 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
       upstreamHeaders = new Headers(init?.headers);
       return Response.json({
         requestId: "jupiter-request-123",
-        transaction: "AQID",
+        transaction: fixture.original,
         inAmount: "100",
         outAmount: "250",
         router: "Jupiter",
@@ -128,17 +147,17 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
     const req = new Request("https://worker.test/api/swap/order", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: fixture.taker })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.requestId, "jupiter-request-123");
-    assert.equal(body.transaction, "AQID");
+    assert.equal(body.transaction, fixture.original);
     assert.equal(body.lastValidBlockHeight, 12345);
     assert.match(body.orderToken, /^[0-9a-f-]{36}$/i);
     assert.equal(orderStoreCalls.at(-1).pathname, "/store");
-    assert.equal(orderStoreCalls.at(-1).body.taker, valid);
+    assert.equal(orderStoreCalls.at(-1).body.taker, fixture.taker);
     assert.equal(upstreamHeaders.get("x-api-key"), "test-server-key");
     assert.match(upstreamUrl, /^https:\/\/api\.jup\.ag\/swap\/v2\/order\?/);
     assert.match(upstreamUrl, /maxSupportedTransactionVersion=0/);
