@@ -1,11 +1,16 @@
 import { createHash } from "node:crypto";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
+import { expectedInitializeV2Accounts, prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
 
 class PublicKey {
   constructor(value) { if (typeof value !== "string" || value.length < 32) throw new Error("invalid public key"); this.value = value; }
   toBase58() { return this.value; }
+  toBuffer() { return Buffer.from(this.value, "utf8"); }
+  static findProgramAddressSync(seeds, programId) {
+    const digest = createHash("sha256").update(Buffer.concat([...seeds, programId.toBuffer()])).digest("hex");
+    return [new PublicKey("PDA" + digest), 255];
+  }
 }
 class BN { constructor(value) { this.value = String(value); } }
 const ids = {
@@ -20,6 +25,38 @@ const sdk = {
   LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }) },
   PlatformConfig: { decode: () => ({ restrictCurveParam: false }) },
 };
+function makeInitializeV2Transaction(options, label = "init") {
+  const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
+  const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId) });
+  const privileges = new Map();
+  for (const item of expected) {
+    const key = item.pubkey.toBase58();
+    const prior = privileges.get(key) || { isWritable: false };
+    privileges.set(key, { isWritable: prior.isWritable || item.isWritable });
+  }
+  const payer = options.feePayer, mint = options.mintA;
+  const signerKeys = [payer, mint];
+  const signerSet = new Set(signerKeys.map(key => key.toBase58()));
+  const writableUnsigned = [...privileges.entries()].filter(([key, value]) => !signerSet.has(key) && value.isWritable).map(([key]) => new PublicKey(key));
+  const readonlyUnsigned = [...privileges.entries()].filter(([key, value]) => !signerSet.has(key) && !value.isWritable).map(([key]) => new PublicKey(key));
+  const program = new PublicKey(ids.programId);
+  readonlyUnsigned.push(program);
+  const staticAccountKeys = [...signerKeys, ...writableUnsigned, ...readonlyUnsigned];
+  const keyIndex = new Map(staticAccountKeys.map((key, index) => [key.toBase58(), index]));
+  return {
+    label,
+    message: {
+      staticAccountKeys,
+      header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: readonlyUnsigned.length },
+      compiledInstructions: [{
+        programIdIndex: keyIndex.get(ids.programId),
+        accountKeyIndexes: expected.map(item => keyIndex.get(item.pubkey.toBase58())),
+        data: Uint8Array.from([67, 153, 175, 39, 218, 16, 38, 32]),
+      }],
+    },
+  };
+}
+
 const input = overrides => ({
   cluster: "devnet", ...ids, creatorWallet: ids.creator, feePayer: ids.creator,
   mintKeypair: { publicKey: new PublicKey("Mint111111111111111111111111111111111111111") },
@@ -41,16 +78,8 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}
     launchpad: {
       createLaunchpad: async options => {
         captured = options;
-        const makeTx = label => ({
-          label,
-          message: {
-            staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
-            header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
-            compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
-          },
-        });
         return {
-          transactions: [makeTx("init-1"), makeTx("init-2")],
+          transactions: [makeInitializeV2Transaction(options, "init-1"), makeInitializeV2Transaction(options, "init-2")],
           signers: [[options.extraSigners[0]], [options.extraSigners[0]]],
           instructionTypes: ["initializeV2"],
           extInfo: { poolId: "fixture" },
@@ -116,6 +145,11 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, true);
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isWritable, true);
   assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
+  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 17);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[0].name, "payer");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[1].name, "creator");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[1].isSigner, true);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[5].name, "pool_state");
   assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
   assert.equal(result.transactionSubmitted, false);
   assert.equal(result.executeCalled, false);
@@ -130,6 +164,25 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(built.buyAmount.value, "0");
   assert.equal(built.createOnly, true);
   assert.deepEqual(built.extraSigners, [input({}).mintKeypair]);
+});
+test("rejects a tampered initializeV2 pool PDA or account order", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    const indexes = tx.message.compiledInstructions[0].accountKeyIndexes;
+    [indexes[5], indexes[8]] = [indexes[8], indexes[5]];
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /account mismatch at position 5/);
+});
+test("rejects a LaunchLab instruction with a non-initializeV2 discriminator", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    tx.message.compiledInstructions[0].data = Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]);
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /not the pinned initializeV2 discriminator/);
 });
 test("rejects an SDK client not initialized for Devnet", async () => {
   const mock = client();
@@ -185,17 +238,14 @@ test("resolves and reports V0 Address Lookup Table account metas", async () => {
   mock.raydium.connection.getAddressLookupTable = async () => ({
     value: { state: { addresses: [loadedWritable] } },
   });
-  mock.raydium.launchpad.createLaunchpad = async options => ({
-    transactions: [{
-      message: {
-        staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
-        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
-        addressTableLookups: [{ accountKey: lookupKey, writableIndexes: [0], readonlyIndexes: [] }],
-        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1, 3] }],
-      },
-    }],
-    signers: [[options.extraSigners[0]]],
-  });
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    const keys = tx.message.staticAccountKeys;
+    const systemProgramIndex = keys.findIndex(key => key.toBase58() === "11111111111111111111111111111111");
+    tx.message.addressTableLookups = [{ accountKey: lookupKey, writableIndexes: [0], readonlyIndexes: [] }];
+    tx.message.compiledInstructions.push({ programIdIndex: systemProgramIndex, accountKeyIndexes: [keys.length], data: Uint8Array.from([1]) });
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
   const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
   const review = result.transactionReviews[0];
   assert.equal(review.accountMetaDetails[0][2].pubkey, loadedWritable.toBase58());
