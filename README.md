@@ -1,3 +1,16 @@
+### Latest checkpoint — 2026-11-10 (PR #231, historical loader evidence and rate-limit hardening)
+
+- [x] Latest fully completed LaunchLab run `42759070388` **SUCCESS**; Validate Climboria `42759070542` **SUCCESS**. The mock pagination tests and full live provenance workflow completed.
+- [x] The paginated finalized ProgramData scan reached the state slot `363279440` in one RPC page: 149 signatures returned, oldest scanned slot `126114444`. This proves the account history endpoint reaches back past the state slot; it does not yet identify the initial deployment transaction.
+- [x] Confirmed historical successful upgrade transactions in the returned history, including slot `354765528`, signature `2Juf2fcXsmQZgcQaVjbcx5rd3UYgJz9Z2HgB99hDetBfJ9kYaqtdzdtGND3mLtYymjvNfUnW7PSFnb2WrmWGjrJj`, whose log says `Upgraded program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`. Additional successful upgrade logs were observed at slots `337839463`, `337099368`, `337054580`, and `335003496`. These are upgrade events, not evidence of initial deployment.
+- [x] Identified an RPC limitation in the first historical transaction detail pass: 429 responses caused several older transactions (including slots `333894248`, `324839904`, `291241198`, and older) to lack transaction detail. The history scan itself succeeded; transaction-detail retrieval was rate-limited.
+- [x] Hardened `.github/scripts/launchlab-metaplex-deployment-probe.mjs`: inspect up to 100 historical transaction records, process only two concurrently, retry 429/rate-limit responses up to four attempts with bounded exponential backoff, and retain full instruction account/data evidence for loader/governance tracing.
+- [x] Changed capped selection to prioritize the **oldest** signatures in the bounded history window rather than the newest upgrades, improving the chance of locating the original deployment. Output now reports total available historical signatures and selected slot range.
+- [x] Added a regression test proving the bounded cap selects the oldest historical signatures.
+- [ ] **CI verification pending** for source/test commits `bc845c219c3401dbd9d3eae3f403340a132d9e15`, `63be3aa947b7c55a8bbbc6f1d25a6f1234f82d1b`, and `4ebd548894be801eba09a86fd43d5501cbd864af`. Validate for the earlier checkpoint passed, but the new oldest-first and retry changes need their own LaunchLab run.
+- [ ] **Next P0:** verify latest LaunchLab and Validate results; inspect the oldest successful loader transactions and their full instruction evidence. If RPC throttling persists, lower concurrency further or use the returned signatures for targeted single-transaction retries. Identify the initial deploy and governance proposal before asserting source lineage.
+- [ ] Deployed Metaplex bytecode still does not match the reproducible candidate artifact; metadata allocation compatibility remains unresolved. Devnet LP Lock IDL publication and CPMM fee-receiver custody remain independent migration blockers. No signing, simulation, or transaction submission.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, bounded historical ProgramData pagination)
 
 - [x] Rechecked PR #231: open and Draft. LaunchLab Live Provenance run `42758590332` finished SUCCESS; Validate Climboria `42758590322` SUCCESS. The subsequent README-head Validate run `42758776908` also passed.
