@@ -192,20 +192,40 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     }
     const instructions = message.compiledInstructions;
     if (!Array.isArray(instructions) || instructions.length === 0) fail(`SDK transaction ${index} contains no compiled instructions`);
+    const lookupTables = message.addressTableLookups ?? [];
+    const loadedWritable = [];
+    const loadedReadonly = [];
+    for (const lookup of lookupTables) {
+      const table = await raydium.connection.getAddressLookupTable(lookup.accountKey, { commitment: "finalized" });
+      if (!table?.value) fail(`SDK transaction ${index} references a missing or unreadable Address Lookup Table: ${lookup.accountKey.toBase58()}`);
+      for (const addressIndex of Array.from(lookup.writableIndexes ?? [])) {
+        const address = table.value.state.addresses[addressIndex];
+        if (!address) fail(`SDK transaction ${index} references an invalid writable lookup-table index`);
+        loadedWritable.push(address);
+      }
+      for (const addressIndex of Array.from(lookup.readonlyIndexes ?? [])) {
+        const address = table.value.state.addresses[addressIndex];
+        if (!address) fail(`SDK transaction ${index} references an invalid readonly lookup-table index`);
+        loadedReadonly.push(address);
+      }
+    }
+    // V0 message account order is static keys, all loaded writable keys, then all loaded readonly keys.
+    const allKeys = [...keys, ...loadedWritable, ...loadedReadonly];
     const programIds = instructions.map(instruction => {
-      const program = keys[instruction.programIdIndex];
+      const program = allKeys[instruction.programIdIndex];
       if (!program) fail(`SDK transaction ${index} references an unresolved program index`);
       const address = program.toBase58();
       if (!allowedPrograms.has(address)) fail(`SDK transaction ${index} references an unapproved program: ${address}`);
       return address;
     });
     const accountMetaDetails = instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? []).map(keyIndex => {
-      const account = keys[keyIndex];
-      if (!account) fail(`SDK transaction ${index} uses an unresolved lookup-table account index; resolve and review address tables before proceeding`);
+      const account = allKeys[keyIndex];
+      if (!account) fail(`SDK transaction ${index} references an unresolved account index after Address Lookup Table resolution`);
       const isSigner = keyIndex < requiredCount;
-      const isWritable = isSigner
-        ? keyIndex < requiredCount - readonlySigned
-        : keyIndex < keys.length - readonlyUnsigned;
+      let isWritable = false;
+      if (keyIndex < requiredCount) isWritable = keyIndex < requiredCount - readonlySigned;
+      else if (keyIndex < keys.length) isWritable = keyIndex < keys.length - readonlyUnsigned;
+      else if (keyIndex < keys.length + loadedWritable.length) isWritable = true;
       return { index: keyIndex, pubkey: account.toBase58(), isSigner, isWritable };
     }));
     if (!accountMetaDetails.flat().some(meta => meta.pubkey === input.mintKeypair.publicKey.toBase58() && meta.isSigner && meta.isWritable)) {
@@ -219,6 +239,11 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       instructionCount: instructions.length,
       accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
       accountMetaDetails,
+      lookupTables: lookupTables.map((lookup, lookupIndex) => ({
+        address: lookup.accountKey.toBase58(),
+        writableAddresses: loadedWritable.slice(0, loadedWritable.length).map(key => key.toBase58()),
+        readonlyAddresses: loadedReadonly.slice(0, loadedReadonly.length).map(key => key.toBase58()),
+      })),
     };
   });
   return {
