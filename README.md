@@ -1,31 +1,24 @@
-## 2026-11-10 — Real pinned-SDK Devnet builder verified
+## 2026-11-10 — LaunchLab IDL accounts and serialized arguments verified
 
-- [x] Installed the pinned published Raydium SDK `0.2.84-alpha` in CI and ran the real `Raydium.load({ cluster: "devnet" })` create-only builder against live Devnet RPC/API.
-- [x] Real SDK produced one ordered V0 transaction using the standard SPL `initializeV2` instruction path and explicit CPMM migration.
-- [x] Resolved the transaction's finalized Address Lookup Table and recorded the resolved readonly accounts (GlobalConfig, platform config, WSOL mint, SPL Token program, Metaplex metadata program, System Program and Rent sysvar). No unresolved account indexes remain.
-- [x] Inspected the message fee payer, required signer keys, top-level program ID, instruction count and all account-meta indexes/addresses/signer/writable flags. Required message signers were the synthetic CI fee-payer wallet and throwaway mint key; the SDK's additional signer group contained only the throwaway mint key.
-- [x] Confirmed the builder smoke did not call SDK `execute()`, did not sign with the creator wallet, and did not submit the transaction. CI test parameters and synthetic keys are not approved Climboria launch settings.
-- [x] Diagnosed the first real builder failure from the pinned SDK `LaunchConstantProductCurve.getInitParam`: the chosen fixture made its integer denominator exactly zero. Changed only the CI fixture to a non-degenerate explicit ratio and added a matching preflight guard/test in the production preparation boundary.
-- [x] Diagnosed the next inspector failure: the actual V0 message used Address Lookup Table indexes. Implemented finalized ALT resolution and a unit test; did not weaken the unresolved-index fail-closed check.
-- [x] Corrected negative-test fixtures after the expanded V0 header checks; all 16 preparation tests now pass.
-- [x] Latest LaunchLab Live Provenance run `42746385706` — SUCCESS, including pinned SDK Devnet transaction build and inspection.
-- [x] Latest Validate Climboria run `42746385964` — SUCCESS.
-- [ ] **Still not complete:** independently compare all 18 `initializeV2` account positions and privileges to the pinned IDL, verify each dynamic PDA from the actual mint/quote/config, and assert exact writable/signer semantics. Current smoke records/resolves metas but is not yet a complete account-by-account IDL approval gate.
-- [ ] No Devnet simulation was run. The synthetic CI creator has no approved funding and no wallet signature; simulation/funding would be a separate step. Do not airdrop, sign or submit.
-- [ ] Owner launch inputs remain open: creator wallet, approved name/symbol, hosted immutable metadata, token decimals, total supply, curve sale, quote raise, supply allocation/authority plan, and fee/LP disclosures.
-- [ ] Exact next task: implement the `initializeV2` account-by-account validator using the pinned IDL and SDK PDA derivation helpers; add positive and tampering tests, then rerun LaunchLab + Validate. Only after that should a separately approved, funded Devnet wallet be used for read-only simulation. Mainnet remains disabled.
+**Priority:** P0 — Raydium LaunchLab Devnet-only preparation on PR #231, branch `codex/launchlab-live-provenance-probe`.
 
-## 2026-11-10 — LaunchLab preparation hardening follow-up
-
-- [x] Hardened Devnet preparation to require the SDK's own `scope.cluster === "devnet"`; a Mainnet-configured SDK client now fails closed.
-- [x] Removed the caller-controlled curve-rule bypass. If the live PlatformConfig restricts curve parameters, preparation now blocks until the actual PlatformCurveRule is decoded and validated.
-- [x] Expanded fresh API vs finalized GlobalConfig comparisons to include fee rates, min supply/sell/migration/raise constraints and migrate fee.
-- [x] Removed the hard-coded Climboria token-decimal assumption. Token decimals must be explicitly supplied (0–9); WSOL quote decimals remain fixed at 9.
-- [x] Added regression coverage for Devnet cluster binding, explicit decimals and metadata-hash tampering; corrected the mock GlobalConfig fixture to include migrateFee.
-- [x] Corrected LaunchLab workflow PR path filters to include the new preparation module and tests. The previous path-filter omission was a real workflow wiring defect.
-- [ ] **CI still unverified:** latest PR head `08cf0a045296d9cccf4f712438dc3ab6d598dc54` currently has no GitHub Actions check-runs or commit statuses visible. Do not call the new tests passed. Existing `Validate Climboria` workflow on main watches `.github/scripts/**` and `.github/workflows/**`; investigate why Actions are not appearing rather than changing code blindly.
-- [ ] No Devnet transactions have been constructed with a real creator wallet or simulated. The tests use mocks; they do not prove live transaction correctness.
-- [ ] Exact next task: get a real CI run for PR #231 head `08cf0a0`; inspect logs, fix failures based on root cause, and only then integrate a pinned-SDK builder integration test with account-meta/signer inspection. Simulation remains read-only and must not call SDK `execute()`.
+- [x] Implemented exact validation of the pinned `initializeV2` instruction discriminator.
+- [x] Verified all 18 ordered IDL account entries, including the final `program` entry carried in the compiled instruction account indexes.
+- [x] Derived and compared the dynamic authority, pool, base/quote vault, Metaplex metadata and event-authority PDAs from the caller's mint and verified Devnet quote mint/program.
+- [x] Verified GlobalConfig, PlatformConfig, creator/payer alias, mint signer, token programs, metadata program, System Program, Rent sysvar and LaunchLab program addresses.
+- [x] Compared exact effective signer/writable privileges, unioning the IDL privileges where payer and creator resolve to the same public key. Any privilege escalation or mismatch fails closed.
+- [x] Added strict decoding of the serialized `initializeV2` instruction data and comparison against explicit caller inputs: decimals, name, symbol, URI, constant-curve index, supply, totalSellA, quote raise, CPMM migration flag, locked amount, cliff/unlock and creator fee mode.
+- [x] Creator fee mode is now explicit input (0 = OnlyTokenB; 1 = BothToken); CI uses 0 only as a test fixture, not as production fee-policy approval.
+- [x] Added regression tests for altered pool/account order, wrong discriminator, altered serialized sale amount, missing creator-fee selection, and V0 Address Lookup Table account resolution.
+- [x] Latest LaunchLab Live Provenance run `42747329401` — SUCCESS: 7 provenance tests, 4 API-constraint tests, 21 Devnet-preparation tests; real pinned-SDK Devnet builder smoke and live Mainnet/Devnet API/IDL checks passed.
+- [x] Latest Validate Climboria run `42747329361` — SUCCESS.
+- [x] Latest real builder smoke decoded and matched the exact CI-only fixture: 6 decimals, CLIMBTEST metadata, curve index 0, explicit supply/sale/raise values, CPMM flag 1, zero lock/cliff/unlock, creatorFeeOn 0. One unsigned V0 transaction; no creator signature, SDK execute, simulation or submission.
+- [x] Root-caused and fixed the earlier account-count failure: the actual compiled SDK instruction includes the IDL's final `program` account entry, so the validator now checks all 18 entries rather than treating it as only 17 metas.
+- [x] Root-caused and fixed the earlier ALT test failure: the fixture assertion inspected the LaunchLab instruction row instead of the separate instruction row containing the lookup-loaded test account.
+- [ ] **Not approved / not complete:** no owner-approved creator wallet, production token metadata, supply/curve economics, locked allocation, fee/creator-fee policy, allocation/authority plan, or fee/LP disclosures.
+- [ ] No Devnet simulation or transaction submission has been performed. CI uses synthetic keys and test-only parameters; do not fund, sign, airdrop or submit.
+- [ ] Mainnet signing, fundraising, escrow, public deposits and execution remain disabled.
+- [ ] Exact next task: audit the finalized Devnet PlatformConfig and LaunchLab/CPMM migration fee and destination semantics against the pinned SDK + live on-chain state; verify fee/LP/creator destination accounts and all top-level instruction semantics. Add tampering tests and rerun both workflows. Only after owner-approved launch inputs and a separately approved, funded Devnet wallet exist should a read-only simulation be considered.
 
 ## 2026-11-10 — LaunchLab Devnet transaction-preparation checkpoint
 
