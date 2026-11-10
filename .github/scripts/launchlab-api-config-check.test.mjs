@@ -19,6 +19,10 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
     lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
   };
   const feeData = Buffer.alloc(165);
+  const cpmmConfigData = Buffer.alloc(236);
+  new PublicKey(target.cpmmFeeAuthority).toBuffer().copy(cpmmConfigData, 44);
+  new PublicKey("11111111111111111111111111111112").toBuffer().copy(cpmmConfigData, 76);
+  cpmmConfigData.writeBigUInt64LE(99n, 36);
   new PublicKey("So11111111111111111111111111111111111111112").toBuffer().copy(feeData, 0);
   new PublicKey(target.cpmmFeeAuthority).toBuffer().copy(feeData, 32);
   feeData.writeBigUInt64LE(42n, 64);
@@ -31,7 +35,8 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
     cpmmProgramAccount: { executable: true },
     lockProgramAccount: { executable: true },
     cpmmFeeAccount: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", lamports: 123, data: [feeData.toString("base64"), "base64"] },
-    target,
+    cpmmConfigAccount: { owner: target.cpmmProgram, data: [cpmmConfigData.toString("base64"), "base64"] },
+    target: { ...target, cpmmConfigId: "11111111111111111111111111111113" },
     PublicKey,
   });
   assert.equal(result.cpmmProgramExecutable, true);
@@ -41,6 +46,9 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   assert.equal(result.cpmmCreatePoolFeeTokenAmount, "42");
   assert.equal(result.cpmmCreatePoolFeeTokenAuthorityMatchesPinnedSdk, true);
   assert.equal(result.cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds, true);
+  assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner, true);
+  assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner, false);
+  assert.equal(result.cpmmConfig.createPoolFee, "99");
   assert.equal(result.lockAuthority, target.lockAuthority);
 });
 test("rejects a missing CPMM migration fee destination account", () => {
