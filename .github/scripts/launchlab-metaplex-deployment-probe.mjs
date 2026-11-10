@@ -237,15 +237,18 @@ async function inspectUpgradeableAccountHistory({
     }));
     history.push(...batch);
   }
+  const historyComplete = reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions;
   return {
-    status: reachedStateSlot ? `${accountLabel}_state_slot_reached` : `${accountLabel}_history_incomplete`,
+    status: !reachedStateSlot ? `${accountLabel}_history_incomplete`
+      : historyComplete ? `${accountLabel}_state_slot_reached`
+      : `${accountLabel}_state_slot_reached_with_bounded_partial_history`,
     stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
     historicalCandidateCount: selectedHistoricalCandidates.length,
     availableHistoricalSignatureCount: historicalCandidates.length,
     selectedRangeOldestSlot: selectedHistoricalCandidates[0]?.slot ?? null,
     selectedRangeNewestSlot: selectedHistoricalCandidates.at(-1)?.slot ?? null,
     signatures: history,
-    complete: reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions,
+    complete: historyComplete,
   };
 }
 
@@ -719,6 +722,12 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockTimeUnix,
     programDataStateSlotBlockEvidence,
     programDataHistory,
+    historyCoverage: {
+      complete: programDataHistory.complete === true,
+      truncated: programDataHistory.complete !== true && programDataHistory.reachedStateSlot === true,
+      selectedHistoricalCandidateCount: programDataHistory.historicalCandidateCount ?? 0,
+      availableHistoricalCandidateCount: programDataHistory.availableHistoricalSignatureCount ?? 0,
+    },
     programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
     governanceHistory,
     governanceProposalAccounts,
