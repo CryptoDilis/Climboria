@@ -153,6 +153,7 @@ export function expectedInitializeV2Accounts({ sdk, input, programId }) {
     { name: "system_program", pubkey: systemProgram, isSigner: false, isWritable: false },
     { name: "rent_program", pubkey: rentSysvar, isSigner: false, isWritable: false },
     { name: "event_authority", pubkey: eventAuthority, isSigner: false, isWritable: false },
+    { name: "program", pubkey: programId, isSigner: false, isWritable: false },
   ];
 }
 
@@ -166,7 +167,7 @@ function validateInitializeV2Instruction({ instruction, allKeys, expectedAccount
   }
   const indexes = Array.from(instruction.accountKeyIndexes ?? []);
   if (indexes.length !== expectedAccounts.length) {
-    fail(`SDK transaction ${index} initializeV2 account count differs from the pinned 18-entry IDL (17 metas plus program ID)`);
+    fail(`SDK transaction ${index} initializeV2 account count differs from the pinned 18-entry initializeV2 IDL`);
   }
 
   // Compiled-message privileges are global per key. Union the IDL privileges
