@@ -2829,3 +2829,15 @@ For every integrated asset or borrowed technique, record:
 - [x] Current PR #233 head after redirect hardening and documentation: `8a71f48480e091b92ae95629ac811528128a16e4`.
 - [ ] No new Actions run has appeared for that newer head yet. The green Validate result `42854007949` is valid for `4d989326...` only. Do not claim the redirect change passed CI until a fresh run is observed.
 - [ ] Exact next task: refresh Actions until fresh Validate runs on `8a71f484...`; inspect the completed Browser Smoke run and remaining gameplay step. Then implement semantic instruction policy using an audited, explicit supported-program/instruction set. Do not integrate into execution or enable user funds before order binding/replay protection and independent security review.
+
+
+
+## 2026-11-11 — Latest-head validation and browser smoke checkpoint
+
+- [x] Fresh Validate run `42854701949` completed **SUCCESS** for PR #233 latest head `4c9606e8bba32e3ea2b87af5fe5eb7232efa8ef6`. All listed steps passed: Worker security/API contract tests, homepage structure/controls, launch-copy target labeling, inline JavaScript syntax checks, DEX/Swap script syntax checks, game script syntax checks, and remaining HTML script audit.
+- [x] Fresh Browser Smoke run `42854701917` on the same latest head passed homepage CTA/DEX routing/mobile navigation, Cloudflare DEX proxy, execution fail-closed regression, standalone Swap, DEX quote-preview shell, mobile workspace/desktop regression, compact 390px/360px layouts, and mobile market loading/provider-error/empty-state checks.
+- [ ] Browser Smoke gameplay step (Jarrell's Peak desktop/mobile) was still running at the time of this checkpoint; screenshot upload and cleanup were pending. Do not mark the entire Browser Smoke run complete yet.
+- [x] Confirmed the current hard execution gate still intentionally blocks transaction execution. The browser check explicitly verifies fail-closed behavior; this is not a live-trading verification.
+- [ ] **Production blockers remain:** Worker not deployed/configured; trusted ALT resolver is not wired into the execute route; semantic instruction validation and immutable order-wallet-message binding/replay protection are not implemented; no live RPC provider verification, controlled Devnet transaction lifecycle, or independent security review.
+- [ ] **Exact next task:** finish and inspect Browser Smoke run `42854701917`, including Jarrell's Peak step and screenshot artifact. Then implement the first audited, fail-closed semantic validator for a deliberately narrow supported instruction set; do not guess program IDs/layouts and do not connect it to execution until order binding, replay protection, adversarial tests, Devnet validation, and independent security review are complete.
+- Execution remains disabled. No production funds, signing, submission, Worker deployment, or live trading was enabled by this checkpoint.
