@@ -8,6 +8,7 @@ import {
   summarizeMetaplexGovernanceHistory,
   inspectGovernanceProposalAccounts,
   decodeGovernanceProposalAccountEvidence,
+  verifyGovernanceUpgradeProposalEvidence,
   METAPLEX_GOVERNANCE_PROGRAM_ID,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
@@ -487,4 +488,51 @@ test("decodes SPL Governance ProposalV2 title/state and embedded loader upgrade 
   assert.equal(decoded.proposalTransactions[0].instructions[0].loaderOperation, "upgrade");
   assert.equal(decoded.proposalTransactions[0].executionStatus, 1);
   assert.deepEqual(decoded.failures, []);
+});
+
+test("verifies executed governance proposal state and exact embedded ProgramData upgrade accounts", () => {
+  const governance = "Governance11111111111111111111111111111";
+  const proposal = "Proposal111111111111111111111111111111";
+  const proposalTransaction = "ProposalTx11111111111111111111111111111";
+  const programData = "ProgramData111111111111111111111111111111";
+  const loader = BPF_UPGRADEABLE_LOADER_ID;
+  const program = METAPLEX_TOKEN_METADATA_PROGRAM_ID;
+  const proposalDetails = {
+    proposals: [{ address: proposal, governance, state: "Completed", name: "Metaplex upgrade" }],
+    proposalTransactions: [{
+      address: proposalTransaction, proposal, executionStatus: 1,
+      instructions: [{
+        programId: loader, loaderOpcode: 3,
+        accounts: [
+          { pubkey: programData }, { pubkey: program }, { pubkey: "buffer" },
+          { pubkey: "spill" }, { pubkey: "rent" }, { pubkey: "clock" }, { pubkey: governance },
+        ],
+      }],
+    }],
+  };
+  const governanceHistory = { events: [{
+    slot: 100, signature: "execute-upgrade", instruction: "executeTransaction",
+    governance, proposal, proposalTransaction, innerProgramId: loader, success: true,
+  }] };
+  const verified = verifyGovernanceUpgradeProposalEvidence({
+    governanceHistory, proposalDetails, programId: program, programDataAddress: programData,
+  });
+  assert.equal(verified.status, "all_governance_upgrade_proposals_verified");
+  assert.equal(verified.executionCount, 1);
+  assert.equal(verified.verifiedCount, 1);
+  const mismatch = verifyGovernanceUpgradeProposalEvidence({
+    governanceHistory,
+    proposalDetails: {
+      ...proposalDetails,
+      proposalTransactions: [{
+        ...proposalDetails.proposalTransactions[0],
+        instructions: [{ ...proposalDetails.proposalTransactions[0].instructions[0],
+          accounts: [{ pubkey: "WrongProgramData" }, ...proposalDetails.proposalTransactions[0].instructions[0].accounts.slice(1)] }],
+      }],
+    },
+    programId: program, programDataAddress: programData,
+  });
+  assert.equal(mismatch.status, "governance_upgrade_proposal_verification_partial");
+  assert.equal(mismatch.failedCount, 1);
+  assert.equal(mismatch.results[0].checks.programDataMatches, false);
 });
