@@ -112,6 +112,8 @@
   async function loadForSession(session) {
     const user = session?.user;
     if (!user || user.is_anonymous) {
+      // Return to the local guest backpack cache. Account-scoped backpacks remain isolated.
+      adapter.setUserScope?.(null, false);
       generation++;
       activeUserId = null;
       loadingUser = false;
@@ -144,6 +146,7 @@
         .maybeSingle();
       if (error) throw error;
       if (requestGeneration !== generation) return;
+      const scope = adapter.setUserScope?.(user.id, !data) || { unclaimedLocalItems: 0 };
 
       if (data) {
         if (data.schema_version !== 1 || !adapter.restore(data.save_data)) {
@@ -154,7 +157,9 @@
         hasRemoteRow = true;
         remoteSavedAt = data.saved_at;
         lastSnapshot = JSON.stringify(adapter.capture());
-        setStatus('loaded', 'Cloud save · account progress loaded');
+        setStatus('loaded', scope.unclaimedLocalItems > 0
+          ? 'Cloud save loaded · separate local guest backpack preserved'
+          : 'Cloud save · account progress loaded');
       } else {
         setStatus('ready', 'Cloud save ready · progress will sync when you start playing');
       }

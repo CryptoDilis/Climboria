@@ -740,6 +740,32 @@ jobs:
                 throw new Error('Unexpected unauthenticated cloud-save state: '+JSON.stringify(state));
               }
               if(errors.length) throw new Error('Game cloud-save runtime errors: '+errors.join(' | '));
+
+              const scopePage=await browser.newPage({viewport:{width:1280,height:800}});
+              await scopePage.addInitScript(()=>{
+                localStorage.setItem('climboria_jarrell_inventory_v1',JSON.stringify([{name:'GuestScopeFixture',qty:2}]));
+              });
+              const scopeResponse=await scopePage.goto('http://127.0.0.1:4173/game/play.html',{waitUntil:'domcontentloaded'});
+              if(!scopeResponse?.ok()) throw new Error('Game page did not load for account-scope isolation check');
+              await scopePage.waitForFunction(()=>typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.setUserScope==='function',null,{timeout:20000});
+              const scopeState=await scopePage.evaluate(()=>{
+                const adapter=window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                const read=()=>adapter.capture()?.inventory||[];
+                adapter.setUserScope('auth-user-A',true);
+                const accountA=read();
+                adapter.setUserScope(null,false);
+                const guest=read();
+                adapter.setUserScope('auth-user-B',true);
+                const accountB=read();
+                adapter.setUserScope('auth-user-A',false);
+                const accountAReload=read();
+                return {accountA,guest,accountB,accountAReload};
+              });
+              if(!scopeState.accountA.some(item=>item.name==='GuestScopeFixture')||scopeState.guest.length!==0||scopeState.accountB.length!==0||!scopeState.accountAReload.some(item=>item.name==='GuestScopeFixture')){
+                throw new Error('Backpack data crossed account boundaries: '+JSON.stringify(scopeState));
+              }
+              await scopePage.close();
+              console.log('PASS account-scoped backpack cache: first account adopts unscoped guest inventory, sign-out returns to empty guest scope, other accounts remain isolated.');
               console.log('PASS game save adapter + Supabase client initialized; unauthenticated browser remains local-only.');
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});

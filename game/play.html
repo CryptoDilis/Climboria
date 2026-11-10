@@ -1164,11 +1164,20 @@ const toast=t=>{toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(toast
 const emit=(type,detail)=>window.dispatchEvent(new CustomEvent('climboria:'+type,{detail}));
 /* Persistent local player inventory. Server-authoritative multiplayer/rewards are a separate integration. */
 const INVENTORY_KEY='climboria_jarrell_inventory_v1';
-const inventory=(()=>{try{const v=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(x.qty)&&x.qty>0):[]}catch(_){return[]} })();
+const readInventory = (key) => {
+ try {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return null;
+  const value = JSON.parse(raw);
+  return Array.isArray(value) ? value.filter(item => item && typeof item.name === 'string' && Number.isFinite(item.qty) && item.qty > 0) : [];
+ } catch (_) { return []; }
+};
+let inventoryStorageKey = INVENTORY_KEY;
+const inventory=readInventory(INVENTORY_KEY) || [];
 const invPanel=css(document.createElement('section'),'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;z-index:1002;width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
 const invToggle={addEventListener:()=>{}};
- const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
+ const saveInventory=()=>{try{localStorage.setItem(inventoryStorageKey,JSON.stringify(inventory))}catch(_){}};
 function renderInventory(){
  invPanel.replaceChildren();
  const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='CHARACTER · EQUIPMENT & INVENTORY';
@@ -1187,6 +1196,30 @@ function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name
 // Cloud save adapter. Only account-owned player position and backpack contents are persisted.
 // Token balances, marketplace value, rewards, and other economic state must remain server-authoritative.
 window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+  // Backpack snapshots are partitioned by authenticated account. Only an unscoped
+  // local guest backpack may be adopted by the first account with no cloud row.
+  setUserScope(userId, migrateUnscopedInventory = false) {
+    const previousKey = inventoryStorageKey;
+    const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
+    const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
+    const unclaimedLocalItems = userId && previousKey === INVENTORY_KEY && !migrateUnscopedInventory
+      ? previousItems.length
+      : 0;
+    if (targetKey === previousKey) return { unclaimedLocalItems: 0 };
+
+    const cached = readInventory(targetKey);
+    let nextItems = cached || [];
+    if (userId && cached === null && migrateUnscopedInventory && previousKey === INVENTORY_KEY) {
+      nextItems = previousItems;
+      try { localStorage.removeItem(INVENTORY_KEY); } catch (_) {}
+    }
+
+    inventoryStorageKey = targetKey;
+    inventory.splice(0, inventory.length, ...nextItems);
+    saveInventory();
+    renderInventory();
+    return { unclaimedLocalItems };
+  },
   capture() {
     if (P.mode === 'cine') return null;
     const x = Number(P.x), z = Number(P.z), yaw = Number(P.yaw);

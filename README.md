@@ -3286,3 +3286,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Investigated failed Browser Smoke run `42903943680` on head `6eafecb39ca26789e9ce14aeda4f9061dea79e06`. The first homepage/DEX browser step failed only after the synthetic DEX token fixture opened its holder-intel panel and called public Solana mainnet RPC. The external RPC returned HTTP 403 twice; the page's global console-error check correctly failed the run. The Auth-specific and game cloud-save checks were skipped because this earlier step failed.
 - [x] Root cause is nondeterministic external dependency in the browser fixture, not an Auth/session or cloud-save failure. Added deterministic getTokenLargestAccounts, getTokenSupply, and getMultipleAccounts JSON-RPC responses for the synthetic DEX mint. Production DEX code and production RPC configuration are unchanged.
 - [ ] Fresh Validate + Browser Smoke are required on the corrected exact head. Browser test should now proceed through Auth UI and game cloud-save initialization before gameplay. Do not infer cloud-save end-to-end success until its explicit test and real authenticated account checks pass.
+
+
+### 2026-11-11 — Account-scoped local backpack isolation
+
+- [x] Added per-authenticated-user localStorage namespaces for the backpack cache. A first account with no cloud save may adopt the unscoped local guest backpack; once claimed, that cache is moved to the account-specific key.
+- [x] On sign-out, the game returns to the separate guest-local inventory. When another account signs in, it loads that account's namespace or an empty cache; the previous user's backpack is not copied into the new user's cloud save.
+- [x] If an account already has a cloud save while unscoped guest inventory remains, the cloud save is restored to the account namespace and the guest inventory is preserved separately rather than silently merged/overwritten.
+- [ ] The account-scope isolation test is added to Browser Smoke; run Validate + Browser Smoke on the new exact head before marking this complete.

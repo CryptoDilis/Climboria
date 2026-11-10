@@ -209,12 +209,14 @@ jobs:
           from pathlib import Path
           html = Path("game/play.html").read_text(encoding="utf-8")
           save = Path("game-save.js").read_text(encoding="utf-8")
-          required_html = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', 'src="/game-save.js"', '__CLIMBORIA_GAME_SAVE_ADAPTER__']
+          required_html = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', 'src="/game-save.js"', '__CLIMBORIA_GAME_SAVE_ADAPTER__', 'setUserScope(userId, migrateUnscopedInventory = false)']
           required_save = [
               "from('player_saves')", "select('schema_version,save_data,saved_at')",
               ".eq('user_id', activeUserId)", ".eq('saved_at', remoteSavedAt)",
               'schema_version: 1', 'auth.onAuthStateChange', 'auth.getSession',
               'is_anonymous', 'TextEncoder', 'A newer cloud save exists on another device',
+              'adapter.setUserScope?.(null, false)', 'adapter.setUserScope?.(user.id, !data)',
+
           ]
           missing = [item for item in required_html if item not in html] + [item for item in required_save if item not in save]
           if missing:
