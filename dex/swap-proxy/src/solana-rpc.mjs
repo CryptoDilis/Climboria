@@ -35,6 +35,38 @@ function assertApprovedRpcUrl(value) {
   return url.toString();
 }
 
+async function readBoundedText(response) {
+  const declaredLength = Number(response.headers?.get?.("content-length") || 0);
+  if (declaredLength > MAX_RPC_RESPONSE_BYTES) throw new Error("Trusted Solana RPC response exceeded size limit");
+  if (!response.body?.getReader) {
+    const raw = await response.text();
+    if (new TextEncoder().encode(raw).length > MAX_RPC_RESPONSE_BYTES) throw new Error("Trusted Solana RPC response exceeded size limit");
+    return raw;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_RPC_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error("Trusted Solana RPC response exceeded size limit");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.byteLength; }
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(joined); }
+  catch { throw new Error("Trusted Solana RPC returned invalid UTF-8"); }
+}
+
 function decodeCanonicalBase64(value) {
   if (typeof value !== "string" || !value.length || value.length % 4 !== 0 ||
       !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
@@ -82,8 +114,7 @@ export async function resolveAddressLookupTables(parsed, {
     signal: AbortSignal.timeout(RPC_TIMEOUT_MS)
   });
   if (!response?.ok) throw new Error("Trusted Solana RPC account request failed");
-  const raw = await response.text();
-  if (new TextEncoder().encode(raw).length > MAX_RPC_RESPONSE_BYTES) throw new Error("Trusted Solana RPC response exceeded size limit");
+  const raw = await readBoundedText(response);
   let payload;
   try { payload = JSON.parse(raw); } catch { throw new Error("Trusted Solana RPC returned invalid JSON"); }
   if (payload?.jsonrpc !== "2.0" || payload.id !== "climboria-alt-resolution" || payload.error) {
