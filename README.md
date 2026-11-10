@@ -2690,3 +2690,15 @@ For every integrated asset or borrowed technique, record:
 - [ ] Browser Smoke step 15 (Jarrell’s Peak desktop/mobile gameplay) is still in progress; step 16 screenshot upload is pending. Do not mark the entire Browser Smoke run complete until both settle.
 - [ ] Exact next job: poll run `42735350994`; if gameplay smoke fails, fetch completed job logs and diagnose the exact root cause before any targeted fix. If successful, inspect screenshot artifacts and update this checkpoint with the final result.
 - [ ] Keep PR #230 OPEN/DRAFT. Live portfolio balances and claims remain blocked on official token mint verification, trusted pricing, authenticated player identity, server-authoritative rewards ledger, replay-safe claim settlement, and verifiable transaction history.
+
+
+## 2026-11-10 — Portfolio tracker checkpoint correction and release handoff
+
+- [x] Validate run `42735351120`: SUCCESS.
+- [x] Browser Smoke run `42735350994` steps 1–14 succeeded, including all dedicated Portfolio assertions, homepage navigation, Cloudflare proxy, fail-closed execution, DEX quote-preview and Swap desktop/mobile regressions.
+- [x] Screenshot artifact `13727025693` (`climboria-browser-smoke-screenshots`) uploaded successfully and is available until 2026-11-17.
+- [ ] Full Browser Smoke is **NOT passed**: gameplay step 15 was cancelled (not a test failure, but also not a pass). Re-run the full Browser Smoke on this latest branch head and verify gameplay plus screenshot artifact.
+- [x] Portfolio UI and dedicated assertions are implemented; all eight values remain explicitly Unavailable, and Claim Rewards remains disabled. No fake balances/rewards are shown.
+- [ ] Keep PR #230 OPEN/DRAFT until the full Browser Smoke rerun and visual review are complete. Do not enable live balances/claims without official mint, trusted pricing, authenticated player identity, secure rewards ledger, replay-safe settlement and verifiable history.
+- [ ] Exact next job: rerun/poll Browser Smoke on the latest PR head; diagnose any completed gameplay failure from its logs before changing code; review uploaded desktop/mobile screenshots; then update this handoff with exact run IDs and results.
+- [ ] Main release priority is recorded in `docs/RELEASE-PRIORITY-2026-11-10.md`: P0 close Portfolio verification, then production Swap, DEX, Climboria Signature Launchpad, cross-product release gates; shift primary focus to the game only after those gates pass.
