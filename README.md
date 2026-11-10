@@ -1,3 +1,22 @@
+## 2026-11-10 — approval-gated unsigned Devnet simulation preflight
+
+**Status:** Implemented — CI verification pending. Work continues on PR #231 branch `codex/launchlab-live-provenance-probe`.
+
+- [x] Added `.github/scripts/launchlab-devnet-simulation-preflight.mjs` as a separate simulation-only boundary; it cannot sign, submit, broadcast, or call SDK `execute()`.
+- [x] Requires explicit operator approval record, exact confirmation phrase, dedicated fee-payer match, exact SHA-256 of the serialized unsigned message, and a short-lived approval window (maximum 30 minutes).
+- [x] Requires a finalized fee-payer balance, exact finalized message-fee quote, explicit positive rent reserve and fee buffer; fails closed if any value is missing or the wallet lacks headroom.
+- [x] Requires every signature slot to be exactly zero and calls only `simulateTransaction` with `sigVerify:false`, `replaceRecentBlockhash:true`, and finalized commitment.
+- [x] Added deterministic mock-RPC tests for missing/expired/tampered approval, wrong payer, signed transaction, insufficient balance, missing fee quote, RPC simulation failure, Mainnet rejection, and successful unsigned simulation.
+- [x] Explicitly blocks multi-transaction SDK sets before any RPC call. Current LaunchLab builder smoke reports a two-transaction set; do not pretend separate simulations are equivalent to ordered/atomic simulation. Resolve transaction dependency and state-transition semantics before enabling this gate for the real builder output.
+- [x] Added the safety test to the LaunchLab provenance workflow. CI uses only mock RPC fixtures for this new test; it does not contact a wallet or run a live simulation.
+- [ ] **Verification pending:** wait for the exact PR #231 LaunchLab Provenance and Validate runs triggered by these commits, inspect all jobs and logs, and only then mark tests passed.
+- [ ] **Owner action required:** no real simulation is approved or run by this code change. A dedicated funded Devnet fee-payer address, exact unsigned transaction message hash, explicit owner approval reference, and approved rent reserve/fee buffer must be supplied through a trusted operator process before any simulation.
+- [ ] **Next P0:** determine why the pinned SDK returns two transactions and whether they are state-dependent. Design a safe sequential simulation strategy (or keep blocked); do not simulate each transaction against unchanged chain state and call that an end-to-end result.
+
+**Commits:** preflight module `04ef247e11a718fc5ee94a75374ea0cbb0ca0186`; deterministic tests `5729df7d87dbefc2133c103e96404c81b32b0ea6`; workflow wiring recorded in the next commit.
+
+**Safety:** no real wallet, keypair, signing, simulation, submission, migration, fee collection, or Mainnet action was used for this implementation.
+
 ## 2026-11-10 — CPMM fee receiver and LP Lock migration audit
 
 **Priority:** P0 — LaunchLab-to-CPMM migration readiness on PR #231. This checkpoint supersedes the earlier note that no LP Lock source/IDL had been pinned.
