@@ -1,24 +1,24 @@
-## 2026-11-10 — LaunchLab IDL accounts and serialized arguments verified
+## 2026-11-10 — LaunchLab fee destinations and CPMM migration authority audit
 
-**Priority:** P0 — Raydium LaunchLab Devnet-only preparation on PR #231, branch `codex/launchlab-live-provenance-probe`.
+**Priority:** P0 — Raydium LaunchLab create-only transaction safety on PR #231.
 
-- [x] Implemented exact validation of the pinned `initializeV2` instruction discriminator.
-- [x] Verified all 18 ordered IDL account entries, including the final `program` entry carried in the compiled instruction account indexes.
-- [x] Derived and compared the dynamic authority, pool, base/quote vault, Metaplex metadata and event-authority PDAs from the caller's mint and verified Devnet quote mint/program.
-- [x] Verified GlobalConfig, PlatformConfig, creator/payer alias, mint signer, token programs, metadata program, System Program, Rent sysvar and LaunchLab program addresses.
-- [x] Compared exact effective signer/writable privileges, unioning the IDL privileges where payer and creator resolve to the same public key. Any privilege escalation or mismatch fails closed.
-- [x] Added strict decoding of the serialized `initializeV2` instruction data and comparison against explicit caller inputs: decimals, name, symbol, URI, constant-curve index, supply, totalSellA, quote raise, CPMM migration flag, locked amount, cliff/unlock and creator fee mode.
-- [x] Creator fee mode is now explicit input (0 = OnlyTokenB; 1 = BothToken); CI uses 0 only as a test fixture, not as production fee-policy approval.
-- [x] Added regression tests for altered pool/account order, wrong discriminator, altered serialized sale amount, missing creator-fee selection, and V0 Address Lookup Table account resolution.
-- [x] Latest LaunchLab Live Provenance run `42747329401` — SUCCESS: 7 provenance tests, 4 API-constraint tests, 21 Devnet-preparation tests; real pinned-SDK Devnet builder smoke and live Mainnet/Devnet API/IDL checks passed.
-- [x] Latest Validate Climboria run `42747329361` — SUCCESS.
-- [x] Latest real builder smoke decoded and matched the exact CI-only fixture: 6 decimals, CLIMBTEST metadata, curve index 0, explicit supply/sale/raise values, CPMM flag 1, zero lock/cliff/unlock, creatorFeeOn 0. One unsigned V0 transaction; no creator signature, SDK execute, simulation or submission.
-- [x] Root-caused and fixed the earlier account-count failure: the actual compiled SDK instruction includes the IDL's final `program` account entry, so the validator now checks all 18 entries rather than treating it as only 17 metas.
-- [x] Root-caused and fixed the earlier ALT test failure: the fixture assertion inspected the LaunchLab instruction row instead of the separate instruction row containing the lookup-loaded test account.
-- [ ] **Not approved / not complete:** no owner-approved creator wallet, production token metadata, supply/curve economics, locked allocation, fee/creator-fee policy, allocation/authority plan, or fee/LP disclosures.
-- [ ] No Devnet simulation or transaction submission has been performed. CI uses synthetic keys and test-only parameters; do not fund, sign, airdrop or submit.
-- [ ] Mainnet signing, fundraising, escrow, public deposits and execution remain disabled.
-- [ ] Exact next task: audit the finalized Devnet PlatformConfig and LaunchLab/CPMM migration fee and destination semantics against the pinned SDK + live on-chain state; verify fee/LP/creator destination accounts and all top-level instruction semantics. Add tampering tests and rerun both workflows. Only after owner-approved launch inputs and a separately approved, funded Devnet wallet exist should a read-only simulation be considered.
+- [x] Inspected pinned SDK `createLaunchpad`: in `createOnly: true` mode the SDK skips `buyToken`; the current builder produces one `initializeV2` instruction, not a buy, fee claim, or migration instruction.
+- [x] Hardened the preparation boundary to require exactly one compiled instruction per transaction and only the approved LaunchLab program. Extra top-level instructions (including an unexpected buy, transfer, fee or migration instruction) now fail closed.
+- [x] Added a prospective fee-vault derivation report using the pinned SDK PDA seeds: platform vault uses `[platformId, quoteMint]`; creator vault uses `[creatorWallet, quoteMint]`; both authority PDAs use their pinned SDK seed strings. Report explicitly says these vaults are not accounts in create-only initialization.
+- [x] Extended finalized Mainnet/Devnet config reads to decode GlobalConfig fee/migration destination wallets and PlatformConfig claim-fee, lock-NFT, vesting, creator and fee-rate fields from the pinned SDK byte offsets; derives platform fee vault + authority PDAs.
+- [x] Extended pinned IDL checker to verify the exact 18-account `initialize_v2` schema, exact `migrate_to_cpswap` account order, writable migration accounts, migration payer authority docs, and `collect_migrate_fee` owner restriction.
+- [x] Added tests for config destination offsets/lengths, platform fee vault derivation, creator vault derivation, CPMM migration authority reporting and create-only instruction boundary.
+- [x] Live Mainnet GlobalConfig destination values: protocol fee owner `rayvTLcCMDs7P5tgpuoNA6ZYeLERegeCphdqLSgdKms`; migration fee owner `rayHQtJKrtvqUs3HnhDW9RKubHRbu87eESKEYD5xosa`; AMM migration wallet `RAYzrepoBdjSFg7MZj2vy4XBSv2azKRXC72ztUMZMJB`; CPMM migration wallet `RAYpQbFNq9i3mu6cKpTKKRwwHFDeK5AuZz8xvxUrCgw`.
+- [x] Live Devnet GlobalConfig destination values: protocol fee owner `DRaySeEaQ4oFFFZNFfM8vZTZdj6ve6bqBByBg4DuLGdi`; migration fee owner `DRays1SduYDUsRmtsRoEshsFMD1N93LW9GLjpUGu7TLW`; AMM migration wallet `DRay9TLEqeJsXr9je9yKopK137gRLXNhtNXgpAmGDTdh`; CPMM migration wallet `DRayP1Yav394wpS47WQJ5Qm6d95WTQFtGGh54cVQFmhF`.
+- [x] Live Mainnet PlatformConfig: claim-fee wallet `rayfqP1sEWfE1SJTSa5Z1szTW1hYpLWoBNwwPGRoJgV`; lock-NFT wallet `RaysvGD275FiXmL6AhWo3ZPhR9GnpMRsRLUvHYKaY4P`; scales platform/creator/burn = 0 / 100000 / 900000; feeRate 7500; creatorFeeRate 500.
+- [x] Live Devnet PlatformConfig: claim-fee wallet `DRayXUQXQAtFX9yyZdm6m5gtGfoQYx9X2q9WHPQb7egW`; lock-NFT wallet `DRayPQ7B4cfzMKfX5aHRJmnHJHfLBodt942ttFXCvpJX`; scales platform/creator/burn = 0 / 100000 / 900000; feeRate 2500; creatorFeeRate 2500.
+- [x] Derived platform fee vaults: Mainnet `EQLuLJ9X5oHpVAxJ77BvQxGu9Nbk8ssnrbferXDnN7Sa`, authority `56XVRVAsgWv6ADaxzoNnbL38LMoWKM5WiSAhrAWUbd2p`; Devnet `C9KxgZFeFiB7ZwV6p4uoh4NeRprn1REVKeQk3qWpXFpT`, authority `9JkxvRLjBnnjxmdQQ8iZVP3GUFfe4xtXNRigkPPZ8wyd`.
+- [x] Confirmed from the pinned IDL: `migrate_to_cpswap` payer must be a writable signer matching GlobalConfig `migrateToCpmmWallet`; `collect_migrate_fee` owner must match GlobalConfig `migrateFeeOwner`. These are Raydium-controlled config authorities, not Climboria fee destinations.
+- [x] Confirmed the CPMM migration instruction explicitly includes the CPMM create-pool fee account and LP lock vault, and drains the LaunchLab base/quote vaults; migration is a separate instruction from token creation.
+- [x] Latest successful live config + builder run `42747980686`: provenance 7/7, API checks 6/6, Devnet prep 23/23; real SDK builder, Mainnet/Devnet destination decoding and on-chain IDL checks passed. Validate run `42747980889` SUCCESS. (These runs predate the final test-only/smoke-report cleanup commits; final-head verification is pending.)
+- [ ] **Critical external dependency:** the configured CPMM migration signer is the Raydium GlobalConfig wallet above. Climboria creator does not automatically gain migration authority. Confirm Raydium's migration responsibility and operational SLA before any launch; never attempt to substitute a Climboria wallet.
+- [ ] **Not approved:** Raydium fee rates, destination wallets, lock-NFT scales and migration wallet are protocol/platform configuration, not Climboria tokenomics, treasury or owner-controlled addresses. Do not represent them as Climboria allocations.
+- [ ] Exact next task: rerun both workflows on the final head; inspect the final smoke report and confirm all destination fields are present. Then audit the CPMM and LP-lock program IDLs/authority semantics behind `cpswap_create_pool_fee`, `lock_authority`, `lock_lp_vault`, and the three migration scale fields. No signing, simulation or submission.
 
 ## 2026-11-10 — LaunchLab Devnet transaction-preparation checkpoint
 
