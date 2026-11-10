@@ -3047,3 +3047,21 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 4. For PR #231, resolve Devnet LP Lock IDL publication, CPMM fee receiver custody/governance, deployed-program provenance and migration scale/NFT custody. Integrate only after conflict-aware review; keep Launchpad creation/migration disabled until on-chain readiness is proven.
 5. Implement and verify actual Guest/email/password/Google/X account-session flows using a selected auth provider. Do not equate wallet connection with login.
 
+
+
+## 2026-11-11 — Continued Swap source review and fresh CI checkpoint
+
+- Rechecked GitHub PR #234 and #231 before this documentation update. PR #234 remains open/draft, mergeable=false at head `7f5d3451c7c99356fd46502691f0c24f92a96ade`; compare against main at this checkpoint: **42 ahead / 37 behind**, merge base `28180c2a277e0c4bd093a40462032e7f536989e6`. PR #231 remains open/draft, mergeable=false at head `281209c66e2e69fa14c973867086947a2dc47000`; compare: **350 ahead / 76 behind**, merge base `9709b0301c97445e05c1ac0dec6b4c7ae1ade4ed`.
+- Queried Actions runs directly for exact PR #234 head SHA: `total_count=0`. Combined commit status has zero status contexts. No current-head Validate, Browser Smoke, or Wrangler dry-run result is available. The Validate workflow on the PR branch does contain a manual `workflow_dispatch` trigger and the full proxy test glob plus Wrangler dry-run, but this connected integration cannot dispatch it.
+- Performed a fresh source review of PR #234 files `transaction-validation.mjs`, `order-store.mjs`, `index.mjs`, Wrangler config, deployment guide and order-store tests. The inspected code binds the signed message to the stored Jupiter order, checks fee-payer/taker equality, verifies the taker Ed25519 signature, preserves non-taker signature slots, stores server-side requestId/block height, and atomically claims the order once; ambiguous upstream results remain replay-locked. No definite new exploitable defect was established by this source-only pass. This is **not** a substitute for executed tests or independent security review.
+- Specific review limitation retained for independent audit: the v0 parser checks address-lookup-table index bounds and exact signed-message equality, but does not itself resolve on-chain ALT account contents. Confirm the wallet/provider/cluster interpretation and lookup-table lifecycle in controlled Devnet testing before enabling execution. The parser also does not constitute a semantic audit of aggregator instructions.
+- Re-fetched deployment guide: Worker remains explicitly **prepared but not deployed**. Wrangler still has `EXECUTION_ENABLED = "false"` and placeholder rate-limit namespace `20261108`; no Cloudflare deployment or production health/CORS verification was performed. Frontend execution flag remains disabled on main.
+- No source code, tests, workflow runs, deployment, transaction submission, token creation or auth configuration changed in this continuation. Login audit remains unchanged: wallet connect only; X/Google OAuth and email/password auth remain disabled.
+
+### Exact next job
+1. Owner manually runs **Validate Climboria** on `codex/swap-order-binding-durable-object`; confirm checked-out SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`; inspect all proxy tests and Wrangler dry-run logs.
+2. Obtain a network-enabled Git worktree; reconcile PR #234 against current main with conflict-aware merge/rebase, then rerun Validate and Browser Smoke on the integrated head. Keep PR draft/unmerged until independent security review, including ALT resolution/lifecycle review, is complete.
+3. Run controlled Devnet swap lifecycle, then deploy and verify the Worker only after Cloudflare account secrets, account ID, zone/custom domain, real rate-limit namespace, health/TLS/CORS and Durable Object persistence are verified. Keep Worker and frontend execution kill switches off until separately approved.
+4. Resolve PR #231 Devnet LP Lock IDL, fee-receiver custody/governance, deployed-program provenance and migration scale/NFT custody. Keep Launchpad creation/migration disabled.
+5. Implement real Guest/email/password/Google/X account sessions with a selected provider and verify each flow; wallet connection is not login.
+
