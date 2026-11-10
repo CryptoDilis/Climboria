@@ -43,7 +43,7 @@ jobs:
       - name: Test Cloudflare swap proxy security and API contracts
         run: |
           node --check dex/swap-proxy/src/index.mjs
-          node --test dex/swap-proxy/test/worker.test.mjs
+          node --test dex/swap-proxy/test/*.test.mjs
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
