@@ -169,3 +169,50 @@ export function reconstructAccountMetas(parsed, resolvedTables = []) {
   });
   return { metas, instructions };
 }
+
+
+const ADDRESS_LOOKUP_TABLE_PROGRAM_ID = "AddressLookupTab1e1111111111111111111111111";
+const LOOKUP_TABLE_META_SIZE = 56;
+const U64_MAX = 0xffffffffffffffffn;
+
+/**
+ * Decode the canonical Solana Address Lookup Table account layout.
+ * The caller must fetch this account from a trusted RPC, pass the RPC-reported
+ * owner/executable/context slot, and bind this result to that exact response.
+ * This parser alone is not proof that RPC data is trustworthy.
+ */
+export function decodeAddressLookupTableAccount({ data, owner, executable = false, contextSlot }) {
+  if (owner !== ADDRESS_LOOKUP_TABLE_PROGRAM_ID) throw new Error("Address lookup table has an unexpected owner program");
+  if (executable !== false) throw new Error("Address lookup table account must not be executable");
+  if (!Number.isSafeInteger(contextSlot) || contextSlot < 0) throw new Error("Missing trusted RPC context slot");
+  if (!(data instanceof Uint8Array) || data.length < LOOKUP_TABLE_META_SIZE ||
+      data.length > LOOKUP_TABLE_META_SIZE + 256 * 32 || (data.length - LOOKUP_TABLE_META_SIZE) % 32 !== 0) {
+    throw new Error("Invalid address lookup table account data length");
+  }
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  if (view.getUint32(0, true) !== 1) throw new Error("Address lookup table account is not initialized");
+  const deactivationSlot = view.getBigUint64(4, true);
+  const lastExtendedSlot = view.getBigUint64(12, true);
+  const lastExtendedSlotStartIndex = data[20];
+  const authorityOption = data[21];
+  if (authorityOption !== 0 && authorityOption !== 1) throw new Error("Invalid lookup table authority option");
+  const authorityBytes = data.slice(22, 54);
+  if (authorityOption === 0 && authorityBytes.some(byte => byte !== 0)) throw new Error("Non-zero bytes for absent lookup table authority");
+  if (data[54] !== 0 || data[55] !== 0) throw new Error("Invalid lookup table metadata padding");
+  const addresses = [];
+  for (let offset = LOOKUP_TABLE_META_SIZE; offset < data.length; offset += 32) addresses.push(data.slice(offset, offset + 32));
+  if (lastExtendedSlotStartIndex > addresses.length) throw new Error("Lookup table extension index exceeds address count");
+  if (deactivationSlot !== U64_MAX) throw new Error("Deactivated lookup tables are not accepted");
+  if (BigInt(contextSlot) <= lastExtendedSlot && lastExtendedSlotStartIndex < addresses.length) {
+    throw new Error("Lookup table contains addresses that are not active until a later slot");
+  }
+  return {
+    accountKey: null,
+    addresses,
+    authority: authorityOption === 1 ? authorityBytes : null,
+    deactivationSlot: deactivationSlot.toString(),
+    lastExtendedSlot: lastExtendedSlot.toString(),
+    lastExtendedSlotStartIndex,
+    contextSlot
+  };
+}
