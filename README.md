@@ -2832,3 +2832,26 @@ No production-live or real-swap claims are made by this entry.
 4. Only after the above, controlled Devnet lifecycle tests; then production Worker deployment and feature-gate review. Production Swap, Launchpad token creation, and Guest/email/Google/X login are not verified live.
 
 No production transaction, deployment, or login activation is claimed by this record.
+
+
+## 2026-11-11 — Current frontend capability audit (DEX / Swap / Launchpad / Login)
+
+### Verified on main at `f002cceeafd406ee54a0e834da4c08a8815a33e5`
+- `swap-config.js`: `proxyEnabled: true`, `enabled: false`, API base `https://api.climboria.fun`. This enables proxy-backed market/token search and quote-preview routing only; it does not enable wallet transaction execution.
+- `dex/index.html` explicitly labels DEX as market data / quote-only and execution as not enabled until secure backend deployment and production checks. DEX market data comes from live provider sources, but this is not proof of swap execution.
+- `launchpad/index.html` explicitly labels the page a development preview; normal/developer/signature paths are coming soon/planned. The page states token creation, deployment, fundraising, payments, liquidity provisioning and launch execution are unavailable.
+- `index.html` auth panel enables only the wallet connection button. X OAuth, Google OAuth and email/password are disabled and explicitly say provider/backend setup is needed. No guest/email/social production account session system is live.
+
+### LaunchLab evidence nuance
+- PR #231 latest provenance workflow is green on commit `281209c66e2e69fa14c973867086947a2dc47000`, but its live IDL type mismatch and missing canonical Devnet LP Lock IDL remain blockers as recorded above. A green provenance probe does not equal a working Launchpad service.
+
+### Latest record commits
+- README: `970d5de3060039da676cdaa1042e964cfefcd2c1`.
+- Release priority: `ae2346bad020403c78af66fad55025e533f5570e`.
+
+### Exact next job
+- For Swap: run Validate Climboria manually against latest PR #234 branch head `43b514c2770b4717a4146b173fe4ce7529375d7a`; reconcile PR branch with latest main before merge; finish Browser Smoke and independent security review; only then proceed to Cloudflare Worker deployment and controlled Devnet execution.
+- For Launchpad: resolve LaunchLab on-chain IDL schema differences and missing Devnet LP Lock IDL, then complete owner-reviewed unsigned preparation and simulation gates. Do not expose token creation or fundraising controls in the UI yet.
+- For login: choose and configure a real auth provider, then implement guest-to-account upgrade, email verification/password reset, Google OAuth, and optional X OAuth; verify account linking, sessions, logout and cross-device progress before enabling buttons.
+
+No live Launchpad or social/email login is claimed. No swap execution switch has been enabled.
