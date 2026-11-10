@@ -313,7 +313,7 @@ test("decodes ProgramData loader operations and does not claim deployment from u
   const newAuthority = "NewAuthority111111111111111111111111111111";
   const lifecycle = summarizeUpgradeableLoaderHistory([
     {
-      slot: 10, signature: "upgrade-signature", transactionError: null,
+      slot: 10, signature: "upgrade-signature", transactionAvailable: true, transactionError: null,
       signerKeys: [oldAuthority],
       instructionEvidence: [{
         programId: loader, data: Buffer.from([3, 0, 0, 0]).toString("base64"),
@@ -322,7 +322,7 @@ test("decodes ProgramData loader operations and does not claim deployment from u
       }],
     },
     {
-      slot: 11, signature: "authority-transfer-signature", transactionError: null,
+      slot: 11, signature: "authority-transfer-signature", transactionAvailable: true, transactionError: null,
       signerKeys: [oldAuthority],
       instructionEvidence: [{
         programId: loader, data: Buffer.from([4, 0, 0, 0]).toString("base64"),
@@ -330,7 +330,7 @@ test("decodes ProgramData loader operations and does not claim deployment from u
       }],
     },
     {
-      slot: 12, signature: "extend-signature", transactionError: null,
+      slot: 12, signature: "extend-signature", transactionAvailable: true, transactionError: null,
       signerKeys: ["payer"],
       instructionEvidence: [{
         programId: loader, data: Buffer.from([6, 0, 0, 0, 160, 5, 0, 0]).toString("base64"),
@@ -356,7 +356,7 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
   const loader = "BPFLoaderUpgradeab1e11111111111111111111111";
   const governanceHistory = summarizeMetaplexGovernanceHistory([
     {
-      slot: 100, signature: "create-governance", transactionError: null,
+      slot: 100, signature: "create-governance", transactionAvailable: true, transactionError: null,
       governanceLogs: ["Program log: GOVERNANCE-INSTRUCTION: CreateProgramGovernance { transfer_upgrade_authority: true }"],
       instructionEvidence: [{
         programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
@@ -365,7 +365,7 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
       }],
     },
     {
-      slot: 200, signature: "execute-upgrade", transactionError: null,
+      slot: 200, signature: "execute-upgrade", transactionAvailable: true, transactionError: null,
       instructionEvidence: [{
         programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
         data: Buffer.from([16, 0, 0, 0]).toString("base64"), dataEncoding: "base64",
