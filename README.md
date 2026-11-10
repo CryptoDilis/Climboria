@@ -1,3 +1,16 @@
+### Latest checkpoint — 2026-11-10 (PR #231, ProgramData slot semantics and history)
+
+- [x] Corrected the earlier interpretation of ProgramData's `slot` field. It is the most recent loader modification slot, not guaranteed to be the initial deployment slot. The official Agave v2.0.9 loader source shows `ExtendProgram` rewrites `ProgramData { slot, upgrade_authority_address }` to the current clock slot.
+- [x] Inspected the finalized block at slot `363279440` (block time `2025-02-24T12:53:11Z`). The only matching loader transaction is `5vnHL8vRF63oSgQAfdithpwkyGFAzKTQ8L1VzyXEqbK6kY3Y1JrPCk88i33ggMFUwM4tYivs1VEbYDX6eDvhHEaV`; its log explicitly says `Extended ProgramData account by 300000 bytes`. This is an extension event, not proof of initial deployment.
+- [x] Updated `.github/scripts/launchlab-metaplex-deployment-probe.mjs` to name the field `programDataStateSlot`, inspect that slot's block, and query finalized ProgramData signature history (up to 100 signatures, transaction fetches in bounded batches of 10). It records transaction signatures, slots, errors, and loader logs without inventing an initial deployment date.
+- [x] Updated mock tests to verify extension-vs-deployment log interpretation and ProgramData history parsing. Parser tests passed in the latest LaunchLab run's completed test step.
+- [x] Corrected the README's earlier wording: February 24, 2025 is the last ProgramData modification/extension timestamp observed, not the initial program deployment time.
+- [ ] **Live ProgramData history capture pending:** latest LaunchLab run `42758590332` passed all offline tests and is rebuilding the historical candidate binary; the finalized ProgramData history scan and final run result are still pending.
+- [ ] **Next P0:** use the returned ProgramData history to identify the original deploy/upgrade transaction and associated governance proposal. Only then can the correct source/build lineage be pinned and the metadata allocation compatibility question closed.
+- [ ] Binary source match remains unresolved: the historical candidate build artifact (685,688 bytes, SHA-256 `d1914b9af7eda34d66e54de20e11b55dcfdbf4652dfff89cce0808681960fee8`) still does not match the deployed ProgramData bytecode (1,295,344 bytes, SHA-256 `bb0842f6d5740eabe8f9fb3b723b9ecd89cadf9f48ef9ad6a9dc6cfa8a9658e4`).
+- [ ] No wallet or transaction execution was involved. No signing, simulation, or submission.
+- [ ] Devnet LP Lock IDL publication and CPMM fee-receiver custody remain separate migration blockers.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, Metaplex deployment-era build comparison)
 
 - [x] Added a read-only comparison against the actual canonical Devnet Metaplex Token Metadata ProgramData account. The probe records the finalized deployment slot, block time, upgrade authority, deployed byte length, and SHA-256; it does not sign, simulate, or submit transactions.
