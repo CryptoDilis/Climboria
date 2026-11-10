@@ -55,13 +55,28 @@ async function getAccount(rpc, address) {
   if (json.error) throw new Error(json.error.message || "Solana RPC error");
   return json.result?.value ?? null;
 }
-export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target, PublicKey }) {
+export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, cpmmConfigAccount, target, PublicKey }) {
   if (!cpmmProgramAccount?.executable) throw new Error("CPMM migration program is missing or not executable");
   if (!lockProgramAccount?.executable) throw new Error("CPMM LP lock program is missing or not executable");
   if (!cpmmFeeAccount) throw new Error("CPMM create-pool fee destination account is missing");
   if (cpmmFeeAccount.owner !== "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA") throw new Error("CPMM create-pool fee destination is not owned by the standard SPL Token program");
   const feeData = Buffer.from(cpmmFeeAccount.data?.[0] ?? "", "base64");
   if (feeData.length !== 165) throw new Error("CPMM create-pool fee destination is not a valid 165-byte SPL Token account");
+  if (!cpmmConfigAccount || cpmmConfigAccount.owner !== target.cpmmProgram) throw new Error("CPMM AMM config account is missing or has the wrong program owner");
+  const configData = Buffer.from(cpmmConfigAccount.data?.[0] ?? "", "base64");
+  if (configData.length !== 236) throw new Error("CPMM AMM config byte length does not match the pinned SDK layout");
+  const cpmmConfig = {
+    disableCreatePool: configData.readUInt8(9) === 1,
+    index: configData.readUInt16LE(10),
+    tradeFeeRate: configData.readBigUInt64LE(12).toString(),
+    protocolFeeRate: configData.readBigUInt64LE(20).toString(),
+    fundFeeRate: configData.readBigUInt64LE(28).toString(),
+    createPoolFee: configData.readBigUInt64LE(36).toString(),
+    protocolOwner: new PublicKey(configData.subarray(44, 76)).toBase58(),
+    fundOwner: new PublicKey(configData.subarray(76, 108)).toBase58(),
+    creatorFeeRate: configData.readBigUInt64LE(108).toString(),
+    creatorFeeShareRate: configData.readBigUInt64LE(116).toString(),
+  };
   const feeMint = new PublicKey(feeData.subarray(0, 32));
   const feeTokenAuthority = new PublicKey(feeData.subarray(32, 64));
   const feeAmount = feeData.readBigUInt64LE(64).toString();
@@ -77,6 +92,9 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
     cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner,
     cpmmCreatePoolFeeMint: feeMint.toBase58(), cpmmCreatePoolFeeTokenAuthority: feeTokenAuthority.toBase58(),
     cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesPinnedSdk: feeAuthorityMatchesPinnedSdk, cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds: feeAtaDerivationMatches,
+    cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner: feeTokenAuthority.toBase58() === cpmmConfig.protocolOwner,
+    cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner: feeTokenAuthority.toBase58() === cpmmConfig.fundOwner,
+    cpmmConfigId: target.cpmmConfigId, cpmmConfig,
     cpmmCreatePoolFeeAccountLamports: String(cpmmFeeAccount.lamports),
     lockProgramId: target.lockProgram, lockProgramExecutable: true, lockAuthority: target.lockAuthority
   };
@@ -152,7 +170,9 @@ async function verifyCluster(cluster) {
   };
   const platform = { platformScale: u64(pd,80).toString(), creatorScale: u64(pd,88).toString(), burnScale: u64(pd,96).toString(), feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
   const destinations = decodeConfigDestinations({ globalData: gd, platformData: pd, PublicKey, programId: target.program, platformId: target.platformConfig, mintB: global.mintB });
-  const cpmmMigrationAccounts = validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, target, PublicKey });
+  const cpmmConfigId = destinations.platformConfigDestinations.cpConfigId;
+  const cpmmConfigAccount = await getAccount(target.rpc, cpmmConfigId);
+  const cpmmMigrationAccounts = validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, cpmmConfigAccount, target: { ...target, cpmmConfigId }, PublicKey });
   for (const key of ["epoch","migrateFee","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
