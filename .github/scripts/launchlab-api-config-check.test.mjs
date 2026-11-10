@@ -173,3 +173,24 @@ test("reports a missing finalized authority account without fabricating history"
   });
   assert.equal(report.accountExists, false); assert.deepEqual(report.recentSignatures, []); assert.equal(report.historyComplete, false);
 });
+
+test("paginates finalized authority signatures with the before cursor until the requested cap or end of history", async () => {
+  const authority = "DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW";
+  const first = Array.from({ length: 12 }, (_, i) => ({ signature: `page-one-${i}`, slot: 100 - i, confirmationStatus: "finalized" }));
+  const second = Array.from({ length: 3 }, (_, i) => ({ signature: `page-two-${i}`, slot: 80 - i, confirmationStatus: "finalized" }));
+  const calls = [];
+  const report = await (await import("./launchlab-api-config-check.mjs")).inspectAuthorityHistory({
+    rpc: "https://api.devnet.solana.com", authority, limit: 20, pageSize: 12,
+    getAccount: async () => ({ value: { owner: "11111111111111111111111111111111", executable: false, lamports: 1, data: ["", "base64"] } }),
+    getSignatures: async (_rpc, _authority, count, before) => {
+      calls.push({ count, before });
+      return before ? second : first;
+    },
+    getTransaction: async () => null
+  });
+  assert.deepEqual(calls, [{ count: 12, before: undefined }, { count: 8, before: "page-one-11" }]);
+  assert.equal(report.recentSignatureCount, 15);
+  assert.equal(report.historyComplete, true);
+  assert.equal(report.historyLimit, 20);
+  assert.equal(report.historyPageSize, 12);
+});
