@@ -2698,3 +2698,12 @@ For every integrated asset or borrowed technique, record:
 5. Only after independent security review and Devnet evidence may the code-level constant and deployment/frontend flags be considered for a separately reviewed release.
 
 **Never remove the hard gate just to make the UI appear live.**
+
+
+## Follow-up verification — 2026-11-10
+
+- Corrected source guard is now present in `handleExecute`; it checks the code-level constant before rate limiting, parsing, or any upstream Jupiter request.
+- Latest corrected-head Validate workflow `42849330950`: SUCCESS.
+- Latest corrected-head Browser Smoke workflow `42849331112`: still running at checkpoint time. All DEX/Swap browser checks completed SUCCESS: proxy API, fail-closed execution, standalone Swap, DEX quote shell, mobile workspace, narrow 390px/360px layouts, and provider error/empty states. The unrelated Jarrell's Peak gameplay smoke step was still running.
+- Earlier failures were caused by an initial source-patch mismatch and stale tests asserting the previous execute path. Both were traced in the logs and corrected; latest Validate run passed.
+- Do not enable execution. The hard gate remains intentionally false.
