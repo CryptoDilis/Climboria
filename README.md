@@ -4,7 +4,8 @@
 - [x] Root cause 1: accountResult?.value ?? accountResult treated a valid RPC response wrapper with value:null as an existing account. Corrected by checking whether the response explicitly owns the value property and preserving null as “account missing”.
 - [x] Root cause 2: truthiness check on account.data[0] treated an empty base64 string as absent, yielding null instead of a valid zero-byte data length. Corrected to decode an empty string as zero bytes when the data tuple exists.
 - [x] Existing regression tests already cover both cases; no new test expectations were weakened or removed.
-- [ ] Pending rerun: targeted fix pushed; rerun LaunchLab Live Provenance and Validate Climboria. Do not consider the probe verified until both the 13-test suite and live finalized RPC step complete.
+- [x] Targeted rerun on PR head `e0929fe`: LaunchLab probe unit-test step 4 passed; LP Lock tests, live Launch Config validation and all offline/mock safety/provenance steps 5–19 also passed. `Validate Climboria` run `42767004399` completed SUCCESS.
+- [ ] LaunchLab Live Provenance run `42767004354` remains IN PROGRESS at step 20 (“Capture and compare canonical Metaplex Devnet deployment provenance (read-only RPC)”). The authority probe's live config step 10 passed, but its exact `cpmmFeeAuthorityHistory` output cannot yet be read because the job has not completed and logs are not available. Do not claim the authority is classified or the full workflow is green.
 - [ ] After green CI, inspect Devnet authority account/history output and classify only with supporting controlling-program/governance evidence. Continue Devnet LP Lock Program/ProgramData investigation. Keep all signing, simulation, migration, fee collection and Mainnet execution disabled.
 
 ### Latest checkpoint — 2026-11-10 (Devnet CPMM fee-authority history probe added)
