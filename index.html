@@ -415,12 +415,42 @@ footer:first-of-type>div{
  .menu-state{font-size:7px;letter-spacing:.6px}
 }
 
+
+/* Portfolio & rewards tracker — values remain unavailable until verified wallet/token/ledger sources are connected. */
+.portfolio-section{padding-top:54px;padding-bottom:64px}
+.portfolio-shell{position:relative;overflow:hidden;padding:clamp(18px,3vw,30px);border:1px solid rgba(191,150,77,.48);border-radius:22px;background:radial-gradient(ellipse at 90% 0%,rgba(181,137,64,.14),transparent 38%),linear-gradient(145deg,#111c2c 0%,#080f1b 70%);box-shadow:0 18px 55px rgba(0,0,0,.24)}
+.portfolio-shell:before{content:"";position:absolute;inset:7px;border:1px solid rgba(218,178,103,.12);border-radius:16px;pointer-events:none}
+.portfolio-head{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
+.portfolio-kicker{font-size:9px;letter-spacing:2.4px;color:#d7b36c;font-weight:800;text-transform:uppercase}
+.portfolio-title{font:900 clamp(21px,3vw,30px) Cinzel,serif;color:#f5e3bd;margin:7px 0}
+.portfolio-copy{max-width:620px;color:rgba(231,237,246,.56);font-size:12px;line-height:1.6}
+.portfolio-wallet{display:flex;align-items:center;gap:8px;margin-top:12px;color:#b9c5d5;font-size:10px;overflow-wrap:anywhere}
+.portfolio-wallet-dot{width:7px;height:7px;border-radius:50%;background:#8a94a3;box-shadow:0 0 8px #8a94a355;flex:0 0 7px}
+.portfolio-actions{display:flex;gap:8px;flex-wrap:wrap}
+.portfolio-connect,.portfolio-claim{border-radius:9px;padding:11px 15px;font-size:10px;font-weight:900;letter-spacing:1px}
+.portfolio-connect{background:linear-gradient(180deg,#f5cf79,#b98536);border:1px solid #e4bd70;color:#15100a;cursor:pointer}
+.portfolio-claim{background:#202a38;border:1px solid #4b5666;color:#788596;cursor:not-allowed}
+.portfolio-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:relative}
+.portfolio-metric{min-width:0;padding:15px;border-radius:13px;background:rgba(4,10,19,.72);border:1px solid rgba(180,195,214,.12)}
+.portfolio-metric.primary{border-color:rgba(211,169,91,.38);background:linear-gradient(145deg,rgba(180,132,54,.12),rgba(4,10,19,.8))}
+.portfolio-metric small{display:block;color:#9aa9bd;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800}
+.portfolio-metric strong{display:block;margin-top:9px;color:#f1dfbd;font:800 clamp(17px,2vw,23px) Inter,sans-serif;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.portfolio-metric p{margin-top:6px;color:#78879b;font-size:9px;line-height:1.45}
+.portfolio-lower{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-top:12px;position:relative}
+.portfolio-subpanel{padding:16px;border:1px solid rgba(180,195,214,.12);border-radius:13px;background:rgba(4,10,19,.58)}
+.portfolio-subpanel h3{font:700 14px Cinzel,serif;color:#ead5ae;margin-bottom:7px}
+.portfolio-subpanel>p{font-size:10px;line-height:1.6;color:#8795a8}
+.portfolio-ledger-state{display:flex;align-items:center;gap:9px;padding:12px;margin-top:10px;border:1px dashed rgba(201,164,99,.25);border-radius:9px;color:#b4bfce;font-size:10px;line-height:1.5}
+.portfolio-ledger-state b{display:block;color:#e4c88e;font-size:10px;margin-bottom:2px}
+.portfolio-foot{margin-top:14px;color:#6f7d90;font-size:9px;line-height:1.6;position:relative}
+@media(max-width:760px){.portfolio-section{padding-top:35px;padding-bottom:42px}.portfolio-head{flex-direction:column}.portfolio-actions{width:100%}.portfolio-connect,.portfolio-claim{flex:1}.portfolio-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.portfolio-lower{grid-template-columns:1fr}.portfolio-metric{padding:13px}}
+
 </style>
 </head>
 <body>
 <nav>
 <a class="logo" href="./" style="text-decoration:none;cursor:pointer">CLIMBORIA</a>
-<div class="navl"><a href="/game/" id="gameNavLink">Game</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
+<div class="navl"><a href="/game/" id="gameNavLink">Game</a><a href="/launchpad/" id="launchpadNavLink">Launchpad</a><a href="/dex/" id="dexNavLink">DEX</a><a href="/swap/" id="swapNavLink">Swap</a><a href="#portfolio">Portfolio</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a><button class="hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg><span>Announcements</span></button><button class="hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg><span>Notifications</span></button><a href="https://x.com/ClimboriaHQ" target="_blank" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
 <button class="btn-gold" data-open-auth>SIGN IN</button></div>
 <div style="display:flex;align-items:center;gap:12px">
 <a href="https://x.com/ClimboriaHQ" target="_blank" id="xLogo" style="display:none;align-items:center;justify-content:center;width:38px;height:38px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;color:#fff;text-decoration:none;font-weight:900;font-size:14px">𝕏</a>
@@ -428,7 +458,7 @@ footer:first-of-type>div{
 </div>
 </nav>
 <div class="home-panel-backdrop" id="homePanelBackdrop" hidden><section class="home-panel" role="dialog" aria-modal="true" aria-labelledby="homePanelTitle"><button class="home-panel-close" id="homePanelClose" aria-label="Close">×</button><span>CLIMBORIA HUB</span><h2 id="homePanelTitle">Announcements</h2><div id="homePanelContent"></div></section></div><div class="mobile-menu" id="mobileMenu">
-<a href="/game/" id="mobileGameBtn">Game</a><a href="/launchpad/" id="mobileLaunchpadBtn">Launchpad</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
+<a href="/game/" id="mobileGameBtn">Game</a><a href="/launchpad/" id="mobileLaunchpadBtn">Launchpad</a><a href="/dex/" id="mobileDexBtn">DEX</a><a href="/swap/" id="mobileSwapBtn">Swap</a><a href="#portfolio">Portfolio</a><a href="#overview">Overview</a><a href="#whitepaper">Whitepaper</a>
 <button class="mobile-hub-link" data-panel="announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg>Announcements</button><button class="mobile-hub-link" data-panel="notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg>Notifications</button>
 <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
 <button class="btn-gold" data-open-auth>SIGN IN / CREATE ACCOUNT</button>
@@ -479,6 +509,45 @@ footer:first-of-type>div{
   </div>
 </div>
 
+<section class="sec portfolio-section" id="portfolio" aria-labelledby="portfolioTitle">
+ <div class="portfolio-shell">
+  <div class="portfolio-head">
+   <div>
+    <div class="portfolio-kicker">Player finance · wallet & rewards</div>
+    <h2 class="portfolio-title" id="portfolioTitle">Portfolio &amp; Rewards</h2>
+    <p class="portfolio-copy">Track your Climboria assets, earned rewards and claim history in one place. Live balances will appear only after the official token and secure rewards ledger are verified.</p>
+    <div class="portfolio-wallet" id="portfolioWalletState" role="status" aria-live="polite"><span class="portfolio-wallet-dot"></span><span id="portfolioWalletLabel">Wallet not connected</span></div>
+   </div>
+   <div class="portfolio-actions">
+    <button class="portfolio-connect" type="button" data-open-auth>CONNECT WALLET</button>
+    <button class="portfolio-claim" type="button" disabled aria-disabled="true" title="Rewards claiming is not active until the secure reward ledger is deployed">CLAIM REWARDS · NOT ACTIVE</button>
+   </div>
+  </div>
+  <div class="portfolio-metrics" aria-label="Portfolio and rewards balances">
+   <article class="portfolio-metric primary"><small>Total portfolio value</small><strong id="portfolioValue">Unavailable</strong><p>Live asset pricing is not connected</p></article>
+   <article class="portfolio-metric"><small>$CLIMB balance</small><strong id="portfolioClimbBalance">Unavailable</strong><p>Official token mint not verified</p></article>
+   <article class="portfolio-metric"><small>Claimable rewards</small><strong id="portfolioClaimable">Unavailable</strong><p>Secure rewards ledger not active</p></article>
+   <article class="portfolio-metric"><small>Total claimed</small><strong id="portfolioClaimed">Unavailable</strong><p>Verified claim history not connected</p></article>
+   <article class="portfolio-metric"><small>Lifetime earned</small><strong id="portfolioLifetime">Unavailable</strong><p>Server-authoritative rewards only</p></article>
+   <article class="portfolio-metric"><small>Pending rewards</small><strong id="portfolioPending">Unavailable</strong><p>Awaiting verified reward settlement</p></article>
+   <article class="portfolio-metric"><small>Other assets</small><strong id="portfolioOtherAssets">Unavailable</strong><p>Supported networks and tokens pending</p></article>
+   <article class="portfolio-metric"><small>Rewards this season</small><strong id="portfolioSeason">Unavailable</strong><p>Season ledger not active</p></article>
+  </div>
+  <div class="portfolio-lower">
+   <section class="portfolio-subpanel" aria-labelledby="portfolioHistoryTitle">
+    <h3 id="portfolioHistoryTitle">Rewards activity</h3>
+    <p>Earned, pending, claimed and reversed rewards will be listed here with their source and verifiable transaction record.</p>
+    <div class="portfolio-ledger-state"><span aria-hidden="true">◈</span><span><b>Reward history not connected</b>There are no verified reward records to display yet.</span></div>
+   </section>
+   <section class="portfolio-subpanel" aria-labelledby="portfolioSecurityTitle">
+    <h3 id="portfolioSecurityTitle">Account &amp; security</h3>
+    <p>Rewards must belong to the authenticated player and be claimable only once. Wallet ownership alone does not authorize a reward claim.</p>
+    <div class="portfolio-ledger-state"><span aria-hidden="true">◇</span><span><b>Claiming is safely disabled</b>Claim actions will unlock only after identity, ledger, and transaction verification.</span></div>
+   </section>
+  </div>
+  <p class="portfolio-foot">Display status: preview shell only. No balances, rewards, token prices, claims, or transaction history are simulated. Do not treat unavailable values as zero.</p>
+ </div>
+</section>
 
 <section class="sec" id="climboria-signature" aria-labelledby="signature-main-title" style="padding-top:64px;padding-bottom:64px">
  <div class="label">A Climboria flagship product</div>
@@ -684,6 +753,10 @@ footer:first-of-type>div{
         const a=await window.ethereum.request({method:'eth_requestAccounts'}); address=a?.[0]||'';
       } else { authStatus.textContent='No compatible wallet detected. Install Phantom then retry.';return;}
       authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
+      const portfolioLabel=document.getElementById('portfolioWalletLabel');
+      const portfolioDot=document.querySelector('.portfolio-wallet-dot');
+      if(portfolioLabel) portfolioLabel.textContent=address ? 'Wallet connected · '+address.slice(0,6)+'…'+address.slice(-4)+' · account login not verified' : 'Wallet not connected';
+      if(portfolioDot&&address){portfolioDot.style.background='#d6ad62';portfolioDot.style.boxShadow='0 0 8px #d6ad6280';}
     } catch { authStatus.textContent='Wallet connection failed.'; }
   });
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
