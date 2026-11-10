@@ -71,7 +71,7 @@ test("rejects a tampered signed message without consuming the valid order", asyn
   const { object } = createStore();
   assert.equal((await storeOrder(object, fixture)).status, 201);
   const changedMessage = fixture.message.slice();
-  changedMessage[changedMessage.length - 1] ^= 1;
+  changedMessage[changedMessage.length - 2] ^= 1;
   const tampered = Buffer.from([
     2, ...fixture.signedSlots.flatMap(slot => [...slot]), ...changedMessage
   ]).toString("base64");
