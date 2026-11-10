@@ -138,7 +138,7 @@ export async function inspectProgramDataStateSlotBlock({
 }
 
 export async function inspectProgramDataHistory({
-  connection, programDataPublicKey, stateSlot, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 30,
+  connection, programDataPublicKey, stateSlot, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 100,
 }) {
   if (typeof connection?.getSignaturesForAddress !== "function" ||
       typeof connection?.getTransaction !== "function" || !programDataPublicKey ||
@@ -147,7 +147,7 @@ export async function inspectProgramDataHistory({
   }
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000 ||
       !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50 ||
-      !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 100) {
+      !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 200) {
     throw new Error("Invalid bounded ProgramData history scan configuration");
   }
   let before;
@@ -185,24 +185,44 @@ export async function inspectProgramDataHistory({
       pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot, signatures: [] };
   }
   const history = [];
-  for (let offset = 0; offset < historicalCandidates.length; offset += 10) {
-    const batch = await Promise.all(historicalCandidates.slice(offset, offset + 10).map(async info => {
+  for (let offset = 0; offset < historicalCandidates.length; offset += 2) {
+    const batch = await Promise.all(historicalCandidates.slice(offset, offset + 2).map(async info => {
       let transaction = null;
       let fetchError = null;
-      try {
-        transaction = await connection.getTransaction(info.signature, {
-          commitment: "finalized", maxSupportedTransactionVersion: 0,
-        });
-      } catch (error) {
-        fetchError = String(error.message || error);
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          transaction = await connection.getTransaction(info.signature, {
+            commitment: "finalized", maxSupportedTransactionVersion: 0,
+          });
+          fetchError = null;
+          break;
+        } catch (error) {
+          fetchError = String(error.message || error);
+          const rateLimited = /429|too many requests|rate limit/i.test(fetchError);
+          if (!rateLimited || attempt === 3) break;
+          await new Promise(resolve => setTimeout(resolve, 500 * (2 ** attempt)));
+        }
       }
       const logs = transaction?.meta?.logMessages ?? [];
+      const message = transaction?.transaction?.message;
+      const accountKeys = message?.staticAccountKeys ?? message?.accountKeys ?? [];
+      const instructions = message?.compiledInstructions ?? message?.instructions ?? [];
+      const instructionEvidence = instructions.map(ix => {
+        const programIndex = ix.programIdIndex;
+        const accountIndexes = ix.accountKeyIndexes ?? ix.accounts ?? [];
+        return {
+          programId: ix.programId?.toBase58?.() ?? (Number.isInteger(programIndex) ? accountKeys[programIndex]?.toBase58?.() ?? String(accountKeys[programIndex] ?? "") : null),
+          accounts: accountIndexes.map(index => Number.isInteger(index) ? accountKeys[index]?.toBase58?.() ?? String(accountKeys[index] ?? "") : String(index)),
+          data: typeof ix.data === "string" ? ix.data : null,
+        };
+      });
       return {
         signature: info.signature, slot: info.slot,
         blockTime: info.blockTime ?? transaction?.blockTime ?? null,
         transactionAvailable: Boolean(transaction),
         transactionError: transaction?.meta?.err ?? info.err ?? null,
         loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
+        instructionEvidence,
         fetchError,
       };
     }));
