@@ -190,3 +190,13 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - **Limitations:** current probe checks account presence/executable/loader owner only. It does not yet decode ProgramData upgrade authority, verify IDL instruction discriminators, decode GlobalConfig/PlatformConfig or prove Devnet launch transaction viability. Public RPC/API availability may be rate-limited.
 - No transaction signing/submission or Mainnet activation. Product remains no-fundraising LaunchLab bonding curve; no mocks in product runtime.
 - **Exact next job:** poll PR #231 checks. Diagnose any failures from completed logs; if tests pass, inspect actual live probe output, then extend read-only verification to ProgramData upgrade authority, IDL hash/discriminator and Devnet GlobalConfig/PlatformConfig. Keep PR draft until evidence is complete.
+
+
+## 2026-11-10 — Live LaunchLab program-account probe verified
+- PR #231: https://github.com/CryptoDilis/Climboria/pull/231 — draft, unmerged; head `32584cfe603de9441399251b17ef6604e57001a0`.
+- Validate run `42740386095` SUCCESS; job `129579682452` SUCCESS. Existing repository validation passed.
+- LaunchLab Live Provenance run `42740386208` SUCCESS; job `129579682371` SUCCESS. Four unit tests passed (4/4).
+- Actual public network reads at `2026-11-10T02:06:16.799Z`: Raydium Mainnet and Devnet `/main/info` APIs reachable. Solana finalized `getAccountInfo` returned all six documented program accounts (LaunchLab, CPMM, LP-lock on both clusters), each exists, executable and owned by `BPFLoaderUpgradeab1e11111111111111111111111` (Upgradeable BPF Loader). No blockers in this limited check.
+- **Important scope:** this proves API reachability and program-account presence/executable/loader owner only. It does NOT decode ProgramData upgrade authority, verify deployed code/IDL hash or instruction discriminators, read LaunchLab GlobalConfig/PlatformConfig, verify quote mint/curve parameters/fee destinations/LP split, or execute a Devnet launch. It is not a security audit or mainnet readiness sign-off.
+- No wallet, signature, transaction submission, fee collection or state mutation occurred. No mock product behavior added.
+- **Exact next job:** extend the probe to derive and read each ProgramData account and decode upgrade authority; pin the official LaunchLab IDL and SDK version/hash; derive and decode Devnet GlobalConfig, PlatformConfig and CPMM config using the pinned SDK/IDL. Add fixture-backed tests and record actual on-chain fee, curve and LP migration configuration before any transaction builder is implemented.
