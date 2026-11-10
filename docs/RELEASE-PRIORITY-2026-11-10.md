@@ -87,3 +87,13 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 
 ### Exact next Launchpad job
 After Portfolio P0 verification and Swap/DEX production gates, audit the actual `launchpad/` source and all related Solana programs/API/Worker routes. Map the real token creation, metadata upload, authorities, pool creation, LP ownership/lock, fee routing, confirmation, and retry paths. Record source paths and evidence, identify missing implementation, and build a devnet-only test plan before changing code. No mainnet launch or custody behavior is authorized by this design checkpoint.
+
+
+## 2026-11-10 — Signature Launchpad source audit (read-only)
+- Inspected current `launchpad/index.html` and the existing static audit `docs/AUDIT-DEX-LAUNCHPAD-UPLOADED-HTML.md`.
+- Current dedicated Launchpad page is an informational preview: it explicitly says launch services are not open, shows three planned launch paths, and does not establish a working on-chain token creation or liquidity flow.
+- Existing audit of the uploaded bundled “mainnet” DEX/Launchpad HTML found the Create Token action is alert-only: no SPL Token/Metaplex instructions, transaction construction, wallet signing, mint submission, or chain confirmation. It also found placeholder mint data and unverified mainnet/live claims. This audit is static review only and applies to that uploaded bundled HTML; do not assume every finding maps to the current dedicated `launchpad/index.html` without further source inspection.
+- No live wallet signing, devnet transaction, pool creation, or LP ownership verification has been performed.
+- Safety decision: keep Launchpad preview-only; do not enable token creation, liquidity deposits, fee collection, or any “launched/locked” status until the actual Solana implementation and devnet evidence are verified.
+- **Next exact Launchpad job:** trace the complete current Launchpad path from the dedicated page and homepage modal into JavaScript modules, API/Worker routes, metadata storage, wallet adapters, and any Solana program/package. Produce a source-path map proving which steps exist and which are placeholders; then design devnet-only tests for mint creation, metadata, authorities, creator allocation, pool creation, LP ownership/lock, fees, confirmation and replay-safe retries. Do not implement a mainnet transaction path before this audit is complete.
+- **Portfolio verification remains active:** Browser Smoke run `42737703450`, job `129570878173`; steps 1–14 succeeded, step 15 Jarrell's Peak desktop/mobile gameplay smoke is still in progress, screenshot upload pending. Exact next action remains polling this run; do not fetch job logs before it completes.
