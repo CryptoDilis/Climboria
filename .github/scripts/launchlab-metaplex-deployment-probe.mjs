@@ -62,6 +62,80 @@ export function compareExecutableToPinnedBuildArtifact(executableBytes, {
   };
 }
 
+export async function inspectMetaplexDeploymentBlock({
+  connection,
+  deploymentSlot,
+  programId,
+  programDataAddress,
+  loaderId = BPF_UPGRADEABLE_LOADER_ID,
+}) {
+  if (typeof connection?.getBlock !== "function") {
+    return { status: "block_rpc_unavailable", deploymentSlot, candidateTransactions: [] };
+  }
+  let block;
+  try {
+    block = await connection.getBlock(deploymentSlot, {
+      commitment: "finalized",
+      transactionDetails: "full",
+      rewards: false,
+      maxSupportedTransactionVersion: 0,
+    });
+  } catch (error) {
+    return {
+      status: "deployment_block_fetch_failed",
+      deploymentSlot,
+      reason: String(error.message || error),
+      candidateTransactions: [],
+    };
+  }
+  if (!block) return { status: "deployment_block_unavailable", deploymentSlot, candidateTransactions: [] };
+  const candidates = [];
+  for (const entry of block.transactions ?? []) {
+    const tx = entry.transaction ?? {};
+    const message = tx.message ?? {};
+    const keys = message.staticAccountKeys ?? message.accountKeys ?? [];
+    const addressAt = value => value?.toBase58?.() ?? value?.pubkey?.toBase58?.() ?? String(value ?? "");
+    const addresses = keys.map(addressAt);
+    const mentionsTarget = addresses.includes(programDataAddress) || addresses.includes(programId);
+    const instructions = message.compiledInstructions ?? message.instructions ?? [];
+    let loaderInstructionCount = 0;
+    for (const instruction of instructions) {
+      const instructionProgramId = instruction.programId
+        ? addressAt(instruction.programId)
+        : Number.isInteger(instruction.programIdIndex)
+          ? addresses[instruction.programIdIndex]
+          : "";
+      if (instructionProgramId !== loaderId) continue;
+      const accountIndexes = instruction.accountKeyIndexes ?? instruction.accounts ?? [];
+      const accountAddresses = accountIndexes.map(index =>
+        Number.isInteger(index) ? addresses[index] : addressAt(index)
+      );
+      if (accountAddresses.includes(programDataAddress) || accountAddresses.includes(programId)) {
+        loaderInstructionCount += 1;
+      }
+    }
+    if (!mentionsTarget && loaderInstructionCount === 0) continue;
+    const firstSignature = tx.signatures?.[0] ?? null;
+    candidates.push({
+      signature: typeof firstSignature === "string"
+        ? firstSignature
+        : firstSignature ? Buffer.from(firstSignature).toString("hex") : null,
+      referencesProgram: addresses.includes(programId),
+      referencesProgramData: addresses.includes(programDataAddress),
+      loaderInstructionCount,
+      transactionError: entry.meta?.err ?? null,
+      relevantLogs: (entry.meta?.logMessages ?? []).filter(line => /upgrade|deploy|programdata|loader/i.test(line)).slice(0, 20),
+    });
+  }
+  return {
+    status: "deployment_block_inspected",
+    deploymentSlot,
+    blockTime: block.blockTime ?? null,
+    transactionCount: block.transactions?.length ?? 0,
+    candidateTransactions: candidates,
+  };
+}
+
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -122,6 +196,12 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     byteLength: buildArtifact.byteLength,
     sha256: buildArtifact.sha256,
   };
+  const deploymentTransactionEvidence = await inspectMetaplexDeploymentBlock({
+    connection,
+    deploymentSlot,
+    programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
+    programDataAddress: programDataAddress.toBase58(),
+  });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
     artifactSha256: artifactMetadata.sha256,
@@ -139,6 +219,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataOwner: dataAccount.owner.toBase58(),
     deploymentSlot,
     deploymentBlockTimeUnix,
+    deploymentTransactionEvidence,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
