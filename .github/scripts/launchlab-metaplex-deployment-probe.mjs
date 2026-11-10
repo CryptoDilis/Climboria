@@ -148,27 +148,31 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
     return { status: "programdata_history_fetch_failed", reason: String(error.message || error), signatures: [] };
   }
   const history = [];
-  for (const info of signatureInfo ?? []) {
-    let transaction = null;
-    let fetchError = null;
-    try {
-      transaction = await connection.getTransaction(info.signature, {
-        commitment: "finalized",
-        maxSupportedTransactionVersion: 0,
-      });
-    } catch (error) {
-      fetchError = String(error.message || error);
-    }
-    const logs = transaction?.meta?.logMessages ?? [];
-    history.push({
-      signature: info.signature,
-      slot: info.slot,
-      blockTime: info.blockTime ?? transaction?.blockTime ?? null,
-      transactionAvailable: Boolean(transaction),
-      transactionError: transaction?.meta?.err ?? info.err ?? null,
-      loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
-      fetchError,
-    });
+  const infos = signatureInfo ?? [];
+  for (let offset = 0; offset < infos.length; offset += 10) {
+    const batch = await Promise.all(infos.slice(offset, offset + 10).map(async info => {
+      let transaction = null;
+      let fetchError = null;
+      try {
+        transaction = await connection.getTransaction(info.signature, {
+          commitment: "finalized",
+          maxSupportedTransactionVersion: 0,
+        });
+      } catch (error) {
+        fetchError = String(error.message || error);
+      }
+      const logs = transaction?.meta?.logMessages ?? [];
+      return {
+        signature: info.signature,
+        slot: info.slot,
+        blockTime: info.blockTime ?? transaction?.blockTime ?? null,
+        transactionAvailable: Boolean(transaction),
+        transactionError: transaction?.meta?.err ?? info.err ?? null,
+        loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
+        fetchError,
+      };
+    }));
+    history.push(...batch);
   }
   return { status: "programdata_history_inspected", signatureCount: history.length, complete: history.length < 100, signatures: history };
 }
