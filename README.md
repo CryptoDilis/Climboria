@@ -3234,3 +3234,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Auth UI and SQL hardening are in a new draft PR; wait for Validate and Browser Smoke on the exact PR head. Do not merge until the test runs pass.
 
 **Exact next task:** configure Supabase Auth email confirmation/SMTP, Google and Twitter(X) OAuth credentials/provider toggles, production redirect URLs, and Turnstile CAPTCHA securely in the dashboard; then test email confirmation, password sign-in, Google redirect/callback, X redirect/callback, local session restoration/logout and Guest sign-in in a controlled browser. After provider setup, implement safe guest identity linking and connect the authenticated user ID to actual game-save reads/writes. Keep DEX/Swap transaction execution and Launchpad launch controls behind their existing production security gates.
+
+
+### CI root-cause diagnosis — Auth PR #236
+
+- Validate run `42899334478` failed at step **Validate Supabase Auth wiring and browser-safe configuration**. The failure was a false positive: the check searched the entire `auth.js` source for the literal word `service_role`, and correctly documented safety guidance in a source comment matched that broad scan. `node --check auth.js`, swap proxy tests (**29 passed**), homepage structure, and planned-launch copy all passed before that assertion.
+- Narrowed the guard to validate the actual configured key constant starts with `sb_publishable_` and reject concrete secret-key patterns, rather than scanning harmless comments. This preserves the intended protection without treating a security comment as an exposed secret.
+- The unapplied SQL migration remains a forward-only patch for this existing database, not a blank-project baseline.
+- Browser Smoke run `42899334232` was in progress on the prior PR head while this diagnosis was recorded. A new code commit will cause the branch's cancel-in-progress browser workflow to restart on the corrected exact head; do not reuse the old run as final-head evidence.
