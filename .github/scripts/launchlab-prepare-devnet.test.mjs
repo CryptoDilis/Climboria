@@ -137,7 +137,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, missi
     PLATFORM_CURVE_RULE_DISCRIMINATOR: ruleDiscriminator,
     getPdaPlatformCurveRule: () => ({ publicKey: rulePda, bump: 9 }),
     checkLaunchAgainstCurveRule: ({ rule, context }) => ({
-      ok: !context.supply.isZero() && rule.groups.length === 1,
+      ok: rule.groups.length === 1 && context.curveType === 0 && context.migrateType === 1,
       matchedGroupId: 0,
       groupFailures: [],
     }),
@@ -378,9 +378,43 @@ test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => 
   const mock = client({ apiEpoch: 8 });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /API \/ finalized GlobalConfig mismatch: epoch/);
 });
-test("fails closed when platform enforces curve rules; caller flags cannot bypass verification", async () => {
+test("validates the finalized PlatformCurveRule PDA and matching launch constraints", async () => {
   const mock = client({ restrict: true });
-  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({ platformCurveRuleVerified: true }) }), /Platform restricts curve parameters/);
+  const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
+  assert.equal(result.platformCurveRule.enforced, true);
+  assert.equal(result.platformCurveRule.bump, 9);
+  assert.equal(result.platformCurveRule.epoch, "4");
+  assert.equal(result.platformCurveRule.matchedGroupId, 0);
+  assert.equal(result.platformCurveRule.finalizedSlot, 123);
+  assert.equal(result.platformCurveRule.finalizedBlockTime, 1700000000);
+});
+test("fails closed when the restricted PlatformCurveRule account is missing", async () => {
+  const mock = client({ restrict: true, missingRule: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /PlatformCurveRule account is missing/);
+});
+test("fails closed when the PlatformCurveRule identity does not match the verified platform/config", async () => {
+  const mock = client({ restrict: true, ruleIdentityMismatch: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /identity does not match/);
+});
+test("fails closed when explicit launch parameters do not satisfy any PlatformCurveRule group", async () => {
+  const mock = client({ restrict: true });
+  mock.sdk.checkLaunchAgainstCurveRule = () => ({
+    ok: false,
+    groupFailures: [{ groupId: 2, unsatisfied: [{ field: 3, op: 1, value: new BN("900"), actual: new BN("100") }] }],
+  });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /do not satisfy any active PlatformCurveRule group: group 2/);
+});
+test("fails closed when the finalized PlatformCurveRule account has the wrong owner", async () => {
+  const mock = client({ restrict: true });
+  const original = mock.raydium.connection.getAccountInfo;
+  mock.raydium.connection.getAccountInfo = async key => {
+    if (key?.toBase58?.() === "Rule111111111111111111111111111111111111") return {
+      owner: new PublicKey(ids.creator),
+      data: Buffer.concat([Buffer.from([1,2,3,4,5,6,7,8]), Buffer.alloc(32)]),
+    };
+    return original(key);
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /wrong owner/);
 });
 test("rejects a creator wallet that differs from the connected SDK owner", async () => {
   const mock = client();
