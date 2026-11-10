@@ -2724,3 +2724,28 @@ Last checked: 2026-11-11 02:44 Philippine time. This entry records verified sour
 1. Poll runs `42879777028` and `42879777254` to completion. If either fails, inspect its exact failed step and logs, diagnose root cause, implement a targeted fix, and rerun. If both pass, continue review of order-store concurrency/expiry/settlement and parser adversarial cases, then document review findings before requesting a human security review. Keep all production execution gates disabled until the documented Cloudflare and Devnet gates pass.
 
 Last checked: 2026-11-11 (Philippine time). This entry records repository work and observed CI state only; it does not claim production deployment, successful real swaps, enabled account login, or live Launchpad functionality.
+
+
+## 2026-11-11 — DEX search race fix and Swap parser hardening
+
+### Root cause found in Browser Smoke
+- PR #234 head `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c`: Validate run `42879777028` SUCCESS; Browser Smoke run `42879777254` FAILED in `Test homepage CTAs, DEX routing, and mobile navigation` at the exact-mint DEX row assertion.
+- Inspected the failing log and the exact app/test code. DEX boot-time `load()` asynchronously replaced `state.pairs` after the name-search path had merged a discovered token into it. The browser test navigated to DEX and immediately searched without waiting for initial market load; when the boot load completed later, it could discard the just-discovered row. The exact-mint assertion also checked a row prefix that could already be present, rather than awaiting the exact-mint provider request. This is a real UI race and a test synchronization gap, not a Worker signature-validation failure.
+
+### Targeted fixes committed to PR #234 branch
+- Commit `9d01add60d86df3f8c0abdd43b59cdd7f0be38e3`: introduced a separate bounded `searchPairs` collection; initial market refresh now merges previously discovered search pairs instead of discarding them; live search adds validated results to both the discovered cache and current market set. Search cache capped at 200 unique base-token entries.
+- Commit `32ec6caee34e37a9f4d2afd0b491c840abc66034`: Browser Smoke now explicitly waits for the exact-mint DexScreener request and successful response before asserting the exact matching row.
+- Commit `6019158eaed8c581bbe5e344efc57719473e8e78`: parser rejects a Solana v0 header that marks the fee payer read-only.
+- Commit `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c`: regression test for read-only fee payer; Validate passed on this head.
+
+### Current verification
+- New Validate run `42880044395` and Browser Smoke run `42880044279` for head `32ec6caee34e37a9f4d2afd0b491c840abc66034` were in progress when this entry was written. Do not claim either passed until terminal conclusions and failed-step logs are checked.
+- Pages deployment of the preceding main README record: run `42879845789` SUCCESS.
+- PR #234 remains open/draft; no merge, Cloudflare deployment, Devnet execution or Mainnet execution performed.
+
+### Exact next task
+1. Poll `42880044395` and `42880044279`. If Browser Smoke passes, continue adversarial review of order-store expiry/claim/settle and ensure both frontend and Worker kill switches remain false. If it fails, inspect its exact failing step/log and fix only the proven cause; do not reapply the previous timing workaround blindly.
+2. Once CI is green, update the PR review notes and request/obtain independent security review before merging. Then configure Cloudflare owner secrets/namespace securely and deploy quote-only Worker; verify health, CORS and Durable Object readiness. Keep execution disabled until controlled Devnet lifecycle approval.
+3. After Swap release gates, implement production Launchpad and select/implement real Guest + email/password + Google + X auth with provider/session lifecycle and end-to-end tests. Current repository has no Supabase/Firebase auth client integration; login buttons are disabled, and no login method is live.
+
+No production-live claims are made by this entry.
