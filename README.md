@@ -2773,3 +2773,35 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Next account task:** owner completes Supabase project/provider/SMTP setup and applies the migration; then run real signup/verification/login/logout/recovery and OAuth/Web3 callback tests. Implement secure guest-progress migration, verified identity linking to one Player ID, and non-economic cloud saves before declaring account system complete.
 - [ ] **Base task:** design and implement a separate EVM DEX/Swap router and wallet lifecycle; no Base execution is currently evidenced.
 - **Release truth:** no blanket "all live" claim. Website smoke is green; DEX discovery is provider-backed; Swap execution, Base execution, Signature Launchpad creation and all production account-provider flows are not yet verified live.
+
+
+## 2026-11-10 — Production-live release continuation (Pages retry verified)
+
+**Latest repository / deployment verification**
+- Main remains at `037f251048e6aecaf12675be1cd11fa9dd8fb6cd`; repository default branch is `main`.
+- Priority tracking PR #232 remains open/draft at `2029ef2d9491ee24cb32fc27c16792311bdaa26c`; PR #228 auth and PR #231 LaunchLab provenance also remain open/draft. None of these draft branches is merged to main.
+- GitHub Pages run `42744080549` attempt 2 is now **SUCCESS**. Latest jobs: deploy SUCCESS, build SUCCESS, report-build-status SUCCESS. The earlier attempt's queue failure was transient; retry succeeded. This verifies Pages deployment only.
+- Re-audited main source: `swap-config.js` still has `proxyEnabled: true` and `enabled: false`; `dex/swap-proxy/wrangler.toml` still has `EXECUTION_ENABLED = "false"` and placeholder rate-limit namespace `20261108`.
+- `dex/swap-proxy/DEPLOYMENT.md` explicitly says the Worker is prepared but not deployed. Required account-specific Cloudflare/Jupiter credentials and namespace remain prerequisites. Do not mistake a successful Pages deployment for a Worker deployment.
+- Worker source `dex/swap-proxy/src/index.mjs` still does not perform server-side semantic deserialization/allowlisting of the signed Solana transaction or bind an execution request to a previously issued order's wallet, mints, amounts, and expiry. Its own code comments and deployment guide require these controls before enabling execution. Existing client-side metadata display is not a security boundary.
+- Launchpad main route `launchpad/index.html` remains an informational UI, not a live creator submission / wallet / LaunchLab transaction lifecycle. PR #231 remains read-only provenance/Devnet preparation; its remaining Devnet custody, LP Lock IDL, deployed-bytecode provenance, migration-scale/NFT custody and production governance gates remain unresolved.
+- PR #228 remains draft and unmerged. It contains the auth foundation, but provider configuration and live E2E callback testing are not evidenced on main. The five methods are Solana wallet, EVM wallet, Google OAuth, X OAuth 2.0, and email/password; identity linking and safe guest-save migration remain unfinished.
+- No secrets were read, printed, or requested in chat. Never put Cloudflare/Jupiter/Supabase service-role credentials in source control or chat.
+
+**Release truth (do not overstate)**
+- [x] GitHub Pages build/deploy pipeline retry: SUCCESS.
+- [ ] Cloudflare Swap Worker production deployment + health/CORS/rate-limit/Jupiter verification: BLOCKED / NOT VERIFIED.
+- [ ] Swap production execution: DISABLED pending server-side transaction semantic validation, order-wallet binding, Devnet lifecycle testing and independent security review.
+- [ ] Signature Launchpad production creation: NOT LIVE; Devnet technical/governance gates and creator configuration remain open.
+- [ ] Five production login methods: NOT VERIFIED LIVE; Supabase/provider/SMTP configuration, migration, E2E tests and unified Player ID linking remain open.
+- [ ] Base chain swap/launch execution: NOT IMPLEMENTED / NOT VERIFIED.
+
+**Exact next actions**
+1. Implement and test a server-side Solana v0 transaction semantic validator plus durable, expiring order-to-wallet binding for Swap. Verify signer, payer, input/output mints, input amount, allowed programs/instructions/accounts, compute budget, priority fees, destination accounts, blockhash expiry, request replay/idempotency, and reject any mismatch. Keep execution disabled while developing.
+2. Add adversarial unit tests and a controlled Devnet end-to-end lifecycle using an explicitly approved dedicated test wallet; no synthetic CI signing keys, no Mainnet funds.
+3. Deploy the Worker only after the owner provisions the account-specific Cloudflare rate-limit namespace and encrypted GitHub Actions secrets (Cloudflare API token/account ID, Jupiter API key); run the existing manual Deploy Climboria API workflow and verify production health/CORS/rate limiting/provider requests. Never ask for secrets in chat.
+4. Continue LaunchLab Devnet interface/provenance/migration checks and implement the create-only Devnet vertical slice only after the fee receiver and LP Lock gaps are resolved; keep migration and Mainnet disabled.
+5. Complete Supabase project, SMTP and Google/X/Solana/EVM provider setup; apply the SQL migration; run real callback/session/recovery tests; implement verified identity linking and safe guest-save migration.
+6. Design and implement Base execution as a separately reviewed integration; do not label it live before real chain-specific tests.
+
+**Checkpoint rule:** update this README after each verified engineering change with commit SHA, exact workflow IDs/results, unresolved blockers, and the next single task. Do not toggle execution or accept deposits to make a status indicator appear live.
