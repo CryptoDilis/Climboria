@@ -90,6 +90,71 @@ export function validateConstantProductInitFormula({ supply, totalSellA, totalFu
 }
 
 
+export async function validatePlatformCurveRule({ raydium, sdk, platformInfo, input, configInfo }) {
+  if (!platformInfo?.restrictCurveParam) return { enforced: false, reason: "PlatformConfig does not restrict curve parameters" };
+  for (const name of ["PlatformCurveRule", "getPdaPlatformCurveRule", "PLATFORM_CURVE_RULE_DISCRIMINATOR", "checkLaunchAgainstCurveRule"]) {
+    if (!sdk?.[name]) fail("Pinned SDK PlatformCurveRule verifier export is required: " + name);
+  }
+  const programId = new sdk.PublicKey(DEVNET.programId);
+  const platformId = new sdk.PublicKey(DEVNET.platformId);
+  const configId = new sdk.PublicKey(DEVNET.configId);
+  const derived = sdk.getPdaPlatformCurveRule(programId, platformId, configId);
+  if (!derived?.publicKey || !Number.isInteger(derived.bump)) fail("Pinned SDK did not return the PlatformCurveRule PDA and bump");
+  const account = await raydium.connection.getAccountInfo(derived.publicKey, "finalized");
+  if (!account) fail("Platform restricts curve parameters but the finalized PlatformCurveRule account is missing");
+  if (!sameKey(account.owner, programId)) fail("Finalized PlatformCurveRule account has the wrong owner");
+  const discriminator = Buffer.from(sdk.PLATFORM_CURVE_RULE_DISCRIMINATOR);
+  if (discriminator.length !== 8 || !Buffer.from(account.data).subarray(0, 8).equals(discriminator)) {
+    fail("Finalized PlatformCurveRule account discriminator does not match the pinned SDK layout");
+  }
+  let rule;
+  try { rule = sdk.PlatformCurveRule.decode(account.data); } catch (error) {
+    fail("Finalized PlatformCurveRule account could not be decoded: " + String(error.message || error));
+  }
+  if (!sameKey(rule.platformId, platformId) || !sameKey(rule.configId, configId)) {
+    fail("Finalized PlatformCurveRule identity does not match the verified Devnet platform/config pair");
+  }
+  if (Number(rule.bump) !== derived.bump) fail("Finalized PlatformCurveRule bump does not match its derived PDA");
+  if (!Array.isArray(rule.groups)) fail("Finalized PlatformCurveRule groups are malformed");
+  const slot = await raydium.connection.getSlot("finalized");
+  const blockTime = await raydium.connection.getBlockTime(slot);
+  if (!Number.isSafeInteger(blockTime) || blockTime <= 0) fail("Could not obtain a finalized Solana block time for time-based PlatformCurveRule checks");
+  const context = {
+    curveType: Number(configInfo.curveType),
+    migrateType: 1,
+    migrateCpmmFeeOn: input.creatorFeeOn,
+    supply: new sdk.BN(input.supply),
+    totalSellA: new sdk.BN(input.totalSellA),
+    totalFundRaisingB: new sdk.BN(input.totalFundRaisingB),
+    totalLockedAmount: new sdk.BN(input.totalLockedAmount),
+    cliffPeriod: new sdk.BN("0"),
+    unlockPeriod: new sdk.BN("0"),
+    baseTokenProgram: 0,
+    transferFee: undefined,
+    unixTimestamp: new sdk.BN(String(blockTime)),
+  };
+  const checked = sdk.checkLaunchAgainstCurveRule({ rule, context });
+  if (!checked?.ok) {
+    const failures = (checked?.groupFailures ?? []).map(group =>
+      "group " + group.groupId + ": " + group.unsatisfied.map(item =>
+        "field " + item.field + " op " + item.op + " expected " + item.value?.toString?.() + " actual " + item.actual?.toString?.()
+      ).join(", ")
+    ).join("; ");
+    fail("Explicit launch parameters do not satisfy any active PlatformCurveRule group" + (failures ? ": " + failures : ""));
+  }
+  return {
+    enforced: true,
+    pda: derived.publicKey.toBase58(),
+    bump: derived.bump,
+    epoch: rule.epoch?.toString?.() ?? String(rule.epoch),
+    groupCount: rule.groups.length,
+    matchedGroupId: checked.matchedGroupId ?? null,
+    finalizedSlot: slot,
+    finalizedBlockTime: blockTime,
+    context: Object.fromEntries(Object.entries(context).map(([key, value]) => [key, value?.toString?.() ?? value])),
+  };
+}
+
 const INITIALIZE_V2_DISCRIMINATOR = Buffer.from([67, 153, 175, 39, 218, 16, 38, 32]);
 const METADATA_PROGRAM_ID = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -295,9 +360,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     const onChain = field === "mintB" ? configInfo.mintB.toBase58() : String(configInfo[field]);
     if (String(apiConfig.key[field]) !== onChain) fail(`Fresh API / finalized GlobalConfig mismatch: ${field}`);
   }
-  if (platformInfo.restrictCurveParam) {
-    fail("Platform restricts curve parameters; this builder does not yet decode and verify PlatformCurveRule, so preparation is blocked");
-  }
+  const platformCurveRule = await validatePlatformCurveRule({ raydium, sdk, platformInfo, input, configInfo });
   const curveFormula = validateConstantProductInitFormula({ ...amounts, migrateFee: configInfo.migrateFee.toString() });
 
   // Important: do not read apiConfig.defaultParams. All curve economics are caller-supplied.
@@ -473,6 +536,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     metadataHash: input.metadata.contentHash.toLowerCase(),
     amounts,
     curveFormula,
+    platformCurveRule,
     creatorFeeOn: input.creatorFeeOn,
     feeVaults: deriveDevnetFeeVaults({ sdk, programId: DEVNET.programId, platformId: DEVNET.platformId, creatorWallet: input.creatorWallet, quoteMint: DEVNET.quoteMint }),
     feeAndMigrationDestinations: {
