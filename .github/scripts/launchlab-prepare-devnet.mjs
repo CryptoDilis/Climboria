@@ -195,19 +195,25 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     const lookupTables = message.addressTableLookups ?? [];
     const loadedWritable = [];
     const loadedReadonly = [];
+    const lookupTableReviews = [];
     for (const lookup of lookupTables) {
       const table = await raydium.connection.getAddressLookupTable(lookup.accountKey, { commitment: "finalized" });
       if (!table?.value) fail(`SDK transaction ${index} references a missing or unreadable Address Lookup Table: ${lookup.accountKey.toBase58()}`);
+      const writableAddresses = [];
+      const readonlyAddresses = [];
       for (const addressIndex of Array.from(lookup.writableIndexes ?? [])) {
         const address = table.value.state.addresses[addressIndex];
         if (!address) fail(`SDK transaction ${index} references an invalid writable lookup-table index`);
         loadedWritable.push(address);
+        writableAddresses.push(address.toBase58());
       }
       for (const addressIndex of Array.from(lookup.readonlyIndexes ?? [])) {
         const address = table.value.state.addresses[addressIndex];
         if (!address) fail(`SDK transaction ${index} references an invalid readonly lookup-table index`);
         loadedReadonly.push(address);
+        readonlyAddresses.push(address.toBase58());
       }
+      lookupTableReviews.push({ address: lookup.accountKey.toBase58(), writableAddresses, readonlyAddresses });
     }
     // V0 message account order is static keys, all loaded writable keys, then all loaded readonly keys.
     const allKeys = [...keys, ...loadedWritable, ...loadedReadonly];
@@ -239,11 +245,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       instructionCount: instructions.length,
       accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
       accountMetaDetails,
-      lookupTables: lookupTables.map((lookup, lookupIndex) => ({
-        address: lookup.accountKey.toBase58(),
-        writableAddresses: loadedWritable.slice(0, loadedWritable.length).map(key => key.toBase58()),
-        readonlyAddresses: loadedReadonly.slice(0, loadedReadonly.length).map(key => key.toBase58()),
-      })),
+      lookupTables: lookupTableReviews,
     };
   });
   return {
