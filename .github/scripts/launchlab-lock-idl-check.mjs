@@ -20,9 +20,10 @@ const LOCK_PROGRAMS = {
   devnet: {
     id: "DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX",
     rpc: "https://api.devnet.solana.com",
-    authority: "7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3",
+    authority: null,
   },
 };
+const RAYDIUM_CPI_SOURCE_COMMIT = "115df2779d53bacc7db9d0be2773a4b48a6d372b";
 const LOCK_AUTH_SEED = "lock_cp_authority_seed";
 const LOCK_LIQUIDITY_SEED = "locked_liquidity";
 const LOCK_CP_LIQUIDITY_DISCRIMINATOR = [216, 157, 29, 78, 38, 51, 31, 26];
@@ -51,9 +52,48 @@ const expectedCollectAccounts = [
   ["lockedLpVault", false, true], ["tokenProgram", false, false],
   ["tokenProgram2022", false, false], ["memoProgram", false, false],
 ];
-function pdaSeedText(seed) {
-  if (seed?.kind !== "const" || !Array.isArray(seed.value)) return null;
-  return Buffer.from(seed.value).toString("utf8");
+export function validateLockProgramSource({ libSource, statesSource, contextSource }, target, Key = PublicKey) {
+  const mainnetId = libSource.match(/#\\[cfg\\(not\\(feature = "devnet"\\)\\)\\]\\s*declare_id!\\("([^"]+)"\\)/)?.[1];
+  const devnetId = libSource.match(/#\\[cfg\\(feature = "devnet"\\)\\]\\s*declare_id!\\("([^"]+)"\\)/)?.[1];
+  if (mainnetId !== LOCK_PROGRAMS.mainnet.id || devnetId !== LOCK_PROGRAMS.devnet.id) fail("Pinned Raydium locking source program IDs differ from the configured Mainnet/Devnet programs");
+  const authSeed = libSource.match(/pub const LOCK_CP_AUTH_SEED: &str = "([^"]+)"/)?.[1];
+  const liquiditySeed = statesSource.match(/pub const LOCKED_LIQUIDITY_SEED: &str = "([^"]+)"/)?.[1];
+  if (authSeed !== LOCK_AUTH_SEED) fail("Pinned Raydium locking source authority seed differs from the SDK seed");
+  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("Pinned Raydium locking source locked-liquidity seed differs from the SDK seed");
+  const lockContext = contextSource.split("pub struct LockCpLiquidity")[1]?.split("pub struct CollectCpFee")[0] ?? "";
+  const collectContext = contextSource.split("pub struct CollectCpFee")[1] ?? "";
+  if (!lockContext.includes("crate::LOCK_CP_AUTH_SEED.as_bytes()") || !lockContext.includes("LOCKED_LIQUIDITY_SEED.as_bytes()") || !lockContext.includes("fee_nft_mint.key().as_ref()")) fail("Pinned LockCpLiquidity source does not derive authority/locked-liquidity PDAs with expected seeds");
+  if (!lockContext.includes("associated_token::mint = lp_mint") || !lockContext.includes("associated_token::authority = authority")) fail("Pinned LockCpLiquidity source does not bind locked LP vault to authority and LP mint");
+  if (!collectContext.includes("associated_token::mint = lp_mint") || !collectContext.includes("associated_token::authority = authority")) fail("Pinned CollectCpFee source does not bind locked LP vault to authority and LP mint");
+  const feeNftAccountAttribute = collectContext.match(/#\\[account\\(([\\s\\S]*?)\\)\\]\\s*pub fee_nft_account/)?.[1] ?? "";
+  if (!feeNftAccountAttribute || /\\bmut\\b/.test(feeNftAccountAttribute)) fail("Pinned CollectCpFee source unexpectedly marks the Fee NFT account mutable");
+  if (!collectContext.includes("fee_nft_owner: Signer") || !collectContext.includes("fee_nft_account.amount == 1")) fail("Pinned CollectCpFee source lacks Fee NFT owner/signature ownership constraints");
+  const [mainnetAuthority] = Key.findProgramAddressSync([Buffer.from(authSeed, "utf8")], new Key(mainnetId));
+  const [devnetAuthority] = Key.findProgramAddressSync([Buffer.from(authSeed, "utf8")], new Key(devnetId));
+  if (mainnetAuthority.toBase58() !== LOCK_PROGRAMS.mainnet.authority) fail("Pinned source-derived Mainnet LP Lock authority differs from SDK constant");
+  return {
+    sourceCommit: RAYDIUM_CPI_SOURCE_COMMIT,
+    mainnetProgramId: mainnetId,
+    devnetProgramId: devnetId,
+    lockAuthoritySeed: authSeed,
+    lockedLiquiditySeed: liquiditySeed,
+    mainnetLockAuthority: mainnetAuthority.toBase58(),
+    devnetLockAuthority: devnetAuthority.toBase58(),
+    lockedLiquidityPdaSeeds: ["locked_liquidity", "fee_nft_mint"],
+    lockedLpVault: "ATA([authority, SPL Token program, CPMM LP mint])",
+    collectCpFeeFeeNftAccountIsReadonly: true,
+    feeNftOwnerMustSignToCollect: true,
+  };
+}
+async function fetchLockProgramSource() {
+  const base = "https://raw.githubusercontent.com/raydium-io/raydium-cpi/" + RAYDIUM_CPI_SOURCE_COMMIT + "/programs/locking-cpi/src/";
+  const paths = ["lib.rs", "states.rs", "context.rs"];
+  const contents = await Promise.all(paths.map(async path => {
+    const response = await fetch(base + path, { signal: AbortSignal.timeout(20000) });
+    if (!response.ok) fail("Pinned Raydium locking source fetch failed for " + path + ": HTTP " + response.status);
+    return response.text();
+  }));
+  return { libSource: contents[0], statesSource: contents[1], contextSource: contents[2], sha256: Object.fromEntries(paths.map((path, i) => [path, sha(contents[i])])) };
 }
 function checkAccounts(instruction, expected, name, options = {}) {
   const actual = instruction?.accounts ?? [];
@@ -87,7 +127,7 @@ export function deriveLockProgramAddresses({ programId, lpMint, PublicKey: Key =
   );
   return { authority: authority.toBase58(), lockedLiquidity: lockedLiquidity.toBase58(), lockLpVault: lockLpVault.toBase58() };
 }
-export function validateLockProgramIdl(idl, target, Key = PublicKey) {
+export function validateLockProgramIdl(idl, target, Key = PublicKey, source = { lockAuthoritySeed: LOCK_AUTH_SEED, lockedLiquiditySeed: LOCK_LIQUIDITY_SEED }) {
   if (idl.address && idl.address !== target.id) fail("LP Lock IDL address differs from the expected cluster program ID");
   const idlName = idl.name ?? idl.metadata?.name ?? null;
   if (idlName !== "raydium_liquidity_locking") fail("LP Lock IDL name is not raydium_liquidity_locking");
@@ -109,14 +149,12 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
     ["lpfeeamount", "feelpamount"].includes(normalizedCollectArgs[0][0]) && normalizedCollectArgs[0][1] === "u64";
   if (!collectArgumentWireCompatible) fail("LP Lock collectCpFees argument wire layout differs from pinned SDK; live=" + JSON.stringify(collectArgs) + "; expected one u64 fee amount");
 
-  const auth = lock.accounts.find(item => normalizeName(item.name) === "authority");
-  const locked = lock.accounts.find(item => normalizeName(item.name) === "lockedliquidity");
-  const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
-  const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
-  if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK; decoded=" + JSON.stringify(auth?.pda?.seeds) + "; text=" + String(authSeed));
-  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("LP Lock locked-liquidity PDA seed differs from pinned SDK; decoded=" + JSON.stringify(locked?.pda?.seeds) + "; text=" + String(liquiditySeed));
-  const [derivedAuthority] = Key.findProgramAddressSync([Buffer.from(LOCK_AUTH_SEED, "utf8")], new Key(target.id));
-  if (derivedAuthority.toBase58() !== target.authority) fail("LP Lock authority PDA does not match the pinned SDK program constant");
+  const authSeed = source.lockAuthoritySeed;
+  const liquiditySeed = source.lockedLiquiditySeed;
+  if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned source/SDK");
+  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("LP Lock locked-liquidity PDA seed differs from pinned source/SDK");
+  const [derivedAuthority] = Key.findProgramAddressSync([Buffer.from(authSeed, "utf8")], new Key(target.id));
+  if (target.authority && derivedAuthority.toBase58() !== target.authority) fail("LP Lock authority PDA does not match the pinned SDK program constant");
   return {
     programId: target.id,
     metadataName: idlName,
@@ -160,11 +198,18 @@ export async function fetchLockIdl(cluster, target = LOCK_PROGRAMS[cluster]) {
 }
 export async function runLockProgramAudit() {
   const results = [];
+  let sourceReview;
+  try {
+    const source = await fetchLockProgramSource();
+    sourceReview = validateLockProgramSource(source, LOCK_PROGRAMS.mainnet);
+  } catch (error) {
+    return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, results: [], pass: false, sourceError: String(error.message || error) };
+  }
   for (const cluster of ["mainnet", "devnet"]) {
     const target = LOCK_PROGRAMS[cluster];
     try {
       const fetched = await fetchLockIdl(cluster, target);
-      const schema = validateLockProgramIdl(fetched.idl, target);
+      const schema = validateLockProgramIdl(fetched.idl, target, PublicKey, { lockAuthoritySeed: sourceReview.lockAuthoritySeed, lockedLiquiditySeed: sourceReview.lockedLiquiditySeed });
       results.push({ cluster, pass: true, idlAddress: fetched.idlAddress, idlSha256: fetched.idlSha256, idlAuthority: fetched.authority, trailingAllocatedBytes: fetched.trailingAllocatedBytes, ...schema });
     } catch (error) {
       results.push({ cluster, pass: false, error: String(error.message || error) });
@@ -178,6 +223,7 @@ export async function runLockProgramAudit() {
     readOnly: true,
     transactionSubmitted: false,
     results,
+    pinnedProgramSource: sourceReview,
     mainnetIdlVerified: mainnetPass,
     devnetIdlPublishedAndVerified: devnetResult?.pass === true,
     devnetIdlPublicationMissing: devnetIdlUnavailable,
