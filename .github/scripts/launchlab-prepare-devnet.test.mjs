@@ -17,7 +17,7 @@ const ids = {
 };
 const sdk = {
   PublicKey, BN, TxVersion: { V0: "v0" },
-  LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7 }) },
+  LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }) },
   PlatformConfig: { decode: () => ({ restrictCurveParam: false }) },
 };
 const input = overrides => ({
@@ -36,7 +36,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}
     connection: {
       getAccountInfo: async () => ({ owner: new PublicKey(ids.programId), data: Buffer.from("fixture") }),
     },
-    api: { fetchLaunchConfigs: async () => [{ key: { pubKey: ids.configId, mintB: apiMint, curveType: 0, index: 0, epoch: apiEpoch }, defaultParams: { supplyInit: "1", totalSellA: "1", totalFundRaisingB: "1" } }] },
+    api: { fetchLaunchConfigs: async () => [{ key: { pubKey: ids.configId, mintB: apiMint, curveType: 0, index: 0, epoch: apiEpoch, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }, defaultParams: { supplyInit: "1", totalSellA: "1", totalFundRaisingB: "1" } }] },
     launchpad: {
       createLaunchpad: async options => {
         captured = options;
@@ -95,9 +95,9 @@ test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => 
   const mock = client({ apiEpoch: 8 });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /API \/ finalized GlobalConfig mismatch: epoch/);
 });
-test("fails closed when platform enforces curve rules without a verified rule", async () => {
+test("fails closed when platform enforces curve rules; caller flags cannot bypass verification", async () => {
   const mock = client({ restrict: true });
-  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /Platform restricts curve parameters/);
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({ platformCurveRuleVerified: true }) }), /Platform restricts curve parameters/);
 });
 test("rejects a creator wallet that differs from the connected SDK owner", async () => {
   const mock = client();
