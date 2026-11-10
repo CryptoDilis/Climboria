@@ -14,8 +14,8 @@
 - [x] Devnet CPMM fee receiver `3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy`; live token authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`.
 - [ ] **Devnet source/deployment discrepancy:** pinned CP-Swap source `admin::ID` for Devnet is `DRayqG9RXYi8WHgWEmRQGrUWRWbhjYWYkCRJDd6JBBak`, but the live fee receiver token authority is `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`. The live token authority also matches neither the CPMM config protocol owner nor fund owner. Do not infer ownership or claim the Devnet migration fee destination is fully verified until this discrepancy is explained against the deployed program binary/source version.
 - [x] The Mainnet/Devnet fee receiver accounts do not match a standard associated-token-address derivation using their observed token authority and WSOL mint. CP-Swap source hardcodes the receiver address; do not assume it is a normal ATA.
-- [x] Latest LaunchLab Live Provenance run `42749654248` — SUCCESS; preparation tests 23/23, live API/config tests 9/9, provenance checks 7/7; real pinned-SDK builder and Mainnet/Devnet account queries passed.
-- [x] Latest Validate Climboria run `42749654265` — SUCCESS.
+- [x] Latest LaunchLab Live Provenance run `42749773836` — SUCCESS on the latest PR head; preparation tests 23/23, live API/config tests 9/9, provenance checks 7/7; pinned CPMM source/IDL checks, real SDK builder and Mainnet/Devnet account queries passed.
+- [x] Latest Validate Climboria run `42749774034` — SUCCESS.
 - [ ] **Remaining migration blocker:** confirm the deployed Devnet CP-Swap admin/fee-receiver authority discrepancy, and inspect the LP lock program's deployed authority/PDA semantics for `lock_authority` and `lock_lp_vault`. No lock-program IDL/source has yet been pinned in this audit.
 - [ ] Exact next task: identify the deployed Devnet CP-Swap program version/upgrade authority and reconcile its fee receiver token authority with the source constant; then verify lock-program PDA derivation, LP NFT custody and the platform/creator/burn scale application from an authoritative lock-program source. Keep migration disabled until both are proven.
 
