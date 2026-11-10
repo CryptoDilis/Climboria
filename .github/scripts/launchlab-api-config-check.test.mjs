@@ -48,7 +48,7 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   assert.equal(result.cpmmCreatePoolFeeTokenAmount, "42");
   assert.equal(result.cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin, true);
   assert.equal(result.cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds, true);
-  assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner, true);
+  assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner, false);
   assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner, false);
   assert.equal(result.cpmmConfig.createPoolFee, "99");
   assert.equal(result.lockAuthority, target.lockAuthority);
