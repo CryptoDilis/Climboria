@@ -2722,3 +2722,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Next P0:** complete the `initializeV2` 18-account account-by-account validation against the pinned LaunchLab IDL and SDK PDA derivations, including exact account order, addresses, signer/writable privileges, and payer/creator alias handling. Add tampering tests and rerun both LaunchLab Live Provenance and Validate Climboria.
 - [ ] Then add a separate, explicit approval gate for funded Devnet read-only simulation; do not use synthetic CI keys for simulation or submission.
 - [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until Climboria launch parameters are approved, the Devnet LP Lock IDL gap is resolved or independently covered by source-level verification, and independent security review is complete.
+
+### Signature LaunchLab initializeV2 account security gate — 2026-11-10
+
+- [x] Pinned `initialize_v2` IDL account order and all 18 signer/writable privilege pairs in the CI source verifier.
+- [x] Confirmed the exact 18-account schema against pinned IDL commit `e7e0c96fe77bcf6a020b84a44c47a722aac8e359`: payer/creator alias handling, GlobalConfig, PlatformConfig, authority, pool, both mints, both vaults, metadata PDA, token/system programs, rent, event authority, and LaunchLab program.
+- [x] Confirmed PDA seed derivations against pinned SDK commit `1cf5bb129dbbb1c76dab67819c3d478349c8ed25` source `src/raydium/launchpad/pda.ts`: `vault_auth_seed`, `pool`, `pool_vault`, and `__event_authority`; Metaplex metadata PDA uses the metadata program and mint seeds.
+- [x] Transaction inspector resolves V0 Address Lookup Tables at finalized commitment, compares each instruction account address in order, checks the compiled message's effective signer/writable privileges (including payer/creator alias union), and validates serialized `initializeV2` arguments/discriminator.
+- [x] Added negative tests for reordered accounts, substituted GlobalConfig address, writable privilege escalation, altered curve amount, wrong discriminator, extra instruction, wrong fee payer, unexpected signer/program, and ALT resolution.
+- [x] Latest LaunchLab Live Provenance run `42752913186` — SUCCESS on PR head `2e42ea82698e79c0f11df6e676ba2ed2d194ba37`. Latest Validate Climboria run `42752913503` — SUCCESS.
+- [x] Real pinned SDK Devnet builder smoke passed with the exact transaction inspection. No creator signature, simulation, submission, or transaction execution.
+- [ ] **Next P0:** implement read-only `PlatformCurveRule` PDA/account decoding and compare any enforced curve parameters with the explicit caller-supplied launch inputs. Preserve fail-closed behavior for missing, stale, malformed, or mismatched rules; add fixture/tampering tests and rerun both workflows.
+- [ ] Then only after explicit approval and a funded, separately controlled Devnet wallet is provided, plan a read-only simulation gate. Do not use synthetic CI keys for simulation or submission.
+- [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until Climboria production launch settings are explicitly approved and independent security review is complete.
