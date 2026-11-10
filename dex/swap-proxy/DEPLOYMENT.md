@@ -67,3 +67,8 @@ Next implementation stage: add trusted ALT resolution and canonical account-meta
 ### ALT account-meta helper: trust boundary
 
 `reconstructAccountMetas(parsed, resolvedTables)` reconstructs canonical v0 account ordering (static accounts, all loaded writable addresses, then all loaded readonly addresses). It is a pure helper; the caller must independently verify each lookup-table account's owner, address contents, slot validity, and source using trusted RPC. Untrusted or client-provided table contents must never be accepted as authorization. Program ID indices may legitimately refer to loaded readonly addresses; they are validated against the fully resolved key list, not static keys alone. This helper is not wired into execution. The hard execution gate remains false.
+
+
+### ALT account-state decoder boundary
+
+The parser now checks the canonical ALT metadata layout, owner program ID, executable flag, state, slot warmup, deactivation marker, authority encoding and padding. This is still only a decoder: the caller must fetch account data from an approved RPC endpoint, verify that the RPC response context slot is the slot passed to the parser, and bind owner/executable/data to the same account response. Never accept client-provided ALT bytes or owner fields as trusted. The helper is not wired into swap execution; the independent hard execution gate remains false.
