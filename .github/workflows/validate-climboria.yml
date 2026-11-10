@@ -121,6 +121,8 @@ jobs:
               'Guest progress is not linked to another login yet.',
               "provider === 'x'", 'auth.signInWithWeb3',
               "signInWithWallet('solana')", "signInWithWallet('ethereum')",
+              "const AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString()",
+              'emailRedirectTo: AUTH_REDIRECT_URL', 'redirectTo: AUTH_REDIRECT_URL',
           ]
           missing = [item for item in required_auth if item not in auth]
           if missing:
@@ -132,6 +134,10 @@ jobs:
           key_value = auth[key_start + len(key_marker):].split("'", 1)[0]
           if not key_value.startswith("sb_publishable_"):
               raise SystemExit("Browser Auth must use a Supabase publishable key, not a privileged key.")
+          if "new URL('/?auth=confirmed'" in auth or "new URL('/?auth=callback'" in auth:
+              raise SystemExit("Auth callbacks must use the canonical, allow-listed site-root redirect.")
+          if "emailRedirectTo: AUTH_REDIRECT_URL" not in auth or "redirectTo: AUTH_REDIRECT_URL" not in auth:
+              raise SystemExit("Email and OAuth must share the canonical Auth redirect URL.")
           if 'id="authWallet"' in html:
               raise SystemExit("Legacy wallet-connect-only button must not remain.")
           if 'id="authGoogle" type="button" disabled' in html or 'id="authX" type="button" disabled' in html:
