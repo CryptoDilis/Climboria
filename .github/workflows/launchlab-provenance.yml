@@ -1,0 +1,33 @@
+name: LaunchLab Live Provenance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-provenance.mjs"
+      - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/workflows/launchlab-provenance.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/scripts/launchlab-provenance.mjs"
+      - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/workflows/launchlab-provenance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test read-only probe and fail-closed behavior
+        run: node --test .github/scripts/launchlab-provenance.test.mjs
+      - name: Query live Raydium APIs and finalized Solana program accounts
+        run: node .github/scripts/launchlab-provenance.mjs
