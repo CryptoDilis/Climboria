@@ -44,6 +44,9 @@ jobs:
         run: |
           node --check dex/swap-proxy/src/index.mjs
           node --test dex/swap-proxy/test/*.test.mjs
+      - name: Bundle Worker and validate Wrangler Durable Object configuration (dry run)
+        working-directory: dex/swap-proxy
+        run: npx wrangler@4.36.0 deploy --dry-run --outdir /tmp/climboria-swap-proxy-dry-run
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
