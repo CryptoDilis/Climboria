@@ -1,3 +1,17 @@
+### Latest checkpoint — 2026-11-10 (PR #231, Metaplex deployment-era build comparison)
+
+- [x] Added a read-only comparison against the actual canonical Devnet Metaplex Token Metadata ProgramData account. The probe records the finalized deployment slot, block time, upgrade authority, deployed byte length, and SHA-256; it does not sign, simulate, or submit transactions.
+- [x] Finalized Devnet deployment metadata: slot `363279440`; block time `2025-02-24T12:53:11Z`; ProgramData `PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT`; upgrade authority `6Vwz7AXYG6V1TUPP3KWYZncMEvUv6iPSFbfHDCLRcjtz`.
+- [x] Found deployment-era candidate source commit `23aee718e723578ee5df411f045184e0ac9a9e63` (2025-02-02). Its `.github/.env` names the exact same ProgramData address and governance/upgrade-authority address observed on Devnet.
+- [x] Compared the candidate commit with the 2026 pinned upstream commit `7ce760f9e010cb9819ffd7dd86986a44691bd1f8`: `programs/token-metadata/program/src/state/metadata.rs`, `utils/metadata.rs`, and `program/Cargo.toml` are byte-for-byte identical.
+- [x] Rebuilt the 2025 candidate source in CI using its declared Rust `1.79.0` and Solana CLI `2.0.9`. Build succeeded; `token_metadata.so` size `685,688` bytes, SHA-256 `d1914b9af7eda34d66e54de20e11b55dcfdbf4652dfff89cce0808681960fee8`.
+- [x] Compared that reproducible candidate artifact to finalized Devnet ProgramData in LaunchLab run `42757348669`: **no match**. Deployed executable data length `1,295,344` bytes, SHA-256 `bb0842f6d5740eabe8f9fb3b723b9ecd89cadf9f48ef9ad6a9dc6cfa8a9658e4`; candidate artifact prefix hash `f3d063012b08d5dea46d653b56fb4b7a0e1e31c6b1ad71b17292478a3e3caabd`; trailing bytes are not all zero. Do not treat the candidate source as an exact deployed binary match.
+- [x] LaunchLab Live Provenance `42757348669`: SUCCESS, including Rust/Solana rebuild, live Devnet provenance capture, bytecode comparison, and all existing LaunchLab checks.
+- [x] Validate Climboria `42757348687`: SUCCESS.
+- [ ] **Metaplex deployment source remains unresolved:** the source configuration's ProgramData/governance addresses match, and the metadata sizing source is unchanged, but the reproducible binary does not match the deployed executable. This can indicate a different build/toolchain/source lineage or loader data layout; do not infer which without deployment transaction evidence.
+- [ ] **Next P0:** inspect the finalized block at deployment slot `363279440` and locate the loader deploy/upgrade transaction signature; trace its governance proposal/authority and historical build source. Verify the deployed metadata allocation semantics before removing the 607-byte caveat.
+- [ ] Devnet LP Lock IDL publication and CPMM fee-receiver custody remain independent migration blockers. No migration transaction may be submitted.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, live Devnet Metaplex provenance)
 
 - [x] Added `.github/scripts/launchlab-metaplex-deployment-probe.mjs`: read-only upgradeable-loader parser for the canonical Metaplex Token Metadata program. It checks the finalized executable program account and ProgramData account, extracts deployment slot/upgrade authority, and hashes the executable bytes. It explicitly does not claim a source-to-binary match.
