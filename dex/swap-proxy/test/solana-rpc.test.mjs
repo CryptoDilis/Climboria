@@ -62,11 +62,24 @@ test("uses confirmed commitment and forwards an optional minimum context slot", 
   assert.equal(config.minContextSlot, 90);
 });
 
-test("rejects missing configuration and non-public or non-HTTPS RPC endpoints", async () => {
+test("rejects missing configuration and non-HTTPS or credentialed RPC endpoints", async () => {
   await assert.rejects(resolveAddressLookupTables(parsed()), /valid URL/);
   for (const rpcUrl of ["http://rpc.example.com", "https://localhost", "https://127.0.0.1", "https://192.168.1.5", "https://10.0.0.2", "https://user:pass@rpc.example.com"]) {
-    await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl }), /public HTTPS/);
+    await assert.rejects(resolveAddressLookupTables(parsed(), { rpcUrl }), /configured HTTPS/);
   }
+});
+
+
+test("requires a streaming response body so the byte cap is enforced before buffering", async () => {
+  const response = {
+    ok: true,
+    headers: new Headers(),
+    text: async () => JSON.stringify({ jsonrpc: "2.0", id: "climboria-alt-resolution", result: { context: { slot: 101 }, value: [account()] } })
+  };
+  await assert.rejects(resolveAddressLookupTables(parsed(), {
+    rpcUrl: "https://rpc.example.com",
+    fetchImpl: async () => response
+  }), /bounded streaming reads/);
 });
 
 test("rejects duplicate lookup table keys before making an RPC request", async () => {
