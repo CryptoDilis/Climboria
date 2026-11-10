@@ -41,6 +41,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
     getBlock: async (slot, config) => {
       assert.equal(slot, 123456);
       assert.equal(config.commitment, "finalized");
+      assert.equal(config.maxSupportedTransactionVersion, 1);
       return {
         blockTime: 1794270000,
         transactions: [{
@@ -67,7 +68,8 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
         { signature: "OriginalDeploySignature", slot: 120000, blockTime: 1794000000, err: null },
       ];
     },
-    getTransaction: async signature => {
+    getTransaction: async (signature, options) => {
+      assert.equal(options.maxSupportedTransactionVersion, 1);
       const isExtend = signature === "ExtendSignature";
       const keys = isExtend
         ? [new PublicKey(derivedAddress.toBase58()), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("11111111111111111111111111111111"), new PublicKey("Payer111111111111111111111111111111111")]
@@ -282,7 +284,8 @@ test("retries rate-limited historical transaction reads and captures loader inst
     getSignaturesForAddress: async () => [
       { signature: "oldest-loader", slot: 50 },
     ],
-    getTransaction: async () => {
+    getTransaction: async (_signature, options) => {
+      assert.equal(options.maxSupportedTransactionVersion, 1);
       attempts++;
       if (attempts === 1) throw Error("429 Too Many Requests");
       return {
