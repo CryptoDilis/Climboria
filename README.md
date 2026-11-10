@@ -2738,3 +2738,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Verification pending:** GitHub Actions must run on new head `f158162f2009f42570482fe9a54497c2b2a4b9eb`; do not reuse the earlier successful Validate run as proof of these changes. Prior browser smoke attempts were cancelled or in progress, not a green full suite.
 - [ ] **Exact next job:** verify new Validate and Browser Smoke checks; if failed, inspect failing logs and fix root cause. Then implement trusted RPC ALT account-owner/state/slot checks, instruction program allowlists, exact order-wallet-message binding, durable replay protection, adversarial tests, and controlled Devnet lifecycle verification.
 - **Safety boundary:** the new helper consumes externally supplied table contents and DOES NOT authenticate them. It is NOT integrated into the execute route. `EXECUTION_SECURITY_REVIEW_COMPLETE` remains false, and neither production Worker nor live trading was enabled.
+
+
+## 2026-11-11 — ALT state decoder and loaded-program regression
+
+- [x] Added a v0 regression fixture proving a program ID may be loaded from a readonly ALT; the full resolved account-key range is used for program-index validation.
+- [x] Added `decodeAddressLookupTableAccount` to parse the canonical ALT account metadata layout and fail closed on unexpected ALT program owner, executable account, invalid account-data length/state, invalid authority option, nonzero absent-authority bytes, invalid padding, out-of-range extension start index, deactivated table, and same-slot un-warmed appended addresses.
+- [x] Added tests for active ALT decoding, owner/executable checks, warmup, deactivation, metadata padding and truncation. Source/test commits: `509e6a518d5f83b936b00f80a6990f3a879a169c`, `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`.
+- [ ] **CI pending on latest code head** `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`. Current visible Validate run `42851432127` and Browser Smoke `42851432268` ran on older head `1e8fd34849319e541923eee8403fb922e1838742`; Browser Smoke remains in progress. Do not treat these as verification of the latest changes.
+- [ ] **Exact next task:** obtain fresh CI for latest head; inspect logs and repair any failures. Then connect trusted RPC fetch/context/owner validation to ALT parsing without trusting client-supplied account data. Continue instruction allowlists, transfer semantics, order-wallet-message binding, replay/idempotency, adversarial and Devnet tests.
+- **Hard safety boundary:** ALT parser is a pure decoder; caller must bind its inputs to a trusted RPC response. It is not connected to `/api/swap/execute`. Execution security constant remains false; no production deployment or transaction submission occurred.
