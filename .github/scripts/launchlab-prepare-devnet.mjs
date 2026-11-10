@@ -256,6 +256,18 @@ function validateInitializeV2Instruction({ instruction, allKeys, expectedAccount
   return { accounts: accountReview, data: decodedData };
 }
 
+export function deriveDevnetFeeVaults({ sdk, programId, platformId, creatorWallet, quoteMint }) {
+  const PublicKey = sdk.PublicKey;
+  const program = new PublicKey(programId);
+  const platform = new PublicKey(platformId);
+  const creator = new PublicKey(creatorWallet);
+  const quote = new PublicKey(quoteMint);
+  const [platformFeeVault] = PublicKey.findProgramAddressSync([platform.toBuffer(), quote.toBuffer()], program);
+  const [platformFeeVaultAuthority] = PublicKey.findProgramAddressSync([Buffer.from("platform_fee_vault_auth_seed", "utf8")], program);
+  const [creatorFeeVault] = PublicKey.findProgramAddressSync([creator.toBuffer(), quote.toBuffer()], program);
+  const [creatorFeeVaultAuthority] = PublicKey.findProgramAddressSync([Buffer.from("creator_fee_vault_auth_seed", "utf8")], program);
+  return { platformFeeVault: platformFeeVault.toBase58(), platformFeeVaultAuthority: platformFeeVaultAuthority.toBase58(), creatorFeeVault: creatorFeeVault.toBase58(), creatorFeeVaultAuthority: creatorFeeVaultAuthority.toBase58(), scope: "prospective trading/claim vaults; not accounts in the create-only initializeV2 transaction" };
+}
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   const { amounts } = validateDevnetLaunchInput(input, sdk);
   if (!raydium?.connection || !raydium?.api || !raydium?.launchpad) fail("Initialized read-only Devnet Raydium SDK client is required");
@@ -362,6 +374,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     }
     const instructions = message.compiledInstructions;
     if (!Array.isArray(instructions) || instructions.length === 0) fail(`SDK transaction ${index} contains no compiled instructions`);
+    if (instructions.length !== 1) fail(`SDK transaction ${index} create-only preparation must contain exactly one initializeV2 instruction and no buy, fee, migration, or unrelated instructions`);
     const lookupTables = message.addressTableLookups ?? [];
     const loadedWritable = [];
     const loadedReadonly = [];
@@ -405,7 +418,9 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       return { index: keyIndex, pubkey: account.toBase58(), isSigner, isWritable };
     }));
     const launchpadInstructions = instructions.filter(instruction => allKeys[instruction.programIdIndex]?.toBase58() === DEVNET.programId);
-    if (launchpadInstructions.length !== 1) fail(`SDK transaction ${index} must contain exactly one LaunchLab initializeV2 instruction`);
+    if (launchpadInstructions.length !== 1 || programIds.length !== 1 || programIds[0] !== DEVNET.programId) {
+      fail(`SDK transaction ${index} create-only path must contain only the approved LaunchLab initializeV2 program instruction`);
+    }
     const launchpadReview = validateInitializeV2Instruction({
       instruction: launchpadInstructions[0],
       allKeys,
@@ -459,6 +474,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     amounts,
     curveFormula,
     creatorFeeOn: input.creatorFeeOn,
+    feeVaults: deriveDevnetFeeVaults({ sdk, programId: DEVNET.programId, platformId: DEVNET.platformId, creatorWallet: input.creatorWallet, quoteMint: DEVNET.quoteMint }),
     migration: "cpmm",
     instructionPath: "initializeV2",
     createOnly: true,
