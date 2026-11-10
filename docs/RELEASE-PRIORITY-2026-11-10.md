@@ -305,3 +305,13 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - LaunchLab API provider defaults (1B supply / 793.1M offered / 85 SOL target at six base decimals) are not approved Climboria tokenomics; require explicit creator inputs and confirmation.
 - **P0 execution order:** (1) implement strict creator-input validation and fresh on-chain config revalidation; (2) construct ordered unsigned Devnet `initializeV2`/`cpmm`/`createOnly` transaction preview and verify account metas/signers; (3) run isolated tests and simulation; (4) separately resolve production Swap Worker secrets, deployment, CORS, rate limits, and transaction security; (5) verify login providers end-to-end. Never enable mainnet execution solely from static checks.
 - **Exact next coding job:** inspect the existing LaunchLab SDK integration and provenance test files on PR #231, implement the preparation module and tests on that branch, and run relevant GitHub Actions. No code implementation or simulation is claimed in this checkpoint.
+
+
+## 2026-11-11 — PR #230 verification recheck and release-order correction
+- [x] Rechecked Browser Smoke run `42737703450`, job `129570878173`: all 16 numbered steps completed SUCCESS, including Jarrell's Peak desktop/mobile gameplay smoke and screenshot upload.
+- [x] Rechecked screenshot artifact `13727353643`: still available, not expired; prior checkpoint records desktop/mobile visual review. Automated viewport evidence is not physical-device acceptance.
+- [x] Rechecked PR #230 review submissions and inline review threads: zero reviews and zero review threads are currently returned. PR was previously marked ready for review; no approval is evidenced by this check.
+- [ ] PR #230 closeout remains gated on current PR checks/branch-protection/review requirements and GitHub's current mergeability state; this session did not merge it or claim approval.
+- [ ] Launchpad work remains behind the release priority sequence, not a substitute for Portfolio P0 and Swap/DEX production gates. Latest LaunchLab validation proves API/config parameter compatibility only; no mint, wallet signature, transaction simulation or submission has occurred.
+- **Exact next job:** fetch the current PR #230 status/checks and branch-protection/mergeability state; if review is required, obtain an authorized review; then close out PR #230 only when GitHub reports all required checks green and mergeable. After that, resume Swap PR #219's DNS/custom-domain root-cause verification before any Worker redeploy. Keep public Swap execution and Portfolio claims fail-closed.
+- **No code changes or deployment in this checkpoint.** Do not mark DEX, Swap, Launchpad, or login as production-live without end-to-end evidence.
