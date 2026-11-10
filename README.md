@@ -1,3 +1,23 @@
+## 2026-11-10 — LaunchLab Devnet transaction-preparation checkpoint
+
+**Priority:** P0 — Raydium LaunchLab Devnet-only preparation. Work continues on PR #231 branch `codex/launchlab-live-provenance-probe`; do not restart the completed provenance investigation.
+
+- [x] Re-read the actual PR #231 head, latest commits, source files, architecture decision, protocol gate and pinned SDK source before editing.
+- [x] Confirmed the approved product direction: Raydium LaunchLab bonding curve, Solana-first, **no public deposits/fundraising**, no Climboria escrow, and no Mainnet execution.
+- [x] Added `.github/scripts/launchlab-prepare-devnet.mjs`: fail-closed Devnet preparation boundary; exact Devnet program / GlobalConfig / PlatformConfig / WSOL allowlist; creator must equal fee payer and connected SDK owner; caller supplies mint Keypair; explicit metadata JSON + matching SHA-256; explicit raw u64 supply/curve values; CPMM + create-only + V0; fetches finalized GlobalConfig/PlatformConfig and fresh Launch Config API; compares API/on-chain config; does not read provider defaultParams; rejects restricted curve config without a separately verified rule; returns SDK ordered transaction set and never invokes `execute()`.
+- [x] Added `.github/scripts/launchlab-prepare-devnet.test.mjs` with mocked SDK coverage for explicit values, Mainnet/config allowlist rejection, creator/fee-payer binding, CPMM/create-only/Token-2022 gates, raw integer/supply bounds, ordered transactions, API/on-chain mismatch, restricted curve rules and owner mismatch.
+- [x] Updated `.github/workflows/launchlab-provenance.yml` path filters and added the new preparation safety test step.
+- [ ] **Verification pending:** the new tests and workflow have not yet run on GitHub. Do not mark implementation tested/passed until the exact PR workflow jobs and logs are inspected.
+- [ ] **Not yet implemented:** creator UI integration, immutable server-side launch approval/config hash, transaction decode/account-meta allowlist, Devnet simulation, wallet approval, submit, finalized reconciliation, duplicate/retry protection and independent security review.
+- [ ] **Owner inputs still required before any real launch preparation:** creator wallet, approved token name/symbol and hosted metadata JSON/URI, approved supply/curve amounts, supply allocation/authority policy, and approved fee/LP disclosures. Do not substitute Raydium provider defaults or invent these values.
+- [ ] Mainnet remains disabled. No wallet signing, transaction submission, fee collection, public deposits or fundraising were performed by this work.
+
+**Commits on PR #231 branch:** preparation module `e298da853870660d624c0341877540607f4a9168`; tests `0d95f5b69edbd092423bfdf96b33f69bee912f26`; metadata-integrity hardening `7e276f53520ffd8232c51a1133ccb2d3b447f4cd`; metadata hash tests `3bed73f435e73522eb00f432f82f840abb06045d`; CI wiring `ebececca0fd55a88217415a1a6f938947831b1dd`.
+
+**Exact next job:** inspect the workflow triggered by the latest PR #231 commit. If it fails, read the failing job logs, identify the root cause and make one targeted fix (do not repeat the same patch). If it passes, proceed to a pinned-SDK integration test that constructs the Devnet create-only transaction set from explicit test inputs, inspects every returned transaction and signer requirement, and simulates only when the test harness can prove no submission/signing path is called. Keep the UI and Mainnet execution disabled.
+
+---
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
