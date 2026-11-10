@@ -106,11 +106,19 @@ jobs:
               const dexPair={chainId:'solana',dexId:'search-fixture',pairAddress:'DexSearchPair11111111111111111111111111111',baseToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},priceUsd:'0.125',priceChange:{h24:4.2},volume:{h24:45678},liquidity:{usd:23456}};
               const dexSearchRequests=[];
               dexPage.on('request',request=>{if(request.url().includes('/latest/dex/search'))dexSearchRequests.push(request.url())});
+              // Force the initial market refresh to finish after the interactive search. This reproduces the race seen in main run 42920866242.
+              await dexPage.route('https://api.dexscreener.com/token-profiles/latest/v1',async route=>{
+                await new Promise(resolve=>setTimeout(resolve,1200));
+                return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+              });
+              const bootstrapQueries=new Set(['SOL','USDC','BONK','JUP','WIF','RAY','ORCA','PYTH']);
               await dexPage.route(/https:\/\/api\.dexscreener\.com\/latest\/dex\/search(?:\?.*)?$/,async route=>{
-                const url=new URL(route.request().url());
-                if(url.searchParams.get('q')==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
+                const url=new URL(route.request().url()),query=url.searchParams.get('q');
+                if(query==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
+                if(bootstrapQueries.has(query))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
                 return route.continue();
               });
+              await dexPage.reload({waitUntil:'domcontentloaded'});
               const quoteSidePair={chainId:'solana',dexId:'quote-side-fixture',pairAddress:'QuoteSidePair1111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},priceUsd:'150',priceNative:'1200',priceChange:{h24:1},volume:{h24:999999},liquidity:{usd:999999}};
               await dexPage.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
@@ -169,6 +177,8 @@ jobs:
               if(!dexSearchResponse){const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText,handler:typeof window.discoverDexSearch}));throw new Error('DEX name search request did not complete. Requests='+JSON.stringify(dexSearchRequests)+' UI='+JSON.stringify(diagnostics)+' pageErrors='+JSON.stringify(errors));}
               if(!dexSearchResponse.ok())throw new Error('DEX name search fixture returned HTTP '+dexSearchResponse.status());
               await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:5000}).catch(async error=>{const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText}));throw new Error('DEX name search response succeeded but row did not render. UI='+JSON.stringify(diagnostics)+' requests='+JSON.stringify(dexSearchRequests)+' cause='+error.message)});
+              await dexPage.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('Live provider connection'),null,{timeout:5000});
+              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX search result was lost when the delayed initial market refresh completed');
               if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
               await dexPage.locator('#search').fill(dexMint);
               await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
