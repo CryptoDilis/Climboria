@@ -689,7 +689,7 @@ footer:first-of-type>div{
   document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
   document.getElementById('authClose').addEventListener('click',closeAuth);
   authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
-  // Wallet linking is intentionally deferred until nonce/signature verification exists.
+  // Wallet authentication is implemented in /auth/auth-client.js via Supabase Auth Web3 (SIWE/SIWS); do not add a parallel custom signature verifier here.
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
