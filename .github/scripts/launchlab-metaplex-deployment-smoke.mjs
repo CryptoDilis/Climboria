@@ -15,5 +15,5 @@ const result = await captureDevnetMetaplexProgramProvenance({
 });
 process.stdout.write(JSON.stringify({
   ...result,
-  note: "Deployment metadata and bytecode hash are captured from finalized Devnet accounts. Source commit matching is not claimed; a reproducible build comparison is still required.",
+  note: "Deployment metadata and bytecode hash are captured from finalized Devnet accounts and compared against the official pinned Metaplex GitHub Actions token_metadata.so artifact. An exact match requires identical artifact prefix and only zero-filled loader padding.",
 }, null, 2) + "\n");
