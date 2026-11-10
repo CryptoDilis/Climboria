@@ -1,3 +1,21 @@
+### Latest checkpoint — 2026-11-10 (PR #231, live Devnet Metaplex provenance)
+
+- [x] Added `.github/scripts/launchlab-metaplex-deployment-probe.mjs`: read-only upgradeable-loader parser for the canonical Metaplex Token Metadata program. It checks the finalized executable program account and ProgramData account, extracts deployment slot/upgrade authority, and hashes the executable bytes. It explicitly does not claim a source-to-binary match.
+- [x] Added deterministic parser tests: 4/4 passed in LaunchLab Live Provenance `42756617050`.
+- [x] Added live Devnet RPC smoke `.github/scripts/launchlab-metaplex-deployment-smoke.mjs`. Finalized Devnet capture:
+  - Program: `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`
+  - ProgramData: `PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT`
+  - Deployment slot: `363279440`
+  - Upgrade authority: `6Vwz7AXYG6V1TUPP3KWYZncMEvUv6iPSFbfHDCLRcjtz` (program remains upgradeable)
+  - Executable byte length: `1,295,344`
+  - Executable SHA-256: `bb0842f6d5740eabe8f9fb3b723b9ecd89cadf9f48ef9ad6a9dc6cfa8a9658e4`
+- [x] LaunchLab Live Provenance `42756617050`: SUCCESS, including mock parser tests and finalized Devnet ProgramData capture.
+- [x] Validate Climboria `42756617104`: SUCCESS.
+- [x] Diagnosed failed run `42756497637`: the test fixture allocated only 64 bytes for ProgramData, but the upgradeable-loader header with an authority is 45 bytes and the bytecode fixture needs 24 additional bytes. The copy was truncated to 19 bytes. Replaced the fixed buffer with an exact `headerLength + bytecodeLength` allocation; latest run passes.
+- [ ] **Metaplex source-to-binary match remains unresolved:** deployed Devnet bytecode hash and deployment metadata are now captured, but no reproducible build has been matched to the pinned source. Do not claim that the upstream 607-byte metadata layout is proven identical to the deployed binary until that comparison is completed.
+- [ ] No wallet was used; this was finalized account inspection only. No transaction was signed, simulated, or submitted.
+- [ ] **Next P0:** locate a reproducible build/release artifact matching the captured Metaplex bytecode hash (or obtain authoritative deployed-version build provenance), then close the metadata allocation compatibility caveat. Continue separate investigation of Devnet LP Lock IDL publication and CPMM fee-receiver custody; both still block migration.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, source-backed rent layouts)
 
 - [x] Added `.github/scripts/launchlab-devnet-rent-layouts.mjs` and tests. Source-backed candidate data lengths: SPL Mint 82 bytes; SPL Token Account/vault 165 bytes; Raydium Launchpad PoolState 429 bytes; Metaplex metadata PDA 607 bytes.
