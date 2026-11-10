@@ -2848,3 +2848,12 @@ Implement a separately tested server-side transaction security layer before any 
 
 
 - Browser Smoke attempt 1 on corrected source passed every DEX/Swap step (including execution fail-closed and mobile/desktop layouts) but the unrelated Jarrell's Peak gameplay step was cancelled by the runner, so the overall job was cancelled. Reran the browser job as attempt 2; GitHub reports it pending/queued at the latest check. Do not report the whole browser suite green until attempt 2 completes.
+
+
+## 2026-11-10 — Swap transaction decoder foundation added (verification pending)
+
+- [x] PR #233 now contains a standalone Solana legacy/v0 wire-format decoder and message-hash helper, with focused structural parser tests. Latest PR #233 branch head at the time of this checkpoint: `e1f4ec333e068e20cbb6c930a9e938dd2ad38236` (subsequent documentation commits may advance it).
+- [x] The decoder is deliberately isolated and **not connected to the execute route**. It is not a semantic validator: trusted ALT resolution, instruction decoding/allowlists, token-transfer and destination validation, immutable expiring order-wallet binding, replay/idempotency controls, Devnet lifecycle testing and independent security review remain outstanding.
+- [x] The code-level hard execution gate remains false. No Worker deployment, wallet signing, Devnet/Mainnet transaction or production execution enablement occurred.
+- [ ] GitHub Actions validation for the new parser tests is pending observation; do not claim these new tests pass until the workflow reports success.
+- [ ] Exact next task: verify parser tests on the PR branch, repair any test or parser defect, then implement trusted ALT resolution and semantic instruction validation. Keep execution disabled.
