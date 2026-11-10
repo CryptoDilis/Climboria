@@ -43,7 +43,7 @@ export function decodeSolanaTransaction(encoded) {
   const bytes = parseBase64Transaction(encoded);
   const cursor = { offset: 0 };
   const signatureCount = readShortVec(bytes, cursor, "signature count");
-  if (signatureCount > MAX_SIGNATURES) throw new Error("Too many transaction signatures");
+  if (signatureCount === 0 || signatureCount > MAX_SIGNATURES) throw new Error("Invalid transaction signature count");
   const signatures = [];
   for (let i = 0; i < signatureCount; i++) signatures.push(take(bytes, cursor, 64, "signature"));
 
@@ -99,6 +99,7 @@ export function decodeSolanaTransaction(encoded) {
   if (cursor.offset !== bytes.length) throw new Error("Unexpected trailing transaction bytes");
   const loadedKeyCount = addressTableLookups.reduce((sum, lookup) => sum + lookup.writableIndexes.length + lookup.readonlyIndexes.length, 0);
   const totalKeyCount = staticKeyCount + loadedKeyCount;
+  if (totalKeyCount > 256) throw new Error("Too many resolved transaction account keys");
   for (const instruction of instructions) {
     if (instruction.accountIndexes.some(index => index >= totalKeyCount)) throw new Error("Instruction account index is outside resolved account-key range");
   }
@@ -106,6 +107,7 @@ export function decodeSolanaTransaction(encoded) {
 }
 
 export async function hashSolanaMessage(encoded) {
+  decodeSolanaTransaction(encoded);
   const bytes = parseBase64Transaction(encoded);
   const cursor = { offset: 0 };
   const signatureCount = readShortVec(bytes, cursor, "signature count");

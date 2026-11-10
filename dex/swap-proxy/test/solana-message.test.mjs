@@ -37,9 +37,12 @@ test("rejects unsupported message versions", () => {
   bytes[65] = 0x81;
   assert.throws(() => decodeSolanaTransaction(bytes.toString("base64")), /Unsupported Solana message version/);
 });
-test("rejects malformed base64 and truncated transactions", () => {
+test("rejects malformed base64, truncated transactions, and zero signatures", () => {
   assert.throws(() => decodeSolanaTransaction("not base64!"), /Invalid transaction base64/);
   assert.throws(() => decodeSolanaTransaction("AQI="), /Truncated|Invalid/);
+  const noSignatures = Buffer.from(fixture());
+  noSignatures[0] = 0;
+  assert.throws(() => decodeSolanaTransaction(noSignatures.toString("base64")), /signature count/);
 });
 test("rejects trailing bytes instead of silently accepting a different wire message", () => {
   assert.throws(() => decodeSolanaTransaction(fixture({ trailing: [99] })), /trailing transaction bytes/);
