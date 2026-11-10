@@ -36,6 +36,8 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/package.json -o /tmp/launchlab-provenance/package.json
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts -o /tmp/launchlab-provenance/instrument.ts
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json -o /tmp/launchlab-provenance/launchpad-idl.json
+      - name: Report downloaded artifact SHA-256 digests
+        run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
         run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts
       - name: Query live Raydium APIs and finalized Solana program accounts
