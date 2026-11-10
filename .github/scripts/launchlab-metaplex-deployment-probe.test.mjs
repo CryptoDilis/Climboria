@@ -1,7 +1,10 @@
 import test from "node:test";
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import {
   captureDevnetMetaplexProgramProvenance,
+  compareExecutableToPinnedBuildArtifact,
+  PINNED_METAPLEX_BUILD_ARTIFACT,
   BPF_UPGRADEABLE_LOADER_ID,
   METAPLEX_TOKEN_METADATA_PROGRAM_ID,
 } from "./launchlab-metaplex-deployment-probe.mjs";
@@ -53,7 +56,9 @@ test("captures finalized Devnet program-data slot, authority, and bytecode hash 
   assert.equal(result.immutable, false);
   assert.equal(result.executableByteLength, 24);
   assert.equal(result.executableSha256.length, 64);
-  assert.equal(result.sourceMatchStatus, "not_verified_no_reproducible_build_comparison");
+  assert.equal(result.sourceMatchStatus, "pinned_build_artifact_not_matched");
+  assert.equal(result.pinnedBuildArtifact.sourceCommit, "7ce760f9e010cb9819ffd7dd86986a44691bd1f8");
+  assert.equal(result.pinnedBuildArtifactComparison.status, "deployed_program_shorter_than_build_artifact");
   assert.equal(result.transactionSubmitted, false);
   assert.deepEqual(f.calls.map(x => x.commitment), ["finalized", "finalized"]);
 });
@@ -77,4 +82,40 @@ test("rejects missing ProgramData, bad loader state, and invalid authority optio
   await assert.rejects(() => captureDevnetMetaplexProgramProvenance({ connection: fixture({ dataMissing: true }).connection, sdk, cluster: "devnet" }), /ProgramData account is missing/);
   await assert.rejects(() => captureDevnetMetaplexProgramProvenance({ connection: fixture({ stateTag: 2 }).connection, sdk, cluster: "devnet" }), /unexpected state layout/);
   await assert.rejects(() => captureDevnetMetaplexProgramProvenance({ connection: fixture({ authorityOption: 7 }).connection, sdk, cluster: "devnet" }), /authority option is invalid/);
+});
+
+test("matches an exact official build artifact prefix with only zero-filled loader padding", () => {
+  const artifact = Buffer.from("reproducible-metaplex-elf-fixture");
+  const deployed = Buffer.concat([artifact, Buffer.alloc(16)]);
+  const comparison = compareExecutableToPinnedBuildArtifact(deployed, {
+    artifactLength: artifact.length,
+    artifactSha256: createHash("sha256").update(artifact).digest("hex"),
+  });
+  assert.equal(comparison.exactMatch, true);
+  assert.equal(comparison.status, "exact_pinned_artifact_match_with_zero_padding");
+  assert.equal(comparison.trailingPaddingLength, 16);
+  assert.equal(comparison.trailingPaddingIsZero, true);
+});
+
+test("does not accept an artifact prefix mismatch or nonzero bytes after the artifact", () => {
+  const artifact = Buffer.from("expected-elf");
+  const hash = createHash("sha256").update(artifact).digest("hex");
+  const mismatch = compareExecutableToPinnedBuildArtifact(Buffer.from("different-elf"), {
+    artifactLength: artifact.length, artifactSha256: hash,
+  });
+  assert.equal(mismatch.exactMatch, false);
+  assert.equal(mismatch.status, "pinned_artifact_hash_mismatch");
+  const nonzeroTail = compareExecutableToPinnedBuildArtifact(Buffer.concat([artifact, Buffer.from([1])]), {
+    artifactLength: artifact.length, artifactSha256: hash,
+  });
+  assert.equal(nonzeroTail.prefixHashMatches, true);
+  assert.equal(nonzeroTail.trailingPaddingIsZero, false);
+  assert.equal(nonzeroTail.exactMatch, false);
+});
+
+test("requires valid pinned artifact hash and length", () => {
+  assert.throws(() => compareExecutableToPinnedBuildArtifact(Buffer.alloc(1), {
+    artifactLength: 0, artifactSha256: "bad",
+  }), /Pinned build artifact length and SHA-256 are required/);
+  assert.equal(PINNED_METAPLEX_BUILD_ARTIFACT.byteLength, 685688);
 });
