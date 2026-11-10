@@ -269,3 +269,17 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - The field `minFundRaisingB` is a Raydium curve threshold in quote-token units; it is not a Climboria public deposit vault or a fundraising feature. No Climboria fundraising/deposit mechanism is introduced.
 - No wallet, signature, transaction submission, fee collection, or state mutation occurred. No config writes. Mainnet execution remains disabled. SDK layout decoding is read-only and limited to the pinned client layout.
 - **Exact next job:** derive the intended GlobalConfig PDA for WSOL/curve type 0 and verify launch initialization arguments, Token-2022 vs legacy SPL mint path, migration type CPSWAP, supply/decimals, lock constraints, fee/LP destination and all signer/account metas against the live on-chain instruction schema. Build only a Devnet unsigned transaction preview/simulation path; do not sign or submit a token launch without explicit owner approval.
+
+## 2026-11-10 — WSOL curve-0 PDA and creator transaction-builder path verified from pinned SDK
+- PR #231 branch `codex/launchlab-live-provenance-probe`; current head `7643884f58fe0bbd4f8408c03be55843292b0432`.
+- LaunchLab Live Provenance run `42743519163` SUCCESS; job `129590076335`. Validate run `42743519223` SUCCESS; job `129590077443`.
+- Added immutable-source checks for SDK `launchpad.ts` SHA-256 `32628b92cbb7fe96f15b9fc8c56c2baa503efccdfa7b889d7ab8a9332189127f` and `pda.ts` SHA-256 `bfa801c13f842c374e27d3e34007a75520094cbb71a82ca24c69882415932522` at pinned SDK commit `1cf5bb129dbbb1c76dab67819c3d478349c8ed25`. CI now checks these plus package, instrument, layout and IDL hashes.
+- Derived GlobalConfig PDA from `global_config` seed + WSOL mint + curveType 0 + index 0. Result matches observed live default account on both clusters: Mainnet `6s1xP3hpbAfFoNtUNF8mfHsjr2Bd97JxFJRWLbL6aHuX`; Devnet `7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt`.
+- Static SDK source compatibility checks confirm:
+  - `createLaunchpad` requires caller-provided `mintA`; `initializeV2` marks `mintA` as a signer. Caller must supply the mint Keypair through `extraSigners`; fee payer also signs.
+  - `createLaunchpad` uses `initializeV2` for standard SPL mint, `initializeWithToken2022` for Token-2022 transfer-fee extension. Token-2022 extension path forces CPMM migration.
+  - Migration argument encoding maps `"amm"` to 0 and any non-`"amm"` value to 1; future integration must pass explicit `"cpmm"`, never rely on an omitted/implicit value.
+  - `createOnly: true` skips the initial `buyToken` instruction. If false, the SDK appends a creator buy; `buyToken` rejects zero buy amount. Default Climboria flow should be create-only unless the owner explicitly opts into a creator buy.
+  - Builder returns `versionSizeCheckBuild` multi-transaction data; it must be reviewed as an ordered transaction set, not assumed to be one transaction.
+- No token mint keypair generated, no wallet connected, no signatures, no simulation or transaction submitted. Source inspection only.
+- **Exact next job:** inspect the actual Raydium launch-config API response for the verified WSOL/curve-0 config on Devnet/Mainnet; compare API `defaultParams` (supply, totalSellA, totalFundRaisingB) against live GlobalConfig thresholds and `Curve.checkParam` rules. Pin the API response schema and reject stale/missing params. Then construct an unsigned Devnet transaction preview with ephemeral in-memory mint signer and `createOnly: true`; simulation only, no signature/submission.
