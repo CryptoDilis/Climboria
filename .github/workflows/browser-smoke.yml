@@ -750,18 +750,32 @@ jobs:
               await scopePage.waitForFunction(()=>typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.setUserScope==='function',null,{timeout:20000});
               const scopeState=await scopePage.evaluate(()=>{
                 const adapter=window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
-                const read=()=>adapter.capture()?.inventory||[];
+                const baseKey='climboria_jarrell_inventory_v1';
+                const accountAKey=baseKey+':user:auth-user-A';
+                const accountBKey=baseKey+':user:auth-user-B';
+                // Restore a valid gameplay save so the adapter is in walk mode (capture()
+                // intentionally returns null during the game's cinematic intro state).
+                if(!adapter.restore({version:1,player:{x:0,z:0,yaw:0},inventory:[{name:'GuestScopeFixture',qty:2}]})){
+                  throw new Error('Could not seed a valid guest inventory fixture through the game restore adapter.');
+                }
+                const read=key=>JSON.parse(localStorage.getItem(key)||'[]');
+                const initialGuest=read(baseKey);
                 adapter.setUserScope('auth-user-A',true);
-                const accountA=read();
+                const accountA=read(accountAKey);
+                const guestKeyAfterClaim=localStorage.getItem(baseKey);
                 adapter.setUserScope(null,false);
-                const guest=read();
+                const guest=read(baseKey);
                 adapter.setUserScope('auth-user-B',true);
-                const accountB=read();
+                const accountB=read(accountBKey);
                 adapter.setUserScope('auth-user-A',false);
-                const accountAReload=read();
-                return {accountA,guest,accountB,accountAReload};
+                const accountAReload=read(accountAKey);
+                return {initialGuest,accountA,guestKeyAfterClaim,guest,accountB,accountAReload};
               });
-              if(!scopeState.accountA.some(item=>item.name==='GuestScopeFixture')||scopeState.guest.length!==0||scopeState.accountB.length!==0||!scopeState.accountAReload.some(item=>item.name==='GuestScopeFixture')){
+              if(!scopeState.initialGuest.some(item=>item.name==='GuestScopeFixture')||
+                 !scopeState.accountA.some(item=>item.name==='GuestScopeFixture')||
+                 scopeState.guest.length!==0||
+                 scopeState.accountB.length!==0||
+                 !scopeState.accountAReload.some(item=>item.name==='GuestScopeFixture')){
                 throw new Error('Backpack data crossed account boundaries: '+JSON.stringify(scopeState));
               }
               await scopePage.close();

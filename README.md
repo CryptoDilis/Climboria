@@ -3294,3 +3294,5 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] On sign-out, the game returns to the separate guest-local inventory. When another account signs in, it loads that account's namespace or an empty cache; the previous user's backpack is not copied into the new user's cloud save.
 - [x] If an account already has a cloud save while unscoped guest inventory remains, the cloud save is restored to the account namespace and the guest inventory is preserved separately rather than silently merged/overwritten.
 - [ ] The account-scope isolation test is added to Browser Smoke; run Validate + Browser Smoke on the new exact head before marking this complete.
+
+- Follow-up CI diagnosis for the first isolation test attempt: run `42907263348` failed because the test read `adapter.capture()` while the game was still in its cinematic intro state; by design, capture returns null in that mode. It did not prove a storage namespace failure. The revised test seeds a valid walk-mode save through the adapter's normal restore path and reads the actual guest/account-specific localStorage keys after each scope transition.
