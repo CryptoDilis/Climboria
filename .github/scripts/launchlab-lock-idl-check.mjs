@@ -62,8 +62,10 @@ function checkAccounts(instruction, expected, name) {
     const [expectedName, signer, writable] = expected[i];
     const item = actual[i];
     if (normalizeName(item.name) !== normalizeName(expectedName)) fail(name + " account order mismatch at " + i + ": expected " + expectedName + ", got " + item.name);
-    if (Boolean(item.signer) !== signer || Boolean(item.writable) !== writable) {
-      fail(name + " signer/writable flags mismatch for " + expectedName);
+    const actualSigner = Boolean(item.signer ?? item.isSigner ?? false);
+    const actualWritable = Boolean(item.writable ?? item.isMut ?? false);
+    if (actualSigner !== signer || actualWritable !== writable) {
+      fail(name + " signer/writable flags mismatch for " + expectedName + "; live signer=" + actualSigner + " writable=" + actualWritable + "; SDK signer=" + signer + " writable=" + writable);
     }
   }
 }
