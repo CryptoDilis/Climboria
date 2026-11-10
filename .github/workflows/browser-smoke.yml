@@ -215,6 +215,8 @@ jobs:
               let btcProxySearchIntercepted=false;
               const btcSearchRequests=[];
               page.on('request',request=>{if(request.url().includes('/api/tokens/search')||request.url().includes('/tokens/v2/search'))btcSearchRequests.push(request.url());});
+              const selectedPoolRequests=[];
+              page.on('request',request=>{if(request.url().includes('/token-pairs/v1/solana/'))selectedPoolRequests.push(request.url());});
               await page.route('**/*tokens/search**',async route=>{
                 const requestUrl=new URL(route.request().url());
                 if(requestUrl.searchParams.get('query')!=='BTC')return route.continue();
@@ -230,10 +232,10 @@ jobs:
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
               await page.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
-                if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
-                if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
+                if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([quoteOnlyPair])});
+                if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+                if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}])}); }
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([mockPair])});
               });
               await page.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -258,6 +260,7 @@ jobs:
               const selectedMint=new URL(page.url()).searchParams.get('from');
               if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              if(!selectedPoolRequests.some(url=>url.endsWith('/'+mockMint)))throw new Error('Selected BTC chart did not use the chain-specific token-pairs endpoint: '+JSON.stringify(selectedPoolRequests));
               if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
               // A pool where the selected mint is only the quote side must never show the base token's (e.g. SOL) chart or metrics.
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarC1ock11111111111111111111111111111111',symbol:'QONLY',name:'Quote Only'}));
@@ -301,8 +304,8 @@ jobs:
               await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
               await mobileSwap.route('https://api.dexscreener.com/token-pairs/v1/solana/**',route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
+                if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([mobileMockPair])});
+                return route.fulfill({status:200,contentType:'application/json',body:'[]'});
               });
               await mobileSwap.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
