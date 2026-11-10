@@ -1,3 +1,12 @@
+### Latest checkpoint — 2026-11-10 (SPL Governance discriminator-width correction)
+
+- [x] Analyzed the first live proposal-account capture from run `42763348402`: ProgramData history and account capture completed, but the governance summary reported zero executions, so no proposal accounts were requested. The actual finalized transactions showed Borsh instruction data `EA==` for `ExecuteTransaction` (one byte, value 16) and `BQA...` for `CreateProgramGovernance` (first byte 5).
+- [x] Root cause: the governance summary incorrectly read its Borsh enum discriminator as a four-byte little-endian integer. SPL Governance serializes this enum discriminator as a single byte. This is distinct from the upgradeable-loader instruction encoding, which remains a four-byte little-endian discriminator.
+- [x] Corrected the governance decoder to read one byte and changed mock fixtures to match the actual SPL Governance encoding. Validate run `42764419669` on commit `4c27541b97ab9d8cf7d79be9b7e48997a04871bf`: SUCCESS.
+- [ ] Latest LaunchLab run `42764419641` on this head is running; at last inspection it was installing the temporary Solana RPC client. The corrected live governance event count and account batch are still pending.
+- [ ] **Next P0:** inspect the corrected capture. Confirm the governance summary recognizes the 39 known successful loader `ExecuteTransaction` events, requests their Proposal/Proposal-transaction accounts, decodes the account states, and verifies the embedded loader instructions against the current ProgramData and Program IDs.
+- [ ] No original `DeployWithMaxDataLen` was observed in the available ProgramData history. Original deployment date and exact deployed source lineage remain unresolved. PR #231 remains Draft and unmerged; no signing, simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (Fail-closed proposal evidence decoding)
 
 - [x] Hardened proposal decoding so an unavailable or unsuccessful RPC account batch returns `governance_proposal_account_evidence_unavailable`, never a misleading zero-error decoded status.
