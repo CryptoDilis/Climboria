@@ -88,7 +88,7 @@ function transactionDetails(tx) {
     logMessages: tx.meta?.logMessages ?? []
   };
 }
-export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized" }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 0 }]) }) {
+export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized" }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 1 }]) }) {
   const accountResult = await getAccount(rpc, authority);
   // Preserve explicit RPC value:null (account missing); nullish coalescing would
   // incorrectly fall back to the wrapper object and classify it as an account.
