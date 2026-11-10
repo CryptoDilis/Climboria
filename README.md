@@ -2667,3 +2667,32 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-11 — Active release handoff (P0: live DEX / Swap / Launchpad / account login)
+
+### User priority (authoritative)
+- Complete production-live DEX, secure live Swap, functional Launchpad, and enable all intended account login methods (Google, X, and email/password). This supersedes game-content polish as the immediate release priority.
+- Do not label quote previews, wallet connection, static Launchpad UI, or a code-only integration as production-live.
+
+### Verified repository / CI state
+- Repository: `CryptoDilis/Climboria`; default branch: `main`; latest main checkpoint before this entry: `a52497a06db7b0c132adce5de45d473596d829ac`.
+- Open draft PR #234, `codex/swap-order-binding-durable-object`, head `47fa08125048a9978dd6ea116172ab818425fefc`: server-bound Solana v0 order validation, taker Ed25519 signature verification, SQLite Durable Object one-time claim/replay protection, and opaque server-issued order token.
+- PR #234 Validate Climboria run `42875196438`: SUCCESS. Browser Smoke run `42875196759`: SUCCESS. Pages deployment on main checkpoint `42875593557`: SUCCESS.
+- Earlier Validate run `42874782026` failed in `order-store.test.mjs`: the test fake storage adapter exposed async `transaction()` but implementation called SQLite `transactionSync()` and `storage.kv`; the mismatch returned 503 in five tests. The later PR head aligns the test adapter with the SQLite API and adds an alarm-failure/no-persist test. Latest PR Validate and Browser Smoke runs are green; do not repeat the old test harness.
+- PR #233 remains an earlier draft execution-gate change; PR #232 records the authoritative release priority. PR #234 is not merged and must receive a proper security/code review before merge.
+
+### Production truth / blockers (do not claim live)
+- Main branch `dex/swap-proxy/wrangler.toml` still has placeholder rate-limit namespace `20261108`, and no `ORDER_STORE` Durable Object binding/migration; the PR #234 branch adds the SQLite binding and deploy-workflow checks.
+- Cloudflare production deployment is still unverified. Required GitHub Actions variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and encrypted secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `JUPITER_API_KEY` must be configured by the owner in GitHub/Cloudflare. Never request or commit secrets in chat/source.
+- Frontend `swap-config.js` remains `enabled: false`; Worker `EXECUTION_ENABLED = "false"`. Keep both off until review, Worker deployment/health/CORS/rate-limit verification, controlled Devnet order-sign-execute lifecycle tests, and independent security review pass.
+- DEX has provider-backed market discovery/quote preview, not yet proven full production order execution. Launchpad remains static/informational; no production launch backend has been verified. Wallet connect is not account login; Google, X, and email/password are not verified enabled.
+
+### Exact next tasks (continue in this order)
+1. Review PR #234 security-critical code and tests: Solana v0 parser/canonical encoding, required signer and taker signature, JupiterZ additional signer preservation, order expiry, atomic one-time claim, concurrent/replay behavior, uncertain upstream outcomes, DO binding/migration, and deployment workflow. Fix only evidence-backed defects; do not merge merely because CI is green.
+2. Obtain owner-configured Cloudflare Actions variable/secrets (without exposing values), deploy the Worker from the reviewed branch, and verify live `https://api.climboria.fun/health`, CORS, rate limiting, Durable Object readiness, and fail-closed execution state. If configuration is unavailable, record that as an external blocker rather than pretending deployment happened.
+3. Run controlled Devnet lifecycle tests with a dedicated test wallet and explicit owner approval; verify order creation, wallet signature, server-side binding, single execution, final status, replay rejection, expiry, and ambiguous-timeout recovery. No Mainnet execution while any gate is open.
+4. After Swap backend readiness, complete DEX exact-mint/market/chart validation and Launchpad production backend/creation lifecycle; then implement and verify Google, X, and email/password account authentication with secure session handling.
+5. Re-run Validate, Browser Smoke, deployment health checks, and update this README with commit/run IDs, verified results, unresolved blockers, and the next exact task.
+
+Last checked: 2026-11-11 02:44 Philippine time. This entry records verified source/CI state only; no Cloudflare secrets, deployment, Devnet transaction, Mainnet execution, or login provider was enabled by this checkpoint.
