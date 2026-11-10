@@ -364,6 +364,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     const onChain = field === "mintB" ? configInfo.mintB.toBase58() : String(configInfo[field]);
     if (String(apiConfig.key[field]) !== onChain) fail(`Fresh API / finalized GlobalConfig mismatch: ${field}`);
   }
+  if (platformInfo.restrictGlobalConfig) fail("Platform restricts GlobalConfig access; PlatformAllowConfig is not yet independently decoded and verified, so preparation is blocked");
   const platformCurveRule = await validatePlatformCurveRule({ raydium, sdk, platformInfo, input, configInfo });
   const curveFormula = validateConstantProductInitFormula({ ...amounts, migrateFee: configInfo.migrateFee.toString() });
 
