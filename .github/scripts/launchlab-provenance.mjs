@@ -3,6 +3,9 @@
  * Read-only Raydium LaunchLab provenance check.
  * Makes public HTTP/RPC reads only. Never signs, submits, or stores keys.
  */
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
 export const PROGRAMS = Object.freeze({
   mainnet: {
     launchpad: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
@@ -70,7 +73,7 @@ export async function runProvenanceCheck(fetchImpl = fetch) {
   }
   return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, pass: results.every(x => x.pass), results };
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const report = await runProvenanceCheck();
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
   if (!report.pass) process.exitCode = 1;
