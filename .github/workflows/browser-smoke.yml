@@ -554,8 +554,19 @@ jobs:
                   await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
-                await dex.locator('#closeDetail').tap();
-                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
+                const closeDetailButton=dex.locator('#closeDetail');
+                await closeDetailButton.scrollIntoViewIfNeeded();
+                const closeTapTarget=await closeDetailButton.evaluate(el=>{
+                  const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2));
+                  const hit=document.elementFromPoint(x,y);
+                  return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},visible:!!(r.width&&r.height),disabled:el.disabled,hitTag:hit?.tagName||null,hitId:hit?.id||null,hitClass:typeof hit?.className==='string'?hit.className:null,hitIsClose:!!hit?.closest?.('#closeDetail'),bodyClass:document.body.className,detailClass:document.querySelector('#tokenDetail')?.className};
+                });
+                if(!closeTapTarget.visible||closeTapTarget.disabled||!closeTapTarget.hitIsClose)throw new Error('Mobile close control is not receiving the tap at its visible center: '+JSON.stringify(closeTapTarget));
+                await closeDetailButton.tap();
+                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:8000}).catch(async error=>{
+                  const state=await dex.evaluate(()=>({bodyClass:document.body.className,detailClass:document.querySelector('#tokenDetail')?.className,closeButton:document.querySelector('#closeDetail')?.outerHTML,detailChartSrc:document.querySelector('#detailChart')?.getAttribute('src'),url:location.href}));
+                  throw new Error('Mobile close tap reached its target but did not dismiss token view: '+JSON.stringify({closeTapTarget,state})+'; '+error.message);
+                });
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
                 await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
                 await dex.waitForFunction(()=>document.querySelectorAll('#baseMobileCards a.base-mobile-market-card').length>0,null,{timeout:15000});
@@ -630,6 +641,10 @@ jobs:
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
+
+      - name: Test all six Swap major assets on desktop and mobile
+        timeout-minutes: 6
+        run: node .github/scripts/swap-major-assets-smoke.mjs
 
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
