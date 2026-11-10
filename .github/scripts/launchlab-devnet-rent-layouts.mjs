@@ -18,6 +18,22 @@ const METAPLEX_METADATA_SOURCE = "https://github.com/metaplex-foundation/mpl-tok
 const METAPLEX_CREATOR_SOURCE = "https://github.com/metaplex-foundation/mpl-token-metadata/blob/7ce760f9e010cb9819ffd7dd86986a44691bd1f8/programs/token-metadata/program/src/state/creator.rs";
 const METAPLEX_ALLOCATOR_SOURCE = "https://github.com/metaplex-foundation/mpl-token-metadata/blob/7ce760f9e010cb9819ffd7dd86986a44691bd1f8/programs/token-metadata/program/src/utils/metadata.rs";
 
+// Borsh/Anchor PoolState size derived from the pinned LaunchLab IDL:
+ // discriminator + epoch + five u8 fields + ten u64 fields + VestingSchedule
+ // (five u64) + seven pubkeys + token flag + one-byte enum + u64 + padding.
+export const LAUNCHLAB_POOL_STATE_SPACE =
+  8 + 8 + 5 + (10 * 8) + (5 * 8) + (7 * 32) + 1 + 1 + 8 + 54;
+
+// Metaplex MAX_DATA_SIZE and MAX_METADATA_LEN from the pinned upstream source.
+export const METAPLEX_MAX_DATA_SIZE =
+  4 + 32 + 4 + 10 + 4 + 200 + 2 + 1 + 4 + (5 * 34);
+export const METAPLEX_MAX_METADATA_LEN =
+  1 + 32 + 32 + METAPLEX_MAX_DATA_SIZE + 1 + 1 + 9 + 2 + 34 + 18 + 10 + 35 + 1;
+
+if (LAUNCHLAB_POOL_STATE_SPACE !== 421 || METAPLEX_MAX_DATA_SIZE !== 431 || METAPLEX_MAX_METADATA_LEN !== 607) {
+  throw new Error("Source-backed account layout arithmetic changed; re-review the pinned IDL and Metaplex source");
+}
+
 export const DEVNET_LAUNCH_RENT_LAYOUTS = Object.freeze({
   base_mint: Object.freeze({
     space: 82,
@@ -38,13 +54,13 @@ export const DEVNET_LAUNCH_RENT_LAYOUTS = Object.freeze({
     verificationScope: "Pinned SPL Token interface source defines Account::LEN = 165",
   }),
   pool_state: Object.freeze({
-    space: 421,
+    space: LAUNCHLAB_POOL_STATE_SPACE,
     purpose: "Raydium Launchpad PoolState account",
     sourceRef: LAUNCHPAD_IDL_SOURCE + "#L1",
     verificationScope: "8-byte Anchor discriminator plus Borsh PoolState fields from the pinned Launchpad IDL: 8-byte epoch, five u8 fields, ten u64 fields, five-u64 VestingSchedule, seven pubkeys, two one-byte enum/flag fields, one u64, and 54-byte padding",
   }),
   metadata_account: Object.freeze({
-    space: 607,
+    space: METAPLEX_MAX_METADATA_LEN,
     purpose: "Metaplex Token Metadata PDA",
     sourceRef: METAPLEX_METADATA_SOURCE + "#L20",
     verificationScope: "Derived MAX_METADATA_LEN = 607 from the cited upstream source: MAX_DATA_SIZE 431 using five creators of 34 bytes; allocator uses MAX_METADATA_LEN. Verify deployed Devnet metadata program revision before treating as deployment-exact",
