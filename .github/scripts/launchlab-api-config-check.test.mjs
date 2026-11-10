@@ -47,6 +47,7 @@ test("rejects fee totals above the protocol denominator", () => {
 
 test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock destinations from pinned SDK offsets", () => {
   const globalData = Buffer.alloc(371);
+  globalData.writeBigUInt64LE(123n, 19);
   const platformData = Buffer.alloc(944);
   const { Keypair } = require("@solana/web3.js");
   const addresses = Array.from({ length: 11 }, () => Keypair.generate().publicKey);
@@ -59,6 +60,7 @@ test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock des
     platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
     mintB: "So11111111111111111111111111111111111111112",
   });
+  assert.equal(result.globalConfigDestinations.migrateFee, "123");
   assert.equal(result.globalConfigDestinations.protocolFeeOwner, addresses[0].toBase58());
   assert.equal(result.globalConfigDestinations.migrateFeeOwner, addresses[1].toBase58());
   assert.equal(result.globalConfigDestinations.migrateToAmmWallet, addresses[2].toBase58());
