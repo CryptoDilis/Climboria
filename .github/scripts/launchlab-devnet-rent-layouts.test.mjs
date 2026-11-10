@@ -6,9 +6,9 @@ test("records source-backed fixed SPL Token, LaunchLab PoolState, and Metaplex m
   assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.base_mint.space, 82);
   assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.base_vault.space, 165);
   assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.quote_vault.space, 165);
-  assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.pool_state.space, 421);
+  assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.pool_state.space, 429);
   assert.equal(DEVNET_LAUNCH_RENT_LAYOUTS.metadata_account.space, 607);
-  assert.equal(LAUNCHLAB_POOL_STATE_SPACE, 421);
+  assert.equal(LAUNCHLAB_POOL_STATE_SPACE, 429);
   assert.equal(METAPLEX_MAX_DATA_SIZE, 431);
   assert.equal(METAPLEX_MAX_METADATA_LEN, 607);
   for (const layout of Object.values(DEVNET_LAUNCH_RENT_LAYOUTS)) {
@@ -25,7 +25,7 @@ test("maps only the exact missing writable accounts to their source-backed layou
     { name: "quote_vault", address: "QuoteVault11111111111111111111111111111111" },
     { name: "metadata_account", address: "Metadata1111111111111111111111111111111111" },
   ]);
-  assert.deepEqual(specs.map(x => x.space), [82, 421, 165, 165, 607]);
+  assert.deepEqual(specs.map(x => x.space), [82, 429, 165, 165, 607]);
   assert.ok(specs.every(x => x.sourceRef && x.verificationScope));
   assert.equal(specs[4].supportingSourceRefs.length, 2);
 });
