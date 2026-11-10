@@ -5,6 +5,8 @@ import {
   captureDevnetMetaplexProgramProvenance,
   inspectProgramDataHistory,
   summarizeUpgradeableLoaderHistory,
+  summarizeMetaplexGovernanceHistory,
+  METAPLEX_GOVERNANCE_PROGRAM_ID,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
   BPF_UPGRADEABLE_LOADER_ID,
@@ -332,4 +334,46 @@ test("decodes ProgramData loader operations and does not claim deployment from u
     governedAccount: programData, currentAuthority: oldAuthority, newAuthority,
   });
   assert.equal(lifecycle.events[2].accountRoles.additionalBytes, 1440);
+});
+
+test("maps Metaplex program-governance creation and executed upgrade proposal accounts", () => {
+  const realm = "Realm1111111111111111111111111111111111";
+  const governance = "Governance11111111111111111111111111111";
+  const currentAuthority = "Authority111111111111111111111111111111";
+  const proposal = "Proposal111111111111111111111111111111";
+  const proposalTransaction = "ProposalTx11111111111111111111111111111";
+  const loader = "BPFLoaderUpgradeab1e11111111111111111111111";
+  const governanceHistory = summarizeMetaplexGovernanceHistory([
+    {
+      slot: 100, signature: "create-governance", transactionError: null,
+      governanceLogs: ["Program log: GOVERNANCE-INSTRUCTION: CreateProgramGovernance { transfer_upgrade_authority: true }"],
+      instructionEvidence: [{
+        programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
+        data: Buffer.from([5, 0, 0, 0]).toString("base64"), dataEncoding: "base64",
+        accounts: [realm, governance, METAPLEX_TOKEN_METADATA_PROGRAM_ID, programDataAddress, currentAuthority, "TokenOwnerRecord", "Payer", loader, "System", "CreateAuthority"],
+      }],
+    },
+    {
+      slot: 200, signature: "execute-upgrade", transactionError: null,
+      instructionEvidence: [{
+        programId: METAPLEX_GOVERNANCE_PROGRAM_ID,
+        data: Buffer.from([16, 0, 0, 0]).toString("base64"), dataEncoding: "base64",
+        accounts: [governance, proposal, proposalTransaction, loader, programDataAddress, METAPLEX_TOKEN_METADATA_PROGRAM_ID, "Buffer", "Spill", "Rent", "Clock", governance],
+      }],
+    },
+  ]);
+  assert.equal(governanceHistory.events.length, 2);
+  assert.deepEqual(governanceHistory.events[0], {
+    slot: 100, signature: "create-governance", instruction: "createProgramGovernance",
+    realm, programGovernance: governance, governedProgram: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
+    programData: programDataAddress, currentUpgradeAuthority: currentAuthority,
+    tokenOwnerRecord: "TokenOwnerRecord", payer: "Payer", createAuthority: "CreateAuthority",
+    transferUpgradeAuthority: true, success: true, transactionError: null,
+  });
+  assert.deepEqual(governanceHistory.events[1], {
+    slot: 200, signature: "execute-upgrade", instruction: "executeTransaction",
+    governance, proposal, proposalTransaction, innerProgramId: loader,
+    innerProgramData: programDataAddress, innerGovernedProgram: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
+    innerBuffer: "Buffer", innerUpgradeAuthority: governance, success: true, transactionError: null,
+  });
 });
