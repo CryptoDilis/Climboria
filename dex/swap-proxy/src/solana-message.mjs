@@ -80,7 +80,6 @@ export function decodeSolanaTransaction(encoded) {
     const accountIndexes = [...take(bytes, cursor, accountCount, "instruction account indexes")];
     const dataLength = readShortVec(bytes, cursor, "instruction data length");
     const data = take(bytes, cursor, dataLength, "instruction data");
-    if (programIdIndex >= staticKeyCount) throw new Error("Instruction program index is outside static account keys");
     instructions.push({ programIdIndex, accountIndexes, data });
   }
 
@@ -101,9 +100,10 @@ export function decodeSolanaTransaction(encoded) {
   const totalKeyCount = staticKeyCount + loadedKeyCount;
   if (totalKeyCount > 256) throw new Error("Too many resolved transaction account keys");
   for (const instruction of instructions) {
+    if (instruction.programIdIndex >= totalKeyCount) throw new Error("Instruction program index is outside resolved account-key range");
     if (instruction.accountIndexes.some(index => index >= totalKeyCount)) throw new Error("Instruction account index is outside resolved account-key range");
   }
-  return { version, signatures, requiredSignatures, staticAccountKeys, recentBlockhash, instructions, addressTableLookups, totalKeyCount };
+  return { version, signatures, requiredSignatures, readonlySigned, readonlyUnsigned, staticAccountKeys, recentBlockhash, instructions, addressTableLookups, totalKeyCount };
 }
 
 export async function hashSolanaMessage(encoded) {
@@ -115,4 +115,57 @@ export async function hashSolanaMessage(encoded) {
   if (cursor.offset >= bytes.length) throw new Error("Missing Solana message");
   const digest = await crypto.subtle.digest("SHA-256", bytes.subarray(cursor.offset));
   return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+
+/**
+ * Reconstruct Solana's canonical account order from externally supplied,
+ * already-authenticated ALT account contents. The caller MUST independently
+ * verify the lookup-table account owner, state, slot validity, and provenance
+ * from trusted RPC before supplying tables. This helper performs no RPC.
+ *
+ * Solana appends ALL loaded writable keys across tables, then ALL loaded
+ * readonly keys, rather than interleaving writable/readonly per table.
+ */
+export function reconstructAccountMetas(parsed, resolvedTables = []) {
+  if (!parsed || !Array.isArray(parsed.staticAccountKeys) || !Array.isArray(parsed.addressTableLookups)) {
+    throw new Error("Invalid parsed Solana transaction");
+  }
+  if (!Array.isArray(resolvedTables) || resolvedTables.length !== parsed.addressTableLookups.length) {
+    throw new Error("Every lookup table requires a trusted resolution");
+  }
+  const key = (value, label) => {
+    if (!(value instanceof Uint8Array) || value.length !== 32) throw new Error(`Invalid ${label} public key`);
+    return [...value].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  };
+  const staticKeys = parsed.staticAccountKeys.map((value, i) => ({ key: key(value, "static"), signer: i < parsed.requiredSignatures, writable: i < parsed.requiredSignatures - parsed.readonlySigned || (i >= parsed.requiredSignatures && i < parsed.staticAccountKeys.length - parsed.readonlyUnsigned), source: "static" }));
+  const writable = [];
+  const readonly = [];
+  parsed.addressTableLookups.forEach((lookup, i) => {
+    const table = resolvedTables[i];
+    if (!table || key(table.accountKey, "table") !== key(lookup.accountKey, "lookup table") || !Array.isArray(table.addresses)) {
+      throw new Error("Lookup table identity mismatch or missing trusted addresses");
+    }
+    const seen = new Set();
+    for (const [indexes, target, isWritable] of [[lookup.writableIndexes, writable, true], [lookup.readonlyIndexes, readonly, false]]) {
+      for (const index of indexes) {
+        if (!Number.isInteger(index) || index < 0 || index >= table.addresses.length || seen.has(index)) throw new Error("Invalid or duplicated lookup table index");
+        seen.add(index);
+        target.push({ key: key(table.addresses[index], "lookup address"), signer: false, writable: isWritable, source: "lookup" });
+      }
+    }
+  });
+  const metas = [...staticKeys, ...writable, ...readonly];
+  if (metas.length !== parsed.totalKeyCount) throw new Error("Resolved account key count mismatch");
+  const seenKeys = new Set();
+  for (const meta of metas) {
+    if (seenKeys.has(meta.key)) throw new Error("Duplicate resolved account public key");
+    seenKeys.add(meta.key);
+  }
+  const instructions = parsed.instructions.map(ix => {
+    const program = metas[ix.programIdIndex];
+    if (!program || program.writable || program.signer) throw new Error("Instruction program account must be readonly and non-signer");
+    return { program, accounts: ix.accountIndexes.map(index => metas[index]), data: ix.data };
+  });
+  return { metas, instructions };
 }
