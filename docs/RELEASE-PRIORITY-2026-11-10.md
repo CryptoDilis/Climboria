@@ -27,7 +27,7 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 
 ## Current known blockers / constraints
 - Portfolio values/claims are intentionally unavailable/disabled until official token mint, trusted pricing, authenticated player identity, server-authoritative rewards ledger, replay-safe settlement and verifiable history exist.
-- Swap execution was previously kept fail-closed pending production Worker deployment, secrets/variables, devnet E2E and security review.
+- Swap Worker deployment was previously attempted twice and Worker tests/configuration/secrets checks passed, but post-deploy health/CORS checks failed because the runner could not resolve `api.climboria.fun`. Recorded root cause is DNS/custom-domain activation or authoritative nameserver delegation; do not repeat deployment or edit Worker source blindly. First verify Cloudflare zone Active, registrar nameservers, `api.climboria.fun` DNS/Custom Domain and certificate, then rerun health/CORS. Public execution remains fail-closed until that and devnet E2E/security pass.
 - DEX public market data and quote-preview UI do not prove production execution readiness.
 - Launchpad must not show a successful live launch unless the actual chain transaction and resulting token/profile are verified.
 - Google/X credentials, production redirects, SMTP and real authentication provider tests remain separate account-readiness gates.
@@ -36,7 +36,7 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 ## Handoff / execution log
 - **2026-11-10:** Portfolio PR #230 is open/draft. Validate run `42735351120` succeeded. Browser Smoke `42735350994`: homepage/Portfolio assertions, Worker proxy, fail-closed execution, Swap, DEX quote preview, desktop/mobile layout and market-state tests (steps 1–14) succeeded. Gameplay step 15 was cancelled; screenshot artifact `13727025693` uploaded. This is not a full Browser Smoke pass.
 - **Exact next job:** rerun Browser Smoke on latest PR #230 head `32cf1770de810f137e6e49c201d1e785d75534db`; if gameplay fails, inspect completed logs and diagnose root cause before a targeted fix. Review screenshot artifact. Update PR and README with final results.
-- **After P0:** inspect the current open DEX productionization and Swap redesign PRs/branches, workflow results, deployment blockers and existing code before making changes. Do not duplicate or overwrite in-flight work. Then audit Launchpad end-to-end implementation and create a concrete branch/test plan for missing production pieces.
+- **After P0:** Swap redesign is tracked in open PR #219 (head `812531a7a790a755f2138f1d9f9158583620d6f5`); do not duplicate its work. Its recorded blocker is DNS resolution for `api.climboria.fun`, not a Worker test/build failure. DEX productionization is tracked in issue #220. Inspect their latest workflow results and current code before edits. Then audit Launchpad end-to-end implementation and create a concrete branch/test plan for missing production pieces.
 - **Every task handoff must record:** task, branch, exact commit, workflow run IDs and conclusions, tests/screenshots reviewed, unresolved blockers, and one exact next job.
 
 ## Master checklist
