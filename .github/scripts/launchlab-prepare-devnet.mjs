@@ -199,8 +199,8 @@ export function expectedInitializeV2Accounts({ sdk, input, programId, platformCu
   const [eventAuthority] = PublicKey.findProgramAddressSync([Buffer.from("__event_authority")], programId);
 
   // Ordered from the pinned official Anchor IDL initialize_v2 account list.
-  // The final IDL "program" entry is the compiled instruction's programIdIndex,
-  // not an entry in accountKeyIndexes.
+  // The final IDL "program" entry is included as the final SDK account meta;
+  // the compiled instruction programIdIndex independently points to that same program key.
   const accounts = [
     { name: "payer", pubkey: creator, isSigner: true, isWritable: true },
     { name: "creator", pubkey: creator, isSigner: false, isWritable: false },
