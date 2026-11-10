@@ -16,8 +16,6 @@ on:
       - ".github/scripts/launchlab-devnet-builder-smoke.mjs"
       - ".github/scripts/launchlab-devnet-simulation-preflight.mjs"
       - ".github/scripts/launchlab-devnet-simulation-preflight.test.mjs"
-      - ".github/scripts/launchlab-devnet-simulation-preflight.mjs"
-      - ".github/scripts/launchlab-devnet-simulation-preflight.test.mjs"
       - ".github/scripts/launchlab-lock-idl-check.mjs"
       - ".github/scripts/launchlab-lock-idl-check.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
