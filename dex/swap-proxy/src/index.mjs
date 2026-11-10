@@ -300,11 +300,24 @@ async function handleExecute(request, env) {
     });
     return response.ok;
   };
-  const response = await upstream("/execute", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload)
-  }, env);
+  let response;
+  try {
+    response = await upstream("/execute", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    }, env);
+  } catch {
+    // A transport timeout/reset can happen after Jupiter has accepted the
+    // transaction. Never leave the UI with a generic retry-looking error.
+    // The order was already atomically claimed, so it remains replay-locked
+    // even if this best-effort terminal-state write also fails.
+    const settlementRecorded = await settle("uncertain").catch(() => false);
+    return json({
+      error: "Jupiter execution outcome is unknown; the order is locked against replay. Check wallet activity before taking further action.",
+      settlementRecorded
+    }, 502);
+  }
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     await settle("uncertain");
