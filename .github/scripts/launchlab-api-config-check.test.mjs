@@ -41,7 +41,6 @@ test("rejects fee totals above the protocol denominator", () => {
 test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock destinations from pinned SDK offsets", () => {
   const globalData = Buffer.alloc(371);
   const platformData = Buffer.alloc(944);
-  const wallet = (n) => Keypair.generate().publicKey;
   const { Keypair } = require("@solana/web3.js");
   const addresses = Array.from({ length: 11 }, () => Keypair.generate().publicKey);
   const putKey = (buffer, offset, key) => key.toBuffer().copy(buffer, offset);
