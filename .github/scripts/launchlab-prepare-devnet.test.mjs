@@ -232,6 +232,26 @@ test("rejects a tampered initializeV2 pool PDA or account order", async () => {
   };
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /account mismatch at position 5/);
 });
+test("rejects a substituted initializeV2 account public key even when account order is unchanged", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    const instruction = tx.message.compiledInstructions[0];
+    const index = instruction.accountKeyIndexes[2];
+    tx.message.staticAccountKeys[index] = new PublicKey("11111111111111111111111111111112");
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /account mismatch at position 2 \(global_config\)/);
+});
+test("rejects an initializeV2 readonly config account promoted to writable in the compiled message", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    tx.message.header.numReadonlyUnsignedAccounts -= 1;
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /signer\/writable privilege mismatch at global_config/);
+});
 test("rejects a serialized initializeV2 curve amount that differs from reviewed input", async () => {
   const mock = client();
   mock.raydium.launchpad.createLaunchpad = async options => ({
