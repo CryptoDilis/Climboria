@@ -3422,3 +3422,19 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 3. Launchpad: resolve LP Lock Devnet IDL, custody/governance and program provenance; establish safe migration scale and Fee Key NFT custody before implementing real launch/migration transactions.
 4. Login: configure real Supabase Site URL/redirects, SMTP/email confirmation, Google/X OAuth and SIWS/SIWE callbacks; test controlled accounts and actual save persistence/two-device conflicts. Guest remains disabled until Turnstile + Supabase CAPTCHA and safe account linking are ready.
 5. Preserve physical Redmi 14 5G acceptance as a separate outstanding check; automated viewport tests do not replace it.
+
+
+## 2026-11-11 — Base DEX live-search expansion checkpoint
+
+- [x] Added dynamic Base name/symbol discovery and exact ERC-20 contract lookup in `dex/index.html`, commit `cbaa9fc2a981eace2df1699b169d787f03cdb3a1`. Search results augment (not replace) the finite boot-time query sample; exact contract lookup keeps only pools where the requested contract is the base token.
+- [x] Added deterministic Base search fixtures to Browser Smoke in commit `50e911e1dc1ae903f553fc63aa1f314811a132c4` for both symbol/name and exact-contract search.
+- [x] Validate run `42920596450` on exact code/test head `50e911e1dc1ae903f553fc63aa1f314811a132c4`: **SUCCESS**.
+- [ ] Browser Smoke run `42920596428` on the same exact head is **in progress**. The preceding run `42920551244` on code head `cbaa9fc2a981eace2df1699b169d787f03cdb3a1` was cancelled by the subsequent test-fixture synchronization while Playwright was installing; it is not counted as a pass or failure. Wait for run `42920596428` and inspect its exact job result before marking the new feature accepted.
+- [!] This is live provider-backed search code, but production endpoint health/coverage has not been independently monitored. Base market indexing is still not exhaustive. No production DEX uptime claim.
+
+### Exact next tasks
+1. Finish and inspect Browser Smoke `42920596428`; diagnose the exact step if it fails and record screenshot artifact if successful.
+2. Continue DEX live provider/pair/chart verification, rate/latency/fallback handling and Base discovery quality without claiming exhaustive indexing.
+3. Continue Swap independent ALT/instruction review and controlled Devnet lifecycle; keep both execution kill switches off.
+4. Resolve Launchpad LP Lock IDL/custody/program provenance and migration constraints.
+5. Complete real Supabase provider callbacks and controlled account/device acceptance; automated fixture coverage does not make login production-live.
