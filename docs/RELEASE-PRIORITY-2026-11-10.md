@@ -892,3 +892,24 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 4. Resolve PR #231 Devnet LP Lock IDL, fee-receiver custody/governance, deployed-program provenance and migration scale/NFT custody. Keep Launchpad creation/migration disabled.
 5. Implement real Guest/email/password/Google/X account sessions with a selected provider and verify each flow; wallet connection is not login.
 
+
+
+## 2026-11-11 — Corrected PR #234 CI discovery; run logs inspected
+
+- Correction to the prior audit: querying workflow runs by the PR's current source SHA alone returned zero, but that was an incomplete query strategy. PR-triggered Actions runs were present under the branch query and were associated with PR #234. GitHub records their workflow `head_sha` as the PR event's synthetic/merge-side commit, not the current source branch SHA. Do not use the exact-SHA runs query alone to conclude no PR runs exist.
+- Inspected **Validate Climboria run 42880044395** (job 130053552425): job SUCCESS. Checkout log says `HEAD is now at 7253463 Merge 32ec6caee34e37a9f4d2afd0b491c840abc66034 into 9dadab2299cd83679098f8879cb929fc68aec8e5`. Worker Node suite: **47 tests, 47 passed, 0 failed**. Wrangler 4.36.0 Durable Object deploy dry-run step completed; the overall job passed. Homepage/launch-copy and inline JavaScript audits also completed successfully.
+- Inspected **Browser Smoke run 42880044279** (job 130053555537): job SUCCESS; all listed steps completed, including homepage CTAs/navigation, proxy and fail-closed checks, standalone Swap, DEX market/quote-preview shell, DEX history/market synchronization, mobile 390px/360px layouts, provider-error/empty states, and Jarrell's Peak desktop/mobile gameplay smoke. Browser log confirms local DEX state/history tests passed and screenshots artifact uploaded.
+- **Crucial scope limit:** the tested PR code commit was `32ec6caee34e37a9f4d2afd0b491c840abc66034`, merged for CI with main snapshot `9dadab2299cd83679098f8879cb929fc68aec8e5`. Current PR #234 head is `7f5d3451c7c99356fd46502691f0c24f92a96ade`. A fresh GitHub compare shows current head is **5 commits ahead** of tested `32ec6ca`, with changes to `.github/workflows/validate-climboria.yml`, `dex/swap-proxy/src/index.mjs`, and `dex/swap-proxy/test/worker.test.mjs`. The five newer commits add transport-failure uncertainty handling, tests for ambiguous execution and failed settlement persistence, and manual validation dispatch. Therefore the successful runs are real and useful, but **do not validate the current PR head**.
+- The current PR head has no exact-SHA check runs. PR #234 remains open/draft and mergeable=false; current compare at this checkpoint remains 42 ahead / 39 behind main (merge base `28180c2a277e0c4bd093a40462032e7f536989e6`). PR #231 remains open/draft, mergeable=false, 350 ahead / 78 behind main (merge base `9709b0301c97445e05c1ac0dec6b4c7ae1ade4ed`).
+- PR #234 has no submitted review entries or inline review comments at the time checked. Independent security review is still outstanding.
+- Main frontend `swap-config.js` remains `proxyEnabled=true`, `enabled=false`; Worker config remains `EXECUTION_ENABLED=false`. The Worker is documented as prepared but not deployed. Homepage auth still has only wallet connection enabled; X/Google OAuth and email/password auth are disabled.
+- No source code was changed, no workflow was dispatched, and no deployment or chain transaction was performed during this continuation.
+
+### Exact next job
+1. Run **Validate Climboria** and **Climboria Browser Smoke Test** against the current PR #234 head `7f5d3451c7c99356fd46502691f0c24f92a96ade` (or the latest head if it advances). Confirm the workflow checkout merge commit contains that exact source head. The Validate workflow now has `workflow_dispatch`; the connected integration still has no dispatch operation.
+2. Specifically inspect new tests/branches for transport timeout, Jupiter HTTP non-2xx, and failed Durable Object uncertainty settlement. Confirm replay remains locked if settlement persistence fails. Do not infer those new cases are covered by the earlier 47-test run; its checkout predates the 5 commits.
+3. Reconcile PR #234 with current main in a network-enabled Git worktree, then rerun both workflows on the integrated head. Do not merge while it remains unreviewed/diverged.
+4. Complete independent security review (including ALT lookup/lifecycle and aggregator instruction semantics) and controlled Devnet lifecycle; only then consider Worker deployment. Keep both execution kill switches off.
+5. Resolve PR #231 LP Lock IDL, fee receiver custody/governance, deployed program provenance and migration scale/NFT custody. Keep Launchpad creation/migration disabled.
+6. Implement and verify real Guest/email/password/Google/X account sessions. Wallet connection is not account login.
+
