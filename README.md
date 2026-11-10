@@ -3296,3 +3296,21 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] The account-scope isolation test is added to Browser Smoke; run Validate + Browser Smoke on the new exact head before marking this complete.
 
 - Follow-up CI diagnosis for the first isolation test attempt: run `42907263348` failed because the test read `adapter.capture()` while the game was still in its cinematic intro state; by design, capture returns null in that mode. It did not prove a storage namespace failure. The revised test seeds a valid walk-mode save through the adapter's normal restore path and reads the actual guest/account-specific localStorage keys after each scope transition.
+
+
+## 2026-11-11 — Auth redirect allow-list alignment
+
+- [x] Verified the Supabase project is ACTIVE_HEALTHY; the existing `player_profiles` and `player_saves` tables both have RLS enabled. Applied migration `20261110205612_auth_profile_acl_rls_hardening` is present in remote migration history. Fresh Supabase Security Advisor: **0 findings**; Performance Advisor: **0 findings**.
+- [x] Re-read current Supabase Auth Redirect URLs guidance. Supabase requires `redirectTo` destinations to match the project URL Configuration allow-list; Web3 additionally checks the URL where the wallet signs. The root URL is the simplest common target for OAuth, email confirmation, and Web3: `https://climboria.fun/` (with trailing slash).
+- [x] Found Auth UI was requesting query-suffixed destinations (`/?auth=callback` and `/?auth=confirmed`), which unnecessarily required additional allow-list entries and disagreed with the documented root URL. On isolated follow-up branch `codex/auth-redirect-allowlist-fix-2026-11-11`, consolidated both email confirmation and OAuth redirect options to `AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString()`. `detectSessionInUrl: true` remains enabled so Supabase can process its returned auth tokens/code.
+- [x] Added Validate assertions to require both flows use the shared root URL and reject the old query-suffixed paths.
+- [x] Kept changes isolated from the currently running Auth Browser Smoke on PR #236; no in-flight test was cancelled.
+- [!] Code change is not provider activation. Dashboard-side Site URL/redirect allow-list, Google and X OAuth credentials, Web3 providers, SMTP/email confirmation, CAPTCHA/Turnstile and rate limits remain to be configured and tested. Do not claim production account login is live.
+- [!] The Auth cloud-save adapter still needs real authenticated account tests: load and save a controlled account, verify cross-device optimistic conflict handling, and confirm sign-out stops cloud writes. The CI Browser Smoke on PR #236 at `0e2659688106a4a8ebbce38e2cc50b8976085ae3` was still running its Jarrell's Peak desktop/mobile step when this note was written; only Validate `42907528940` was confirmed successful on that exact head.
+
+### Exact next task
+1. Open a small follow-up PR from `codex/auth-redirect-allowlist-fix-2026-11-11` into `codex/supabase-auth-hardening-2026-11-11`; verify Validate and Browser Smoke on the redirect-fix head.
+2. Let PR #236's existing Browser Smoke `42907528744` finish; inspect its terminal gameplay step and screenshots. Do not count it as completed until conclusion is SUCCESS.
+3. In Supabase Dashboard set the Site URL and exact additional redirect URL to `https://climboria.fun/`; configure provider credentials/toggles and test email confirmation/password, Google, X, Solana SIWS, Ethereum SIWE, session restore and local sign-out with real controlled accounts. Provider-console callback URI remains the Supabase Auth callback shown in the Dashboard, not the app redirect.
+4. Test the account cloud-save lifecycle, including cross-device conflict behavior and guest/account backpack isolation. Keep unauthenticated play local-only and guest signup disabled until CAPTCHA and safe account-linking are ready.
+5. Continue Swap PR #235 security review/Devnet/deployment gates and Launchpad IDL/custody gates independently. Do not enable Swap execution or Launchpad signing/migration from a UI-only or dry-run success.
