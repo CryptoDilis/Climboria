@@ -3385,3 +3385,17 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 3. Continue Swap P0: independent ALT/instruction semantics review, controlled Devnet order/sign/execute/confirm plus replay/timeout/uncertain-settlement tests, then Cloudflare DO migration, rate-limit namespace, secrets, health/TLS/CORS/monitoring/rollback and quote-only deployment. Keep both execution kill switches closed until approval.
 4. Continue Launchpad P0: resolve Devnet LP Lock IDL and custody/governance evidence, deployed bytecode provenance and migration scale/NFT custody; only then build and verify actual create/launch/migration flows.
 5. Verify each real Auth provider callback, email confirmation/password, OAuth, SIWS/SIWE, session restore/logout, and actual authenticated save load/insert/update/two-device conflict before calling login live.
+
+
+## 2026-11-11 — DEX token-detail pool identity guard
+
+- [x] Reviewed the token-detail lookup in `dex/index.html` on PR #236. DexScreener's token endpoint can return pools where the requested mint is either the base or quote token, while Climboria's detail renderer and chart treat `baseToken` as the selected token and display `priceUsd` as its USD price.
+- [x] Targeted fix committed as `05440e4975c06210230ae79cc768d333c833721c`: token-detail pools are now restricted to rows whose `baseToken.address` exactly matches the requested mint. Quote-side-only pools are not misattributed to the selected token. If no base-side pool exists, the existing no-pool state is shown instead of fabricated/inverted metadata.
+- [ ] Validate and Browser Smoke for exact new head `05440e4975c06210230ae79cc768d333c833721c` are pending; do not claim this guard is tested until those workflows finish. The prior exact-head Validate `42917953806` passed on parent `55b8693e128eed3ee20ead5f55bc5c19d7397cd6`; prior Browser Smoke `42917953918` was cancelled before Jarrell's Peak gameplay acceptance.
+- [ ] PR #236 remains draft. Production OAuth/provider settings, real controlled-account login, actual authenticated cloud-save tests and physical Redmi acceptance remain outstanding.
+
+### Exact next tasks
+1. Inspect Validate and Browser Smoke triggered by `05440e4975c06210230ae79cc768d333c833721c`; if Browser Smoke is cancelled again, identify the competing run/concurrency cause and obtain one completed exact-head run.
+2. Add a deterministic browser fixture covering both a matching base-side pool and a quote-side-only pool for the selected mint, and assert the quote-side pool is never rendered as that token's detail/chart.
+3. Continue DEX provider coverage and real-pair chart verification, clearly separating the current finite Base search sample from exhaustive market indexing.
+4. Continue Swap R1/R2/R3/R4 blockers documented in PR #235; keep both execution kill switches off. Continue Launchpad custody/program/migration gates, then complete real Auth provider acceptance.
