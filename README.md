@@ -2797,3 +2797,16 @@ For every integrated asset or borrowed technique, record:
 - [x] Added `workflow_dispatch` to Validate Climboria so maintainers can manually run the complete test suite against the selected PR branch from GitHub Actions. This addresses the practical trigger gap where connector-authored commits did not result in a fresh run.
 - [ ] The available GitHub connection has no workflow-dispatch action, so I cannot invoke that manual run here. A maintainer must select branch `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow. Confirm the run checks out the latest branch SHA before accepting its result.
 - [ ] Exact next task remains: run validation on the latest head, inspect full TAP output, then continue trusted RPC ALT fetch/context binding and semantic instruction allowlists.
+
+
+## 2026-11-11 — Trusted server-side ALT RPC resolver foundation
+
+- [x] Added `dex/swap-proxy/src/solana-rpc.mjs` with a server-configured HTTPS endpoint only; no browser-controlled RPC URL parameter exists. The helper batches all transaction ALT keys into one `getMultipleAccounts` request at confirmed/finalized commitment.
+- [x] Binds lookup table identity by request order and validates JSON-RPC version/ID, response context slot, exact returned account count, account owner, executable flag, base64 encoding, and canonical ALT state using the existing decoder.
+- [x] Rejects duplicate ALT account keys, invalid commitment/minimum context slot, incomplete or failed RPC responses, malformed JSON/base64, oversized responses (128 KiB streaming cap), and endpoint URLs that are not public HTTPS. RPC call timeout is 8 seconds.
+- [x] Added mocked-RPC tests for successful identity/context binding, commitment/minContextSlot, endpoint validation, duplicate keys, bad owner/executable, malformed/underspecified responses, invalid base64 and oversized payload.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md` to document the planned server-only `SOLANA_RPC_URL` binding and explicit not-yet-integrated boundary.
+- [ ] **Verification pending:** no GitHub Actions run has appeared for this new module/test suite. The previous Validate failure `42852777038` is on old head `964c0a2a0a741dcd1fc56c648a01c077d48da125`; it had 38 passing / 2 fixture failures, which have since been corrected. No green run exists for the current branch.
+- [ ] **Integration pending:** helper is not imported by `src/index.mjs` and is not called from `/api/swap/execute`. Do not configure or accept an RPC endpoint from client input. Next implementation: wire a server-owned `SOLANA_RPC_URL` into a dedicated validation service without opening execution, then implement program-specific instruction semantics and immutable order-wallet-message binding.
+- [ ] **Exact next task:** obtain manual Validate run on current branch `codex/swap-semantic-execution-gate`; inspect all TAP tests (including `solana-rpc.test.mjs`). Then implement a fail-closed server-side semantic validator consuming the trusted ALT results, with allowlisted program IDs/instruction layouts and exact mint/authority/destination/amount constraints.
+- Execution remains hard-disabled; no Worker deployment, live RPC provider verification, wallet signing, transaction submission, or production trading.
