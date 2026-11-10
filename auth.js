@@ -4,6 +4,8 @@
   // Publishable key is intended for browser use. Never place a service_role or secret key here.
   const SUPABASE_URL = 'https://unadepiwbovblkfjlksk.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_5DTna9vCafWt4YEbkSSaAA_W0hEDiUK';
+  // Use the exact site root so email, OAuth, and Web3 flows share one allow-listed origin URL.
+  const AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString();
   const authStatus = document.getElementById('authStatus');
   const authEmailForm = document.getElementById('authEmailForm');
   const emailInput = document.getElementById('authEmail');
@@ -151,7 +153,7 @@
         const { data, error } = await authClient.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: new URL('/?auth=confirmed', window.location.origin).toString() }
+          options: { emailRedirectTo: AUTH_REDIRECT_URL }
         });
         if (error) throw error;
         if (data.session) renderSession(data.session);
@@ -171,7 +173,7 @@
     try {
       const { error } = await authClient.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: new URL('/?auth=callback', window.location.origin).toString() }
+        options: { redirectTo: AUTH_REDIRECT_URL }
       });
       if (error) throw error;
       setStatus('Redirecting to ' + (provider === 'x' ? 'X' : 'Google') + ' to finish sign-in…');
