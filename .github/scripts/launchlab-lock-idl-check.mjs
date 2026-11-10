@@ -166,7 +166,7 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey, source = { 
     collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs, argumentWireCompatible: collectArgumentWireCompatible, sdkArgumentName: "lpFeeAmount", sdkPrivilegeDivergences: collectPrivilegeDivergences, safeToUsePinnedSdkBuilder: collectPrivilegeDivergences.length === 0 },
     lockAuthority: derivedAuthority.toBase58(),
     lockLpVaultDerivation: "Associated Token Account PDA [lock_authority, SPL Token program, CPMM LP mint] under Associated Token Program",
-    sourceAvailability: "LP Lock program source is not publicly available; live on-chain Anchor IDL and pinned SDK interface are compared, but IDL does not prove deployed bytecode behavior.",
+    sourceAvailability: "Pinned public Raydium locking source and live Mainnet Anchor IDL are compared; no reproducible build/hash match to deployed LP Lock bytecode has been established, so source and IDL do not prove deployed bytecode behavior.",
   };
 }
 async function getAccount(rpc, address) {
