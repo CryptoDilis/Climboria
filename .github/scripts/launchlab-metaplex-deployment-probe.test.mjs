@@ -61,7 +61,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
     },
     getSignaturesForAddress: async (key, options, commitment) => {
       assert.equal(key.toBase58(), derivedAddress.toBase58());
-      assert.equal(options.limit, 1000);
+      assert.equal(options.limit, 250);
       assert.equal(commitment, "finalized");
       return [
         { signature: "ExtendSignature", slot: 123456, blockTime: 1794270000, err: null },
@@ -119,6 +119,7 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.deepEqual(result.programDataLifecycle.events.map(event => event.operation), ["deployWithMaxDataLen", "extendProgram"]);
   assert.equal(result.programDataLifecycle.events[1].accountRoles.additionalBytes, 300000);
   assert.equal(result.programDataHistory.signaturesScanned, 2);
+  assert.equal(result.programDataHistory.historicalCandidateCount, 2);
   assert.equal(result.programDataHistory.reachedStateSlot, true);
   assert.equal(result.programDataHistory.signatures[0].signature, "OriginalDeploySignature");
   assert.equal(result.programDataHistory.signatures[0].loaderLogs[0], "Program deployed");
