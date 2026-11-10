@@ -304,7 +304,7 @@ export function summarizeUpgradeableLoaderHistory(signatures = []) {
       });
       events.push({
         slot: transaction.slot, signature: transaction.signature, instructionIndex,
-        opcode, operation, success: transaction.transactionError === null,
+        opcode, operation, success: transaction.transactionAvailable === true && transaction.transactionError === null,
         transactionError: transaction.transactionError ?? null,
         signerKeys: transaction.signerKeys ?? [], accountRoles,
       });
