@@ -54,10 +54,10 @@ export class SwapOrderStore {
           state: "ready",
           createdAt: Date.now()
         };
-        const created = await this.ctx.storage.transaction(async txn => {
-          const existing = await txn.get("order");
+        const created = this.ctx.storage.transactionSync(() => {
+          const existing = this.ctx.storage.kv.get("order");
           if (existing) return false;
-          await txn.put("order", record);
+          this.ctx.storage.kv.put("order", record);
           return true;
         });
         if (!created) return json({ error: "Order token has already been used" }, 409);
@@ -78,11 +78,11 @@ export class SwapOrderStore {
           taker: record.taker
         });
         if (!valid.ok) return json({ error: valid.error }, 400);
-        const claimed = await this.ctx.storage.transaction(async txn => {
-          const current = await txn.get("order");
+        const claimed = this.ctx.storage.transactionSync(() => {
+          const current = this.ctx.storage.kv.get("order");
           if (!current || current.expiresAt <= Date.now()) return { status: 410, error: "Order has expired" };
           if (current.state !== "ready") return { status: 409, error: "Order has already been claimed and cannot be replayed" };
-          await txn.put("order", { ...current, state: "executing", claimedAt: Date.now() });
+          this.ctx.storage.kv.put("order", { ...current, state: "executing", claimedAt: Date.now() });
           return {
             status: 200,
             record: {
@@ -100,11 +100,11 @@ export class SwapOrderStore {
         if (!["completed", "failed", "uncertain"].includes(body?.state)) {
           return json({ error: "Invalid terminal order state" }, 400);
         }
-        const settled = await this.ctx.storage.transaction(async txn => {
-          const current = await txn.get("order");
+        const settled = this.ctx.storage.transactionSync(() => {
+          const current = this.ctx.storage.kv.get("order");
           if (!current) return false;
           if (current.state !== "executing") return false;
-          await txn.put("order", {
+          this.ctx.storage.kv.put("order", {
             ...current,
             state: body.state,
             settledAt: Date.now(),
