@@ -210,3 +210,20 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - New live workflow run `42740608651` for current head was `in_progress` at checkpoint; job `129580414694`. No conclusion claimed yet. Poll only after completion; inspect completed logs and actual authority output.
 - PR #231 remains draft and unmerged. Mainnet execution remains disabled.
 - **Exact next job:** inspect run `42740608651`; if failure, diagnose logs and fix parser/RPC behavior. If successful, record each cluster/program's actual ProgramData slot and upgrade authority, then pin official LaunchLab SDK/IDL and verify IDL hash/instruction discriminators before decoding GlobalConfig/PlatformConfig.
+
+
+## 2026-11-10 — Live ProgramData upgrade-authority verification passed
+- Current PR #231 head `61b26e9e4b04bf8d7b4b53f7d4ffaa0b9b5c9d4a`.
+- LaunchLab Live Provenance run `42740608651` SUCCESS; job `129580414694` SUCCESS. Validate run `42740608919` SUCCESS; job `129580438996` SUCCESS.
+- LaunchLab probe unit tests: 7 passed, 0 failed. Existing repository validation: 28 passed, 0 failed.
+- Actual finalized Mainnet ProgramData results (LaunchLab / CPMM / LP-lock respectively):
+  - ProgramData `D2QX47Tv2uhNNwFcnLCyJtLMZ4WGmc7eXxvyEmD6zNUh`, slot `446221802`, upgrade authority `FytDrVzDybM1TwFQPGb8qaxZR7dBCzNeqT3vtQsceZQK`.
+  - ProgramData `DMawCQzbgNTmbzaESc7o6pvL1KAeetY8zA7jNpzntHhU`, slot `463522946`, same upgrade authority.
+  - ProgramData `Am73KshQKaKVRrB8qbnhAub2rcwWtbhKASDrkmedrJWE`, slot `362025476`, same upgrade authority.
+- Actual finalized Devnet ProgramData results (LaunchLab / CPMM / LP-lock respectively):
+  - ProgramData `8wUGvU4BkShhads6JsNkyQu5cz8T5sQXSfT4dtG5Qd6a`, slot `496182200`, upgrade authority `DRayw6sn9fCvbhx5ZLtAVGAgAk6qAAX7UT7urzkXTeM5`.
+  - ProgramData `3KvTa2fYhMxMZNfHho5oX34yLQLwRauoU2JScBkugvXF`, slot `515685818`, same upgrade authority.
+  - ProgramData `33sCmSa7Zse8gumekDKfpbhLdT1HDLQuAMzGhLMSZLJV`, slot `403082609`, same upgrade authority.
+- All six are **upgradeable**, not immutable. This establishes the live upgrade-authority addresses and deployment slots; it does not establish who controls those keys, whether they are governed safely, or whether deployed code matches an audited build. Do not treat the authority as trusted without independent identity/governance verification.
+- No signing or transaction submitted. PR remains draft/unmerged; Mainnet execution disabled.
+- **Exact next job:** pin the official Raydium LaunchLab IDL and SDK version, record cryptographic hashes, compare IDL instruction/account layouts with the deployed integration target, then decode Devnet GlobalConfig/PlatformConfig using that pinned schema. Do not build launch transactions until schema/config checks pass.
