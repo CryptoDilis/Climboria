@@ -31,6 +31,7 @@ const COLLECT_CP_FEES_DISCRIMINATOR = [8, 30, 51, 199, 209, 184, 247, 133];
 const fail = message => { throw new Error(message); };
 const normalizeName = value => String(value).replaceAll("_", "").toLowerCase();
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const anchorDiscriminator = name => [...createHash("sha256").update("global:" + name).digest().subarray(0, 8)];
 const expectedLockAccounts = [
   ["auth", false, false], ["payer", true, true], ["liquidityOwner", true, false],
   ["nftOwner", false, false], ["nftMint", true, true], ["nftAccount", false, true],
@@ -84,8 +85,10 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const lock = instructions.get("lockcpliquidity");
   const collect = instructions.get("collectcpfees");
   if (!lock || !collect) fail("LP Lock IDL is missing lockCpLiquidity/collectCpFees; IDL name=" + idlName + "; available=" + (idl.instructions ?? []).map(item => item.name).join(", "));
-  if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK; live=" + JSON.stringify(lock.discriminator) + "; SDK=" + JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR));
-  if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK; live=" + JSON.stringify(collect.discriminator) + "; SDK=" + JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR));
+  const lockDiscriminator = lock.discriminator ?? anchorDiscriminator("lock_cp_liquidity");
+  const collectDiscriminator = collect.discriminator ?? anchorDiscriminator("collect_cp_fees");
+  if (JSON.stringify(lockDiscriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK; live/derived=" + JSON.stringify(lockDiscriminator) + "; SDK=" + JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR));
+  if (JSON.stringify(collectDiscriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK; live/derived=" + JSON.stringify(collectDiscriminator) + "; SDK=" + JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR));
   checkAccounts(lock, expectedLockAccounts, "lockCpLiquidity");
   checkAccounts(collect, expectedCollectAccounts, "collectCpFees");
   const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
@@ -104,8 +107,8 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
     programId: target.id,
     metadataName: idlName,
     instructionCount: idl.instructions.length,
-    lockCpLiquidity: { discriminator: lock.discriminator, accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed },
-    collectCpFees: { discriminator: collect.discriminator, accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs },
+    lockCpLiquidity: { discriminator: lockDiscriminator, discriminatorSource: lock.discriminator ? "live IDL field" : "Anchor global:lock_cp_liquidity derived because legacy IDL omits discriminators", accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed },
+    collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs },
     lockAuthority: derivedAuthority.toBase58(),
     lockLpVaultDerivation: "Associated Token Account PDA [lock_authority, SPL Token program, CPMM LP mint] under Associated Token Program",
     sourceAvailability: "LP Lock program source is not publicly available; live on-chain Anchor IDL and pinned SDK interface are compared, but IDL does not prove deployed bytecode behavior.",
