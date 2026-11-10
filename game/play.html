@@ -547,6 +547,31 @@ const mats={};const M=(hex,e)=>{const k=hex+(e?'e':'');return mats[k]||(mats[k]=
 const BOX=new T3.BoxGeometry(1,1,1),CYL=new T3.CylinderGeometry(1,1,1,14),SPH=new T3.SphereGeometry(1,14,10),CON=new T3.ConeGeometry(1,1,10),DOD=new T3.DodecahedronGeometry(1,0);
 const mk=(g,m,x,y,z,p)=>{const o=new T3.Mesh(g,m);o.position.set(x,y,z);p&&p.add(o);return o};
 const sc=(o,x,y,z)=>{o.scale.set(x,y,z);return o};
+function caveNoiseCanvas(seed,base,amplitude){
+ const size=128,rand=rng(seed),grids=[8,24,48].map(n=>({n,data:Array.from({length:n*n},()=>rand())}));
+ const smooth=t=>t*t*(3-2*t),mixNoise=(a,b,t)=>a+(b-a)*t;
+ const sample=(grid,x,y)=>{
+  const {n,data}=grid,gx=x/size*n,gy=y/size*n,x0=Math.floor(gx)%n,y0=Math.floor(gy)%n;
+  const tx=smooth(gx-Math.floor(gx)),ty=smooth(gy-Math.floor(gy)),x1=(x0+1)%n,y1=(y0+1)%n;
+  const a=mixNoise(data[y0*n+x0],data[y0*n+x1],tx),b=mixNoise(data[y1*n+x0],data[y1*n+x1],tx);
+  return mixNoise(a,b,ty);
+ };
+ const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+ const ctx=canvas.getContext('2d'),image=ctx.createImageData(size,size);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const n=sample(grids[0],x,y)*.5+sample(grids[1],x,y)*.32+sample(grids[2],x,y)*.18;
+  const grain=(rand()-.5)*.075,shade=Math.max(0,Math.min(255,base+(n-.5)*amplitude+grain*amplitude));
+  const i=(y*size+x)*4;
+  image.data[i]=shade;image.data[i+1]=Math.max(0,shade-3);image.data[i+2]=Math.max(0,shade-8);image.data[i+3]=255;
+ }
+ ctx.putImageData(image,0,0);return canvas;
+}
+function caveRockMaterial(hex,seed,bumpScale=.14){
+ const map=new T3.CanvasTexture(caveNoiseCanvas(seed,222,54));map.colorSpace=T3.SRGBColorSpace;
+ const bumpMap=new T3.CanvasTexture(caveNoiseCanvas(seed+1,128,210));bumpMap.colorSpace=T3.NoColorSpace;
+ const material=new T3.MeshStandardMaterial({color:L(hex),map,bumpMap,bumpScale,roughness:.96,metalness:.015,flatShading:true});
+ material.userData.caveRockTexture=true;material.userData.caveRockSeed=seed;return material;
+}
 const lights=[],flames=[],wavingFlags=[],sanctuaryFlagMeshes=[];
 function torch(x,y,z,p){const f=sc(mk(CON,M('#ff9a2e',1),x,y+2.2,z,p),.35,.9,.35);sc(mk(CYL,M('#4a3322'),x,y+1,z,p),.12,2,.12);flames.push(f);return f}
 function glow(color,i,d,x,y,z,p){const l=new T3.PointLight(L(color),i,d,2);l.position.set(x,y,z);(p||scene).add(l);lights.push(l);return l}
@@ -655,7 +680,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
 {
  const p=POI.cave;p.h=heightAt(p.x,p.z);const dx=-p.x,dz=-p.z,dl=Math.hypot(dx,dz),dir={x:dx/dl,z:dz/dl};POI.cave.dir=dir;
  const g=new T3.Group();g.position.set(p.x,p.h,p.z);g.rotation.y=Math.atan2(dir.x,dir.z);scene.add(g);caveG=g;
- const rk=M('#4a463f');
+ const rk=caveRockMaterial('#4a463f',4101,.17);
  // Broad local fill prevents the cave floor and routes from disappearing between torch pools.
  caveAmbientFill=new T3.HemisphereLight(L('#c8d8e8'),L('#625548'),1.2);g.add(caveAmbientFill);
  // Living mineral seams: faceted clusters with restrained colored bounce light.
@@ -675,7 +700,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  [[-30,7,-18,8],[30,7,-18,8],[-34,8,5,9],[34,8,5,9],[-25,5,-38,7],[25,5,-38,7]].forEach(([x,y,z,s])=>sc(mk(DOD,rk,x,y,z,g),s,s*.9,s));
  // Natural cave mouth: a connected, irregular stone arch with a readable dark tunnel.
  // Compact side shoulders support a continuous crown; avoid isolated pillars and floating teeth.
- const archMat=M('#514b43'),archRockMat=M('#45433e');
+ const archMat=caveRockMaterial('#514b43',4102,.15),archRockMat=caveRockMaterial('#45433e',4104,.18);
  const portalRock=(x,y,z,sx,sy,sz,rot=0)=>{
   const rock=mk(new T3.IcosahedronGeometry(1,1),archRockMat,x,y,z,g);sc(rock,sx,sy,sz);
   rock.rotation.set(.08*Math.sin(rot*1.7),rot,.06*Math.cos(rot*1.3));
@@ -693,7 +718,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  });
  const caveMouth=new T3.Mesh(new T3.PlaneGeometry(8.6,4.9),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.22,roughness:1,side:T3.DoubleSide}));
  caveMouth.position.set(0,2.75,3.9);g.add(caveMouth);
- const caveFloorLip=mk(BOX,M('#625b50'),0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
+ const caveFloorLip=mk(BOX,caveFloorMat,0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
  [[-7.8,.45,-.8,1.7,.7,2.2],[7.7,.42,-.5,1.8,.65,2.1],[-5.8,.28,-5.0,2.4,.45,1.8],[5.9,.3,-4.7,2.2,.48,1.9]].forEach(([x,y,z,sx,sy,sz],i)=>{
   const rock=mk(DOD,archMat,x,y,z,g);sc(rock,sx,sy,sz);rock.rotation.y=i*.7;rock.castShadow=true;
@@ -707,7 +732,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  glow('#9bd8e5',2.4,58,51,3,25,g);
  // First connected side chamber: a short walkable branch off the existing chamber.
  // Every wall has a matching swept player collider; the doorway remains open at the west end.
- const caveWallMat=M('#514b43'),caveWallDark=M('#3d3935'),caveWallHeight=7,caveWallThickness=1.1;
+ const caveWallMat=caveRockMaterial('#514b43',4106,.16),caveWallDark=caveRockMaterial('#3d3935',4108,.18),caveWallHeight=7,caveWallThickness=1.1;
  function caveWall(x1,z1,x2,z2,label){
   const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),angle=Math.atan2(dz,dx);
   // Build the visible wall from tightly overlapping irregular stone masses rather
@@ -749,8 +774,8 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(33,34,40,34,'side-room-north-east');
  caveWall(22,16,22,21,'side-room-west-lower');
  caveWall(22,29,22,34,'side-room-west-upper');
- const branchFloor=mk(BOX,M('#625b50'),15,.08,25,g);sc(branchFloor,14,.16,8,g);
- const chamberFloor=mk(BOX,M('#514b42'),31,.08,25,g);sc(chamberFloor,18,.16,18,g);
+ const caveFloorMat=caveRockMaterial('#625b50',4110,.11),caveDampFloorMat=caveRockMaterial('#4f5b5c',4112,.14),caveRoofMat=caveRockMaterial('#383f43',4114,.2);\n const branchFloor=mk(BOX,caveFloorMat,15,.08,25,g);sc(branchFloor,14,.16,8,g);
+ const chamberFloor=mk(BOX,caveFloorMat,31,.08,25,g);sc(chamberFloor,18,.16,18,g);
  // Low broken mineral plates soften the flat prototype floor while leaving the
  // central traversal lane and chest approach clear.
  const floorRand=rng(8831),floorGeo=new T3.IcosahedronGeometry(1,1);
@@ -766,7 +791,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // Break up the rectangular prototype room with a natural cave-rock lining.
  // Decorative masses sit against the structural walls and above head clearance;
  // the underlying swept wall colliders remain authoritative for traversal.
- const liningMat=M('#514b43'),liningDark=M('#3d3935');
+ const liningMat=caveRockMaterial('#514b43',4116,.17),liningDark=caveRockMaterial('#3d3935',4118,.2);
  const wallLining=[
   [22.35,1.35,18,1.8,1.55,1.65],[22.55,3.15,21,1.65,1.9,1.8],[22.4,1.7,25,1.9,1.55,1.7],[22.5,2.5,30,1.8,1.65,1.8],
   [39.55,1.5,18,1.8,1.6,1.7],[39.4,3.3,22,1.7,1.8,1.8],[39.55,1.65,27,1.8,1.6,1.8],[39.45,2.35,32,1.7,1.7,1.55],
@@ -781,7 +806,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  // sees stone overhead instead of daylight through a scattered decorative layer.
  // The smooth, irregular rock tiles overlap in both axes and preserve headroom.
  const roofGeo=new T3.IcosahedronGeometry(1,2);
- const roofMat=M('#393b3a');
+ const roofMat=caveRoofMat;
  const roofRand=rng(4407);
  for(let rz=14.5;rz<=34.5;rz+=4){
   for(let rx=20.5;rx<=40.5;rx+=4){
@@ -805,15 +830,15 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(33,40,35,40,'annex-room-south-east');
  caveWall(35,40,35,45,'annex-room-east');
  caveWall(29,45,35,45,'annex-room-north-east');
- const annexFloor=mk(BOX,M('#625b50'),30,.08,42.5,g);sc(annexFloor,10,.16,5,g);
+ const annexFloor=mk(BOX,caveFloorMat,30,.08,42.5,g);sc(annexFloor,10,.16,5,g);
  // The hidden grotto opens directly west from the annex through a five-metre doorway.
  caveWall(25,37,25,40,'grotto-room-east-south');
  caveWall(25,45,25,47,'grotto-room-east-north');
  caveWall(15,37,25,37,'grotto-room-south');
  caveWall(25,47,15,47,'grotto-room-north');
  caveWall(15,47,15,37,'grotto-room-west');
- const grottoFloor=mk(BOX,M('#4f5b5c'),20,.08,42,g);sc(grottoFloor,10,.16,10,g);
- const grottoCeiling=mk(BOX,M('#383f43'),20,7.05,42,g);sc(grottoCeiling,10,.3,10,g);
+ const grottoFloor=mk(BOX,caveDampFloorMat,20,.08,42,g);sc(grottoFloor,10,.16,10,g);
+ const grottoCeiling=mk(BOX,caveRoofMat,20,7.05,42,g);sc(grottoCeiling,10,.3,10,g);
  const grottoWaterMaterial=new T3.MeshStandardMaterial({color:L('#287e91'),emissive:L('#0b2f45'),emissiveIntensity:.22,transparent:true,opacity:.68,roughness:.18,metalness:.08,side:T3.DoubleSide});
  const grottoWaterSurface=new T3.Mesh(new T3.PlaneGeometry(10,10),grottoWaterMaterial);
  grottoWaterSurface.rotation.x=-Math.PI/2;grottoWaterSurface.position.set(20,2.8,42);g.add(grottoWaterSurface);
@@ -1780,7 +1805,7 @@ function caveEntranceTraversalAudit(){
   return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,texturedRockMaterials:[rk,archMat,archRockMat,caveWallMat,caveWallDark,caveFloorMat,caveDampFloorMat,caveRoofMat,liningMat,liningDark].filter(m=>m.userData?.caveRockTexture&&m.map&&m.bumpMap).length,bumpedRockMaterials:[rk,archMat,archRockMat,caveWallMat,caveWallDark,caveFloorMat,caveDampFloorMat,caveRoofMat,liningMat,liningDark].filter(m=>!!m.bumpMap).length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
