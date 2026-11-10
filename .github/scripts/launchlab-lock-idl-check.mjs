@@ -33,23 +33,23 @@ const normalizeName = value => String(value).replaceAll("_", "").toLowerCase();
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const anchorDiscriminator = name => [...createHash("sha256").update("global:" + name).digest().subarray(0, 8)];
 const expectedLockAccounts = [
-  ["auth", false, false], ["payer", true, true], ["liquidityOwner", true, false],
-  ["nftOwner", false, false], ["nftMint", true, true], ["nftAccount", false, true],
+  ["authority", false, false], ["payer", true, true], ["liquidityOwner", true, false],
+  ["feeNftOwner", false, false], ["feeNftMint", true, true], ["feeNftAccount", false, true],
   ["poolState", false, false], ["lockedLiquidity", false, true], ["lpMint", false, false],
   ["liquidityOwnerLp", false, true], ["lockedLpVault", false, true],
-  ["tokenVault0", false, true], ["tokenVault1", false, true],
+  ["token0Vault", false, true], ["token1Vault", false, true],
   ["metadataAccount", false, true], ["rent", false, false], ["systemProgram", false, false],
   ["tokenProgram", false, false], ["associatedTokenProgram", false, false],
   ["metadataProgram", false, false],
 ];
 const expectedCollectAccounts = [
-  ["auth", false, false], ["nftOwner", true, false], ["nftAccount", false, true],
-  ["lockedLiquidity", false, true], ["cpmmProgram", false, false], ["cpmmAuth", false, false],
-  ["poolState", false, true], ["lpMint", false, true], ["userVault0", false, true],
-  ["userVault1", false, true], ["poolVault0", false, true], ["poolVault1", false, true],
-  ["token0Mint", false, false], ["token1Mint", false, false],
+  ["authority", false, false], ["feeNftOwner", true, false], ["feeNftAccount", false, true],
+  ["lockedLiquidity", false, true], ["cpSwapProgram", false, false], ["cpAuthority", false, false],
+  ["poolState", false, true], ["lpMint", false, true], ["recipientToken0Account", false, true],
+  ["recipientToken1Account", false, true], ["token0Vault", false, true], ["token1Vault", false, true],
+  ["vault0Mint", false, false], ["vault1Mint", false, false],
   ["lockedLpVault", false, true], ["tokenProgram", false, false],
-  ["token2022Program", false, false], ["memoProgram", false, false],
+  ["tokenProgram2022", false, false], ["memoProgram", false, false],
 ];
 function pdaSeedText(seed) {
   if (seed?.kind !== "const" || !Array.isArray(seed.value)) return null;
@@ -95,7 +95,7 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const collectArgs = (collect.args ?? []).map(arg => [arg.name, arg.type]);
   if (JSON.stringify(lockArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpamount", "u64"], ["withmetadata", "bool"]])) fail("LP Lock lockCpLiquidity arguments differ from pinned SDK encoding");
   if (JSON.stringify(collectArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpfeeamount", "u64"]])) fail("LP Lock collectCpFees arguments differ from pinned SDK encoding");
-  const auth = lock.accounts.find(item => normalizeName(item.name) === "auth");
+  const auth = lock.accounts.find(item => normalizeName(item.name) === "authority");
   const locked = lock.accounts.find(item => normalizeName(item.name) === "lockedliquidity");
   const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
   const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
