@@ -11,6 +11,13 @@ test("health endpoint responds without exposing credentials", async () => {
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: true } });
 });
+
+test("health endpoint reports execution disabled when the production kill switch is off", async () => {
+  const safeEnv = { ...env, EXECUTION_ENABLED: "false" };
+  const res = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: false } });
+});
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.headers.get("x-content-type-options"), "nosniff");
