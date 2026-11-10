@@ -537,3 +537,12 @@ test("verifies executed governance proposal state and exact embedded ProgramData
   assert.equal(mismatch.failedCount, 1);
   assert.equal(mismatch.results[0].checks.programDataMatches, false);
 });
+
+test("does not report governance account decoding success when the RPC batch was unavailable", () => {
+  const decoded = decodeGovernanceProposalAccountEvidence({
+    status: "multiple_accounts_rpc_unavailable", requestedCount: 3, accounts: [],
+  }, { PublicKey });
+  assert.equal(decoded.status, "governance_proposal_account_evidence_unavailable");
+  assert.equal(decoded.proposalCount, 0);
+  assert.deepEqual(decoded.proposals, []);
+});
