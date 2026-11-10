@@ -32,11 +32,11 @@ const REQUIRED = {
 };
 function sha(content) { return createHash("sha256").update(content, "utf8").digest("hex"); }
 function assert(condition, message) { if (!condition) throw new Error(message); }
-export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath }) {
-  const [packageText, idlText, instrumentText, layoutText, launchpadText, pdaText] = await Promise.all([
-    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8"), readFile(launchpadPath, "utf8"), readFile(pdaPath, "utf8")
+export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath }) {
+  const [packageText, idlText, instrumentText, layoutText, launchpadText, pdaText, cpmmIdlText] = await Promise.all([
+    readFile(packagePath, "utf8"), readFile(idlPath, "utf8"), readFile(instrumentPath, "utf8"), readFile(layoutPath, "utf8"), readFile(launchpadPath, "utf8"), readFile(pdaPath, "utf8"), readFile(cpmmIdlPath, "utf8")
   ]);
-  const pkg = JSON.parse(packageText), idl = JSON.parse(idlText);
+  const pkg = JSON.parse(packageText), idl = JSON.parse(idlText), cpmmIdl = JSON.parse(cpmmIdlText);
   const packageHash = sha(packageText), idlHash = sha(idlText), instrumentHash = sha(instrumentText), layoutHash = sha(layoutText), launchpadHash = sha(launchpadText), pdaHash = sha(pdaText);
   assert(pkg.name === "@raydium-io/raydium-sdk-v2", "Unexpected SDK package name");
   assert(pkg.version === EXPECTED.sdkVersion, `SDK version mismatch: ${pkg.version}`);
@@ -80,6 +80,15 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
   }
   const collectMigrationFee = idlInstructions.get("collect_migrate_fee");
   assert(collectMigrationFee && (collectMigrationFee.accounts[0].docs || []).join(" ").includes("migrate_fee_owner"), "collect_migrate_fee owner authority rule missing");
+  assert(cpmmIdl.address === "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C", "Unexpected Raydium CPMM program IDL address");
+  const cpmmInitialize = cpmmIdl.instructions.find(x => x.name === "initialize");
+  assert(cpmmInitialize, "CPMM IDL missing initialize instruction used by LaunchLab migration");
+  const cpmmInitializeAccounts = ["creator","amm_config","authority","pool_state","token_0_mint","token_1_mint","lp_mint","creator_token_0","creator_token_1","creator_lp_token","token_0_vault","token_1_vault","create_pool_fee","observation_state","token_program","token_0_program","token_1_program","associated_token_program","system_program","rent"];
+  assert(JSON.stringify(cpmmInitialize.accounts.map(x => x.name)) === JSON.stringify(cpmmInitializeAccounts), "CPMM initialize account order differs from pinned IDL");
+  const cpmmCreator = cpmmInitialize.accounts.find(x => x.name === "creator");
+  const cpmmFee = cpmmInitialize.accounts.find(x => x.name === "create_pool_fee");
+  assert(cpmmCreator?.signer === true && cpmmCreator?.writable === true, "CPMM initialize creator must be writable signer");
+  assert(cpmmFee?.writable === true && (cpmmFee.docs || []).join(" ").includes("create pool fee account"), "CPMM create_pool_fee destination semantics missing");
   assert(layoutText.includes('publicKey("protocolFeeOwner")') && layoutText.includes('publicKey("migrateFeeOwner")') && layoutText.includes('publicKey("migrateToCpmmWallet")'), "GlobalConfig fee/migration destination fields missing from pinned SDK layout");
   assert(layoutText.includes('publicKey("platformClaimFeeWallet")') && layoutText.includes('publicKey("platformLockNftWallet")') && layoutText.includes('publicKey("platformVestingWallet")'), "PlatformConfig claim/lock/vesting destination fields missing from pinned SDK layout");
   assert(pdaText.includes("getPdaPlatformVault") && pdaText.includes("platformId.toBuffer(), mintB.toBuffer()"), "Platform fee-vault PDA seed derivation changed");
@@ -98,15 +107,15 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
     idl: { commit: EXPECTED.idlCommit, sha256: idlHash, address: idl.address, metadata: idl.metadata, instructionCount: idl.instructions.length },
     checkedDiscriminators: checked,
     creatorLaunchPath: { mintAKeypairIsRequiredSigner: true, callerMustSupplyExtraSigner: true, token2022SelectedByTransferFeeExtension: true, token2022ForcesCpmmMigration: true, createOnlySkipsInitialBuy: true, multiTransactionBuilder: true },
-    migrationAudit: { cpswapInstructionAccountOrderVerified: true, payerMustMatchGlobalConfigMigrateToCpmmWallet: true, createPoolFeeAndLockLpVaultAreExplicitAccounts: true, migrateFeeCollectionRestrictedToGlobalConfigMigrateFeeOwner: true, platformAndCreatorFeeVaultPdaSeedsVerified: true, feeDestinationFieldsVerifiedInPinnedSdkLayout: true },
+    migrationAudit: { cpSwapProgramId: cpmmIdl.address, cpSwapInitializeAccountOrderVerified: true, cpSwapCreatePoolFeeAccountVerified: true, cpswapInstructionAccountOrderVerified: true, payerMustMatchGlobalConfigMigrateToCpmmWallet: true, createPoolFeeAndLockLpVaultAreExplicitAccounts: true, migrateFeeCollectionRestrictedToGlobalConfigMigrateFeeOwner: true, platformAndCreatorFeeVaultPdaSeedsVerified: true, feeDestinationFieldsVerifiedInPinnedSdkLayout: true },
     cpswapMigrationInstructionPresent: true,
     legacyInitializeMarkedDeprecated: true,
     transactionSubmitted: false
   };
 }
 if (process.argv[1]?.endsWith("launchlab-sdk-idl-check.mjs")) {
-  const [packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath] = process.argv.slice(2);
-  if (!packagePath || !idlPath || !instrumentPath || !layoutPath || !launchpadPath || !pdaPath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts launchpad.ts pda.ts");
-  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath });
+  const [packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath] = process.argv.slice(2);
+  if (!packagePath || !idlPath || !instrumentPath || !layoutPath || !launchpadPath || !pdaPath || !cpmmIdlPath) throw new Error("Usage: node launchlab-sdk-idl-check.mjs package.json launchpad-idl.json instrument.ts layout.ts launchpad.ts pda.ts cp-swap-idl.json");
+  const report = await verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPath, layoutPath, launchpadPath, pdaPath, cpmmIdlPath });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
