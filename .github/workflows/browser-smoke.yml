@@ -6,9 +6,13 @@ concurrency:
 
 on:
   push:
-    branches: [main, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
+    branches: [main, codex/real-player-auth-foundation-20261109, codex/jarrell-natural-wilderness-pass, codex/mountain-stability-v2, codex/ten-summit-expedition, codex/hero-banga-mountain-results, fix/browser-smoke-homepage-check]
     paths:
       - "index.html"
+      - "auth/**"
+      - ".github/scripts/game-save-options-smoke.mjs"
+      - "auth-config.js"
+      - "supabase/migrations/**"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -17,11 +21,15 @@ on:
       - "game/play.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/game-save-options-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
     paths:
       - "index.html"
+      - "auth/**"
+      - "auth-config.js"
+      - "supabase/migrations/**"
       - "dex/**"
       - "swap/**"
       - "launchpad/**"
@@ -74,6 +82,77 @@ jobs:
           done
           cat /tmp/climboria-http.log
           exit 1
+
+      - name: Test guest and account save-choice resolver
+        run: node --experimental-default-type=module --test .github/scripts/save-choice.test.mjs
+
+      - name: Test Climboria authentication UI and client flows
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            await page.route('https://esm.sh/@supabase/supabase-js@2',route=>route.fulfill({
+              status:200,contentType:'application/javascript',
+              body:`let listener; let session=null;
+                const ok=(data={})=>Promise.resolve({data,error:null});
+                export function createClient(){
+                  const auth={
+                    getSession:()=>ok({session}), getUser:()=>ok({user:session?.user||null}),
+                    getUserIdentities:()=>ok({identities:[]}),
+                    onAuthStateChange:(fn)=>{listener=fn;globalThis.__emitAuthEvent=(event)=>listener?.(event,session);return {data:{subscription:{unsubscribe(){}}}}},
+                    signUp:async()=>{session={user:{id:'test-user',email:'test@example.com'}};listener?.('SIGNED_IN',session);return ok({user:session.user,session})},
+                    signInWithPassword:async()=>{session={user:{id:'test-user',email:'test@example.com'}};listener?.('SIGNED_IN',session);return ok({user:session.user,session})},
+                    resetPasswordForEmail:async()=>ok({}), updateUser:async()=>ok({user:{id:'test-user'}}),
+                    signInWithOAuth:async({provider})=>ok({provider}), signInWithWeb3:async({chain})=>{session={user:{id:'wallet-user'}};listener?.('SIGNED_IN',session);return ok({session,user:session.user,chain})},
+                    signOut:async()=>{session=null;listener?.('SIGNED_OUT',null);return ok({})}
+                  };
+                  return {auth,from:()=>({select:()=>({eq:()=>({maybeSingle:()=>Promise.resolve({data:{player_id:'CLB-TEST123',username:'Tester'},error:null})})})})};
+                }`
+            }));
+            await page.addInitScript(()=>{window.ethereum={request:async()=>[]};window.solana={isConnected:true,connect:async()=>({publicKey:{toString:()=> 'So11111111111111111111111111111111111111112'}})};});
+            await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>!!window.climboriaAuth,{timeout:10000});
+            for(const id of ['authEvm','authSolana','authGoogle','authX','authEmail','authPassword','authEmailSubmit','authModeToggle','authForgotPassword','authNewPassword','authSavePassword','authAccountStatus','authLogout']){
+              if(await page.locator('#'+id).count()!==1)throw new Error('Missing auth control #'+id);
+            }
+            await page.locator('#hamburger').click();
+          await page.locator('.mobile-menu [data-open-auth]').click();
+            if(!await page.locator('#authModal').isVisible())throw new Error('Account modal did not open');
+            await page.locator('#authModeToggle').click();
+            if(await page.locator('#authEmailSubmit').getAttribute('data-mode')!=='signup')throw new Error('Email signup mode did not toggle');
+            await page.locator('#authEmail').fill('test@example.com');
+            await page.locator('#authPassword').fill('ClimboriaTest123!');
+            await page.locator('#authEmailSubmit').click();
+            await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Signed in successfully'),null,{timeout:5000});
+            await page.waitForFunction(()=>document.querySelector('#authAccountStatus')?.textContent.includes('CLB-TEST123'),null,{timeout:5000});
+            await page.locator('#authLogout').click();
+            await page.waitForFunction(()=>document.querySelector('#authAccountStatus')?.textContent==='Guest session',null,{timeout:5000});
+            await page.locator('#authForgotPassword').click();
+            await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('password reset email'),null,{timeout:5000});
+            if(await page.locator('#authRecoveryPanel').isVisible())throw new Error('Recovery form must stay hidden until the recovery callback arrives');
+            await page.evaluate(()=>window.__emitAuthEvent('PASSWORD_RECOVERY'));
+            await page.locator('#authRecoveryPanel').waitFor({state:'visible',timeout:5000});
+            await page.locator('#authNewPassword').fill('NewClimboria123!');
+            await page.locator('#authSavePassword').click();
+            await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Password updated'),null,{timeout:5000});
+            await page.locator('#authGoogle').click();
+            await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Redirecting to Google'),null,{timeout:5000});
+            await page.locator('#authX').click();
+            await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Redirecting to X'),null,{timeout:5000});
+            await page.locator('#authEvm').click();
+            await page.waitForFunction(()=>document.querySelector('#authAccountStatus')?.textContent.includes('CLB-TEST123'),null,{timeout:5000});
+            await page.locator('#authLogout').click();
+            await page.locator('#authSolana').click();
+            await page.waitForFunction(()=>document.querySelector('#authAccountStatus')?.textContent.includes('CLB-TEST123'),null,{timeout:5000});
+            if(errors.length)throw new Error('Auth browser errors: '+errors.join(' | '));
+            console.log('PASS auth UI controls, email signup/session/profile/logout, password recovery, Google/X OAuth initiation, EVM/Solana wallet initiation (Supabase mocked).');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
 
       - name: Test homepage CTAs, DEX routing, and mobile navigation
         run: |
@@ -631,6 +710,9 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test in-game save options safety matrix
+        run: node .github/scripts/game-save-options-smoke.mjs
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
@@ -647,6 +729,8 @@ jobs:
             climboria-mobile-home.png
             climboria-desktop-gameplay.png
             climboria-mobile-gameplay.png
+            climboria-save-options-desktop.png
+            climboria-save-options-mobile.png
             climboria-desktop-cave-entrance.png
             climboria-mobile-cave-entrance.png
             climboria-desktop-cave-interior.png

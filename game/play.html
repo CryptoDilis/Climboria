@@ -1924,5 +1924,33 @@ animate();
 initChunks();
 })();
 </script>
+<script src="/auth-config.js"></script>
+<script type="module">
+  import { getClimboriaSupabase } from "../auth/supabase-client.js";
+  const client = getClimboriaSupabase();
+  window.climboriaSupabase = client;
+  window.climboriaSupabaseBridgeReady = true;
+  if (client) {
+    client.auth.onAuthStateChange((event, session) => {
+      window.dispatchEvent(new CustomEvent("climboria:auth-session", {
+        detail: { event, session }
+      }));
+    });
+    client.auth.getSession().then(({ data, error }) => {
+      window.dispatchEvent(new CustomEvent("climboria:auth-session", {
+        detail: { event: error ? "SESSION_ERROR" : "SESSION_READY", session: data?.session || null, error: error?.message || null }
+      }));
+    });
+  } else {
+    window.dispatchEvent(new CustomEvent("climboria:auth-session", {
+      detail: { event: "GUEST_MODE", session: null }
+    }));
+  }
+</script>
+<script type="module">
+  import { installGameSaveOptions } from "../auth/game-save-options.js";
+  import { getClimboriaSupabase } from "../auth/supabase-client.js";
+  installGameSaveOptions({ client: getClimboriaSupabase() });
+</script>
 </body>
 </html>
