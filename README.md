@@ -2903,3 +2903,21 @@ No production Swap execution, Launchpad token creation, or Google/X/email login 
 4. Implement account/session login only after a real auth provider is configured; validate guest upgrade, email/password, Google/X OAuth, account linking, verification/reset, logout, and session persistence.
 
 No production Swap execution, Launchpad service, or Google/X/email account login is claimed live.
+
+
+## 2026-11-11 — Repository recheck and Pages deployment confirmation
+
+- Rechecked PR #234 directly from GitHub: open/draft; head `7f5d3451c7c99356fd46502691f0c24f92a96ade`; base `28180c2a277e0c4bd093a40462032e7f536989e6`; GitHub mergeability is `false` / `dirty`.
+- Compared `main` with `codex/swap-order-binding-durable-object`: history is diverged, branch is 42 commits ahead and 19 behind. The compare includes changes to workflows, DEX, Swap Worker/order store/transaction validation/tests, Wrangler config and release docs. No merge, rebase, force-push, or merge was performed; safe integration needs an actual conflict-aware worktree.
+- Rechecked PR-head checks: `GET /commits/7f5d3451c7c99356fd46502691f0c24f92a96ade/check-runs` returned zero check runs. A workflow run associated with PR #234 was found, but its actual `head_sha` is `32ec6caee34e37a9f4d2afd0b491c840abc66034`, so it does NOT validate the latest `7f5d345` change or its new settlement-persistence regression test. Earlier Browser Smoke evidence also remains tied to `32ec6ca`.
+- Pages deployment run `42884066993` completed **SUCCESS** on main SHA `a2e69d9f92b5024d3c0e0e42772c50fe2e1ae03a`. Build job `130067655894`, deploy job `130067929841`, and status-report job `130067929945` all completed successfully. This confirms the documentation at that main SHA was deployed to GitHub Pages.
+- PR #231 remains open/draft at head `281209c66e2e69fa14c973867086947a2dc47000`; its LaunchLab provenance blockers remain: canonical Devnet LP Lock IDL missing and live on-chain LaunchLab IDL type definitions do not exactly match the pinned SDK. A green provenance probe does not establish a production Launchpad.
+
+### Exact next job (supersedes earlier stale run/deployment notes)
+1. Manually dispatch [Validate Climboria Actions](https://github.com/CryptoDilis/Climboria/actions/workflows/validate-climboria.yml) on branch `codex/swap-order-binding-durable-object`; confirm the actual run `head_sha` is exactly `7f5d3451c7c99356fd46502691f0c24f92a96ade`. Inspect all test output, including the new uncertain-settlement persistence regression. The connected GitHub actions do not provide workflow_dispatch, so this dispatch cannot be initiated from this session.
+2. Reconcile PR #234's 42-ahead/19-behind divergence against current main through a real conflict-aware local merge/rebase, then rerun Validate and Browser Smoke on the resulting exact head. Do not merge while GitHub reports dirty/unmergeable.
+3. Keep `EXECUTION_ENABLED=false` and frontend `swap-config.js enabled=false` until security review, Cloudflare deployment/health/CORS verification, and controlled Devnet lifecycle validation are complete.
+4. Resolve PR #231 LaunchLab IDL discrepancies and publish/verify the canonical Devnet LP Lock IDL before any Launchpad transaction-signing or public token-creation path.
+5. Implement real account/session authentication for guest, email/password, Google OAuth and X OAuth only after a real auth provider is configured; verify account linking, verification/reset, logout, session persistence and cross-device progress before enabling login controls.
+
+Production Swap execution, production Launchpad token creation/fundraising, and Google/X/email account login remain **not live**. DEX market discovery/quote preview and wallet connection are not substitutes for those capabilities.
