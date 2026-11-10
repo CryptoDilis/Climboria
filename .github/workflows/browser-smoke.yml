@@ -116,6 +116,51 @@ jobs:
                 if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
                 return route.continue();
               });
+              // The selected DEX token is synthetic. Keep its holder-intel RPC reads deterministic
+              // so public Solana RPC rate limits/403s cannot make this browser fixture flaky.
+              await dexPage.route(/^https:\/\/api\.mainnet-beta\.solana\.com\/?$/, async route => {
+                const request = route.request().postDataJSON();
+                const rpcFixtures = {
+                  getTokenLargestAccounts: {
+                    context: { slot: 1 },
+                    value: [{
+                      address: 'HolderTokenAccountFixture111111111111111111',
+                      amount: '250000',
+                      decimals: 6,
+                      uiAmount: 0.25,
+                      uiAmountString: '0.25'
+                    }]
+                  },
+                  getTokenSupply: {
+                    context: { slot: 1 },
+                    value: {
+                      amount: '1000000',
+                      decimals: 6,
+                      uiAmount: 1,
+                      uiAmountString: '1'
+                    }
+                  },
+                  getMultipleAccounts: {
+                    context: { slot: 1 },
+                    value: [{
+                      data: {
+                        parsed: {
+                          info: { owner: 'HolderOwnerFixture1111111111111111111111111' }
+                        }
+                      }
+                    }]
+                  }
+                };
+                return route.fulfill({
+                  status: 200,
+                  contentType: 'application/json',
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: request.id ?? 1,
+                    result: rpcFixtures[request.method] ?? { context: { slot: 1 }, value: null }
+                  })
+                });
+              });
               // Keep Pump metadata local to the browser fixture; production CORS must not be weakened for localhost tests.
               await dexPage.route('https://api.climboria.fun/api/pump/coin**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({mint:dexMint,name:'Climboria Search Fixture',symbol:'CLIMBTEST',complete:false,source:'browser-smoke-fixture'})}));
               await dexPage.locator('#search').fill('CLIMBTEST');

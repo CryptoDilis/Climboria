@@ -3279,3 +3279,10 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] This cloud-save commit requires fresh Validate + Browser Smoke on the exact new head. Dashboard providers remain unconfigured; unauthenticated game sessions must remain local-only. Test the authenticated save path with controlled accounts on Dev/Preview before production.
 
 **Exact next task:** run the new game cloud-save Validate + Browser Smoke checks. Then perform controlled Supabase account tests: sign in, load an existing player's save, add a chest/fishing item, verify the row and saved_at update, open the same account on a second browser and verify conflict detection, reload latest progress, sign out and verify writes stop. Configure Web3/social/email providers in Supabase Dashboard before any production Auth claim.
+
+
+### 2026-11-11 — Auth/game cloud-save Browser Smoke root-cause fix
+
+- [x] Investigated failed Browser Smoke run `42903943680` on head `6eafecb39ca26789e9ce14aeda4f9061dea79e06`. The first homepage/DEX browser step failed only after the synthetic DEX token fixture opened its holder-intel panel and called public Solana mainnet RPC. The external RPC returned HTTP 403 twice; the page's global console-error check correctly failed the run. The Auth-specific and game cloud-save checks were skipped because this earlier step failed.
+- [x] Root cause is nondeterministic external dependency in the browser fixture, not an Auth/session or cloud-save failure. Added deterministic getTokenLargestAccounts, getTokenSupply, and getMultipleAccounts JSON-RPC responses for the synthetic DEX mint. Production DEX code and production RPC configuration are unchanged.
+- [ ] Fresh Validate + Browser Smoke are required on the corrected exact head. Browser test should now proceed through Auth UI and game cloud-save initialization before gameplay. Do not infer cloud-save end-to-end success until its explicit test and real authenticated account checks pass.
