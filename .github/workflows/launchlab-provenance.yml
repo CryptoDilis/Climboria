@@ -8,6 +8,7 @@ on:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
       - ".github/scripts/launchlab-sdk-idl-check.mjs"
+      - ".github/scripts/launchlab-onchain-idl-check.mjs"
       - ".github/workflows/launchlab-provenance.yml"
   pull_request:
     branches: [main]
@@ -40,5 +41,11 @@ jobs:
         run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
         run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts
+      - name: Install temporary Solana RPC client dependency
+        run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4
+      - name: Compare live Mainnet and Devnet Anchor IDLs
+        env:
+          NODE_PATH: /tmp/launchlab-tools/node_modules
+        run: node --experimental-default-type=module .github/scripts/launchlab-onchain-idl-check.mjs /tmp/launchlab-provenance/launchpad-idl.json
       - name: Query live Raydium APIs and finalized Solana program accounts
         run: node .github/scripts/launchlab-provenance.mjs
