@@ -88,6 +88,9 @@ async function handleOrder(request, env) {
   if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
     return json({ error: "Amount must be a positive integer string in base units" }, 400);
   }
+  if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
+    return json({ error: "Backend order store is not configured; executable orders are fail-closed" }, 503);
+  }
   const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
@@ -121,9 +124,6 @@ async function handleOrder(request, env) {
   if (typeof data.inAmount !== "string" || !/^[1-9][0-9]*$/.test(data.inAmount) ||
       typeof data.outAmount !== "string" || !/^[1-9][0-9]*$/.test(data.outAmount)) {
     return json({ error: "Jupiter returned invalid order amounts" }, 502);
-  }
-  if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
-    return json({ error: "Backend order store is not configured; executable orders are fail-closed" }, 503);
   }
   const orderToken = crypto.randomUUID();
   const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
