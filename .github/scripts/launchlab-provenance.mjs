@@ -82,10 +82,15 @@ export function parseProgramDataAccount(programDataAccount) {
   const option = data[12];
   if (option !== 0 && option !== 1) throw new Error("Invalid ProgramData upgrade-authority option tag");
   if (option === 1 && data.length < 45) throw new Error("Truncated ProgramData upgrade authority");
+  const programPayload = data.subarray(45);
   return {
     slot: Number(data.readBigUInt64LE(4)),
     upgradeAuthority: option === 1 ? encodeBase58(data.subarray(13, 45)) : null,
-    immutable: option === 0
+    immutable: option === 0,
+    programDataAccountLength: data.length,
+    programDataPayloadLength: programPayload.length,
+    programDataAccountSha256: createHash("sha256").update(data).digest("hex"),
+    programDataPayloadSha256: createHash("sha256").update(programPayload).digest("hex")
   };
 }
 async function readJson(fetchImpl, url, init = {}) {
