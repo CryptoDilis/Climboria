@@ -113,8 +113,8 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const locked = lock.accounts.find(item => normalizeName(item.name) === "lockedliquidity");
   const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
   const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
-  if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK");
-  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("LP Lock locked-liquidity PDA seed differs from pinned SDK");
+  if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK; decoded=" + JSON.stringify(auth?.pda?.seeds) + "; text=" + String(authSeed));
+  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("LP Lock locked-liquidity PDA seed differs from pinned SDK; decoded=" + JSON.stringify(locked?.pda?.seeds) + "; text=" + String(liquiditySeed));
   const [derivedAuthority] = Key.findProgramAddressSync([Buffer.from(LOCK_AUTH_SEED, "utf8")], new Key(target.id));
   if (derivedAuthority.toBase58() !== target.authority) fail("LP Lock authority PDA does not match the pinned SDK program constant");
   return {
