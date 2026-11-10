@@ -1175,7 +1175,7 @@ async function prepareJupiterSwap(){
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({inputMint:from.id,outputMint:to.id,amount:String(raw),taker:connectedWallet})});
   const order=await response.json();
   if(!response.ok)throw new Error(order.error||'Climboria swap backend rejected the order (HTTP '+response.status+')');
-  if(!order.requestId||!order.transaction)throw new Error(order.errorMessage||'Jupiter did not return a signable transaction. Error code: '+(order.errorCode??'unknown'));
+  if(!order.requestId||!order.orderToken||!order.transaction)throw new Error(order.errorMessage||'Climboria did not return a securely stored signable order. Error code: '+(order.errorCode??'unknown'));
   if(order.transactionVersion!==0)throw new Error('This wallet flow currently accepts Solana transaction version 0 only.');
   const web3=await import('https://esm.sh/@solana/web3.js@1.98.4');
   const bytes=Uint8Array.from(atob(order.transaction),ch=>ch.charCodeAt(0));
@@ -1205,8 +1205,7 @@ async function signAndExecuteJupiterSwap(){
   if(!signed||typeof signed.serialize!=='function')throw new Error('Wallet did not return a signed Solana transaction.');
   const signedTransaction=btoa(String.fromCharCode(...signed.serialize()));
   button.textContent='Submitting to Jupiter…';
-  const payload={signedTransaction,requestId:pendingSwapOrder.order.requestId};
-  if(pendingSwapOrder.order.lastValidBlockHeight!==undefined&&pendingSwapOrder.order.lastValidBlockHeight!==null){const blockHeight=Number(pendingSwapOrder.order.lastValidBlockHeight);if(!Number.isSafeInteger(blockHeight)||blockHeight<=0)throw new Error('Jupiter returned an invalid last-valid block height.');payload.lastValidBlockHeight=blockHeight;}
+  const payload={signedTransaction,orderToken:pendingSwapOrder.order.orderToken};
   const response=await fetch(swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/execute',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'Execution request failed (HTTP '+response.status+')');
