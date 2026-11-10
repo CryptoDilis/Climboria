@@ -32,7 +32,7 @@ const input = overrides => ({
 function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}) {
   let captured, executeCalled = false;
   const raydium = {
-    scope: { cluster: "devnet" },
+    cluster: "devnet",
     ownerPubKey: new PublicKey(ids.creator),
     connection: {
       getAccountInfo: async () => ({ owner: new PublicKey(ids.programId), data: Buffer.from("fixture") }),
@@ -120,7 +120,7 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
 });
 test("rejects an SDK client not initialized for Devnet", async () => {
   const mock = client();
-  mock.raydium.scope.cluster = "mainnet";
+  mock.raydium.cluster = "mainnet";
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /initialized for Devnet/);
 });
 test("rejects an unexpected SDK transaction signer", async () => {
