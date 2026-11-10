@@ -5,6 +5,7 @@ import { validateUnsignedOrderTransaction } from "../src/transaction-validation.
 import { makeFixture } from "./solana-v0-fixture.mjs";
 
 const orderStoreCalls = [];
+let settleResponseStatus = 200;
 const orderStoreStub = {
   async fetch(input, init = {}) {
     const pathname = new URL(input).pathname;
@@ -16,7 +17,7 @@ const orderStoreStub = {
       return Response.json({ ok: true, state: "ready" }, { status: 201 });
     }
     if (pathname === "/claim") return Response.json({ ok: true, record: { requestId: "request-123456", lastValidBlockHeight: 12345 } });
-    if (pathname === "/settle") return Response.json({ ok: true, state: body?.state });
+    if (pathname === "/settle") return Response.json({ ok: settleResponseStatus === 200, state: body?.state }, { status: settleResponseStatus });
     return Response.json({ error: "not found" }, { status: 404 });
   }
 };
@@ -268,6 +269,52 @@ test("records an uncertain, replay-locked order when Jupiter execution transport
     assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
     assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
   } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("marks non-2xx Jupiter execution responses uncertain and replay-locked", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  try {
+    globalThis.fetch = async () => Response.json({ message: "upstream unavailable" }, { status: 503 });
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    assert.match((await res.json()).error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("reports failed durable uncertainty settlement without releasing the claimed order", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  settleResponseStatus = 503;
+  try {
+    globalThis.fetch = async () => { throw new TypeError("connection reset after request dispatch"); };
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.equal(body.settlementRecorded, false);
+    assert.match(body.error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    settleResponseStatus = 200;
     globalThis.fetch = originalFetch;
   }
 });
