@@ -1,3 +1,13 @@
+### Latest checkpoint — 2026-11-10 (Proposal-to-loader verification checks)
+
+- [x] Added a cross-check joining each successful governance `ExecuteTransaction` to its decoded Proposal and Proposal-transaction account. It verifies: governance PDA matches, Proposal state is `Completed`, Proposal-transaction points back to that Proposal, execution status is `Success`, exactly one embedded loader instruction exists, loader opcode is `Upgrade` (3), ProgramData and governed Program addresses match the live Metaplex addresses, and the final loader authority is the Program Governance PDA.
+- [x] Added account-owner validation: proposal accounts owned by anything other than the SPL Governance program are reported as decode failures rather than trusted.
+- [x] Added tests for successful proposal-to-loader verification and a deliberate ProgramData mismatch. Validate run `42763759683` on commit `5e431bc857065b47bff24352cf99e5d9e33046c7`: SUCCESS.
+- [ ] **Next P0:** complete LaunchLab run `42763759653` on this head. It was still installing the temporary Solana RPC client at last inspection. Once the live capture finishes, inspect `governanceProposalAccounts`, `governanceProposalDetails`, and `governanceUpgradeVerification`; report actual verified count and any account decode or RPC failures.
+- [ ] Older LaunchLab run `42763348402` (commit `007de21a301afe0e3dc2ddd3488bd77d3a9797a1`) was in its read-only Devnet capture step; its output is not yet available. Do not substitute that run's pending status for a successful live verification.
+- [ ] The historical 93-record evidence still shows 69 successful upgrades (30 direct + 39 governance-executed), one successful authority transfer, three ProgramData extensions, and no observed `DeployWithMaxDataLen` in the returned history. Original deployment and exact deployed source lineage remain unresolved.
+- [ ] PR #231 remains Draft and unmerged. No wallet signing, simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (Governance proposal account verification added)
 
 - [x] Added one bounded finalized RPC batch to read the unique Program Governance, Proposal, and Proposal-transaction accounts referenced by successful loader `ExecuteTransaction` events. The probe captures account existence, owner, lamports, data length, SHA-256, and base64 account bytes; it is read-only and does not submit transactions.
