@@ -87,7 +87,7 @@ const result = await prepareDevnetLaunch({
     token2022: false,
     // Explicit CI-only curve parameters; these are not Climboria launch settings.
     supply: "100000000000000",
-    totalSellA: "50000000000000",
+    totalSellA: "60000000000000",
     totalFundRaisingB: "30000000000",
     totalLockedAmount: "0",
   },
