@@ -85,6 +85,8 @@ const result = await prepareDevnetLaunch({
     migrateType: "cpmm",
     createOnly: true,
     token2022: false,
+    // Explicit SDK fee-mode fixture: 0 = OnlyTokenB; not a production fee-policy approval.
+    creatorFeeOn: 0,
     // Explicit CI-only curve parameters; these are not Climboria launch settings.
     supply: "100000000000000",
     totalSellA: "60000000000000",
