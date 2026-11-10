@@ -932,3 +932,15 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 4. Resolve PR #231 Devnet fee-receiver custody/governance, Devnet LP Lock IDL/deployed-interface and bytecode provenance, and LaunchLab migration scale/Fee Key NFT custody. Keep creation/migration disabled.
 5. Implement and verify genuine Guest/email-password/Google/X account sessions; wallet connection is not account login.
 6. Record each new change and evidence in both progress files. Do not create a no-op code commit or claim DEX/Launchpad/auth is live without production evidence.
+
+
+## 2026-11-11 — Repository state refresh (no new code run)
+
+- Rechecked the live PRs, branch refs, main, progress files, and Actions runs. Main was b29c987c7c42da7813c13ba818214773f1c646da at the start of this checkpoint. PR #234 source head remains 7f5d3451c7c99356fd46502691f0c24f92a96ade, open/draft, mergeable=false; compare against that main: 42 ahead / 43 behind, merge base 28180c2a277e0c4bd093a40462032e7f536989e6. PR #231 source head remains 281209c66e2e69fa14c973867086947a2dc47000, open/draft, mergeable=false; compare: 350 ahead / 82 behind, merge base 9709b0301c97445e05c1ac0dec6b4c7ae1ade4ed.
+- PR #234 branch Actions history has no newer runs than Validate 42880044395 and Browser Smoke 42880044279. Both green runs checked out merge-side source commit 32ec6caee34e37a9f4d2afd0b491c840abc66034, while the PR source head remains five commits newer. No current-head validation evidence was found.
+- PR #231 remains unchanged at its recorded head; latest exact-head Validate 42866535160 and LaunchLab Live Provenance 42866535205 are green but read-only/preparation checks only. No newer live token creation or migration evidence.
+- No code change, workflow dispatch, rebase, merge, deployment, signing, or on-chain transaction occurred in this refresh. The available GitHub Actions methods can inspect runs/logs and rerun failed jobs, but expose no workflow-dispatch action; rerunning the older failed browser job would not validate current PR head. A network-enabled Git worktree is still required for conflict-aware integration and local verification.
+- This note records the exact pre-documentation-commit comparison above. The two progress-file commits themselves advance main; recalculate ahead/behind counts before the next checkpoint rather than carrying these counts forward.
+
+### Exact next action
+Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head (confirm the workflow checkout includes that head), inspect the new settlement-failure tests and logs, then reconcile with current main in a network-enabled worktree and rerun both workflows. Keep PR #234 unmerged and both execution kill switches off. In parallel, continue the PR #231 custody/IDL/provenance blockers; do not enable Launchpad creation or migration. Account auth (Guest/email/Google/X) remains a separate required production task; wallet connection is not login.
