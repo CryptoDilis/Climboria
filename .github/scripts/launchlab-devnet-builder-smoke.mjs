@@ -39,6 +39,7 @@ const rpcUrl = process.env.SOLANA_DEVNET_RPC_URL || "https://api.devnet.solana.c
 const connection = new Connection(rpcUrl, { commitment: "finalized" });
 // Deterministic ephemeral test keys only. No secret is persisted or used to submit.
 const creator = Keypair.fromSeed(Buffer.alloc(32, 0x31));
+const feePayer = Keypair.fromSeed(Buffer.alloc(32, 0x53));
 const mint = Keypair.fromSeed(Buffer.alloc(32, 0x42));
 const contentJson = JSON.stringify({
   name: "Climboria Devnet Builder Check",
@@ -86,7 +87,7 @@ const result = await prepareDevnetLaunch({
     platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
     quoteMint: "So11111111111111111111111111111111111111112",
     creatorWallet: creator.publicKey.toBase58(),
-    feePayer: creator.publicKey.toBase58(),
+    feePayer: feePayer.publicKey.toBase58(),
     mintKeypair: mint,
     metadata,
     decimals: 6,
@@ -114,6 +115,9 @@ process.stdout.write(JSON.stringify({
   sdkVersion: pkg.version,
   cluster: result.cluster,
   mintAddress: result.mintAddress,
+  creatorWallet: result.creatorWallet,
+  feePayer: result.feePayer,
+  separateFeePayer: result.creatorWallet !== result.feePayer,
   transactionCount: result.transactionCount,
   instructionPath: result.instructionPath,
   migration: result.migration,
