@@ -142,7 +142,7 @@ test("rejects an unexpected SDK transaction signer", async () => {
     transactions: [{
       message: {
         staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
-        header: { numRequiredSignatures: 2 },
+        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
         compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
       },
     }],
@@ -156,7 +156,7 @@ test("rejects an unapproved program in a prepared SDK transaction", async () => 
     transactions: [{
       message: {
         staticAccountKeys: [options.feePayer, options.mintA, new PublicKey("Unknown111111111111111111111111111111111")],
-        header: { numRequiredSignatures: 2 },
+        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
         compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
       },
     }],
@@ -170,7 +170,7 @@ test("rejects a transaction fee payer that differs from the creator", async () =
     transactions: [{
       message: {
         staticAccountKeys: [new PublicKey("11111111111111111111111111111112"), options.mintA, new PublicKey(ids.programId)],
-        header: { numRequiredSignatures: 2 },
+        header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
         compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
       },
     }],
