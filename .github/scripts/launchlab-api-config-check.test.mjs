@@ -14,19 +14,28 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   const target = {
     cpmmProgram: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
     cpmmFeeAccount: "DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8",
+    cpmmFeeAuthority: "GpMZbSM2GgvTKHJirzeGfMFoaZ8UR2X7F4v8vHTvxFbL",
     lockProgram: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
     lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
   };
+  const feeData = Buffer.alloc(165);
+  new PublicKey("So11111111111111111111111111111111111111112").toBuffer().copy(feeData, 0);
+  new PublicKey(target.cpmmFeeAuthority).toBuffer().copy(feeData, 32);
+  feeData.writeBigUInt64LE(42n, 64);
+  feeData.writeUInt8(1, 108);
   const result = validateCpmmMigrationAccounts({
     cpmmProgramAccount: { executable: true },
     lockProgramAccount: { executable: true },
-    cpmmFeeAccount: { owner: "11111111111111111111111111111111", lamports: 123 },
+    cpmmFeeAccount: { owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", lamports: 123, data: [feeData.toString("base64"), "base64"] },
     target,
+    PublicKey,
   });
   assert.equal(result.cpmmProgramExecutable, true);
   assert.equal(result.lockProgramExecutable, true);
   assert.equal(result.cpmmCreatePoolFeeAccount, target.cpmmFeeAccount);
   assert.equal(result.cpmmCreatePoolFeeAccountLamports, "123");
+  assert.equal(result.cpmmCreatePoolFeeTokenAmount, "42");
+  assert.equal(result.cpmmCreatePoolFeeAssociatedTokenAccountVerified, true);
   assert.equal(result.lockAuthority, target.lockAuthority);
 });
 test("rejects a missing CPMM migration fee destination account", () => {
