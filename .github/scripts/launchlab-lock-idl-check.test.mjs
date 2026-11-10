@@ -98,7 +98,7 @@ test("rejects changed lock authority PDA seed supplied by source review", () => 
   assert.throws(() => validateLockProgramIdl(fixture(), target, PublicKey, {
     lockAuthoritySeed: "wrong_seed",
     lockedLiquiditySeed: "locked_liquidity",
-  }), /authority seed differs/);
+  }), /authority PDA seed differs/);
 });
 test("derives distinct locked LP ATAs for different CPMM LP mints", () => {
   const a = deriveLockProgramAddresses({ programId: target.id, lpMint: "So11111111111111111111111111111111111111112", PublicKey });
