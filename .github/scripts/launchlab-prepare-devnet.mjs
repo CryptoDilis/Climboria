@@ -38,7 +38,8 @@ export function validateDevnetLaunchInput(input, sdk) {
     fail("Token decimals must be explicitly selected (0–9); WSOL quote decimals must be 9");
   }
   if (typeof input.creatorWallet !== "string" || !input.creatorWallet.trim()) fail("Creator wallet is required");
-  if (typeof input.feePayer !== "string" || input.feePayer !== input.creatorWallet) fail("Fee payer must exactly match the creator wallet");
+  if (typeof input.feePayer !== "string" || !input.feePayer.trim()) fail("A dedicated Devnet fee-payer public key is required");
+  try { new sdk.PublicKey(input.feePayer); } catch { fail("Dedicated Devnet fee payer must be a valid public key"); }
   if (!input.mintKeypair || !isPublicKey(input.mintKeypair.publicKey)) fail("Caller-supplied mint Keypair is required; this module never generates or stores keys");
   if (!input.metadata || typeof input.metadata !== "object") fail("Explicit token metadata is required");
   const { name, symbol, uri, contentHash } = input.metadata;
@@ -216,6 +217,7 @@ function decodeBase58(value) {
 export function expectedInitializeV2Accounts({ sdk, input, programId, platformAllowConfigId, platformCurveRuleId }) {
   const PublicKey = sdk.PublicKey;
   const creator = new PublicKey(input.creatorWallet);
+  const payer = new PublicKey(input.feePayer ?? input.creatorWallet);
   const mintA = input.mintKeypair.publicKey;
   const mintB = new PublicKey(DEVNET.quoteMint);
   const metadataProgram = new PublicKey(METADATA_PROGRAM_ID);
@@ -236,7 +238,7 @@ export function expectedInitializeV2Accounts({ sdk, input, programId, platformAl
   // The final IDL "program" entry is included as the final SDK account meta;
   // the compiled instruction programIdIndex independently points to that same program key.
   const accounts = [
-    { name: "payer", pubkey: creator, isSigner: true, isWritable: true },
+    { name: "payer", pubkey: payer, isSigner: true, isWritable: true },
     { name: "creator", pubkey: creator, isSigner: false, isWritable: false },
     { name: "global_config", pubkey: new PublicKey(DEVNET.configId), isSigner: false, isWritable: false },
     { name: "platform_config", pubkey: new PublicKey(DEVNET.platformId), isSigner: false, isWritable: false },
@@ -425,7 +427,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     creatorFeeOn: input.creatorFeeOn,
     buyAmount: new sdk.BN(0),
     createOnly: true,
-    feePayer: new sdk.PublicKey(input.creatorWallet),
+    feePayer: new sdk.PublicKey(input.feePayer),
     extraSigners: [input.mintKeypair],
     txVersion: sdk.TxVersion.V0,
     platformAllowConfig: platformAllowConfig.enforced ? true : undefined,
@@ -476,11 +478,11 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
         !Number.isInteger(readonlySigned) || !Number.isInteger(readonlyUnsigned)) {
       fail(`SDK transaction ${index} is not a supported v0 message or lacks complete account-meta header data`);
     }
-    if (!sameKey(keys[0], new sdk.PublicKey(input.creatorWallet))) {
-      fail(`SDK transaction ${index} fee payer does not match the approved creator wallet`);
+    if (!sameKey(keys[0], new sdk.PublicKey(input.feePayer))) {
+      fail(`SDK transaction ${index} fee payer does not match the approved dedicated Devnet fee payer`);
     }
     const required = keys.slice(0, requiredCount).map(key => key.toBase58());
-    const expected = [input.creatorWallet, input.mintKeypair.publicKey.toBase58()];
+    const expected = [input.feePayer, input.mintKeypair.publicKey.toBase58()];
     if (required.length !== 2 || !expected.every(key => required.includes(key))) {
       fail(`SDK transaction ${index} contains an unexpected required signer`);
     }
@@ -581,6 +583,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     configId: DEVNET.configId,
     platformId: DEVNET.platformId,
     creatorWallet: input.creatorWallet,
+    feePayer: input.feePayer,
     mintAddress: input.mintKeypair.publicKey.toBase58(),
     metadataHash: input.metadata.contentHash.toLowerCase(),
     amounts,
