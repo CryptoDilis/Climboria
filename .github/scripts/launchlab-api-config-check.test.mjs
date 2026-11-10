@@ -43,7 +43,7 @@ test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock des
   const platformData = Buffer.alloc(944);
   const wallet = (n) => Keypair.generate().publicKey;
   const { Keypair } = require("@solana/web3.js");
-  const addresses = Array.from({ length: 9 }, () => Keypair.generate().publicKey);
+  const addresses = Array.from({ length: 11 }, () => Keypair.generate().publicKey);
   const putKey = (buffer, offset, key) => key.toBuffer().copy(buffer, offset);
   [115,147,179,211].forEach((offset, i) => putKey(globalData, offset, addresses[i]));
   [16,48,688,728,760,800,834].forEach((offset, i) => putKey(platformData, offset, addresses[i+4]));
