@@ -1,4 +1,5 @@
 import test from "node:test";
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { PROGRAMS, LOADER, parseProgramDataAddress, parseProgramDataAccount, runProvenanceCheck } from "./launchlab-provenance.mjs";
 
@@ -15,9 +16,11 @@ function programAccount(programDataBytes) {
   const data=Buffer.alloc(36); data.writeUInt32LE(2,0); Buffer.from(programDataBytes).copy(data,4);
   return { ...accountData(data), executable:true, lamports:1000 };
 }
-function programDataAccount(authorityBytes, slot=123456n) {
-  const data=Buffer.alloc(authorityBytes ? 45 : 13); data.writeUInt32LE(3,0); data.writeBigUInt64LE(slot,4);
+function programDataAccount(authorityBytes, slot=123456n, payload=Buffer.alloc(0)) {
+  const headerLength = authorityBytes ? 45 : 13;
+  const data=Buffer.alloc(headerLength + payload.length); data.writeUInt32LE(3,0); data.writeBigUInt64LE(slot,4);
   if(authorityBytes){data[12]=1;Buffer.from(authorityBytes).copy(data,13);} else data[12]=0;
+  Buffer.from(payload).copy(data,headerLength);
   return accountData(data);
 }
 test("published program identifiers are stable and cluster-specific", () => {
