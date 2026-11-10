@@ -147,7 +147,7 @@ test("rejects untrusted, malformed, deactivated and not-yet-warmed lookup tables
   view.setUint32(0, 1, true);
   view.setBigUint64(4, 0xffffffffffffffffn, true);
   view.setBigUint64(12, 100n, true);
-  data[20] = 1;
+  data[20] = 0;
   assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner: "11111111111111111111111111111111", contextSlot: 101 }), /unexpected owner/);
   assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner, executable: true, contextSlot: 101 }), /must not be executable/);
   assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner, contextSlot: 100 }), /not active until a later slot/);
