@@ -1,3 +1,11 @@
+### Live run update — 2026-11-10 (LaunchLab #42759807542)
+
+- [x] LaunchLab run `42759807542` (head `8f994b7b2d4140ab7cd5ce453f063a49fa357c6f`) passed the Metaplex read-only provenance parser tests and successfully rebuilt the deployment-era candidate Metaplex Token Metadata program with the historical toolchain.
+- [x] The same run completed the pinned SDK/IDL verification and all preflight/approval/rent/parser mock test stages successfully.
+- [ ] The workflow has advanced to **Capture and compare canonical Metaplex Devnet deployment provenance (read-only RPC)**. The live RPC step is still running; no live history conclusions are available yet.
+- [ ] Log download endpoint returned a transient BlobNotFound while the job was still running. Use the run/job status and final artifacts/output once the job completes; do not infer results from the unavailable streaming log.
+- [ ] Next: inspect final live RPC capture, selected oldest-first transaction signatures and instruction evidence; verify candidate loader deploy/upgrade transactions and governance links. Record any RPC throttling and missing transaction detail explicitly.
+
 ### Latest checkpoint — 2026-11-10 (corrected oldest-first parser tests, PR #231)
 
 - [x] Rechecked PR #231: open and Draft; branch remains `codex/launchlab-live-provenance-probe`.
