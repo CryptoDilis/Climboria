@@ -2667,3 +2667,210 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-10 — Swap execution hard-gate engineering checkpoint
+
+**Change under review:** PR #233 — https://github.com/CryptoDilis/Climboria/pull/233
+
+- Added `EXECUTION_SECURITY_REVIEW_COMPLETE = false` as a code-level gate in `dex/swap-proxy/src/index.mjs`. The gate is independent of `EXECUTION_ENABLED`; configuration alone cannot enable execution.
+- `handleExecute` now rejects before rate-limit/provider forwarding whenever the code-level gate is closed.
+- `/health` now reports `execution: disabled` and `configured.executionEnabled: false` while the code-level gate is closed, even if an environment flag is mistakenly set true.
+- Replaced unit tests that previously exercised a mocked Jupiter execute-forwarding path with a regression test proving a true deployment flag still cannot reach Jupiter while the security gate is closed.
+- Updated `dex/swap-proxy/DEPLOYMENT.md` with the two-gate model and the conditions for any future gate change.
+- No keys, signatures, wallet funds, or live transactions were used. No execution switches were enabled.
+
+**CI diagnosis**
+- Initial PR checks: Validate run `42849007215`; Browser Smoke run `42849007217`; both failed on the first attempt.
+- Root cause from Validate job `129944184285`: the expected error assertion observed the mock fetch exception, proving the first source edit had not actually inserted the handleExecute hard-stop (the health flag and constant were changed, but the execute guard replacement had not matched). This was a code-patch mismatch, not an upstream Jupiter or Pages outage.
+- Corrected by explicitly matching and replacing the exact `handleExecute` block; verified the branch source now returns 503 before rate-limit/provider code. The regression test now checks the 503 reason and asserts upstream fetch was never called.
+- The failed runs above belong to the earlier commit `0c29e95f25ccbc03603f38b9291a20c0bbfcdb58`, before the corrected guard commit `8d073da87664af4e1f8e564a13aeab3145de1d35`. Do not treat the old failure as a result for the corrected source. A fresh PR check on the latest head is still required.
+
+**Current status**
+- PR #233 remains draft/open; latest code head at this checkpoint: `8d073da87664af4e1f8e564a13aeab3145de1d35` (source guard fix; follow-up documentation commit will advance it).
+- Swap execution remains OFF. This is an interim safety hardening, not the completed semantic validator, not a production deployment, and not a live trading claim.
+
+**Next exact tasks**
+1. Obtain fresh Validate and Browser Smoke checks on the corrected PR head; diagnose and fix any failures from logs before proceeding.
+2. Implement the actual Solana v0 transaction semantic validator, including address lookup table resolution and strict signer/fee-payer, token mint, amount, destination, program/instruction/account, and compute-budget checks.
+3. Implement durable one-time expiring order binding to the wallet + exact mints + amount + signed message hash, with atomic consumption, replay protection, and idempotent execution results.
+4. Add adversarial tests (tampered transaction, wallet/mint/amount substitution, malicious lookup-table addresses, unexpected instructions, expired blockhash, replay, Jupiter request mismatch) and controlled Devnet lifecycle tests.
+5. Only after independent security review and Devnet evidence may the code-level constant and deployment/frontend flags be considered for a separately reviewed release.
+
+**Never remove the hard gate just to make the UI appear live.**
+
+
+## Follow-up verification — 2026-11-10
+
+- Corrected source guard is now present in `handleExecute`; it checks the code-level constant before rate limiting, parsing, or any upstream Jupiter request.
+- Latest corrected-head Validate workflow `42849330950`: SUCCESS.
+- Latest corrected-head Browser Smoke workflow `42849331112`: still running at checkpoint time. All DEX/Swap browser checks completed SUCCESS: proxy API, fail-closed execution, standalone Swap, DEX quote shell, mobile workspace, narrow 390px/360px layouts, and provider error/empty states. The unrelated Jarrell's Peak gameplay smoke step was still running.
+- Earlier failures were caused by an initial source-patch mismatch and stale tests asserting the previous execute path. Both were traced in the logs and corrected; latest Validate run passed.
+- Do not enable execution. The hard gate remains intentionally false.
+
+
+## 2026-11-10 — Solana transaction wire-decoder foundation (not an execution validator)
+
+- [x] Added `dex/swap-proxy/src/solana-message.mjs`: bounded canonical base64 decoding (Solana packet limit), strict legacy/v0 message structure parsing, signature/header count checks, static account key and recent blockhash extraction, compiled instruction index bounds, v0 address-lookup descriptor parsing, trailing-byte rejection, and SHA-256 hashing of the exact message bytes excluding signatures.
+- [x] Added `dex/swap-proxy/test/solana-message.test.mjs` with focused fixtures for legacy/v0 decoding, unsupported versions, malformed/truncated base64, zero signatures, trailing bytes, invalid program/account indexes, and signature-independent message hashes.
+- [x] Kept this parser isolated from `handleExecute`. It is intentionally not wired into execution and does not establish safe instruction semantics, resolve lookup tables against trusted RPC state, bind an order to a wallet, or prevent replay.
+- [x] Added an explicit security-boundary section to `dex/swap-proxy/DEPLOYMENT.md` so this structural decoder cannot be misrepresented as a complete validator.
+- [ ] **Verification pending:** the GitHub Actions run for the new parser tests has not yet been observed. Existing Browser Smoke run `42849331112` remains in progress on its retry; do not mark it green prematurely.
+- [ ] **Exact next task:** execute the parser unit tests and fix any fixture/parser mismatch; then implement trusted address-lookup-table resolution and account-meta reconstruction. Follow with protocol-specific instruction decoders/allowlists and durable atomic expiring order-wallet-message binding. Keep the hard execution gate false throughout.
+- No production deployment, wallet signing, live transaction, Devnet submission, Mainnet action, or execution flag change occurred.
+
+
+## Decoder verification update — 2026-11-10
+
+- [x] Validate workflow [42850672329](https://github.com/CryptoDilis/Climboria/actions/runs/42850672329) completed **SUCCESS** on code head `4f96240648f421c0ddb9768b5e121a45aeaccf9d`. The job's “Test Cloudflare swap proxy security and API contracts” step passed, along with homepage/DEX/Swap syntax and structural checks. This validates the repository test command including the new parser test file.
+- [ ] Browser Smoke workflow [42850672349](https://github.com/CryptoDilis/Climboria/actions/runs/42850672349) remains **IN PROGRESS**; Playwright browser-cache setup was running at last inspection.
+- Parser remains a structural wire decoder only; no ALT account resolution, semantic instruction allowlist, order-wallet binding or execute-route integration exists yet.
+- Hard execution gate remains false.
+- **Next exact task:** wait for Browser Smoke result; then implement trusted ALT resolution/account-meta reconstruction and instruction-level semantic validation, with tests. Keep execution disabled.
+
+
+## 2026-11-11 — ALT account-meta reconstruction and program-index correction
+
+- [x] **Root-cause diagnosis:** the first structural decoder rejected every instruction whose program ID was in a v0 loaded lookup account because it compared `programIdIndex` to the static-key count before parsing ALT descriptors. Solana v0 can reference readonly loaded program IDs; the check was too restrictive.
+- [x] **Targeted fix:** defer the program-index bounds check until the complete static + loaded account-key count is known. Reject out-of-range program and account indexes against that final count.
+- [x] Added `reconstructAccountMetas(parsed, resolvedTables)`: reconstruct static signer/writable/readonly flags and canonical global ordering of loaded writable keys followed by loaded readonly keys, including multiple lookup tables; reject missing/mismatched trusted table input, out-of-bounds or duplicate lookup indexes, duplicate resolved account keys, and writable/signer program IDs.
+- [x] Added ALT-focused unit tests for canonical ordering and malformed lookup tables. Commits: `27dfc342888cc23662281f866d81b9df9126c27c` (source), `f158162f2009f42570482fe9a54497c2b2a4b9eb` (tests).
+- [ ] **Verification pending:** GitHub Actions must run on new head `f158162f2009f42570482fe9a54497c2b2a4b9eb`; do not reuse the earlier successful Validate run as proof of these changes. Prior browser smoke attempts were cancelled or in progress, not a green full suite.
+- [ ] **Exact next job:** verify new Validate and Browser Smoke checks; if failed, inspect failing logs and fix root cause. Then implement trusted RPC ALT account-owner/state/slot checks, instruction program allowlists, exact order-wallet-message binding, durable replay protection, adversarial tests, and controlled Devnet lifecycle verification.
+- **Safety boundary:** the new helper consumes externally supplied table contents and DOES NOT authenticate them. It is NOT integrated into the execute route. `EXECUTION_SECURITY_REVIEW_COMPLETE` remains false, and neither production Worker nor live trading was enabled.
+
+
+## 2026-11-11 — ALT state decoder and loaded-program regression
+
+- [x] Added a v0 regression fixture proving a program ID may be loaded from a readonly ALT; the full resolved account-key range is used for program-index validation.
+- [x] Added `decodeAddressLookupTableAccount` to parse the canonical ALT account metadata layout and fail closed on unexpected ALT program owner, executable account, invalid account-data length/state, invalid authority option, nonzero absent-authority bytes, invalid padding, out-of-range extension start index, deactivated table, and same-slot un-warmed appended addresses.
+- [x] Added tests for active ALT decoding, owner/executable checks, warmup, deactivation, metadata padding and truncation. Source/test commits: `509e6a518d5f83b936b00f80a6990f3a879a169c`, `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`.
+- [ ] **CI pending on latest code head** `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`. Current visible Validate run `42851432127` and Browser Smoke `42851432268` ran on older head `1e8fd34849319e541923eee8403fb922e1838742`; Browser Smoke remains in progress. Do not treat these as verification of the latest changes.
+- [ ] **Exact next task:** obtain fresh CI for latest head; inspect logs and repair any failures. Then connect trusted RPC fetch/context/owner validation to ALT parsing without trusting client-supplied account data. Continue instruction allowlists, transfer semantics, order-wallet-message binding, replay/idempotency, adversarial and Devnet tests.
+- **Hard safety boundary:** ALT parser is a pure decoder; caller must bind its inputs to a trusted RPC response. It is not connected to `/api/swap/execute`. Execution security constant remains false; no production deployment or transaction submission occurred.
+
+
+## 2026-11-11 — ALT parser hardening follow-up
+
+- [x] Added v0 regression coverage for program IDs loaded from readonly ALT entries.
+- [x] Added ALT account-state metadata decoder with owner/executable/state/authority/padding/address-count/deactivation/warmup checks. This remains a pure parser; the caller must authenticate the exact RPC response and context slot.
+- [x] Tightened lookup descriptors: reject a table lookup that selects zero addresses.
+- [x] Enforce a 128-account resolved-key cap both after decode and after ALT reconstruction; added oversized-account-set regression test.
+- [x] Documented these constraints in `dex/swap-proxy/DEPLOYMENT.md`.
+- [ ] **Latest CI remains pending:** latest engineering changes are after commit `1e8fd34849319e541923eee8403fb922e1838742`, which is the head used by visible Validate `42851432127` (success) and Browser Smoke `42851432268` (still in progress). These runs do not validate current source. GitHub Actions did not produce a fresh run for the latest code commits through the available repository connection; do not claim tests pass.
+- [ ] **Exact next task:** obtain a fresh Validate run for current PR head and inspect result; then add trusted RPC fetch integration binding owner/executable/data/context slot to the same account response. Continue semantic instruction allowlists, exact order-wallet-message binding, replay/idempotency and controlled Devnet tests.
+- **Safety:** parser not integrated into execute route; execution security constant remains false. No Worker deployment, wallet signing, live transaction, or production switch change.
+
+
+## 2026-11-11 — ALT account identity binding follow-up
+
+- [x] Decoder now requires the 32-byte lookup-table account public key and returns a defensive copy in the parsed result. This lets the returned ALT object be passed directly to `reconstructAccountMetas`, which checks it against the transaction's referenced table key instead of relying on a caller to attach identity later.
+- [x] Added a regression test rejecting missing lookup-table identity before accepting account bytes.
+- [x] Documented the trust boundary: the decoder does not fetch RPC data; owner, executable flag, data and context slot must be taken from one trusted server-side account response.
+- [ ] **Latest CI still pending:** visible Validate `42852192636` and Browser Smoke `42852192411` were started against older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`, not this latest change. Validate passed on that older head; Browser Smoke remained in progress. Do not claim latest changes passed.
+- [ ] **Exact next task:** trigger/obtain fresh CI for current PR head; then implement server-side RPC account fetch with strict response identity/context binding, followed by program-specific semantic instruction allowlists and durable order-wallet-message/replay protection.
+- Execution gate remains false; parser is not wired into execute. No Worker deploy, wallet signing or live trade.
+
+
+## 2026-11-11 — CI coverage gap found and corrected
+
+- [x] **Root-cause diagnosis:** the repository Validate workflow only ran `dex/swap-proxy/test/worker.test.mjs`. The new `solana-message.test.mjs` parser/ALT regression suite was therefore not included in CI, despite the workflow's broad JavaScript syntax checks. Earlier Validate successes did not prove the new parser tests passed.
+- [x] **Targeted fix:** updated `.github/workflows/validate-climboria.yml` to run `node --test dex/swap-proxy/test/*.test.mjs`, so both Worker API/security tests and Solana parser/ALT tests are included.
+- [x] ALT decoder now requires and returns the exact 32-byte table account identity; account-meta reconstruction can verify it against the message's lookup reference. Missing identity is covered by a regression test.
+- [ ] **Fresh CI still not observed:** latest branch head is `96967b99d5fe46cace66486feb2d39b0f8dc9bcd`. Available Validate run `42852192636` and Browser Smoke `42852192411` were on older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`; prior workflow results did not execute parser tests. The repository connection's PR close/reopen did not produce a new run on the latest SHA. Do not claim latest tests passed.
+- [ ] **Exact next task:** get a fresh Validate run on `96967b99d5fe46cace66486feb2d39b0f8dc9bcd` and inspect the parser test output; fix root cause if anything fails. Then implement trusted server-side RPC ALT fetch/context binding and semantic program/instruction allowlists.
+- Execution remains hard-disabled and parser remains outside execute route. No Worker deployment, live transaction, or release approval.
+
+
+## 2026-11-11 — Diagnose and fix first full parser-suite CI failures
+
+- [x] Fresh Validate run `42852777038` finally exercised the parser suite on PR merge commit `be619ce7b8053b8c5d2d8fb57f2746cb440a48a7` (PR head at that time: `964c0a2a0a741dcd1fc56c648a01c077d48da125`).
+- [x] **Failure 1 root cause:** the unsupported-version test used `Buffer.from(fixture())` on a Base64 string, producing UTF-8 text bytes instead of decoding the serialized transaction. Changed it to `Buffer.from(fixture(), "base64")`, so byte 65 is actually the message version byte.
+- [x] **Failure 2 root cause:** the ALT same-slot warmup fixture set `lastExtendedSlotStartIndex = 1` while the table contained exactly one address. That means no newly appended address existed at index 1, so expecting a warmup rejection was invalid. Changed the fixture index to `0`, correctly marking the sole address as newly extended in slot 100.
+- [ ] **Verification pending:** these fixes are committed, but no new Validate run has appeared for the current branch head `a33ac53b0be148f28c1699f981368a5c0d65fc4f`. The failed run had 38 passing and 2 failing tests; it must not be described as a pass. Browser Smoke run `42852776852` is still attached to the pre-fix head and does not validate these changes.
+- [ ] **Exact next task:** obtain a fresh Validate run for the current head and inspect all test results; then address any genuine code defects. After tests pass, implement trusted RPC account retrieval/context binding and program-specific semantic instruction allowlists.
+- Execution remains hard-disabled. No execute-route integration, Worker deployment, wallet signing, or live trading.
+
+
+### Manual verification trigger added
+
+- [x] Added `workflow_dispatch` to Validate Climboria so maintainers can manually run the complete test suite against the selected PR branch from GitHub Actions. This addresses the practical trigger gap where connector-authored commits did not result in a fresh run.
+- [ ] The available GitHub connection has no workflow-dispatch action, so I cannot invoke that manual run here. A maintainer must select branch `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow. Confirm the run checks out the latest branch SHA before accepting its result.
+- [ ] Exact next task remains: run validation on the latest head, inspect full TAP output, then continue trusted RPC ALT fetch/context binding and semantic instruction allowlists.
+
+
+## 2026-11-11 — Trusted server-side ALT RPC resolver foundation
+
+- [x] Added `dex/swap-proxy/src/solana-rpc.mjs` with a server-configured HTTPS endpoint only; no browser-controlled RPC URL parameter exists. The helper batches all transaction ALT keys into one `getMultipleAccounts` request at confirmed/finalized commitment.
+- [x] Binds lookup table identity by request order and validates JSON-RPC version/ID, response context slot, exact returned account count, account owner, executable flag, base64 encoding, and canonical ALT state using the existing decoder.
+- [x] Rejects duplicate ALT account keys, invalid commitment/minimum context slot, incomplete or failed RPC responses, malformed JSON/base64, oversized responses (128 KiB streaming cap), and endpoint URLs that are not public HTTPS. RPC call timeout is 8 seconds.
+- [x] Added mocked-RPC tests for successful identity/context binding, commitment/minContextSlot, endpoint validation, duplicate keys, bad owner/executable, malformed/underspecified responses, invalid base64 and oversized payload.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md` to document the planned server-only `SOLANA_RPC_URL` binding and explicit not-yet-integrated boundary.
+- [ ] **Verification pending:** no GitHub Actions run has appeared for this new module/test suite. The previous Validate failure `42852777038` is on old head `964c0a2a0a741dcd1fc56c648a01c077d48da125`; it had 38 passing / 2 fixture failures, which have since been corrected. No green run exists for the current branch.
+- [ ] **Integration pending:** helper is not imported by `src/index.mjs` and is not called from `/api/swap/execute`. Do not configure or accept an RPC endpoint from client input. Next implementation: wire a server-owned `SOLANA_RPC_URL` into a dedicated validation service without opening execution, then implement program-specific instruction semantics and immutable order-wallet-message binding.
+- [ ] **Exact next task:** obtain manual Validate run on current branch `codex/swap-semantic-execution-gate`; inspect all TAP tests (including `solana-rpc.test.mjs`). Then implement a fail-closed server-side semantic validator consuming the trusted ALT results, with allowlisted program IDs/instruction layouts and exact mint/authority/destination/amount constraints.
+- Execution remains hard-disabled; no Worker deployment, live RPC provider verification, wallet signing, transaction submission, or production trading.
+
+
+## 2026-11-11 — Validate CI green; RPC redirect hardening follow-up
+
+- [x] Fresh Validate run `42854007949` completed **SUCCESS** on PR #233 head `4d989326dc08bbfae9562bd53120f2603c9053c4`. The workflow ran `node --test dex/swap-proxy/test/*.test.mjs`, so the full Worker + Solana parser + trusted RPC resolver suite passed on that exact SHA.
+- [x] Inspected Browser Smoke run `42854007897` on the same SHA. Homepage CTA/DEX routing/mobile navigation, Worker proxy, fail-closed execution, standalone Swap, DEX shell, and mobile workspace/desktop regression steps had passed at the last check; compact 390px/360px layouts and remaining mobile/gameplay checks were still running.
+- [x] Additional SSRF/endpoint hardening: configured RPC fetch now sets `redirect: "error"`, preventing a trusted endpoint URL from silently redirecting the server request. Added a regression assertion and documented the control.
+- [ ] **Verification pending for follow-up commits:** redirect hardening commits `19f90962`, `f2e14d3b`, and docs `45cae0d0` were made after the successful run above. They require a new Validate run; do not extend the earlier green result to these commits.
+- [ ] **Exact next task:** verify fresh Validate and Browser Smoke results on the new head; then implement a server-only, fail-closed semantic transaction validator consuming trusted ALT results, followed by order-wallet-message binding/replay protection. Keep execution disabled.
+- Execution remains hard-disabled; resolver is not wired into `/api/swap/execute`, no live RPC provider verification or Worker deployment has been performed, and no production trades are enabled.
+
+
+### 2026-11-11 — Follow-up browser smoke and latest-head status
+
+- [x] Browser Smoke run `42854007897` (head `4d989326dc08bbfae9562bd53120f2603c9053c4`) has passed homepage CTA/DEX routing/mobile navigation, Worker proxy, execution fail-closed, standalone Swap, DEX shell, mobile workspace tabs/desktop regression, compact 390px/360px layouts, and mobile market loading/provider-error/empty-state checks.
+- [ ] Jarrell's Peak desktop/mobile gameplay smoke step was still running at last inspection; screenshot upload and post-job cleanup had not completed. This run is on the earlier head and does not cover the subsequent RPC redirect-hardening commits.
+- [x] Current PR #233 head after redirect hardening and documentation: `8a71f48480e091b92ae95629ac811528128a16e4`.
+- [ ] No new Actions run has appeared for that newer head yet. The green Validate result `42854007949` is valid for `4d989326...` only. Do not claim the redirect change passed CI until a fresh run is observed.
+- [ ] Exact next task: refresh Actions until fresh Validate runs on `8a71f484...`; inspect the completed Browser Smoke run and remaining gameplay step. Then implement semantic instruction policy using an audited, explicit supported-program/instruction set. Do not integrate into execution or enable user funds before order binding/replay protection and independent security review.
+
+
+
+## 2026-11-11 — Latest-head validation and browser smoke checkpoint
+
+- [x] Fresh Validate run `42854701949` completed **SUCCESS** for PR #233 latest head `4c9606e8bba32e3ea2b87af5fe5eb7232efa8ef6`. All listed steps passed: Worker security/API contract tests, homepage structure/controls, launch-copy target labeling, inline JavaScript syntax checks, DEX/Swap script syntax checks, game script syntax checks, and remaining HTML script audit.
+- [x] Fresh Browser Smoke run `42854701917` on the same latest head passed homepage CTA/DEX routing/mobile navigation, Cloudflare DEX proxy, execution fail-closed regression, standalone Swap, DEX quote-preview shell, mobile workspace/desktop regression, compact 390px/360px layouts, and mobile market loading/provider-error/empty-state checks.
+- [ ] Browser Smoke gameplay step (Jarrell's Peak desktop/mobile) was still running at the time of this checkpoint; screenshot upload and cleanup were pending. Do not mark the entire Browser Smoke run complete yet.
+- [x] Confirmed the current hard execution gate still intentionally blocks transaction execution. The browser check explicitly verifies fail-closed behavior; this is not a live-trading verification.
+- [ ] **Production blockers remain:** Worker not deployed/configured; trusted ALT resolver is not wired into the execute route; semantic instruction validation and immutable order-wallet-message binding/replay protection are not implemented; no live RPC provider verification, controlled Devnet transaction lifecycle, or independent security review.
+- [ ] **Exact next task:** finish and inspect Browser Smoke run `42854701917`, including Jarrell's Peak step and screenshot artifact. Then implement the first audited, fail-closed semantic validator for a deliberately narrow supported instruction set; do not guess program IDs/layouts and do not connect it to execution until order binding, replay protection, adversarial tests, Devnet validation, and independent security review are complete.
+- Execution remains disabled. No production funds, signing, submission, Worker deployment, or live trading was enabled by this checkpoint.
+
+
+## 2026-11-11 — Trusted RPC response-boundary correction
+
+- [x] Corrected the resolver's endpoint error wording: it now says "configured HTTPS endpoint" rather than claiming the URL is a fully validated public endpoint.
+- [x] Tightened the response-size guarantee: the resolver now requires a streaming response body and rejects non-streaming response implementations instead of falling back to `.text()`, which could buffer an oversized body before enforcing the cap.
+- [x] Added a regression test proving that a response without a streaming reader is rejected. Updated the endpoint validation test to match the corrected wording.
+- [x] Updated `dex/swap-proxy/DEPLOYMENT.md`: basic URL checks are explicitly not a complete SSRF defense; DNS resolution and every private address range are not comprehensively classified. Production deployment must restrict the server-side RPC hostname through deployment/network policy, and clients must never supply it.
+- [ ] **Verification pending:** these follow-up commits have not yet been covered by a fresh Validate run. Earlier green run `42854701949` is for pre-follow-up head `009c0940...` only. Do not infer test success from the earlier run.
+- [ ] Browser Smoke `42854701917` still had Jarrell's Peak gameplay step running at last inspection; all preceding DEX/Swap browser steps passed. This run does not validate the resolver follow-up commits.
+- [ ] **Exact next task:** run/obtain Validate on the latest PR #233 head and inspect the new streaming-response regression plus full parser suite. Then finish Browser Smoke gameplay/artifact review. Keep execution disabled; the RPC resolver remains a foundation and is not wired into `/api/swap/execute`.
+
+
+## 2026-11-11 — Browser Smoke completed; semantic validation plan recorded
+
+- [x] Browser Smoke run `42854701917` completed **SUCCESS** on commit `4c9606e8bba32e3ea2b87af5fe5eb7232efa8ef6`. All job steps passed, including Jarrell's Peak desktop/mobile gameplay and screenshot upload. This supersedes the earlier in-progress status for this run.
+- [x] Downloaded and inspected artifact `13781973134` (`climboria-browser-smoke-screenshots`, 10 PNGs). Desktop/mobile homepage, DEX social-rail, gameplay, cave entrance and cave interior captures are present. Visual review confirms the smoke capture shows a very broad flat green spawn-field view with the shrine in the gameplay framing; record this as a separate world-art/terrain presentation follow-up, not as a DEX release blocker and not as a failed browser test.
+- [x] Added `docs/DEX-SWAP-SEMANTIC-VALIDATION-PLAN.md` with primary-source-backed Solana instruction facts, Jupiter order/execute contract, current parser/resolver boundaries, fail-closed order-to-wallet pipeline, per-program audit matrix, release gates and exact next task. It explicitly prohibits guessed program IDs/layouts and keeps execution disabled.
+- [x] Confirmed PR #233 is still open/draft at head `01c2522e6ae1efb455e367f1afd5b45c0bee1dcf` before the latest documentation commits.
+- [ ] **Fresh CI pending:** no PR-triggered Actions runs are currently associated with `01c2522e...`; semantic plan commit `866d31c4...` and any later README checkpoint need fresh Validate evidence. The successful Validate run `42854701949` is from the earlier code head and does not validate the subsequent streaming-response changes.
+- [ ] **Exact next task:** audit the minimal Compute Budget, System Program, SPL Token/Token-2022 and Associated Token instruction families against current official specs and deployed program provenance; build source-backed test vectors first. Then implement narrow fail-closed semantic decoding and durable order binding/replay protection. Keep the execution gate false.
+- Execution remains hard-disabled; no Worker deployment, production trading, wallet signature, transaction submission or mainnet funds were enabled.
+
+
+## 2026-11-11 — Solana swap instruction-family audit checkpoint
+
+- [x] Added `docs/DEX-SWAP-INSTRUCTION-FAMILY-AUDIT.md` (commit `a22040cf845188f552c0de507d335bef15bbac52`). It records source-backed Compute Budget variants and bounds, System Program transfer-vs-account-management policy, SPL Token/Token-2022 restrictions, canonical ATA derivation/creation requirements, router/CPI provenance requirements, and a negative-test matrix.
+- [x] Used current official Solana documentation for the protocol facts. The document distinguishes those facts from stricter Climboria policy and rejects unknown/unsupported instructions/extensions by default.
+- [x] Validate run `42856558717` (run #3142) completed **SUCCESS** on parent code head `c8cc62fa7d1d5bd7445b93348e4e7eb8d287060b`. This run does not include the new audit-document-only commit; no code behavior was changed in the audit commit.
+- [ ] Browser Smoke run `42856558850` (run #2325) is still in progress at this checkpoint. Homepage/DEX routing, proxy tests, fail-closed execution, standalone Swap/DEX, responsive layouts and mobile provider/empty-state steps passed; Jarrell's Peak desktop/mobile gameplay step is still running and screenshot upload is pending.
+- [ ] No fresh Actions run is associated with audit commit `a22040c...` yet. Do not treat the parent Validate result as verification of the new commit.
+- [ ] **Exact next engineering task:** inspect the pinned Solana transaction parser and current tests, then implement a pure non-executable instruction decoder with source-backed fixtures for Compute Budget and the narrow System Program `Transfer` candidate. Add malformed-data, duplicate-variant, signer/destination, amount-cap and overflow-negative tests. Keep SPL Token, Token-2022, ATA and all router programs rejected until their source fixtures and deployed-program provenance are independently checked. Do not wire this decoder into `/api/swap/execute`.
+- Execution remains hard-disabled: `EXECUTION_SECURITY_REVIEW_COMPLETE = false`. No Worker deployment, wallet signature, transaction submission, production trading or mainnet funds were enabled.
