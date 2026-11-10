@@ -315,3 +315,14 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - [ ] Launchpad work remains behind the release priority sequence, not a substitute for Portfolio P0 and Swap/DEX production gates. Latest LaunchLab validation proves API/config parameter compatibility only; no mint, wallet signature, transaction simulation or submission has occurred.
 - **Exact next job:** fetch the current PR #230 status/checks and branch-protection/mergeability state; if review is required, obtain an authorized review; then close out PR #230 only when GitHub reports all required checks green and mergeable. After that, resume Swap PR #219's DNS/custom-domain root-cause verification before any Worker redeploy. Keep public Swap execution and Portfolio claims fail-closed.
 - **No code changes or deployment in this checkpoint.** Do not mark DEX, Swap, Launchpad, or login as production-live without end-to-end evidence.
+
+
+## 2026-11-11 — Portfolio PR #230 CI evidence revalidated
+- [x] Re-fetched PR #230 changed-file list: `.github/workflows/browser-smoke.yml`, `README.md`, `index.html`.
+- [x] Re-fetched workflow runs attached to PR head `24559cc78e58026000036d7a0e6d603f73ca6e76`: Validate run `42737702817` completed SUCCESS; Browser Smoke run `42737703450` completed SUCCESS.
+- [x] Re-fetched Browser Smoke job `129570878173`: all numbered steps 1–16 completed SUCCESS, including Jarrell's Peak desktop/mobile gameplay smoke and screenshot upload.
+- [x] Re-fetched artifact `13727353643`: available, not expired; prior checkpoint documents desktop/mobile screenshot visual review.
+- [x] Rechecked PR review submissions and inline review threads: both currently return zero entries. No approving review is evidenced.
+- [ ] Combined commit status endpoint returned an empty status list for the PR head; this endpoint alone does not establish branch-protection/check-run requirements. PR metadata/mergeability and required checks could not be independently read with the available GitHub actions in this session. Do not infer approval or merge readiness from successful workflow runs alone.
+- **Exact next job:** inspect PR #230 current GitHub metadata (state, draft, mergeable/mergeable_state, head/base SHA), check-runs and branch-protection required contexts using the repository's PR/checks API; if all required checks are green and approval requirements are met, merge PR #230. If not, resolve only the identified blocker and rerun the affected workflows. Do not enable Portfolio claims/rewards.
+- **No source code changes, merge, deployment, or transaction submission in this checkpoint.**
