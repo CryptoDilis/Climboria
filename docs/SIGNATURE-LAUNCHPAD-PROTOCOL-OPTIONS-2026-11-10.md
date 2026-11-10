@@ -112,3 +112,7 @@ The 11 owner decisions remain open. Priority order:
 - No program source was built or deployed; no SDK was installed; no Devnet transaction or audit was performed.
 - No protocol is selected for Climboria.
 - **Exact next job:** owner must choose the intended launch product (direct mint only, fair launch/sale, or instant bonding curve) and explicitly decide whether funds/deposits will be accepted. Once that is decided, verify the selected protocol's exact program/version, custody, fee and LP rules and prepare a Devnet-only implementation plan.
+
+
+## Owner selection — 2026-11-10
+Selected **bonding curve / intended Raydium LaunchLab integration**. Explicitly **no public deposits or fundraising**: no presale, launch-pool contributions, auction or Climboria escrow. Protocol bonding-curve token trades are distinct from Climboria fundraising. The comparison above is retained as research; it no longer represents an open product-mechanism decision. Exact program, fee, LP/migration, authority and Devnet behavior remain unverified. See [approved architecture](./SIGNATURE-LAUNCHPAD-BONDING-ARCHITECTURE.md).
