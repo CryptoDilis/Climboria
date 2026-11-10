@@ -3402,3 +3402,23 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 
 - [x] Added a deterministic Browser Smoke regression fixture in commit `6cb7084294f49060ad92761622aeece4a1892f8b`: the selected Climboria test mint is returned once as a pool's base token and once as a different pool's quote token. The test asserts that the detail workspace includes the true base-side pool and excludes the quote-side-only pool. This directly covers the token-detail identity guard; the workflow must still pass on the final PR head.
+
+
+## 2026-11-11 — DEX and Swap browser acceptance checkpoint (runs 42919442167 / 42918242316)
+
+- [x] PR #236 exact-head Validate run `42919442130` completed **SUCCESS** on `dd2ad16f79e6ff24f3cf811693fc926b856a1f14`.
+- [x] PR #236 exact-head Browser Smoke run `42919442167` completed **SUCCESS** on the same head. All 23 job steps passed, including homepage/DEX routing/mobile navigation; Supabase Auth client/sign-in choices; DEX proxy and fail-closed execution; standalone Swap and DEX; desktop/mobile responsive layouts at 390px/360px; market loading/error/empty states; authenticated cloud-save load/insert/update/conflict fixtures; Jarrell's Peak desktop/mobile gameplay; and screenshot upload.
+- [x] PR #236 screenshot artifact `13810988392` (`climboria-browser-smoke-screenshots`, 8,936,994 bytes) exists and expires `2026-11-17T23:04:40Z`. Automated browser screenshots are not physical Redmi 14 5G acceptance or production-provider/chain evidence.
+- [x] PR #235 Browser Smoke run `42918242316` completed **SUCCESS**. All 20 job steps passed, including DEX/Swap proxy, fail-closed execution, standalone Swap/DEX, responsive/mobile/provider states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload.
+- [x] PR #235 screenshot artifact `13809989839` (`climboria-browser-smoke-screenshots`, 7,749,090 bytes) exists and expires `2026-11-17T22:59:49Z`.
+- [x] Both PRs remain open and draft; GitHub reports both mergeable. No merge was performed.
+- [!] These browser runs validate local browser fixtures and UI paths. They do not prove live Supabase OAuth/email provider configuration, production cloud-save accounts, Cloudflare Worker deployment, live market data health, Devnet/Mainnet swap settlement, or physical-device acceptance.
+- [!] Swap execution remains fail-closed: frontend `enabled=false` and Worker `EXECUTION_ENABLED=false`. Independent ALT/instruction-semantic review, controlled Devnet lifecycle evidence, and Cloudflare production deployment checks remain required.
+- [!] Launchpad remains informational/static; LP Lock IDL, fee-receiver custody/governance, deployed-program provenance, migration scale and Fee Key NFT custody remain unresolved.
+
+### Exact next tasks
+1. DEX: verify live provider/pair/chart responses and expand Base discovery beyond the finite hard-coded query sample; keep unsupported/empty provider states truthful.
+2. Swap: close independent R1 ALT resolution and R2 aggregator instruction/account/amount/slippage/fee-destination review, then R3 controlled Devnet order/sign/execute/confirm/replay/timeout/uncertain-settlement lifecycle; verify R4 Cloudflare DO/rate-limit/secrets/TLS/CORS/health/monitoring/rollback. Deploy quote-only first; never enable either execution switch until all gates pass.
+3. Launchpad: resolve LP Lock Devnet IDL, custody/governance and program provenance; establish safe migration scale and Fee Key NFT custody before implementing real launch/migration transactions.
+4. Login: configure real Supabase Site URL/redirects, SMTP/email confirmation, Google/X OAuth and SIWS/SIWE callbacks; test controlled accounts and actual save persistence/two-device conflicts. Guest remains disabled until Turnstile + Supabase CAPTCHA and safe account linking are ready.
+5. Preserve physical Redmi 14 5G acceptance as a separate outstanding check; automated viewport tests do not replace it.
