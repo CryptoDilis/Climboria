@@ -3482,3 +3482,18 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport screenshots are not a physical-device check. The Sanctuary scene is improved but broader world realism polish continues separately.
 
 **Exact next job:** recheck the independent cave material PR against the new main commit; complete its Validate/Browser Smoke and review entrance/interior screenshots. Then carry out physical Redmi 14 5G acceptance. Keep the Auth branch gated on real provider/dashboard and account-save tests; keep Swap execution gated on ALT/instruction semantic review and controlled Devnet lifecycle.
+
+
+## 2026-11-11 — PR #236 synchronized with latest main
+
+- [x] Deep-checked PR #236 divergence after main advanced from base `bd1d5d45a6a68cdc0f40f98176568f86d103167c` to `9a3c4aca82957883e8109f357949132dc96b734a`. Before synchronization, compare reported 37 commits ahead / 2 behind and GitHub marked the PR `dirty`.
+- [x] Inspected the two main-only commits. They added Sanctuary spawn path/lantern/planter dressing and a deterministic `sanctuaryDressingAudit` in `game/play.html`, two corresponding smoke assertions in `.github/scripts/game-smoke.mjs`, and a README release checkpoint.
+- [x] Manually reconciled the overlapping `game/play.html` changes, preserving both PR account-scoped inventory/cloud-save work and main's Sanctuary dressing/audit. Brought the main smoke script and README checkpoint into the PR tree. File reconciliation commits: `606c7bafebea52ee4b6e1eac82c68e64de3375eb`, `2714d46e431ee92a588e544a8abaaf9495e0086c`, `9d14f790630ccc18b5aadc6ea91f89facb4f94e0`.
+- [x] Created a real two-parent merge commit `62aca819ce1009b72fa61ac1defbc96def892e01` with previous PR head `9d14f790630ccc18b5aadc6ea91f89facb4f94e0` and main `9a3c4aca82957883e8109f357949132dc96b734a`. Compare now reports **ahead 41 / behind 0**; no files were dropped from either side. GitHub mergeability is recalculating (`unknown`) and must be rechecked.
+- [!] No exact-head Validate or Browser Smoke run is associated with the new merge commit yet. The available GitHub integration has no workflow-dispatch action. Do not claim CI acceptance for this synchronized head until both workflows run.
+
+### Exact next actions
+1. Recheck PR #236 mergeability and run Validate + Browser Smoke on the synchronized current head. Review the new DEX search race regression, Sanctuary dressing audit, account inventory/cloud-save and mobile/gameplay results.
+2. If any test fails, diagnose that exact step and commit before changing code; do not replay an earlier fix without a new root-cause finding.
+3. Continue live DEX provider validation, then Swap R1/R2 trusted ALT resolution and instruction-semantic review. Keep execution disabled pending independent review and controlled Devnet lifecycle acceptance.
+4. Continue Launchpad program/custody/migration blockers, then complete real Auth provider/account acceptance.
