@@ -136,6 +136,21 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.deepEqual(f.calls.map(x => x.commitment), ["finalized", "finalized"]);
 });
 
+test("marks reached-but-truncated ProgramData history as partial, never complete", async () => {
+  const f = fixture();
+  const result = await inspectProgramDataHistory({
+    connection: f.connection,
+    programDataPublicKey: f.derivedAddress,
+    stateSlot: 123456,
+    maxHistoricalTransactions: 1,
+  });
+  assert.equal(result.reachedStateSlot, true);
+  assert.equal(result.availableHistoricalSignatureCount, 2);
+  assert.equal(result.historicalCandidateCount, 1);
+  assert.equal(result.complete, false);
+  assert.equal(result.status, "programdata_state_slot_reached_with_bounded_partial_history");
+});
+
 test("captures immutable ProgramData when upgrade authority is absent", async () => {
   const f = fixture({ authorityOption: 0 });
   const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
