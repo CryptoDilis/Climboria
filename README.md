@@ -3497,3 +3497,19 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 2. If any test fails, diagnose that exact step and commit before changing code; do not replay an earlier fix without a new root-cause finding.
 3. Continue live DEX provider validation, then Swap R1/R2 trusted ALT resolution and instruction-semantic review. Keep execution disabled pending independent review and controlled Devnet lifecycle acceptance.
 4. Continue Launchpad program/custody/migration blockers, then complete real Auth provider/account acceptance.
+
+## 2026-11-11 — Swap selected-token chart endpoint correction (verification in progress)
+
+- [!] Browser Smoke run `42923141014` failed at step 7, script line 180: after explicit BTC token selection, `#selectedAssetChart` never received the expected pool URL. This was separate from the earlier DEX search race.
+- [x] Root cause: `swap/index.html` still called `/latest/dex/tokens/{mint}` in `updateSelectedAsset`, `resolveSolanaTokenByMint`, and `chooseBestSolanaCandidate`, while the test fixture and DEX detail code used `/token-pairs/v1/solana/{mint}`. The selected chart request bypassed the deterministic route. `dex/premium-terminal.js` also retained the legacy token lookup.
+- [x] Counter-strategy: added shared `fetchSolanaTokenPairs(mint)` in Swap, calling the chain-specific token-pairs endpoint and normalizing the documented top-level `Pair[]` plus a compatibility `{pairs}` wrapper. Routed all three Swap market flows through it; retained exact base-token identity for the chart and metadata resolution for base/quote token appearances. Migrated premium-terminal SOL lookup and updated desktop/mobile fixtures to top-level arrays.
+- [x] Added an explicit Browser Smoke assertion that selected BTC chart lookup uses `/token-pairs/v1/solana/{mint}`. Commits: `166cc02c8f8b02bd4ac89635873d65540ce2ba52` (Swap), `25a0641fa007e4253da771eae81094ae7966c156` (premium terminal), `8050573d89bc3fa0bb3238d52353d0c909e20320` (fixtures/assertion).
+- [x] Validate run `42923406014` completed **SUCCESS** on code head `8050573d89bc3fa0bb3238d52353d0c909e20320`.
+- [x] Browser Smoke run `42923405917` on the same code head: steps 1–17 completed **SUCCESS**, including DEX search race regression, BTC selected-chart request, Swap fail-closed checks, mobile 390px/360px, provider empty/error states, game-save initialization, authenticated cloud-save load/insert/update/conflict fixtures.
+- [!] Step 18, Jarrell's Peak desktop/mobile gameplay smoke, is still in progress; step 19 screenshot upload is pending. Do not claim full Browser Smoke pass until terminal success and artifact review.
+
+### Exact next actions
+1. Wait for run `42923405917` to finish. If gameplay step 18 fails, inspect the exact failing assertion/log, diagnose the root cause, and implement a distinct targeted correction; do not repeat the DEX/Swap endpoint change.
+2. If successful, review artifact/screenshots, then record final Browser Smoke pass and artifact ID on this checkpoint.
+3. After DEX/Swap browser acceptance, continue Swap R1/R2 trusted ALT resolution and instruction-semantic review; keep execution disabled until independent review and controlled Devnet lifecycle acceptance.
+4. Continue Launchpad program/custody/migration blockers, then real Auth provider/account acceptance.
