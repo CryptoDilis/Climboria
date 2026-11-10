@@ -560,3 +560,28 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - [!] The general Order & Execute docs establish requestId linkage and managed landing, but do not establish a general bit-for-bit transaction equality guarantee for every router. A strict bit-for-bit guarantee appears in separate Jupiter Squads v5 execute docs and must not be generalized to this endpoint.
 - [ ] Architecture refinement: current Wrangler config has no KV, D1, or Durable Object binding. A stateless Worker cannot independently compare the signed message to the original order transaction using only a client-supplied requestId. First determine the available Cloudflare state primitive and its consistency/atomicity guarantees. Design a short-lived one-time order record (taker, requestId, original message bytes/hash, input/output mint, amount, version, expiry/blockhash, and fee/receiver context) with replay protection. Never trust client-supplied expected values.
 - [ ] Validator scope: v0 only, including address lookup tables. Resolve lookup addresses from trusted order-time provider data and reject unresolved/changed tables. Compare signed transaction message bytes to the server-stored unsigned order message (signatures are the only permitted byte differences), verify required taker signature/fee payer and signature slots, and reject replay. Do not reverse-engineer aggregator instruction semantics if exact message binding proves the wallet signed the exact transaction returned for that order. Add policy checks only where trusted order fields support them.
+
+
+## 2026-11-11 — DEX search race fix and Swap parser hardening
+
+### Root cause found in Browser Smoke
+- PR #234 head `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c`: Validate run `42879777028` SUCCESS; Browser Smoke run `42879777254` FAILED in `Test homepage CTAs, DEX routing, and mobile navigation` at the exact-mint DEX row assertion.
+- Inspected the failing log and the exact app/test code. DEX boot-time `load()` asynchronously replaced `state.pairs` after the name-search path had merged a discovered token into it. The browser test navigated to DEX and immediately searched without waiting for initial market load; when the boot load completed later, it could discard the just-discovered row. The exact-mint assertion also checked a row prefix that could already be present, rather than awaiting the exact-mint provider request. This is a real UI race and a test synchronization gap, not a Worker signature-validation failure.
+
+### Targeted fixes committed to PR #234 branch
+- Commit `9d01add60d86df3f8c0abdd43b59cdd7f0be38e3`: introduced a separate bounded `searchPairs` collection; initial market refresh now merges previously discovered search pairs instead of discarding them; live search adds validated results to both the discovered cache and current market set. Search cache capped at 200 unique base-token entries.
+- Commit `32ec6caee34e37a9f4d2afd0b491c840abc66034`: Browser Smoke now explicitly waits for the exact-mint DexScreener request and successful response before asserting the exact matching row.
+- Commit `6019158eaed8c581bbe5e344efc57719473e8e78`: parser rejects a Solana v0 header that marks the fee payer read-only.
+- Commit `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c`: regression test for read-only fee payer; Validate passed on this head.
+
+### Current verification
+- New Validate run `42880044395` and Browser Smoke run `42880044279` for head `32ec6caee34e37a9f4d2afd0b491c840abc66034` were in progress when this entry was written. Do not claim either passed until terminal conclusions and failed-step logs are checked.
+- Pages deployment of the preceding main README record: run `42879845789` SUCCESS.
+- PR #234 remains open/draft; no merge, Cloudflare deployment, Devnet execution or Mainnet execution performed.
+
+### Exact next task
+1. Poll `42880044395` and `42880044279`. If Browser Smoke passes, continue adversarial review of order-store expiry/claim/settle and ensure both frontend and Worker kill switches remain false. If it fails, inspect its exact failing step/log and fix only the proven cause; do not reapply the previous timing workaround blindly.
+2. Once CI is green, update the PR review notes and request/obtain independent security review before merging. Then configure Cloudflare owner secrets/namespace securely and deploy quote-only Worker; verify health, CORS and Durable Object readiness. Keep execution disabled until controlled Devnet lifecycle approval.
+3. After Swap release gates, implement production Launchpad and select/implement real Guest + email/password + Google + X auth with provider/session lifecycle and end-to-end tests. Current repository has no Supabase/Firebase auth client integration; login buttons are disabled, and no login method is live.
+
+No production-live claims are made by this entry.
