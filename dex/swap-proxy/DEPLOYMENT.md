@@ -53,3 +53,12 @@ For a local/manual deployment, replace `namespace_id` in `wrangler.toml` with th
 ## Frontend backend switch
 
 Both `/dex/` and `/swap/` load the public `/swap-config.js` file. It contains no secret. Keep `enabled: false` until the Worker is deployed and all security/release checks pass. Once ready, set `enabled: true` in that file; token search and quote previews will then use the Worker routes, and order/execute will become available behind the wallet-review flow. Never set this flag merely because a Worker exists: verify `/health`, CORS, rate limits, API key handling, and transaction security first.
+
+
+## Solana wire decoder boundary
+
+The Worker branch now contains a standalone structural decoder for legacy and v0 serialized Solana transactions, plus message hashing that excludes signature bytes. Its tests cover supported message versions, signature/header consistency, canonical base64, truncated/trailing bytes, instruction indexes, and signature-independent message hashes.
+
+**This is only a wire-format parser. It does not resolve address lookup table accounts against trusted RPC state, decode or allowlist System/Token/Associated Token/Compute Budget/Jupiter instructions, prove token transfer semantics, validate destination ownership, or bind a Jupiter order to a wallet and immutable request.** It is not wired into `/api/swap/execute`, and must not be treated as a security validator. The hard-coded `EXECUTION_SECURITY_REVIEW_COMPLETE = false` gate remains mandatory and unchanged.
+
+Next implementation stage: add trusted ALT resolution and canonical account-meta reconstruction, then protocol-specific instruction decoders/allowlists and an immutable expiring order record bound to wallet, mints, exact input amount, order response, block height and serialized message hash. Use durable atomic consume/idempotency before any provider execute call. Do not enable execution until adversarial tests, controlled Devnet lifecycle tests and independent security review all pass.
