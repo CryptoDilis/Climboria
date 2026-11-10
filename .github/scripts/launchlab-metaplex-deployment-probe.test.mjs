@@ -97,8 +97,10 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
   assert.equal(result.programDataHistory.signaturesScanned, 2);
   assert.equal(result.programDataHistory.reachedStateSlot, true);
-  assert.equal(result.programDataHistory.signatures[0].loaderLogs[0], "Extended ProgramData account by 300000 bytes");
-  assert.equal(result.programDataHistory.signatures[1].loaderLogs[0], "Program deployed");
+  assert.equal(result.programDataHistory.signatures[0].signature, "OriginalDeploySignature");
+  assert.equal(result.programDataHistory.signatures[0].loaderLogs[0], "Program deployed");
+  assert.equal(result.programDataHistory.signatures[1].signature, "ExtendSignature");
+  assert.equal(result.programDataHistory.signatures[1].loaderLogs[0], "Extended ProgramData account by 300000 bytes");
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
   assert.equal(result.immutable, false);
   assert.equal(result.executableByteLength, 24);
@@ -204,7 +206,7 @@ test("paginates backward to the state slot without fetching unrelated recent tra
   assert.equal(result.status, "programdata_state_slot_reached");
   assert.equal(result.pagesScanned, 2);
   assert.equal(result.signaturesScanned, 4);
-  assert.deepEqual(fetched, ["extension", "deploy"]);
+  assert.deepEqual(fetched, ["deploy", "extension"]);
   assert.equal(result.complete, true);
 });
 
