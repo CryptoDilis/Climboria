@@ -1,3 +1,13 @@
+### Latest checkpoint — 2026-11-10 (Governance decoder correction verified in live CI)
+
+- [x] Confirmed the one-byte SPL Governance Borsh discriminator boundary fix: `ExecuteTransaction` uses byte `16` (`EA==`); `CreateProgramGovernance` begins with byte `5`. The governance decoder accepts a one-byte payload while the Upgradeable Loader instruction decoder remains four-byte little-endian.
+- [x] Corrected live capture workflow run `42764590548` completed SUCCESS after the parser fix; Validate run `42764590574` completed SUCCESS with the one-byte fixture.
+- [x] Latest PR-head LaunchLab Live Provenance run `42764682766` completed SUCCESS (job `129658267270`); latest Validate run `42764682821` completed SUCCESS. All reported job steps passed.
+- [x] Inspected the live provenance job output. Mainnet LP Lock IDL/source comparison passes, but the SDK fee collector remains unsafe because it marks `feeNftAccount` writable while the live Mainnet IDL and pinned source require readonly. Devnet LP Lock program is executable but its canonical legacy Anchor IDL account is unpublished; CI correctly reports this limitation.
+- [ ] Do not infer the historical upgrade total solely from CI success. Independently reconcile the corrected governance execution count, proposal-account batch, decoded instruction data, and exact ProgramData/Program/authority matches before treating the historical deployment lineage as complete.
+- [ ] **Exact next P0:** resolve the Devnet LP Lock IDL/deployed-interface gap and independently establish Devnet fixed CPMM fee-receiver custody/governance. In parallel, continue the historical upgrade-lineage reconciliation (including the original `DeployWithMaxDataLen` transaction and source/build provenance). Keep migration, fee collection, signing, simulation and Mainnet execution disabled.
+- [ ] PR #231 remains Draft and unmerged. No wallet signature, transaction submission, migration or fee collection was performed.
+
 ### Latest checkpoint — 2026-11-10 (Governance one-byte discriminator guard fully corrected)
 
 - [x] The actual Devnet governance instruction data confirmed one-byte Borsh discriminators: `ExecuteTransaction` is `EA==` (16) and `CreateProgramGovernance` begins with `BQA...` (5). The decoder now reads one byte and accepts a one-byte payload; the upgradeable-loader decoder remains four-byte little-endian.
