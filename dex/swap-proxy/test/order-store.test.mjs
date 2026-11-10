@@ -5,20 +5,16 @@ import { makeFixture } from "./solana-v0-fixture.mjs";
 
 function createStore() {
   const values = new Map();
-  let transactionQueue = Promise.resolve();
   const storage = {
+    kv: {
+      get(key) { return values.get(key); },
+      put(key, value) { values.set(key, value); }
+    },
+    transactionSync(callback) { return callback(); },
     async get(key) { return values.get(key); },
     async put(key, value) { values.set(key, value); },
     async setAlarm(value) { this.alarmAt = value; },
-    async deleteAll() { values.clear(); },
-    transaction(callback) {
-      const run = transactionQueue.then(() => callback({
-        get: async key => values.get(key),
-        put: async (key, value) => values.set(key, value)
-      }));
-      transactionQueue = run.catch(() => {});
-      return run;
-    }
+    async deleteAll() { values.clear(); }
   };
   const object = new SwapOrderStore({ storage });
   return { object, storage };
