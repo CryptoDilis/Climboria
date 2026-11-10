@@ -2931,3 +2931,12 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] Resolver is documented as not yet integrated into the Worker execute route; `SOLANA_RPC_URL` is intended only as a server-side binding.
 - [ ] CI has not yet run on the latest PR #233 branch. Previous run `42852777038` failed on the pre-fix head with 38/40 tests passing; fixture fixes and new resolver tests remain unverified by GitHub Actions.
 - [ ] Next: run Validate on the latest PR #233 branch, then integrate the resolver into a fail-closed semantic validation service. Execution remains disabled until protocol-specific allowlists, immutable order-wallet-message binding, replay protection, adversarial/Devnet tests and independent security review.
+
+
+### PR #233 latest checkpoint — trusted ALT RPC resolver
+
+- Latest PR #233 branch checkpoint: `4d989326dc08bbfae9562bd53120f2603c9053c4`.
+- Added a server-configured HTTPS-only RPC resolver that batches transaction ALT keys through `getMultipleAccounts`, validates response ID/context/account count, and binds the same response's owner, executable flag, base64 bytes and context slot into the existing ALT decoder.
+- Added mocked tests for valid response binding, commitment/minContextSlot, duplicate keys, invalid endpoint, owner/executable mismatch, malformed RPC/base64, incomplete responses and oversized payloads.
+- RPC helper is not wired into the Worker execute route; it is not a live provider check. GitHub Actions has no fresh run for this head. Prior failure `42852777038` remains an earlier SHA with 38/40 tests passing before fixture corrections.
+- Exact next task: obtain a manual Validate run for `codex/swap-semantic-execution-gate`; only after the complete suite passes, integrate the resolver into a fail-closed semantic validation service. Keep user-fund execution disabled.
