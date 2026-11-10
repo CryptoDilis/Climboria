@@ -1,3 +1,12 @@
+### Latest checkpoint — 2026-11-10 (Governance proposal account verification added)
+
+- [x] Added one bounded finalized RPC batch to read the unique Program Governance, Proposal, and Proposal-transaction accounts referenced by successful loader `ExecuteTransaction` events. The probe captures account existence, owner, lamports, data length, SHA-256, and base64 account bytes; it is read-only and does not submit transactions.
+- [x] Added a Borsh decoder for SPL Governance `ProposalV2`, `ProposalTransactionV2`, and legacy `ProposalInstructionV1` accounts. It extracts proposal title/state/description link and embedded instruction program ID, account metas, data, and loader opcode. Safety bounds reject oversized strings, option arrays, account arrays, and instruction data.
+- [x] Added mock tests for batched account retrieval, missing-account handling, fail-closed RPC behavior, ProposalV2 decoding, and embedded loader Upgrade decoding. Validate run `42763348588` on commit `007de21a301afe0e3dc2ddd3488bd77d3a9797a1`: SUCCESS.
+- [ ] **Next P0:** inspect the live LaunchLab run `42763348402` after its historical Metaplex build and read-only Devnet capture complete. Confirm the returned proposal and proposal-transaction account counts, decode success/failures, and whether each of the 39 governance executions targets the exact Metaplex ProgramData and Program accounts with loader Upgrade opcode 3.
+- [ ] Earlier live capture `42760805818` remains the evidence basis for 93 historical ProgramData transactions, 69 successful upgrades (30 direct + 39 governance CPI), one authority transfer, and three ProgramData extensions. New account-level verification is pending; do not present proposal titles or completion states as live-verified yet.
+- [ ] Original `DeployWithMaxDataLen` remains unobserved in available ProgramData history. Exact original deployment date and deployed source lineage remain unresolved. PR #231 remains Draft and unmerged; no signing, simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (Governance-executed upgrade chain enumerated)
 
 - [x] Recomputed the complete 93-transaction ProgramData capture from successful LaunchLab run `42760805818` (all 93 transaction details available). Exact event counts:
