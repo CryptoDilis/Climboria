@@ -3471,3 +3471,14 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 3. Confirm live token detail identity and selected pool/chart behavior for real tokens; retain query-based rather than exhaustive Base discovery wording.
 4. Continue Swap R1/R2 trusted ALT resolution and instruction-semantic policy work; keep frontend and Worker execution switches off until independent review and controlled Devnet lifecycle acceptance.
 5. Continue Launchpad program/custody/migration blockers, then real Google/X/email/Solana/EVM login acceptance.
+
+### 2026-11-11 — Sanctuary spawn approach merged to main
+
+- [x] Clean PR #239 was created directly from `main` and contained exactly two files: `game/play.html` and `.github/scripts/game-smoke.mjs`. The visually identical earlier PR #238 was closed because its branch ancestry included the unrelated Auth feature commits; no unique work was lost.
+- [x] Validate run `42919045399` and Browser Smoke run `42919045149` both completed SUCCESS on exact tested head `31f1a7e152fce02b5a5036f378c516c1884ed125`.
+- [x] Browser Smoke diagnostics verified 39 deterministic stone slabs, 4 lanterns, 4 planted beds, local path span Z 22.94–53.07 and all objects attached to the existing Sanctuary group. All 19 browser steps passed, including Jarrell's Peak desktop/mobile gameplay.
+- [x] Artifact `13810539362` downloaded and visually reviewed (10 screenshots). Stone approach appears on desktop and mobile. No change was made to spawn/terrain/collision or player movement.
+- [x] PR #239 merged by squash as `e699e0b485ae5280d251768e00c8dd2908ae21d0`.
+- [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport screenshots are not a physical-device check. The Sanctuary scene is improved but broader world realism polish continues separately.
+
+**Exact next job:** recheck the independent cave material PR against the new main commit; complete its Validate/Browser Smoke and review entrance/interior screenshots. Then carry out physical Redmi 14 5G acceptance. Keep the Auth branch gated on real provider/dashboard and account-save tests; keep Swap execution gated on ALT/instruction semantic review and controlled Devnet lifecycle.
