@@ -325,7 +325,7 @@ export function summarizeMetaplexGovernanceHistory(signatures = []) {
     for (const instruction of transaction.instructionEvidence ?? []) {
       if (instruction.programId !== METAPLEX_GOVERNANCE_PROGRAM_ID || instruction.dataEncoding !== "base64" || typeof instruction.data !== "string") continue;
       const bytes = Buffer.from(instruction.data, "base64");
-      if (bytes.length < 4) continue;
+      if (bytes.length < 1) continue;
       const discriminator = bytes.readUInt8(0);
       const accounts = instruction.accounts ?? [];
       if (discriminator === 5) {
