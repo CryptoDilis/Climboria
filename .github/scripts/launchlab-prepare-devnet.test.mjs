@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { prepareDevnetLaunch, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
@@ -22,10 +23,7 @@ const sdk = {
 const input = overrides => ({
   cluster: "devnet", ...ids, creatorWallet: ids.creator, feePayer: ids.creator,
   mintKeypair: { publicKey: new PublicKey("Mint111111111111111111111111111111111111111") },
-  metadata: {
-    name: "Climboria Test", symbol: "CLIMB", uri: "https://metadata.example/climboria.json",
-    contentHash: "a".repeat(64),
-  },
+  metadata: (() => { const contentJson = JSON.stringify({ name: "Climboria Test", symbol: "CLIMB", description: "Devnet fixture" }); return { name: "Climboria Test", symbol: "CLIMB", uri: "https://metadata.example/climboria.json", contentJson, contentHash: createHash("sha256").update(contentJson).digest("hex") }; })(),
   decimals: 6, quoteDecimals: 9, migrateType: "cpmm", createOnly: true,
   token2022: false, supply: "1000000000000000", totalSellA: "793100000000000",
   totalFundRaisingB: "85000000000", totalLockedAmount: "0",
