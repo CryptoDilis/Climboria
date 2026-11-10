@@ -14,6 +14,7 @@ const PROGRAMS = {
   mainnet: { id: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj", rpc: "https://api.mainnet-beta.solana.com", globalConfig: "6s1xP3hpbAfFoNtUNF8mfHsjr2Bd97JxFJRWLbL6aHuX", platformConfig: "4Bu96XjU84XjPDSpveTVf6LYGCkfW5FK7SNkREWcEfV4" },
   devnet: { id: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", rpc: "https://api.devnet.solana.com", globalConfig: "7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt", platformConfig: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a" }
 };
+const WSOL_MINT = "So11111111111111111111111111111111111111112";
 const CRITICAL_INSTRUCTIONS = [
   "initialize_v2", "initialize_with_token_2022", "buy_exact_in", "buy_exact_out",
   "sell_exact_in", "sell_exact_out", "migrate_to_cpswap", "create_platform_config",
@@ -80,6 +81,7 @@ async function readAccount(rpc, address) {
 }
 async function fetchCluster(cluster, repoIdl) {
   const target = PROGRAMS[cluster], programId = new PublicKey(target.id);
+  const [derivedWsolCurve0Config] = PublicKey.findProgramAddressSync([Buffer.from("global_config"), new PublicKey(WSOL_MINT).toBuffer(), Buffer.from([0]), Buffer.from([0, 0])], programId);
   const [base] = PublicKey.findProgramAddressSync([], programId);
   const idlAddress = await PublicKey.createWithSeed(base, "anchor:idl", programId);
   const account = await readAccount(target.rpc, idlAddress.toBase58());
@@ -154,6 +156,7 @@ async function fetchCluster(cluster, repoIdl) {
   const globalDecoded = configAccountChecks.GlobalConfig.sdkLayoutDecoded;
   const platformDecoded = configAccountChecks.PlatformConfig.sdkLayoutDecoded;
   const sdkLayoutBinaryCompatible =
+    derivedWsolCurve0Config.toBase58() === target.globalConfig &&
     configAccountChecks.GlobalConfig.dataLength === 371 &&
     configAccountChecks.PlatformConfig.dataLength === 944 &&
     configAccountChecks.GlobalConfig.discriminatorMatches &&
@@ -165,6 +168,7 @@ async function fetchCluster(cluster, repoIdl) {
     platformDecoded?.legacyIdlCurveParamsVectorLength === 0;
   return {
     cluster, rpc: target.rpc, programId: target.id, idlAddress: idlAddress.toBase58(),
+    derivedWsolCurve0Config: derivedWsolCurve0Config.toBase58(), wsolCurve0ConfigPdaMatchesObservedDefault: derivedWsolCurve0Config.toBase58() === target.globalConfig,
     accountOwner: account.owner, idlAuthority: authority, configAccountChecks,
     declaredCompressedLength, compressedBytes: compressed.length, trailingAllocatedBytes,
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
