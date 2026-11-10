@@ -39,6 +39,18 @@ test("validates live-style CPMM LP lock and fee collection schemas against pinne
   assert.equal(result.collectCpFees.accounts.length, 18);
   assert.match(result.lockLpVaultDerivation, /Associated Token Account PDA/);
 });
+test("accepts legacy Anchor isSigner/isMut account privilege fields", () => {
+  const idl = fixture();
+  for (const instruction of idl.instructions) {
+    for (const account of instruction.accounts) {
+      account.isSigner = account.signer;
+      account.isMut = account.writable;
+      delete account.signer;
+      delete account.writable;
+    }
+  }
+  assert.equal(validateLockProgramIdl(idl, target, PublicKey).lockCpLiquidity.accounts.length, 19);
+});
 test("rejects LP lock account reordering", () => {
   const idl = fixture();
   [idl.instructions[0].accounts[1], idl.instructions[0].accounts[2]] = [idl.instructions[0].accounts[2], idl.instructions[0].accounts[1]];
