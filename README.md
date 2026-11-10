@@ -2857,3 +2857,11 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] The code-level hard execution gate remains false. No Worker deployment, wallet signing, Devnet/Mainnet transaction or production execution enablement occurred.
 - [ ] GitHub Actions validation for the new parser tests is pending observation; do not claim these new tests pass until the workflow reports success.
 - [ ] Exact next task: verify parser tests on the PR branch, repair any test or parser defect, then implement trusted ALT resolution and semantic instruction validation. Keep execution disabled.
+
+
+### Follow-up CI — Solana wire decoder branch head `4f96240648f421c0ddb9768b5e121a45aeaccf9d`
+
+- [x] Validate workflow [42850672329](https://github.com/CryptoDilis/Climboria/actions/runs/42850672329): **SUCCESS** on the branch head containing the structural Solana decoder and parser tests.
+- [ ] Browser Smoke workflow [42850672349](https://github.com/CryptoDilis/Climboria/actions/runs/42850672349): **IN PROGRESS**; browser setup/cache step was still running at checkpoint. No full browser result claimed.
+- [x] PR #233 remains open/draft. Execution hard gate remains false; parser is not connected to execute.
+- [ ] Next: wait for Browser Smoke completion and inspect any failure logs; then continue ALT/account resolution and semantic instruction validation. No Worker deployment or live trade.
