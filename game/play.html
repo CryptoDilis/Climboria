@@ -1184,6 +1184,62 @@ function renderInventory(){
   const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+// Cloud save adapter. Only account-owned player position and backpack contents are persisted.
+// Token balances, marketplace value, rewards, and other economic state must remain server-authoritative.
+window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+  capture() {
+    if (P.mode === 'cine') return null;
+    const x = Number(P.x), z = Number(P.z), yaw = Number(P.yaw);
+    if (![x, z, yaw].every(Number.isFinite) || Math.abs(x) > 100000 || Math.abs(z) > 100000) return null;
+    return {
+      version: 1,
+      player: { x, z, yaw },
+      inventory: inventory.slice(0, 50).map(item => ({
+        name: String(item.name).slice(0, 64),
+        qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1)))
+      }))
+    };
+  },
+  restore(data) {
+    if (!data || typeof data !== 'object' || data.version !== 1) return false;
+    const x = Number(data.player?.x), z = Number(data.player?.z), yaw = Number(data.player?.yaw);
+    if ([x, z, yaw].every(Number.isFinite) && Math.abs(x) <= 100000 && Math.abs(z) <= 100000) {
+      P.x = x;
+      P.z = z;
+      P.y = groundAt(P.x, P.z) + 1.75;
+      P.yaw = yaw;
+      P.vy = 0;
+      P.mode = 'walk';
+      P.moveTarget = null;
+      P.swim = false;
+      P.swimDepth = 0;
+      P.waterBodyId = null;
+      cameraYaw = P.yaw;
+      cameraPitch = -0.08;
+      camY = null;
+      free(true);
+      cam.position.set(
+        P.x + Math.sin(cameraYaw) * targetCameraDistance,
+        P.y + 2.8,
+        P.z + Math.cos(cameraYaw) * targetCameraDistance
+      );
+      cam.lookAt(P.x, P.y + 0.9, P.z);
+      updateChunks(P.x, P.z, 120);
+    }
+
+    const savedInventory = Array.isArray(data.inventory)
+      ? data.inventory
+          .filter(item => item && typeof item.name === 'string' && item.name.length > 0 && item.name.length <= 64)
+          .slice(0, 50)
+          .map(item => ({ name: item.name, qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1))) }))
+      : [];
+    inventory.splice(0, inventory.length, ...savedInventory);
+    saveInventory();
+    renderInventory();
+    emit('cloud-save-restored', { itemCount: inventory.length });
+    return true;
+  }
+};
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
@@ -1924,5 +1980,7 @@ animate();
 initChunks();
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
+<script src="/game-save.js"></script>
 </body>
 </html>

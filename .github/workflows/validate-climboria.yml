@@ -202,6 +202,27 @@ jobs:
           print(f"DEX/Swap syntax audit extracted {total} inline script(s).")
           PY
           for file in /tmp/climboria-dex-swap-js/*; do node --check "$file"; done
+      - name: Validate game cloud-save schema and ownership checks
+        run: |
+          node --check game-save.js
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("game/play.html").read_text(encoding="utf-8")
+          save = Path("game-save.js").read_text(encoding="utf-8")
+          required_html = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', 'src="/game-save.js"', '__CLIMBORIA_GAME_SAVE_ADAPTER__']
+          required_save = [
+              "from('player_saves')", "select('schema_version,save_data,saved_at')",
+              ".eq('user_id', activeUserId)", ".eq('saved_at', remoteSavedAt)",
+              'schema_version: 1', 'auth.onAuthStateChange', 'auth.getSession',
+              'is_anonymous', 'TextEncoder', 'A newer cloud save exists on another device',
+          ]
+          missing = [item for item in required_html if item not in html] + [item for item in required_save if item not in save]
+          if missing:
+              raise SystemExit(f'Missing cloud-save requirements: {missing}')
+          if 'service_role' in save or 'sb_secret_' in save:
+              raise SystemExit('Privileged Supabase credentials must never ship to the browser.')
+          print('Cloud-save session, owner filter, schema version, and optimistic concurrency checks passed.')
+          PY
       - name: Syntax-check game/play.html scripts
         run: |
           python3 - <<'PY'
