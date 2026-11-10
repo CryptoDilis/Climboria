@@ -2894,3 +2894,11 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] This is still a structural/account-state parsing foundation, not a full semantic transaction validator. Trusted RPC integration, exact instruction/program allowlists, token movement/destination validation, order-wallet-message binding, replay controls, Devnet lifecycle tests and independent security review remain open.
 - [ ] Latest CI has not run on current PR #233 source head; Validate `42851432127` passed on older `1e8fd348`, while Browser Smoke `42851432268` remained in progress on that older head. Do not use those results to certify newer code.
 - [ ] Next: obtain and verify CI on current source head, then continue trusted RPC ALT resolution and semantic instruction validator. Hard execution gate remains false; no production deployment or live trade.
+
+
+## 2026-11-11 — ALT lookup-table identity binding
+
+- [x] PR #233's ALT decoder now requires the lookup-table account's 32-byte public key and returns it with the decoded addresses; account-meta reconstruction can validate that exact identity against the transaction's lookup reference.
+- [x] Added a regression test for missing account identity and documented that trusted server-side RPC must provide owner, executable flag, account bytes and context slot from one response.
+- [ ] Latest CI remains pending on newest PR #233 source; visible Validate `42852192636` passed on older `e36446d4`, while Browser Smoke `42852192411` was still running on that older head. No claim of latest-source validation.
+- [ ] Next: fresh CI for latest head, then implement server-side trusted RPC fetch/context binding, semantic instruction allowlists, exact order-wallet-message binding and replay protection. Keep execute gate closed.
