@@ -2829,3 +2829,19 @@ Implement a separately tested server-side transaction security layer before any 
 - Build Base as a separate chain-specific integration with its own verification; do not call it live until proven.
 
 **Release status remains:** Pages SUCCESS; DEX discovery provider-backed; Swap execution OFF; Launchpad creation NOT LIVE; five production login methods NOT VERIFIED; Base execution NOT LIVE.
+
+
+## 2026-11-10 — Swap security gate PR #233 progress
+
+- Opened draft PR #233: https://github.com/CryptoDilis/Climboria/pull/233
+- Latest PR #233 head: `8c148e7db9a91d115b79c346128c9014077194c6`.
+- Added a hard-coded code-level execution gate, independent of Wrangler/frontend switches; the Worker returns 503 before Jupiter forwarding until server-side semantic transaction validation and durable order-wallet binding are implemented and reviewed.
+- Health reports execution disabled while the hard gate is closed. Deployment documentation explains both gates.
+- Initial CI failures were diagnosed from logs, not blindly retried:
+  1. First attempt had not actually inserted the handleExecute guard because the source replacement did not match the source block; test observed mock fetch instead of 503.
+  2. After the guard landed, three remaining tests still asserted the old behavior (config-only disabled message, malformed-body 400 before hard gate, and a Jupiter Failed response path). Updated tests to assert the new security invariant: execute never reaches provider while hard gate is closed.
+- Latest corrected-head Validate run `42849330950`: SUCCESS.
+- Latest corrected-head Browser Smoke run `42849331112`: in progress at the time of this checkpoint. DEX/Swap-related browser steps all passed so far: proxy test, execution fail-closed test, standalone Swap, DEX market/quote shell, mobile workspace tabs, 390px/360px layout, provider-error/empty states. Jarrell's Peak gameplay smoke still running.
+- The earlier failed run `42849242160` is for previous head `16626574ce2defddec21c8cf4f3c4386834ead2c`, before test expectation corrections; do not attribute that failure to the current head.
+- No production Worker deployment, real wallet transaction, or Mainnet execution was performed. Both production execution switches remain OFF.
+- Next: complete the current browser run, then implement the actual Solana v0 semantic validator and durable expiring order-wallet binding with replay/idempotency controls and adversarial/Devnet tests. Keep the code-level hard gate false until the entire review is complete.
