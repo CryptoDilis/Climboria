@@ -1,3 +1,12 @@
+### Latest checkpoint — 2026-11-10 (Authority probe CI failure diagnosed; targeted fix applied)
+
+- [x] Inspected failed PR workflow 42766882578, job 129665342045 logs. Pinned artifact downloads/hash checks and LP Lock tests passed; authority probe test suite reached 11/13.
+- [x] Root cause 1: accountResult?.value ?? accountResult treated a valid RPC response wrapper with value:null as an existing account. Corrected by checking whether the response explicitly owns the value property and preserving null as “account missing”.
+- [x] Root cause 2: truthiness check on account.data[0] treated an empty base64 string as absent, yielding null instead of a valid zero-byte data length. Corrected to decode an empty string as zero bytes when the data tuple exists.
+- [x] Existing regression tests already cover both cases; no new test expectations were weakened or removed.
+- [ ] Pending rerun: targeted fix pushed; rerun LaunchLab Live Provenance and Validate Climboria. Do not consider the probe verified until both the 13-test suite and live finalized RPC step complete.
+- [ ] After green CI, inspect Devnet authority account/history output and classify only with supporting controlling-program/governance evidence. Continue Devnet LP Lock Program/ProgramData investigation. Keep all signing, simulation, migration, fee collection and Mainnet execution disabled.
+
 ### Latest checkpoint — 2026-11-10 (Devnet CPMM fee-authority history probe added)
 
 - [x] Rechecked PR #231 and branch head before continuing: PR remains open, Draft, unmerged; GitHub reports mergeable. Existing successful LaunchLab/Validate run evidence predates this change.
