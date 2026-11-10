@@ -554,6 +554,55 @@ export function decodeGovernanceProposalAccountEvidence(evidence, sdk) {
   };
 }
 
+export function verifyGovernanceUpgradeProposalEvidence({
+  governanceHistory, proposalDetails, programId = METAPLEX_TOKEN_METADATA_PROGRAM_ID, programDataAddress,
+}) {
+  const proposals = new Map((proposalDetails?.proposals ?? []).map(proposal => [proposal.address, proposal]));
+  const transactions = new Map((proposalDetails?.proposalTransactions ?? []).map(transaction => [transaction.address, transaction]));
+  const executions = (governanceHistory?.events ?? []).filter(event =>
+    event.instruction === "executeTransaction" &&
+    event.innerProgramId === BPF_UPGRADEABLE_LOADER_ID &&
+    event.success);
+  const results = executions.map(event => {
+    const proposal = proposals.get(event.proposal);
+    const transaction = transactions.get(event.proposalTransaction);
+    const loaderInstructions = (transaction?.instructions ?? []).filter(instruction =>
+      instruction.programId === BPF_UPGRADEABLE_LOADER_ID);
+    const loader = loaderInstructions[0];
+    const accounts = loader?.accounts ?? [];
+    const checks = {
+      proposalAccountFound: Boolean(proposal),
+      proposalGovernanceMatches: Boolean(proposal && proposal.governance === event.governance),
+      proposalCompleted: proposal?.state === "Completed",
+      proposalTransactionFound: Boolean(transaction),
+      proposalTransactionMatches: Boolean(transaction && transaction.proposal === event.proposal),
+      exactlyOneLoaderInstruction: loaderInstructions.length === 1,
+      loaderUpgradeOpcode: loader?.loaderOpcode === 3,
+      programDataMatches: accounts[0]?.pubkey === programDataAddress,
+      governedProgramMatches: accounts[1]?.pubkey === programId,
+      governancePdaIsUpgradeAuthority: accounts[6]?.pubkey === event.governance,
+    };
+    return {
+      slot: event.slot, signature: event.signature,
+      proposal: event.proposal, proposalTransaction: event.proposalTransaction,
+      proposalName: proposal?.name ?? null, proposalState: proposal?.state ?? null,
+      transactionExecutionStatus: transaction?.executionStatus ?? null,
+      checks,
+      verified: Object.values(checks).every(Boolean),
+    };
+  });
+  const verifiedCount = results.filter(result => result.verified).length;
+  return {
+    status: executions.length === 0 ? "no_successful_loader_governance_executions"
+      : verifiedCount === executions.length ? "all_governance_upgrade_proposals_verified"
+      : "governance_upgrade_proposal_verification_partial",
+    executionCount: executions.length,
+    verifiedCount,
+    failedCount: executions.length - verifiedCount,
+    results,
+  };
+}
+
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -652,6 +701,12 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     governanceHistory,
     governanceProposalAccounts,
     governanceProposalDetails: decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk),
+    governanceUpgradeVerification: verifyGovernanceUpgradeProposalEvidence({
+      governanceHistory,
+      proposalDetails: decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk),
+      programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
+      programDataAddress: programDataAddress.toBase58(),
+    }),
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
