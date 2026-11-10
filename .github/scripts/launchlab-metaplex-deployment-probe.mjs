@@ -576,6 +576,7 @@ export function verifyGovernanceUpgradeProposalEvidence({
       proposalCompleted: proposal?.state === "Completed",
       proposalTransactionFound: Boolean(transaction),
       proposalTransactionMatches: Boolean(transaction && transaction.proposal === event.proposal),
+      transactionExecutionSucceeded: transaction?.executionStatus === 1,
       exactlyOneLoaderInstruction: loaderInstructions.length === 1,
       loaderUpgradeOpcode: loader?.loaderOpcode === 3,
       programDataMatches: accounts[0]?.pubkey === programDataAddress,
