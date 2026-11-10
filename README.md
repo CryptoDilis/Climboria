@@ -1,3 +1,15 @@
+### Latest checkpoint — 2026-11-10 (Raydium Devnet LP Lock and CPMM receiver cross-reference)
+
+- [x] Cross-checked the configured Devnet LP Lock program ID against Raydium's current official program-address documentation: `DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX`. The configured ID matches the official Devnet table.
+- [x] Cross-checked the Devnet CPMM fixed pool-creation fee receiver against the same official documentation: `3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy`. The repository's LaunchLab config audit uses this address and reads its finalized SPL Token account plus CPMM config.
+- [x] Official Raydium docs state Burn & Earn / LP Lock source is not publicly available and direct integrators to the published IDL mirror. The public `raydium-io/raydium-idl` repository currently exposes only `raydium_clmm`, `raydium_cpmm`, and `raydium_launchpad` folders; no locking IDL folder is published there. The canonical Devnet legacy Anchor IDL account is also missing per live RPC.
+- [x] Confirmed the docs distinguish the fixed CPMM pool-creation receiver from CPMM protocol/fund fee owners. The receiver is a fixed token account, not an ATA; its token-account authority must be read from finalized account data, not guessed to be the program admin or protocol owner.
+- [ ] Do not label Devnet LP Lock interface verified from source or IDL. Keep the Devnet lock path blocked until an independent deployed-interface verification route is established (e.g. verified explorer/IDL artifact with reproducible provenance, or a carefully reviewed bytecode/interface analysis). The official public docs do not supply the missing Devnet IDL.
+- [ ] **Exact next P0:** capture the current finalized Devnet LP Lock Program + ProgramData metadata, compare it with available explorer/IDL history and governance upgrade transactions, and determine whether any verifiable deployed-interface artifact exists. Separately record the exact Devnet CPMM fixed fee receiver mint, token authority, amount, state and owning program from the latest finalized account; compare the observed authority to documented config/admin addresses without assuming equivalence.
+- [ ] Existing hard gates remain: no launch migration, LP lock, fee collection, creator signing, simulation or Mainnet execution until Devnet interface/custody and independent security review are complete.
+
+Source cross-reference: https://github.com/raydium-io/raydium-docs-v1/blob/main/reference/program-addresses.mdx
+
 ### Latest checkpoint — 2026-11-10 (Governance decoder correction verified in live CI)
 
 - [x] Confirmed the one-byte SPL Governance Borsh discriminator boundary fix: `ExecuteTransaction` uses byte `16` (`EA==`); `CreateProgramGovernance` begins with byte `5`. The governance decoder accepts a one-byte payload while the Upgradeable Loader instruction decoder remains four-byte little-endian.
