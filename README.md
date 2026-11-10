@@ -2855,3 +2855,20 @@ No production transaction, deployment, or login activation is claimed by this re
 - For login: choose and configure a real auth provider, then implement guest-to-account upgrade, email verification/password reset, Google OAuth, and optional X OAuth; verify account linking, sessions, logout and cross-device progress before enabling buttons.
 
 No live Launchpad or social/email login is claimed. No swap execution switch has been enabled.
+
+
+## 2026-11-11 — CI and deployment recheck (supersedes stale status above)
+
+- GitHub Pages run `42881653723` completed **SUCCESS** for main SHA `4ef245e19184907a04f640c8247c5afa651c6b33`. The current release-priority and README audit records are deployed.
+- Browser Smoke run `42880044279` completed **SUCCESS**. All 20 job steps completed, including DEX routing/search, quote-only fail-closed behavior, desktop/mobile DEX and Swap layouts, provider error/empty states, and Jarrell's Peak desktop/mobile gameplay smoke. Important: the run's tested workflow head was `32ec6caee34e37a9f4d2afd0b491c840abc66034`, not the latest PR #234 head `43b514c2770b4717a4146b173fe4ce7529375d7a`. The run's PR association now points to #234's current head, but its own head_sha remains the older commit.
+- Latest PR #234 head `43b514c2770b4717a4146b173fe4ce7529375d7a` has **zero GitHub check runs** at recheck time. No Validate result exists for the two latest settlement regression tests on this head. Prior successful Validate runs do not validate these new tests.
+- PR #234 remains draft/open and GitHub reports `mergeable=false`. Do not merge until the latest head is tested and code review is complete.
+- Main is currently `4ef245e19184907a04f640c8247c5afa651c6b33`; PR #234's base is still `28180c2a277e0c4bd093a40462032e7f536989e6`. The main-vs-base comparison shows main has advanced 15 commits and is not behind that base. The PR itself still needs a safe branch update/rebase and conflict resolution before review; no branch rewrite was performed in this session.
+
+### Exact next job
+1. Open [Validate Climboria Actions](https://github.com/CryptoDilis/Climboria/actions/workflows/validate-climboria.yml), choose branch `codex/swap-order-binding-durable-object`, and manually run it against current head `43b514c2770b4717a4146b173fe4ce7529375d7a`. Confirm the run's head SHA before accepting results.
+2. Safely update/rebase PR #234 onto current main, resolve any conflicts based on actual diffs, then rerun Validate and Browser Smoke on the updated head. Keep both Swap execution feature flags false until review, Worker deployment/health checks, and controlled Devnet lifecycle validation pass.
+3. Continue Launchpad blockers exactly as documented: publish/verify canonical Devnet LP Lock IDL and reconcile on-chain LaunchLab type definitions; keep Launchpad preview and unsigned Devnet-only preparation until proven.
+4. Implement real account/session authentication (guest, email/password, Google OAuth, X OAuth) only after selecting/configuring the auth provider and verifying account linking/session lifecycle. Wallet connect alone is not account login.
+
+No production Swap execution, Launchpad token creation, or Google/X/email login activation is claimed.
