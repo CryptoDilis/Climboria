@@ -1,3 +1,14 @@
+### Latest checkpoint — 2026-11-10 (PR #231, oldest-first test correction)
+
+- [x] Validate Climboria `42759689663` on source commit `d356fd05357e45e60548658a6ef57bca4a66bd34`: SUCCESS.
+- [x] LaunchLab Live Provenance `42759689660` on that same commit failed in the Metaplex provenance mock tests. Root cause was stale fixture expectations after the intentional oldest-first behavior change: the fixture expected the ProgramData extension before the older original-deploy fixture, and the pagination test expected newest-first fetch order.
+- [x] Inspected the exact failed test logs. Corrected the mock assertions to expect `OriginalDeploySignature` / `Program deployed` before `ExtendSignature` / `Extended ProgramData account...`, and corrected pagination fetch order to `deploy` then `extension`. No production logic was reverted.
+- [x] The same failed run showed the new 429 retry + instruction-evidence test passed; the oldest-first cap-selection test passed. The two failing tests were fixture-order assumptions, not runtime parser failures.
+- [ ] **CI verification pending** for corrective commit `83a5209e50d74c44a7772c234ffd3d6ec7a08c37`. Validate and LaunchLab must both be checked on this corrected head.
+- [ ] **Next P0:** verify corrected LaunchLab run; then inspect live oldest-first transaction instruction evidence for the original ProgramData deployment and governance context. Keep 429s visible as incomplete evidence rather than treating unavailable transaction details as proof.
+- [ ] Deployed Metaplex executable still does not match the reproducible candidate artifact; exact source lineage and metadata allocation compatibility remain unresolved. Devnet LP Lock IDL publication and CPMM fee-receiver custody remain independent migration blockers.
+- [ ] No signing, simulation, submission, migration, or Mainnet operations.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, oldest-first loader transaction evidence)
 
 - [x] Rechecked PR #231: open, Draft; current code branch remains isolated from main.
