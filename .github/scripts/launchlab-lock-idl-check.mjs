@@ -29,6 +29,7 @@ const LOCK_CP_LIQUIDITY_DISCRIMINATOR = [216, 157, 29, 78, 38, 51, 31, 26];
 const COLLECT_CP_FEES_DISCRIMINATOR = [8, 30, 51, 199, 209, 184, 247, 133];
 
 const fail = message => { throw new Error(message); };
+const normalizeName = value => String(value).replaceAll("_", "").toLowerCase();
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const expectedLockAccounts = [
   ["auth", false, false], ["payer", true, true], ["liquidityOwner", true, false],
@@ -59,7 +60,7 @@ function checkAccounts(instruction, expected, name) {
   for (let i = 0; i < expected.length; i++) {
     const [expectedName, signer, writable] = expected[i];
     const item = actual[i];
-    if (item.name !== expectedName) fail(name + " account order mismatch at " + i + ": expected " + expectedName + ", got " + item.name);
+    if (normalizeName(item.name) !== normalizeName(expectedName)) fail(name + " account order mismatch at " + i + ": expected " + expectedName + ", got " + item.name);
     if (Boolean(item.signer) !== signer || Boolean(item.writable) !== writable) {
       fail(name + " signer/writable flags mismatch for " + expectedName);
     }
@@ -79,20 +80,20 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   if (idl.address && idl.address !== target.id) fail("LP Lock IDL address differs from the expected cluster program ID");
   const idlName = idl.name ?? idl.metadata?.name ?? null;
   if (idlName !== "raydium_liquidity_locking") fail("LP Lock IDL name is not raydium_liquidity_locking");
-  const instructions = new Map((idl.instructions ?? []).map(item => [item.name, item]));
-  const lock = instructions.get("lockCpLiquidity");
-  const collect = instructions.get("collectCpFees");
-  if (!lock || !collect) fail("LP Lock IDL is missing expected SDK instruction names; IDL name=" + idlName + "; available=" + (idl.instructions ?? []).map(item => item.name).join(", "));
+  const instructions = new Map((idl.instructions ?? []).map(item => [normalizeName(item.name), item]));
+  const lock = instructions.get("lockcpliquidity");
+  const collect = instructions.get("collectcpfees");
+  if (!lock || !collect) fail("LP Lock IDL is missing lockCpLiquidity/collectCpFees; IDL name=" + idlName + "; available=" + (idl.instructions ?? []).map(item => item.name).join(", "));
   if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK");
   if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK");
   checkAccounts(lock, expectedLockAccounts, "lockCpLiquidity");
   checkAccounts(collect, expectedCollectAccounts, "collectCpFees");
   const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
   const collectArgs = (collect.args ?? []).map(arg => [arg.name, arg.type]);
-  if (JSON.stringify(lockArgs) !== JSON.stringify([["lpAmount", "u64"], ["withMetadata", "bool"]])) fail("LP Lock lock_cp_liquidity arguments differ from pinned SDK encoding");
-  if (JSON.stringify(collectArgs) !== JSON.stringify([["lpFeeAmount", "u64"]])) fail("LP Lock collect_cp_fees arguments differ from pinned SDK encoding");
-  const auth = lock.accounts.find(item => item.name === "auth");
-  const locked = lock.accounts.find(item => item.name === "lockedLiquidity");
+  if (JSON.stringify(lockArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpamount", "u64"], ["withmetadata", "bool"]])) fail("LP Lock lockCpLiquidity arguments differ from pinned SDK encoding");
+  if (JSON.stringify(collectArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpfeeamount", "u64"]])) fail("LP Lock collectCpFees arguments differ from pinned SDK encoding");
+  const auth = lock.accounts.find(item => normalizeName(item.name) === "auth");
+  const locked = lock.accounts.find(item => normalizeName(item.name) === "lockedliquidity");
   const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
   const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
   if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK");
