@@ -54,7 +54,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json -o /tmp/launchlab-provenance/launchpad-idl.json
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_cpmm/raydium_cp_swap.json -o /tmp/launchlab-provenance/cp-swap-idl.json
       - name: Report downloaded artifact SHA-256 digests
-        run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts
+        run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
         run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json
       - name: Install temporary Solana RPC client dependency
