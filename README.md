@@ -2950,3 +2950,22 @@ No production Worker deployment, live swap execution, Launchpad token creation, 
 4. Continue Launchpad IDL/Devnet blockers and real account authentication as separate release gates.
 
 Production Swap execution, Launchpad token creation/fundraising, and Google/X/email account login remain not live.
+
+
+## 2026-11-11 — Latest continuation checkpoint (Pages + PR divergence recheck)
+
+- Rechecked current main: `8e043c467d6d49790664b15e43848fab3c980901`.
+- GitHub Pages run `42885521444` completed successfully for that exact main SHA. Build job `130072750927`, deploy job `130073053197`, and report job `130073053210` all completed SUCCESS. This confirms the current README/release-priority checkpoint is published.
+- Rechecked PR #234 directly: still open/draft, head `7f5d3451c7c99356fd46502691f0c24f92a96ade`, base `28180c2a277e0c4bd093a40462032e7f536989e6`, GitHub mergeable=false. No reviews are recorded.
+- Fresh compare `main...codex/swap-order-binding-durable-object` is **diverged: 42 commits ahead / 25 commits behind** (previous recorded behind count was 19; the base/main has advanced). Merge base remains `28180c2a277e0c4bd093a40462032e7f536989e6`. Changed paths include CI workflows, DEX UI, Swap Worker/order-store/transaction parser/tests, Wrangler config, and release-priority documentation. Do not merge, force-push, or manufacture a merge commit without a real conflict-aware worktree.
+- Fetching PR-triggered workflow runs for latest PR head `7f5d3451c7c99356fd46502691f0c24f92a96ade` returned no runs. No exact-head Validate result is evidenced. Prior green Browser Smoke/Validate runs on `32ec6ca` do not validate this later head or its settlement-persistence regression.
+- No PR reviews are recorded. The PR branch deployment guide confirms the Worker is prepared but **not deployed**; Cloudflare account secrets, Jupiter API key, account-specific rate-limit namespace, active zone/custom-domain checks, health/CORS verification, independent security review and controlled Devnet lifecycle remain prerequisites.
+- No production Worker deployment, live swap execution, Launchpad token creation/fundraising, or account login activation is claimed. Keep Worker `EXECUTION_ENABLED=false` and frontend `swap-config.js enabled=false`.
+
+### Exact next task
+1. Manually run [Validate Climboria Actions](https://github.com/CryptoDilis/Climboria/actions/workflows/validate-climboria.yml) on branch `codex/swap-order-binding-durable-object`; confirm the run head SHA is exactly `7f5d3451c7c99356fd46502691f0c24f92a96ade`, then inspect all Swap tests and Wrangler dry-run. The connected GitHub tools still do not expose workflow_dispatch.
+2. Obtain a real local/worktree environment and reconcile the now 42-ahead/25-behind PR against current main with explicit conflict resolution; rerun Validate and Browser Smoke on the integrated head. Do not merge until checks and review are complete.
+3. After independent security review and controlled Devnet lifecycle, configure and deploy the Worker using repository secrets/variables (never share secrets in chat), verify health/CORS/rate limiting, and only then separately review execution feature gates.
+4. Continue Launchpad's missing canonical Devnet LP Lock IDL and live LaunchLab type-definition reconciliation; keep all signing/submission/migration paths disabled.
+5. Implement real Guest/email/Google/X account sessions only with a configured auth provider and verified account-linking/session lifecycle.
+
