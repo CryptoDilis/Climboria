@@ -38,6 +38,13 @@ test("decodes Program -> ProgramData address and ProgramData upgrade authority",
   assert.equal(parsed.upgradeAuthority,encode58(authority));
   assert.equal(parsed.immutable,false);
 });
+test("fingerprints deployed ProgramData payload bytes after the optional authority header", () => {
+  const authority = Uint8Array.from({length:32},(_,i)=>i+33);
+  const payload = Buffer.from([1,2,3,4,5,6]);
+  const parsed = parseProgramDataAccount(programDataAccount(authority, 123n, payload));
+  assert.equal(parsed.programDataPayloadLength, payload.length);
+  assert.equal(parsed.programDataPayloadSha256, createHash("sha256").update(payload).digest("hex"));
+});
 test("recognizes immutable ProgramData accounts", () => {
   const parsed=parseProgramDataAccount(programDataAccount(null,42n));
   assert.equal(parsed.slot,42);
