@@ -40,7 +40,6 @@ function makeInitializeV2Transaction(options, label = "init") {
   const writableUnsigned = [...privileges.entries()].filter(([key, value]) => !signerSet.has(key) && value.isWritable).map(([key]) => new PublicKey(key));
   const readonlyUnsigned = [...privileges.entries()].filter(([key, value]) => !signerSet.has(key) && !value.isWritable).map(([key]) => new PublicKey(key));
   const program = new PublicKey(ids.programId);
-  readonlyUnsigned.push(program);
   const staticAccountKeys = [...signerKeys, ...writableUnsigned, ...readonlyUnsigned];
   const keyIndex = new Map(staticAccountKeys.map((key, index) => [key.toBase58(), index]));
   return {
@@ -145,11 +144,12 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, true);
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isWritable, true);
   assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
-  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 17);
+  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 18);
   assert.equal(result.transactionReviews[0].launchpadAccounts[0].name, "payer");
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].name, "creator");
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].isSigner, true);
   assert.equal(result.transactionReviews[0].launchpadAccounts[5].name, "pool_state");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[17].name, "program");
   assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
   assert.equal(result.transactionSubmitted, false);
   assert.equal(result.executeCalled, false);
