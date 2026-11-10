@@ -32,6 +32,7 @@ const ids = {
   platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
   quoteMint: "So11111111111111111111111111111111111111112",
   creator: "11111111111111111111111111111111",
+  feePayer: "11111111111111111111111111111112",
 };
 const sdk = {
   PublicKey, BN, TxVersion: { V0: "v0" },
@@ -39,7 +40,7 @@ const sdk = {
   PlatformConfig: { decode: () => ({ restrictCurveParam: false, platformClaimFeeWallet: new PublicKey(ids.creator), platformLockNftWallet: new PublicKey(ids.creator), feeRate: 2500, creatorFeeRate: 2500, cpConfigId: new PublicKey(ids.configId) }) },
 };
 function makeInitializeV2Transaction(options, label = "init", overrides = {}, platformAllowConfigId, platformCurveRuleId) {
-  const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
+  const launchInput = { creatorWallet: ids.creator, feePayer: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
   const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId), platformAllowConfigId, platformCurveRuleId });
   const privileges = new Map();
   for (const item of expected) {
@@ -97,7 +98,7 @@ function makeInitializeV2Transaction(options, label = "init", overrides = {}, pl
 }
 
 const input = overrides => ({
-  cluster: "devnet", ...ids, creatorWallet: ids.creator, feePayer: ids.creator,
+  cluster: "devnet", ...ids, creatorWallet: ids.creator, feePayer: ids.feePayer,
   mintKeypair: { publicKey: new PublicKey("Mint111111111111111111111111111111111111111") },
   metadata: (() => { const contentJson = JSON.stringify({ name: "Climboria Test", symbol: "CLIMB", description: "Devnet fixture" }); return { name: "Climboria Test", symbol: "CLIMB", uri: "https://metadata.example/climboria.json", contentJson, contentHash: createHash("sha256").update(contentJson).digest("hex") }; })(),
   decimals: 6, quoteDecimals: 9, migrateType: "cpmm", createOnly: true,
@@ -195,8 +196,10 @@ test("requires explicit token decimals and the verified WSOL quote decimals", ()
   assert.throws(() => validateDevnetLaunchInput(input({ decimals: undefined }), sdk), /Token decimals must be explicitly selected/);
   assert.throws(() => validateDevnetLaunchInput(input({ quoteDecimals: 6 }), sdk), /Token decimals must be explicitly selected/);
 });
-test("requires creator and fee payer to be the same wallet", () => {
-  assert.throws(() => validateDevnetLaunchInput(input({ feePayer: "11111111111111111111111111111112" }), sdk), /match the creator wallet/);
+test("requires a valid dedicated fee payer distinct from creator when supplied", () => {
+  assert.equal(validateDevnetLaunchInput(input({ feePayer: ids.feePayer }), sdk).amounts.supply, "1000000000000000");
+  assert.throws(() => validateDevnetLaunchInput(input({ feePayer: "not-a-public-key" }), sdk), /valid public key/);
+  assert.throws(() => validateDevnetLaunchInput(input({ feePayer: "" }), sdk), /fee-payer public key is required/);
 });
 test("requires an explicit CPMM creator fee mode", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ creatorFeeOn: undefined }), sdk), /Creator fee mode must be explicitly selected/);
@@ -228,8 +231,12 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, true);
   assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isWritable, true);
   assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
+  assert.equal(result.transactionReviews[0].feePayer, ids.feePayer);
+  assert.deepEqual(result.transactionReviews[0].requiredSignerKeys, [ids.feePayer, input({}).mintKeypair.publicKey.toBase58()]);
   assert.equal(result.transactionReviews[0].launchpadAccounts.length, 18);
   assert.equal(result.transactionReviews[0].launchpadAccounts[0].name, "payer");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[0].pubkey, ids.feePayer);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[1].pubkey, ids.creator);
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].name, "creator");
   assert.equal(result.transactionReviews[0].launchpadAccounts[1].isSigner, true);
   assert.equal(result.transactionReviews[0].launchpadAccounts[5].name, "pool_state");
@@ -250,6 +257,7 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(built.totalFundRaisingB.value, "85000000000");
   assert.equal(built.buyAmount.value, "0");
   assert.equal(built.createOnly, true);
+  assert.equal(built.feePayer.toBase58(), ids.feePayer);
   assert.deepEqual(built.extraSigners, [input({}).mintKeypair]);
 });
 test("rejects any extra top-level instruction in create-only preparation", async () => {
