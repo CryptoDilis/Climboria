@@ -25,7 +25,7 @@ const sdk = {
   LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }) },
   PlatformConfig: { decode: () => ({ restrictCurveParam: false }) },
 };
-function makeInitializeV2Transaction(options, label = "init") {
+function makeInitializeV2Transaction(options, label = "init", overrides = {}) {
   const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
   const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId) });
   const privileges = new Map();
@@ -42,6 +42,33 @@ function makeInitializeV2Transaction(options, label = "init") {
   const program = new PublicKey(ids.programId);
   const staticAccountKeys = [...signerKeys, ...writableUnsigned, ...readonlyUnsigned];
   const keyIndex = new Map(staticAccountKeys.map((key, index) => [key.toBase58(), index]));
+  const encodeString = value => {
+    const bytes = Buffer.from(value, "utf8");
+    const length = Buffer.alloc(4);
+    length.writeUInt32LE(bytes.length);
+    return Buffer.concat([length, bytes]);
+  };
+  const encodeU64 = value => {
+    const bytes = Buffer.alloc(8);
+    bytes.writeBigUInt64LE(BigInt(value));
+    return bytes;
+  };
+  const data = Buffer.concat([
+    Buffer.from([67, 153, 175, 39, 218, 16, 38, 32]),
+    Buffer.from([options.decimals]),
+    encodeString(options.name),
+    encodeString(options.symbol),
+    encodeString(options.uri),
+    Buffer.from([0]),
+    encodeU64(options.supply.value),
+    encodeU64(overrides.totalSellA ?? options.totalSellA.value),
+    encodeU64(options.totalFundRaisingB.value),
+    Buffer.from([1]),
+    encodeU64(options.totalLockedAmount.value),
+    encodeU64("0"),
+    encodeU64("0"),
+    Buffer.from([options.creatorFeeOn]),
+  ]);
   return {
     label,
     message: {
@@ -50,7 +77,7 @@ function makeInitializeV2Transaction(options, label = "init") {
       compiledInstructions: [{
         programIdIndex: keyIndex.get(ids.programId),
         accountKeyIndexes: expected.map(item => keyIndex.get(item.pubkey.toBase58())),
-        data: Uint8Array.from([67, 153, 175, 39, 218, 16, 38, 32]),
+        data,
       }],
     },
   };
@@ -61,7 +88,7 @@ const input = overrides => ({
   mintKeypair: { publicKey: new PublicKey("Mint111111111111111111111111111111111111111") },
   metadata: (() => { const contentJson = JSON.stringify({ name: "Climboria Test", symbol: "CLIMB", description: "Devnet fixture" }); return { name: "Climboria Test", symbol: "CLIMB", uri: "https://metadata.example/climboria.json", contentJson, contentHash: createHash("sha256").update(contentJson).digest("hex") }; })(),
   decimals: 6, quoteDecimals: 9, migrateType: "cpmm", createOnly: true,
-  token2022: false, supply: "1000000000000000", totalSellA: "793100000000000",
+  token2022: false, creatorFeeOn: 0, supply: "1000000000000000", totalSellA: "793100000000000",
   totalFundRaisingB: "85000000000", totalLockedAmount: "0",
   ...overrides,
 });
@@ -116,6 +143,9 @@ test("requires explicit token decimals and the verified WSOL quote decimals", ()
 });
 test("requires creator and fee payer to be the same wallet", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ feePayer: "11111111111111111111111111111112" }), sdk), /match the creator wallet/);
+});
+test("requires an explicit CPMM creator fee mode", () => {
+  assert.throws(() => validateDevnetLaunchInput(input({ creatorFeeOn: undefined }), sdk), /Creator fee mode must be explicitly selected/);
 });
 test("rejects non-CPMM, non-create-only and Token-2022 paths", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ migrateType: "amm" }), sdk), /CPMM migration/);
@@ -174,6 +204,14 @@ test("rejects a tampered initializeV2 pool PDA or account order", async () => {
     return { transactions: [tx], signers: [[options.extraSigners[0]]] };
   };
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /account mismatch at position 5/);
+});
+test("rejects a serialized initializeV2 curve amount that differs from reviewed input", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => ({
+    transactions: [makeInitializeV2Transaction(options, "init", { totalSellA: "1" })],
+    signers: [[options.extraSigners[0]]],
+  });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /initializeV2 argument mismatch: totalSellA/);
 });
 test("rejects a LaunchLab instruction with a non-initializeV2 discriminator", async () => {
   const mock = client();
