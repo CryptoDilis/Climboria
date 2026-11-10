@@ -786,7 +786,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 const API='https://api.dexscreener.com';
 const $=id=>document.getElementById(id);
 const state={mode:'trending',pairs:[],profiles:[],graduations:[],searchPairs:[],graduationStatus:'not loaded',search:'',last:0,busy:false,loadError:null};
-let basePairs=[];let baseBusy=false;let baseLoadError=null;let basePartialFailures=0;let baseMode="trending";let mobileMarketLimit=12,baseMarketLimit=12;
+let basePairs=[];let baseSearchPairs=[];let baseSearchRequestId=0,baseSearchTimer=null;let baseBusy=false;let baseLoadError=null;let basePartialFailures=0;let baseMode="trending";let mobileMarketLimit=12,baseMarketLimit=12;
 const fmt=(n)=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1e9?'$'+(n/1e9).toFixed(2)+'B':n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(n<1?6:2)};
 const price=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return '$'+(n<0.0001?n.toExponential(2):n<1?n.toPrecision(4):n.toLocaleString('en-US',{maximumFractionDigits:4}))};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -807,9 +807,26 @@ async function loadBaseMarkets(){
  }catch(e){baseLoadError=e.message||'Base market provider unavailable';renderBaseMarkets();$('baseCoverage').textContent=basePairs.length?'Base refresh failed; showing last successful provider data. '+baseLoadError:'Base data unavailable: '+baseLoadError}
  finally{baseBusy=false}
 }
+async function discoverBaseSearch(query,requestId){
+ const exactAddress=/^0x[a-fA-F0-9]{40}$/.test(query);
+ try{
+  const path=exactAddress?'/latest/dex/tokens/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
+  const payload=await get(path);
+  if(requestId!==baseSearchRequestId)return;
+  const rows=Array.isArray(payload)?payload:payload?.pairs;
+  const found=(Array.isArray(rows)?rows:[]).filter(p=>p&&p.chainId==='base'&&p.baseToken&&p.quoteToken&&p.pairAddress&&(!exactAddress||p.baseToken.address?.toLowerCase()===query.toLowerCase()));
+  baseSearchPairs=found;
+  renderBaseMarkets();
+  $('baseCoverage').textContent=found.length?(exactAddress?'Exact Base contract lookup':'Live Base token search')+' · '+found.length+' matching pool(s) added to the current discovery sample':exactAddress?'No Base pool found with this exact contract address.':'No matching Base token or pool found.';
+ }catch(error){
+  if(requestId!==baseSearchRequestId)return;
+  baseSearchPairs=[];renderBaseMarkets();
+  $('baseCoverage').textContent='Base search unavailable: '+(error.message||'provider error')+' · Showing the currently loaded discovery sample.';
+ }
+}
 function renderBaseMarkets(){
  const q=$('baseSearch').value.trim().toLowerCase(),sort=$('baseSort').value;
- let list=basePairs.filter(p=>!q||[p.baseToken.name,p.baseToken.symbol,p.baseToken.address,p.quoteToken.symbol].some(v=>String(v||'').toLowerCase().includes(q)));
+ const merged=new Map();for(const p of [...basePairs,...baseSearchPairs])if(p?.pairAddress&&!merged.has(p.pairAddress))merged.set(p.pairAddress,p);let list=[...merged.values()].filter(p=>!q||[p.baseToken.name,p.baseToken.symbol,p.baseToken.address,p.quoteToken.symbol].some(v=>String(v||'').toLowerCase().includes(q)));
  const val=(p,k)=>{const v=k==='change'?p.priceChange?.h24:k==='volume'?p.volume?.h24:k==='liquidity'?p.liquidity?.usd:p.pairCreatedAt;return v===null||v===undefined||v===''?NaN:Number(v)};
  const desc=(k)=>(a,b)=>{const x=val(a,k),y=val(b,k);if(!Number.isFinite(x))return 1;if(!Number.isFinite(y))return -1;return y-x};
  const asc=(k)=>(a,b)=>{const x=val(a,k),y=val(b,k);if(!Number.isFinite(x))return 1;if(!Number.isFinite(y))return -1;return x-y};
@@ -1275,7 +1292,7 @@ $('search').addEventListener('input',e=>{
  const requestId=++dexSearchRequestId;
  if(query.length<2)return;
  dexSearchTimer=setTimeout(()=>discoverDexSearch(query,requestId),350);
-});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',renderBaseMarkets);$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
+});$('sort').addEventListener('change',render);$('refresh').addEventListener('click',load);$('refreshBase').addEventListener('click',loadBaseMarkets);$('baseSearch').addEventListener('input',e=>{renderBaseMarkets();clearTimeout(baseSearchTimer);const query=e.target.value.trim();const requestId=++baseSearchRequestId;baseSearchPairs=[];if(query.length<2){renderBaseMarkets();return}baseSearchTimer=setTimeout(()=>discoverBaseSearch(query,requestId),350);});$('baseSort').addEventListener('change',renderBaseMarkets);$('baseTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-base-mode]');if(!b)return;baseMode=b.dataset.baseMode;document.querySelectorAll('#baseTabs [data-base-mode]').forEach(x=>x.classList.toggle('active',x===b));$('baseSort').value='mode';renderBaseMarkets()});$('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(!b)return;state.mode=b.dataset.mode;document.querySelectorAll('.tab[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
 load();loadBaseMarkets();const dp=new URLSearchParams(location.search),im=dp.get('token');if(im&&/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(im))openToken(im,{fromUrl:true});setInterval(load,60000);setInterval(loadBaseMarkets,60000);setInterval(()=>{if(activeDetailMint&&document.visibilityState==='visible')openToken(activeDetailMint,{refresh:true,fromUrl:true});},20000);
 
 const CLIMBORIA_WATCHLIST_KEY='climboria:dex:watchlist:v1';
