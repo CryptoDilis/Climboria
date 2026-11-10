@@ -556,6 +556,7 @@ export function decodeGovernanceProposalAccountEvidence(evidence, sdk) {
 
 export function verifyGovernanceUpgradeProposalEvidence({
   governanceHistory, proposalDetails, programId = METAPLEX_TOKEN_METADATA_PROGRAM_ID, programDataAddress,
+  currentUpgradeAuthority = null,
 }) {
   const proposals = new Map((proposalDetails?.proposals ?? []).map(proposal => [proposal.address, proposal]));
   const transactions = new Map((proposalDetails?.proposalTransactions ?? []).map(transaction => [transaction.address, transaction]));
@@ -573,6 +574,7 @@ export function verifyGovernanceUpgradeProposalEvidence({
     const checks = {
       proposalAccountFound: Boolean(proposal),
       proposalGovernanceMatches: Boolean(proposal && proposal.governance === event.governance),
+      governancePdaMatchesCurrentUpgradeAuthority: Boolean(currentUpgradeAuthority && event.governance === currentUpgradeAuthority),
       proposalCompleted: proposal?.state === "Completed",
       proposalTransactionFound: Boolean(transaction),
       proposalTransactionMatches: Boolean(transaction && transaction.proposal === event.proposal),
@@ -684,6 +686,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     governanceHistory, proposalDetails: governanceProposalDetails,
     programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
     programDataAddress: programDataAddress.toBase58(),
+    currentUpgradeAuthority: upgradeAuthority,
   });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
