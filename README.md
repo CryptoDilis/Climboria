@@ -2923,3 +2923,11 @@ Implement a separately tested server-side transaction security layer before any 
 
 - [x] Added a manual `workflow_dispatch` trigger to PR #233's Validate workflow so maintainers can run the complete parser/Worker suite on the selected branch.
 - [ ] The connected GitHub actions do not expose workflow dispatch. A maintainer needs to select `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow and verify it checks out the latest commit.
+
+
+## 2026-11-11 — Trusted ALT RPC resolver foundation recorded
+
+- [x] PR #233 adds a server-only `getMultipleAccounts` ALT resolver with strict response identity, JSON-RPC context-slot, owner, executable, base64, timeout and bounded-response checks. Mocked tests cover valid and hostile/malformed RPC responses.
+- [x] Resolver is documented as not yet integrated into the Worker execute route; `SOLANA_RPC_URL` is intended only as a server-side binding.
+- [ ] CI has not yet run on the latest PR #233 branch. Previous run `42852777038` failed on the pre-fix head with 38/40 tests passing; fixture fixes and new resolver tests remain unverified by GitHub Actions.
+- [ ] Next: run Validate on the latest PR #233 branch, then integrate the resolver into a fail-closed semantic validation service. Execution remains disabled until protocol-specific allowlists, immutable order-wallet-message binding, replay protection, adversarial/Devnet tests and independent security review.
