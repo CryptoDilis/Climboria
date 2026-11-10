@@ -9,6 +9,13 @@ const prefix = process.env.LAUNCHLAB_TOOLS_PREFIX || "/tmp/launchlab-tools";
 const require = createRequire(`${prefix}/package.json`);
 const { Connection, PublicKey } = require("@solana/web3.js");
 const rpcUrl = process.env.SOLANA_DEVNET_RPC_URL || "https://api.devnet.solana.com";
+// Prevent a stalled public RPC fetch from holding the workflow step indefinitely.
+const nativeFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = (input, init = {}) => {
+  const timeoutSignal = AbortSignal.timeout(20000);
+  const signal = init.signal ? AbortSignal.any([init.signal, timeoutSignal]) : timeoutSignal;
+  return nativeFetch(input, { ...init, signal });
+};
 const connection = new Connection(rpcUrl, { commitment: "finalized" });
 const artifactPath = process.env.METAPLEX_BUILD_ARTIFACT_PATH;
 let buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT;
