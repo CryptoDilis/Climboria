@@ -90,6 +90,40 @@ export function validateConstantProductInitFormula({ supply, totalSellA, totalFu
 }
 
 
+const PLATFORM_GLOBAL_ACCESS_DISCRIMINATOR = Buffer.from([174, 147, 132, 240, 137, 219, 243, 16]);
+const PLATFORM_GLOBAL_ACCESS_SIZE = 8 + 1 + 32 + 32 + 8 * 8;
+
+export async function validatePlatformAllowConfig({ raydium, sdk, platformInfo }) {
+  if (!platformInfo?.restrictGlobalConfig) return { enforced: false, reason: "PlatformConfig does not restrict GlobalConfig access" };
+  if (typeof sdk?.getPdaPlatformAllowConfig !== "function") fail("Pinned SDK getPdaPlatformAllowConfig export is required");
+  const programId = new sdk.PublicKey(DEVNET.programId);
+  const platformId = new sdk.PublicKey(DEVNET.platformId);
+  const configId = new sdk.PublicKey(DEVNET.configId);
+  const derived = sdk.getPdaPlatformAllowConfig(programId, platformId, configId);
+  if (!derived?.publicKey || !Number.isInteger(derived.bump)) fail("Pinned SDK did not return the PlatformAllowConfig PDA and bump");
+  const account = await raydium.connection.getAccountInfo(derived.publicKey, "finalized");
+  if (!account) fail("Platform restricts GlobalConfig access but the finalized PlatformAllowConfig account is missing");
+  if (!sameKey(account.owner, programId)) fail("Finalized PlatformAllowConfig account has the wrong owner");
+  const data = Buffer.from(account.data);
+  if (data.length !== PLATFORM_GLOBAL_ACCESS_SIZE) fail("Finalized PlatformAllowConfig account has an unexpected PlatformGlobalAccess data length");
+  if (!data.subarray(0, 8).equals(PLATFORM_GLOBAL_ACCESS_DISCRIMINATOR)) fail("Finalized PlatformAllowConfig discriminator does not match the pinned Anchor IDL");
+  const bump = data.readUInt8(8);
+  const globalConfig = new sdk.PublicKey(data.subarray(9, 41));
+  const platformConfig = new sdk.PublicKey(data.subarray(41, 73));
+  if (bump !== derived.bump) fail("Finalized PlatformAllowConfig bump does not match its derived PDA");
+  if (!sameKey(globalConfig, configId) || !sameKey(platformConfig, platformId)) {
+    fail("Finalized PlatformAllowConfig identity does not match the verified Devnet platform/config pair");
+  }
+  return {
+    enforced: true,
+    pda: derived.publicKey.toBase58(),
+    bump,
+    globalConfig: globalConfig.toBase58(),
+    platformConfig: platformConfig.toBase58(),
+    accountDiscriminator: [...PLATFORM_GLOBAL_ACCESS_DISCRIMINATOR],
+  };
+}
+
 export async function validatePlatformCurveRule({ raydium, sdk, platformInfo, input, configInfo }) {
   if (!platformInfo?.restrictCurveParam) return { enforced: false, reason: "PlatformConfig does not restrict curve parameters" };
   for (const name of ["PlatformCurveRule", "getPdaPlatformCurveRule", "PLATFORM_CURVE_RULE_DISCRIMINATOR", "checkLaunchAgainstCurveRule"]) {
@@ -179,7 +213,7 @@ function decodeBase58(value) {
   return Buffer.concat([Buffer.alloc(leading), body]);
 }
 
-export function expectedInitializeV2Accounts({ sdk, input, programId, platformCurveRuleId }) {
+export function expectedInitializeV2Accounts({ sdk, input, programId, platformAllowConfigId, platformCurveRuleId }) {
   const PublicKey = sdk.PublicKey;
   const creator = new PublicKey(input.creatorWallet);
   const mintA = input.mintKeypair.publicKey;
@@ -221,6 +255,9 @@ export function expectedInitializeV2Accounts({ sdk, input, programId, platformCu
     { name: "event_authority", pubkey: eventAuthority, isSigner: false, isWritable: false },
     { name: "program", pubkey: programId, isSigner: false, isWritable: false },
   ];
+  if (platformAllowConfigId) {
+    accounts.push({ name: "platform_allow_config", pubkey: platformAllowConfigId, isSigner: false, isWritable: false });
+  }
   if (platformCurveRuleId) {
     accounts.push({ name: "platform_curve_rule", pubkey: platformCurveRuleId, isSigner: false, isWritable: false });
   }
@@ -364,7 +401,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     const onChain = field === "mintB" ? configInfo.mintB.toBase58() : String(configInfo[field]);
     if (String(apiConfig.key[field]) !== onChain) fail(`Fresh API / finalized GlobalConfig mismatch: ${field}`);
   }
-  if (platformInfo.restrictGlobalConfig) fail("Platform restricts GlobalConfig access; PlatformAllowConfig is not yet independently decoded and verified, so preparation is blocked");
+  const platformAllowConfig = await validatePlatformAllowConfig({ raydium, sdk, platformInfo });
   const platformCurveRule = await validatePlatformCurveRule({ raydium, sdk, platformInfo, input, configInfo });
   const curveFormula = validateConstantProductInitFormula({ ...amounts, migrateFee: configInfo.migrateFee.toString() });
 
@@ -391,6 +428,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     feePayer: new sdk.PublicKey(input.creatorWallet),
     extraSigners: [input.mintKeypair],
     txVersion: sdk.TxVersion.V0,
+    platformAllowConfig: platformAllowConfig.enforced ? true : undefined,
   };
   const prepared = await raydium.launchpad.createLaunchpad(sdkInput);
   if (!Array.isArray(prepared?.transactions) || prepared.transactions.length === 0) {
@@ -424,6 +462,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     sdk,
     input,
     programId,
+    platformAllowConfigId: platformAllowConfig.enforced ? new sdk.PublicKey(platformAllowConfig.pda) : undefined,
     platformCurveRuleId: platformCurveRule.enforced ? new sdk.PublicKey(platformCurveRule.pda) : undefined,
   });
   const transactionReviews = await Promise.all(prepared.transactions.map(async (transaction, index) => {
@@ -546,6 +585,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     metadataHash: input.metadata.contentHash.toLowerCase(),
     amounts,
     curveFormula,
+    platformAllowConfig,
     platformCurveRule,
     creatorFeeOn: input.creatorFeeOn,
     feeVaults: deriveDevnetFeeVaults({ sdk, programId: DEVNET.programId, platformId: DEVNET.platformId, creatorWallet: input.creatorWallet, quoteMint: DEVNET.quoteMint }),
