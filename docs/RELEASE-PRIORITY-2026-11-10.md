@@ -46,3 +46,11 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 - [ ] P3 Climboria Signature Launchpad end-to-end devnet and security verified.
 - [ ] P4 Cross-product integration, production deploy, release gates and rollback verified.
 - [ ] P5 Resume game/Jarrell's Peak as primary development focus.
+
+
+## 2026-11-10 — Active execution checkpoint
+- [x] Browser Smoke run `42737703450` steps 1–14 succeeded: homepage/Portfolio assertions, Cloudflare DEX proxy, fail-closed execution, standalone Swap, DEX quote-preview shell, DEX mobile workspace, 390px/360px responsive checks, and provider loading/error/empty states.
+- [ ] Step 15 Jarrell's Peak desktop/mobile gameplay smoke is still running; screenshot upload has not completed. Full Browser Smoke remains pending.
+- [ ] Exact next job: poll run `42737703450`; if gameplay fails, inspect the completed job logs and diagnose root cause before a targeted fix. Verify screenshot artifact after upload.
+- [ ] After P0, continue Swap PR #219 by resolving the documented `api.climboria.fun` DNS/custom-domain health-check blocker (verify zone Active, registrar nameserver delegation, DNS/custom domain and certificate before redeploy). Continue DEX issue #220 only with real OHLCV provider verification; current provider research checkpoint recommends prototype/cached pool OHLCV, conservative rate limits and exact pool orientation. Then audit Signature Launchpad's actual end-to-end chain flow.
+- [x] Updated Portfolio PR #230 and DEX issue #220 with this exact handoff checkpoint (comments `6756536692`, `6756537637`).
