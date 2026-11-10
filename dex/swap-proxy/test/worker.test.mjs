@@ -294,6 +294,31 @@ test("marks non-2xx Jupiter execution responses uncertain and replay-locked", as
   }
 });
 
+test("reports failed uncertainty settlement after a non-2xx Jupiter response", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  settleResponseStatus = 503;
+  try {
+    globalThis.fetch = async () => Response.json({ message: "upstream unavailable" }, { status: 503 });
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.equal(body.settlementRecorded, false);
+    assert.match(body.error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    settleResponseStatus = 200;
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("reports failed durable uncertainty settlement without releasing the claimed order", async () => {
   const originalFetch = globalThis.fetch;
   orderStoreCalls.length = 0;

@@ -320,8 +320,15 @@ async function handleExecute(request, env) {
   }
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    await settle("uncertain");
-    return json({ error: "Jupiter execution request failed; order is locked against replay", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
+    // A provider HTTP error is not proof that no execution occurred. Preserve
+    // the replay lock and tell the caller whether the terminal state was stored.
+    const settlementRecorded = await settle("uncertain").catch(() => false);
+    return json({
+      error: "Jupiter execution request failed; order is locked against replay",
+      upstreamStatus: response.status,
+      details: data?.error || data?.message || null,
+      settlementRecorded
+    }, response.status >= 400 && response.status < 500 ? response.status : 502);
   }
   if (!data || !["Success", "Failed"].includes(data.status) || !Number.isInteger(data.code)) {
     await settle("uncertain");
