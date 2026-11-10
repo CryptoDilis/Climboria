@@ -88,15 +88,19 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
   if (cpmmConfig.protocolOwner !== target.cpmmProtocolOwner || cpmmConfig.fundOwner !== target.cpmmFundOwner) throw new Error("CPMM config protocol/fund owners differ from the pinned CPMM source constants");
   if (state !== 1) throw new Error("CPMM create-pool fee token account is not initialized");
   const feeAuthorityMatchesProgramAdmin = feeTokenAuthority.toBase58() === target.cpmmAdmin;
-  const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-  const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-  const [expectedFeeAta] = PublicKey.findProgramAddressSync([feeTokenAuthority.toBuffer(), tokenProgram.toBuffer(), feeMint.toBuffer()], associatedProgram);
-  const feeAtaDerivationMatches = expectedFeeAta.toBase58() === target.cpmmFeeAccount;
+  const feeMintIsWsol = feeMint.toBase58() === "So11111111111111111111111111111111111111112";
+  // CPMM source constrains this to the program's fixed create_pool_fee_reveiver::ID.
+  // It is a fixed SPL token account, not an ATA; do not apply ATA seed derivation here.
+  if (!feeAuthorityMatchesProgramAdmin) throw new Error("CPMM fixed create-pool fee receiver authority differs from the pinned program admin");
+  if (!feeMintIsWsol) throw new Error("CPMM fixed create-pool fee receiver must hold WSOL");
+  if (cpmmConfig.disableCreatePool) throw new Error("CPMM AMM config currently disables pool creation");
   return {
     cpmmProgramId: target.cpmmProgram, cpmmProgramExecutable: true,
     cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner,
     cpmmCreatePoolFeeMint: feeMint.toBase58(), cpmmCreatePoolFeeTokenAuthority: feeTokenAuthority.toBase58(),
-    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin: feeAuthorityMatchesProgramAdmin, cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds: feeAtaDerivationMatches,
+    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin: feeAuthorityMatchesProgramAdmin,
+    cpmmCreatePoolFeeMintIsWsol: feeMintIsWsol, cpmmCreatePoolFeeIsPinnedProgramReceiver: true,
+    cpmmCreatePoolFeeIsAssociatedTokenAccount: false,
     cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner: feeTokenAuthority.toBase58() === cpmmConfig.protocolOwner,
     cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner: feeTokenAuthority.toBase58() === cpmmConfig.fundOwner,
     cpmmConfigId: target.cpmmConfigId, cpmmConfig,
@@ -121,7 +125,30 @@ export function decodeConfigDestinations({ globalData, platformData, PublicKey, 
   const pid = new PublicKey(programId);
   const [platformFeeVault] = PublicKey.findProgramAddressSync([new PublicKey(platformId).toBuffer(), new PublicKey(mintB).toBuffer()], pid);
   const [platformFeeVaultAuthority] = PublicKey.findProgramAddressSync([Buffer.from("platform_fee_vault_auth_seed", "utf8")], pid);
-  return { globalConfigDestinations: global, platformConfigDestinations: platform, derivedPlatformFeeVault: platformFeeVault.toBase58(), derivedPlatformFeeVaultAuthority: platformFeeVaultAuthority.toBase58(), creatorFeeVaultDerivation: { seedDescription: "[creator_wallet_pubkey, quote_mint_pubkey]", authoritySeed: "creator_fee_vault_auth_seed", note: "Creator vault is creator-specific and requires an approved creator wallet." } };
+  const platformScale = BigInt(platform.platformScale), creatorScale = BigInt(platform.creatorScale), burnScale = BigInt(platform.burnScale);
+  const migrationScaleDenominator = 1_000_000n;
+  const migrationScalesValid = platformScale >= 0n && creatorScale >= 0n && burnScale >= 0n &&
+    platformScale + creatorScale + burnScale === migrationScaleDenominator;
+  if (!migrationScalesValid) throw new Error("PlatformConfig migration scales must be non-negative and sum exactly to 1,000,000");
+  return {
+    globalConfigDestinations: global,
+    platformConfigDestinations: platform,
+    migrationLpDistribution: {
+      denominator: migrationScaleDenominator.toString(),
+      platformScale: platformScale.toString(),
+      legacyCreatorScale: creatorScale.toString(),
+      burnScale: burnScale.toString(),
+      effectivePlatformLockedScaleAfter2026_08_17: (platformScale + creatorScale).toString(),
+      effectiveBurnScale: burnScale.toString(),
+      platformNftRecipient: platform.platformLockNftWallet,
+      separateCreatorFeeKeyForPostUpgradeMigration: false,
+      formula: "platformLockedLp = floor(totalLp * (platformScale + creatorScale) / 1,000,000); burnedLp = totalLp - platformLockedLp",
+      note: "Creator scale is folded into the platform Fee Key for migrations executed after the 2026-08-17 upgrade; do not promise it as a creator-owned LP fee entitlement."
+    },
+    derivedPlatformFeeVault: platformFeeVault.toBase58(),
+    derivedPlatformFeeVaultAuthority: platformFeeVaultAuthority.toBase58(),
+    creatorFeeVaultDerivation: { seedDescription: "[creator_wallet_pubkey, quote_mint_pubkey]", authoritySeed: "creator_fee_vault_auth_seed", note: "Creator vault is creator-specific and requires an approved creator wallet." }
+  };
 }
 export function validateCurveDefaults({ config, global, platform, baseDecimals = 6, totalLockedAmount = 0n, shareFeeRate = 0n }) {
   const p = config.defaultParams;
