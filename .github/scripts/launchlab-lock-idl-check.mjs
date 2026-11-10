@@ -82,7 +82,7 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const instructions = new Map((idl.instructions ?? []).map(item => [item.name, item]));
   const lock = instructions.get("lock_cp_liquidity");
   const collect = instructions.get("collect_cp_fees");
-  if (!lock || !collect) fail("LP Lock IDL is missing lock_cp_liquidity or collect_cp_fees");
+  if (!lock || !collect) fail("LP Lock IDL is missing expected SDK instruction names; IDL name=" + idlName + "; available=" + (idl.instructions ?? []).map(item => item.name).join(", "));
   if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK");
   if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK");
   checkAccounts(lock, expectedLockAccounts, "lock_cp_liquidity");
