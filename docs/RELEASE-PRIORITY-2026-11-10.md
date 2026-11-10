@@ -137,3 +137,12 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - **Exact next Launchpad job:** create a source-mapped implementation specification (UI fields → validation → metadata storage → Solana mint/program instructions → authority state → creator allocation → pool/LP position → fee settlement → confirmation/history), with threat model and devnet acceptance tests. Then implement in an isolated feature branch only after confirming supported protocol and fee model.
 - **Swap PR #219 status refresh:** still open/unmerged; PR metadata shows 84 commits and head `812531a7a790a755f2138f1d9f9158583620d6f5`. The two fetched workflow runs `42546440668` Browser Smoke and `42546440677` Validate succeeded on an older commit, not verified as current-head checks. Existing DNS blocker for `api.climboria.fun` remains unresolved; no speculative redeploy/source patch.
 - **Exact next Swap job:** check latest commit on branch `codex/swap-premium-focused-ui`, map workflow runs to that exact SHA, then verify public DNS/custom domain/certificate and Cloudflare zone state before any deploy retry. Keep transaction execution disabled.
+
+
+## 2026-11-10 — Signature Launchpad implementation specification completed
+- Added `docs/SIGNATURE-LAUNCHPAD-IMPLEMENTATION-SPEC.md` at commit `3be9a198ff23eb8f2b2c4af218c6414ae1f4d136`.
+- Specification includes the verified source map, full creator-to-finalized-launch flow, server-authoritative launch state machine, threat model, Devnet acceptance matrix, and 11 unresolved product/economic/custody decisions.
+- Explicit safety gates: no mainnet transaction, token creation, sale/fundraising, liquidity, LP custody/lock, or fee collection; no implementation of irreversible choices until owner decisions and architecture review.
+- Current source evidence: dedicated Launchpad is static preview; homepage buttons navigate to `/launchpad/`; the separate uploaded bundled HTML audit is not conflated with this page; no Launchpad API/program or Devnet transaction was verified.
+- **Tests:** documentation-only change; no CI run triggered and no runtime/chain behavior changed.
+- **Exact next job:** resolve the specification's owner-decision table, starting with launch mechanism, direct launch vs fundraising, liquidity funding and LP ownership/lock, Launchpad fee base/asset/recipient/refunds, token supply/allocation and authority policy. Once decisions are explicit, select and map audited Solana programs/instructions and produce a Devnet architecture before implementation.
