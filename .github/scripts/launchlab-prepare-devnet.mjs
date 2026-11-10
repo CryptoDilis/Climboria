@@ -174,9 +174,13 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   const transactionReviews = prepared.transactions.map((transaction, index) => {
     const message = transaction?.message;
     const keys = message?.staticAccountKeys;
-    const requiredCount = message?.header?.numRequiredSignatures;
-    if (!Array.isArray(keys) || !Number.isInteger(requiredCount) || requiredCount < 2) {
-      fail(`SDK transaction ${index} is not a supported v0 message or lacks required signer metadata`);
+    const header = message?.header;
+    const requiredCount = header?.numRequiredSignatures;
+    const readonlySigned = header?.numReadonlySignedAccounts;
+    const readonlyUnsigned = header?.numReadonlyUnsignedAccounts;
+    if (!Array.isArray(keys) || !Number.isInteger(requiredCount) || requiredCount < 2 ||
+        !Number.isInteger(readonlySigned) || !Number.isInteger(readonlyUnsigned)) {
+      fail(`SDK transaction ${index} is not a supported v0 message or lacks complete account-meta header data`);
     }
     if (!sameKey(keys[0], new sdk.PublicKey(input.creatorWallet))) {
       fail(`SDK transaction ${index} fee payer does not match the approved creator wallet`);
@@ -195,6 +199,18 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       if (!allowedPrograms.has(address)) fail(`SDK transaction ${index} references an unapproved program: ${address}`);
       return address;
     });
+    const accountMetaDetails = instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? []).map(keyIndex => {
+      const account = keys[keyIndex];
+      if (!account) fail(`SDK transaction ${index} uses an unresolved lookup-table account index; resolve and review address tables before proceeding`);
+      const isSigner = keyIndex < requiredCount;
+      const isWritable = isSigner
+        ? keyIndex < requiredCount - readonlySigned
+        : keyIndex < keys.length - readonlyUnsigned;
+      return { index: keyIndex, pubkey: account.toBase58(), isSigner, isWritable };
+    }));
+    if (!accountMetaDetails.flat().some(meta => meta.pubkey === input.mintKeypair.publicKey.toBase58() && meta.isSigner && meta.isWritable)) {
+      fail(`SDK transaction ${index} does not mark the supplied mint Keypair as a writable signer account`);
+    }
     return {
       index,
       feePayer: keys[0].toBase58(),
@@ -202,6 +218,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       programIds: [...new Set(programIds)],
       instructionCount: instructions.length,
       accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
+      accountMetaDetails,
     };
   });
   return {
