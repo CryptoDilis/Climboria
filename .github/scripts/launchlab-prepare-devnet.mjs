@@ -171,7 +171,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
     "ComputeBudget111111111111111111111111111111",
   ]);
-  const transactionReviews = prepared.transactions.map((transaction, index) => {
+  const transactionReviews = await Promise.all(prepared.transactions.map(async (transaction, index) => {
     const message = transaction?.message;
     const keys = message?.staticAccountKeys;
     const header = message?.header;
@@ -247,7 +247,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       accountMetaDetails,
       lookupTables: lookupTableReviews,
     };
-  });
+  }));
   return {
     cluster: "devnet",
     programId: DEVNET.programId,
