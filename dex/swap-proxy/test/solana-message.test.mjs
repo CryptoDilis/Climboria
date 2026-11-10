@@ -97,3 +97,25 @@ test("fails closed on missing, mismatched, duplicated or out-of-bounds ALT data"
   assert.throws(() => reconstructAccountMetas({ ...parsed, addressTableLookups: [{ ...parsed.addressTableLookups[0], readonlyIndexes: [0] }] }, [{ accountKey: key(10), addresses: [key(20), key(21)] }]), /duplicated lookup table index/);
   assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: key(10), addresses: [key(1), key(21)] }]), /Duplicate resolved account/);
 });
+
+
+test("accepts an instruction program ID loaded from a v0 readonly ALT", () => {
+  const bytes = [
+    ...shortVec(1), ...new Array(64).fill(5),
+    0x80, 1, 0, 0,
+    ...shortVec(1), ...new Array(32).fill(1), ...new Array(32).fill(2),
+    1, 1, 0, 0,
+    ...shortVec(1), ...new Array(32).fill(9),
+    0, 1, 0
+  ];
+  const parsed = decodeSolanaTransaction(Buffer.from(bytes).toString("base64"));
+  assert.equal(parsed.totalKeyCount, 2);
+  assert.equal(parsed.instructions[0].programIdIndex, 1);
+  const resolved = reconstructAccountMetas(parsed, [{
+    accountKey: Uint8Array.from({ length: 32 }, () => 9),
+    addresses: [Uint8Array.from({ length: 32 }, () => 7)]
+  }]);
+  assert.equal(resolved.instructions[0].program.key, "07".repeat(32));
+  assert.equal(resolved.instructions[0].program.writable, false);
+  assert.equal(resolved.instructions[0].program.signer, false);
+});
