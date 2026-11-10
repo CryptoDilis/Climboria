@@ -32,6 +32,7 @@ const input = overrides => ({
 function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}) {
   let captured, executeCalled = false;
   const raydium = {
+    scope: { cluster: "devnet" },
     ownerPubKey: new PublicKey(ids.creator),
     connection: {
       getAccountInfo: async () => ({ owner: new PublicKey(ids.programId), data: Buffer.from("fixture") }),
@@ -55,6 +56,10 @@ test("requires explicit economic values and refuses silent provider defaults", (
 test("rejects Mainnet and unapproved program/config/platform IDs", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ cluster: "mainnet" }), sdk), /restricted to Solana Devnet/);
   assert.throws(() => validateDevnetLaunchInput(input({ platformId: ids.configId }), sdk), /verified Devnet allowlist/);
+});
+test("requires explicit token decimals and the verified WSOL quote decimals", () => {
+  assert.throws(() => validateDevnetLaunchInput(input({ decimals: undefined }), sdk), /Token decimals must be explicitly selected/);
+  assert.throws(() => validateDevnetLaunchInput(input({ quoteDecimals: 6 }), sdk), /Token decimals must be explicitly selected/);
 });
 test("requires creator and fee payer to be the same wallet", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ feePayer: "11111111111111111111111111111112" }), sdk), /match the creator wallet/);
@@ -94,6 +99,11 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(built.buyAmount.value, "0");
   assert.equal(built.createOnly, true);
   assert.deepEqual(built.extraSigners, [input({}).mintKeypair]);
+});
+test("rejects an SDK client not initialized for Devnet", async () => {
+  const mock = client();
+  mock.raydium.scope.cluster = "mainnet";
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /initialized for Devnet/);
 });
 test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => {
   const mock = client({ apiEpoch: 8 });
