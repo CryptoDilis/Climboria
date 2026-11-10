@@ -111,6 +111,7 @@ export async function resolveAddressLookupTables(parsed, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-alt-resolution", method: "getMultipleAccounts", params: [accountKeys, config] }),
+    redirect: "error",
     signal: AbortSignal.timeout(RPC_TIMEOUT_MS)
   });
   if (!response?.ok) throw new Error("Trusted Solana RPC account request failed");
