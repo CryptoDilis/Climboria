@@ -113,7 +113,7 @@ function decodeBase58(value) {
   return Buffer.concat([Buffer.alloc(leading), body]);
 }
 
-function expectedInitializeV2Accounts({ sdk, input, programId }) {
+export function expectedInitializeV2Accounts({ sdk, input, programId }) {
   const PublicKey = sdk.PublicKey;
   const creator = new PublicKey(input.creatorWallet);
   const mintA = input.mintKeypair.publicKey;
@@ -384,6 +384,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       instructionCount: instructions.length,
       accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
       accountMetaDetails,
+      launchpadAccounts,
       lookupTables: lookupTableReviews,
     };
   }));
