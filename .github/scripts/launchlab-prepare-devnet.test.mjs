@@ -45,7 +45,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}
           label,
           message: {
             staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
-            header: { numRequiredSignatures: 2 },
+            header: { numRequiredSignatures: 2, numReadonlySignedAccounts: 0, numReadonlyUnsignedAccounts: 1 },
             compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
           },
         });
@@ -113,6 +113,8 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.deepEqual(result.transactions.map(x => x.label), ["init-1", "init-2"]);
   assert.equal(result.transactionReviews.length, 2);
   assert.deepEqual(result.transactionReviews[0].programIds, [ids.programId]);
+  assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isSigner, true);
+  assert.equal(result.transactionReviews[0].accountMetaDetails[0][1].isWritable, true);
   assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
   assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
   assert.equal(result.transactionSubmitted, false);
