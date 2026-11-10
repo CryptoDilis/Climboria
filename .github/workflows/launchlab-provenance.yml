@@ -57,7 +57,7 @@ jobs:
       - name: Report downloaded artifact SHA-256 digests
         run: sha256sum /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json /tmp/launchlab-provenance/programId.ts
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
-        run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json /tmp/launchlab-provenance/programId.ts /tmp/launchlab-provenance/programId.ts
+        run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json /tmp/launchlab-provenance/programId.ts
       - name: Install temporary Solana RPC client dependency
         run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4 @raydium-io/raydium-sdk-v2@0.2.84-alpha
       - name: Test live Launch Config parameter validation
