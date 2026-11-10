@@ -66,9 +66,26 @@ export function validateDevnetLaunchInput(input, sdk) {
     totalLockedAmount: rawAmount(input.totalLockedAmount, "totalLockedAmount", { allowZero: true }),
   };
   const supply = BigInt(amounts.supply);
-  if (BigInt(amounts.totalSellA) > supply) fail("totalSellA cannot exceed total supply");
-  if (BigInt(amounts.totalLockedAmount) > supply - BigInt(amounts.totalSellA)) fail("Locked amount cannot exceed the supply remaining after curve allocation");
+  if (BigInt(amounts.totalSellA) >= supply) fail("totalSellA must be less than total supply");
+  if (BigInt(amounts.totalLockedAmount) >= supply - BigInt(amounts.totalSellA)) fail("Locked amount must leave a positive supply remainder after curve allocation");
   return { amounts };
+}
+
+export function validateConstantProductInitFormula({ supply, totalSellA, totalFundRaisingB, totalLockedAmount, migrateFee }) {
+  const supplyRaw = BigInt(supply);
+  const sellRaw = BigInt(totalSellA);
+  const raiseRaw = BigInt(totalFundRaisingB);
+  const lockedRaw = BigInt(totalLockedAmount);
+  const migrateFeeRaw = BigInt(migrateFee);
+  const remaining = supplyRaw - sellRaw - lockedRaw;
+  const raiseAfterMigrationFee = raiseRaw - migrateFeeRaw;
+  if (remaining <= 0n) fail("LaunchLab curve initialization requires positive supply remaining after sale and lock allocations");
+  if (raiseAfterMigrationFee <= 0n) fail("LaunchLab curve initialization requires quote raise greater than migration fee");
+  // Mirrors the pinned SDK's integer BN formula exactly. A zero/negative
+  // denominator otherwise surfaces as an opaque BN.div assertion.
+  const denominator = (raiseAfterMigrationFee * sellRaw) / remaining - raiseRaw;
+  if (denominator <= 0n) fail("LaunchLab constant-product initialization denominator must be positive; adjust explicit supply, sale and quote-raise inputs");
+  return { remaining: remaining.toString(), raiseAfterMigrationFee: raiseAfterMigrationFee.toString(), denominator: denominator.toString() };
 }
 
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
@@ -101,6 +118,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   if (platformInfo.restrictCurveParam) {
     fail("Platform restricts curve parameters; this builder does not yet decode and verify PlatformCurveRule, so preparation is blocked");
   }
+  const curveFormula = validateConstantProductInitFormula({ ...amounts, migrateFee: configInfo.migrateFee.toString() });
 
   // Important: do not read apiConfig.defaultParams. All curve economics are caller-supplied.
   const sdkInput = {
@@ -195,6 +213,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     mintAddress: input.mintKeypair.publicKey.toBase58(),
     metadataHash: input.metadata.contentHash.toLowerCase(),
     amounts,
+    curveFormula,
     migration: "cpmm",
     instructionPath: "initializeV2",
     createOnly: true,
