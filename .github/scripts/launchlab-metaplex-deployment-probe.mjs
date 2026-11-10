@@ -531,6 +531,13 @@ function decodeProposalTransactionAccount(account, sdk) {
 }
 
 export function decodeGovernanceProposalAccountEvidence(evidence, sdk) {
+  if (evidence?.status !== "governance_proposal_accounts_captured") {
+    return {
+      status: "governance_proposal_account_evidence_unavailable",
+      proposalCount: 0, proposalTransactionCount: 0,
+      failures: [], proposals: [], proposalTransactions: [],
+    };
+  }
   const proposals = [];
   const proposalTransactions = [];
   const failures = [];
