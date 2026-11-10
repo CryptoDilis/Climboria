@@ -1,3 +1,20 @@
+## 2026-11-10 — Real pinned-SDK Devnet builder verified
+
+- [x] Installed the pinned published Raydium SDK `0.2.84-alpha` in CI and ran the real `Raydium.load({ cluster: "devnet" })` create-only builder against live Devnet RPC/API.
+- [x] Real SDK produced one ordered V0 transaction using the standard SPL `initializeV2` instruction path and explicit CPMM migration.
+- [x] Resolved the transaction's finalized Address Lookup Table and recorded the resolved readonly accounts (GlobalConfig, platform config, WSOL mint, SPL Token program, Metaplex metadata program, System Program and Rent sysvar). No unresolved account indexes remain.
+- [x] Inspected the message fee payer, required signer keys, top-level program ID, instruction count and all account-meta indexes/addresses/signer/writable flags. Required message signers were the synthetic CI fee-payer wallet and throwaway mint key; the SDK's additional signer group contained only the throwaway mint key.
+- [x] Confirmed the builder smoke did not call SDK `execute()`, did not sign with the creator wallet, and did not submit the transaction. CI test parameters and synthetic keys are not approved Climboria launch settings.
+- [x] Diagnosed the first real builder failure from the pinned SDK `LaunchConstantProductCurve.getInitParam`: the chosen fixture made its integer denominator exactly zero. Changed only the CI fixture to a non-degenerate explicit ratio and added a matching preflight guard/test in the production preparation boundary.
+- [x] Diagnosed the next inspector failure: the actual V0 message used Address Lookup Table indexes. Implemented finalized ALT resolution and a unit test; did not weaken the unresolved-index fail-closed check.
+- [x] Corrected negative-test fixtures after the expanded V0 header checks; all 16 preparation tests now pass.
+- [x] Latest LaunchLab Live Provenance run `42746385706` — SUCCESS, including pinned SDK Devnet transaction build and inspection.
+- [x] Latest Validate Climboria run `42746385964` — SUCCESS.
+- [ ] **Still not complete:** independently compare all 18 `initializeV2` account positions and privileges to the pinned IDL, verify each dynamic PDA from the actual mint/quote/config, and assert exact writable/signer semantics. Current smoke records/resolves metas but is not yet a complete account-by-account IDL approval gate.
+- [ ] No Devnet simulation was run. The synthetic CI creator has no approved funding and no wallet signature; simulation/funding would be a separate step. Do not airdrop, sign or submit.
+- [ ] Owner launch inputs remain open: creator wallet, approved name/symbol, hosted immutable metadata, token decimals, total supply, curve sale, quote raise, supply allocation/authority plan, and fee/LP disclosures.
+- [ ] Exact next task: implement the `initializeV2` account-by-account validator using the pinned IDL and SDK PDA derivation helpers; add positive and tampering tests, then rerun LaunchLab + Validate. Only after that should a separately approved, funded Devnet wallet be used for read-only simulation. Mainnet remains disabled.
+
 ## 2026-11-10 — LaunchLab preparation hardening follow-up
 
 - [x] Hardened Devnet preparation to require the SDK's own `scope.cluster === "devnet"`; a Mainnet-configured SDK client now fails closed.
