@@ -216,11 +216,11 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
   }
   const executableBytes = bytes.subarray(codeOffset);
   if (executableBytes.length === 0) fail("Metaplex ProgramData contains no executable bytecode");
-  let deploymentBlockTimeUnix = null;
+  let programDataStateSlotBlockTimeUnix = null;
   if (typeof connection.getBlockTime === "function") {
     try {
       const blockTime = await connection.getBlockTime(programDataStateSlot);
-      if (Number.isSafeInteger(blockTime) && blockTime > 0) deploymentBlockTimeUnix = blockTime;
+      if (Number.isSafeInteger(blockTime) && blockTime > 0) programDataStateSlotBlockTimeUnix = blockTime;
     } catch {
       // The slot timestamp is supplementary provenance; account/hash checks remain authoritative.
     }
@@ -259,7 +259,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataAddress: programDataAddress.toBase58(),
     programDataOwner: dataAccount.owner.toBase58(),
     programDataStateSlot,
-    programDataStateSlotBlockTimeUnix: deploymentBlockTimeUnix,
+    programDataStateSlotBlockTimeUnix,
     programDataStateSlotBlockEvidence,
     programDataHistory,
     upgradeAuthority,
