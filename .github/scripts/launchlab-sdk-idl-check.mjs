@@ -4,11 +4,11 @@ import { createHash } from "node:crypto";
 
 const EXPECTED = {
   sdkVersion: "0.2.84-alpha",
-  sdkPackageSha256: "9b86fdd40fe7c75ecdbe8c0e3f0984e072b9e67d70758d5a5322147fa7f279d5",
-  sdkInstrumentSha256: "b45c0567b83b2a564407d6ddb1c64f59891d4679fbd011cf0407a205946ca1db",
+  sdkPackageSha256: "38c593087c874cf5ede8847e45dc5fc9d6c1f670805c9f7b0e9fc83eac6a6d86",
+  sdkInstrumentSha256: "177d418defd36a173d43fafb29a06019a8754c7abe599365885d0b46c1fd8274",
   sdkCommit: "1cf5bb129dbbb1c76dab67819c3d478349c8ed25",
   idlCommit: "e7e0c96fe77bcf6a020b84a44c47a722aac8e359",
-  idlSha256: "db84c4dd9901de640ab370c0b0c627f95d2d32e175a8caa21d82e56523d69a87",
+  idlSha256: "963189409945069409f32e345d4adf2892e0b3ca1be504372577fe34a23c6cdb",
   programId: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj"
 };
 const REQUIRED = {
