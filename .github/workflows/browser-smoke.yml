@@ -111,9 +111,10 @@ jobs:
                 if(url.searchParams.get('q')==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
                 return route.continue();
               });
+              const quoteSidePair={chainId:'solana',dexId:'quote-side-fixture',pairAddress:'QuoteSidePair1111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},priceUsd:'150',priceNative:'1200',priceChange:{h24:1},volume:{h24:999999},liquidity:{usd:999999}};
               await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
                 const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
+                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair,quoteSidePair]})});
                 return route.continue();
               });
               // The selected DEX token is synthetic. Keep its holder-intel RPC reads deterministic
@@ -178,6 +179,8 @@ jobs:
               const chartUrl=new URL(await dexPage.locator('#detailChart').getAttribute('src'));
               if(chartUrl.searchParams.get('chartStyle')!=='1'||chartUrl.searchParams.get('interval')!=='15')throw new Error('DEX chart must default to visible 15-minute candlesticks: '+chartUrl.href);
               if(!(await dexPage.locator('#detailTitle').innerText()).includes('CLIMBTEST'))throw new Error('DEX chart detail did not match the exact searched token');
+              const detailPoolIds=await dexPage.locator('#detailPairs [data-pool]').evaluateAll(rows=>rows.map(row=>row.getAttribute('data-pool')));
+              if(!detailPoolIds.includes(dexPair.pairAddress)||detailPoolIds.includes(quoteSidePair.pairAddress))throw new Error('DEX token detail must include the requested mint as base token and exclude quote-side-only pools: '+JSON.stringify(detailPoolIds));
               await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
