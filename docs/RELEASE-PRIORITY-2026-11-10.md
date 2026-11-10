@@ -814,3 +814,21 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 3. Obtain independent security review and controlled Devnet lifecycle evidence before Cloudflare deployment or any execution enablement.
 4. Keep Launchpad IDL/Devnet gates and real account/session authentication as separate release blockers.
 
+
+
+## 2026-11-11 — Fresh continuation checkpoint (02:00 PHT)
+
+- Re-fetched GitHub PR metadata and current default-branch commit state. Main is now `2ad36959fd7db8edd7dc210df05e050fcd64e844` (latest commit at recheck).
+- PR #234 remains open/draft at head `7f5d3451c7c99356fd46502691f0c24f92a96ade`, based on `28180c2a277e0c4bd093a40462032e7f536989e6`; GitHub reports mergeable=false. Fresh compare: **42 commits ahead / 29 behind**, diverged, merge base still `28180c2a277e0c4bd093a40462032e7f536989e6`. No merge/rebase/force-push was attempted. This is a larger integration gap than the prior 25-behind checkpoint.
+- Exact-head workflow lookup for PR #234 returned **zero PR-triggered workflow runs**. The PR branch's Validate workflow was re-fetched and confirms it runs `node --check dex/swap-proxy/src/index.mjs`, the full `node --test dex/swap-proxy/test/*.test.mjs` suite, and Wrangler 4.36.0 Durable Object deploy dry-run. These are configured checks, not evidence that they have passed on the current head.
+- Re-fetched PR #234 deployment guide: Worker is explicitly **prepared but not deployed**. It requires account-specific Cloudflare secrets/variables, active zone/custom-domain provisioning, health/TLS/CORS/rate-limit verification. No deployment was attempted.
+- Re-fetched main `swap-config.js`: `proxyEnabled: true`, `enabled: false`, API base `https://api.climboria.fun`. Frontend transaction signing/execution remains disabled. This does not prove that the Worker endpoint is deployed or healthy.
+- PR #231 remains open/draft at head `281209c66e2e69fa14c973867086947a2dc47000`. Exact-head workflow lookup confirms Validate run `42866535160` and LaunchLab Live Provenance run `42866535205` both completed SUCCESS. These validate the read-only provenance/preparation checks only; they do not establish token creation, signing, migration, fundraising, or Mainnet readiness. The recorded Devnet LP Lock IDL and fee-receiver custody blockers remain.
+- No code or workflow changes were made in this continuation. No production Swap, Launchpad, or account login was enabled or claimed live.
+
+### Exact next job
+1. Manually dispatch **Validate Climboria** from GitHub Actions on `codex/swap-order-binding-durable-object`; verify run SHA is exactly `7f5d3451c7c99356fd46502691f0c24f92a96ade`; inspect all proxy tests and Wrangler dry-run. This session's connected GitHub actions expose no workflow-dispatch operation.
+2. Obtain a real local Git worktree/network path, reconcile the 42-ahead/29-behind PR #234 against current main with conflict-aware merge/rebase, then rerun Validate and Browser Smoke on the integrated head. Do not merge while dirty/unreviewed.
+3. Complete independent security review and controlled Devnet lifecycle before configuring/deploying the Worker. Keep Worker `EXECUTION_ENABLED=false` and frontend `enabled=false` until every release gate passes and the execution enablement is explicitly approved.
+4. Continue PR #231's Devnet LP Lock IDL publication, fee-receiver custody governance, deployed-program provenance, and migration/NFT behavior verification. Keep launch/migration paths disabled.
+5. Keep real Guest/email/password/Google/X account-session authentication as a separate blocker; wallet connection is not account login.
