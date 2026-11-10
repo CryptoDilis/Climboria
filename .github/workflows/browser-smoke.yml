@@ -938,7 +938,7 @@ jobs:
                   inserted.request?.payload?.user_id !== 'cloud-user-B' ||
                   inserted.request?.payload?.schema_version !== 1 ||
                   !inserted.request?.payload?.save_data?.player) {
-                throw new Error('First authenticated save did not insert the session owner's schema-v1 row: ' + JSON.stringify(inserted));
+                throw new Error("First authenticated save did not insert the session owner schema-v1 row: " + JSON.stringify(inserted));
               }
               console.log('PASS authenticated cloud-save fixture: owner-filtered load, saved_at optimistic update, conflict lock, and first-row insert.');
               await newPage.close();
