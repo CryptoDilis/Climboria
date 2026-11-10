@@ -39,6 +39,7 @@ test("fetches ALT by message key and binds account bytes, owner and context from
   });
   assert.equal(request.url, "https://rpc.example.com/");
   assert.equal(request.body.method, "getMultipleAccounts");
+  assert.equal(request.init.redirect, "error");
   assert.equal(request.body.params[0].length, 1);
   assert.equal(request.body.params[1].encoding, "base64");
   assert.equal(tables.length, 1);
