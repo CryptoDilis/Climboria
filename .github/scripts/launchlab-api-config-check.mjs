@@ -66,6 +66,21 @@ async function rpcCall(rpc, method, params) {
   if (json.error) throw new Error(json.error.message || `Solana RPC error for ${method}`);
   return json.result;
 }
+async function retryRateLimitedRead(operation, label, maxAttempts = 4) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      const message = String(error?.message || error);
+      const rateLimited = /429|too many requests|rate limit/i.test(message);
+      if (!rateLimited || attempt === maxAttempts - 1) {
+        throw new Error(`${label}: ${message}`, { cause: error });
+      }
+      await new Promise(resolve => setTimeout(resolve, 500 * (2 ** attempt)));
+    }
+  }
+  throw new Error(`${label}: exhausted retry attempts`);
+}
 function transactionDetails(tx) {
   const message = tx?.transaction?.message;
   if (!message) return null;
@@ -102,7 +117,7 @@ export async function inspectAuthorityHistory({ rpc, authority, limit = 48, page
   let before, historyComplete = false;
   while (signatures.length < limit) {
     const requested = Math.min(pageSize, limit - signatures.length);
-    const page = await getSignatures(rpc, authority, requested, before);
+    const page = await retryRateLimitedRead(() => getSignatures(rpc, authority, requested, before), "getSignaturesForAddress");
     if (!Array.isArray(page)) throw new Error("Finalized authority signature RPC returned a non-array result");
     signatures.push(...page.slice(0, requested));
     if (page.length < requested) { historyComplete = true; break; }
@@ -114,7 +129,7 @@ export async function inspectAuthorityHistory({ rpc, authority, limit = 48, page
   const transactions = [];
   for (const item of signatures) {
     let tx = null, fetchError = null;
-    try { tx = await getTransaction(rpc, item.signature); } catch (error) { fetchError = String(error?.message || error); }
+    try { tx = await retryRateLimitedRead(() => getTransaction(rpc, item.signature), `getTransaction ${item.signature}`); } catch (error) { fetchError = String(error?.message || error); }
     const message = tx?.transaction?.message, keys = message?.accountKeys ?? [];
     transactions.push({ signature: item.signature, slot: item.slot, blockTime: item.blockTime ?? null, confirmationStatus: item.confirmationStatus ?? null, err: item.err ?? null, transactionFetched: Boolean(tx), transactionFetchError: fetchError, feeLamports: tx?.meta?.fee ?? null, signers: keys.filter(key => typeof key === "object" && key.signer).map(key => key.pubkey), programIds: [...new Set((message?.instructions ?? []).map(ix => ix.programId ?? ix.program ?? "unknown"))], instructionCount: message?.instructions?.length ?? null, transactionDetails: transactionDetails(tx) });
   }
