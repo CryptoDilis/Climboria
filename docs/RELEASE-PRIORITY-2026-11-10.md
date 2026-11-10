@@ -326,3 +326,37 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - [ ] Combined commit status endpoint returned an empty status list for the PR head; this endpoint alone does not establish branch-protection/check-run requirements. PR metadata/mergeability and required checks could not be independently read with the available GitHub actions in this session. Do not infer approval or merge readiness from successful workflow runs alone.
 - **Exact next job:** inspect PR #230 current GitHub metadata (state, draft, mergeable/mergeable_state, head/base SHA), check-runs and branch-protection required contexts using the repository's PR/checks API; if all required checks are green and approval requirements are met, merge PR #230. If not, resolve only the identified blocker and rerun the affected workflows. Do not enable Portfolio claims/rewards.
 - **No source code changes, merge, deployment, or transaction submission in this checkpoint.**
+
+## 2026-11-11 — Climboria priority and PR gates rechecked
+
+### Current owner priority
+- [x] Reaffirmed current execution order from the owner's latest direction: **production Swap, DEX, and Climboria Signature Launchpad first; enable all supported login methods after provider credentials/callbacks are verified; game work follows the urgent ecosystem delivery unless the owner changes priority.**
+- [x] No demo/simulated values or fake transaction success. Clearly distinguish live market data/quotes from transaction execution; keep execution disabled until provider, wallet, security and production deployment gates pass.
+
+### Portfolio & Rewards PR #230 — merge gate still blocked
+- [x] Re-fetched PR #230: OPEN, non-draft, base `main`, head `codex/portfolio-rewards-tracker-20261110`, head SHA `24559cc78e58026000036d7a0e6d603f73ca6e76`; GitHub currently reports `mergeable=false`.
+- [x] Re-fetched latest PR-head workflows: Validate `42737702817` SUCCESS; Browser Smoke `42737703450` SUCCESS. Browser Smoke previously recorded all 16 steps and screenshot artifact review.
+- [x] Re-fetched review submissions and inline review threads: both empty (no approval evidenced).
+- [ ] Do not merge while mergeability is false and required-review/branch-protection requirements are not independently established. The precise reason for `mergeable=false` has not yet been proven; do not label it a conflict without inspecting the current base/head comparison.
+- [ ] Exact next task: inspect PR #230 mergeability/base-vs-head diff and branch protection / required review policy; if conflict exists, rebase/resolve on the PR branch and rerun both workflows; otherwise satisfy the actual GitHub merge gate. Keep Portfolio values unavailable and claim disabled until real token/pricing/authenticated ledger prerequisites exist.
+
+### Signature Launchpad PR #231 — latest workflow evidence
+- [x] Re-fetched PR #231: OPEN, DRAFT, unmerged; head `5b475670533b4d8e067ce40f6140d3b6118f56d0`.
+- [x] Latest-head Validate run `42804471585` SUCCESS (job `129789998341`).
+- [x] Latest-head LaunchLab Live Provenance run `42804471690` SUCCESS (job `129789998508`); all 25 workflow steps completed, including fail-closed transaction preparation, mock-only approval-gated simulation tests, offline rent-layout fixtures, real pinned-SDK Devnet transaction construction/inspection without signing or submission, live API/config checks, live IDL comparison, program-account reads, and LP Lock IDL status.
+- [x] Latest branch evidence continues to identify unresolved production blockers: Devnet CPMM fee-receiver beneficial ownership/governance is unconfirmed; Devnet LP Lock canonical IDL is not published; deployment source/build equivalence and upgrade-authority governance are not independently verified; LaunchLab migration scale/rounding and Fee Key NFT custody are not proven against deployed bytecode. Mainnet authority history is incomplete because public RPC rate-limits transaction fetches (38 of 48 returned HTTP 429 in the recorded scan).
+- [ ] Exact next Launchpad task: continue read-only custody/provenance analysis for the Devnet fixed CPMM fee receiver and Devnet LP Lock interface/deployment; use an approved reliable RPC if historical Mainnet evidence is needed. Do not weaken fail-closed gates or enable migration/fee collection/Mainnet execution.
+- [ ] A funded-wallet Devnet simulation remains a separate approval-gated step. Do not run it, request a signature, or submit any transaction without explicit approval and a separately controlled wallet.
+
+### Next execution sequence
+1. Resolve PR #230 mergeability/review gate without bypassing protection.
+2. Continue production Swap deployment blocker: Cloudflare zone/DNS/custom-domain activation, required secrets/variables, then health/CORS/rate-limit/upstream verification; do not change Worker code to mask DNS.
+3. Continue DEX production integration and exact-mint/quote/execution security checks; no simulated liquidity, chart candles, or transaction confirmations.
+4. Continue Signature Launchpad only through the documented read-only provenance and explicitly approved Devnet gates; Mainnet remains disabled.
+5. Verify all configured login providers end-to-end (credentials, callback URLs, session handling, mobile/desktop); never report a provider enabled based on UI buttons alone.
+
+### Work completed in this checkpoint
+- [x] Rechecked PR #230 metadata, latest PR-head workflows, reviews and review threads.
+- [x] Rechecked PR #231 metadata, latest PR-head workflows and all LaunchLab job steps.
+- [x] Recorded the current owner priority and exact blockers/next jobs here.
+- [ ] No source code, deployment, merge, wallet signature, simulation, or transaction submission was performed in this checkpoint.
