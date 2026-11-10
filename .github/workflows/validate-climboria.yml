@@ -26,6 +26,8 @@ on:
       - ".github/scripts/**"
       - ".github/workflows/**"
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
