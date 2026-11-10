@@ -2744,3 +2744,19 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Next P0:** implement read-only `PlatformCurveRule` PDA/account decoding and compare any enforced curve parameters with the explicit caller-supplied launch inputs. Preserve fail-closed behavior for missing, stale, malformed, or mismatched rules; add fixture/tampering tests and rerun both workflows.
 - [ ] Then only after explicit approval and a funded, separately controlled Devnet wallet is provided, plan a read-only simulation gate. Do not use synthetic CI keys for simulation or submission.
 - [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until Climboria production launch settings are explicitly approved and independent security review is complete.
+
+### Signature LaunchLab PlatformCurveRule gate — 2026-11-10
+
+- [x] Implemented read-only finalized-account lookup for the SDK-derived `PlatformCurveRule` PDA whenever Devnet `PlatformConfig.restrictCurveParam` is enabled.
+- [x] Validates LaunchLab program ownership, the pinned SDK account discriminator, decoded platform/config identity, derived PDA bump, and finalized block time for time-based constraints.
+- [x] Uses the pinned SDK's `checkLaunchAgainstCurveRule` against the exact explicit launch inputs (CPMM migration, creator fee mode, supply, sale amount, quote raise, lock amount, zero cliff/unlock, SPL Token base mint, no transfer-fee extension). Rejects if no rule group matches.
+- [x] Includes the optional read-only `platform_curve_rule` account in the exact `initializeV2` account-meta review when restricted curve rules are active; this is an extra SDK instruction account beyond the base 18-entry IDL schema.
+- [x] Fails closed when `restrictGlobalConfig` is enabled because PlatformAllowConfig has not yet been independently decoded and verified. No caller-provided bypass flag is accepted.
+- [x] Added fixture tests for successful rule match, missing account, wrong owner, wrong identity, wrong discriminator, wrong PDA bump, unavailable finalized block time, and unsatisfied rule constraints; also verifies optional 19th account placement and readonly privilege.
+- [x] Pinned SDK Devnet builder smoke now asserts the required PlatformCurveRule exports exist and prints the live rule-gate result. Current live Devnet PlatformConfig does not restrict curve params, so no live restricted rule account was claimed as verified; restricted-path behavior is covered by deterministic fixtures.
+- [x] Latest LaunchLab Live Provenance run `42753981114` — SUCCESS on PR head `ed87860f04894a29d1b6515ff105fc0ef125f52a`. Latest Validate Climboria run `42753981691` — SUCCESS.
+- [x] The run's real pinned-SDK Devnet builder smoke, no-sign/no-submit transaction inspection, live Launch Config checks, Mainnet/Devnet IDL checks, and LP Lock source audit all passed.
+- [x] Diagnosed and corrected the intervening regressions with targeted fixes: missing `createHash` import in the provenance audit; BN fixture serialization; optional PlatformCurveRule account-count handling; and the GlobalConfig restriction guard insertion. Latest full workflows pass.
+- [ ] **Next P0:** implement read-only `PlatformAllowConfig` PDA/account decoding and identity/owner/bump checks for `restrictGlobalConfig`; append its optional instruction account to the exact initializeV2 account review and add positive/tampering fixtures. Until that passes, this mode remains blocked.
+- [ ] Then review a funded, separately controlled Devnet simulation gate only after explicit user approval. No synthetic CI key may sign, simulate, or submit.
+- [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled pending approved Climboria launch settings and independent security review.
