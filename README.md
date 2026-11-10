@@ -2667,3 +2667,38 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-10 — Portfolio & Rewards Tracker UI foundation
+
+- [x] Added a dedicated `#portfolio` section to the homepage, with desktop and mobile navigation links.
+- [x] Added premium dark-navy / muted-gold portfolio card and responsive metric grid for total portfolio value, $CLIMB balance, claimable rewards, total claimed, lifetime earned, pending rewards, other assets, and season rewards.
+- [x] Added Rewards Activity and Account & Security panels.
+- [x] Wallet connection status reflects only the address returned by the existing browser wallet connection flow. It explicitly says account login is not verified.
+- [x] Claim action is visibly disabled. No fake balances, reward totals, token price, claim transactions, or reward history are generated. Unavailable values are not shown as zero.
+- [x] Clear release gates displayed: official token mint and pricing source, authenticated player identity, server-authoritative rewards ledger, idempotent claim execution, and verifiable transaction history must exist before live figures or claims are enabled.
+- [x] Commit `6d61ca4d319c4aa31b46eb16c768a68a69773009`: homepage Portfolio & Rewards tracker UI foundation.
+- [ ] Exact next job: open draft PR and run Validate + Browser Smoke; inspect mobile 390px/360px and desktop card layout, nav anchor behavior, auth modal CTA, and ensure disabled claim has no action. Keep UI read-only until token mint and rewards backend are verified.
+- [ ] Future backend work: connect wallet asset reads for verified supported networks; add server-side reward summary endpoint scoped to authenticated player; claim endpoint with replay protection and on-chain settlement verification; history endpoint with explorer links. Do not use localStorage as a reward source or trust client-submitted balances.
+
+
+## 2026-11-10 — Portfolio tracker browser verification checkpoint
+
+- [x] Dedicated Playwright assertions added in commit `89fe937bbb9de43d42eb0761bbf7dbe05ea4876a`: all eight metrics exist and remain explicitly `Unavailable`; both desktop/mobile Portfolio navigation anchors exist; Connect Wallet opens the existing auth modal; Claim Rewards remains disabled; preview disclosure confirms no balances/rewards are simulated.
+- [x] Validate run `42735351120`: SUCCESS on the tracker and browser-test branch head.
+- [x] Browser Smoke run `42735350994` steps 1–14: SUCCESS, including the new Portfolio & Rewards assertions and existing DEX/Swap/mobile regression checks.
+- [ ] Browser Smoke step 15 (Jarrell’s Peak desktop/mobile gameplay) is still in progress; step 16 screenshot upload is pending. Do not mark the entire Browser Smoke run complete until both settle.
+- [ ] Exact next job: poll run `42735350994`; if gameplay smoke fails, fetch completed job logs and diagnose the exact root cause before any targeted fix. If successful, inspect screenshot artifacts and update this checkpoint with the final result.
+- [ ] Keep PR #230 OPEN/DRAFT. Live portfolio balances and claims remain blocked on official token mint verification, trusted pricing, authenticated player identity, server-authoritative rewards ledger, replay-safe claim settlement, and verifiable transaction history.
+
+
+## 2026-11-10 — Portfolio tracker checkpoint correction and release handoff
+
+- [x] Validate run `42735351120`: SUCCESS.
+- [x] Browser Smoke run `42735350994` steps 1–14 succeeded, including all dedicated Portfolio assertions, homepage navigation, Cloudflare proxy, fail-closed execution, DEX quote-preview and Swap desktop/mobile regressions.
+- [x] Screenshot artifact `13727025693` (`climboria-browser-smoke-screenshots`) uploaded successfully and is available until 2026-11-17.
+- [ ] Full Browser Smoke is **NOT passed**: gameplay step 15 was cancelled (not a test failure, but also not a pass). Re-run the full Browser Smoke on this latest branch head and verify gameplay plus screenshot artifact.
+- [x] Portfolio UI and dedicated assertions are implemented; all eight values remain explicitly Unavailable, and Claim Rewards remains disabled. No fake balances/rewards are shown.
+- [ ] Keep PR #230 OPEN/DRAFT until the full Browser Smoke rerun and visual review are complete. Do not enable live balances/claims without official mint, trusted pricing, authenticated player identity, secure rewards ledger, replay-safe settlement and verifiable history.
+- [ ] Exact next job: rerun/poll Browser Smoke on the latest PR head; diagnose any completed gameplay failure from its logs before changing code; review uploaded desktop/mobile screenshots; then update this handoff with exact run IDs and results.
+- [ ] Main release priority is recorded in `docs/RELEASE-PRIORITY-2026-11-10.md`: P0 close Portfolio verification, then production Swap, DEX, Climboria Signature Launchpad, cross-product release gates; shift primary focus to the game only after those gates pass.

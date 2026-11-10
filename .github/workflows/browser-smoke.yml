@@ -88,6 +88,25 @@ jobs:
               page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               if(!response?.ok()) throw new Error('Homepage HTTP load failed');
+              // Portfolio & Rewards tracker: verify every requested metric, safe unavailable state, navigation and disabled claim.
+              for (const id of ['#portfolio','#portfolioValue','#portfolioClimbBalance','#portfolioClaimable','#portfolioClaimed','#portfolioLifetime','#portfolioPending','#portfolioOtherAssets','#portfolioSeason','#portfolioHistoryTitle','#portfolioSecurityTitle','#portfolioWalletLabel']) {
+                if(await page.locator(id).count()!==1) throw new Error('Portfolio tracker missing or duplicated element: '+id);
+              }
+              for (const selector of ['a[href="#portfolio"]']) {
+                if(await page.locator(selector).count()!==2) throw new Error('Portfolio anchor must exist in desktop and mobile navigation');
+              }
+              for (const id of ['#portfolioValue','#portfolioClimbBalance','#portfolioClaimable','#portfolioClaimed','#portfolioLifetime','#portfolioPending','#portfolioOtherAssets','#portfolioSeason']) {
+                const value=(await page.locator(id).innerText()).trim();
+                if(value!=='Unavailable') throw new Error('Portfolio metric must remain explicitly unavailable until verified: '+id+'='+value);
+              }
+              const claim=page.locator('.portfolio-claim');
+              if(await claim.count()!==1 || !(await claim.isDisabled())) throw new Error('Portfolio claim button must remain disabled without verified reward ledger');
+              if(!(await page.locator('.portfolio-foot').innerText()).includes('No balances, rewards')) throw new Error('Portfolio preview must disclose that no balances or rewards are simulated');
+              const connect=page.locator('.portfolio-actions [data-open-auth]');
+              if(await connect.count()!==1) throw new Error('Portfolio connect-wallet CTA missing');
+              await connect.click();
+              if(!(await page.locator('#authModal').getAttribute('class')).includes('open')) throw new Error('Portfolio connect-wallet CTA did not open existing auth modal');
+              await page.locator('#authClose').click();
               const ctas=page.locator('.hero-buttons button');
               if(await ctas.count()!==3) throw new Error('Expected 3 hero CTA buttons');
               const labels=(await ctas.allTextContents()).map(s=>s.trim());
