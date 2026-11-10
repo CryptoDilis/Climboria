@@ -50,7 +50,7 @@ export function decodeConfigDestinations({ globalData, platformData, PublicKey, 
     throw new Error("GlobalConfig/PlatformConfig byte lengths do not match the pinned SDK layouts");
   }
   const key = (data, offset) => new PublicKey(data.subarray(offset, offset + 32)).toBase58();
-  const global = { protocolFeeOwner: key(globalData, 115), migrateFeeOwner: key(globalData, 147), migrateToAmmWallet: key(globalData, 179), migrateToCpmmWallet: key(globalData, 211) };
+  const global = { migrateFee: u64(globalData, 19).toString(), protocolFeeOwner: key(globalData, 115), migrateFeeOwner: key(globalData, 147), migrateToAmmWallet: key(globalData, 179), migrateToCpmmWallet: key(globalData, 211) };
   const platform = {
     platformClaimFeeWallet: key(platformData, 16),
     platformLockNftWallet: key(platformData, 48),
@@ -81,6 +81,7 @@ export function validateCurveDefaults({ config, global, platform, baseDecimals =
     totalLockedWithinMaximum: totalLockedAmount <= maxLocked,
     migrationAmountAtLeastMinimum: migrateAmount >= minMigrate,
     quoteRaiseAtLeastMinimum: totalRaise >= BigInt(global.minFundRaisingB),
+    quoteRaiseExceedsMigrationFee: totalRaise > BigInt(global.migrateFee ?? 0),
     quoteMintIsWsol: global.mintB === WSOL,
     curveTypeIsConstantProduct: Number(global.curveType) === 0,
     totalFeeRateWithinDenominator: BigInt(global.tradeFeeRate) + BigInt(platform.feeRate) + BigInt(platform.creatorFeeRate) + shareFeeRate <= DENOMINATOR
@@ -88,7 +89,7 @@ export function validateCurveDefaults({ config, global, platform, baseDecimals =
   return {
     pass: Object.values(checks).every(Boolean),
     checks,
-    amounts: { supply: supply.toString(), totalSellA: totalSell.toString(), totalFundRaisingB: totalRaise.toString(), totalLockedAmount: totalLockedAmount.toString(), minSupplyUnits: minSupply.toString(), minSellUnits: minSell.toString(), minMigrateUnits: minMigrate.toString(), migrateAmount: migrateAmount.toString(), maxLockedUnits: maxLocked.toString() },
+    amounts: { supply: supply.toString(), totalSellA: totalSell.toString(), totalFundRaisingB: totalRaise.toString(), totalLockedAmount: totalLockedAmount.toString(), migrateFee: String(global.migrateFee ?? "0"), minSupplyUnits: minSupply.toString(), minSellUnits: minSell.toString(), minMigrateUnits: minMigrate.toString(), migrateAmount: migrateAmount.toString(), maxLockedUnits: maxLocked.toString() },
     rates: { denominator: DENOMINATOR.toString(), protocol: String(global.tradeFeeRate), platform: String(platform.feeRate), creator: String(platform.creatorFeeRate), share: shareFeeRate.toString(), total: (BigInt(global.tradeFeeRate) + BigInt(platform.feeRate) + BigInt(platform.creatorFeeRate) + shareFeeRate).toString() }
   };
 }
@@ -106,7 +107,7 @@ async function verifyCluster(cluster) {
   const gd = Buffer.from(globalAccount.data[0], "base64"), pd = Buffer.from(platformAccount.data[0], "base64");
   if (gd.length !== 371 || pd.length !== 944) throw new Error(`${cluster}: unexpected config account lengths`);
   const global = {
-    epoch: u64(gd, 8).toString(), curveType: gd.readUInt8(16), index: gd.readUInt16LE(17),
+    epoch: u64(gd, 8).toString(), migrateFee: u64(gd, 19).toString(), curveType: gd.readUInt8(16), index: gd.readUInt16LE(17),
     tradeFeeRate: u64(gd, 27).toString(), maxShareFeeRate: u64(gd, 35).toString(),
     minSupplyA: u64(gd, 43).toString(), maxLockRate: u64(gd, 51).toString(),
     minSellRateA: u64(gd, 59).toString(), minMigrateRateA: u64(gd, 67).toString(),
@@ -114,7 +115,7 @@ async function verifyCluster(cluster) {
   };
   const platform = { platformScale: u64(pd,80).toString(), creatorScale: u64(pd,88).toString(), burnScale: u64(pd,96).toString(), feeRate: u64(pd,104).toString(), creatorFeeRate: u64(pd,720).toString() };
   const destinations = decodeConfigDestinations({ globalData: gd, platformData: pd, PublicKey, programId: target.program, platformId: target.platformConfig, mintB: global.mintB });
-  for (const key of ["epoch","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
+  for (const key of ["epoch","migrateFee","curveType","index","tradeFeeRate","maxShareFeeRate","minSupplyA","maxLockRate","minSellRateA","minMigrateRateA","minFundRaisingB","mintB","requiresPlatformAuth"]) {
     if (String(config.key[key]) !== String(global[key])) throw new Error(`${cluster}: API/on-chain GlobalConfig mismatch for ${key}`);
   }
   const validation = validateCurveDefaults({ config, global, platform });
