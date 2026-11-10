@@ -228,6 +228,7 @@ async function inspectUpgradeableAccountHistory({
         transactionAvailable: Boolean(transaction),
         transactionError: transaction?.meta?.err ?? info.err ?? null,
         loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
+        governanceLogs: logs.filter(line => /GOVERNANCE-INSTRUCTION|GOVERNANCE-ERROR/i.test(line)).slice(0, 20),
         instructionEvidence,
         signerKeys,
         fetchError,
@@ -251,6 +252,71 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
   return inspectUpgradeableAccountHistory({
     connection, accountPublicKey: programDataPublicKey, accountLabel: "programdata", ...options,
   });
+}
+
+const UPGRADEABLE_LOADER_INSTRUCTION_NAMES = Object.freeze({
+  0: "initializeBuffer",
+  1: "write",
+  2: "deployWithMaxDataLen",
+  3: "upgrade",
+  4: "setAuthority",
+  5: "close",
+  6: "extendProgram",
+});
+
+export function summarizeUpgradeableLoaderHistory(signatures = []) {
+  const events = [];
+  const counts = {};
+  for (const transaction of signatures) {
+    for (const [instructionIndex, instruction] of (transaction.instructionEvidence ?? []).entries()) {
+      if (instruction.programId !== BPF_UPGRADEABLE_LOADER_ID ||
+          instruction.dataEncoding !== "base64" || typeof instruction.data !== "string") continue;
+      const bytes = Buffer.from(instruction.data, "base64");
+      if (bytes.length < 4) continue;
+      const opcode = bytes.readUInt32LE(0);
+      const operation = UPGRADEABLE_LOADER_INSTRUCTION_NAMES[opcode] ?? "unknown";
+      counts[operation] = (counts[operation] ?? 0) + 1;
+      const accounts = instruction.accounts ?? [];
+      const accountRoles = {};
+      if (opcode === 2) Object.assign(accountRoles, {
+        payer: accounts[0] ?? null, programData: accounts[1] ?? null,
+        program: accounts[2] ?? null, buffer: accounts[3] ?? null,
+        programAuthority: accounts[7] ?? null,
+      });
+      if (opcode === 3) Object.assign(accountRoles, {
+        programData: accounts[0] ?? null, program: accounts[1] ?? null,
+        buffer: accounts[2] ?? null, spill: accounts[3] ?? null,
+        upgradeAuthority: accounts[6] ?? null,
+      });
+      if (opcode === 4) Object.assign(accountRoles, {
+        governedAccount: accounts[0] ?? null, currentAuthority: accounts[1] ?? null,
+        newAuthority: accounts[2] ?? null,
+      });
+      if (opcode === 5) Object.assign(accountRoles, {
+        closedAccount: accounts[0] ?? null, recipient: accounts[1] ?? null,
+        authority: accounts[2] ?? null, program: accounts[3] ?? null,
+      });
+      if (opcode === 6) Object.assign(accountRoles, {
+        programData: accounts[0] ?? null, program: accounts[1] ?? null,
+        payer: accounts[3] ?? null,
+        additionalBytes: bytes.length >= 8 ? bytes.readUInt32LE(4) : null,
+      });
+      events.push({
+        slot: transaction.slot, signature: transaction.signature, instructionIndex,
+        opcode, operation, success: transaction.transactionError === null,
+        transactionError: transaction.transactionError ?? null,
+        signerKeys: transaction.signerKeys ?? [], accountRoles,
+      });
+    }
+  }
+  const deployObserved = events.some(event =>
+    event.operation === "deployWithMaxDataLen" && event.success);
+  return {
+    counts,
+    deployWithMaxDataLenObserved: deployObserved,
+    initialDeploymentProven: deployObserved,
+    events,
+  };
 }
 
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
@@ -343,6 +409,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockTimeUnix,
     programDataStateSlotBlockEvidence,
     programDataHistory,
+    programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
