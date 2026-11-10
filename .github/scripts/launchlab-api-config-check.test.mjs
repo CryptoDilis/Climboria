@@ -29,10 +29,6 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   new PublicKey(target.cpmmAdmin).toBuffer().copy(feeData, 32);
   feeData.writeBigUInt64LE(42n, 64);
   feeData.writeUInt8(1, 108);
-  const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-  const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-  const [expectedFeeAta] = PublicKey.findProgramAddressSync([new PublicKey(target.cpmmAdmin).toBuffer(), tokenProgram.toBuffer(), new PublicKey("So11111111111111111111111111111111111111112").toBuffer()], associatedProgram);
-  target.cpmmFeeAccount = expectedFeeAta.toBase58();
   const result = validateCpmmMigrationAccounts({
     cpmmProgramAccount: { executable: true },
     lockProgramAccount: { executable: true },
@@ -47,7 +43,9 @@ test("requires executable CPMM and LP-lock programs plus a present CPMM create-p
   assert.equal(result.cpmmCreatePoolFeeAccountLamports, "123");
   assert.equal(result.cpmmCreatePoolFeeTokenAmount, "42");
   assert.equal(result.cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin, true);
-  assert.equal(result.cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds, true);
+  assert.equal(result.cpmmCreatePoolFeeIsPinnedProgramReceiver, true);
+  assert.equal(result.cpmmCreatePoolFeeIsAssociatedTokenAccount, false);
+  assert.equal(result.cpmmCreatePoolFeeMintIsWsol, true);
   assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner, false);
   assert.equal(result.cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner, false);
   assert.equal(result.cpmmConfig.createPoolFee, "99");
