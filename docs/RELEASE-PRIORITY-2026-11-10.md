@@ -172,3 +172,11 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - Source-backed constraints: new launches use `InitializeV2`/`InitializeWithToken2022` and CPMM migration; older demo shows `migrateType: "amm"` and must not be copied unverified; quote mint/curve/fees depend on on-chain configs; post-2026-08-17 LP migration ownership behavior changed.
 - Documentation-only; no CI, RPC account read, SDK installation, code change, wallet signature or transaction. Launchpad preview-only and all fees disabled.
 - **Exact next job:** implement a dedicated **read-only** Gate A provenance probe: compare live Raydium mainnet/devnet APIs and Solana program accounts/upgrade authorities against official docs, pin SDK and IDL hashes, verify Devnet GlobalConfig/PlatformConfig existence, record reproducible fixtures and tests. No signing or submission code until verified.
+
+
+## Owner direction — production/live product standard (2026-11-10)
+- Owner explicitly requests **no mock/demo implementation**; Climboria products should be built for real integrations and real production data, not sample balances, fake quotes, generated candles, fake bonding-curve progress, placeholder transaction success, or alert-only launch buttons.
+- All product UI must use genuine provider/on-chain data with explicit loading, unavailable and error states. If a live source is not connected or verified, disclose unavailable; do not fabricate a live value.
+- Build toward production integration directly: real provider adapters, real wallet flows, real transaction construction, confirmed transaction/account reconciliation, monitoring and recovery. Keep production execution disabled until the real integration is proven secure.
+- **Devnet is not a demo:** it is the actual Solana pre-production network used to test real program instructions and wallet-signed transactions without risking mainnet funds. Do not replace it with mock flows. Devnet validation is a required safety gate before mainnet, not the final product.
+- Never label a product LIVE or enable mainnet execution based on documentation, static UI, mocks, or Devnet-only success. Mainnet activation requires verified program/config provenance, independent security review, owner approval and production monitoring/rollback.
