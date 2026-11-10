@@ -1,3 +1,11 @@
+### Latest checkpoint — 2026-11-10 (Finalized Devnet CPMM fee receiver custody observation)
+
+- [x] Inspected the latest successful PR-head LaunchLab provenance job output (`42764682766`, job `129658267270`) for the actual finalized Devnet CPMM fixed pool-creation fee receiver.
+- [x] Devnet fixed receiver: `3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy`; account owner program is SPL Token (`Tokenkeg...`); mint is WSOL; token authority is `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`; observed raw token amount `2148880560840`; account is initialized and is not an ATA.
+- [x] The observed Devnet token authority does **not** match the documented Devnet CPMM program admin (`DRayqG9RXYi8WHgWEmRQGrUWRWbhjYWYkCRJDd6JBBak`) or the Devnet CPMM config's protocol/fund owner (`DRay33UmULQCeawH3dVpJfN3uqLj6Qtq4ymSRx2pAgGK`). The account is still the fixed CPMM receiver; do not infer that its token authority is invalid solely from this mismatch.
+- [ ] **New exact next custody task:** establish the authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW` provenance and governance from finalized account/transaction history (including whether it is a PDA, multisig vault, or dedicated receiver authority); inspect its controlling program/account relationships and historical changes. Do not treat this address as a Climboria fee recipient or claim that Climboria receives these provider fees.
+- [ ] In parallel, continue the Devnet LP Lock interface gap investigation. Keep launch migration, LP lock, fee collection, signing, simulation and Mainnet execution disabled.
+- [x] Evidence source: latest successful PR-head workflow run `42764682766`, job `129658267270`; values above are a point-in-time finalized account snapshot from that run, not permanent constants.
 ### Latest checkpoint — 2026-11-10 (Raydium Devnet LP Lock and CPMM receiver cross-reference)
 
 - [x] Cross-checked the configured Devnet LP Lock program ID against Raydium's current official program-address documentation: `DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX`. The configured ID matches the official Devnet table.
