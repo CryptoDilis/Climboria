@@ -479,6 +479,7 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
       protocolFeeOwner: configInfo.protocolFeeOwner?.toBase58?.(),
       migrationFeeOwner: configInfo.migrateFeeOwner?.toBase58?.(),
       cpmmMigrationPayer: configInfo.migrateToCpmmWallet?.toBase58?.(),
+      creatorMatchesCpmmMigrationAuthority: configInfo.migrateToCpmmWallet?.toBase58?.() === input.creatorWallet,
       migrationFee: configInfo.migrateFee?.toString?.(),
       platformClaimFeeWallet: platformInfo.platformClaimFeeWallet?.toBase58?.(),
       platformLockNftWallet: platformInfo.platformLockNftWallet?.toBase58?.(),
