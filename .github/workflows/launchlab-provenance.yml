@@ -13,6 +13,7 @@ on:
       - ".github/scripts/launchlab-api-config-check.test.mjs"
       - ".github/scripts/launchlab-prepare-devnet.mjs"
       - ".github/scripts/launchlab-prepare-devnet.test.mjs"
+      - ".github/scripts/launchlab-devnet-builder-smoke.mjs"
       - ".github/workflows/launchlab-provenance.yml"
   pull_request:
     branches: [main]
@@ -55,11 +56,15 @@ jobs:
       - name: Verify pinned SDK, IDL hashes and instruction discriminators
         run: node .github/scripts/launchlab-sdk-idl-check.mjs /tmp/launchlab-provenance/package.json /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/instrument.ts /tmp/launchlab-provenance/layout.ts /tmp/launchlab-provenance/launchpad.ts /tmp/launchlab-provenance/pda.ts
       - name: Install temporary Solana RPC client dependency
-        run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4
+        run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4 @raydium-io/raydium-sdk-v2@0.2.84-alpha
       - name: Test live Launch Config parameter validation
         run: node --test .github/scripts/launchlab-api-config-check.test.mjs
       - name: Test fail-closed Devnet transaction preparation (no signing or submission)
         run: node --test .github/scripts/launchlab-prepare-devnet.test.mjs
+      - name: Build and inspect real pinned-SDK Devnet transactions (no signing or submission)
+        env:
+          LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
+        run: node .github/scripts/launchlab-devnet-builder-smoke.mjs
       - name: Validate live Mainnet and Devnet Launch Config API defaults against on-chain state
         env:
           LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
