@@ -2785,3 +2785,19 @@ No production-live claims are made by this entry.
 4. Continue the live release order: DEX, Swap, Launchpad, then Guest/email-password/Google/X login. Launchpad execution and all login providers remain unverified/not live.
 
 No production-live or real-swap claims are made by this entry.
+
+
+## 2026-11-11 — Restore manual CI validation for Swap security branch
+
+### Diagnosis and fix
+- PR #234 head `8938b636d6a770dd9af85530792eb4789594338c` contained the ambiguous Jupiter execution transport fix/test, but GitHub reported **zero check runs** on that commit. Prior green CI was for an older head and must not be reused as verification.
+- Reviewed `.github/workflows/validate-climboria.yml`: it supported `push` on `main` and `pull_request` to `main`, but did **not** expose `workflow_dispatch` for an explicit latest-ref rerun. The GitHub integration currently available cannot dispatch a new workflow through its supported actions. Exact cause of missing automatic PR check remains unconfirmed; do not assert that GitHub intentionally suppressed it.
+- Added `workflow_dispatch:` to the Validate workflow on **main** (commit `3eebddfb86ab05b994d7f3cd221f6519ef3aa0ef`) and the **PR branch** (commit `79f01cf45d8744803ab32938dd8d41ad92d16218`). No production execution flags were changed.
+- The main-branch workflow change triggered Validate run `42881099416` (observed **in_progress**); this validates main, **not** PR #234. Pages run `42881098172` was pending at last check.
+- The latest PR #234 head is now `79f01cf45d8744803ab32938dd8d41ad92d16218`; still draft/open. No new PR-head checks observed yet.
+
+### Exact next task and owner handoff
+1. In GitHub Actions open **Validate Climboria** → **Run workflow** → choose branch `codex/swap-order-binding-durable-object` → run. This explicitly tests the current PR branch with the new ambiguous-transport test. The connected GitHub integration lacks a workflow-dispatch action; do not pretend it was dispatched here.
+2. Watch new run to terminal success/failure; inspect actual failing step logs and fix the root cause before retrying. Do not merge PR #234 while latest-head CI is unverified.
+3. Poll Browser Smoke run `42880044279` (previous head), especially the long-running Jarrell gameplay step. If it fails, diagnose its logs separately; do not conflate gameplay with DEX/Swap regressions.
+4. Recheck Pages deployment for latest main head; production Cloudflare Worker, Devnet execution, Mainnet execution, Launchpad execution and Google/X/email auth remain unverified. Keep `EXECUTION_ENABLED=false` and frontend execution disabled.
