@@ -157,3 +157,21 @@ test("rejects untrusted, malformed, deactivated and not-yet-warmed lookup tables
   assert.throws(() => decodeAddressLookupTableAccount({ data: badPadding, owner, contextSlot: 101 }), /padding/);
   assert.throws(() => decodeAddressLookupTableAccount({ data: data.slice(0, 55), owner, contextSlot: 101 }), /data length/);
 });
+
+
+test("rejects empty ALT selections and transactions exceeding the runtime account-lock limit", () => {
+  const bytes = [
+    ...shortVec(1), ...new Array(64).fill(5),
+    0x80, 1, 0, 0,
+    ...shortVec(1), ...new Array(32).fill(1), ...new Array(32).fill(2),
+    0, ...shortVec(1), ...new Array(32).fill(9), 0, 0
+  ];
+  assert.throws(() => decodeSolanaTransaction(Buffer.from(bytes).toString("base64")), /select at least one address/);
+  const parsed = {
+    staticAccountKeys: Array.from({ length: 128 }, (_, i) => Uint8Array.from({ length: 32 }, () => i + 1)),
+    requiredSignatures: 1, readonlySigned: 0, readonlyUnsigned: 127,
+    addressTableLookups: [{ accountKey: Uint8Array.from({ length: 32 }, () => 250), writableIndexes: [0], readonlyIndexes: [] }],
+    totalKeyCount: 129, instructions: []
+  };
+  assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: parsed.addressTableLookups[0].accountKey, addresses: [Uint8Array.from({ length: 32 }, () => 251)] }]), /resolved account key count mismatch|account-lock limit/);
+});
