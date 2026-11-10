@@ -41,7 +41,21 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false } = {}
     launchpad: {
       createLaunchpad: async options => {
         captured = options;
-        return { transactions: [{ transaction: { label: "init-1" } }, { transaction: { label: "init-2" } }], extInfo: { poolId: "fixture" }, execute: async () => { executeCalled = true; } };
+        const makeTx = label => ({
+          label,
+          message: {
+            staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
+            header: { numRequiredSignatures: 2 },
+            compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
+          },
+        });
+        return {
+          transactions: [makeTx("init-1"), makeTx("init-2")],
+          signers: [[options.extraSigners[0]], [options.extraSigners[0]]],
+          instructionTypes: ["initializeV2"],
+          extInfo: { poolId: "fixture" },
+          execute: async () => { executeCalled = true; },
+        };
       },
     },
   };
@@ -85,7 +99,11 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.migration, "cpmm");
   assert.equal(result.createOnly, true);
   assert.equal(result.transactionCount, 2);
-  assert.deepEqual(result.transactions.map(x => x.transaction.label), ["init-1", "init-2"]);
+  assert.deepEqual(result.transactions.map(x => x.label), ["init-1", "init-2"]);
+  assert.equal(result.transactionReviews.length, 2);
+  assert.deepEqual(result.transactionReviews[0].programIds, [ids.programId]);
+  assert.equal(result.transactionReviews[0].requiredSignerKeys.length, 2);
+  assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
   assert.equal(result.transactionSubmitted, false);
   assert.equal(result.executeCalled, false);
   assert.equal(mock.executeCalled(), false);
