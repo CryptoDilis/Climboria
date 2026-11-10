@@ -47,7 +47,15 @@ try {
       installGameSaveOptions({ client });
     }, scenario);
     await page.getByRole("button", { name: "SAVE OPTIONS" }).click();
-    await page.locator("#climboria-save-options .save-status").waitFor({ state: "visible" });\n    if (scenario.name === "guest" || scenario.name === "account-only") {\n      const panelBox = await page.locator("#climboria-save-options").boundingBox();\n      const viewport = page.viewportSize();\n      if (!panelBox || panelBox.x < 0 || panelBox.y < 0 || panelBox.x + panelBox.width > viewport.width + 1 || panelBox.y + panelBox.height > viewport.height + 1) {\n        failures.push(scenario.name + ": Save Options panel exceeds viewport bounds: " + JSON.stringify({ panelBox, viewport }));\n      }\n      await page.screenshot({ path: scenario.name === "guest" ? "climboria-save-options-desktop.png" : "climboria-save-options-mobile.png" });\n    }
+    await page.locator("#climboria-save-options .save-status").waitFor({ state: "visible" });
+    if (scenario.name === "guest" || scenario.name === "account-only") {
+      const panelBox = await page.locator("#climboria-save-options").boundingBox();
+      const viewport = page.viewportSize();
+      if (!panelBox || panelBox.x < 0 || panelBox.y < 0 || panelBox.x + panelBox.width > viewport.width + 1 || panelBox.y + panelBox.height > viewport.height + 1) {
+        failures.push(scenario.name + ": Save Options panel exceeds viewport bounds: " + JSON.stringify({ panelBox, viewport }));
+      }
+      await page.screenshot({ path: scenario.name === "guest" ? "climboria-save-options-desktop.png" : "climboria-save-options-mobile.png" });
+    }
     await page.waitForFunction(expected => document.querySelector("#climboria-save-options .save-status")?.textContent.includes(expected), scenario.expected);
     const inventoryBefore = await page.evaluate(() => localStorage.getItem("climboria_jarrell_inventory_v1"));
     if (scenario.chooseAccount) {
