@@ -10,8 +10,9 @@ function setFlash(el,next){if(!el)return;const old=el.dataset.lastValue;if(old&&
 async function loadHero(){
  const el=$('heroMarket');if(!el)return;
  try{
-  const data=await get('/latest/dex/tokens/'+SOL);
-  const pairs=(data.pairs||[]).filter(p=>p.chainId==='solana'&&p.baseToken?.address===SOL&&p.priceUsd);
+  const data=await get('/token-pairs/v1/solana/'+SOL);
+  const rows=Array.isArray(data)?data:data?.pairs;
+  const pairs=(Array.isArray(rows)?rows:[]).filter(p=>p.chainId==='solana'&&p.baseToken?.address===SOL&&p.priceUsd);
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   const p=pairs[0];if(!p)throw new Error('No wrapped-SOL base pair returned');
   const change=Number(p.priceChange?.h24),changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
