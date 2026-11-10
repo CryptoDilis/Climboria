@@ -585,3 +585,31 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 3. After Swap release gates, implement production Launchpad and select/implement real Guest + email/password + Google + X auth with provider/session lifecycle and end-to-end tests. Current repository has no Supabase/Firebase auth client integration; login buttons are disabled, and no login method is live.
 
 No production-live claims are made by this entry.
+
+
+## 2026-11-11 — Ambiguous Swap execution outcome hardening
+
+### Additional security review
+- Reviewed the server-side Jupiter execution lifecycle in `dex/swap-proxy/src/index.mjs` and the Durable Object state machine in `dex/swap-proxy/src/order-store.mjs`.
+- Confirmed the one-time claim is persisted before upstream execution and all replay paths remain locked after a claim. Identified a clarity/state-recording gap: when `fetch(/execute)` throws (timeout, reset or transport error after dispatch), the outer Worker handler returned a generic error without explicitly attempting to settle the order as `uncertain`.
+- Implemented a targeted catch around the Jupiter execution request. It now best-effort settles `uncertain` and returns an explicit unknown-outcome/replay-locked message plus `settlementRecorded`; if that write fails, the prior durable `executing` claim still prevents replay.
+- Added regression test `records an uncertain, replay-locked order when Jupiter execution transport fails`, asserting claim, uncertain settlement, explicit unknown-outcome response, and no generic retry wording.
+
+### Commits
+- Worker implementation: `30106129a70d8a7babec925d96df1300a0f31a7b`.
+- Regression test: `8938b636d6a770dd9af85530792eb4789594338c` (current PR #234 head at last check).
+- These changes are on `codex/swap-order-binding-durable-object`; PR #234 remains open/draft.
+
+### Verification state at record time
+- Existing Validate run `42880044395` passed on previous head `32ec6caee34e37a9f4d2afd0b491c840abc66034`; it does NOT include the new ambiguous-transport test or implementation.
+- Existing Browser Smoke run `42880044279` on the previous head passed homepage/DEX exact-mint search, Swap proxy and fail-closed checks, standalone Swap/DEX checks, mobile workspace/responsive tests, and mobile market loading/error/empty states. Its Jarrell's Peak gameplay smoke step was still running; full workflow conclusion is not yet terminal.
+- Main Pages deployment run `42880270020` completed SUCCESS for README record commit `a9a399d15e7057b18d68ab5b6e53eb21fb9a5910`.
+- No new Actions run for head `8938b636d6a770dd9af85530792eb4789594338c` was visible in the latest Actions listing. Do not assume CI auto-triggered; investigate/dispatch through GitHub Actions if needed.
+
+### Exact next task
+1. Verify whether PR #234 workflows were triggered for head `8938b636d6a770dd9af85530792eb4789594338c`. If absent, inspect workflow event/path filters and use an authorized workflow-dispatch or rerun path; do not call this change verified until Validate and Browser Smoke run on the new head pass.
+2. Poll Browser Smoke run `42880044279` and inspect the Jarrell gameplay step logs if it fails or times out; retain the passing DEX/mobile results and diagnose only the failing subsystem.
+3. Once all checks pass, complete independent security review before merging. Cloudflare production deployment, Devnet transaction lifecycle, and Mainnet execution are still not proven. Keep execution kill switches false.
+4. Continue the live release order: DEX, Swap, Launchpad, then Guest/email-password/Google/X login. Launchpad execution and all login providers remain unverified/not live.
+
+No production-live or real-swap claims are made by this entry.
