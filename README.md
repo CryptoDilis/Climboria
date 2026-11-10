@@ -1,3 +1,13 @@
+### Latest checkpoint — 2026-11-10 (Current-head CI rechecked; pre-fix failure correctly scoped)
+
+- [x] Rechecked PR #231, branch ref and README before resuming. PR remains open, Draft, unmerged; GitHub reports mergeable. Current branch head is `7e0bc235c56dcec2ae1279d0b33ef4cb6eab3066`.
+- [x] Latest-head `Validate Climboria` run `42767431779` completed SUCCESS on `7e0bc235c56dcec2ae1279d0b33ef4cb6eab3066`.
+- [x] Latest-head `LaunchLab Live Provenance` run `42767431832` is IN PROGRESS (job `129667101730`); at last inspection it was rebuilding the deployment-era Metaplex Token Metadata program. No live authority-history conclusion is available from this run yet.
+- [x] Older LaunchLab run `42766946882` failed at step 10 on commit `4cd4911a0971fd9cc9d03734f0a650b26e62433f`, before the current branch's targeted authority-probe fix. Its test log showed the two already-diagnosed symptoms: empty base64 account data reported as `null` instead of zero, and an explicit RPC `value:null` response proceeding to signature-history lookup. The current branch source preserves explicit null and decodes an existing empty base64 tuple as zero bytes; do not treat this pre-fix run as a current-head regression.
+- [ ] Older LaunchLab run `42767004354` on code head `e0929fe434eff687b4714eb5172db809a87289c5` remains IN PROGRESS at step 20 (read-only Metaplex Devnet deployment provenance capture). Inspect its final result/logs when complete.
+- [ ] Exact next P0: inspect current-head run `42767431832` through completion; then inspect `cpmmFeeAuthorityHistory` output from a successful run and continue finalized Devnet LP Lock Program/ProgramData upgrade-history and deployed-interface investigation. Classify authority custody only with controlling-program/governance evidence. Keep signing, simulation, transaction submission, migration, fee collection and Mainnet execution disabled.
+- [ ] PR #231 remains Draft and unmerged pending independent review and all documented security gates.
+
 ### Latest checkpoint — 2026-11-10 (Authority probe CI failure diagnosed; targeted fix applied)
 
 - [x] Inspected failed PR workflow 42766882578, job 129665342045 logs. Pinned artifact downloads/hash checks and LP Lock tests passed; authority probe test suite reached 11/13.
