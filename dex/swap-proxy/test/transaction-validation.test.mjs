@@ -80,6 +80,14 @@ test("rejects a modified JupiterZ additional signature slot", async () => {
   assert.match(result.error, /additional signer signature change/i);
 });
 
+test("rejects a read-only fee payer in the Solana message header", () => {
+  const fixture = makeFixture(2);
+  const bytes = Buffer.from(fixture.original, "base64");
+  const messageStart = 1 + 2 * 64;
+  bytes[messageStart + 2] = 2; // numReadonlySignedAccounts includes the fee payer
+  assert.throws(() => parseSolanaV0Transaction(bytes.toString("base64")), /signature header is inconsistent/i);
+});
+
 test("rejects non-v0, truncated, trailing-byte and non-canonical base64 transactions", () => {
   const fixture = makeFixture();
   const versionOne = Buffer.from(Buffer.from(fixture.original, "base64"));
