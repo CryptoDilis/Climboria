@@ -374,6 +374,7 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
     },
   ]);
   assert.equal(governanceHistory.events.length, 2);
+  assert.equal(governanceHistory.successfulLoaderUpgradeExecutionCount, 1);
   assert.deepEqual(governanceHistory.events[0], {
     slot: 100, signature: "create-governance", instruction: "createProgramGovernance",
     realm, programGovernance: governance, governedProgram: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
