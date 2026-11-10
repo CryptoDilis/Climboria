@@ -101,6 +101,9 @@ test("decodes GlobalConfig fee/migration wallets and PlatformConfig fee/lock des
   const putKey = (buffer, offset, key) => key.toBuffer().copy(buffer, offset);
   [115,147,179,211].forEach((offset, i) => putKey(globalData, offset, addresses[i]));
   [16,48,688,728,760,800,834].forEach((offset, i) => putKey(platformData, offset, addresses[i+4]));
+  platformData.writeBigUInt64LE(0n, 80);
+  platformData.writeBigUInt64LE(100000n, 88);
+  platformData.writeBigUInt64LE(900000n, 96);
   const result = decodeConfigDestinations({
     globalData, platformData, PublicKey,
     programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
