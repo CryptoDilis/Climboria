@@ -6,6 +6,7 @@ import {
   inspectProgramDataHistory,
   summarizeUpgradeableLoaderHistory,
   summarizeMetaplexGovernanceHistory,
+  inspectGovernanceProposalAccounts,
   METAPLEX_GOVERNANCE_PROGRAM_ID,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
@@ -107,6 +108,7 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
   assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
+  assert.equal(result.governanceProposalAccounts.status, "multiple_accounts_rpc_unavailable");
   assert.equal(result.programDataLifecycle.counts.deployWithMaxDataLen, 1);
   assert.equal(result.programDataLifecycle.counts.extendProgram, 1);
   assert.equal(result.programDataLifecycle.deployWithMaxDataLenObserved, true);
@@ -388,4 +390,55 @@ test("maps Metaplex program-governance creation and executed upgrade proposal ac
     innerProgramData: programDataAddress, innerGovernedProgram: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
     innerBuffer: "Buffer", innerUpgradeAuthority: governance, success: true, transactionError: null,
   });
+});
+
+test("captures governance, proposal, and proposal-transaction accounts in one finalized read-only batch", async () => {
+  const governance = "Governance11111111111111111111111111111";
+  const proposal = "Proposal111111111111111111111111111111";
+  const proposalTransaction = "ProposalTx11111111111111111111111111111";
+  const requested = [];
+  const evidence = await inspectGovernanceProposalAccounts({
+    sdk: { PublicKey },
+    commitment: "finalized",
+    governanceHistory: {
+      events: [{
+        instruction: "executeTransaction", innerProgramId: BPF_UPGRADEABLE_LOADER_ID,
+        success: true, governance, proposal, proposalTransaction,
+      }],
+    },
+    connection: {
+      getMultipleAccountsInfo: async (keys, commitment) => {
+        assert.equal(commitment, "finalized");
+        requested.push(...keys.map(key => key.toBase58()));
+        return [
+          { owner: new PublicKey("GovernanceProgram1111111111111111111111"), lamports: 10, executable: false, data: Buffer.from([1, 2, 3]) },
+          { owner: new PublicKey("GovernanceProgram1111111111111111111111"), lamports: 20, executable: false, data: Buffer.from("proposal bytes") },
+          null,
+        ];
+      },
+    },
+  });
+  assert.deepEqual(requested, [governance, proposal, proposalTransaction]);
+  assert.equal(evidence.status, "governance_proposal_accounts_captured");
+  assert.equal(evidence.requestedCount, 3);
+  assert.equal(evidence.foundCount, 2);
+  assert.equal(evidence.accounts[0].dataBase64, Buffer.from([1, 2, 3]).toString("base64"));
+  assert.equal(evidence.accounts[1].dataLength, Buffer.byteLength("proposal bytes"));
+  assert.equal(evidence.accounts[2].exists, false);
+});
+
+test("fails closed when governance account history is unavailable", async () => {
+  const evidence = await inspectGovernanceProposalAccounts({
+    sdk: { PublicKey },
+    governanceHistory: { events: [{
+      instruction: "executeTransaction", innerProgramId: BPF_UPGRADEABLE_LOADER_ID,
+      success: true, governance: "Governance11111111111111111111111111111",
+      proposal: "Proposal111111111111111111111111111111",
+      proposalTransaction: "ProposalTx11111111111111111111111111111",
+    }] },
+    connection: {},
+  });
+  assert.equal(evidence.status, "multiple_accounts_rpc_unavailable");
+  assert.equal(evidence.requestedCount, 3);
+  assert.deepEqual(evidence.accounts, []);
 });
