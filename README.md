@@ -2865,3 +2865,13 @@ Implement a separately tested server-side transaction security layer before any 
 - [ ] Browser Smoke workflow [42850672349](https://github.com/CryptoDilis/Climboria/actions/runs/42850672349): **IN PROGRESS**; browser setup/cache step was still running at checkpoint. No full browser result claimed.
 - [x] PR #233 remains open/draft. Execution hard gate remains false; parser is not connected to execute.
 - [ ] Next: wait for Browser Smoke completion and inspect any failure logs; then continue ALT/account resolution and semantic instruction validation. No Worker deployment or live trade.
+
+
+## 2026-11-11 — Swap ALT metadata reconstruction checkpoint
+
+- [x] PR #233 fixes an overly restrictive Solana v0 program-ID index check: loaded readonly program accounts are valid, so program indexes now validate against the full static + loaded account-key range.
+- [x] Added a pure helper to reconstruct canonical static/ALT signer and writable metadata, with adversarial tests for mismatched table identities, invalid/duplicate indexes, duplicate addresses and account ordering.
+- [x] Engineering commits: `27dfc342888cc23662281f866d81b9df9126c27c`, `f158162f2009f42570482fe9a54497c2b2a4b9eb`. PR #233 README and Worker deployment notes updated with trust-boundary and exact next task.
+- [ ] New-head CI validation remains unverified at this checkpoint. Prior Validate run `42850813367` passed on an older head; Browser Smoke `42850813278` was still running, while `42850672349` was cancelled. No claim of a passing full browser suite.
+- [ ] Exact next task: inspect new-head CI and fix any failure; implement trusted RPC ALT account verification, semantic instruction allowlists, durable expiring order-wallet-message binding and replay protection; Devnet/adversarial tests and independent security review before any execution enablement.
+- **Production status unchanged:** no Cloudflare Worker deployment, no live Swap execution, no Launchpad mainnet creation, and no change to five-login production provisioning. Execution hard gate remains false.
