@@ -94,12 +94,12 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   }
   const apiConfig = Array.isArray(apiConfigs) && apiConfigs.find(item => item.key?.pubKey === DEVNET.configId);
   if (!apiConfig) fail("Fresh Raydium Launch Config API did not return the verified Devnet GlobalConfig");
-  for (const field of ["mintB", "curveType", "index", "epoch"]) {
+  for (const field of ["mintB", "curveType", "index", "epoch", "tradeFeeRate", "maxShareFeeRate", "minSupplyA", "maxLockRate", "minSellRateA", "minMigrateRateA", "minFundRaisingB", "migrateFee"]) {
     const onChain = field === "mintB" ? configInfo.mintB.toBase58() : String(configInfo[field]);
     if (String(apiConfig.key[field]) !== onChain) fail(`Fresh API / finalized GlobalConfig mismatch: ${field}`);
   }
-  if (platformInfo.restrictCurveParam && !input.platformCurveRuleVerified) {
-    fail("Platform restricts curve parameters; a separately verified matching PlatformCurveRule is required");
+  if (platformInfo.restrictCurveParam) {
+    fail("Platform restricts curve parameters; this builder does not yet decode and verify PlatformCurveRule, so preparation is blocked");
   }
 
   // Important: do not read apiConfig.defaultParams. All curve economics are caller-supplied.
