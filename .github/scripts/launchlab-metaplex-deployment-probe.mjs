@@ -167,9 +167,7 @@ export async function inspectProgramDataHistory({
       for (const info of infos) {
         if (!Number.isSafeInteger(info.slot)) continue;
         oldestScannedSlot = oldestScannedSlot === null ? info.slot : Math.min(oldestScannedSlot, info.slot);
-        if (info.slot <= stateSlot && historicalCandidates.length < maxHistoricalTransactions) {
-          historicalCandidates.push(info);
-        }
+        if (info.slot <= stateSlot) historicalCandidates.push(info);
       }
       if (oldestScannedSlot !== null && oldestScannedSlot <= stateSlot) {
         reachedStateSlot = true;
@@ -184,9 +182,12 @@ export async function inspectProgramDataHistory({
     return { status: "programdata_history_fetch_failed", reason: String(error.message || error),
       pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot, signatures: [] };
   }
+  // Prefer the oldest signatures in the bounded window: the initial deploy
+  // is more likely to be earlier than the recent upgrades and extensions.
+  const selectedHistoricalCandidates = historicalCandidates.slice(-maxHistoricalTransactions);
   const history = [];
-  for (let offset = 0; offset < historicalCandidates.length; offset += 2) {
-    const batch = await Promise.all(historicalCandidates.slice(offset, offset + 2).map(async info => {
+  for (let offset = 0; offset < selectedHistoricalCandidates.length; offset += 2) {
+    const batch = await Promise.all(selectedHistoricalCandidates.slice(offset, offset + 2).map(async info => {
       let transaction = null;
       let fetchError = null;
       for (let attempt = 0; attempt < 4; attempt++) {
@@ -231,8 +232,12 @@ export async function inspectProgramDataHistory({
   return {
     status: reachedStateSlot ? "programdata_state_slot_reached" : "programdata_history_incomplete",
     stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
-    historicalCandidateCount: historicalCandidates.length, signatures: history,
-    complete: reachedStateSlot && historicalCandidates.length < maxHistoricalTransactions,
+    historicalCandidateCount: selectedHistoricalCandidates.length,
+    availableHistoricalSignatureCount: historicalCandidates.length,
+    selectedRangeOldestSlot: selectedHistoricalCandidates.at(-1)?.slot ?? null,
+    selectedRangeNewestSlot: selectedHistoricalCandidates[0]?.slot ?? null,
+    signatures: history,
+    complete: reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions,
   };
 }
 
