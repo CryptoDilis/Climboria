@@ -67,8 +67,8 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
     getTransaction: async signature => {
       const isExtend = signature === "ExtendSignature";
       const keys = isExtend
-        ? [new PublicKey(programDataAddress), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("11111111111111111111111111111111"), new PublicKey("Payer111111111111111111111111111111111")]
-        : [new PublicKey("Payer111111111111111111111111111111111"), new PublicKey(programDataAddress), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("Buffer111111111111111111111111111111111"), new PublicKey("Rent111111111111111111111111111111111"), new PublicKey("Clock11111111111111111111111111111111"), new PublicKey(authority), new PublicKey(authority)];
+        ? [new PublicKey(derivedAddress.toBase58()), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("11111111111111111111111111111111"), new PublicKey("Payer111111111111111111111111111111111")]
+        : [new PublicKey("Payer111111111111111111111111111111111"), new PublicKey(derivedAddress.toBase58()), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("Buffer111111111111111111111111111111111"), new PublicKey("Rent111111111111111111111111111111111"), new PublicKey("Clock11111111111111111111111111111111"), new PublicKey(authority), new PublicKey(authority)];
       const accountIndexes = isExtend ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5, 6, 7];
       const data = isExtend ? Uint8Array.from([6, 0, 0, 0, 224, 147, 4, 0]) : Uint8Array.from([2, 0, 0, 0]);
       return {
