@@ -108,7 +108,7 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
   assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
-  assert.equal(result.governanceProposalAccounts.status, "multiple_accounts_rpc_unavailable");
+  assert.equal(result.governanceProposalAccounts.status, "no_successful_loader_governance_executions");
   assert.equal(result.programDataLifecycle.counts.deployWithMaxDataLen, 1);
   assert.equal(result.programDataLifecycle.counts.extendProgram, 1);
   assert.equal(result.programDataLifecycle.deployWithMaxDataLenObserved, true);
