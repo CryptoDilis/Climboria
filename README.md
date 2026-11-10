@@ -2770,3 +2770,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Latest CI still pending:** visible Validate `42852192636` and Browser Smoke `42852192411` were started against older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`, not this latest change. Validate passed on that older head; Browser Smoke remained in progress. Do not claim latest changes passed.
 - [ ] **Exact next task:** trigger/obtain fresh CI for current PR head; then implement server-side RPC account fetch with strict response identity/context binding, followed by program-specific semantic instruction allowlists and durable order-wallet-message/replay protection.
 - Execution gate remains false; parser is not wired into execute. No Worker deploy, wallet signing or live trade.
+
+
+## 2026-11-11 — CI coverage gap found and corrected
+
+- [x] **Root-cause diagnosis:** the repository Validate workflow only ran `dex/swap-proxy/test/worker.test.mjs`. The new `solana-message.test.mjs` parser/ALT regression suite was therefore not included in CI, despite the workflow's broad JavaScript syntax checks. Earlier Validate successes did not prove the new parser tests passed.
+- [x] **Targeted fix:** updated `.github/workflows/validate-climboria.yml` to run `node --test dex/swap-proxy/test/*.test.mjs`, so both Worker API/security tests and Solana parser/ALT tests are included.
+- [x] ALT decoder now requires and returns the exact 32-byte table account identity; account-meta reconstruction can verify it against the message's lookup reference. Missing identity is covered by a regression test.
+- [ ] **Fresh CI still not observed:** latest branch head is `96967b99d5fe46cace66486feb2d39b0f8dc9bcd`. Available Validate run `42852192636` and Browser Smoke `42852192411` were on older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`; prior workflow results did not execute parser tests. The repository connection's PR close/reopen did not produce a new run on the latest SHA. Do not claim latest tests passed.
+- [ ] **Exact next task:** get a fresh Validate run on `96967b99d5fe46cace66486feb2d39b0f8dc9bcd` and inspect the parser test output; fix root cause if anything fails. Then implement trusted server-side RPC ALT fetch/context binding and semantic program/instruction allowlists.
+- Execution remains hard-disabled and parser remains outside execute route. No Worker deployment, live transaction, or release approval.
