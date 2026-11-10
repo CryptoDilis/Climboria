@@ -3399,3 +3399,6 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 2. Add a deterministic browser fixture covering both a matching base-side pool and a quote-side-only pool for the selected mint, and assert the quote-side pool is never rendered as that token's detail/chart.
 3. Continue DEX provider coverage and real-pair chart verification, clearly separating the current finite Base search sample from exhaustive market indexing.
 4. Continue Swap R1/R2/R3/R4 blockers documented in PR #235; keep both execution kill switches off. Continue Launchpad custody/program/migration gates, then complete real Auth provider acceptance.
+
+
+- [x] Added a deterministic Browser Smoke regression fixture in commit `6cb7084294f49060ad92761622aeece4a1892f8b`: the selected Climboria test mint is returned once as a pool's base token and once as a different pool's quote token. The test asserts that the detail workspace includes the true base-side pool and excludes the quote-side-only pool. This directly covers the token-detail identity guard; the workflow must still pass on the final PR head.
