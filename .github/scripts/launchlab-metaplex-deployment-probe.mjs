@@ -395,6 +395,165 @@ export async function inspectGovernanceProposalAccounts({ connection, sdk, gover
   }
 }
 
+function createGovernanceAccountReader(base64Data, sdk) {
+  const bytes = Buffer.from(base64Data, "base64");
+  let offset = 0;
+  const take = length => {
+    if (!Number.isSafeInteger(length) || length < 0 || offset + length > bytes.length) {
+      throw new Error("Governance account data ended before the expected Borsh field");
+    }
+    const value = bytes.subarray(offset, offset + length);
+    offset += length;
+    return value;
+  };
+  const u8 = () => take(1).readUInt8(0);
+  const u16 = () => take(2).readUInt16LE(0);
+  const u32 = () => take(4).readUInt32LE(0);
+  const u64 = () => take(8).readBigUInt64LE(0).toString();
+  const i64 = () => take(8).readBigInt64LE(0).toString();
+  const string = () => {
+    const length = u32();
+    if (length > 1_000_000) throw new Error("Governance string exceeds the parser safety bound");
+    return take(length).toString("utf8");
+  };
+  const option = readValue => {
+    const tag = u8();
+    if (tag === 0) return null;
+    if (tag !== 1) throw new Error("Invalid Borsh Option tag in governance account");
+    return readValue();
+  };
+  const pubkey = () => {
+    const keyBytes = take(32);
+    return sdk?.PublicKey ? new sdk.PublicKey(keyBytes).toBase58() : keyBytes.toString("hex");
+  };
+  return { bytes, take, u8, u16, u32, u64, i64, string, option, pubkey, get offset() { return offset; } };
+}
+
+function decodeProposalV2Account(account, sdk) {
+  const reader = createGovernanceAccountReader(account.dataBase64, sdk);
+  const accountType = reader.u8();
+  if (accountType !== 14) throw new Error("Account is not a ProposalV2 account");
+  const governance = reader.pubkey();
+  const governingTokenMint = reader.pubkey();
+  const proposalState = reader.u8();
+  const tokenOwnerRecord = reader.pubkey();
+  const signatoriesCount = reader.u8();
+  const signatoriesSignedOffCount = reader.u8();
+  const voteType = reader.u8();
+  if (voteType === 1) { reader.u8(); reader.u8(); }
+  else if (voteType !== 0) throw new Error("Unknown ProposalV2 vote type");
+  const optionCount = reader.u32();
+  if (optionCount > 100) throw new Error("Proposal option count exceeds parser safety bound");
+  const options = [];
+  for (let index = 0; index < optionCount; index++) {
+    options.push({
+      label: reader.string(),
+      voteWeight: reader.u64(),
+      voteResult: reader.u8(),
+      transactionsExecutedCount: reader.u16(),
+      transactionsCount: reader.u16(),
+      transactionsNextIndex: reader.u16(),
+    });
+  }
+  reader.option(reader.u64);
+  reader.option(reader.u64);
+  reader.option(reader.u64);
+  reader.option(reader.i64);
+  const draftAt = reader.i64();
+  const signingOffAt = reader.option(reader.i64);
+  const votingAt = reader.option(reader.i64);
+  const votingAtSlot = reader.option(reader.u64);
+  const votingCompletedAt = reader.option(reader.i64);
+  const executingAt = reader.option(reader.i64);
+  const closedAt = reader.option(reader.i64);
+  const executionFlags = reader.u8();
+  reader.option(reader.u64);
+  reader.option(reader.u32);
+  reader.option(() => ({ type: reader.u8(), value: reader.u8() }));
+  reader.take(64);
+  const name = reader.string();
+  const descriptionLink = reader.string();
+  const states = ["Draft", "SigningOff", "Voting", "Succeeded", "Executing", "Completed", "Cancelled", "Defeated", "ExecutingWithErrors"];
+  return {
+    address: account.address, accountType: "ProposalV2", governance, governingTokenMint,
+    state: states[proposalState] ?? "Unknown", stateDiscriminator: proposalState,
+    tokenOwnerRecord, signatoriesCount, signatoriesSignedOffCount,
+    options, draftAt, signingOffAt, votingAt, votingAtSlot,
+    votingCompletedAt, executingAt, closedAt, executionFlags,
+    name, descriptionLink, bytesConsumed: reader.offset,
+    trailingBytes: reader.bytes.length - reader.offset,
+  };
+}
+
+function decodeProposalTransactionAccount(account, sdk) {
+  const reader = createGovernanceAccountReader(account.dataBase64, sdk);
+  const accountType = reader.u8();
+  if (accountType !== 8 && accountType !== 13) throw new Error("Account is not a ProposalInstructionV1 or ProposalTransactionV2 account");
+  const proposal = reader.pubkey();
+  const optionIndex = accountType === 13 ? reader.u8() : null;
+  const transactionIndex = accountType === 13 ? reader.u16() : reader.u16();
+  const holdUpTime = reader.u32();
+  const instructionCount = accountType === 13 ? reader.u32() : 1;
+  if (instructionCount > 20) throw new Error("Proposal instruction count exceeds parser safety bound");
+  const instructions = [];
+  for (let index = 0; index < instructionCount; index++) {
+    const programId = reader.pubkey();
+    const accountCount = reader.u32();
+    if (accountCount > 100) throw new Error("Proposal instruction account count exceeds parser safety bound");
+    const accounts = [];
+    for (let accountIndex = 0; accountIndex < accountCount; accountIndex++) {
+      accounts.push({
+        pubkey: reader.pubkey(),
+        isSigner: reader.u8() !== 0,
+        isWritable: reader.u8() !== 0,
+      });
+    }
+    const dataLength = reader.u32();
+    if (dataLength > 100_000) throw new Error("Proposal instruction data exceeds parser safety bound");
+    const data = reader.take(dataLength);
+    const loaderOpcode = programId === BPF_UPGRADEABLE_LOADER_ID && data.length >= 4
+      ? data.readUInt32LE(0) : null;
+    instructions.push({
+      programId, accounts, dataBase64: data.toString("base64"),
+      loaderOpcode, loaderOperation: loaderOpcode === 3 ? "upgrade" : loaderOpcode === 4 ? "setAuthority" : loaderOpcode === 6 ? "extendProgram" : loaderOpcode === 2 ? "deployWithMaxDataLen" : null,
+    });
+  }
+  const executedAt = reader.option(reader.i64);
+  const executionStatus = reader.u8();
+  if (accountType === 13) reader.take(8);
+  return {
+    address: account.address,
+    accountType: accountType === 13 ? "ProposalTransactionV2" : "ProposalInstructionV1",
+    proposal, optionIndex, transactionIndex, holdUpTime, instructions,
+    executedAt, executionStatus, bytesConsumed: reader.offset,
+    trailingBytes: reader.bytes.length - reader.offset,
+  };
+}
+
+export function decodeGovernanceProposalAccountEvidence(evidence, sdk) {
+  const proposals = [];
+  const proposalTransactions = [];
+  const failures = [];
+  for (const account of evidence?.accounts ?? []) {
+    if (!account.exists || typeof account.dataBase64 !== "string") continue;
+    try {
+      const firstByte = Buffer.from(account.dataBase64, "base64")[0];
+      if (firstByte === 14) proposals.push(decodeProposalV2Account(account, sdk));
+      else if (firstByte === 8 || firstByte === 13) proposalTransactions.push(decodeProposalTransactionAccount(account, sdk));
+    } catch (error) {
+      failures.push({ address: account.address, reason: String(error.message || error) });
+    }
+  }
+  return {
+    status: failures.length === 0 ? "governance_proposal_accounts_decoded" : "governance_proposal_account_decode_partial",
+    proposalCount: proposals.length,
+    proposalTransactionCount: proposalTransactions.length,
+    failures,
+    proposals,
+    proposalTransactions,
+  };
+}
+
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -492,6 +651,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
     governanceHistory,
     governanceProposalAccounts,
+    governanceProposalDetails: decodeGovernanceProposalAccountEvidence(governanceProposalAccounts, sdk),
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
