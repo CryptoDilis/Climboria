@@ -53,8 +53,8 @@ const expectedCollectAccounts = [
   ["tokenProgram2022", false, false], ["memoProgram", false, false],
 ];
 export function validateLockProgramSource({ libSource, statesSource, contextSource }, target, Key = PublicKey) {
-  const mainnetId = libSource.match(/#\\[cfg\\(not\\(feature = "devnet"\\)\\)\\]\\s*declare_id!\\("([^"]+)"\\)/)?.[1];
-  const devnetId = libSource.match(/#\\[cfg\\(feature = "devnet"\\)\\]\\s*declare_id!\\("([^"]+)"\\)/)?.[1];
+  const mainnetId = libSource.includes('declare_id!("' + LOCK_PROGRAMS.mainnet.id + '")') ? LOCK_PROGRAMS.mainnet.id : null;
+  const devnetId = libSource.includes('declare_id!("' + LOCK_PROGRAMS.devnet.id + '")') ? LOCK_PROGRAMS.devnet.id : null;
   if (mainnetId !== LOCK_PROGRAMS.mainnet.id || devnetId !== LOCK_PROGRAMS.devnet.id) fail("Pinned Raydium locking source program IDs differ from the configured Mainnet/Devnet programs");
   const authSeed = libSource.match(/pub const LOCK_CP_AUTH_SEED: &str = "([^"]+)"/)?.[1];
   const liquiditySeed = statesSource.match(/pub const LOCKED_LIQUIDITY_SEED: &str = "([^"]+)"/)?.[1];
@@ -65,8 +65,11 @@ export function validateLockProgramSource({ libSource, statesSource, contextSour
   if (!lockContext.includes("crate::LOCK_CP_AUTH_SEED.as_bytes()") || !lockContext.includes("LOCKED_LIQUIDITY_SEED.as_bytes()") || !lockContext.includes("fee_nft_mint.key().as_ref()")) fail("Pinned LockCpLiquidity source does not derive authority/locked-liquidity PDAs with expected seeds");
   if (!lockContext.includes("associated_token::mint = lp_mint") || !lockContext.includes("associated_token::authority = authority")) fail("Pinned LockCpLiquidity source does not bind locked LP vault to authority and LP mint");
   if (!collectContext.includes("associated_token::mint = lp_mint") || !collectContext.includes("associated_token::authority = authority")) fail("Pinned CollectCpFee source does not bind locked LP vault to authority and LP mint");
-  const feeNftAccountAttribute = collectContext.match(/#\\[account\\(([\\s\\S]*?)\\)\\]\\s*pub fee_nft_account/)?.[1] ?? "";
-  if (!feeNftAccountAttribute || /\\bmut\\b/.test(feeNftAccountAttribute)) fail("Pinned CollectCpFee source unexpectedly marks the Fee NFT account mutable");
+  const feeNftAccountIndex = collectContext.indexOf("pub fee_nft_account");
+  const feeNftAttributeStart = feeNftAccountIndex >= 0 ? collectContext.lastIndexOf("#[account(", feeNftAccountIndex) : -1;
+  const feeNftAttributeEnd = feeNftAttributeStart >= 0 ? collectContext.indexOf(")]", feeNftAttributeStart) : -1;
+  const feeNftAccountAttribute = feeNftAttributeStart >= 0 && feeNftAttributeEnd >= 0 ? collectContext.slice(feeNftAttributeStart, feeNftAttributeEnd) : "";
+  if (!feeNftAccountAttribute || feeNftAccountAttribute.includes("mut")) fail("Pinned CollectCpFee source unexpectedly marks the Fee NFT account mutable");
   if (!collectContext.includes("fee_nft_owner: Signer") || !collectContext.includes("fee_nft_account.amount == 1")) fail("Pinned CollectCpFee source lacks Fee NFT owner/signature ownership constraints");
   const [mainnetAuthority] = Key.findProgramAddressSync([Buffer.from(authSeed, "utf8")], new Key(mainnetId));
   const [devnetAuthority] = Key.findProgramAddressSync([Buffer.from(authSeed, "utf8")], new Key(devnetId));
@@ -201,7 +204,7 @@ export async function runLockProgramAudit() {
   let sourceReview;
   try {
     const source = await fetchLockProgramSource();
-    sourceReview = validateLockProgramSource(source, LOCK_PROGRAMS.mainnet);
+    sourceReview = { ...validateLockProgramSource(source, LOCK_PROGRAMS.mainnet), sourceSha256: source.sha256 };
   } catch (error) {
     return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, results: [], pass: false, sourceError: String(error.message || error) };
   }
