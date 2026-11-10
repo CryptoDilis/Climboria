@@ -71,7 +71,7 @@ async function fetchCluster(cluster, repoIdl) {
   }
   const repoAccounts = new Map((repoIdl.accounts || []).map(x => [x.name, x]));
   const liveAccounts = new Map((liveIdl.accounts || []).map(x => [x.name, x]));
-  const criticalSchemaMismatches = [];
+  const criticalSchemaMismatches = [], criticalSchemaDetails = [];
   for (const name of CRITICAL_ACCOUNTS) {
     const a = repoAccounts.get(name), b = liveAccounts.get(name);
     if (!a || !b) criticalSchemaMismatches.push(`${name}: account definition missing from ${!a ? "pinned repo IDL" : "live on-chain IDL"}`);
@@ -83,7 +83,11 @@ async function fetchCluster(cluster, repoIdl) {
     const a = repoTypes.get(name), b = liveTypes.get(name);
     if (!a && !b) continue;
     if (!a || !b) criticalSchemaMismatches.push(`${name}: type missing from ${!a ? "pinned repo IDL" : "live on-chain IDL"}`);
-    else if (!same(a, b)) criticalSchemaMismatches.push(`${name}: type layout differs`);
+    else if (!same(a, b)) {
+      criticalSchemaMismatches.push(`${name}: type layout differs`);
+      const fields = entry => entry?.type?.fields?.map(field => ({ name: field.name, type: field.type })) ?? null;
+      criticalSchemaDetails.push({ name, repositoryFields: fields(a), liveFields: fields(b) });
+    }
   }
   const repoOnlyInstructions = [...repoInstructions.keys()].filter(x => !liveInstructions.has(x));
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
@@ -96,7 +100,7 @@ async function fetchCluster(cluster, repoIdl) {
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
     liveInstructionCount: liveIdl.instructions?.length ?? 0, repositoryInstructionCount: repoIdl.instructions.length,
-    selectedDiscriminatorsMatch, criticalSchemasMatch, criticalDiscriminatorMismatches, criticalSchemaMismatches,
+    selectedDiscriminatorsMatch, criticalSchemasMatch, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
     repoOnlyInstructions, liveOnlyInstructions,
     pass: selectedDiscriminatorsMatch && criticalSchemasMatch
   };
