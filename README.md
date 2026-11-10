@@ -13,7 +13,7 @@
 - [ ] **Owner action required:** no real simulation is approved or run by this code change. A dedicated funded Devnet fee-payer address, exact unsigned transaction message hash, explicit owner approval reference, and approved rent reserve/fee buffer must be supplied through a trusted operator process before any simulation.
 - [ ] **Next P0:** determine why the pinned SDK returns two transactions and whether they are state-dependent. Design a safe sequential simulation strategy (or keep blocked); do not simulate each transaction against unchanged chain state and call that an end-to-end result.
 
-**Commits:** preflight module `04ef247e11a718fc5ee94a75374ea0cbb0ca0186`; deterministic tests `5729df7d87dbefc2133c103e96404c81b32b0ea6`; workflow wiring recorded in the next commit.
+**Commits:** preflight module `04ef247e11a718fc5ee94a75374ea0cbb0ca0186`; deterministic tests `5729df7d87dbefc2133c103e96404c81b32b0ea6`; workflow wiring commit `0ddfa0a6105ccaf21e9b76ed39ceb32a1b38e761` (subsequently corrected to include both push and pull-request path filters).
 
 **Safety:** no real wallet, keypair, signing, simulation, submission, migration, fee collection, or Mainnet action was used for this implementation.
 
