@@ -2902,3 +2902,12 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] Added a regression test for missing account identity and documented that trusted server-side RPC must provide owner, executable flag, account bytes and context slot from one response.
 - [ ] Latest CI remains pending on newest PR #233 source; visible Validate `42852192636` passed on older `e36446d4`, while Browser Smoke `42852192411` was still running on that older head. No claim of latest-source validation.
 - [ ] Next: fresh CI for latest head, then implement server-side trusted RPC fetch/context binding, semantic instruction allowlists, exact order-wallet-message binding and replay protection. Keep execute gate closed.
+
+
+## 2026-11-11 — Swap CI coverage gap fixed in PR #233
+
+- [x] Found a real verification gap: the Validate workflow only executed `worker.test.mjs`; it did not run the newly added Solana parser/ALT test file. Earlier Validate success was not evidence those parser tests passed.
+- [x] Updated PR #233 workflow to execute every `dex/swap-proxy/test/*.test.mjs` suite, including the parser and ALT tests.
+- [x] ALT decoder now requires the referenced table's 32-byte account key and returns it with decoded account contents; missing identity has a regression test.
+- [ ] Fresh CI on the new workflow/code head is still not observed. Existing run `42852192636` succeeded on older head `e36446d4` with the previous workflow command; do not count it as parser-suite verification. PR close/reopen did not trigger a new run for the latest head.
+- [ ] Next: obtain fresh Validate run on latest PR #233 head, inspect all parser test results and fix failures; then implement trusted server-side RPC binding and semantic instruction allowlists. Keep execution gate closed.
