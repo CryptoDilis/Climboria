@@ -253,12 +253,6 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
   });
 }
 
-export async function inspectProgramAccountHistory({ connection, programPublicKey, ...options }) {
-  return inspectUpgradeableAccountHistory({
-    connection, accountPublicKey: programPublicKey, accountLabel: "program", ...options,
-  });
-}
-
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -330,11 +324,6 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataPublicKey: programDataAddress,
     stateSlot: programDataStateSlot,
   });
-  const programAccountHistory = await inspectProgramAccountHistory({
-    connection,
-    programPublicKey: programId,
-    stateSlot: programDataStateSlot,
-  });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
     artifactSha256: artifactMetadata.sha256,
@@ -354,7 +343,6 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockTimeUnix,
     programDataStateSlotBlockEvidence,
     programDataHistory,
-    programAccountHistory,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
