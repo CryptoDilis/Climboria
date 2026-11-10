@@ -238,7 +238,7 @@ test("rejects Jupiter Success without a transaction signature", async () => {
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
