@@ -785,7 +785,7 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 (()=>{'use strict';
 const API='https://api.dexscreener.com';
 const $=id=>document.getElementById(id);
-const state={mode:'trending',pairs:[],profiles:[],graduations:[],graduationStatus:'not loaded',search:'',last:0,busy:false,loadError:null};
+const state={mode:'trending',pairs:[],searchPairs:[],profiles:[],graduations:[],graduationStatus:'not loaded',search:'',last:0,busy:false,loadError:null};
 let basePairs=[];let baseBusy=false;let baseLoadError=null;let basePartialFailures=0;let baseMode="trending";let mobileMarketLimit=12,baseMarketLimit=12;
 const fmt=(n)=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return n>=1e9?'$'+(n/1e9).toFixed(2)+'B':n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K':'$'+n.toFixed(n<1?6:2)};
 const price=n=>{if(n===null||n===undefined||!Number.isFinite(Number(n)))return '—';n=Number(n);return '$'+(n<0.0001?n.toExponential(2):n<1?n.toPrecision(4):n.toLocaleString('en-US',{maximumFractionDigits:4}))};
@@ -836,7 +836,7 @@ state.profiles=(Array.isArray(profiles)?profiles:[]).filter(x=>x.chainId==='sola
 const profileMints=[...new Set(state.profiles.map(x=>x.tokenAddress).filter(Boolean))].slice(0,30);
 const profilePairs=profileMints.length?await get('/tokens/v1/solana/'+profileMints.join(',')).catch(()=>[]):[];
 const pairs=[...searches.flatMap(x=>Array.isArray(x.pairs)?x.pairs:[]),...(Array.isArray(profilePairs)?profilePairs:[])];
-state.pairs=bestByToken(solPairs(pairs));
+state.pairs=bestByToken([...solPairs(pairs),...state.searchPairs]);
 if(!searches.length&&!state.pairs.length)throw new Error('All Solana market discovery requests failed');
 state.loadError=null;
 $('profileCount').textContent=state.profiles.length.toLocaleString();
@@ -1250,7 +1250,7 @@ async function discoverDexSearch(query,requestId){
   let found=solPairs(raw);
   if(exactMint)found=found.filter(pair=>pair.baseToken.address===query);
   if(found.length){
-   state.pairs=bestByToken([...state.pairs,...found]);
+   state.searchPairs=bestByToken([...state.searchPairs,...found]).slice(0,200);state.pairs=bestByToken([...state.pairs,...found]);
    render();
    $('status').textContent=exactMint?'Exact mint lookup complete · '+found.length+' matching Solana pool(s)':'Live token search complete · '+found.length+' matching Solana pool(s)';
   }else{
