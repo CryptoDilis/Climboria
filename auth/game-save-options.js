@@ -129,7 +129,7 @@ export function installGameSaveOptions({ client, documentRef = document, storage
       status.textContent = "An account hero choice is available. Choosing it applies the cosmetic hero choice to this device only; it does not write to the cloud.";
       addAction("USE ACCOUNT CHOICE ON THIS DEVICE", () => {
         applyChoiceLocally("account", resolution, storage);
-        status.textContent = "Account hero choice applied on this device. No cloud data was changed.";
+        status.textContent = "Account hero choice saved on this device. Reload the game to apply it. No cloud data was changed.";
         actions.replaceChildren();
         addAction("CLOSE", close);
       });
