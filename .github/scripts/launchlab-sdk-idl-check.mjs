@@ -65,7 +65,16 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
     checked.push(idlName);
   }
   const initializeAccounts = ["payer","creator","global_config","platform_config","authority","pool_state","base_mint","quote_mint","base_vault","quote_vault","metadata_account","base_token_program","quote_token_program","metadata_program","system_program","rent_program","event_authority","program"];
-  assert(JSON.stringify(idlInstructions.get("initialize_v2").accounts.map(x => x.name)) === JSON.stringify(initializeAccounts), "initialize_v2 account order differs from the approved 18-entry schema");
+  const initializeInstruction = idlInstructions.get("initialize_v2");
+  assert(JSON.stringify(initializeInstruction.accounts.map(x => x.name)) === JSON.stringify(initializeAccounts), "initialize_v2 account order differs from the approved 18-entry schema");
+  const initializePrivileges = [
+    [true, true], [false, false], [false, false], [false, false], [false, false],
+    [false, true], [true, true], [false, false], [false, true], [false, true],
+    [false, true], [false, false], [false, false], [false, false], [false, false],
+    [false, false], [false, false], [false, false],
+  ];
+  assert(JSON.stringify(initializeInstruction.accounts.map(account => [account.signer === true, account.writable === true])) === JSON.stringify(initializePrivileges),
+    "initialize_v2 signer/writable privileges differ from the reviewed 18-entry account schema");
   const migration = idlInstructions.get("migrate_to_cpswap");
   assert(migration, "IDL missing migrate_to_cpswap");
   const migrationAccounts = ["payer","base_mint","quote_mint","platform_config","cpswap_program","cpswap_pool","cpswap_authority","cpswap_lp_mint","cpswap_base_vault","cpswap_quote_vault","cpswap_config","cpswap_create_pool_fee","cpswap_observation","lock_program","lock_authority","lock_lp_vault","authority","pool_state","global_config","base_vault","quote_vault","pool_lp_token","base_token_program","quote_token_program","associated_token_program","system_program","rent_program","metadata_program"];
