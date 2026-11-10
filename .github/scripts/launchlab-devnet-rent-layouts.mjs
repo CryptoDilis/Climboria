@@ -19,7 +19,7 @@ const METAPLEX_CREATOR_SOURCE = "https://github.com/metaplex-foundation/mpl-toke
 const METAPLEX_ALLOCATOR_SOURCE = "https://github.com/metaplex-foundation/mpl-token-metadata/blob/7ce760f9e010cb9819ffd7dd86986a44691bd1f8/programs/token-metadata/program/src/utils/metadata.rs";
 
 // Borsh/Anchor PoolState size derived from the pinned LaunchLab IDL:
- // discriminator + epoch + five u8 fields + ten u64 fields + VestingSchedule
+ // 8-byte discriminator + 8-byte epoch + five u8 fields + ten u64 fields + VestingSchedule
  // (five u64) + seven pubkeys + token flag + one-byte enum + u64 + padding.
 export const LAUNCHLAB_POOL_STATE_SPACE =
   8 + 8 + 5 + (10 * 8) + (5 * 8) + (7 * 32) + 1 + 1 + 8 + 54;
@@ -30,7 +30,7 @@ export const METAPLEX_MAX_DATA_SIZE =
 export const METAPLEX_MAX_METADATA_LEN =
   1 + 32 + 32 + METAPLEX_MAX_DATA_SIZE + 1 + 1 + 9 + 2 + 34 + 18 + 10 + 35 + 1;
 
-if (LAUNCHLAB_POOL_STATE_SPACE !== 421 || METAPLEX_MAX_DATA_SIZE !== 431 || METAPLEX_MAX_METADATA_LEN !== 607) {
+if (LAUNCHLAB_POOL_STATE_SPACE !== 429 || METAPLEX_MAX_DATA_SIZE !== 431 || METAPLEX_MAX_METADATA_LEN !== 607) {
   throw new Error("Source-backed account layout arithmetic changed; re-review the pinned IDL and Metaplex source");
 }
 
