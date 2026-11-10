@@ -2948,3 +2948,10 @@ Implement a separately tested server-side transaction security layer before any 
 - [x] Follow-up hardening added `redirect: "error"` to the server-side RPC request and a regression assertion. This follow-up is newer than the green run and still needs fresh CI.
 - [ ] Browser Smoke `42854007897` was still in progress at last inspection; the initial homepage, DEX routing, Worker proxy, fail-closed, Swap and DEX checks had passed. Remaining mobile/gameplay checks were pending.
 - [ ] Next: verify CI/browser smoke against the follow-up head, then continue server-side semantic instruction validation and immutable order-wallet-message/replay protection. Execution remains disabled; no live Worker deployment or production trading claim.
+
+
+### Browser smoke checkpoint and redirect follow-up
+
+- Browser Smoke run `42854007897` on PR #233 head `4d989326dc08bbfae9562bd53120f2603c9053c4` passed homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX interface, mobile workspace, compact 390px/360px layouts, and mobile market loading/error/empty-state checks. Jarrell's Peak gameplay step was still running at last inspection.
+- A later follow-up added `redirect: "error"` to the trusted RPC fetch and a regression assertion. Latest PR #233 head is now `8a71f48480e091b92ae95629ac811528128a16e4`; no fresh Actions run has yet been observed for that head. Prior green Validate `42854007949` applies only to the earlier head.
+- Exact next: obtain fresh CI on the latest head, inspect the completed browser run, then implement audited semantic instruction policy and durable order-wallet/replay controls. Execution remains disabled.
