@@ -309,7 +309,7 @@ test("resolves and reports V0 Address Lookup Table account metas", async () => {
     const configIndex = keys.findIndex(key => key.toBase58() === ids.configId);
     const instruction = tx.message.compiledInstructions[0];
     instruction.accountKeyIndexes = instruction.accountKeyIndexes.map(index =>
-      index === configIndex ? keys.length : index > configIndex ? index - 1 : index
+      index === configIndex ? keys.length - 1 : index > configIndex ? index - 1 : index
     );
     if (instruction.programIdIndex > configIndex) instruction.programIdIndex -= 1;
     keys.splice(configIndex, 1);
