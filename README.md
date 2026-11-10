@@ -1,3 +1,44 @@
+# LIVE ECOSYSTEM RELEASE PRIORITY — 2026-11-10 (USER-CORRECTED, SUPERSEDES OLDER ROADMAP PRIORITY)
+
+**The user's explicit current P0 is to finish and launch the Climboria DEX, Swap, and Launchpad as real production services, and enable every intended sign-in method. This is the active priority and supersedes older README statements that put Jarrell’s Peak first or kept DEX/CDIS as design-only. Do not redirect effort to Jarrell’s Peak until the live ecosystem release work is complete or the user changes priority. Target requested by user: LIVE TODAY (2026-11-10).**
+
+## Release acceptance — no demos, mocks, fake success, or misleading “live” labels
+
+1. **DEX — P0:** Keep real provider-sourced market discovery, token/pool details and charts; finish the production data/backend reliability and connect actual swap execution. A live market feed alone does not mean DEX trading is live. Verify with real quotes, wallet review, successful on-chain settlement and explorer confirmation.
+2. **Swap — P0:** Solana and Base must not appear executable until each has a real, secure router/backend, supported wallet signing flow, transaction validation, submission and finalized confirmation. Current source audit found /swap-config.js has proxyEnabled=true but enabled=false; Swap page explicitly says execution is not enabled. Solana has Jupiter quote/order scaffolding; Base Uniswap routing is still planned/disabled. Do not turn on a flag as a substitute for a verified backend.
+3. **Launchpad — P0:** Implement a real launch lifecycle (creator authentication/wallet proof, immutable launch config, token mint/metadata, approved launch mechanism, liquidity/LP custody, fee handling, transaction reconciliation and public verification). Current /launchpad/ is an informational static preview, says launch services are not open, and has no submission form, wallet flow, mint/pool API or execution backend. docs/SIGNATURE-LAUNCHPAD-IMPLEMENTATION-SPEC.md is architecture/specification only. Do not represent the Launchpad as live until the complete lifecycle is deployed and verified.
+4. **All sign-ins — P0:** Enable and verify all intended account sign-in methods, not just show buttons. Current homepage audit: crypto wallet button can connect an installed Phantom/EVM provider but explicitly says this is not a Climboria account login; X OAuth and Google/Gmail OAuth buttons are disabled; email/password is disabled pending an auth backend. Implement secure account/session handling, provider callbacks, verified email/identity, account linking, logout/session expiry and abuse protections. Never request or store seed phrases/private keys. Do not enable a provider until its credentials, callback URLs, consent/configuration and production verification are in place.
+
+## Verified source baseline before implementation
+
+- Repository base branch: main; starting commit for this release branch: 037f251048e6aecaf12675be1cd11fa9dd8fb6cd.
+- Dedicated release branch: codex/live-ecosystem-release-nov10.
+- DEX source: dex/index.html — provider-sourced Solana discovery and market data exist; page explicitly marks trade execution as quote-only and “SWAP COMING SOON”.
+- Swap source: swap/index.html, swap-config.js, dex/swap-proxy/src/index.mjs. Public config has proxyEnabled=true, enabled=false. Worker execution route returns 503 unless EXECUTION_ENABLED=true; code comment says keep disabled pending transaction semantic validation and wallet/order binding review. Base Uniswap route is planned, not enabled.
+- Production Worker deployment workflow: .github/workflows/deploy-climboria-api.yml. Requires account-specific Cloudflare API token/account ID, Jupiter API key and rate-limit namespace; it validates Worker health/CORS after deployment. Secrets must be configured in GitHub/Cloudflare, never pasted into source or chat.
+- Launchpad source: launchpad/index.html is informational only; no forms/scripts or launch backend. Signature Launchpad spec explicitly states architecture only, not implemented or approved for Mainnet.
+- Login source: root index.html auth modal currently exposes Wallet, X, Google/Gmail and Email/password. Wallet connect is not account login; X/Google/email are disabled. No dedicated auth provider/backend files were found in the repository tree audit.
+- These are source inspections, not proof of current production deployment state. Verify deployed URLs, Worker health, provider credentials and on-chain outcomes before marking any item complete.
+
+## Execution order and next exact tasks
+
+- [ ] P0-A: Establish a dedicated live-release branch/checklist (this commit) and audit current production deployment/health for climboria.fun, api.climboria.fun/health, /dex/, /swap/, and /launchpad/. Record actual response/status, not assumptions.
+- [ ] P0-B: DEX + Solana Swap: inspect current Worker code and tests end-to-end; resolve missing production dependencies/secrets; run order → wallet review → signed execute → finalized confirmation tests. Add production-grade failure handling, idempotency and transaction reconciliation. Keep execution fail-closed until every gate passes.
+- [ ] P0-C: Base Swap: implement a separate Base-compatible quote/order, allowance, gas estimation, wallet signing and confirmation flow; do not reuse Solana/Jupiter transaction handling or label Base as supported before live verification.
+- [ ] P0-D: Launchpad: select and implement a real audited launch mechanism; define creator eligibility, supply/authority/metadata policy, fees, liquidity and LP custody; build authenticated creator workflow and verifiable mint/pool lifecycle. If any owner decision, credential, custody setup or independent audit is missing, record it as a release blocker rather than faking a launch.
+- [ ] P0-E: Authentication: implement X OAuth, Google OAuth, email/password (secure password hashing, email verification, reset and session lifecycle) and wallet-based sign-in using signed, expiring domain-bound nonces. Add account linking, collision protections, logout and recovery; configure provider secrets/callbacks only through secure secret storage.
+- [ ] P0-F: Add automated tests and real production smoke checks for every login, chain, quote, order, signing, execution, launch and confirmation path. Update this README after each completed task with commit, exact tests, production evidence and the next task.
+- [ ] User-requested deadline: target is today, 2026-11-10. Be candid: if production credentials, account owner actions, audits, custody decisions or chain verification are unavailable, those are blockers; never claim “live today” without evidence.
+
+## Security and release rules
+
+- Never put API keys, OAuth client secrets, passwords, private keys, seed phrases or signed transaction payloads in public frontend code, Git history, logs or chat.
+- No wallet signing, token minting, fundraising, liquidity provisioning, fee collection or Mainnet launch without explicit owner-approved parameters, secure custody and verified transaction review.
+- Do not bypass security gates merely to meet the date. “Live” means real production behavior with verified outcomes, not UI enabled, a successful HTTP response, a quote preview, a mocked callback or a workflow pass.
+- Keep the previous Jarrell’s Peak priority and older DEX design-only notes as historical records only; they are superseded by this user correction.
+
+---
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
