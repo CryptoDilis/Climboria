@@ -135,3 +135,13 @@ test("concurrent claims atomically allow exactly one execution", async () => {
   ]);
   assert.deepEqual(results.map(response => response.status).sort(), [200, 409]);
 });
+
+
+test("does not persist an order when cleanup scheduling fails", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  storage.setAlarm = async () => { throw new Error("alarm unavailable"); };
+  const response = await storeOrder(object, fixture);
+  assert.equal(response.status, 503);
+  assert.equal(await storage.get("order"), undefined);
+});
