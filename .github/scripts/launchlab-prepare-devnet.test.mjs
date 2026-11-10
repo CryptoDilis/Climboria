@@ -22,8 +22,8 @@ const ids = {
 };
 const sdk = {
   PublicKey, BN, TxVersion: { V0: "v0" },
-  LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000 }) },
-  PlatformConfig: { decode: () => ({ restrictCurveParam: false }) },
+  LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000, protocolFeeOwner: new PublicKey(ids.creator), migrateFeeOwner: new PublicKey(ids.creator), migrateToCpmmWallet: new PublicKey("11111111111111111111111111111112"), migrateToAmmWallet: new PublicKey(ids.creator) }) },
+  PlatformConfig: { decode: () => ({ restrictCurveParam: false, platformClaimFeeWallet: new PublicKey(ids.creator), platformLockNftWallet: new PublicKey(ids.creator), feeRate: 2500, creatorFeeRate: 2500, cpConfigId: new PublicKey(ids.configId) }) },
 };
 function makeInitializeV2Transaction(options, label = "init", overrides = {}) {
   const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
@@ -183,6 +183,9 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(result.signerRequirements[0][0], input({}).mintKeypair.publicKey.toBase58());
   assert.equal(result.transactionSubmitted, false);
   assert.equal(result.executeCalled, false);
+  assert.equal(result.feeAndMigrationDestinations.cpmmMigrationPayer, "11111111111111111111111111111112");
+  assert.equal(result.feeAndMigrationDestinations.creatorMatchesCpmmMigrationAuthority, false);
+  assert.equal(result.feeAndMigrationDestinations.migrationIncludedInCreateOnlyTransaction, false);
   assert.equal(mock.executeCalled(), false);
   const built = mock.captured();
   assert.equal(built.programId.toBase58(), ids.programId);
