@@ -679,10 +679,15 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programId: METAPLEX_TOKEN_METADATA_PROGRAM_ID,
     programDataAddress: programDataAddress.toBase58(),
   });
+  // Bound public Devnet RPC history work. If the state slot is not reached
+  // within this window, the report remains explicitly incomplete and fail-closed.
   const programDataHistory = await inspectProgramDataHistory({
     connection,
     programDataPublicKey: programDataAddress,
     stateSlot: programDataStateSlot,
+    pageSize: 250,
+    maxPages: 8,
+    maxHistoricalTransactions: 20,
   });
   const governanceHistory = summarizeMetaplexGovernanceHistory(programDataHistory.signatures);
   const governanceProposalAccounts = await inspectGovernanceProposalAccounts({
