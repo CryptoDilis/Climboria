@@ -50,7 +50,7 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts -o /tmp/launchlab-provenance/instrument.ts
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/layout.ts -o /tmp/launchlab-provenance/layout.ts
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/launchpad.ts -o /tmp/launchlab-provenance/launchpad.ts
-          curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/pda.ts -o /tmp/launchlab-provenance/pda.ts /tmp/launchlab-provenance/cp-swap-idl.json
+          curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-sdk-V2/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/pda.ts -o /tmp/launchlab-provenance/pda.ts
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_launchpad/raydium_launchpad.json -o /tmp/launchlab-provenance/launchpad-idl.json
           curl -fsSL https://raw.githubusercontent.com/raydium-io/raydium-idl/e7e0c96fe77bcf6a020b84a44c47a722aac8e359/raydium_cpmm/raydium_cp_swap.json -o /tmp/launchlab-provenance/cp-swap-idl.json
       - name: Report downloaded artifact SHA-256 digests
