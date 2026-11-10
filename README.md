@@ -3090,3 +3090,13 @@ This is a standing project rule, not a one-time task:
 ### Separate authentication activation blocker
 - PR #228 remains OPEN / DRAFT / unmerged at `fde34340a4bcb6ccac5b94efdb5bc93201013b3e`. Its auth implementation and `auth-config.js` are on the feature branch; `auth-config.js` on `main` returned 404. PR #228 mocked CI passed, but real Google/X/email/Web3 provider E2E remains unverified.
 - Next auth job: inspect existing Supabase Auth provider settings and production redirect allowlist, then test real email confirmation/recovery, Google OAuth, X OAuth2, Ethereum SIWE, Solana SIWS, session refresh/logout, profile RLS and identity linking. Do not recreate the project or rerun the applied migration; never commit secrets or paste them into chat.
+
+
+## 2026-11-10 — Save Options smoke test syntax diagnosis and fix
+
+- [x] Browser Smoke run `42729109026` completed with failure. Steps 1–16 passed; step 17, `Test in-game save options safety matrix`, failed. Jarrell gameplay step 18 was skipped as a consequence; screenshot artifact upload ran but had no expected files because gameplay never ran.
+- [x] Retrieved job log `129542343093`. Exact failure: `SyntaxError: missing ) after argument list` at `.github/scripts/game-save-options-smoke.mjs:16`. The viewport ternary had literal escaped newline characters (`\\n`) inserted into JavaScript source by the test-edit script, rather than real line breaks. This is a test-source syntax defect, not a Save Options app behavior failure.
+- [x] Strategy: replace only that malformed exact block with valid multiline JavaScript; retain the desktop/mobile viewport scenarios, screenshot capture, viewport-boundary assertion, and Escape focus-restoration check. No app runtime, Supabase, cloud save or inventory code changed.
+- [x] Commit `78141f5731610238f3d3106c7f55fba05893b8d3`: targeted syntax correction.
+- [ ] **Exact next job:** wait for and inspect CI on head `78141f5731610238f3d3106c7f55fba05893b8d3`. Validate and Browser Smoke must both complete. If Save Options test fails again, inspect the exact assertion/log and make a separate reasoned fix. If it passes, confirm Jarrell gameplay step 18 runs, then download and inspect the two Save Options screenshots from artifact upload.
+- [ ] Do not claim the new screenshot coverage passes until the artifact is inspected. Keep PR #229 OPEN / DRAFT pending live Supabase schema/RLS inspection and adversarial owner-row tests.
