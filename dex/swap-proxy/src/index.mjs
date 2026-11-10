@@ -108,7 +108,7 @@ async function handleOrder(request, env) {
     }, 422);
   }
   // Bound and validate the upstream transaction before forwarding it to a wallet.
-  // Deserialization and semantic instruction review still happen in the client/release gates.
+  // The order store performs exact v0 message binding and taker-signature verification at execute time; this is not an independent audit of aggregator instruction semantics.
   if (data.transaction.length > 50000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(data.transaction) || data.transaction.length % 4 !== 0) {
     return json({ error: "Jupiter returned an invalid or oversized transaction encoding" }, 502);
   }
