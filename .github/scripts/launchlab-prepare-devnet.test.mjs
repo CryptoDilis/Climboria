@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { expectedInitializeV2Accounts, prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
+import { deriveDevnetFeeVaults, expectedInitializeV2Accounts, prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
 
 class PublicKey {
   constructor(value) { if (typeof value !== "string" || value.length < 32) throw new Error("invalid public key"); this.value = value; }
@@ -195,6 +195,30 @@ test("prepares ordered Devnet transactions with explicit settings and never exec
   assert.equal(built.createOnly, true);
   assert.deepEqual(built.extraSigners, [input({}).mintKeypair]);
 });
+test("rejects any extra top-level instruction in create-only preparation", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => {
+    const tx = makeInitializeV2Transaction(options);
+    tx.message.compiledInstructions.push({
+      programIdIndex: tx.message.staticAccountKeys.findIndex(key => key.toBase58() === "11111111111111111111111111111111"),
+      accountKeyIndexes: [],
+      data: Uint8Array.from([1]),
+    });
+    return { transactions: [tx], signers: [[options.extraSigners[0]]] };
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /exactly one initializeV2 instruction/);
+});
+test("derives future fee vaults from approved creator/platform and WSOL without adding them to create-only transaction", () => {
+  const result = deriveDevnetFeeVaults({
+    sdk, programId: ids.programId, platformId: ids.platformId,
+    creatorWallet: ids.creator, quoteMint: ids.quoteMint,
+  });
+  assert.ok(result.platformFeeVault);
+  assert.ok(result.platformFeeVaultAuthority);
+  assert.ok(result.creatorFeeVault);
+  assert.ok(result.creatorFeeVaultAuthority);
+  assert.match(result.scope, /not accounts in the create-only/);
+});
 test("rejects a tampered initializeV2 pool PDA or account order", async () => {
   const mock = client();
   mock.raydium.launchpad.createLaunchpad = async options => {
@@ -276,20 +300,28 @@ test("resolves and reports V0 Address Lookup Table account metas", async () => {
   mock.raydium.connection.getAddressLookupTable = async () => ({
     value: { state: { addresses: [loadedWritable] } },
   });
+  mock.raydium.connection.getAddressLookupTable = async () => ({
+    value: { state: { addresses: [new PublicKey(ids.configId)] } },
+  });
   mock.raydium.launchpad.createLaunchpad = async options => {
     const tx = makeInitializeV2Transaction(options);
     const keys = tx.message.staticAccountKeys;
-    const systemProgramIndex = keys.findIndex(key => key.toBase58() === "11111111111111111111111111111111");
-    tx.message.addressTableLookups = [{ accountKey: lookupKey, writableIndexes: [0], readonlyIndexes: [] }];
-    tx.message.compiledInstructions.push({ programIdIndex: systemProgramIndex, accountKeyIndexes: [keys.length], data: Uint8Array.from([1]) });
+    const configIndex = keys.findIndex(key => key.toBase58() === ids.configId);
+    const instruction = tx.message.compiledInstructions[0];
+    instruction.accountKeyIndexes = instruction.accountKeyIndexes.map(index =>
+      index === configIndex ? keys.length : index > configIndex ? index - 1 : index
+    );
+    if (instruction.programIdIndex > configIndex) instruction.programIdIndex -= 1;
+    keys.splice(configIndex, 1);
+    tx.message.addressTableLookups = [{ accountKey: lookupKey, writableIndexes: [], readonlyIndexes: [0] }];
     return { transactions: [tx], signers: [[options.extraSigners[0]]] };
   };
   const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
   const review = result.transactionReviews[0];
-  assert.equal(review.accountMetaDetails[1][0].pubkey, loadedWritable.toBase58());
-  assert.equal(review.accountMetaDetails[1][0].isWritable, true);
+  assert.equal(review.accountMetaDetails[0][2].pubkey, ids.configId);
+  assert.equal(review.accountMetaDetails[0][2].isWritable, false);
   assert.equal(review.lookupTables[0].address, lookupKey.toBase58());
-  assert.deepEqual(review.lookupTables[0].writableAddresses, [loadedWritable.toBase58()]);
+  assert.deepEqual(review.lookupTables[0].readonlyAddresses, [ids.configId]);
 });
 test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => {
   const mock = client({ apiEpoch: 8 });
