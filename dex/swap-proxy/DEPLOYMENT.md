@@ -77,3 +77,8 @@ The parser now checks the canonical ALT metadata layout, owner program ID, execu
 ### Solana runtime account-lock and lookup constraints
 
 The structural decoder now rejects v0 lookup entries that select no addresses and caps the reconstructed transaction account-key set at 128, including static plus ALT-loaded keys. The same cap is enforced again after ALT reconstruction. This is a conservative runtime guard, not a substitute for the target cluster's own runtime validation. ALT deactivation is rejected conservatively; same-slot newly appended addresses are not accepted. These checks remain isolated from `/api/swap/execute`.
+
+
+### Lookup-table identity binding
+
+The ALT decoder now requires the 32-byte public key of the lookup-table account and returns a defensive copy of that identity with the decoded address list. The caller can pass the returned object directly to account-meta reconstruction, which compares the decoded table key to the key embedded in the transaction message. This closes an API-level ambiguity where decoded addresses previously returned with a null table identity. It still does not fetch or authenticate RPC data; owner, executable flag, data and context slot must come from one trusted server-side account response.
