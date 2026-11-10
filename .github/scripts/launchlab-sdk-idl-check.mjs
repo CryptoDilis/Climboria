@@ -75,6 +75,17 @@ export async function verifySdkIdlArtifacts({ packagePath, idlPath, instrumentPa
   ];
   assert(JSON.stringify(initializeInstruction.accounts.map(account => [account.signer === true, account.writable === true])) === JSON.stringify(initializePrivileges),
     "initialize_v2 signer/writable privileges differ from the reviewed 18-entry account schema");
+  const platformGlobalAccessAccount = idl.accounts.find(account => account.name === "PlatformGlobalAccess");
+  assert(JSON.stringify(platformGlobalAccessAccount?.discriminator) === JSON.stringify([174,147,132,240,137,219,243,16]),
+    "PlatformGlobalAccess Anchor discriminator differs from the reviewed account schema");
+  const platformGlobalAccessType = idl.types.find(type => type.name === "PlatformGlobalAccess");
+  assert(JSON.stringify(platformGlobalAccessType?.type?.fields?.map(field => [field.name, field.type])) === JSON.stringify([
+    ["bump", "u8"], ["global_config", "pubkey"], ["platform_config", "pubkey"], ["padding", { array: ["u64", 8] }],
+  ]), "PlatformGlobalAccess account layout differs from the reviewed PDA decoder");
+  assert(pdaText.includes('PLATFORM_ALLOW_CONFIG_SEED = Buffer.from("platform_allow_config"') &&
+    pdaText.includes("getPdaPlatformAllowConfig(") &&
+    pdaText.includes("platformId.toBuffer(), configId.toBuffer()"),
+    "Pinned SDK PlatformAllowConfig PDA seed/order differs from the reviewed derivation");
   const migration = idlInstructions.get("migrate_to_cpswap");
   assert(migration, "IDL missing migrate_to_cpswap");
   const migrationAccounts = ["payer","base_mint","quote_mint","platform_config","cpswap_program","cpswap_pool","cpswap_authority","cpswap_lp_mint","cpswap_base_vault","cpswap_quote_vault","cpswap_config","cpswap_create_pool_fee","cpswap_observation","lock_program","lock_authority","lock_lp_vault","authority","pool_state","global_config","base_vault","quote_vault","pool_lp_token","base_token_program","quote_token_program","associated_token_program","system_program","rent_program","metadata_program"];
