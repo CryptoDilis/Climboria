@@ -313,6 +313,7 @@ test("resolves and reports V0 Address Lookup Table account metas", async () => {
     );
     if (instruction.programIdIndex > configIndex) instruction.programIdIndex -= 1;
     keys.splice(configIndex, 1);
+    tx.message.header.numReadonlyUnsignedAccounts -= 1;
     tx.message.addressTableLookups = [{ accountKey: lookupKey, writableIndexes: [], readonlyIndexes: [0] }];
     return { transactions: [tx], signers: [[options.extraSigners[0]]] };
   };
