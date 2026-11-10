@@ -129,6 +129,63 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   if (!Array.isArray(prepared?.transactions) || prepared.transactions.length === 0) {
     fail("Pinned SDK did not return an ordered launch transaction set");
   }
+  if (!Array.isArray(prepared.signers) || prepared.signers.length !== prepared.transactions.length) {
+    fail("Pinned SDK signer groups are missing or do not match the ordered transaction set");
+  }
+  let mintSignerSeen = false;
+  const signerRequirements = prepared.signers.map((group, index) => {
+    if (!Array.isArray(group)) fail(`SDK signer group ${index} is malformed`);
+    return group.map(signer => {
+      if (!signer?.publicKey || !sameKey(signer.publicKey, input.mintKeypair.publicKey)) {
+        fail("SDK requested an unexpected transaction signer");
+      }
+      mintSignerSeen = true;
+      return signer.publicKey.toBase58();
+    });
+  });
+  if (!mintSignerSeen) fail("Caller-supplied mint Keypair is not present in the SDK transaction signer requirements");
+
+  const allowedPrograms = new Set([
+    DEVNET.programId,
+    "11111111111111111111111111111111",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+    "ComputeBudget111111111111111111111111111111",
+  ]);
+  const transactionReviews = prepared.transactions.map((transaction, index) => {
+    const message = transaction?.message;
+    const keys = message?.staticAccountKeys;
+    const requiredCount = message?.header?.numRequiredSignatures;
+    if (!Array.isArray(keys) || !Number.isInteger(requiredCount) || requiredCount < 2) {
+      fail(`SDK transaction ${index} is not a supported v0 message or lacks required signer metadata`);
+    }
+    if (!sameKey(keys[0], new sdk.PublicKey(input.creatorWallet))) {
+      fail(`SDK transaction ${index} fee payer does not match the approved creator wallet`);
+    }
+    const required = keys.slice(0, requiredCount).map(key => key.toBase58());
+    const expected = [input.creatorWallet, input.mintKeypair.publicKey.toBase58()];
+    if (required.length !== 2 || !expected.every(key => required.includes(key))) {
+      fail(`SDK transaction ${index} contains an unexpected required signer`);
+    }
+    const instructions = message.compiledInstructions;
+    if (!Array.isArray(instructions) || instructions.length === 0) fail(`SDK transaction ${index} contains no compiled instructions`);
+    const programIds = instructions.map(instruction => {
+      const program = keys[instruction.programIdIndex];
+      if (!program) fail(`SDK transaction ${index} references an unresolved program index`);
+      const address = program.toBase58();
+      if (!allowedPrograms.has(address)) fail(`SDK transaction ${index} references an unapproved program: ${address}`);
+      return address;
+    });
+    return {
+      index,
+      feePayer: keys[0].toBase58(),
+      requiredSignerKeys: required,
+      programIds: [...new Set(programIds)],
+      instructionCount: instructions.length,
+      accountMetaIndexes: instructions.map(instruction => Array.from(instruction.accountKeyIndexes ?? [])),
+    };
+  });
   return {
     cluster: "devnet",
     programId: DEVNET.programId,
@@ -143,6 +200,9 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     createOnly: true,
     transactionCount: prepared.transactions.length,
     transactions: prepared.transactions,
+    signerRequirements,
+    transactionReviews,
+    instructionTypes: prepared.instructionTypes ?? [],
     extInfo: prepared.extInfo,
     creatorWalletSignatureRequired: true,
     transactionSubmitted: false,
