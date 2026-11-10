@@ -3192,3 +3192,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - The canonical checklist file explicitly directs maintainers to keep the root README as the single source of truth; it is not maintained as a second independent checklist.
 - No current-head test was run, no workflow was dispatched, no branch was rebased or merged, no Cloudflare deployment occurred, and no chain transaction was signed/submitted in this audit. The connected GitHub actions available here still expose no workflow-dispatch, writable Git worktree, or merge action. No claim of live Swap/Launchpad/auth is made.
 - Exact next task: get an authorized network-enabled Git worktree or workflow-dispatch capability; inspect and validate PR #234's five commits beyond the last green checkout; reconcile its 49-commit divergence and run Validate + Browser Smoke plus all proxy tests on the integrated head. In parallel, continue PR #231's custody/IDL/provenance blockers and verify real account-session flows. Keep execution and launch controls off until the relevant end-to-end gates pass.
+
+
+### Follow-up source verification (same release-state audit)
+
+- Fetched the current main versions of launchpad/index.html and swap-config.js. The Launchpad page contains **0 script tags and 0 form tags**; a source scan found no token-mint/submit/wallet transaction handler. The Launchpad is still a static information page, not a production launch service.
+- The exact public config remains proxyEnabled: true, enabled: false, API base https://api.climboria.fun. This permits proxy-backed discovery/quote routing only; it does not enable signing or execution.
+- Found a stale secondary handoff: docs/ACTIVE-HANDOFF-2026-11-11.md still records PR #234 head 47fa08125048a9978dd6ea116172ab818425fefc, whereas the live PR head is 7f5d3451c7c99356fd46502691f0c24f92a96ade. Use the root README and live GitHub PR metadata as the current source of truth; do not use the stale handoff SHA to validate or resume work.
+- These checks were source inspection only. No production endpoint health, chart rendering, wallet signature, swap settlement, Launchpad mint, or authentication session was exercised.
