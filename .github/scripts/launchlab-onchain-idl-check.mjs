@@ -25,7 +25,7 @@ const CRITICAL_TYPES = ["GlobalConfig", "PlatformConfig", "PoolState", "BondingC
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const SDK_LAYOUT_SHA256 = "a422af7572b3b0f567ff7ad39f4b099eaf8a551257a77f89a61a3fe603ec2256";
 const readU64 = (data, offset) => data.readBigUInt64LE(offset).toString();
-const fixedText = (data, start, length) => data.subarray(start, start + length).toString("utf8").replace(/\\0.*$/s, "").trim();
+const fixedText = (data, start, length) => { const value = data.subarray(start, start + length).toString("utf8"); const end = value.indexOf("\\0"); return (end < 0 ? value : value.slice(0, end)).trim(); };
 function decodeSdkGlobalConfig(data) {
   if (data.length !== 371) throw new Error(`GlobalConfig size mismatch for pinned SDK layout: ${data.length} != 371`);
   const requiresPlatformAuth = data.readUInt8(243);
@@ -56,7 +56,8 @@ function decodeSdkPlatformConfig(data) {
     transferFeeExtensionAuth: new PublicKey(data.subarray(728, 760)).toBase58(),
     platformVestingWallet: new PublicKey(data.subarray(760, 792)).toBase58(), platformVestingScale: readU64(data, 792),
     platformCpCreator: new PublicKey(data.subarray(800, 832)).toBase58(), restrictGlobalConfig, restrictCurveParam,
-    curveRuleManager: new PublicKey(data.subarray(834, 866)).toBase58()
+    curveRuleManager: new PublicKey(data.subarray(834, 866)).toBase58(),
+    legacyIdlCurveParamsVectorLength: data.readUInt32LE(940)
   };
 }
 const stable = value => {
