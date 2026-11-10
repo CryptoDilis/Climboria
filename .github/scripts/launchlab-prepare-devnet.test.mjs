@@ -64,6 +64,10 @@ test("rejects non-CPMM, non-create-only and Token-2022 paths", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ createOnly: false }), sdk), /create-only mode/);
   assert.throws(() => validateDevnetLaunchInput(input({ token2022: true }), sdk), /not enabled/);
 });
+test("rejects metadata bytes whose declared hash does not match", () => {
+  const validMetadata = input({}).metadata;
+  assert.throws(() => validateDevnetLaunchInput(input({ metadata: { ...validMetadata, contentHash: "0".repeat(64) } }), sdk), /SHA-256 does not match/);
+});
 test("validates raw u64 amounts and supply bounds", () => {
   assert.throws(() => validateDevnetLaunchInput(input({ totalSellA: "1.5" }), sdk), /unsigned integer string/);
   assert.throws(() => validateDevnetLaunchInput(input({ totalSellA: "1000000000000001" }), sdk), /cannot exceed total supply/);
