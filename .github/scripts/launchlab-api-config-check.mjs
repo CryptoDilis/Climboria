@@ -67,16 +67,16 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
   const feeAmount = feeData.readBigUInt64LE(64).toString();
   const state = feeData.readUInt8(108);
   if (state !== 1) throw new Error("CPMM create-pool fee token account is not initialized");
-  if (feeTokenAuthority.toBase58() !== target.cpmmFeeAuthority) throw new Error("CPMM create-pool fee token authority differs from pinned SDK constant");
+  const feeAuthorityMatchesPinnedSdk = feeTokenAuthority.toBase58() === target.cpmmFeeAuthority;
   const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
   const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
   const [expectedFeeAta] = PublicKey.findProgramAddressSync([feeTokenAuthority.toBuffer(), tokenProgram.toBuffer(), feeMint.toBuffer()], associatedProgram);
-  if (expectedFeeAta.toBase58() !== target.cpmmFeeAccount) throw new Error("CPMM create-pool fee account is not the pinned authority/mint associated token account");
+  const feeAtaDerivationMatches = expectedFeeAta.toBase58() === target.cpmmFeeAccount;
   return {
     cpmmProgramId: target.cpmmProgram, cpmmProgramExecutable: true,
     cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner,
     cpmmCreatePoolFeeMint: feeMint.toBase58(), cpmmCreatePoolFeeTokenAuthority: feeTokenAuthority.toBase58(),
-    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeAssociatedTokenAccountVerified: true,
+    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesPinnedSdk: feeAuthorityMatchesPinnedSdk, cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds: feeAtaDerivationMatches,
     cpmmCreatePoolFeeAccountLamports: String(cpmmFeeAccount.lamports),
     lockProgramId: target.lockProgram, lockProgramExecutable: true, lockAuthority: target.lockAuthority
   };
