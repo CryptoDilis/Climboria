@@ -2667,3 +2667,16 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-10 — Portfolio & Rewards Tracker UI foundation
+
+- [x] Added a dedicated `#portfolio` section to the homepage, with desktop and mobile navigation links.
+- [x] Added premium dark-navy / muted-gold portfolio card and responsive metric grid for total portfolio value, $CLIMB balance, claimable rewards, total claimed, lifetime earned, pending rewards, other assets, and season rewards.
+- [x] Added Rewards Activity and Account & Security panels.
+- [x] Wallet connection status reflects only the address returned by the existing browser wallet connection flow. It explicitly says account login is not verified.
+- [x] Claim action is visibly disabled. No fake balances, reward totals, token price, claim transactions, or reward history are generated. Unavailable values are not shown as zero.
+- [x] Clear release gates displayed: official token mint and pricing source, authenticated player identity, server-authoritative rewards ledger, idempotent claim execution, and verifiable transaction history must exist before live figures or claims are enabled.
+- [x] Commit `6d61ca4d319c4aa31b46eb16c768a68a69773009`: homepage Portfolio & Rewards tracker UI foundation.
+- [ ] Exact next job: open draft PR and run Validate + Browser Smoke; inspect mobile 390px/360px and desktop card layout, nav anchor behavior, auth modal CTA, and ensure disabled claim has no action. Keep UI read-only until token mint and rewards backend are verified.
+- [ ] Future backend work: connect wallet asset reads for verified supported networks; add server-side reward summary endpoint scoped to authenticated player; claim endpoint with replay protection and on-chain settlement verification; history endpoint with explorer links. Do not use localStorage as a reward source or trust client-submitted balances.
