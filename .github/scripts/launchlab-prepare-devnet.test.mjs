@@ -25,9 +25,9 @@ const sdk = {
   LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000, protocolFeeOwner: new PublicKey(ids.creator), migrateFeeOwner: new PublicKey(ids.creator), migrateToCpmmWallet: new PublicKey("11111111111111111111111111111112"), migrateToAmmWallet: new PublicKey(ids.creator) }) },
   PlatformConfig: { decode: () => ({ restrictCurveParam: false, platformClaimFeeWallet: new PublicKey(ids.creator), platformLockNftWallet: new PublicKey(ids.creator), feeRate: 2500, creatorFeeRate: 2500, cpConfigId: new PublicKey(ids.configId) }) },
 };
-function makeInitializeV2Transaction(options, label = "init", overrides = {}) {
+function makeInitializeV2Transaction(options, label = "init", overrides = {}, platformCurveRuleId) {
   const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
-  const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId) });
+  const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId), platformCurveRuleId });
   const privileges = new Map();
   for (const item of expected) {
     const key = item.pubkey.toBase58();
@@ -92,7 +92,7 @@ const input = overrides => ({
   totalFundRaisingB: "85000000000", totalLockedAmount: "0",
   ...overrides,
 });
-function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, missingRule = false, ruleIdentityMismatch = false } = {}) {
+function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restrictGlobalConfig = false, missingRule = false, ruleIdentityMismatch = false } = {}) {
   let captured, executeCalled = false;
   const rulePda = new PublicKey("Rule111111111111111111111111111111111111");
   const ruleDiscriminator = Buffer.from([1,2,3,4,5,6,7,8]);
@@ -121,7 +121,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, missi
       createLaunchpad: async options => {
         captured = options;
         return {
-          transactions: [makeInitializeV2Transaction(options, "init-1"), makeInitializeV2Transaction(options, "init-2")],
+          transactions: [makeInitializeV2Transaction(options, "init-1", {}, restrict ? rulePda : undefined), makeInitializeV2Transaction(options, "init-2", {}, restrict ? rulePda : undefined)],
           signers: [[options.extraSigners[0]], [options.extraSigners[0]]],
           instructionTypes: ["initializeV2"],
           extInfo: { poolId: "fixture" },
@@ -132,7 +132,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, missi
   };
   const testSdk = {
     ...sdk,
-    PlatformConfig: { decode: () => ({ restrictCurveParam: restrict }) },
+    PlatformConfig: { decode: () => ({ restrictCurveParam: restrict, restrictGlobalConfig }) },
     PlatformCurveRule: { decode: () => ruleData },
     PLATFORM_CURVE_RULE_DISCRIMINATOR: ruleDiscriminator,
     getPdaPlatformCurveRule: () => ({ publicKey: rulePda, bump: 9 }),
@@ -387,6 +387,12 @@ test("validates the finalized PlatformCurveRule PDA and matching launch constrai
   assert.equal(result.platformCurveRule.matchedGroupId, 0);
   assert.equal(result.platformCurveRule.finalizedSlot, 123);
   assert.equal(result.platformCurveRule.finalizedBlockTime, 1700000000);
+  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 19);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[18].name, "platform_curve_rule");
+});
+test("fails closed when the platform restricts GlobalConfig access without verified PlatformAllowConfig support", async () => {
+  const mock = client({ restrictGlobalConfig: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /PlatformAllowConfig is not yet independently decoded and verified/);
 });
 test("fails closed when the restricted PlatformCurveRule account is missing", async () => {
   const mock = client({ restrict: true, missingRule: true });
