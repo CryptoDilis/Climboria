@@ -62,7 +62,7 @@ export function compareExecutableToPinnedBuildArtifact(executableBytes, {
   };
 }
 
-export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster }) {
+export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
     fail("Read-only account RPC and PublicKey support are required");
@@ -114,9 +114,17 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
       // The slot timestamp is supplementary provenance; account/hash checks remain authoritative.
     }
   }
+  const artifactMetadata = {
+    sourceCommit: buildArtifact.sourceCommit ?? null,
+    workflowRunId: buildArtifact.workflowRunId ?? null,
+    artifactId: buildArtifact.artifactId ?? null,
+    artifactPath: buildArtifact.artifactPath ?? null,
+    byteLength: buildArtifact.byteLength,
+    sha256: buildArtifact.sha256,
+  };
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
-    artifactLength: PINNED_METAPLEX_BUILD_ARTIFACT.byteLength,
-    artifactSha256: PINNED_METAPLEX_BUILD_ARTIFACT.sha256,
+    artifactLength: artifactMetadata.byteLength,
+    artifactSha256: artifactMetadata.sha256,
   });
   return {
     status: pinnedBuildArtifactComparison.exactMatch
@@ -135,7 +143,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
     executableSha256: createHash("sha256").update(executableBytes).digest("hex"),
-    pinnedBuildArtifact: PINNED_METAPLEX_BUILD_ARTIFACT,
+    pinnedBuildArtifact: artifactMetadata,
     pinnedBuildArtifactComparison,
     sourceMatchStatus: pinnedBuildArtifactComparison.exactMatch ? "exact_pinned_build_artifact_match" : "pinned_build_artifact_not_matched",
     transactionSigned: false,
