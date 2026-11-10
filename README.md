@@ -2727,3 +2727,14 @@ For every integrated asset or borrowed technique, record:
 - Parser remains a structural wire decoder only; no ALT account resolution, semantic instruction allowlist, order-wallet binding or execute-route integration exists yet.
 - Hard execution gate remains false.
 - **Next exact task:** wait for Browser Smoke result; then implement trusted ALT resolution/account-meta reconstruction and instruction-level semantic validation, with tests. Keep execution disabled.
+
+
+## 2026-11-11 — ALT account-meta reconstruction and program-index correction
+
+- [x] **Root-cause diagnosis:** the first structural decoder rejected every instruction whose program ID was in a v0 loaded lookup account because it compared `programIdIndex` to the static-key count before parsing ALT descriptors. Solana v0 can reference readonly loaded program IDs; the check was too restrictive.
+- [x] **Targeted fix:** defer the program-index bounds check until the complete static + loaded account-key count is known. Reject out-of-range program and account indexes against that final count.
+- [x] Added `reconstructAccountMetas(parsed, resolvedTables)`: reconstruct static signer/writable/readonly flags and canonical global ordering of loaded writable keys followed by loaded readonly keys, including multiple lookup tables; reject missing/mismatched trusted table input, out-of-bounds or duplicate lookup indexes, duplicate resolved account keys, and writable/signer program IDs.
+- [x] Added ALT-focused unit tests for canonical ordering and malformed lookup tables. Commits: `27dfc342888cc23662281f866d81b9df9126c27c` (source), `f158162f2009f42570482fe9a54497c2b2a4b9eb` (tests).
+- [ ] **Verification pending:** GitHub Actions must run on new head `f158162f2009f42570482fe9a54497c2b2a4b9eb`; do not reuse the earlier successful Validate run as proof of these changes. Prior browser smoke attempts were cancelled or in progress, not a green full suite.
+- [ ] **Exact next job:** verify new Validate and Browser Smoke checks; if failed, inspect failing logs and fix root cause. Then implement trusted RPC ALT account-owner/state/slot checks, instruction program allowlists, exact order-wallet-message binding, durable replay protection, adversarial tests, and controlled Devnet lifecycle verification.
+- **Safety boundary:** the new helper consumes externally supplied table contents and DOES NOT authenticate them. It is NOT integrated into the execute route. `EXECUTION_SECURITY_REVIEW_COMPLETE` remains false, and neither production Worker nor live trading was enabled.
