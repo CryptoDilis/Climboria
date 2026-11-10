@@ -224,3 +224,29 @@ test("reports bounded incomplete history without claiming the deployment was fou
   assert.equal(result.signatures.length, 0);
   assert.equal(result.pagesScanned, 2);
 });
+
+test("selects the oldest signatures when the historical transaction inspection cap is reached", async () => {
+  const fetched = [];
+  const connection = {
+    getSignaturesForAddress: async () => [
+      { signature: "recent", slot: 500 },
+      { signature: "middle", slot: 300 },
+      { signature: "state", slot: 100 },
+      { signature: "oldest", slot: 50 },
+    ],
+    getTransaction: async signature => {
+      fetched.push(signature);
+      return { meta: { err: null, logMessages: ["Program deployed"] } };
+    },
+  };
+  const result = await inspectProgramDataHistory({
+    connection, programDataPublicKey: new PublicKey(programDataAddress),
+    stateSlot: 100, pageSize: 10, maxPages: 1, maxHistoricalTransactions: 2,
+  });
+  assert.deepEqual(fetched, ["state", "oldest"]);
+  assert.equal(result.availableHistoricalSignatureCount, 2);
+  assert.equal(result.historicalCandidateCount, 2);
+  assert.equal(result.complete, true);
+  assert.equal(result.selectedRangeOldestSlot, 50);
+  assert.equal(result.selectedRangeNewestSlot, 100);
+});
