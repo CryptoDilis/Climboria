@@ -11,7 +11,7 @@ const target = {
 const lockNames = ["authority","payer","liquidityOwner","feeNftOwner","feeNftMint","feeNftAccount","poolState","lockedLiquidity","lpMint","liquidityOwnerLp","lockedLpVault","token0Vault","token1Vault","metadataAccount","rent","systemProgram","tokenProgram","associatedTokenProgram","metadataProgram"];
 const collectNames = ["authority","feeNftOwner","feeNftAccount","lockedLiquidity","cpSwapProgram","cpAuthority","poolState","lpMint","recipientToken0Account","recipientToken1Account","token0Vault","token1Vault","vault0Mint","vault1Mint","lockedLpVault","tokenProgram","tokenProgram2022","memoProgram"];
 const lockFlags = [[false,false],[true,true],[true,false],[false,false],[true,true],[false,true],[false,false],[false,true],[false,false],[false,true],[false,true],[false,true],[false,true],[false,true],[false,false],[false,false],[false,false],[false,false],[false,false]];
-const collectFlags = [[false,false],[true,false],[false,true],[false,true],[false,false],[false,false],[false,true],[false,true],[false,true],[false,true],[false,true],[false,true],[false,false],[false,false],[false,true],[false,false],[false,false],[false,false]];
+const collectFlags = [[false,false],[true,false],[false,false],[false,true],[false,false],[false,false],[false,true],[false,true],[false,true],[false,true],[false,true],[false,true],[false,false],[false,false],[false,true],[false,false],[false,false],[false,false]];
 const makeAccounts = (names, flags) => names.map((name, i) => ({ name, signer: flags[i][0], writable: flags[i][1] }));
 function fixture() {
   const lock = {
