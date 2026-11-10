@@ -33,7 +33,7 @@ test("decodes a structurally valid legacy transaction", () => {
   assert.equal(parsed.requiredSignatures, 1);
 });
 test("rejects unsupported message versions", () => {
-  const bytes = Buffer.from(fixture());
+  const bytes = Buffer.from(fixture(), "base64");
   bytes[65] = 0x81;
   assert.throws(() => decodeSolanaTransaction(bytes.toString("base64")), /Unsupported Solana message version/);
 });
@@ -128,7 +128,7 @@ test("decodes active lookup-table account data with owner and RPC slot checks", 
   view.setUint32(0, 1, true);
   view.setBigUint64(4, 0xffffffffffffffffn, true);
   view.setBigUint64(12, 100n, true);
-  data[20] = 1;
+  data[20] = 0;
   data[21] = 0;
   data.set(new Uint8Array(32).fill(8), 56);
   data.set(new Uint8Array(32).fill(9), 88);
