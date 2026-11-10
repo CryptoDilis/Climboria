@@ -1,3 +1,15 @@
+### Latest checkpoint — 2026-11-10 (corrected oldest-first parser tests, PR #231)
+
+- [x] Rechecked PR #231: open and Draft; branch remains `codex/launchlab-live-provenance-probe`.
+- [x] Corrective code commit `83a5209e50d74c44a7772c234ffd3d6ec7a08c37` fixed the two stale mock-order assertions after the oldest-first change.
+- [x] Latest Validate Climboria run `42759807891` on README checkpoint head `8f994b7b2d4140ab7cd5ce453f063a49fa357c6f`: SUCCESS. The Validate run for the corrective source commit was cancelled by the subsequent README checkpoint commit, but the later head validation is green.
+- [x] LaunchLab Live Provenance run `42759807542` for code commit `83a5209e50d74c44a7772c234ffd3d6ec7a08c37` has passed the read-only probe tests, pinned SDK/IDL hash and discriminator checks, LP Lock/Launch Config checks, fail-closed transaction preparation, approval-gated simulation mock tests, owner approval packet tests, rent layout tests, and Metaplex provenance parser mock tests. At last inspection it was rebuilding the deployment-era Metaplex program; final outcome and live RPC evidence are still pending.
+- [ ] An earlier LaunchLab run `42759792899` for the same corrective source commit remains in progress at the historical rebuild stage. It is a duplicate run; do not treat it as additional verification.
+- [ ] **Next P0:** poll `42759807542` through the historical build and live read-only provenance steps. Inspect the resulting oldest-first transaction list and instruction evidence; verify any original deployment candidate and governance references from actual successful transaction contents, not log wording alone.
+- [ ] If RPC 429s still leave transaction detail unavailable, record exact unavailable signatures and keep provenance incomplete; do not infer deployment lineage.
+- [ ] Metaplex deployed executable still does not match the reproducible candidate artifact; exact source lineage and metadata allocation compatibility remain unresolved. Devnet LP Lock IDL publication and CPMM fee-receiver custody remain independent migration blockers.
+- [ ] No wallet signing, transaction simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, oldest-first test correction)
 
 - [x] Validate Climboria `42759689663` on source commit `d356fd05357e45e60548658a6ef57bca4a66bd34`: SUCCESS.
