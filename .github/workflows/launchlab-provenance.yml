@@ -126,7 +126,7 @@ jobs:
         env:
           METAPLEX_BUILD_ARTIFACT_PATH: ${{ runner.temp }}/metaplex-build/token_metadata.so
           METAPLEX_SOURCE_COMMIT: 23aee718e723578ee5df411f045184e0ac9a9e63
-        run: node .github/scripts/launchlab-metaplex-deployment-smoke.mjs
+        run: timeout --signal=TERM --kill-after=10s 240s node .github/scripts/launchlab-metaplex-deployment-smoke.mjs
       - name: Build and inspect real pinned-SDK Devnet transactions (no signing or submission)
         env:
           LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
