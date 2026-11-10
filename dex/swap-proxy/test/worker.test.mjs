@@ -248,6 +248,30 @@ test("executes only with a valid Jupiter success response and matching request p
   }
 });
 
+test("records an uncertain, replay-locked order when Jupiter execution transport fails", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  try {
+    globalThis.fetch = async () => { throw new TypeError("connection reset after request dispatch"); };
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.match(body.error, /outcome is unknown/i);
+    assert.match(body.error, /locked against replay/i);
+    assert.equal(body.settlementRecorded, true);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("rejects Jupiter Success when execution code is nonzero", async () => {
   const originalFetch = globalThis.fetch;
   try {
