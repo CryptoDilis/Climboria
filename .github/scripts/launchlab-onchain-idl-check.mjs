@@ -11,8 +11,8 @@ const require = createRequire(`${process.env.LAUNCHLAB_TOOLS_PREFIX || "/tmp/lau
 const { PublicKey } = require("@solana/web3.js");
 
 const PROGRAMS = {
-  mainnet: { id: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj", rpc: "https://api.mainnet-beta.solana.com" },
-  devnet: { id: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", rpc: "https://api.devnet.solana.com" }
+  mainnet: { id: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj", rpc: "https://api.mainnet-beta.solana.com", globalConfig: "6s1xP3hpbAfFoNtUNF8mfHsjr2Bd97JxFJRWLbL6aHuX", platformConfig: "4Bu96XjU84XjPDSpveTVf6LYGCkfW5FK7SNkREWcEfV4" },
+  devnet: { id: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6", rpc: "https://api.devnet.solana.com", globalConfig: "7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt", platformConfig: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a" }
 };
 const CRITICAL_INSTRUCTIONS = [
   "initialize_v2", "initialize_with_token_2022", "buy_exact_in", "buy_exact_out",
@@ -61,6 +61,22 @@ async function fetchCluster(cluster, repoIdl) {
   const inflated = inflateSync(compressed), liveIdl = JSON.parse(inflated.toString("utf8"));
   if (liveIdl.address !== target.id) throw new Error(`${cluster}: live IDL address mismatch: ${liveIdl.address}`);
 
+  const liveAccountsByName = new Map((liveIdl.accounts || []).map(x => [x.name, x]));
+  const configAccountChecks = {};
+  for (const [kind, address] of [["GlobalConfig", target.globalConfig], ["PlatformConfig", target.platformConfig]]) {
+    const configAccount = await readAccount(target.rpc, address);
+    const accountDef = liveAccountsByName.get(kind);
+    const actualData = configAccount ? Buffer.from(configAccount.data[0], "base64") : null;
+    const expectedDisc = accountDef?.discriminator ? Buffer.from(accountDef.discriminator) : null;
+    configAccountChecks[kind] = {
+      address, exists: Boolean(configAccount), owner: configAccount?.owner ?? null,
+      ownerMatchesLaunchpad: configAccount?.owner === target.id,
+      dataLength: actualData?.length ?? null, lamports: configAccount?.lamports ?? null,
+      expectedDiscriminator: expectedDisc?.toString("hex") ?? null,
+      actualDiscriminator: actualData?.subarray(0, 8).toString("hex") ?? null,
+      discriminatorMatches: Boolean(expectedDisc && actualData && actualData.subarray(0, 8).equals(expectedDisc))
+    };
+  }
   const repoInstructions = new Map(repoIdl.instructions.map(x => [x.name, x]));
   const liveInstructions = new Map(liveIdl.instructions.map(x => [x.name, x]));
   const criticalDiscriminatorMismatches = [];
@@ -95,7 +111,7 @@ async function fetchCluster(cluster, repoIdl) {
   const criticalSchemasMatch = criticalSchemaMismatches.length === 0;
   return {
     cluster, rpc: target.rpc, programId: target.id, idlAddress: idlAddress.toBase58(),
-    accountOwner: account.owner, idlAuthority: authority,
+    accountOwner: account.owner, idlAuthority: authority, configAccountChecks,
     declaredCompressedLength, compressedBytes: compressed.length, trailingAllocatedBytes,
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
