@@ -17,6 +17,10 @@ const {
   Raydium,
   LaunchpadConfig,
   PlatformConfig,
+  PlatformCurveRule,
+  PLATFORM_CURVE_RULE_DISCRIMINATOR,
+  getPdaPlatformCurveRule,
+  checkLaunchAgainstCurveRule,
   TxVersion,
 } = sdkPackage;
 
@@ -69,7 +73,7 @@ raydium.launchpad.createLaunchpad = async params => {
 
 const result = await prepareDevnetLaunch({
   raydium,
-  sdk: { PublicKey, BN, LaunchpadConfig, PlatformConfig, TxVersion },
+  sdk: { PublicKey, BN, LaunchpadConfig, PlatformConfig, PlatformCurveRule, PLATFORM_CURVE_RULE_DISCRIMINATOR, getPdaPlatformCurveRule, checkLaunchAgainstCurveRule, TxVersion },
   input: {
     cluster: "devnet",
     programId: "DRay6fNdQ5J82H7xV6uq2aV3mNrUZ1J4PgSKsWgptcm6",
