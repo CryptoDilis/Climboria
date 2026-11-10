@@ -326,7 +326,7 @@ export function summarizeMetaplexGovernanceHistory(signatures = []) {
       if (instruction.programId !== METAPLEX_GOVERNANCE_PROGRAM_ID || instruction.dataEncoding !== "base64" || typeof instruction.data !== "string") continue;
       const bytes = Buffer.from(instruction.data, "base64");
       if (bytes.length < 4) continue;
-      const discriminator = bytes.readUInt32LE(0);
+      const discriminator = bytes.readUInt8(0);
       const accounts = instruction.accounts ?? [];
       if (discriminator === 5) {
         const log = (transaction.governanceLogs ?? []).find(line => line.includes("CreateProgramGovernance")) ?? "";
