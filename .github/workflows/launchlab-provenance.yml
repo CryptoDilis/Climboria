@@ -26,6 +26,7 @@ on:
       - ".github/scripts/launchlab-api-config-check.test.mjs"
       - ".github/scripts/launchlab-prepare-devnet.mjs"
       - ".github/scripts/launchlab-prepare-devnet.test.mjs"
+      - ".github/scripts/launchlab-devnet-builder-smoke.mjs"
       - ".github/workflows/launchlab-provenance.yml"
 
 permissions:
