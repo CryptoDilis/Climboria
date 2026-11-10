@@ -778,3 +778,22 @@ No production Worker deployment, live swap execution, Launchpad token creation, 
 4. Continue Launchpad IDL/Devnet blockers and real account authentication as separate release gates.
 
 Production Swap execution, Launchpad token creation/fundraising, and Google/X/email account login remain not live.
+
+
+## 2026-11-11 — Latest continuation checkpoint (supersedes older counts/status)
+
+- Main SHA before this record: `8e043c467d6d49790664b15e43848fab3c980901`; README checkpoint commit: `47415d087ad941be62289e6a8dbca1e2cfecd805`.
+- GitHub Pages run `42885521444` completed SUCCESS for main SHA `8e043c467d6d49790664b15e43848fab3c980901`; build `130072750927`, deploy `130073053197`, report `130073053210` all succeeded.
+- PR #234 remains open/draft, head `7f5d3451c7c99356fd46502691f0c24f92a96ade`, base `28180c2a277e0c4bd093a40462032e7f536989e6`, mergeable=false, no reviews. Fresh compare against current main: 42 ahead / 25 behind, diverged; merge base is still the original PR base. The behind count increased from the previously recorded 19. No safe merge/rebase has been performed.
+- Latest-head PR workflow-run lookup returned no PR-triggered runs for `7f5d3451c7c99356fd46502691f0c24f92a96ade`. Exact-head Validate and Browser Smoke are still unverified. Successful historical Browser Smoke on `32ec6ca` is not evidence for this head.
+- PR #234 Worker deployment guide still states **prepared, not deployed**. Required Cloudflare secrets/variables, active zone/custom domain, health/CORS/rate-limit checks, independent security review and controlled Devnet lifecycle are outstanding.
+- Production kill switches remain OFF: Worker `EXECUTION_ENABLED=false`; frontend `swap-config.js enabled=false`. Do not turn them on based on Pages success or quote-preview functionality.
+- No production Swap, Launchpad token creation/fundraising, or Guest/email/Google/X account login is verified live.
+
+### Exact next task
+1. Owner manually dispatches Validate Climboria on `codex/swap-order-binding-durable-object` and confirms exact head SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`. This session's GitHub connector still lacks a workflow-dispatch action.
+2. Reconcile PR #234 with current main in a genuine local worktree, resolve actual conflicts, and rerun Validate + Browser Smoke on the integrated head. Do not merge while dirty/unreviewed.
+3. Complete independent security review and controlled Devnet lifecycle; then configure/deploy Worker and verify production health/CORS/rate limits before any separately approved execution enablement.
+4. Resolve PR #231 canonical Devnet LP Lock IDL publication and live LaunchLab IDL type-definition mismatches. Keep Launchpad signing/submission/migration disabled.
+5. Implement and verify real account/session auth (Guest, email/password, Google OAuth, X OAuth), account linking, email verification/reset, logout, persistence and cross-device progress before enabling login UI.
+
