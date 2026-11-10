@@ -20,7 +20,9 @@ const CLUSTERS = {
     platformConfig: "4Bu96XjU84XjPDSpveTVf6LYGCkfW5FK7SNkREWcEfV4",
     cpmmProgram: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
     cpmmFeeAccount: "DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8",
-    cpmmFeeAuthority: "GpMZbSM2GgvTKHJirzeGfMFoaZ8UR2X7F4v8vHTvxFbL",
+    cpmmAdmin: "GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ",
+    cpmmProtocolOwner: "ProCXqRcXJjoUd1RNoo28bSizAA6EEqt9wURZYPDc5u",
+    cpmmFundOwner: "FUNDduJTA7XcckKHKfAoEnnhuSud2JUCUZv6opWEjrBU",
     lockProgram: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
     lockAuthority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH"
   },
@@ -32,7 +34,9 @@ const CLUSTERS = {
     platformConfig: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
     cpmmProgram: "DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb",
     cpmmFeeAccount: "3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy",
-    cpmmFeeAuthority: "CXniRufdq5xL8t8jZAPxsPZDpuudwuJSPWnbcD5Y5Nxq",
+    cpmmAdmin: "DRayqG9RXYi8WHgWEmRQGrUWRWbhjYWYkCRJDd6JBBak",
+    cpmmProtocolOwner: "DRay33UmULQCeawH3dVpJfN3uqLj6Qtq4ymSRx2pAgGK",
+    cpmmFundOwner: "DRay33UmULQCeawH3dVpJfN3uqLj6Qtq4ymSRx2pAgGK",
     lockProgram: "DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX",
     lockAuthority: "7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3"
   }
@@ -81,8 +85,9 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
   const feeTokenAuthority = new PublicKey(feeData.subarray(32, 64));
   const feeAmount = feeData.readBigUInt64LE(64).toString();
   const state = feeData.readUInt8(108);
+  if (cpmmConfig.protocolOwner !== target.cpmmProtocolOwner || cpmmConfig.fundOwner !== target.cpmmFundOwner) throw new Error("CPMM config protocol/fund owners differ from the pinned CPMM source constants");
   if (state !== 1) throw new Error("CPMM create-pool fee token account is not initialized");
-  const feeAuthorityMatchesPinnedSdk = feeTokenAuthority.toBase58() === target.cpmmFeeAuthority;
+  const feeAuthorityMatchesProgramAdmin = feeTokenAuthority.toBase58() === target.cpmmAdmin;
   const tokenProgram = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
   const associatedProgram = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
   const [expectedFeeAta] = PublicKey.findProgramAddressSync([feeTokenAuthority.toBuffer(), tokenProgram.toBuffer(), feeMint.toBuffer()], associatedProgram);
@@ -91,7 +96,7 @@ export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramA
     cpmmProgramId: target.cpmmProgram, cpmmProgramExecutable: true,
     cpmmCreatePoolFeeAccount: target.cpmmFeeAccount, cpmmCreatePoolFeeAccountOwner: cpmmFeeAccount.owner,
     cpmmCreatePoolFeeMint: feeMint.toBase58(), cpmmCreatePoolFeeTokenAuthority: feeTokenAuthority.toBase58(),
-    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesPinnedSdk: feeAuthorityMatchesPinnedSdk, cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds: feeAtaDerivationMatches,
+    cpmmCreatePoolFeeTokenAmount: feeAmount, cpmmCreatePoolFeeTokenAuthorityMatchesProgramAdmin: feeAuthorityMatchesProgramAdmin, cpmmCreatePoolFeeAssociatedTokenAccountMatchesPinnedSeeds: feeAtaDerivationMatches,
     cpmmCreatePoolFeeAuthorityMatchesConfigProtocolOwner: feeTokenAuthority.toBase58() === cpmmConfig.protocolOwner,
     cpmmCreatePoolFeeAuthorityMatchesConfigFundOwner: feeTokenAuthority.toBase58() === cpmmConfig.fundOwner,
     cpmmConfigId: target.cpmmConfigId, cpmmConfig,
