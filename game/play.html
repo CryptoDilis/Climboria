@@ -718,6 +718,7 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  });
  const caveMouth=new T3.Mesh(new T3.PlaneGeometry(8.6,4.9),new T3.MeshStandardMaterial({color:L('#20272a'),emissive:L('#293438'),emissiveIntensity:.22,roughness:1,side:T3.DoubleSide}));
  caveMouth.position.set(0,2.75,3.9);g.add(caveMouth);
+ const caveFloorMat=caveRockMaterial('#625b50',4110,.11),caveDampFloorMat=caveRockMaterial('#4f5b5c',4112,.14),caveRoofMat=caveRockMaterial('#383f43',4114,.2);
  const caveFloorLip=mk(BOX,caveFloorMat,0,.12,-1.1,g);sc(caveFloorLip,9.4,.24,5.8,g);
  // Low, irregular rubble blends the threshold into the natural approach apron.
  [[-7.8,.45,-.8,1.7,.7,2.2],[7.7,.42,-.5,1.8,.65,2.1],[-5.8,.28,-5.0,2.4,.45,1.8],[5.9,.3,-4.7,2.2,.48,1.9]].forEach(([x,y,z,sx,sy,sz],i)=>{
@@ -774,7 +775,6 @@ const spikes=[],caveGems=[],caveTorches=[],caveWallSegments=[];let caveAmbientFi
  caveWall(33,34,40,34,'side-room-north-east');
  caveWall(22,16,22,21,'side-room-west-lower');
  caveWall(22,29,22,34,'side-room-west-upper');
- const caveFloorMat=caveRockMaterial('#625b50',4110,.11),caveDampFloorMat=caveRockMaterial('#4f5b5c',4112,.14),caveRoofMat=caveRockMaterial('#383f43',4114,.2);
  const branchFloor=mk(BOX,caveFloorMat,15,.08,25,g);sc(branchFloor,14,.16,8,g);
  const chamberFloor=mk(BOX,caveFloorMat,31,.08,25,g);sc(chamberFloor,18,.16,18,g);
  // Low broken mineral plates soften the flat prototype floor while leaving the
