@@ -151,6 +151,18 @@ async function fetchCluster(cluster, repoIdl) {
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
   const selectedDiscriminatorsMatch = criticalDiscriminatorMismatches.length === 0;
   const criticalSchemasMatch = criticalSchemaMismatches.length === 0;
+  const globalDecoded = configAccountChecks.GlobalConfig.sdkLayoutDecoded;
+  const platformDecoded = configAccountChecks.PlatformConfig.sdkLayoutDecoded;
+  const sdkLayoutBinaryCompatible =
+    configAccountChecks.GlobalConfig.dataLength === 371 &&
+    configAccountChecks.PlatformConfig.dataLength === 944 &&
+    configAccountChecks.GlobalConfig.discriminatorMatches &&
+    configAccountChecks.PlatformConfig.discriminatorMatches &&
+    globalDecoded?.requiresPlatformAuth <= 1 &&
+    globalDecoded?.alignmentPaddingHex === "00000000000000" &&
+    platformDecoded?.restrictGlobalConfig <= 1 &&
+    platformDecoded?.restrictCurveParam <= 1 &&
+    platformDecoded?.legacyIdlCurveParamsVectorLength === 0;
   return {
     cluster, rpc: target.rpc, programId: target.id, idlAddress: idlAddress.toBase58(),
     accountOwner: account.owner, idlAuthority: authority, configAccountChecks,
@@ -158,9 +170,9 @@ async function fetchCluster(cluster, repoIdl) {
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
     liveInstructionCount: liveIdl.instructions?.length ?? 0, repositoryInstructionCount: repoIdl.instructions.length,
-    selectedDiscriminatorsMatch, criticalSchemasMatch, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
+    selectedDiscriminatorsMatch, criticalSchemasMatch, sdkLayoutBinaryCompatible, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
     repoOnlyInstructions, liveOnlyInstructions,
-    pass: selectedDiscriminatorsMatch && criticalSchemasMatch
+    pass: selectedDiscriminatorsMatch && sdkLayoutBinaryCompatible
   };
 }
 export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath) {
