@@ -112,3 +112,7 @@ All three should use the same verified core protocol integration if compatible; 
 This document records the owner's choice of bonding curve and NO public fundraising. It does not assert that LaunchLab was integrated, program IDs verified, Devnet parity tested, or any token/pool deployed.
 
 **Exact next job:** inspect and pin the current official Raydium LaunchLab SDK, deployed program IDs/config accounts, instruction/account layout, Devnet support, curve fee and graduation/LP behavior; record sources, version pins, and concrete read-only fixtures before implementing a wallet-signing flow.
+
+
+## Owner production direction — no mock/demo product (2026-11-10)
+The owner explicitly requests that Climboria be built for real live integrations, not mock/demo functionality. Do not ship generated curve progress, fake quotes, placeholder success, alert-only launch buttons, simulated balances, or synthetic market data. Connect actual Raydium/provider/on-chain sources and show honest loading/unavailable/error states when unavailable. Devnet remains a real pre-production network for real program instructions and wallet-signed tests; it is not a mock demo and is mandatory before risking Mainnet. Production execution stays disabled until program/config verification, independent security review, owner approval, monitoring and rollback are complete.
