@@ -24,7 +24,10 @@ const {
   TxVersion,
 } = sdkPackage;
 
-if (!Raydium || !LaunchpadConfig || !PlatformConfig || !TxVersion || !BN) {
+if (!Raydium || !LaunchpadConfig || !PlatformConfig || !PlatformCurveRule ||
+    !Buffer.isBuffer(PLATFORM_CURVE_RULE_DISCRIMINATOR) ||
+    typeof getPdaPlatformCurveRule !== "function" ||
+    typeof checkLaunchAgainstCurveRule !== "function" || !TxVersion || !BN) {
   throw new Error("Pinned Raydium SDK exports required by the Devnet builder are missing");
 }
 const pkg = require("@raydium-io/raydium-sdk-v2/package.json");
@@ -114,6 +117,7 @@ process.stdout.write(JSON.stringify({
   migration: result.migration,
   signerRequirements: result.signerRequirements,
   feeVaults: result.feeVaults,
+  platformCurveRule: result.platformCurveRule,
   feeAndMigrationDestinations: result.feeAndMigrationDestinations,
   transactionReviews: result.transactionReviews,
   transactionSubmitted: false,
