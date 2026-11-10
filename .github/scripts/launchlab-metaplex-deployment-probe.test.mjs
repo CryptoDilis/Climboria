@@ -31,6 +31,26 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
   const derivedAddress = new PublicKey(Buffer.alloc(32, 7));
   const connection = {
     getBlockTime: async slot => { assert.equal(slot, 123456); return 1794270000; },
+    getBlock: async (slot, config) => {
+      assert.equal(slot, 123456);
+      assert.equal(config.commitment, "finalized");
+      return {
+        blockTime: 1794270000,
+        transactions: [{
+          transaction: {
+            signatures: ["DeployOrUpgradeSignature"],
+            message: {
+              staticAccountKeys: [
+                new PublicKey(BPF_UPGRADEABLE_LOADER_ID),
+                derivedAddress,
+              ],
+              compiledInstructions: [{ programIdIndex: 0, accountKeyIndexes: [1] }],
+            },
+          },
+          meta: { err: null, logMessages: ["Program upgraded successfully"] },
+        }],
+      };
+    },
     getAccountInfo: async (key, commitment) => {
       calls.push({ key: key.toBase58(), commitment });
       if (key.toBase58() === METAPLEX_TOKEN_METADATA_PROGRAM_ID) {
@@ -54,6 +74,9 @@ test("captures finalized Devnet program-data slot, authority, and bytecode hash 
   assert.equal(result.programDataAddress, f.derivedAddress.toBase58());
   assert.equal(result.deploymentSlot, 123456);
   assert.equal(result.deploymentBlockTimeUnix, 1794270000);
+  assert.equal(result.deploymentTransactionEvidence.status, "deployment_block_inspected");
+  assert.equal(result.deploymentTransactionEvidence.candidateTransactions[0].signature, "DeployOrUpgradeSignature");
+  assert.equal(result.deploymentTransactionEvidence.candidateTransactions[0].loaderInstructionCount, 1);
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
   assert.equal(result.immutable, false);
   assert.equal(result.executableByteLength, 24);
@@ -120,4 +143,12 @@ test("requires valid pinned artifact hash and length", () => {
     artifactLength: 0, artifactSha256: "bad",
   }), /Pinned build artifact length and SHA-256 are required/);
   assert.equal(PINNED_METAPLEX_BUILD_ARTIFACT.byteLength, 685688);
+});
+
+test("reports unavailable deployment block history without inventing a transaction signature", async () => {
+  const f = fixture();
+  f.connection.getBlock = async () => null;
+  const result = await captureDevnetMetaplexProgramProvenance({ connection: f.connection, sdk, cluster: "devnet" });
+  assert.equal(result.deploymentTransactionEvidence.status, "deployment_block_unavailable");
+  assert.deepEqual(result.deploymentTransactionEvidence.candidateTransactions, []);
 });
