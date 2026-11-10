@@ -150,7 +150,7 @@ async function fetchCluster(cluster, repoIdl) {
   const repoOnlyInstructions = [...repoInstructions.keys()].filter(x => !liveInstructions.has(x));
   const liveOnlyInstructions = [...liveInstructions.keys()].filter(x => !repoInstructions.has(x));
   const selectedDiscriminatorsMatch = criticalDiscriminatorMismatches.length === 0;
-  const criticalSchemasMatch = criticalSchemaMismatches.length === 0;
+  const repoIdlTypeDefinitionsExactlyMatch = criticalSchemaMismatches.length === 0;
   const globalDecoded = configAccountChecks.GlobalConfig.sdkLayoutDecoded;
   const platformDecoded = configAccountChecks.PlatformConfig.sdkLayoutDecoded;
   const sdkLayoutBinaryCompatible =
@@ -170,7 +170,7 @@ async function fetchCluster(cluster, repoIdl) {
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
     liveInstructionCount: liveIdl.instructions?.length ?? 0, repositoryInstructionCount: repoIdl.instructions.length,
-    selectedDiscriminatorsMatch, criticalSchemasMatch, sdkLayoutBinaryCompatible, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
+    selectedDiscriminatorsMatch, repoIdlTypeDefinitionsExactlyMatch, sdkLayoutBinaryCompatible, criticalDiscriminatorMismatches, criticalSchemaMismatches, criticalSchemaDetails,
     repoOnlyInstructions, liveOnlyInstructions,
     pass: selectedDiscriminatorsMatch && sdkLayoutBinaryCompatible
   };
