@@ -3,6 +3,7 @@
  * Read-only Raydium LaunchLab provenance check.
  * Public API and finalized Solana account reads only. Never signs or submits.
  */
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
