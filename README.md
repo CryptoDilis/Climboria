@@ -2680,3 +2680,13 @@ For every integrated asset or borrowed technique, record:
 - [x] Commit `6d61ca4d319c4aa31b46eb16c768a68a69773009`: homepage Portfolio & Rewards tracker UI foundation.
 - [ ] Exact next job: open draft PR and run Validate + Browser Smoke; inspect mobile 390px/360px and desktop card layout, nav anchor behavior, auth modal CTA, and ensure disabled claim has no action. Keep UI read-only until token mint and rewards backend are verified.
 - [ ] Future backend work: connect wallet asset reads for verified supported networks; add server-side reward summary endpoint scoped to authenticated player; claim endpoint with replay protection and on-chain settlement verification; history endpoint with explorer links. Do not use localStorage as a reward source or trust client-submitted balances.
+
+
+## 2026-11-10 — Portfolio tracker browser verification checkpoint
+
+- [x] Dedicated Playwright assertions added in commit `89fe937bbb9de43d42eb0761bbf7dbe05ea4876a`: all eight metrics exist and remain explicitly `Unavailable`; both desktop/mobile Portfolio navigation anchors exist; Connect Wallet opens the existing auth modal; Claim Rewards remains disabled; preview disclosure confirms no balances/rewards are simulated.
+- [x] Validate run `42735351120`: SUCCESS on the tracker and browser-test branch head.
+- [x] Browser Smoke run `42735350994` steps 1–14: SUCCESS, including the new Portfolio & Rewards assertions and existing DEX/Swap/mobile regression checks.
+- [ ] Browser Smoke step 15 (Jarrell’s Peak desktop/mobile gameplay) is still in progress; step 16 screenshot upload is pending. Do not mark the entire Browser Smoke run complete until both settle.
+- [ ] Exact next job: poll run `42735350994`; if gameplay smoke fails, fetch completed job logs and diagnose the exact root cause before any targeted fix. If successful, inspect screenshot artifacts and update this checkpoint with the final result.
+- [ ] Keep PR #230 OPEN/DRAFT. Live portfolio balances and claims remain blocked on official token mint verification, trusted pricing, authenticated player identity, server-authoritative rewards ledger, replay-safe claim settlement, and verifiable transaction history.
