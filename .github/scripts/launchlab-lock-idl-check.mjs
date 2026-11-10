@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+/**
+ * Read-only verification of Raydium's published on-chain Burn & Earn / LP Lock IDL.
+ * Fetches the legacy Anchor IDL account on Mainnet and Devnet; never signs or submits.
+ */
+import { createHash } from "node:crypto";
+import { inflateSync } from "node:zlib";
+import { createRequire } from "node:module";
+
+const require = createRequire(`${process.env.LAUNCHLAB_TOOLS_PREFIX || "/tmp/launchlab-tools"}/package.json`);
+const { PublicKey } = require("@solana/web3.js");
+const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const ASSOCIATED_TOKEN_PROGRAM = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const LOCK_PROGRAMS = {
+  mainnet: {
+    id: "LockrWmn6K5twhz3y9w1dQERbmgSaRkfnTeTKbpofwE",
+    rpc: "https://api.mainnet-beta.solana.com",
+    authority: "3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH",
+  },
+  devnet: {
+    id: "DRay25Usp3YJAi7beckgpGUC7mGJ2cR1AVPxhYfwVCUX",
+    rpc: "https://api.devnet.solana.com",
+    authority: "7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3",
+  },
+};
+const LOCK_AUTH_SEED = "lock_cp_authority_seed";
+const LOCK_LIQUIDITY_SEED = "locked_liquidity";
+const LOCK_CP_LIQUIDITY_DISCRIMINATOR = [216, 157, 29, 78, 38, 51, 31, 26];
+const COLLECT_CP_FEES_DISCRIMINATOR = [8, 30, 51, 199, 209, 184, 247, 133];
+
+const fail = message => { throw new Error(message); };
+const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const expectedLockAccounts = [
+  ["auth", false, false], ["payer", true, true], ["liquidity_owner", true, false],
+  ["nft_owner", false, false], ["nft_mint", true, true], ["nft_account", false, true],
+  ["pool_state", false, false], ["locked_liquidity", false, true], ["lp_mint", false, false],
+  ["liquidity_owner_lp", false, true], ["locked_lp_vault", false, true],
+  ["token_vault_0", false, true], ["token_vault_1", false, true],
+  ["metadata_account", false, true], ["rent", false, false], ["system_program", false, false],
+  ["token_program", false, false], ["associated_token_program", false, false],
+  ["metadata_program", false, false],
+];
+const expectedCollectAccounts = [
+  ["auth", false, false], ["nft_owner", true, false], ["nft_account", false, true],
+  ["locked_liquidity", false, true], ["cpmm_program", false, false], ["cpmm_auth", false, false],
+  ["pool_state", false, true], ["lp_mint", false, true], ["user_vault_0", false, true],
+  ["user_vault_1", false, true], ["pool_vault_0", false, true], ["pool_vault_1", false, true],
+  ["token_0_mint", false, false], ["token_1_mint", false, false],
+  ["locked_lp_vault", false, true], ["token_program", false, false],
+  ["token_2022_program", false, false], ["memo_program", false, false],
+];
+function pdaSeedText(seed) {
+  if (seed?.kind !== "const" || !Array.isArray(seed.value)) return null;
+  return Buffer.from(seed.value).toString("utf8");
+}
+function checkAccounts(instruction, expected, name) {
+  const actual = instruction?.accounts ?? [];
+  if (actual.length !== expected.length) fail(name + " account count differs from pinned SDK lock instruction account list");
+  for (let i = 0; i < expected.length; i++) {
+    const [expectedName, signer, writable] = expected[i];
+    const item = actual[i];
+    if (item.name !== expectedName) fail(name + " account order mismatch at " + i + ": expected " + expectedName + ", got " + item.name);
+    if (Boolean(item.signer) !== signer || Boolean(item.writable) !== writable) {
+      fail(name + " signer/writable flags mismatch for " + expectedName);
+    }
+  }
+}
+export function deriveLockProgramAddresses({ programId, lpMint, PublicKey: Key = PublicKey }) {
+  const lockProgram = new Key(programId);
+  const [authority] = Key.findProgramAddressSync([Buffer.from(LOCK_AUTH_SEED, "utf8")], lockProgram);
+  const [lockedLiquidity] = Key.findProgramAddressSync([Buffer.from(LOCK_LIQUIDITY_SEED, "utf8"), new Key(lpMint).toBuffer()], lockProgram);
+  const [lockLpVault] = Key.findProgramAddressSync(
+    [authority.toBuffer(), new Key(TOKEN_PROGRAM).toBuffer(), new Key(lpMint).toBuffer()],
+    new Key(ASSOCIATED_TOKEN_PROGRAM),
+  );
+  return { authority: authority.toBase58(), lockedLiquidity: lockedLiquidity.toBase58(), lockLpVault: lockLpVault.toBase58() };
+}
+export function validateLockProgramIdl(idl, target, Key = PublicKey) {
+  if (idl.address !== target.id) fail("LP Lock IDL address differs from the expected cluster program ID");
+  const instructions = new Map((idl.instructions ?? []).map(item => [item.name, item]));
+  const lock = instructions.get("lock_cp_liquidity");
+  const collect = instructions.get("collect_cp_fees");
+  if (!lock || !collect) fail("LP Lock IDL is missing lock_cp_liquidity or collect_cp_fees");
+  if (JSON.stringify(lock.discriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK");
+  if (JSON.stringify(collect.discriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK");
+  checkAccounts(lock, expectedLockAccounts, "lock_cp_liquidity");
+  checkAccounts(collect, expectedCollectAccounts, "collect_cp_fees");
+  const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
+  const collectArgs = (collect.args ?? []).map(arg => [arg.name, arg.type]);
+  if (JSON.stringify(lockArgs) !== JSON.stringify([["lp_amount", "u64"], ["with_metadata", "bool"]])) fail("LP Lock lock_cp_liquidity arguments differ from pinned SDK encoding");
+  if (JSON.stringify(collectArgs) !== JSON.stringify([["lp_fee_amount", "u64"]])) fail("LP Lock collect_cp_fees arguments differ from pinned SDK encoding");
+  const auth = lock.accounts.find(item => item.name === "auth");
+  const locked = lock.accounts.find(item => item.name === "locked_liquidity");
+  const authSeed = pdaSeedText(auth?.pda?.seeds?.[0]);
+  const liquiditySeed = pdaSeedText(locked?.pda?.seeds?.[0]);
+  if (authSeed !== LOCK_AUTH_SEED) fail("LP Lock authority PDA seed differs from pinned SDK");
+  if (liquiditySeed !== LOCK_LIQUIDITY_SEED) fail("LP Lock locked-liquidity PDA seed differs from pinned SDK");
+  const [derivedAuthority] = Key.findProgramAddressSync([Buffer.from(LOCK_AUTH_SEED, "utf8")], new Key(target.id));
+  if (derivedAuthority.toBase58() !== target.authority) fail("LP Lock authority PDA does not match the pinned SDK program constant");
+  return {
+    programId: target.id,
+    metadataName: idl.metadata?.name ?? null,
+    instructionCount: idl.instructions.length,
+    lockCpLiquidity: { discriminator: lock.discriminator, accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed },
+    collectCpFees: { discriminator: collect.discriminator, accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs },
+    lockAuthority: derivedAuthority.toBase58(),
+    lockLpVaultDerivation: "Associated Token Account PDA [lock_authority, SPL Token program, CPMM LP mint] under Associated Token Program",
+    sourceAvailability: "LP Lock program source is not publicly available; live on-chain Anchor IDL and pinned SDK interface are compared, but IDL does not prove deployed bytecode behavior.",
+  };
+}
+async function getAccount(rpc, address) {
+  const response = await fetch(rpc, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-lock-idl-readonly", method: "getAccountInfo", params: [address, { encoding: "base64", commitment: "finalized" }] }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) fail("LP Lock RPC HTTP " + response.status);
+  const json = await response.json();
+  if (json.error) fail(json.error.message || "LP Lock RPC error");
+  return json.result?.value ?? null;
+}
+export async function fetchLockIdl(cluster, target = LOCK_PROGRAMS[cluster]) {
+  if (!target) fail("Unsupported LP Lock cluster");
+  const programId = new PublicKey(target.id);
+  const [base] = PublicKey.findProgramAddressSync([], programId);
+  const idlAddress = await PublicKey.createWithSeed(base, "anchor:idl", programId);
+  const account = await getAccount(target.rpc, idlAddress.toBase58());
+  if (!account) fail(cluster + " LP Lock Anchor IDL account is missing");
+  if (account.owner !== target.id || account.executable) fail(cluster + " LP Lock Anchor IDL account has an unexpected owner or executable flag");
+  const raw = Buffer.from(account.data[0], "base64");
+  const discriminator = createHash("sha256").update("internal:IdlAccount").digest().subarray(0, 8);
+  if (raw.length < 44 || !raw.subarray(0, 8).equals(discriminator)) fail(cluster + " LP Lock Anchor IDL account header is invalid");
+  const compressedLength = raw.readUInt32LE(40);
+  if (compressedLength < 1 || 44 + compressedLength > raw.length) fail(cluster + " LP Lock Anchor IDL compressed payload length is invalid");
+  const compressed = raw.subarray(44, 44 + compressedLength);
+  const bytes = inflateSync(compressed);
+  const idl = JSON.parse(bytes.toString("utf8"));
+  if (idl.address !== target.id) fail(cluster + " LP Lock IDL payload address mismatch");
+  return { idl, idlAddress: idlAddress.toBase58(), idlSha256: sha(bytes), authority: new PublicKey(raw.subarray(8, 40)).toBase58(), trailingAllocatedBytes: raw.length - 44 - compressedLength };
+}
+export async function runLockProgramAudit() {
+  const results = [];
+  for (const cluster of ["mainnet", "devnet"]) {
+    const target = LOCK_PROGRAMS[cluster];
+    try {
+      const fetched = await fetchLockIdl(cluster, target);
+      const schema = validateLockProgramIdl(fetched.idl, target);
+      results.push({ cluster, pass: true, idlAddress: fetched.idlAddress, idlSha256: fetched.idlSha256, idlAuthority: fetched.authority, trailingAllocatedBytes: fetched.trailingAllocatedBytes, ...schema });
+    } catch (error) {
+      results.push({ cluster, pass: false, error: String(error.message || error) });
+    }
+  }
+  return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, results, pass: results.every(item => item.pass) };
+}
+if (process.argv[1]?.endsWith("launchlab-lock-idl-check.mjs")) {
+  const report = await runLockProgramAudit();
+  process.stdout.write(JSON.stringify(report, null, 2) + "\n");
+  if (!report.pass) process.exitCode = 1;
+}
