@@ -2708,3 +2708,17 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+### Signature Launchpad security checkpoint — 2026-11-10
+
+- [x] Added pinned official Raydium LP Lock program-source review at `raydium-cpi` commit `115df2779d53bacc7db9d0be2773a4b48a6d372b`; CI records SHA-256 digests for `lib.rs`, `states.rs`, and `context.rs`.
+- [x] Verified Mainnet and Devnet LP Lock program IDs from the pinned source and derived the authority PDAs from the source-defined seed. Mainnet PDA matches the pinned SDK constant; Devnet PDA is `7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3`.
+- [x] Verified the source-defined locked-liquidity PDA seeds and that the locked LP vault is the associated token account for the lock authority and CPMM LP mint.
+- [x] Verified from pinned source that the fee-NFT account is read-only for `CollectCpFee`, the Fee NFT owner must sign, and the Fee NFT ownership/amount constraints are enforced.
+- [x] Corrected the test regression after source review became authoritative for PDA seed validation; tests now pass the reviewed source-derived seeds into IDL validation.
+- [x] Latest LaunchLab Live Provenance run `42752499884` — SUCCESS on branch `codex/launchlab-live-provenance-probe`. Latest Validate Climboria run `42752499748` — SUCCESS.
+- [x] Live Mainnet LP Lock legacy Anchor IDL verified against the SDK account order/privileges and instruction wire layout. Live Devnet LP Lock program is executable, but its canonical legacy Anchor IDL account is missing; CI reports this as an explicit limitation rather than claiming Devnet IDL verification.
+- [x] Read-only audit only. No wallet signing, transaction simulation, transaction submission, LP migration, fee collection, token launch, or Mainnet execution occurred.
+- [ ] **Next P0:** complete the `initializeV2` 18-account account-by-account validation against the pinned LaunchLab IDL and SDK PDA derivations, including exact account order, addresses, signer/writable privileges, and payer/creator alias handling. Add tampering tests and rerun both LaunchLab Live Provenance and Validate Climboria.
+- [ ] Then add a separate, explicit approval gate for funded Devnet read-only simulation; do not use synthetic CI keys for simulation or submission.
+- [ ] Keep public LaunchLab/DEX execution and Mainnet actions disabled until Climboria launch parameters are approved, the Devnet LP Lock IDL gap is resolved or independently covered by source-level verification, and independent security review is complete.
