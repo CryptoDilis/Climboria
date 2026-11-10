@@ -2760,3 +2760,13 @@ For every integrated asset or borrowed technique, record:
 - [ ] **Latest CI remains pending:** latest engineering changes are after commit `1e8fd34849319e541923eee8403fb922e1838742`, which is the head used by visible Validate `42851432127` (success) and Browser Smoke `42851432268` (still in progress). These runs do not validate current source. GitHub Actions did not produce a fresh run for the latest code commits through the available repository connection; do not claim tests pass.
 - [ ] **Exact next task:** obtain a fresh Validate run for current PR head and inspect result; then add trusted RPC fetch integration binding owner/executable/data/context slot to the same account response. Continue semantic instruction allowlists, exact order-wallet-message binding, replay/idempotency and controlled Devnet tests.
 - **Safety:** parser not integrated into execute route; execution security constant remains false. No Worker deployment, wallet signing, live transaction, or production switch change.
+
+
+## 2026-11-11 — ALT account identity binding follow-up
+
+- [x] Decoder now requires the 32-byte lookup-table account public key and returns a defensive copy in the parsed result. This lets the returned ALT object be passed directly to `reconstructAccountMetas`, which checks it against the transaction's referenced table key instead of relying on a caller to attach identity later.
+- [x] Added a regression test rejecting missing lookup-table identity before accepting account bytes.
+- [x] Documented the trust boundary: the decoder does not fetch RPC data; owner, executable flag, data and context slot must be taken from one trusted server-side account response.
+- [ ] **Latest CI still pending:** visible Validate `42852192636` and Browser Smoke `42852192411` were started against older head `e36446d4fb64d5e5b0e71bc6395e2142831a6136`, not this latest change. Validate passed on that older head; Browser Smoke remained in progress. Do not claim latest changes passed.
+- [ ] **Exact next task:** trigger/obtain fresh CI for current PR head; then implement server-side RPC account fetch with strict response identity/context binding, followed by program-specific semantic instruction allowlists and durable order-wallet-message/replay protection.
+- Execution gate remains false; parser is not wired into execute. No Worker deploy, wallet signing or live trade.
