@@ -13,7 +13,11 @@ try {
   ];
 
   for (const scenario of scenarios) {
-    const page = await browser.newPage(scenario.name === "guest"\n      ? { viewport: { width: 1365, height: 900 } }\n      : scenario.name === "account-only"\n        ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }\n        : {});
+    const page = await browser.newPage(scenario.name === "guest"
+      ? { viewport: { width: 1365, height: 900 } }
+      : scenario.name === "account-only"
+        ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }
+        : {});
     await page.goto("http://127.0.0.1:4173/", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => {
       localStorage.setItem("climboria_jarrell_inventory_v1", '[{"name":"Quartz","qty":7}]');
