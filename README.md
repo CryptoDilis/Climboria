@@ -1,3 +1,64 @@
+# LIVE ECOSYSTEM RELEASE PRIORITY — 2026-11-10 (USER-CORRECTED, SUPERSEDES OLDER ROADMAP PRIORITY)
+
+**The user's explicit current P0 is to finish and launch the Climboria DEX, Swap, and Launchpad as real production services, and enable every intended sign-in method. This is the active priority and supersedes older README statements that put Jarrell’s Peak first or kept DEX/CDIS as design-only. Do not redirect effort to Jarrell’s Peak until the live ecosystem release work is complete or the user changes priority. Target requested by user: LIVE TODAY (2026-11-10).**
+
+## Release acceptance — no demos, mocks, fake success, or misleading “live” labels
+
+1. **DEX — P0:** Keep real provider-sourced market discovery, token/pool details and charts; finish the production data/backend reliability and connect actual swap execution. A live market feed alone does not mean DEX trading is live. Verify with real quotes, wallet review, successful on-chain settlement and explorer confirmation.
+2. **Swap — P0:** Solana and Base must not appear executable until each has a real, secure router/backend, supported wallet signing flow, transaction validation, submission and finalized confirmation. Current source audit found /swap-config.js has proxyEnabled=true but enabled=false; Swap page explicitly says execution is not enabled. Solana has Jupiter quote/order scaffolding; Base Uniswap routing is still planned/disabled. Do not turn on a flag as a substitute for a verified backend.
+3. **Launchpad — P0:** Implement a real launch lifecycle (creator authentication/wallet proof, immutable launch config, token mint/metadata, approved launch mechanism, liquidity/LP custody, fee handling, transaction reconciliation and public verification). Current /launchpad/ is an informational static preview, says launch services are not open, and has no submission form, wallet flow, mint/pool API or execution backend. docs/SIGNATURE-LAUNCHPAD-IMPLEMENTATION-SPEC.md is architecture/specification only. Do not represent the Launchpad as live until the complete lifecycle is deployed and verified.
+4. **All sign-ins — P0:** Enable and verify all intended account sign-in methods, not just show buttons. Current homepage audit: crypto wallet button can connect an installed Phantom/EVM provider but explicitly says this is not a Climboria account login; X OAuth and Google/Gmail OAuth buttons are disabled; email/password is disabled pending an auth backend. Implement secure account/session handling, provider callbacks, verified email/identity, account linking, logout/session expiry and abuse protections. Never request or store seed phrases/private keys. Do not enable a provider until its credentials, callback URLs, consent/configuration and production verification are in place.
+
+## 2026-11-10 — Authentication branch audit (PR #228/#229)
+
+- [x] Retrieved earlier user decisions: Supabase Auth + Postgres is the selected identity backend; required methods are Solana wallet, EVM wallet, Google/Gmail OAuth, X.com OAuth 2.0, and email/password. Wallet sign-in is a signed, domain-bound message only; never request private keys or seed phrases.
+- [x] Located Draft PR [#228](https://github.com/CryptoDilis/Climboria/pull/228) (auth foundation) and Draft PR [#229](https://github.com/CryptoDilis/Climboria/pull/229) (contains the same auth foundation plus safe game-save options). PR #229 head aff19695176884f7a74ea2506d760a091500980d; Browser Smoke 42734310752 SUCCESS and Validate 42734310550 SUCCESS. These are mocked browser/CI tests only, not real provider E2E.
+- [x] Auth source already implements the five sign-in methods in auth/auth-client.js; auth-config.js contains only a public Supabase project URL and publishable key. SQL migration supabase/migrations/202611090001_player_accounts.sql creates immutable Player IDs and own-row RLS.
+- [ ] Owner-side provider state previously recorded: Supabase email and Web3 (Solana/Ethereum) configured; Google and X OAuth 2.0 credentials remain pending. Re-verify current dashboard state, exact production redirect URLs, SMTP sender/confirmation, and apply/test the SQL migration/RLS before declaring login live.
+- [ ] PR #229 must be integrated into main and deployed before its auth UI/code can be considered present on the public homepage. Keep it Draft until real Supabase provider, migration/RLS, session-refresh, recovery, and wallet-signature tests pass. Do not merge a draft or claim production-ready auth from mocked tests alone.
+- [ ] Account identity linking remains deliberately unfinished; do not claim that all providers resolve to one unified Player ID until an explicitly approved and tested linking policy exists.
+
+## 2026-11-10 — Live production smoke audit (main)
+
+- [x] Live Site Smoke run [42774251046](https://github.com/CryptoDilis/Climboria/actions/runs/42774251046) on main commit 037f251048e6aecaf12675be1cd11fa9dd8fb6cd: SUCCESS. The browser verified homepage/mobile navigation, live Jarrell gameplay, DEX route and Swap route.
+- [x] The same live smoke explicitly verified DEX market/search/wallet/quote UI while confirming Swap remains quote-only, and verified Swap's execution gate remains disabled. This is a live-site smoke, not proof of executable swaps.
+- [x] dex/swap-proxy/DEPLOYMENT.md explicitly says the Cloudflare Worker is prepared but not deployed. Deployment requires account-specific Cloudflare API token/account ID, Jupiter API key and rate-limit namespace. No successful production Worker deployment run was found in the inspected main workflow history.
+- [x] Launchpad source remains an informational static page with no real token launch lifecycle. No production launch transaction or creator workflow is verified.
+- [ ] The Pages deploy job in run [42744080549](https://github.com/CryptoDilis/Climboria/actions/runs/42744080549) failed after GitHub Pages remained deployment_queued; it ended with generic “Deployment failed, try again later.” The build job itself succeeded. Diagnose this separately from application-code errors; the later live smoke run succeeded against the deployed site.
+- [ ] Next exact task: integrate and verify the Supabase auth foundation without claiming mocked tests are production login; in parallel, remove the Worker deployment blockers, then finish secure Solana execution and the Base router; implement the real Launchpad lifecycle. Keep all transaction/launch gates fail-closed until independently verified.
+
+---
+
+## Verified source baseline before implementation
+
+- Repository base branch: main; starting commit for this release branch: 037f251048e6aecaf12675be1cd11fa9dd8fb6cd.
+- Dedicated release branch: codex/live-ecosystem-release-nov10.
+- DEX source: dex/index.html — provider-sourced Solana discovery and market data exist; page explicitly marks trade execution as quote-only and “SWAP COMING SOON”.
+- Swap source: swap/index.html, swap-config.js, dex/swap-proxy/src/index.mjs. Public config has proxyEnabled=true, enabled=false. Worker execution route returns 503 unless EXECUTION_ENABLED=true; code comment says keep disabled pending transaction semantic validation and wallet/order binding review. Base Uniswap route is planned, not enabled.
+- Production Worker deployment workflow: .github/workflows/deploy-climboria-api.yml. Requires account-specific Cloudflare API token/account ID, Jupiter API key and rate-limit namespace; it validates Worker health/CORS after deployment. Secrets must be configured in GitHub/Cloudflare, never pasted into source or chat.
+- Launchpad source: launchpad/index.html is informational only; no forms/scripts or launch backend. Signature Launchpad spec explicitly states architecture only, not implemented or approved for Mainnet.
+- Login source on main: root index.html still has the older wallet-connect-only modal; X, Google/Gmail and email/password are disabled. Correction from the parallel auth implementation branch: Draft PR #228 and its superset Draft PR #229 already contain a Supabase Auth foundation, public project URL/publishable key, five sign-in methods (Solana, EVM, Google, X OAuth 2.0, email/password), player-profile migration/RLS, and mocked browser tests. This auth code is not yet in main/production. PR #229 head CI runs 42734310752 (Browser Smoke) and 42734310550 (Validate) both passed, but these use mocked Supabase behavior—not real provider sign-in. Previously recorded owner-side state: Supabase email and Web3 (Solana/Ethereum) configured; Google and X OAuth credentials still pending; production redirect URLs, SMTP verification, SQL migration/RLS deployment and real provider E2E remain to be verified. Do not ask the user to choose Supabase again; Supabase is the selected auth backend.
+- These are source inspections, not proof of current production deployment state. Verify deployed URLs, Worker health, provider credentials and on-chain outcomes before marking any item complete.
+
+## Execution order and next exact tasks
+
+- [x] P0-A: Created this dedicated live-release branch/checklist and audited the latest available live-site smoke plus production source/deployment docs. Live Site Smoke 42774251046 passed homepage/mobile, DEX and Swap route checks; it explicitly confirms quote-only DEX/Swap behavior. Worker deployment docs say the Cloudflare Worker is not deployed. Launchpad source is informational only. Direct production health endpoint could not be independently read through the available web access, so do not claim Worker health.
+- [ ] P0-B: DEX + Solana Swap: inspect current Worker code and tests end-to-end; resolve missing production dependencies/secrets; run order → wallet review → signed execute → finalized confirmation tests. Add production-grade failure handling, idempotency and transaction reconciliation. Keep execution fail-closed until every gate passes.
+- [ ] P0-C: Base Swap: implement a separate Base-compatible quote/order, allowance, gas estimation, wallet signing and confirmation flow; do not reuse Solana/Jupiter transaction handling or label Base as supported before live verification.
+- [ ] P0-D: Launchpad: select and implement a real audited launch mechanism; define creator eligibility, supply/authority/metadata policy, fees, liquidity and LP custody; build authenticated creator workflow and verifiable mint/pool lifecycle. If any owner decision, credential, custody setup or independent audit is missing, record it as a release blocker rather than faking a launch.
+- [ ] P0-E: Authentication: integrate the existing Supabase foundation from PR #229 (five implemented methods: Solana, EVM, Google, X OAuth 2.0, email/password) into the production main branch. Complete owner-side Google/X credentials, production redirects, SMTP/email confirmation, Supabase SQL migration/RLS, and real provider E2E. Preserve the existing domain-bound wallet signature flow; do not add a parallel verifier. Account linking remains a separate unapproved feature.
+- [ ] P0-F: Extend CI and real production smoke checks to cover all five sign-in methods, Solana and Base quote/order/signing/execution/confirmation paths, and the full Launchpad lifecycle. PR #229's mocked auth tests passed but do not substitute for provider E2E. Update this README after each completed task with commit, exact tests, production evidence and the next task.
+- [ ] User-requested deadline: target is today, 2026-11-10. Be candid: if production credentials, account owner actions, audits, custody decisions or chain verification are unavailable, those are blockers; never claim “live today” without evidence.
+
+## Security and release rules
+
+- Never put API keys, OAuth client secrets, passwords, private keys, seed phrases or signed transaction payloads in public frontend code, Git history, logs or chat.
+- No wallet signing, token minting, fundraising, liquidity provisioning, fee collection or Mainnet launch without explicit owner-approved parameters, secure custody and verified transaction review.
+- Do not bypass security gates merely to meet the date. “Live” means real production behavior with verified outcomes, not UI enabled, a successful HTTP response, a quote preview, a mocked callback or a workflow pass.
+- Keep the previous Jarrell’s Peak priority and older DEX design-only notes as historical records only; they are superseded by this user correction.
+
+---
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
@@ -2667,3 +2728,230 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-10 23:40 PHT — Live ecosystem reconnection and evidence refresh
+
+- [x] Reconnected to `CryptoDilis/Climboria`; verified repository is public, default branch `main`, and the GitHub connection has admin/maintain/push/pull permissions.
+- [x] Rechecked `main`: current head `037f251048e6aecaf12675be1cd11fa9dd8fb6cd` (2026-11-10 02:37:46Z), commit message: `docs: record live LaunchLab API and curve constraint validation`.
+- [x] Confirmed current user-priority record remains Draft PR [#232](https://github.com/CryptoDilis/Climboria/pull/232), head `451c9cce83ca01283efefbe81c293c7fee6c2a2d`, based on current main. It is documentation-only; no production flags, credentials, or deployments were changed.
+- [x] Refreshed LaunchLab provenance evidence: latest run [42804471690](https://github.com/CryptoDilis/Climboria/actions/runs/42804471690) SUCCESS and Validate [42804471585](https://github.com/CryptoDilis/Climboria/actions/runs/42804471585) SUCCESS on branch `codex/launchlab-live-provenance-probe`. Earlier provenance run [42803538833](https://github.com/CryptoDilis/Climboria/actions/runs/42803538833) failed at Mainnet/Devnet Anchor IDL comparison; the later run completed all provenance, API/config, Devnet preparation, and pinned-SDK checks successfully. This is read-only/provenance and unsigned Devnet preparation evidence only—not a production Launchpad.
+- [x] Reconfirmed PR [#231](https://github.com/CryptoDilis/Climboria/pull/231) remains Draft and does not execute/sign/migrate/collect fees or submit Mainnet transactions. Devnet LP Lock IDL/custody and deployed-bytecode provenance remain unresolved.
+- [x] Reconfirmed PR [#228](https://github.com/CryptoDilis/Climboria/pull/228) remains Draft; the auth foundation is not yet production-integrated. Five intended methods are Solana wallet, EVM wallet, Google/Gmail, X OAuth 2.0, and email/password. Provider credentials/callbacks, SQL migration/RLS, SMTP, real provider E2E and identity-linking policy remain release gates. Do not describe mocked CI as live login.
+- [x] Reconfirmed public Swap config: `proxyEnabled: true`, `enabled: false`; the Cloudflare Worker deployment guide still states the Worker is not deployed. A Pages deployment is not an API deployment. Do not enable wallet execution by changing a frontend flag.
+- [x] Reconfirmed `launchpad/index.html` is informational HTML only; no creator submission, wallet flow, mint/pool API, or execution backend is present on main.
+- [ ] **Exact next task (P0-B):** complete a focused Cloudflare Worker deployment-readiness audit: verify the account-specific `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` repository variable and encrypted `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `JUPITER_API_KEY` Actions secrets through an authorized owner-side configuration check; do not read, expose, or paste secret values. Then run the documented **Deploy Climboria API** workflow only when prerequisites are present; verify production `/health`, TLS, CORS, rate limiting and fail-closed behavior. Keep frontend and Worker execution flags disabled until semantic transaction review, controlled Devnet lifecycle tests, and independent security review pass.
+- [ ] After the Worker gate, continue in P0 order: Solana order/sign/execute/finalized reconciliation; separate Base router and wallet lifecycle; real Signature Launchpad creator/mint/liquidity/LP custody/fee/reconciliation lifecycle; integrate and production-verify all five auth methods and account sessions.
+- **No production-live claim:** DEX market discovery is live, but trade execution is not; Swap is quote-only; Base execution is not implemented; Signature Launchpad is static; account login is not yet production verified.
+
+
+### P0-B source-level Worker review — 2026-11-10 23:45 PHT
+
+- [x] Inspected current-main `dex/swap-proxy/src/index.mjs`, Worker tests, `wrangler.toml`, and `.github/workflows/deploy-climboria-api.yml`.
+- [x] Confirmed Worker has bounded JSON/body handling, mint/taker/amount validation on order creation, server-side Jupiter-key injection, rate-limit enforcement, transaction encoding/version/amount checks, strict origin allowlist, and Jupiter status/code/signature checks.
+- [x] Confirmed the deploy workflow requires a positive account-specific `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` plus encrypted `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `JUPITER_API_KEY`; it then deploys and probes `https://api.climboria.fun/health` and CORS.
+- [x] Confirmed checked-in `wrangler.toml` still contains placeholder namespace `20261108`, and `EXECUTION_ENABLED = "false"`. Workflow intentionally rejects the placeholder. Frontend `swap-config.js` remains `enabled: false`.
+- [x] Identified a hard security gate in current Worker source: `handleExecute` forwards a signed transaction plus Jupiter `requestId` after encoding/format checks, but does not itself deserialize and semantically allowlist transaction instructions or persist/verify an order-to-wallet binding. Source comments explicitly require this review before execution. Do not enable the Worker kill switch or frontend flag until this is resolved and independently reviewed.
+- [ ] Owner-side deployment prerequisites are not verifiable through the repository source/API inspection; confirm variable/secrets are present in GitHub Settings without exposing their values. Do not run deployment until they are configured and the security gate is resolved.
+- **Next exact engineering task:** implement a server-side transaction semantic-validation and order-to-wallet binding design (including request/order expiry, signer, program/account/instruction allowlists, idempotency and replay protection), with adversarial tests and controlled Devnet lifecycle coverage; obtain independent security review. In parallel, owner must configure the required Cloudflare/Jupiter deployment settings. Only then run the manual Worker deployment and production health/CORS/rate-limit verification.
+
+
+## 2026-11-10 23:55 PHT — Continued production-live push / current evidence
+
+- [x] Revalidated repository access and current `main` head: `037f251048e6aecaf12675be1cd11fa9dd8fb6cd`. Repository permission snapshot: admin/maintain/push/pull.
+- [x] Confirmed main-branch Climboria Live Site Smoke Test `42774251046` is SUCCESS on that main head.
+- [x] Diagnosed the failed GitHub Pages deployment attempt `42744080549`: build succeeded; deploy created a Pages deployment but remained `deployment_queued` until the action timed out with "Deployment failed, try again later." This is a deployment-queue/service failure, not a Jekyll build failure.
+- [x] Reran only the failed Pages deploy job (attempt 2, job `129939352172`). At the latest check it remained IN_PROGRESS; do not mark it successful until GitHub reports completed/success.
+- [x] Confirmed PR [#228](https://github.com/CryptoDilis/Climboria/pull/228) auth foundation remains DRAFT/open. Both recorded CI/browser checks passed on head `fde34340a4bcb6ccac5b94efdb5bc93201013b3e` (`42725387943` Validate, `42725387684` Browser Smoke). Its branch includes Supabase public URL/publishable key and handlers for Solana wallet, EVM wallet, Google, X OAuth 2.0, email/password, recovery and session refresh. It is still not production-live: provider settings, SMTP, deployed SQL/RLS, actual provider callbacks, real end-to-end account tests, guest migration, identity linking and cloud-save integration remain unresolved. Do not merge/advertise it as fully live solely on CI success.
+- [x] Corrected Launchpad product-decision status after reading the actual main-branch architecture docs: owner has selected **Raydium LaunchLab bonding curve**, with **no Climboria public deposits or fundraising**. This is an approved product direction, not an approved production deployment.
+- [x] Confirmed PR [#231](https://github.com/CryptoDilis/Climboria/pull/231) contains read-only LaunchLab provenance, pinned SDK/IDL checks, fail-closed Devnet create-only builder preparation and a real pinned-SDK Devnet create-only builder smoke. Latest run `42804471690` and Validate `42804471585` both SUCCESS. These checks do not sign, simulate, submit, migrate, collect fees or launch on Mainnet.
+- [x] Confirmed LaunchLab exact unresolved protocol blockers from PR #231: Devnet fixed CPMM fee-receiver authority/custody governance; Devnet LP Lock canonical IDL unavailable; deployed bytecode/source provenance not matched; migration scale/NFT behavior not bytecode-verified; no approved creator wallet, token economics, allocations/authority plan, creator-fee policy or fee/LP disclosures. Keep migration disabled.
+- [x] Reconfirmed Cloudflare Worker deployment is separate from GitHub Pages. The repo workflow requires repository variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` and encrypted Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `JUPITER_API_KEY`. GitHub connector does not expose secret values/configuration state; no secret was read or exposed. No Worker deployment run is evidenced.
+- [x] Reconfirmed main `swap-config.js` keeps `enabled: false`, Worker `EXECUTION_ENABLED` defaults false, and Worker deployment guide says Worker is not deployed. Swap/DEX order execution is therefore not live.
+- [ ] **Exact next task (P0-B):** finish the Worker semantic transaction security design and implementation with order-to-wallet binding, expiry, signer and instruction/program/account allowlists, idempotency/replay protection, then adversarial tests and controlled Devnet lifecycle tests; independently review before any execution switch. Owner-side Cloudflare/Jupiter secrets and rate-limit variable must be confirmed in GitHub Settings without sharing secret values; only then deploy Worker and verify `api.climboria.fun/health`, TLS, CORS, rate limiting and fail-closed behavior.
+- [ ] **Next Launchpad task:** resolve PR #231 Devnet fee receiver custody and LP Lock interface gaps; verify exact deployed program provenance and migration scale/NFT behavior; then build the first Devnet-only creator launch vertical slice (intake → locked config → transaction preview → wallet signature → simulation/submission → finalized reconciliation). Do not accept funds or enable Mainnet.
+- [ ] **Next account task:** owner completes Supabase project/provider/SMTP setup and applies the migration; then run real signup/verification/login/logout/recovery and OAuth/Web3 callback tests. Implement secure guest-progress migration, verified identity linking to one Player ID, and non-economic cloud saves before declaring account system complete.
+- [ ] **Base task:** design and implement a separate EVM DEX/Swap router and wallet lifecycle; no Base execution is currently evidenced.
+- **Release truth:** no blanket "all live" claim. Website smoke is green; DEX discovery is provider-backed; Swap execution, Base execution, Signature Launchpad creation and all production account-provider flows are not yet verified live.
+
+
+## 2026-11-10 — Production-live release continuation (Pages retry verified)
+
+**Latest repository / deployment verification**
+- Main remains at `037f251048e6aecaf12675be1cd11fa9dd8fb6cd`; repository default branch is `main`.
+- Priority tracking PR #232 remains open/draft at `2029ef2d9491ee24cb32fc27c16792311bdaa26c`; PR #228 auth and PR #231 LaunchLab provenance also remain open/draft. None of these draft branches is merged to main.
+- GitHub Pages run `42744080549` attempt 2 is now **SUCCESS**. Latest jobs: deploy SUCCESS, build SUCCESS, report-build-status SUCCESS. The earlier attempt's queue failure was transient; retry succeeded. This verifies Pages deployment only.
+- Re-audited main source: `swap-config.js` still has `proxyEnabled: true` and `enabled: false`; `dex/swap-proxy/wrangler.toml` still has `EXECUTION_ENABLED = "false"` and placeholder rate-limit namespace `20261108`.
+- `dex/swap-proxy/DEPLOYMENT.md` explicitly says the Worker is prepared but not deployed. Required account-specific Cloudflare/Jupiter credentials and namespace remain prerequisites. Do not mistake a successful Pages deployment for a Worker deployment.
+- Worker source `dex/swap-proxy/src/index.mjs` still does not perform server-side semantic deserialization/allowlisting of the signed Solana transaction or bind an execution request to a previously issued order's wallet, mints, amounts, and expiry. Its own code comments and deployment guide require these controls before enabling execution. Existing client-side metadata display is not a security boundary.
+- Launchpad main route `launchpad/index.html` remains an informational UI, not a live creator submission / wallet / LaunchLab transaction lifecycle. PR #231 remains read-only provenance/Devnet preparation; its remaining Devnet custody, LP Lock IDL, deployed-bytecode provenance, migration-scale/NFT custody and production governance gates remain unresolved.
+- PR #228 remains draft and unmerged. It contains the auth foundation, but provider configuration and live E2E callback testing are not evidenced on main. The five methods are Solana wallet, EVM wallet, Google OAuth, X OAuth 2.0, and email/password; identity linking and safe guest-save migration remain unfinished.
+- No secrets were read, printed, or requested in chat. Never put Cloudflare/Jupiter/Supabase service-role credentials in source control or chat.
+
+**Release truth (do not overstate)**
+- [x] GitHub Pages build/deploy pipeline retry: SUCCESS.
+- [ ] Cloudflare Swap Worker production deployment + health/CORS/rate-limit/Jupiter verification: BLOCKED / NOT VERIFIED.
+- [ ] Swap production execution: DISABLED pending server-side transaction semantic validation, order-wallet binding, Devnet lifecycle testing and independent security review.
+- [ ] Signature Launchpad production creation: NOT LIVE; Devnet technical/governance gates and creator configuration remain open.
+- [ ] Five production login methods: NOT VERIFIED LIVE; Supabase/provider/SMTP configuration, migration, E2E tests and unified Player ID linking remain open.
+- [ ] Base chain swap/launch execution: NOT IMPLEMENTED / NOT VERIFIED.
+
+**Exact next actions**
+1. Implement and test a server-side Solana v0 transaction semantic validator plus durable, expiring order-to-wallet binding for Swap. Verify signer, payer, input/output mints, input amount, allowed programs/instructions/accounts, compute budget, priority fees, destination accounts, blockhash expiry, request replay/idempotency, and reject any mismatch. Keep execution disabled while developing.
+2. Add adversarial unit tests and a controlled Devnet end-to-end lifecycle using an explicitly approved dedicated test wallet; no synthetic CI signing keys, no Mainnet funds.
+3. Deploy the Worker only after the owner provisions the account-specific Cloudflare rate-limit namespace and encrypted GitHub Actions secrets (Cloudflare API token/account ID, Jupiter API key); run the existing manual Deploy Climboria API workflow and verify production health/CORS/rate limiting/provider requests. Never ask for secrets in chat.
+4. Continue LaunchLab Devnet interface/provenance/migration checks and implement the create-only Devnet vertical slice only after the fee receiver and LP Lock gaps are resolved; keep migration and Mainnet disabled.
+5. Complete Supabase project, SMTP and Google/X/Solana/EVM provider setup; apply the SQL migration; run real callback/session/recovery tests; implement verified identity linking and safe guest-save migration.
+6. Design and implement Base execution as a separately reviewed integration; do not label it live before real chain-specific tests.
+
+**Checkpoint rule:** update this README after each verified engineering change with commit SHA, exact workflow IDs/results, unresolved blockers, and the next single task. Do not toggle execution or accept deposits to make a status indicator appear live.
+
+
+## 2026-11-10 — Release continuation audit (fresh repository check)
+
+- [x] Re-checked `main`: still `037f251048e6aecaf12675be1cd11fa9dd8fb6cd`. Latest main commit checks are green: `report-build-status`, `build`, `deploy`, and `live-site-smoke` all SUCCESS.
+- [x] Re-checked PR #232: open/draft, head `f9749946ca70b974f3ffca4d21afe1cc195d8e54`, based on the current main SHA. It is still a documentation-only release checkpoint.
+- [x] Re-checked PR #228: open/draft at `fde34340a4bcb6ccac5b94efdb5bc93201013b3e`; it has not been merged to main. Auth foundation remains separate from live provider setup.
+- [x] Re-checked PR #231: open/draft at `5b475670533b4d8e067ce40f6140d3b6118f56d0`; latest LaunchLab provenance `42804471690` and Validate `42804471585` both SUCCESS. These are read-only provenance/preparation checks, not creator launch transactions.
+- [x] Confirmed the Pages deployment run `42744080549` completed SUCCESS, with build, deploy, and report jobs all SUCCESS.
+- [x] Re-read `dex/swap-proxy/src/index.mjs`, `wrangler.toml`, `swap-config.js`, `DEPLOYMENT.md`, and `launchpad/index.html` from main. Frontend execution remains `enabled: false`; Worker execution remains `EXECUTION_ENABLED = "false"`; rate-limit namespace remains a placeholder; Launchpad remains informational.
+- [x] Re-read `.github/workflows/deploy-climboria-api.yml`: it is `workflow_dispatch` only and requires the owner-provisioned Cloudflare namespace variable plus encrypted Cloudflare API token, Cloudflare account ID, and Jupiter key. The workflow's health check only verifies Worker readiness and CORS; execution must remain disabled until semantic transaction validation and order-wallet binding are independently tested.
+- [x] Current repository connector exposes read-only GitHub fetch and file writes, but no workflow-dispatch action and no secrets read/write endpoint. No secret values were accessed. Therefore no claim is made that the Worker was deployed or that the external credentials exist.
+- [ ] No production endpoint response or live wallet transaction was verified in this audit. Do not equate a green Pages smoke test with DEX/Swap/Launchpad/auth readiness.
+
+**Current exact next engineering task**
+Implement a separately tested server-side transaction security layer before any execution enablement: decode and validate the complete signed Solana v0 transaction (including address lookup table resolution), enforce signer/fee-payer, mint, amount, destination, program and instruction allowlists, reject unexpected writable accounts/authority changes, and bind each one-time expiring order ID to the exact wallet + input/output mints + amount + transaction message hash. Use durable atomic storage and replay/idempotency protection. Add adversarial tests for tampering, substitution, expired blockhash, replay, missing/extra instructions, malicious lookup-table addresses, and Jupiter mismatch. Keep both execution switches false until controlled Devnet lifecycle tests and independent security review pass.
+
+**After the security layer**
+- Provision Worker secrets/namespace outside chat and run the manual deploy workflow; verify real health, CORS, limiter, Jupiter token search/order/quote against production.
+- Resolve the remaining LaunchLab Devnet fee receiver / LP Lock IDL / deployed-program provenance / migration custody gaps; then run the approved Devnet creator lifecycle only.
+- Complete Supabase, SMTP, Google, X OAuth, Solana/EVM provider configuration; apply migration and run actual provider callbacks and account-linking tests.
+- Build Base as a separate chain-specific integration with its own verification; do not call it live until proven.
+
+**Release status remains:** Pages SUCCESS; DEX discovery provider-backed; Swap execution OFF; Launchpad creation NOT LIVE; five production login methods NOT VERIFIED; Base execution NOT LIVE.
+
+
+## 2026-11-10 — Swap security gate PR #233 progress
+
+- Opened draft PR #233: https://github.com/CryptoDilis/Climboria/pull/233
+- Latest PR #233 head: `8c148e7db9a91d115b79c346128c9014077194c6`.
+- Added a hard-coded code-level execution gate, independent of Wrangler/frontend switches; the Worker returns 503 before Jupiter forwarding until server-side semantic transaction validation and durable order-wallet binding are implemented and reviewed.
+- Health reports execution disabled while the hard gate is closed. Deployment documentation explains both gates.
+- Initial CI failures were diagnosed from logs, not blindly retried:
+  1. First attempt had not actually inserted the handleExecute guard because the source replacement did not match the source block; test observed mock fetch instead of 503.
+  2. After the guard landed, three remaining tests still asserted the old behavior (config-only disabled message, malformed-body 400 before hard gate, and a Jupiter Failed response path). Updated tests to assert the new security invariant: execute never reaches provider while hard gate is closed.
+- Latest corrected-head Validate run `42849330950`: SUCCESS.
+- Latest corrected-head Browser Smoke run `42849331112`: in progress at the time of this checkpoint. DEX/Swap-related browser steps all passed so far: proxy test, execution fail-closed test, standalone Swap, DEX market/quote shell, mobile workspace tabs, 390px/360px layout, provider-error/empty states. Jarrell's Peak gameplay smoke still running.
+- The earlier failed run `42849242160` is for previous head `16626574ce2defddec21c8cf4f3c4386834ead2c`, before test expectation corrections; do not attribute that failure to the current head.
+- No production Worker deployment, real wallet transaction, or Mainnet execution was performed. Both production execution switches remain OFF.
+- Next: complete the current browser run, then implement the actual Solana v0 semantic validator and durable expiring order-wallet binding with replay/idempotency controls and adversarial/Devnet tests. Keep the code-level hard gate false until the entire review is complete.
+
+
+- Browser Smoke attempt 1 on corrected source passed every DEX/Swap step (including execution fail-closed and mobile/desktop layouts) but the unrelated Jarrell's Peak gameplay step was cancelled by the runner, so the overall job was cancelled. Reran the browser job as attempt 2; GitHub reports it pending/queued at the latest check. Do not report the whole browser suite green until attempt 2 completes.
+
+
+## 2026-11-10 — Swap transaction decoder foundation added (verification pending)
+
+- [x] PR #233 now contains a standalone Solana legacy/v0 wire-format decoder and message-hash helper, with focused structural parser tests. Latest PR #233 branch head at the time of this checkpoint: `e1f4ec333e068e20cbb6c930a9e938dd2ad38236` (subsequent documentation commits may advance it).
+- [x] The decoder is deliberately isolated and **not connected to the execute route**. It is not a semantic validator: trusted ALT resolution, instruction decoding/allowlists, token-transfer and destination validation, immutable expiring order-wallet binding, replay/idempotency controls, Devnet lifecycle testing and independent security review remain outstanding.
+- [x] The code-level hard execution gate remains false. No Worker deployment, wallet signing, Devnet/Mainnet transaction or production execution enablement occurred.
+- [ ] GitHub Actions validation for the new parser tests is pending observation; do not claim these new tests pass until the workflow reports success.
+- [ ] Exact next task: verify parser tests on the PR branch, repair any test or parser defect, then implement trusted ALT resolution and semantic instruction validation. Keep execution disabled.
+
+
+### Follow-up CI — Solana wire decoder branch head `4f96240648f421c0ddb9768b5e121a45aeaccf9d`
+
+- [x] Validate workflow [42850672329](https://github.com/CryptoDilis/Climboria/actions/runs/42850672329): **SUCCESS** on the branch head containing the structural Solana decoder and parser tests.
+- [ ] Browser Smoke workflow [42850672349](https://github.com/CryptoDilis/Climboria/actions/runs/42850672349): **IN PROGRESS**; browser setup/cache step was still running at checkpoint. No full browser result claimed.
+- [x] PR #233 remains open/draft. Execution hard gate remains false; parser is not connected to execute.
+- [ ] Next: wait for Browser Smoke completion and inspect any failure logs; then continue ALT/account resolution and semantic instruction validation. No Worker deployment or live trade.
+
+
+## 2026-11-11 — Swap ALT metadata reconstruction checkpoint
+
+- [x] PR #233 fixes an overly restrictive Solana v0 program-ID index check: loaded readonly program accounts are valid, so program indexes now validate against the full static + loaded account-key range.
+- [x] Added a pure helper to reconstruct canonical static/ALT signer and writable metadata, with adversarial tests for mismatched table identities, invalid/duplicate indexes, duplicate addresses and account ordering.
+- [x] Engineering commits: `27dfc342888cc23662281f866d81b9df9126c27c`, `f158162f2009f42570482fe9a54497c2b2a4b9eb`. PR #233 README and Worker deployment notes updated with trust-boundary and exact next task.
+- [ ] New-head CI validation remains unverified at this checkpoint. Prior Validate run `42850813367` passed on an older head; Browser Smoke `42850813278` was still running, while `42850672349` was cancelled. No claim of a passing full browser suite.
+- [ ] Exact next task: inspect new-head CI and fix any failure; implement trusted RPC ALT account verification, semantic instruction allowlists, durable expiring order-wallet-message binding and replay protection; Devnet/adversarial tests and independent security review before any execution enablement.
+- **Production status unchanged:** no Cloudflare Worker deployment, no live Swap execution, no Launchpad mainnet creation, and no change to five-login production provisioning. Execution hard gate remains false.
+
+
+## 2026-11-11 — ALT metadata decoder progress (latest CI not yet confirmed)
+
+- [x] PR #233 adds a v0 test proving readonly program IDs loaded from Address Lookup Tables are accepted when their indexes are valid in the full resolved account-key range.
+- [x] Added a pure ALT account-state decoder checking expected ALT program owner, non-executable account, canonical metadata length/state, authority option, padding, address count, deactivation marker and same-slot warmup boundary.
+- [x] Added regression tests for valid account decoding and malformed/untrusted/deactivated/not-yet-warmed table data.
+- [ ] **Latest CI pending:** newest parser/test head at time of checkpoint `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`; visible Validate `42851432127` and Browser Smoke `42851432268` were triggered on older head `1e8fd34849319e541923eee8403fb922e1838742`. Browser run still in progress. Do not claim latest code is validated.
+- [ ] Next exact task: obtain fresh CI on current head; then wire ALT account fetch to trusted server-side RPC with owner/executable/context-slot binding. Continue instruction allowlists, token transfer/destination checks, durable order-wallet-message binding, replay protection, adversarial and Devnet tests.
+- ALT decoder is not wired into execute; no Worker deployment, live trade, launchpad transaction or production auth provisioning was performed. Execution hard gate remains false.
+
+
+## 2026-11-11 — Swap ALT/runtime guard follow-up
+
+- [x] PR #233 now validates ALT account metadata format and owner field, executable flag, initialization state, authority encoding, padding, deactivation and extension warmup; regression test covers v0 program IDs loaded from readonly ALT.
+- [x] Rejects empty lookup selections and caps reconstructed static + loaded account keys at 128, including a second guard after reconstruction.
+- [x] This is still a structural/account-state parsing foundation, not a full semantic transaction validator. Trusted RPC integration, exact instruction/program allowlists, token movement/destination validation, order-wallet-message binding, replay controls, Devnet lifecycle tests and independent security review remain open.
+- [ ] Latest CI has not run on current PR #233 source head; Validate `42851432127` passed on older `1e8fd348`, while Browser Smoke `42851432268` remained in progress on that older head. Do not use those results to certify newer code.
+- [ ] Next: obtain and verify CI on current source head, then continue trusted RPC ALT resolution and semantic instruction validator. Hard execution gate remains false; no production deployment or live trade.
+
+
+## 2026-11-11 — ALT lookup-table identity binding
+
+- [x] PR #233's ALT decoder now requires the lookup-table account's 32-byte public key and returns it with the decoded addresses; account-meta reconstruction can validate that exact identity against the transaction's lookup reference.
+- [x] Added a regression test for missing account identity and documented that trusted server-side RPC must provide owner, executable flag, account bytes and context slot from one response.
+- [ ] Latest CI remains pending on newest PR #233 source; visible Validate `42852192636` passed on older `e36446d4`, while Browser Smoke `42852192411` was still running on that older head. No claim of latest-source validation.
+- [ ] Next: fresh CI for latest head, then implement server-side trusted RPC fetch/context binding, semantic instruction allowlists, exact order-wallet-message binding and replay protection. Keep execute gate closed.
+
+
+## 2026-11-11 — Swap CI coverage gap fixed in PR #233
+
+- [x] Found a real verification gap: the Validate workflow only executed `worker.test.mjs`; it did not run the newly added Solana parser/ALT test file. Earlier Validate success was not evidence those parser tests passed.
+- [x] Updated PR #233 workflow to execute every `dex/swap-proxy/test/*.test.mjs` suite, including the parser and ALT tests.
+- [x] ALT decoder now requires the referenced table's 32-byte account key and returns it with decoded account contents; missing identity has a regression test.
+- [ ] Fresh CI on the new workflow/code head is still not observed. Existing run `42852192636` succeeded on older head `e36446d4` with the previous workflow command; do not count it as parser-suite verification. PR close/reopen did not trigger a new run for the latest head.
+- [ ] Next: obtain fresh Validate run on latest PR #233 head, inspect all parser test results and fix failures; then implement trusted server-side RPC binding and semantic instruction allowlists. Keep execution gate closed.
+
+
+## 2026-11-11 — First full Swap parser CI run diagnosed
+
+- [x] CI coverage fix exposed two invalid parser-test fixtures rather than a parser implementation regression: Base64 fixture was being read as UTF-8 bytes, and ALT warmup fixture marked a nonexistent newly-added address index.
+- [x] Corrected Base64 decoding and set the ALT extension start index to the actual first address.
+- [ ] PR #233 Validate run `42852777038` failed on the earlier head with 38 passing / 2 failing tests. Fixes are committed on the latest PR #233 branch, but no fresh verification run exists yet. Browser Smoke remains tied to the pre-fix head.
+- [ ] Next: fresh CI against latest PR #233 head, then trusted RPC ALT integration and instruction semantic validation. Keep Swap execution disabled until independent review and controlled Devnet lifecycle tests.
+
+
+- [x] Added a manual `workflow_dispatch` trigger to PR #233's Validate workflow so maintainers can run the complete parser/Worker suite on the selected branch.
+- [ ] The connected GitHub actions do not expose workflow dispatch. A maintainer needs to select `codex/swap-semantic-execution-gate` in Actions → Validate Climboria → Run workflow and verify it checks out the latest commit.
+
+
+## 2026-11-11 — Trusted ALT RPC resolver foundation recorded
+
+- [x] PR #233 adds a server-only `getMultipleAccounts` ALT resolver with strict response identity, JSON-RPC context-slot, owner, executable, base64, timeout and bounded-response checks. Mocked tests cover valid and hostile/malformed RPC responses.
+- [x] Resolver is documented as not yet integrated into the Worker execute route; `SOLANA_RPC_URL` is intended only as a server-side binding.
+- [ ] CI has not yet run on the latest PR #233 branch. Previous run `42852777038` failed on the pre-fix head with 38/40 tests passing; fixture fixes and new resolver tests remain unverified by GitHub Actions.
+- [ ] Next: run Validate on the latest PR #233 branch, then integrate the resolver into a fail-closed semantic validation service. Execution remains disabled until protocol-specific allowlists, immutable order-wallet-message binding, replay protection, adversarial/Devnet tests and independent security review.
+
+
+### PR #233 latest checkpoint — trusted ALT RPC resolver
+
+- Latest PR #233 branch checkpoint: `4d989326dc08bbfae9562bd53120f2603c9053c4`.
+- Added a server-configured HTTPS-only RPC resolver that batches transaction ALT keys through `getMultipleAccounts`, validates response ID/context/account count, and binds the same response's owner, executable flag, base64 bytes and context slot into the existing ALT decoder.
+- Added mocked tests for valid response binding, commitment/minContextSlot, duplicate keys, invalid endpoint, owner/executable mismatch, malformed RPC/base64, incomplete responses and oversized payloads.
+- RPC helper is not wired into the Worker execute route; it is not a live provider check. GitHub Actions has no fresh run for this head. Prior failure `42852777038` remains an earlier SHA with 38/40 tests passing before fixture corrections.
+- Exact next task: obtain a manual Validate run for `codex/swap-semantic-execution-gate`; only after the complete suite passes, integrate the resolver into a fail-closed semantic validation service. Keep user-fund execution disabled.
+
+
+## 2026-11-11 — Swap validation milestone
+
+- [x] PR #233 Validate run `42854007949` passed on head `4d989326dc08bbfae9562bd53120f2603c9053c4`, executing the complete `dex/swap-proxy/test/*.test.mjs` suite, including the structural parser and trusted RPC ALT resolver tests.
+- [x] Follow-up hardening added `redirect: "error"` to the server-side RPC request and a regression assertion. This follow-up is newer than the green run and still needs fresh CI.
+- [ ] Browser Smoke `42854007897` was still in progress at last inspection; the initial homepage, DEX routing, Worker proxy, fail-closed, Swap and DEX checks had passed. Remaining mobile/gameplay checks were pending.
+- [ ] Next: verify CI/browser smoke against the follow-up head, then continue server-side semantic instruction validation and immutable order-wallet-message/replay protection. Execution remains disabled; no live Worker deployment or production trading claim.
+
+
+### Browser smoke checkpoint and redirect follow-up
+
+- Browser Smoke run `42854007897` on PR #233 head `4d989326dc08bbfae9562bd53120f2603c9053c4` passed homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX interface, mobile workspace, compact 390px/360px layouts, and mobile market loading/error/empty-state checks. Jarrell's Peak gameplay step was still running at last inspection.
+- A later follow-up added `redirect: "error"` to the trusted RPC fetch and a regression assertion. Latest PR #233 head is now `8a71f48480e091b92ae95629ac811528128a16e4`; no fresh Actions run has yet been observed for that head. Prior green Validate `42854007949` applies only to the earlier head.
+- Exact next: obtain fresh CI on the latest head, inspect the completed browser run, then implement audited semantic instruction policy and durable order-wallet/replay controls. Execution remains disabled.
