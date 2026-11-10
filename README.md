@@ -1,3 +1,20 @@
+### Latest checkpoint — 2026-11-10 (PR #231, source-backed rent layouts)
+
+- [x] Added `.github/scripts/launchlab-devnet-rent-layouts.mjs` and tests. Source-backed candidate data lengths: SPL Mint 82 bytes; SPL Token Account/vault 165 bytes; Raydium Launchpad PoolState 429 bytes; Metaplex metadata PDA 607 bytes.
+- [x] Source references are commit-pinned: SPL Token interface `ebff90aee6facb59218fed68e61e7fbdcf92830e`; Launchpad IDL `e7e0c96fe77bcf6a020b84a44c47a722aac8e359`; Metaplex Token Metadata upstream `7ce760f9e010cb9819ffd7dd86986a44691bd1f8`.
+- [x] PoolState size formula is explicit and tested: 8-byte Anchor discriminator + 8-byte epoch + five u8 fields + ten u64 fields + five-u64 VestingSchedule + seven pubkeys + token flag + one-byte enum + u64 + 54-byte padding = 429 bytes.
+- [x] Metaplex maximum metadata account length is derived and tested: `MAX_DATA_SIZE = 431` (including five maximum creator entries) and `MAX_METADATA_LEN = 607`. The upstream Metaplex source confirms the allocator uses `MAX_METADATA_LEN`.
+- [x] Integrated source-backed layouts into `.github/scripts/launchlab-devnet-approval-packet.mjs`. It now inspects missing writable accounts first, then maps exact IDL account names to known layouts; already-existing accounts are excluded; unknown names/aliases fail closed. Finalized Devnet RPC still supplies the actual rent-exemption lamports and exact message fee.
+- [x] Approval packet tests: 9/9 passed; source-layout tests: 4/4 passed in LaunchLab Live Provenance run `42756260045`.
+- [x] LaunchLab Live Provenance `42756260045`: SUCCESS. All job steps passed, including source-backed rent tests, approval-packet tests, real pinned-SDK one-transaction builder inspection, live config/API checks, and LP Lock audit.
+- [x] Validate Climboria `42756260176`: SUCCESS.
+- [x] Diagnosed earlier failed run `42756143315`: the PoolState arithmetic omitted the separate 8-byte epoch field (it counted the Anchor discriminator but not epoch). Corrected the layout formula from 421 to 429 bytes, updated both layout and packet reserve fixtures, and reran successfully in `42756260045`.
+- [x] Earlier integration test failure `42756058820` was caused by stale approval-packet tests still supplying the previous hand-authored rent specs and incomplete writable-account fixture after the builder switched to automatic source-backed layouts. Replaced those stale tests with the real account set and automatic layout expectations; the complete suite passed in `42756095210` and later `42756260045`.
+- [ ] **Metaplex deployment-version caveat:** 607 bytes is source-derived from the pinned upstream Metaplex source commit, but CI has not proven that this exact source revision corresponds to the deployed Devnet metadata-program binary. Keep this explicit in any owner packet and verify the deployed program/source revision before treating this account size as deployment-exact.
+- [ ] **Owner approval remains pending:** no production-intended message hash, owner approval record, or funded dedicated Devnet fee payer has been supplied. No live simulation, signing, submission, or migration has been performed.
+- [ ] **Migration blockers remain:** Devnet LP Lock program is executable but its legacy Anchor IDL is not published at the canonical address; LP-lock semantics are verified against pinned SDK only, not live Devnet IDL. No migration submission until resolved. Devnet CPMM fee-receiver custody also remains independently unresolved.
+- [ ] **Next P0:** verify the deployed Devnet Metaplex program revision/metadata allocation compatibility; then run the owner packet builder against the actual prepared unsigned transaction and finalized Devnet account/rent/fee/balance RPC reads (still no simulation until explicit approval). In parallel, resolve Devnet LP Lock IDL publication and CPMM fee-receiver custody.
+
 ### Latest checkpoint — 2026-11-10 (PR #231, dedicated fee-payer and approval packet)
 
 - [x] Added independent `feePayer` support to LaunchLab Devnet preparation. Creator remains the SDK owner and LaunchLab creator account; the dedicated fee payer is the transaction payer and required signer.
