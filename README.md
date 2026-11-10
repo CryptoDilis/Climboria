@@ -1,23 +1,32 @@
-## 2026-11-10 — CPMM migration fee receiver and live config audit
+## 2026-11-10 — CPMM fee receiver and LP Lock migration audit
 
-**Priority:** P0 — LaunchLab-to-CPMM migration readiness on PR #231.
+**Priority:** P0 — LaunchLab-to-CPMM migration readiness on PR #231. This checkpoint supersedes the earlier note that no LP Lock source/IDL had been pinned.
 
-- [x] Pinned the Raydium CPMM IDL at raydium-idl commit `e7e0c96fe77bcf6a020b84a44c47a722aac8e359` and CP-Swap source at `raydium-cp-swap` commit `3d69122790e97cd6aff24e8ba95940793773f58c`.
-- [x] Verified CPMM `initialize` account order and that `create_pool_fee` is a writable SPL Token account. Pinned CP-Swap `initialize_v2.rs` constrains it to `create_pool_fee_reveiver::ID` (fixed receiver), rather than allowing an arbitrary Climboria wallet.
-- [x] Verified Mainnet/Devnet CPMM program accounts and LP lock program accounts are executable at finalized RPC. The pinned SDK constants and program source identify the corresponding lock authorities.
-- [x] Read the actual CPMM fee receiver token accounts: both are owned by the standard SPL Token program and use WSOL as their mint.
-- [x] Read the live CPMM AMM config accounts referenced by each LaunchLab PlatformConfig. Both report `disableCreatePool=false`, index 0, trade fee rate 2500, protocol fee rate 120000, fund fee rate 40000 and create-pool fee 150000000 lamports (0.15 SOL).
-- [x] Confirmed LaunchLab GlobalConfig `migrateFee=0` on both clusters; this is distinct from the CPMM create-pool fee of 0.15 SOL. Do not conflate the two.
-- [x] Mainnet CPMM config: `D4FPEruKEHrG5TenZ2mpDGEfu1iUvTiqBxvpU8HLBvC2`; protocol owner `ProCXqRcXJjoUd1RNoo28bSizAA6EEqt9wURZYPDc5u`; fund owner `FUNDduJTA7XcckKHKfAoEnnhuSud2JUCUZv6opWEjrBU`.
-- [x] Devnet CPMM config: `5MxLgy9oPdTC3YgkiePHqr3EoCRD9uLVYRQS2ANAs7wy`; protocol and fund owners both `DRay33UmULQCeawH3dVpJfN3uqLj6Qtq4ymSRx2pAgGK`.
-- [x] Mainnet CPMM fee receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8`; token authority `GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ`, matching the pinned CP-Swap source `admin::ID`.
-- [x] Devnet CPMM fee receiver `3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy`; live token authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`.
-- [ ] **Devnet source/deployment discrepancy:** pinned CP-Swap source `admin::ID` for Devnet is `DRayqG9RXYi8WHgWEmRQGrUWRWbhjYWYkCRJDd6JBBak`, but the live fee receiver token authority is `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`. The live token authority also matches neither the CPMM config protocol owner nor fund owner. Do not infer ownership or claim the Devnet migration fee destination is fully verified until this discrepancy is explained against the deployed program binary/source version.
-- [x] The Mainnet/Devnet fee receiver accounts do not match a standard associated-token-address derivation using their observed token authority and WSOL mint. CP-Swap source hardcodes the receiver address; do not assume it is a normal ATA.
-- [x] Latest LaunchLab Live Provenance run `42749976191` — SUCCESS on the latest PR head; preparation tests 23/23, live API/config tests 9/9, provenance checks 7/7; pinned CPMM source/IDL checks, real SDK builder and Mainnet/Devnet account queries passed.
-- [x] Latest Validate Climboria run `42749976179` — SUCCESS.
-- [ ] **Remaining migration blocker:** confirm the deployed Devnet CP-Swap admin/fee-receiver authority discrepancy, and inspect the LP lock program's deployed authority/PDA semantics for `lock_authority` and `lock_lp_vault`. No lock-program IDL/source has yet been pinned in this audit.
-- [ ] Exact next task: identify the deployed Devnet CP-Swap program version/upgrade authority and reconcile its fee receiver token authority with the source constant; then verify lock-program PDA derivation, LP NFT custody and the platform/creator/burn scale application from an authoritative lock-program source. Keep migration disabled until both are proven.
+### Completed and verified
+- [x] Pinned CP-Swap IDL at `raydium-io/raydium-idl@e7e0c96fe77bcf6a020b84a44c47a722aac8e359` and CP-Swap source at `raydium-io/raydium-cp-swap@3d69122790e97cd6aff24e8ba95940793773f58c`.
+- [x] Confirmed CPMM `create_pool_fee` is a fixed program receiver token account (`create_pool_fee_reveiver::ID`), not an arbitrary Climboria wallet and not a standard ATA. Both live receiver accounts are initialized SPL Token accounts with WSOL mint.
+- [x] Confirmed Mainnet receiver `DNXgeM9EiiaAbaWvwjHj9fQQLAX5ZsfHyvmYUNRAdNC8` has token authority `GThUX1Atko4tqhN2NaiTazWSeFWMuiUvfFnyJyUghFMJ`, which matches the pinned source admin constant.
+- [x] Confirmed Devnet receiver `3oE58BKVt8KuYkGxx8zBojugnymWmBiyafWgMrnb6eYy` has token authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`, which differs from the source admin constant `DRayqG9RXYi8WHgWEmRQGrUWRWbhjYWYkCRJDd6JBBak` and the CPMM protocol/fund owners. **Important correction:** CP-Swap source fixes the receiver address but does not constrain its token-account authority to equal `admin::ID`; this is an observed custody/control difference, not by itself proof of a source/deployment mismatch. Confirm who controls the Devnet receiver before any migration.
+- [x] Kept one-time CPMM create-pool fee separate from LaunchLab migration fee: live CPMM AMM config create-pool fee is 150,000,000 lamports (0.15 SOL) on both clusters; LaunchLab GlobalConfig `migrateFee=0` on both.
+- [x] Verified live CPMM AMM configs: create-pool enabled, index 0, trade fee rate 2500, protocol fee rate 120000, fund fee rate 40000. Protocol/fund owners are distinct from the fixed create-pool fee receiver authority.
+- [x] Pinned official public LP Lock source at `raydium-io/raydium-cpi@115df2779d53bacc7db9d0be2773a4b48a6d372b`; CI records SHA-256 hashes for `lib.rs`, `states.rs`, and `context.rs`.
+- [x] Verified source-derived LP Lock authority seed `lock_cp_authority_seed`, Mainnet authority `3f7GcQFG397GAaEnv51zR6tsTVihYRydnydDD1cXekxH`, and Devnet authority `7qWVV8UY2bRJfDLP4s37YzBPKUkVB46DStYJBpYbQzu3`.
+- [x] Verified locked-liquidity PDA seeds `["locked_liquidity", "fee_nft_mint"]`; locked LP vault is the associated token account derived from `[lock_authority, SPL Token program, CPMM LP mint]`.
+- [x] Verified Mainnet live legacy Anchor LP Lock IDL at IDL account `HzLkUWn57cdtyQNQLJpyu2EPF8qQAiGt4iuiEo1XnEFK`, SHA-256 `da45fd5eaf726e5e2ead7280c04588ebd4224d203304cdc8217b012b8130e1f1`, IDL authority `2XVnob28A5Qnpcy95UVeHWNT6G8Poy3tpA3AFyAMoZDt`. The legacy IDL omits discriminators, so CI derives the Anchor `global:` discriminators from the verified instruction names and compares them with the pinned SDK.
+- [x] Mainnet `lockCpLiquidity`: all 19 account positions and signer/writable privileges match the live IDL and pinned SDK. `collectCpFees`: account order and argument wire layout match, but the pinned SDK builder marks `feeNftAccount` writable while live IDL and pinned Rust source require it readonly. CI records this as an unnecessary writable privilege and marks the SDK fee-collector builder unsafe; do not use it. Any future Fee Key fee-collection path needs an IDL-accurate custom builder.
+- [x] Verified source custody constraints: liquidity owner signs the lock; Fee NFT owner must sign fee collection; Fee NFT account must contain exactly one NFT; locked LP vault is controlled by lock authority.
+- [x] PlatformConfig migration scales on both clusters are `platformScale=0`, `creatorScale=100000`, `burnScale=900000` (denominator 1,000,000). The documented post-2026-08-17 interpretation folds legacy creatorScale into the platform Fee Key share; the configured split therefore reports 10% platform-side and 90% burn-side. Exact LP rounding, NFT mint count and custody are **not** verified against deployed LaunchLab bytecode. Mainnet platform NFT recipient: `RaysvGD275FiXmL6AhWo3ZPhR9GnpMRsRLUvHYKaY4P`; Devnet: `DRayPQ7B4cfzMKfX5aHRJmnHJHfLBodt942ttFXCvpJX`.
+- [x] CI on head `2e42ea82698e79c0f11df6e676ba2ed2d194ba37`: LaunchLab Live Provenance run `42752913186` — SUCCESS; Validate Climboria run `42752913503` — SUCCESS. Tests: provenance 7/7, LP Lock audit 7/7, live API/config 11/11, Devnet preparation 25/25; real pinned-SDK Devnet builder smoke passed.
+
+### Remaining blockers / next work
+- [ ] Devnet LP Lock program is executable, but its canonical legacy Anchor IDL account is not published. Current Devnet LP Lock schema is therefore verified against pinned SDK/source only, not a live Devnet IDL. Do not submit a Devnet migration transaction until the deployed Devnet interface is independently confirmed.
+- [ ] Confirm the actual controlling wallet/governance for the Devnet fixed CPMM create-pool fee receiver authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW`; do not infer it from the CPMM admin or config fee owners.
+- [ ] No reproducible build/hash match has been established between pinned public LP Lock/CP-Swap source and deployed program bytecode. ProgramData checks show the relevant programs are upgradeable; upgrade-authority key ownership/governance and deployed-code provenance still need independent review.
+- [ ] Verify LaunchLab migration scale application, rounding and Fee Key NFT custody against deployed LaunchLab bytecode or a separately approved read-only migration preview. The current scale report is config/documentation interpretation only.
+- [ ] If Fee Key fee harvesting is needed, implement and test a custom collector instruction matching the live readonly `feeNftAccount` privilege. Do not use the pinned SDK `collectCpFees` builder as-is.
+- [ ] Exact next task: reconcile Devnet fee-receiver custody and Devnet LP Lock IDL/deployed-interface gaps; then verify deployed-program provenance and migration scale/NFT behavior. Keep LaunchLab-to-CPMM migration disabled until those checks and owner approvals are complete.
+
+**Safety state:** no wallet signature, simulation, transaction submission, migration, fee collection, fundraising, escrow, public deposits or Mainnet execution has been performed.
 
 ## 2026-11-10 — LaunchLab Devnet transaction-preparation checkpoint
 
