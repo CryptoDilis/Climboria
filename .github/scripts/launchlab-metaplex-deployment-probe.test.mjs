@@ -30,6 +30,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
   bytecode.copy(programData, codeOffset);
   const derivedAddress = new PublicKey(Buffer.alloc(32, 7));
   const connection = {
+    getBlockTime: async slot => { assert.equal(slot, 123456); return 1794270000; },
     getAccountInfo: async (key, commitment) => {
       calls.push({ key: key.toBase58(), commitment });
       if (key.toBase58() === METAPLEX_TOKEN_METADATA_PROGRAM_ID) {
@@ -52,6 +53,7 @@ test("captures finalized Devnet program-data slot, authority, and bytecode hash 
   assert.equal(result.programId, METAPLEX_TOKEN_METADATA_PROGRAM_ID);
   assert.equal(result.programDataAddress, f.derivedAddress.toBase58());
   assert.equal(result.deploymentSlot, 123456);
+  assert.equal(result.deploymentBlockTimeUnix, 1794270000);
   assert.equal(result.upgradeAuthority, new PublicKey(Buffer.alloc(32, 9)).toBase58());
   assert.equal(result.immutable, false);
   assert.equal(result.executableByteLength, 24);
