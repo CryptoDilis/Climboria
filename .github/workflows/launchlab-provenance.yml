@@ -7,9 +7,6 @@ on:
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
-      - ".github/scripts/launchlab-prepare-devnet.mjs"
-      - ".github/scripts/launchlab-prepare-devnet.test.mjs"
-      - ".github/workflows/launchlab-provenance.yml"
       - ".github/scripts/launchlab-sdk-idl-check.mjs"
       - ".github/scripts/launchlab-onchain-idl-check.mjs"
       - ".github/scripts/launchlab-api-config-check.mjs"
@@ -22,6 +19,12 @@ on:
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/scripts/launchlab-sdk-idl-check.mjs"
+      - ".github/scripts/launchlab-onchain-idl-check.mjs"
+      - ".github/scripts/launchlab-api-config-check.mjs"
+      - ".github/scripts/launchlab-api-config-check.test.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
 
 permissions:
