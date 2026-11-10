@@ -26,7 +26,7 @@ test("accepts the taker signature while preserving JupiterZ additional signer sl
 test("rejects a signed message that differs from the stored Jupiter order", async () => {
   const fixture = makeFixture();
   const changedMessage = fixture.message.slice();
-  changedMessage[changedMessage.length - 1] ^= 1;
+  changedMessage[changedMessage.length - 2] ^= 1;
   const tampered = Buffer.from([
     ...shortVec(2), ...fixture.signedSlots.flatMap(s => [...s]), ...changedMessage
   ]).toString("base64");
@@ -40,8 +40,8 @@ test("rejects a signed message that differs from the stored Jupiter order", asyn
 
 test("rejects a transaction signed by a different wallet", async () => {
   const fixture = makeFixture();
-  const other = generateKeyPairSync("ed25519");
-  const wrongTaker = base58Encode(rawPublicKey(other.publicKey));
+  const other = makeFixture(1);
+  const wrongTaker = other.taker;
   const result = await validateSignedOrderTransaction({
     originalTransaction: fixture.original, signedTransaction: fixture.signed,
     taker: wrongTaker, cryptoApi: webcrypto
