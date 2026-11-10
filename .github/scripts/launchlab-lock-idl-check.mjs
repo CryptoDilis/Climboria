@@ -55,19 +55,27 @@ function pdaSeedText(seed) {
   if (seed?.kind !== "const" || !Array.isArray(seed.value)) return null;
   return Buffer.from(seed.value).toString("utf8");
 }
-function checkAccounts(instruction, expected, name) {
+function checkAccounts(instruction, expected, name, options = {}) {
   const actual = instruction?.accounts ?? [];
   if (actual.length !== expected.length) fail(name + " account count differs from pinned SDK lock instruction account list");
+  const sdkOverprivileges = [];
   for (let i = 0; i < expected.length; i++) {
     const [expectedName, signer, writable] = expected[i];
     const item = actual[i];
     if (normalizeName(item.name) !== normalizeName(expectedName)) fail(name + " account order mismatch at " + i + ": expected " + expectedName + ", got " + item.name);
     const actualSigner = Boolean(item.signer ?? item.isSigner ?? false);
     const actualWritable = Boolean(item.writable ?? item.isMut ?? false);
-    if (actualSigner !== signer || actualWritable !== writable) {
-      fail(name + " signer/writable flags mismatch for " + expectedName + "; live signer=" + actualSigner + " writable=" + actualWritable + "; SDK signer=" + signer + " writable=" + writable);
+    if (actualSigner !== signer) fail(name + " signer privilege mismatch for " + expectedName + "; live=" + actualSigner + "; SDK=" + signer);
+    if (actualWritable !== writable) {
+      const isSdkOverprivilege = writable && !actualWritable && (options.allowSdkWritableOvergrant ?? []).some(value => normalizeName(value) === normalizeName(expectedName));
+      if (isSdkOverprivilege) {
+        sdkOverprivileges.push({ account: expectedName, liveIdlWritable: false, sdkBuilderWritable: true, severity: "unnecessary-writable-privilege" });
+      } else {
+        fail(name + " writable privilege mismatch for " + expectedName + "; live=" + actualWritable + "; SDK=" + writable);
+      }
     }
   }
+  return sdkOverprivileges;
 }
 export function deriveLockProgramAddresses({ programId, lpMint, PublicKey: Key = PublicKey }) {
   const lockProgram = new Key(programId);
@@ -91,8 +99,8 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
   const collectDiscriminator = collect.discriminator ?? anchorDiscriminator("collect_cp_fees");
   if (JSON.stringify(lockDiscriminator) !== JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR)) fail("LP Lock lock_cp_liquidity discriminator differs from the pinned SDK; live/derived=" + JSON.stringify(lockDiscriminator) + "; SDK=" + JSON.stringify(LOCK_CP_LIQUIDITY_DISCRIMINATOR));
   if (JSON.stringify(collectDiscriminator) !== JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR)) fail("LP Lock collect_cp_fees discriminator differs from the pinned SDK; live/derived=" + JSON.stringify(collectDiscriminator) + "; SDK=" + JSON.stringify(COLLECT_CP_FEES_DISCRIMINATOR));
-  checkAccounts(lock, expectedLockAccounts, "lockCpLiquidity");
-  checkAccounts(collect, expectedCollectAccounts, "collectCpFees");
+  const lockPrivilegeDivergences = checkAccounts(lock, expectedLockAccounts, "lockCpLiquidity");
+  const collectPrivilegeDivergences = checkAccounts(collect, expectedCollectAccounts, "collectCpFees", { allowSdkWritableOvergrant: ["feeNftAccount"] });
   const lockArgs = (lock.args ?? []).map(arg => [arg.name, arg.type]);
   const collectArgs = (collect.args ?? []).map(arg => [arg.name, arg.type]);
   if (JSON.stringify(lockArgs.map(([name, type]) => [normalizeName(name), type])) !== JSON.stringify([["lpamount", "u64"], ["withmetadata", "bool"]])) fail("LP Lock lockCpLiquidity arguments differ from pinned SDK encoding");
@@ -109,8 +117,8 @@ export function validateLockProgramIdl(idl, target, Key = PublicKey) {
     programId: target.id,
     metadataName: idlName,
     instructionCount: idl.instructions.length,
-    lockCpLiquidity: { discriminator: lockDiscriminator, discriminatorSource: lock.discriminator ? "live IDL field" : "Anchor global:lock_cp_liquidity derived because legacy IDL omits discriminators", accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed },
-    collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs },
+    lockCpLiquidity: { discriminator: lockDiscriminator, discriminatorSource: lock.discriminator ? "live IDL field" : "Anchor global:lock_cp_liquidity derived because legacy IDL omits discriminators", accounts: expectedLockAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: lockArgs, authoritySeed: authSeed, lockedLiquiditySeed: liquiditySeed, sdkPrivilegeDivergences: lockPrivilegeDivergences },
+    collectCpFees: { discriminator: collectDiscriminator, discriminatorSource: collect.discriminator ? "live IDL field" : "Anchor global:collect_cp_fees derived because legacy IDL omits discriminators", accounts: expectedCollectAccounts.map(([name, signer, writable]) => ({ name, signer, writable })), args: collectArgs, sdkPrivilegeDivergences: collectPrivilegeDivergences, safeToUsePinnedSdkBuilder: collectPrivilegeDivergences.length === 0 },
     lockAuthority: derivedAuthority.toBase58(),
     lockLpVaultDerivation: "Associated Token Account PDA [lock_authority, SPL Token program, CPMM LP mint] under Associated Token Program",
     sourceAvailability: "LP Lock program source is not publicly available; live on-chain Anchor IDL and pinned SDK interface are compared, but IDL does not prove deployed bytecode behavior.",
