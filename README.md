@@ -3438,3 +3438,20 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 3. Continue Swap independent ALT/instruction review and controlled Devnet lifecycle; keep both execution kill switches off.
 4. Resolve Launchpad LP Lock IDL/custody/program provenance and migration constraints.
 5. Complete real Supabase provider callbacks and controlled account/device acceptance; automated fixture coverage does not make login production-live.
+
+
+## 2026-11-11 — DEX all-pools endpoint correction (CI pending)
+
+- [x] Completed the previously pending exact-head Browser Smoke run `42920696338` on `e9505ef0253dc88688d98b71991f59cfbfa684db`: **SUCCESS**. All 19 main steps passed, including DEX Base search fixtures, quote-side identity regression, Swap fail-closed checks, authenticated cloud-save fixtures, Jarrell's Peak desktop/mobile gameplay and screenshot upload.
+- [x] Screenshot artifact `13811627886` (`climboria-browser-smoke-screenshots`, 8,918,537 bytes; expires 2026-11-17T23:16:30Z) was uploaded. Logs confirm mobile gameplay completed with no render errors; wildlife was temporarily disabled for the automated smoke.
+- [x] Root-cause finding from the official DexScreener API reference: token-detail and exact-address lookups used `/latest/dex/tokens/{address}`, whereas `/token-pairs/v1/{chainId}/{tokenAddress}` is the documented endpoint for retrieving a token's pools. Switched Solana detail/exact-mint and Base exact-contract lookups to the chain-specific token-pairs endpoint. Response normalization accepts the documented top-level array and a `{pairs}` wrapper for compatibility.
+- [x] Code commit: `d70b42d95ab4181e655edf9263345ab86cb8fcd7` (`fix(dex): use all-pools token-pairs endpoint`). Browser Smoke fixture commit: `39bd56861811e9c537294574dd37fdce45949f61` (`test(dex): cover all-pools token lookup routes`). Response-shape fixture commit: `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1` (`test(dex): match token-pairs array response schema`).
+- [!] The new commits are on this branch, but no workflow run is currently associated with head `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1`. The GitHub integration used for file commits did not automatically start the PR workflows; the workflow YAML supports `workflow_dispatch`, but the available connected GitHub actions do not expose a dispatch action. Do not mark the new change CI-verified until an exact-head run exists.
+- [!] Live external DexScreener API access could not be independently exercised from this environment. The prior Browser Smoke fixtures are deterministic and do not establish external provider uptime or live market completeness. DexScreener documents current pair/pool market data but not an OHLC candle API; Climboria's detail chart remains a third-party DexScreener embed rather than an internally sourced candle series.
+
+### Exact next tasks
+1. Trigger `Validate Climboria` and `Climboria Browser Smoke Test` with `workflow_dispatch` on exact head `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1`; inspect logs/artifact, fix any failure and rerun on the final head.
+2. Verify live DexScreener responses for Solana and Base token-pairs endpoints from a network-enabled production/browser environment; measure status, latency, rate-limit and empty-pool behavior.
+3. Confirm selected token identity, all returned pools, liquidity-ranked default pool and external chart embed for real mints on both chains. Keep Base discovery described as query-based, not exhaustive indexing.
+4. Continue Swap R1/R2 independent transaction review, controlled Devnet lifecycle and Cloudflare production gates; keep execution kill switches off.
+5. Continue Launchpad program/custody/migration gates, then real Auth provider/device acceptance.
