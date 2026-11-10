@@ -137,18 +137,18 @@ export async function inspectProgramDataStateSlotBlock({
   };
 }
 
-export async function inspectProgramDataHistory({
-  connection, programDataPublicKey, stateSlot, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 100,
+async function inspectUpgradeableAccountHistory({
+  connection, accountPublicKey, stateSlot, accountLabel, pageSize = 1000, maxPages = 10, maxHistoricalTransactions = 100,
 }) {
   if (typeof connection?.getSignaturesForAddress !== "function" ||
-      typeof connection?.getTransaction !== "function" || !programDataPublicKey ||
+      typeof connection?.getTransaction !== "function" || !accountPublicKey ||
       !Number.isSafeInteger(stateSlot) || stateSlot < 1) {
-    return { status: "programdata_history_rpc_unavailable", signatures: [] };
+    return { status: "${accountLabel}_history_rpc_unavailable", signatures: [] };
   }
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 1000 ||
       !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50 ||
       !Number.isSafeInteger(maxHistoricalTransactions) || maxHistoricalTransactions < 1 || maxHistoricalTransactions > 200) {
-    throw new Error("Invalid bounded ProgramData history scan configuration");
+    throw new Error("Invalid bounded account history scan configuration");
   }
   let before;
   let pagesScanned = 0;
@@ -160,7 +160,7 @@ export async function inspectProgramDataHistory({
     for (let page = 0; page < maxPages; page++) {
       const options = { limit: pageSize };
       if (before) options.before = before;
-      const infos = await connection.getSignaturesForAddress(programDataPublicKey, options, "finalized");
+      const infos = await connection.getSignaturesForAddress(accountPublicKey, options, "finalized");
       pagesScanned++;
       if (!Array.isArray(infos) || infos.length === 0) break;
       signaturesScanned += infos.length;
@@ -179,7 +179,7 @@ export async function inspectProgramDataHistory({
       before = lastSignature;
     }
   } catch (error) {
-    return { status: "programdata_history_fetch_failed", reason: String(error.message || error),
+    return { status: "${accountLabel}_history_fetch_failed", reason: String(error.message || error),
       pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot, signatures: [] };
   }
   // Prefer the oldest signatures in the bounded window: the initial deploy
@@ -206,7 +206,11 @@ export async function inspectProgramDataHistory({
       }
       const logs = transaction?.meta?.logMessages ?? [];
       const message = transaction?.transaction?.message;
-      const accountKeys = message?.staticAccountKeys ?? message?.accountKeys ?? [];
+      const staticKeys = message?.staticAccountKeys ?? message?.accountKeys ?? [];
+      const loaded = transaction?.meta?.loadedAddresses;
+      const accountKeys = [...staticKeys, ...(loaded?.writable ?? []), ...(loaded?.readonly ?? [])];
+      const signerCount = message?.header?.numRequiredSignatures ?? 0;
+      const signerKeys = accountKeys.slice(0, signerCount).map(key => key?.toBase58?.() ?? String(key ?? ""));
       const instructions = message?.compiledInstructions ?? message?.instructions ?? [];
       const instructionEvidence = instructions.map(ix => {
         const programIndex = ix.programIdIndex;
@@ -214,7 +218,8 @@ export async function inspectProgramDataHistory({
         return {
           programId: ix.programId?.toBase58?.() ?? (Number.isInteger(programIndex) ? accountKeys[programIndex]?.toBase58?.() ?? String(accountKeys[programIndex] ?? "") : null),
           accounts: accountIndexes.map(index => Number.isInteger(index) ? accountKeys[index]?.toBase58?.() ?? String(accountKeys[index] ?? "") : String(index)),
-          data: typeof ix.data === "string" ? ix.data : null,
+          data: typeof ix.data === "string" ? ix.data : (Buffer.isBuffer(ix.data) || ArrayBuffer.isView(ix.data)) ? Buffer.from(ix.data).toString("base64") : null,
+          dataEncoding: typeof ix.data === "string" ? "base58" : (Buffer.isBuffer(ix.data) || ArrayBuffer.isView(ix.data)) ? "base64" : null,
         };
       });
       return {
@@ -224,13 +229,14 @@ export async function inspectProgramDataHistory({
         transactionError: transaction?.meta?.err ?? info.err ?? null,
         loaderLogs: logs.filter(line => /upgrade|deploy|programdata|loader|extend/i.test(line)).slice(0, 30),
         instructionEvidence,
+        signerKeys,
         fetchError,
       };
     }));
     history.push(...batch);
   }
   return {
-    status: reachedStateSlot ? "programdata_state_slot_reached" : "programdata_history_incomplete",
+    status: reachedStateSlot ? "${accountLabel}_state_slot_reached" : "${accountLabel}_history_incomplete",
     stateSlot, pagesScanned, signaturesScanned, oldestScannedSlot, reachedStateSlot,
     historicalCandidateCount: selectedHistoricalCandidates.length,
     availableHistoricalSignatureCount: historicalCandidates.length,
@@ -239,6 +245,18 @@ export async function inspectProgramDataHistory({
     signatures: history,
     complete: reachedStateSlot && historicalCandidates.length <= maxHistoricalTransactions,
   };
+}
+
+export async function inspectProgramDataHistory({ connection, programDataPublicKey, ...options }) {
+  return inspectUpgradeableAccountHistory({
+    connection, accountPublicKey: programDataPublicKey, accountLabel: "programdata", ...options,
+  });
+}
+
+export async function inspectProgramAccountHistory({ connection, programPublicKey, ...options }) {
+  return inspectUpgradeableAccountHistory({
+    connection, accountPublicKey: programPublicKey, accountLabel: "program", ...options,
+  });
 }
 
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
@@ -312,6 +330,11 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataPublicKey: programDataAddress,
     stateSlot: programDataStateSlot,
   });
+  const programAccountHistory = await inspectProgramAccountHistory({
+    connection,
+    programPublicKey: programId,
+    stateSlot: programDataStateSlot,
+  });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
     artifactSha256: artifactMetadata.sha256,
@@ -331,6 +354,7 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockTimeUnix,
     programDataStateSlotBlockEvidence,
     programDataHistory,
+    programAccountHistory,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
