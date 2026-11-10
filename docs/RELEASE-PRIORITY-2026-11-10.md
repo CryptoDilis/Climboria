@@ -749,3 +749,14 @@ No production Swap execution, Launchpad service, or Google/X/email account login
 5. Implement real account/session authentication for guest, email/password, Google OAuth and X OAuth only after a real auth provider is configured; verify account linking, verification/reset, logout, session persistence and cross-device progress before enabling login controls.
 
 Production Swap execution, production Launchpad token creation/fundraising, and Google/X/email account login remain **not live**. DEX market discovery/quote preview and wallet connection are not substitutes for those capabilities.
+
+
+## 2026-11-11 — Latest docs deployment completed
+
+- The follow-up Pages run `42884731926` has now completed **SUCCESS** on exact main SHA `143b53e029424e2e5cadaebce06ea5a415ad246e`. This includes both the README and release-priority record updates from the previous checkpoint.
+- The Validate Climboria workflow definition on main includes a `workflow_dispatch` trigger. The linked GitHub connector in this session exposes fetch and rerun operations but no workflow-dispatch action. Therefore the owner can start a new run from Actions UI, but this session cannot dispatch a fresh run through its available GitHub actions.
+- Current PR #234 recheck remains unchanged: head `7f5d3451c7c99356fd46502691f0c24f92a96ade`, base `28180c2a277e0c4bd093a40462032e7f536989e6`, draft/open, mergeability unresolved/dirty, and zero check-runs on the latest head. The successful PR workflow runs currently listed are for `32ec6ca` or earlier; they do not validate `7f5d345`.
+- Confirmed the PR-branch Wrangler config has `EXECUTION_ENABLED = "false"`, a placeholder rate-limit namespace value, the SQLite Durable Object binding/migration, and custom domain route. Deployment guide requires owner-provided Cloudflare account/API token, Jupiter API key and account-specific rate-limit namespace. No secret was exposed or deployment attempted.
+- Exact next action remains: owner manually runs Validate on branch `codex/swap-order-binding-durable-object`, confirms SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`, and shares/permits inspection of the run result; then reconcile branch divergence in a real worktree and repeat Validate + Browser Smoke. Keep both execution flags false.
+
+No production Worker deployment, live swap execution, Launchpad token creation, or social/email login activation is verified.
