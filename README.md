@@ -2875,3 +2875,13 @@ Implement a separately tested server-side transaction security layer before any 
 - [ ] New-head CI validation remains unverified at this checkpoint. Prior Validate run `42850813367` passed on an older head; Browser Smoke `42850813278` was still running, while `42850672349` was cancelled. No claim of a passing full browser suite.
 - [ ] Exact next task: inspect new-head CI and fix any failure; implement trusted RPC ALT account verification, semantic instruction allowlists, durable expiring order-wallet-message binding and replay protection; Devnet/adversarial tests and independent security review before any execution enablement.
 - **Production status unchanged:** no Cloudflare Worker deployment, no live Swap execution, no Launchpad mainnet creation, and no change to five-login production provisioning. Execution hard gate remains false.
+
+
+## 2026-11-11 — ALT metadata decoder progress (latest CI not yet confirmed)
+
+- [x] PR #233 adds a v0 test proving readonly program IDs loaded from Address Lookup Tables are accepted when their indexes are valid in the full resolved account-key range.
+- [x] Added a pure ALT account-state decoder checking expected ALT program owner, non-executable account, canonical metadata length/state, authority option, padding, address count, deactivation marker and same-slot warmup boundary.
+- [x] Added regression tests for valid account decoding and malformed/untrusted/deactivated/not-yet-warmed table data.
+- [ ] **Latest CI pending:** newest parser/test head at time of checkpoint `fb2bc0d3e23d0ec796e7f7f4403aed1e6993965d`; visible Validate `42851432127` and Browser Smoke `42851432268` were triggered on older head `1e8fd34849319e541923eee8403fb922e1838742`. Browser run still in progress. Do not claim latest code is validated.
+- [ ] Next exact task: obtain fresh CI on current head; then wire ALT account fetch to trusted server-side RPC with owner/executable/context-slot binding. Continue instruction allowlists, token transfer/destination checks, durable order-wallet-message binding, replay protection, adversarial and Devnet tests.
+- ALT decoder is not wired into execute; no Worker deployment, live trade, launchpad transaction or production auth provisioning was performed. Execution hard gate remains false.
