@@ -376,3 +376,15 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - [ ] PR #230 remains open/non-draft and non-mergeable; review submissions remain empty. Compare shows it is 35 commits behind and 5 ahead of `main`; inspect current conflict/review requirements before considering integration.
 - [ ] PR #231 remains open/draft and non-mergeable; LaunchLab is still read-only/unsigned and has unresolved Devnet fee custody, LP Lock interface, deployed-bytecode provenance, migration-scale and Fee Key NFT custody gates.
 - [ ] No Worker deployment, DNS mutation, secret access, PR merge, wallet signing, simulation or transaction submission occurred in this checkpoint.
+
+## 2026-11-11 — LaunchLab LP Lock SDK privilege regression added
+
+- [x] Re-read the latest PR #231 LaunchLab workflow logs. Mainnet LP Lock live IDL is published and schema-verified, but it reports a pinned SDK builder privilege divergence: SDK marks `feeNftAccount` writable while the live IDL marks it read-only. The checker correctly reports `safeToUsePinnedSdkBuilder=false`.
+- [x] Confirmed the Devnet LP Lock program account is executable but its canonical legacy Anchor IDL account is missing. The existing provenance report records this limitation and prohibits migration submission until resolved.
+- [x] Read live LaunchLab/CPMM evidence from the run: Devnet CPMM create-pool fee authority `DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW` does not match the observed program admin, protocol owner, or fund owner. Beneficial ownership/governance is therefore unverified; do not assume it is Climboria-controlled.
+- [x] Added two regression tests on PR #231 branch `codex/launchlab-live-provenance-probe` in commit `0b407d9d10b79d7254f616f9c3f5a4281bffe274`: one asserts the precise Fee NFT writability divergence is surfaced and the pinned SDK fee-collection builder remains unsafe; the other rejects privilege divergence on any account outside that explicitly documented exception.
+- [x] Validate workflow for the new head passed: run `42860374386` (PR #231, head `0b407d9d10b79d7254f616f9c3f5a4281bffe274`).
+- [ ] LaunchLab Live Provenance workflow `42860373856` is still running at checkpoint time. Its new LP Lock regression-test step completed successfully; historical Metaplex source rebuild and subsequent live read-only provenance steps are still in progress. Do not mark the complete run passed until it finishes.
+- [ ] PR #231 remains draft and unmerged. Its branch is 341 commits ahead / 19 behind `main` (diverged); do not merge wholesale without a deliberate history/diff review, even if GitHub reports mergeable.
+- [ ] Exact next task: wait for run `42860373856`; inspect any failed step and diagnose before modifying. If all steps pass, record final run evidence and keep LP Lock execution blocked pending a published/verified Devnet IDL or independently reviewed equivalent, resolution of the Fee NFT SDK privilege mismatch, and deployed-bytecode provenance.
+- [ ] No wallet signing, Devnet simulation, transaction submission, LP migration, fee collection, or Mainnet action was performed.
