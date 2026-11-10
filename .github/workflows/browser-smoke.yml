@@ -178,8 +178,7 @@ jobs:
               if(!dexSearchResponse.ok())throw new Error('DEX name search fixture returned HTTP '+dexSearchResponse.status());
               await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:5000}).catch(async error=>{const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText}));throw new Error('DEX name search response succeeded but row did not render. UI='+JSON.stringify(diagnostics)+' requests='+JSON.stringify(dexSearchRequests)+' cause='+error.message)});
               await dexPage.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('Live provider connection'),null,{timeout:5000});
-              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX search result was lost when the delayed initial market refresh completed');
-              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
+              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search result did not survive the delayed initial market refresh');
               await dexPage.locator('#search').fill(dexMint);
               await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
               const exactRow=dexPage.locator('#rows button[data-mint="'+dexMint+'"]');
