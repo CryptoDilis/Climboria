@@ -123,6 +123,48 @@ test("rejects an SDK client not initialized for Devnet", async () => {
   mock.raydium.scope.cluster = "mainnet";
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /initialized for Devnet/);
 });
+test("rejects an unexpected SDK transaction signer", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => ({
+    transactions: [{
+      message: {
+        staticAccountKeys: [options.feePayer, options.mintA, new PublicKey(ids.programId)],
+        header: { numRequiredSignatures: 2 },
+        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
+      },
+    }],
+    signers: [[{ publicKey: new PublicKey("11111111111111111111111111111112") }]],
+  });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /unexpected transaction signer/);
+});
+test("rejects an unapproved program in a prepared SDK transaction", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => ({
+    transactions: [{
+      message: {
+        staticAccountKeys: [options.feePayer, options.mintA, new PublicKey("Unknown111111111111111111111111111111111")],
+        header: { numRequiredSignatures: 2 },
+        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
+      },
+    }],
+    signers: [[options.extraSigners[0]]],
+  });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /unapproved program/);
+});
+test("rejects a transaction fee payer that differs from the creator", async () => {
+  const mock = client();
+  mock.raydium.launchpad.createLaunchpad = async options => ({
+    transactions: [{
+      message: {
+        staticAccountKeys: [new PublicKey("11111111111111111111111111111112"), options.mintA, new PublicKey(ids.programId)],
+        header: { numRequiredSignatures: 2 },
+        compiledInstructions: [{ programIdIndex: 2, accountKeyIndexes: [0, 1] }],
+      },
+    }],
+    signers: [[options.extraSigners[0]]],
+  });
+  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /fee payer does not match/);
+});
 test("fails closed on fresh API / finalized GlobalConfig mismatch", async () => {
   const mock = client({ apiEpoch: 8 });
   await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /API \/ finalized GlobalConfig mismatch: epoch/);
