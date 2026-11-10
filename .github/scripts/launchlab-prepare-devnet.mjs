@@ -13,7 +13,6 @@ const DEVNET = Object.freeze({
   configId: "7ZR4zD7PYfY2XxoG1Gxcy2EgEeGYrpxrwzPuwdUBssEt",
   platformId: "2Jx4KTDrVSdWNazuGpcA8n3ZLTRGGBDxAWhuKe2Xcj2a",
   quoteMint: "So11111111111111111111111111111111111111112",
-  decimals: 6,
   quoteDecimals: 9,
 });
 
@@ -35,8 +34,8 @@ export function validateDevnetLaunchInput(input, sdk) {
     fail("LaunchLab program, GlobalConfig, and PlatformConfig must match the verified Devnet allowlist");
   }
   if (input.quoteMint !== DEVNET.quoteMint) fail("Only the verified Devnet WSOL quote mint is allowed");
-  if (input.decimals !== DEVNET.decimals || input.quoteDecimals !== DEVNET.quoteDecimals) {
-    fail("Token and quote decimals must be explicitly set to the verified Devnet configuration (6 / 9)");
+  if (!Number.isInteger(input.decimals) || input.decimals < 0 || input.decimals > 9 || input.quoteDecimals !== DEVNET.quoteDecimals) {
+    fail("Token decimals must be explicitly selected (0–9); WSOL quote decimals must be 9");
   }
   if (typeof input.creatorWallet !== "string" || !input.creatorWallet.trim()) fail("Creator wallet is required");
   if (typeof input.feePayer !== "string" || input.feePayer !== input.creatorWallet) fail("Fee payer must exactly match the creator wallet");
@@ -75,6 +74,7 @@ export function validateDevnetLaunchInput(input, sdk) {
 export async function prepareDevnetLaunch({ raydium, sdk, input }) {
   const { amounts } = validateDevnetLaunchInput(input, sdk);
   if (!raydium?.connection || !raydium?.api || !raydium?.launchpad) fail("Initialized read-only Devnet Raydium SDK client is required");
+  if (raydium.scope?.cluster !== "devnet") fail("Raydium SDK client must be explicitly initialized for Devnet");
   if (!sameKey(raydium.ownerPubKey, new sdk.PublicKey(input.creatorWallet))) fail("Connected SDK owner does not match the approved creator wallet");
 
   const programId = new sdk.PublicKey(DEVNET.programId);
