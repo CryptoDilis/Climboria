@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   captureDevnetMetaplexProgramProvenance,
   inspectProgramDataHistory,
+  inspectProgramAccountHistory,
   compareExecutableToPinnedBuildArtifact,
   PINNED_METAPLEX_BUILD_ARTIFACT,
   BPF_UPGRADEABLE_LOADER_ID,
@@ -53,7 +54,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
       };
     },
     getSignaturesForAddress: async (key, options, commitment) => {
-      assert.equal(key.toBase58(), derivedAddress.toBase58());
+      assert.ok([derivedAddress.toBase58(), METAPLEX_TOKEN_METADATA_PROGRAM_ID].includes(key.toBase58()));
       assert.equal(options.limit, 1000);
       assert.equal(commitment, "finalized");
       return [
@@ -95,6 +96,8 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
   assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
+  assert.equal(result.programAccountHistory.status, "program_state_slot_reached");
+  assert.equal(result.programAccountHistory.signatures.length, 2);
   assert.equal(result.programDataHistory.signaturesScanned, 2);
   assert.equal(result.programDataHistory.reachedStateSlot, true);
   assert.equal(result.programDataHistory.signatures[0].signature, "OriginalDeploySignature");
@@ -286,4 +289,47 @@ test("retries rate-limited historical transaction reads and captures loader inst
   assert.equal(result.signatures[0].instructionEvidence[0].programId, loader.toBase58());
   assert.deepEqual(result.signatures[0].instructionEvidence[0].accounts, [programData.toBase58()]);
   assert.equal(result.signatures[0].instructionEvidence[0].data, "AQID");
+});
+
+test("inspects the executable Program account history and preserves instruction bytes and signer keys", async () => {
+  const programKey = new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID);
+  const payer = new PublicKey("HistoryPayer111111111111111111111111111111");
+  const programData = new PublicKey(programDataAddress);
+  const result = await inspectProgramAccountHistory({
+    connection: {
+      getSignaturesForAddress: async (key, options, commitment) => {
+        assert.equal(key.toBase58(), programKey.toBase58());
+        assert.equal(options.limit, 10);
+        assert.equal(commitment, "finalized");
+        return [
+          { signature: "later-upgrade", slot: 200 },
+          { signature: "initial-deploy-candidate", slot: 100 },
+        ];
+      },
+      getTransaction: async signature => ({
+        transaction: {
+          message: {
+            staticAccountKeys: [payer, programKey, programData],
+            header: { numRequiredSignatures: 1 },
+            compiledInstructions: [{
+              programIdIndex: 1,
+              accountKeyIndexes: [2],
+              data: Uint8Array.from([1, 2, 3, 4]),
+            }],
+          },
+        },
+        meta: { err: null, logMessages: [signature === "initial-deploy-candidate" ? "Program deployed" : "Upgraded program"] },
+      }),
+    },
+    programPublicKey: programKey,
+    stateSlot: 200,
+    pageSize: 10,
+    maxPages: 1,
+  });
+  assert.equal(result.status, "program_state_slot_reached");
+  assert.deepEqual(result.signatures.map(x => x.signature), ["initial-deploy-candidate", "later-upgrade"]);
+  assert.deepEqual(result.signatures[0].signerKeys, [payer.toBase58()]);
+  assert.equal(result.signatures[0].instructionEvidence[0].programId, programKey.toBase58());
+  assert.equal(result.signatures[0].instructionEvidence[0].data, Buffer.from([1, 2, 3, 4]).toString("base64"));
+  assert.equal(result.signatures[0].instructionEvidence[0].dataEncoding, "base64");
 });
