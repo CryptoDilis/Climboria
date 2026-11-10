@@ -1,3 +1,11 @@
+### Latest checkpoint — 2026-11-10 (Governance one-byte discriminator guard fully corrected)
+
+- [x] The actual Devnet governance instruction data confirmed one-byte Borsh discriminators: `ExecuteTransaction` is `EA==` (16) and `CreateProgramGovernance` begins with `BQA...` (5). The decoder now reads one byte and accepts a one-byte payload; the upgradeable-loader decoder remains four-byte little-endian.
+- [x] Diagnosed LaunchLab run `42764516007`: the discriminator read width had been corrected, but a stale `bytes.length < 4` guard still discarded valid one-byte governance instructions. Changed the guard to reject only empty instruction data. This was a test-detected parser boundary issue, not a live RPC failure.
+- [x] Validate run `42764590574` on commit `4c96af2898a35c97dd6371dc3d3fac263af11651`: SUCCESS, including one-byte governance instruction fixtures.
+- [ ] Latest LaunchLab run `42764590548` on this head: queued/in progress at last inspection. Wait for the corrected live capture and verify the governance event count, proposal account batch, Borsh decode results, and exact ProgramData/Program/authority matches.
+- [ ] Historical evidence still supports 69 successful upgrades across 93 ProgramData records (30 direct + 39 governance CPI), one authority handoff, and three ProgramData extensions. Original `DeployWithMaxDataLen` transaction and exact deployed source lineage remain unresolved. PR #231 remains Draft and unmerged; no signing, simulation, submission, migration, or Mainnet action was performed.
+
 ### Latest checkpoint — 2026-11-10 (SPL Governance discriminator-width correction)
 
 - [x] Analyzed the first live proposal-account capture from run `42763348402`: ProgramData history and account capture completed, but the governance summary reported zero executions, so no proposal accounts were requested. The actual finalized transactions showed Borsh instruction data `EA==` for `ExecuteTransaction` (one byte, value 16) and `BQA...` for `CreateProgramGovernance` (first byte 5).
