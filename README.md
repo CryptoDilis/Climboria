@@ -2667,3 +2667,34 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-10 — Swap execution hard-gate engineering checkpoint
+
+**Change under review:** PR #233 — https://github.com/CryptoDilis/Climboria/pull/233
+
+- Added `EXECUTION_SECURITY_REVIEW_COMPLETE = false` as a code-level gate in `dex/swap-proxy/src/index.mjs`. The gate is independent of `EXECUTION_ENABLED`; configuration alone cannot enable execution.
+- `handleExecute` now rejects before rate-limit/provider forwarding whenever the code-level gate is closed.
+- `/health` now reports `execution: disabled` and `configured.executionEnabled: false` while the code-level gate is closed, even if an environment flag is mistakenly set true.
+- Replaced unit tests that previously exercised a mocked Jupiter execute-forwarding path with a regression test proving a true deployment flag still cannot reach Jupiter while the security gate is closed.
+- Updated `dex/swap-proxy/DEPLOYMENT.md` with the two-gate model and the conditions for any future gate change.
+- No keys, signatures, wallet funds, or live transactions were used. No execution switches were enabled.
+
+**CI diagnosis**
+- Initial PR checks: Validate run `42849007215`; Browser Smoke run `42849007217`; both failed on the first attempt.
+- Root cause from Validate job `129944184285`: the expected error assertion observed the mock fetch exception, proving the first source edit had not actually inserted the handleExecute hard-stop (the health flag and constant were changed, but the execute guard replacement had not matched). This was a code-patch mismatch, not an upstream Jupiter or Pages outage.
+- Corrected by explicitly matching and replacing the exact `handleExecute` block; verified the branch source now returns 503 before rate-limit/provider code. The regression test now checks the 503 reason and asserts upstream fetch was never called.
+- The failed runs above belong to the earlier commit `0c29e95f25ccbc03603f38b9291a20c0bbfcdb58`, before the corrected guard commit `8d073da87664af4e1f8e564a13aeab3145de1d35`. Do not treat the old failure as a result for the corrected source. A fresh PR check on the latest head is still required.
+
+**Current status**
+- PR #233 remains draft/open; latest code head at this checkpoint: `8d073da87664af4e1f8e564a13aeab3145de1d35` (source guard fix; follow-up documentation commit will advance it).
+- Swap execution remains OFF. This is an interim safety hardening, not the completed semantic validator, not a production deployment, and not a live trading claim.
+
+**Next exact tasks**
+1. Obtain fresh Validate and Browser Smoke checks on the corrected PR head; diagnose and fix any failures from logs before proceeding.
+2. Implement the actual Solana v0 transaction semantic validator, including address lookup table resolution and strict signer/fee-payer, token mint, amount, destination, program/instruction/account, and compute-budget checks.
+3. Implement durable one-time expiring order binding to the wallet + exact mints + amount + signed message hash, with atomic consumption, replay protection, and idempotent execution results.
+4. Add adversarial tests (tampered transaction, wallet/mint/amount substitution, malicious lookup-table addresses, unexpected instructions, expired blockhash, replay, Jupiter request mismatch) and controlled Devnet lifecycle tests.
+5. Only after independent security review and Devnet evidence may the code-level constant and deployment/frontend flags be considered for a separately reviewed release.
+
+**Never remove the hard gate just to make the UI appear live.**
