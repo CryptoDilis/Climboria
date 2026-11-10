@@ -54,3 +54,36 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 - [ ] Exact next job: poll run `42737703450`; if gameplay fails, inspect the completed job logs and diagnose root cause before a targeted fix. Verify screenshot artifact after upload.
 - [ ] After P0, continue Swap PR #219 by resolving the documented `api.climboria.fun` DNS/custom-domain health-check blocker (verify zone Active, registrar nameserver delegation, DNS/custom domain and certificate before redeploy). Continue DEX issue #220 only with real OHLCV provider verification; current provider research checkpoint recommends prototype/cached pool OHLCV, conservative rate limits and exact pool orientation. Then audit Signature Launchpad's actual end-to-end chain flow.
 - [x] Updated Portfolio PR #230 and DEX issue #220 with this exact handoff checkpoint (comments `6756536692`, `6756537637`).
+
+
+## 2026-11-10 — Signature Launchpad token & liquidity custody policy (design checkpoint)
+**Status: proposed architecture; not yet implemented or approved as final launch policy.**
+
+### Token destination
+- A newly created token is identified by its on-chain mint address; it is not a single wallet-held object.
+- The creator's allocation should be delivered to the creator's connected wallet by default, subject to the allocation they explicitly configure and confirm.
+- Any team, treasury, community, vesting, or liquidity allocation must be separately disclosed with its exact percentage/amount and destination before signing.
+- Mint authority, freeze authority, metadata update authority, and any revocation/renunciation action must be explicitly disclosed. Do not imply that token supply is fixed or immutable unless the relevant authority state is verified on-chain.
+
+### Liquidity destination and ownership
+- Liquidity assets (creator-supplied tokens plus the paired SOL/USDC) go into the actual on-chain pool when the creator confirms pool creation; they do not simply go to a Climboria wallet.
+- The pool's LP token or concentrated-liquidity position represents ownership/control rights and must be separately identified from the pool's underlying assets.
+- Recommended UX: creator chooses from supported LP ownership options (creator wallet, time-locked position, or burn/irrecoverable route only where technically supported), with clear warnings, lock duration, unlock destination, and explorer-verifiable transaction details.
+- Climboria must not custody, withdraw, or redirect creator liquidity by default. Any platform fee must be separately disclosed and routed to a published, verifiable fee destination.
+- A pool existing does not mean liquidity is locked. Never display “locked” or “burned” without verified on-chain evidence.
+
+### Launch confirmation / UI requirements
+- Before wallet signing, show token allocation table, creator wallet, mint address (after creation), pair asset, token/SOL-or-USDC liquidity amounts, pool address, LP ownership choice, authority status, all fees, and irreversible actions.
+- After confirmation, show actual transaction signatures, explorer links, pool address, LP owner/lock status, and chain-confirmed balances. Failure/retry must not duplicate token creation or liquidity deposits.
+- No fake launch success, fake bonding curve progress, simulated balances, or unsupported pool/lock claims.
+- Implementation is Solana-first; Base/EVM support must be separately audited and must not be represented as identical until its contracts and pool mechanics are verified.
+
+### Decisions still required before implementation
+- [ ] Confirm LP ownership default: creator wallet, mandatory time-lock, burn, or creator-selectable options. Current recommendation: creator-selectable options with plain-language risk disclosure.
+- [ ] Confirm liquidity funding model and any minimums/presets. Current recommendation: creator chooses the amount; any minimum/preset must be disclosed before launch.
+- [ ] Confirm supported pool protocol and whether launch is direct pool creation or bonding-curve graduation/migration. These are different flows and must not be conflated.
+- [ ] Confirm platform fee amount, destination wallet/program, and exact fee timing.
+- [ ] Confirm token supply/allocation defaults and authority-revocation policy.
+
+### Exact next Launchpad job
+After Portfolio P0 verification and Swap/DEX production gates, audit the actual `launchpad/` source and all related Solana programs/API/Worker routes. Map the real token creation, metadata upload, authorities, pool creation, LP ownership/lock, fee routing, confirmation, and retry paths. Record source paths and evidence, identify missing implementation, and build a devnet-only test plan before changing code. No mainnet launch or custody behavior is authorized by this design checkpoint.
