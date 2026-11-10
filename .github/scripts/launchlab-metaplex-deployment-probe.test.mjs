@@ -516,6 +516,7 @@ test("verifies executed governance proposal state and exact embedded ProgramData
   }] };
   const verified = verifyGovernanceUpgradeProposalEvidence({
     governanceHistory, proposalDetails, programId: program, programDataAddress: programData,
+    currentUpgradeAuthority: governance,
   });
   assert.equal(verified.status, "all_governance_upgrade_proposals_verified");
   assert.equal(verified.executionCount, 1);
@@ -530,7 +531,7 @@ test("verifies executed governance proposal state and exact embedded ProgramData
           accounts: [{ pubkey: "WrongProgramData" }, ...proposalDetails.proposalTransactions[0].instructions[0].accounts.slice(1)] }],
       }],
     },
-    programId: program, programDataAddress: programData,
+    programId: program, programDataAddress: programData, currentUpgradeAuthority: governance,
   });
   assert.equal(mismatch.status, "governance_upgrade_proposal_verification_partial");
   assert.equal(mismatch.failedCount, 1);
