@@ -101,3 +101,10 @@ Until every gate is checked and separately approved, keep proxyEnabled=false, en
 ## Wallet signature verification implementation
 
 The dedicated verification flow is specified in [TREASURY-SIGNATURE-VERIFICATION-SPEC.md](./TREASURY-SIGNATURE-VERIFICATION-SPEC.md). It is not yet implemented or deployed. Do not ask the owner to sign until the backend nonce store, server-side EVM and Solana signature verification, replay protection, and Coinbase mobile compatibility tests pass.
+
+
+## Owner product decision — 2026-11-10
+- Approved Launchpad mechanism: bonding curve, intended Raydium LaunchLab integration, pending program/SDK and Devnet verification.
+- Public deposits/fundraising: **NO**. No presale, auction, sale contribution vault, deposit escrow or public fundraising collection by Climboria.
+- The proposed 100 bps Launchpad fee previously framed around successfully settled gross contributions is **not applicable as written** to this no-fundraising product. Do not apply it to bonding-curve trades, creator launch fees or graduation automatically. Any separate fee needs explicit owner approval, provider/program support, fee-base/recipient disclosure, security tests and receipt reconciliation.
+- See [bonding architecture](./SIGNATURE-LAUNCHPAD-BONDING-ARCHITECTURE.md). Existing release gates remain in force; no execution or collection is enabled.
