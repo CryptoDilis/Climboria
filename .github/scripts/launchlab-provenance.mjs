@@ -82,7 +82,8 @@ export function parseProgramDataAccount(programDataAccount) {
   const option = data[12];
   if (option !== 0 && option !== 1) throw new Error("Invalid ProgramData upgrade-authority option tag");
   if (option === 1 && data.length < 45) throw new Error("Truncated ProgramData upgrade authority");
-  const programPayload = data.subarray(45);
+  const payloadOffset = option === 1 ? 45 : 13;
+  const programPayload = data.subarray(payloadOffset);
   return {
     slot: Number(data.readBigUInt64LE(4)),
     upgradeAuthority: option === 1 ? encodeBase58(data.subarray(13, 45)) : null,
