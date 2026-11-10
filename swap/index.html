@@ -451,6 +451,11 @@ let majorAssetChoices=[];
 const usdFmt=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:v>=1000?0:v>=1?2:6}).format(v)};
 const compactUsd=n=>{const v=Number(n);if(n===null||n===undefined||!Number.isFinite(v))return '—';return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',notation:'compact',maximumFractionDigits:2}).format(v)};
 async function fetchMarketJson(url){const response=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('Market provider HTTP '+response.status);return response.json()}
+async function fetchSolanaTokenPairs(mint){
+ const payload=await fetchMarketJson('https://api.dexscreener.com/token-pairs/v1/solana/'+encodeURIComponent(mint));
+ const rows=Array.isArray(payload)?payload:payload?.pairs;
+ return (Array.isArray(rows)?rows:[]).filter(pair=>pair&&pair.chainId==='solana'&&pair.pairAddress&&pair.baseToken&&pair.quoteToken);
+}
 let selectedChartRequest=0;
 async function updateSelectedAsset(token){
  const chartRequest=++selectedChartRequest;
@@ -459,12 +464,12 @@ async function updateSelectedAsset(token){
  title.textContent=(token.symbol||'TOKEN')+' · '+(token.name||'Selected asset');
  price.textContent='Loading…';change.textContent='—';volume.textContent='—';mcap.textContent='—';liquidity.textContent='—';venue.textContent='—';note.textContent='Looking up live Solana pool data…';empty.hidden=false;empty.textContent='Loading selected token chart…';chart.removeAttribute('src');
  try{
-  const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));
+  const pairsPayload=await fetchSolanaTokenPairs(token.id);
   if(chartRequest!==selectedChartRequest)return;
   // DexScreener pair charts render the pool's BASE asset. A mint appearing only as
   // quoteToken would show the other asset (often SOL), so never use that pool as a
   // misleading chart for the selected token.
-  const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.pairAddress&&p.baseToken?.address===token.id);
+  const pairs=pairsPayload.filter(p=>p.baseToken?.address===token.id);
   if(!pairs.length)throw new Error('No Solana pool with this exact mint as the chart base asset. Choose another verified representation or pool.');
   pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
   if(chartRequest!==selectedChartRequest)return;
@@ -487,8 +492,8 @@ async function updateSelectedAsset(token){
 async function resolveSolanaTokenByMint(mint,fallbackSymbol='TOKEN',fallbackName='Unknown token'){
  if(typeof mint!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint))throw new Error('Invalid Solana mint address.');
  const canonical={So11111111111111111111111111111111111111112:{symbol:'SOL',name:'Solana',decimals:9},EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v:{symbol:'USDC',name:'USD Coin',decimals:6}};
- const pairsPayload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(mint));
- const pairs=(pairsPayload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&((p.baseToken?.address===mint)||(p.quoteToken?.address===mint)));
+ const pairsPayload=await fetchSolanaTokenPairs(mint);
+ const pairs=pairsPayload.filter(p=>p.baseToken?.address===mint||p.quoteToken?.address===mint);
  pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
  const pair=pairs[0];
  const meta=pair?(pair.baseToken?.address===mint?pair.baseToken:pair.quoteToken):null;
@@ -525,7 +530,7 @@ async function disconnectClimboriaWallet(){try{if(walletProvider?.disconnect)awa
 const quoteTokens={from:{id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9},to:{id:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin',decimals:6}};
 let tokenSearchSequence={from:0,to:0};
 async function searchQuoteToken(side,options={}){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Finding the best Solana token match…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}const candidates=tokens.filter(t=>t&&typeof t.id==='string'&&Number.isInteger(Number(t.decimals))&&Number(t.decimals)>=0&&Number(t.decimals)<=18).slice(0,8);if(!candidates.length)throw new Error('Jupiter returned no usable token metadata.');box._tokens=candidates;box.innerHTML=candidates.map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');if(options.autoSelect){const chosen=await chooseBestSolanaCandidate(candidates,request,side,query);if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(chosen){const alternativesMarkup=box.innerHTML;chooseQuoteToken(side,chosen);box.innerHTML='<div class="notice">Selected best-supported '+esc(chosen.symbol||'token')+' market automatically. You can still choose another representation below.</div>'+alternativesMarkup;autoQuoteAfterChange();}else{$(side==='from'?'fromSelected':'toSelected').textContent='Selection required · choose the exact mint';box.insertAdjacentHTML('afterbegin','<div class="notice">Multiple token representations found. Choose the exact mint below; no asset has been changed yet.</div>');}}}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
-async function chooseBestSolanaCandidate(tokens,request,side,query){if(!Array.isArray(tokens)||tokens.length!==1)return null;const ranked=[];for(const token of tokens.slice(0,1)){if(request!==tokenSearchSequence[side]||$(side==='from'?'quoteFromSearch':'quoteToSearch').value.trim()!==query)return null;try{const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.baseToken?.address===token.id&&p.pairAddress);if(!pairs.length)continue;pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));const liquidity=Number(pairs[0].liquidity?.usd)||0;ranked.push({token,score:liquidity});}catch(_){}}ranked.sort((a,b)=>b.score-a.score);return ranked.length===1?ranked[0].token:null}
+async function chooseBestSolanaCandidate(tokens,request,side,query){if(!Array.isArray(tokens)||tokens.length!==1)return null;const ranked=[];for(const token of tokens.slice(0,1)){if(request!==tokenSearchSequence[side]||$(side==='from'?'quoteFromSearch':'quoteToSearch').value.trim()!==query)return null;try{const pairs=(await fetchSolanaTokenPairs(token.id)).filter(p=>p.baseToken?.address===token.id);if(!pairs.length)continue;pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));const liquidity=Number(pairs[0].liquidity?.usd)||0;ranked.push({token,score:liquidity});}catch(_){}}ranked.sort((a,b)=>b.score-a.score);return ranked.length===1?ranked[0].token:null}
 let autoQuoteTimer=null;
 function autoQuoteAfterChange(delay=450){clearTimeout(autoQuoteTimer);if(!quoteTokens.from?.id||!quoteTokens.to?.id||quoteTokens.from.id===quoteTokens.to.id||!(Number($('quoteAmount').value)>0))return;autoQuoteTimer=setTimeout(()=>{if(quoteTokens.from.id!==quoteTokens.to.id)requestJupiterQuote();},delay)}
 
