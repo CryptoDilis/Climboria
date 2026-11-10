@@ -79,6 +79,12 @@ The parser now checks the canonical ALT metadata layout, owner program ID, execu
 The structural decoder now rejects v0 lookup entries that select no addresses and caps the reconstructed transaction account-key set at 128, including static plus ALT-loaded keys. The same cap is enforced again after ALT reconstruction. This is a conservative runtime guard, not a substitute for the target cluster's own runtime validation. ALT deactivation is rejected conservatively; same-slot newly appended addresses are not accepted. These checks remain isolated from `/api/swap/execute`.
 
 
+### Trusted RPC ALT resolver foundation
+
+A server-only helper in `src/solana-rpc.mjs` now requests all transaction lookup-table accounts in one `getMultipleAccounts` RPC call using confirmed/finalized commitment. It binds the exact transaction table keys to the returned account array, requires the JSON-RPC response ID/context slot and exact account count, and passes owner/executable/base64 data plus the same response context slot into the ALT state decoder. It rejects duplicate table keys, untrusted owners, executable accounts, malformed base64, incomplete RPC values, invalid context, oversized responses, and non-public/non-HTTPS endpoint URLs. RPC response reads are bounded to 128 KiB and requests time out after 8 seconds.
+
+The RPC URL must be configured only in a server-side Worker secret/binding (planned name: `SOLANA_RPC_URL`). Never accept an RPC URL or ALT account data from browser request fields. The helper is not yet imported by the Worker request handler, is not wired into `/api/swap/execute`, and has not been run against a live RPC provider or CI in this change. Its tests use a mocked RPC response. This is a foundation, not a production execution validator.
+
 ### Lookup-table identity binding
 
 The ALT decoder now requires the 32-byte public key of the lookup-table account and returns a defensive copy of that identity with the decoded address list. The caller can pass the returned object directly to account-meta reconstruction, which compares the decoded table key to the key embedded in the transaction message. This closes an API-level ambiguity where decoded addresses previously returned with a null table identity. It still does not fetch or authenticate RPC data; owner, executable flag, data and context slot must come from one trusted server-side account response.
