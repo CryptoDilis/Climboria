@@ -20,3 +20,9 @@ namespace_id = "20261108"
   [ratelimits.simple]
   limit = 30
   period = 60
+
+# Provision the API hostname as a Worker Custom Domain during deploy.
+# Cloudflare requires an active zone and no conflicting CNAME at this hostname.
+[[routes]]
+pattern = "api.climboria.fun"
+custom_domain = true
