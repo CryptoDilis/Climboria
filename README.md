@@ -2667,3 +2667,41 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-09 — Cross-chat handoff and DEX regression checkpoint
+
+### Completed and verified in this session
+- [x] Inspected repository state: `CryptoDilis/Climboria`, default branch `main`; no changes were made to `main`, and no PR was merged or deployed.
+- [x] Diagnosed the main-branch Browser Smoke failure on run [42593894269](https://github.com/CryptoDilis/Climboria/actions/runs/42593894269): all earlier browser checks passed; the compact mobile DEX/Swap test failed while waiting for the mobile token detail close flow to restore navigation.
+- [x] Follow-up diagnostic evidence on run [42602374520](https://github.com/CryptoDilis/Climboria/actions/runs/42602374520): the physical Playwright tap reached `#closeDetail`; after the tap, `mobile-token-view` was removed, the detail panel became hidden, and the fixed mobile navigation returned. The first diagnostic harness then failed with `ReferenceError: document is not defined`, a test-context mistake rather than a production UI failure.
+- [x] Corrected the test-context mistake and retained a focused real-tap regression assertion in PR [#226](https://github.com/CryptoDilis/Climboria/pull/226), branch `codex/diagnose-mobile-detail-close`, head `3d7a936bfeed3ff223b33bd6ed7b34fc5d9c0b44`. No production UI code was changed in this PR.
+- [x] Browser Smoke run [42603943464](https://github.com/CryptoDilis/Climboria/actions/runs/42603943464) passed, including compact DEX/Swap at 390px and 360px, mobile market states, and Jarrell's Peak desktop/mobile smoke.
+- [x] Validate run [42603943415](https://github.com/CryptoDilis/Climboria/actions/runs/42603943415) passed.
+- [ ] PR #226 still requires review/merge approval; do not merge or deploy without the user's explicit approval.
+
+### Active DEX / Swap work — do not repeat completed fixes
+- [ ] Review and continue PR [#219](https://github.com/CryptoDilis/Climboria/pull/219), branch `codex/swap-premium-focused-ui`: premium quote-first Swap redesign, Major Assets selection, exact-selected-mint chart synchronization, quote-preview states, mobile 390px layout, wallet/order invalidation, and fail-closed execution.
+- [ ] Confirm the latest Browser Smoke result for PR #219's current head before changing code; its PR description records a prior Browser Smoke success and a subsequent Worker deployment failure. Diagnose the Worker failure separately from frontend smoke results.
+- [ ] Reproduce the user's reported issue before editing: tapping a Major Asset must visibly select that asset in the Swap input and the chart must match that exact selected mint; search input styling must remain polished and usable on mobile. Add/retain targeted assertions for each behavior.
+- [ ] Inspect the current Worker deployment failure logs and identify whether required Cloudflare variables/secrets are absent or whether the workflow/configuration itself is wrong. Never ask the user to paste secrets into chat; keep production execution disabled until backend/security gates pass.
+
+### Mandatory workflow for every future session
+1. Read this checkpoint and the current PR/branch before making changes.
+2. Inspect recent GitHub Actions runs and identify failed jobs/steps.
+3. For each failure, capture the exact error and root cause before proposing a fix; distinguish product defects, test-harness defects, missing deployment configuration, and transient infrastructure.
+4. Write a targeted strategy that addresses the diagnosed cause. Do not repeat a prior patch unless new evidence explains why it is appropriate.
+5. Make changes only on a dedicated non-`main` branch; run focused tests, then full Validate and Browser Smoke where applicable.
+6. Record changed files, commit SHA, test run URLs/results, unresolved risks, and the exact next task here before ending the session.
+7. Never merge PRs, change `main`, enable live swap execution, or deploy production without explicit user approval.
+
+
+### Follow-up diagnosis — PR #219 Worker deployment
+- [x] Inspected both failed Deploy Climboria API runs [42547911329](https://github.com/CryptoDilis/Climboria/actions/runs/42547911329) and [42548163117](https://github.com/CryptoDilis/Climboria/actions/runs/42548163117).
+- [x] Root cause is after deployment, not in Worker build/configuration: all 27 Worker tests, account-specific namespace validation, Wrangler config validation, secret validation, Jupiter secret upload, and `wrangler deploy` succeeded. Wrangler reported the Worker and custom domain `api.climboria.fun` created.
+- [x] Both runs failed only at the production health/CORS verification because runner DNS returned `curl: (6) Could not resolve host: api.climboria.fun` on every retry. The CORS request was never reached.
+- [ ] Do not repeat deployment or alter Worker source as a speculative fix. First verify that `climboria.fun` is an Active Cloudflare zone and that the registrar's authoritative nameservers point to Cloudflare; then inspect the `api.climboria.fun` Custom Domain/DNS record and its certificate/activation status. Cloudflare's Custom Domain setup requires an active zone and provisions DNS/certificate; see [Cloudflare Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+- [ ] Once authoritative DNS resolves `api.climboria.fun`, rerun the health/CORS verification. If DNS resolves but health fails, then diagnose the returned HTTP/JSON response separately.
+- [ ] Do not claim production API readiness or enable frontend execution until health, CORS, rate limiting, and security gates pass.
+
+**Exact next job:** Continue PR #219 by inspecting its latest branch head and Actions runs, then resolve the confirmed Cloudflare authoritative DNS/custom-domain activation issue (requires Cloudflare/registrar dashboard access), rerun health/CORS, and verify Major Assets → Swap input → exact-mint chart flow before any frontend implementation.

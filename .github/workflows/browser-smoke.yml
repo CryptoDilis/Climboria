@@ -553,7 +553,7 @@ jobs:
                   await dex.locator('#mobileMarketMore').tap();
                   await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
-                // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
+                // Close detail and wait for the mobile market view to be restored.
                 await dex.locator('#closeDetail').tap();
                 await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
