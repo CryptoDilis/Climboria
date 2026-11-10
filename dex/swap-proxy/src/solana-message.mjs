@@ -158,6 +158,7 @@ export function reconstructAccountMetas(parsed, resolvedTables = []) {
     }
   });
   const metas = [...staticKeys, ...writable, ...readonly];
+  if (metas.length > MAX_RESOLVED_ACCOUNT_KEYS) throw new Error("Transaction exceeds the runtime account-lock limit");
   if (metas.length !== parsed.totalKeyCount) throw new Error("Resolved account key count mismatch");
   const seenKeys = new Set();
   for (const meta of metas) {
