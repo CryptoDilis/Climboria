@@ -80,7 +80,7 @@ export async function inspectProgramDataStateSlotBlock({
       commitment: "finalized",
       transactionDetails: "full",
       rewards: false,
-      maxSupportedTransactionVersion: 0,
+      maxSupportedTransactionVersion: 1,
     });
   } catch (error) {
     return {
@@ -194,7 +194,7 @@ async function inspectUpgradeableAccountHistory({
       for (let attempt = 0; attempt < 4; attempt++) {
         try {
           transaction = await connection.getTransaction(info.signature, {
-            commitment: "finalized", maxSupportedTransactionVersion: 0,
+            commitment: "finalized", maxSupportedTransactionVersion: 1,
           });
           fetchError = null;
           break;
