@@ -107,7 +107,7 @@ export function parseSolanaV0Transaction(base64) {
   const readonlySigned = header[1];
   const readonlyUnsigned = header[2];
   if (requiredSignatures !== signatureCount || requiredSignatures < 1 ||
-      readonlySigned > requiredSignatures) {
+      readonlySigned >= requiredSignatures) {
     fail("Transaction signature header is inconsistent");
   }
   const keyCount = readShortVec(bytes, cursor);
