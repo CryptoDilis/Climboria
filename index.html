@@ -441,12 +441,27 @@ footer:first-of-type>div{
  <div class="auth-panel">
   <button class="auth-close" id="authClose">×</button>
   <h2 id="authTitle">Enter Climboria</h2>
-  <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
-  <button class="auth-option" id="authWallet"><span>Connect crypto wallet</span><span class="auth-tag">Phantom / EVM</span></button>
-  <button class="auth-option" disabled><span>Continue with X</span><span class="auth-tag">OAuth setup needed</span></button>
-  <button class="auth-option" disabled><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth setup needed</span></button>
-  <button class="auth-option" disabled><span>Email and password</span><span class="auth-tag">Auth backend needed</span></button>
-  <p class="auth-note" id="authStatus">No account is created or logged in yet.</p>
+  <p>Sign in or create your Climboria Player Account. Guest progress stays on this device until a safe account migration is completed.</p>
+  <button class="auth-option" id="authEvm" type="button"><span>Sign in with EVM wallet</span><span class="auth-tag">MetaMask / EVM</span></button>
+  <button class="auth-option" id="authSolana" type="button"><span>Sign in with Solana</span><span class="auth-tag">Phantom / Solflare / Backpack</span></button>
+  <button class="auth-option" id="authGoogle" type="button"><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth</span></button>
+  <button class="auth-option" id="authX" type="button"><span>Continue with X</span><span class="auth-tag">X OAuth 2.0</span></button>
+  <label for="authEmail" style="display:block;color:#e8d8b7;font-size:12px;margin:14px 0 5px">Email</label>
+  <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff30;background:#080d18;color:#fff">
+  <label for="authPassword" style="display:block;color:#e8d8b7;font-size:12px;margin:10px 0 5px">Password</label>
+  <input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff30;background:#080d18;color:#fff">
+  <button class="auth-option" id="authEmailSubmit" data-mode="signin" type="button"><span>Sign in with email</span><span class="auth-tag">Secure account</span></button>
+  <button class="auth-option" id="authForgotPassword" type="button"><span>Forgot password?</span><span class="auth-tag">Email recovery</span></button>
+  <section id="authRecoveryPanel" hidden aria-label="Set a new password">
+   <label for="authNewPassword" style="display:block;color:#e8d8b7;font-size:12px;margin:10px 0 5px">New password</label>
+   <input id="authNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff30;background:#080d18;color:#fff">
+   <button class="auth-option" id="authSavePassword" type="button"><span>Save new password</span><span class="auth-tag">Update</span></button>
+  </section>
+  <p id="authAccountStatus" class="auth-note">Guest session</p>
+  <button class="auth-option" id="authLogout" type="button" hidden><span>Sign out</span><span class="auth-tag">Account</span></button>
+  <button class="auth-option" id="authModeToggle" type="button"><span>Create a new account instead</span><span class="auth-tag">Sign up</span></button>
+  <p class="auth-note" id="authStatus">Account service setup is required before sign-in is available. Guest play remains available.</p>
+  <p style="font-size:10px;color:#aab2be">Wallet-based sign-in uses a signature only; it never sends a blockchain transaction.</p>
  </div>
 </div>
 
@@ -674,18 +689,7 @@ footer:first-of-type>div{
   document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
   document.getElementById('authClose').addEventListener('click',closeAuth);
   authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
-  document.getElementById('authWallet').addEventListener('click',async()=>{
-    authStatus.textContent='Looking for an installed wallet…';
-    try {
-      let address='';
-      if(window.solana && window.solana.isPhantom){
-        const r=await window.solana.connect(); address=r?.publicKey?.toString()||'';
-      } else if(window.ethereum){
-        const a=await window.ethereum.request({method:'eth_requestAccounts'}); address=a?.[0]||'';
-      } else { authStatus.textContent='No compatible wallet detected. Install Phantom then retry.';return;}
-      authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
-    } catch { authStatus.textContent='Wallet connection failed.'; }
-  });
+  // Wallet authentication is implemented in /auth/auth-client.js via Supabase Auth Web3 (SIWE/SIWS); do not add a parallel custom signature verifier here.
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
@@ -719,5 +723,7 @@ footer:first-of-type>div{
 
 const homePanelBackdrop=document.getElementById("homePanelBackdrop");document.querySelectorAll("[data-panel]").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.panel;document.getElementById("homePanelTitle").textContent=type==="announcements"?"Announcements":"Notifications";document.getElementById("homePanelContent").innerHTML=type==="announcements"?'<p>Official Climboria ecosystem and expedition updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Account, market and expedition alerts will appear here when notification services are enabled.</p>';homePanelBackdrop.hidden=false;document.getElementById("mobileMenu")?.classList.remove("active")}));document.getElementById("homePanelClose").addEventListener("click",()=>homePanelBackdrop.hidden=true);homePanelBackdrop.addEventListener("click",e=>{if(e.target===homePanelBackdrop)homePanelBackdrop.hidden=true});
 </script>
-<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body>
+<svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg><script src="/auth-config.js"></script>
+<script type="module" src="/auth/auth-client.js"></script>
+</body>
 </html>

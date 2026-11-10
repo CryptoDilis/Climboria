@@ -1,3 +1,31 @@
+## 2026-11-10 — In-game Save Options implementation handoff (PR #229)
+
+- [x] Latest baseline CI was rechecked before implementation: Validate `42684644668` and Browser Smoke `42684644556` both passed on PR #228 head `8b3280db16479539cda7582755f1db192020bfde`.
+- [x] Created draft PR [#229](https://github.com/CryptoDilis/Climboria/pull/229), branch `codex/game-save-options-panel-v2-20261110`.
+- [x] Added `auth/game-save-options.js` and mounted it from `game/play.html`. Save options query `player_saves` only after the player opens the panel; it selects only `schema_version,save_data` and relies on own-row RLS. Guest mode remains playable and provides a homepage sign-in path.
+- [x] Account hero selection is applied to this device only after an explicit button click. No cloud save insert/update/upsert, automatic upload, sign-in-triggered save read, or inventory migration is implemented. `climboria_jarrell_inventory_v1` is not read by the feature.
+- [x] Added `.github/scripts/game-save-options-smoke.mjs` and a Browser Smoke workflow step. The state matrix covers guest, account-only, same-choice, invalid payload and read failure; asserts inventory byte-preservation and zero cloud writes.
+- [x] Follow-up code hardening handles `account-save-no-hero` and unexpected conflict states without silently changing either copy.
+- [x] Validate run [42711389612](https://github.com/CryptoDilis/Climboria/actions/runs/42711389612) passed on code commit `4af2818c0f8b03e4e6c8cb964da93941046e0f22`.
+- [x] Browser Smoke run [42711389649](https://github.com/CryptoDilis/Climboria/actions/runs/42711389649): steps 1–16 passed; **new Save Options safety matrix step 17 passed**. Jarrell's Peak desktop/mobile gameplay step 18 is still running at handoff update time. Do not mark the full Browser Smoke as passed until run conclusion is success.
+- [ ] **Next exact job:** finish/poll Browser Smoke run `42711389649`. If it fails, fetch job logs and identify the actual failing step/root cause before changing code; do not repeat the same attempted fix. If it passes, record final conclusion and review screenshot artifact.
+- [ ] Then add tests for `account-save-no-hero` and explicit close/keyboard/mobile interaction if needed; review the live panel screenshot/behavior and confirm no overlay collision with gameplay controls.
+- [ ] Keep PR #229 draft/unmerged until CI is fully green and owner-side auth provider/RLS real-user checks are complete. PR #228 also remains draft/unmerged pending real provider E2E and identity-linking verification.
+
+**Current implementation commit:** `4af2818c0f8b03e4e6c8cb964da93941046e0f22`  
+**PR #229:** https://github.com/CryptoDilis/Climboria/pull/229  
+**Active Browser Smoke:** https://github.com/CryptoDilis/Climboria/actions/runs/42711389649
+
+## 2026-11-10 — Auth foundation CI verification and next implementation
+
+- [x] Validate run [42678416740](https://github.com/CryptoDilis/Climboria/actions/runs/42678416740) completed successfully for commit `859ba7f6e7cf32abed9f182a45f3bee828c9d2ba`.
+- [x] Browser Smoke run [42678416998](https://github.com/CryptoDilis/Climboria/actions/runs/42678416998) completed successfully on the same commit (run #2279, attempt 1). Job `129365989487` passed every step, including save-choice resolver tests, auth UI/client flows, homepage/DEX routing, Cloudflare proxy fail-closed checks, standalone Swap/DEX, 390px/360px mobile regressions, market loading/error/empty states, and Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] No new CI failure was observed in these latest runs; no speculative code change or repeated fix was made.
+- [ ] **Exact next implementation job:** build the in-game, mobile-safe **Save options** panel for signed-in players. It must query only the signed-in user's own `player_saves` row on explicit panel open; read only the approved cosmetic hero key; never read/migrate `climboria_jarrell_inventory_v1`; never insert/update/upsert cloud saves; never auto-upload on sign-in/session refresh; preserve both copies unless the player explicitly chooses; and keep guest play non-blocking.
+- [ ] Add mocked browser state-matrix coverage for guest, account-only, same-choice, invalid payload and read failure. Assert the inventory key is unchanged byte-for-byte and that zero `player_saves` insert/update/upsert requests occur.
+- [ ] After implementation, run Browser Smoke and Validate, inspect actual failed-step logs if either fails, diagnose root cause before editing, then record exact commit SHA, run IDs/results, unresolved gates and the next exact task here.
+- [ ] Keep PR #228 draft/unmerged until owner OAuth/SMTP/provider setup and real-provider E2E/security gates are complete.
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
@@ -209,10 +237,19 @@
 
 ## 2026-11-06 — account-system requirements clarified (documentation only)
 
-- [x] Re-read the canonical account/cloud-save section and confirmed that the account system is already sequenced as P2, frozen until Jarrell's Peak is accepted.
-- [x] Expanded the account requirements to explicitly include Guest play with later account upgrade, logout/session revocation, password reset, unique immutable Player ID, username, and cross-device progress recovery.
-- [ ] No login, registration, OAuth, backend, or cloud-save implementation is claimed by this documentation update. Keep the account system planned/frozen until the P2 gate.
-- [ ] After Jarrell's Peak acceptance, choose the auth/database provider only after checking current pricing, free-tier limits, region availability, backup/export options, and security controls. Implement and test Guest-to-account migration without losing or duplicating progress.
+- [x] Owner explicitly changed priority on 2026-11-09: begin real player-account implementation now, ahead of remaining Jarrell's Peak P0 work.
+- [x] Selected Supabase Auth + Postgres as the initial integration target after checking current official docs: email/password and Google OAuth are supported; Singapore is an available APAC region; Free projects may pause after a low-activity week.
+- [x] Added the initial player identity/RLS migration, public-config placeholder, browser auth client, and provider setup guide on branch `codex/real-player-auth-foundation-20261109`.
+- [x] Added the requested EVM wallet sign-in alongside Google/Gmail OAuth and email/password, using Supabase Sign in with Web3 (EIP-4361 / SIWE); wallet login signs a domain-bound message and does not submit a blockchain transaction.
+- [x] Added X.com sign-in using Supabase's current X OAuth 2.0 provider (`provider: 'x'`); legacy Twitter OAuth 1.0a is intentionally not used.
+- [ ] Configure an X Developer OAuth 2.0 app, request user email, add the exact Supabase callback URL, and enable X / Twitter OAuth 2.0 in the Supabase dashboard before live testing.
+- [ ] Enable the Ethereum Web3 provider in Supabase and allowlist the exact Climboria sign-in redirect URL. Apply Web3 rate limits and CAPTCHA/abuse controls before public launch.
+- [ ] Add verified identity linking so EVM wallet, Google and email methods can resolve to one existing Player ID without creating duplicate player accounts.
+- [ ] Supabase project has not yet been provisioned or configured by the owner; no production login is live. Do not claim account activation until real provider credentials/configuration and end-to-end tests pass.
+- [ ] Finish auth UI integration checks, email verification/password recovery, Google OAuth callback, immutable Player ID creation, profile RLS tests, logout/session refresh, and accessible error states.
+- [ ] Implement and test safe Guest-to-account migration; never overwrite guest saves or merge duplicate inventory blindly.
+- [ ] Implement cloud-save adapter only after auditing the existing local save keys/data structures; client-writable saves are not authoritative inventory, token balances, NFT ownership, or reward claims.
+- [ ] Owner setup required: create the Supabase project in Singapore, run `supabase/migrations/202611090001_player_accounts.sql`, configure email/SMTP and Google OAuth, then populate `auth-config.js` with the public project URL and publishable/anon key only. Never put service-role secrets in browser code, Git, or chat.
 - [ ] Continue P0 Jarrell's Peak work first; the next gameplay task remains the first confirmed open world/performance blocker, with desktop/mobile verification and physical Redmi 14 5G acceptance tracked separately.
 
 ---
@@ -408,7 +445,7 @@
 
 ## 3. Universal Player Account, wallet linking and Cloud Save — future phase
 
-**Status: PLANNED / FROZEN until Jarrell's Peak is accepted.**
+**Status: ACTIVE IMPLEMENTATION (owner priority override 2026-11-09); provider provisioning and production enablement still pending.**
 
 ### Guest play, account creation and authentication
 - [ ] Let players start in Guest mode without email, password or crypto wallet; clearly explain that guest progress is device/browser-local until an account is linked.
@@ -2667,3 +2704,359 @@ For every integrated asset or borrowed technique, record:
 - [ ] Re-run Browser Smoke after screenshot/mobile assertion update and review both DEX social screenshots before closing the visual task.
 
 - [x] Latest Browser Smoke `d382f78`, Validate, and Pages deployment all completed successfully; screenshots visually reviewed for DEX social-link containment.
+
+
+## 2026-11-09 — Solana wallet login added to real account foundation
+
+- [x] Added a dedicated **Sign in with Solana** option to the account modal alongside EVM, Google, X and email.
+- [x] Implemented Supabase Auth Web3 sign-in with `chain: "solana"`, explicit wallet discovery (`window.phantom.solana` / `window.solana`), wallet connect, and a clear sign-in-only consent statement. No transaction is sent and no private key is requested.
+- [x] Updated owner setup guide to enable both Solana and Ethereum Web3 providers and documented Phantom/Solflare/Backpack compatibility where their injected provider API is available.
+- [ ] Verify latest branch CI and run a real Phantom/Solflare sign-in after the Supabase project is configured. Provider enablement and Supabase public URL/anon key remain owner-side release prerequisites.
+- [ ] Test browser injection on Android wallet in-app browsers; desktop extension smoke tests do not prove mobile wallet compatibility.
+- [ ] Continue verified cross-provider identity linking and safe guest-save migration; do not claim a single unified Player ID across providers until tested.
+- **Next exact job:** inspect latest PR #228 workflow results, then implement/test provider-session identity linking without allowing account takeover or overwriting guest progress.
+
+
+## 2026-11-09 — Supabase project created by owner; public URL configured
+
+- [x] Owner created the `Climboria` Supabase project; dashboard screenshot showed project status Healthy and the project endpoint `https://unadepiwbovblkjfljksk.supabase.co`.
+- [x] Added that project URL to `auth-config.js` on `codex/real-player-auth-foundation-20261109` (commit `db749c833da4febbce47ffc51434267403a3e51e`). The public anon/publishable key remains intentionally blank until owner retrieves it; no secret key was requested or stored.
+- [ ] Owner: open Project Settings → API Keys (or API), copy the **publishable key** / legacy **anon public** key only, and provide it through a safe channel so the browser config can be completed. Never use the `service_role` or secret key in the website.
+- [ ] Next exact job: complete the public key config, then run `supabase/migrations/202611090001_player_accounts.sql` in SQL Editor and verify the tables/RLS before configuring auth providers and testing sign-in.
+
+
+## 2026-11-09 — Supabase project URL corrected from owner confirmation
+
+- [x] Owner supplied the exact project URL: `https://unadepiwbovblkfjlksk.supabase.co`.
+- [x] Corrected `auth-config.js` to use this exact URL (commit aabbb4ffb08ad4df5aac36887d89ab8577dd8e20). This supersedes the earlier URL transcribed from the screenshot; use the owner-confirmed URL as authoritative.
+- [ ] Still required: owner-provided public publishable/anon key; run the player account SQL migration; enable Solana/Ethereum and social/email providers; then run end-to-end tests.
+- **Next exact job:** finish `auth-config.js` once the publishable/anon key is safely available, then apply and verify the database migration.
+
+
+## 2026-11-09 — Supabase public client configuration completed
+
+- [x] Owner supplied a key with the `sb_publishable_` prefix. Confirmed it is the publishable/public browser key type (not a `service_role`/secret key).
+- [x] Configured `auth-config.js` with the owner-confirmed Supabase project URL and publishable key (commit 37e376aa9692a6dab9bc3f618a4d6d76ce658d67). This key is intended for browser use; database RLS and least-privilege policies remain mandatory.
+- [ ] Owner must now apply `supabase/migrations/202611090001_player_accounts.sql` in Supabase Dashboard → SQL Editor → New query → Run. Review the SQL before execution; do not run it in production if it shows unexpected destructive statements.
+- [ ] Verify `player_profiles` and `player_saves` tables and RLS policies exist. Then enable Solana and Ethereum Web3 providers and configure Google, X OAuth2, and SMTP/email confirmation.
+- **Next exact job:** after the owner applies the migration, inspect table/RLS results and then continue provider setup and auth tests. Latest commit is not production-live until PR merge/deployment and end-to-end tests.
+
+
+## 2026-11-10 — Supabase player-account migration executed
+
+- [x] Owner ran the full `supabase/migrations/202611090001_player_accounts.sql` in the Climboria Supabase SQL Editor. Screenshot showed `Success. No rows returned` and the editor contained the migration through its final GRANT statements.
+- [ ] Still verify catalog state: confirm `public.player_profiles`, `public.player_saves`, RLS enabled on both, expected policies, and auth-user profile trigger. Do not assume success text alone proves every object is present.
+- **Next exact job:** run the read-only SQL catalog verification query in Supabase SQL Editor; inspect its result before enabling providers or testing sign-in.
+
+
+## 2026-11-10 — Supabase tables and RLS verified
+
+- [x] Owner ran read-only catalog query in Supabase. Screenshot confirms `public.player_profiles` exists with `rls_enabled = true` and `public.player_saves` exists with `rls_enabled = true`.
+- [ ] Still verify policy definitions and `climboria_auth_user_created` trigger exist and are enabled; then test an actual email signup to confirm profile auto-creation and RLS isolation.
+- **Next exact job:** run the read-only SQL query checking policies and the auth.users trigger; review results before configuring provider login tests.
+
+
+## 2026-11-10 — Supabase policy and auth trigger catalog check
+
+- [x] Owner ran the read-only catalog query. Screenshot shows five policies returned: two on `player_profiles` (read own profile, update own username) and three on `player_saves` (read/create/update own save).
+- [x] Screenshot shows the `climboria_auth_user_created` trigger row exists on `auth.users`.
+- [ ] Trigger `status` cell is obscured by the mobile floating toolbar in the screenshot, so enabled state is not yet confirmed. Need a clearer screenshot or a focused query returning only `tgname` and `tgenabled`.
+- **Next exact job:** confirm trigger enabled status; then configure email provider and test a real email signup/profile auto-creation. After that configure Solana/EVM and social OAuth providers.
+
+
+## 2026-11-10 — Supabase auth profile trigger confirmed enabled
+
+- [x] Focused trigger query returned exactly one row for `climboria_auth_user_created` with `tgenabled = 'O'` and `trigger_status = 'ENABLED'`.
+- [x] Combined with prior owner screenshots: both player tables exist with RLS enabled, and all five expected policies are present.
+- [ ] Next: configure email auth/SMTP and verify actual signup creates a `player_profiles` row; then configure and test Solana/EVM wallet providers and Google/X OAuth. No production auth claim until real end-to-end checks pass.
+- **Next exact job:** guide owner through Supabase Authentication → Providers → Email settings; confirm email/password enabled and email confirmation policy, then test signup on the configured Climboria branch/deployment.
+
+
+## 2026-11-10 — Supabase Web3 wallet provider enabled
+
+- [x] Owner enabled the Supabase **Web3 Wallet** auth provider; dashboard screenshot now shows Web3 Wallet `ENABLED` and Email `ENABLED`.
+- [x] Earlier Web3 Wallet settings showed separate toggles for Ethereum and Solana; owner was instructed to enable both and save. The list-level screenshot confirms the provider is enabled, but does not independently expose each chain toggle's saved state. Confirm both chain toggles remain ON before live tests.
+- [ ] Next: configure Google and X OAuth providers (requires owner-created OAuth apps and credentials); configure custom SMTP for reliable confirmation email; set auth abuse protection/rate limits.
+- [ ] Then run end-to-end signup/sign-in tests for email, Solana and EVM wallets, verify each creates a profile and that identity linking is secure. Do not claim production-ready until tests pass and PR is merged/deployed.
+- **Next exact job:** open Web3 Wallet provider once more and visually confirm both Ethereum and Solana toggles are ON; then return to Auth Providers list and proceed to Google OAuth setup.
+
+
+## 2026-11-10 — Owner screenshot: production login modal is still the old wallet-connect UI
+
+- [x] Reviewed owner screenshot of the live Climboria login modal. It still shows the legacy `Connect crypto wallet` button and explicitly says `Wallet connected ... This is not yet a Climboria account login`; X/Google/email appear disabled with setup-needed labels.
+- [x] Compared against auth branch `index.html`: the branch has separate EVM and Solana sign-in buttons, active Google/X OAuth buttons, email/password controls, and loads `auth-config.js` plus `auth/auth-client.js`. Therefore the screenshot is consistent with the current `main`/production deployment not yet containing PR #228 changes.
+- [x] Confirmed PR #228 is still open, draft, unmerged; latest head `d2cfec1ccc5bde0d98d4943a2881f1f6616b8cab`.
+- [ ] Do not treat the current live wallet connection as authenticated Climboria account. Do not ask players to use it for account creation yet.
+- [ ] Before deployment: inspect and fix auth integration/redirect behavior; configure Supabase Site URL + allowed redirects; complete provider credentials; run CI and real signup/wallet OAuth tests. Then merge/deploy PR #228 only after checks pass.
+- **Next exact job:** review PR #228 auth integration and latest-head CI; ensure `auth-config.js` and module scripts are included in Pages artifact, then validate on a preview before production rollout.
+
+
+## 2026-11-10 — Auth deployment gate rechecked
+
+- [x] Confirmed latest PR #228 head is `6f5f1a0f1d97bfe62f3bca2dd5c4d01d37ac0a04` and PR remains open/draft/unmerged.
+- [x] Latest `Validate Climboria` run `42652747661` completed successfully.
+- [x] Latest `Climboria Browser Smoke Test` run `42652747827`: homepage/DEX/mobile test steps 7–14 completed successfully.
+- [ ] Browser smoke is still running Jarrell's Peak desktop/mobile gameplay step 15; screenshot upload and cleanup steps remain pending. Do not merge/deploy until this run concludes and result is inspected.
+- [ ] The live-site login screenshot still reflects `main` because PR #228 has not been merged/deployed. After all checks pass, mark PR ready, merge, verify Pages/Cloudflare deployment and run live-site auth UI smoke. Keep Google/X labeled as provider-setup dependent until owner credentials are configured.
+- **Next exact job:** poll run `42652747827`; if step 15 fails, inspect its job logs and diagnose/fix root cause before rerunning. If all checks pass, mark PR #228 ready and merge/deploy, then verify live `https://climboria.fun/` auth modal exposes EVM, Solana, Google, X, and email controls.
+
+
+## Permanent handoff rule — Climboria development continuity
+
+This is a standing project rule, not a one-time task:
+
+- Record every meaningful task completed, the exact files/areas changed, commit SHA, verification performed, and actual result.
+- Record every failed check with its run ID, failing step, diagnosed root cause, attempted fix, and rerun result. Never repeat an identical attempted fix without new evidence and a reasoned strategy.
+- Always record the exact next unfinished task, its prerequisites, and the current branch/PR/commit so work can resume from the true stopping point after a chat ends.
+- Before starting any new task, inspect this handoff and current GitHub state first. Do not redo verified work.
+- Update this README in the same working branch after each substantial milestone and before ending a work session. Do not mark work complete based only on an attempted action; require a confirmed result.
+- If the work is blocked on an owner-only dashboard action, record exactly what the owner completed, what remains, and the next precise instruction.
+
+**Current handoff (2026-11-10):**
+- Active auth branch: `codex/real-player-auth-foundation-20261109`; PR #228 remains open, draft, unmerged.
+- Latest auth PR head at last inspection: `6f5f1a0f1d97bfe62f3bca2dd5c4d01d37ac0a04`.
+- Supabase owner setup: project URL and publishable key configured in branch; migration executed; `player_profiles` and `player_saves` confirmed with RLS enabled; five expected RLS policies found; `climboria_auth_user_created` trigger confirmed enabled.
+- Supabase dashboard: Email provider enabled; Web3 Wallet provider enabled (Ethereum and Solana toggles were requested ON; verify both toggles remain ON before testing). Email signup allowed and email confirmation ON. Google/X OAuth credentials and SMTP remain owner setup tasks.
+- CI: Validate run `42652747661` passed. Browser Smoke run `42652747827` had steps 7–14 pass; at last check Jarrell's Peak desktop/mobile step 15 was still running, with screenshot upload and cleanup pending.
+- Live website still showed the legacy wallet-connect-only modal because PR #228 was not merged/deployed. Do not call wallet connection an authenticated Climboria account.
+- **Exact next action:** poll Browser Smoke run `42652747827`. If it fails, inspect logs and diagnose root cause before any fix. If it passes, inspect the final checks, mark PR #228 ready, merge/deploy, and verify the live auth modal and sign-in flows. Then continue Google/X OAuth and SMTP setup plus real end-to-end auth tests.
+
+
+## 2026-11-10 — Resume check: authentication PR CI still blocked on gameplay smoke
+
+- [x] Re-read the handoff before doing work; no database migration or prior provider setup was repeated.
+- [x] Confirmed PR #228 remains open, draft, and unmerged at head `6964e8510b54c0560b0b911a10a1971f2edb0d57`.
+- [x] Confirmed Validate Climboria run `42653155660` passed.
+- [x] Confirmed Browser Smoke run `42653155665`: steps 7–14 passed, including homepage, DEX, swap security, mobile workspace, 360px/390px, and market loading/error/empty states.
+- [ ] Step 15, Jarrell's Peak desktop/mobile gameplay smoke, remains `in_progress`; screenshot upload is pending. The previous browser run `42652747827` was cancelled during the same gameplay step, so this is a repeated slow/stalled point, not a proven test failure.
+- [ ] Attempted to retrieve the job log for job `129284585530`; GitHub returned a 404 BlobNotFound response. No root cause can be claimed from that response. Need inspect Actions UI/logs or wait for run completion; if it fails, diagnose from actual failing output before editing.
+- [x] Rechecked auth implementation files: `index.html` includes the EVM, Solana, Google, X, and email controls and loads `/auth-config.js` and `/auth/auth-client.js`; `auth-config.js` contains the owner-confirmed project URL and publishable key.
+- [ ] Still not production: PR unmerged; live site was previously confirmed to show legacy wallet-connect-only UI. Google/X OAuth credentials, SMTP, Supabase redirect URLs, end-to-end auth tests, cross-provider identity linking, and guest-save migration remain outstanding.
+- **Next exact job:** resolve the long-running Jarrell's Peak smoke step using the GitHub Actions run page (run `42653155665`); inspect logs if it fails. Do not repeat or alter gameplay code without failure evidence. Once all required CI is green, review PR diff and auth-specific tests, then mark PR ready and proceed with deployment verification. Keep README handoff current.
+
+
+## 2026-11-10 — Login completion work: recovery and account session UI
+
+- [x] Continued from the current auth handoff without repeating Supabase provisioning or SQL migration work.
+- [x] Updated `auth/auth-client.js` in commit `ce99a4ca284989646e79917fc52f9ed51d2c3888`: added PKCE auth flow, password-reset email request, password recovery completion via `updateUser`, Player Profile lookup (Player ID / username), session-aware account status, logout, and Google/X OAuth identity-linking entry points for an already signed-in account.
+- [x] Updated `index.html` in commit `c09849ccb568fd97610a62ffbbc5aefb48d7375d`: added Forgot Password, recovery password field/save action, Player Account status, and Sign Out controls; clarified guest progress remains local until safe migration is implemented.
+- [ ] These code changes are committed to the auth branch but not yet CI-verified or production deployed. Latest workflow lookup for commit `c09849ccb568fd97610a62ffbbc5aefb48d7375d` returned no PR workflow runs at the time of this note; recheck after GitHub Actions trigger propagation.
+- [ ] No live password recovery, OAuth callback, wallet sign-in, profile lookup, or logout E2E test has been performed. Google/X linking entry points use Supabase's manual OAuth identity-linking API; provider credentials and linking behavior still require real project tests. Wallet-to-existing-account linking is not implemented and must not be claimed.
+- [ ] Owner-side prerequisites remain: confirm Supabase Ethereum and Solana chain toggles are saved ON; configure Google OAuth app credentials, X OAuth 2.0 app credentials with email scope, custom SMTP, Site URL and allowed redirects; add CAPTCHA/rate limits before public signup.
+- [ ] Still required for completion: auth-specific automated/browser tests; signup + email confirmation + profile auto-creation; sign-in/out + session refresh; password recovery; Google/X callback and linking; Solana/EVM SIWS/SIWE on desktop and mobile wallet browsers; RLS isolation; guest-save migration design and tests.
+- **Next exact job:** inspect latest commit CI after trigger propagation, then add dedicated auth browser tests and fix any failures from actual logs. Do not merge/deploy until auth tests and owner provider setup are complete. Keep cross-provider wallet identity linking explicitly gated until safely implemented and verified.
+
+
+## 2026-11-10 — Dedicated authentication browser smoke coverage added
+
+- [x] Reviewed latest auth PR and previous workflow state before editing; PR #228 remains open/draft/unmerged.
+- [x] Added a dedicated Playwright browser step to `.github/workflows/browser-smoke.yml` covering auth modal controls, email signup/session, Player ID profile display, logout, password recovery request/update, Google/X OAuth initiation, and EVM/Solana Web3 initiation with a mocked Supabase client. This is a deterministic UI/client contract test, **not** a real Supabase/provider E2E test.
+- [x] Added auth source paths (`auth/**`, `auth-config.js`, `supabase/migrations/**`) to both push and pull-request path filters so future auth-only changes trigger browser smoke.
+- [x] Workflow commits: test step `17ded53e2df1331880bf013dbcbd73199935420b`; path-filter correction `664a6971b0750dd4f92f554608ae5eeaa8d674d7`.
+- [x] Latest known Validate run `42656157591` passed on the test-step commit. Browser run `42656157774` started; at last inspection it was still in setup/install, before the new auth test step. Its job-log download returned GitHub 404 BlobNotFound, so no log-based diagnosis is available yet.
+- [ ] Latest branch head is `664a6971b0750dd4f92f554608ae5eeaa8d674d7`; workflow lookup for this latest head had not yet surfaced a new run at the time of this note. Recheck Actions and wait for the run associated with this exact head; inspect the auth step result before changing code.
+- [ ] Previous Browser Smoke run `42654455173` passed overall but gameplay step 15 was cancelled; do not claim the Jarrell's Peak gameplay smoke passed.
+- [ ] Real provider E2E still outstanding: email verification and SMTP, password reset email callback, Google OAuth callback, X OAuth 2.0 callback, Solana SIWS, EVM SIWE, session refresh, RLS isolation, and account identity linking. The new browser test mocks Supabase and cannot certify those provider-side flows.
+- [ ] Owner setup remains required for Google/X client credentials, SMTP, exact Supabase Site URL/redirect allowlist, CAPTCHA/rate limits, and confirmation that both Ethereum and Solana Web3 provider toggles are saved ON.
+- **Next exact job:** inspect the latest-head browser run and its new “Test Climboria authentication UI and client flows” step. If it fails, retrieve actionable logs and diagnose the actual cause before editing. If it passes, build a safe real-provider test checklist and continue identity-linking/guest-save migration work without claiming production-ready authentication prematurely.
+
+
+## 2026-11-10 — Authentication browser smoke selector diagnosis
+
+- [x] Inspected failed Browser Smoke run `42656334643` and retrieved the full job log for job `129295724908`. Root cause: the first matching desktop sign-in button was hidden at 390px; the next `:visible` match was the mobile-menu account button, which Playwright considered outside the viewport because the hamburger menu had not been opened. This is a test interaction/selector issue, not evidence of an auth client failure.
+- [x] The first targeted attempt `0d3871cc251c2095b87ad7f1972d17a9dbf01440` changed the selector to `:visible`, but the next run `42656760463` proved that alone was insufficient: the selected button was outside the viewport. Do not repeat that approach.
+- [x] Updated the smoke test in commit `434107dcd9465648e7c2c269688c2e60f52624a7` to open `#hamburger` first and then click `.mobile-menu [data-open-auth]`, exercising the actual mobile account entry path.
+- [x] Validate run `42656760627` passed on commit `0d3871cc251c2095b87ad7f1972d17a9dbf01440` (security/API contracts, homepage structure, launch copy, JavaScript syntax audits).
+- [ ] Latest browser and validate runs for commit `434107dcd9465648e7c2c269688c2e60f52624a7` must complete. Inspect the auth step log; do not mark authentication smoke passed until the full test finishes.
+- **Next exact job:** inspect the new-head Browser Smoke and Validate runs. If auth passes, continue with authenticated account-link UI and safe guest-save migration design; if it fails, retrieve logs and diagnose the actual failing assertion before another edit. Real Supabase OAuth/SMTP and SIWE/SIWS E2E remain owner-configuration-dependent. PR #228 stays draft/unmerged.
+
+
+## 2026-11-10 — Auth smoke mock response correction
+
+- [x] Rechecked retried Browser Smoke job `129299061231` and retrieved its log. The mobile menu navigation fix worked: the test opened the mobile menu and reached the auth modal, then progressed through the email signup/profile verification sequence. It timed out during that sequence; it did not reach provider tests.
+- [x] Reviewed the real auth client contract: Supabase `.maybeSingle()` resolves to `{ data: profile, error }`. The test mock incorrectly returned `ok({ data: profile })`, nesting the profile one level too deep (`data.data.player_id`) and making the Player ID assertion impossible. Corrected the mock to return `{ data: profile, error: null }` directly in commit `ad9d948925a7a3a3ec2d9b142f0047a7bf33b1c1`.
+- [ ] Re-run the new-head Browser Smoke and Validate workflows. If email status still times out, use the new log to inspect the exact wait and do not assume a production auth defect. The mock is still not a real provider E2E test.
+- **Next exact job:** verify the corrected profile mock passes email signup/session/profile/logout, then password recovery and OAuth/Web3 initiation tests; afterward add safe account-link UI and guest-save migration design. Live Supabase/provider configuration and callbacks remain outstanding. PR #228 remains draft/unmerged.
+
+
+## 2026-11-10 — Latest full Browser Smoke passed on auth branch head
+
+- [x] Rechecked PR #228: still open, draft, unmerged; head commit `983daadf79c28a90679ed30ff4f204db45b81dd8`.
+- [x] Browser Smoke run `42658547371` completed with conclusion **success** (job `129303548543`). All steps passed, including the dedicated mocked authentication UI/client-flow test, homepage/mobile navigation, Cloudflare DEX proxy, fail-closed DEX execution, standalone Swap and DEX shells, mobile workspace/layout states at 390px and 360px, market loading/provider-error/empty states, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload.
+- [x] The password-recovery smoke now correctly asserts the recovery panel remains hidden after requesting a reset email and only opens after a simulated Supabase `PASSWORD_RECOVERY` event. This test models the provider callback; it does not prove a real email callback.
+- [ ] Real Supabase/provider E2E remains outstanding: email confirmation/SMTP and recovery callback, Google OAuth callback, X OAuth 2.0 callback, Solana SIWS, EVM SIWE, session refresh, RLS isolation, and verified identity linking. The browser auth test uses a mocked Supabase client and must not be described as live provider verification.
+- [ ] Owner-side configuration remains: Google and X OAuth app credentials, custom SMTP, Supabase Site URL/allowed redirects, abuse controls/CAPTCHA, and explicit confirmation that Ethereum and Solana Web3 chain toggles are both enabled.
+- [ ] Guest-to-account save migration, cross-provider identity linking (including wallet linking), and cloud-save integration are not implemented. Do not silently overwrite or merge guest saves; do not trust client-writable saves for economic/reward state.
+- **Next exact job:** audit the current game's localStorage/IndexedDB save keys and data schema on this branch, then document a safe, versioned guest-to-account migration design (backup first, size/schema validation, explicit conflict choice, idempotent upload, and rollback). Do not implement cloud save or migration writes until the actual legacy save format and conflict behavior are understood. Keep PR #228 draft/unmerged until real provider setup and E2E gates are complete.
+
+**Current handoff (2026-11-10, latest):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR: [#228](https://github.com/CryptoDilis/Climboria/pull/228), open/draft/unmerged
+- Head: `983daadf79c28a90679ed30ff4f204db45b81dd8`
+- Latest Browser Smoke: `42658547371` — **success**, all 17 work steps including Jarrell's Peak and screenshot upload.
+- Auth browser coverage is mocked; no live provider E2E claim.
+- Next task: inspect and document the actual guest save storage format before designing migration.
+
+
+## 2026-11-10 — Guest save storage audit (read-only)
+
+- [x] Audited `game/play.html` on the current auth branch. The only persistent gameplay inventory key found is `climboria_jarrell_inventory_v1`; it stores a JSON array of up to 50 entries shaped as `{ name: string, qty: positive number }`. Invalid JSON is caught and treated as an empty array; entries are filtered for a string name and finite positive quantity.
+- [x] Confirmed the game writes this array directly from `addInventoryItem()` and emits `climboria:inventory` after local mutation. The current UI renders equipment slots as placeholders; it does not persist equipped item slots.
+- [x] Found `climboria-selected-hero` as a separate localStorage preference for the selected hero asset. It is cosmetic selection, not player progression.
+- [x] No IndexedDB usage, cloud-save adapter, or persisted player-position/level-completion save was found in the inspected game page. Other localStorage keys found in DEX/Swap are watchlist/token-room preferences, not game progress.
+- [ ] **Safety decision:** do not migrate `climboria_jarrell_inventory_v1` into the current client-writable `player_saves` table as authoritative inventory. The inventory can contain gameplay/reward items and is trivially user-editable in browser storage; uploading it would create a false trust boundary. Keep it local and label it provisional until a server-authoritative inventory/reward system exists.
+- [ ] Safe candidate for a first cloud preference migration: `climboria-selected-hero` only, after validating it against an explicit allowlist of available hero asset IDs. It is cosmetic and can be safely overwritten by a user-confirmed preference choice.
+- [ ] Before any migration implementation, add a versioned save envelope and a preview/consent step; back up raw guest values, validate schema/size, never silently merge inventory, and make migration idempotent. The current `player_saves` table's 64 KiB limit is a hard upper bound, not a target.
+- **Next exact job:** implement a minimal, user-consented cloud preference sync for the selected hero only (schema version + allowlist validation + explicit guest/account conflict choice + rollback-safe local backup), with browser tests for signed-out, signed-in, malformed local value, unknown hero ID, and conflicting account preference. Do not include inventory or economic/reward state.
+
+
+
+## 2026-11-10 — Cloud preference sync sequencing correction
+
+- [x] Confirmed `game/play.html` is a standalone gameplay page and currently does not load the Supabase auth bootstrap. The account modal/auth client is on the main site page; therefore the game cannot yet safely read the authenticated Supabase session.
+- [x] Avoided implementing a cosmetic cloud sync against a nonexistent game-page auth session. No speculative duplicate Supabase client or localStorage-to-cloud write was added.
+- [ ] First prerequisite: design and implement one shared auth bootstrap/session bridge that both the main site and `game/play.html` can use without creating competing Supabase clients or exposing credentials. Preserve PKCE/session persistence and verify refresh behavior on same-origin navigation.
+- [ ] Add a minimal account status/link entry in the game UI only after the shared auth bridge is available. Then implement the selected-hero preference sync with an explicit guest/account conflict choice, hero-ID allowlist validation, versioned payload, backup/rollback, and idempotent writes.
+- [ ] Keep `climboria_jarrell_inventory_v1` local/provisional. Do not cloud-sync it or represent it as trusted inventory until server-authoritative inventory/reward APIs exist.
+- **Next exact job:** inspect all HTML entry points and script-loading conventions, then refactor the Supabase initialization into a shared same-origin module consumed by both `index.html` and `game/play.html`; add regression tests proving there is one session/client per page, auth state survives navigation/refresh, and guest play still works with auth unconfigured. Do not start hero preference writes until that bridge passes.
+
+**Handoff update after storage audit:**
+- Latest branch commit: `520993fe9f87036c60a7dfb1fe1d936f9f0af2de` (README audit record; Browser Smoke run `42658547371` passed on parent code commit `983daadf79c28a90679ed30ff4f204db45b81dd8`).
+- PR #228 remains draft/open/unmerged; real provider E2E remains a release gate.
+- Next implementation is shared auth bootstrap/session bridge, not inventory migration or direct cloud-save writes.
+
+
+## 2026-11-10 — Guest-save storage audit completed; migration design documented
+
+- [x] Audited the active game entry point `game/play.html` on the auth branch. The current persistent gameplay data is `climboria_jarrell_inventory_v1` (array of `{name, qty}` records; UI caps distinct entries at 50) and `climboria-selected-hero` (string cosmetic selection).
+- [x] Confirmed the legacy inventory parser only filters basic shape/positive finite quantity; it does not enforce an item allowlist, quantity ceiling, or serialized-size limit. It is therefore untrusted client state and must not be used as authoritative inventory, rewards, crafting, marketplace, NFT, or token state.
+- [x] Distinguished unrelated DEX local data: `climboria:dex:watchlist:v1` and `climboria:token-room:v1:<mint>`; these are not player progression and are excluded from migration by default.
+- [x] No general-purpose player save object or IndexedDB usage was identified in the inspected gameplay entry point. Current inventory persistence does not save player position/progression.
+- [x] Added `auth/GUEST-MIGRATION.md` (commit `010158f3e87ba8ac311db1255130495d1767e057`) documenting storage shapes, trust boundaries, validation, explicit conflict choice, idempotency, verification, rollback, and unresolved product decisions.
+- [x] Existing Supabase `player_saves` contract remains limited to non-authoritative convenience data, one row per user, RLS, schema version, and 65,536-byte JSON constraint.
+- [ ] Do not implement inventory migration until the owner confirms whether Jarrell's Peak items are purely non-economic or can affect crafting, rewards, minting, or marketplace value. Any economic inventory must be server-authoritative.
+- [ ] Before writing migration code, inspect the official hero asset manifest and create an allowlist for `climboria-selected-hero`; define the actual non-economic progression fields that need cloud persistence.
+- **Next exact job:** implement the first safe cloud-save slice for the allowlisted cosmetic hero preference only (after confirming the valid hero IDs from the asset manifest). Keep guest storage unchanged on sign-in; use authenticated RLS-bound upsert, schema validation, explicit conflict handling, read-back verification, and rollback. Do not migrate the inventory array in this slice.
+
+**Current handoff (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: open/draft/unmerged; latest CI before this documentation-only work: Browser Smoke `42658547371` success.
+- Latest work commits: README/browser-smoke handoff `1fc2ac3f027b21f345aa0b0e4d92b6cd8af9edc7`; guest audit document `010158f3e87ba8ac311db1255130495d1767e057`.
+- New commits have not yet been workflow-verified; check latest-head Validate and Browser Smoke before relying on them.
+- Real auth provider E2E and owner-side Google/X OAuth + SMTP setup remain outstanding.
+
+
+## 2026-11-10 — Shared Supabase client bridge added to gameplay
+
+- [x] Latest pre-bridge Validate run `42664896758` passed.
+- [x] Shared singleton Supabase client factory added at `auth/supabase-client.js`; homepage auth UI now consumes this factory rather than initializing a separate client.
+- [x] Added a same-origin module bridge to `game/play.html`. It loads public auth config, exposes the shared page client as `window.climboriaSupabase`, and emits `climboria:auth-session` events for session changes and initial session resolution. If auth is unconfigured, the game remains in guest mode and continues without a client.
+- [x] Extended `.github/scripts/game-smoke.mjs` to mock Supabase and assert gameplay bridge initialization in guest mode before the Jarrell's Peak checks.
+- [x] Added the auth foundation branch to Browser Smoke push triggers so future gameplay/auth changes on this branch are tested.
+- [ ] Latest gameplay bridge browser test is not yet verified. The previous Browser Smoke run `42664896588` was cancelled while its 20-minute Jarrell's Peak gameplay step was still running; cancellation is not a pass or a code failure.
+- [ ] Confirm a fresh Browser Smoke run for commit `36bd5d7be972d97ca1b36b1d6aaa308a7713ee81` starts and completes. Inspect the actual gameplay step and logs if it fails or times out; do not repeat the same long-running attempt without diagnosing the cause.
+- [ ] After bridge verification, add account/guest conflict UX and implement hero-only cloud preference sync with strict allowlist validation, explicit user choice, local backup, idempotent write, read-back verification, and rollback. Do not sync inventory or economic/reward state.
+- **Next exact job:** verify latest-head Browser Smoke and Validate runs, then add focused tests for the gameplay auth-session event on initial guest session and signed-in/session-refresh events. Keep PR #228 draft/unmerged until real provider setup and E2E release gates are complete.
+
+
+## 2026-11-10 — Shared gameplay auth bridge Browser Smoke verified
+
+- [x] Browser Smoke run `42665766190` completed with **success** on branch `codex/real-player-auth-foundation-20261109` (job `129328930262`).
+- [x] Auth UI/client flows passed.
+- [x] Homepage CTAs, DEX routing, and mobile navigation passed.
+- [x] Cloudflare DEX swap proxy and fail-closed execution checks passed.
+- [x] Standalone Swap and DEX market/quote-preview shell passed.
+- [x] DEX mobile workspace, desktop regression, compact 390px/360px layouts, and mobile loading/provider-error/true-empty states passed.
+- [x] Jarrell's Peak desktop and mobile gameplay smoke tests passed (step 16); browser screenshot upload also passed (step 17).
+- [x] All post-job cleanup steps completed successfully. No failed step was reported in this run; no corrective commit was necessary.
+- [ ] Mocked bridge coverage does not prove live provider behavior. Keep real Supabase provider E2E and owner configuration as release gates; PR #228 remains draft/open/unmerged.
+- **Next exact job:** extend `.github/scripts/game-smoke.mjs` with focused gameplay auth-session bridge tests for initial guest mode, configured signed-in session delivery, and subsequent token/session refresh events. Assert listener registration and event ordering without relying on live credentials; then run Validate and Browser Smoke, diagnose any failures from logs, and record the exact outcomes/next task here. Do not start hero cloud preference writes until these bridge tests pass. Continue excluding `climboria_jarrell_inventory_v1` and all economic/reward state from cloud sync.
+
+**Handoff after Browser Smoke success (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 (draft/open/unmerged)
+- Verified Browser Smoke run: `42665766190` — success, including Jarrell's Peak desktop/mobile.
+- Previous Validate run: `42665766166` — success.
+- Latest verified source head before this README handoff: `b828ff9c57463acc955bcd702e72258273752388`.
+- This README handoff itself must be checked by its resulting commit's CI before treating the documentation update as part of a fully verified head.
+
+
+## 2026-11-10 — Gameplay auth-session transition smoke coverage added
+
+- [x] Extended the mocked Supabase module in `.github/scripts/game-smoke.mjs` to emit controlled auth events with explicit session payloads.
+- [x] Added an early page listener to capture the gameplay bridge's initial `SESSION_READY` guest event.
+- [x] Added assertions that the gameplay page receives `SIGNED_IN` and `TOKEN_REFRESHED` events for the same mock player identity after initial guest initialization.
+- [x] Change committed as `c3345910563ffc4325ae1e06c226f397ac23843f`.
+- [ ] These are mocked transition tests only; no real Supabase provider, OAuth, wallet, or token-refresh network flow is claimed as verified.
+- **Next exact job:** inspect the Validate and Browser Smoke workflows triggered by this test commit. If any step fails, fetch the completed job logs, identify the exact failing assertion or environment cause, implement a targeted correction, and rerun. If both pass, update this handoff with run IDs/results and proceed to design the account/guest conflict UX before any hero preference cloud write. Keep PR #228 draft/unmerged and keep inventory/economic state excluded from cloud sync.
+
+**Current handoff:**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 (draft/open/unmerged)
+- Latest code commit: `c3345910563ffc4325ae1e06c226f397ac23843f`
+- Previous verified Browser Smoke: `42665766190` success; previous Validate: `42665766166` success.
+- README verification record for the previous Browser Smoke: commit `45aec0f997273c6425f59524c805efd71c8d2081`.
+
+
+## 2026-11-10 — Auth-session transition test verification update
+
+- [x] Validate run `42669888626` completed successfully on the auth foundation branch. All validation steps passed, including Cloudflare swap proxy contracts, homepage controls, token launch copy, inline JS syntax, DEX/Swap syntax, gameplay script syntax, and remaining HTML script audit.
+- [x] Browser Smoke run `42669889007` has passed steps 1–15: auth UI/client, homepage and DEX routing, proxy and fail-closed checks, standalone Swap/DEX, desktop/mobile DEX layouts, compact 390px/360px layouts, and market loading/error/empty states.
+- [ ] Browser Smoke step 16 (Jarrell's Peak desktop/mobile gameplay) is still running at the time of this handoff; step 17 screenshot upload and cleanup are pending. Do not mark the full Browser Smoke successful until the run concludes.
+- [ ] The new guest → signed-in → token-refreshed event assertions are part of the gameplay smoke step and are not yet individually verified until that step completes.
+- **Next exact job:** poll run `42669889007` / job `129343348886`. If successful, record the final outcome and proceed to account/guest conflict UX design. If failed, fetch completed job logs and identify the exact assertion/root cause before making a targeted fix; do not repeat the same test/code change blindly.
+
+
+## 2026-11-10 — Browser Smoke cancellation diagnosed; auth transition assertions passed
+
+- [x] Validate run `42669888626` passed all validation steps.
+- [x] Browser Smoke run `42669889007` passed steps 1–15, including authentication UI/client, DEX/Swap, responsive mobile layouts, and market loading/error/empty states.
+- [x] Retrieved the completed Browser Smoke job log (`129343348886`) after the run was cancelled. The log explicitly records the new gameplay bridge diagnostics:
+  `SESSION_READY:guest` → `SIGNED_IN:smoke-player-001` → `TOKEN_REFRESHED:smoke-player-001`.
+  This confirms the newly added mocked guest/sign-in/refresh event assertions executed and produced the expected events before cancellation.
+- [ ] Step 16 (the broader Jarrell's Peak desktop/mobile gameplay smoke suite) was cancelled; screenshot upload succeeded. The log ends with GitHub Actions `The operation was canceled.`, not a Playwright assertion failure, thrown test error, or the configured 20-minute timeout. Therefore this is an externally cancelled/incomplete run, not evidence of a gameplay regression. No code fix is justified by this log.
+- [x] Deep diagnosis completed: the targeted auth-session transition portion ran successfully at 18:00:24Z; gameplay smoke continued through GLB movement-state diagnostics at 18:02:35Z; the operation was cancelled at 18:03:39Z. No failing assertion or stack trace precedes cancellation.
+- **Next exact job:** continue with account/guest conflict UX design before any cloud preference writes. First inspect the current game-page account controls and auth client APIs; define a safe, explicit guest-vs-account choice with no automatic local overwrite, no silent merge, and no inventory migration. Implement the UI and mocked browser coverage for signed-out guest, authenticated account, and conflicting local/account hero preference states. Keep `climboria_jarrell_inventory_v1` excluded. Run Validate and Browser Smoke after the implementation; diagnose actual failures from logs before fixing. Do not spend another run repeating the identical cancelled gameplay attempt without a specific reason.
+
+**Handoff after cancelled Browser Smoke:**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- PR #228: open/draft/unmerged.
+- Latest code commit: `c3345910563ffc4325ae1e06c226f397ac23843f`
+- Latest README handoff before this update: `871409afee44bcf235555d7dd42cb6cf33bce21e`
+- Validate `42669888626`: success.
+- Browser Smoke `42669889007`: cancelled during broader Jarrell's Peak step 16; new auth event diagnostics passed before cancellation; not a full Browser Smoke pass.
+
+
+## 2026-11-10 — Account/guest save-choice foundation
+
+- [x] Inspected homepage auth entry points, Supabase auth client/session events, gameplay hero loader, actual hero asset map, guest localStorage reads, and the `player_saves` migration.
+- [x] Confirmed the current explicit hero allowlist is only `Adventurer` (`../assets/characters/Climboria_Hero.glb`). Legacy `ClimboriaHero` is normalized by the current gameplay loader to `Adventurer`.
+- [x] Added `auth/ACCOUNT-GUEST-CHOICE.md` with the account-vs-guest decision states, safety contract, test matrix, and implementation sequence.
+- [x] Added pure resolver `auth/save-choice.js`. It validates schema version 1 and the current hero allowlist; distinguishes guest-only, account-only, same-choice, invalid-data, and read-error states; it never reads storage or calls Supabase itself.
+- [x] Added `.github/scripts/save-choice.test.mjs` covering legacy normalization, invalid payload/version, read failure, and explicit local-only choice behavior. The account-choice helper can write only the validated hero preference after an explicit call; the guest-choice path performs no write.
+- [x] Added a dedicated Browser Smoke workflow step to run the resolver tests with Node's module default enabled.
+- [ ] **Not yet implemented:** gameplay decision panel, account save read/inspection, and Playwright state-matrix coverage. No account save query or cloud preference write has been introduced. No inventory data is included.
+- [ ] **Next exact job:** implement an accessible, mobile-safe gameplay account/guest choice panel. Query only the signed-in user's `player_saves` row after the player explicitly opens “Save options”; validate through `resolveSaveChoice`; expose “Keep this device”, “Use account choice on this device”, and “Decide later” where applicable. Keep it local/session-only and preserve both copies. Add mocked tests for guest, account-only, same-choice, invalid payload, read failure, and explicit choice; assert the inventory key is unchanged and no insert/update/upsert request occurs. Since the allowlist currently has one hero, a differing valid-hero conflict cannot currently occur; do not invent a second hero to force a conflict. Run Browser Smoke and Validate after integration, then diagnose any actual failure from logs.
+- Branch: `codex/real-player-auth-foundation-20261109`; PR #228 remains draft/unmerged.
+- Latest code/workflow commit: `8e5f7905aaf95fe4c9f48688b1c6af136ee6e727` (workflow test step; resolver/test/docs commits precede it: `c1098db`, `4a9f3b9`, `9608b47`).
+
+## 2026-11-10 — Latest CI failure investigation and durable handoff
+
+- [x] Rechecked PR #228 metadata: still open, draft, unmerged; head remains `6760df65ee945ea99d432002cad5be5d50386b7b`.
+- [x] Confirmed Browser Smoke run `42673871882` is a completed `pull_request` run for workflow `.github/workflows/browser-smoke.yml`, conclusion **failure**.
+- [x] Confirmed Validate run `42673872152` is a completed `pull_request` run for workflow `.github/workflows/validate-climboria.yml`, conclusion **failure**.
+- [x] Retrieved both run metadata records and requested the latest-attempt jobs through the GitHub Actions jobs API. Both job responses returned an empty `jobs: []` array. The jobs endpoint for the Validate run also exposed zero jobs. Therefore there is no job ID, step summary, or downloadable job log available through the connected GitHub API for either failed run.
+- [x] Inspected the current Browser Smoke workflow: the new resolver test step is present after local-server startup; the workflow has a single `browser-smoke` job. Inspected the Validate workflow: it has a single `validate` job and the expected syntax/security checks. Workflow source inspection alone does not establish which job/step failed.
+- [ ] **Root cause remains unconfirmed.** Do not attribute these failures to the save-choice tests, YAML, runner, or application code without a failing step/log. Do not repeat the same fix or make a speculative code change.
+- [ ] Earlier Browser Smoke run `42673829490` passed on parent commit `8e5f7905aaf95fe4c9f48688b1c6af136ee6e727`; this is useful comparison evidence but does not prove latest-head status.
+- **Next exact job:** recover the missing job/check-suite diagnostics for runs `42673871882` and `42673872152` (including checking run attempts and the associated check-suite/check-runs endpoints through an available GitHub API route). If GitHub continues returning no jobs, run the existing resolver tests and relevant Validate checks locally against the exact `6760df65` source snapshot, then trigger a fresh PR workflow only after identifying a justified trigger/change. Record the exact commands/results and compare the new run. Do not start the gameplay save-options panel until CI failure triage is resolved or explicitly documented as an external GitHub observability limitation.
+- After CI triage, implement the accessible gameplay “Save options” panel exactly as specified in `auth/ACCOUNT-GUEST-CHOICE.md`: read-only own-row query only on explicit open; guest play stays non-blocking; explicit local choice; no cloud writes; no inventory migration; mocked Playwright matrix and zero insert/update/upsert assertions.
+- Keep `climboria_jarrell_inventory_v1` local and untrusted. Current approved hero allowlist remains only `Adventurer`; do not invent a second hero to force a conflict.
+- Keep PR #228 draft/unmerged until owner-side provider setup and real provider E2E gates are complete.
+
+**Handoff state (2026-11-10):**
+- Branch: `codex/real-player-auth-foundation-20261109`
+- Latest code/documentation head: `6760df65ee945ea99d432002cad5be5d50386b7b`
+- Latest Browser Smoke: `42673871882` — failure; jobs/logs unavailable through current API response.
+- Latest Validate: `42673872152` — failure; jobs/logs unavailable through current API response.
+- PR #228: https://github.com/CryptoDilis/Climboria/pull/228 — open/draft/unmerged.
