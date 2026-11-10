@@ -1,8 +1,9 @@
 /**
  * Read-only provenance capture for the canonical Metaplex Token Metadata
- * program on Devnet. Captures the upgradeable-loader deployment slot,
- * authority, and deployed bytecode SHA-256. It does not claim that a source
- * commit matches the deployed binary; that requires a reproducible build.
+ * program on Devnet. ProgramDataState.slot is the last loader modification
+ * slot (including ExtendProgram), not necessarily the initial deployment slot.
+ * Captures loader history and deployed bytecode SHA-256 without claiming a
+ * source match unless a reproducible build artifact is identical.
  */
 import { createHash } from "node:crypto";
 
@@ -82,7 +83,7 @@ export async function inspectProgramDataStateSlotBlock({
     });
   } catch (error) {
     return {
-      status: "deployment_block_fetch_failed",
+      status: "state_slot_block_fetch_failed",
       stateSlot,
       reason: String(error.message || error),
       candidateTransactions: [],
@@ -142,7 +143,7 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
   }
   let signatureInfo;
   try {
-    signatureInfo = await connection.getSignaturesForAddress(programDataPublicKey, { limit: 1000 }, "finalized");
+    signatureInfo = await connection.getSignaturesForAddress(programDataPublicKey, { limit: 100 }, "finalized");
   } catch (error) {
     return { status: "programdata_history_fetch_failed", reason: String(error.message || error), signatures: [] };
   }
@@ -169,7 +170,7 @@ export async function inspectProgramDataHistory({ connection, programDataPublicK
       fetchError,
     });
   }
-  return { status: "programdata_history_inspected", signatureCount: history.length, signatures: history };
+  return { status: "programdata_history_inspected", signatureCount: history.length, complete: history.length < 100, signatures: history };
 }
 
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
