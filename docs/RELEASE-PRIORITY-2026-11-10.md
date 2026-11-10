@@ -155,3 +155,12 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - Raydium's current docs describe an Aug 17, 2026 LP migration behavior change; do not promise creator-owned graduated LP based on older documentation. Exact current state/config must be inspected.
 - No protocol selected; no SDK installed; no program source changed; no Devnet/Mainnet transaction; no security audit performed. Documentation/research only.
 - **Exact next job:** owner decision required: select intended product (direct mint only, fair launch/sale, or instant bonding curve) and explicitly decide whether Climboria accepts user deposits/fundraising. Then verify exact current program/version, fee/custody/LP rules and design Devnet-only implementation.
+
+
+## 2026-11-10 — Owner approved bonding-curve direction (no fundraising)
+- Owner chose **bonding curve** for Signature Launchpad; Raydium LaunchLab is the intended Solana integration, subject to program/version, fee, LP and Devnet verification.
+- Owner explicitly chose **NO public deposits/fundraising**. No presale, auction, contribution vault or Climboria escrow; ordinary protocol bonding-curve trades are separate.
+- Architecture recorded in `docs/SIGNATURE-LAUNCHPAD-BONDING-ARCHITECTURE.md`, commit `00a2cd1ddc0d77e344a4aef0bab66220fc3195f3`.
+- Earlier 100 bps fee on gross contributions does not apply to a no-fundraising design; fee model remains unapproved. LP ownership, lock, supply, authority, creator allocation and migration behavior remain pending.
+- No code, protocol integration, tests or transactions in this architecture work unit. Launchpad stays preview-only.
+- **Exact next job:** inspect and pin official current Raydium LaunchLab SDK/program IDs/config accounts and Devnet availability, verify fee/migration/LP rules, and collect read-only fixtures before writing signing/execution code.
