@@ -109,7 +109,7 @@ jobs:
               'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0',
               'src="/auth.js"', 'id="authGoogle"', 'id="authX"',
               'id="authEmailForm"', 'id="authSignIn"', 'id="authSignUp"',
-              'id="authSignOut"', 'id="authGuest"',
+              'id="authSignOut"', 'id="authGuest"', 'id="authSolana"', 'id="authEthereum"',
           ]
           missing = [item for item in required_html if item not in html]
           if missing:
@@ -119,7 +119,8 @@ jobs:
               'auth.signInWithOAuth', "startOAuth('x')", "startOAuth('google')",
               "auth.signOut({ scope: 'local' })", 'onAuthStateChange',
               'Guest progress is not linked to another login yet.',
-              "provider === 'x'",
+              "provider === 'x'", 'auth.signInWithWeb3',
+              "signInWithWallet('solana')", "signInWithWallet('ethereum')",
           ]
           missing = [item for item in required_auth if item not in auth]
           if missing:
@@ -131,6 +132,8 @@ jobs:
           key_value = auth[key_start + len(key_marker):].split("'", 1)[0]
           if not key_value.startswith("sb_publishable_"):
               raise SystemExit("Browser Auth must use a Supabase publishable key, not a privileged key.")
+          if 'id="authWallet"' in html:
+              raise SystemExit("Legacy wallet-connect-only button must not remain.")
           if 'id="authGoogle" type="button" disabled' in html or 'id="authX" type="button" disabled' in html:
               raise SystemExit("Google/X controls should invoke their configured OAuth providers.")
           print("Supabase Auth UI wiring and public-key exposure checks passed.")

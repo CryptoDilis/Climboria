@@ -13,6 +13,8 @@
   const signOutButton = document.getElementById('authSignOut');
   const googleButton = document.getElementById('authGoogle');
   const xButton = document.getElementById('authX');
+  const solanaButton = document.getElementById('authSolana');
+  const ethereumButton = document.getElementById('authEthereum');
   const guestButton = document.getElementById('authGuest');
 
   const setStatus = (message) => {
@@ -21,7 +23,7 @@
 
   if (!window.supabase || typeof window.supabase.createClient !== 'function') {
     setStatus('Authentication library did not load. Check your connection and reload.');
-    for (const button of [signInButton, signUpButton, googleButton, xButton]) {
+    for (const button of [signInButton, signUpButton, googleButton, xButton, solanaButton, ethereumButton]) {
       if (button) button.disabled = true;
     }
     return;
@@ -41,7 +43,7 @@
 
   const setBusy = (value) => {
     busy = value;
-    for (const button of [signInButton, signUpButton, googleButton, xButton]) {
+    for (const button of [signInButton, signUpButton, googleButton, xButton, solanaButton, ethereumButton]) {
       if (button) button.disabled = value;
     }
   };
@@ -49,7 +51,7 @@
   const friendlyError = (error, provider) => {
     const message = String(error?.message || error || 'Unknown authentication error');
     if (/provider.*not enabled|unsupported provider/i.test(message)) {
-      const name = provider === 'x' ? 'X (Twitter)' : provider === 'google' ? 'Google' : provider;
+      const name = provider === 'x' ? 'X (Twitter)' : provider === 'google' ? 'Google' : provider === 'solana' ? 'Solana wallet' : provider === 'ethereum' ? 'Ethereum wallet' : provider;
       return name + ' sign-in is not enabled in the Climboria Supabase Auth provider settings yet.';
     }
     if (/captcha/i.test(message)) {
@@ -73,13 +75,27 @@
       setStatus('Guest session active in this browser. Guest progress is not yet linked to an email or social account.');
       return;
     }
-    const email = currentSession.user?.email || 'Climboria player';
-    setStatus('Signed in as ' + email + '. Your Supabase session is active on this device.');
+    const email = currentSession.user?.email;
+    const walletIdentity = (currentSession.user?.identities || []).find(identity => identity.provider === 'solana' || identity.provider === 'ethereum');
+    const walletAddress = walletIdentity?.identity_data?.address || walletIdentity?.identity_data?.sub || walletIdentity?.provider_id;
+    if (email) {
+      setStatus('Signed in as ' + email + '. Your Supabase session is active on this device.');
+    } else if (walletIdentity && walletAddress) {
+      const chainName = walletIdentity.provider === 'solana' ? 'Solana' : 'Ethereum';
+      const shortAddress = walletAddress.length > 14 ? walletAddress.slice(0, 6) + '…' + walletAddress.slice(-4) : walletAddress;
+      setStatus('Signed in with ' + chainName + ' wallet ' + shortAddress + '. Your verified Supabase session is active on this device.');
+    } else {
+      setStatus('Climboria account authenticated. Your Supabase session is active on this device.');
+    }
   };
 
-  const confirmLeavingGuest = () => {
-    if (!currentSession?.user?.is_anonymous) return true;
-    setStatus('Guest progress is not linked to another login yet. Sign-in is blocked to protect this guest save until account linking is ready.');
+  const requireSignedOut = () => {
+    if (!currentSession) return true;
+    if (currentSession.user?.is_anonymous) {
+      setStatus('Guest progress is not linked to another login yet. Sign-in is blocked to protect this guest save until account linking is ready.');
+    } else {
+      setStatus('You are already signed in. Sign out on this device before switching to another Climboria account.');
+    }
     return false;
   };
 
@@ -91,7 +107,7 @@
       setStatus('Enter your email address and password.');
       return;
     }
-    if (!confirmLeavingGuest()) return;
+    if (!requireSignedOut()) return;
     setBusy(true);
     try {
       const { data, error } = await authClient.auth.signInWithPassword({ email, password });
@@ -150,10 +166,7 @@
 
   const startOAuth = async (provider) => {
     if (busy) return;
-    if (currentSession?.user?.is_anonymous) {
-      setStatus('Guest identity linking is not enabled yet. Do not switch providers until your guest progress can be linked safely.');
-      return;
-    }
+    if (!requireSignedOut()) return;
     setBusy(true);
     try {
       const { error } = await authClient.auth.signInWithOAuth({
@@ -170,6 +183,54 @@
 
   googleButton?.addEventListener('click', () => startOAuth('google'));
   xButton?.addEventListener('click', () => startOAuth('x'));
+
+  const signInWithWallet = async (chain) => {
+    if (busy || !requireSignedOut()) return;
+    const isSolana = chain === 'solana';
+    let wallet = null;
+    if (isSolana) {
+      wallet = window.phantom?.solana || window.solana || window.braveSolana || null;
+      if (!wallet || typeof wallet.connect !== 'function') {
+        setStatus('No compatible Solana wallet found. Install Phantom, Solflare, or another Solana wallet and retry.');
+        return;
+      }
+    } else {
+      const providers = Array.isArray(window.ethereum?.providers) ? window.ethereum.providers : [];
+      wallet = providers.find(provider => provider.isMetaMask) || window.ethereum || null;
+      if (!wallet || typeof wallet.request !== 'function') {
+        setStatus('No compatible Ethereum wallet found. Install MetaMask or another EVM wallet and retry.');
+        return;
+      }
+    }
+
+    setBusy(true);
+    try {
+      if (isSolana) {
+        await wallet.connect();
+      } else {
+        const accounts = await wallet.request({ method: 'eth_requestAccounts' });
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+          throw new Error('The Ethereum wallet did not return an account.');
+        }
+      }
+
+      const { data, error } = await authClient.auth.signInWithWeb3({
+        chain,
+        statement: 'I accept the Climboria Terms of Service at https://climboria.fun/terms/',
+        wallet
+      });
+      if (error) throw error;
+      if (!data.session) throw new Error('Wallet signature was verified but no Climboria session was returned.');
+      renderSession(data.session);
+    } catch (error) {
+      setStatus(friendlyError(error, chain));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  solanaButton?.addEventListener('click', () => signInWithWallet('solana'));
+  ethereumButton?.addEventListener('click', () => signInWithWallet('ethereum'));
 
   // Anonymous sign-in is intentionally gated until both a Turnstile site key and
   // Supabase Auth CAPTCHA verification are configured to prevent automated user creation.
