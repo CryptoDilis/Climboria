@@ -7,10 +7,15 @@ on:
     paths:
       - ".github/scripts/launchlab-provenance.mjs"
       - ".github/scripts/launchlab-provenance.test.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.test.mjs"
+      - ".github/workflows/launchlab-provenance.yml"
       - ".github/scripts/launchlab-sdk-idl-check.mjs"
       - ".github/scripts/launchlab-onchain-idl-check.mjs"
       - ".github/scripts/launchlab-api-config-check.mjs"
       - ".github/scripts/launchlab-api-config-check.test.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.mjs"
+      - ".github/scripts/launchlab-prepare-devnet.test.mjs"
       - ".github/workflows/launchlab-provenance.yml"
   pull_request:
     branches: [main]
@@ -50,6 +55,8 @@ jobs:
         run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4
       - name: Test live Launch Config parameter validation
         run: node --test .github/scripts/launchlab-api-config-check.test.mjs
+      - name: Test fail-closed Devnet transaction preparation (no signing or submission)
+        run: node --test .github/scripts/launchlab-prepare-devnet.test.mjs
       - name: Validate live Mainnet and Devnet Launch Config API defaults against on-chain state
         env:
           LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
