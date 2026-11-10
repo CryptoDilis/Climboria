@@ -832,3 +832,19 @@ Production Swap execution, Launchpad token creation/fundraising, and Google/X/em
 3. Complete independent security review and controlled Devnet lifecycle before configuring/deploying the Worker. Keep Worker `EXECUTION_ENABLED=false` and frontend `enabled=false` until every release gate passes and the execution enablement is explicitly approved.
 4. Continue PR #231's Devnet LP Lock IDL publication, fee-receiver custody governance, deployed-program provenance, and migration/NFT behavior verification. Keep launch/migration paths disabled.
 5. Keep real Guest/email/password/Google/X account-session authentication as a separate blocker; wallet connection is not account login.
+
+
+## 2026-11-11 — Follow-up verification correction (03:47 PHT)
+
+- After the preceding progress-record commits, re-ran the live GitHub compare. Current `main` is now `f1f323f131ff581192b8b3e25324eeb5c0a5579b`; PR #234 remains at `7f5d3451c7c99356fd46502691f0c24f92a96ade`. The actual current divergence is **42 commits ahead / 31 behind** (not 29 behind as stated in the immediately preceding checkpoint); merge base remains `28180c2a277e0c4bd093a40462032e7f536989e6`. PR is still open/draft and GitHub reports mergeable=false.
+- Queried the exact PR #234 head combined commit status: zero status contexts. Exact-head PR workflow-run lookup also returned zero runs. No Validate or Browser Smoke success is established for `7f5d345`.
+- Attempted a fresh `git ls-remote` to obtain a local worktree for conflict-aware integration; the environment still cannot resolve `github.com`. No local checkout, rebase, merge, or tests were performed. This confirms the integration limitation is environmental, not a decision to skip conflict resolution.
+- Re-fetched current main `index.html` (blob `00c6e50c8f01473d99872c2011419d524e927576`). The auth panel still has only wallet connection enabled; X OAuth and Google/Gmail buttons are disabled pending OAuth setup, and email/password is disabled pending an auth backend. The UI explicitly says no account is created or logged in yet. Wallet connection is not account/session login.
+- No production deployment or feature enablement was performed. Worker remains documented as not deployed; frontend `swap-config.js` still has `enabled: false`; no live Swap execution, Launchpad token creation, or account login is claimed.
+
+### Updated exact next action
+1. Manually run Validate Climboria on `codex/swap-order-binding-durable-object` and verify exact head SHA `7f5d3451c7c99356fd46502691f0c24f92a96ade`; inspect all proxy tests and Wrangler dry-run. The connected GitHub actions still expose no workflow-dispatch operation.
+2. Restore a network-enabled real local worktree, reconcile the now **42-ahead/31-behind** PR #234 against main with conflict-aware merge/rebase, then rerun Validate and Browser Smoke on the integrated head. Do not merge the dirty PR.
+3. Complete independent security review and controlled Devnet lifecycle; deploy/verify Worker only after secrets, namespace, zone, health/TLS/CORS/rate limits are configured. Keep execution disabled until separately approved.
+4. Resolve PR #231 Devnet LP Lock IDL and fee-receiver custody/provenance blockers; keep launch/migration disabled.
+5. Configure a real auth provider and implement/verify account/session flows before enabling Guest, email/password, Google or X login.
