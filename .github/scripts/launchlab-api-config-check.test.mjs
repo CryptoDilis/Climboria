@@ -194,3 +194,21 @@ test("paginates finalized authority signatures with the before cursor until the 
   assert.equal(report.historyLimit, 20);
   assert.equal(report.historyPageSize, 12);
 });
+
+test("retries rate-limited finalized authority transaction reads with bounded exponential backoff", async () => {
+  const authority = "DRayEuvQMUDHNsHLzNhzQsKnhCPPpbFqrau8L54XqGyW";
+  let attempts = 0;
+  const report = await (await import("./launchlab-api-config-check.mjs")).inspectAuthorityHistory({
+    rpc: "https://api.devnet.solana.com", authority, limit: 1, pageSize: 1,
+    getAccount: async () => ({ value: { owner: "11111111111111111111111111111111", executable: false, lamports: 1, data: ["", "base64"] } }),
+    getSignatures: async () => [{ signature: "rate-limited-signature", slot: 10, confirmationStatus: "finalized" }],
+    getTransaction: async () => {
+      attempts++;
+      if (attempts < 3) throw new Error("RPC HTTP 429 for getTransaction");
+      return { version: "legacy", transaction: { message: { accountKeys: [], instructions: [] } }, meta: { fee: 5000 } };
+    }
+  });
+  assert.equal(attempts, 3);
+  assert.equal(report.recentSignatures[0].transactionFetched, true);
+  assert.equal(report.recentSignatures[0].transactionFetchError, null);
+});
