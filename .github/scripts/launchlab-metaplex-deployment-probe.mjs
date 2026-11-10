@@ -330,7 +330,7 @@ export function summarizeMetaplexGovernanceHistory(signatures = []) {
       const accounts = instruction.accounts ?? [];
       if (discriminator === 5) {
         const log = (transaction.governanceLogs ?? []).find(line => line.includes("CreateProgramGovernance")) ?? "";
-        const transferMatch = /transfer_upgrade_authority:\\s*(true|false)/.exec(log);
+        const transferMatch = /transfer_upgrade_authority:\s*(true|false)/.exec(log);
         events.push({ slot: transaction.slot, signature: transaction.signature, instruction: "createProgramGovernance", realm: accounts[0] ?? null, programGovernance: accounts[1] ?? null, governedProgram: accounts[2] ?? null, programData: accounts[3] ?? null, currentUpgradeAuthority: accounts[4] ?? null, tokenOwnerRecord: accounts[5] ?? null, payer: accounts[6] ?? null, createAuthority: accounts[9] ?? null, transferUpgradeAuthority: transferMatch ? transferMatch[1] === "true" : null, success: transaction.transactionError === null, transactionError: transaction.transactionError ?? null });
       } else if (discriminator === 16) {
         const isLoader = accounts[3] === BPF_UPGRADEABLE_LOADER_ID;
