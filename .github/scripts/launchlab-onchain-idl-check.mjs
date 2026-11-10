@@ -39,11 +39,13 @@ async function fetchCluster(cluster, repoIdl) {
   if (account.executable) throw new Error(`${cluster}: IDL metadata account unexpectedly executable`);
   const raw = Buffer.from(account.data[0], "base64");
   if (raw.length < 44) throw new Error(`${cluster}: IDL account shorter than Anchor header`);
+  const expectedDiscriminator = createHash("sha256").update("account:IdlAccount").digest().subarray(0, 8);
+  if (!raw.subarray(0, 8).equals(expectedDiscriminator)) throw new Error(`${cluster}: Anchor IDL account discriminator mismatch`);
   const authority = new PublicKey(raw.subarray(8, 40)).toBase58();
-  const declaredLength = raw.readUInt32LE(40);
+  const declaredCompressedLength = raw.readUInt32LE(40);
   const compressed = raw.subarray(44);
+  if (compressed.length !== declaredCompressedLength) throw new Error(`${cluster}: IDL compressed-length mismatch (${declaredCompressedLength} vs ${compressed.length})`);
   const inflated = inflateSync(compressed);
-  if (inflated.length !== declaredLength) throw new Error(`${cluster}: IDL declared length mismatch (${declaredLength} vs ${inflated.length})`);
   const liveIdl = JSON.parse(inflated.toString("utf8"));
   if (liveIdl.address !== target.id) throw new Error(`${cluster}: live IDL address mismatch: ${liveIdl.address}`);
   const repoInstructions = new Map(repoIdl.instructions.map(x => [x.name, x]));
