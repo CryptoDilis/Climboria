@@ -346,6 +346,55 @@ export function summarizeMetaplexGovernanceHistory(signatures = []) {
     events,
   };
 }
+export async function inspectGovernanceProposalAccounts({ connection, sdk, governanceHistory, commitment = "finalized" }) {
+  const executions = (governanceHistory?.events ?? []).filter(event =>
+    event.instruction === "executeTransaction" &&
+    event.innerProgramId === BPF_UPGRADEABLE_LOADER_ID &&
+    event.success);
+  const addresses = [...new Set(executions.flatMap(event => [
+    event.governance, event.proposal, event.proposalTransaction,
+  ]).filter(Boolean))];
+  if (addresses.length === 0) return { status: "no_successful_loader_governance_executions", requestedCount: 0, accounts: [] };
+  if (typeof connection?.getMultipleAccountsInfo !== "function" || typeof sdk?.PublicKey !== "function") {
+    return { status: "multiple_accounts_rpc_unavailable", requestedCount: addresses.length, accounts: [] };
+  }
+  try {
+    const publicKeys = addresses.map(address => new sdk.PublicKey(address));
+    const infos = await connection.getMultipleAccountsInfo(publicKeys, commitment);
+    if (!Array.isArray(infos) || infos.length !== addresses.length) {
+      return { status: "proposal_account_response_mismatch", requestedCount: addresses.length, returnedCount: Array.isArray(infos) ? infos.length : null, accounts: [] };
+    }
+    const accounts = infos.map((info, index) => {
+      if (!info) return { address: addresses[index], exists: false };
+      const data = Buffer.from(info.data ?? []);
+      return {
+        address: addresses[index],
+        exists: true,
+        owner: info.owner?.toBase58?.() ?? String(info.owner ?? ""),
+        lamports: info.lamports ?? null,
+        executable: Boolean(info.executable),
+        dataLength: data.length,
+        dataSha256: createHash("sha256").update(data).digest("hex"),
+        dataBase64: data.toString("base64"),
+      };
+    });
+    return {
+      status: "governance_proposal_accounts_captured",
+      requestedCount: addresses.length,
+      foundCount: accounts.filter(account => account.exists).length,
+      commitment,
+      accounts,
+    };
+  } catch (error) {
+    return {
+      status: "governance_proposal_account_fetch_failed",
+      requestedCount: addresses.length,
+      reason: String(error.message || error),
+      accounts: [],
+    };
+  }
+}
+
 export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, cluster, buildArtifact = PINNED_METAPLEX_BUILD_ARTIFACT }) {
   if (cluster !== "devnet") fail("Metaplex deployment provenance capture is restricted to Devnet");
   if (!connection || !sdk?.PublicKey || typeof connection.getAccountInfo !== "function") {
@@ -417,6 +466,10 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataPublicKey: programDataAddress,
     stateSlot: programDataStateSlot,
   });
+  const governanceHistory = summarizeMetaplexGovernanceHistory(programDataHistory.signatures);
+  const governanceProposalAccounts = await inspectGovernanceProposalAccounts({
+    connection, sdk, governanceHistory, commitment,
+  });
   const pinnedBuildArtifactComparison = compareExecutableToPinnedBuildArtifact(executableBytes, {
     artifactLength: artifactMetadata.byteLength,
     artifactSha256: artifactMetadata.sha256,
@@ -437,7 +490,8 @@ export async function captureDevnetMetaplexProgramProvenance({ connection, sdk, 
     programDataStateSlotBlockEvidence,
     programDataHistory,
     programDataLifecycle: summarizeUpgradeableLoaderHistory(programDataHistory.signatures),
-    governanceHistory: summarizeMetaplexGovernanceHistory(programDataHistory.signatures),
+    governanceHistory,
+    governanceProposalAccounts,
     upgradeAuthority,
     immutable: upgradeAuthority === null,
     executableByteLength: executableBytes.length,
