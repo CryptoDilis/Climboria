@@ -200,3 +200,13 @@ After Portfolio P0 verification and Swap/DEX production gates, audit the actual 
 - **Important scope:** this proves API reachability and program-account presence/executable/loader owner only. It does NOT decode ProgramData upgrade authority, verify deployed code/IDL hash or instruction discriminators, read LaunchLab GlobalConfig/PlatformConfig, verify quote mint/curve parameters/fee destinations/LP split, or execute a Devnet launch. It is not a security audit or mainnet readiness sign-off.
 - No wallet, signature, transaction submission, fee collection or state mutation occurred. No mock product behavior added.
 - **Exact next job:** extend the probe to derive and read each ProgramData account and decode upgrade authority; pin the official LaunchLab IDL and SDK version/hash; derive and decode Devnet GlobalConfig, PlatformConfig and CPMM config using the pinned SDK/IDL. Add fixture-backed tests and record actual on-chain fee, curve and LP migration configuration before any transaction builder is implemented.
+
+
+## 2026-11-10 — ProgramData upgrade-authority decoding added; live run pending
+- Extended PR #231 branch `codex/launchlab-live-provenance-probe` at head `61b26e9e4b04bf8d7b4b53f7d4ffaa0b9b5c9d4a`.
+- Probe now decodes Upgradeable Loader Program state (Program -> ProgramData address) and ProgramData state (deployment slot, optional upgrade authority, immutable flag) from finalized base64 account data. It still performs read-only RPC calls only.
+- Added tests for ProgramData PDA pointer decoding, authority decoding, immutable/no-authority state, malformed layout/owner rejection, live verifier fetching ProgramData, missing accounts and upstream errors.
+- Previous verified run `42740386208` passed the earlier version's program existence/executable/owner checks. **It does not validate this new ProgramData decoder.**
+- New live workflow run `42740608651` for current head was `in_progress` at checkpoint; job `129580414694`. No conclusion claimed yet. Poll only after completion; inspect completed logs and actual authority output.
+- PR #231 remains draft and unmerged. Mainnet execution remains disabled.
+- **Exact next job:** inspect run `42740608651`; if failure, diagnose logs and fix parser/RPC behavior. If successful, record each cluster/program's actual ProgramData slot and upgrade authority, then pin official LaunchLab SDK/IDL and verify IDL hash/instruction discriminators before decoding GlobalConfig/PlatformConfig.
