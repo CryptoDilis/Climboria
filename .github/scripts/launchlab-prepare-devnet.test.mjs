@@ -4,9 +4,22 @@ import assert from "node:assert/strict";
 import { deriveDevnetFeeVaults, expectedInitializeV2Accounts, prepareDevnetLaunch, validateConstantProductInitFormula, validateDevnetLaunchInput } from "./launchlab-prepare-devnet.mjs";
 
 class PublicKey {
-  constructor(value) { if (typeof value !== "string" || value.length < 32) throw new Error("invalid public key"); this.value = value; }
+  static buffers = new Map();
+  constructor(value) {
+    if (value instanceof Uint8Array) {
+      const hex = Buffer.from(value).toString("hex");
+      this.value = PublicKey.buffers.get(hex) ?? "bytes:" + hex;
+    } else {
+      if (typeof value !== "string" || value.length < 32) throw new Error("invalid public key");
+      this.value = value;
+    }
+  }
   toBase58() { return this.value; }
-  toBuffer() { return Buffer.from(this.value, "utf8"); }
+  toBuffer() {
+    const bytes = createHash("sha256").update(this.value, "utf8").digest().subarray(0, 32);
+    PublicKey.buffers.set(bytes.toString("hex"), this.value);
+    return bytes;
+  }
   static findProgramAddressSync(seeds, programId) {
     const digest = createHash("sha256").update(Buffer.concat([...seeds, programId.toBuffer()])).digest("hex");
     return [new PublicKey("PDA" + digest), 255];
@@ -25,9 +38,9 @@ const sdk = {
   LaunchpadConfig: { decode: () => ({ mintB: new PublicKey(ids.quoteMint), curveType: 0, index: 0, epoch: 7, tradeFeeRate: 2500, maxShareFeeRate: 10000, minSupplyA: 10000000, maxLockRate: 800000, minSellRateA: 200000, minMigrateRateA: 150000, minFundRaisingB: 24000000000, migrateFee: 100000000, protocolFeeOwner: new PublicKey(ids.creator), migrateFeeOwner: new PublicKey(ids.creator), migrateToCpmmWallet: new PublicKey("11111111111111111111111111111112"), migrateToAmmWallet: new PublicKey(ids.creator) }) },
   PlatformConfig: { decode: () => ({ restrictCurveParam: false, platformClaimFeeWallet: new PublicKey(ids.creator), platformLockNftWallet: new PublicKey(ids.creator), feeRate: 2500, creatorFeeRate: 2500, cpConfigId: new PublicKey(ids.configId) }) },
 };
-function makeInitializeV2Transaction(options, label = "init", overrides = {}, platformCurveRuleId) {
+function makeInitializeV2Transaction(options, label = "init", overrides = {}, platformAllowConfigId, platformCurveRuleId) {
   const launchInput = { creatorWallet: options.feePayer.toBase58(), mintKeypair: { publicKey: options.mintA } };
-  const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId), platformCurveRuleId });
+  const expected = expectedInitializeV2Accounts({ sdk, input: launchInput, programId: new PublicKey(ids.programId), platformAllowConfigId, platformCurveRuleId });
   const privileges = new Map();
   for (const item of expected) {
     const key = item.pubkey.toBase58();
@@ -92,9 +105,19 @@ const input = overrides => ({
   totalFundRaisingB: "85000000000", totalLockedAmount: "0",
   ...overrides,
 });
-function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restrictGlobalConfig = false, missingRule = false, ruleIdentityMismatch = false, wrongRuleDiscriminator = false, wrongRuleBump = false, missingBlockTime = false } = {}) {
+function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restrictGlobalConfig = false, missingAllow = false, allowIdentityMismatch = false, wrongAllowDiscriminator = false, wrongAllowBump = false, missingRule = false, ruleIdentityMismatch = false, wrongRuleDiscriminator = false, wrongRuleBump = false, missingBlockTime = false } = {}) {
   let captured, executeCalled = false;
   const rulePda = new PublicKey("Rule111111111111111111111111111111111111");
+  const allowPda = new PublicKey("Allow11111111111111111111111111111111111");
+  const allowDiscriminator = Buffer.from([174,147,132,240,137,219,243,16]);
+  const allowBump = wrongAllowBump ? 6 : 7;
+  const allowData = Buffer.concat([
+    wrongAllowDiscriminator ? Buffer.from([1,2,3,4,5,6,7,8]) : allowDiscriminator,
+    Buffer.from([allowBump]),
+    new PublicKey(ids.configId).toBuffer(),
+    new PublicKey(allowIdentityMismatch ? ids.creator : ids.platformId).toBuffer(),
+    Buffer.alloc(64),
+  ]);
   const ruleDiscriminator = Buffer.from([1,2,3,4,5,6,7,8]);
   const ruleData = {
     platformId: new PublicKey(ruleIdentityMismatch ? ids.creator : ids.platformId),
@@ -108,6 +131,9 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restr
     ownerPubKey: new PublicKey(ids.creator),
     connection: {
       getAccountInfo: async key => {
+        if (key?.toBase58?.() === allowPda.toBase58()) {
+          return missingAllow ? null : { owner: new PublicKey(ids.programId), data: allowData };
+        }
         if (key?.toBase58?.() === rulePda.toBase58()) {
           return missingRule ? null : { owner: new PublicKey(ids.programId), data: Buffer.concat([wrongRuleDiscriminator ? Buffer.from([8,7,6,5,4,3,2,1]) : ruleDiscriminator, Buffer.alloc(32)]) };
         }
@@ -121,7 +147,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restr
       createLaunchpad: async options => {
         captured = options;
         return {
-          transactions: [makeInitializeV2Transaction(options, "init-1", {}, restrict ? rulePda : undefined), makeInitializeV2Transaction(options, "init-2", {}, restrict ? rulePda : undefined)],
+          transactions: [makeInitializeV2Transaction(options, "init-1", {}, restrictGlobalConfig ? allowPda : undefined, restrict ? rulePda : undefined), makeInitializeV2Transaction(options, "init-2", {}, restrictGlobalConfig ? allowPda : undefined, restrict ? rulePda : undefined)],
           signers: [[options.extraSigners[0]], [options.extraSigners[0]]],
           instructionTypes: ["initializeV2"],
           extInfo: { poolId: "fixture" },
@@ -136,6 +162,7 @@ function client({ apiEpoch = 7, apiMint = ids.quoteMint, restrict = false, restr
     PlatformCurveRule: { decode: () => ruleData },
     PLATFORM_CURVE_RULE_DISCRIMINATOR: ruleDiscriminator,
     getPdaPlatformCurveRule: () => ({ publicKey: rulePda, bump: 9 }),
+    getPdaPlatformAllowConfig: () => ({ publicKey: allowPda, bump: 7 }),
     checkLaunchAgainstCurveRule: ({ rule, context }) => ({
       ok: rule.groups.length === 1 && context.curveType === 0 && context.migrateType === 1,
       matchedGroupId: 0,
@@ -390,9 +417,40 @@ test("validates the finalized PlatformCurveRule PDA and matching launch constrai
   assert.equal(result.transactionReviews[0].launchpadAccounts.length, 19);
   assert.equal(result.transactionReviews[0].launchpadAccounts[18].name, "platform_curve_rule");
 });
-test("fails closed when the platform restricts GlobalConfig access without verified PlatformAllowConfig support", async () => {
+test("validates PlatformAllowConfig PDA identity and appends the optional readonly account", async () => {
   const mock = client({ restrictGlobalConfig: true });
-  await assert.rejects(() => prepareDevnetLaunch({ ...mock, input: input({}) }), /PlatformAllowConfig is not yet independently decoded and verified/);
+  const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
+  assert.equal(result.platformAllowConfig.enforced, true);
+  assert.equal(result.platformAllowConfig.bump, 7);
+  assert.equal(result.platformAllowConfig.globalConfig, ids.configId);
+  assert.equal(result.platformAllowConfig.platformConfig, ids.platformId);
+  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 19);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[18].name, "platform_allow_config");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[18].isWritable, false);
+});
+test("fails closed on missing, wrong-owner, wrong-identity, wrong-discriminator, or wrong-bump PlatformAllowConfig", async () => {
+  const missing = client({ restrictGlobalConfig: true, missingAllow: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...missing, input: input({}) }), /PlatformAllowConfig account is missing/);
+  const wrongIdentity = client({ restrictGlobalConfig: true, allowIdentityMismatch: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...wrongIdentity, input: input({}) }), /identity does not match/);
+  const wrongDiscriminator = client({ restrictGlobalConfig: true, wrongAllowDiscriminator: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...wrongDiscriminator, input: input({}) }), /discriminator does not match/);
+  const wrongBump = client({ restrictGlobalConfig: true, wrongAllowBump: true });
+  await assert.rejects(() => prepareDevnetLaunch({ ...wrongBump, input: input({}) }), /bump does not match/);
+  const wrongOwner = client({ restrictGlobalConfig: true });
+  const original = wrongOwner.raydium.connection.getAccountInfo;
+  wrongOwner.raydium.connection.getAccountInfo = async key => {
+    if (key?.toBase58?.() === "Allow11111111111111111111111111111111111") return { owner: new PublicKey(ids.creator), data: Buffer.concat([Buffer.from([174,147,132,240,137,219,243,16]), Buffer.from([7]), new PublicKey(ids.configId).toBuffer(), new PublicKey(ids.platformId).toBuffer(), Buffer.alloc(64)]) };
+    return original(key);
+  };
+  await assert.rejects(() => prepareDevnetLaunch({ ...wrongOwner, input: input({}) }), /wrong owner/);
+});
+test("includes both optional allow-config and curve-rule accounts in SDK order", async () => {
+  const mock = client({ restrictGlobalConfig: true, restrict: true });
+  const result = await prepareDevnetLaunch({ ...mock, input: input({}) });
+  assert.equal(result.transactionReviews[0].launchpadAccounts.length, 20);
+  assert.equal(result.transactionReviews[0].launchpadAccounts[18].name, "platform_allow_config");
+  assert.equal(result.transactionReviews[0].launchpadAccounts[19].name, "platform_curve_rule");
 });
 test("fails closed when the restricted PlatformCurveRule account is missing", async () => {
   const mock = client({ restrict: true, missingRule: true });
