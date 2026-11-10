@@ -30,7 +30,7 @@ function assertApprovedRpcUrl(value) {
       host === "0.0.0.0" || host === "::1" || host.startsWith("fc") || host.startsWith("fd") ||
       /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) ||
       /^169\.254\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host)) {
-    throw new Error("Solana RPC endpoint must be a configured public HTTPS endpoint");
+    throw new Error("Solana RPC endpoint must be a configured HTTPS endpoint");
   }
   return url.toString();
 }
@@ -38,11 +38,7 @@ function assertApprovedRpcUrl(value) {
 async function readBoundedText(response) {
   const declaredLength = Number(response.headers?.get?.("content-length") || 0);
   if (declaredLength > MAX_RPC_RESPONSE_BYTES) throw new Error("Trusted Solana RPC response exceeded size limit");
-  if (!response.body?.getReader) {
-    const raw = await response.text();
-    if (new TextEncoder().encode(raw).length > MAX_RPC_RESPONSE_BYTES) throw new Error("Trusted Solana RPC response exceeded size limit");
-    return raw;
-  }
+  if (!response.body?.getReader) throw new Error("Trusted Solana RPC response must support bounded streaming reads");
   const reader = response.body.getReader();
   const chunks = [];
   let total = 0;
