@@ -2940,3 +2940,11 @@ Implement a separately tested server-side transaction security layer before any 
 - Added mocked tests for valid response binding, commitment/minContextSlot, duplicate keys, invalid endpoint, owner/executable mismatch, malformed RPC/base64, incomplete responses and oversized payloads.
 - RPC helper is not wired into the Worker execute route; it is not a live provider check. GitHub Actions has no fresh run for this head. Prior failure `42852777038` remains an earlier SHA with 38/40 tests passing before fixture corrections.
 - Exact next task: obtain a manual Validate run for `codex/swap-semantic-execution-gate`; only after the complete suite passes, integrate the resolver into a fail-closed semantic validation service. Keep user-fund execution disabled.
+
+
+## 2026-11-11 — Swap validation milestone
+
+- [x] PR #233 Validate run `42854007949` passed on head `4d989326dc08bbfae9562bd53120f2603c9053c4`, executing the complete `dex/swap-proxy/test/*.test.mjs` suite, including the structural parser and trusted RPC ALT resolver tests.
+- [x] Follow-up hardening added `redirect: "error"` to the server-side RPC request and a regression assertion. This follow-up is newer than the green run and still needs fresh CI.
+- [ ] Browser Smoke `42854007897` was still in progress at last inspection; the initial homepage, DEX routing, Worker proxy, fail-closed, Swap and DEX checks had passed. Remaining mobile/gameplay checks were pending.
+- [ ] Next: verify CI/browser smoke against the follow-up head, then continue server-side semantic instruction validation and immutable order-wallet-message/replay protection. Execution remains disabled; no live Worker deployment or production trading claim.
