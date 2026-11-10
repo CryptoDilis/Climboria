@@ -88,7 +88,7 @@ function transactionDetails(tx) {
     logMessages: tx.meta?.logMessages ?? []
   };
 }
-export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized" }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 1 }]) }) {
+export async function inspectAuthorityHistory({ rpc, authority, limit = 48, pageSize = 12, getAccount = async (url, address) => rpcCall(url, "getAccountInfo", [address, { encoding: "base64", commitment: "finalized" }]), getSignatures = async (url, address, count, before) => rpcCall(url, "getSignaturesForAddress", [address, { limit: count, commitment: "finalized", ...(before ? { before } : {}) }]), getTransaction = async (url, signature) => rpcCall(url, "getTransaction", [signature, { encoding: "jsonParsed", commitment: "finalized", maxSupportedTransactionVersion: 1 }]) }) {
   const accountResult = await getAccount(rpc, authority);
   // Preserve explicit RPC value:null (account missing); nullish coalescing would
   // incorrectly fall back to the wrapper object and classify it as an account.
@@ -96,15 +96,29 @@ export async function inspectAuthorityHistory({ rpc, authority, limit = 12, getA
     ? accountResult.value
     : accountResult;
   if (!account) return { authority, accountExists: false, recentSignatures: [], historyComplete: false, note: "Authority account is not present at finalized commitment." };
-  const signatures = await getSignatures(rpc, authority, limit);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new Error("Authority history limit must be an integer from 1 to 1000");
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) throw new Error("Authority history pageSize must be an integer from 1 to 1000");
+  const signatures = [];
+  let before, historyComplete = false;
+  while (signatures.length < limit) {
+    const requested = Math.min(pageSize, limit - signatures.length);
+    const page = await getSignatures(rpc, authority, requested, before);
+    if (!Array.isArray(page)) throw new Error("Finalized authority signature RPC returned a non-array result");
+    signatures.push(...page.slice(0, requested));
+    if (page.length < requested) { historyComplete = true; break; }
+    if (signatures.length >= limit) break;
+    const nextBefore = page.at(-1)?.signature;
+    if (!nextBefore || nextBefore === before) throw new Error("Authority signature pagination did not advance its before cursor");
+    before = nextBefore;
+  }
   const transactions = [];
-  for (const item of (Array.isArray(signatures) ? signatures : []).slice(0, limit)) {
+  for (const item of signatures) {
     let tx = null, fetchError = null;
     try { tx = await getTransaction(rpc, item.signature); } catch (error) { fetchError = String(error?.message || error); }
     const message = tx?.transaction?.message, keys = message?.accountKeys ?? [];
     transactions.push({ signature: item.signature, slot: item.slot, blockTime: item.blockTime ?? null, confirmationStatus: item.confirmationStatus ?? null, err: item.err ?? null, transactionFetched: Boolean(tx), transactionFetchError: fetchError, feeLamports: tx?.meta?.fee ?? null, signers: keys.filter(key => typeof key === "object" && key.signer).map(key => key.pubkey), programIds: [...new Set((message?.instructions ?? []).map(ix => ix.programId ?? ix.program ?? "unknown"))], instructionCount: message?.instructions?.length ?? null, transactionDetails: transactionDetails(tx) });
   }
-  return { authority, accountExists: true, accountOwner: account.owner, accountExecutable: Boolean(account.executable), accountDataLength: Array.isArray(account.data) ? Buffer.from(account.data[0] ?? "", "base64").length : null, accountLamports: String(account.lamports ?? "0"), recentSignatureCount: Array.isArray(signatures) ? signatures.length : 0, recentSignatures: transactions, historyLimit: limit, historyComplete: Array.isArray(signatures) && signatures.length < limit, classification: "unclassified", note: "System-owned, zero-data accounts may still be PDA-controlled; ownership/executable/data shape and recent signatures alone do not prove beneficial ownership or governance." };
+  return { authority, accountExists: true, accountOwner: account.owner, accountExecutable: Boolean(account.executable), accountDataLength: Array.isArray(account.data) ? Buffer.from(account.data[0] ?? "", "base64").length : null, accountLamports: String(account.lamports ?? "0"), recentSignatureCount: signatures.length, recentSignatures: transactions, historyLimit: limit, historyPageSize: pageSize, historyComplete, classification: "unclassified", note: "System-owned, zero-data accounts may still be PDA-controlled; ownership/executable/data shape and recent signatures alone do not prove beneficial ownership or governance." };
 }
 export function validateCpmmMigrationAccounts({ cpmmProgramAccount, lockProgramAccount, cpmmFeeAccount, cpmmConfigAccount, target, PublicKey }) {
   if (!cpmmProgramAccount?.executable) throw new Error("CPMM migration program is missing or not executable");
