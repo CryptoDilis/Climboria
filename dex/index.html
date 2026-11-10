@@ -810,7 +810,7 @@ async function loadBaseMarkets(){
 async function discoverBaseSearch(query,requestId){
  const exactAddress=/^0x[a-fA-F0-9]{40}$/.test(query);
  try{
-  const path=exactAddress?'/latest/dex/tokens/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
+  const path=exactAddress?'/token-pairs/v1/base/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
   const payload=await get(path);
   if(requestId!==baseSearchRequestId)return;
   const rows=Array.isArray(payload)?payload:payload?.pairs;
@@ -1116,7 +1116,7 @@ async function openToken(mint,options={}){
  $('detailPairs').innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
  $('tokenProfile').innerHTML='<div class="skeleton"></div><div class="skeleton"></div>';
  const [dexResult,pumpResult]=await Promise.allSettled([
-  get('/latest/dex/tokens/'+encodeURIComponent(mint)),
+  get('/token-pairs/v1/solana/'+encodeURIComponent(mint)),
   fetchPumpCoin(mint)
  ]);
  if(requestId!==detailRequestId)return;
@@ -1134,7 +1134,8 @@ async function openToken(mint,options={}){
   return;
  }
  const data=dexResult.value;
- const pairs=solPairs(data.pairs||[]).filter(pair=>pair.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const detailRows=Array.isArray(data)?data:(Array.isArray(data?.pairs)?data.pairs:[]);
+ const pairs=solPairs(detailRows).filter(pair=>pair.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
  activeDetailPairs=pairs;
  if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
@@ -1261,7 +1262,7 @@ async function discoverDexSearch(query,requestId){
  const exactMint=/^[1-9A-HJ-NP-Za-km-z]{32,50}$/.test(query);
  $('status').textContent=exactMint?'Looking up exact Solana mint…':'Searching live Solana token names and symbols…';
  try{
-  const path=exactMint?'/latest/dex/tokens/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
+  const path=exactMint?'/token-pairs/v1/solana/'+encodeURIComponent(query):'/latest/dex/search?q='+encodeURIComponent(query);
   const payload=await get(path);
   if(requestId!==dexSearchRequestId)return;
   const raw=Array.isArray(payload)?payload:payload?.pairs;
