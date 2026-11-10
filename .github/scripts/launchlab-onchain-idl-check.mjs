@@ -23,6 +23,42 @@ const CRITICAL_INSTRUCTIONS = [
 const CRITICAL_ACCOUNTS = ["GlobalConfig", "PlatformConfig", "PoolState"];
 const CRITICAL_TYPES = ["GlobalConfig", "PlatformConfig", "PoolState", "BondingCurveParam", "CurveParams", "PlatformConfigParam", "PlatformCurveParam"];
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const SDK_LAYOUT_SHA256 = "a422af7572b3b0f567ff7ad39f4b099eaf8a551257a77f89a61a3fe603ec2256";
+const readU64 = (data, offset) => data.readBigUInt64LE(offset).toString();
+const fixedText = (data, start, length) => data.subarray(start, start + length).toString("utf8").replace(/\\0.*$/s, "").trim();
+function decodeSdkGlobalConfig(data) {
+  if (data.length !== 371) throw new Error(`GlobalConfig size mismatch for pinned SDK layout: ${data.length} != 371`);
+  const requiresPlatformAuth = data.readUInt8(243);
+  if (requiresPlatformAuth > 1) throw new Error(`GlobalConfig requires_platform_auth invalid enum: ${requiresPlatformAuth}`);
+  return {
+    epoch: readU64(data, 8), curveType: data.readUInt8(16), index: data.readUInt16LE(17),
+    migrateFee: readU64(data, 19), tradeFeeRate: readU64(data, 27), maxShareFeeRate: readU64(data, 35),
+    minSupplyA: readU64(data, 43), maxLockRate: readU64(data, 51), minSellRateA: readU64(data, 59),
+    minMigrateRateA: readU64(data, 67), minFundRaisingB: readU64(data, 75),
+    quoteMint: new PublicKey(data.subarray(83, 115)).toBase58(),
+    protocolFeeOwner: new PublicKey(data.subarray(115, 147)).toBase58(),
+    migrateFeeOwner: new PublicKey(data.subarray(147, 179)).toBase58(),
+    migrateToAmmWallet: new PublicKey(data.subarray(179, 211)).toBase58(),
+    migrateToCpmmWallet: new PublicKey(data.subarray(211, 243)).toBase58(),
+    requiresPlatformAuth, alignmentPaddingHex: data.subarray(244, 251).toString("hex")
+  };
+}
+function decodeSdkPlatformConfig(data) {
+  if (data.length !== 944) throw new Error(`PlatformConfig size mismatch for pinned SDK layout: ${data.length} != 944`);
+  const restrictGlobalConfig = data.readUInt8(832), restrictCurveParam = data.readUInt8(833);
+  if (restrictGlobalConfig > 1 || restrictCurveParam > 1) throw new Error("PlatformConfig restriction flags are outside boolean range");
+  return {
+    epoch: readU64(data, 8), platformClaimFeeWallet: new PublicKey(data.subarray(16, 48)).toBase58(),
+    platformLockNftWallet: new PublicKey(data.subarray(48, 80)).toBase58(),
+    platformScale: readU64(data, 80), creatorScale: readU64(data, 88), burnScale: readU64(data, 96), feeRate: readU64(data, 104),
+    name: fixedText(data, 112, 64), web: fixedText(data, 176, 256), image: fixedText(data, 432, 256),
+    cpConfigId: new PublicKey(data.subarray(688, 720)).toBase58(), creatorFeeRate: readU64(data, 720),
+    transferFeeExtensionAuth: new PublicKey(data.subarray(728, 760)).toBase58(),
+    platformVestingWallet: new PublicKey(data.subarray(760, 792)).toBase58(), platformVestingScale: readU64(data, 792),
+    platformCpCreator: new PublicKey(data.subarray(800, 832)).toBase58(), restrictGlobalConfig, restrictCurveParam,
+    curveRuleManager: new PublicKey(data.subarray(834, 866)).toBase58()
+  };
+}
 const stable = value => {
   if (Array.isArray(value)) return value.map(stable);
   if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])]));
@@ -76,6 +112,11 @@ async function fetchCluster(cluster, repoIdl) {
       actualDiscriminator: actualData?.subarray(0, 8).toString("hex") ?? null,
       discriminatorMatches: Boolean(expectedDisc && actualData && actualData.subarray(0, 8).equals(expectedDisc))
     };
+    if (configAccountChecks[kind].exists && configAccountChecks[kind].ownerMatchesLaunchpad && configAccountChecks[kind].discriminatorMatches) {
+      configAccountChecks[kind].sdkLayoutDecoded = kind === "GlobalConfig" ? decodeSdkGlobalConfig(actualData) : decodeSdkPlatformConfig(actualData);
+      configAccountChecks[kind].sdkLayoutSizeMatches = true;
+      configAccountChecks[kind].schemaSemanticsIndependentlyVerified = false;
+    }
   }
   const repoInstructions = new Map(repoIdl.instructions.map(x => [x.name, x]));
   const liveInstructions = new Map(liveIdl.instructions.map(x => [x.name, x]));
@@ -121,18 +162,25 @@ async function fetchCluster(cluster, repoIdl) {
     pass: selectedDiscriminatorsMatch && criticalSchemasMatch
   };
 }
-export async function verifyOnchainLaunchpadIdl(repoIdlPath) {
-  const repoIdl = JSON.parse(await readFile(repoIdlPath, "utf8")), results = [];
+export async function verifyOnchainLaunchpadIdl(repoIdlPath, sdkLayoutPath) {
+  const repoIdl = JSON.parse(await readFile(repoIdlPath, "utf8"));
+  const sdkLayout = await readFile(sdkLayoutPath, "utf8");
+  const sdkLayoutSha256 = sha(Buffer.from(sdkLayout));
+  if (sdkLayoutSha256 !== SDK_LAYOUT_SHA256) throw new Error(`Pinned SDK layout source hash mismatch: ${sdkLayoutSha256}`);
+  for (const marker of ["export const LaunchpadConfig = struct([", "export const PlatformConfig = struct([", 'u8("restrictGlobalConfig")', 'u8("restrictCurveParam")']) {
+    if (!sdkLayout.includes(marker)) throw new Error(`Pinned SDK layout source missing expected marker: ${marker}`);
+  }
+  const results = [];
   for (const cluster of ["mainnet", "devnet"]) {
     try { results.push(await fetchCluster(cluster, repoIdl)); }
     catch (error) { results.push({ cluster, pass: false, blockers: [String(error.message || error)] }); }
   }
-  return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, pass: results.every(x => x.pass), results };
+  return { checkedAt: new Date().toISOString(), readOnly: true, transactionSubmitted: false, sdkLayout: { sha256: sdkLayoutSha256, commit: "1cf5bb129dbbb1c76dab67819c3d478349c8ed25", layoutSizeChecks: "GlobalConfig=371;PlatformConfig=944" }, pass: results.every(x => x.pass), results };
 }
 if (process.argv[1]?.endsWith("launchlab-onchain-idl-check.mjs")) {
-  const idlPath = process.argv[2];
-  if (!idlPath) throw new Error("Usage: node launchlab-onchain-idl-check.mjs launchpad-idl.json");
-  const report = await verifyOnchainLaunchpadIdl(idlPath);
+  const [idlPath, sdkLayoutPath] = process.argv.slice(2);
+  if (!idlPath || !sdkLayoutPath) throw new Error("Usage: node launchlab-onchain-idl-check.mjs launchpad-idl.json layout.ts");
+  const report = await verifyOnchainLaunchpadIdl(idlPath, sdkLayoutPath);
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
   if (!report.pass) process.exitCode = 1;
 }
