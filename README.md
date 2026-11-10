@@ -1,3 +1,19 @@
+### Latest checkpoint — 2026-11-10 (Versioned transaction RPC compatibility fix)
+
+- [x] Continued from the verified checkpoint and confirmed branch/PR state before code changes. Latest code commit is `17f0038baf45c2dad00f7ceed01cd448c4a54e3a`; PR #231 head matches, remains Open/Draft/unmerged.
+- [x] Added structured finalized transaction evidence to CPMM authority history: account-key signer/writable/source flags, blockhash, parsed outer/inner instructions, loaded addresses, pre/post lamport and token balances, fees, execution errors and logs. Regression fixtures cover the new fields. Implementation commit `6786509c2a3014b7377ddf7e435e9293bcc54e0a`; test commit `0aabd8d0d939760906912cfbddfafa983938af97`.
+- [x] Deep-inspected the prior live Mainnet authority history output from LaunchLab run [42768620879](https://github.com/CryptoDilis/Climboria/actions/runs/42768620879): 12 finalized signatures were returned; 11 transaction fetches succeeded and one failed because the RPC client declared `maxSupportedTransactionVersion: 0`, while the provider explicitly reported that signature uses transaction version 1 and requested max version 1. This is a confirmed reader-compatibility defect, not a missing signature.
+- [x] Targeted fix: raised the read-only `getTransaction` request's supported version to 1 and changed the mocked regression transaction to version 1. Commits: `90f621a98697cfd1cebbfe87dc04f48434b3ac2e` (reader fix), `17f0038baf45c2dad00f7ceed01cd448c4a54e3a` (version-1 regression test). No transaction write/signing behavior added.
+- [x] Latest-head Validate Climboria run [42802607747](https://github.com/CryptoDilis/Climboria/actions/runs/42802607747) on `17f0038baf45c2dad00f7ceed01cd448c4a54e3a`: SUCCESS.
+- [ ] Latest-head LaunchLab Live Provenance run [42802607841](https://github.com/CryptoDilis/Climboria/actions/runs/42802607841), job `129783672012`, was still running at last poll after temporary RPC dependency installation. Inspect its final logs and verify version-1 transactions are now fetched with full details.
+- [ ] Earlier full-transaction-detail validation run [42802358643](https://github.com/CryptoDilis/Climboria/actions/runs/42802358643), job `129782833160`, was still rebuilding the historical Metaplex Token Metadata program at last poll. Poll to completion; inspect for failures rather than assuming success.
+- [ ] Inspect full live transaction details for both Devnet authority signatures `3BCzfpr7rTNbNSr6fAzQtYPDgNa9GUnPUGyut5fGMopoxVcfATFtYSMUTWGh49yQiZjg77oDFhpAzt6zz6GoALTE` and `3sohfE8tkcWfKSWQW39bovXDNZaP6cFh6oKFm6uLXUXwxtSeb4v6Y6uvYdmGtxVWn69LZdh3MmhrBJUeAo1ichFn`; trace signers, controlling accounts/programs and balance effects without inferring beneficial ownership.
+- [ ] Extend Mainnet authority signature pagination beyond the current 12-signature cap if RPC supports it; keep bounded and read-only. Recheck the one version-1 Mainnet transaction after the fix.
+- [ ] Continue Devnet LP Lock canonical IDL/ProgramData and deployed-bytecode provenance investigation. Mainnet LP Lock IDL is verified; Devnet IDL is still missing. LaunchLab live IDL selected critical discriminators and SDK binary layouts pass, but live IDL type definitions are not an exact match (`BondingCurveParam` and `PlatformCurveParam` absent); do not claim full schema equivalence.
+- Security boundary unchanged: read-only RPC only. No wallet signing, simulation, transaction submission, migration, fee collection, fundraising, escrow, public deposits or Mainnet execution. PR #231 stays Draft/unmerged.
+
+---
+
 ### Latest checkpoint — 2026-11-10 (Full authority transaction evidence added; current-head validation)
 
 - [x] Reconnected and checked the live branch ref, PR #231, README and Actions state before continuing. Branch and PR head now agree at `0aabd8d0d939760906912cfbddfafa983938af97`; PR #231 remains Open, Draft and unmerged.
