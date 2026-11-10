@@ -179,7 +179,7 @@ function decodeBase58(value) {
   return Buffer.concat([Buffer.alloc(leading), body]);
 }
 
-export function expectedInitializeV2Accounts({ sdk, input, programId }) {
+export function expectedInitializeV2Accounts({ sdk, input, programId, platformCurveRuleId }) {
   const PublicKey = sdk.PublicKey;
   const creator = new PublicKey(input.creatorWallet);
   const mintA = input.mintKeypair.publicKey;
@@ -201,7 +201,7 @@ export function expectedInitializeV2Accounts({ sdk, input, programId }) {
   // Ordered from the pinned official Anchor IDL initialize_v2 account list.
   // The final IDL "program" entry is the compiled instruction's programIdIndex,
   // not an entry in accountKeyIndexes.
-  return [
+  const accounts = [
     { name: "payer", pubkey: creator, isSigner: true, isWritable: true },
     { name: "creator", pubkey: creator, isSigner: false, isWritable: false },
     { name: "global_config", pubkey: new PublicKey(DEVNET.configId), isSigner: false, isWritable: false },
@@ -221,6 +221,10 @@ export function expectedInitializeV2Accounts({ sdk, input, programId }) {
     { name: "event_authority", pubkey: eventAuthority, isSigner: false, isWritable: false },
     { name: "program", pubkey: programId, isSigner: false, isWritable: false },
   ];
+  if (platformCurveRuleId) {
+    accounts.push({ name: "platform_curve_rule", pubkey: platformCurveRuleId, isSigner: false, isWritable: false });
+  }
+  return accounts;
 }
 
 function decodeInitializeV2Data(data, index) {
@@ -415,7 +419,12 @@ export async function prepareDevnetLaunch({ raydium, sdk, input }) {
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
     "ComputeBudget111111111111111111111111111111",
   ]);
-  const expectedAccounts = expectedInitializeV2Accounts({ sdk, input, programId });
+  const expectedAccounts = expectedInitializeV2Accounts({
+    sdk,
+    input,
+    programId,
+    platformCurveRuleId: platformCurveRule.enforced ? new sdk.PublicKey(platformCurveRule.pda) : undefined,
+  });
   const transactionReviews = await Promise.all(prepared.transactions.map(async (transaction, index) => {
     const message = transaction?.message;
     const keys = message?.staticAccountKeys;
