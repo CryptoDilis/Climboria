@@ -313,7 +313,7 @@ test("rejects an initializeV2 readonly config account promoted to writable in th
     const keys = tx.message.staticAccountKeys;
     const targetIndex = keys.findIndex(key => key.toBase58() === ids.configId);
     const readonlyStart = keys.length - tx.message.header.numReadonlyUnsignedAccounts;
-    const swapIndex = readonlyStart - 1;
+    const swapIndex = readonlyStart;
     assert.ok(targetIndex >= readonlyStart);
     [keys[targetIndex], keys[swapIndex]] = [keys[swapIndex], keys[targetIndex]];
     tx.message.compiledInstructions[0].accountKeyIndexes = tx.message.compiledInstructions[0].accountKeyIndexes.map(index =>
