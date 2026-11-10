@@ -72,3 +72,8 @@ Next implementation stage: add trusted ALT resolution and canonical account-meta
 ### ALT account-state decoder boundary
 
 The parser now checks the canonical ALT metadata layout, owner program ID, executable flag, state, slot warmup, deactivation marker, authority encoding and padding. This is still only a decoder: the caller must fetch account data from an approved RPC endpoint, verify that the RPC response context slot is the slot passed to the parser, and bind owner/executable/data to the same account response. Never accept client-provided ALT bytes or owner fields as trusted. The helper is not wired into swap execution; the independent hard execution gate remains false.
+
+
+### Solana runtime account-lock and lookup constraints
+
+The structural decoder now rejects v0 lookup entries that select no addresses and caps the reconstructed transaction account-key set at 128, including static plus ALT-loaded keys. The same cap is enforced again after ALT reconstruction. This is a conservative runtime guard, not a substitute for the target cluster's own runtime validation. ALT deactivation is rejected conservatively; same-slot newly appended addresses are not accepted. These checks remain isolated from `/api/swap/execute`.
