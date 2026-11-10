@@ -112,7 +112,7 @@ jobs:
                 return route.continue();
               });
               const quoteSidePair={chainId:'solana',dexId:'quote-side-fixture',pairAddress:'QuoteSidePair1111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},priceUsd:'150',priceNative:'1200',priceChange:{h24:1},volume:{h24:999999},liquidity:{usd:999999}};
-              await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
+              await dexPage.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair,quoteSidePair]})});
                 return route.continue();
@@ -185,7 +185,7 @@ jobs:
               const baseMint='0x1234567890abcdef1234567890abcdef12345678';
               const basePair={chainId:'base',dexId:'base-search-fixture',pairAddress:'0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',baseToken:{address:baseMint,symbol:'BASEFIX',name:'Climboria Base Search Fixture'},quoteToken:{address:'0x4200000000000000000000000000000000000006',symbol:'WETH',name:'Wrapped Ether'},priceUsd:'1.25',priceChange:{h24:3.5},volume:{h24:76543},liquidity:{usd:45678},pairCreatedAt:Date.now()-86400000};
               await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')==='BASEFIX')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
-              await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{const address=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');if(address.toLowerCase()===baseMint.toLowerCase())return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
+              await dexPage.route('https://api.dexscreener.com/token-pairs/v1/base/**',async route=>{const address=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');if(address.toLowerCase()===baseMint.toLowerCase())return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
               await dexPage.locator('#baseSearch').fill('BASEFIX');
               await dexPage.waitForFunction(()=>document.querySelector('#baseRows')?.innerText.includes('BASEFIX'),null,{timeout:10000});
               await dexPage.locator('#baseSearch').fill(baseMint);
@@ -219,7 +219,7 @@ jobs:
               await page.route('https://api.jup.ag/tokens/v2/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
-              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
+              await page.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
                 if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
@@ -290,7 +290,7 @@ jobs:
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               await mobileSwap.route('https://api.climboria.fun/api/tokens/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mobileMockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
               await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
-              await mobileSwap.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
+              await mobileSwap.route('https://api.dexscreener.com/token-pairs/v1/solana/**',route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
                 if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
                 return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
@@ -458,7 +458,7 @@ jobs:
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
-                if(url.includes('/latest/dex/tokens/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
+                if(url.includes('/token-pairs/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
                 if(url.includes('/latest/dex/search')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
                 if(url.includes('/token-profiles/latest/v1')) return route.fulfill({status:200,contentType:'application/json',body:'[]'});
                 if(url.includes('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
