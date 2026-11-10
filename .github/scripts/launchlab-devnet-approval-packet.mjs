@@ -7,6 +7,7 @@
  * It never signs, simulates, submits, broadcasts, or invokes SDK execute().
  */
 import { createHash } from "node:crypto";
+import { createDevnetLaunchRentAccountSpecs } from "./launchlab-devnet-rent-layouts.mjs";
 
 const fail = message => { throw new Error(message); };
 const keyString = value => value && typeof value.toBase58 === "function" ? value.toBase58() : "";
@@ -19,7 +20,6 @@ export async function prepareDevnetOwnerApprovalPacket({
   raydium,
   sdk,
   prepared,
-  rentAccountSpecs,
   feeBufferLamports,
 }) {
   if (raydium?.cluster !== "devnet") fail("Owner-approval packets are restricted to an explicitly initialized Devnet client");
@@ -85,35 +85,26 @@ export async function prepareDevnetOwnerApprovalPacket({
     info: await raydium.connection.getAccountInfo(new sdk.PublicKey(account.address), "finalized"),
   })));
   const missing = accountInfos.filter(account => !account.info);
-  const specs = Array.isArray(rentAccountSpecs) ? rentAccountSpecs : [];
-  const specMap = new Map();
-  for (const spec of specs) {
-    if (!spec || typeof spec.address !== "string" || !Number.isSafeInteger(spec.space) || spec.space < 1 ||
-        typeof spec.purpose !== "string" || !spec.purpose.trim() ||
-        typeof spec.sourceRef !== "string" || !spec.sourceRef.trim()) {
-      fail("Every rent account spec must include address, positive verified data space, purpose, and source reference");
-    }
-    if (specMap.has(spec.address)) fail("Duplicate rent account specification: " + spec.address);
-    specMap.set(spec.address, spec);
-  }
-  const missingAddresses = new Set(missing.map(account => account.address));
-  for (const spec of specs) {
-    if (!missingAddresses.has(spec.address)) fail("Rent account spec does not match a currently missing writable account: " + spec.address);
-  }
-  const unresolved = missing.filter(account => !specMap.has(account.address));
-  if (unresolved.length) {
+  let specs;
+  try {
+    specs = createDevnetLaunchRentAccountSpecs(missing.map(account => {
+      if (account.names.length !== 1) fail("Writable account aliases do not have a single unambiguous IDL account name: " + account.address);
+      return { address: account.address, name: account.names[0] };
+    }));
+  } catch (error) {
     return {
       status: "blocked",
-      reason: "Verified data-space/source specifications are required for every missing writable account; no rent reserve will be guessed",
+      reason: String(error.message || error),
       cluster: "devnet",
       creatorWallet: prepared.creatorWallet,
       feePayer,
       messageSha256: messageHash,
-      missingRentSpecs: unresolved.map(({ address, names }) => ({ address, names })),
+      missingRentSpecs: missing.map(({ address, names }) => ({ address, names })),
       ownerApprovalCreated: false,
       transactionSubmitted: false,
     };
   }
+  const specMap = new Map(specs.map(spec => [spec.address, spec]));
 
   const rentAccounts = await Promise.all(missing.map(async account => {
     const spec = specMap.get(account.address);
@@ -127,6 +118,8 @@ export async function prepareDevnetOwnerApprovalPacket({
       dataSpaceBytes: spec.space,
       purpose: spec.purpose,
       sourceRef: spec.sourceRef,
+      verificationScope: spec.verificationScope,
+      supportingSourceRefs: spec.supportingSourceRefs ?? [],
       minimumBalanceLamports,
     };
   }));
