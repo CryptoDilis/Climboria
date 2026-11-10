@@ -43,8 +43,9 @@ async function fetchCluster(cluster, repoIdl) {
   if (!raw.subarray(0, 8).equals(expectedDiscriminator)) throw new Error(`${cluster}: Anchor IDL account discriminator mismatch`);
   const authority = new PublicKey(raw.subarray(8, 40)).toBase58();
   const declaredCompressedLength = raw.readUInt32LE(40);
-  const compressed = raw.subarray(44);
-  if (compressed.length !== declaredCompressedLength) throw new Error(`${cluster}: IDL compressed-length mismatch (${declaredCompressedLength} vs ${compressed.length})`);
+  if (declaredCompressedLength <= 0 || 44 + declaredCompressedLength > raw.length) throw new Error(`${cluster}: IDL compressed payload length exceeds account data`);
+  const compressed = raw.subarray(44, 44 + declaredCompressedLength);
+  const trailingAllocatedBytes = raw.length - 44 - declaredCompressedLength;
   const inflated = inflateSync(compressed);
   const liveIdl = JSON.parse(inflated.toString("utf8"));
   if (liveIdl.address !== target.id) throw new Error(`${cluster}: live IDL address mismatch: ${liveIdl.address}`);
@@ -60,7 +61,7 @@ async function fetchCluster(cluster, repoIdl) {
   const sameInstructionSet = mismatches.length === 0;
   return {
     cluster, rpc: target.rpc, programId: target.id, idlAddress: idlAddress.toBase58(),
-    accountOwner: account.owner, authority, declaredLength, compressedBytes: compressed.length,
+    accountOwner: account.owner, authority, declaredCompressedLength, compressedBytes: compressed.length, trailingAllocatedBytes,
     liveIdlSha256: sha(inflated), repositoryIdlSha256: sha(Buffer.from(JSON.stringify(repoIdl))),
     liveIdlName: liveIdl.metadata?.name, liveIdlVersion: liveIdl.metadata?.version,
     liveInstructionCount: liveIdl.instructions?.length ?? 0,
