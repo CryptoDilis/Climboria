@@ -86,7 +86,7 @@ jobs:
         run: node --experimental-default-type=module .github/scripts/launchlab-onchain-idl-check.mjs /tmp/launchlab-provenance/launchpad-idl.json /tmp/launchlab-provenance/layout.ts
       - name: Query live Raydium APIs and finalized Solana program accounts
         run: node .github/scripts/launchlab-provenance.mjs
-      - name: Verify live Mainnet and Devnet LP Lock Anchor IDLs
+      - name: Verify Mainnet LP Lock IDL and report Devnet IDL publication status
         env:
           LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
         run: node .github/scripts/launchlab-lock-idl-check.mjs
