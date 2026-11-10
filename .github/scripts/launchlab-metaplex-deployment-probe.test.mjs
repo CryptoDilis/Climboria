@@ -56,7 +56,7 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
       };
     },
     getSignaturesForAddress: async (key, options, commitment) => {
-      assert.ok([derivedAddress.toBase58(), METAPLEX_TOKEN_METADATA_PROGRAM_ID].includes(key.toBase58()));
+      assert.equal(key.toBase58(), derivedAddress.toBase58());
       assert.equal(options.limit, 1000);
       assert.equal(commitment, "finalized");
       return [
@@ -64,13 +64,22 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
         { signature: "OriginalDeploySignature", slot: 120000, blockTime: 1794000000, err: null },
       ];
     },
-    getTransaction: async signature => ({
-      blockTime: signature === "ExtendSignature" ? 1794270000 : 1794000000,
-      meta: {
-        err: null,
-        logMessages: [signature === "ExtendSignature" ? "Extended ProgramData account by 300000 bytes" : "Program deployed"],
-      },
-    }),
+    getTransaction: async signature => {
+      const isExtend = signature === "ExtendSignature";
+      const keys = isExtend
+        ? [new PublicKey(programDataAddress), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("11111111111111111111111111111111"), new PublicKey("Payer111111111111111111111111111111111")]
+        : [new PublicKey("Payer111111111111111111111111111111111"), new PublicKey(programDataAddress), new PublicKey(METAPLEX_TOKEN_METADATA_PROGRAM_ID), new PublicKey("Buffer111111111111111111111111111111111"), new PublicKey("Rent111111111111111111111111111111111"), new PublicKey("Clock11111111111111111111111111111111"), new PublicKey(authority), new PublicKey(authority)];
+      const accountIndexes = isExtend ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5, 6, 7];
+      const data = isExtend ? Uint8Array.from([6, 0, 0, 0, 224, 147, 4, 0]) : Uint8Array.from([2, 0, 0, 0]);
+      return {
+        blockTime: isExtend ? 1794270000 : 1794000000,
+        transaction: { message: { staticAccountKeys: [new PublicKey(BPF_UPGRADEABLE_LOADER_ID), ...keys], header: { numRequiredSignatures: 1 }, compiledInstructions: [{ programIdIndex: 0, accountKeyIndexes: accountIndexes.map(index => index + 1), data }] } },
+        meta: {
+          err: null,
+          logMessages: [isExtend ? "Extended ProgramData account by 300000 bytes" : "Program deployed"],
+        },
+      };
+    },
     getAccountInfo: async (key, commitment) => {
       calls.push({ key: key.toBase58(), commitment });
       if (key.toBase58() === METAPLEX_TOKEN_METADATA_PROGRAM_ID) {
@@ -98,8 +107,11 @@ test("captures finalized ProgramData state slot, loader history, authority, and 
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].signature, "ExtendSignature");
   assert.equal(result.programDataStateSlotBlockEvidence.candidateTransactions[0].loaderInstructionCount, 1);
   assert.equal(result.programDataHistory.status, "programdata_state_slot_reached");
-  assert.equal(result.programAccountHistory.status, "program_state_slot_reached");
-  assert.equal(result.programAccountHistory.signatures.length, 2);
+  assert.equal(result.programDataLifecycle.counts.deployWithMaxDataLen, 1);
+  assert.equal(result.programDataLifecycle.counts.extendProgram, 1);
+  assert.equal(result.programDataLifecycle.deployWithMaxDataLenObserved, true);
+  assert.deepEqual(result.programDataLifecycle.events.map(event => event.operation), ["deployWithMaxDataLen", "extendProgram"]);
+  assert.equal(result.programDataLifecycle.events[1].accountRoles.additionalBytes, 300000);
   assert.equal(result.programDataHistory.signaturesScanned, 2);
   assert.equal(result.programDataHistory.reachedStateSlot, true);
   assert.equal(result.programDataHistory.signatures[0].signature, "OriginalDeploySignature");
