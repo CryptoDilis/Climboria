@@ -39,7 +39,7 @@ async function fetchCluster(cluster, repoIdl) {
   if (account.executable) throw new Error(`${cluster}: IDL metadata account unexpectedly executable`);
   const raw = Buffer.from(account.data[0], "base64");
   if (raw.length < 44) throw new Error(`${cluster}: IDL account shorter than Anchor header`);
-  const expectedDiscriminator = createHash("sha256").update("account:IdlAccount").digest().subarray(0, 8);
+  const expectedDiscriminator = createHash("sha256").update("internal:IdlAccount").digest().subarray(0, 8);
   if (!raw.subarray(0, 8).equals(expectedDiscriminator)) throw new Error(`${cluster}: Anchor IDL account discriminator mismatch`);
   const authority = new PublicKey(raw.subarray(8, 40)).toBase58();
   const declaredCompressedLength = raw.readUInt32LE(40);
