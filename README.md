@@ -2696,3 +2696,31 @@ For every integrated asset or borrowed technique, record:
 5. Re-run Validate, Browser Smoke, deployment health checks, and update this README with commit/run IDs, verified results, unresolved blockers, and the next exact task.
 
 Last checked: 2026-11-11 02:44 Philippine time. This entry records verified source/CI state only; no Cloudflare secrets, deployment, Devnet transaction, Mainnet execution, or login provider was enabled by this checkpoint.
+
+
+## 2026-11-11 — Swap security review continuation
+
+### New review work
+- Reviewed PR #234 (`codex/swap-order-binding-durable-object`) source: Solana v0 wire parser, Ed25519 taker signature verification, JupiterZ non-taker signature-slot preservation, SQLite-backed Durable Object order storage, atomic one-time claim, expiry, ambiguous-outcome replay lock, Worker deployment workflow and frontend order-token integration.
+- Cross-checked Cloudflare's current SQLite Durable Object storage API: synchronous KV (`storage.kv`), `transactionSync`, alarms and `new_sqlite_classes` are supported for SQLite-backed classes. This validates the API family used by the PR; it is not a substitute for deployed-runtime verification.
+- Found a parser invariant gap: the v0 header could count the fee payer as read-only. Updated parser to reject `readonlySigned >= requiredSignatures`, because Solana's fee payer must be the first writable signer.
+- Added regression test that constructs a message header marking the fee payer read-only and expects parser rejection.
+
+### Commits / verification state
+- PR #234 updated to head `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c` (two commits after prior reviewed head `47fa08125048a9978dd6ea116172ab818425fefc`).
+- Parser change commit: `6019158eaed8c581bbe5e344efc57719473e8e78`.
+- Regression-test commit: `ea4cabdfd78e22f07e60462836ca0cfd1ad65f7c`.
+- New Validate run `42879777028` and Browser Smoke run `42879777254` were observed in progress at the time of this record; do not treat them as passing until final conclusions are checked.
+- Prior PR head `47fa08125048a9978dd6ea116172ab818425fefc` had Validate run `42875196438` and Browser Smoke run `42875196759` both successful; Wrangler dry-run bundling and Durable Object configuration validation passed on that prior head.
+
+### Still not verified / release blockers
+- No Cloudflare production deployment or live `api.climboria.fun/health` response could be verified in this session. GitHub connector cannot fetch non-GitHub endpoints, and direct web retrieval did not expose the endpoint.
+- Owner must configure GitHub Actions secret values `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `JUPITER_API_KEY` and variable `CLOUDFLARE_RATE_LIMIT_NAMESPACE_ID` securely. Values must never be pasted into chat or committed.
+- Keep `EXECUTION_ENABLED=false` and frontend `swap-config.js enabled=false`. No Devnet lifecycle or Mainnet execution has been proven.
+- PR #234 remains draft/open pending the new checks and independent security review. Do not merge based on earlier CI alone.
+- Launchpad remains an informational page; no token-creation, fundraising, payment, liquidity or launch execution backend verified. Google/X/email-password account login remains disabled.
+
+### Exact next task
+1. Poll runs `42879777028` and `42879777254` to completion. If either fails, inspect its exact failed step and logs, diagnose root cause, implement a targeted fix, and rerun. If both pass, continue review of order-store concurrency/expiry/settlement and parser adversarial cases, then document review findings before requesting a human security review. Keep all production execution gates disabled until the documented Cloudflare and Devnet gates pass.
+
+Last checked: 2026-11-11 (Philippine time). This entry records repository work and observed CI state only; it does not claim production deployment, successful real swaps, enabled account login, or live Launchpad functionality.
