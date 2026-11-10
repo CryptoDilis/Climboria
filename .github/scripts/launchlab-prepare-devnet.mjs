@@ -291,7 +291,7 @@ function validateInitializeV2Instruction({ instruction, allKeys, expectedAccount
   }
   const indexes = Array.from(instruction.accountKeyIndexes ?? []);
   if (indexes.length !== expectedAccounts.length) {
-    fail(`SDK transaction ${index} initializeV2 account count differs from the pinned 18-entry initializeV2 IDL`);
+    fail(`SDK transaction ${index} initializeV2 account count differs from the pinned IDL plus verified optional accounts; expected ${expectedAccounts.length}, got ${indexes.length}`);
   }
 
   // Compiled-message privileges are global per key. Union the IDL privileges
