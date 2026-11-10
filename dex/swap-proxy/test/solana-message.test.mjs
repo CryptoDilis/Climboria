@@ -132,8 +132,9 @@ test("decodes active lookup-table account data with owner and RPC slot checks", 
   data[21] = 0;
   data.set(new Uint8Array(32).fill(8), 56);
   data.set(new Uint8Array(32).fill(9), 88);
-  const table = decodeAddressLookupTableAccount({ data, owner, executable: false, contextSlot: 101 });
+  const table = decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner, executable: false, contextSlot: 101 });
   assert.equal(table.addresses.length, 2);
+  assert.equal(table.accountKey[0], 6);
   assert.equal(table.lastExtendedSlot, "100");
   assert.equal(table.authority, null);
   assert.equal(table.addresses[1][0], 9);
@@ -147,15 +148,15 @@ test("rejects untrusted, malformed, deactivated and not-yet-warmed lookup tables
   view.setBigUint64(4, 0xffffffffffffffffn, true);
   view.setBigUint64(12, 100n, true);
   data[20] = 1;
-  assert.throws(() => decodeAddressLookupTableAccount({ data, owner: "11111111111111111111111111111111", contextSlot: 101 }), /unexpected owner/);
-  assert.throws(() => decodeAddressLookupTableAccount({ data, owner, executable: true, contextSlot: 101 }), /must not be executable/);
-  assert.throws(() => decodeAddressLookupTableAccount({ data, owner, contextSlot: 100 }), /not active until a later slot/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner: "11111111111111111111111111111111", contextSlot: 101 }), /unexpected owner/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner, executable: true, contextSlot: 101 }), /must not be executable/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data, owner, contextSlot: 100 }), /not active until a later slot/);
   const inactive = data.slice();
   new DataView(inactive.buffer).setBigUint64(4, 99n, true);
-  assert.throws(() => decodeAddressLookupTableAccount({ data: inactive, owner, contextSlot: 101 }), /Deactivated/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data: inactive, owner, contextSlot: 101 }), /Deactivated/);
   const badPadding = data.slice(); badPadding[55] = 1;
-  assert.throws(() => decodeAddressLookupTableAccount({ data: badPadding, owner, contextSlot: 101 }), /padding/);
-  assert.throws(() => decodeAddressLookupTableAccount({ data: data.slice(0, 55), owner, contextSlot: 101 }), /data length/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data: badPadding, owner, contextSlot: 101 }), /padding/);
+  assert.throws(() => decodeAddressLookupTableAccount({ accountKey: new Uint8Array(32).fill(6), data: data.slice(0, 55), owner, contextSlot: 101 }), /data length/);
 });
 
 
@@ -174,4 +175,14 @@ test("rejects empty ALT selections and transactions exceeding the runtime accoun
     totalKeyCount: 129, instructions: []
   };
   assert.throws(() => reconstructAccountMetas(parsed, [{ accountKey: parsed.addressTableLookups[0].accountKey, addresses: [Uint8Array.from({ length: 32 }, () => 251)] }]), /resolved account key count mismatch|account-lock limit/);
+});
+
+
+test("rejects missing lookup table identity before accepting RPC account bytes", () => {
+  const data = new Uint8Array(56);
+  new DataView(data.buffer).setUint32(0, 1, true);
+  new DataView(data.buffer).setBigUint64(4, 0xffffffffffffffffn, true);
+  assert.throws(() => decodeAddressLookupTableAccount({
+    data, owner: "AddressLookupTab1e1111111111111111111111111", contextSlot: 5
+  }), /lookup table account public key/);
 });
