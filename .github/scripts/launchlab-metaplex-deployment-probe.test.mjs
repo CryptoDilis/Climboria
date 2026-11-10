@@ -17,12 +17,14 @@ function fixture({ cluster = "devnet", programMissing = false, dataMissing = fal
   const programState = Buffer.alloc(36);
   programState.writeUInt32LE(2, 0);
   Buffer.alloc(32, 7).copy(programState, 4);
-  const programData = Buffer.alloc(80);
+  const bytecode = Buffer.from("metaplex-devnet-bytecode");
+  const codeOffset = authorityOption === 1 ? 45 : 13;
+  const programData = Buffer.alloc(codeOffset + bytecode.length);
   programData.writeUInt32LE(stateTag, 0);
   programData.writeBigUInt64LE(123456n, 4);
   programData[12] = authorityOption;
   if (authorityOption === 1) Buffer.alloc(32, 9).copy(programData, 13);
-  Buffer.from("metaplex-devnet-bytecode").copy(programData, authorityOption === 1 ? 45 : 13);
+  bytecode.copy(programData, codeOffset);
   const derivedAddress = new PublicKey(Buffer.alloc(32, 7));
   const connection = {
     getAccountInfo: async (key, commitment) => {
