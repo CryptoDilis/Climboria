@@ -412,6 +412,23 @@ async function fetchDexCpiProgramHistory(program) {
     isActiveAtSlot(candidate, candidateTransactionSlot)
   );
   const latestMatches = responses.latest.candidates;
+  const schemaHash = (candidate) => sha256(JSON.stringify(candidate.matchingInstructions));
+  const activeSchemaHashes = [...new Set(activeHistory.map(schemaHash))];
+  const latestHistoryComparisons = activeHistory.map((historical) => {
+    const latestForSource = latestMatches.find((candidate) =>
+      candidate.sourceType === historical.sourceType
+    );
+    return {
+      sourceType: historical.sourceType,
+      historicalContentSha256: historical.contentSha256,
+      latestContentSha256: latestForSource?.contentSha256 ?? null,
+      historicalInstructionSchemaSha256: schemaHash(historical),
+      latestInstructionSchemaSha256: latestForSource ? schemaHash(latestForSource) : null,
+      latestAndHistoryInstructionSchemasAgree: Boolean(
+        latestForSource && schemaHash(latestForSource) === schemaHash(historical)
+      ),
+    };
+  });
   return {
     slug: program.slug,
     programId: program.programId,
@@ -422,6 +439,14 @@ async function fetchDexCpiProgramHistory(program) {
     matchingHistoricalRevisionCount: matchingHistory.length,
     activeHistoricalRevisionCount: activeHistory.length,
     exactlyOneRevisionCoversCandidateSlot: activeHistory.length === 1,
+    activeInstructionSchemaVariantCount: activeSchemaHashes.length,
+    activeSourcesAgreeOnInstructionSchema: activeHistory.length > 0 && activeSchemaHashes.length === 1,
+    activeInstructionSchemaSha256: activeSchemaHashes.length === 1 ? activeSchemaHashes[0] : null,
+    latestHistoryComparisons,
+    allLatestAndActiveHistorySchemasAgree:
+      latestHistoryComparisons.length > 0 &&
+      latestHistoryComparisons.every((comparison) => comparison.latestAndHistoryInstructionSchemasAgree),
+    activeRevisionsForCandidateSlot: activeHistory,
     activeRevisionForCandidateSlot: activeHistory.length === 1 ? activeHistory[0] : null,
     latestMatchingInstructions: latestMatches.flatMap((candidate) => candidate.matchingInstructions),
   };
@@ -485,7 +510,9 @@ const summary = {
     programDataDeploymentCoversCandidateSlot: onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true,
     programDataLoaderOwnerMatches: onChainProvenance.programDataAccount?.loaderOwnerMatches === true,
     dexCpiProgramsWithExactlyOneActiveRevision: dexCpiIdlHistory.filter((item) => item.exactlyOneRevisionCoversCandidateSlot).length,
-    dexCpiProgramsWithActiveDiscriminatorMatch: dexCpiIdlHistory.filter((item) => item.activeHistoricalRevisionCount === 1).length,
+    dexCpiProgramsWithActiveDiscriminatorMatch: dexCpiIdlHistory.filter((item) => item.activeHistoricalRevisionCount > 0).length,
+    dexCpiProgramsWithActiveSchemaAgreement: dexCpiIdlHistory.filter((item) => item.activeSourcesAgreeOnInstructionSchema).length,
+    dexCpiProgramsWithLatestHistorySchemaAgreement: dexCpiIdlHistory.filter((item) => item.allLatestAndActiveHistorySchemasAgree).length,
   },
   safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
 };
