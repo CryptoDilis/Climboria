@@ -3490,3 +3490,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Await fresh Validate and Browser Smoke on this exact head. Determine whether the GLB is not requested, blocked/failed, or requested but not decoded.
 - [ ] Change production loader/asset delivery only after evidence identifies the actual defect. Keep strict GLB readiness.
 - [ ] PR #242 remains open; do not merge until exact-head checks and mobile gameplay/cave screenshot review pass.
+
+### 2026-11-11 — PR #242 exact-head diagnostic rerun
+
+- [x] Counter-fix head `7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717` corrects the GLB resource-name matcher and captures failed GLB requests with URL/reason; it does not change production loading or weaken readiness.
+- [x] Validate run `42946493667`: SUCCESS on exact head `7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717`.
+- [ ] Browser Smoke run `42946493750`: IN PROGRESS. Steps 1–14 (homepage/DEX routing, proxy security/fail-closed, standalone Swap/DEX, mobile layout and provider loading/error/empty states) passed. Step 15, Jarrell's Peak desktop/mobile gameplay smoke, is still running; screenshot upload is pending.
+- [ ] Do not call the Browser Smoke successful until gameplay and screenshot upload complete. On failure, use corrected resource/requestfailed diagnostics to distinguish missing request, network/CDN failure, or GLB decode/scene setup failure.
+- [ ] After terminal success, inspect all desktop/mobile gameplay and cave captures before merging PR #242. Then port only DEX changes from PR #243 onto the accepted harness and rerun exact-head checks.
