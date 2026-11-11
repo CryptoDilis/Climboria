@@ -4400,3 +4400,13 @@ The user's active delivery order supersedes older locked-priority notes for this
 
 
 - [x] Added an on-chain IDL history retrieval path to the research log: Solana IDL Explorer documents current/latest/history endpoints and a CLI for Anchor/Program Metadata IDLs. This is a retrieval lead only; Jupiter's current/history IDL has not yet been obtained or validated. Follow-up documentation commit: c894d27918225ea389838f8f52d536cb979547a3.
+
+
+## 2026-11-12 — Jupiter route_v2 IDL investigation checkpoint
+
+- PR #268's last fully inspected head `9f69deafb10110c974fd226ff3adae4b6f5ad430` passed exact-head Validate `43068998073`, Browser Smoke `43068998041`, and Jupiter CPI Trace Audit `43068998208`; all job steps succeeded. No failed job existed on that head. Browser Smoke is ecosystem-only, not a Jarrell's Peak gameplay pass.
+- A public Surfpool Jupiter fixture includes a `routeV2` entry but is not the candidate schema: its discriminator is `b98d6ec5d3b66cd1`, not candidate `bb64facc31c4af14`; its `Swap` enum has 44 variants (0–43) and no Kipseli. Byte 181 remains unmapped.
+- Added an automated Solana IDL Explorer `/api/latest` + `/api/history` fetcher and workflow; raw responses, SHA-256 hashes, schema summaries, and failure evidence are intended to be uploaded as an artifact. Its result has not yet been observed; do not claim retrieval success.
+- Detailed findings and exact source/blob metadata: `docs/JUPITER-ROUTE-V2-IDL-RESEARCH-2026-11-12.md`; continuing research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
+- Safety unchanged: route_v2 stays diagnostic-only/rejected by production legacy-route validation; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`. No signing, execution, deployment, or production approval.
+- Next: inspect the IDL History Audit workflow/artifact; diagnose any HTTP/transport failure from the raw response and job logs; verify IDL authority/source, revision slot and exact route_v2 discriminator before decoding byte 181. Keep gameplay and production release checks separate.
