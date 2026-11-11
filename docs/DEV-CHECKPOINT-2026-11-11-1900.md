@@ -586,3 +586,34 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - [ ] Browser Smoke step 12 reaches and passes Back/Forward assertions.
 - [ ] Browser Smoke step 15 reaches and passes 390px/360px close-detail touch checks from the previous counter-fix.
 - If the workflow again fails before jobs are created, inspect the YAML diff and workflow-level error rather than rerunning blindly.
+
+
+## Recovery verification — mobile close tap, DEX history and workflow syntax — 2026-11-11
+
+### Exact-head CI — commit `80941976310de7ddcb63ef9c157199d3edf28035`
+- Validate run `43023657205`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43023657205
+- Browser Smoke run `43023657228`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43023657228
+- Both required check-runs completed SUCCESS on the exact same SHA `8094197`.
+- Browser Smoke steps 7–17 all passed, including:
+  - Authentication and cloud-save account isolation.
+  - Homepage DEX routing, Cloudflare swap proxy and fail-closed execution.
+  - Standalone Swap and DEX quote-preview.
+  - DEX pool Back/Forward state restore (step 12) using same-document `history.back()` / `history.forward()`, with strict URL, selected-row, chart and metric assertions.
+  - Mobile DEX workspace and responsive 390px/360px layouts (step 15), including the real touch tap on close-detail after stable-scroll/hit-target verification.
+  - Mobile provider loading/error/empty states and screenshot upload.
+- Validate passed all 12 checks, including swap proxy security/API contract tests, Wrangler Worker bundle/config dry-run, Supabase client syntax and game/site script audits.
+
+### Counter-fix outcomes
+- [x] Mobile close-detail test race addressed by waiting for stable button geometry and scroll position across eight animation frames, then confirming the button is the center hit target before a real touch tap. Step 15 passed at both viewport widths.
+- [x] DEX history test no longer waits for a full document `load` on a same-document History API transition. Step 12 passed Back and Forward pool restoration and all dependent chart/metric assertions.
+- [x] Workflow YAML indentation error in intermediate commit `d551035` corrected in `8094197`; the browser-smoke job was recognized and ran normally on the corrected head.
+- [x] No product DEX code, timeout acceptance criteria, or security gates were weakened.
+- [x] The intermediate workflow-level no-job failure `43023263382` was caused by the outdented JS line escaping the YAML `run: |` block. It is retained above as a diagnosed workflow-authoring error, not hidden or counted as a product-code regression.
+
+### Release posture and next task
+- PR #268 remains draft/open/unmerged; main remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- Both Jupiter signable-order and execution gates remain false; no live swap or production readiness is claimed.
+- Next DEX blocker remains authoritative per-DEX CPI account-vector and route-plan-step mapping proof. The generated SDK and mainnet Meteora route candidate are supplemental evidence only; no speculative DEX offsets are allowed.
+- Continue controlled Devnet settlement/fee-destination proof, Cloudflare production verification, production Login provider verification, and Launchpad lifecycle after DEX semantic proof.
