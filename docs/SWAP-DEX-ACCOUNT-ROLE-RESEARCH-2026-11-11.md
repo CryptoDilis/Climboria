@@ -276,3 +276,30 @@ Pinned official repository: https://github.com/jup-ag/jupiter-amm-implementation
 
 ### Engineering decision
 No new Climboria DEX account-position code is justified. Continue with raw finalized transaction metadata/CPI traces and deployed-program provenance. Keep SolFi excluded, V2 variants 47/75 rejected, and all signable/execution gates closed until a version-matched mapping is established.
+
+
+
+## Evidence acquisition correction and no-cost research checkpoint — 2026-11-11 22:10 PHT
+
+### Trawl dataset pricing correction
+A fresh read of the current public Jupiter V6 dataset page shows that its current advertised price is **$4 for one recent epoch** (and $8.68 for one week of chain). The page documents decoded top-level and inner CPI instructions, with context fields including `signature`, `ix_index`, `is_inner`, `inner_index`, `stack_height`, `program_id`, and `accounts`. This is the right general data shape for associating an outer route with ordered inner DEX calls, but it is not a free sample in the currently visible pricing section.
+
+- No scan was purchased, no payment was made, and no Trawl Parquet rows were retrieved or inspected.
+- Earlier notes describing a free Jupiter V6 sample at slots `466130000–466130999` are not substantiated by the current page and must not be treated as an available free download. Retain that range only as an unverified earlier lead; do not claim sample access.
+- A free public page is not equivalent to access to its underlying decoded rows.
+- Reference: https://trawl.run/data/jupiter-v6
+
+### Additional public-source check
+- The current Trawl program catalog confirms Jupiter V6 as a decoded preset and lists the inner-instruction context fields; it does not expose the actual paid result rows.
+- Jupiter's official developer documentation describes /build as a Metis-only route-building endpoint that returns raw instructions and ALT accounts. That is useful for understanding the off-chain transaction construction path, but it does not disclose the deployed V6 route handler's per-step DEX CPI account-slice cursor.
+- References:
+  - https://trawl.run/data
+  - https://developers.jup.ag/docs/api-reference/swap/build.md
+
+### Engineering conclusion
+- [x] Corrected the evidence acquisition note: Trawl's current page is paid, not a verified free-sample source.
+- [x] Confirmed the required CPI trace schema is documented publicly, without acquiring paid rows.
+- [ ] Still require raw inner CPI account vectors and a proven route-plan-step-to-CPI association for each allowed variant.
+- [ ] Still require Jupiter deployed executable hash/build provenance and version-matched route-handler source or equivalent authoritative trace evidence.
+- [ ] Still require resolution of Meteora DLMM CPI-vs-direct-IDL privilege/optionality differences.
+- No Climboria code change is justified by this source check. Do not purchase data or loosen the policy to compensate for missing evidence. Keep signable-order and execution gates false.
