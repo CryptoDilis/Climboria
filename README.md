@@ -4499,3 +4499,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - No failed workflow has been observed for the new code yet. No retry or failure counter-fix is appropriate without an actual failed job.
 - Safety unchanged: `route_v2` remains rejected by production validation; signing/execution gates remain false; no production deployment or live swap execution is claimed.
 - Exact next task: obtain and inspect fresh Validate, Browser Smoke and Jupiter CPI Trace Audit runs on the latest branch head. If no run appears, use a supported Actions trigger or report the dispatch limitation; do not mark the change complete. If green, inspect the trace artifact and update the duplicate-key research only with transaction-key-index evidence, then continue CPI privilege and multi-shape route verification.
+
+## 2026-11-12 — verification blocked for CPI duplicate-position instrumentation
+
+- Added CPI account-key → all matching outer-instruction positions mapping and tests for duplicate static keys plus ALT-loaded keys. The output explicitly does not claim which duplicate occurrence a deployed handler consumed.
+- Added a dedicated regression-test step to the Jupiter CPI Trace Audit workflow (`c6c1df9d0e3dc0c0e899a28263cca2142fe0ac79`).
+- The branch is 187 commits ahead / 0 behind main at the code checkpoint. Subsequent research documentation records the verification limitation.
+- No workflow run or combined status is visible for the new code/workflow head. The previous green head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` does not verify these new changes. Local test execution was unavailable because GitHub DNS could not be resolved; this is an environment/tooling blocker, not a test failure.
+- No failed workflow was observed on the new head, so no retry or counter-fix is justified. Exact next task: obtain authorized Actions dispatch for Validate, Browser Smoke and CPI Trace Audit, inspect the exact-head results and artifact, and only then mark the change verified.
+- Safety: route_v2 remains excluded from production validation; execution and signable-order gates remain false.
