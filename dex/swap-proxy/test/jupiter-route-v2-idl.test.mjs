@@ -39,11 +39,11 @@ function makeIdl() {
       { name: "Swap", type: { kind: "enum", variants } },
       { name: "RemainingAccountsInfo", type: { kind: "struct", fields: [
         { name: "slices", type: { vec: { defined: { name: "RemainingAccountsSlice" } } } },
-      ] } } },
+      ] } },
       { name: "RemainingAccountsSlice", type: { kind: "struct", fields: [
         { name: "accounts_type", type: "u8" },
         { name: "length", type: "u8" },
-      ] } } },
+      ] } },
     ],
   };
 }
