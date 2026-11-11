@@ -151,7 +151,8 @@ async function handleOrder(request, env) {
       taker,
       outputMint,
       amount,
-      outAmount: data.outAmount
+      outAmount: data.outAmount,
+      otherAmountThreshold: data.otherAmountThreshold
     });
     await verifyJupiterTokenAccounts({
       sourceTokenAccount: policyResult.sourceTokenAccount,
