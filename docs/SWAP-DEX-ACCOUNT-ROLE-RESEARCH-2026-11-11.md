@@ -498,3 +498,35 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - [ ] Controlled Devnet reproduction and independent Solana security review.
 
 **Decision remains unchanged:** this one Meteora CPI vector and its BinArray are now transaction-specifically verified, but universal account-slice semantics and CPI-requested privilege flags are not. Signing/execution remain disabled and variant 75 remains excluded.
+
+
+## Route-discovery workflow failure diagnosis and counter-fix — 2026-11-11 23:18 PHT
+
+### Failure A — duplicate ESM import binding
+- Validate run `43031746350`, job `130560293461`, on head `619fdf9289658f4a8503338d1629c987c068aca6`: the test file failed to load with `SyntaxError: Identifier 'decodeBase58' has already been declared`.
+- Root cause: `jupiter-v6-policy.test.mjs` already imports `decodeBase58` from `src/transaction-validation.mjs`; the new discovery helper imported another `decodeBase58` under the same local binding.
+- Counter-fix: alias the new import as `decodeDiscoveryBase58` and use that explicit name in the discovery decoder test. No existing helper or test was removed.
+
+### Failure B — public Solana RPC rate limiting
+- Dedicated audit runs `43031734145` / job `130560228605`, `43031746115` / job `130560305446`, and `43031863938` / job `130560675951` failed in the bounded discovery step with `Solana RPC HTTP error for getTransaction: 429`.
+- Root cause: the public `api.mainnet-beta.solana.com` endpoint rate-limited repeated recent-transaction requests after the known transaction and account-info fetches. This is an external provider quota response, not a malformed transaction, parser defect, or Climboria swap-policy regression.
+- Counter-fix: limit discovery to five recent signatures by default, space requests by one second, apply bounded exponential backoff, and on persistent HTTP 429 return an explicit partial report (`rateLimited=true`, method, scanned count, existing matches) instead of failing the entire research workflow or claiming an empty result. The workflow also bounds the discovery command to 90 seconds and logs the report summary.
+- Added offline test that simulates repeated 429 responses and verifies the partial-report behavior.
+
+### Successful counter-fix verification
+- Latest branch code head `00c145cabf49588a209b2e6e6ca186eb4b86c621`, 80 ahead / 0 behind main.
+- Validate run `43032018023`, job `130561216130`: SUCCESS; **84 tests passed, 0 failed**, Wrangler dry-run and all syntax audits passed.
+- Browser Smoke run `43032018200`, job `130561274311`: SUCCESS; all ecosystem steps 7–16 passed.
+- Jupiter V6 CPI Trace Audit run `43032017949`, job `130561207633`: SUCCESS. Artifact `13860769847` includes the known route trace, verified BinArray account metadata, and bounded recent-route scan.
+- The recent scan fetched five finalized signatures for the Meteora program, scanned all five, found zero Jupiter V6 Swap2 routes, and was not rate-limited. This is a small bounded sample only; it does not establish that Jupiter/Meteora routes are absent generally.
+- Browser screenshot artifact `13862020231` uploaded (5,386,347 bytes).
+- The two counter-fixes are verified on the latest code head. No tests were weakened.
+
+### Remaining next steps
+- [ ] Sample a wider time window or additional bounded batches when public RPC quota permits; record 429 as incomplete evidence, never as no-match proof.
+- [ ] Resolve the extra outer Jupiter program account at route position 27.
+- [ ] Obtain direct evidence for CPI-requested signer/writable flags and establish Jupiter deployed binary/source provenance.
+- [ ] Repeat variant-75 traces with bitmap extension, multiple BinArrays, transfer-hook slices, split and multi-hop routes.
+- [ ] Devnet reproduction and independent security review.
+
+All signable-order and execution gates remain closed. Variant 75 remains excluded.
