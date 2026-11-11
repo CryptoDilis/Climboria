@@ -137,7 +137,12 @@ async function handleOrder(request, env) {
       typeof data.outAmount !== "string" || !/^[1-9][0-9]*$/.test(data.outAmount)) {
     return json({ error: "Jupiter returned invalid order amounts" }, 502);
   }
-  let parsedTransaction, lookupResolution;
+  try {
+    validateJupiterOrderMetadata(data, { taker, amount });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Jupiter order metadata is invalid" }, 422);
+  }
+  let parsedTransaction, lookupResolution, tokenAccountVerification;
   try {
     parsedTransaction = parseSolanaV0Transaction(data.transaction);
     lookupResolution = await resolveTransactionLookups({
@@ -153,22 +158,18 @@ async function handleOrder(request, env) {
       amount,
       outAmount: data.outAmount
     });
-    const tokenAccountVerification = await verifyJupiterTokenAccounts({
+    tokenAccountVerification = await verifyJupiterTokenAccounts({
       sourceTokenAccount: policyResult.sourceTokenAccount,
       destinationTokenAccount: policyResult.destinationTokenAccount,
       taker,
       inputMint,
       outputMint,
       amount,
-      rpcUrl: env.SOLANA_RPC_URL
+      rpcUrl: env.SOLANA_RPC_URL,
+      minContextSlot: lookupResolution.contextSlot
     });
   } catch (error) {
     return json({ error: "Jupiter transaction or address lookup table validation failed", details: error instanceof Error ? error.message : "Invalid transaction" }, 422);
-  }
-  try {
-    validateJupiterOrderMetadata(data, { taker, amount });
-  } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Jupiter order metadata is invalid" }, 422);
   }
   const orderToken = crypto.randomUUID();
   const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
@@ -183,7 +184,8 @@ async function handleOrder(request, env) {
       lastValidBlockHeight: data.lastValidBlockHeight ?? null,
       expiresAt,
       resolvedLookups: lookupResolution.tables,
-      lookupContextSlot: lookupResolution.contextSlot
+      lookupContextSlot: lookupResolution.contextSlot,
+      tokenAccountEvidence: tokenAccountVerification
     })
   });
   const storedData = await stored.json().catch(() => null);
