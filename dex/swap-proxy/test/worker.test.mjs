@@ -125,98 +125,21 @@ test("rejects requests over the configured edge rate limit", async () => {
   assert.equal(res.status, 429);
 });
 
-test("proxies a valid Jupiter order with server-side credentials and normalized response", async () => {
-  const fixture = makeFixture(1);
+test("hard-blocks wallet-signable order creation until semantic validation is reviewed", async () => {
   const originalFetch = globalThis.fetch;
-  let upstreamUrl = "";
-  let upstreamHeaders;
+  let upstreamCalled = false;
   try {
-    globalThis.fetch = async (url, init) => {
-      upstreamUrl = String(url);
-      upstreamHeaders = new Headers(init?.headers);
-      return Response.json({
-        requestId: "jupiter-request-123",
-        transaction: fixture.original,
-        inAmount: "100",
-        outAmount: "250",
-        router: "Jupiter",
-        feeBps: 0,
-        transactionVersion: 0,
-        lastValidBlockHeight: 12345
-      });
-    };
+    globalThis.fetch = async () => { upstreamCalled = true; throw new Error("must not request a signable Jupiter order"); };
     const req = new Request("https://worker.test/api/swap/order", {
-      method: "POST",
-      headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: fixture.taker })
-    });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.requestId, "jupiter-request-123");
-    assert.equal(body.transaction, fixture.original);
-    assert.equal(body.lastValidBlockHeight, 12345);
-    assert.match(body.orderToken, /^[0-9a-f-]{36}$/i);
-    assert.equal(orderStoreCalls.at(-1).pathname, "/store");
-    assert.equal(orderStoreCalls.at(-1).body.taker, fixture.taker);
-    assert.equal(upstreamHeaders.get("x-api-key"), "test-server-key");
-    assert.match(upstreamUrl, /^https:\/\/api\.jup\.ag\/swap\/v2\/order\?/);
-    assert.match(upstreamUrl, /maxSupportedTransactionVersion=0/);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test("rejects malformed transaction encoding and invalid order expiry metadata", async () => {
-  const originalFetch = globalThis.fetch;
-  try {
-    const request = () => new Request("https://worker.test/api/swap/order", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
       body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
     });
-    globalThis.fetch = async () => Response.json({
-      requestId: "jupiter-request-123", transaction: "not base64!", inAmount: "100", outAmount: "200", transactionVersion: 0
-    });
-    const malformed = await worker.fetch(request(), env);
-    assert.equal(malformed.status, 502);
-    assert.match((await malformed.json()).error, /transaction encoding/i);
-
-    globalThis.fetch = async () => Response.json({
-      requestId: "jupiter-request-123", transaction: "AQID", inAmount: "100", outAmount: "200",
-      transactionVersion: 0, lastValidBlockHeight: -1
-    });
-    const invalidExpiry = await worker.fetch(request(), env);
-    assert.equal(invalidExpiry.status, 502);
-    assert.match((await invalidExpiry.json()).error, /lastValidBlockHeight/i);
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /wallet-signable orders are disabled.*semantic instruction validation/i);
+    assert.equal(upstreamCalled, false);
   } finally { globalThis.fetch = originalFetch; }
-});
-
-test("rejects a Jupiter quote-only order instead of returning it as executable", async () => {
-  const originalFetch = globalThis.fetch;
-  try {
-    globalThis.fetch = async () => Response.json({
-      requestId: "jupiter-request-quote-only",
-      transaction: "",
-      inAmount: "100",
-      outAmount: "200",
-      errorCode: 2,
-      errorMessage: "Insufficient SOL for gas",
-      transactionVersion: 0
-    });
-    const req = new Request("https://worker.test/api/swap/order", {
-      method: "POST",
-      headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
-    });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 422);
-    const body = await res.json();
-    assert.equal(body.errorCode, 2);
-    assert.match(body.error, /Insufficient SOL for gas/);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
 });
 
 test("hard-blocks wallet execution even when the deployment flag is true", async () => {
