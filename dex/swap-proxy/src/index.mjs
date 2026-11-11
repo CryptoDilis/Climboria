@@ -1,6 +1,7 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
-import { resolveTransactionLookups } from "./solana-rpc.mjs";
+import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "./solana-rpc.mjs";
+import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 export { SwapOrderStore };
 
 const JSON_HEADERS = {
@@ -141,6 +142,25 @@ async function handleOrder(request, env) {
     parsedTransaction = parseSolanaV0Transaction(data.transaction);
     lookupResolution = await resolveTransactionLookups({
       lookups: parsedTransaction.addressTableLookups,
+      rpcUrl: env.SOLANA_RPC_URL
+    });
+    const policyResult = validateJupiterV6Transaction({
+      parsed: parsedTransaction,
+      loadedWritable: lookupResolution.writable,
+      loadedReadonly: lookupResolution.readonly,
+      taker,
+      outputMint,
+      amount,
+      outAmount: data.outAmount,
+      otherAmountThreshold: data.otherAmountThreshold
+    });
+    await verifyJupiterTokenAccounts({
+      sourceTokenAccount: policyResult.sourceTokenAccount,
+      destinationTokenAccount: policyResult.destinationTokenAccount,
+      taker,
+      inputMint,
+      outputMint,
+      amount,
       rpcUrl: env.SOLANA_RPC_URL
     });
   } catch (error) {

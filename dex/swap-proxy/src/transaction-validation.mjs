@@ -20,7 +20,7 @@ function decodeBase64(value) {
   return bytes;
 }
 
-function decodeBase58(value) {
+export function decodeBase58(value) {
   if (typeof value !== "string" || value.length < 32 || value.length > 44) {
     fail("Invalid taker public key");
   }
@@ -50,7 +50,7 @@ function decodeBase58(value) {
   return decoded;
 }
 
-function encodeBase58(bytes) {
+export function encodeBase58(bytes) {
   const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   let zeros = 0;
   while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
@@ -182,6 +182,8 @@ export function parseSolanaV0Transaction(base64) {
     message: bytes.subarray(messageStart),
     staticAccountKeys,
     requiredSignatures,
+    readonlySignedAccounts: readonlySigned,
+    readonlyUnsignedAccounts: readonlyUnsigned,
     instructions,
     addressTableLookups
   };
