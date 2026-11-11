@@ -404,7 +404,8 @@ test("preserves unknown Jupiter instruction discriminators instead of misclassif
       };
     }
   });
-  assert.equal(report.matchingRoutes, 1);
+  assert.equal(report.matchingRoutes, 0);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 1);
   assert.equal(report.results[0].instructionDiscriminatorHex, "0102030405060708");
   assert.equal(report.results[0].routePlanHeader, null);
   assert.equal(report.results[0].routePlanHeaderRecognized, false);
