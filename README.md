@@ -3457,3 +3457,24 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Do not claim DEX/Swap/Launchpad/Login are production-live based on UI shells, fixtures, or source-only tests.
 
 **Exact next task:** finish Browser Smoke `42944275557`; if it fails, inspect the new failure's own evidence and devise a different targeted counter-fix. If it passes, inspect all uploaded screenshots, then reconcile PR #242 with current main and separately port the DEX-only changes from PR #243. Do not merge either PR without exact-head verification.
+
+### 2026-11-11 — Security gate audit and latest smoke failure
+
+**Swap security audit across PR #233 and PR #235**
+- [x] Reviewed changed-file diffs for #233 and #235 against R1–R4; added audit and remaining acceptance criteria to both PR conversations.
+- [x] Preserve PR #233 groundwork: strict Solana wire parsing, ALT account decoding, bounded trusted-RPC resolver, and malformed-input tests. This is groundwork, not full ALT execution approval.
+- [x] Preserve PR #235 groundwork: server-issued order token, durable order binding, atomic claim/replay prevention, exact signed-message binding, taker/fee-payer match, Ed25519 signature verification, and JupiterZ additional-signer slot preservation.
+- [ ] R1: complete adversarial ALT tests for missing/wrong-owner/deactivated/malformed tables, duplicate references, index bounds, writable/readonly loaded-key ordering, RPC timeout and response-size limits.
+- [ ] R2: implement a distinct semantic instruction policy layer. Decode only explicitly supported programs/instructions; verify account roles, mints, source/destination, amounts, minimum output, slippage, fees, signer/writable constraints and all token movements. Reject unknown instructions/programs and unexpected transfers. Existing message binding/signature checks do not satisfy this gate.
+- [ ] R3: controlled Devnet end-to-end quote/order/sign/execute/confirm/balance reconciliation plus expiry, replay, concurrency, duplicate submission, timeout/unknown outcome and settlement-failure cases.
+- [ ] R4: verify production Cloudflare zone/Worker, secrets, Durable Object migration/binding, rate limits, TLS/CORS, health, monitoring, alerts and rollback using deployment evidence.
+- [ ] Independent security review after R1–R4 pass.
+- [x] Keep frontend and Worker execution disabled. No gate was bypassed and no source code was changed during this audit.
+
+**Latest mobile smoke failure — run 42944275557**
+- [x] Failure confirmed at game-smoke.mjs:706 after 75s wait plus 15s grace: heroReady=false, glbRenderer=null, cameraHero=false, selectedHero=loading-adventurer, renderer=awaiting-saved-glb, asset=null, glbResources=[], browserErrors=[].
+- [x] Desktop gameplay/cave captures completed; screenshot artifact 13823051255 uploaded. Mobile gameplay/cave capture was not completed.
+- [ ] This is not the previous polling race. Investigate the mobile hero asset-selection/load path and why it remains in loading-adventurer with no GLB resource timing entries. Do not repeat the prior wait/grace patch or alter production rendering until the actual asset-selection defect is proven.
+- [ ] Inspect artifact 13823051255 and reproduce the mobile path before implementing a distinct counter-fix.
+
+**Exact next tasks:** (1) inspect PR #242 artifact and trace mobile saved-hero/GLB loading; (2) reconcile #233 R1 and #235 order-binding code onto current main; (3) implement R2 semantic validation as a separate reviewed layer. Swap execution remains disabled.
