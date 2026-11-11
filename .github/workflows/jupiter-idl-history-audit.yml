@@ -16,6 +16,8 @@ on:
       - main
     paths:
       - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
       - ".github/workflows/jupiter-idl-history-audit.yml"
   workflow_dispatch:
 
