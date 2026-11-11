@@ -70,6 +70,41 @@ test("stores a verified unsigned order and atomically permits only one claim", a
   assert.match((await replay.json()).error, /already been claimed/i);
 });
 
+
+test("persists finalized account evidence and rejects stale or inconsistent evidence", async () => {
+  const fixture = makeFixture(1);
+  const { object, storage } = createStore();
+  const accepted = await storeOrder(object, fixture, { lookupContextSlot: 98 });
+  assert.equal(accepted.status, 201);
+  const record = await storage.get("order");
+  assert.equal(record.tokenAccountEvidence.contextSlot, 99);
+  assert.equal(record.tokenAccountEvidence.source.amount, "1500");
+
+  const staleStore = createStore();
+  const stale = await storeOrder(staleStore.object, fixture, { lookupContextSlot: 100 });
+  assert.equal(stale.status, 400);
+
+  const ownerStore = createStore();
+  const ownerEvidence = {
+    contextSlot: 99,
+    requestedAmount: "1000",
+    source: { address: "SysvarRent111111111111111111111111111111111", mint: "So11111111111111111111111111111111111111112", owner: "11111111111111111111111111111111", amount: "1500", native: true },
+    destination: { address: "SysvarC1ock11111111111111111111111111111111", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", owner: fixture.taker, amount: "0", native: false },
+    inputMint: { address: "So11111111111111111111111111111111111111112", decimals: 9, supply: "1000000", mintAuthority: null, freezeAuthority: null },
+    outputMint: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", decimals: 6, supply: "1000000", mintAuthority: null, freezeAuthority: null }
+  };
+  const wrongOwner = await storeOrder(ownerStore.object, fixture, { tokenAccountEvidence: ownerEvidence });
+  assert.equal(wrongOwner.status, 400);
+
+  const balanceStore = createStore();
+  const lowBalance = {
+    ...ownerEvidence,
+    source: { ...ownerEvidence.source, owner: fixture.taker, amount: "999" }
+  };
+  const insufficient = await storeOrder(balanceStore.object, fixture, { tokenAccountEvidence: lowBalance });
+  assert.equal(insufficient.status, 400);
+});
+
 test("rejects stored orders without finalized token-account and mint evidence", async () => {
   const { object } = createStore();
   const fixture = makeFixture(1);
