@@ -144,7 +144,7 @@ function parseClassicTokenAccount(address, account) {
   if (state !== 1) fail("Token account must be initialized and not frozen");
   if (delegateOption !== 0) fail("Delegated token accounts are not supported");
   if (nativeOption > 1 || closeAuthorityOption !== 0) fail("Token account native/close-authority metadata is unsupported");
-  if (nativeOption === 1 && mint !== WRAPPED_SOL_MINT) fail("Native token account must use the wrapped-SOL mint");
+  if ((nativeOption === 1 && mint !== WRAPPED_SOL_MINT) || (mint === WRAPPED_SOL_MINT && nativeOption !== 1)) fail("Native token account must use the wrapped-SOL mint");
   return { address, mint, owner, amount: amount.toString(), native: nativeOption === 1 };
 }
 
