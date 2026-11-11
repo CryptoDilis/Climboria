@@ -13,7 +13,14 @@
 - [ ] Merge #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified; confirm Pages deployment on resulting main.
 - [ ] Do not reopen/recreate superseded #244/#245.
 
-**Latest verified run state (2026-11-11):** PR #246 Browser Smoke `42948629303` (job `130287377797`) and main Browser Smoke `42948561787` (job `130287158900`) are both `in_progress`. In both runs, steps 1–14 are SUCCESS; step 15, Jarrell's Peak desktop/mobile gameplay, is IN_PROGRESS; screenshot upload is PENDING. No terminal result yet. Poll these exact runs; do not start duplicate runs or call an active run failed.
+**Latest verified P0 state (2026-11-11):**
+- [x] PR #246 Validate `42948629207`: SUCCESS on exact head `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c`.
+- [x] PR #246 Browser Smoke `42948629303`, job `130287377797`: FAILED at step 15 (Jarrell's Peak desktop/mobile gameplay). Steps 1–14 passed; screenshot upload succeeded. Artifact `13823653421` contains desktop gameplay/cave and desktop/mobile home + DEX screenshots, but no mobile gameplay/cave screenshots because the mobile hero-readiness gate stopped capture.
+- [x] Failure evidence: after >100 seconds of mobile readiness waiting, GLB resource entry showed the full `Climboria_Hero.glb` downloaded (`decodedBodySize=42,923,204`, `transferSize=42,923,504`, resource duration `182,197ms`); no failed GLB request and no browser errors. Yet `heroReady=false`, `glbRenderer=null`, `cameraHero=false`, selected hero remained `loading-adventurer`, renderer remained `awaiting-saved-glb`. Failure thrown at `.github/scripts/game-smoke.mjs:708`.
+- [x] Root-cause boundary narrowed: this is no longer evidence of a missing/failed network request. The outstanding path is after response download and before the GLTF load callback completes: GLTF parsing/image decode, scene setup (including `Box3.setFromObject`), or saved-hero readiness handoff. Exact sub-phase is not yet proven. Do not increase timeouts, bypass GLB readiness, enable fallback, or change the spawn coordinate again.
+- [x] Desktop screenshot artifact reviewed: avatar appears on the circular Sanctuary landing; this alone does not satisfy mobile spawn visual acceptance.
+- [ ] Main post-merge Browser Smoke `42948561787`, job `130287158900`, was still IN_PROGRESS at step 15 when last polled. Poll to terminal; do not start a duplicate run.
+- [ ] **Single next task:** create a diagnostic-only counter-strategy on a fresh branch from current main that records GLTFLoader response progress, parse start/complete/error, scene setup phase timings, and saved-hero readiness transitions. Extend the failing smoke diagnostic to print those phase markers. Do not alter production behavior, relax readiness, or reapply the Sanctuary coordinate patch. Run Validate + Browser Smoke on that exact diagnostic head; use evidence to choose the subsequent production fix.
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
