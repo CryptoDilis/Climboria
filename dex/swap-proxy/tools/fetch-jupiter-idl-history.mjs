@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
 import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
-import { classifyDexAdapterIdlEvidence } from "./dex-adapter-idl-status.mjs";
+import { canonicalIdlSchemaSha256, classifyDexAdapterIdlEvidence } from "./dex-adapter-idl-status.mjs";
 import { auditRaydiumLaunchlabCandidateAccounts } from "./raydium-launchlab-account-audit.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -350,6 +350,7 @@ function collectDexInstructionCandidates(value, expectedDiscriminatorHex, path =
           idlName: parsed.metadata?.name ?? null,
           idlVersion: parsed.metadata?.version ?? null,
           contentSha256: sha256(value.content),
+          fullIdlSchemaSha256: canonicalIdlSchemaSha256(parsed),
           matchingInstructions: matches.map((instruction) => ({
             name: instruction.name,
             discriminatorHex: Buffer.from(instruction.discriminator).toString("hex"),
@@ -575,6 +576,7 @@ async function fetchDexCpiProgramHistory(program) {
   const latestMatches = responses.latest.candidates;
   const schemaHash = (candidate) => sha256(JSON.stringify(candidate.matchingInstructions));
   const activeSchemaHashes = [...new Set(activeHistory.map(schemaHash))];
+  const activeFullIdlHashes = [...new Set(activeHistory.map((candidate) => candidate.fullIdlSchemaSha256).filter(Boolean))];
   const latestHistoryComparisons = activeHistory.map((historical) => {
     const latestForSource = latestMatches.find((candidate) =>
       candidate.sourceType === historical.sourceType
@@ -587,6 +589,9 @@ async function fetchDexCpiProgramHistory(program) {
       latestInstructionSchemaSha256: latestForSource ? schemaHash(latestForSource) : null,
       latestAndHistoryInstructionSchemasAgree: Boolean(
         latestForSource && schemaHash(latestForSource) === schemaHash(historical)
+      ),
+      latestAndHistoryFullIdlSchemasAgree: Boolean(
+        latestForSource && latestForSource.fullIdlSchemaSha256 === historical.fullIdlSchemaSha256
       ),
     };
   });
@@ -607,6 +612,9 @@ async function fetchDexCpiProgramHistory(program) {
     exactlyOneRevisionCoversCandidateSlot: activeHistory.length === 1,
     activeInstructionSchemaVariantCount: activeSchemaHashes.length,
     activeSourcesAgreeOnInstructionSchema: activeHistory.length > 0 && activeSchemaHashes.length === 1,
+    activeFullIdlSchemaVariantCount: activeFullIdlHashes.length,
+    activeSourcesAgreeOnFullIdl: activeHistory.length > 0 && activeFullIdlHashes.length === 1,
+    activeFullIdlSchemaSha256: activeFullIdlHashes.length === 1 ? activeFullIdlHashes[0] : null,
     activeInstructionSchemaSha256: activeSchemaHashes.length === 1 ? activeSchemaHashes[0] : null,
     latestHistoryComparisons,
     allLatestAndActiveHistorySchemasAgree:
@@ -629,6 +637,7 @@ for (const item of dexCpiIdlHistory) {
     candidateTransactionSlot,
     activeHistoricalRevisionCount: item.activeHistoricalRevisionCount,
     activeSourcesAgreeOnInstructionSchema: item.activeSourcesAgreeOnInstructionSchema,
+    activeSourcesAgreeOnFullIdl: item.activeSourcesAgreeOnFullIdl,
     latestAndActiveHistorySchemasAgree: item.allLatestAndActiveHistorySchemasAgree,
     programLoaderOwnerMatches: onChain.programAccount?.loaderOwnerMatches === true,
     programDataDeploymentSlot: onChain.programDataAccount?.deploymentSlot ?? null,
@@ -663,6 +672,7 @@ async function auditRaydiumLaunchlabCandidateAccountState() {
   const idlTrusted = idlAccount?.found === true &&
     idlAccount.ownerMatchesProgram === true &&
     idlAccount.payloadMatchesAnyActiveHistoricalRevision === true &&
+    raydium.activeSourcesAgreeOnFullIdl === true &&
     raydium.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true &&
     idlAccount.poolStateType?.type?.kind === "struct" &&
     Array.isArray(idlAccount.poolStateAccountDiscriminator);
@@ -700,9 +710,12 @@ async function auditRaydiumLaunchlabCandidateAccountState() {
     report.programDataDeploymentCoversCandidateSlot =
       raydium.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true;
     report.idlProvenanceUniqueAtCandidateSlot = raydium.activeHistoricalRevisionCount === 1;
-    if (!report.idlProvenanceUniqueAtCandidateSlot && report.status === "matched") {
+    report.idlSchemaUniqueAtCandidateSlot = raydium.activeSourcesAgreeOnFullIdl === true;
+    report.activeFullIdlSchemaSha256 = raydium.activeFullIdlSchemaSha256;
+    report.activeFullIdlSchemaVariantCount = raydium.activeFullIdlSchemaVariantCount;
+    if (!report.idlSchemaUniqueAtCandidateSlot && report.status === "matched") {
       report.status = "incomplete";
-      report.provenanceWarning = "Candidate slot has multiple active historical IDL revisions; current finalized PoolState account fields and PDA checks match, but the schema revision is not uniquely pinned to the candidate slot.";
+      report.provenanceWarning = "Candidate slot has multiple divergent active full-IDL schemas; current finalized PoolState account fields and PDA checks match, but the schema revision is not uniquely pinned to the candidate slot.";
     }
     report.candidateTransactionSlot = candidateTransactionSlot;
     report.candidateTransactionSignature = "2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX";

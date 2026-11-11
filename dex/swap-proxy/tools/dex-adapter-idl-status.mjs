@@ -1,8 +1,26 @@
+import { createHash } from "node:crypto";
+
 /**
  * Evidence-only DEX adapter IDL provenance classification.
  * This does not establish runtime CPI account slicing, deployed binary identity,
  * signer/writable privileges, or transaction safety.
  */
+function canonicalizeIdlValue(value) {
+  if (Array.isArray(value)) return value.map(canonicalizeIdlValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, canonicalizeIdlValue(value[key])]),
+    );
+  }
+  return value;
+}
+
+export function canonicalIdlSchemaSha256(value) {
+  return createHash("sha256")
+    .update(JSON.stringify(canonicalizeIdlValue(value)))
+    .digest("hex");
+}
+
 export function classifyDexAdapterIdlEvidence(evidence) {
   const reasons = [];
   const deploymentSlot = evidence.programDataDeploymentSlot == null
@@ -26,10 +44,13 @@ export function classifyDexAdapterIdlEvidence(evidence) {
     reasons.push("current-programdata-last-deployment-after-candidate-slot");
   }
 
-  if (evidence.activeHistoricalRevisionCount !== 1) {
-    reasons.push(evidence.activeHistoricalRevisionCount === 0
-      ? "no-active-historical-idl-revision"
-      : "multiple-active-historical-idl-revisions");
+  if (evidence.activeHistoricalRevisionCount === 0) {
+    reasons.push("no-active-historical-idl-revision");
+  } else if (
+    evidence.activeHistoricalRevisionCount !== 1 &&
+    evidence.activeSourcesAgreeOnFullIdl !== true
+  ) {
+    reasons.push("multiple-active-historical-idl-revisions");
   }
   if (evidence.activeSourcesAgreeOnInstructionSchema !== true) {
     reasons.push("active-history-sources-do-not-establish-one-schema");

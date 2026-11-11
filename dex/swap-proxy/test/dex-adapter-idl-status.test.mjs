@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyDexAdapterIdlEvidence } from "../tools/dex-adapter-idl-status.mjs";
+import { canonicalIdlSchemaSha256, classifyDexAdapterIdlEvidence } from "../tools/dex-adapter-idl-status.mjs";
 
 const complete = {
   candidateTransactionSlot: 468153382,
@@ -26,6 +26,7 @@ test("classifies missing and ambiguous evidence as incomplete with reason codes"
   const result = classifyDexAdapterIdlEvidence({
     ...complete,
     activeHistoricalRevisionCount: 2,
+    activeSourcesAgreeOnFullIdl: false,
     latestAndActiveHistorySchemasAgree: false,
     onChainPayloadMatchesActiveHistory: false,
   });
@@ -52,6 +53,35 @@ test("does not infer incompatibility when deployment-slot evidence is missing", 
   });
   assert.equal(result.status, "incomplete");
   assert.ok(result.reasons.includes("program-deployment-slot-unavailable"));
+});
+
+
+test("accepts multiple active provenance records when their complete IDL JSON is identical", () => {
+  const result = classifyDexAdapterIdlEvidence({
+    ...complete,
+    activeHistoricalRevisionCount: 2,
+    activeSourcesAgreeOnFullIdl: true,
+  });
+  assert.equal(result.status, "supported");
+  assert.deepEqual(result.reasons, []);
+});
+
+test("keeps multiple active records incomplete when their full IDL schemas differ", () => {
+  const result = classifyDexAdapterIdlEvidence({
+    ...complete,
+    activeHistoricalRevisionCount: 2,
+    activeSourcesAgreeOnFullIdl: false,
+  });
+  assert.equal(result.status, "incomplete");
+  assert.ok(result.reasons.includes("multiple-active-historical-idl-revisions"));
+});
+
+test("canonical full-IDL hashing ignores JSON object key order but preserves array order and values", () => {
+  const first = { address: "program", metadata: { version: "0.2.0", name: "launchpad" }, instructions: [{ name: "buy_exact_in" }] };
+  const reordered = { instructions: [{ name: "buy_exact_in" }], metadata: { name: "launchpad", version: "0.2.0" }, address: "program" };
+  const changed = { ...reordered, metadata: { ...reordered.metadata, version: "0.2.1" } };
+  assert.equal(canonicalIdlSchemaSha256(first), canonicalIdlSchemaSha256(reordered));
+  assert.notEqual(canonicalIdlSchemaSha256(first), canonicalIdlSchemaSha256(changed));
 });
 
 test("classifies candidate-slot absence as incompatible only when archival evidence proves it", () => {
