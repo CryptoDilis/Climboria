@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { deflateSync } from "node:zlib";
-import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "../tools/legacy-anchor-idl-account.mjs";
+import { decodeAnchorIdlAccount, decodeLegacyAnchorIdlAccount, encodeBase58 } from "../tools/legacy-anchor-idl-account.mjs";
 import { decodeJupiterRouteV2 } from "../tools/decode-jupiter-route-v2-candidate.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -162,4 +162,25 @@ test("rejects malformed legacy Anchor IDL account lengths and invalid JSON", () 
     () => decodeLegacyAnchorIdlAccount(Buffer.concat([Buffer.alloc(32, 1), length, compressed])),
     /not valid JSON/
   );
+});
+
+
+test("detects an eight-byte-prefixed Anchor IDL account when the prefix is not a standard account discriminator", () => {
+  const prefix = Buffer.from("JUPIDLv1");
+  const authorityBytes = Buffer.alloc(32, 9);
+  const idlText = JSON.stringify({
+    name: "jupiter",
+    instructions: [{ name: "route_v2", discriminator: [187, 100, 250, 204, 49, 196, 175, 20] }],
+  });
+  const compressed = deflateSync(Buffer.from(idlText, "utf8"));
+  const length = Buffer.alloc(4);
+  length.writeUInt32LE(compressed.length, 0);
+  const accountData = Buffer.concat([prefix, authorityBytes, length, compressed]);
+
+  const decoded = decodeAnchorIdlAccount(accountData);
+  assert.match(decoded.layout, /^8-byte prefix/);
+  assert.equal(decoded.prefixHex, prefix.toString("hex"));
+  assert.equal(decoded.prefixMatchesAnchorAccountDiscriminator, false);
+  assert.equal(decoded.authority, encodeBase58(authorityBytes));
+  assert.equal(decoded.routeV2Discriminator, "bb64facc31c4af14");
 });
