@@ -4467,3 +4467,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - ProgramData deployment slot 468023491 precedes candidate transaction slot 468153382. Binary SHA-256 aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6; upgrade authority remains set. Strong interface/deployment evidence, not proof of adapter CPI account-slice behavior or CPI-requested privileges.
 - The first helper-file commit a52b844 was inadvertently created on main because its create-file operation omitted the branch argument; no production runtime was changed. PR branch was synchronized with main by merge commit 23ac3897ded80d43c8d7c2d31de525832287b3bf (164 ahead / 0 behind). Further file creation must specify the PR branch.
 - Detailed raw hashes, root causes, account layout and limitations are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and all signing/execution gates closed.
+
+
+## 2026-11-12 — Candidate route_v2 CPI positional mapping
+
+- Matched the candidate route_v2 IDL's fixed 10-account prefix to outer positions 0–9.
+- Compared ordered stack-height-2 DEX CPI vectors with the 85 outer accounts: Kipseli inner 0 → outer 12–26 (15/15); Whirlpool inner 3 → outer 28–42 (15/15); Meteora inner 6 → outer 44–61 (18/18); Raydium LaunchLab inner 11 → outer 64–78 and 80–82 (18/18, skips duplicate user-authority at outer 79).
+- This is one-transaction address-order correlation, not proof of universal Jupiter cursor behavior or CPI-requested signer/writable flags. Outer positions 10, 62, 79, 83, 84 need further explanation. Full analysis is in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
+- Browser Smoke run 43076000655 remained queued at the last poll. Exact-head Validate passed 92 tests; IDL provenance and CPI trace audits passed. Keep route_v2 rejected by production validation and signing/execution disabled.
