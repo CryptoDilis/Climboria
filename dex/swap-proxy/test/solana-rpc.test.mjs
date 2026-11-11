@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "../src/solana-rpc.mjs";
 import { ADDRESS_LOOKUP_TABLE_PROGRAM_ID } from "../src/alt-resolution.mjs";
+import { decodeBase58 } from "../src/transaction-validation.mjs";
 
 const tableKey = "AddressLookupTab1e1111111111111111111111111";
 const ACTIVE = (1n << 64n) - 1n;
@@ -82,58 +83,85 @@ test("rejects redirects, missing accounts, malformed context and mismatched acco
   await assert.rejects(resolveTransactionLookups({ lookups: lookup, rpcUrl: "https://rpc.example.com", fetchImpl: async () => rpcResponse([], 9) }), /incomplete or mismatched/);
 });
 
-const tokenTaker = "11111111111111111111111111111111";
+
+const tokenTaker = encodeBase58(key(31));
 const tokenInputMint = "So11111111111111111111111111111111111111112";
 const tokenOutputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const sourceAccountKey = "SysvarRent111111111111111111111111111111111";
-const destinationAccountKey = "SysvarC1ock11111111111111111111111111111111";
+const sourceAccountKey = encodeBase58(key(32));
+const destinationAccountKey = encodeBase58(key(33));
 const SPL_TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-function parsedTokenAccount({ mint, owner = tokenTaker, amount = "5000", state = "initialized", delegate = null, closeAuthority = null, programOwner = SPL_TOKEN_PROGRAM_ID, executable = false, space = 165 } = {}) {
-  return {
-    owner: programOwner,
-    executable,
-    space,
-    data: {
-      program: "spl-token",
-      parsed: {
-        type: "account",
-        info: {
-          mint,
-          owner,
-          state,
-          delegate,
-          delegatedAmount: { amount: "0", decimals: 0, uiAmount: 0, uiAmountString: "0" },
-          closeAuthority,
-          tokenAmount: { amount, decimals: 9, uiAmount: Number(amount) / 1e9, uiAmountString: String(Number(amount) / 1e9) }
-        }
-      }
-    }
-  };
+function classicTokenData({
+  mint = tokenInputMint,
+  owner = tokenTaker,
+  amount = 5000n,
+  state = 1,
+  delegateOption = 0,
+  delegatedAmount = 0n,
+  nativeOption = mint === tokenInputMint ? 1 : 0,
+  closeAuthorityOption = 0
+} = {}) {
+  const bytes = new Uint8Array(165);
+  bytes.set(decodeBase58(mint), 0);
+  bytes.set(decodeBase58(owner), 32);
+  const view = new DataView(bytes.buffer);
+  view.setBigUint64(64, BigInt(amount), true);
+  view.setUint32(72, delegateOption, true);
+  bytes[108] = state;
+  view.setUint32(109, nativeOption, true);
+  view.setBigUint64(113, nativeOption === 1 ? 890880n : 0n, true);
+  view.setBigUint64(121, BigInt(delegatedAmount), true);
+  view.setUint32(129, closeAuthorityOption, true);
+  return Buffer.from(bytes).toString("base64");
 }
-function parsedMint({ decimals = 9, isInitialized = true, programOwner = SPL_TOKEN_PROGRAM_ID, executable = false, space = 82 } = {}) {
-  return {
-    owner: programOwner,
-    executable,
-    space,
-    data: {
-      program: "spl-token",
-      parsed: {
-        type: "mint",
-        info: { decimals, isInitialized, supply: "1000000", mintAuthority: null, freezeAuthority: null }
-      }
-    }
-  };
+function classicMintData({
+  decimals = 9,
+  supply = 1_000_000n,
+  initialized = 1,
+  mintAuthorityOption = 0,
+  freezeAuthorityOption = 0
+} = {}) {
+  const bytes = new Uint8Array(82);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(0, mintAuthorityOption, true);
+  if (mintAuthorityOption === 1) bytes.set(key(41), 4);
+  view.setBigUint64(36, BigInt(supply), true);
+  bytes[44] = decimals;
+  bytes[45] = initialized;
+  view.setUint32(46, freezeAuthorityOption, true);
+  if (freezeAuthorityOption === 1) bytes.set(key(42), 50);
+  return Buffer.from(bytes).toString("base64");
 }
-const validMintAccounts = () => [parsedMint(), parsedMint()];
-function tokenAccountsResponse(value, slot = 123) {
+function tokenRpcResponse(value, slot = 120) {
   return Response.json({
     jsonrpc: "2.0",
     id: "climboria-token-account-verification",
     result: { context: { slot }, value }
   });
 }
-function verifyTokenAccounts(overrides = {}, fetchImpl) {
+function tokenAccount(mint, amount, options = {}) {
+  return {
+    owner: SPL_TOKEN_PROGRAM_ID,
+    executable: false,
+    lamports: 2_000_000,
+    data: [classicTokenData({ mint, amount, ...options }), "base64"]
+  };
+}
+function mintAccount(options = {}) {
+  return {
+    owner: SPL_TOKEN_PROGRAM_ID,
+    executable: false,
+    lamports: 2_000_000,
+    data: [classicMintData(options), "base64"]
+  };
+}
+const validTokenAccounts = () => [
+  tokenAccount(tokenInputMint, 1500n),
+  tokenAccount(tokenOutputMint, 0n),
+  mintAccount(),
+  mintAccount()
+];
+function verifyTokens(overrides = {}, responseFactory = () => tokenRpcResponse(validTokenAccounts())) {
   return verifyJupiterTokenAccounts({
     sourceTokenAccount: sourceAccountKey,
     destinationTokenAccount: destinationAccountKey,
@@ -142,79 +170,109 @@ function verifyTokenAccounts(overrides = {}, fetchImpl) {
     outputMint: tokenOutputMint,
     amount: "1000",
     rpcUrl: "https://rpc.example.com",
-    ...overrides,
-    fetchImpl
+    minContextSlot: 100,
+    fetchImpl: async (url, init) => {
+      const body = JSON.parse(init.body);
+      assert.equal(body.method, "getMultipleAccounts");
+      assert.deepEqual(body.params[0], [sourceAccountKey, destinationAccountKey, tokenInputMint, tokenOutputMint]);
+      assert.deepEqual(body.params[1], { encoding: "base64", commitment: "finalized", minContextSlot: 100 });
+      assert.equal(init.redirect, "error");
+      return responseFactory(body);
+    },
+    ...overrides
   });
 }
 
-test("verifies both Jupiter user token accounts at one finalized RPC context", async () => {
-  let request;
-  const result = await verifyTokenAccounts({}, async (url, init) => {
-    request = { url, init, body: JSON.parse(init.body) };
-    return tokenAccountsResponse([
-      parsedTokenAccount({ mint: tokenInputMint, amount: "1000" }),
-      parsedTokenAccount({ mint: tokenOutputMint, amount: "0" }),
-      ...validMintAccounts()
-    ]);
-  });
-  assert.equal(request.body.method, "getMultipleAccounts");
-  assert.deepEqual(request.body.params[0], [sourceAccountKey, destinationAccountKey, tokenInputMint, tokenOutputMint]);
-  assert.deepEqual(request.body.params[1], { encoding: "jsonParsed", commitment: "finalized" });
-  assert.equal(request.init.redirect, "error");
-  assert.equal(result.contextSlot, 123);
+test("verifies raw classic SPL token accounts and mint accounts at a finalized context", async () => {
+  const result = await verifyTokens();
+  assert.equal(result.contextSlot, 120);
+  assert.equal(result.requestedAmount, "1000");
+  assert.equal(result.source.owner, tokenTaker);
   assert.equal(result.source.mint, tokenInputMint);
+  assert.equal(result.source.amount, "1500");
+  assert.equal(result.source.native, true);
   assert.equal(result.destination.mint, tokenOutputMint);
+  assert.equal(result.inputMint.decimals, 9);
+  assert.equal(result.outputMint.supply, "1000000");
 });
 
-test("rejects token accounts with wrong mint, authority, program owner, state or delegated authority", async () => {
-  const cases = [
-    [parsedTokenAccount({ mint: tokenOutputMint }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
-    [parsedTokenAccount({ mint: tokenInputMint, owner: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
-    [parsedTokenAccount({ mint: tokenInputMint, programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
-    [parsedTokenAccount({ mint: tokenInputMint, state: "frozen" }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
-    [parsedTokenAccount({ mint: tokenInputMint, delegate: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
-    [parsedTokenAccount({ mint: tokenInputMint, closeAuthority: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()]
-  ];
-  for (const value of cases) {
-    await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse(value)));
-  }
+test("rejects wrong token-account program, authority, mint and frozen state", async () => {
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    { ...tokenAccount(tokenInputMint, 1500n), owner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID },
+    ...validTokenAccounts().slice(1)
+  ])), /classic SPL Token program/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenInputMint, 1500n, { owner: encodeBase58(key(44)) }),
+    ...validTokenAccounts().slice(1)
+  ])), /directly owned by the taker/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenOutputMint, 1500n),
+    ...validTokenAccounts().slice(1)
+  ])), /mints do not match/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenInputMint, 1500n, { state: 2 }),
+    ...validTokenAccounts().slice(1)
+  ])), /initialized and not frozen/i);
 });
 
-test("rejects insufficient source balance, missing/unparsed accounts and malformed RPC context", async () => {
-  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
-    parsedTokenAccount({ mint: tokenInputMint, amount: "999" }),
-    parsedTokenAccount({ mint: tokenOutputMint }),
-    ...validMintAccounts()
-  ])), /below the requested input amount/);
-  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([null, parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()])));
-  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
-    { ...parsedTokenAccount({ mint: tokenInputMint }), data: ["AA==", "base64"] },
-    parsedTokenAccount({ mint: tokenOutputMint }),
-    ...validMintAccounts()
-  ])));
-  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
-    parsedTokenAccount({ mint: tokenInputMint }),
-    parsedTokenAccount({ mint: tokenOutputMint }),
-    ...validMintAccounts()
-  ], Number.MAX_SAFE_INTEGER + 1)));
+test("rejects delegated, close-authority, Token-2022 and insufficient-balance accounts", async () => {
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenInputMint, 1500n, { delegateOption: 1 }),
+    ...validTokenAccounts().slice(1)
+  ])), /delegated token accounts/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenInputMint, 1500n, { closeAuthorityOption: 1 }),
+    ...validTokenAccounts().slice(1)
+  ])), /native\/close-authority metadata/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    { ...tokenAccount(tokenInputMint, 1500n), data: [Buffer.alloc(200).toString("base64"), "base64"] },
+    ...validTokenAccounts().slice(1)
+  ])), /Token-2022\/extensions are rejected/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenInputMint, 999n),
+    ...validTokenAccounts().slice(1)
+  ])), /balance is insufficient/i);
 });
 
-test("rejects duplicate source/destination accounts and redirects", async () => {
-  await assert.rejects(verifyTokenAccounts({ destinationTokenAccount: sourceAccountKey }, async () => tokenAccountsResponse([])), /must be distinct/);
-  await assert.rejects(verifyTokenAccounts({}, async () => new Response("{}", { status: 302 })), /HTTP 302/);
+test("rejects invalid or non-classic mint accounts", async () => {
+  const tokenAccounts = validTokenAccounts().slice(0, 2);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    ...tokenAccounts,
+    { ...mintAccount(), owner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID },
+    mintAccount()
+  ])), /not owned by the classic SPL Token program/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    ...tokenAccounts,
+    mintAccount({ initialized: 0 }),
+    mintAccount()
+  ])), /initialized classic SPL Token mint/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    ...tokenAccounts,
+    { ...mintAccount(), data: [Buffer.alloc(80).toString("base64"), "base64"] },
+    mintAccount()
+  ])), /82-byte SPL Token mints/i);
 });
 
-test("rejects non-classic, uninitialized or malformed mint accounts", async () => {
-  const validTokens = [
-    parsedTokenAccount({ mint: tokenInputMint }),
-    parsedTokenAccount({ mint: tokenOutputMint })
-  ];
-  for (const mint of [
-    parsedMint({ programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }),
-    parsedMint({ isInitialized: false }),
-    parsedMint({ space: 165 }),
-    { ...parsedMint(), data: { program: "spl-token", parsed: { type: "account", info: {} } } }
-  ]) {
-    await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([...validTokens, mint, parsedMint()])));
-  }
+test("rejects stale context, duplicate token accounts and invalid wrapped-SOL state", async () => {
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse(validTokenAccounts(), 99)), /incomplete or stale/i);
+  await assert.rejects(() => verifyJupiterTokenAccounts({
+    sourceTokenAccount: sourceAccountKey,
+    destinationTokenAccount: sourceAccountKey,
+    taker: tokenTaker,
+    inputMint: tokenInputMint,
+    outputMint: tokenOutputMint,
+    amount: "1000",
+    rpcUrl: "https://rpc.example.com",
+    fetchImpl: async () => { throw new Error("must not fetch"); }
+  }), /must be distinct/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(tokenOutputMint, 1500n, { nativeOption: 1 }),
+    ...validTokenAccounts().slice(1)
+  ])), /wrapped-SOL mint/i);
+});
+
+test("rejects redirects, missing accounts and malformed RPC responses", async () => {
+  await assert.rejects(() => verifyTokens({}, () => new Response("{}", { status: 302 })), /HTTP 302/);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([null, ...validTokenAccounts().slice(1)])), /missing, executable/i);
+  await assert.rejects(() => verifyTokens({}, () => Response.json({ jsonrpc: "2.0", id: "wrong", result: { context: { slot: 120 }, value: validTokenAccounts() } })), /incomplete or stale/i);
 });
