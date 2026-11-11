@@ -2,12 +2,14 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
+import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const baseUrl = "https://idl-one.vercel.app";
 const outDir = join(process.cwd(), "artifacts", "jupiter-idl-history");
 const expectedRouteV2Discriminator = "bb64facc31c4af14";
 const candidateTransactionSlot = 468153382;
+const legacyTokenProgramId = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 await mkdir(outDir, { recursive: true });
 
@@ -176,6 +178,9 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
             dataLength: value ? bytes.length : null,
             accountDataSha256: value ? sha256(bytes) : null,
             prefixHex: value ? bytes.subarray(0, 8).toString("hex") : null,
+            splTokenAccount: value?.owner === legacyTokenProgramId
+              ? decodeSplTokenAccountSummary(bytes)
+              : null,
           };
         });
       } catch (error) {
