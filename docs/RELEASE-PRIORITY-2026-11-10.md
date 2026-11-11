@@ -35,10 +35,11 @@ Deliver Climboria in this exact order: **P1 Live Swap → P2 Live DEX → P3 All
 
 ## Current repository checkpoint — 2026-11-12
 
-- Main: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
 - PR #268: draft/unmerged, head `8c4e86994e1ed203ffa26803874924e705973462`.
 - Validate, Ecosystem Browser Smoke and Jupiter V6 CPI Trace Audit passed on that exact PR head.
-- Game Browser Smoke and Jupiter IDL History Audit were still running at latest inspection; do not claim pending workflows passed.
+- Game Browser Smoke run `43102883650`, job `130798728159`: **SUCCESS** on exact PR head `8c4e86994e1ed203ffa26803874924e705973462`; strict Jarrell's Peak desktop/mobile gameplay step and screenshot upload both passed. Screenshot artifact `13891784600` (`climboria-game-browser-smoke-screenshots`, 3,488,205 bytes).
+- Jupiter IDL History Audit run `43102883513`, job `130798767558`: **SUCCESS** on the same exact PR head. Together with Validate `43102883438`, Ecosystem Browser Smoke `43102883591`, and Jupiter V6 CPI Trace Audit `43102883472`, all five exact-head workflows passed.
 - Swap remains fail-closed. Do not enable signing/execution until all security and production gates pass.
 
 ## Historical execution log
