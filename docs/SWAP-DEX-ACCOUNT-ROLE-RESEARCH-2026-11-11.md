@@ -582,8 +582,18 @@ The prior route discovery helper sampled only the newest finalized Meteora signa
 
 ### Verification status
 - [x] Source, test and workflow updates committed on the PR branch.
-- [ ] Exact-head Validate, Browser Smoke and CPI Trace Audit after this pagination change.
-- [ ] Run one older bounded scan using a finalized Meteora signature cursor; record sample count, route matches and rate-limit status.
+- [x] Exact-head Validate, Browser Smoke and CPI Trace Audit after this pagination change (head `83d32b1d0a02981b2e9e853ce0c63954e8a54dd9`; runs `43034073782`, `43034073129`, `43034073159`: all SUCCESS).
+- [ ] Run one older bounded scan using a finalized Meteora signature cursor; record sample count, route matches and rate-limit status. The current successful artifact `13861677769` is the default newest-five sample (`before=null`), not an older-cursor scan; do not mislabel it.
 - [ ] Do not treat zero matches in a bounded cursor window as evidence of global absence.
 
 The change adds a research capability only. It does not change runtime swap policy, the variant-75 allowlist, or any execution/signing gate.
+
+
+### Pagination change CI evidence
+- Final source/test/workflow head at verification: `83d32b1d0a02981b2e9e853ce0c63954e8a54dd9`.
+- Validate run `43034073782`, job `130568236755`: SUCCESS; all proxy tests, Wrangler dry-run, auth/cloud-save checks, homepage assertions, token launch copy and script audits passed. The unit suite includes the new cursor forwarding assertion.
+- Browser Smoke run `43034073129`, job `130568234777`: SUCCESS; auth/cloud-save, homepage, DEX proxy, fail-closed execution, Swap, DEX, live profile, desktop/mobile and market-state checks passed.
+- CPI Trace Audit run `43034073159`, job `130568244853`: SUCCESS; finalized known route trace and BinArray verification passed.
+- Trace artifact `13861677769`: newest five finalized Meteora signatures scanned; 0 Jupiter Swap2 matches; not rate-limited. This is not an older-cursor scan and remains only a bounded sample.
+- Browser screenshot artifact `13862771931` uploaded.
+- No failed jobs on this verified head. Earlier workflow attempts on intermediate commits were cancelled by newer commits and are not test failures.
