@@ -143,7 +143,7 @@ export function validateJupiterV6Transaction({
       accountKeys[6] !== JUPITER_V6_PROGRAM_ID) {
     fail("Jupiter route account roles do not match the taker, token program and output mint");
   }
-  if (!accountMetas[1].signer || !accountMetas[2].writable || !accountMetas[3].writable ||
+  if (!accountMetas[1].signer || accountMetas[2].signer || accountMetas[3].signer || !accountMetas[2].writable || !accountMetas[3].writable ||
       accountMetas[0].signer || accountMetas[0].writable || accountMetas[5].writable ||
       accountMetas[4].writable || accountMetas[6].writable) {
     fail("Jupiter route account signer/writable privileges are unexpected");
@@ -152,9 +152,9 @@ export function validateJupiterV6Transaction({
     if (accountMetas[i].signer) fail("DEX remaining accounts must not introduce additional signers");
   }
   for (const dexProgramId of route.dexProgramIds) {
-    if (!accountKeys.slice(7).includes(dexProgramId)) {
-      fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
-    }
+    const relativeIndex = accountKeys.slice(7).indexOf(dexProgramId);
+    if (relativeIndex < 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
+    if (accountMetas[7 + relativeIndex].writable) fail("DEX program accounts must be readonly");
   }
   return { ok: true, route, sourceTokenAccount: accountKeys[2], destinationTokenAccount: accountKeys[3] };
 }
