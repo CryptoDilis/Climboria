@@ -1147,3 +1147,28 @@ This does not change the platform-fee attribution at outer position 10: its tran
 - No Actions workflow-dispatch operation is exposed by the connected GitHub integration in this session. A local `git clone` attempt was also blocked because the execution environment could not resolve `github.com`. Therefore the new test has not been executed in this session.
 - No failed workflow exists on this new head to diagnose or rerun. Do not mark the instrumentation verified or merge based on the preceding `c7736c25...` green runs.
 - Exact next action: trigger Validate, Browser Smoke and Jupiter CPI Trace Audit on the current branch head through an authorized Actions dispatch; inspect all jobs and the uploaded trace artifact. If the new mapping test fails, inspect the exact assertion and account-key ordering before changing code. Keep route_v2 rejected and signing/execution disabled.
+
+## 2026-11-12 — deep CI diagnosis: ALT fixture key-order assertion
+
+### Failed run
+- Validate run `43080087974`, job `130730057040`, PR head `b4da973aaff9482ed90e8c89f57cbd6e84b49297`; GitHub checked out synthetic merge SHA `25ffe69788f8b239c5b335214a9d9c940edf71ba`.
+- Failing step 4: `Test Cloudflare swap proxy security and API contracts`. Node test summary: 97 total, 96 passed, 1 failed. Failure location: `dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs:92`.
+- Exact assertion mismatch: expected `LookupReadonly1111111111111111111111111111`; actual `LookupWritable11111111111111111111111111111`.
+
+### Root cause
+- Solana v0 transaction account-key arrays are assembled as static keys, then loaded writable addresses, then loaded readonly addresses. The fixture uses two static keys; therefore combined index 2 is the first loaded writable address, not the loaded readonly address.
+- Production parser's key ordering was correct. The regression fixture's final expected address was incorrect. The failure did not indicate a runtime parser, swap-policy, or security-gate regression.
+
+### Counter-fix and recovery
+- Changed only the expected address assertion to the first loaded writable key. No test was removed, no expected behavior was loosened, and no production source was modified for this fix.
+- Counter-fix commit: `ddf5f609fde582845d4265629aec59afae86858f`.
+- Subsequent exact-head Validate `43080142035`, CPI Trace Audit `43080142010`, and IDL History Audit `43080142015` all passed on `ddf5f609fde582845d4265629aec59afae86858f`.
+
+### Latest exact-head verification
+- Latest PR head `302bb0841a20a51c3cebc39d51ba82440aab4e2c` passed Validate `43080434138` (97/97 tests; 0 failures; Wrangler dry-run successful), Browser Smoke `43080434131` (all test steps including desktop/mobile, provider states and screenshot upload), Jupiter CPI Trace Audit `43080436579` (duplicate-position regression, finalized trace fetch and artifact upload), and IDL History Audit `43080434110` (IDL retrieval and artifact upload). Run metadata confirmed all four exact `head_sha` values match `302bb0841a20a51c3cebc39d51ba82440aab4e2c`.
+- CPI trace artifact `13883338579`, SHA-256 `2429b7920db72831ee3a6b91f6fbc11d9e4b2d11`.
+- Superseded runs marked cancelled by the workflow's concurrency behavior are not failures and were not treated as such. No other failed run appeared in the recent branch-history page inspected.
+- Scope limits remain: Browser Smoke is ecosystem-only, not Jarrell's Peak gameplay; CPI trace/IDL CI does not prove CPI-requested AccountMeta flags or universal adapter dispatch. Keep route_v2 excluded from production validation and all signing/execution gates closed.
+
+### Next engineering task
+- Expand read-only evidence across multiple finalized transactions and route shapes, including multi-hop/split plans, DEX ordering changes, transfer-hook slices, and variable Meteora BinArray counts. Correlate by transaction account-key indexes and retain duplicate-position ambiguity. Require independent proof for CPI privileges and deployed-binary provenance before any allowlist change.
