@@ -1,4 +1,18 @@
-# CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
+## 2026-11-11 13:22 +08 — DEX mobile close fix merged; Swap account-state verification added
+
+**Execution order remains DEX → Swap → Login → Launchpad. Gameplay remains non-blocking.**
+
+- [x] PR #256 merged to main as `2e10af89026464411eda56c3094b0fa0976ae10c`. It invalidates pending detail requests, clears active token/pool URL state and chart iframe, and restores the market view.
+- [x] Exact-head PR #256 Validate `42964086934` passed on `4e286fc796cdf87b11f99b2cebb6b43a08f1e1ee`.
+- [x] Exact-head PR #256 Browser Smoke `42964087241`: DEX/Swap steps 7–15 passed, including mobile detail close/return-to-market, 390px/360px layouts and provider-error/empty states. The separate gameplay step was cancelled when a newer run superseded it; it is outside this sprint's acceptance scope.
+- [x] Main Validate `42964227420` passed after merge; GitHub Pages deployment `42964227037` passed on main merge commit `2e10af89026464411eda56c3094b0fa0976ae10c`.
+- [ ] Main Browser Smoke `42964227346` remains separate from the DEX/Swap-specific passing checks; do not use unrelated gameplay status to change the current work order.
+- [x] Swap PR #255 adds `verifyJupiterTokenAccounts`: one bounded, finalized `getMultipleAccounts(jsonParsed)` request checks route source/destination accounts against requested input/output mints and taker authority; rejects non-classic SPL Token accounts, uninitialized/frozen state, delegated/close-authority accounts, insufficient source balance, missing/unparsed accounts and malformed RPC responses.
+- [x] Added adversarial RPC tests for valid state, wrong mint/authority/program, frozen/delegated/close-authority accounts, insufficient balance, missing/unparsed accounts, malformed context and redirects.
+- [ ] Latest exact-head PR #255 Validate `42964323411` and Browser Smoke `42964323426` are running on `60d6e70dafed05d6d1dfe481f95d8780957b910e`; do not count the new RPC validation as verified until Validate passes.
+- [ ] Swap still requires DEX-specific CPI/account-role schemas, finalized mint-account validation, token movement/fee proof, controlled Devnet wallet lifecycle and independent security review. Both source-level gates remain false. Do not issue wallet-signable orders or submit transactions.
+- [ ] Next: fix any exact-head CI failures with evidence-based counter-fixes, then continue mint-account/CPI validation. After Swap is independently reviewed, resume Login provider/account lifecycle, then Launchpad Devnet lifecycle.
+
 
 ## 2026-11-11 13:12 +08 — Swap semantic-policy checkpoint (PR #255)
 
