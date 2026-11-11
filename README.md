@@ -47,6 +47,22 @@
 - **Latest runs:** Validate `42953476530` SUCCESS; Browser Smoke `42953476811` IN_PROGRESS at gameplay step 16.
 - **Exact next task:** poll run `42953476811` to terminal status; if failed, fetch job logs and artifacts, identify root cause, implement a distinct targeted fix, and rerun. If successful, review screenshots and verify Pages deployment before merge. Then proceed directly to P2 security implementation.
 
+
+
+### Latest exact-head verification — 2026-11-11 04:04 UTC
+- [x] Exact-head Validate run `42955669259` passed on `1038d76e90365f937e6623c25964915392a6b6c9`.
+- [x] Browser Smoke DEX-specific steps 7–15 passed on the same head: homepage/DEX routing, proxy contract, execution fail-closed, standalone Swap/DEX shells, live Solana profile/boost discovery, mobile workspace, 390px/360px layouts, provider-error and true-empty states.
+- [x] Full desktop Jarrell gameplay checks passed through the desktop cave entrance/interior capture; screenshot artifact `13827028379` uploaded.
+- [ ] Full Browser Smoke run `42955669349` failed at step 16, mobile GLB readiness. Exact log evidence: GLB resource completed with `transferSize=42923504`, `decodedBodySize=42923204`, no failed GLB requests and no browser errors; mobile had 48 rendered frames, but loader remained `parse-start` after `278295ms` elapsed / `110319ms` within bounded readiness wait. It never reached parse-complete or scene-setup. This narrows the failure to the GLB parse/decode stage after successful transfer, not DEX or transport. Do not mask with longer timeouts or fallback acceptance.
+- [x] Added parse/scene-setup phase telemetry and exact diagnostic output in commit `1038d76e90365f937e6623c25964915392a6b6c9`.
+- [ ] Next counter-strategy: inspect GLB structure/texture/mesh payload and test a mobile-appropriate optimized asset or progressive LOD; verify visual/animation parity before replacing production character. Consider splitting independent DEX release smoke from the full game smoke so unrelated game initialization does not obscure DEX acceptance, without deleting or weakening gameplay coverage.
+- [ ] P1 PR #248 remains open/unmerged and Pages deployment remains unverified.
+- [ ] P2 Swap remains fail-closed. Existing parser verifies canonical v0 encoding, exact message equality, fee payer/taker, and Ed25519 signature, but does not resolve trusted ALTs or semantically validate all programs/accounts/mints/amounts/min-output/slippage/fees/token movement. Do not enable execution. Next: trusted ALT account resolution + instruction allowlist/semantic validation and adversarial tests; then controlled Devnet E2E and Worker production checks.
+- [ ] P3 Login code in PR #236 supports email/password, Google/X OAuth adapters, and Supabase Web3 wallet sign-in calls; guest remains disabled pending CAPTCHA. Supabase RLS/advisors were reviewed, but live provider credentials, redirect allowlist, SMTP, and controlled real-account/OAuth/wallet tests are not verified. PR #236 is stale/draft and must be reconciled onto current main before release.
+- [ ] P4 LaunchLab PR #231 contains read-only provenance, config, lock-IDL, authority-history and Devnet preparation probes. It does not establish approved custody/governance, complete create→curve→migration→pool/LP lifecycle, or production deployment. PR #231 is stale/draft and must be reconciled only after P1–P3 gates.
+- **Active branch/head:** `codex/live-dex-priority-override-2026-11-11` / `1038d76e90365f937e6623c25964915392a6b6c9`.
+- **Exact next task:** inspect and optimize the 42.9 MB GLB for mobile parsing without reducing gameplay assertions; run exact-head browser tests. Then establish independent DEX smoke evidence and continue P2 security implementation.
+
 ## 2026-11-11 execution checkpoint
 - [x] Owner explicitly overrode the Sanctuary-first gate and reaffirmed P1→P2→P3→P4 as today's delivery target.
 - [x] Sanctuary PRs #246/#247 paused; no further Sanctuary retries, commits, or diagnostics are authorized unless requested.
