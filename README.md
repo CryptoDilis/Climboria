@@ -4007,12 +4007,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Closed superseded draft PR #264 (mobile close-tap fix) and PR #265 (mint-copy fix) after consolidating both changes into PR #266. Their prior run IDs/results remain recorded above; no production merge was made from either stale branch.
 
 
-### PR #266 — GLB parse-stage failure confirmed — 2026-11-11 14:25 +08
+### PR #266 — GLB readiness timeout: slow transfer + parse pending — 2026-11-11 14:25 +08
 
 - [x] Exact-head Validate run `42971112186` passed on `71be6ca4b7ed1c444c68e5b9d0f05f021e809dfb`.
 - [x] Exact-head Browser Smoke run `42971112227` reached terminal FAILURE at gameplay step 17; steps 7–16 passed and screenshot upload step 18 succeeded.
 - [x] Job `130359560071` confirms the mobile hero GLB fully transferred: decoded body `42,923,204` bytes, transfer size `42,923,504`, resource duration `223,789ms`; no failed GLB requests and no browser errors.
-- [x] New phase telemetry identifies the stall: `phase=parse-start`, `bufferBytes=42,923,204`, `parseStartedAt=243355.2ms`, `parseDurationMs=null`, `sceneSetupStartedAt=null`, loader elapsed `268,022ms`. Mobile readiness expired after `107,974ms`; hero remained `loading-adventurer`, GLB renderer `null`, camera hero `false`, asset `null`.
+- [x] New phase telemetry identifies the stall: `phase=parse-start`, `bufferBytes=42,923,204`, `parseStartedAt=243355.2ms`, `parseDurationMs=null`, `sceneSetupStartedAt=null`, loader elapsed `268,022ms`. Since `startedAt=9,744.9ms`, parse had been pending for approximately `34.4s` at the failure snapshot; `268,022ms` is total request elapsed, not parse duration. The resource itself took `223,789ms` to transfer. Mobile readiness expired after `107,974ms`; hero remained `loading-adventurer`, GLB renderer `null`, camera hero `false`, asset `null`.
 - [!] Root-cause boundary is now narrowed to GLTFLoader's parse/dependency/decode stage, before the scene callback. This does not yet prove whether JSON parsing, geometry/animation processing, or embedded texture/image decoding is the blocking substage. Do not increase timeout or weaken the saved-GLB readiness assertions.
 - [x] Screenshot artifact `climboria-browser-smoke-screenshots`, ID `13834110917`, uploaded (7 files, 7,970,178 bytes).
 - [ ] Next: inspect the GLB container JSON/extension and resource composition from inside the browser runner; add substage timings around GLTFParser dependency resolution/image decode where feasible. Then implement an asset- or loader-level optimization supported by that evidence and rerun strict mobile GLB readiness plus the full smoke suite.
@@ -4024,3 +4024,9 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Added temporary `THREE.TextureLoader` dependency counters (started/completed/failed/pending and last URL/duration) scoped to the GLTFLoader parse window. This is instrumentation only; the GLB asset, loader choice, readiness contract, timeout and gameplay behavior remain unchanged.
 - [x] Commit `79acbc8222f6e70840eabc92c34e3f0517f72ef9` on PR #266 branch.
 - [ ] Exact-head Validate run `42972552677` and Browser Smoke run `42972552578` are in progress. Inspect the next mobile timeout payload for the GLB JSON composition and whether texture dependencies remain pending; use those measurements to choose the next targeted fix.
+
+
+### PR #266 — timing interpretation correction
+
+- [x] Re-read the exact timestamp fields rather than treating loader total elapsed as parse duration. `startedAt=9,744.9ms`, `parseStartedAt=243,355.2ms`, and total loader elapsed `268,022ms` imply parse had been pending for approximately `34,411ms` at the failure snapshot. The GLB resource transfer duration was `223,789ms`.
+- [!] Correct diagnosis: the mobile readiness deadline expired while the 42.9 MB asset was still in its parse/dependency phase, after an exceptionally slow ~223.8-second transfer. Do not claim a 268-second parser stall. Next counter-strategy must address asset transfer size/delivery and capture the new container/texture diagnostics to measure parse completion time independently.
