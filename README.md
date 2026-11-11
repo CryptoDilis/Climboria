@@ -3274,3 +3274,18 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 4. Record every new code change with exact commit, CI run IDs/conclusions, artifact review, unresolved blockers and one exact next task. A successful source test or Pages build alone is not proof of production trading or launch readiness.
 
 **No application code, production secret, wallet signature, on-chain transaction or execution flag was changed during this checkpoint.**
+
+
+## 2026-11-11 — Browser Smoke failure diagnosis and orientation-fixture counter-fix
+
+- [x] Main Browser Smoke run `42939543763` completed FAILURE on merge commit `1de853845b8c80527bd5dd061c678ed7b355710c`; exact failed job `130257802965`, step `Run Jarrell's Peak desktop and mobile gameplay smoke tests`.
+- [x] Deep log inspection located the exception at `.github/scripts/game-smoke.mjs:515`: the mobile landscape rotate-gate assertion timed out.
+- [x] Earlier checks in that same run passed: DEX/Swap/browser/mobile test stages, 29/29 Swap proxy tests, Jarrell desktop scene initialization and rendering, walking/running jump takeoff and landing, cave entrance/interior traversal, chest distribution, fishing interactions, water/terrain/collision audits, and desktop screenshots. Failure occurred at the mobile portrait-to-landscape transition before mobile gameplay acceptance could complete.
+- [x] Root cause: the smoke harness resized the Playwright viewport and manually changed body CSS classes, but the game derives orientation classes in `resizeClimboriaViewport()` from `screen.orientation.type`. Playwright viewport resize does not guarantee a corresponding physical Screen Orientation state transition; the fixture could therefore leave the game handler and CSS in inconsistent orientation states. This is a test-fixture synchronization flaw, not evidence that gameplay or the rotate gate should be disabled.
+- [x] Counter-fix isolated on PR #242, commit `0167210768b40157bf5b276614c509caa52481c1`: model `screen.orientation` as a mutable `EventTarget`, explicitly change to `landscape-primary`, dispatch `change`, `orientationchange`, and `resize`, and let the actual game handler toggle orientation classes. Added actionable failure diagnostics (orientation, viewport, media query, mobile-device/landscape/portrait classes, overlay display/visibility).
+- [x] PR #242 discussion records the complete diagnosis and counter-strategy (comment `6784500270`).
+- [x] Validate run `42940880181` on exact PR #242 head `0167210768b40157bf5b276614c509caa52481c1`: SUCCESS.
+- [ ] Browser Smoke run `42940880469` on the same exact head: IN_PROGRESS at checkpoint; Playwright installation was active. Do not merge or claim the mobile/game smoke passed until this completes and the mobile orientation phase plus artifact are reviewed.
+- [!] No gameplay source, DEX/Swap logic, production configuration, wallet execution gate, secrets, or on-chain transaction was changed by this counter-fix.
+
+**Exact next task:** poll Browser Smoke `42940880469`. If it fails, inspect the new diagnostic output at the exact failure line and fix the actual runtime/test mismatch without removing the orientation assertion. If it passes, review its screenshot artifact, record the exact successful head and run IDs, then decide whether PR #242 is safe to merge. Resume P0 DEX/Swap/Launchpad after this acceptance gate.
