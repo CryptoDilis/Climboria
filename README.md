@@ -3219,6 +3219,259 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] CI and Wrangler dry-run are not production deployment. Cloudflare Worker/DO production deployment, live health/TLS/CORS/rate-limit/persistence, controlled Devnet swap, independent ALT/instruction security review, Launchpad live token creation/migration, and account sessions remain unverified. Keep frontend `enabled=false` and Worker `EXECUTION_ENABLED=false`.
 - Exact next task: let Browser Smoke `42897519023` finish; inspect its exact terminal logs and screenshots; if successful, record the final run/artifact evidence and request independent Swap security review. Then verify Cloudflare secrets/namespace/domain securely and deploy quote-only Worker (execution off). Keep PR #235 draft until the gameplay smoke and review gates pass. In parallel, Launchpad PR #231 remains highly divergent and its Devnet LP Lock IDL, custody and reproducible-build blockers must be resolved before a real launch flow. Implement real auth only after a provider is selected/configured; no secrets should be pasted into chat.
 
+
+## 2026-11-11 — Supabase authentication foundation and access hardening
+
+- Connected to the existing Supabase organization **Climboria** and active project `unadepiwbovblkfjlksk` (region `ap-northeast-1`). Database inspection found existing `public.player_profiles` and `public.player_saves` tables with RLS enabled, an `auth.users` insert trigger creating deterministic player IDs, and **0 Auth users** at inspection time. The Supabase project had **no recorded migration history** before this checkpoint.
+- [x] Hardened `public.climboria_create_player_profile()`: retained its owner-bound `SECURITY DEFINER` trigger behavior with empty search path and fully-qualified table reference; revoked direct `EXECUTE` from `PUBLIC`, `anon`, and `authenticated`; retained only `postgres` and `service_role`. Verified role checks: `anon=false`, `authenticated=false`, `service_role=true`, `postgres=true`.
+- [x] Optimized all five profile/save RLS policies to use scalar subqueries around `auth.uid()`. Supabase Performance Advisor changed from five warnings to **0 findings**.
+- [x] Removed all table privileges on player profile/save tables from `anon`. Limited `authenticated` to profile SELECT and username-only UPDATE; save SELECT, INSERT on `user_id/schema_version/save_data`, and UPDATE on `schema_version/save_data/saved_at`. RLS owner checks remain in force. Verified anonymous table access is false, a signed-in user cannot update `player_id` or change save `user_id`, and permitted profile/save columns remain accessible.
+- [x] Supabase Security Advisor: **0 findings** after hardening. Supabase Performance Advisor: **0 findings** after RLS optimization and privilege changes.
+- [x] Added a pinned `@supabase/supabase-js@2.119.0` browser client using the project's **publishable** key only (no service-role/secret key). Homepage now has email/password sign-in and sign-up handlers, Google OAuth and X/Twitter OAuth handlers, session restore/state listener, and local-device sign-out. Wallet connection remains explicitly separate from Auth identity.
+- [!] Guest sign-in UI remains intentionally disabled until Cloudflare Turnstile and Supabase Auth CAPTCHA are configured. Guest-to-email/social identity linking is not enabled; the UI prevents silently switching away from an anonymous guest account. OAuth handlers are wired but Google/X provider credentials, enabled-provider settings, production redirect allow-list and email delivery/confirmation configuration must still be completed and verified in Supabase Dashboard. Do not call these providers LIVE until each end-to-end flow is tested.
+- [!] The Auth connector can inspect the database but does not expose the project Auth-provider/CAPTCHA/SMTP settings. Those settings and OAuth client secrets must be configured through the Supabase Dashboard and provider consoles; never put secrets in GitHub source or chat. Required production redirect target: `https://climboria.fun/?auth=callback` (also allow the confirmation redirect on the same origin).
+- [x] Applied the forward-only profile/save hardening patch through Supabase migration history as version `20261110205612` (`auth_profile_acl_rls_hardening`). Repository migration filename is aligned to that exact remote version. This patch targets the existing profile/save tables and trigger; it is not a complete empty-database bootstrap. Capture the existing schema as a baseline migration before provisioning another environment.
+- [ ] Auth UI and SQL hardening are in a new draft PR; wait for Validate and Browser Smoke on the exact PR head. Do not merge until the test runs pass.
+
+**Exact next task:** configure Supabase Auth email confirmation/SMTP, Google and Twitter(X) OAuth credentials/provider toggles, production redirect URLs, and Turnstile CAPTCHA securely in the dashboard; then test email confirmation, password sign-in, Google redirect/callback, X redirect/callback, local session restoration/logout and Guest sign-in in a controlled browser. After provider setup, implement safe guest identity linking and connect the authenticated user ID to actual game-save reads/writes. Keep DEX/Swap transaction execution and Launchpad launch controls behind their existing production security gates.
+
+
+### CI root-cause diagnosis — Auth PR #236
+
+- Validate run `42899334478` failed at step **Validate Supabase Auth wiring and browser-safe configuration**. The failure was a false positive: the check searched the entire `auth.js` source for the literal word `service_role`, and correctly documented safety guidance in a source comment matched that broad scan. `node --check auth.js`, swap proxy tests (**29 passed**), homepage structure, and planned-launch copy all passed before that assertion.
+- Narrowed the guard to validate the actual configured key constant starts with `sb_publishable_` and reject concrete secret-key patterns, rather than scanning harmless comments. This preserves the intended protection without treating a security comment as an exposed secret.
+- The unapplied SQL migration remains a forward-only patch for this existing database, not a blank-project baseline.
+- Browser Smoke run `42899334232` was in progress on the prior PR head while this diagnosis was recorded. A new code commit will cause the branch's cancel-in-progress browser workflow to restart on the corrected exact head; do not reuse the old run as final-head evidence.
+
+- Follow-up diagnosis on the first attempted correction: run `42899570660` failed because the Python regular expression in the generated YAML was over-escaped and produced a Python syntax error. Replaced that regex with literal extraction of `SUPABASE_PUBLISHABLE_KEY` and an exact `sb_publishable_` prefix check; this removes escaping ambiguity and validates the configured value itself.
+
+
+### X OAuth provider-name correction
+
+- Verified the current Supabase X/Twitter (OAuth 2.0) documentation (updated Oct 22, 2026): the supported JavaScript SDK provider identifier for the newer X OAuth 2.0 flow is `x`. Updated the homepage OAuth handler and CI assertion from legacy `twitter` to `x`. This does not enable X provider credentials in the Supabase Dashboard; client ID/secret and callback setup are still required.
+
+- Hardened the account-switch edge case: active guest sessions now cannot sign in to a different account or start an unrelated sign-up, because the current implementation does not yet merge/transfer guest player saves. A signed-in user must sign out locally before creating a separate account. This avoids orphaning or silently abandoning guest progress.
+
+
+### 2026-11-11 — Real Web3 wallet authentication and Auth browser verification
+
+- [x] Auth Browser Smoke run `42900020382` completed SUCCESS on exact head `da7a451f5baae4352ef541b8b0694e568ea76141`. All workflow steps passed, including homepage/navigation, Swap proxy, fail-closed execution, DEX/Swap desktop/mobile, mobile market states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload.
+- [x] Screenshot artifact `13802698406` (10 desktop/mobile homepage, gameplay, cave entrance/interior, and DEX screenshots; 7.7 MB) downloaded and visually reviewed. Cave entrance/interior and gameplay renders appeared on both desktop and mobile captures. This is test-browser rendering evidence, not live production hosting.
+- [x] Replaced wallet connect-only with actual Supabase `auth.signInWithWeb3()` flows for Solana and Ethereum. Both flows ask the wallet to sign a domain-bound Climboria Terms of Service statement; Supabase Auth verifies the SIWS/SIWE signature before returning a session. Solana provider selection prefers Phantom, then the standard Solana provider, then Brave Solana. Ethereum prefers MetaMask if injected with other providers, otherwise the injected EVM provider.
+- [x] Email/password, Google OAuth, X OAuth 2.0 (`x` provider), Solana Web3, and Ethereum Web3 handlers now use the same Supabase Auth session store and state listener. Wallet authentication is separate from a simple wallet connection.
+- [!] Web3 wallet provider, Google, X and email/SMTP settings still must be enabled/configured in Supabase Dashboard. Exact Web3 redirect allow-list needs `https://climboria.fun/` (trailing slash) in addition to OAuth/confirmation redirects. Rate limits and CAPTCHA are recommended before exposing wallet/guest registration at scale.
+- [!] Guest sign-in remains disabled pending Turnstile + Supabase Auth CAPTCHA and safe guest identity linking. Do not remove this gate until the challenge is verified end-to-end.
+- [x] Web3 Auth code head `ed050caf476002ff6fffd1d16ad595588c13cf22` passed Validate run `42902438919`: all 29 proxy tests passed; Supabase Auth wiring and browser-safe publishable-key checks passed; inline/home/DEX/Swap/game/site script checks passed.
+- [x] Browser Smoke run `42902438929` completed SUCCESS on the exact same Web3 Auth code head. The new `Test Supabase Auth session client and sign-in choices` step passed: SDK initialization, email/OAuth/Web3 APIs, visible Solana/Ethereum choices and intentionally disabled Guest sign-in. All DEX/Swap, mobile market, and Jarrell's Peak desktop/mobile gameplay steps passed too.
+- [x] Screenshot artifact `13804315817` (11 screenshots, 8.9 MB) downloaded and visually reviewed. It includes the updated Auth modal, homepage, DEX token UI, gameplay and cave views across desktop/mobile.
+- [!] CI verifies the Web3 UI/client integration, not real wallet signatures or OAuth callbacks. Supabase Dashboard provider credentials/toggles and exact redirect allow-lists are not enabled/verified yet.
+- [ ] Connect authenticated `auth.users.id` to the actual game save load/store lifecycle after login flows are working; current schema permissions are ready but game save sync is not yet wired.
+
+**Exact next task:** wire the authenticated Supabase user ID to the game's player-save lifecycle. Preserve local inventory and position on first sign-in, restore cloud saves safely on later sessions, enforce optimistic conflict checks between devices, and never treat client-side inventory as authoritative token/reward balances. Then complete Dashboard-side provider configuration (email/SMTP, Google, X, Solana, Ethereum, exact redirect URLs, CAPTCHA/rate limits) and perform controlled real wallet-signature/OAuth/email/session-restore/logout tests. Keep DEX execution disabled and Launchpad create/migrate actions disabled until their separate security gates are satisfied.
+
+
+### 2026-11-11 — Authenticated game cloud-save implementation added
+
+- Added a shared in-game save adapter for the existing `public.player_saves` table. It persists only the player's world position/yaw and backpack item quantities/names; token balances, marketplace assets, paid rewards, and other economic state are explicitly excluded because they must be server-authoritative.
+- Game page now initializes Supabase with the same project URL/publishable key and reads only the signed-in user's `player_saves` row. The user ID always comes from the Auth session; queries are additionally constrained by `user_id = auth.uid()` and the existing RLS policies.
+- First save uses INSERT with only the three columns permitted to authenticated users (`user_id`, `schema_version`, `save_data`). Later saves use UPDATE including `saved_at` and an equality check on the last observed `saved_at` value. If another device saved first, the update affects zero rows and the client blocks further writes with a reload warning rather than silently overwriting newer progress.
+- Cloud save accepts schema version 1 only, checks serialized payload size below 60 KB (database CHECK limit is 64 KB), sanitizes inventory to 50 slots and safe quantities, and restores position by snapping Y to the game's current terrain height.
+- [ ] This cloud-save commit requires fresh Validate + Browser Smoke on the exact new head. Dashboard providers remain unconfigured; unauthenticated game sessions must remain local-only. Test the authenticated save path with controlled accounts on Dev/Preview before production.
+
+**Exact next task:** run the new game cloud-save Validate + Browser Smoke checks. Then perform controlled Supabase account tests: sign in, load an existing player's save, add a chest/fishing item, verify the row and saved_at update, open the same account on a second browser and verify conflict detection, reload latest progress, sign out and verify writes stop. Configure Web3/social/email providers in Supabase Dashboard before any production Auth claim.
+
+
+### 2026-11-11 — Auth/game cloud-save Browser Smoke root-cause fix
+
+- [x] Investigated failed Browser Smoke run `42903943680` on head `6eafecb39ca26789e9ce14aeda4f9061dea79e06`. The first homepage/DEX browser step failed only after the synthetic DEX token fixture opened its holder-intel panel and called public Solana mainnet RPC. The external RPC returned HTTP 403 twice; the page's global console-error check correctly failed the run. The Auth-specific and game cloud-save checks were skipped because this earlier step failed.
+- [x] Root cause is nondeterministic external dependency in the browser fixture, not an Auth/session or cloud-save failure. Added deterministic getTokenLargestAccounts, getTokenSupply, and getMultipleAccounts JSON-RPC responses for the synthetic DEX mint. Production DEX code and production RPC configuration are unchanged.
+- [ ] Fresh Validate + Browser Smoke are required on the corrected exact head. Browser test should now proceed through Auth UI and game cloud-save initialization before gameplay. Do not infer cloud-save end-to-end success until its explicit test and real authenticated account checks pass.
+
+
+### 2026-11-11 — Account-scoped local backpack isolation
+
+- [x] Added per-authenticated-user localStorage namespaces for the backpack cache. A first account with no cloud save may adopt the unscoped local guest backpack; once claimed, that cache is moved to the account-specific key.
+- [x] On sign-out, the game returns to the separate guest-local inventory. When another account signs in, it loads that account's namespace or an empty cache; the previous user's backpack is not copied into the new user's cloud save.
+- [x] If an account already has a cloud save while unscoped guest inventory remains, the cloud save is restored to the account namespace and the guest inventory is preserved separately rather than silently merged/overwritten.
+- [ ] The account-scope isolation test is added to Browser Smoke; run Validate + Browser Smoke on the new exact head before marking this complete.
+
+- Follow-up CI diagnosis for the first isolation test attempt: run `42907263348` failed because the test read `adapter.capture()` while the game was still in its cinematic intro state; by design, capture returns null in that mode. It did not prove a storage namespace failure. The revised test seeds a valid walk-mode save through the adapter's normal restore path and reads the actual guest/account-specific localStorage keys after each scope transition.
+
+
+## 2026-11-11 — Auth redirect allow-list alignment
+
+- [x] Verified the Supabase project is ACTIVE_HEALTHY; the existing `player_profiles` and `player_saves` tables both have RLS enabled. Applied migration `20261110205612_auth_profile_acl_rls_hardening` is present in remote migration history. Fresh Supabase Security Advisor: **0 findings**; Performance Advisor: **0 findings**.
+- [x] Re-read current Supabase Auth Redirect URLs guidance. Supabase requires `redirectTo` destinations to match the project URL Configuration allow-list; Web3 additionally checks the URL where the wallet signs. The root URL is the simplest common target for OAuth, email confirmation, and Web3: `https://climboria.fun/` (with trailing slash).
+- [x] Found Auth UI was requesting query-suffixed destinations (`/?auth=callback` and `/?auth=confirmed`), which unnecessarily required additional allow-list entries and disagreed with the documented root URL. On isolated follow-up branch `codex/auth-redirect-allowlist-fix-2026-11-11`, consolidated both email confirmation and OAuth redirect options to `AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString()`. `detectSessionInUrl: true` remains enabled so Supabase can process its returned auth tokens/code.
+- [x] Added Validate assertions to require both flows use the shared root URL and reject the old query-suffixed paths.
+- [x] Kept changes isolated from the currently running Auth Browser Smoke on PR #236; no in-flight test was cancelled.
+- [!] Code change is not provider activation. Dashboard-side Site URL/redirect allow-list, Google and X OAuth credentials, Web3 providers, SMTP/email confirmation, CAPTCHA/Turnstile and rate limits remain to be configured and tested. Do not claim production account login is live.
+- [!] The Auth cloud-save adapter still needs real authenticated account tests: load and save a controlled account, verify cross-device optimistic conflict handling, and confirm sign-out stops cloud writes. The CI Browser Smoke on PR #236 at `0e2659688106a4a8ebbce38e2cc50b8976085ae3` was still running its Jarrell's Peak desktop/mobile step when this note was written; only Validate `42907528940` was confirmed successful on that exact head.
+
+### Exact next task
+1. Open a small follow-up PR from `codex/auth-redirect-allowlist-fix-2026-11-11` into `codex/supabase-auth-hardening-2026-11-11`; verify Validate and Browser Smoke on the redirect-fix head.
+2. Let PR #236's existing Browser Smoke `42907528744` finish; inspect its terminal gameplay step and screenshots. Do not count it as completed until conclusion is SUCCESS.
+3. In Supabase Dashboard set the Site URL and exact additional redirect URL to `https://climboria.fun/`; configure provider credentials/toggles and test email confirmation/password, Google, X, Solana SIWS, Ethereum SIWE, session restore and local sign-out with real controlled accounts. Provider-console callback URI remains the Supabase Auth callback shown in the Dashboard, not the app redirect.
+4. Test the account cloud-save lifecycle, including cross-device conflict behavior and guest/account backpack isolation. Keep unauthenticated play local-only and guest signup disabled until CAPTCHA and safe account-linking are ready.
+5. Continue Swap PR #235 security review/Devnet/deployment gates and Launchpad IDL/custody gates independently. Do not enable Swap execution or Launchpad signing/migration from a UI-only or dry-run success.
+
+
+### 2026-11-11 — Auth redirect fix exact-head CI and visual checkpoint
+
+- [x] Redirect correction was fast-forwarded from the three-commit PR #237 into this Auth branch; PR #237 is closed as merged. Both sign-up confirmation and Google/X OAuth now use `AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString()` (production root `https://climboria.fun/`). `detectSessionInUrl: true` remains enabled.
+- [x] Validate run `42909535736` completed SUCCESS on exact head `23467a46032f0d6841812862dfa88aa1b6a13d0a`. All validation steps passed, including Auth redirect-allow-list guards, publishable-key checks, all 29 Swap proxy tests, cloud-save schema/ownership audits, and all homepage/DEX/Swap/game script checks.
+- [x] Browser Smoke run `42909535704` completed SUCCESS on the same exact head. All steps passed: homepage/navigation, Auth session client and sign-in choices, Cloudflare proxy, fail-closed execution, standalone Swap, DEX/Swap desktop/mobile and 390px/360px states, market loading/error/empty states, cloud-save client initialization, account-scoped local backpack isolation, and Jarrell's Peak desktop/mobile gameplay.
+- [x] Screenshot artifact `13806562924` (`climboria-browser-smoke-screenshots`, 8.93 MB) downloaded and visually reviewed. It contains 11 homepage/Auth/DEX/gameplay/cave desktop and mobile captures. The Auth modal and mobile DEX layout render; gameplay/cave captures show the current automated smoke scene.
+- [!] Visual QA follow-up from those captures: the Sanctuary spawn screenshot is a broad flat green clearing with the flag-pillared structure distant in frame; the cave interior uses strongly faceted low-poly rock geometry. Automated scene boot and gameplay assertions pass, but these frames are not polished evidence of the target realistic world. Add a deliberate terrain/landmark/cave material and lighting pass, then inspect on actual Redmi 14 5G before calling world presentation launch-ready. These are CI fixture screenshots, not a physical-device or production-world acceptance test.
+- [!] The DEX screenshot uses a synthetic `TST` fixture; its embedded chart panel is blank/loading in the capture. This does not prove a production chart failure or production chart success. Live pair/history and production iframe/chart behavior still require a separate real-data verification. Public Swap execution remains fail-closed.
+- [!] The game screenshot's `Local only · sign in to sync progress` status is expected for the unauthenticated smoke context. It confirms that Guest/unauthed play stays local; it does not test a real remote account save. Account-scoped localStorage isolation passed, but controlled authenticated INSERT/UPDATE, two-device conflict and sign-out tests remain open.
+- [!] No Supabase Auth provider credentials/toggles, SMTP, Web3 provider settings, Turnstile/CAPTCHA, or production redirect allow-list were changed. No real email/OAuth/wallet-signature session was exercised. The code is in this PR branch only; it has not been merged into `main` or deployed to `climboria.fun`.
+
+### Exact next job
+1. Configure the Supabase Dashboard Site URL and redirect allow-list to `https://climboria.fun/`, then enable/configure email confirmation/SMTP, Google OAuth, X OAuth 2.0 and Solana/Ethereum Web3 providers. Register the Supabase callback URI in each provider console and run controlled real sign-in, callback, session-restore and sign-out tests.
+2. Run controlled authenticated cloud-save lifecycle checks: load existing row, insert first save, update with `saved_at` optimistic condition, force a concurrent two-device conflict, reload latest state, sign out and verify cloud writes stop. Do not treat the unauthenticated local-only smoke as this test.
+3. Configure Turnstile + Supabase Auth CAPTCHA and rate limits, then implement safe guest identity linking/migration before enabling Guest.
+4. Complete the visual terrain/landmark/cave pass and real Redmi 14 5G acceptance. Verify DEX pair/chart data using a real mint/provider separately.
+5. Keep PR #236 draft until provider config, account-save end-to-end checks and review are complete. After that, integrate conflict-aware into current `main` and rerun both workflows on the integrated exact head. Swap and Launchpad remain on their separate security/Devnet gates.
+
+### 2026-11-11 — Auth cloud-save lifecycle regression added
+
+- [x] Added a deterministic mocked Supabase client/query-builder regression in .github/workflows/browser-smoke.yml to exercise the authenticated game-save adapter without creating real users or mutating production database data.
+- [x] The new exact-head Browser Smoke run 42911156154 on source head cc001caf7319cc73a84e99e97f77418ed2bc2e1a reached and PASSED step 17, "Test authenticated cloud-save load, insert, update, and conflict paths with REST fixtures." It verifies (a) account A's row is loaded with a user_id filter and restored into the game adapter; (b) a first save for account B inserts the correct owner ID and schema version; (c) later updates include both owner and last-observed saved_at predicates; and (d) a simulated zero-row competing update moves the adapter into conflict and blocks subsequent writes.
+- [x] Validate run 42911155727 completed SUCCESS on exact source head cc001caf7319cc73a84e99e97f77418ed2bc2e1a, including all 29 Swap proxy unit tests, Auth wiring/redirect checks, cloud-save schema/owner checks and script audits.
+- [x] Diagnosed the preceding run 42910904454 failure on head 3098841fcfd1713d3342fca6bc7231735e7f6199: the new test script contained an unescaped apostrophe in a single-quoted JavaScript error message. Node failed to parse the test script before executing its data-path assertions. Corrected the message to a double-quoted literal in cc001caf; this was a test-harness syntax defect, not a discovered cloud-save implementation failure.
+- [!] At the time of this checkpoint, Browser Smoke 42911156154 is still in_progress at step 18, the bounded Jarrell's Peak desktop/mobile gameplay test. Screenshot upload is pending. Do not mark the full workflow passed until that step and artifact upload complete; the connector does not expose job logs/artifacts while the run remains active.
+- [!] The new save lifecycle exercise is a mocked Supabase client/query-builder fixture, not live Supabase REST or real account E2E. A fresh direct SQL check of production project unadepiwbovblkfjlksk reports auth.users=0, player_profiles=0, player_saves=0; both player tables have RLS enabled. Live role/column privilege checks still confirm anonymous access blocked and authenticated owner columns protected. Actual account save/load, two-device conflict, session refresh and sign-out tests still require a controlled real account after provider setup.
+- [!] No Auth provider credentials, SMTP, OAuth, Web3 provider toggles, redirect allow-list or CAPTCHA settings were changed in Supabase Dashboard. Auth code remains in draft PR #236 and is not on main or production hosting.
+
+**Exact next job:** let Browser Smoke 42911156154 on cc001caf7319cc73a84e99e97f77418ed2bc2e1a finish. Inspect the terminal gameplay step and download/review screenshots. If it passes, record its exact evidence and update PR #236. If it fails, inspect the full job log, identify the actual gameplay root cause and make one targeted correction before rerunning both workflows. Then configure provider/SMTP/redirect/CAPTCHA settings securely in Supabase Dashboard and run controlled real account/session/cloud-save tests. Keep Guest disabled until CAPTCHA and safe identity linking are ready.
+
+### 2026-11-11 — Latest Auth/cloud-save exact-head CI completed
+
+- [x] Latest branch head `bec482aa778a58868456638936a6ddd308ab6cb2` is **19 commits ahead / 0 behind** current `main` `bd1d5d45a6a68cdc0f40f98176568f86d103167c`. Compared with the prior cloud-save regression checkpoint `cc001caf7319cc73a84e99e97f77418ed2bc2e1a`, this final head adds only the README evidence record; tested source and workflow files are unchanged.
+- [x] Validate run `42912698955` completed SUCCESS on exact current head `bec482aa778a58868456638936a6ddd308ab6cb2`. All 12 substantive validation steps passed, including **29/29 Swap proxy tests**, publishable-key/redirect assertions, game cloud-save schema/owner checks, and inline/site script audits.
+- [x] Browser Smoke run `42912698745` completed SUCCESS on the same exact head. All 19 substantive steps passed: homepage/nav; Auth client/session choices; proxy + fail-closed execution; standalone Swap/DEX; desktop/mobile workspace; 390px/360px responsive checks; provider-error/empty states; unauthenticated cloud-save initialization; account-scoped backpack isolation; **authenticated cloud-save fixture**; Jarrell's Peak desktop/mobile gameplay; and screenshot upload.
+- [x] The authenticated REST fixture passed all four intended paths: account-owned row read (owner filter), first account save INSERT with session user ID/schema version, subsequent UPDATE constrained by the last-observed `saved_at`, and a simulated concurrent zero-row update that marks the client `conflict` and blocks further writes. Logs include: PASS authenticated cloud-save fixture: owner-filtered load, saved_at optimistic update, conflict lock, and first-row insert. This is deterministic mocked REST/query-builder coverage, **not** a live Supabase account or production multi-device test.
+- [x] Browser artifact `13807833996` (`climboria-browser-smoke-screenshots`, 8.93 MB) downloaded and visually inspected (11 desktop/mobile/Auth/DEX/gameplay/cave captures). Automated diagnostics report successful render frames, no render errors, terrain finite, 100 chests, 14 cave gem clusters, 88 collision solids, 8/8 open approaches to Jarrell's Peak, and all tested fishing interactions started.
+- [!] Visual QA is still not launch-ready: screenshots show the Sanctuary spawn as an expansive flat green clearing, while the cave entrance/interior still read as faceted stylized low-poly geometry. These scenes boot and pass the automated mechanics checks, but need deliberate terrain, landmark dressing, rock material/lighting and depth polish. Actual physical Redmi 14 5G testing remains outstanding.
+- [!] DEX screenshot data uses synthetic fixtures; chart/market panel capture is not proof of production provider/history/chart operation. Verify with a real mint/pair and live upstream separately.
+- [!] Supabase DB checks still show `player_profiles`/`player_saves` tables with RLS and 0 current Auth users at the last inspection. No provider console credentials, SMTP, Web3 toggles, Turnstile/CAPTCHA, or redirect allow-list settings have been changed. No real email/OAuth/SIWS/SIWE login, remote row insert/update, or two-device race was run. Guest remains disabled; unauthenticated gameplay remains local-only.
+- [!] The current code has **not** merged into `main` or been deployed to `climboria.fun`. PR #236 remains draft. Supabase migration and advisor state are recorded above; DB permission hardening remains applied, but live app Auth is still configuration-gated.
+
+### Exact next job
+1. Configure Supabase Dashboard Site URL/redirect allow-list to `https://climboria.fun/` and configure email/SMTP, Google, X, Solana and Ethereum providers. Register each provider's Supabase callback in that provider console. Add Turnstile/CAPTCHA and sensible rate limits before opening public account creation.
+2. Run controlled real-account E2E: email confirmation/password sign-in, Google/X callback, Solana SIWS, Ethereum SIWE, session restore and sign-out. Then test real player-save load/INSERT/UPDATE, two-browser optimistic conflict, reload latest, and sign-out write stop. Only enable Guest after safe linking/merge rules and CAPTCHA are implemented and tested.
+3. In parallel, do the Sanctuary/terrain/cave visual pass and real Redmi 14 5G acceptance; verify DEX token history/chart using a live real pair rather than the synthetic TST fixture.
+4. Keep PR #236 draft until the above external account/provider, real-cloud-save and device-acceptance gates are satisfied. Then perform a fresh conflict-aware integration onto latest `main` and rerun Validate + Browser Smoke on the integrated exact head. Do not deploy this branch as a substitute for those checks.
+5. Continue PR #235 independently through third-party ALT/instruction review, controlled Devnet transaction lifecycle, Cloudflare production prerequisites and quote-only Worker deployment; keep transaction execution off. Launchpad live mint/custody work remains independently gated.
+
+
+## 2026-11-11 — Auth branch DEX race fix and release checkpoint
+
+- [x] Investigated Browser Smoke failure on pre-fix PR #236 head `7492ad16ed2f60c82f830ae93c7b8663624da0cd`. Validate `42916153069` passed; Browser Smoke `42916153051` failed at the homepage/DEX name-search fixture before Auth and later suites ran.
+- [x] Root cause confirmed from the job log and source: the initial asynchronous `load()` replaced `state.pairs` after `discoverDexSearch()` had merged the search response, so a slower boot-time market refresh could erase a successful live search result.
+- [x] Fixed in commit `970dc17779f1f435b841b58756a855ff56cc74c2`: introduced separate `state.searchPairs`, render the deduplicated union of boot-time market pairs and current search results, and clear only the search-result collection when the query changes or returns no matches. Verified exact committed source and diff.
+- [x] Exact-head Validate `42917695089` on `970dc17779f1f435b841b58756a855ff56cc74c2`: **SUCCESS**. Proxy security/API tests, Wrangler configuration, Supabase Auth browser-safe configuration, cloud-save schema/ownership checks and JavaScript syntax checks all completed.
+- [ ] Exact-head Browser Smoke `42917695333` on the same commit: in progress at checkpoint time. Steps 1–16 passed, including the previously failing DEX name-search step, Auth session/sign-in choices, Swap/DEX UI and mobile checks. Authenticated cloud-save REST fixture step 17 was running; Jarrell's Peak desktop/mobile gameplay and screenshot upload remained pending. Do not mark Browser Smoke passed until final conclusion and artifact review.
+- [x] Supabase project `unadepiwbovblkfjlksk` rechecked: ACTIVE_HEALTHY, region `ap-northeast-1`; active publishable key matches `auth.js`; `player_profiles` and `player_saves` have RLS enabled; migration `20261110205612_auth_profile_acl_rls_hardening` is present; Security and Performance Advisors returned zero lints. Both tables currently have zero rows; no real account sign-in is evidenced by this database check.
+- [ ] Production Auth is not yet live: Site URL/redirect allow-list, SMTP/email confirmation, Google OAuth, X OAuth 2.0 and Solana/Ethereum Web3 provider settings/callbacks still require owner-side configuration and real controlled-account E2E verification. Guest remains disabled pending Turnstile + Supabase CAPTCHA and safe identity-linking.
+- [ ] Swap remains quote/order preparation only: frontend `enabled=false`, Worker `EXECUTION_ENABLED=false`; no production Worker health/deployment or real Devnet/Mainnet settlement verified. Independent ALT resolution and aggregator instruction semantics review plus controlled Devnet lifecycle are mandatory before execution can be enabled.
+- [ ] Launchpad remains a static/informational page on main, not a real token creation/migration service. Devnet LP Lock IDL, fee-receiver custody/governance, deployed-program provenance and migration scale/Fee Key NFT custody blockers remain open.
+- [ ] Production API/website endpoint checks were not accessible through the current inspection channel; treat live endpoint health as unverified, not as evidence of either success or outage.
+
+### Exact next tasks
+1. Let Browser Smoke `42917695333` finish; inspect the final cloud-save fixture, gameplay smoke, screenshots and terminal logs. If it fails, diagnose the exact failing step before changing code.
+2. After the browser workflow completes, append its exact final status/artifact evidence here and keep PR #236 draft until real provider configuration and controlled account tests pass.
+3. Continue Swap P0: independent ALT/instruction semantics review, controlled Devnet order/sign/execute/confirm plus replay/timeout/uncertain-settlement tests, then Cloudflare DO migration, rate-limit namespace, secrets, health/TLS/CORS/monitoring/rollback and quote-only deployment. Keep both execution kill switches closed until approval.
+4. Continue Launchpad P0: resolve Devnet LP Lock IDL and custody/governance evidence, deployed bytecode provenance and migration scale/NFT custody; only then build and verify actual create/launch/migration flows.
+5. Verify each real Auth provider callback, email confirmation/password, OAuth, SIWS/SIWE, session restore/logout, and actual authenticated save load/insert/update/two-device conflict before calling login live.
+
+
+## 2026-11-11 — DEX token-detail pool identity guard
+
+- [x] Reviewed the token-detail lookup in `dex/index.html` on PR #236. DexScreener's token endpoint can return pools where the requested mint is either the base or quote token, while Climboria's detail renderer and chart treat `baseToken` as the selected token and display `priceUsd` as its USD price.
+- [x] Targeted fix committed as `05440e4975c06210230ae79cc768d333c833721c`: token-detail pools are now restricted to rows whose `baseToken.address` exactly matches the requested mint. Quote-side-only pools are not misattributed to the selected token. If no base-side pool exists, the existing no-pool state is shown instead of fabricated/inverted metadata.
+- [ ] Validate and Browser Smoke for exact new head `05440e4975c06210230ae79cc768d333c833721c` are pending; do not claim this guard is tested until those workflows finish. The prior exact-head Validate `42917953806` passed on parent `55b8693e128eed3ee20ead5f55bc5c19d7397cd6`; prior Browser Smoke `42917953918` was cancelled before Jarrell's Peak gameplay acceptance.
+- [ ] PR #236 remains draft. Production OAuth/provider settings, real controlled-account login, actual authenticated cloud-save tests and physical Redmi acceptance remain outstanding.
+
+### Exact next tasks
+1. Inspect Validate and Browser Smoke triggered by `05440e4975c06210230ae79cc768d333c833721c`; if Browser Smoke is cancelled again, identify the competing run/concurrency cause and obtain one completed exact-head run.
+2. Add a deterministic browser fixture covering both a matching base-side pool and a quote-side-only pool for the selected mint, and assert the quote-side pool is never rendered as that token's detail/chart.
+3. Continue DEX provider coverage and real-pair chart verification, clearly separating the current finite Base search sample from exhaustive market indexing.
+4. Continue Swap R1/R2/R3/R4 blockers documented in PR #235; keep both execution kill switches off. Continue Launchpad custody/program/migration gates, then complete real Auth provider acceptance.
+
+
+- [x] Added a deterministic Browser Smoke regression fixture in commit `6cb7084294f49060ad92761622aeece4a1892f8b`: the selected Climboria test mint is returned once as a pool's base token and once as a different pool's quote token. The test asserts that the detail workspace includes the true base-side pool and excludes the quote-side-only pool. This directly covers the token-detail identity guard; the workflow must still pass on the final PR head.
+
+
+## 2026-11-11 — DEX and Swap browser acceptance checkpoint (runs 42919442167 / 42918242316)
+
+- [x] PR #236 exact-head Validate run `42919442130` completed **SUCCESS** on `dd2ad16f79e6ff24f3cf811693fc926b856a1f14`.
+- [x] PR #236 exact-head Browser Smoke run `42919442167` completed **SUCCESS** on the same head. All 23 job steps passed, including homepage/DEX routing/mobile navigation; Supabase Auth client/sign-in choices; DEX proxy and fail-closed execution; standalone Swap and DEX; desktop/mobile responsive layouts at 390px/360px; market loading/error/empty states; authenticated cloud-save load/insert/update/conflict fixtures; Jarrell's Peak desktop/mobile gameplay; and screenshot upload.
+- [x] PR #236 screenshot artifact `13810988392` (`climboria-browser-smoke-screenshots`, 8,936,994 bytes) exists and expires `2026-11-17T23:04:40Z`. Automated browser screenshots are not physical Redmi 14 5G acceptance or production-provider/chain evidence.
+- [x] PR #235 Browser Smoke run `42918242316` completed **SUCCESS**. All 20 job steps passed, including DEX/Swap proxy, fail-closed execution, standalone Swap/DEX, responsive/mobile/provider states, Jarrell's Peak desktop/mobile gameplay, and screenshot upload.
+- [x] PR #235 screenshot artifact `13809989839` (`climboria-browser-smoke-screenshots`, 7,749,090 bytes) exists and expires `2026-11-17T22:59:49Z`.
+- [x] Both PRs remain open and draft; GitHub reports both mergeable. No merge was performed.
+- [!] These browser runs validate local browser fixtures and UI paths. They do not prove live Supabase OAuth/email provider configuration, production cloud-save accounts, Cloudflare Worker deployment, live market data health, Devnet/Mainnet swap settlement, or physical-device acceptance.
+- [!] Swap execution remains fail-closed: frontend `enabled=false` and Worker `EXECUTION_ENABLED=false`. Independent ALT/instruction-semantic review, controlled Devnet lifecycle evidence, and Cloudflare production deployment checks remain required.
+- [!] Launchpad remains informational/static; LP Lock IDL, fee-receiver custody/governance, deployed-program provenance, migration scale and Fee Key NFT custody remain unresolved.
+
+### Exact next tasks
+1. DEX: verify live provider/pair/chart responses and expand Base discovery beyond the finite hard-coded query sample; keep unsupported/empty provider states truthful.
+2. Swap: close independent R1 ALT resolution and R2 aggregator instruction/account/amount/slippage/fee-destination review, then R3 controlled Devnet order/sign/execute/confirm/replay/timeout/uncertain-settlement lifecycle; verify R4 Cloudflare DO/rate-limit/secrets/TLS/CORS/health/monitoring/rollback. Deploy quote-only first; never enable either execution switch until all gates pass.
+3. Launchpad: resolve LP Lock Devnet IDL, custody/governance and program provenance; establish safe migration scale and Fee Key NFT custody before implementing real launch/migration transactions.
+4. Login: configure real Supabase Site URL/redirects, SMTP/email confirmation, Google/X OAuth and SIWS/SIWE callbacks; test controlled accounts and actual save persistence/two-device conflicts. Guest remains disabled until Turnstile + Supabase CAPTCHA and safe account linking are ready.
+5. Preserve physical Redmi 14 5G acceptance as a separate outstanding check; automated viewport tests do not replace it.
+
+
+## 2026-11-11 — Base DEX live-search expansion checkpoint
+
+- [x] Added dynamic Base name/symbol discovery and exact ERC-20 contract lookup in `dex/index.html`, commit `cbaa9fc2a981eace2df1699b169d787f03cdb3a1`. Search results augment (not replace) the finite boot-time query sample; exact contract lookup keeps only pools where the requested contract is the base token.
+- [x] Added deterministic Base search fixtures to Browser Smoke in commit `50e911e1dc1ae903f553fc63aa1f314811a132c4` for both symbol/name and exact-contract search.
+- [x] Validate run `42920596450` on exact code/test head `50e911e1dc1ae903f553fc63aa1f314811a132c4`: **SUCCESS**.
+- [ ] Browser Smoke run `42920596428` on the same exact head is **in progress**. The preceding run `42920551244` on code head `cbaa9fc2a981eace2df1699b169d787f03cdb3a1` was cancelled by the subsequent test-fixture synchronization while Playwright was installing; it is not counted as a pass or failure. Wait for run `42920596428` and inspect its exact job result before marking the new feature accepted.
+- [!] This is live provider-backed search code, but production endpoint health/coverage has not been independently monitored. Base market indexing is still not exhaustive. No production DEX uptime claim.
+
+### Exact next tasks
+1. Finish and inspect Browser Smoke `42920596428`; diagnose the exact step if it fails and record screenshot artifact if successful.
+2. Continue DEX live provider/pair/chart verification, rate/latency/fallback handling and Base discovery quality without claiming exhaustive indexing.
+3. Continue Swap independent ALT/instruction review and controlled Devnet lifecycle; keep both execution kill switches off.
+4. Resolve Launchpad LP Lock IDL/custody/program provenance and migration constraints.
+5. Complete real Supabase provider callbacks and controlled account/device acceptance; automated fixture coverage does not make login production-live.
+
+
+## 2026-11-11 — DEX all-pools endpoint correction (CI pending)
+
+- [x] Completed the previously pending exact-head Browser Smoke run `42920696338` on `e9505ef0253dc88688d98b71991f59cfbfa684db`: **SUCCESS**. All 19 main steps passed, including DEX Base search fixtures, quote-side identity regression, Swap fail-closed checks, authenticated cloud-save fixtures, Jarrell's Peak desktop/mobile gameplay and screenshot upload.
+- [x] Screenshot artifact `13811627886` (`climboria-browser-smoke-screenshots`, 8,918,537 bytes; expires 2026-11-17T23:16:30Z) was uploaded. Logs confirm mobile gameplay completed with no render errors; wildlife was temporarily disabled for the automated smoke.
+- [x] Root-cause finding from the official DexScreener API reference: token-detail and exact-address lookups used `/latest/dex/tokens/{address}`, whereas `/token-pairs/v1/{chainId}/{tokenAddress}` is the documented endpoint for retrieving a token's pools. Switched Solana detail/exact-mint and Base exact-contract lookups to the chain-specific token-pairs endpoint. Response normalization accepts the documented top-level array and a `{pairs}` wrapper for compatibility.
+- [x] Code commit: `d70b42d95ab4181e655edf9263345ab86cb8fcd7` (`fix(dex): use all-pools token-pairs endpoint`). Browser Smoke fixture commit: `39bd56861811e9c537294574dd37fdce45949f61` (`test(dex): cover all-pools token lookup routes`). Response-shape fixture commit: `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1` (`test(dex): match token-pairs array response schema`).
+- [!] The new commits are on this branch, but no workflow run is currently associated with head `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1`. The GitHub integration used for file commits did not automatically start the PR workflows; the workflow YAML supports `workflow_dispatch`, but the available connected GitHub actions do not expose a dispatch action. Do not mark the new change CI-verified until an exact-head run exists.
+- [!] Live external DexScreener API access could not be independently exercised from this environment. The prior Browser Smoke fixtures are deterministic and do not establish external provider uptime or live market completeness. DexScreener documents current pair/pool market data but not an OHLC candle API; Climboria's detail chart remains a third-party DexScreener embed rather than an internally sourced candle series.
+
+### Exact next tasks
+1. Trigger `Validate Climboria` and `Climboria Browser Smoke Test` with `workflow_dispatch` on exact head `ccc0fbaca302f48e004220a5f42ba4c1ac715bb1`; inspect logs/artifact, fix any failure and rerun on the final head.
+2. Verify live DexScreener responses for Solana and Base token-pairs endpoints from a network-enabled production/browser environment; measure status, latency, rate-limit and empty-pool behavior.
+3. Confirm selected token identity, all returned pools, liquidity-ranked default pool and external chart embed for real mints on both chains. Keep Base discovery described as query-based, not exhaustive indexing.
+4. Continue Swap R1/R2 independent transaction review, controlled Devnet lifecycle and Cloudflare production gates; keep execution kill switches off.
+5. Continue Launchpad program/custody/migration gates, then real Auth provider/device acceptance.
+
+## 2026-11-11 — DEX Browser Smoke failure diagnosis and counter-strategy
+
+- [!] Investigated failed main-branch Browser Smoke run `42920866242` at commit `e699e0b485ae5280d251768e00c8dd2908ae21d0`. The failure was step 7, `Test homepage CTAs, DEX routing, and mobile navigation`; the test received HTTP 200 for the `CLIMBTEST` DEX search fixture but the row disappeared before the assertion. The run then skipped downstream steps 8–15. This was a real failed test, not a cancellation.
+- [x] Root cause confirmed from the exact failed-run log and source at that commit: `discoverDexSearch()` merged search results into `state.pairs`, while the initial asynchronous `load()` later replaced `state.pairs` with its boot-time market sample and called `render()`. If the search completed before initial load, the load completion overwrote the discovered row. The fixture response was successful; the defect was a state ownership/race condition.
+- [x] Counter-strategy already present in the current PR #236 DEX source: isolate query results in `state.searchPairs`; render from `bestByToken([...state.pairs,...state.searchPairs])`; clear only the query-result set when the user changes the search. This prevents the boot refresh from deleting independently discovered search results. Verified these exact code paths in current PR source at `dex/index.html`.
+- [x] Added a deterministic regression to `.github/workflows/browser-smoke.yml`: delay the initial token-profile response by 1.2 seconds, return controlled empty bootstrap search results, complete `CLIMBTEST` search first, wait for the initial refresh to finish, and assert the discovered row still exists. This directly reproduces the race rather than merely retrying the old test. Regression test commit `9a149bf46fe15def19576798e65ebc4967386e36`; removed a redundant duplicate assertion in follow-up commit `2b066dca2e69bf662a85cb7786e209fa0fd9ffe2`.
+- [!] Exact-head CI remains pending for PR #236 head `2b066dca2e69bf662a85cb7786e209fa0fd9ffe2`. The available GitHub integration has no workflow-dispatch action; do not rerun the failed main-branch job because it would test the old broken source, not this counter-strategy. The last successful PR #236 Validate and Browser Smoke runs were on older head `e9505ef0253dc88688d98b71991f59cfbfa684db`.
+- [!] Attempted direct live API checks for Solana and Base token-pairs endpoints, but the browser retrieval service could not access the API URLs. Official DexScreener API docs confirm `/token-pairs/v1/{chainId}/{tokenAddress}` returns a top-level `Pair[]` and lists a 300 requests/minute limit for this endpoint: https://docs.dexscreener.com/api/reference. This documentation is not proof of current provider uptime.
+
+### Exact next actions
+1. Run Validate and Browser Smoke on exact PR #236 head `2b066dca2e69bf662a85cb7786e209fa0fd9ffe2`; inspect the complete logs and artifact. Do not mark the race fix verified before this.
+2. In a network-enabled browser/production environment, exercise real Solana and Base token-pairs requests; record status, latency, 429/5xx behavior, no-pool behavior and response shape.
+3. Confirm live token detail identity and selected pool/chart behavior for real tokens; retain query-based rather than exhaustive Base discovery wording.
+4. Continue Swap R1/R2 trusted ALT resolution and instruction-semantic policy work; keep frontend and Worker execution switches off until independent review and controlled Devnet lifecycle acceptance.
+5. Continue Launchpad program/custody/migration blockers, then real Google/X/email/Solana/EVM login acceptance.
+
 ### 2026-11-11 — Sanctuary spawn approach merged to main
 
 - [x] Clean PR #239 was created directly from `main` and contained exactly two files: `game/play.html` and `.github/scripts/game-smoke.mjs`. The visually identical earlier PR #238 was closed because its branch ancestry included the unrelated Auth feature commits; no unique work was lost.
@@ -3229,3 +3482,63 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport screenshots are not a physical-device check. The Sanctuary scene is improved but broader world realism polish continues separately.
 
 **Exact next job:** recheck the independent cave material PR against the new main commit; complete its Validate/Browser Smoke and review entrance/interior screenshots. Then carry out physical Redmi 14 5G acceptance. Keep the Auth branch gated on real provider/dashboard and account-save tests; keep Swap execution gated on ALT/instruction semantic review and controlled Devnet lifecycle.
+
+
+## 2026-11-11 — PR #236 synchronized with latest main
+
+- [x] Deep-checked PR #236 divergence after main advanced from base `bd1d5d45a6a68cdc0f40f98176568f86d103167c` to `9a3c4aca82957883e8109f357949132dc96b734a`. Before synchronization, compare reported 37 commits ahead / 2 behind and GitHub marked the PR `dirty`.
+- [x] Inspected the two main-only commits. They added Sanctuary spawn path/lantern/planter dressing and a deterministic `sanctuaryDressingAudit` in `game/play.html`, two corresponding smoke assertions in `.github/scripts/game-smoke.mjs`, and a README release checkpoint.
+- [x] Manually reconciled the overlapping `game/play.html` changes, preserving both PR account-scoped inventory/cloud-save work and main's Sanctuary dressing/audit. Brought the main smoke script and README checkpoint into the PR tree. File reconciliation commits: `606c7bafebea52ee4b6e1eac82c68e64de3375eb`, `2714d46e431ee92a588e544a8abaaf9495e0086c`, `9d14f790630ccc18b5aadc6ea91f89facb4f94e0`.
+- [x] Created a real two-parent merge commit `62aca819ce1009b72fa61ac1defbc96def892e01` with previous PR head `9d14f790630ccc18b5aadc6ea91f89facb4f94e0` and main `9a3c4aca82957883e8109f357949132dc96b734a`. Compare now reports **ahead 41 / behind 0**; no files were dropped from either side. GitHub mergeability is recalculating (`unknown`) and must be rechecked.
+- [!] No exact-head Validate or Browser Smoke run is associated with the new merge commit yet. The available GitHub integration has no workflow-dispatch action. Do not claim CI acceptance for this synchronized head until both workflows run.
+
+### Exact next actions
+1. Recheck PR #236 mergeability and run Validate + Browser Smoke on the synchronized current head. Review the new DEX search race regression, Sanctuary dressing audit, account inventory/cloud-save and mobile/gameplay results.
+2. If any test fails, diagnose that exact step and commit before changing code; do not replay an earlier fix without a new root-cause finding.
+3. Continue live DEX provider validation, then Swap R1/R2 trusted ALT resolution and instruction-semantic review. Keep execution disabled pending independent review and controlled Devnet lifecycle acceptance.
+4. Continue Launchpad program/custody/migration blockers, then complete real Auth provider/account acceptance.
+
+## 2026-11-11 — Swap selected-token chart endpoint correction (verification in progress)
+
+- [!] Browser Smoke run `42923141014` failed at step 7, script line 180: after explicit BTC token selection, `#selectedAssetChart` never received the expected pool URL. This was separate from the earlier DEX search race.
+- [x] Root cause: `swap/index.html` still called `/latest/dex/tokens/{mint}` in `updateSelectedAsset`, `resolveSolanaTokenByMint`, and `chooseBestSolanaCandidate`, while the test fixture and DEX detail code used `/token-pairs/v1/solana/{mint}`. The selected chart request bypassed the deterministic route. `dex/premium-terminal.js` also retained the legacy token lookup.
+- [x] Counter-strategy: added shared `fetchSolanaTokenPairs(mint)` in Swap, calling the chain-specific token-pairs endpoint and normalizing the documented top-level `Pair[]` plus a compatibility `{pairs}` wrapper. Routed all three Swap market flows through it; retained exact base-token identity for the chart and metadata resolution for base/quote token appearances. Migrated premium-terminal SOL lookup and updated desktop/mobile fixtures to top-level arrays.
+- [x] Added an explicit Browser Smoke assertion that selected BTC chart lookup uses `/token-pairs/v1/solana/{mint}`. Commits: `166cc02c8f8b02bd4ac89635873d65540ce2ba52` (Swap), `25a0641fa007e4253da771eae81094ae7966c156` (premium terminal), `8050573d89bc3fa0bb3238d52353d0c909e20320` (fixtures/assertion).
+- [x] Validate run `42923406014` completed **SUCCESS** on code head `8050573d89bc3fa0bb3238d52353d0c909e20320`.
+- [x] Browser Smoke run `42923405917` on the same code head: steps 1–17 completed **SUCCESS**, including DEX search race regression, BTC selected-chart request, Swap fail-closed checks, mobile 390px/360px, provider empty/error states, game-save initialization, authenticated cloud-save load/insert/update/conflict fixtures.
+- [!] Step 18, Jarrell's Peak desktop/mobile gameplay smoke, is still in progress; step 19 screenshot upload is pending. Do not claim full Browser Smoke pass until terminal success and artifact review.
+
+### Exact next actions
+1. Wait for run `42923405917` to finish. If gameplay step 18 fails, inspect the exact failing assertion/log, diagnose the root cause, and implement a distinct targeted correction; do not repeat the DEX/Swap endpoint change.
+2. If successful, review artifact/screenshots, then record final Browser Smoke pass and artifact ID on this checkpoint.
+3. After DEX/Swap browser acceptance, continue Swap R1/R2 trusted ALT resolution and instruction-semantic review; keep execution disabled until independent review and controlled Devnet lifecycle acceptance.
+4. Continue Launchpad program/custody/migration blockers, then real Auth provider/account acceptance.
+
+## 2026-11-11 — Browser Smoke retry completed successfully (attempt 2)
+
+- [x] Rechecked the exact active retry instead of starting another run. Workflow run [42923405917](https://github.com/CryptoDilis/Climboria/actions/runs/42923405917), attempt **2**, tested code SHA `8050573d89bc3fa0bb3238d52353d0c909e20320`, completed with conclusion **SUCCESS**.
+- [x] All 19 workflow steps passed. This includes homepage/DEX routing and the deterministic DEX search-race regression; Supabase Auth client/sign-in choices; Cloudflare DEX proxy and fail-closed Swap execution checks; standalone Swap and DEX shells; desktop/mobile DEX; 390px/360px layouts; provider error/empty states; cloud-save initialization; authenticated cloud-save load/insert/update/conflict fixtures; and Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] The earlier attempt 1 cancellation at Jarrell's Peak gameplay was not treated as a failure. Attempt 2 reran the job and completed the gameplay step successfully. The separate superseded run remains a cancellation, not a pass/fail.
+- [x] Screenshot artifact [13814400686](https://github.com/CryptoDilis/Climboria/actions/runs/42923405917) downloaded and inspected: 11 screenshots covering desktop/mobile home, DEX token socials, auth modal, Jarrell's Peak gameplay, cave entrance and cave interior. Both desktop and mobile gameplay/cave captures were produced. This is automated browser viewport evidence, not physical Redmi 14 5G acceptance.
+- [!] DEX token/social screenshots use synthetic test fixtures. They verify UI and test routing only; they do not establish live provider uptime, real token discovery, or production chart data. Real Solana/Base provider validation remains open.
+- [!] This run tested code SHA `8050573d89bc3fa0bb3238d52353d0c909e20320`. The current PR branch tip is a later README-only checkpoint commit `fb18fa3887beb62dfee737dc13b065c228a52f39`; no application code changed after the tested code SHA. Validate on the README-only tip also completed SUCCESS in run `42923938297`.
+- [!] PR #236 remains open and mergeable; this checkpoint does not claim that the PR was merged or that production services are live.
+
+### Exact next actions
+
+1. DEX: test real Solana and Base token-pairs responses from a network-enabled production/browser environment; record response shape, latency, 429/5xx behavior, no-pool behavior and selected chart identity. Do not treat synthetic fixture screenshots as live acceptance.
+2. Swap: continue R1 trusted RPC Address Lookup Table resolution and R2 instruction/program/account/amount/slippage/fee-destination semantic policy. Keep execution disabled until independent review, controlled Devnet sign/execute/confirm/replay/timeout/uncertain-settlement tests, and Cloudflare production controls all pass.
+3. Launchpad: resolve deployed program provenance, LP Lock IDL, fee receiver custody/governance, migration scale and Fee Key NFT custody before calling token creation/launch live.
+4. Login: complete owner-side Supabase Site URL/redirect, SMTP/email confirmation, Google OAuth and X OAuth credentials/provider configuration, SIWS/SIWE settings, then controlled-account/device acceptance. Physical Redmi 14 5G test remains outstanding.
+5. When any future check fails, inspect that exact step and logs, identify a new root cause, implement a targeted counter-strategy, and rerun the relevant checks. Do not recommit the same attempted code without a fresh diagnosis.
+
+
+## 2026-11-11 — PR #236 latest Browser Smoke completion and screenshot review
+
+- [x] Browser Smoke run [42936193975](https://github.com/CryptoDilis/Climboria/actions/runs/42936193975), job `130246752007`, completed **SUCCESS**. Step 18 Jarrell's Peak desktop/mobile gameplay and step 19 screenshot upload both completed successfully. Earlier checkpoint text above that said "in progress" is historical; this entry is the final result.
+- [x] Screenshot artifact `13819581183` downloaded and inspected: 11 captures covering desktop/mobile homepage, auth modal, DEX token/social screens, desktop/mobile Jarrell gameplay, cave entrance and cave interior. Desktop/mobile game screenshots show the character at Sanctuary, and cave entrance/interior captures rendered on both viewports. These are automated browser viewport checks, not physical Redmi 14 5G acceptance.
+- [!] DEX token/social captures are synthetic fixture data and are not evidence of live Solana/Base provider uptime, real token discovery, or production chart data.
+- [!] This run tested PR #236 head `1a66e03636747fcc57a7f8992f715ab10430b519`. It does not verify real external Google/X/SMTP OAuth credentials or physical-device authentication. Supabase owner-side configuration and controlled-account tests remain required.
+- [!] PR #236 remains open and mergeable; no claim of production login rollout or PR merge is made.
+
+**Exact next actions:** complete PR #235's exact synchronized-head Browser Smoke run `42937400230` and inspect its screenshot artifact; then update its README checkpoint. Continue real Solana/Base provider validation, Swap ALT/instruction-semantic and controlled Devnet gates (execution off), Launchpad program/custody/migration blockers, and owner-configured login provider acceptance.

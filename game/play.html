@@ -1200,11 +1200,20 @@ const toast=t=>{toastEl.textContent=t;toastEl.style.opacity=1;clearTimeout(toast
 const emit=(type,detail)=>window.dispatchEvent(new CustomEvent('climboria:'+type,{detail}));
 /* Persistent local player inventory. Server-authoritative multiplayer/rewards are a separate integration. */
 const INVENTORY_KEY='climboria_jarrell_inventory_v1';
-const inventory=(()=>{try{const v=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(x.qty)&&x.qty>0):[]}catch(_){return[]} })();
+const readInventory = (key) => {
+ try {
+  const raw = localStorage.getItem(key);
+  if (raw === null) return null;
+  const value = JSON.parse(raw);
+  return Array.isArray(value) ? value.filter(item => item && typeof item.name === 'string' && Number.isFinite(item.qty) && item.qty > 0) : [];
+ } catch (_) { return []; }
+};
+let inventoryStorageKey = INVENTORY_KEY;
+const inventory=readInventory(INVENTORY_KEY) || [];
 const invPanel=css(document.createElement('section'),'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);right:auto;z-index:1002;width:min(620px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding:14px 16px;background:rgba(8,13,20,.94);border:1px solid #d8b46b88;border-radius:12px;box-shadow:0 12px 40px #000b;color:#f4ecd8;font:13px/1.5 system-ui;display:none;backdrop-filter:blur(12px)');
 invPanel.id='climboriaInventoryPanel';
 const invToggle={addEventListener:()=>{}};
- const saveInventory=()=>{try{localStorage.setItem(INVENTORY_KEY,JSON.stringify(inventory))}catch(_){}};
+ const saveInventory=()=>{try{localStorage.setItem(inventoryStorageKey,JSON.stringify(inventory))}catch(_){}};
 function renderInventory(){
  invPanel.replaceChildren();
  const head=document.createElement('div');head.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#ffe3a3;font-weight:700';head.textContent='CHARACTER · EQUIPMENT & INVENTORY';
@@ -1220,6 +1229,86 @@ function renderInventory(){
   const note=document.createElement('p');note.textContent=inventory.length+' / 50 backpack slots used';note.style.cssText='color:#aeb4b4;font-size:11px;margin:8px 0';invPanel.append(note);
 }
 function addInventoryItem(name,qty=1){const item=inventory.find(x=>x.name===name);if(item)item.qty+=qty;else if(inventory.length<50)inventory.push({name,qty});else{toast('Backpack full · 50/50 slots');return}saveInventory();renderInventory();emit('inventory',{items:inventory.map(x=>({...x}))})}
+// Cloud save adapter. Only account-owned player position and backpack contents are persisted.
+// Token balances, marketplace value, rewards, and other economic state must remain server-authoritative.
+window.__CLIMBORIA_GAME_SAVE_ADAPTER__ = {
+  // Backpack snapshots are partitioned by authenticated account. Only an unscoped
+  // local guest backpack may be adopted by the first account with no cloud row.
+  setUserScope(userId, migrateUnscopedInventory = false) {
+    const previousKey = inventoryStorageKey;
+    const previousItems = inventory.map(item => ({ name: item.name, qty: item.qty }));
+    const targetKey = userId ? INVENTORY_KEY + ':user:' + userId : INVENTORY_KEY;
+    const unclaimedLocalItems = userId && previousKey === INVENTORY_KEY && !migrateUnscopedInventory
+      ? previousItems.length
+      : 0;
+    if (targetKey === previousKey) return { unclaimedLocalItems: 0 };
+
+    const cached = readInventory(targetKey);
+    let nextItems = cached || [];
+    if (userId && cached === null && migrateUnscopedInventory && previousKey === INVENTORY_KEY) {
+      nextItems = previousItems;
+      try { localStorage.removeItem(INVENTORY_KEY); } catch (_) {}
+    }
+
+    inventoryStorageKey = targetKey;
+    inventory.splice(0, inventory.length, ...nextItems);
+    saveInventory();
+    renderInventory();
+    return { unclaimedLocalItems };
+  },
+  capture() {
+    if (P.mode === 'cine') return null;
+    const x = Number(P.x), z = Number(P.z), yaw = Number(P.yaw);
+    if (![x, z, yaw].every(Number.isFinite) || Math.abs(x) > 100000 || Math.abs(z) > 100000) return null;
+    return {
+      version: 1,
+      player: { x, z, yaw },
+      inventory: inventory.slice(0, 50).map(item => ({
+        name: String(item.name).slice(0, 64),
+        qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1)))
+      }))
+    };
+  },
+  restore(data) {
+    if (!data || typeof data !== 'object' || data.version !== 1) return false;
+    const x = Number(data.player?.x), z = Number(data.player?.z), yaw = Number(data.player?.yaw);
+    if ([x, z, yaw].every(Number.isFinite) && Math.abs(x) <= 100000 && Math.abs(z) <= 100000) {
+      P.x = x;
+      P.z = z;
+      P.y = groundAt(P.x, P.z) + 1.75;
+      P.yaw = yaw;
+      P.vy = 0;
+      P.mode = 'walk';
+      P.moveTarget = null;
+      P.swim = false;
+      P.swimDepth = 0;
+      P.waterBodyId = null;
+      cameraYaw = P.yaw;
+      cameraPitch = -0.08;
+      camY = null;
+      free(true);
+      cam.position.set(
+        P.x + Math.sin(cameraYaw) * targetCameraDistance,
+        P.y + 2.8,
+        P.z + Math.cos(cameraYaw) * targetCameraDistance
+      );
+      cam.lookAt(P.x, P.y + 0.9, P.z);
+      updateChunks(P.x, P.z, 120);
+    }
+
+    const savedInventory = Array.isArray(data.inventory)
+      ? data.inventory
+          .filter(item => item && typeof item.name === 'string' && item.name.length > 0 && item.name.length <= 64)
+          .slice(0, 50)
+          .map(item => ({ name: item.name, qty: Math.max(1, Math.min(9999, Math.floor(Number(item.qty) || 1))) }))
+      : [];
+    inventory.splice(0, inventory.length, ...savedInventory);
+    saveInventory();
+    renderInventory();
+    emit('cloud-save-restored', { itemCount: inventory.length });
+    return true;
+  }
+};
 function toggleInventory(){renderInventory();const opening=invPanel.style.display==='none';invPanel.style.display=opening?'block':'none';if(opening)mapPanel.classList.remove('map-expanded')}
 document.getElementById('player-card').addEventListener('click',toggleInventory);
 
@@ -1816,7 +1905,7 @@ function caveEntranceTraversalAudit(){
   return {ok:reached>=endLocal.z-.5,progressLocalZ:+reached.toFixed(2),walkedDistance:+(reached-startLocal.z).toFixed(2),blockedAt};
  }finally{Object.assign(P,saved)}
 }
-window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
+window.ENDLESS_WILDS={heightAt,groundAt,colorAt,waterBodyAt,caveEntranceTraversalAudit,positionAtCaveEntranceForSmoke,positionAtCaveInteriorForSmoke,updatePlayerWaterState,chooseAssetAnimation,heroAnimationAudit,jumpControllerAudit,cavePassageAudit:()=>({wallCount:caveWallSegments.length,passageWidth:8,annexPassageWidth:6,eastBranchWidth:6,room:{minX:22,maxX:40,minZ:16,maxZ:34},annex:{minX:25,maxX:35,minZ:40,maxZ:45},eastRoom:{minX:48,maxX:54,minZ:20,maxZ:30},geodeChamber:{minX:48,maxX:60,minZ:36,maxZ:48},grotto:{minX:15,maxX:25,minZ:37,maxZ:47},geodeFloorY:groundAt(...l2w(caveG,54,42)),caveFloorY:caveG.position.y+.08,walls:caveWallSegments.map(w=>w.label),clearRoute:!caveWallBlocks(...l2w(caveG,15,25),...l2w(caveG,20,25)),annexRoute:!caveWallBlocks(...l2w(caveG,30,36),...l2w(caveG,30,42)),eastBranchRoute:!caveWallBlocks(...l2w(caveG,42,25),...l2w(caveG,50,25)),geodeRoute:!caveWallBlocks(...l2w(caveG,51,28),...l2w(caveG,51,42)),geodeBlockedAcrossWall:caveWallBlocks(...l2w(caveG,61,42),...l2w(caveG,59,42)),blockedAcrossWall:caveWallBlocks(...l2w(caveG,15,20),...l2w(caveG,15,22)),annexBlockedAcrossWall:caveWallBlocks(...l2w(caveG,24,38),...l2w(caveG,26,38)),eastBlockedAcrossWall:caveWallBlocks(...l2w(caveG,54,24),...l2w(caveG,54,26)),westRoute:!caveWallBlocks(...l2w(caveG,-36,-8),...l2w(caveG,-46,-8)),northMazeRoute:!caveWallBlocks(...l2w(caveG,-55,-25),...l2w(caveG,-55,-36)),westBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-63,-8),...l2w(caveG,-61,-8)),northBlockedAcrossWall:caveWallBlocks(...l2w(caveG,-48,-29),...l2w(caveG,-48,-31))}),caveWaterAudit:()=>{const c=l2w(caveG,20,42),o=l2w(caveG,13,42),b=waterBodyAt(c[0],c[1]);return {inside:b?.id==='cave_grotto',outside:waterBodyAt(o[0],o[1])?.id!=='cave_grotto',surfaceY:b?.surfaceY,depth:b?.depth,ground:groundAt(c[0],c[1]),baseY:caveG.position.y,room:{minX:15,maxX:25,minZ:37,maxZ:47}}},caveGrottoTraversalAudit:new URLSearchParams(location.search).has('smoke')?caveGrottoTraversalAudit:undefined,geodeChestLifecycleAudit:new URLSearchParams(location.search).has('smoke')?geodeChestLifecycleAudit:undefined,chestDistributionAudit,caveLightingAudit:()=>({torchCount:caveTorches.length,localPointLights:lights.filter(l=>l.parent===caveG).length,blackSphereOccluders:caveG.children.filter(o=>o.isMesh&&o.geometry===SPH&&o.material?.color?.getHex?.()===0x000000).length,entranceArchRocks:caveG.children.filter(o=>o.isMesh&&o.userData?.caveEntranceArchRock===true).length,ambientFillIntensity:caveAmbientFill.intensity,fixtureMeshes:caveG.children.filter(o=>o.isMesh&&o.geometry?.type==='CylinderGeometry').length,torchPositions:caveTorches.map(t=>({x:+t.position.x.toFixed(1),y:+t.position.y.toFixed(1),z:+t.position.z.toFixed(1)}))}),caveTrapAudit:()=>({caveBaseY:caveG.position.y,spikeCount:spikes.length,rows:5,columns:7,trapRoom:{minX:-64,maxX:-46,minZ:-47,maxZ:-35},damage:CAVE_SPIKE_DAMAGE,activeProbe:caveSpikeContact(0,0,0,{s:{position:{x:0,y:1,z:0}}}),inactiveProbe:!caveSpikeContact(0,0,0,{s:{position:{x:0,y:-2,z:0}}}),outsideProbe:!caveSpikeContact(3,0,0,{s:{position:{x:0,y:1,z:0}}})}),caveTrapLifecycleAudit:new URLSearchParams(location.search).has('smoke')?caveTrapLifecycleAudit:undefined,caveSpikeDamageTickAudit:new URLSearchParams(location.search).has('smoke')?caveSpikeDamageTickAudit:undefined,waterBodies:WATER_BODIES,maxSwimDepth,swimTargetY,moveWalk,blocked,collisionSolids:solids,auditCollisionSolids,collisionLimits:{slope:SLOPE,playerRadius:PLAYER_RADIUS,maxStepUp:MAX_STEP_UP},parkFixtures:parkFixtureSolids,sanctuaryFlags:sanctuaryFlagMeshes,sanctuaryDressingAudit:()=>({pathSlabs:sanctuaryPathSlabs.length,lanterns:sanctuaryPathLanterns.length,planters:sanctuaryPlanters.length,span:{minZ:Math.min(...sanctuaryPathSlabs.map(o=>o.position.z)),maxZ:Math.max(...sanctuaryPathSlabs.map(o=>o.position.z))},attached:sanctuaryPathSlabs.every(o=>o.parent===sanctuaryGroup)&&sanctuaryPathLanterns.every(o=>o.base.parent===sanctuaryGroup&&o.post.parent===sanctuaryGroup&&o.cap.parent===sanctuaryGroup&&o.lamp.parent===sanctuaryGroup)&&sanctuaryPlanters.every(o=>o.bed.parent===sanctuaryGroup&&o.shrub.parent===sanctuaryGroup&&o.bloom.parent===sanctuaryGroup)}),caveGems,fishingSpots:FAC.filter(f=>f.type==='fish'),coastalDockSpots,forestAssets:{spots:{buttress:cc0TreeSpots,canopy:cc0CanopySpots,undergrowth:cc0GroundSpots,fallenLog:cc0LogSpots}},POI,chests,FAC,snakes,chunks,player:P,animals,water,inventory,interact,toggleInventory,updateSummitChestStatus,shoreClear};
 window.__climboriaJarrellsPeak=window.ENDLESS_WILDS;
 /* ---------- main update ---------- */
 const zoneEl=document.getElementById('zone'),subEl=document.getElementById('sub');
@@ -1960,5 +2049,7 @@ animate();
 initChunks();
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
+<script src="/game-save.js"></script>
 </body>
 </html>

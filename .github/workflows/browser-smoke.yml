@@ -106,15 +106,69 @@ jobs:
               const dexPair={chainId:'solana',dexId:'search-fixture',pairAddress:'DexSearchPair11111111111111111111111111111',baseToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},priceUsd:'0.125',priceChange:{h24:4.2},volume:{h24:45678},liquidity:{usd:23456}};
               const dexSearchRequests=[];
               dexPage.on('request',request=>{if(request.url().includes('/latest/dex/search'))dexSearchRequests.push(request.url())});
+              // Force the initial market refresh to finish after the interactive search. This reproduces the race seen in main run 42920866242.
+              await dexPage.route('https://api.dexscreener.com/token-profiles/latest/v1',async route=>{
+                await new Promise(resolve=>setTimeout(resolve,1200));
+                return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+              });
+              const bootstrapQueries=new Set(['SOL','USDC','BONK','JUP','WIF','RAY','ORCA','PYTH']);
               await dexPage.route(/https:\/\/api\.dexscreener\.com\/latest\/dex\/search(?:\?.*)?$/,async route=>{
-                const url=new URL(route.request().url());
-                if(url.searchParams.get('q')==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
+                const url=new URL(route.request().url()),query=url.searchParams.get('q');
+                if(query==='CLIMBTEST'){console.log('Intercepted DEX fixture search:',url.href);return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});}
+                if(bootstrapQueries.has(query))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
                 return route.continue();
               });
-              await dexPage.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
+              await dexPage.reload({waitUntil:'domcontentloaded'});
+              const quoteSidePair={chainId:'solana',dexId:'quote-side-fixture',pairAddress:'QuoteSidePair1111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},priceUsd:'150',priceNative:'1200',priceChange:{h24:1},volume:{h24:999999},liquidity:{usd:999999}};
+              await dexPage.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const mint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[dexPair]})});
+                if(mint===dexMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([dexPair,quoteSidePair])});
                 return route.continue();
+              });
+              // The selected DEX token is synthetic. Keep its holder-intel RPC reads deterministic
+              // so public Solana RPC rate limits/403s cannot make this browser fixture flaky.
+              await dexPage.route(/^https:\/\/api\.mainnet-beta\.solana\.com\/?$/, async route => {
+                const request = route.request().postDataJSON();
+                const rpcFixtures = {
+                  getTokenLargestAccounts: {
+                    context: { slot: 1 },
+                    value: [{
+                      address: 'HolderTokenAccountFixture111111111111111111',
+                      amount: '250000',
+                      decimals: 6,
+                      uiAmount: 0.25,
+                      uiAmountString: '0.25'
+                    }]
+                  },
+                  getTokenSupply: {
+                    context: { slot: 1 },
+                    value: {
+                      amount: '1000000',
+                      decimals: 6,
+                      uiAmount: 1,
+                      uiAmountString: '1'
+                    }
+                  },
+                  getMultipleAccounts: {
+                    context: { slot: 1 },
+                    value: [{
+                      data: {
+                        parsed: {
+                          info: { owner: 'HolderOwnerFixture1111111111111111111111111' }
+                        }
+                      }
+                    }]
+                  }
+                };
+                return route.fulfill({
+                  status: 200,
+                  contentType: 'application/json',
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: request.id ?? 1,
+                    result: rpcFixtures[request.method] ?? { context: { slot: 1 }, value: null }
+                  })
+                });
               });
               // Keep Pump metadata local to the browser fixture; production CORS must not be weakened for localhost tests.
               await dexPage.route('https://api.climboria.fun/api/pump/coin**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({mint:dexMint,name:'Climboria Search Fixture',symbol:'CLIMBTEST',complete:false,source:'browser-smoke-fixture'})}));
@@ -123,7 +177,8 @@ jobs:
               if(!dexSearchResponse){const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText,handler:typeof window.discoverDexSearch}));throw new Error('DEX name search request did not complete. Requests='+JSON.stringify(dexSearchRequests)+' UI='+JSON.stringify(diagnostics)+' pageErrors='+JSON.stringify(errors));}
               if(!dexSearchResponse.ok())throw new Error('DEX name search fixture returned HTTP '+dexSearchResponse.status());
               await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:5000}).catch(async error=>{const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText}));throw new Error('DEX name search response succeeded but row did not render. UI='+JSON.stringify(diagnostics)+' requests='+JSON.stringify(dexSearchRequests)+' cause='+error.message)});
-              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
+              await dexPage.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('Live provider connection'),null,{timeout:5000});
+              if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search result did not survive the delayed initial market refresh');
               await dexPage.locator('#search').fill(dexMint);
               await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
               const exactRow=dexPage.locator('#rows button[data-mint="'+dexMint+'"]');
@@ -133,6 +188,18 @@ jobs:
               const chartUrl=new URL(await dexPage.locator('#detailChart').getAttribute('src'));
               if(chartUrl.searchParams.get('chartStyle')!=='1'||chartUrl.searchParams.get('interval')!=='15')throw new Error('DEX chart must default to visible 15-minute candlesticks: '+chartUrl.href);
               if(!(await dexPage.locator('#detailTitle').innerText()).includes('CLIMBTEST'))throw new Error('DEX chart detail did not match the exact searched token');
+              const detailPoolIds=await dexPage.locator('#detailPairs [data-pool]').evaluateAll(rows=>rows.map(row=>row.getAttribute('data-pool')));
+              if(!detailPoolIds.includes(dexPair.pairAddress)||detailPoolIds.includes(quoteSidePair.pairAddress))throw new Error('DEX token detail must include the requested mint as base token and exclude quote-side-only pools: '+JSON.stringify(detailPoolIds));
+              // Base search must discover tokens outside the finite boot-time query sample by name and exact ERC-20 contract.
+              const baseMint='0x1234567890abcdef1234567890abcdef12345678';
+              const basePair={chainId:'base',dexId:'base-search-fixture',pairAddress:'0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',baseToken:{address:baseMint,symbol:'BASEFIX',name:'Climboria Base Search Fixture'},quoteToken:{address:'0x4200000000000000000000000000000000000006',symbol:'WETH',name:'Wrapped Ether'},priceUsd:'1.25',priceChange:{h24:3.5},volume:{h24:76543},liquidity:{usd:45678},pairCreatedAt:Date.now()-86400000};
+              await dexPage.route('https://api.dexscreener.com/latest/dex/search**',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')==='BASEFIX')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([basePair])});return route.continue();});
+              await dexPage.route('https://api.dexscreener.com/token-pairs/v1/base/**',async route=>{const address=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');if(address.toLowerCase()===baseMint.toLowerCase())return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[basePair]})});return route.continue();});
+              await dexPage.locator('#baseSearch').fill('BASEFIX');
+              await dexPage.waitForFunction(()=>document.querySelector('#baseRows')?.innerText.includes('BASEFIX'),null,{timeout:10000});
+              await dexPage.locator('#baseSearch').fill(baseMint);
+              await dexPage.waitForFunction(mint=>document.querySelector('#baseRows')?.innerText.includes(mint.slice(0,8)),baseMint,{timeout:10000});
+              if(!(await dexPage.locator('#baseRows').innerText()).includes('BASEFIX'))throw new Error('Base exact-contract search did not render the matching token pool');
               await dexPage.goto('http://127.0.0.1:4173/swap/',{waitUntil:'domcontentloaded'});
               for (const selector of ['#connectWallet','#getQuote','#prepareSwap','#quoteAmount']) if(await page.locator(selector).count()!==1) throw new Error('Missing standalone Swap control: '+selector);
               // Major asset buttons must be plain clickable rows with no hover "SELECT" overlay.
@@ -148,6 +215,8 @@ jobs:
               let btcProxySearchIntercepted=false;
               const btcSearchRequests=[];
               page.on('request',request=>{if(request.url().includes('/api/tokens/search')||request.url().includes('/tokens/v2/search'))btcSearchRequests.push(request.url());});
+              const selectedPoolRequests=[];
+              page.on('request',request=>{if(request.url().includes('/token-pairs/v1/solana/'))selectedPoolRequests.push(request.url());});
               await page.route('**/*tokens/search**',async route=>{
                 const requestUrl=new URL(route.request().url());
                 if(requestUrl.searchParams.get('query')!=='BTC')return route.continue();
@@ -161,12 +230,12 @@ jobs:
               await page.route('https://api.jup.ag/tokens/v2/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(btcSearchFixture)}));
               const quoteOnlyMint='SysvarC1ock11111111111111111111111111111111';
               const quoteOnlyPair={...mockPair,pairAddress:'QuoteOnlyPair111111111111111111111111111111',baseToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},quoteToken:{address:quoteOnlyMint,symbol:'QONLY',name:'Quote Only'},priceUsd:'1.25'};
-              await page.route('https://api.dexscreener.com/latest/dex/tokens/**',async route=>{
+              await page.route('https://api.dexscreener.com/token-pairs/v1/solana/**',async route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[quoteOnlyPair]})});
-                if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
-                if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}]})}); }
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mockPair]})});
+                if(requestedMint===quoteOnlyMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([quoteOnlyPair])});
+                if(requestedMint==='NoPoolMint11111111111111111111111111111111')return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+                if(requestedMint==='SlowAsset11111111111111111111111111111111') { await new Promise(resolve=>setTimeout(resolve,700)); return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{...mockPair,pairAddress:'SlowAssetPair111111111111111111111111111111',baseToken:{address:requestedMint,symbol:'SLOW',name:'Slow Asset'},priceUsd:'0.01'}])}); }
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([mockPair])});
               });
               await page.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await page.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -191,6 +260,7 @@ jobs:
               const selectedMint=new URL(page.url()).searchParams.get('from');
               if(selectedMint!==mockMint) throw new Error('Explicit BTC token choice did not persist the exact selected token mint URL');
               await page.waitForFunction(()=>document.querySelector('#selectedAssetChart')?.src.includes('9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe'),null,{timeout:10000});
+              if(!selectedPoolRequests.some(url=>url.endsWith('/'+mockMint)))throw new Error('Selected BTC chart did not use the chain-specific token-pairs endpoint: '+JSON.stringify(selectedPoolRequests));
               if(!(await page.locator('#selectedAssetTitle').innerText()).startsWith('BTC')||!(await page.locator('#selectedAssetPrice').innerText()).includes('65,000')) throw new Error('Selected BTC chart title/price did not match the explicitly selected mint');
               // A pool where the selected mint is only the quote side must never show the base token's (e.g. SOL) chart or metrics.
               await page.evaluate(()=>window.updateSelectedAsset({id:'SysvarC1ock11111111111111111111111111111111',symbol:'QONLY',name:'Quote Only'}));
@@ -232,10 +302,10 @@ jobs:
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
               await mobileSwap.route('https://api.climboria.fun/api/tokens/search**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{id:mobileMockMint,symbol:'BTC',name:'Bitcoin (wrapped representation)',decimals:8,isVerified:true},{id:'11111111111111111111111111111111',symbol:'BTC',name:'Alternate BTC representation',decimals:8,isVerified:false}])}));
               await mobileSwap.route('https://api.climboria.fun/api/swap/quote**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({inAmount:'10000000',outAmount:'1234567',priceImpactPct:0.001,feeBps:0,router:'Jupiter fixture'})}));
-              await mobileSwap.route('https://api.dexscreener.com/latest/dex/tokens/**',route=>{
+              await mobileSwap.route('https://api.dexscreener.com/token-pairs/v1/solana/**',route=>{
                 const requestedMint=decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop()||'');
-                if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[mobileMockPair]})});
-                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
+                if(requestedMint===mobileMockMint)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([mobileMockPair])});
+                return route.fulfill({status:200,contentType:'application/json',body:'[]'});
               });
               await mobileSwap.route('https://api.mainnet-beta.solana.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
               await mobileSwap.route('https://solana-rpc.publicnode.com',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,result:{value:{decimals:8,amount:'100000000'}}})}));
@@ -291,6 +361,45 @@ jobs:
               console.log('PASS: homepage, 3 hero CTAs, desktop/mobile DEX routing, mobile menu, and mobile width.');
             } finally { await browser.close(); }
           })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+
+      - name: Test Supabase Auth session client and sign-in choices
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const page = await browser.newPage({viewport:{width:1365,height:900}});
+              const errors=[];
+              page.on('pageerror',error=>errors.push(error.message));
+              const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Homepage did not load for Auth smoke check');
+              await page.waitForFunction(()=>typeof window.CLIMBORIA_AUTH?.auth?.signInWithWeb3==='function',null,{timeout:15000});
+              await page.locator('[data-open-auth]:visible').first().click();
+              await page.locator('#authModal.open').waitFor({state:'visible',timeout:5000});
+              for(const selector of ['#authSolana','#authEthereum','#authGoogle','#authX','#authEmailForm','#authSignIn','#authSignUp','#authSignOut','#authGuest']){
+                if(await page.locator(selector).count()!==1) throw new Error('Missing Auth control: '+selector);
+              }
+              const state=await page.evaluate(()=>({
+                client:!!window.CLIMBORIA_AUTH,
+                password:typeof window.CLIMBORIA_AUTH?.auth?.signInWithPassword,
+                web3:typeof window.CLIMBORIA_AUTH?.auth?.signInWithWeb3,
+                oauth:typeof window.CLIMBORIA_AUTH?.auth?.signInWithOAuth,
+                signUp:typeof window.CLIMBORIA_AUTH?.auth?.signUp,
+                guestDisabled:document.querySelector('#authGuest')?.disabled,
+                solanaDisabled:document.querySelector('#authSolana')?.disabled,
+                ethereumDisabled:document.querySelector('#authEthereum')?.disabled
+              }));
+              if(!state.client||state.password!=='function'||state.web3!=='function'||state.oauth!=='function'||state.signUp!=='function'){
+                throw new Error('Supabase Auth SDK/session methods failed to initialize: '+JSON.stringify(state));
+              }
+              if(!state.guestDisabled||state.solanaDisabled||state.ethereumDisabled) throw new Error('Auth provider gates are in an unexpected state: '+JSON.stringify(state));
+              if(errors.length) throw new Error('Auth modal runtime errors: '+errors.join(' | '));
+              await page.screenshot({path:'climboria-auth-modal.png',fullPage:true});
+              console.log('PASS Supabase Auth SDK initialization, email/OAuth/Web3 methods, wallet sign-in choices, and gated guest sign-in.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
       - name: Test Cloudflare DEX swap proxy
@@ -361,7 +470,7 @@ jobs:
               ]};
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
-                if(url.includes('/latest/dex/tokens/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
+                if(url.includes('/token-pairs/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
                 if(url.includes('/latest/dex/search')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
                 if(url.includes('/token-profiles/latest/v1')) return route.fulfill({status:200,contentType:'application/json',body:'[]'});
                 if(url.includes('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData.pairs)});
@@ -631,6 +740,237 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test game cloud-save adapter initialization
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const page = await browser.newPage({viewport:{width:1280,height:800}});
+              const errors=[];
+              page.on('pageerror',error=>errors.push(error.message));
+              const response=await page.goto('http://127.0.0.1:4173/game/play.html',{waitUntil:'domcontentloaded'});
+              if(!response?.ok()) throw new Error('Game page did not load for cloud-save check');
+              await page.waitForFunction(()=>typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.capture==='function' && !!window.__CLIMBORIA_GAME_SAVE_CLIENT,{timeout:20000});
+              await page.waitForFunction(()=>window.__CLIMBORIA_GAME_SAVE?.status==='local-only',{timeout:10000});
+              const state=await page.evaluate(()=>({
+                capture:typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.capture,
+                restore:typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.restore,
+                client:!!window.__CLIMBORIA_GAME_SAVE_CLIENT,
+                state:window.__CLIMBORIA_GAME_SAVE?.status,
+                user:window.__CLIMBORIA_GAME_SAVE?.userId
+              }));
+              if(state.capture!=='function'||state.restore!=='function'||!state.client||state.user!==null||state.state!=='local-only'){
+                throw new Error('Unexpected unauthenticated cloud-save state: '+JSON.stringify(state));
+              }
+              if(errors.length) throw new Error('Game cloud-save runtime errors: '+errors.join(' | '));
+
+              const scopePage=await browser.newPage({viewport:{width:1280,height:800}});
+              await scopePage.addInitScript(()=>{
+                localStorage.setItem('climboria_jarrell_inventory_v1',JSON.stringify([{name:'GuestScopeFixture',qty:2}]));
+              });
+              const scopeResponse=await scopePage.goto('http://127.0.0.1:4173/game/play.html',{waitUntil:'domcontentloaded'});
+              if(!scopeResponse?.ok()) throw new Error('Game page did not load for account-scope isolation check');
+              await scopePage.waitForFunction(()=>typeof window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.setUserScope==='function',null,{timeout:20000});
+              const scopeState=await scopePage.evaluate(()=>{
+                const adapter=window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                const baseKey='climboria_jarrell_inventory_v1';
+                const accountAKey=baseKey+':user:auth-user-A';
+                const accountBKey=baseKey+':user:auth-user-B';
+                // Restore a valid gameplay save so the adapter is in walk mode (capture()
+                // intentionally returns null during the game's cinematic intro state).
+                if(!adapter.restore({version:1,player:{x:0,z:0,yaw:0},inventory:[{name:'GuestScopeFixture',qty:2}]})){
+                  throw new Error('Could not seed a valid guest inventory fixture through the game restore adapter.');
+                }
+                const read=key=>JSON.parse(localStorage.getItem(key)||'[]');
+                const initialGuest=read(baseKey);
+                adapter.setUserScope('auth-user-A',true);
+                const accountA=read(accountAKey);
+                const guestKeyAfterClaim=localStorage.getItem(baseKey);
+                adapter.setUserScope(null,false);
+                const guest=read(baseKey);
+                adapter.setUserScope('auth-user-B',true);
+                const accountB=read(accountBKey);
+                adapter.setUserScope('auth-user-A',false);
+                const accountAReload=read(accountAKey);
+                return {initialGuest,accountA,guestKeyAfterClaim,guest,accountB,accountAReload};
+              });
+              if(!scopeState.initialGuest.some(item=>item.name==='GuestScopeFixture')||
+                 !scopeState.accountA.some(item=>item.name==='GuestScopeFixture')||
+                 scopeState.guest.length!==0||
+                 scopeState.accountB.length!==0||
+                 !scopeState.accountAReload.some(item=>item.name==='GuestScopeFixture')){
+                throw new Error('Backpack data crossed account boundaries: '+JSON.stringify(scopeState));
+              }
+              await scopePage.close();
+              console.log('PASS account-scoped backpack cache: first account adopts unscoped guest inventory, sign-out returns to empty guest scope, other accounts remain isolated.');
+              console.log('PASS game save adapter + Supabase client initialized; unauthenticated browser remains local-only.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
+      - name: Test authenticated cloud-save load, insert, update, and conflict paths with REST fixtures
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const mockSdk = `(() => {
+            const config = window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ || {};
+            const copy = value => value == null ? null : JSON.parse(JSON.stringify(value));
+            const state = {
+              user: { id: config.userId || 'cloud-user-A', is_anonymous: false, email: 'cloud-fixture@example.test' },
+              row: copy(config.row || null),
+              conflictNextUpdate: false,
+              requests: []
+            };
+            window.__CLIMBORIA_SUPABASE_MOCK_STATE__ = state;
+            const makeQuery = table => {
+              if (table !== 'player_saves') throw new Error('Unexpected mocked table: ' + table);
+              let action = 'select', payload = null, filters = {};
+              const query = {
+                select(fields) { query.fields = fields; return query; },
+                eq(key, value) { filters[key] = value; return query; },
+                update(value) { action = 'update'; payload = copy(value); return query; },
+                insert(value) { action = 'insert'; payload = copy(value); return query; },
+                async maybeSingle() {
+                  if (action === 'select') {
+                    state.requests.push({ method: 'select', filters: copy(filters) });
+                    return { data: copy(state.row), error: null };
+                  }
+                  if (action === 'update') {
+                    state.requests.push({ method: 'update', payload: copy(payload), filters: copy(filters) });
+                    if (state.conflictNextUpdate) {
+                      state.conflictNextUpdate = false;
+                      return { data: null, error: null };
+                    }
+                    const savedAt = '2026-11-11T00:00:01.000Z';
+                    state.row = { ...(state.row || {}), ...copy(payload), user_id: filters.user_id, saved_at: savedAt };
+                    return { data: { saved_at: savedAt }, error: null };
+                  }
+                  throw new Error('Unexpected maybeSingle action: ' + action);
+                },
+                async single() {
+                  if (action !== 'insert') throw new Error('Unexpected single action: ' + action);
+                  state.requests.push({ method: 'insert', payload: copy(payload) });
+                  const savedAt = '2026-11-11T00:00:02.000Z';
+                  state.row = { ...copy(payload), saved_at: savedAt };
+                  return { data: { saved_at: savedAt }, error: null };
+                }
+              };
+              return query;
+            };
+            window.supabase = {
+              createClient() {
+                return {
+                  from: makeQuery,
+                  auth: {
+                    onAuthStateChange(callback) {
+                      setTimeout(() => callback('INITIAL_SESSION', { user: state.user }), 0);
+                      return { data: { subscription: { unsubscribe() {} } } };
+                    },
+                    async getSession() { return { data: { session: { user: state.user } }, error: null }; }
+                  }
+                };
+              }
+            };
+          })();`;
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const existingSavedAt = '2026-11-10T22:00:00.000Z';
+              const existingRow = {
+                user_id: 'cloud-user-A', schema_version: 1, saved_at: existingSavedAt,
+                save_data: { version: 1, player: { x: 4, z: -18, yaw: 0.25 }, inventory: [{ name: 'CloudFixture', qty: 3 }] }
+              };
+              const page = await browser.newPage({viewport:{width:1280,height:800}});
+              const errors = [];
+              page.on('pageerror', error => errors.push(error.message));
+              await page.addInitScript(config => { window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ = config; }, { userId: 'cloud-user-A', row: existingRow });
+              await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', route => route.fulfill({status:200,contentType:'application/javascript',body:mockSdk}));
+              const response = await page.goto('http://127.0.0.1:4173/game/play.html', {waitUntil:'domcontentloaded'});
+              if (!response?.ok()) throw new Error('Game page did not load for authenticated cloud-save fixture');
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'loaded', null, {timeout:30000});
+              const restored = await page.evaluate(() => ({
+                userId: window.__CLIMBORIA_GAME_SAVE?.userId,
+                snapshot: window.__CLIMBORIA_GAME_SAVE_ADAPTER__?.capture(),
+                requests: window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests
+              }));
+              if (restored.userId !== 'cloud-user-A' || restored.snapshot?.player?.x !== 4 ||
+                  !restored.snapshot?.inventory?.some(item => item.name === 'CloudFixture' && item.qty === 3) ||
+                  !restored.requests?.some(request => request.method === 'select' && request.filters.user_id === 'cloud-user-A')) {
+                throw new Error('Authenticated cloud save did not load the owner-filtered row: ' + JSON.stringify(restored));
+              }
+
+              await page.evaluate(() => {
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:13,z:-27,yaw:0.75},inventory:[{name:'CloudUpdatedFixture',qty:5}]})) throw new Error('Could not seed changed cloud-save state');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'synced' &&
+                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'update'), null, {timeout:10000});
+              const updated = await page.evaluate(() => ({
+                status: window.__CLIMBORIA_GAME_SAVE?.status,
+                request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'update'),
+                row: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.row
+              }));
+              if (updated.status !== 'synced' || updated.request?.filters?.user_id !== 'cloud-user-A' ||
+                  updated.request?.filters?.saved_at !== existingSavedAt ||
+                  updated.request?.payload?.save_data?.player?.x !== 13 ||
+                  !updated.request?.payload?.save_data?.inventory?.some(item => item.name === 'CloudUpdatedFixture' && item.qty === 5) ||
+                  updated.row?.saved_at !== '2026-11-11T00:00:01.000Z') {
+                throw new Error('Optimistic cloud-save update did not use the last observed saved_at or persist the new snapshot: ' + JSON.stringify(updated));
+              }
+
+              await page.evaluate(() => {
+                const state = window.__CLIMBORIA_SUPABASE_MOCK_STATE__;
+                state.conflictNextUpdate = true;
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:31,z:-44,yaw:1.25},inventory:[{name:'ConflictFixture',qty:1}]})) throw new Error('Could not seed conflict fixture');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
+              await page.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'conflict', null, {timeout:10000});
+              const conflict = await page.evaluate(() => ({
+                status: window.__CLIMBORIA_GAME_SAVE?.status,
+                ready: document.documentElement.dataset.climboriaCloudSave,
+                lastRequest: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.filter(request => request.method === 'update').slice(-1)[0]
+              }));
+              if (conflict.status !== 'conflict' || conflict.ready !== 'conflict' ||
+                  conflict.lastRequest?.filters?.saved_at !== '2026-11-11T00:00:01.000Z') {
+                throw new Error('A competing cloud save was not blocked using the last known version: ' + JSON.stringify(conflict));
+              }
+              if (errors.length) throw new Error('Authenticated cloud-save runtime errors: ' + errors.join(' | '));
+              await page.close();
+
+              const newPage = await browser.newPage({viewport:{width:1280,height:800}});
+              await newPage.addInitScript(config => { window.__CLIMBORIA_SUPABASE_TEST_CONFIG__ = config; }, { userId: 'cloud-user-B', row: null });
+              await newPage.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', route => route.fulfill({status:200,contentType:'application/javascript',body:mockSdk}));
+              const newResponse = await newPage.goto('http://127.0.0.1:4173/game/play.html', {waitUntil:'domcontentloaded'});
+              if (!newResponse?.ok()) throw new Error('Game page did not load for first-save insert fixture');
+              await newPage.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'ready', null, {timeout:30000});
+              await newPage.evaluate(() => {
+                const adapter = window.__CLIMBORIA_GAME_SAVE_ADAPTER__;
+                if (!adapter.restore({version:1,player:{x:6,z:-14,yaw:0.5},inventory:[{name:'FirstSaveFixture',qty:1}]})) throw new Error('Could not seed first-save walk-mode fixture');
+                window.dispatchEvent(new CustomEvent('climboria:inventory'));
+              });
+              await newPage.waitForFunction(() => window.__CLIMBORIA_GAME_SAVE?.status === 'synced' &&
+                window.__CLIMBORIA_SUPABASE_MOCK_STATE__?.requests?.some(request => request.method === 'insert'), null, {timeout:10000});
+              const inserted = await newPage.evaluate(() => ({
+                userId: window.__CLIMBORIA_GAME_SAVE?.userId,
+                request: window.__CLIMBORIA_SUPABASE_MOCK_STATE__.requests.find(request => request.method === 'insert'),
+                status: window.__CLIMBORIA_GAME_SAVE?.status
+              }));
+              if (inserted.userId !== 'cloud-user-B' || inserted.status !== 'synced' ||
+                  inserted.request?.payload?.user_id !== 'cloud-user-B' ||
+                  inserted.request?.payload?.schema_version !== 1 ||
+                  !inserted.request?.payload?.save_data?.player) {
+                throw new Error("First authenticated save did not insert the session owner schema-v1 row: " + JSON.stringify(inserted));
+              }
+              console.log('PASS authenticated cloud-save fixture: owner-filtered load, saved_at optimistic update, conflict lock, and first-row insert.');
+              await newPage.close();
+            } finally { await browser.close(); }
+          })().catch(error => { console.error(error); process.exit(1); });
+          JS
+
       - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
         timeout-minutes: 21
         run: |
@@ -643,6 +983,7 @@ jobs:
         with:
           name: climboria-browser-smoke-screenshots
           path: |
+            climboria-auth-modal.png
             climboria-desktop-home.png
             climboria-mobile-home.png
             climboria-desktop-gameplay.png

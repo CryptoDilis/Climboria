@@ -98,6 +98,52 @@ jobs:
               raise SystemExit("Homepage must not imply an unverified token launch is already official.")
           print("Launch target wording is clearly marked as planned and subject to verification.")
           PY
+      - name: Validate Supabase Auth wiring and browser-safe configuration
+        run: |
+          node --check auth.js
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          auth = Path("auth.js").read_text(encoding="utf-8")
+          required_html = [
+              'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0',
+              'src="/auth.js"', 'id="authGoogle"', 'id="authX"',
+              'id="authEmailForm"', 'id="authSignIn"', 'id="authSignUp"',
+              'id="authSignOut"', 'id="authGuest"', 'id="authSolana"', 'id="authEthereum"',
+          ]
+          missing = [item for item in required_html if item not in html]
+          if missing:
+              raise SystemExit(f"Missing Auth UI wiring: {missing}")
+          required_auth = [
+              'sb_publishable_', 'auth.signInWithPassword', 'auth.signUp',
+              'auth.signInWithOAuth', "startOAuth('x')", "startOAuth('google')",
+              "auth.signOut({ scope: 'local' })", 'onAuthStateChange',
+              'Guest progress is not linked to another login yet.',
+              "provider === 'x'", 'auth.signInWithWeb3',
+              "signInWithWallet('solana')", "signInWithWallet('ethereum')",
+              "const AUTH_REDIRECT_URL = new URL('/', window.location.origin).toString()",
+              'emailRedirectTo: AUTH_REDIRECT_URL', 'redirectTo: AUTH_REDIRECT_URL',
+          ]
+          missing = [item for item in required_auth if item not in auth]
+          if missing:
+              raise SystemExit(f"Missing Supabase Auth behavior: {missing}")
+          key_marker = "const SUPABASE_PUBLISHABLE_KEY = '"
+          key_start = auth.find(key_marker)
+          if key_start < 0:
+              raise SystemExit("Browser Auth must define a Supabase publishable key.")
+          key_value = auth[key_start + len(key_marker):].split("'", 1)[0]
+          if not key_value.startswith("sb_publishable_"):
+              raise SystemExit("Browser Auth must use a Supabase publishable key, not a privileged key.")
+          if "new URL('/?auth=confirmed'" in auth or "new URL('/?auth=callback'" in auth:
+              raise SystemExit("Auth callbacks must use the canonical, allow-listed site-root redirect.")
+          if "emailRedirectTo: AUTH_REDIRECT_URL" not in auth or "redirectTo: AUTH_REDIRECT_URL" not in auth:
+              raise SystemExit("Email and OAuth must share the canonical Auth redirect URL.")
+          if 'id="authWallet"' in html:
+              raise SystemExit("Legacy wallet-connect-only button must not remain.")
+          if 'id="authGoogle" type="button" disabled' in html or 'id="authX" type="button" disabled' in html:
+              raise SystemExit("Google/X controls should invoke their configured OAuth providers.")
+          print("Supabase Auth UI wiring and public-key exposure checks passed.")
+          PY
       - name: Syntax-check inline JavaScript
         run: |
           python3 - <<'PY'
@@ -162,6 +208,29 @@ jobs:
           print(f"DEX/Swap syntax audit extracted {total} inline script(s).")
           PY
           for file in /tmp/climboria-dex-swap-js/*; do node --check "$file"; done
+      - name: Validate game cloud-save schema and ownership checks
+        run: |
+          node --check game-save.js
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("game/play.html").read_text(encoding="utf-8")
+          save = Path("game-save.js").read_text(encoding="utf-8")
+          required_html = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0', 'src="/game-save.js"', '__CLIMBORIA_GAME_SAVE_ADAPTER__', 'setUserScope(userId, migrateUnscopedInventory = false)']
+          required_save = [
+              "from('player_saves')", "select('schema_version,save_data,saved_at')",
+              ".eq('user_id', activeUserId)", ".eq('saved_at', remoteSavedAt)",
+              'schema_version: 1', 'auth.onAuthStateChange', 'auth.getSession',
+              'is_anonymous', 'TextEncoder', 'A newer cloud save exists on another device',
+              'adapter.setUserScope?.(null, false)', 'adapter.setUserScope?.(user.id, !data)',
+
+          ]
+          missing = [item for item in required_html if item not in html] + [item for item in required_save if item not in save]
+          if missing:
+              raise SystemExit(f'Missing cloud-save requirements: {missing}')
+          if 'service_role' in save or 'sb_secret_' in save:
+              raise SystemExit('Privileged Supabase credentials must never ship to the browser.')
+          print('Cloud-save session, owner filter, schema version, and optimistic concurrency checks passed.')
+          PY
       - name: Syntax-check game/play.html scripts
         run: |
           python3 - <<'PY'
@@ -244,3 +313,4 @@ jobs:
           print(f"Audit passed for {len(files)} HTML files; extracted {count} inline scripts.")
           PY
           find /tmp/climboria-other-html-scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | while IFS= read -r -d '' file; do node --check "$file"; done
+
