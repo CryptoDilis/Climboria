@@ -297,3 +297,12 @@ Initial authoritative-source findings:
 - [ ] Controlled Devnet token movement/fee-destination lifecycle; production Cloudflare deployment verification.
 - [ ] Production Login provider verification, then Launchpad lifecycle/Devnet proof.
 - [ ] Separate mobile GLB parser/decode/texture/handoff diagnosis after ecosystem priorities.
+
+
+## Progress addendum — stale SolFi payload path removed — 2026-11-11 20:25 PHT
+- Follow-up review after SolFi variant 61 was removed found two stale references: the route decoder's boolean-payload guard still mentioned variant 61, and the test fixture helper still constructed a SolFi direction byte.
+- Counter-fix: removed variant 61 from both stale branches; only supported Whirlpool variant 17 now uses the one-byte direction payload.
+- Added a negative regression fixture that mutates the Whirlpool direction byte to value 2 and requires the decoder to reject it as an invalid boolean payload.
+- This is a narrow parser/test consistency fix; it does not add DEX account-role approval or alter either execution/signable-order gate.
+- Exact-head CI before this cleanup: Validate `43018658281` and Browser Smoke `43018658229` both SUCCESS on `3a1f9575978e510990e17c5bd73b6a5e5f8de71f`.
+- [ ] Rerun exact-head Validate and DEX/Login Browser Smoke for this cleanup commit; record full results.

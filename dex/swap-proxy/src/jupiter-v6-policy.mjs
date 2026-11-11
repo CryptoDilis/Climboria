@@ -50,7 +50,7 @@ export function decodeJupiterV6Route(data) {
     if (!support) fail("Jupiter route contains an unsupported DEX variant: " + variant);
     if (offset + support.payloadBytes + 3 > data.length) fail("Truncated Jupiter route step payload");
     const payload = data.slice(offset, offset + support.payloadBytes);
-    if (payload.some(value => value > 1) && (variant === 17 || variant === 61)) {
+    if (payload.some(value => value > 1) && variant === 17) {
       fail("Jupiter route contains an invalid boolean variant payload");
     }
     offset += support.payloadBytes;

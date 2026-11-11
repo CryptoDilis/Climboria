@@ -16,7 +16,7 @@ function u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24)
 function u64(n) { const x = BigInt(n); return Array.from({ length: 8 }, (_, i) => Number((x >> BigInt(8 * i)) & 255n)); }
 function routeData({ variant = 7, percent = 100, inputIndex = 0, outputIndex = 1, inAmount = 1000, outAmount = 950, slippage = 50, fee = 0 } = {}) {
   const discriminator = [229, 23, 203, 151, 122, 227, 173, 42];
-  const payload = variant === 17 || variant === 61 ? [1] : [];
+  const payload = variant === 17 ? [1] : [];
   return new Uint8Array([...discriminator, ...u32(1), variant, ...payload, percent, inputIndex, outputIndex, ...u64(inAmount), ...u64(outAmount), ...u16(slippage), fee]);
 }
 function parsed({ data = routeData(), extraProgram = false, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
@@ -50,6 +50,9 @@ test("rejects unknown top-level programs, extra signers and unsupported route va
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 8 })), /unsupported DEX variant/);
   // SolFi enum 61 has no matching CPI instruction/account schema in the pinned Jupiter CPI interface.
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 61 })), /unsupported DEX variant/);
+  const invalidWhirlpoolDirection = routeData({ variant: 17 });
+  invalidWhirlpoolDirection[13] = 2;
+  assert.throws(() => decodeJupiterV6Route(invalidWhirlpoolDirection), /invalid boolean variant payload/);
 });
 
 test("rejects wrong taker, output mint, amounts, fee and excessive slippage", () => {
