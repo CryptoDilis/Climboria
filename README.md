@@ -3405,3 +3405,10 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Exact-head Validate and Browser Smoke for PR #242 commit `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93` must pass before merge.
 
 **Exact next task:** poll PR #242's new Validate and Browser Smoke runs. If the HUD wait still fails, use the new state snapshot to determine which actual CSS/class/element condition is preventing visibility; do not reapply any of the prior orientation patches.
+
+
+### Fourth counter-fix verification — PR #242 exact head (2026-11-11)
+
+- [x] Commit `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93` Validate run `42943303956`: SUCCESS.
+- [ ] Browser Smoke run `42943304017`: IN_PROGRESS. It has progressed through homepage/DEX routing and is currently in standalone DEX market and quote-preview checks; no failed step reported at this poll.
+- [ ] Await the mobile gameplay/HUD stage and screenshot artifact before deciding merge readiness.
