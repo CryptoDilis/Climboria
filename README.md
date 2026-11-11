@@ -1,59 +1,63 @@
-# CLIMBORIA — ACTIVE EXECUTION QUEUE (SOURCE OF TRUTH)
+# CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
 
-**Updated: 2026-11-11. Follow this queue in order. Do not restart completed work, create duplicate PRs, or jump to a lower priority while a higher one is unresolved.** Older dated progress notes below are historical evidence only; this section is the sole active task list.
+**Locked on: 2026-11-11. These four priorities are the agreed product execution order. Do not reorder, skip, or replace them without the user's explicit instruction.** Work top-down. The current gameplay release gate is a prerequisite to shipping these priorities, not a replacement priority.
 
-## P0 — Finish and ship the current gameplay release gate
+## Release gate — finish current gameplay blocker before P1
 
-**Current owner task: PR #246 — Sanctuary spawn alignment.**
-- [x] Merge PR #242's validated mobile-orientation test fix into `main` (merge `66909629ea0fcf9dec75b0e9002a776072fe9b57`).
-- [x] Confirm current-main Validate passed (`42948561557`) and Pages deployment passed (`42948561382`).
-- [x] Implement one shared Sanctuary landing-center spawn coordinate in PR #246; Validate passed on exact head `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c` (`42948629207`).
-- [ ] Finish PR #246 Browser Smoke `42948629303`: complete Jarrell's Peak desktop + mobile gameplay checks and screenshot upload.
-- [ ] Inspect the uploaded desktop/mobile screenshots. Confirm takeover, teleport and death-respawn all place the avatar safely at the physical Sanctuary landing center; verify collision/grounding and mobile orientation.
-- [ ] If Browser Smoke fails: inspect the exact failed step and its logs/artifact; identify the new root cause; make one targeted, non-duplicative fix; rerun Validate + Browser Smoke on the new exact head. Never repeat the same failed patch or weaken assertions.
-- [ ] Merge PR #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified. Confirm Pages deployment on the resulting main commit.
-- [ ] Once #246 is merged, mark P0 complete and move immediately to P1. Do not reopen or recreate the superseded #244/#245 implementations.
+**Sole active gameplay fix: PR #246 — Sanctuary spawn alignment.**
+- [x] PR #242's validated mobile-orientation harness merged to main: `66909629ea0fcf9dec75b0e9002a776072fe9b57`.
+- [x] Main Validate `42948561557` and Pages deployment `42948561382` passed.
+- [x] PR #246 Sanctuary landing-center spawn fix implemented; exact-head Validate `42948629207` passed on `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c`.
+- [ ] Finish PR #246 Browser Smoke `42948629303`, inspect desktop/mobile gameplay screenshots, and confirm takeover, teleport and death-respawn align with the physical Sanctuary landing, including grounding/collision/orientation.
+- [ ] If a check fails, inspect its exact failing step, logs and artifacts; identify the new root cause; implement a distinct targeted counter-fix; rerun Validate and Browser Smoke on the new exact head. Never repeat failed code or weaken assertions.
+- [ ] Merge #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified; confirm Pages deployment on resulting main.
+- [ ] Do not reopen/recreate superseded #244/#245.
 
-**Current P0 run status at last check:** PR #246 Validate SUCCESS; Browser Smoke still running at gameplay step 15, screenshot upload pending. Main post-merge Browser Smoke `42948561787` also still running at gameplay step 15. These are running, not failed. Poll them; do not start duplicate runs while active.
+**Last recorded run state:** PR #246 Browser Smoke `42948629303` and main Browser Smoke `42948561787` were still running at Jarrell's Peak gameplay step 15, screenshot upload pending. Poll existing runs; do not start duplicate runs or call an active run failed.
 
-## P1 — Ship the live DEX market-discovery upgrade
+## P1 — LIVE DEX: Complete Solana market discovery and testing
 
-**Source donor: PR #243; do not merge it as-is.**
-- [ ] After P0 is closed, create one fresh branch from latest `main`.
-- [ ] Port only `dex/index.html` and `dex/premium-terminal.js` from PR #243 head `9b967b119bc52be5b259f4579cea751b4726829e`. Do not copy its stale workflow/test harness or merge its old base.
-- [ ] Preserve live provider-backed Solana discovery (latest token profiles + top boosts, batched pair lookup, liquidity/price validation, volume sorting); show honest empty/provider-error states and never invent tokens, prices, or rankings.
-- [ ] Run syntax/Validate + full Browser Smoke on the exact new head, including desktop, 390px/360px mobile, search, token detail navigation, provider-error and true-empty states.
-- [ ] Diagnose any failed check from its own logs; apply a distinct root-cause fix, then rerun. Merge only after all required checks pass.
+- [ ] After the gameplay release gate closes, create one fresh branch from latest `main`.
+- [ ] Port only `dex/index.html` and `dex/premium-terminal.js` from donor PR #243 head `9b967b119bc52be5b259f4579cea751b4726829e`; do not merge its stale base or copy its old workflow/test harness.
+- [ ] Complete live provider-backed Solana discovery: latest token profiles + top boosts, batched pair lookup, liquidity/price validation, volume sorting, and real token detail navigation.
+- [ ] Keep provider errors and true-empty results explicit and honest. Never fabricate tokens, prices, rankings, volume, liquidity or chart history.
+- [ ] Run syntax/Validate and full Browser Smoke on the exact new head: desktop, 390px and 360px mobile, search, token detail, provider-error and true-empty cases. Review screenshots.
+- [ ] Diagnose each failure from its own logs/artifacts and use a distinct root-cause fix. Merge only after all required exact-head checks pass and Pages deployment is confirmed.
 
-## P2 — Finish Swap transaction security (do not expose unsafe execution)
+## P2 — SWAP: Complete transaction security and controlled Devnet testing
 
-- [ ] Reconcile the existing Swap work (#233–#235) onto latest main once P1 is merged; do not merge stale-base PRs directly.
-- [ ] Complete R1–R4: resolve and validate Address Lookup Tables; enforce an isolated semantic instruction allowlist and reject unexpected programs/accounts/instructions; enforce quote/order binding, expiry, replay protection and idempotency; add adversarial tests.
-- [ ] Run controlled Devnet end-to-end lifecycle tests (quote → server-built transaction → wallet signing → submit → confirmation/failure/replay cases).
-- [ ] Verify Cloudflare production Worker deployment, secrets/bindings, health, CORS, rate limits, logs and rollback.
-- [ ] Keep wallet transaction execution fail-closed until every security and production gate is evidenced. Read-only quotes/market data stay live.
+- [ ] Reconcile Swap work from PRs #233–#235 onto latest main after P1; do not merge stale-base PRs directly.
+- [ ] Complete ALT resolution and validation, including adversarial malformed/missing/wrong-owner/deactivated table cases, index bounds, loaded-key ordering and RPC limits.
+- [ ] Implement a separate semantic instruction allowlist: decode only explicitly supported programs/instructions; validate account roles, mints, source/destination, amounts, minimum output, slippage, fees, signer/writable constraints and all token movements; reject unknown programs/instructions and unexpected transfers.
+- [ ] Enforce quote/order binding, expiry, replay protection, concurrency safety and idempotency; add adversarial tests.
+- [ ] Run controlled Devnet end-to-end lifecycle: quote → server-built transaction → wallet sign → submit → confirm/failure, including expiry, replay, duplicate, timeout/unknown-outcome and settlement-failure cases.
+- [ ] Verify production Cloudflare Worker deployment, secrets/bindings, Durable Object migration, health, TLS/CORS, rate limits, logs, monitoring, alerts and rollback.
+- [ ] Keep wallet execution fail-closed until security review, Devnet evidence and production controls all pass. Keep live read-only market data/quotes available where verified; never bypass transaction gates.
 
-## P3 — Complete real player Login and account persistence
+## P3 — LOGIN: Complete actual Supabase authentication and player persistence
 
-- [ ] Reconcile PR #236 auth hardening and PR #228 provider foundation onto latest main; inspect migrations and avoid duplicate auth implementations.
-- [ ] Apply/verify Supabase migrations, RLS and per-player data ownership.
-- [ ] Configure actual redirect allowlists and selected OAuth providers, SMTP/email and wallet sign-in settings in Supabase; configuration must be verified in the provider dashboard, not inferred from mocked tests.
-- [ ] Test real controlled accounts through sign-in, sign-out, refresh/session restore, account linking and unauthorized data access. Do not claim production-live until verified.
+- [ ] Reconcile PR #236 auth hardening and PR #228 provider foundation onto latest main; inspect migrations and consolidate rather than duplicate auth implementations.
+- [ ] Apply and verify actual Supabase migrations, RLS policies and per-player data ownership.
+- [ ] Configure real redirect allowlists, selected OAuth providers, SMTP/email and wallet sign-in settings in Supabase; verify actual provider dashboard settings, not mocks.
+- [ ] Test controlled real accounts: sign-in, sign-out, refresh/session restoration, account linking, persistence across sessions and unauthorized cross-player data access.
+- [ ] Verify production-domain redirects, error handling and security. Do not call Login production-live until real provider/account tests pass.
 
-## P4 — Complete Launchpad provenance and custody
+## P4 — LAUNCHPAD: Complete provenance, custody and migration verification
 
-- [ ] Reconcile PR #231 read-only LaunchLab provenance work onto latest main after P0–P3.
-- [ ] Verify official provider/API provenance, mint/pool/curve state, migration authority and custody boundaries.
-- [ ] Keep launch/create/buy/sell actions disabled until transaction security, custody, Devnet and production controls are independently verified.
+- [ ] Reconcile PR #231's read-only LaunchLab provenance work onto latest main only after P1–P3 are complete.
+- [ ] Verify official provider/API provenance, mint and pool identity, bonding-curve state, migration authority, migration destination and custody boundaries.
+- [ ] Verify signer authority, treasury ownership, upgrade/admin controls, fee destinations and failure/recovery paths with evidence.
+- [ ] Keep launch/create/buy/sell execution unavailable until Swap security, controlled Devnet testing, custody review and production controls are independently verified.
+- [ ] Only mark Launchpad complete after provenance, custody and migration tests pass against the actual provider/on-chain state.
 
-## Execution rules — apply to every task
+## Non-negotiable execution rules
 
-1. Check latest `main`, open PRs and active workflow runs before editing.
-2. Work on one priority at a time; one authoritative PR per fix.
-3. Never commit the same failed code again. Read the failing step/log, state the root cause, choose a different targeted counter-strategy, and rerun the relevant tests.
-4. Do not disable live features to make tests pass. Do not reduce acceptance criteria, fake provider data, or claim production readiness from mocks.
-5. After each task, record the exact commit/PR, changed files, check-run IDs and terminal results, unresolved blockers, and the single next task here.
-6. When a priority is complete, mark it complete here and move to the next priority in this list. Do not keep appending duplicate “next task” sections; update this queue and leave old notes as historical records.
+1. Follow the locked order: gameplay release gate → P1 DEX → P2 Swap → P3 Login → P4 Launchpad.
+2. Before every change, inspect latest main, open PRs, exact branch heads and active workflow runs.
+3. One priority at a time; one authoritative PR per fix. Do not restart completed tasks or create duplicate implementations.
+4. On failure: inspect exact failing step/log/artifact, prove root cause, choose a genuinely different counter-strategy, then rerun relevant checks on the exact new head. Never recommit the same failed code.
+5. Keep real functionality live where safe. Do not disable features merely to pass tests, weaken acceptance criteria, fake provider data, or claim production readiness from mocks.
+6. After each task, update this queue in place with exact commit/PR, changed files, workflow IDs and terminal results, remaining blockers, and the single next task. Keep older dated notes below as historical evidence; do not append duplicate active queues.
 
 ---
 
