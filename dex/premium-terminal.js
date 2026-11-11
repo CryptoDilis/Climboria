@@ -45,7 +45,11 @@ async function loadTrending(){
   add((Array.isArray(profileRows)?profileRows:[]).slice(0,15),'Profile');
   add((Array.isArray(boostRows)?boostRows:[]).slice(0,15),'Boosted');
   const addresses=[...candidates.keys()].slice(0,30);
-  if(!addresses.length)throw new Error('No Solana tokens in latest-profile or top-boost discovery');
+  if(!addresses.length){
+   grid.innerHTML='<div class="premium-trending-empty">No eligible Solana tokens were returned by the latest-profile or active-boost feeds.</div>';
+   if(updated)updated.textContent='No eligible discovery results';
+   return;
+  }
   // DexScreener supports up to 30 token addresses in one batch request.
   const pairPayload=await get('/tokens/v1/solana/'+addresses.join(','));
   const pairs=Array.isArray(pairPayload)?pairPayload:(Array.isArray(pairPayload?.pairs)?pairPayload.pairs:[]);
@@ -62,7 +66,11 @@ async function loadTrending(){
    ...p,
    discoverySource:[...candidates.get(mint).sources].sort().join(' + ')
   })).sort((a,b)=>(Number(b.volume?.h24)||0)-(Number(a.volume?.h24)||0)).slice(0,6);
-  if(!list.length)throw new Error('No eligible live Solana pools returned for discovered tokens');
+  if(!list.length){
+   grid.innerHTML='<div class="premium-trending-empty">No eligible live Solana pools were found for the discovered tokens.</div>';
+   if(updated)updated.textContent='No eligible live pools';
+   return;
+  }
   const max=Math.max(...list.map(p=>Number(p.liquidity.usd)||0),1);
   grid.innerHTML=list.map(p=>{
    const change=Number(p.priceChange?.h24),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
