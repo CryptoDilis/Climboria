@@ -275,3 +275,25 @@ Initial authoritative-source findings:
 - [ ] Run focused worker/Jupiter policy tests and exact-head Validate + DEX/Login Browser Smoke.
 - [ ] Continue proving the remaining enum-to-CPI mappings, outer route account slices, Meteora privilege discrepancy and deployed-version provenance.
 - Safety remains unchanged: `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, public swap config disabled.
+
+
+## Progress addendum — SolFi fail-closed exclusion verified — 2026-11-11 20:23 PHT
+
+### Exact-head CI for SolFi variant exclusion — PR #268 / head `36fcb4979cc726701bdd85b71411504f04f02858`
+- Validate run `43018474982`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43018474982
+- DEX/Login Browser Smoke run `43018474941`: SUCCESS on the same exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43018474941
+- All 16 functional browser steps passed; screenshot upload succeeded. The new Jupiter policy regression test rejects route enum variant 61 (SolFi) because the pinned CPI interface has no matching SolFi instruction/account schema.
+- The removal is a fail-closed structural restriction only. The remaining DEX variants are not yet approved for signable/executable orders: deployed-version mapping, outer account-slice partitioning, pool account semantics and fee/token movement proof remain outstanding.
+- Both hard security gates remain false; Wrangler execution remains false; public swap config remains disabled.
+
+### Current exact tasks
+- [x] SolFi variant 61 removed from the parser allowlist and regression-tested.
+- [x] Validate and DEX/Login Browser Smoke passed on exact head `36fcb49`.
+- [ ] Finish version-matched Jupiter aggregator dispatch and outer remaining-account slice evidence.
+- [ ] Resolve Meteora DLMM CPI/direct-IDL privilege and optional-account discrepancies.
+- [ ] Implement adversarial per-DEX account-role validation only after each mapping is proven; keep all wallet-signable and execution gates closed.
+- [ ] Controlled Devnet token movement/fee-destination lifecycle; production Cloudflare deployment verification.
+- [ ] Production Login provider verification, then Launchpad lifecycle/Devnet proof.
+- [ ] Separate mobile GLB parser/decode/texture/handoff diagnosis after ecosystem priorities.
