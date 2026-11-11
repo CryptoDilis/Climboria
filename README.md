@@ -3324,3 +3324,17 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Existing Swap execution security gates remain unchanged: frontend and Worker execution disabled until ALT resolution, instruction semantics, independent review, controlled Devnet lifecycle and production prerequisites are accepted.
 
 **Exact next task:** finish Browser Smoke `42941085361` and inspect its gameplay screenshots; then resume P0 DEX live market discovery/profile/chart validation, not mock/demo behavior. Keep Swap signing/execution disabled while resolving its independent security gates.
+
+
+### P0 DEX — expanded live Solana discovery feed (2026-11-11)
+
+- [x] Source audit found `dex/premium-terminal.js` built its six-card “Trending on Solana” feed from ten fixed symbol searches (SOL, USDC, BONK, JUP, WIF, RAY, PYTH, JTO, JLP, POPCAT). This was a curated ticker sample, not broad market discovery.
+- [x] Counter-strategy: use DexScreener's documented latest token profiles and top-active-boost endpoints to discover Solana mint addresses, then batch-fetch up to 30 token addresses through `/tokens/v1/solana/{tokenAddresses}`; select the deepest eligible pool per mint and rank the discovered subset by reported 24h volume. Each card labels whether it came from a profile, active boost, or both. UI copy explicitly says this is not a global market ranking. Provider failure displays unavailable state and never substitutes fake/sample prices.
+- [x] Implementation branch: `codex/dex-live-market-discovery-2026-11-11`.
+- [x] Commit `dd9108f3d2a3ebe4b206f30246dc704bf1d8a287`: replace fixed ticker searches with live profile/boost discovery and batched token-pair lookup.
+- [x] Commit `9b967b119bc52be5b259f4579cea751b4726829e`: clarify feed coverage and non-global ranking in DEX UI.
+- [x] Draft PR #243 opened: https://github.com/CryptoDilis/Climboria/pull/243. Exact head `9b967b119bc52be5b259f4579cea751b4726829e`.
+- [ ] Validate and Browser Smoke checks on PR #243 exact head are QUEUED. Do not merge until both pass and market discovery, search, selected-token/chart identity, and provider failure states are verified.
+- [!] This improves discovery breadth but does not claim a complete/global Solana market index or provider SLA. Swap signing/execution remains disabled; this DEX change does not bypass Swap security gates.
+
+**Exact next task:** poll PR #243 Validate and Browser Smoke on exact head `9b967b119bc52be5b259f4579cea751b4726829e`; inspect logs/screenshots. In parallel, finish the still-running PR #242 Browser Smoke `42941085361`; if it fails, diagnose the exact new failure before any further code change.
