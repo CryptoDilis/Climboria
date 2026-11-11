@@ -1,4 +1,5 @@
 import { resolveAddressLookupTables } from "./alt-resolution.mjs";
+import { decodeBase58, encodeBase58 } from "./transaction-validation.mjs";
 
 const MAX_RESPONSE_BYTES = 512 * 1024;
 const RPC_TIMEOUT_MS = 8000;
@@ -110,11 +111,73 @@ export async function resolveTransactionLookups({
 }
 
 const SPL_TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
+
+function readU32LE(bytes, offset) {
+  if (offset + 4 > bytes.length) fail("SPL account data is truncated");
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
+}
+function readU64LE(bytes, offset) {
+  if (offset + 8 > bytes.length) fail("SPL account data is truncated");
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getBigUint64(offset, true);
+}
+function decodeBase64(value) {
+  if (typeof value !== "string" || value.length > 1024) fail("SPL account base64 data is invalid");
+  let binary;
+  try { binary = atob(value); } catch { fail("SPL account base64 data is malformed"); }
+  return Uint8Array.from(binary, character => character.charCodeAt(0));
+}
+function parseClassicTokenAccount(address, account) {
+  if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
+      !Array.isArray(account.data) || account.data[1] !== "base64") {
+    fail("Token account is missing, executable or not owned by the classic SPL Token program");
+  }
+  const bytes = decodeBase64(account.data[0]);
+  if (bytes.length !== 165) fail("Only classic 165-byte SPL Token accounts are supported; Token-2022/extensions are rejected");
+  const mint = encodeBase58(bytes.slice(0, 32));
+  const owner = encodeBase58(bytes.slice(32, 64));
+  const amount = readU64LE(bytes, 64);
+  const delegateOption = readU32LE(bytes, 72);
+  const state = bytes[108];
+  const nativeOption = readU32LE(bytes, 109);
+  const delegatedAmount = readU64LE(bytes, 121);
+  const closeAuthorityOption = readU32LE(bytes, 129);
+  if (state !== 1) fail("Token account must be initialized and not frozen");
+  if (delegateOption !== 0 || delegatedAmount !== 0n) fail("Delegated token accounts are not supported");
+  if (nativeOption > 1 || closeAuthorityOption !== 0) fail("Token account native/close-authority metadata is unsupported");
+  if ((nativeOption === 1 && mint !== WRAPPED_SOL_MINT) || (mint === WRAPPED_SOL_MINT && nativeOption !== 1)) {
+    fail("Native token account must use the wrapped-SOL mint");
+  }
+  return { address, mint, owner, amount: amount.toString(), native: nativeOption === 1 };
+}
+function parseClassicMint(address, account) {
+  if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
+      !Array.isArray(account.data) || account.data[1] !== "base64") {
+    fail("Mint account is missing or not owned by the classic SPL Token program");
+  }
+  const bytes = decodeBase64(account.data[0]);
+  if (bytes.length !== 82) fail("Only classic 82-byte SPL Token mints are supported; Token-2022/extensions are rejected");
+  const mintAuthorityOption = readU32LE(bytes, 0);
+  const supply = readU64LE(bytes, 36);
+  const decimals = bytes[44];
+  const initialized = bytes[45];
+  const freezeAuthorityOption = readU32LE(bytes, 46);
+  if (mintAuthorityOption > 1 || freezeAuthorityOption > 1 || initialized !== 1) {
+    fail("Mint account must be an initialized classic SPL Token mint with canonical authority options");
+  }
+  return {
+    address,
+    decimals,
+    supply: supply.toString(),
+    mintAuthority: mintAuthorityOption === 1 ? encodeBase58(bytes.slice(4, 36)) : null,
+    freezeAuthority: freezeAuthorityOption === 1 ? encodeBase58(bytes.slice(50, 82)) : null
+  };
+}
 
 /**
- * Verifies the user-owned SPL token accounts referenced by the Jupiter route.
- * Uses a single finalized-context getMultipleAccounts response and fails closed
- * on missing, unparsed, delegated, frozen, wrong-mint or wrong-authority accounts.
+ * Verifies Jupiter's user token accounts and both mint accounts in one finalized
+ * RPC context. Raw SPL account bytes are parsed locally; RPC jsonParsed output is
+ * not trusted. minContextSlot prevents checking token state older than ALT state.
  */
 export async function verifyJupiterTokenAccounts({
   sourceTokenAccount,
@@ -124,18 +187,25 @@ export async function verifyJupiterTokenAccounts({
   outputMint,
   amount,
   rpcUrl,
+  minContextSlot = null,
   fetchImpl = globalThis.fetch
 }) {
-  const addresses = [sourceTokenAccount, destinationTokenAccount, inputMint, outputMint];
-  if (addresses.some(address => typeof address !== "string" || address.length < 32 || address.length > 44) ||
-      new Set(addresses).size !== addresses.length) {
-    fail("Jupiter source, destination and mint accounts must be distinct valid addresses");
-  }
-  if ([taker, inputMint, outputMint].some(value => typeof value !== "string" || value.length < 32 || value.length > 44) ||
-      inputMint === outputMint || typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
-    fail("Token-account verification received invalid taker, mint or input amount metadata");
-  }
   if (typeof fetchImpl !== "function") fail("Solana RPC fetch implementation is unavailable");
+  const addresses = [sourceTokenAccount, destinationTokenAccount, inputMint, outputMint];
+  for (const [label, address] of [
+    ["source token account", sourceTokenAccount],
+    ["destination token account", destinationTokenAccount],
+    ["taker", taker],
+    ["input mint", inputMint],
+    ["output mint", outputMint]
+  ]) {
+    if (typeof address !== "string" || decodeBase58(address).length !== 32) fail("Invalid " + label + " public key");
+  }
+  if (new Set(addresses).size !== addresses.length) fail("Jupiter source, destination and mint accounts must be distinct");
+  if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) fail("Requested token input amount is invalid");
+  if (minContextSlot !== null && (!Number.isSafeInteger(minContextSlot) || minContextSlot < 0)) {
+    fail("Minimum RPC context slot is invalid");
+  }
   const url = validateRpcUrl(rpcUrl);
   const requestId = "climboria-token-account-verification";
   const response = await fetchImpl(url.toString(), {
@@ -145,7 +215,11 @@ export async function verifyJupiterTokenAccounts({
       jsonrpc: "2.0",
       id: requestId,
       method: "getMultipleAccounts",
-      params: [addresses, { encoding: "jsonParsed", commitment: "finalized" }]
+      params: [addresses, {
+        encoding: "base64",
+        commitment: "finalized",
+        ...(minContextSlot === null ? {} : { minContextSlot })
+      }]
     }),
     redirect: "error",
     signal: AbortSignal.timeout(RPC_TIMEOUT_MS)
@@ -154,77 +228,25 @@ export async function verifyJupiterTokenAccounts({
   const raw = await readBoundedBody(response);
   let payload;
   try { payload = JSON.parse(raw); } catch { fail("Solana RPC returned invalid token-account JSON"); }
+  const slot = payload?.result?.context?.slot;
   if (payload?.jsonrpc !== "2.0" || payload?.id !== requestId || payload?.error ||
-      !Number.isSafeInteger(payload?.result?.context?.slot) ||
+      !Number.isSafeInteger(slot) || (minContextSlot !== null && slot < minContextSlot) ||
       !Array.isArray(payload?.result?.value) || payload.result.value.length !== 4) {
-    fail("Solana RPC returned an incomplete or mismatched token-account response");
+    fail("Solana RPC returned incomplete or stale token-account evidence");
   }
-  const expected = [
-    { address: sourceTokenAccount, mint: inputMint, role: "source" },
-    { address: destinationTokenAccount, mint: outputMint, role: "destination" }
-  ];
-  const verified = [];
-  for (let i = 0; i < expected.length; i++) {
-    const item = expected[i];
-    const account = payload.result.value[i];
-    const parsed = account?.data?.parsed;
-    const info = parsed?.info;
-    if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
-        account.space !== 165 || account.data?.program !== "spl-token" ||
-        parsed?.type !== "account" || !info) {
-      fail("Jupiter " + item.role + " must be an initialized classic SPL Token account");
-    }
-    if (info.mint !== item.mint || info.owner !== taker || info.state !== "initialized") {
-      fail("Jupiter " + item.role + " token account mint, authority or state does not match the order");
-    }
-    if (info.delegate != null || (info.delegatedAmount?.amount != null && info.delegatedAmount.amount !== "0") ||
-        info.closeAuthority != null) {
-      fail("Jupiter " + item.role + " token account has a delegate or close authority");
-    }
-    if (!info.tokenAmount || typeof info.tokenAmount.amount !== "string" || !/^(0|[1-9][0-9]*)$/.test(info.tokenAmount.amount)) {
-      fail("Jupiter " + item.role + " token account has an invalid token balance");
-    }
-    if (item.role === "source" && BigInt(info.tokenAmount.amount) < BigInt(amount)) {
-      fail("Jupiter source token account balance is below the requested input amount");
-    }
-    verified.push({
-      address: item.address,
-      mint: info.mint,
-      authority: info.owner,
-      amount: info.tokenAmount.amount,
-      state: info.state
-    });
-  }
-  const expectedMints = [
-    { address: inputMint, role: "input" },
-    { address: outputMint, role: "output" }
-  ];
-  const verifiedMints = [];
-  for (let i = 0; i < expectedMints.length; i++) {
-    const item = expectedMints[i];
-    const account = payload.result.value[i + 2];
-    const parsed = account?.data?.parsed;
-    const info = parsed?.info;
-    if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
-        account.space !== 82 || account.data?.program !== "spl-token" ||
-        parsed?.type !== "mint" || !info || info.isInitialized !== true ||
-        !Number.isInteger(info.decimals) || info.decimals < 0 || info.decimals > 255 ||
-        typeof info.supply !== "string" || !/^(0|[1-9][0-9]*)$/.test(info.supply)) {
-      fail("Jupiter " + item.role + " mint must be an initialized classic SPL Token mint");
-    }
-    verifiedMints.push({
-      address: item.address,
-      decimals: info.decimals,
-      supply: info.supply,
-      mintAuthority: info.mintAuthority ?? null,
-      freezeAuthority: info.freezeAuthority ?? null
-    });
-  }
+  const source = parseClassicTokenAccount(sourceTokenAccount, payload.result.value[0]);
+  const destination = parseClassicTokenAccount(destinationTokenAccount, payload.result.value[1]);
+  if (source.owner !== taker || destination.owner !== taker) fail("Both swap token accounts must be directly owned by the taker");
+  if (source.mint !== inputMint || destination.mint !== outputMint) fail("Swap token-account mints do not match the requested input/output mints");
+  if (BigInt(source.amount) < BigInt(amount)) fail("Taker source token-account balance is insufficient for the requested input");
+  const inputMintEvidence = parseClassicMint(inputMint, payload.result.value[2]);
+  const outputMintEvidence = parseClassicMint(outputMint, payload.result.value[3]);
   return {
-    contextSlot: payload.result.context.slot,
-    source: verified[0],
-    destination: verified[1],
-    inputMint: verifiedMints[0],
-    outputMint: verifiedMints[1]
+    contextSlot: slot,
+    requestedAmount: amount,
+    source,
+    destination,
+    inputMint: inputMintEvidence,
+    outputMint: outputMintEvidence
   };
 }
