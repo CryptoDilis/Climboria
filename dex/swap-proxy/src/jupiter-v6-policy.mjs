@@ -105,7 +105,8 @@ export function validateJupiterV6Transaction({
   taker,
   outputMint,
   amount,
-  outAmount
+  outAmount,
+  otherAmountThreshold
 }) {
   if (!parsed || parsed.requiredSignatures !== 1) fail("Only single-taker-signature transactions are supported");
   const keys = buildAccountKeys(parsed, loadedWritable, loadedReadonly);
@@ -135,6 +136,14 @@ export function validateJupiterV6Transaction({
   const route = decodeJupiterV6Route(instruction.data);
   if (route.inAmount !== BigInt(amount) || route.quotedOutAmount !== BigInt(outAmount)) {
     fail("Jupiter route instruction amounts do not match the validated order metadata");
+  }
+  if (typeof otherAmountThreshold !== "string" || !/^[1-9][0-9]*$/.test(otherAmountThreshold)) {
+    fail("Jupiter minimum-output threshold must be a positive integer string");
+  }
+  const minimumFromInstruction = route.quotedOutAmount * BigInt(10_000 - route.slippageBps) / 10_000n;
+  const suppliedMinimum = BigInt(otherAmountThreshold);
+  if (suppliedMinimum < minimumFromInstruction || suppliedMinimum > route.quotedOutAmount) {
+    fail("Jupiter minimum-output threshold is weaker than the route slippage limit or exceeds quoted output");
   }
   const accountKeys = instruction.accountIndexes.map(index => keys[index]);
   const accountMetas = instruction.accountIndexes.map(index => metaFor(parsed, index, loadedWritable, loadedReadonly));
