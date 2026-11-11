@@ -482,7 +482,18 @@ try {
         return Promise.resolve();
       }
     });
-    const mockedOrientation = { get type() { return innerWidth>innerHeight?'landscape-primary':'portrait-primary'; }, lock: async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); } };
+    // Model ScreenOrientation as a mutable EventTarget. Playwright viewport resizing
+    // does not guarantee that the emulated screen.orientation.type changes with it.
+    let mockedOrientationType = 'portrait-primary';
+    const mockedOrientation = new EventTarget();
+    Object.defineProperty(mockedOrientation, 'type', { configurable: true, get: () => mockedOrientationType });
+    mockedOrientation.lock = async mode => { window.__climboriaFullscreenRequests.push({ orientation: mode }); };
+    window.__setClimboriaMockOrientation = type => {
+      mockedOrientationType = type;
+      mockedOrientation.dispatchEvent(new Event('change'));
+      window.dispatchEvent(new Event('orientationchange'));
+      window.dispatchEvent(new Event('resize'));
+    };
     try {
       Object.defineProperty(screen, 'orientation', { configurable: true, value: mockedOrientation });
     } catch (_) {
@@ -505,14 +516,53 @@ try {
     errors.push('Portrait mobile launch must show a readable rotate-phone gate and hide gameplay HUD: ' + JSON.stringify(portraitGate));
   }
   await mobile.setViewportSize({ width: 844, height: 390 });
-  // Simulate the orientation class applied by the game's fullscreen/orientation handler.
-  // Playwright's viewport resize does not reproduce every Android Screen Orientation event.
-  await mobile.evaluate(() => {
-    document.body.classList.remove('climboria-portrait');
-    document.body.classList.add('climboria-landscape');
-    window.dispatchEvent(new Event('resize'));
+  // Change the mocked physical orientation first, then let the game's own resize
+  // handler toggle its orientation classes exactly as it does on a real device.
+  // The handler runs synchronously for the dispatched orientation/resize events;
+  // inspect that result immediately before falling back to interval polling. A
+  // requestAnimationFrame-poll can miss an already-satisfied state while the
+  // mobile WebGL scene is busy rendering.
+  const readLandscapeGate = () => ({
+    orientation: screen.orientation?.type || null,
+    width: innerWidth,
+    height: innerHeight,
+    mediaLandscape: matchMedia('(orientation: landscape)').matches,
+    mobileDevice: document.body.classList.contains('mobile-device'),
+    landscapeClass: document.body.classList.contains('climboria-landscape'),
+    portraitClass: document.body.classList.contains('climboria-portrait'),
+    overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
+    overlayVisibility: getComputedStyle(document.querySelector('#rotate-phone-overlay')).visibility,
   });
-  await mobile.waitForFunction(() => getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none', undefined, { timeout: 5000 });
+  const landscapeTransition = await mobile.evaluate(() => {
+    window.__setClimboriaMockOrientation('landscape-primary');
+    return {
+      orientation: screen.orientation?.type || null,
+      width: innerWidth,
+      height: innerHeight,
+      mediaLandscape: matchMedia('(orientation: landscape)').matches,
+      mobileDevice: document.body.classList.contains('mobile-device'),
+      landscapeClass: document.body.classList.contains('climboria-landscape'),
+      portraitClass: document.body.classList.contains('climboria-portrait'),
+      overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
+      overlayVisibility: getComputedStyle(document.querySelector('#rotate-phone-overlay')).visibility,
+    };
+  });
+  const landscapeGateReady = state => state.landscapeClass && !state.portraitClass && state.overlayDisplay === 'none';
+  if (!landscapeGateReady(landscapeTransition)) {
+    await mobile.waitForFunction(() => {
+      const overlay = document.querySelector('#rotate-phone-overlay');
+      return document.body.classList.contains('climboria-landscape') &&
+        !document.body.classList.contains('climboria-portrait') &&
+        getComputedStyle(overlay).display === 'none';
+    }, undefined, { polling: 100, timeout: 5000 }).catch(async error => {
+      const diagnostic = await mobile.evaluate(readLandscapeGate);
+      throw new Error('Landscape orientation transition did not clear the rotate gate: ' + JSON.stringify({ initial: landscapeTransition, final: diagnostic }) + '; ' + error.message);
+    });
+  }
+  const verifiedLandscapeGate = await mobile.evaluate(readLandscapeGate);
+  if (!landscapeGateReady(verifiedLandscapeGate)) {
+    throw new Error('Landscape orientation gate did not remain cleared after event dispatch: ' + JSON.stringify({ initial: landscapeTransition, final: verifiedLandscapeGate }));
+  }
   const directMobileEntry = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
     createHeroInGameplay: !!document.querySelector('#character-create, #character-create-panel, #expedition-hero-menu'),
@@ -522,26 +572,58 @@ try {
   if (!directMobileEntry.gameplayActive || directMobileEntry.createHeroInGameplay || directMobileEntry.titleVisible || directMobileEntry.generatingOverlay) {
     errors.push('Mobile Hub-to-game must enter directly with no Create Hero, title, or generating overlay: ' + JSON.stringify(directMobileEntry));
   }
-  // The game is already active; this phase normalizes the emulated landscape CSS state.
-  await mobile.evaluate(() => {
-    // This phase validates gameplay HUD, so emulate the same state set by takeOver().
-    document.body.classList.add('free');
-    document.body.classList.remove('climboria-portrait');
-    document.body.classList.add('climboria-landscape');
-    window.dispatchEvent(new Event('resize'));
-  });
-  await mobile.waitForFunction(() => {
-    const overlay=document.querySelector('#rotate-phone-overlay');
-    const map=document.querySelector('#world-map-panel');
-    return getComputedStyle(overlay).display==='none' && getComputedStyle(map).display!=='none' && getComputedStyle(map).visibility!=='hidden';
-  }, undefined, { timeout: 5000 });
-  const landscapeGate = await mobile.evaluate(() => ({
-    hidden: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none',
-    mapVisible: getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    playerVisible: getComputedStyle(document.querySelector('#player-card')).visibility !== 'hidden',
-    statusVisible: getComputedStyle(document.querySelector('#status-card')).visibility !== 'hidden',
+  // The game is already active and its real orientation handler has passed
+  // the landscape gate above. Do not dispatch a second resize or rewrite body
+  // classes here: that would invoke the production handler again and could
+  // overwrite the state we just verified. Observe the actual HUD passively.
+  const readMobileHudState = () => ({
+    bodyClasses: [...document.body.classList],
+    orientation: screen.orientation?.type || null,
+    mediaLandscape: matchMedia('(orientation: landscape)').matches,
     viewport: { width: innerWidth, height: innerHeight },
-  }));
+    overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
+    mapDisplay: getComputedStyle(document.querySelector('#world-map-panel')).display,
+    mapVisibility: getComputedStyle(document.querySelector('#world-map-panel')).visibility,
+    mapOpacity: getComputedStyle(document.querySelector('#world-map-panel')).opacity,
+    playerVisibility: getComputedStyle(document.querySelector('#player-card')).visibility,
+    playerOpacity: getComputedStyle(document.querySelector('#player-card')).opacity,
+    statusVisibility: getComputedStyle(document.querySelector('#status-card')).visibility,
+    statusOpacity: getComputedStyle(document.querySelector('#status-card')).opacity,
+  });
+  const mobileHudReady = state =>
+    state.overlayDisplay === 'none' &&
+    state.mapDisplay !== 'none' &&
+    state.mapVisibility !== 'hidden' &&
+    state.playerVisibility !== 'hidden' &&
+    state.statusVisibility !== 'hidden';
+  let landscapeGate = await mobile.evaluate(readMobileHudState);
+  if (!mobileHudReady(landscapeGate)) {
+    await mobile.waitForFunction(() => {
+      const overlay=document.querySelector('#rotate-phone-overlay');
+      const map=document.querySelector('#world-map-panel');
+      const player=document.querySelector('#player-card');
+      const status=document.querySelector('#status-card');
+      return getComputedStyle(overlay).display==='none' &&
+        getComputedStyle(map).display!=='none' &&
+        getComputedStyle(map).visibility!=='hidden' &&
+        getComputedStyle(player).visibility!=='hidden' &&
+        getComputedStyle(status).visibility!=='hidden';
+    }, undefined, { polling: 100, timeout: 5000 }).catch(async error => {
+      landscapeGate = await mobile.evaluate(readMobileHudState);
+      throw new Error('Landscape HUD did not become visible after the accepted orientation transition: ' + JSON.stringify(landscapeGate) + '; ' + error.message);
+    });
+    landscapeGate = await mobile.evaluate(readMobileHudState);
+  }
+  if (!mobileHudReady(landscapeGate)) {
+    throw new Error('Landscape HUD visibility regressed after orientation transition: ' + JSON.stringify(landscapeGate));
+  }
+  landscapeGate = {
+    hidden: landscapeGate.overlayDisplay === 'none',
+    mapVisible: landscapeGate.mapDisplay !== 'none' && landscapeGate.mapVisibility !== 'hidden',
+    playerVisible: landscapeGate.playerVisibility !== 'hidden',
+    statusVisible: landscapeGate.statusVisibility !== 'hidden',
+    viewport: landscapeGate.viewport,
+  };
   if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
     errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
   }
@@ -592,20 +674,41 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
+  const mobileGlbRequestFailures = [];
+  mobile.on('requestfailed', request => { if (/\.glb(?:[?#]|$)/i.test(request.url())) mobileGlbRequestFailures.push({ url: request.url(), error: request.failure()?.errorText || 'unknown' }); });
+  const mobileGlbReady = () => mobile.evaluate(() => ({
+    ready: window.__climboriaReadiness?.heroReady === true &&
+      window.__climboriaGLBRenderer === true &&
+      window.__climboriaCameraOrbit?.heroUsesGlb === true,
+    readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
+    glbRenderer: window.__climboriaGLBRenderer ?? null,
+    cameraHero: window.__climboriaCameraOrbit?.heroUsesGlb ?? null,
+    selectedHero: document.documentElement.dataset.climboriaHero ?? null,
+    renderer: document.documentElement.dataset.climboriaHeroRenderer ?? null,
+    asset: document.documentElement.dataset.climboriaHeroAsset ?? null,
+    frames: window.__climboriaRenderState?.frames ?? null,
+    canvas: !!document.querySelector('canvas'),
+    glbResources: performance.getEntriesByType('resource')
+      .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+  }));
+  const mobileGlbWaitStartedAt = Date.now();
   try {
     await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 75000 });
   } catch (error) {
-    const diagnostic = await mobile.evaluate(() => ({
-      readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
-      glbRenderer: window.__climboriaGLBRenderer ?? null,
-      cameraHero: window.__climboriaCameraOrbit?.heroUsesGlb ?? null,
-      selectedHero: document.documentElement.dataset.climboriaHero ?? null,
-      renderer: document.documentElement.dataset.climboriaHeroRenderer ?? null,
-      asset: document.documentElement.dataset.climboriaHeroAsset ?? null,
-      frames: window.__climboriaRenderState?.frames ?? null,
-      canvas: !!document.querySelector('canvas')
-    }));
-    throw new Error('Mobile GLB readiness timed out: ' + JSON.stringify(diagnostic) + '; browserErrors=' + JSON.stringify(errors) + '; ' + error.message);
+    // The timeout can race the final GLB/camera readiness update on mobile.
+    // Re-read the same production invariants before treating the timeout as a
+    // real failure; do not accept a fallback renderer or skip the GLB check.
+    let diagnostic = await mobileGlbReady();
+    if (!diagnostic.ready) {
+      try {
+        await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 15000 });
+      } catch (graceError) {
+        diagnostic = await mobileGlbReady();
+        throw new Error('Mobile GLB readiness remained incomplete after bounded grace period: ' + JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }) + '; failedGlbRequests=' + JSON.stringify(mobileGlbRequestFailures) + '; browserErrors=' + JSON.stringify(errors) + '; initial=' + error.message + '; grace=' + graceError.message);
+      }
+    }
+    console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
