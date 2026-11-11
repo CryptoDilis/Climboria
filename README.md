@@ -4173,3 +4173,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 
 - [x] Re-read the exact timestamp fields rather than treating loader total elapsed as parse duration. `startedAt=9,744.9ms`, `parseStartedAt=243,355.2ms`, and total loader elapsed `268,022ms` imply parse had been pending for approximately `34,411ms` at the failure snapshot. The GLB resource transfer duration was `223,789ms`.
 - [!] Correct diagnosis: the mobile readiness deadline expired while the 42.9 MB asset was still in its parse/dependency phase, after an exceptionally slow ~223.8-second transfer. Do not claim a 268-second parser stall. Next counter-strategy must address asset transfer size/delivery and capture the new container/texture diagnostics to measure parse completion time independently.
+
+### Workflow checkpoint — 2026-11-12 06:16 +08
+
+- [x] Re-inspected repository metadata, current main (`0fa8e987aec4d6e6bc7590363efa7d20fde79422`), open PRs, latest workflow runs, and current PR #269 exact head (`26bef00c050533a6980e85799a4967f79d14fe98`).
+- [x] PR #269 exact-head Validate run `43110016247` passed; Jupiter V6 CPI Trace Audit `43110016651` passed; both run on `26bef00c050533a6980e85799a4967f79d14fe98`.
+- [x] Browser Smoke run `43110016244`, job `130823319819`, passed steps 1–16 and remains in gameplay step 17; screenshot upload step 18 is pending. Do not call it passed until terminal success.
+- [x] Jupiter IDL History Audit run `43110016341`, job `130823472265`, passed syntax and focused classifier tests (steps 1–5) and remains in external IDL/RPC collection step 6; artifact upload step 7 is pending.
+- [x] PR #269 includes the prior evidence-backed close-desktop-before-mobile GLB smoke fix and strict saved-GLB readiness assertions. No production loader behavior or readiness threshold was relaxed.
+- [x] Reviewed the DEX adapter provenance classifier and its five focused tests. It scopes results to candidate-slot IDL provenance and treats missing/conflicting evidence as `incomplete`; a later ProgramData deployment slot is not misclassified as proof of historical absence.
+- [!] Several older PR #269 runs were cancelled while successive commits were pushed to the same branch. These are superseded/cancelled runs, not code failures. Keep the branch unchanged while current exact-head checks are active to avoid cancelling them again.
+- [ ] Next: wait for Browser Smoke run `43110016244` and IDL History Audit run `43110016341` to become terminal. If either fails, inspect the first failing step and decoded logs before any change. If successful, inspect the IDL artifact and per-adapter reason codes, then continue read-only CPI privilege/account-slice evidence. Keep PR #269 draft/unmerged and all signing/execution gates false.
