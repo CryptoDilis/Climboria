@@ -22,9 +22,10 @@
 - [x] Reviewed PR #246 desktop gameplay screenshot from artifact `13823653421`: avatar is standing on the Sanctuary circular landing; mobile screenshot evidence is still absent.
 - [x] Recorded failure diagnosis in main README at commit `76d1a528c642a93bd55032228b2c11b2ec7fb1c9`.
 - [x] README Pages deployment for the recorded diagnosis passed: run `42949853011` on commit `76d1a528c642a93bd55032228b2c11b2ec7fb1c9`.
+- [x] Latest README deployment passed: run `42950076408` for main commit `870b56399b06391d715c28000b65024fc0e4e322`.
 - [x] Opened diagnostic-only counter-strategy PR #247: https://github.com/CryptoDilis/Climboria/pull/247. Branch `codex/mobile-gltf-phase-diagnostics-2026-11-11`, exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`; changed only `game/play.html` and `.github/scripts/game-smoke.mjs`. It records download progress, GLTF parse start/completion/error, scene bounds/scale/traverse/attach/rig phases, and final ready state. No timeout increase, spawn change, fallback, readiness bypass, or feature disablement.
 - [x] PR #247 Validate `42949923101`: SUCCESS on exact diagnostic head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`.
-- [ ] PR #247 Browser Smoke `42949922898`, job `130291551496`: IN_PROGRESS on that exact head. Steps 1–13 passed; step 14 (DEX mobile provider loading/error/empty states) was in progress at last poll; gameplay step 15 has not started. Do not start a duplicate run.
+- [ ] PR #247 Browser Smoke `42949922898`, job `130291551496`: still IN_PROGRESS on that exact head. Latest poll confirms steps 1–14 PASSED and step 15, Jarrell's Peak desktop/mobile gameplay, is IN_PROGRESS. GitHub has not published a terminal result or downloadable job log yet; do not start a duplicate run.
 - [ ] Do not merge PR #246 or #247 until the mobile gameplay readiness and Sanctuary landing visual acceptance are satisfied. PR #247 is diagnostic only and must not be merged as a production fix unless its value is retained deliberately and the release gate is met.
 - [ ] **Single next task:** poll PR #247's exact-head Validate and Browser Smoke runs `42949923101` / `42949922898`; inspect the phase telemetry from the failing or passing mobile run and proceed from the evidence. Keep P1 DEX blocked until this gameplay release gate closes.
 
