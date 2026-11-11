@@ -1265,7 +1265,7 @@ Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-a
 ### DEX account-role evidence still unresolved
 
 - Latest IDL artifact exposes no matching historical IDL candidate for Kipseli's expected `swap_v3` discriminator. This means the selected IDL-history source did not supply a matching candidate; it does not prove the deployed Kipseli program has no IDL.
-- Meteora DLMM history reports a candidate-slot `0.10.0` schema and latest `0.12.0` schema with a writability disagreement for `bin_array_bitmap_extension`. The history service's active-slot classification alone is insufficient to choose production account privileges; independently verify deployed program binary/version and its IDL account before changing policy.
+- Meteora DLMM candidate-slot history reports Anchor IDL 0.10.0 with `bin_array_bitmap_extension` optional and no explicit `writable` field; latest 0.12.0 reports it optional and explicitly writable. Treat this as a schema difference/omission, not an explicit historical `writable: false` or a CPI-requested privilege. The history service's active-slot classification alone is insufficient; verify deployed binary/version and on-chain IDL before changing policy.
 - Orca's active historical schema agrees with latest. Raydium's two active metadata sources agree on instruction schema.
 - The exact-head bounded route scan covered five finalized transactions and returned zero matching Jupiter/Meteora routes. Record this as a no-match bounded sample, not a no-routes conclusion.
 
@@ -1276,3 +1276,29 @@ Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-a
 3. Resolve Meteora deployed-version and Kipseli IDL provenance before any account privilege or account-slice change.
 4. Continue cursor-based finalized multi-transaction route traces; retain duplicate transaction-key position ambiguity and do not infer CPI AccountMeta signer/writable flags from outer message privileges.
 5. Keep route_v2 out of production validation; keep signing, execution and deployment disabled.
+
+
+## 2026-11-12 — DEX on-chain provenance audit expansion and evidence correction
+
+### Deep inspection of artifacts
+
+- Re-opened IDL artifact `13885387689` and CPI artifact `13884639160`.
+- Meteora DLMM historical Anchor IDL 0.10.0 at slot `356279108` has `bin_array_bitmap_extension: optional=true` and omits the `writable` property. Latest Anchor IDL 0.12.0 has `optional=true, writable=true`. The history record is marked active-to-current by the Explorer, but the latest response has no activation slot. This is a schema difference, not an explicit historical `writable=false`, and neither IDL nor outer transaction privilege proves the CPI-requested meta.
+- In the candidate Jupiter route transaction at slot `468153382`, the 18-account Meteora `Swap2` CPI places the bitmap extension at CPI account position 1. The resolved transaction message gives the account a writable outer-message privilege, but the trace format explicitly labels this as the maximum outer privilege, not the CPI-requested writable flag.
+- Kipseli latest/history requests both returned HTTP 200 and empty `anchor`/`pmp` arrays. Metadata addresses are Anchor `8DW4XwaDSDjnb2ccHiSkCdFSswzMD8WVo44xXCwVPo6y` and PMP `AiGJDXFDDv6KbuRUXgSPzYdBByPjM3v6izk3dEGZAPM5`. No IDL candidate was returned; this is not evidence that no deployed IDL exists.
+- Raydium has two active metadata-source revisions (PMP and Anchor) at the candidate slot; both carry the same instruction schema, so `exactlyOneRevisionCoversCandidateSlot=false` does not mean the schema is ambiguous. Orca's active schema matches latest.
+
+### Counter-fix
+
+- Extended `fetch-jupiter-idl-history.mjs` to query each DEX program account and the Explorer-provided Anchor metadata account through finalized `getMultipleAccounts`, then inspect ProgramData when the program is upgradeable-loader owned.
+- The new read-only provenance report records program owner/state, ProgramData deployment slot and binary SHA-256, on-chain IDL owner/prefix/payload hash, expected instruction discriminator/account list, and comparisons with the candidate-slot historical/latest IDL.
+- Missing account, missing IDL, decode errors and RPC failures are retained as explicit per-program evidence gaps; they do not change production allowlists or turn absent evidence into inferred privileges.
+- This is diagnostic-only. It does not sign, submit, simulate or execute swaps and does not relax any validation gate.
+
+### Next
+
+1. Run Validate and Jupiter IDL History Audit on the expanded provenance code.
+2. Inspect on-chain Meteora ProgramData deployment slot and IDL account at the same report timestamp; determine whether current deployed metadata can be correlated to candidate slot `468153382`.
+3. Check whether Kipseli's supplied Anchor metadata address resolves to an account owned by the Kipseli program and whether its bytes decode as a legacy Anchor IDL.
+4. Preserve the strict mobile GLB readiness contract and await terminal Game Browser Smoke logs.
+5. Keep route_v2 excluded from production validation; wallet signing, transaction execution and deployment remain disabled.

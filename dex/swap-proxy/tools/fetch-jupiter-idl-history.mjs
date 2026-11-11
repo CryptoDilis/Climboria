@@ -372,6 +372,146 @@ function collectDexInstructionCandidates(value, expectedDiscriminatorHex, path =
   return found;
 }
 
+
+async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRevision, latestCandidates) {
+  const report = {
+    endpoint: "https://api.mainnet-beta.solana.com",
+    commitment: "finalized",
+    fetchedAt: new Date().toISOString(),
+    programId: program.programId,
+    expectedInstructionName: program.expectedInstructionName,
+    expectedDiscriminatorHex: program.expectedDiscriminatorHex,
+    anchorMetadataAccountAddress: metadataAccounts?.anchorAddress ?? null,
+    programAccount: null,
+    programDataAccount: null,
+    idlAccount: null,
+    error: null,
+  };
+  try {
+    const anchorAddress = metadataAccounts?.anchorAddress ?? null;
+    const addresses = anchorAddress && anchorAddress !== program.programId
+      ? [program.programId, anchorAddress] : [program.programId];
+    const accountResult = await fetchMultipleAccountInfo(addresses);
+    const programInfo = { contextSlot: accountResult.contextSlot, value: accountResult.values[0] ?? null };
+    const idlInfo = anchorAddress && anchorAddress !== program.programId
+      ? { contextSlot: accountResult.contextSlot, value: accountResult.values[1] ?? null } : null;
+    if (!programInfo.value) throw new Error("DEX program account not found through finalized RPC");
+
+    const programBytes = Buffer.from(programInfo.value.data?.[0] ?? "", "base64");
+    const programState = programBytes.length >= 4 ? programBytes.readUInt32LE(0) : null;
+    const upgradeableLoader = "BPFLoaderUpgradeab1e11111111111111111111111";
+    const programDataAddress = programState === 2 && programBytes.length >= 36
+      ? encodeBase58(programBytes.subarray(4, 36)) : null;
+    report.programAccount = {
+      address: program.programId,
+      contextSlot: programInfo.contextSlot,
+      owner: programInfo.value.owner,
+      executable: programInfo.value.executable,
+      dataLength: programBytes.length,
+      accountDataSha256: sha256(programBytes),
+      loaderOwnerMatches: programInfo.value.owner === upgradeableLoader,
+      stateTag: programState,
+      programDataAddress,
+    };
+
+    if (programDataAddress) {
+      const info = await fetchAccountInfo(programDataAddress);
+      if (!info.value) throw new Error("DEX ProgramData account not found through finalized RPC");
+      const bytes = Buffer.from(info.value.data?.[0] ?? "", "base64");
+      const stateTag = bytes.length >= 4 ? bytes.readUInt32LE(0) : null;
+      const deploymentSlot = bytes.length >= 12 ? bytes.readBigUInt64LE(4).toString() : null;
+      const authorityOption = bytes.length >= 13 ? bytes[12] : null;
+      const headerLength = authorityOption === 1 ? 45 : 13;
+      const binary = bytes.subarray(Math.min(headerLength, bytes.length));
+      report.programDataAccount = {
+        address: programDataAddress,
+        contextSlot: info.contextSlot,
+        owner: info.value.owner,
+        dataLength: bytes.length,
+        accountDataSha256: sha256(bytes),
+        stateTag,
+        deploymentSlot,
+        deployedAtOrBeforeCandidateSlot: deploymentSlot !== null &&
+          BigInt(deploymentSlot) <= BigInt(candidateTransactionSlot),
+        upgradeAuthorityOption: authorityOption,
+        upgradeAuthority: authorityOption === 1 && bytes.length >= 45
+          ? encodeBase58(bytes.subarray(13, 45)) : null,
+        binaryLength: binary.length,
+        binarySha256: sha256(binary),
+        loaderOwnerMatches: info.value.owner === upgradeableLoader,
+      };
+    }
+
+    if (!anchorAddress) {
+      report.idlAccount = { found: false, error: "IDL Explorer did not provide an Anchor metadata account address" };
+    } else if (!idlInfo?.value) {
+      report.idlAccount = { address: anchorAddress, found: false, error: "Anchor metadata account not found through finalized RPC" };
+    } else {
+      const bytes = Buffer.from(idlInfo.value.data?.[0] ?? "", "base64");
+      const record = {
+        address: anchorAddress,
+        contextSlot: idlInfo.contextSlot,
+        owner: idlInfo.value.owner,
+        ownerMatchesProgram: idlInfo.value.owner === program.programId,
+        executable: idlInfo.value.executable,
+        dataLength: bytes.length,
+        accountDataSha256: sha256(bytes),
+        found: true,
+        decodeError: null,
+        idlName: null,
+        idlVersion: null,
+        prefixHex: null,
+        prefixMatchesAnchorIdlDiscriminator: null,
+        decompressedPayloadSha256: null,
+        payloadMatchesActiveHistoricalRevision: null,
+        instruction: null,
+        instructionSchemaSha256: null,
+        instructionSchemaMatchesActiveHistory: null,
+        instructionSchemaMatchesLatest: null,
+      };
+      try {
+        const decoded = decodeLegacyAnchorIdlAccount(bytes);
+        const findInstruction = (items) => items?.find((item) =>
+          item.name === program.expectedInstructionName ||
+          (Array.isArray(item.discriminator) && Buffer.from(item.discriminator).toString("hex") === program.expectedDiscriminatorHex)
+        ) ?? null;
+        const summarize = (item) => item ? {
+          name: item.name,
+          discriminatorHex: Array.isArray(item.discriminator) ? Buffer.from(item.discriminator).toString("hex") : null,
+          accounts: item.accounts ?? [],
+        } : null;
+        const schemaHash = (item) => item ? sha256(JSON.stringify(summarize(item))) : null;
+        const instruction = findInstruction(decoded.idl.instructions);
+        const active = findInstruction(activeRevision?.matchingInstructions?.map(item => ({
+          ...item, discriminator: item.discriminatorHex ? Buffer.from(item.discriminatorHex, "hex") : undefined
+        })) ?? []);
+        const latest = findInstruction(latestCandidates.flatMap(candidate => candidate.matchingInstructions ?? []).map(item => ({
+          ...item, discriminator: item.discriminatorHex ? Buffer.from(item.discriminatorHex, "hex") : undefined
+        })));
+        record.idlName = decoded.idl.metadata?.name ?? decoded.idl.name ?? null;
+        record.idlVersion = decoded.idl.metadata?.version ?? null;
+        record.prefixHex = decoded.prefixHex;
+        record.prefixMatchesAnchorIdlDiscriminator = decoded.prefixMatchesAnchorAccountDiscriminator;
+        record.decompressedPayloadSha256 = decoded.decompressedPayloadSha256;
+        record.payloadMatchesActiveHistoricalRevision = activeRevision
+          ? decoded.decompressedPayloadSha256 === activeRevision.contentSha256 : null;
+        record.instruction = summarize(instruction);
+        record.instructionSchemaSha256 = schemaHash(instruction);
+        record.instructionSchemaMatchesActiveHistory = active
+          ? record.instructionSchemaSha256 === schemaHash(active) : null;
+        record.instructionSchemaMatchesLatest = latest
+          ? record.instructionSchemaSha256 === schemaHash(latest) : null;
+      } catch (error) {
+        record.decodeError = error instanceof Error ? error.message : String(error);
+      }
+      report.idlAccount = record;
+    }
+  } catch (error) {
+    report.error = error instanceof Error ? error.message : String(error);
+  }
+  return report;
+}
+
 async function fetchDexCpiProgramHistory(program) {
   const responses = {};
   for (const kind of ["latest", "history"]) {
@@ -396,6 +536,10 @@ async function fetchDexCpiProgramHistory(program) {
       record.responseBytes = Buffer.byteLength(body);
       const parsed = parseJson(body);
       record.responseKeys = parsed && typeof parsed === "object" ? Object.keys(parsed) : [];
+      record.metadataAccounts = parsed && typeof parsed === "object" ? {
+        anchorAddress: parsed.anchorAddress ?? null,
+        pmpAddress: parsed.pmpAddress ?? null,
+      } : null;
       record.candidates = parsed
         ? collectDexInstructionCandidates(parsed, program.expectedDiscriminatorHex, "$", [], parsed)
         : [];
@@ -429,10 +573,15 @@ async function fetchDexCpiProgramHistory(program) {
       ),
     };
   });
+  const metadataAccounts = responses.history.metadataAccounts ?? responses.latest.metadataAccounts ?? null;
+  const onChainProvenance = await auditDexCpiOnChainProvenance(
+    program, metadataAccounts, activeHistory.length === 1 ? activeHistory[0] : null, latestMatches,
+  );
   return {
     slug: program.slug,
     programId: program.programId,
     expectedInstructionName: program.expectedInstructionName,
+    onChainProvenance,
     expectedDiscriminatorHex: program.expectedDiscriminatorHex,
     latest: responses.latest,
     history: responses.history,
@@ -513,6 +662,11 @@ const summary = {
     dexCpiProgramsWithActiveDiscriminatorMatch: dexCpiIdlHistory.filter((item) => item.activeHistoricalRevisionCount > 0).length,
     dexCpiProgramsWithActiveSchemaAgreement: dexCpiIdlHistory.filter((item) => item.activeSourcesAgreeOnInstructionSchema).length,
     dexCpiProgramsWithLatestHistorySchemaAgreement: dexCpiIdlHistory.filter((item) => item.allLatestAndActiveHistorySchemasAgree).length,
+    dexProgramsWithOnChainProgramAccount: dexCpiIdlHistory.filter((item) => item.onChainProvenance.programAccount !== null).length,
+    dexProgramsWithUpgradeableLoaderProgramData: dexCpiIdlHistory.filter((item) => item.onChainProvenance.programDataAccount?.loaderOwnerMatches === true).length,
+    dexProgramsDeployedAtOrBeforeCandidateSlot: dexCpiIdlHistory.filter((item) => item.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true).length,
+    dexProgramsWithOnChainIdlOwnedByProgram: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.ownerMatchesProgram === true).length,
+    dexProgramsWithOnChainIdlInstructionSchemaMatchingHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.instructionSchemaMatchesActiveHistory === true).length,
   },
   safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
 };
