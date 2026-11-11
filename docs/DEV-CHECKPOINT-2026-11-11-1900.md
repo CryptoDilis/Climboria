@@ -507,3 +507,31 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - [x] Distinguish cancelled/superseded runs from genuine test failures.
 - [x] Verify both required workflows on the final head before proceeding.
 - [ ] For future branch updates, avoid pushing a second commit while long-running browser/validate jobs are still active unless the change is urgent; if superseded, document the cancellation reason and wait for the new exact-head checks. Never treat a cancelled run as a green check.
+
+
+## Deep diagnosis — Browser Smoke mobile close-detail tap failure — 2026-11-11
+
+### Exact failing workflow and evidence
+- Latest tested head before counter-fix: `6353d826fa0b6c0b082dad492bc6b6b0ebe7ec45`.
+- Browser Smoke run `43022517549` failed in step 15, `Test compact mobile DEX and Swap layouts at 390px and 360px`.
+- Exact assertion: `Mobile close-detail tap did not exit token view`, at the strict check that waits for `body.mobile-token-view` to be removed after tapping `#closeDetail`.
+- Failure diagnostics:
+  - Before tap, close button rect was `x=188.45, y=628.75, width=47.25, height=31`; it was enabled, visible and had pointer events enabled; hit testing reported the button.
+  - After the failed tap, the same button rect had moved to `y=516.75` (112px vertical shift); page `scrollY=888`.
+  - Embedded cross-origin chart iframe rect was `x=24, y=556.75, width=342, height=500`.
+  - `document.activeElement` was the DexScreener chart iframe.
+  - Parent-document pointer/touch/click event trace was empty, and token view remained open.
+- Source inspection: `openToken()` adds `mobile-token-view` then calls `tokenDetail.scrollIntoView({behavior:'smooth', block:'start'})`. The browser smoke test waited only for the class and button visibility, then immediately called `locator.tap()`; it did not wait for the smooth scroll/layout to settle.
+- The 112px button movement, overlapping iframe geometry at the prior tap position, iframe focus, and absence of parent-document events together indicate the tap coordinate drifted into the embedded cross-origin chart while smooth scrolling was still moving the close button. The close handler did not receive the tap. This is a Playwright interaction-timing race; it is not evidence that the close handler's state transition is broken.
+- Product source was unchanged between previously green head `342b3456acaafa9399bf3fcaffcd8b220a31f910` and failing head `6353d826fa0b6c0b082dad492bc6b6b0ebe7ec45`. The compare shows only the research and checkpoint Markdown files changed in those commits. The same browser flow passed on the earlier head, supporting the timing-race diagnosis.
+
+### Targeted counter-fix
+- Update only the Browser Smoke test: after the close button becomes visible, wait for its bounding box and `window.scrollY` to remain stable across eight consecutive animation frames.
+- Re-check that the close button is the top hit-test target at its center after scrolling settles, then perform the same real Playwright touch tap.
+- Keep the strict assertion that the tap must remove `mobile-token-view`; retain failure diagnostics and existing interaction timeouts. Do not skip the close action, force a DOM click, enlarge the post-tap assertion timeout, or weaken the mobile-layout requirements.
+- No DEX product code or UX behavior is changed by this counter-fix.
+
+### Verification plan
+- [ ] Run Validate and Browser Smoke on the counter-fix commit.
+- [ ] Confirm both 390px and 360px passes, including the actual touch tap and subsequent Base-market navigation.
+- [ ] If step 15 fails again, inspect the new stability/hit-test/event diagnostics and treat it as a new failure, not an automatic retry.

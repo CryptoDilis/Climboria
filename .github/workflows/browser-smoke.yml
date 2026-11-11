@@ -616,6 +616,26 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
+                // openToken() intentionally scrolls the detail panel into view smoothly.
+                // Wait for the close button and page scroll position to stop moving before
+                // tapping; otherwise the tap point can drift into the cross-origin chart iframe.
+                await dex.evaluate(async()=>{
+                  const el=document.querySelector('#closeDetail');
+                  if(!el)throw new Error('Mobile token close control disappeared before tap');
+                  const deadline=performance.now()+5000;
+                  let previous=null,stableFrames=0;
+                  while(performance.now()<deadline&&stableFrames<8){
+                    await new Promise(requestAnimationFrame);
+                    const r=el.getBoundingClientRect();
+                    const next={x:r.x,y:r.y,width:r.width,height:r.height,scrollY:window.scrollY};
+                    if(previous&&Math.abs(next.x-previous.x)<0.25&&Math.abs(next.y-previous.y)<0.25&&Math.abs(next.width-previous.width)<0.25&&Math.abs(next.height-previous.height)<0.25&&Math.abs(next.scrollY-previous.scrollY)<0.25)stableFrames++;
+                    else stableFrames=0;
+                    previous=next;
+                  }
+                  if(stableFrames<8)throw new Error('Mobile detail scroll did not settle before close tap: '+JSON.stringify({stableFrames,rect:el.getBoundingClientRect().toJSON(),scrollY:window.scrollY}));
+                  const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+                  if(hit!==el&&!el.contains(hit))throw new Error('Mobile close control is not the top hit target after scroll settled: '+JSON.stringify({hit:hit?{tag:hit.tagName,id:hit.id,classes:String(hit.className)}:null,rect:r.toJSON(),scrollY:window.scrollY}));
+                });
                 const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
