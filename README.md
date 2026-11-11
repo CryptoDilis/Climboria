@@ -3907,3 +3907,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Exact-head Browser Smoke run `42968419467`, job `130350957112`, started on the same head; currently installing Playwright (step 5). DEX 390px/360px and Jarrell gameplay steps have not run yet.
 - [ ] Continue polling both exact-head runs. Browser Smoke must pass step 15 before step 17 is treated as useful GLB diagnostic evidence.
 - [ ] PR #262 older Browser Smoke `42967445978` remains non-terminal at gameplay step 17; keep it distinct from PR #263's new combined-head run and do not duplicate or infer its outcome.
+
+
+### PR #263 exact-head CI update — 2026-11-11 13:55 +08
+
+- [x] Validate run `42968419490`, job `130350957256`: SUCCESS on exact PR #263 head `343db8f21ee09919591167489366551c204385b7`.
+- [x] Browser Smoke run `42968419467`, job `130350957112`: steps 15 and 16 SUCCESS. This confirms the compact mobile DEX/Swap layout and provider-error/true-empty states pass on the combined head.
+- [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile, including strict saved-GLB readiness) remains IN PROGRESS; screenshot upload step 18 pending. Do not call the full Browser Smoke passed.
+- [ ] Next: poll job `130350957112`; when step 17 is terminal, retrieve logs/diagnostics and inspect the reported `loaderDiagnostics.phase`. If phase telemetry shows a concrete parse/scene-attach/readiness defect, implement a narrow production counter-fix and rerun exact-head Validate + Browser Smoke. Keep PR #263 diagnostic-only until then.
