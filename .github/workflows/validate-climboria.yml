@@ -45,6 +45,8 @@ jobs:
         run: |
           node --check dex/swap-proxy/src/index.mjs
           node --test dex/swap-proxy/test/worker.test.mjs
+          node --check dex/swap-proxy/src/alt-resolution.mjs
+          node --test dex/swap-proxy/test/alt-resolution.test.mjs
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
