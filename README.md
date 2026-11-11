@@ -4267,3 +4267,20 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] Older-cursor scan remains pending: audit artifact from this run uses the default cursor (`before=null`). Manual dispatch remains unavailable through the current GitHub integration. No older-window results are claimed.
 - [!] These are code/CI and browser checks, not production deployment, wallet signing, swap execution, full gameplay, or proof of Login/Launchpad completion.
 - Security remains fail-closed; variant 75 excluded; signing/execution flags remain false.
+
+
+
+## 2026-11-11 — Senior engineering continuation: PR #268 exact-head audit
+
+- [x] Re-read repository metadata: default branch is `main`; current main head at inspection is `623adfbbe9bca5832b79b71c625a2e201c5279db`.
+- [x] Re-read open PRs and confirmed PR #268 remains open, draft, and unmerged: `fix(swap): validate Jupiter V6 fixed account roles`.
+- [x] Inspected exact PR #268 head: `5472f435fc6f3d2eed6945059bc5b6cad4413faf`; PR base is current main `623adfbbe9bca5832b79b71c625a2e201c5279db`.
+- [x] Exact-head Validate run `43035556560`, job `130573371164`: SUCCESS. All 15 steps passed, including Worker security/API contracts, Wrangler Durable Object dry-run, auth/cloud-save syntax, homepage and token-launch copy checks, inline/Dex/Swap/game syntax, and HTML script audit.
+- [x] Exact-head ecosystem Browser Smoke run `43035556451`, job `130573341212`: SUCCESS. All executed steps passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX, live Solana discovery, desktop/mobile workspace, 390px/360px layouts, provider-error/true-empty states, and screenshot upload.
+- [x] Exact-head Jupiter V6 CPI Trace Audit run `43035556257`, job `130573362128`: SUCCESS. All 8 steps passed, including finalized public route trace fetch and report artifact upload.
+- [!] Three earlier workflow runs on superseded intermediate heads (`43035524511`, `43035524562`, `43035524805`) were cancelled when a newer commit superseded them. These are cancellations, not failed test results; the three latest workflows above passed on the same exact head.
+- [!] The Browser Smoke workflow executed here is the ecosystem smoke, not the separate Jarrell's Peak gameplay workflow. Do not claim current-head gameplay verification from this result.
+- [!] A successful read-only Jupiter trace audit is not a complete per-DEX CPI/account-role security approval. No production deployment, Devnet settlement, wallet signing, or live swap execution is established by these checks.
+- [ ] Next: inspect the latest CPI trace artifact and update the research/security review with its exact route, account mapping, and unresolved limitations. Continue version-pinned per-DEX adapter validation and controlled Devnet evidence; do not widen the allowlist based on a single trace.
+- [ ] Run the separate gameplay Browser Smoke against a current-main-synchronized head when its required game/assets paths are changed or when explicitly dispatched. Keep Jarrell's Peak/gameplay status separate from ecosystem smoke.
+- Security boundary remains unchanged: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`, and public frontend execution remains disabled. Keep PR #268 draft pending complete evidence and independent review.
