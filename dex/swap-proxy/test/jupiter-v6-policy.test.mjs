@@ -20,8 +20,8 @@ function routeData({ variant = 7, percent = 100, inputIndex = 0, outputIndex = 1
   return new Uint8Array([...discriminator, ...u32(1), variant, ...payload, percent, inputIndex, outputIndex, ...u64(inAmount), ...u64(outAmount), ...u16(slippage), fee]);
 }
 function parsed({ data = routeData(), extraProgram = null, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
-  const keys = [takerKey, TOKEN_PROGRAM_ID, source, destination, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute];
-  const instructions = [{ programIdIndex: 5, accountIndexes: [1, 0, 2, 3, 5, 4, 5, 6], data }];
+  const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute];
+  const instructions = [{ programIdIndex: 5, accountIndexes: [3, 0, 1, 2, 5, 4, 5, 6], data }];
   if (extraProgram) instructions.push({ programIdIndex: 7, accountIndexes: [], data: new Uint8Array([99]) });
   return {
     staticAccountKeys: keys.map(decodeBase58),
