@@ -1,4 +1,5 @@
 import { resolveAddressLookupTables } from "./alt-resolution.mjs";
+import { decodeBase58, encodeBase58 } from "./transaction-validation.mjs";
 
 const MAX_RESPONSE_BYTES = 512 * 1024;
 const RPC_TIMEOUT_MS = 8000;
@@ -107,4 +108,99 @@ export async function resolveTransactionLookups({
     currentSlot: payload.result.context.slot
   });
   return { ...resolved, contextSlot: payload.result.context.slot };
+}
+
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
+
+function readU32LE(bytes, offset) {
+  if (offset + 4 > bytes.length) fail("Token account data is truncated");
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
+}
+function readU64LE(bytes, offset) {
+  if (offset + 8 > bytes.length) fail("Token account data is truncated");
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getBigUint64(offset, true);
+}
+function decodeBase64(value) {
+  if (typeof value !== "string" || value.length > 1024) fail("Token account base64 data is invalid");
+  let binary;
+  try { binary = atob(value); } catch { fail("Token account base64 data is malformed"); }
+  return Uint8Array.from(binary, character => character.charCodeAt(0));
+}
+function parseClassicTokenAccount(address, account) {
+  if (!account || account.executable !== false || account.owner !== TOKEN_PROGRAM_ID ||
+      !Array.isArray(account.data) || account.data[1] !== "base64") {
+    fail("Token account is missing, executable or not owned by the classic SPL Token program");
+  }
+  const bytes = decodeBase64(account.data[0]);
+  if (bytes.length !== 165) fail("Only classic 165-byte SPL Token accounts are supported; Token-2022/extensions are rejected");
+  const mint = encodeBase58(bytes.slice(0, 32));
+  const owner = encodeBase58(bytes.slice(32, 64));
+  const amount = readU64LE(bytes, 64);
+  const delegateOption = readU32LE(bytes, 72);
+  const state = bytes[108];
+  const nativeOption = readU32LE(bytes, 109);
+  const closeAuthorityOption = readU32LE(bytes, 129);
+  if (state !== 1) fail("Token account must be initialized and not frozen");
+  if (delegateOption !== 0) fail("Delegated token accounts are not supported");
+  if (nativeOption > 1 || closeAuthorityOption !== 0) fail("Token account native/close-authority metadata is unsupported");
+  if (nativeOption === 1 && mint !== WRAPPED_SOL_MINT) fail("Native token account must use the wrapped-SOL mint");
+  return { address, mint, owner, amount: amount.toString(), native: nativeOption === 1 };
+}
+
+/**
+ * Verify both route token accounts against finalized on-chain state.
+ * Only classic SPL Token accounts with direct taker ownership are supported.
+ */
+export async function verifyJupiterTokenAccounts({
+  sourceTokenAccount,
+  destinationTokenAccount,
+  taker,
+  inputMint,
+  outputMint,
+  amount,
+  rpcUrl,
+  minContextSlot = null,
+  fetchImpl = globalThis.fetch
+}) {
+  if (typeof fetchImpl !== "function") fail("Solana RPC fetch implementation is unavailable");
+  for (const [label, address] of [["source", sourceTokenAccount], ["destination", destinationTokenAccount], ["taker", taker], ["input mint", inputMint], ["output mint", outputMint]]) {
+    if (typeof address !== "string" || decodeBase58(address).length !== 32) fail("Invalid " + label + " public key");
+  }
+  if (sourceTokenAccount === destinationTokenAccount) fail("Source and destination token accounts must be different");
+  if (typeof amount !== "string" || !/^[1-9][0-9]*$/.test(amount)) fail("Requested token input amount is invalid");
+  if (minContextSlot !== null && (!Number.isSafeInteger(minContextSlot) || minContextSlot < 0)) fail("Minimum RPC context slot is invalid");
+  const url = validateRpcUrl(rpcUrl);
+  const response = await fetchImpl(url.toString(), {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "climboria-token-account-verification",
+      method: "getMultipleAccounts",
+      params: [[sourceTokenAccount, destinationTokenAccount], {
+        encoding: "base64",
+        commitment: "finalized",
+        ...(minContextSlot === null ? {} : { minContextSlot })
+      }]
+    }),
+    redirect: "error",
+    signal: AbortSignal.timeout(RPC_TIMEOUT_MS)
+  });
+  if (!response.ok) fail("Solana RPC token-account verification failed with HTTP " + response.status);
+  const raw = await readBoundedBody(response);
+  let payload;
+  try { payload = JSON.parse(raw); } catch { fail("Solana RPC returned invalid token-account JSON"); }
+  const slot = payload?.result?.context?.slot;
+  if (payload?.jsonrpc !== "2.0" || payload?.id !== "climboria-token-account-verification" ||
+      payload?.error || !Number.isSafeInteger(slot) || (minContextSlot !== null && slot < minContextSlot) ||
+      !Array.isArray(payload?.result?.value) || payload.result.value.length !== 2) {
+    fail("Solana RPC returned incomplete or stale token-account evidence");
+  }
+  const source = parseClassicTokenAccount(sourceTokenAccount, payload.result.value[0]);
+  const destination = parseClassicTokenAccount(destinationTokenAccount, payload.result.value[1]);
+  if (source.owner !== taker || destination.owner !== taker) fail("Both swap token accounts must be directly owned by the taker");
+  if (source.mint !== inputMint || destination.mint !== outputMint) fail("Swap token-account mints do not match the requested input/output mints");
+  if (BigInt(source.amount) < BigInt(amount)) fail("Taker source token-account balance is insufficient for the requested input");
+  return { contextSlot: slot, source, destination };
 }
