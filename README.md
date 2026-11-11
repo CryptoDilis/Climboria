@@ -1,3 +1,32 @@
+## 2026-11-11 21:07 +08 — continuation audit: PR #268 exact-head checks green; GLB payload measured
+
+**Locked delivery order: DEX → Swap → Login → Launchpad.** Gameplay remains a separate, non-blocking track.
+
+- [x] Re-read repository metadata: `CryptoDilis/Climboria`, default branch `main`; write permission confirmed.
+- [x] Re-read current open PRs and latest active work. PR #268 is the current Swap security hardening branch; PR #267 is the diagnostic GLB asset audit. Older #266 remains an earlier combined diagnostic branch.
+- [x] PR #268 exact head `68580032d5980a3b4e6e43f428fb57cac217f0f2`: Validate run `43025646890` SUCCESS; job `130539562116`. All validation steps completed, including Swap proxy tests, Wrangler dry-run, auth/script syntax, and repository HTML/script audits.
+- [x] PR #268 exact head: Browser Smoke run `43025646971` SUCCESS; job `130539562377`. Auth/cloud-save isolation, homepage/DEX routing, Cloudflare proxy, fail-closed execution, standalone Swap/DEX, live Solana discovery, desktop/mobile DEX, 390px/360px layouts, and provider-error/empty states all passed.
+- [!] Browser Smoke #268 no longer contains Jarrell's Peak gameplay; gameplay was separated into a dedicated workflow. Do not interpret run `43025646971` as a gameplay pass. Confirm the dedicated game workflow separately.
+- [x] Retrieved and inspected PR #267 Validate run `42994562962`, job `130435295388` logs. The prior missing measurement is now resolved: `Climboria_Hero.glb` is 42,923,204 bytes (40.93 MiB); its 3 embedded PNG textures are each 4096×4096 and total 32,951,598 bytes (31.43 MiB): normal map 13,455,702 bytes; base-color 13,453,363 bytes; metallic/roughness 6,042,533 bytes. The model has 29 nodes, 1 mesh/primitive/material, and 19 animations.
+- [!] The 3 oversized 4K PNG textures account for ~76.8% of the GLB. This is strong evidence for a texture-payload optimization, but do not replace/compress the production asset without visual-quality comparison, licensing/source retention, format/device support checks, and strict desktop/mobile gameplay verification.
+- [!] PR #268 body still describes its latest checks as pending; this checkpoint records the subsequent exact-head green run IDs. Keep PR #268 draft pending independent semantic security review and full transaction-security acceptance. Both `EXECUTION_SECURITY_REVIEW_COMPLETE` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE` must remain false; no wallet signing or execution.
+- [ ] DEX production/live provider verification remains outstanding.
+- [ ] Swap still needs complete per-DEX CPI/account-role/token-movement/fee validation, execution-time state re-fetch, controlled Devnet sign-submit-confirm lifecycle, production Worker controls, and independent Solana security review.
+- [ ] Login still needs actual Supabase provider/dashboard configuration and controlled production-domain account lifecycle tests.
+- [ ] Launchpad still needs the complete Devnet create → bonding curve → migration → pool/LP lifecycle and authority/fee/custody review.
+
+### Always-visible delivery checklist
+- [x] PR #268 exact-head Validate: `43025646890`.
+- [x] PR #268 exact-head Browser Smoke (ecosystem/browser scope only): `43025646971`.
+- [x] PR #267 GLB audit measured all embedded texture dimensions and byte sizes: `42994562962`.
+- [ ] Dedicated gameplay Browser Smoke after workflow separation: verify exact head, run, logs, and desktop/mobile screenshots.
+- [ ] Continue P2 Swap semantic validation from PR #268; retain all fail-closed gates.
+- [ ] Record every subsequent fix, exact commit, run IDs, root-cause evidence, verification, blockers, and one next action here.
+
+**Single next action:** continue PR #268's remaining Jupiter V6 semantic/CPI account-role validation on its exact head, while separately confirming the dedicated gameplay workflow's status; do not enable signing/execution or claim gameplay readiness from the ecosystem Browser Smoke.
+
+---
+
 ## 2026-11-11 13:22 +08 — DEX mobile close fix merged; Swap account-state verification added
 
 **Execution order remains DEX → Swap → Login → Launchpad. Gameplay remains non-blocking.**
