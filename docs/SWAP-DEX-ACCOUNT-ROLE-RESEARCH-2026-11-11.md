@@ -371,3 +371,13 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - A local `git clone` attempt could not resolve github.com from this execution environment, so no local Node test result is claimed.
 - Next: obtain a fresh Validate run on the corrected exact head and inspect all test results; then inspect the matching Browser Smoke run. If the corrected test still fails, inspect its new stack trace and fix only the demonstrated cause. Do not rerun the old failed SHA as proof of the new code.
 - All signing/execution gates remain closed. No live transaction, deployment, or per-DEX semantic approval is implied.
+
+
+## Counter-fix exact-head verification — 2026-11-11
+
+- Code/test/workflow tree verified at `19f5d63098ba9b648a0ab6e21b88161bbb123062` (includes the corrected ALT privilege label, corrected static-vs-ALT assertions, and explicit trace utility syntax check).
+- Validate run `43029729833`, job `130553385102`: SUCCESS. All steps completed, including the complete swap security/API test suite, Wrangler dry-run, auth/cloud-save syntax, homepage/token-copy checks, all inline script audits, and explicit `node --check` of the trace auditor.
+- Browser Smoke run `43029729852`, job `130553473385`: SUCCESS. All steps 7–16 passed: auth/cloud-save isolation, homepage/DEX navigation, Cloudflare proxy, fail-closed execution, standalone Swap/DEX, live Solana discovery, desktop/mobile workspace, 390px/360px layout, provider-error/empty states. Screenshot artifact `13860116825` uploaded (5,387,245 bytes).
+- The failure was fixed without weakening assertions. The updated test separately verifies static transaction-message privilege caveats and ALT privilege source labels.
+- No gameplay workflow ran; no production deployment, per-DEX CPI approval, Devnet settlement, wallet signing, or swap execution is claimed.
+- Following this verification, only documentation records and PR description are updated; no runtime source, tests, or workflow logic is changed after the tested code tree.
