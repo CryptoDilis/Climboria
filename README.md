@@ -3382,3 +3382,13 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] After PR #242 Browser Smoke passes and the change is integrated, rebase/recreate PR #243 on updated main and rerun Validate + Browser Smoke on the integrated exact head.
 
 **Exact next task:** finish PR #242 Browser Smoke `42942177844`; inspect its terminal diagnostics and screenshots. Then integrate the DEX discovery commits onto the accepted orientation harness, without duplicating or reapplying the earlier orientation patch.
+
+
+### PR #243 artifact review — 2026-11-11
+
+- [x] Downloaded and inspected artifact `13820584008` from Browser Smoke `42942014181`.
+- [x] Artifact contains desktop homepage, mobile homepage, desktop gameplay, desktop cave entrance/interior, and desktop/mobile DEX token-social captures. It contains no mobile gameplay/cave captures because the inherited orientation test failed before mobile gameplay capture.
+- [x] Desktop gameplay/cave images visually confirm the game rendered and cave traversal/capture completed. Visual follow-ups noted (not part of current P0 DEX work): sanctuary spawn image shows the avatar intersecting/clipping through the circular platform edge; cave interior remains visually dense/low-poly. Do not conflate these observations with the orientation harness failure.
+- [ ] Review corresponding PR #242 artifact once its corrected exact-head Browser Smoke completes.
+- [ ] PR #243 remains blocked on rebasing/integrating with PR #242's corrected harness and a fresh exact-head Browser Smoke pass.
+
