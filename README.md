@@ -4016,3 +4016,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] Root-cause boundary is now narrowed to GLTFLoader's parse/dependency/decode stage, before the scene callback. This does not yet prove whether JSON parsing, geometry/animation processing, or embedded texture/image decoding is the blocking substage. Do not increase timeout or weaken the saved-GLB readiness assertions.
 - [x] Screenshot artifact `climboria-browser-smoke-screenshots`, ID `13834110917`, uploaded (7 files, 7,970,178 bytes).
 - [ ] Next: inspect the GLB container JSON/extension and resource composition from inside the browser runner; add substage timings around GLTFParser dependency resolution/image decode where feasible. Then implement an asset- or loader-level optimization supported by that evidence and rerun strict mobile GLB readiness plus the full smoke suite.
+
+
+### PR #266 — GLB payload/dependency substage instrumentation — 2026-11-11 14:28 +08
+
+- [x] After the parse-stage failure, added diagnostic-only GLB container inspection in `game/play.html`: validates the GLB header/JSON chunk and records extension requirements, node/mesh/primitive/material/texture/image/animation/accessor counts, image MIME/bufferView byte sizes, and accessor types.
+- [x] Added temporary `THREE.TextureLoader` dependency counters (started/completed/failed/pending and last URL/duration) scoped to the GLTFLoader parse window. This is instrumentation only; the GLB asset, loader choice, readiness contract, timeout and gameplay behavior remain unchanged.
+- [x] Commit `79acbc8222f6e70840eabc92c34e3f0517f72ef9` on PR #266 branch.
+- [ ] Exact-head Validate run `42972552677` and Browser Smoke run `42972552578` are in progress. Inspect the next mobile timeout payload for the GLB JSON composition and whether texture dependencies remain pending; use those measurements to choose the next targeted fix.
