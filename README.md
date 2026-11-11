@@ -4229,3 +4229,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Run a cursor-based older finalized sample and record scan count, matches and rate-limit status.
 - Scope: research tooling only; no runtime swap-policy change. Variant 75 remains excluded and signing/execution remain disabled.
 - Research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
+
+
+### Older-scan pagination CI verification — 2026-11-11
+- [x] Exact-head Validate run `43034073782`: SUCCESS.
+- [x] Exact-head Browser Smoke run `43034073129`: SUCCESS.
+- [x] Exact-head Jupiter CPI Trace Audit run `43034073159`: SUCCESS.
+- [x] Cursor forwarding regression test passed as part of Validate.
+- [x] Existing recent trace and BinArray verification passed; trace artifact `13861677769`.
+- [ ] Execute a manual older-cursor scan with `before_signature`; current artifact is the newest-five sample (`before=null`), not an older window.
+- Screenshot artifact: `13862771931`.
+- Verified code head: `83d32b1d0a02981b2e9e853ce0c63954e8a54dd9`. Research log contains full evidence and limitations.
