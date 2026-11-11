@@ -30,6 +30,11 @@ async function storeOrder(object, fixture, overrides = {}) {
       taker: fixture.taker,
       lastValidBlockHeight: 12345,
       expiresAt: Date.now() + 60_000,
+      tokenAccountEvidence: {
+        contextSlot: 99,
+        source: { address: "11111111111111111111111111111111", mint: "So11111111111111111111111111111111111111112", owner: fixture.taker, amount: "1000" },
+        destination: { address: "SysvarRent111111111111111111111111111111111", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", owner: fixture.taker, amount: "0" }
+      },
       ...overrides
     })
   }));
