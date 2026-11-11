@@ -85,3 +85,43 @@ Do not write a generic account-position policy shared across DEXes. Implement a 
 - Raydium CLMM swap context: https://github.com/raydium-io/raydium-clmm/blob/master/programs/amm/src/instructions/swap.rs
 - Climboria implementation under review: `dex/swap-proxy/src/jupiter-v6-policy.mjs`
 - Climboria security checkpoint: `dex/swap-proxy/SECURITY-REVIEW-2026-11-11.md`
+
+
+## Pinned-source follow-up — 2026-11-11 19:45 PHT
+
+The following source snapshots were fetched and inspected. These are source-provenance pins for research; they do not prove that a live Jupiter quote/transaction uses these exact adapter revisions. The Jupiter account-role/CPI mapping must still be matched to the deployed aggregator and route transaction before implementation.
+
+### Jupiter route enum provenance
+
+- Repository: https://github.com/jup-ag/jupiter-amm-implementation
+- Snapshot commit: `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39` (2025-07-22)
+- IDL file blob: `idls/jupiter_aggregator_v6.json`, blob `f554d1c7635b3497c022109fca231a15cb3642bd`
+- The IDL's `Swap` enum indices match the currently coded subset: Raydium 7, Whirlpool 17, RaydiumClmm 26, MeteoraDlmm 38, RaydiumClmmV2 40, RaydiumCP 46, SolFi 61.
+- This validates the enum discriminant values against this pinned IDL snapshot only. It does not validate the Jupiter adapter's CPI account ordering or establish that this older IDL is the exact deployed revision for the current route service. Re-pin against the exact release/deployment source before any production allowlist decision.
+
+### Raydium CPMM
+
+- Repository: https://github.com/raydium-io/raydium-cp-swap
+- Snapshot commit: `3d69122790e97cd6aff24e8ba95940793773f58c` (2026-11-01)
+- Source: `programs/cp-swap/src/instructions/swap_base_input.rs`
+- The Anchor account context names payer signer, PDA authority, AmmConfig constrained to PoolState.amm_config, mutable PoolState, mutable user input/output token accounts, mutable input/output vaults, separate input/output TokenInterface programs, mint accounts constrained to vault mints, and mutable observation state constrained to PoolState.observation_key.
+- The handler derives trade direction from the selected pool vaults, checks pool swap status/open time, accounts for transfer fees, computes trade/protocol/fund/creator fees, checks minimum received output, updates fee state and transfers input/output through the supplied token interfaces.
+- The policy must verify pool ownership/layout, config relation, canonical authority PDA, both pool vault addresses and mint pairing, user input authority/taker binding, token-program compatibility, observation relation, fee accounting and exact Jupiter adapter account ordering. CPMM uses TokenInterface and transfer-fee-aware paths; do not assume the legacy SPL Token-only layout.
+
+### Meteora DLMM
+
+- Repository: https://github.com/MeteoraAg/dlmm-sdk
+- Snapshot commit: `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1` (2026-11-04)
+- IDL file blob: `idls/dlmm.json`, blob `6715f5cf19dffa8651a185ac0dd823218c6a2a75`; IDL metadata version `0.12.0`.
+- The IDL `swap` account order is: lb_pair (writable), optional bin_array_bitmap_extension (writable), reserve_x (writable), reserve_y (writable), user_token_in (writable), user_token_out (writable), token_x_mint, token_y_mint, oracle (writable), optional host_fee_in (writable), user signer, token_x_program, token_y_program, event_authority PDA, program.
+- The IDL declares reserve/mint/oracle relations to lb_pair and the canonical Tokenkeg address on the basic `swap` path. It also exposes `swap2` and exact-out variants with different token-program/memo/remaining-account semantics. The current Climboria allowlist maps Jupiter variant 38 to MeteoraDlmm but does not decode/validate any of these CPI account roles.
+- Do not infer the Jupiter adapter's account mapping from Meteora's direct-program IDL. Pin the exact Jupiter adapter instruction builder and determine which DLMM instruction variant is invoked. Validate bin arrays and bitmap extension ownership/linkage/order, pair reserves/mints, oracle, optional host fee destination, user token accounts, token program and remaining-account slices.
+
+### Additional pinned on-chain source snapshots
+
+- Orca Whirlpool repository commit: `cc683ec92acb5e7606caa3d8e514d9383e9c7c11` (2026-10-12), source `programs/whirlpool/src/instructions/swap.rs`. This confirms the direct `Swap` Anchor account context and handler constraints previously summarized above. It does not establish Jupiter's adapter account ordering.
+- Raydium CLMM repository commit: `6d7a0f82d2f293c553c69aaf943377367c6c4cc6` (2026-10-27), source `programs/amm/src/instructions/swap.rs`. This confirms the direct `SwapSingle` Anchor account context and PoolState/AmmConfig/observation/tick-array relationships previously summarized above. It does not establish Jupiter's adapter account ordering.
+
+### Revised implementation gate
+
+No per-DEX account-index allowlist may be implemented from these direct DEX IDLs alone. The next engineering task is to locate the exact Jupiter adapter instruction builder/source corresponding to each route enum variant and bind that source revision to its direct DEX program IDL. If an adapter mapping cannot be independently grounded, remove that variant from the supported route set and retain fail-closed rejection. For SolFi, no sufficiently authoritative version-pinned on-chain account schema has yet been established; variant 61 must remain unsupported for signable/executable orders.
