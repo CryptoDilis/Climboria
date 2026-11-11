@@ -1,5 +1,5 @@
 import { SwapOrderStore } from "./order-store.mjs";
-import { parseSolanaV0Transaction } from "./transaction-validation.mjs";
+import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
 import { resolveTransactionLookups } from "./solana-rpc.mjs";
 export { SwapOrderStore };
 
@@ -146,8 +146,10 @@ async function handleOrder(request, env) {
   } catch (error) {
     return json({ error: "Jupiter transaction or address lookup table validation failed", details: error instanceof Error ? error.message : "Invalid transaction" }, 422);
   }
-  if (data.inAmount !== amount) {
-    return json({ error: "Jupiter order input amount does not match the requested amount" }, 502);
+  try {
+    validateJupiterOrderMetadata(data, { taker, amount });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Jupiter order metadata is invalid" }, 422);
   }
   const orderToken = crypto.randomUUID();
   const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
