@@ -3438,3 +3438,22 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] DEX/Swap checks and preceding mobile layout checks passed in run `42943304017`; desktop Jarrell's Peak gameplay and cave captures completed. Artifact `13821822426` was uploaded; mobile gameplay/cave screenshots were not generated because the readiness gate failed before those capture steps.
 - [x] PR #242 comment `6784950577` records the root cause and counter-strategy.
 - [ ] Verify Validate and Browser Smoke on the new exact commit; inspect newly generated mobile gameplay/cave screenshots. Do not merge PR #242 or integrate DEX PR #243 until the corrected exact-head run passes and visual evidence is reviewed.
+
+
+### Master progress checklist — current checkpoint 2026-11-11
+
+**Release priority: DEX → Swap → Launchpad → Login**
+
+- [x] PR #242 mobile GLB timeout diagnosed from completed run `42943304017`: timeout catch snapshot showed all strict GLB readiness flags true and no browser errors.
+- [x] Distinct test-harness counter-fix committed as `049c3907f2ccc2b868df51ffea3b1d74d069a6f4`; no production game renderer changes and no GLB assertion bypass.
+- [x] Validate `42944275550` passed on exact head `049c3907...`.
+- [ ] Browser Smoke `42944275557` still in progress at Jarrell's Peak desktop/mobile gameplay step; all 13 preceding DEX/Swap/mobile layout steps passed; no failure reported in latest job snapshot. Mobile gameplay screenshots are not yet uploaded.
+- [ ] Review final Browser Smoke logs and desktop/mobile gameplay/cave screenshots before merging PR #242.
+- [ ] PR #243 DEX market discovery remains open/draft; integrate only its DEX source changes after corrected smoke harness is accepted, then rerun exact-head checks.
+- [ ] Swap PR #235 remains open/draft. Production execution is blocked by transaction ALT/account resolution, semantic instruction validation, controlled Devnet end-to-end tests, and production Cloudflare verification. Keep execution disabled.
+- [ ] Launchpad PR #231 remains open/draft and is read-only provenance research; live unsigned Devnet transaction construction and validation are not complete.
+- [ ] Login PR #236 remains open/draft; production OAuth/SMTP/redirect allowlists and real-account end-to-end verification remain incomplete.
+- [x] Main README Pages deployment for checkpoint commit `6f209b4aa923449361c9a810cefe4238f64bfa3b` completed successfully: run `42944441067`.
+- [ ] Do not claim DEX/Swap/Launchpad/Login are production-live based on UI shells, fixtures, or source-only tests.
+
+**Exact next task:** finish Browser Smoke `42944275557`; if it fails, inspect the new failure's own evidence and devise a different targeted counter-fix. If it passes, inspect all uploaded screenshots, then reconcile PR #242 with current main and separately port the DEX-only changes from PR #243. Do not merge either PR without exact-head verification.
