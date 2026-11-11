@@ -3915,3 +3915,27 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Browser Smoke run `42968419467`, job `130350957112`: steps 15 and 16 SUCCESS. This confirms the compact mobile DEX/Swap layout and provider-error/true-empty states pass on the combined head.
 - [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile, including strict saved-GLB readiness) remains IN PROGRESS; screenshot upload step 18 pending. Do not call the full Browser Smoke passed.
 - [ ] Next: poll job `130350957112`; when step 17 is terminal, retrieve logs/diagnostics and inspect the reported `loaderDiagnostics.phase`. If phase telemetry shows a concrete parse/scene-attach/readiness defect, implement a narrow production counter-fix and rerun exact-head Validate + Browser Smoke. Keep PR #263 diagnostic-only until then.
+
+
+### PR #263 full exact-head Browser Smoke result — 2026-11-11 14:00 +08
+
+- [x] Exact-head Validate run `42968419490` passed on commit `343db8f21ee09919591167489366551c204385b7`.
+- [x] Exact-head Browser Smoke run `42968419467`, job `130350957112`, completed SUCCESS. Steps 15–18 all completed successfully: compact mobile DEX/Swap 390px/360px, market loading/provider-error/true-empty states, Jarrell desktop/mobile gameplay, and screenshot upload.
+- [x] Gameplay evidence: desktop and mobile canvas/rendering and GLB hero readiness passed. Desktop smoke verified the Adventurer GLB renderer and idle/walk/run/swim state transitions; world audits covered terrain, collisions, mountain approaches/routes, caves, chests, fishing, water movement and mobile controls. The log shows the idle animation uses the procedural fallback because the asset's available clips do not include a dedicated idle clip; this is not a GLB load failure.
+- [x] Screenshot artifact `climboria-browser-smoke-screenshots`, artifact ID `13832088997`, 8,891,012 bytes, successfully uploaded (10 files).
+- [!] The smoke explicitly ran with all wildlife temporarily disabled. This pass does not verify wildlife behavior, production hosting, external auth/provider credentials, DEX live market availability, Swap transaction execution, or Launchpad mainnet lifecycle.
+- [!] PR #263 head is now 7 commits behind current main and diverged. Do not merge its stale branch directly. The full pass is evidence for its tested head only.
+
+### PR #264 — rebase mobile DEX close-tap stability fix onto current main — 2026-11-11 14:01 +08
+
+- [x] Created fresh branch `codex/dex-mobile-close-stability-current-main-2026-11-11` from current main `19386131dfdc3095109a172db7049f37b3caac8b`.
+- [x] Created draft PR #264: https://github.com/CryptoDilis/Climboria/pull/264, exact head `e57692484fa5f00853524726246714410e0ad26b`.
+- [x] Ported only the targeted Browser Smoke fix: wait for smooth scrolling to settle for four animation frames and require the close button to be the topmost hit target before the real mobile tap. No production UI code or acceptance criteria changed.
+- [ ] Run exact-head Validate and Browser Smoke on PR #264; confirm the 390px/360px mobile DEX detail-close → market return flow and all later gameplay checks.
+- [ ] After verification, merge only the current-main-based PR #264 if all required checks pass. Keep PR #263 as historical diagnostic evidence; do not merge its diverged branch.
+
+### Next ecosystem execution checkpoint
+
+- [ ] Continue DEX and Swap review on current main after PR #264 verification. Do not enable signing/execution until CPI/account-role/token-movement/fee validation, execution-time account re-fetch, controlled Devnet sign-submit-confirm lifecycle, production Cloudflare verification, and independent Solana security review are complete.
+- [ ] Login still needs Supabase dashboard provider activation, redirect allowlist, email/SMTP setup, OAuth secrets and real production-domain account lifecycle tests.
+- [ ] Launchpad still needs full Devnet create → bonding curve → migration → pool/LP lifecycle, authority/fee destination review, and production release gates; provenance checks alone are not a live Launchpad.
