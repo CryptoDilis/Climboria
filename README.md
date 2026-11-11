@@ -3666,3 +3666,15 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] PR #246 Browser Smoke 42948629303 progressed through steps 1–14 successfully and is now at step 15 (Jarrell's Peak desktop/mobile gameplay); screenshot upload is pending.
 - [x] Main Browser Smoke after PR #242 merge 42948561787 is also at step 15 (Jarrell's Peak desktop/mobile gameplay); no terminal result yet.
 - [ ] Next: wait for both gameplay steps to complete, inspect failure logs if either fails, and visually inspect uploaded screenshots. Do not classify a running job as failed.
+
+
+### Swap security progress — 2026-11-11
+- [x] Added a standalone Solana v0 Address Lookup Table (ALT) resolver in `dex/swap-proxy/src/alt-resolution.mjs`.
+- [x] Enforces canonical ALT program ownership, non-executable account, metadata discriminator/layout, active deactivation sentinel, finalized-slot freshness contract, valid address index bounds, and rejects same-slot appended addresses until usable.
+- [x] Preserves canonical writable-then-readonly loaded-address ordering and rejects duplicate table references/indexes.
+- [x] Added focused adversarial unit tests and wired them into `.github/workflows/validate-climboria.yml`.
+- [x] Validate run `42958779215` passed on this branch head `5b3977158a3e63baef067f04ef7afa081c71d539`, including worker contract tests, ALT resolver tests, homepage checks, and DEX/Swap/game script syntax audits.
+- [ ] This is a security building block, not execution approval: resolver is not yet wired into `validateSignedOrderTransaction` or the Worker execution path. The caller must use a trusted finalized RPC, and complete instruction/program/account/mint/amount/min-output/slippage/fee/token-movement semantics are still unvalidated.
+- [ ] Swap remains fail-closed; do not set `EXECUTION_ENABLED=true` or claim production transaction execution.
+- [ ] Browser Smoke run `42958779183` passed all DEX/Swap steps 7–14, but failed the unrelated gameplay step 15 on the same 42.9 MB mobile character GLB parse stall. Desktop gameplay checks before the mobile phase passed.
+- **Exact next task:** wire ALT resolution into the order-validation data path with trusted finalized RPC and tests proving instruction account indices are resolved in Solana's exact message order; then implement an explicit instruction allowlist and semantic policy for approved Jupiter routes before considering any signing/submission path.
