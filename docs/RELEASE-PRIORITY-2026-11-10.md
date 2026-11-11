@@ -1,17 +1,19 @@
 # Climboria — Release Priority & Live Launch Checklist
-**Checkpoint date:** 2026-11-10  
-**Target:** Homepage countdown currently states **2026-11-15 15:00 UTC** (5 days after this checkpoint). This is a target, not a promise; do not launch unsafe or unverified transaction flows.
+**Checkpoint date:** 2026-11-11  
+**Target:** Homepage countdown currently states **2026-11-15 15:00 UTC**. This is a target, not a promise; never launch unsafe or unverified transaction flows.
 
 ## Mission
-Finish the Portfolio & Rewards Tracker verification, then make the three ecosystem products production-ready: **Swap, DEX, and Climboria Signature Launchpad**. Once their release gates are met, shift the main development focus to the game/Jarrell's Peak.
+Deliver the actual Climboria ecosystem in the user's explicit priority order: **DEX → Swap → Launchpad → Login**. “Live” means real provider/backend/chain behavior with verified production evidence—not a demo, fixture, mock, static UI, or a disabled transaction button. Game development continues only as needed for regression coverage while these ecosystem priorities are active.
 
-## Priority order
-1. **P0 — Close Portfolio & Rewards Tracker PR #230.** UI and dedicated assertions are implemented. Validate succeeded; Browser Smoke run `42735350994` passed steps 1–14, but the overall job was cancelled during step 15 (Jarrell's Peak gameplay smoke). Screenshot artifact `13727025693` uploaded successfully. Re-run the full Browser Smoke on the latest PR head; inspect gameplay smoke and screenshots; finish the README/PR checkpoint. Keep claim disabled and all figures unavailable until trusted sources and secure rewards backend exist.
-2. **P1 — Production Swap.** Make exact-input/output selection, token identity, quote refresh, price/chart context, slippage/fees, wallet/network handling, and error/empty/loading states correct on desktop and mobile. Deploy the production Cloudflare Worker and verify health, CORS, rate limits, Jupiter integration, and production domain. Complete devnet end-to-end swap, signing, confirmation, failure/retry, and security tests. Public execution stays disabled until all gates pass.
-3. **P2 — Production DEX.** Complete live market discovery and token profile (verified mint, price/liquidity/volume, chart, socials, holder/pool evidence, token-specific chat), selected-token/chart consistency, mobile workspace and desktop regression. Verify data freshness and provider failure states. DEX market browsing can be live independently; never represent a quote preview as an executable swap. Enable transaction actions only through the verified Swap backend and security gates.
-4. **P3 — Climboria Signature Launchpad.** Finish the end-to-end launch flow: project/token details, metadata/image validation, wallet/network selection, fee disclosure, transaction construction/signing, launch submission, confirmation, token profile/listing, progress/status, and failure/retry handling. Verify actual supported chain contracts/programs, authority/ownership, fee destination, supply/distribution and liquidity policy. Run devnet end-to-end and security tests before production. No simulated successful launches or fake bonding-curve progress.
-5. **P4 — Production integration/release gate.** Homepage links and navigation route correctly; DEX ↔ Swap ↔ Launchpad token identity is consistent; production Pages build and Worker deployment pass; desktop and mobile browser suites pass; real-wallet/devnet E2E and security review pass; monitoring/rollback notes are recorded. Mark each product LIVE only after evidence is attached.
-6. **P5 — Shift focus to the game.** Resume Jarrell's Peak and the 10 normal mountains after P0–P4 release gates are satisfied. Keep gameplay regression tests running alongside ecosystem release work.
+## Current priority order (authoritative)
+1. **P0 — DEX live market experience.** Complete and verify live Solana market discovery, token search by symbol/name/exact mint, selected-token identity, profile, pool/liquidity/volume/price evidence, chart correctness and freshness, socials, loading/error/empty states, desktop/mobile workspaces, and actual provider uptime. Current implementation uses DexScreener public APIs and a fixed boot-time discovery sample; six trending cards are derived from that sample, not a global market-wide feed. Do not label this as complete global discovery. Validate current live responses and provider limits, not only browser fixtures.
+2. **P1 — Swap production service.** Complete quote/order lifecycle, token/mint/network correctness, slippage and fee display, wallet connect/sign/submit/confirm/reconcile, replay/expiry/uncertain-outcome handling, and secure server-side validation. Verify Cloudflare Worker production health, CORS, rate limits, Jupiter upstream and Durable Object persistence. Frontend `enabled:false` and Worker `EXECUTION_ENABLED=false` remain mandatory until ALT resolution, instruction semantic policy, independent review, controlled Devnet E2E and production prerequisites pass.
+3. **P2 — Signature Launchpad live flow.** Complete real project/token metadata, wallet/network, fee disclosure, transaction construction/signing, launch submission/confirmation, token profile/listing, liquidity/pool migration and failure/retry. Verify deployed program/IDL/account layouts, authority and supply policy, fee receiver, LP custody/lock and actual chain results. No simulated successful launches or fake bonding-curve progress.
+4. **P3 — Production Login and account identity.** Enable and verify Guest, email/password, Google and X OAuth where configured; validate canonical site URL/redirect allow-lists, SMTP/email confirmation, provider credentials, CAPTCHA/rate limits, account linking, session persistence, and real-account E2E. Wallet connection is not account login. Do not claim a provider is live until its real credentials and redirect flow have passed.
+5. **P4 — Cross-product release acceptance.** Homepage navigation and DEX ↔ Swap ↔ Launchpad token identity; production Pages and Worker deployment; desktop/mobile browser suites; real-wallet Devnet E2E; security review; monitoring, rollback and exact release evidence. Mark each product LIVE only when its own gates pass.
+6. **P5 — Game focus.** Continue Jarrell's Peak and the ten normal mountains after P0–P4 release gates, keeping gameplay regression tests active in parallel where feasible.
+
+**Deferred, not forgotten:** Portfolio & Rewards Tracker PR #230 remains separate from the current P0–P3 priority order. Claims, balances and rewards stay unavailable/disabled until official token identity, trusted pricing, authenticated player identity, server-authoritative ledger, replay-safe settlement and verifiable history exist.
 
 ## Live release gates — do not bypass
 - [ ] Production Cloudflare Worker deployed; required repository variable and Actions secrets are present without exposing their values in Git/chat.
@@ -39,13 +41,14 @@ Finish the Portfolio & Rewards Tracker verification, then make the three ecosyst
 - **After P0:** Swap redesign is tracked in open PR #219 (head `812531a7a790a755f2138f1d9f9158583620d6f5`); do not duplicate its work. Its recorded blocker is DNS resolution for `api.climboria.fun`, not a Worker test/build failure. DEX productionization is tracked in issue #220. Inspect their latest workflow results and current code before edits. Then audit Launchpad end-to-end implementation and create a concrete branch/test plan for missing production pieces.
 - **Every task handoff must record:** task, branch, exact commit, workflow run IDs and conclusions, tests/screenshots reviewed, unresolved blockers, and one exact next job.
 
-## Master checklist
-- [ ] P0 Portfolio PR #230 fully verified and closed out (without enabling fake/live-unverified rewards).
-- [ ] P1 Swap production backend deployed and real devnet E2E/security verified.
-- [ ] P2 DEX live market/profile experience verified on desktop/mobile.
-- [ ] P3 Climboria Signature Launchpad end-to-end devnet and security verified.
-- [ ] P4 Cross-product integration, production deploy, release gates and rollback verified.
+## Master checklist (authoritative order: DEX → Swap → Launchpad → Login)
+- [ ] P0 DEX live provider discovery, selected-token/profile/chart consistency and desktop/mobile acceptance verified.
+- [ ] P1 Swap production quote/order service, independent transaction security review, controlled Devnet E2E and production Cloudflare health verified; keep execution fail-closed until all gates pass.
+- [ ] P2 Launchpad real Devnet creation/listing/liquidity flow and program/authority/fee/LP custody checks verified.
+- [ ] P3 Guest/email/Google/X login and account linking verified with real provider credentials and real-account E2E.
+- [ ] P4 Cross-product integration, production deploy, release gates, monitoring and rollback verified.
 - [ ] P5 Resume game/Jarrell's Peak as primary development focus.
+- [ ] Deferred Portfolio & Rewards Tracker PR #230 verified separately; do not fabricate or enable untrusted claims/rewards.
 
 
 ## 2026-11-10 — Active execution checkpoint
