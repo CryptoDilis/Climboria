@@ -14,7 +14,7 @@
 
 ## Current exact repository state
 
-- Main: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
 - PR #268 is open, draft and unmerged; exact head `8c4e86994e1ed203ffa26803874924e705973462`.
 - Validate, Ecosystem Browser Smoke and Jupiter V6 CPI Trace Audit passed on the exact PR head.
 - Game Browser Smoke and Jupiter IDL History Audit were still running at the latest inspection. Poll their terminal results before recording a pass/failure.
