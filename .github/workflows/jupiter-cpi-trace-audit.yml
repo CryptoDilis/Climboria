@@ -38,6 +38,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test CPI account-key to duplicate outer-position mapping
+        run: node --test dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs
       - name: Fetch finalized public Jupiter V6 route trace
         env:
           JUPITER_AUDIT_RPC_URL: https://api.mainnet-beta.solana.com
