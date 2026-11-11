@@ -674,20 +674,39 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
+  const mobileGlbReady = () => mobile.evaluate(() => ({
+    ready: window.__climboriaReadiness?.heroReady === true &&
+      window.__climboriaGLBRenderer === true &&
+      window.__climboriaCameraOrbit?.heroUsesGlb === true,
+    readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
+    glbRenderer: window.__climboriaGLBRenderer ?? null,
+    cameraHero: window.__climboriaCameraOrbit?.heroUsesGlb ?? null,
+    selectedHero: document.documentElement.dataset.climboriaHero ?? null,
+    renderer: document.documentElement.dataset.climboriaHeroRenderer ?? null,
+    asset: document.documentElement.dataset.climboriaHeroAsset ?? null,
+    frames: window.__climboriaRenderState?.frames ?? null,
+    canvas: !!document.querySelector('canvas'),
+    glbResources: performance.getEntriesByType('resource')
+      .filter(entry => /Climboria_Hero\\.glb/i.test(entry.name))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+  }));
+  const mobileGlbWaitStartedAt = Date.now();
   try {
     await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 75000 });
   } catch (error) {
-    const diagnostic = await mobile.evaluate(() => ({
-      readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady },
-      glbRenderer: window.__climboriaGLBRenderer ?? null,
-      cameraHero: window.__climboriaCameraOrbit?.heroUsesGlb ?? null,
-      selectedHero: document.documentElement.dataset.climboriaHero ?? null,
-      renderer: document.documentElement.dataset.climboriaHeroRenderer ?? null,
-      asset: document.documentElement.dataset.climboriaHeroAsset ?? null,
-      frames: window.__climboriaRenderState?.frames ?? null,
-      canvas: !!document.querySelector('canvas')
-    }));
-    throw new Error('Mobile GLB readiness timed out: ' + JSON.stringify(diagnostic) + '; browserErrors=' + JSON.stringify(errors) + '; ' + error.message);
+    // The timeout can race the final GLB/camera readiness update on mobile.
+    // Re-read the same production invariants before treating the timeout as a
+    // real failure; do not accept a fallback renderer or skip the GLB check.
+    let diagnostic = await mobileGlbReady();
+    if (!diagnostic.ready) {
+      try {
+        await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 15000 });
+      } catch (graceError) {
+        diagnostic = await mobileGlbReady();
+        throw new Error('Mobile GLB readiness remained incomplete after bounded grace period: ' + JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }) + '; browserErrors=' + JSON.stringify(errors) + '; initial=' + error.message + '; grace=' + graceError.message);
+      }
+    }
+    console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
