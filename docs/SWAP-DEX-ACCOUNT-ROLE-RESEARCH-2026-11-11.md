@@ -331,3 +331,18 @@ A fresh read of the current public Jupiter V6 dataset page shows that its curren
 
 ### Exact next action
 Use a no-cost, read-only `getTransaction` capture for the known finalized Jupiter/Meteora signature (or another carefully selected transaction) and resolve the full v0 key list including ALT-loaded addresses. Decode the inner Meteora CPI instruction and compare its exact account order/privileges against the pinned CPI interface and current Meteora DLMM IDL. If the trace cannot establish the outer remaining-account slice boundaries or route-step association, mark that DEX variant unverified and exclude it from any future signable allowlist. No paid dataset purchase, code allowlist expansion, signing, or execution.
+
+
+## Read-only Jupiter V6 RPC trace auditor — 2026-11-11
+
+- Added `dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs` to capture finalized `getTransaction` responses using raw JSON encoding and resolve static plus ALT-loaded account indexes for Jupiter V6 outer route instructions and their ordered inner CPI instructions.
+- The report preserves outer instruction index, inner instruction index, program IDs, ordered account addresses, stack heights, raw instruction data, transaction logs and pre/post token balances.
+- It rejects malformed account indexes instead of producing a partial trace. The RPC endpoint must be HTTPS and is supplied at runtime via `JUPITER_AUDIT_RPC_URL`; no endpoint credentials are committed.
+- Added offline unit fixtures covering static/ALT account ordering, stack height, transaction-level privilege resolution, malformed account-index rejection, finalized commitment, JSON encoding and v1 transaction support.
+- Critical privilege limitation is encoded in the report: Solana RPC innerInstructions provides account indexes and optional stackHeight, but not each CPI's requested AccountMeta signer/writable bits. The helper labels privileges only as outer transaction-message maximum privileges. It does not pretend to recover CPI-requested privileges, Jupiter route-plan step association, or remaining-account cursor boundaries.
+- Official Solana docs confirm that getTransaction returns innerInstructions and loadedAddresses, and the transaction-introspection library resolves account indexes including lookup-table addresses: https://solana.com/docs/rpc/http/gettransaction and https://solana.com/docs/core/transactions/transaction-introspection.
+- Solscan's public transaction-detail API requires an API key, so no unauthenticated paid endpoint is assumed. Its public rendered transaction page does not expose the raw inner CPI vectors in the fetched HTML.
+- This is a research utility only; no production Worker imports it and no execution/signing behavior changes.
+- [ ] Run the utility against the finalized Meteora example using an approved free HTTPS RPC endpoint; retain the raw response securely and record the resolved CPI vector. Do not paste API-key-bearing RPC URLs or secrets into repository files.
+- [ ] Use logs/stackHeight plus outer instruction context to establish nesting; do not assume each routePlan leg maps one-to-one to an inner CPI.
+- [ ] Compare observed CPI data/accounts against the pinned Meteora CPI interface. Continue to exclude any route variant whose slice/role mapping remains unproven.
