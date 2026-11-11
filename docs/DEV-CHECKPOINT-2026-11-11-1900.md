@@ -565,3 +565,24 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - [ ] Run exact-head Validate and Browser Smoke after this test-only history counter-fix.
 - [ ] Confirm step 12 Back/Forward pool restoration and step 15 390px/360px close-detail touch interactions both pass.
 - [ ] If either fails again, inspect that step's new diagnostics and identify a new root cause; do not retry blindly.
+
+
+## Deep diagnosis — Browser Smoke workflow-level YAML failure — 2026-11-11
+
+### Exact evidence and root cause
+- Commit `d551035a53a6c028500dfd911269afd7e0782525` attempted the same-document history test counter-fix.
+- GitHub created workflow run `43023263382` for `.github/workflows/browser-smoke.yml` and concluded FAILURE with zero jobs; no Browser Smoke PR check was produced for that head. Validate PR run `43023273284` completed SUCCESS.
+- The commit diff exposed the syntax defect: the original JavaScript line lived inside a YAML `run: |` block with 14 spaces of indentation. The inserted comment retained 14 spaces, but the replacement `await page.evaluate(...)` lines were emitted with only 4 spaces. Those lines escaped the YAML block scalar, making the workflow file invalid before GitHub could create the browser-smoke job.
+- This was an authoring/indentation error in the test workflow, not a DEX runtime regression. It was caused by the replacement matching the 4-space substring inside a 14-space-indented line and not preserving the full indentation prefix.
+
+### Counter-fix
+- Re-indent both `history.back()` and `history.forward()` lines to exactly match the surrounding JavaScript block (14 spaces in the workflow file).
+- Keep the direct same-document history traversal and the strict URL, selected-row, chart and metrics assertions.
+- No product code or acceptance criteria are changed.
+
+### Verification
+- [ ] Confirm GitHub recognizes both Validate and Browser Smoke workflows on the corrected exact head.
+- [ ] Validate passes.
+- [ ] Browser Smoke step 12 reaches and passes Back/Forward assertions.
+- [ ] Browser Smoke step 15 reaches and passes 390px/360px close-detail touch checks from the previous counter-fix.
+- If the workflow again fails before jobs are created, inspect the YAML diff and workflow-level error rather than rerunning blindly.
