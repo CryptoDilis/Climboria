@@ -4133,3 +4133,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 
 - [x] Re-read the exact timestamp fields rather than treating loader total elapsed as parse duration. `startedAt=9,744.9ms`, `parseStartedAt=243,355.2ms`, and total loader elapsed `268,022ms` imply parse had been pending for approximately `34,411ms` at the failure snapshot. The GLB resource transfer duration was `223,789ms`.
 - [!] Correct diagnosis: the mobile readiness deadline expired while the 42.9 MB asset was still in its parse/dependency phase, after an exceptionally slow ~223.8-second transfer. Do not claim a 268-second parser stall. Next counter-strategy must address asset transfer size/delivery and capture the new container/texture diagnostics to measure parse completion time independently.
+
+
+## 2026-11-11 — Jupiter V6 raw CPI trace tooling checkpoint
+
+- [x] Added a read-only finalized Solana `getTransaction` trace utility at `dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs`. It resolves static and ALT-loaded account indexes for Jupiter outer route instructions and their ordered inner CPI vectors.
+- [x] Added offline tests for ALT ordering, stackHeight, account-index bounds, finalized commitment, raw JSON encoding, and v1 support.
+- [!] The helper explicitly distinguishes outer transaction-message maximum privileges from CPI-requested signer/writable flags. RPC innerInstructions does not provide the latter; the helper cannot prove Jupiter's per-route remaining-account slice or routePlan-step association by itself.
+- [!] No live RPC trace has been captured yet. Solscan's public transaction-detail API requires an API key; no paid API or credential was assumed. Use an approved free HTTPS RPC endpoint via `JUPITER_AUDIT_RPC_URL` without committing its secret-bearing URL.
+- [ ] Next: run the utility against a finalized Jupiter/Meteora route, inspect logs and stack heights, resolve the exact ordered CPI accounts, compare against the pinned CPI interface, and record what is proven vs still unknown. Keep signable-order/execution gates closed.
