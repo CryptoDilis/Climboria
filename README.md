@@ -4430,3 +4430,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Exact slot-matched IDL result: variant 181 = `KipseliV3`; four route steps decode and correlate transaction-specifically with Kipseli, Whirlpool, Meteora DLMM and Raydium LaunchLab CPIs. Full BPS, indexes, hashes and provenance limits are in the research documents.
 - Added finalized-RPC audit of Anchor IDL account authority/payload and Jupiter ProgramData deployment/binary metadata. Run is pending; do not claim account or binary provenance until its artifact is reviewed.
 - Keep route_v2 diagnostic-only; all signing/execution gates remain false.
+
+
+## 2026-11-12 — Corrected Anchor IDL account provenance parser
+
+- Re-inspected IDL History Audit artifact 13882890059 from run 43074132804. The slot-matched schema is valid for candidate slot 468153382: active from 467726546, route_v2 discriminator bb64facc31c4af14, 211 Swap variants, variant 181 KipseliV3.
+- The same artifact's finalized RPC sample showed the IDL account is Jupiter-owned, but the old provenance parser reported a false discriminator mismatch. Root cause: legacy Anchor IDL accounts have no 8-byte account discriminator; layout is authority[32] + data_len:u32 LE + zlib-compressed IDL. Previous code incorrectly used offsets 8/40/44.
+- Added dex/swap-proxy/tools/legacy-anchor-idl-account.mjs, integrated it into the IDL audit fetcher, and added positive/negative regression tests. This fixes research instrumentation only; no production route policy changed.
+- Previous ProgramData observation: address 4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT, deployment slot 468023491 (before candidate), binary SHA-256 aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6, upgrade authority CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ. Treat this as a current finalized RPC observation, not a full archival binary attestation.
+- Parser-fix commits: a52b84476770fa1064c174e4f6fbc11d9e4b2d11, b47ce4dc295cb1c3bcfe43ba49f96edc05987fd4, 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247.
+- Latest check status at checkpoint: Validate 43074720199 SUCCESS; Jupiter CPI Trace Audit 43074720213 SUCCESS; Browser Smoke 43074720380 still running; IDL History Audit 43074720141 still running. See research log for exact step status and next actions.
+- Next: inspect new IDL artifact for authority and decompressed payload hash equality; finish Browser Smoke; diagnose any real failed step from complete logs. Keep route_v2 rejected by production validation and all signing/execution gates closed.
