@@ -101,3 +101,38 @@ Important grouped findings include:
 2. Inspect the terminal Browser Smoke result and artifact; if it fails again, instrument the GLTFLoader lifecycle instead of increasing timeouts or relaxing readiness.
 3. Preserve the successful Jupiter IDL artifact and improve the audit's per-adapter provenance classification for Kipseli, Orca, Meteora, and Raydium.
 4. Continue read-only finalized multi-hop/split traces and CPI privilege/account-slice evidence. Keep unsupported route families excluded and all signing/execution/deployment gates closed until independent review and controlled Devnet acceptance are complete.
+
+
+## 2026-11-12 — exact-head recovery and adapter evidence classification
+
+### 8. PR #269 Browser Smoke recovery — run 43108247042
+
+- **Exact head:** `04be344c39de1ab725a881221ec19e93f6e90e23`; job `130817118664`; terminal result **SUCCESS**.
+- **Step evidence:** ecosystem/authentication/Swap/DEX/responsive checks 1–16 passed; strict Jarrell's Peak desktop/mobile gameplay step 17 passed; screenshot upload step 18 passed.
+- **Root-cause counter-fix verification:** logs explicitly report `Released desktop WebGL context and scene resources before mobile GLB startup.` Mobile Jarrell's Peak diagnostics report `ready=true`, `hero=true`, `renderFrames=74`, `renderErrors=[]`, all four mobile action controls visible, and player/world UI visible. The run ends with `PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls`.
+- **Artifact:** `climboria-browser-smoke-screenshots`, ID `13895696360`, 8,668,558 bytes, SHA-256 `e72da78d12f515663324cd299fed6658454e69c904292f3b83c33bfafa64baf2`. Ten files uploaded, including desktop/mobile homepage, gameplay and cave captures, DEX token social screenshots, and freshwater captures.
+- **Classification:** the previously identified smoke-harness lifecycle regression is recovered on this exact head. No new failure occurred in this run. Node deprecation warnings (punycode/url.parse and Node 20 action runtime notices) are non-fatal warnings, not failed steps.
+- **Scope boundary:** this proves the tested Browser Smoke scenarios, not full gameplay production acceptance, physical-device performance, multiplayer/economy completeness, or live production deployment.
+
+### 9. Jupiter IDL History Audit exact-head evidence — run 43108247049
+
+- **Exact head:** `04be344c39de1ab725a881221ec19e93f6e90e23`; job `130817117918`; terminal result **SUCCESS**.
+- **Artifact:** `jupiter-idl-history`, ID `13894094213`, 324,852 bytes, SHA-256 `ba28eff03ac33036649cdfad2727263d13f63d780ffeb34caab028e255dcf6d7`.
+- The artifact was retained and inspected. Its adapter findings remain as documented in section 7 above: Kipseli has no candidate historical IDL and a ProgramData deployment slot later than the candidate slot; Orca and Meteora have on-chain/latest-versus-active-history schema/payload discrepancies; Raydium has two active historical revisions at the candidate slot. The green workflow's strict gate is Jupiter candidate provenance and transport, not universal adapter release approval.
+
+### 10. Adapter IDL provenance classification implementation
+
+- Added `dex/swap-proxy/tools/dex-adapter-idl-status.mjs` with explicit `supported`, `incomplete`, and `incompatible` statuses scoped strictly to **candidate-transaction IDL provenance**.
+- Added focused unit tests for complete provenance, missing/ambiguous evidence, a program deployment later than the candidate slot, and missing deployment-slot evidence.
+- Integrated per-adapter status/reason-code records and aggregate counts into `fetch-jupiter-idl-history.mjs`.
+- Updated the IDL audit workflow to run the focused tests and trigger when the classifier or its test changes.
+- Classification policy is deliberately conservative: `supported` requires a unique active revision, agreement among active/latest schemas, verified upgradeable-loader/program deployment chronology, and on-chain IDL owner/schema/payload matches. A missing or conflicting evidence item remains `incomplete`. A proven ProgramData deployment after the candidate transaction slot is `incompatible` **only for that candidate-slot provenance claim**, not a blanket statement that the adapter cannot operate today.
+- Expected classification when applying the classifier to the previously inspected artifact: Kipseli `incompatible` relative to candidate slot `468153382` because observed deployment slot `468190520` is later; Orca `incomplete`; Meteora `incomplete`; Raydium `incomplete` because two active revisions prevent unique historical provenance. These are expected from prior evidence, not yet a new exact-head artifact result.
+- **Verification pending:** rerun Validate and IDL History Audit on the resulting new head; inspect both the unit-test output and generated per-adapter artifact before accepting the classifications. Do not claim this new code has passed until exact-head workflows terminate successfully.
+
+## Next exact engineering task
+
+1. Verify the new classifier and tests on the resulting exact PR head; inspect the new IDL artifact and confirm reason codes match raw evidence.
+2. Continue read-only finalized multi-transaction route traces covering multi-hop/split plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts.
+3. Obtain authoritative CPI-requested signer/writable privileges and deployed Jupiter binary provenance; direct IDLs and outer transaction privileges are insufficient.
+4. Keep PR #269 draft/unmerged and all signing/execution gates false until independent security review, controlled Devnet acceptance, and production release gates are complete.
