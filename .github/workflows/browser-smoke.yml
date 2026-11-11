@@ -75,6 +75,9 @@ jobs:
           cat /tmp/climboria-http.log
           exit 1
 
+      - name: Test Supabase auth UI and cloud-save account isolation
+        run: node .github/scripts/auth-cloud-save-smoke.mjs
+
       - name: Test homepage CTAs, DEX routing, and mobile navigation
         run: |
           node <<'JS'
