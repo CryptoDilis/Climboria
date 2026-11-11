@@ -64,6 +64,27 @@ function resolveInstruction(ix, accountKeys, header, staticKeyCount, loadedWrita
   };
 }
 
+function addOuterKeyOccurrences(innerInstruction, outerAccounts) {
+  const positionsByTransactionKeyIndex = new Map();
+  outerAccounts.forEach((account, position) => {
+    const positions = positionsByTransactionKeyIndex.get(account.index) ?? [];
+    positions.push(position);
+    positionsByTransactionKeyIndex.set(account.index, positions);
+  });
+
+  return {
+    ...innerInstruction,
+    accounts: innerInstruction.accounts.map((account) => ({
+      ...account,
+      // This lists every occurrence of the same transaction account-key index
+      // in the parent instruction. It does NOT identify which occurrence a
+      // deployed handler consumed while slicing remaining accounts.
+      outerInstructionPositionsForSameTransactionKey:
+        positionsByTransactionKeyIndex.get(account.index) ?? [],
+    })),
+  };
+}
+
 /**
  * Build a read-only trace from a raw getTransaction response using encoding=json.
  *
@@ -111,13 +132,13 @@ export function buildJupiterV6TraceReport(signature, rpcTransaction) {
       outerIndex,
       instructionDataBase58: resolvedOuter.dataBase58,
       outerAccounts: resolvedOuter.accounts,
-      innerInstructions: innerInstructions.map((ix, innerIndex) => ({
+      innerInstructions: innerInstructions.map((ix, innerIndex) => addOuterKeyOccurrences({
         innerIndex,
         ...resolveInstruction(
           ix, accountKeys, header, staticKeys.length, loadedWritable.length,
           "inner[outer=" + outerIndex + ",index=" + innerIndex + "]",
         ),
-      })),
+      }, resolvedOuter.accounts)),
     });
   });
 
@@ -145,6 +166,7 @@ export function buildJupiterV6TraceReport(signature, rpcTransaction) {
     evidenceLimitations: [
       "RPC innerInstructions provides ordered account indexes and optional stackHeight, but not each CPI AccountMeta's requested signer/writable flags.",
       "transactionPrivilege is the outer message's maximum privilege for an account, not the CPI's requested privilege.",
+      "outerInstructionPositionsForSameTransactionKey lists duplicate parent-instruction occurrences for the same transaction account-key index; it does not identify a handler cursor position.",
       "Do not infer routePlan-step-to-CPI association or Jupiter remaining-account slice boundaries from this report alone.",
       "A transaction trace is observational evidence for this transaction and slot; it does not establish deployed-program source/binary equivalence or universal adapter behavior.",
     ],
