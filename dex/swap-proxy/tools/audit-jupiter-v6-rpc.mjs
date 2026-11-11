@@ -72,6 +72,15 @@ function addOuterKeyOccurrences(innerInstruction, outerAccounts) {
     positionsByTransactionKeyIndex.set(account.index, positions);
   });
 
+  const parentIndexes = outerAccounts.map((account) => account.index);
+  const cpiIndexes = innerInstruction.accounts.map((account) => account.index);
+  const exactContiguousPositions = [];
+  for (let start = 0; start <= parentIndexes.length - cpiIndexes.length; start += 1) {
+    if (cpiIndexes.every((index, offset) => parentIndexes[start + offset] === index)) {
+      exactContiguousPositions.push(start);
+    }
+  }
+
   return {
     ...innerInstruction,
     accounts: innerInstruction.accounts.map((account) => ({
@@ -82,6 +91,14 @@ function addOuterKeyOccurrences(innerInstruction, outerAccounts) {
       outerInstructionPositionsForSameTransactionKey:
         positionsByTransactionKeyIndex.get(account.index) ?? [],
     })),
+    orderedParentAccountSequenceMatch: {
+      exactContiguousPositions,
+      status: exactContiguousPositions.length === 1
+        ? "unique"
+        : exactContiguousPositions.length > 1 ? "ambiguous" : "not-found",
+      // Even a unique exact sequence is observational correlation, not proof
+      // of the deployed handler's runtime remaining-account cursor.
+    },
   };
 }
 
@@ -167,6 +184,7 @@ export function buildJupiterV6TraceReport(signature, rpcTransaction) {
       "RPC innerInstructions provides ordered account indexes and optional stackHeight, but not each CPI AccountMeta's requested signer/writable flags.",
       "transactionPrivilege is the outer message's maximum privilege for an account, not the CPI's requested privilege.",
       "outerInstructionPositionsForSameTransactionKey lists duplicate parent-instruction occurrences for the same transaction account-key index; it does not identify a handler cursor position.",
+      "orderedParentAccountSequenceMatch reports exact contiguous index-sequence correlation only; even a unique match does not prove which runtime handler cursor consumed the accounts.",
       "Do not infer routePlan-step-to-CPI association or Jupiter remaining-account slice boundaries from this report alone.",
       "A transaction trace is observational evidence for this transaction and slot; it does not establish deployed-program source/binary equivalence or universal adapter behavior.",
     ],
