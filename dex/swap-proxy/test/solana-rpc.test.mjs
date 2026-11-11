@@ -114,7 +114,7 @@ function tokenAccount(mint, amount, options = {}) {
 function verifyTokens(overrides = {}, responseFactory = () => tokenRpcResponse([
   tokenAccount(inputMint, 1500n),
   tokenAccount(outputMint, 0n)
-]))) {
+])) {
   return verifyJupiterTokenAccounts({
     sourceTokenAccount,
     destinationTokenAccount,
