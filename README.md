@@ -1,3 +1,18 @@
+## 2026-11-11 21:45 +08 — PR #268 synchronized; exact-new-head ecosystem CI passed
+
+- [x] Resolved PR #268 base drift without dropping its changes: merged current main `cd42569a9fbe471f2b3df8579cc384d6e461fd66` into branch `codex/swap-jupiter-fixed-account-roles-2026-11-11` with merge commit `9df06f90ae6377b21883e935dff24e75d922614c`.
+- [x] GitHub compare confirms PR head is 44 commits ahead and 0 behind; merge base equals current main `cd42569a9fbe471f2b3df8579cc384d6e461fd66`.
+- [x] Exact-new-head Validate run `43027321665`, job `130545192552`: SUCCESS on `9df06f90ae6377b21883e935dff24e75d922614c`. Worker tests: 75 passed, 0 failed; Wrangler 4.36.0 dry-run passed; Supabase/auth/site/game syntax and HTML audits passed (5 HTML files, 3 inline scripts).
+- [x] Exact-new-head ecosystem Browser Smoke run `43027321228`, job `130545189218`: SUCCESS on the same SHA. Steps 7–16 passed: auth/cloud-save account isolation; homepage/DEX navigation; Cloudflare DEX proxy; fail-closed execution; standalone Swap/DEX; live Solana discovery; DEX mobile workspace; 390px/360px layouts; provider outage and valid-empty states.
+- [x] Screenshot artifact `climboria-browser-smoke-screenshots`, ID `13858795949`, uploaded successfully (5,386,474 bytes).
+- [!] This Browser Smoke is ecosystem-only; it does not execute Jarrell's Peak gameplay. The dedicated `game-browser-smoke.yml` workflow uses path filters for `game/**`, `assets/characters/**`, or `.github/scripts/game-smoke.mjs`; this PR changed none of those paths, so no dedicated game run was triggered. The workflow supports manual dispatch, but the connected GitHub actions controls here do not expose a dispatch action. Do not claim gameplay passed.
+- [!] PR #268 remains draft. The 44-commit security branch is now current-main-based, but no code merge or signing/execution enablement is authorized by green structural CI. Full DEX CPI/account-role semantics, token movement/fee proof, controlled Devnet settlement and independent Solana security review remain release blockers.
+- [x] PR #268 description updated with current-main merge commit and exact-new-head workflow evidence.
+- [ ] Next: continue authoritative Jupiter per-DEX CPI/account-slice proof; do not infer adapter mapping from DEX direct IDLs/generated builders. If source/deployed trace cannot prove a variant, exclude it from any future signable allowlist. Keep all source and environment execution gates closed.
+- [ ] Separately run dedicated gameplay workflow on an eligible game/assets/script change or through a supported manual dispatch; do not confuse this with the passing ecosystem smoke.
+
+---
+
 ## 2026-11-11 21:32 +08 — follow-up repository sync and Swap release posture
 
 - [x] Recorded the complete PR #266 failure analysis and PR #267 GLB audit measurements above in the main README. Commit: `9dfb3c0caa0c661ea0cbe3b985583fbc192bb867`.
