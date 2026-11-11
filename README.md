@@ -4369,3 +4369,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [x] Code commit bb74c805a2bbe0782ea2569fc8d0315b3a00c106.
 - [!] This is not a blanket relaxation: all existing checks remain required (active instruction-schema agreement, latest/history instruction-schema agreement, upgradeable-loader owner, ProgramData deployment at/before candidate slot, on-chain IDL owner, on-chain instruction-schema match, and on-chain payload match). Only semantically identical complete IDL records from multiple sources are collapsed.
 - [ ] Exact-head workflows for bb74c805a2bbe0782ea2569fc8d0315b3a00c106 are running: Validate 43117949007, Browser Smoke 43117949047, Jupiter IDL History Audit 43117949135, and Jupiter V6 CPI Trace Audit 43117948973. Inspect terminal results and the regenerated Raydium classification before any further change.
+
+
+### Full-IDL equivalence audit result — 2026-11-12
+
+- [x] Exact-head Validate run 43117949007 passed with 113 tests / 0 failures. Exact-head Jupiter V6 CPI Trace Audit run 43117948973 passed. Exact-head Jupiter IDL History Audit run 43117949135 passed. Browser Smoke run 43117949047 remains in progress.
+- [x] IDL artifact 13899462652, 347,706 bytes, SHA-256 9d179e60609c9488f06599cb7816b0e1c2371c5ee090af5ff59d57151eef3c69, downloaded and inspected.
+- [x] Full-IDL equivalence result: Raydium LaunchLab has two active history records but one canonical full-IDL schema variant (SHA-256 30d091c81e2593b572d918af4a7d4692c16b9d5ba385741455cbd46cd8ed51d9); the on-chain IDL payload matches active history, and ProgramData deployment covers candidate slot. Its candidate-slot IDL provenance is now supported, with no remaining reasons.
+- [x] Raydium LaunchLab candidate account audit is matched; all 27 checks pass. This confirms the PoolState creator, both fee-vault PDAs and Token-2022 token-account authority/mint state against finalized current account data.
+- [!] Overall DEX IDL provenance: 1 supported (Raydium LaunchLab), 3 incomplete (Kipseli, Orca Whirlpool, Meteora DLMM), 0 incompatible. Kipseli has no active historical revision and current ProgramData deployment is later than candidate; Orca's on-chain IDL instruction schema/payload do not match active history; Meteora has latest/history disagreement and on-chain schema/payload mismatch.
+- [!] Supported IDL provenance is not transaction-safety approval. Raydium LaunchLab source is closed; SDK + on-chain account state do not prove deployed handler semantics. Jupiter route_v2 account cursor/slicing and CPI-requested signer/writable privileges remain unproven. PR #269 remains draft/unmerged and signing/execution gates false.
+- [ ] Next: wait for Browser Smoke run 43117949047, inspect terminal logs and screenshot artifact, then record final exact-head result. Continue slot-matched Jupiter route_v2 runtime/account-slice evidence work without weakening fail-closed gates.
