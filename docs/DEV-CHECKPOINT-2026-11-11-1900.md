@@ -226,3 +226,20 @@ Initial authoritative-source findings:
 - [ ] Prove exact Jupiter adapter dispatch and outer remaining-account partitioning against a version-matched source or deployed-program evidence.
 - [ ] Resolve Meteora privilege/optional-account discrepancies and SolFi's missing CPI schema before any per-DEX role policy implementation.
 - [ ] Keep signable-order and execution kill switches closed throughout.
+
+
+## Progress addendum — DEX browser-history intermittent failure diagnosis — 2026-11-11 20:16 PHT
+
+### Exact failing run and root-cause assessment
+- Browser Smoke run `43017733079` on docs-only head `c22d327eec37d6b109d35849872a3958e7e867c2` failed in step 12, `Test standalone DEX market and quote-preview shell`, at `[stdin]:81`.
+- Mapped line 81 to the 10-second wait for the URL to return to pool B immediately after `page.goForward()`. The earlier pool selection, pool-B chart/metrics, Back-to-pool-A URL/selected-row/chart/metrics checks passed. No browser page error or assertion mismatch was logged before the forward URL wait.
+- The same unchanged DEX source and test passed in run `43017528317` on `6c465a7`, and passed again in run `43017888356` on `8d40976`; Validate also passed on `8d40976` in run `43017888405`. This is intermittent browser-history test behavior, not evidence of a deterministic DEX regression. The precise event/history state at the failed instant was not captured, so the cause is not yet proven.
+- Test review found an unnecessary synthetic `history.pushState` to the **same pool-A URL** immediately before the real UI click that selects pool B. The app already writes pool A into the URL on initial selection, and selecting pool B pushes the actual next history entry. The duplicate same-URL entry adds no product coverage and makes the history stack harder to reason about.
+- Counter-fix: remove only that redundant same-URL test push; preserve the real UI-driven pool-B selection and strict Back/Forward assertions. Add a `popstate` event trace plus URL/history-state/selected-row diagnostics to the timeout path. No retry, timeout increase, or relaxed assertion is introduced.
+- Re-run Validate and DEX/Login Browser Smoke after this test-only change. If it recurs, the captured URL, history length/state, popstate events, active mint and selected row will distinguish a missing browser history transition from an app popstate restoration failure.
+
+### Exact supporting run evidence
+- Failing run: https://github.com/CryptoDilis/Climboria/actions/runs/43017733079
+- Passing rerun on unchanged product/test behavior: https://github.com/CryptoDilis/Climboria/actions/runs/43017888356
+- Validate on the rerun head: https://github.com/CryptoDilis/Climboria/actions/runs/43017888405
+- This finding and counter-fix are isolated to the DEX browser smoke history test; the unrelated mobile GLB game blocker remains tracked in the dedicated game workflow.

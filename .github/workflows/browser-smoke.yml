@@ -398,7 +398,7 @@ jobs:
               await page.setViewportSize({width:1365,height:900});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').waitFor({state:'visible',timeout:15000});
               if(new URL(page.url()).searchParams.get('pool')!==poolA) throw new Error('DEX initial token selection did not persist its best pool in URL');
-              await page.evaluate(pool=>{const u=new URL(location.href);u.searchParams.set('pool',pool);history.pushState({climboriaDex:true},'',u);},poolA);
+              await page.evaluate(()=>{window.__climboriaDexHistoryEvents=[];window.addEventListener('popstate',()=>window.__climboriaDexHistoryEvents.push({url:location.href,state:history.state}));});
               await page.locator('#detailPairs button[data-pool="'+poolB+'"]').click();
               if(new URL(page.url()).searchParams.get('pool')!==poolB) throw new Error('DEX pool selection did not update URL');
               const assertSelectedPool=(pool,expected)=>page.evaluate(({pool,expected})=>{
@@ -415,12 +415,12 @@ jobs:
               const poolBState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBState.passed)throw new Error('Selecting pool B did not synchronize chart, external link and provider metrics: '+JSON.stringify(poolBState));
               await page.goBack();
-              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,historyLength:history.length,historyState:history.state,events:window.__climboriaDexHistoryEvents,selectedPool:document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair,activeMint:window.activeDetailMint||null}));throw new Error('DEX Back URL restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Back selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolABackState=await assertSelectedPool(poolA,poolAExpected);
               if(!poolABackState.passed)throw new Error('Browser Back restored pool A URL/row but not its chart and metrics: '+JSON.stringify(poolABackState));
               await page.goForward();
-              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
+              await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,historyLength:history.length,historyState:history.state,events:window.__climboriaDexHistoryEvents,selectedPool:document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair,activeMint:window.activeDetailMint||null}));throw new Error('DEX Forward URL restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBForwardState.passed)throw new Error('Browser Forward restored pool B URL/row but not its chart and metrics: '+JSON.stringify(poolBForwardState));
