@@ -3961,7 +3961,7 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Added Browser Smoke regression: hold `navigator.clipboard.writeText` pending, assert no copied/success label is shown early, resolve the promise, then assert the exact active mint was written and success is displayed.
 - [x] Draft PR #265: https://github.com/CryptoDilis/Climboria/pull/265; branch `codex/dex-copy-mint-confirmation-2026-11-11`; exact head `fa49fa57195dd1f42e8e1cf92aad2405913da1ab`. Freshly based on current main; compare shows 2 commits ahead, 0 behind, only `dex/premium-terminal.js` and Browser Smoke workflow changed.
 - [x] Exact-head Validate run `42970504827` passed on the PR #265 head.
-- [ ] Browser Smoke run `42970504909` is running; auth/account isolation and homepage/DEX routing passed, Cloudflare DEX Swap proxy, fail-closed guard, standalone Swap, DEX quote preview, live profile/boost discovery (including the new clipboard regression at step 13), mobile workspace and desktop regression (step 14) all passed. Compact mobile 390px/360px step 15 is running; steps 16–18 remain.
+- [ ] Browser Smoke run `42970504909` is running; auth/account isolation and homepage/DEX routing passed, Cloudflare DEX Swap proxy, fail-closed guard, standalone Swap, DEX quote preview, live profile/boost discovery (including the new clipboard regression at step 13), mobile workspace and desktop regression (step 14) all passed. Compact mobile 390px/360px and market loading/provider-error/true-empty states (steps 15–16) also passed. Jarrell desktop/mobile gameplay step 17 is running; screenshot upload step 18 is pending.
 
 ### PR #264 gameplay smoke watch — latest poll
 
