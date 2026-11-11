@@ -618,10 +618,7 @@ jobs:
                   await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
-                await dex.evaluate(()=>{window.__closeDebug=[];document.addEventListener('pointerup',e=>window.__closeDebug.push({type:'pointerup',target:e.target?.id||e.target?.tagName,pointerType:e.pointerType,tokenView:document.body.classList.contains('mobile-token-view')}),true);document.addEventListener('click',e=>window.__closeDebug.push({type:'click',target:e.target?.id||e.target?.tagName,detail:e.detail,tokenView:document.body.classList.contains('mobile-token-view')}),true);});
                 await dex.locator('#closeDetail').tap();
-                const closeDebug=await dex.evaluate(()=>({tokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),events:window.__closeDebug}));
-                console.log('DEX_CLOSE_DEBUG '+JSON.stringify(closeDebug));
                 await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
                 await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
