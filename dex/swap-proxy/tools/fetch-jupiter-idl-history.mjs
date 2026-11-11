@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { inflateSync } from "node:zlib";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const baseUrl = "https://idl-one.vercel.app";
@@ -17,19 +17,6 @@ function sha256(value) {
 
 function parseJson(text) {
   try { return JSON.parse(text); } catch { return null; }
-}
-
-function encodeBase58(buffer) {
-  let number = BigInt(`0x${buffer.toString("hex") || "0"}`);
-  let encoded = "";
-  while (number > 0n) {
-    const remainder = Number(number % 58n);
-    encoded = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"[remainder] + encoded;
-    number /= 58n;
-  }
-  let zeroes = 0;
-  while (zeroes < buffer.length && buffer[zeroes] === 0) zeroes += 1;
-  return "1".repeat(zeroes) + encoded;
 }
 
 async function rpcRequest(method, params) {
@@ -73,36 +60,17 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
     const idlInfo = await fetchAccountInfo(anchorAddress);
     if (!idlInfo.value) throw new Error(`Anchor IDL metadata account not found: ${anchorAddress}`);
     const idlAccountBytes = Buffer.from(idlInfo.value.data?.[0] ?? "", "base64");
-    const idlDiscriminator = createHash("sha256").update("account:IdlAccount").digest().subarray(0, 8);
-    const discriminatorMatches = idlAccountBytes.subarray(0, 8).equals(idlDiscriminator);
-    let idlAuthority = null;
-    let declaredPayloadLength = null;
-    let payloadSha256 = null;
-    let payloadMatchesHistory = false;
-    let payloadRouteV2Discriminator = null;
+    let decodedIdlAccount = null;
     let payloadError = null;
-    if (discriminatorMatches && idlAccountBytes.length >= 44) {
-      idlAuthority = encodeBase58(idlAccountBytes.subarray(8, 40));
-      declaredPayloadLength = idlAccountBytes.readUInt32LE(40);
-      const payloadEnd = 44 + declaredPayloadLength;
-      if (payloadEnd > idlAccountBytes.length) {
-        payloadError = `Declared IDL payload length ${declaredPayloadLength} exceeds account data`;
-      } else {
-        try {
-          const jsonBytes = inflateSync(idlAccountBytes.subarray(44, payloadEnd));
-          const jsonText = jsonBytes.toString("utf8");
-          payloadSha256 = sha256(jsonText);
-          payloadMatchesHistory = payloadSha256 === activeRevision?.contentSha256;
-          const decodedIdl = parseJson(jsonText);
-          const route = decodedIdl?.instructions?.find((instruction) => instruction.name === "route_v2");
-          if (Array.isArray(route?.discriminator)) {
-            payloadRouteV2Discriminator = Buffer.from(route.discriminator).toString("hex");
-          }
-        } catch (error) {
-          payloadError = error instanceof Error ? error.message : String(error);
-        }
-      }
+    try {
+      decodedIdlAccount = decodeLegacyAnchorIdlAccount(idlAccountBytes);
+    } catch (error) {
+      payloadError = error instanceof Error ? error.message : String(error);
     }
+    const payloadSha256 = decodedIdlAccount?.decompressedPayloadSha256 ?? null;
+    const payloadMatchesHistory = payloadSha256 !== null &&
+      payloadSha256 === activeRevision?.contentSha256;
+    const payloadRouteV2Discriminator = decodedIdlAccount?.routeV2Discriminator ?? null;
     report.idlAccount = {
       address: anchorAddress,
       contextSlot: idlInfo.contextSlot,
@@ -112,10 +80,11 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
       lamports: idlInfo.value.lamports,
       dataLength: idlAccountBytes.length,
       accountDataSha256: sha256(idlAccountBytes),
-      anchorIdlAccountDiscriminatorHex: idlDiscriminator.toString("hex"),
-      discriminatorMatches: discriminatorMatches,
-      authority: idlAuthority,
-      declaredPayloadLength,
+      accountLayout: decodedIdlAccount?.layout ?? "unparsed",
+      authority: decodedIdlAccount?.authority ?? null,
+      declaredPayloadLength: decodedIdlAccount?.declaredPayloadLength ?? null,
+      compressedPayloadLength: decodedIdlAccount?.compressedPayloadLength ?? null,
+      decompressedPayloadLength: decodedIdlAccount?.decompressedPayloadLength ?? null,
       decompressedPayloadSha256: payloadSha256,
       decompressedPayloadMatchesActiveHistory: payloadMatchesHistory,
       decompressedRouteV2Discriminator: payloadRouteV2Discriminator,
