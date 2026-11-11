@@ -59,6 +59,21 @@ test("rejects wrong taker, output mint, amounts, fee and excessive slippage", ()
 });
 
 
+test("accepts a connected topologically ordered split route DAG", () => {
+  const splitRoute = new Uint8Array([
+    229, 23, 203, 151, 122, 227, 173, 42,
+    ...u32(4),
+    7, 50, 0, 1,
+    7, 50, 0, 2,
+    7, 100, 1, 4,
+    7, 100, 2, 4,
+    ...u64(1000), ...u64(950), ...u16(50), 0
+  ]);
+  const decoded = decodeJupiterV6Route(splitRoute);
+  assert.equal(decoded.steps.length, 4);
+  assert.equal(decoded.steps.at(-1).outputIndex, 4);
+});
+
 test("rejects route DAG inputs without an earlier producer and dead-end branches", () => {
   const phantomIntermediate = new Uint8Array([
     229, 23, 203, 151, 122, 227, 173, 42,
