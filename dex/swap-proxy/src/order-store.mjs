@@ -33,7 +33,7 @@ export class SwapOrderStore {
     try {
       if (url.pathname === "/store" && request.method === "PUT") {
         const body = await readBody(request);
-        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt } = body || {};
+        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups, lookupContextSlot } = body || {};
         if (typeof requestId !== "string" || requestId.length < 8 || requestId.length > 200 ||
             !/^[A-Za-z0-9._:-]+$/.test(requestId)) return json({ error: "Invalid Jupiter request ID" }, 400);
         if (typeof transaction !== "string" || transaction.length > 4096 ||
@@ -45,12 +45,18 @@ export class SwapOrderStore {
         }
         const valid = validateUnsignedOrderTransaction({ transaction, taker });
         if (!valid.ok) return json({ error: valid.error }, 422);
+        if (!Array.isArray(resolvedLookups) || resolvedLookups.length > 32 ||
+            (lookupContextSlot !== null && lookupContextSlot !== undefined && (!Number.isSafeInteger(lookupContextSlot) || lookupContextSlot < 0))) {
+          return json({ error: "Resolved address lookup evidence is invalid" }, 400);
+        }
         const record = {
           requestId,
           transaction,
           taker,
           lastValidBlockHeight: lastValidBlockHeight ?? null,
           expiresAt,
+          resolvedLookups,
+          lookupContextSlot: lookupContextSlot ?? null,
           state: "ready",
           createdAt: Date.now()
         };
