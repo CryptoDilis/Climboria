@@ -1172,3 +1172,31 @@ This does not change the platform-fee attribution at outer position 10: its tran
 
 ### Next engineering task
 - Expand read-only evidence across multiple finalized transactions and route shapes, including multi-hop/split plans, DEX ordering changes, transfer-hook slices, and variable Meteora BinArray counts. Correlate by transaction account-key indexes and retain duplicate-position ambiguity. Require independent proof for CPI privileges and deployed-binary provenance before any allowlist change.
+
+## 2026-11-12 — exhaustive recent branch workflow audit (512 runs / 22 failures)
+
+Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-account-roles-2026-11-11`: 512 runs returned, 22 failures, 31 cancellations. Cancelled/superseded runs are not failures.
+
+### Per-failure diagnosis and recovery evidence
+
+- `43080087974` — Validate ALT fixture expected index 2 to resolve to loaded readonly; Solana combined key order is static → loaded writable → loaded readonly. Corrected expected value only in `ddf5f609fde582845d4265629aec59afae86858f`; subsequent exact-head Validate passed.
+- `43078477145` — Browser Smoke DEX Forward wait timed out with one Back `popstate` recorded and URL/selected pool still A. Later identical DEX/workflow source passed in `43079635297`; comparison of failing head `e27510d...` and passing head `99e9a...` showed no DEX or browser-workflow changes. Intermittent Playwright same-document traversal remains the best-supported classification; no deterministic app bug proven.
+- `43074681122` — IDL History Audit failed `ERR_MODULE_NOT_FOUND` because `fetch-jupiter-idl-history.mjs` imported `legacy-anchor-idl-account.mjs` before it was present in the commit tree. Added dependency in `8a3f6dbd872d615be5bca6fa92bf3e9a875d8247`; latest IDL workflow passed.
+- `43073589763`, `43073489963`, `43073455000`, `43073364769`, `43073330167`, `43073252926` — Validate parser failures in `jupiter-route-v2-idl.test.mjs`: one excess `}` in each of two nested fixture struct definitions. Initial fix `0e941823...` remained malformed; definitive correction `c4dbc932061fcec396e288802bfa47716f78bc85` changed both closures from `] } } },` to `] } },`. Latest Validate passes 97/97.
+- `43031863938`, `43031746115`, `43031734145` — Jupiter route discovery hit HTTP 429 on `getTransaction` from the public Solana mainnet RPC. `2fabcde436bd8f74a9ef05c421ff749009e0c1d6` added bounded exponential retry and graceful `rateLimited`/`rateLimitedMethod` incomplete-sample output; tests were added in `dce2bee62250ca89027b3e056e499e43f38869ac` and `c0500a03011d740eaddd916e6a7a42cfab800419`. Do not interpret rate-limited empty results as no routes.
+- `43031746350` — Validate failed ESM parse because `decodeBase58` was imported twice in `jupiter-v6-policy.test.mjs`. Aliased discovery helper as `decodeDiscoveryBase58` in `65c684b79bcf200dd6dfc8e10057a9fca94868a5`.
+- `43029480369`, `43029417495` — one test asserted the static-message privilege caveat against an ALT account. ALT accounts correctly use the `address-lookup-table transaction message privilege` source label; static account labels carry the CPI-meta caveat. Corrected test assertions in `f839510f1fbb7c01f8f1690087d51e8cfe67b02d`.
+- `43023263382` — browser workflow YAML parsed with zero jobs because two inline JavaScript statements were dedented outside the `run: |` block. Corrected indentation in `80941976310de7ddcb63ef9c157199d3edf28035`.
+- `43022924844` — `page.goBack()` waited for a document load after same-document `pushState`; converted to explicit same-document `history.back()`/`history.forward()` plus popstate assertions in `d551035a53a6c028500dfd911269afd7e0782525`. The edit's indentation was corrected by `8094197...` after the YAML failure above.
+- `43022517549` — mobile close-detail test tapped during smooth-scroll; button moved 112px and no pointer/touch/click event fired, while chart iframe was focused. Added eight-frame stable geometry/scrollY wait and hit-test before the real touch tap in `d69ecbc5374aca7174d2a28120d171db4471deb9`.
+- `43017733079` — DEX Forward smoke test had an unnecessary synthetic same-URL pool-A history entry before the actual pool-B UI selection. Removed duplicate history push and added popstate diagnostics in `c2d1873b67ed886f543bb5d991f80f6ab7deb2f4`.
+- `43012675319`, `43014262897`, `43015790533` — mobile GLB readiness failed after 90-second wait plus 15-second grace: the 42,923,204-byte hero GLB transferred, but loader callback/readiness never completed; `heroReady=false`, renderer null, selected hero remained loading-adventurer, 47–48 frames, and no failed requests or browser errors. The strict game smoke was later split into `.github/workflows/game-browser-smoke.yml`; the 512-run branch audit contains no run of that dedicated workflow. This remains unresolved and must not be marked green.
+
+### Exact-head green verification
+- On `302bb0841a20a51c3cebc39d51ba82440aab4e2c`: Validate run `43080434138` passed 97/97 and Wrangler dry-run; Browser Smoke `43080434131` passed; Jupiter CPI Trace Audit `43080436579` passed; Jupiter IDL History Audit `43080434110` passed. All four run metadata records target this exact SHA.
+- The later documentation-only branch commits do not change validated runtime/test source. PR #268 remains draft and unmerged.
+- Current safety gate: `route_v2` excluded from production validation; signing and execution disabled. No production readiness claim.
+
+### Next task
+- Highest unresolved engineering blocker: diagnose and reduce/repair mobile GLB load/parse time. Profile the 42.9 MB asset's geometry/texture payload and GLTFLoader callback stages on mobile; then run `.github/workflows/game-browser-smoke.yml`. Keep the strict GLB assertion.
+- Continue gathering multi-transaction route traces; a 429 response must yield an explicitly incomplete sample and a bounded retry, never a false zero-route conclusion.
