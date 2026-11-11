@@ -206,3 +206,48 @@ These match the pinned snapshot. The current aggregator IDL still contains varia
 - Do not infer that CPI IDL account counts are the per-leg outer instruction account-slice boundaries.
 - The exact Jupiter aggregator deployed binary/version and its route account cursor logic remain unverified. The next evidence must come from an authoritative version-matched implementation/release or a controlled transaction/CPI trace that reveals per-leg account consumption and privileges.
 - Keep the SolFi structural exclusion and all signable/execution gates closed until an authoritative SolFi CPI schema and mapping exists. Keep V2 variants 47/75 rejected by the current decoder until dynamic remaining-account slices and CPI roles are proven.
+
+
+
+## Follow-up evidence pass — generated SDK and public mainnet route trace — 2026-11-11
+
+### Supplemental Jupiter Aggregator V6 SDK snapshot
+- Located a later generated SDK release: `jupiter-aggregator-v6-sdk 0.4.0`, in repository `ChiefWoods/jupiter-sdk`, main commit `5e3eef72f44cbdcac3bb0426749fe5b7a5face2f` (2026-11-02).
+- Aggregator product directory: `src/products/aggregator-v6`.
+- Anchor IDL blob: `aad9f389c1a3286e46633c4a261ec626c26ff553`; Codama IDL blob: `3b5f87fc7c1e8b81b317dfacde8a1be32fc2c063`.
+- The Anchor IDL metadata still identifies program `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4`, metadata version `0.1.0`, and includes `route`, `route_v2`, exact-out, shared-account and token-ledger instruction families.
+- Generated `route.rs` confirms the legacy `route` fixed-account order: token program, user transfer authority, user source account, user destination account, optional destination token account, destination mint, optional platform-fee account, Event Authority, Jupiter program; generated remaining accounts are appended after these nine account positions. Missing optional accounts are encoded using the Jupiter program ID sentinel. This corroborates the fixed prefix already enforced by Climboria (Event Authority index 7 and Jupiter program index 8 when the optional slots are present).
+- The generated `SwapType` enum preserves the known route-plan enum sequence, including Raydium, Whirlpool, RaydiumClmm, MeteoraDlmm, RaydiumClmmV2, RaydiumCP, WhirlpoolSwapV2, SolFi and MeteoraDlmmSwapV2.
+- Provenance limitation: this is a generated client/IDL repository under `ChiefWoods/jupiter-sdk`, not the official `jup-ag` aggregator program implementation. Its README and generation script describe Codama-generated clients from the checked-in IDL; the generated route builder constructs the outer instruction but does not implement the deployed program's route execution handler, per-step CPI dispatch, or remaining-account cursor partitioning. Treat this as supplemental fixed-prefix corroboration only, not as authoritative deployed binary/source proof.
+- References:
+  - https://github.com/ChiefWoods/jupiter-sdk/tree/5e3eef72f44cbdcac3bb0426749fe5b7a5face2f/src/products/aggregator-v6
+  - https://github.com/ChiefWoods/jupiter-sdk/blob/5e3eef72f44cbdcac3bb0426749fe5b7a5face2f/src/products/aggregator-v6/rust/generated/instructions/route.rs
+  - https://github.com/ChiefWoods/jupiter-sdk/blob/5e3eef72f44cbdcac3bb0426749fe5b7a5face2f/src/products/aggregator-v6/idl/anchor.json
+  - https://github.com/ChiefWoods/jupiter-sdk/blob/5e3eef72f44cbdcac3bb0426749fe5b7a5face2f/src/products/aggregator-v6/README.md
+
+### Public mainnet transaction trace candidate — Meteora DLMM leg
+- Solscan indexed a successful, finalized Jupiter V6 `route` transaction:
+  - Signature: `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`
+  - Slot: `464856414`; timestamp: 2026-11-03 09:56:47 UTC.
+  - Input: 97.879923 USDC; output: 38,687.896434 AODF.
+  - Solscan identifies outer Jupiter V6 `route` and the Meteora DLMM program `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo`; market `7euPVbmrDWMjQyeJazecDYjxjDmd5fHmuuxpYAtkcgmj`; pool `62vMQYAQYQNsgtF74dzGhxi3yk8feKevXeZPZohgJQTT`.
+  - Transaction was submitted by Relay Solver; this is not a Climboria-controlled test.
+- Solscan's Jupiter program page reports the program as executable and upgradeable, with last deployed slot `462802085` and program-verification status false. The observed transaction slot is later than that reported deployment slot. This gives a useful temporal anchor but not the deployed executable hash, source commit, or binary-to-source equivalence.
+- The public explorer summary establishes a real outer `route` transaction and a Meteora DLMM leg, but the retrieved result did not expose the raw inner CPI instruction account vector, route-plan enum discriminant, or resolved signer/writable flags for that CPI. Therefore it cannot prove the per-leg account slice or resolve the Meteora CPI/direct-IDL privilege discrepancy.
+- References:
+  - https://solscan.io/tx/5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv
+  - https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4?cluster=mainnet-beta
+
+### Structured trace source discovered
+- Trawl's public Jupiter V6 dataset page documents a free sample covering slots `466130000–466130999` (epoch 1079, 2026-11-06) with 6,307 decoded instructions and 6,562 events.
+- Its instruction tables include `signature`, `ix_index`, `is_inner`, `inner_index`, `stack_height`, `program_id`, `accounts`, and decoded arguments. In principle this is the correct shape of evidence to join each outer Jupiter route plan to its ordered inner DEX CPI instruction and account vector.
+- The sample download itself was not retrieved/inspected in this pass; no row-level conclusions are claimed. The dataset is an independent commercial service and its page lists paid historical scans; do not purchase or incur cost. First attempt only the public free sample or independently available RPC/explorer data.
+- Reference: https://trawl.run/data/jupiter-v6
+
+### Updated evidence conclusion
+- [x] Additional generated SDK/IDL corroborates the legacy route fixed prefix and the current index 7/8 fixed-account checks.
+- [x] Found a successful post-reported-deployment mainnet Jupiter route with a Meteora DLMM leg.
+- [ ] Still missing raw inner CPI account vectors and a proven route-plan-step-to-CPI association for each supported DEX variant.
+- [ ] Still missing the Jupiter deployed executable hash/build provenance and version-matched source implementation.
+- [ ] Still unresolved: Meteora CPI interface vs direct DLMM IDL privilege/optionality discrepancy.
+- No Climboria code change is justified by these artifacts. They do not prove the route-slice boundaries or the exact Meteora CPI schema used in the observed transaction. Maintain fail-closed signable-order and execution gates.
