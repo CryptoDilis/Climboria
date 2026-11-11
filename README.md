@@ -8,7 +8,7 @@
 - [x] PR #242's validated mobile-orientation harness merged to main: `66909629ea0fcf9dec75b0e9002a776072fe9b57`.
 - [x] Main Validate `42948561557` and Pages deployment `42948561382` passed.
 - [x] PR #246 Sanctuary landing-center spawn fix implemented; exact-head Validate `42948629207` passed on `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c`.
-- [ ] Finish PR #246 Browser Smoke `42948629303`, inspect desktop/mobile gameplay screenshots, and confirm takeover, teleport and death-respawn align with the physical Sanctuary landing, including grounding/collision/orientation.
+- [ ] Re-verify PR #246 Sanctuary spawn alignment on the now-passing mobile gameplay path; confirm takeover, teleport and death-respawn align with the physical Sanctuary landing, including grounding/collision/orientation. The prior Browser Smoke failure is no longer reproducing on PR #247's full desktop/mobile smoke run.
 - [ ] If a check fails, inspect its exact failing step, logs and artifacts; identify the new root cause; implement a distinct targeted counter-fix; rerun Validate and Browser Smoke on the new exact head. Never repeat failed code or weaken assertions.
 - [ ] Merge #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified; confirm Pages deployment on resulting main.
 - [ ] Do not reopen/recreate superseded #244/#245.
@@ -25,9 +25,10 @@
 - [x] Latest README deployment passed: run `42950076408` for main commit `870b56399b06391d715c28000b65024fc0e4e322`.
 - [x] Opened diagnostic-only counter-strategy PR #247: https://github.com/CryptoDilis/Climboria/pull/247. Branch `codex/mobile-gltf-phase-diagnostics-2026-11-11`, exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`; changed only `game/play.html` and `.github/scripts/game-smoke.mjs`. It records download progress, GLTF parse start/completion/error, scene bounds/scale/traverse/attach/rig phases, and final ready state. No timeout increase, spawn change, fallback, readiness bypass, or feature disablement.
 - [x] PR #247 Validate `42949923101`: SUCCESS on exact diagnostic head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`.
-- [ ] PR #247 Browser Smoke `42949922898`, job `130291551496`: still IN_PROGRESS on that exact head. Latest poll confirms steps 1–14 PASSED and step 15, Jarrell's Peak desktop/mobile gameplay, is IN_PROGRESS. GitHub has not published a terminal result or downloadable job log yet; do not start a duplicate run.
+- [x] PR #247 Browser Smoke `42949922898`, job `130291551496`: SUCCESS on exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`. All 16 main steps passed, including desktop/mobile Jarrell's Peak gameplay, mobile cave entrance/interior captures, and screenshot upload (artifact `13824109692`, 8.9 MB). Mobile diagnostics report `ready=true`, player visible, 70 render frames, and no render errors. This confirms the earlier GLB readiness failure is not currently reproducible; no failure-phase trace was emitted because the run passed.
 - [ ] Do not merge PR #246 or #247 until the mobile gameplay readiness and Sanctuary landing visual acceptance are satisfied. PR #247 is diagnostic only and must not be merged as a production fix unless its value is retained deliberately and the release gate is met.
-- [ ] **Single next task:** poll PR #247's exact-head Validate and Browser Smoke runs `42949923101` / `42949922898`; inspect the phase telemetry from the failing or passing mobile run and proceed from the evidence. Keep P1 DEX blocked until this gameplay release gate closes.
+- [ ] PR #247 remains diagnostic-only; do not merge it solely to ship instrumentation. PR #246 remains unmerged until its Sanctuary landing-center correction is reverified against the now-passing mobile gameplay path and desktop/mobile screenshots.
+- [ ] **Single next task:** rerun only PR #246's previously failed Browser Smoke job against its unchanged exact head, using the successful PR #247 full-smoke result as evidence that the earlier GLB blocker may have been transient. If it passes, inspect screenshots and merge the Sanctuary fix; if it fails, use the new exact logs to select a distinct root-cause counter-fix. Keep P1 DEX blocked until this gameplay release gate closes.
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
