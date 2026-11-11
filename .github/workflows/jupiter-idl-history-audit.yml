@@ -7,6 +7,12 @@ on:
     paths:
       - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
       - ".github/workflows/jupiter-idl-history-audit.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,6 +30,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Syntax-check IDL history audit utility
+        run: node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Fetch Solana IDL Explorer current and historical records
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Upload raw responses and schema summary
