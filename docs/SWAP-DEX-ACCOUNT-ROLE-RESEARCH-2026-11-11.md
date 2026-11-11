@@ -303,3 +303,31 @@ A fresh read of the current public Jupiter V6 dataset page shows that its curren
 - [ ] Still require Jupiter deployed executable hash/build provenance and version-matched route-handler source or equivalent authoritative trace evidence.
 - [ ] Still require resolution of Meteora DLMM CPI-vs-direct-IDL privilege/optionality differences.
 - No Climboria code change is justified by this source check. Do not purchase data or loosen the policy to compensate for missing evidence. Keep signable-order and execution gates false.
+
+
+
+## No-cost raw RPC trace route — 2026-11-11 22:15 PHT
+
+### Public transaction evidence boundary
+- The indexed Solscan transaction page for the previously identified Meteora DLMM route confirms the outer Jupiter V6 route, successful/finalized status, the Meteora DLMM program label, token transfers and balance changes. Its retrieved summary does not expose the raw ordered inner CPI account-index vectors or the route-plan-step-to-CPI mapping.
+- Do not treat explorer action labels or token balance deltas as proof of per-DEX account roles.
+- Reference: https://solscan.io/tx/5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv
+
+### No-cost next evidence path
+- Solana's documented `getTransaction` RPC response includes transaction metadata `innerInstructions`; versioned transactions also expose loaded lookup-table addresses in `meta.loadedAddresses` when using full JSON encoding. This is the primary raw source needed to reconstruct the transaction's outer route and CPI instruction vectors.
+- `@solana/transaction-introspection` is documented to resolve static and lookup-table account indexes, decode inner instructions, and walk outer/inner instructions in explorer order.
+- For the selected finalized transaction, a read-only RPC capture should request JSON encoding and a supported transaction version, then preserve:
+  1. the outer Jupiter route instruction and its decoded routePlan;
+  2. the complete static account-key list and resolved loaded writable/readonly addresses;
+  3. each inner instruction's outer index, inner index, stack height, program ID, ordered account vector, and raw data;
+  4. execution logs and pre/post token balances.
+- Associate a routePlan step with a CPI only when the trace and program logs establish the relationship; do not assume inner instruction order alone maps one-to-one to route steps when a DEX can make nested CPIs.
+- The public Solana RPC endpoint is rate-limited and has no SLA; use only for bounded read-only research, not production transaction processing. This session's available GitHub/web interfaces cannot issue the required JSON-RPC POST or materialize the raw transaction response, so no CPI vector has been claimed or decoded here.
+- References:
+  - https://solana.com/docs/rpc/http/gettransaction
+  - https://solana.com/docs/rpc/json-structures
+  - https://solana.com/docs/core/transactions/transaction-introspection
+  - https://solana.com/docs/payments/interacting-with-solana
+
+### Exact next action
+Use a no-cost, read-only `getTransaction` capture for the known finalized Jupiter/Meteora signature (or another carefully selected transaction) and resolve the full v0 key list including ALT-loaded addresses. Decode the inner Meteora CPI instruction and compare its exact account order/privileges against the pinned CPI interface and current Meteora DLMM IDL. If the trace cannot establish the outer remaining-account slice boundaries or route-step association, mark that DEX variant unverified and exclude it from any future signable allowlist. No paid dataset purchase, code allowlist expansion, signing, or execution.
