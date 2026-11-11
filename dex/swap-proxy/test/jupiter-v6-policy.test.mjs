@@ -367,3 +367,33 @@ test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live n
   assert.equal(report.results[0].routePlanHeader.firstStepVariant, 75);
   assert.equal(report.results[0].meteoraSwap2Cpis[0].accountCount, 4);
 });
+
+
+test("records public RPC rate limiting as an incomplete sample instead of failing the audit", async () => {
+  const methods = [];
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example.invalid", {
+    limit: 1,
+    maxTransactions: 1,
+    maxMatches: 1,
+    delayMs: 0,
+    retryBaseMs: 0,
+    fetchImpl: async (_url, options) => {
+      const request = JSON.parse(options.body);
+      methods.push(request.method);
+      if (request.method === "getSignaturesForAddress") {
+        return { ok: true, status: 200, json: async () => ({ result: [{ signature: "rate-limited-signature" }] }) };
+      }
+      return { ok: false, status: 429, json: async () => ({}) };
+    }
+  });
+  assert.deepEqual(methods, [
+    "getSignaturesForAddress",
+    "getTransaction",
+    "getTransaction",
+    "getTransaction"
+  ]);
+  assert.equal(report.rateLimited, true);
+  assert.equal(report.rateLimitedMethod, "getTransaction");
+  assert.equal(report.transactionsScanned, 0);
+  assert.equal(report.matchingRoutes, 0);
+});
