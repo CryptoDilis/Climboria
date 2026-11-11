@@ -4383,3 +4383,17 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] README checkpoint commit: 83623290525bd786d3d2e61119326ea8530d30ea.
 - [!] No workflow runs are currently associated with documentation-only commit 8362329. The latest verified executable/code tree remains bff9811e4d691e1cbff7b4efda590a82d1ab844d, with Validate 43039523013, Browser Smoke 43039523019 and Jupiter CPI Trace Audit 43039523256 all successful. The two subsequent commits only changed README/research documentation; do not claim fresh exact-head CI on 8362329.
 - [ ] At next continuation, recheck PR #268 branch head and workflow inventory; continue from authoritative deployed route_v2 enum resolution, not from assumptions about Kipseli.
+
+
+## 2026-11-12 +08 — Revalidated PR #268 and Jupiter route_v2 source audit
+
+- [x] Latest inspected head before this record: ae39e7fa5be5458f7ab1db66a9f88943fcf42e34. PR #268 remains draft/open; branch compare is 128 ahead / 0 behind main.
+- [x] Validate 43056805117 / job 130648355318: SUCCESS. All Worker tests, Wrangler dry-run, auth/cloud-save syntax, homepage/launch copy, DEX/Swap/game syntax and HTML audits passed.
+- [x] Browser Smoke 43056805135 / job 130648366587: SUCCESS. Auth/cloud-save isolation, homepage/DEX, proxy/fail-closed behavior, Swap/DEX, Solana discovery, desktop/mobile layouts, provider error/empty states and screenshots passed. This is ecosystem smoke, not dedicated Jarrell's Peak gameplay.
+- [x] Jupiter CPI Trace Audit 43056805358 / job 130648321551: SUCCESS; artifact 13870664486 (14,373 bytes), SHA-256 c21526e5f6340261e6ab04ca7b1feccc9db2aa85d7e160c004363c57e574f1c6. Newest-five discovery returned 0 recognized routes and 0 Jupiter/Meteora instructions, without rate limiting; this is a bounded sample only.
+- [!] The preceding README checkpoint's Validate 43056730929 and Browser Smoke 43056731146 were cancelled mid-run (Validate during launch-copy checks; Browser Smoke during Playwright install). They were cancellations, not failed assertions; later steps were skipped. The following ae39e7fa head completed all three workflows successfully. No retry or failure counter-fix was warranted.
+- [x] Official Jupiter developer notification confirms route_v2 and three related v2 instruction families were introduced and points to the latest Solscan IDL. Official jup-ag/instruction-parser main remains legacy-only: package 6.0.27, IDL blob 4273e9f0f34a3d4d29e035fe37e88d6c80b634b5 has legacy RoutePlanStep percent:u8 and no route_v2 schema. The current parser source cannot decode byte 181.
+- [!] Solscan lists the Jupiter program as upgradeable, last deployed slot 462802085, and not program-verified; its fetched page did not expose the latest IDL body. The candidate transaction at slot 468153382 is later than that displayed slot, but this alone does not establish the exact deployed binary hash or IDL provenance.
+- [x] Detailed evidence, limitations and next tasks recorded in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md, commit e1aff9ae21e54030a8069be7e8b962e3c5675533.
+- [ ] Obtain and hash the actual latest route_v2 IDL from an authoritative Jupiter artifact, verify deployment provenance, then decode four route steps and correlate CPI trees.
+- [ ] Keep route_v2 diagnostic-only and all execution/signing gates false. Separately run dedicated Jarrell's Peak gameplay smoke and production hosting checks.
