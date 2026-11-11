@@ -4162,3 +4162,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] ALT privilege-source label and static/ALT assertions corrected; no test weakened. Explicit syntax check added for the trace auditor.
 - [!] Gameplay, production deployment, Jupiter per-DEX semantic proof, Devnet settlement and live wallet signing/execution remain unverified/disabled.
 - Following this code verification, only README/research-document/PR-description records are updated; no runtime source, test, or workflow logic is changed.
+
+
+## 2026-11-11 — Jupiter V6 → Meteora DLMM CPI trace decoded
+
+- [x] Added a dedicated read-only audit workflow. Latest trace run `43030094086` SUCCESS; artifact `13860297377` contains the finalized v0 transaction trace for signature `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`.
+- [x] Decoded one-step Jupiter `route`: enum variant 75 = `MeteoraDlmmSwapV2`; 100% of input index 0 to output index 1; 97,879,923 input units; 38,687,896,434 quoted output units; 300 bps slippage; no platform fee.
+- [x] Observed Meteora `swap2` CPI at stack height 2 with 17 accounts. First 16 positions match official Meteora `swap2` IDL; one trailing writable account is consistent with the SDK's bin-array remaining-account convention. The CPI vector maps exactly to Jupiter outer account positions 10–26; outer position 27 is an unexplained extra Jupiter program account.
+- [x] Cross-checked user input, pool reserves and final output token balances.
+- [!] Transaction RPC does not expose each CPI's requested signer/writable flags. User is globally signer+writable as fee payer while Meteora IDL only requires signer; do not infer the inner CPI requested writable.
+- [!] One trace is not proof of universal Jupiter account-cursor behavior. Variant 75 remains rejected by the production allowlist.
+- [ ] Resolve trailing outer account, verify bin-array account owner/data, collect multiple route examples, and establish Jupiter deployed-binary provenance.
+- [ ] Devnet reproduction and independent security review. Execution/signing gates remain false.
