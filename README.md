@@ -4521,9 +4521,9 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Current branch comparison at this verified checkpoint: 189 commits ahead / 0 behind main. PR #268 remains draft and unmerged. Ecosystem Browser Smoke does not cover Jarrell's Peak gameplay. Passing CI does not prove production deployment, CPI-requested signer/writable privileges, universal Jupiter adapter behavior, Devnet settlement, or production-safe signing/execution.
 - Exact next task: continue collecting independently grounded CPI evidence for more route shapes and DEX variants; preserve the fail-closed route_v2 policy and all signing/execution gates. Re-run and inspect all relevant workflows after any subsequent source, test, or workflow changes.
 
-## 2026-11-12 — full branch CI failure inventory (512 workflow runs)
+## 2026-11-12 — full branch CI failure inventory (521 workflow runs)
 
-Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-account-roles-2026-11-11`, 512 workflow runs total. Found 22 concluded failures and 31 cancellations. Cancellations caused by superseded runs/concurrency are not test failures and were not counted as such.
+Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-account-roles-2026-11-11`, 521 workflow runs total. Found 22 concluded failures and 31 cancellations. Cancellations caused by superseded runs/concurrency are not test failures and were not counted as such.
 
 ### Failure groups, root causes and counter-fixes
 
@@ -4551,3 +4551,11 @@ Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-acco
 1. Resolve the mobile GLB stall in the dedicated game workflow; do not weaken the hero-ready assertion or accept the procedural fallback as a GLB pass.
 2. Continue multi-transaction Jupiter/Meteora route evidence gathering; record RPC rate limiting as incomplete sampling and retry on a bounded schedule.
 3. Keep the current fail-closed Jupiter policy until exact adapter account slicing and CPI signer/writable semantics are independently established.
+
+## 2026-11-12 — mobile GLB diagnostic instrumentation checkpoint
+
+- Commit `876ec829524fcb0ec3fab51f3e97208e4e26eeb4` instruments `game/play.html` and `.github/scripts/game-smoke.mjs` with GLTFLoader phases: downloading, parsing, callback entry, scene assembly, ready, callback-error and load-error. The smoke failure diagnostic now includes progress bytes/percent and elapsed time. No readiness threshold was relaxed and the procedural fallback is not accepted as a GLB pass.
+- Exact-head run status for `876ec829524fcb0ec3fab51f3e97208e4e26eeb4`: Validate `43082219716` SUCCESS; Browser Smoke `43082219819` SUCCESS; Jupiter CPI Trace Audit `43082219845` SUCCESS; Game Browser Smoke `43082219869` IN PROGRESS; Jupiter IDL History Audit `43082219871` IN PROGRESS. The two in-progress runs must not be marked passed.
+- The 521-run snapshot comprises 22 failures, 219 cancellations, 278 successes and 2 in-progress runs. The 22 historical failures and their counter-fixes are itemized above. Cancellations are superseded runs, not failures.
+- Branch comparison before this documentation update: 195 ahead / 0 behind main. PR #268 remains open, draft and unmerged.
+- Next: inspect the Game Browser Smoke diagnostic to determine whether the 42.9 MB GLB is still transferring, stuck in GLTFLoader parsing, or failing during scene assembly. Inspect IDL History Audit completion. Record both exact-head results before continuing.
