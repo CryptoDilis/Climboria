@@ -4301,3 +4301,17 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Older-cursor scan remains pending; latest sample used `before=null`. Available GitHub actions still do not expose manual workflow dispatch.
 - [!] No failed workflow occurred in the three completed runs above; earlier superseded runs were cancellations, not failures. Therefore no retry was needed. Any new failed job must be diagnosed from its exact step/logs before a distinct counter-fix is attempted.
 - Security gates unchanged: variant 75 remains excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; no wallet signing, live Swap execution, or production deployment is claimed.
+
+
+## 2026-11-11 — CPI discovery classifier counter-fix verified
+
+- [x] Final exact-head PR #268 commit `246d7db3daec4e53d5747b4b72ccd3a30de6af9c` passed Validate run `43037336774`, job `130579556750`: SUCCESS. Worker/security tests passed; Node test suite reports **85 tests, 85 pass, 0 fail**; Wrangler dry-run and all syntax/HTML audits passed.
+- [x] Same exact head passed ecosystem Browser Smoke run `43037337100`, job `130579556593`: SUCCESS. Auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX, Solana discovery, mobile workspace, 390px/360px layouts, provider-error/true-empty states, and screenshot upload all passed. Screenshot artifact `13864380785`, 5,341,152 bytes.
+- [x] Same exact head passed Jupiter V6 CPI Trace Audit run `43037337332`, job `130579589004`: SUCCESS. Artifact `13863661602`, 4,709 bytes, SHA-256 `47d0a095b97c7e8532600e3f0278033c27b1a3fd7604389613df84546d37c6c4`.
+- [x] The exact-head audit artifact now correctly reports the bounded sample fields separately: `before=null`, 5 transactions scanned, `matchingRoutes=0`, `matchingJupiterMeteoraInstructions=0`, `rateLimited=false`. This is only a newest-five sample and is not evidence that no Jupiter/Meteora routes exist.
+- [x] Regression test verifies that an unknown Jupiter outer discriminator with a Meteora Swap2 CPI remains visible as an opaque instruction but is not counted as a recognized route plan. The test is included in the 85 passing tests.
+- [!] The earlier sampled 18-account candidate remains a separate unclassified observation from artifact `13864055427`; it was not reproduced in the newest-five sample. Its discriminator and full transaction still require pinned-IDL classification. Do not fold its vector into the 17-account standard-route schema.
+- [!] Earlier intermediate workflow runs were cancelled by branch concurrency after newer commits arrived; they are not failures. The three final exact-head workflows above completed successfully. No failed job occurred on this exact head, so no retry was appropriate.
+- [ ] Next: identify the previously observed candidate's outer discriminator using a pinned Jupiter instruction IDL/SDK; inspect its exact 18-account CPI vector and account data. Then expand coverage to other Meteora/Jupiter route variations and controlled Devnet verification.
+- [ ] Older-cursor scan remains pending; no manual workflow dispatch action is available in this GitHub integration. Keep `before=null` sample distinct from an older-window scan.
+- Security boundary unchanged: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; variant 75 remains excluded; no wallet signing, live Swap execution, production deployment, or gameplay completion is claimed.
