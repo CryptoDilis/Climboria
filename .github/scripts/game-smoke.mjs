@@ -572,26 +572,58 @@ try {
   if (!directMobileEntry.gameplayActive || directMobileEntry.createHeroInGameplay || directMobileEntry.titleVisible || directMobileEntry.generatingOverlay) {
     errors.push('Mobile Hub-to-game must enter directly with no Create Hero, title, or generating overlay: ' + JSON.stringify(directMobileEntry));
   }
-  // The game is already active; this phase normalizes the emulated landscape CSS state.
-  await mobile.evaluate(() => {
-    // This phase validates gameplay HUD, so emulate the same state set by takeOver().
-    document.body.classList.add('free');
-    document.body.classList.remove('climboria-portrait');
-    document.body.classList.add('climboria-landscape');
-    window.dispatchEvent(new Event('resize'));
-  });
-  await mobile.waitForFunction(() => {
-    const overlay=document.querySelector('#rotate-phone-overlay');
-    const map=document.querySelector('#world-map-panel');
-    return getComputedStyle(overlay).display==='none' && getComputedStyle(map).display!=='none' && getComputedStyle(map).visibility!=='hidden';
-  }, undefined, { timeout: 5000 });
-  const landscapeGate = await mobile.evaluate(() => ({
-    hidden: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display === 'none',
-    mapVisible: getComputedStyle(document.querySelector('#world-map-panel')).display !== 'none',
-    playerVisible: getComputedStyle(document.querySelector('#player-card')).visibility !== 'hidden',
-    statusVisible: getComputedStyle(document.querySelector('#status-card')).visibility !== 'hidden',
+  // The game is already active and its real orientation handler has passed
+  // the landscape gate above. Do not dispatch a second resize or rewrite body
+  // classes here: that would invoke the production handler again and could
+  // overwrite the state we just verified. Observe the actual HUD passively.
+  const readMobileHudState = () => ({
+    bodyClasses: [...document.body.classList],
+    orientation: screen.orientation?.type || null,
+    mediaLandscape: matchMedia('(orientation: landscape)').matches,
     viewport: { width: innerWidth, height: innerHeight },
-  }));
+    overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
+    mapDisplay: getComputedStyle(document.querySelector('#world-map-panel')).display,
+    mapVisibility: getComputedStyle(document.querySelector('#world-map-panel')).visibility,
+    mapOpacity: getComputedStyle(document.querySelector('#world-map-panel')).opacity,
+    playerVisibility: getComputedStyle(document.querySelector('#player-card')).visibility,
+    playerOpacity: getComputedStyle(document.querySelector('#player-card')).opacity,
+    statusVisibility: getComputedStyle(document.querySelector('#status-card')).visibility,
+    statusOpacity: getComputedStyle(document.querySelector('#status-card')).opacity,
+  });
+  const mobileHudReady = state =>
+    state.overlayDisplay === 'none' &&
+    state.mapDisplay !== 'none' &&
+    state.mapVisibility !== 'hidden' &&
+    state.playerVisibility !== 'hidden' &&
+    state.statusVisibility !== 'hidden';
+  let landscapeGate = await mobile.evaluate(readMobileHudState);
+  if (!mobileHudReady(landscapeGate)) {
+    await mobile.waitForFunction(() => {
+      const overlay=document.querySelector('#rotate-phone-overlay');
+      const map=document.querySelector('#world-map-panel');
+      const player=document.querySelector('#player-card');
+      const status=document.querySelector('#status-card');
+      return getComputedStyle(overlay).display==='none' &&
+        getComputedStyle(map).display!=='none' &&
+        getComputedStyle(map).visibility!=='hidden' &&
+        getComputedStyle(player).visibility!=='hidden' &&
+        getComputedStyle(status).visibility!=='hidden';
+    }, undefined, { polling: 100, timeout: 5000 }).catch(async error => {
+      landscapeGate = await mobile.evaluate(readMobileHudState);
+      throw new Error('Landscape HUD did not become visible after the accepted orientation transition: ' + JSON.stringify(landscapeGate) + '; ' + error.message);
+    });
+    landscapeGate = await mobile.evaluate(readMobileHudState);
+  }
+  if (!mobileHudReady(landscapeGate)) {
+    throw new Error('Landscape HUD visibility regressed after orientation transition: ' + JSON.stringify(landscapeGate));
+  }
+  landscapeGate = {
+    hidden: landscapeGate.overlayDisplay === 'none',
+    mapVisible: landscapeGate.mapDisplay !== 'none' && landscapeGate.mapVisibility !== 'hidden',
+    playerVisible: landscapeGate.playerVisibility !== 'hidden',
+    statusVisible: landscapeGate.statusVisibility !== 'hidden',
+    viewport: landscapeGate.viewport,
+  };
   if (!landscapeGate.hidden || !landscapeGate.mapVisible || !landscapeGate.playerVisible || !landscapeGate.statusVisible) {
     errors.push('Landscape mobile layout did not reveal the gameplay HUD correctly: ' + JSON.stringify(landscapeGate));
   }
