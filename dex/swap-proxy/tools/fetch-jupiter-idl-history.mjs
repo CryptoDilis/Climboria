@@ -81,6 +81,8 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
       dataLength: idlAccountBytes.length,
       accountDataSha256: sha256(idlAccountBytes),
       accountLayout: decodedIdlAccount?.layout ?? "unparsed",
+      accountPrefixHex: decodedIdlAccount?.prefixHex ?? null,
+      prefixMatchesAnchorAccountDiscriminator: decodedIdlAccount?.prefixMatchesAnchorAccountDiscriminator ?? null,
       authority: decodedIdlAccount?.authority ?? null,
       declaredPayloadLength: decodedIdlAccount?.declaredPayloadLength ?? null,
       compressedPayloadLength: decodedIdlAccount?.compressedPayloadLength ?? null,
