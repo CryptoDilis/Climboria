@@ -731,3 +731,12 @@ For every future failed workflow: capture exact run/job/step and logs; distingui
 - [ ] Only after semantic proof, implement per-DEX schemas and adversarial fixtures, then controlled Devnet settlement/fee-destination verification.
 
 No Climboria source-code policy changed in this pass. This is an evidence-acquisition blocker, not permission to weaken account validation.
+
+
+### Exact-head CI — public CPI evidence acquisition audit commit — 2026-11-11 21:10 PHT
+- Commit: `b1e7467d1ed4952e0f430417213c8fda2e6d4a54`.
+- Validate run `43025428368`: SUCCESS on exact head `b1e7467`: https://github.com/CryptoDilis/Climboria/actions/runs/43025428368
+- Browser Smoke run `43025428280`: SUCCESS on exact head `b1e7467`: https://github.com/CryptoDilis/Climboria/actions/runs/43025428280
+- Both required workflows completed successfully on the exact same SHA. Browser Smoke auth, homepage/DEX routing, swap proxy, fail-closed execution, standalone Swap, DEX quote-preview, Solana discovery, mobile workspace, responsive widths and provider-state checks all passed.
+- No workflow failure was introduced by this documentation/evidence update. The Trawl free sample retrieval limitation is recorded above as an evidence-source access blocker, not misclassified as a GitHub Actions failure.
+- Current source-code and release gates remain unchanged.
