@@ -415,6 +415,20 @@ footer:first-of-type>div{
  .menu-state{font-size:7px;letter-spacing:.6px}
 }
 
+
+.auth-panel{max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:rgba(255,255,255,.42);font-size:10px;letter-spacing:1.8px}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:rgba(255,255,255,.14)}
+.auth-label{display:block;margin:12px 0 6px;color:rgba(255,255,255,.72);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.auth-field{display:block;width:100%;padding:12px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:#fff;font:500 14px Inter,sans-serif;outline:none}
+.auth-field:focus{border-color:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.12)}
+.auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.auth-action-primary,.auth-action-secondary{min-height:43px;border-radius:10px;padding:10px;border:1px solid #d99b19;font:800 11px Inter,sans-serif;letter-spacing:.7px;cursor:pointer}
+.auth-action-primary{background:linear-gradient(180deg,#fbbf24,#d97706);color:#090d16}
+.auth-action-secondary{background:rgba(255,255,255,.06);color:#fff;border-color:rgba(255,255,255,.22)}
+.auth-action-primary:disabled,.auth-action-secondary:disabled{opacity:.55;cursor:wait}
+.auth-signout{margin-top:10px}
+.auth-footnote{margin:8px 0 0!important;font-size:10px!important;color:rgba(255,255,255,.4)!important}
 </style>
 </head>
 <body>
@@ -439,14 +453,28 @@ footer:first-of-type>div{
 
 <div class="auth-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
  <div class="auth-panel">
-  <button class="auth-close" id="authClose">×</button>
+  <button class="auth-close" id="authClose" type="button" aria-label="Close sign-in">×</button>
   <h2 id="authTitle">Enter Climboria</h2>
-  <p>Choose how you want to connect. Wallet connection can be tested in-browser; social and email login need secure auth-provider setup before they can sign you in.</p>
-  <button class="auth-option" id="authWallet"><span>Connect crypto wallet</span><span class="auth-tag">Phantom / EVM</span></button>
-  <button class="auth-option" disabled><span>Continue with X</span><span class="auth-tag">OAuth setup needed</span></button>
-  <button class="auth-option" disabled><span>Continue with Google / Gmail</span><span class="auth-tag">OAuth setup needed</span></button>
-  <button class="auth-option" disabled><span>Email and password</span><span class="auth-tag">Auth backend needed</span></button>
-  <p class="auth-note" id="authStatus">No account is created or logged in yet.</p>
+  <p>Sign in with a verified email, social account, or wallet signature to sync your player profile and expedition progress.</p>
+  <button class="auth-option" id="authSolana" type="button"><span>Sign in with Solana wallet</span><span class="auth-tag">Phantom / Solflare</span></button>
+  <button class="auth-option" id="authEthereum" type="button"><span>Sign in with Ethereum wallet</span><span class="auth-tag">MetaMask / EVM</span></button>
+  <button class="auth-option" id="authX" type="button"><span>Continue with X</span><span class="auth-tag">Twitter OAuth</span></button>
+  <button class="auth-option" id="authGoogle" type="button"><span>Continue with Google / Gmail</span><span class="auth-tag">Google OAuth</span></button>
+  <button class="auth-option" id="authGuest" type="button" disabled title="Guest sign-in requires Cloudflare Turnstile and Supabase CAPTCHA configuration."><span>Play as guest</span><span class="auth-tag">CAPTCHA setup pending</span></button>
+  <div class="auth-divider">OR USE EMAIL</div>
+  <form id="authEmailForm" autocomplete="on">
+   <label class="auth-label" for="authEmail">Email address</label>
+   <input class="auth-field" id="authEmail" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+   <label class="auth-label" for="authPassword">Password</label>
+   <input class="auth-field" id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="72" placeholder="At least 8 characters">
+   <div class="auth-actions">
+    <button class="auth-action-primary" id="authSignIn" type="submit">SIGN IN</button>
+    <button class="auth-action-secondary" id="authSignUp" type="button">CREATE ACCOUNT</button>
+   </div>
+  </form>
+  <button class="auth-option auth-signout" id="authSignOut" type="button" hidden><span>Sign out on this device</span><span class="auth-tag">Local session</span></button>
+  <p class="auth-note" id="authStatus" role="status" aria-live="polite">Checking your Climboria session…</p>
+  <p class="auth-footnote">Guest accounts are browser-specific. Do not clear browser data before account linking is configured.</p>
  </div>
 </div>
 
@@ -668,24 +696,11 @@ footer:first-of-type>div{
     if(a.id !== 'mobileDexBtn' && a.id !== 'mobileSwapBtn' && a.id !== 'mobileLaunchpadBtn') setMenu(false);
   }));
   const authModal = document.getElementById('authModal');
-  const authStatus = document.getElementById('authStatus');
   const openAuth = () => { setMenu(false); authModal.classList.add('open'); };
   const closeAuth = () => authModal.classList.remove('open');
   document.querySelectorAll('[data-open-auth]').forEach(el=>el.addEventListener('click',openAuth));
   document.getElementById('authClose').addEventListener('click',closeAuth);
   authModal.addEventListener('click',e=>{if(e.target===authModal)closeAuth();});
-  document.getElementById('authWallet').addEventListener('click',async()=>{
-    authStatus.textContent='Looking for an installed wallet…';
-    try {
-      let address='';
-      if(window.solana && window.solana.isPhantom){
-        const r=await window.solana.connect(); address=r?.publicKey?.toString()||'';
-      } else if(window.ethereum){
-        const a=await window.ethereum.request({method:'eth_requestAccounts'}); address=a?.[0]||'';
-      } else { authStatus.textContent='No compatible wallet detected. Install Phantom then retry.';return;}
-      authStatus.textContent=address ? 'Wallet connected: '+address+'. This is not yet a Climboria account login.' : 'Wallet returned no address.';
-    } catch { authStatus.textContent='Wallet connection failed.'; }
-  });
   document.getElementById('nextlevelVictoryButton').addEventListener('click', () => { window.location.href = './game/'; });
   const swapModal = document.getElementById('swapModal');
   const launchModal = document.getElementById('launchpadModal');
@@ -719,5 +734,7 @@ footer:first-of-type>div{
 
 const homePanelBackdrop=document.getElementById("homePanelBackdrop");document.querySelectorAll("[data-panel]").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.panel;document.getElementById("homePanelTitle").textContent=type==="announcements"?"Announcements":"Notifications";document.getElementById("homePanelContent").innerHTML=type==="announcements"?'<p>Official Climboria ecosystem and expedition updates will appear here. Follow <a href="https://x.com/ClimboriaHQ" target="_blank" rel="noopener">@ClimboriaHQ</a> for verified announcements.</p>':'<p>You are all caught up. Account, market and expedition alerts will appear here when notification services are enabled.</p>';homePanelBackdrop.hidden=false;document.getElementById("mobileMenu")?.classList.remove("active")}));document.getElementById("homePanelClose").addEventListener("click",()=>homePanelBackdrop.hidden=true);homePanelBackdrop.addEventListener("click",e=>{if(e.target===homePanelBackdrop)homePanelBackdrop.hidden=true});
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
+<script src="/auth.js"></script>
 <svg class="icon-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="goldShield" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#39465a"/><stop offset=".48" stop-color="#172538"/><stop offset="1" stop-color="#080f1a"/></linearGradient></defs></svg></body>
 </html>
