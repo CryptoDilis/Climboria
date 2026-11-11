@@ -45,6 +45,10 @@ jobs:
         run: |
           node --check dex/swap-proxy/src/index.mjs
           node --test dex/swap-proxy/test/worker.test.mjs
+      - name: Syntax-check Supabase authentication and cloud-save clients
+        run: |
+          node --check auth.js
+          node --check game-save.js
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
