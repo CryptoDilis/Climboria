@@ -1302,3 +1302,10 @@ Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-a
 3. Check whether Kipseli's supplied Anchor metadata address resolves to an account owned by the Kipseli program and whether its bytes decode as a legacy Anchor IDL.
 4. Preserve the strict mobile GLB readiness contract and await terminal Game Browser Smoke logs.
 5. Keep route_v2 excluded from production validation; wallet signing, transaction execution and deployment remain disabled.
+
+
+## 2026-11-12 — provenance schema-hash normalization correction
+
+- Pre-run code review caught a defect in the new diagnostic comparison: on-chain IDL instructions use discriminator byte arrays, whereas Explorer candidate summaries use `discriminatorHex`. The initial normalization converted the latter to Buffer but then only recognized arrays, risking a null discriminator in the comparison hash.
+- Corrected the formatter to accept both forms and compare the existing normalized candidate records directly. This is a diagnostic correctness fix caught before using the new audit output; no swap runtime or privilege policy changed.
+- Next: inspect the first successful exact-head IDL artifact and confirm the on-chain Meteora/Kipseli account and schema evidence fields are populated or explicitly unavailable.

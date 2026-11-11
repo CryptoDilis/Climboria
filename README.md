@@ -4598,3 +4598,10 @@ Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-acco
 - The Jupiter CPI artifact confirms the 18-account Meteora Swap2 call includes bitmap extension at CPI account position 1; the transaction-level message marks that account writable, but the trace explicitly cannot expose the CPI-requested AccountMeta writable bit. Duplicate transaction key indexes and outer-position ambiguity remain.
 - Countermeasure committed with this checkpoint: extend the read-only IDL history audit to query each DEX program account, its ProgramData account when upgradeable-loader owned, and the on-chain Anchor IDL metadata account. Record deployment slot, binary hash, IDL owner/prefix/payload hash, instruction discriminator and schema comparisons against candidate-slot history/latest. Missing/unavailable accounts are reported as evidence gaps and do not silently become a privilege decision. This audit does not change swap execution policy.
 - Next: run Validate and IDL History Audit; inspect the new on-chain provenance section for Meteora and Kipseli; correlate Meteora ProgramData deployment slot and on-chain IDL schema to candidate slot 468153382. Keep production route policy fail-closed.
+
+
+## 2026-11-12 — provenance comparison normalization correction
+
+- While reviewing the new on-chain DEX provenance comparison before its first workflow result, found a comparison-normalization defect: historical/latest Explorer candidates expose `discriminatorHex`, while the decoded on-chain IDL exposes a discriminator byte array. The first implementation converted hex to a Buffer but the summary formatter only recognized JavaScript arrays, which could produce a null discriminator in the comparison hash.
+- Corrected normalization to preserve either the decoded byte-array discriminator or the already-normalized `discriminatorHex` string, and compare the active/latest candidates directly. This prevents a false schema mismatch in the new provenance report. No runtime swap policy changed.
+- The correction is included in the follow-up commit; validate the on-chain comparison against the first completed IDL History Audit artifact.

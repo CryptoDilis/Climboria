@@ -477,17 +477,15 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         ) ?? null;
         const summarize = (item) => item ? {
           name: item.name,
-          discriminatorHex: Array.isArray(item.discriminator) ? Buffer.from(item.discriminator).toString("hex") : null,
+          discriminatorHex: Array.isArray(item.discriminator)
+            ? Buffer.from(item.discriminator).toString("hex")
+            : item.discriminatorHex ?? null,
           accounts: item.accounts ?? [],
         } : null;
         const schemaHash = (item) => item ? sha256(JSON.stringify(summarize(item))) : null;
         const instruction = findInstruction(decoded.idl.instructions);
-        const active = findInstruction(activeRevision?.matchingInstructions?.map(item => ({
-          ...item, discriminator: item.discriminatorHex ? Buffer.from(item.discriminatorHex, "hex") : undefined
-        })) ?? []);
-        const latest = findInstruction(latestCandidates.flatMap(candidate => candidate.matchingInstructions ?? []).map(item => ({
-          ...item, discriminator: item.discriminatorHex ? Buffer.from(item.discriminatorHex, "hex") : undefined
-        })));
+        const active = findInstruction(activeRevision?.matchingInstructions ?? []);
+        const latest = findInstruction(latestCandidates.flatMap(candidate => candidate.matchingInstructions ?? []));
         record.idlName = decoded.idl.metadata?.name ?? decoded.idl.name ?? null;
         record.idlVersion = decoded.idl.metadata?.version ?? null;
         record.prefixHex = decoded.prefixHex;
