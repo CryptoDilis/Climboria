@@ -3867,3 +3867,10 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Await PR #262 exact-head Validate and Browser Smoke. If the tap still fails, inspect the new before/after coordinates and event trace; do not add speculative pointer listeners until the target/event evidence requires it.
 - [ ] After the mobile DEX close step passes, run the full Browser Smoke through gameplay step 17 so PR #261's loader phase diagnostics can identify the GLB parser/scene-setup boundary.
 - [ ] Keep PR #261 and #262 as separate focused drafts until both exact-head checks pass. Do not merge either diagnostic/test-only change as a production gameplay fix.
+
+
+### PR #262 CI poll — 2026-11-11 13:50 +08
+
+- [x] Exact-head Validate run `42967445837`: SUCCESS on `cce63b00613cb8630077a76d60bb1bf547934b1a`.
+- [ ] Exact-head Browser Smoke run `42967445978`, job `130347847200`: still IN PROGRESS during Playwright installation. Mobile close-tap and gameplay stages have not started; no pass/fail claim yet.
+- [ ] Next: poll Browser Smoke `42967445978`. If the scroll-stability guard passes step 15 at both 390px and 360px, allow the same run to proceed to Jarrell's Peak and capture PR #261's loader phase. If it fails, inspect its fresh hit-test coordinates and event trace before changing code again.
