@@ -189,9 +189,15 @@ export function validateJupiterV6Transaction({
   }
   const remainingAccountKeys = instruction.accountIndexes.slice(9).map(index => keys[index]);
   for (const dexProgramId of route.dexProgramIds) {
-    const relativeIndex = remainingAccountKeys.indexOf(dexProgramId);
-    if (relativeIndex < 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
-    if (accountMetas[9 + relativeIndex].writable) fail("DEX program accounts must be readonly");
+    const matchingIndexes = remainingAccountKeys
+      .map((key, index) => key === dexProgramId ? index : -1)
+      .filter(index => index >= 0);
+    if (matchingIndexes.length === 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
+    // Check every occurrence, not only the first. A duplicate program key can
+    // otherwise hide a writable alias later in the remaining-account list.
+    for (const relativeIndex of matchingIndexes) {
+      if (accountMetas[9 + relativeIndex].writable) fail("DEX program accounts must be readonly");
+    }
   }
   return { ok: true, route, sourceTokenAccount: accountKeys[2], destinationTokenAccount: accountKeys[3] };
 }
