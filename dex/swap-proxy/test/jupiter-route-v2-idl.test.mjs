@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { deflateSync } from "node:zlib";
+import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "../tools/legacy-anchor-idl-account.mjs";
 import { decodeJupiterRouteV2 } from "../tools/decode-jupiter-route-v2-candidate.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -109,4 +112,54 @@ test("rejects an IDL revision that does not cover the candidate transaction slot
   };
   const trace = { slot: 468153382, jupiterRoutes: [{ instructionDataBase58 }] };
   assert.throws(() => decodeJupiterRouteV2({ trace, history }), /found 0/);
+});
+
+
+test("decodes legacy Anchor IDL account layout and verifies authority plus compressed payload hash", () => {
+  const authorityBytes = Buffer.alloc(32, 7);
+  const authority = encodeBase58(authorityBytes);
+  const idlText = JSON.stringify({
+    version: "0.1.0",
+    name: "jupiter",
+    instructions: [{
+      name: "route_v2",
+      discriminator: [187, 100, 250, 204, 49, 196, 175, 20],
+      args: [],
+    }],
+  });
+  const compressed = deflateSync(Buffer.from(idlText, "utf8"));
+  const length = Buffer.alloc(4);
+  length.writeUInt32LE(compressed.length, 0);
+  const accountData = Buffer.concat([authorityBytes, length, compressed]);
+
+  const decoded = decodeLegacyAnchorIdlAccount(accountData);
+  assert.match(decoded.layout, /authority\[32\].*data_len:u32le/);
+  assert.equal(decoded.authority, authority);
+  assert.equal(decoded.declaredPayloadLength, compressed.length);
+  assert.equal(decoded.decompressedPayloadSha256,
+    createHash("sha256").update(idlText).digest("hex"));
+  assert.equal(decoded.routeV2Discriminator, "bb64facc31c4af14");
+  assert.equal(decoded.idl.name, "jupiter");
+});
+
+test("rejects malformed legacy Anchor IDL account lengths and invalid JSON", () => {
+  assert.throws(
+    () => decodeLegacyAnchorIdlAccount(Buffer.alloc(35)),
+    /too short/
+  );
+
+  const badLength = Buffer.alloc(36);
+  badLength.writeUInt32LE(100, 32);
+  assert.throws(
+    () => decodeLegacyAnchorIdlAccount(badLength),
+    /exceeds account data/
+  );
+
+  const compressed = deflateSync(Buffer.from("{not-json"));
+  const length = Buffer.alloc(4);
+  length.writeUInt32LE(compressed.length, 0);
+  assert.throws(
+    () => decodeLegacyAnchorIdlAccount(Buffer.concat([Buffer.alloc(32, 1), length, compressed])),
+    /not valid JSON/
+  );
 });
