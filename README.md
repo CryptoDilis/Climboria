@@ -3570,3 +3570,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Monitor PR #246 exact-head checks and main post-merge workflow. Review desktop/mobile screenshot artifact to confirm avatar is centered on the Sanctuary landing. Do not merge before screenshot evidence.
 - [ ] Close/supersede PR #244 (old orientation harness) and PR #245 (duplicate branch from pre-squash PR #242) once PR #246's exact-head test results are captured. Keep only one authoritative Sanctuary implementation.
 - [ ] After #246 is verified, port only the two DEX market discovery files from #243 onto latest main and rerun exact-head tests.
+
+### Latest status correction — 2026-11-11
+
+- [x] PR #246 Validate run 42948629207: SUCCESS on exact head 44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c.
+- [x] PR #246 Browser Smoke run 42948629303 started; first homepage/DEX navigation step was in progress at last poll. Remaining DEX, responsive, Jarrell's Peak gameplay and screenshot steps have not yet run. Do not claim complete.
+- [x] Main after PR #242 merge: Validate 42948561557 SUCCESS; Pages deployment 42948561382 SUCCESS; main Browser Smoke 42948561787 is still running at Jarrell's Peak gameplay step 15.
+- [x] Closed PR #244 and PR #245 as superseded (neither merged). PR #246 is the sole authoritative Sanctuary spawn fix, based on current main and retaining PR #242's accepted test harness.
+- [ ] Next exact task: poll main Browser Smoke 42948561787 and PR #246 Browser Smoke 42948629303 to terminal status. If a failure appears, inspect exact job logs/annotations and apply a distinct root-cause fix; do not repeat previous code.
