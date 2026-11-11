@@ -3289,3 +3289,15 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] No gameplay source, DEX/Swap logic, production configuration, wallet execution gate, secrets, or on-chain transaction was changed by this counter-fix.
 
 **Exact next task:** poll Browser Smoke `42940880469`. If it fails, inspect the new diagnostic output at the exact failure line and fix the actual runtime/test mismatch without removing the orientation assertion. If it passes, review its screenshot artifact, record the exact successful head and run IDs, then decide whether PR #242 is safe to merge. Resume P0 DEX/Swap/Launchpad after this acceptance gate.
+
+
+### Follow-up: exact-head rerun exposed a separate DEX smoke-fixture ordering race
+
+- [x] First counter-fix PR #242 commit `0167210768b40157bf5b276614c509caa52481c1` passed Validate run `42940880181`, but Browser Smoke `42940880469` failed before reaching the mobile orientation test, at the DEX name-search fixture.
+- [x] Logs confirmed the DEX route intercepted `q=CLIMBTEST` and returned HTTP 200 with the expected fixture. UI later reverted to the initial boot state with zero rows and status `Live provider connection`.
+- [x] Source/timeline diagnosis: DEX calls its asynchronous initial `load()` on page boot. The smoke test began a second targeted search before the initial boot request had settled. A late boot response could overwrite `state.pairs` after the search fixture response. The test was timing-dependent; the earlier main run happened to pass this phase.
+- [x] Second counter-fix commit `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7` on PR #242 adds a bounded wait for the initial DEX bootstrap to reach its success or explicit provider-unavailable state before installing/using the isolated search fixture. It reports status/coverage/updated diagnostics if bootstrap does not settle. No production DEX code or provider data behavior changed.
+- [x] PR #242 discussion records this second diagnosis and fix (comment `6784525102`).
+- [ ] Exact-head Validate `42941085352` and Browser Smoke `42941085361` on `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7` are running at this checkpoint.
+
+**Exact next task:** wait for both exact-head checks. If Browser Smoke fails, use the new precise diagnostics and inspect the exact failed phase; do not repeat either previous patch. If green, inspect the uploaded artifact and ensure the mobile landscape/portrait gate actually completed before considering PR #242 merge.
