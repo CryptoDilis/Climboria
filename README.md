@@ -4315,3 +4315,17 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Next: identify the previously observed candidate's outer discriminator using a pinned Jupiter instruction IDL/SDK; inspect its exact 18-account CPI vector and account data. Then expand coverage to other Meteora/Jupiter route variations and controlled Devnet verification.
 - [ ] Older-cursor scan remains pending; no manual workflow dispatch action is available in this GitHub integration. Keep `before=null` sample distinct from an older-window scan.
 - Security boundary unchanged: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; variant 75 remains excluded; no wallet signing, live Swap execution, production deployment, or gameplay completion is claimed.
+
+
+## 2026-11-11 — Jupiter route_v2 and Meteora multi-BinArray continuation
+
+- [x] Investigated the previously unclassified 18-account candidate transaction `2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX`, finalized slot `468153382`, successful.
+- [x] Identified outer Jupiter discriminator `bb64facc31c4af14` as `route_v2` using generated Jupiter V6 `RouteV2Builder` SDK 0.4.0. Its ten fixed accounts at positions 0–9 match the official generated builder. The route contains four plan steps; first step enum byte 181 remains unmapped to a pinned deployed enum revision.
+- [x] Confirmed the production validator remains legacy-route-only; added a regression test that rejects `route_v2`. Diagnostic parsing recognizes `route_v2` without enabling it.
+- [x] Pinned Meteora DLMM IDL version 0.12.0 at commit `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1`. Candidate Meteora `swap2` CPI has 18 accounts: 16 IDL fixed roles plus two dynamic BinArrays.
+- [x] Extended account decoding and verified both BinArrays (indexes 52 and 53, version 2) and the bitmap extension all reference the same LbPair `5p7V96VMiDR5n18KUgMC6MtjZp3syGrD69bwkLMffTjR`. Audit workflow now asserts those parent-pool relationships.
+- [x] Exact-head Browser Smoke `43038503893` SUCCESS and Jupiter CPI Trace Audit `43038504288` SUCCESS on code head `f83f1d49eec2021c8bfc7db4e63cb6c4e841982d`; artifact `13863503120` uploaded and inspected.
+- [ ] Exact-head Validate `43038503976` remains pending. Older PR Validate `43037984654` is still reported in progress with no steps/logs, so the new validation may be waiting behind a stale runner. This is an infrastructure queue issue, not a test failure; no blind retry was made.
+- [!] Intermediate cancelled runs were superseded by newer commits and are not failures. No failed workflow in this checkpoint required a counter-fix.
+- [ ] Next: get a terminal Validate result, map route_v2 enum byte 181 to a pinned deployed Jupiter IDL, and inspect more route_v2 Meteora transactions. Keep route_v2 rejected until independent account-role, CPI privilege, and Devnet validation is complete.
+- Security remains fail-closed: execution/signable-order review flags false; no wallet signing, live swap execution, or production approval.
