@@ -929,3 +929,36 @@ Security boundary remains unchanged: production validator accepts only the legac
 2. Confirm ProgramData deployment slot/hash and whether the candidate transaction is covered by the same deployment; retain the caveat that a current RPC snapshot is not a full archival binary proof.
 3. Inspect Browser Smoke `43074720380`; if any step fails, retrieve full job logs, isolate first failing assertion, root-cause it, make a targeted counter-fix, and rerun exact-head checks.
 4. Keep route_v2 diagnostic-only and rejected by production validation. No adapter allowlist expansion, signing, execution, deployment, or production approval without CPI-requested privilege evidence, adapter account-slice validation, controlled Devnet reproduction, and independent review.
+
+
+## 2026-11-12 — Second IDL account layout assumption rejected; dual-layout parser added
+
+### Evidence and diagnosis
+
+- Inspected corrected-parser artifact `13879892798` from IDL History Audit run `43074720141` (job `130711426550`: SUCCESS). API and finalized RPC requests completed, but on-chain IDL payload decoding still did not validate.
+- The artifact reports the IDL account is Jupiter-owned, non-executable, 6,314 bytes, finalized context slot `468218350`. The assumed no-prefix legacy layout read `data_len=1,381,709,786`, which is impossible for this account. Therefore the first parser correction was still wrong.
+- The same artifact confirms ProgramData account `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT`, upgradeable-loader-owned, deployment slot `468023491` (earlier than candidate `468153382`), current binary length 2,892,224 and SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`; upgrade authority `CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ`. This is a finalized current-state observation; it is not a substitute for archived binary bytes at the candidate slot.
+- Root cause: we had prematurely assumed the account layout from a generic legacy Anchor IDL description, without first recording/inspecting the actual account prefix. The first parser's standard Anchor discriminator check had failed; the second parser's no-prefix assumption produced an impossible length. Neither attempt established the on-chain IDL authority.
+
+### Counter-fix
+
+- Replaced the single assumed layout with a bounded dual-layout parser:
+  1. 8-byte prefix + authority[32] + data_len:u32 LE + zlib payload.
+  2. authority[32] + data_len:u32 LE + zlib payload.
+- The parser now accepts a layout only if the declared payload is in bounds, zlib decompression succeeds, JSON parses, and an IDL instructions array exists. It reports the exact prefix bytes and whether they match the standard Anchor `account:IdlAccount` discriminator; it does not assume an unknown prefix is a valid discriminator.
+- Added a synthetic eight-byte-prefix regression fixture and explicit malformed-length/JSON tests. The fetcher now exposes booleans for owner match, payload-hash match, route_v2 discriminator match, and ProgramData deployment-slot coverage.
+- New commits: parser `3f7345168f1b919f73316bff425d75df90fd8c9f`; prefixed-layout tests `dedcd897e696fa0cf4fdab1e3d379dd5d08f63d5`; prefix evidence/assessment fields `b417cf139bf2a3c22b50fda7226c86629b486858`, `57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1`.
+- These are research-audit changes only; no production swap validator, route allowlist, signing, or execution behavior was changed.
+
+### Verification status
+
+- The preceding code head `8a3f6dbd872d615be5bca6fa92bf3e9a875d8247` passed Validate run `43074720199`, Jupiter CPI Trace Audit `43074720213`, Browser Smoke `43074720380`, and IDL History Audit `43074720141`. The IDL workflow succeeded operationally, but its artifact exposed the incorrect no-prefix parser assumption described above.
+- New parser-fix head `57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1` had no commit-associated workflow runs visible at the last poll. Do not carry forward the previous head's green checks as proof of this new code.
+- No workflow failure has been observed on the new parser-fix head yet. The earlier two decoder-test parse failures and their successful correction remain recorded in the preceding section.
+
+### Exact next actions
+
+1. Wait for new-head Validate, Browser Smoke, Jupiter CPI Trace Audit, and IDL History Audit; inspect all job steps.
+2. Download the new IDL artifact and verify the account layout selected, prefix hex, authority, decompressed payload hash equality to the active history record, and route_v2 discriminator.
+3. If neither layout validates, inspect the raw first 64 account-data bytes and consult the actual Anchor IDL account serialization/version rather than trying further guessed offsets.
+4. Keep route_v2 diagnostic-only and rejected by production validation. Do not enable any adapter, signing, execution, deployment, or production approval based only on an IDL schema and ProgramData deployment timestamp.
