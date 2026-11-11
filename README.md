@@ -3412,3 +3412,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Commit `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93` Validate run `42943303956`: SUCCESS.
 - [ ] Browser Smoke run `42943304017`: IN_PROGRESS. It has progressed through homepage/DEX routing and is currently in standalone DEX market and quote-preview checks; no failed step reported at this poll.
 - [ ] Await the mobile gameplay/HUD stage and screenshot artifact before deciding merge readiness.
+
+
+### Integration drift checkpoint — 2026-11-11
+
+- PR #242 corrected smoke harness head: `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93`; at this checkpoint it is 4 commits ahead and 13 behind main. Do not merge or force-update while its exact-head Browser Smoke `42943304017` is still running.
+- PR #243 DEX discovery head: `9b967b119bc52be5b259f4579cea751b4726829e`; compare against main shows 2 commits ahead / 8 behind, with only `dex/index.html` and `dex/premium-terminal.js` changed. Preserve these two DEX files when integrating; do not copy the older orientation harness from PR #243.
+- PR #242 Validate `42943303956` passed. Browser Smoke `42943304017` remains in the Jarrell desktop/mobile gameplay step, with no failure reported at the latest poll.
+- Integration strategy: first finish and inspect PR #242 exact-head browser results/artifacts; then reconcile both PR branches against current main deliberately, retaining the current smoke harness and DEX discovery changes. Rerun exact-head checks after integration. No merge or production-readiness claim until then.
