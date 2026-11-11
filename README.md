@@ -4142,3 +4142,13 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] The helper explicitly distinguishes outer transaction-message maximum privileges from CPI-requested signer/writable flags. RPC innerInstructions does not provide the latter; the helper cannot prove Jupiter's per-route remaining-account slice or routePlan-step association by itself.
 - [!] No live RPC trace has been captured yet. Solscan's public transaction-detail API requires an API key; no paid API or credential was assumed. Use an approved free HTTPS RPC endpoint via `JUPITER_AUDIT_RPC_URL` without committing its secret-bearing URL.
 - [ ] Next: run the utility against a finalized Jupiter/Meteora route, inspect logs and stack heights, resolve the exact ordered CPI accounts, compare against the pinned CPI interface, and record what is proven vs still unknown. Keep signable-order/execution gates closed.
+
+
+## 2026-11-11 — Validate failure diagnosis and counter-fix
+
+- [x] Deep-inspected Validate run `43029417495` / job `130552389858`: test step failed with 77/78 passing; one new RPC trace test asserted the wrong privilege-source label for an ALT-loaded account.
+- [x] Confirmed second run `43029480369` / job `130552555595` repeated the same assertion defect; no separate product/security regression was shown. Existing route-policy/order/replay/fail-closed tests passed.
+- [x] Corrected ALT label and separated static-key vs ALT assertions. Commits: `3ef9f7b131d06b64fe733d42d6bb9487c4c21724`, `f839510f1fbb7c01f8f1690087d51e8cfe67b02d`.
+- [x] Added explicit syntax check for the new trace utility in `.github/workflows/validate-climboria.yml`, commit `701005d5b840701507d11b7edb8e32b51e4d2f49`.
+- [!] Exact-head CI for the corrected head is not yet visible; no local test could run because the environment could not resolve github.com. Do not mark the counter-fix verified until fresh exact-head Validate and Browser Smoke results are inspected.
+- [ ] Next: obtain fresh exact-head workflow results, inspect the full test summary and screenshot artifact, and continue raw Jupiter CPI evidence capture. Keep all execution/signing gates closed.
