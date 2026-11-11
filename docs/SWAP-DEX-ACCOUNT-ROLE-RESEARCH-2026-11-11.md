@@ -854,3 +854,34 @@ Security boundary remains unchanged: production validator accepts only the legac
 - Keep `route_v2` diagnostic-only and rejected by the production legacy-route validator. Do not add KipseliV3, WhirlpoolSwapV2, MeteoraDlmmSwapV2, or RaydiumLaunchlabBuy to an execution allowlist based solely on this decode.
 - Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`. No signing, execution, deployment, or production approval.
 - Next: finish exact-head CI; verify Anchor IDL metadata account owner/authority and program deployment provenance; obtain CPI-requested privileges; expand route-shape samples; controlled Devnet reproduction; independent Solana security review.
+
+
+## 2026-11-12 — Failed decoder test deeply diagnosed and corrected
+
+### Failure 1 — Validate run 43073364769
+
+- Job `130706796917` failed in the first validation step, `Test Cloudflare swap proxy security and API contracts`.
+- Full job logs show 87 of 88 tests passed. The sole failing test file was `dex/swap-proxy/test/jupiter-route-v2-idl.test.mjs`; Node failed to parse it at line 42 with `SyntaxError: Unexpected token ']'`.
+- Root cause: the newly added synthetic IDL fixture had an unclosed object for the `RemainingAccountsInfo.slices` field. The decoder implementation was not reached by that test module; the existing 87 tests still passed.
+- First counter-fix added the missing field-object closing brace, but left an extra closing brace at the enclosing `RemainingAccountsInfo` object.
+
+### Failure 2 — Validate run 43073589763
+
+- Job `130707564781` repeated the same test-module parse failure, now `SyntaxError: Unexpected token '}'` at line 42.
+- Root cause of the second failure: the first counter-fix corrected the field but over-closed the enclosing fixture objects. The parser error changed from an unexpected closing bracket to an unexpected closing brace; this was not a new runtime defect.
+- Final counter-fix commit `c4dbc932061fcec396e288802bfa47716f78bc85` balanced the `RemainingAccountsInfo` and `RemainingAccountsSlice` object/array delimiters. No production runtime logic or acceptance assertions were weakened.
+
+### Counter-fix verification
+
+- On exact code head `c4dbc932061fcec396e288802bfa47716f78bc85`, Validate run `43073749233`, job `130708097388`: SUCCESS.
+- Test suite output: **89 tests, 89 passed, 0 failed**. The new subtest `decodes the historical route_v2 payload with slot-matched IDL` passed.
+- Wrangler Durable Object dry-run, Supabase auth/cloud-save syntax, homepage checks, token-launch copy, inline scripts, DEX/Swap scripts, game scripts and remaining HTML audits all passed.
+- Jupiter CPI Trace Audit run `43073749383`: SUCCESS.
+- Browser Smoke run `43073749224` was queued at the last poll and had no job object yet; no pass/fail claim is made for that run.
+- IDL History Audit run `43073749339`: SUCCESS; refreshed artifact `13878893917`, SHA-256 digest `bc440ab7dd31d108f849ce56fb9b54c8767b2dfe74d6ac6704849aa0e063c9f7`. Its compact summary confirms exactly one matching history revision covers candidate slot `468153382`.
+
+### Additional on-chain provenance instrumentation
+
+- Added a finalized-mainnet-RPC account audit to the IDL history utility. It queries the Explorer-reported Anchor IDL account, checks the expected Anchor IDL account discriminator, parses the authority and compressed IDL payload, compares the decompressed payload hash with the slot-matched history record, and inspects the Jupiter program/ProgramData upgradeable-loader metadata and binary hash.
+- The RPC audit is best-effort and records errors rather than misrepresenting unavailable RPC data as proof. The current latest code head for this addition is `f98d645d5cf17732b01dace7b42a0ff3d26b46b7`; its IDL History Audit was queued at the latest poll. Do not claim the account owner, IDL authority, ProgramData deployment slot, or binary hash have been verified until its artifact is inspected.
+- No production route policy changed. route_v2 remains diagnostic-only and rejected by the production legacy-route validator; all signing/execution gates remain false.
