@@ -488,6 +488,8 @@ jobs:
               const cards=await page.locator('#premiumTrendingGrid [data-premium-mint]').evaluateAll(nodes=>nodes.map(n=>({mint:n.dataset.premiumMint,text:n.innerText})));
               assert(cards[0].mint===mintB,'Discovery cards must sort by reported 24h volume within the discovered sample');
               assert(cards[1].mint===mintA,'Second discovery card should be the remaining eligible discovered mint');
+              assert(cards[1].text.includes('$300.0K'),'Discovery must choose the deepest eligible pool for each mint, not the first/lowest-liquidity pool');
+              assert(cards.length===2&&!cards.some(card=>card.mint===mintC),'Non-Solana boost/profile entries must never appear in Solana discovery');
               assert(cards.every(c=>c.text.includes('discovery')&&c.text.includes('not a global market ranking')),'Cards must disclose discovery provenance and limited ranking scope');
               assert(calls.includes('/token-profiles/latest/v1')&&calls.includes('/token-boosts/top/v1')&&calls.some(p=>p.startsWith('/tokens/v1/solana/')),'Expected profile, boost and batched token-pair requests');
               await page.locator('#premiumTrendingGrid [data-premium-mint="'+mintA+'"]').click();
