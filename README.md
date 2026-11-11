@@ -4351,3 +4351,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Obtain direct evidence for CPI-requested signer/writable metas; outer transaction-message privileges are only maximum privilege constraints.
 - [ ] Continue controlled Devnet reproduction and independent security review before any allowlist expansion or signing/execution approval.
 - [ ] Keep the separate Jarrell's Peak gameplay smoke and production hosting checks independent from ecosystem Browser Smoke.
+
+
+## 2026-11-11 — Final verification and route_v2 CPI correlation
+
+- [x] Latest PR head `7e5521a71b6036ee98e4c1fd8d0d23149026207e` passed Validate run `43039071777`: SUCCESS, 87 tests passed / 0 failed; Wrangler dry-run and all syntax/HTML checks passed.
+- [x] Latest PR head passed ecosystem Browser Smoke run `43039071847`: SUCCESS, all steps 7–17 passed; screenshot artifact `13864397521`, 5,348,920 bytes.
+- [x] Latest PR head passed Jupiter CPI Trace Audit run `43039071652`: SUCCESS; artifact `13864223042`, 14,373 bytes, SHA-256 `15027e07fc0c4c559bc94081c5b41992c105e4188bfcb6ee6c597f295e6a85b5`.
+- [!] These latest checks are ecosystem-only; Jarrell's Peak gameplay and production deployment are not verified.
+- [x] Additional CPI correlation: the four observed DEX-level outer CPI calls in candidate transaction order are Kipseli (`3TK9D8...`), Orca Whirlpool (`whirLb...`), Meteora DLMM (`LBUZ...`), and Raydium LaunchLab (`LanMV...`). The Kipseli instruction discriminator `f0e02621b01ff1af` matches Anchor `global:swap_v3`; the transaction route_v2 plan has four steps and first enum byte `181`.
+- [!] The order makes `route_v2` step 181 a plausible Kipseli SwapV3 mapping, but it is not accepted as proven until a pinned Jupiter route-plan enum revision confirms it. Do not add this mapping to production policy yet.
+- [!] No failed workflow occurred on the latest head. Earlier runs cancelled by concurrency during superseding commits were cancellations, not failures.
+- Security remains fail-closed: route_v2 is diagnostic-only and rejected by the legacy production validator; all signing/execution review flags remain false.
