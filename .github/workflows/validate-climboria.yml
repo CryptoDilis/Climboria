@@ -50,6 +50,7 @@ jobs:
           node --check dex/swap-proxy/src/solana-rpc.mjs
           node --check dex/swap-proxy/src/jupiter-v6-policy.mjs
           node --check dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs
+          node --check dex/swap-proxy/tools/audit-meteora-bin-array.mjs
           node --test dex/swap-proxy/test/*.test.mjs
       - name: Bundle Worker and validate Wrangler Durable Object configuration (dry run)
         working-directory: dex/swap-proxy
