@@ -3517,3 +3517,10 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Latest PR metadata now reports `mergeable=true` (PR remains open and draft). No merge performed in this continuation. Confirm the current base/head and exact-head checks immediately before integration; preserve review of the gameplay spawn visual issue.
 - [ ] Next: investigate sanctuary spawn transform/platform bounds and character grounding in the production game, implement a targeted gameplay fix on a separate focused branch/PR, then rerun desktop/mobile gameplay smoke and inspect captures. After that, reconcile/merge #242 only when branch protection and review requirements are satisfied; then port only DEX source changes from #243 and rerun exact-head validation.
 - [ ] Release priorities remain DEX → Swap → Launchpad → Login. Swap execution remains fail-closed pending R1–R4 security/Devnet/deployment evidence; Launchpad and production auth are not yet verified live.
+
+### Sanctuary spawn visual defect — source-level root cause identified (2026-11-11)
+
+- [x] Inspected `game/play.html` at blob `e16ba390fb8f312509695d7bc027a034f9158f7a`; sanctuary POI center is `(0,-90)`.
+- [x] Sanctuary entry landing is created at local `z=57`, so its world-space center is `z=-33`. The actual player takeover and teleport/respawn spawn use `(0,-30)`, placing the player 3 world units forward of the landing center. The screenshot's apparent front-edge placement is consistent with this coordinate mismatch.
+- [ ] Counter-strategy: introduce one named sanctuary spawn coordinate derived from the landing center and use it consistently for cinematic takeover, teleport key 1, death respawn, and smoke-test expectations. Preserve terrain snapping (`groundAt`), camera behavior, and collision checks; do not patch CSS or move the landing geometry to hide the symptom.
+- [ ] Update all tests that currently hard-code `z=-30` for sanctuary respawn, then run Validate + Browser Smoke and inspect desktop/mobile screenshots. This source diagnosis is not yet a production fix.
