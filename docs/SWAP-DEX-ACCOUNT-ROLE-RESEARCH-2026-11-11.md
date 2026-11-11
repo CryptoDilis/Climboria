@@ -1014,3 +1014,50 @@ Security boundary remains unchanged: production validator accepts only the legac
 - Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Do not expand the adapter allowlist or enable signing/execution from this evidence alone.
 - Next: inspect Browser Smoke `43076000655`; then obtain CPI-requested signer/writable evidence or an equivalent controlled trace, validate remaining-account slices across multiple route shapes, reproduce safely on Devnet, and obtain independent Solana security review.
 - Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`. No production deployment, live signing, or swap execution is approved.
+
+
+## 2026-11-12 — Candidate route_v2 outer-account / direct-CPI positional correlation
+
+Using trace artifact `13880301840` (candidate signature `2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX`, slot `468153382`), compared the 85 ordered Jupiter outer accounts with each stack-height-2 DEX CPI's ordered account vector.
+
+### Fixed route_v2 prefix
+
+Outer positions 0–9 align with the active on-chain IDL account definitions:
+
+| Outer position | IDL role | Observed account |
+|---:|---|---|
+| 0 | user_transfer_authority | GN2CGUyYYLakXQmeiNtfvxcNDviKM9biqQMnxfEPzF4C |
+| 1 | user_source_token_account | 4ZoRa3aJyUMUWVm8N7P23FQ3cZhunsSCmVUaE9uY3GzY |
+| 2 | user_destination_token_account | 8j4rWcxk6G8j5BKpC1jZtmtFAwD936NgaAgNWiHrbVZW |
+| 3 | source_mint | So11111111111111111111111111111111111111112 |
+| 4 | destination_mint | AydYhVjdXnyLEvdBroRbCoSkVykozfkE5mLo67Bcz7EY |
+| 5 | source_token_program | TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA |
+| 6 | destination_token_program | TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb |
+| 7 | optional destination_token_account | Jupiter program ID placeholder; optional account appears omitted |
+| 8 | event_authority | D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf |
+| 9 | program | Jupiter V6 program ID |
+
+This is a transaction-specific match to the active route_v2 IDL. The optional-account placeholder interpretation follows the Anchor optional-account convention and should still be treated as an interface mapping, not CPI privilege evidence.
+
+### Direct CPI ordered-vector alignment
+
+The candidate's direct DEX CPIs align as follows:
+
+| Route step | CPI inner index | DEX program outer position | CPI account vector mapping to outer positions | Result |
+|---|---:|---:|---|---|
+| KipseliV3 | 0 | 11 | 12–26 | 15/15 contiguous |
+| WhirlpoolSwapV2 | 3 | 27 | 28–42 | 15/15 contiguous |
+| MeteoraDlmmSwapV2 | 6 | 43 | 44–61 | 18/18 contiguous |
+| RaydiumLaunchlabBuy | 11 | 63 | 64–78 and 80–82 | 18/18; outer position 79 is skipped |
+
+- This positional alignment is stronger than merely comparing CPI execution order: each of the first three CPI account vectors is an exact contiguous sequence immediately after its corresponding outer program account.
+- Raydium's CPI vector matches 18 of the accounts after outer program position 63, but skips outer position 79, which is a duplicate user-authority address. The purpose of this extra account is unresolved.
+- Outer position 10 (`EaUghZfmuhgtZEEwaZwX5EBroz4WyH8VM5NSXi4tam5A`) before the Kipseli program account, position 62 (Jupiter program ID) before the Raydium program account, positions 83 (Jupiter program ID) and 84 (Jito don't-front marker) after the Raydium accounts are not part of the four matched CPI vectors. Their precise handler-level roles are not all established by this alignment.
+- Repeated public keys can produce multiple mathematical subsequence alignments. The table uses the unique DEX-program boundary and route-plan order to identify the natural contiguous segment for the first three adapters; do not generalize this mapping to other transactions.
+
+### Limits and next work
+
+- This report proves the observed inner CPI account address order can be matched to the outer account vector at these positions for this one successful transaction. It does not reveal the CPI-requested signer/writable flags; outer transaction privileges remain upper bounds only.
+- It does not prove the deployed Jupiter binary uses these same cursor boundaries for all route shapes, split routes, optional accounts, transfer hooks, or future upgrades.
+- Keep route_v2 rejected by production validation and all execution/signing gates closed.
+- Next: investigate outer position 10, 62, 79, 83, and 84 with account ownership/data and exact handler invocation context; gather multiple route_v2 samples; obtain CPI-requested privilege evidence; controlled Devnet reproduction; independent Solana security review.
