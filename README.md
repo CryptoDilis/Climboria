@@ -3498,3 +3498,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Browser Smoke run `42946493750`: IN PROGRESS. Steps 1–14 (homepage/DEX routing, proxy security/fail-closed, standalone Swap/DEX, mobile layout and provider loading/error/empty states) passed. Step 15, Jarrell's Peak desktop/mobile gameplay smoke, is still running; screenshot upload is pending.
 - [ ] Do not call the Browser Smoke successful until gameplay and screenshot upload complete. On failure, use corrected resource/requestfailed diagnostics to distinguish missing request, network/CDN failure, or GLB decode/scene setup failure.
 - [ ] After terminal success, inspect all desktop/mobile gameplay and cave captures before merging PR #242. Then port only DEX changes from PR #243 onto the accepted harness and rerun exact-head checks.
+
+
+### 2026-11-11 — Follow-up poll and integration drift review
+
+- [x] Re-polled Browser Smoke run `42946493750` / job `130280460840`: still IN PROGRESS at gameplay step 15; steps 1–14 remain SUCCESS; screenshot upload is pending. No terminal failure/pass has been published.
+- [x] Job-log endpoint returned 404 while the job is active; this is an observability limitation, not evidence of a test failure. No speculative retry or production change made.
+- [x] Rechecked open release PRs: #242, #243, #233, #235, #231 and #236 remain open drafts. GitHub currently reports mergeable=false for these stale-base branches; reconcile against current main before integration and rerun exact-head checks.
+- [ ] Next: poll #242 run `42946493750` until terminal; then inspect corrected GLB request diagnostics and screenshot artifact. Only after #242 is accepted should #243 DEX-only changes be ported to current main.
