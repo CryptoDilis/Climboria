@@ -4475,3 +4475,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Compared ordered stack-height-2 DEX CPI vectors with the 85 outer accounts: Kipseli inner 0 → outer 12–26 (15/15); Whirlpool inner 3 → outer 28–42 (15/15); Meteora inner 6 → outer 44–61 (18/18); Raydium LaunchLab inner 11 → outer 64–78 and 80–82 (18/18, skips duplicate user-authority at outer 79).
 - This is one-transaction address-order correlation, not proof of universal Jupiter cursor behavior or CPI-requested signer/writable flags. Outer positions 10, 62, 79, 83, 84 need further explanation. Full analysis is in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
 - Browser Smoke run 43076000655 remained queued at the last poll. Exact-head Validate passed 92 tests; IDL provenance and CPI trace audits passed. Keep route_v2 rejected by production validation and signing/execution disabled.
+
+
+## 2026-11-12 — Jupiter route_v2 platform fee and full transaction trace
+
+- The candidate trace now retains all seven outer instructions. It confirms WSOL ATA creation, 99,550,000-lamport funding, SyncNative, Jupiter route_v2, WSOL account close, plus two separate System Program transfers whose recipients are not yet classified.
+- Outer account position 10 is the WSOL platform-fee recipient for this transaction: inner SPL Token transfer index 17 moves 99,550 base units from the user's WSOL source to EaUgh...; route args are in_amount=99,550,000 and platform_fee_bps=10, so the fee matches exactly. Transaction pre/post balance delta for account index 19 is +99,550.
+- Kipseli CPI moves the remaining 99,450,450 WSOL units to the pool-side account, matching input less fee. Position 10's mint/authority are also decoded from its 165-byte SPL Token account. Full details and evidence limits are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
+- Exact code head c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c passed Validate (95/95 tests), Browser Smoke, Jupiter CPI Trace Audit and IDL History Audit. No failed workflow on that head.
+- Still unresolved: duplicate wallet outer position 79, duplicate Jupiter program positions 62/83, and CPI-requested signer/writable flags. Keep route_v2 rejected by production validation and signing/execution disabled.
