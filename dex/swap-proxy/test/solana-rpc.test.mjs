@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveTransactionLookups, verifyJupiterTokenAccounts } from "../src/solana-rpc.mjs";
-import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
+import { decodeBase58 } from "../src/transaction-validation.mjs";
 import { ADDRESS_LOOKUP_TABLE_PROGRAM_ID } from "../src/alt-resolution.mjs";
 
 const tableKey = "AddressLookupTab1e1111111111111111111111111";
