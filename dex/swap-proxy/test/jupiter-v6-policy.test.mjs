@@ -1,5 +1,5 @@
 import test from "node:test";
-import { decodeBase58, decodeJupiterRoutePlanHeader, discoverRecentJupiterMeteoraRoutes, isMeteoraSwap2Instruction } from "../tools/discover-jupiter-meteora-routes.mjs";
+import { decodeBase58 as decodeDiscoveryBase58, decodeJupiterRoutePlanHeader, discoverRecentJupiterMeteoraRoutes, isMeteoraSwap2Instruction } from "../tools/discover-jupiter-meteora-routes.mjs";
 import { fetchMeteoraAccountInfo, inspectMeteoraAccount, METEORA_DLMM_PROGRAM_ID, METEORA_BIN_ARRAY_DISCRIMINATOR } from "../tools/audit-meteora-bin-array.mjs";
 import { buildJupiterV6TraceReport, fetchJupiterV6Trace, JUPITER_V6_PROGRAM_ID as TRACE_JUPITER_PROGRAM_ID } from "../tools/audit-jupiter-v6-rpc.mjs";
 import assert from "node:assert/strict";
@@ -333,7 +333,7 @@ test("decodes official Jupiter variant 75 and Meteora Swap2 instruction discrimi
   assert.equal(routeHeader.firstStepVariant, 75);
   assert.equal(isMeteoraSwap2Instruction("fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib"), true);
   assert.equal(isMeteoraSwap2Instruction("11111111111111111111111111111111"), false);
-  assert.equal(decodeBase58("1")[0], 0);
+  assert.equal(decodeDiscoveryBase58("1")[0], 0);
 });
 
 test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live network access", async () => {
