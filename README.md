@@ -3242,3 +3242,35 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport smoke is not device acceptance.
 
 **Exact next job:** monitor the three main-commit runs above. If any fail, inspect the exact failing job logs and root cause before making a targeted counter-fix; never recommit the same failed code without a diagnosis. If all pass, verify the deployed `https://climboria.fun` and then continue with the highest-priority live DEX/Swap/Launchpad release blockers, preserving the execution kill switch until security and Devnet gates are satisfied.
+
+
+## 2026-11-11 — Development resume checkpoint (latest verified repository state)
+
+**Repository baseline**
+- Default branch: `main`.
+- Main HEAD at inspection: `d45997caf751b820d32bd2a4393ed1d703ed3c58`.
+- Latest merged code change: PR #241 cave rock material pass, squash merge `1de853845b8c80527bd5dd061c678ed7b355710c`.
+- Latest Pages build/deployment run `42939570861` on the documentation checkpoint HEAD `d45997caf751b820d32bd2a4393ed1d703ed3c58`: **SUCCESS**.
+- Validate run `42939543943` on the code merge commit `1de853845b8c80527bd5dd061c678ed7b355710c`: **SUCCESS**.
+- Browser Smoke run `42939543763` on that same code merge commit: **IN_PROGRESS** at this checkpoint. The Jarrell's Peak desktop/mobile gameplay smoke is the active step; screenshot upload is pending. Do not claim full Browser Smoke acceptance until it completes and its artifact is reviewed.
+- The Pages run `42939543618` on the earlier code merge commit was cancelled; it was superseded by successful Pages run `42939570861` on the later main documentation commit. No failure diagnosis or code fix is warranted for that cancellation.
+
+**Current source audit (read-only; no new application code committed)**
+- `dex/premium-terminal.js` calls the public DexScreener API directly for wrapped-SOL market data and pair discovery; it refreshes while the page is visible every 60 seconds and has explicit provider-unavailable states. The six-card trending list is currently derived from a fixed discovery-query set (SOL, USDC, BONK, JUP, WIF, RAY, PYTH, JTO, JLP, POPCAT), then ranked by 24h volume; do not describe it as a global market-wide trending feed.
+- `dex/index.html` references the premium terminal script and provider-backed market/quote UI. Source inspection is not proof of current live provider uptime, full chart correctness, or production telemetry. Exact browser/runtime validation remains required.
+- `launchpad/index.html` is still informational: zero forms and zero script tags in the inspected source; no token creation, deployment, fundraising, payment, liquidity or launch transaction flow is exposed there. PR #231 is research/provenance work, not a live launch backend.
+- `dex/EXECUTION_READINESS.md` continues to define the Swap release boundary. Frontend execution is disabled and Worker execution is disabled. Do not change either gate until the documented ALT/instruction-semantic, independent review, controlled Devnet and production infrastructure acceptance criteria are satisfied.
+
+**Open release branches (refresh before any sync/merge)**
+- PR #235 Swap integration: head `1cc4ffae315edd2703549e6f0b749112f73e9525`; Validate `42938295491` and Browser Smoke `42938295613` both SUCCESS on that exact head. At comparison time it was 50 commits ahead / 2 behind main. Its prior green checks do not validate a new sync commit.
+- PR #236 Auth integration: head `6f2bd524c569ecaccebb23341511e77968b5d1fb`; Validate `42938156190` and Browser Smoke `42938156244` both SUCCESS on that exact head. At comparison time it was 48 commits ahead / 2 behind main. Provider dashboard setup and real-account E2E remain unverified.
+- PR #231 Launchpad provenance: remains open/draft and highly divergent. Existing read-only Raydium API/on-chain config evidence must be continued; do not rebuild it or weaken the upstream IDL/account-layout gates. The live launch flow, unsigned Devnet transaction preparation, custody/LP lock and migration checks remain unfinished.
+- PR #233 contains the separate fail-closed execution-gate work. PR #234 is the original Swap order-binding implementation; PR #235 is the current integration path. Avoid duplicating work across these branches.
+
+**Exact next actions**
+1. Poll Browser Smoke `42939543763`; if it fails, inspect the failing step/job log and screenshots, identify the root cause, implement a distinct targeted fix, and rerun on the new exact head. If it succeeds, inspect its artifact and record it.
+2. Recheck current main and PR #235/#236 compare counts before synchronizing. Preserve their existing changes with conflict-aware integration; do not blindly overwrite, merge or cherry-pick duplicate code.
+3. Continue P0 DEX/Swap/Launchpad work from the actual source state: validate live DEX provider responses/chart/token detail; resolve the Swap security blockers without opening execution; advance Launchpad from the existing Raydium provenance and Devnet preview work.
+4. Record every new code change with exact commit, CI run IDs/conclusions, artifact review, unresolved blockers and one exact next task. A successful source test or Pages build alone is not proof of production trading or launch readiness.
+
+**No application code, production secret, wallet signature, on-chain transaction or execution flag was changed during this checkpoint.**
