@@ -44,7 +44,14 @@ jobs:
       - name: Test Cloudflare swap proxy security and API contracts
         run: |
           node --check dex/swap-proxy/src/index.mjs
-          node --test dex/swap-proxy/test/worker.test.mjs
+          node --check dex/swap-proxy/src/transaction-validation.mjs
+          node --check dex/swap-proxy/src/order-store.mjs
+          node --check dex/swap-proxy/src/alt-resolution.mjs
+          node --check dex/swap-proxy/src/solana-rpc.mjs
+          node --test dex/swap-proxy/test/*.test.mjs
+      - name: Bundle Worker and validate Wrangler Durable Object configuration (dry run)
+        working-directory: dex/swap-proxy
+        run: npx wrangler@4.36.0 deploy --dry-run --outdir /tmp/climboria-swap-proxy-dry-run
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
