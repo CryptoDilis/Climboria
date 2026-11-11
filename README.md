@@ -3229,3 +3229,16 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport screenshots are not a physical-device check. The Sanctuary scene is improved but broader world realism polish continues separately.
 
 **Exact next job:** recheck the independent cave material PR against the new main commit; complete its Validate/Browser Smoke and review entrance/interior screenshots. Then carry out physical Redmi 14 5G acceptance. Keep the Auth branch gated on real provider/dashboard and account-save tests; keep Swap execution gated on ALT/instruction semantic review and controlled Devnet lifecycle.
+
+
+### 2026-11-11 — Cave rock material pass merged; main CI/deployment queued
+
+- [x] Rechecked clean cave-texturing PR #241 against current main. Exact head: `344d7cee183f2342524d94aba05b1c3b56e8f810`; exactly two files changed (`game/play.html`, `.github/scripts/game-smoke.mjs`).
+- [x] Deep review confirmed deterministic procedural 128×128 color/bump maps for the cave rock families, matte stone settings, no runtime texture fetches, and no changes to cave geometry, colliders, passage widths, traps, water, chests, POIs, or movement.
+- [x] The first superseded attempt PR #240 exposed a diagnostic scope error (audit referenced builder-local `rk`). It was not repeated blindly: the fix registers all ten materials in outer scope, and the smoke assertion now checks 10 textured + 10 bumped materials. PR #241 contains the corrected isolated patch.
+- [x] Validate run `42921908440` and Browser Smoke run `42921908543` both SUCCESS on the exact PR #241 head. PR was marked ready and squash-merged as `1de853845b8c80527bd5dd061c678ed7b355710c`.
+- [ ] Main branch runs are queued on the merge commit: Validate `42939543943`, Browser Smoke `42939543763`, and Pages build/deployment `42939543618`. Do not claim the new deployment is complete until these runs finish successfully and the live site is checked.
+- [!] PR #235 Swap integration and PR #236 Auth remain separate draft PRs. Swap execution remains disabled pending trusted ALT resolution, full instruction-semantic validation, controlled Devnet lifecycle, and Cloudflare production verification. Auth provider credentials/dashboard configuration and real-account E2E remain external release gates. No live Swap execution or fully enabled login is claimed.
+- [!] Physical Redmi 14 5G acceptance remains manual; automated mobile viewport smoke is not device acceptance.
+
+**Exact next job:** monitor the three main-commit runs above. If any fail, inspect the exact failing job logs and root cause before making a targeted counter-fix; never recommit the same failed code without a diagnosis. If all pass, verify the deployed `https://climboria.fun` and then continue with the highest-priority live DEX/Swap/Launchpad release blockers, preserving the execution kill switch until security and Devnet gates are satisfied.
