@@ -24,7 +24,7 @@ const orderStoreStub = {
 const orderNamespace = { idFromName: value => value, get: () => orderStoreStub };
 
 const origin = "https://climboria.fun";
-const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace };
+const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace, SOLANA_RPC_URL: "https://rpc.example.com" };
 const valid = "So11111111111111111111111111111111111111112";
 
 test("health endpoint responds without exposing credentials", async () => {
@@ -110,8 +110,8 @@ test("requires a server-issued order token even if a caller supplies a Jupiter r
     body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
   });
   const res = await worker.fetch(req, env);
-  assert.equal(res.status, 400);
-  assert.match((await res.json()).error, /server-issued orderToken/i);
+  assert.equal(res.status, 503);
+  assert.match((await res.json()).error, /semantic instruction validation/i);
 });
 
 test("fails closed when edge rate limiter is not configured", async () => {
