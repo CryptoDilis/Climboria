@@ -511,3 +511,25 @@ test("records public RPC rate limiting as an incomplete sample instead of failin
   assert.equal(report.matchingRoutes, 0);
   assert.equal(report.matchingJupiterMeteoraInstructions, 0);
 });
+
+
+test("preserves every outer instruction for transaction-wide fee and transfer attribution", () => {
+  const fixture = rpcTraceFixture();
+  fixture.transaction.message.accountKeys.push("outer-token-program");
+  fixture.transaction.message.instructions.push({
+    programIdIndex: 6,
+    accounts: [0, 1],
+    data: "outer-transfer-data",
+  });
+
+  const report = buildJupiterV6TraceReport("trace-with-other-outer-instruction", fixture);
+  assert.equal(report.outerInstructions.length, 2);
+  assert.equal(report.outerInstructions[0].programId, TRACE_JUPITER_PROGRAM_ID);
+  assert.equal(report.outerInstructions[1].outerIndex, 1);
+  assert.equal(report.outerInstructions[1].programId, "outer-token-program");
+  assert.deepEqual(report.outerInstructions[1].accounts.map((account) => account.address), [
+    "payer",
+    "writable-source",
+  ]);
+  assert.equal(report.outerInstructions[1].dataBase58, "outer-transfer-data");
+});
