@@ -465,6 +465,14 @@ try {
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
+  // The desktop smoke page has finished all assertions and screenshots. Close its
+  // WebGL renderer and release the 43 MB GLB/decoded scene before starting the
+  // independent mobile context; keeping both full worlds alive caused the mobile
+  // GLTFLoader to stall after the complete download, before its parse callback.
+  await page.close();
+  await desktop.close();
+  console.log('Released desktop WebGL context and scene resources before mobile GLB startup.');
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
