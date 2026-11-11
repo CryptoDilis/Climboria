@@ -23,7 +23,7 @@
 
 ## Next task
 
-Continue **P1 Live Swap** after the in-flight exact-head workflows finish. Inspect the actual current source and workflow evidence, diagnose failures from terminal logs, implement targeted counter-fixes without weakening assertions/security, and record exact commit/run evidence. Do not advance to P2 until P1 release gates are genuinely satisfied. Then proceed in the listed order through P5.
+All five exact-head workflows have passed. Continue **P1 Live Swap** now, preserving the security gates. Inspect the actual current source and workflow evidence, diagnose failures from terminal logs, implement targeted counter-fixes without weakening assertions/security, and record exact commit/run evidence. Do not advance to P2 until P1 release gates are genuinely satisfied. Then proceed in the listed order through P5.
 
 ## Working rules
 
