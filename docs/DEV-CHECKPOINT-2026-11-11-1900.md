@@ -382,3 +382,14 @@ Initial authoritative-source findings:
 - [ ] Next: seek version-matched authoritative deployed program/source or controlled transaction/CPI trace for outer route account slicing. Do not implement unproven per-DEX validators.
 - [ ] Resolve Meteora privilege discrepancies; retain SolFi exclusion and V2 variant rejection.
 - [ ] Preserve both hard security gates, Wrangler execution=false, public swap enabled=false.
+
+
+## Final verification addendum — 2026-11-11 20:38 PHT
+- Exact-head Validate run `43020329202`: SUCCESS on `39f4d5edd3691113731d398117a43624d24897ad`.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020329202
+- Exact-head DEX/Login Browser Smoke run `43020329171`: SUCCESS on the same head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020329171
+- All 16 functional browser smoke steps and screenshot upload passed.
+- No failed workflows on exact head `39f4d5e`.
+- The public Jupiter-source audit and hard-gate re-audit are now recorded in the research/security documents. No production deployment or live swap readiness is claimed.
+- PR #268 remains draft/open/unmerged; main unchanged. Next engineering task remains authoritative Jupiter route CPI slicing proof, not speculative account-position code.
