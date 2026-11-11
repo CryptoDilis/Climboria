@@ -20,6 +20,7 @@ on:
       - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
       - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
       - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
       - ".github/workflows/jupiter-idl-history-audit.yml"
   workflow_dispatch:
 
@@ -50,11 +51,24 @@ jobs:
         run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs
       - name: Fetch Jupiter and DEX CPI IDL history records
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
-      - name: Upload raw responses and schema summary
+      - name: Set up Rust toolchain for pinned sBPF static analysis
+        uses: dtolnay/rust-toolchain@stable
+      - name: Generate pinned sBPF disassembly and control-flow summary
+        timeout-minutes: 10
+        run: |
+          cargo generate-lockfile --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml
+          cargo run --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
+            artifacts/jupiter-idl-history/jupiter-programdata-elf.so \
+            artifacts/jupiter-sbf-static-audit
+          sha256sum artifacts/jupiter-idl-history/jupiter-programdata-elf.so
+      - name: Upload raw responses, schema summary, and sBPF static analysis
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jupiter-idl-history
-          path: artifacts/jupiter-idl-history/
+          path: |
+            artifacts/jupiter-idl-history/
+            artifacts/jupiter-sbf-static-audit/
+            dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.lock
           if-no-files-found: warn
           retention-days: 30
