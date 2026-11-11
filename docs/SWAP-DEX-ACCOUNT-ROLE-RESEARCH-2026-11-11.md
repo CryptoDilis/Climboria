@@ -442,9 +442,9 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - [x] Matched the first 16 ordered CPI accounts to the pinned official Meteora IDL; observed one additional writable remaining account, consistent with the SDK bin-array convention.
 - [x] Matched this single route step to the Meteora CPI using the decoded one-step route plan, program ID and stack-height/log sequence.
 - [x] Cross-checked input/output token movement against pre/post balances.
-- [ ] Resolve the extra outer Jupiter program account at position 27.
+- [x] Resolve the extra outer Jupiter program account at position 27 as the Anchor event self-CPI program account (transaction-specific; see final section).
 - [ ] Obtain direct CPI-requested signer/writable AccountMeta evidence; transaction-level privileges alone are insufficient.
-- [ ] Verify the dynamic remaining account's owner/data as a Meteora BinArray account.
+- [x] Verify the dynamic remaining account's owner/data as a Meteora BinArray account (finalized owner, discriminator and 10,136-byte data length recorded above).
 - [ ] Repeat on multiple variant-75 transactions, including routes with/without bitmap extension, host fee, transfer hooks, and multi-hop/split routes to establish general cursor behavior.
 - [ ] Establish deployed Jupiter executable hash/build provenance and source-to-binary equivalence for the transaction slot.
 - [ ] Controlled Devnet reproduction and independent security review.
