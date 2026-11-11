@@ -1242,3 +1242,37 @@ Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-a
 - Game Browser Smoke `43082463178` was still `in_progress` at last inspection, job `130738376481`; its active step was strict desktop/mobile gameplay smoke. Job logs were unavailable while active (`BlobNotFound`), so no GLB phase result or terminal status is asserted here.
 - Branch comparison before this update: 197 ahead / 0 behind main. PR #268 remains open, draft and unmerged.
 - Next: verify the discriminator fix with exact-head Validate and IDL History Audit; inspect the fresh IDL artifact for `prefixMatchesAnchorAccountDiscriminator=true`. Continue route-shape evidence and independently obtain CPI-requested account privileges/slicing. Diagnose mobile GLB only from the completed dedicated game run; keep the strict GLB assertion and all transaction execution gates closed.
+
+
+## 2026-11-12 — exact-head follow-up after discriminator fix
+
+### Verification on source commit `f5f403f24ac11a3349734f0c28bd047d8fa6fe72`
+
+- Validate run `43083743886`: SUCCESS; 98 tests passed, 0 failed; Wrangler dry-run succeeded.
+- Browser Smoke run `43083744078`: SUCCESS.
+- Jupiter V6 CPI Trace Audit run `43083744120`: SUCCESS; focused duplicate-account-index mapping tests passed 2/2; artifact `13884639160`.
+- Jupiter IDL History Audit run `43083743796`: SUCCESS; artifact `13885387689` independently reports the on-chain legacy IDL prefix `184662bf3a907b9e` as matching Anchor's historical `internal:IdlAccount` discriminator. The prior false-negative is corrected.
+- Game Browser Smoke run `43083743684`: IN PROGRESS at latest inspection; job `130743806158` is still on the strict Jarrell's Peak desktop/mobile smoke step. Job log retrieval returns GitHub `BlobNotFound` while active. There is no terminal status or GLB phase result to diagnose yet. This is an unresolved in-progress run, not a failure.
+- Older Game Browser Smoke run `43082463178` is CANCELLED by superseding PR activity, not failed. Partial checks only show desktop work; no successful mobile GLB readiness evidence.
+
+### Mobile GLB evidence and limits
+
+- Git tree confirms `assets/characters/Climboria_Hero.glb` is 42,923,204 bytes.
+- Instrumented loader exposes `downloading`, `parsing`, `assembling`, `ready`, `callback-error`, and `error` phases, progress bytes/percent, callback timestamp, and parse/assembly duration.
+- Strict mobile smoke requires all three: `window.__climboriaReadiness.heroReady === true`, `window.__climboriaGLBRenderer === true`, and `window.__climboriaCameraOrbit.heroUsesGlb === true`. The assertion is not relaxed. A procedural fallback does not count as success.
+- Until run `43083743684` completes and exposes its diagnostic, do not infer whether the issue is transfer, GLTF parse/decompression, scene assembly, renderer hookup, or Playwright/runtime hang. Job logs are unavailable during active execution.
+
+### DEX account-role evidence still unresolved
+
+- Latest IDL artifact exposes no matching historical IDL candidate for Kipseli's expected `swap_v3` discriminator. This means the selected IDL-history source did not supply a matching candidate; it does not prove the deployed Kipseli program has no IDL.
+- Meteora DLMM history reports a candidate-slot `0.10.0` schema and latest `0.12.0` schema with a writability disagreement for `bin_array_bitmap_extension`. The history service's active-slot classification alone is insufficient to choose production account privileges; independently verify deployed program binary/version and its IDL account before changing policy.
+- Orca's active historical schema agrees with latest. Raydium's two active metadata sources agree on instruction schema.
+- The exact-head bounded route scan covered five finalized transactions and returned zero matching Jupiter/Meteora routes. Record this as a no-match bounded sample, not a no-routes conclusion.
+
+### Next engineering actions
+
+1. Poll Game Browser Smoke `43083743684` until terminal; retrieve full job logs and screenshot artifact. Diagnose only the measured GLB phase and exact failed assertion.
+2. If mobile still stalls, profile the 42.9 MB GLB payload (buffer geometry, texture dimensions/encodings, animation tracks, mesh count) and instrument CPU parse/scene assembly separately before implementing optimization. Preserve visual identity and strict readiness.
+3. Resolve Meteora deployed-version and Kipseli IDL provenance before any account privilege or account-slice change.
+4. Continue cursor-based finalized multi-transaction route traces; retain duplicate transaction-key position ambiguity and do not infer CPI AccountMeta signer/writable flags from outer message privileges.
+5. Keep route_v2 out of production validation; keep signing, execution and deployment disabled.
