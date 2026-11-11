@@ -4181,3 +4181,10 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Exact PR #268 head passed all five workflows: Validate `43102883438`, Ecosystem Browser Smoke `43102883591`, Jupiter CPI Trace Audit `43102883472`, Game Browser Smoke `43102883650`, and Jupiter IDL History Audit `43102883513`. These are branch-specific checks, not production-live evidence.
 - Deep workflow failure diagnoses, root-cause boundaries, counter-fixes, exact recovery evidence, and the next task are recorded in [the 2026-11-12 workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md). The detailed 521-run P1 branch audit remains in [SWAP/DEX account-role research](docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md).
 - Swap remains fail-closed. No signing, transaction execution, production Worker deployment, or LIVE claim is authorized by green CI alone.
+
+## 2026-11-12 — PR #269 workflow regression follow-up
+
+- Exact-head Browser Smoke `43105908300` failed only at strict mobile saved-GLB readiness after all 16 earlier ecosystem/browser checks and desktop gameplay diagnostics passed. The 42.9 MB GLB transfer completed; no failed requests or browser errors occurred; the mobile hero/GLTF renderer remained unready after 104.5 seconds.
+- Root cause confirmed by comparing scripts: PR #269 omitted the already-validated close-before-mobile resource-lifecycle fix. It kept the desktop page/context alive while starting the mobile GLB load. The proven PR #268 script closes both before creating mobile. The targeted port and recovery verification are tracked in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Exact-head Validate `43105908352`, CPI Trace Audit `43105908294`, and IDL History Audit `43105908383` passed. IDL artifact `13894222771` confirms Jupiter candidate-slot provenance but records incomplete/mixed DEX adapter evidence; a green workflow does not authorize every adapter.
+- PR #269 remains draft/unmerged. Signing/execution gates remain false. Next task: port the proven smoke-script fix, rerun exact-head Browser Smoke, then improve explicit per-adapter provenance states.

@@ -72,6 +72,32 @@ Important grouped findings include:
 - These passes validate that exact PR head only. They do not prove production deployment, CPI-requested signer/writable flags, universal Jupiter adapter account slicing, Devnet settlement, independent security review, or production-live swaps.
 - Swap order issuance and execution remain fail-closed; signing and execution gates remain false. Keep them false.
 
+## 2026-11-12 follow-up — Browser Smoke regression and IDL evidence boundaries
+
+### 6. PR #269 mobile GLB readiness regression — run 43105908300
+
+- **Exact head:** `ec238d2fb2c869e56777180f61b52482a907815f`; job `130809037781`; failing step: `Run Jarrell's Peak desktop and mobile gameplay smoke tests`.
+- **Failure evidence:** all 16 preceding ecosystem/browser checks passed. Desktop Jarrell's Peak reported `ready=true`, 595 scene objects, valid terrain/water/collision diagnostics, 182 chunks, and completed cave/fishing interactions. The mobile hero GLB request completed with `transferSize=42,923,504` and `decodedBodySize=42,923,204`; no failed GLB requests or browser errors. After 104,479 ms, mobile remained `hero=false`, `glbRenderer=null`, `cameraHero=false`, `selectedHero=loading-adventurer`, `renderer=awaiting-saved-glb`, with 46 render frames.
+- **Root cause confirmed by source comparison:** PR #269 was freshly based on current `main`, but its `.github/scripts/game-smoke.mjs` was not ported from the already-validated PR #268 counter-fix. The current PR #269 script created the mobile page while the desktop page and desktop browser context remained alive. The PR #268 version closes both (`await page.close(); await desktop.close();`) after all desktop assertions/screenshots and before creating the mobile page. This precisely matches the previously diagnosed resource contention and explains why the same post-download loader stall recurred.
+- **Causal confidence:** high for a test-harness resource-lifecycle regression. The previous PR #268 exact-head Game Browser Smoke run `43102883650` passed after this close-before-mobile change. No direct GPU OOM evidence is claimed; the observed failure remains a GLTFLoader/readiness stall after successful transfer.
+- **Counter-fix prepared:** restore the previously validated `.github/scripts/game-smoke.mjs` from PR #268 exact head `8c4e86994e1ed203ffa26803874924e705973462` (source blob `e58929b79b89eb3e01312ef4051936d206ef5573`) to this current-main branch. Preserve the close-before-mobile sequence and the strict saved-GLB assertions. This is a targeted port of an existing proven fix, not a relaxed test.
+- **Required recovery:** rerun Browser Smoke on the resulting exact SHA. Only mark recovered if the strict desktop and mobile saved-GLB readiness assertions pass. If it still fails, capture mobile GLTFLoader phase instrumentation (network complete, parser start/complete, embedded image decode, scene/animation setup, renderer handoff) before changing the production loader.
+
+### 7. Jupiter IDL History Audit — run 43105908383
+
+- **Exact head:** `ec238d2fb2c869e56777180f61b52482a907815f`; terminal result **SUCCESS**; artifact `13894222771`, SHA-256 `c44a78c204b65e7378299a564118071ea225db72786b56f4544186c9b054766f`.
+- **Jupiter:** exactly one historical `route_v2` revision covers candidate slot `468153382`; on-chain IDL owner, payload, discriminator, ProgramData loader owner, and deployment-slot checks pass for Jupiter.
+- **DEX adapter evidence is mixed and incomplete; do not infer universal adapter provenance from the green workflow:**
+  - Kipseli: latest/history responses are only 204 bytes with no candidate IDL; finalized RPC cannot find the Anchor metadata account. Observed ProgramData deployment slot `468190520` is later than candidate slot `468153382`.
+  - Orca Whirlpool: one active history revision and latest/history schema agreement, but on-chain IDL payload does not match the active historical payload/schema (the on-chain instruction schema does match latest).
+  - Meteora DLMM: one active revision and active source schema agreement, but latest/history schema agreement is false and on-chain IDL payload does not match the active history.
+  - Raydium LaunchLab: seven matching historical revisions, two active at candidate slot (not exactly one); latest/history schema agreement and on-chain IDL payload/schema match are present.
+- **Why workflow still passed:** the current terminal gate requires the exact Jupiter candidate revision and transport success; the DEX adapter counts are reported as evidence metrics, not strict all-adapter release gates. This is not a CI false positive for the configured assertions, but it is not sufficient production adapter proof.
+- **Next audit improvement:** turn adapter provenance gaps into explicit per-adapter `supported / incomplete / incompatible` states and require route-specific evidence before enabling any adapter. Do not make the workflow green by downgrading its assertions; keep unsupported or unproven adapter variants excluded.
+
 ## Next exact engineering task
 
-Port the P1 Swap semantic-policy, finalized CPI trace, and IDL provenance work onto a fresh branch based on current main (without copying the stale PR README or superseded priority text), run exact-head Validate + Browser Smoke + CPI Trace Audit + IDL History Audit, then expand read-only finalized traces across multi-hop/split plans and variable Meteora BinArray shapes. Keep unsupported route families excluded and every signing/execution/deployment gate closed until independent proof and controlled Devnet acceptance are complete.
+1. Commit the proven close-before-mobile smoke-script counter-fix onto this current-main PR branch and rerun exact-head Browser Smoke.
+2. Inspect the terminal Browser Smoke result and artifact; if it fails again, instrument the GLTFLoader lifecycle instead of increasing timeouts or relaxing readiness.
+3. Preserve the successful Jupiter IDL artifact and improve the audit's per-adapter provenance classification for Kipseli, Orca, Meteora, and Raydium.
+4. Continue read-only finalized multi-hop/split traces and CPI privilege/account-slice evidence. Keep unsupported route families excluded and all signing/execution/deployment gates closed until independent review and controlled Devnet acceptance are complete.
