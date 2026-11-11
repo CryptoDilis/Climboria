@@ -24,7 +24,7 @@
 
 - Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
 - PR #268 head: `8c4e86994e1ed203ffa26803874924e705973462`, draft and unmerged.
-- On that exact PR head, Validate, Ecosystem Browser Smoke, and Jupiter V6 CPI Trace Audit passed. Game Browser Smoke and Jupiter IDL History Audit were still running at the latest inspection. Do not mark their pending results as passed.
+- On exact PR head `8c4e86994e1ed203ffa26803874924e705973462`, all five workflows passed: Validate `43102883438`; Ecosystem Browser Smoke `43102883591`; Jupiter V6 CPI Trace Audit `43102883472`; Game Browser Smoke `43102883650` (job `130798728159`, strict desktop/mobile Jarrell's Peak smoke and screenshot upload passed; artifact `13891784600`, 3,488,205 bytes); Jupiter IDL History Audit `43102883513` (job `130798767558`).
 - Swap remains fail-closed; the required security/Devnet/production evidence is not yet complete. DEX production-live acceptance, all real Login provider flows, full game release acceptance, and Launchpad are not to be marked complete without their own evidence.
 - The immediate next action is to finish the in-flight exact-head workflows, then continue **P1 Swap** with evidence-based security and production work. Follow the order above; do not revert to an older priority order.
 
