@@ -4219,3 +4219,13 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Controlled Devnet reproduction and independent Solana security review.
 - Security boundary unchanged: variant 75 remains excluded; signable-order and execution gates remain false; Wrangler execution and public frontend execution remain disabled.
 - Research details: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md` and `dex/swap-proxy/SECURITY-REVIEW-2026-11-11.md`.
+
+
+### Older finalized Jupiter/Meteora trace pagination — 2026-11-11
+- [x] Route-discovery helper now accepts an optional `before` signature cursor for `getSignaturesForAddress`.
+- [x] CLI reads `JUPITER_AUDIT_BEFORE_SIGNATURE`; audit workflow exposes optional manual-dispatch input `before_signature`.
+- [x] Added offline regression assertion for the RPC cursor and report metadata.
+- [ ] Run exact-head CI for this pagination-only research change.
+- [ ] Run a cursor-based older finalized sample and record scan count, matches and rate-limit status.
+- Scope: research tooling only; no runtime swap-policy change. Variant 75 remains excluded and signing/execution remain disabled.
+- Research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
