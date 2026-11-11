@@ -121,6 +121,12 @@ test("requires the canonical Jupiter event authority and program fixed accounts 
   assert.throws(() => validate(writableEventAuthority), /signer\/writable privileges/i);
 });
 
+test("rejects a writable duplicate alias of an approved DEX program account", () => {
+  const p = parsed();
+  p.instructions[0].accountIndexes.push(10);
+  assert.throws(() => validate(p, { loadedWritable: [raydium] }), /DEX program accounts must be readonly/);
+});
+
 test("rejects unexpected writable privileges on route authority and fee placeholders", () => {
   const p = parsed();
   p.readonlyUnsignedAccounts = 4;
