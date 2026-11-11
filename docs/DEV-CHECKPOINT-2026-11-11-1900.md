@@ -393,3 +393,57 @@ Initial authoritative-source findings:
 - No failed workflows on exact head `39f4d5e`.
 - The public Jupiter-source audit and hard-gate re-audit are now recorded in the research/security documents. No production deployment or live swap readiness is claimed.
 - PR #268 remains draft/open/unmerged; main unchanged. Next engineering task remains authoritative Jupiter route CPI slicing proof, not speculative account-position code.
+
+
+
+## Progress addendum — resumed senior-engineering audit and deployed-program evidence check — 2026-11-11 20:55 PHT
+
+### Repository and exact-head refresh
+- Repository: `CryptoDilis/Climboria`.
+- PR #268 remains open, draft and unmerged: https://github.com/CryptoDilis/Climboria/pull/268
+- Active branch: `codex/swap-jupiter-fixed-account-roles-2026-11-11`.
+- Exact branch/PR head: `16c96f174601ccc0a453267423a49e932e403f33`.
+- Main/base SHA remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- PR review endpoint currently returns no submitted reviews. Independent Solana transaction-security review remains outstanding.
+
+### Exact-head CI re-verification
+- Validate run `43020639165`: completed SUCCESS on exact head `16c96f1`.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020639165
+- Browser Smoke run `43020638238`: completed SUCCESS on the same exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020638238
+- Required check runs `validate` and `browser-smoke` both report completed/success.
+- Latest branch run history shows these are the newest two runs and both target the current head. No new workflow failure was observed during this refresh; therefore no retry or code counter-fix is warranted.
+- Note: the generic commit-status endpoint reports zero legacy statuses and `pending`; the two required GitHub Actions check-runs themselves are completed/success. Do not confuse the aggregate legacy status endpoint with the required check-run conclusions.
+
+### New deployed-program evidence investigation
+- Solscan's Jupiter V6 program page identifies program `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4` as executable and upgradeable, reports last deployed slot `462802085`, and labels the program unverified:
+  https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4?cluster=mainnet-beta
+- This is useful deployment metadata but does not provide a version-matched source commit, deployed binary hash/source equivalence, route account cursor logic, or per-DEX CPI account slicing. It is not sufficient to implement account offsets.
+- Current Solscan account page search metadata shows recent `route_v2` calls, but the retrieved page did not expose usable transaction signatures/inner instruction traces. No trace was treated as evidence.
+- Generated Jupiter V6 SDK documentation exposes CPI builder methods such as `add_remaining_account(s)` with explicit writable/signer booleans. These are caller-side generated CPI builder APIs, not proof of how the deployed Jupiter route handler partitions its own outer remaining-account list.
+  Reference: https://docs.rs/jupiter-aggregator-v6-sdk/latest/jupiter_aggregator_v6_sdk/generated/instructions/struct.RouteV2CpiBuilder.html
+- Solana's official transaction-introspection documentation confirms a confirmed `getTransaction` response can be decoded by resolving static keys plus ALT-loaded addresses and walking outer and inner CPI instructions:
+  https://solana.com/docs/core/transactions/transaction-introspection
+  This gives a viable evidence-collection method once a transaction signature and version/deployment provenance are available. A single arbitrary transaction would not establish every route variant or every deployed version; traces must be tied to the exact route instruction, DEX enum, inner CPI program/discriminator, account ordering, privileges, and deployed program version.
+- No authoritative, version-matched aggregator source or controlled CPI trace was obtained in this pass. The previous public-source ceiling remains in force. Do not invent a mapping or add speculative account-index checks.
+
+### Safety and implementation decision
+- Keep SolFi variant 61 excluded; keep V2 variants 47 and 75 rejected.
+- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, and public swap config `enabled:false`.
+- Do not enable signable order issuance or `/api/swap/execute`.
+- No product-code changes were justified by the new evidence. The current CI pass validates the existing structural parser, tests, and browser flows only; it does not prove per-DEX CPI account roles, production deployment, or live swaps.
+
+### Updated priority checklist
+- [x] Refresh PR, branch, base SHA, review state and latest exact-head check-runs.
+- [x] Confirm latest exact-head Validate and Browser Smoke are both green.
+- [x] Investigate public deployed-program metadata and document its evidentiary limits.
+- [ ] Obtain a version-matched Jupiter V6 deployed-source/release proof or controlled transaction trace for each allowed route variant; prove exact outer remaining-account slicing and inner CPI roles.
+- [ ] Resolve Meteora DLMM CPI/direct-IDL signer and writable/optional discrepancies against the exact Jupiter adapter and DEX program versions.
+- [ ] Only then implement separately versioned per-DEX account owner/layout, mint/vault/PDA, signer/writable and optional-account validators with adversarial fixtures.
+- [ ] Controlled Devnet wallet-sign -> Worker verify -> Jupiter submit -> chain-confirm -> token balance/fee destination proof; only after security review.
+- [ ] Verify Cloudflare production deployment/configuration independently.
+- [ ] Verify production Login provider and Launchpad lifecycle/Devnet proof.
+- [ ] Resume the separate mobile GLB parse/decode/texture/handoff diagnosis after ecosystem priorities.
+
+### Exact next action
+Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `route` instruction and inner CPI trace, then verify the transaction slot against Jupiter program deployment history/version provenance. Build one evidence record per route enum variant; reject any variant for which route-slice boundaries or CPI roles cannot be proven. Do not alter the parser allowlist based on guesswork.
