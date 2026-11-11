@@ -40,6 +40,8 @@
 
   async function saveNow(force = false) {
     if (!ready || !activeUserId || blocked || saveInProgress || Date.now() < retryAfter) return;
+    const savingUserId = activeUserId;
+    const saveGeneration = generation;
     const payload = adapter.capture();
     if (!payload) return;
 
@@ -62,10 +64,11 @@
             save_data: payload,
             saved_at: new Date().toISOString()
           })
-          .eq('user_id', activeUserId)
+          .eq('user_id', savingUserId)
           .eq('saved_at', remoteSavedAt)
           .select('saved_at')
           .maybeSingle();
+        if (saveGeneration !== generation || activeUserId !== savingUserId) return;
         if (error) throw error;
         if (!data) {
           blocked = true;
@@ -78,12 +81,13 @@
         const { data, error } = await client
           .from('player_saves')
           .insert({
-            user_id: activeUserId,
+            user_id: savingUserId,
             schema_version: 1,
             save_data: payload
           })
           .select('saved_at')
           .single();
+        if (saveGeneration !== generation || activeUserId !== savingUserId) return;
         if (error) {
           if (error.code === '23505') {
             blocked = true;
@@ -101,11 +105,16 @@
       retryAfter = 0;
       setStatus('synced', 'Cloud save · progress synced');
     } catch (error) {
-      retryAfter = Date.now() + 30000;
-      setStatus('error', 'Cloud save failed · local progress remains on this browser');
-      console.warn('[Climboria cloud save] Save failed:', error);
+      if (saveGeneration === generation && activeUserId === savingUserId) {
+        retryAfter = Date.now() + 30000;
+        setStatus('error', 'Cloud save failed · local progress remains on this browser');
+        console.warn('[Climboria cloud save] Save failed:', error);
+      }
     } finally {
       saveInProgress = false;
+      // A previous account's request may finish after a session switch. Do not
+      // apply its response to the new account; immediately queue the new snapshot.
+      if (saveGeneration !== generation && ready && activeUserId) void saveNow(true);
     }
   }
 
