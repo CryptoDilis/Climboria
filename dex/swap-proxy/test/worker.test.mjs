@@ -1,22 +1,43 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "../src/index.mjs";
+import { validateUnsignedOrderTransaction } from "../src/transaction-validation.mjs";
+import { makeFixture } from "./solana-v0-fixture.mjs";
+
+const orderStoreCalls = [];
+let settleResponseStatus = 200;
+const orderStoreStub = {
+  async fetch(input, init = {}) {
+    const pathname = new URL(input).pathname;
+    const body = init.body ? JSON.parse(init.body) : null;
+    orderStoreCalls.push({ pathname, body });
+    if (pathname === "/store") {
+      const validOrder = validateUnsignedOrderTransaction({ transaction: body?.transaction, taker: body?.taker });
+      if (!validOrder.ok) return Response.json({ ok: false, error: validOrder.error }, { status: 422 });
+      return Response.json({ ok: true, state: "ready" }, { status: 201 });
+    }
+    if (pathname === "/claim") return Response.json({ ok: true, record: { requestId: "request-123456", lastValidBlockHeight: 12345 } });
+    if (pathname === "/settle") return Response.json({ ok: settleResponseStatus === 200, state: body?.state }, { status: settleResponseStatus });
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+};
+const orderNamespace = { idFromName: value => value, get: () => orderStoreStub };
 
 const origin = "https://climboria.fun";
-const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) } };
+const env = { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true", RATE_LIMITER: { limit: async () => ({ success: true }) }, ORDER_STORE: orderNamespace };
 const valid = "So11111111111111111111111111111111111111112";
 
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: true } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: true } });
 });
 
 test("health endpoint reports execution disabled when the production kill switch is off", async () => {
   const safeEnv = { ...env, EXECUTION_ENABLED: "false" };
   const res = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, executionEnabled: false } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: false } });
 });
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
@@ -48,13 +69,28 @@ test("rejects malformed order input before calling Jupiter", async () => {
   const res = await worker.fetch(req, env);
   assert.equal(res.status, 400);
 });
+test("fails closed before requesting Jupiter when the order store is missing", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("Jupiter must not be called without order storage"); };
+    const req = new Request("https://worker.test/api/swap/order", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+    });
+    const res = await worker.fetch(req, { ...env, ORDER_STORE: undefined });
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /order store is not configured/i);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("does not proxy order when API key is missing", async () => {
   const req = new Request("https://worker.test/api/swap/order", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin });
   assert.equal(res.status, 503);
 });
 test("blocks swap execution by default even when a signed payload is supplied", async () => {
-  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), requestId: "request-123456" }) });
+  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: env.RATE_LIMITER });
   assert.equal(res.status, 503);
   assert.match((await res.json()).error, /disabled pending security review/i);
@@ -66,8 +102,20 @@ test("rejects malformed execute payload", async () => {
   assert.equal(res.status, 400);
 });
 
+test("requires a server-issued order token even if a caller supplies a Jupiter request ID", async () => {
+  const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+  const req = new Request("https://worker.test/api/swap/execute", {
+    method: "POST",
+    headers: { origin, "content-type": "application/json" },
+    body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+  });
+  const res = await worker.fetch(req, env);
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /server-issued orderToken/i);
+});
+
 test("fails closed when edge rate limiter is not configured", async () => {
-  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), requestId: "request-123456" }) });
+  const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "A".repeat(120), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", EXECUTION_ENABLED: "true" });
   assert.equal(res.status, 503);
 });
@@ -78,6 +126,7 @@ test("rejects requests over the configured edge rate limit", async () => {
 });
 
 test("proxies a valid Jupiter order with server-side credentials and normalized response", async () => {
+  const fixture = makeFixture(1);
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
   let upstreamHeaders;
@@ -87,7 +136,7 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
       upstreamHeaders = new Headers(init?.headers);
       return Response.json({
         requestId: "jupiter-request-123",
-        transaction: "AQID",
+        transaction: fixture.original,
         inAmount: "100",
         outAmount: "250",
         router: "Jupiter",
@@ -99,14 +148,17 @@ test("proxies a valid Jupiter order with server-side credentials and normalized 
     const req = new Request("https://worker.test/api/swap/order", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
+      body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: fixture.taker })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.requestId, "jupiter-request-123");
-    assert.equal(body.transaction, "AQID");
+    assert.equal(body.transaction, fixture.original);
     assert.equal(body.lastValidBlockHeight, 12345);
+    assert.match(body.orderToken, /^[0-9a-f-]{36}$/i);
+    assert.equal(orderStoreCalls.at(-1).pathname, "/store");
+    assert.equal(orderStoreCalls.at(-1).body.taker, fixture.taker);
     assert.equal(upstreamHeaders.get("x-api-key"), "test-server-key");
     assert.match(upstreamUrl, /^https:\/\/api\.jup\.ag\/swap\/v2\/order\?/);
     assert.match(upstreamUrl, /maxSupportedTransactionVersion=0/);
@@ -182,7 +234,7 @@ test("executes only with a valid Jupiter success response and matching request p
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456", lastValidBlockHeight: 12345 })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);
@@ -197,6 +249,101 @@ test("executes only with a valid Jupiter success response and matching request p
   }
 });
 
+test("records an uncertain, replay-locked order when Jupiter execution transport fails", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  try {
+    globalThis.fetch = async () => { throw new TypeError("connection reset after request dispatch"); };
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.match(body.error, /outcome is unknown/i);
+    assert.match(body.error, /locked against replay/i);
+    assert.equal(body.settlementRecorded, true);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("marks non-2xx Jupiter execution responses uncertain and replay-locked", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  try {
+    globalThis.fetch = async () => Response.json({ message: "upstream unavailable" }, { status: 503 });
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    assert.match((await res.json()).error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("reports failed uncertainty settlement after a non-2xx Jupiter response", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  settleResponseStatus = 503;
+  try {
+    globalThis.fetch = async () => Response.json({ message: "upstream unavailable" }, { status: 503 });
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.equal(body.settlementRecorded, false);
+    assert.match(body.error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    settleResponseStatus = 200;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("reports failed durable uncertainty settlement without releasing the claimed order", async () => {
+  const originalFetch = globalThis.fetch;
+  orderStoreCalls.length = 0;
+  settleResponseStatus = 503;
+  try {
+    globalThis.fetch = async () => { throw new TypeError("connection reset after request dispatch"); };
+    const signedTransaction = Buffer.alloc(100, 7).toString("base64");
+    const req = new Request("https://worker.test/api/swap/execute", {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
+    });
+    const res = await worker.fetch(req, env);
+    assert.equal(res.status, 502);
+    const body = await res.json();
+    assert.equal(body.settlementRecorded, false);
+    assert.match(body.error, /locked against replay/i);
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/claim"));
+    assert.ok(orderStoreCalls.some(call => call.pathname === "/settle" && call.body?.state === "uncertain"));
+  } finally {
+    settleResponseStatus = 200;
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("rejects Jupiter Success when execution code is nonzero", async () => {
   const originalFetch = globalThis.fetch;
   try {
@@ -205,7 +352,7 @@ test("rejects Jupiter Success when execution code is nonzero", async () => {
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
@@ -221,7 +368,7 @@ test("rejects Jupiter Success without a transaction signature", async () => {
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
@@ -237,7 +384,7 @@ test("does not treat an unknown Jupiter execution status as success", async () =
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 502);
@@ -391,7 +538,7 @@ test("preserves Jupiter Failed status without converting it to success", async (
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
-      body: JSON.stringify({ signedTransaction, requestId: "request-123456" })
+      body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
     const res = await worker.fetch(req, env);
     assert.equal(res.status, 200);

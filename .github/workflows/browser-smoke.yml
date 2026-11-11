@@ -125,7 +125,10 @@ jobs:
               await dexPage.waitForFunction(()=>document.querySelector('#rows')?.innerText.includes('CLIMBTEST'),null,{timeout:5000}).catch(async error=>{const diagnostics=await dexPage.evaluate(()=>({input:document.querySelector('#search')?.value,status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,rows:document.querySelector('#rows')?.innerText}));throw new Error('DEX name search response succeeded but row did not render. UI='+JSON.stringify(diagnostics)+' requests='+JSON.stringify(dexSearchRequests)+' cause='+error.message)});
               if(!(await dexPage.locator('#rows').innerText()).includes(dexMint.slice(0,5)))throw new Error('DEX name/symbol search did not return the provider-discovered token mint');
               await dexPage.locator('#search').fill(dexMint);
-              await dexPage.waitForFunction(mint=>document.querySelector('#rows')?.innerText.includes(mint.slice(0,5)),dexMint,{timeout:12000});
+              const dexExactResponse=await dexPage.waitForResponse(response=>new URL(response.url()).pathname==='/latest/dex/tokens/'+dexMint,{timeout:10000}).catch(()=>null);
+              if(!dexExactResponse)throw new Error('DEX exact-mint provider request did not complete. Requests='+JSON.stringify(dexSearchRequests));
+              if(!dexExactResponse.ok())throw new Error('DEX exact-mint provider returned HTTP '+dexExactResponse.status());
+              await dexPage.waitForFunction(mint=>document.querySelector('#rows button[data-mint="'+mint+'"]')!==null,dexMint,{timeout:12000});
               const exactRow=dexPage.locator('#rows button[data-mint="'+dexMint+'"]');
               if(await exactRow.count()!==1)throw new Error('DEX exact contract-address search did not return the exact base-token mint');
               await exactRow.click();
