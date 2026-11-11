@@ -33,7 +33,7 @@ export class SwapOrderStore {
     try {
       if (url.pathname === "/store" && request.method === "PUT") {
         const body = await readBody(request);
-        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups, lookupContextSlot } = body || {};
+        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups = [], lookupContextSlot = null } = body || {};
         if (typeof requestId !== "string" || requestId.length < 8 || requestId.length > 200 ||
             !/^[A-Za-z0-9._:-]+$/.test(requestId)) return json({ error: "Invalid Jupiter request ID" }, 400);
         if (typeof transaction !== "string" || transaction.length > 4096 ||
