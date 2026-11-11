@@ -19,7 +19,7 @@ function transactionPrivilege(index, header, staticKeyCount, loadedWritableCount
     return {
       signer: false,
       writable: index < staticKeyCount + loadedWritableCount,
-      source: "address-lookup-table transaction message privilege",
+      source: "address-lookup-table transaction message privilege (not the CPI-requested meta)",
     };
   }
 
