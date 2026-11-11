@@ -22,7 +22,7 @@
 
 ## Current status at this checkpoint
 
-- Current main: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- Main baseline immediately before the priority-documentation commits: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
 - PR #268 head: `8c4e86994e1ed203ffa26803874924e705973462`, draft and unmerged.
 - On that exact PR head, Validate, Ecosystem Browser Smoke, and Jupiter V6 CPI Trace Audit passed. Game Browser Smoke and Jupiter IDL History Audit were still running at the latest inspection. Do not mark their pending results as passed.
 - Swap remains fail-closed; the required security/Devnet/production evidence is not yet complete. DEX production-live acceptance, all real Login provider flows, full game release acceptance, and Launchpad are not to be marked complete without their own evidence.
