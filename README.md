@@ -3392,3 +3392,16 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Review corresponding PR #242 artifact once its corrected exact-head Browser Smoke completes.
 - [ ] PR #243 remains blocked on rebasing/integrating with PR #242's corrected harness and a fresh exact-head Browser Smoke pass.
 
+
+
+### PR #242 fourth failure — redundant second resize invalidated HUD state (2026-11-11)
+
+- [x] Browser Smoke `42942177844` completed FAILURE at `.github/scripts/game-smoke.mjs:583`, after the corrected initial landscape gate passed.
+- [x] Exact sequence audit: test changed viewport and dispatched the physical-orientation event; the game's handler established landscape and the first gate passed. The test then manually rewrote `free`/orientation classes and dispatched a second `resize`, re-entering production orientation logic immediately before waiting for the map/HUD. This redundant mutation could undo the verified state. The timeout was specifically the map/HUD visibility check, not the original rotate overlay.
+- [x] Counter-fix commit `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93` removes the second resize/class mutation and passively observes the existing real landscape/HUD state. It retains overlay, map, player and status visibility requirements; adds 100ms interval polling and detailed computed-style/body-class/orientation diagnostics on failure. No production gameplay source changed.
+- [x] PR #242 comment records the diagnosis and fix.
+- [x] PR #243 Browser Smoke `42942014181` independently failed on the older inherited orientation test at line 515; all preceding DEX/Swap and desktop gameplay checks passed. This is not a DEX discovery regression. Do not duplicate orientation fixes on PR #243; integrate it with the accepted PR #242 harness after #242 passes.
+- [x] PR #243 artifact `13820584008` downloaded and visually reviewed; no mobile gameplay capture exists because the older orientation harness stopped before that phase. Desktop game/cave captures were reviewed.
+- [ ] Exact-head Validate and Browser Smoke for PR #242 commit `acb01ad0d1bbf58b01df0b1d61a31338d3e04a93` must pass before merge.
+
+**Exact next task:** poll PR #242's new Validate and Browser Smoke runs. If the HUD wait still fails, use the new state snapshot to determine which actual CSS/class/element condition is preventing visibility; do not reapply any of the prior orientation patches.
