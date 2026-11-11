@@ -153,7 +153,7 @@ async function handleOrder(request, env) {
       amount,
       outAmount: data.outAmount
     });
-    const tokenAccountVerification = await verifyJupiterTokenAccounts({
+    await verifyJupiterTokenAccounts({
       sourceTokenAccount: policyResult.sourceTokenAccount,
       destinationTokenAccount: policyResult.destinationTokenAccount,
       taker,
