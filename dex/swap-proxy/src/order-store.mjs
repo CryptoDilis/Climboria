@@ -1,4 +1,5 @@
 import {
+  decodeBase58,
   parseSolanaV0Transaction,
   validateSignedOrderTransaction,
   validateUnsignedOrderTransaction
@@ -67,6 +68,8 @@ export class SwapOrderStore {
             !validEvidenceAmount || !validSourceAmount || !sourceEvidence || !destinationEvidence ||
             !inputMintEvidence || !outputMintEvidence ||
             typeof sourceEvidence.address !== "string" || typeof destinationEvidence.address !== "string" ||
+            decodeBase58(sourceEvidence.address).length !== 32 || decodeBase58(destinationEvidence.address).length !== 32 ||
+            decodeBase58(inputMintEvidence.address).length !== 32 || decodeBase58(outputMintEvidence.address).length !== 32 ||
             sourceEvidence.address === destinationEvidence.address ||
             sourceEvidence.owner !== taker || destinationEvidence.owner !== taker ||
             typeof sourceEvidence.mint !== "string" || typeof destinationEvidence.mint !== "string" ||
