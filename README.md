@@ -4441,3 +4441,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Parser-fix commits: a52b84476770fa1064c174e4f6fbc11d9e4b2d11, b47ce4dc295cb1c3bcfe43ba49f96edc05987fd4, 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247.
 - Latest check status at checkpoint: Validate 43074720199 SUCCESS; Jupiter CPI Trace Audit 43074720213 SUCCESS; Browser Smoke 43074720380 still running; IDL History Audit 43074720141 still running. See research log for exact step status and next actions.
 - Next: inspect new IDL artifact for authority and decompressed payload hash equality; finish Browser Smoke; diagnose any real failed step from complete logs. Keep route_v2 rejected by production validation and all signing/execution gates closed.
+
+
+## 2026-11-12 — IDL account parser: second evidence-based correction
+
+- New artifact 13879892798 proved the first no-prefix parser assumption was also wrong: account owner matched Jupiter, but parsing bytes 0–31 as authority and offset 32 as data_len produced impossible length 1,381,709,786 for a 6,314-byte account.
+- Added dual-layout detection (8-byte prefix + authority + length + zlib, or no-prefix legacy layout), validates decompression and JSON before accepting a layout, records raw prefix hex, and tests the prefixed format and malformed payloads.
+- Updated IDL audit summary with explicit booleans for on-chain owner, payload hash, route discriminator, and ProgramData deployment coverage. New parser head 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1 awaits exact-head workflows.
+- Previous head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 had Validate, Browser Smoke, CPI Trace and IDL History workflows all operationally successful; however the IDL artifact revealed the parser defect. No production route behavior changed.
+- Full root-cause analysis and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and signing/execution disabled.
