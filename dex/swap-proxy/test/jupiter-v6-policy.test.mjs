@@ -439,4 +439,5 @@ test("records public RPC rate limiting as an incomplete sample instead of failin
   assert.equal(report.rateLimitedMethod, "getTransaction");
   assert.equal(report.transactionsScanned, 0);
   assert.equal(report.matchingRoutes, 0);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 0);
 });
