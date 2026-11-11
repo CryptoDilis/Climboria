@@ -45,6 +45,17 @@ async function fetchAccountInfo(address) {
   };
 }
 
+async function fetchMultipleAccountInfo(addresses) {
+  const result = await rpcRequest("getMultipleAccounts", [addresses, {
+    encoding: "base64",
+    commitment: "finalized",
+  }]);
+  return {
+    contextSlot: result.context?.slot ?? null,
+    values: result.value ?? [],
+  };
+}
+
 async function auditOnChainProvenance(anchorAddress, activeRevision) {
   const report = {
     endpoint: "https://api.mainnet-beta.solana.com",
@@ -141,6 +152,36 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
         binarySha256: sha256(binary),
         loaderOwnerMatches: programDataInfo.value.owner === upgradeableLoader,
       };
+
+      // Classify unexplained outer accounts from this preserved route_v2 candidate.
+      // Only public account metadata is retained; account data bytes are never emitted.
+      try {
+        const candidates = [
+          { outerPosition: 10, address: "EaUghZfmuhgtZEEwaZwX5EBroz4WyH8VM5NSXi4tam5A" },
+          { outerPosition: 79, address: "GN2CGUyYYLakXQmeiNtfvxcNDviKM9biqQMnxfEPzF4C" },
+          { outerPosition: 84, address: "jitodontfront1111111111111111JustUseJupiter" },
+        ];
+        const accounts = await fetchMultipleAccountInfo(candidates.map((item) => item.address));
+        report.candidateOuterAccountObservations = candidates.map((item, index) => {
+          const value = accounts.values[index] ?? null;
+          const bytes = value ? Buffer.from(value.data?.[0] ?? "", "base64") : Buffer.alloc(0);
+          return {
+            outerPosition: item.outerPosition,
+            address: item.address,
+            contextSlot: accounts.contextSlot,
+            found: value !== null,
+            owner: value?.owner ?? null,
+            executable: value?.executable ?? null,
+            lamports: value?.lamports ?? null,
+            dataLength: value ? bytes.length : null,
+            accountDataSha256: value ? sha256(bytes) : null,
+            prefixHex: value ? bytes.subarray(0, 8).toString("hex") : null,
+          };
+        });
+      } catch (error) {
+        report.candidateOuterAccountObservationsError =
+          error instanceof Error ? error.message : String(error);
+      }
     }
   } catch (error) {
     report.error = error instanceof Error ? error.message : String(error);
