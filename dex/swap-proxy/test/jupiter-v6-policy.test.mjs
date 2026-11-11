@@ -1,6 +1,6 @@
 import test from "node:test";
 import { decodeBase58 as decodeDiscoveryBase58, decodeJupiterRoutePlanHeader, discoverRecentJupiterMeteoraRoutes, isMeteoraSwap2Instruction } from "../tools/discover-jupiter-meteora-routes.mjs";
-import { fetchMeteoraAccountInfo, inspectMeteoraAccount, METEORA_DLMM_PROGRAM_ID, METEORA_BIN_ARRAY_DISCRIMINATOR } from "../tools/audit-meteora-bin-array.mjs";
+import { fetchMeteoraAccountInfo, inspectMeteoraAccount, METEORA_DLMM_PROGRAM_ID, METEORA_BIN_ARRAY_DISCRIMINATOR, METEORA_BITMAP_EXTENSION_DISCRIMINATOR } from "../tools/audit-meteora-bin-array.mjs";
 import { buildJupiterV6TraceReport, fetchJupiterV6Trace, JUPITER_V6_PROGRAM_ID as TRACE_JUPITER_PROGRAM_ID } from "../tools/audit-jupiter-v6-rpc.mjs";
 import assert from "node:assert/strict";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
@@ -265,8 +265,13 @@ test("fetches only finalized raw JSON transaction metadata and supports version 
 });
 
 
-test("identifies a Meteora BinArray only when owner and Anchor discriminator both match", () => {
-  const bytes = Buffer.from([...METEORA_BIN_ARRAY_DISCRIMINATOR, 1, 2, 3, 4]);
+test("decodes a Meteora BinArray header only when owner and Anchor discriminator match", () => {
+  const parentPool = encodeBase58(new Uint8Array(32).fill(44));
+  const bytes = Buffer.alloc(56);
+  Buffer.from(METEORA_BIN_ARRAY_DISCRIMINATOR).copy(bytes, 0);
+  bytes.writeBigInt64LE(-3n, 8);
+  bytes[16] = 2;
+  Buffer.from(decodeBase58(parentPool)).copy(bytes, 24);
   const report = inspectMeteoraAccount("bin-array-account", {
     owner: METEORA_DLMM_PROGRAM_ID,
     executable: false,
@@ -278,6 +283,27 @@ test("identifies a Meteora BinArray only when owner and Anchor discriminator bot
   assert.equal(report.matchesBinArray, true);
   assert.equal(report.matchesBitmapExtension, false);
   assert.equal(report.dataLength, bytes.length);
+  assert.equal(report.binArrayIndex, "-3");
+  assert.equal(report.binArrayVersion, 2);
+  assert.equal(report.binArrayPool, parentPool);
+});
+
+
+test("decodes the Meteora bitmap extension parent pool", () => {
+  const parentPool = encodeBase58(new Uint8Array(32).fill(45));
+  const bytes = Buffer.alloc(40);
+  Buffer.from(METEORA_BITMAP_EXTENSION_DISCRIMINATOR).copy(bytes, 0);
+  Buffer.from(decodeBase58(parentPool)).copy(bytes, 8);
+  const report = inspectMeteoraAccount("bitmap-extension-account", {
+    owner: METEORA_DLMM_PROGRAM_ID,
+    executable: false,
+    lamports: 1234,
+    space: bytes.length,
+    data: [bytes.toString("base64"), "base64"]
+  });
+  assert.equal(report.matchesBinArray, false);
+  assert.equal(report.matchesBitmapExtension, true);
+  assert.equal(report.bitmapExtensionPool, parentPool);
 });
 
 test("does not classify a matching discriminator owned by another program as a Meteora BinArray", () => {
@@ -294,7 +320,11 @@ test("does not classify a matching discriminator owned by another program as a M
 
 test("fetches finalized account data and rejects insecure RPC URLs", async () => {
   let request;
-  const bytes = Buffer.from([...METEORA_BIN_ARRAY_DISCRIMINATOR, 1, 2, 3, 4]);
+  const bytes = Buffer.alloc(56);
+  Buffer.from(METEORA_BIN_ARRAY_DISCRIMINATOR).copy(bytes, 0);
+  bytes.writeBigInt64LE(1n, 8);
+  bytes[16] = 2;
+  Buffer.from(decodeBase58(encodeBase58(new Uint8Array(32).fill(9)))).copy(bytes, 24);
   const report = await fetchMeteoraAccountInfo(
     "bin-array-account",
     "https://rpc.example.invalid",
