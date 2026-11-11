@@ -1,6 +1,11 @@
 name: Jupiter V6 CPI Trace Audit
 
 on:
+  push:
+    branches: [codex/swap-jupiter-fixed-account-roles-2026-11-11]
+    paths:
+      - "dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs"
+      - ".github/workflows/jupiter-cpi-trace-audit.yml"
   workflow_dispatch:
   pull_request:
     branches: [main]
