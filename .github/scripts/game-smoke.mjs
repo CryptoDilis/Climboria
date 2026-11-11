@@ -690,7 +690,11 @@ try {
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
       .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
-      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize })),
+    glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ? {
+      ...window.__climboriaGLBLoadDiagnostics,
+      ageMs: window.__climboriaGLBLoadDiagnostics.startedAt===null ? null : Math.round(performance.now()-window.__climboriaGLBLoadDiagnostics.startedAt)
+    } : null
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
@@ -710,7 +714,7 @@ try {
     }
     console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
-  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
+  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero, glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ?? null }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');
