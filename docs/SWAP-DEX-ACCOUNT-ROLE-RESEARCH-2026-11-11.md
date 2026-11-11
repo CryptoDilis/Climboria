@@ -748,3 +748,36 @@ Security boundary remains unchanged: production validator accepts only the legac
 - [ ] Obtain CPI-requested signer/writable evidence, controlled Devnet reproduction, and independent Solana security review.
 - [ ] Keep EXECUTION_SECURITY_REVIEW_COMPLETE=false, SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false, and EXECUTION_ENABLED=false. Keep PR #268 draft.
 - [ ] Separately verify dedicated Jarrell's Peak gameplay smoke and production hosting; do not substitute ecosystem Browser Smoke.
+
+
+## 2026-11-12 — Revalidated CI and authoritative-source gap for route_v2 enum 181
+
+### Exact-head workflow verification
+
+- [x] Latest inspected branch code/documentation head: ae39e7fa5be5458f7ab1db66a9f88943fcf42e34.
+- [x] Validate run 43056805117, job 130648355318: SUCCESS. Worker security/API tests, Wrangler Durable Object dry-run, Supabase auth/cloud-save syntax, homepage/launch-copy checks, DEX/Swap/game JavaScript syntax, and remaining HTML audits all passed.
+- [x] Ecosystem Browser Smoke run 43056805135, job 130648366587: SUCCESS. Auth/cloud-save isolation, homepage/DEX navigation, read-only proxy, fail-closed execution, standalone Swap/DEX, Solana discovery, desktop/mobile layouts, provider error/empty states, and screenshot upload all passed.
+- [x] Jupiter CPI Trace Audit run 43056805358, job 130648321551: SUCCESS. Artifact 13870664486, 14,373 bytes, SHA-256 c21526e5f6340261e6ab04ca7b1feccc9db2aa85d7e160c004363c57e574f1c6.
+- [x] The audit log confirms the fixed historical baseline and route_v2 candidate account assertions completed. Its newest-five discovery scan returned matchingRoutes=0, matchingJupiterMeteoraInstructions=0, rateLimited=false. This is only a five-signature sample and does not negate the separately preserved historical candidate.
+- [!] The preceding README checkpoint 83623290525bd786d3d2e61119326ea8530d30ea had Validate run 43056730929 and Browser Smoke run 43056731146 cancelled mid-run; the CPI audit 43056731233 succeeded. Step logs show Validate cancelled during launch-copy validation and Browser Smoke cancelled during Playwright installation; later steps were skipped. These are cancellations, not failed assertions. The subsequent ae39e7fa head has a complete successful set, so no retry/counter-fix was needed.
+- [!] Browser Smoke is ecosystem coverage; it is not a dedicated Jarrell's Peak gameplay verification or a production deployment test.
+
+### Official Jupiter source cross-check
+
+- [x] Official Jupiter developer notification announces four new V6 instructions: route_v2, exact_out_route_v2, shared_accounts_route_v2, and shared_accounts_exact_out_route_v2; it explicitly points integrators to the latest IDL in Solscan. It also states legacy v1 instructions remain usable. Source: https://t.me/s/jup_dev?before=139 (Jupiter Dev Notifications, announcement section).
+- [x] Solscan's Jupiter Aggregator V6 program page identifies program JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4 as executable and upgradeable, displays last deployed slot 462802085 and an upgrade authority, and marks Program is verified as False. Source: https://solscan.io/account/JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4
+- [x] Re-fetched official jup-ag/instruction-parser main source. Current package.json version is 6.0.27 (blob 3bef7b7c4407ca19e17a9df33a50050382040ae9); README still identifies parser version 6.0.7 for the Jupiter V6 program. Its current src/idl/jupiter.ts blob is 4273e9f0f34a3d4d29e035fe37e88d6c80b634b5 and describes legacy route-family instructions and RoutePlanStep with percent:u8. It does not declare route_v2 or RoutePlanStepV2 in this source snapshot.
+- [!] Therefore this official parser repository is not the latest route_v2 IDL advertised by Jupiter's developer notification. Its legacy Swap enum cannot be used to decode route_v2 byte 181. Do not treat the parser package version as the deployed aggregator binary/IDL version.
+- [!] Solscan's public program page exposes the latest-IDL navigation and program metadata, but the fetched page did not expose the IDL body. The displayed upgradeability, upgrade authority and unverified status also mean public interface artifacts alone do not attest to the deployed binary's exact source. No authoritative mapping of byte 181 was obtained.
+- [!] Historical candidate transaction slot 468153382 is later than the displayed last-deployed slot 462802085, but that comparison alone is not a reproducible binary hash/provenance proof. Preserve this as contextual evidence only; do not infer route enum contents or adapter dispatch from it.
+
+### Engineering decision and next evidence request
+
+- [x] No production code, parser allowlist, or route_v2 acceptance policy changed.
+- [x] Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Keep EXECUTION_SECURITY_REVIEW_COMPLETE=false, SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false, and EXECUTION_ENABLED=false.
+- [ ] Retrieve the actual latest IDL body exposed by the Solscan Program IDL panel or an authoritative Jupiter-published artifact, preserve its retrieval date and cryptographic hash, and verify that its instruction discriminator and RoutePlanStepV2 schema match the candidate bytes.
+- [ ] Establish whether the IDL is tied to the program deployment active at slot 468153382. Capture the ProgramData deployment metadata/binary hash from a trusted archival source if available; otherwise explicitly record provenance as unverified.
+- [ ] Decode the four route_v2 step variants and payload lengths only after the correct schema is pinned; then correlate each with its stack-height-2 DEX CPI and nested CPI subtree.
+- [ ] Capture additional route_v2/Meteora samples with varying BinArray counts, direction and Token-2022 transfer-hook slices.
+- [ ] Obtain CPI-requested signer/writable evidence, controlled Devnet reproduction and independent Solana security review.
+- [ ] Keep Jarrell's Peak gameplay smoke and production hosting checks separate from ecosystem Browser Smoke.
