@@ -688,3 +688,46 @@ For every future failed workflow: capture exact run/job/step and logs; distingui
 - Validate passed, including swap-proxy security/API contracts and Wrangler Worker bundle/config dry-run.
 - No new failure was observed on this head. This confirms CI for the documentation/evidence audit commit only; it does not prove per-DEX CPI semantics, Devnet settlement, production deployment, or release readiness.
 - Exact-head verification was added after the earlier 20:54 PHT audit. Continue the raw CPI trace and deployed-binary provenance investigation before any DEX account-role code change.
+
+
+## Raw CPI evidence acquisition — free public sources audit — 2026-11-11 21:06 PHT
+
+### Exact-head repository/CI status before this research pass
+- Branch/PR #268 head: `5dc3cf03417d37feddd8eeea2b6650ad318193bf`; PR remains open/draft/unmerged.
+- Main: `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- Validate run `43024897529`: SUCCESS on exact head `5dc3cf0`: https://github.com/CryptoDilis/Climboria/actions/runs/43024897529
+- Browser Smoke run `43024897555`: SUCCESS on exact head `5dc3cf0`: https://github.com/CryptoDilis/Climboria/actions/runs/43024897555
+- No new workflow failure on current head.
+
+### Confirmed free public trace formats and requirements
+- Official Solana `getTransaction` returns `meta.innerInstructions`; each group has the parent outer instruction index and ordered inner CPI instructions. For compiled `json` responses, account references are indices; v0 transactions also require `meta.loadedAddresses` to resolve address-table keys. Inner CPI `stackHeight` is present where recorded. Official references:
+  - https://solana.com/docs/rpc/http/gettransaction
+  - https://solana.com/docs/rpc/json-structures
+  - https://solana.com/docs/core/transactions/transaction-introspection
+- Solana's official transaction-introspection guide documents resolving static plus ALT-loaded account addresses, decoding inner CPI instructions, and walking outer/inner calls in execution order. This is the correct decode method; a summary-level transfer view is not enough.
+- Trawl's public Jupiter V6 page advertises a free 2.8 MB sample ZIP for slots `466130000–466130999` (epoch 1079, 6 Nov 2026), containing 14 Parquet files, 6,307 decoded instructions, 6,562 events and zero raw rows. Its schema includes `signature`, `ix_index`, `is_inner`, `inner_index`, `stack_height`, ordered `accounts`, and decoded `route_plan` arguments. This could support route-plan-to-inner-CPI correlation and ordered account-vector inspection for sample transactions, without buying historical scans.
+  - https://trawl.run/data/jupiter-v6
+  - https://trawl.run/docs
+
+### Acquisition attempt and limitation
+- Opened the public sample link. Trawl redirected it to a time-limited Cloudflare R2 signed URL; the web retrieval layer rejected the redirected object as inaccessible. Re-opened the exact signed URL and retried the download through the container, but the download utility still would not fetch the redirect target. A direct runtime URL attempt failed at DNS resolution (`Temporary failure in name resolution`).
+- No Trawl account, paid scan, paid API, API-key bypass, or auth-token reuse was attempted. No Parquet row-level evidence was obtained; do not claim otherwise.
+- The free sample's published scope is 1,000 slots and it contains zero raw transaction rows. Its decoded instruction rows may show route-plan args and ordered CPI account addresses, but the public schema does not claim per-CPI signer/writable privilege flags. For privilege verification, still obtain raw RPC transaction metadata/message plus versioned ALT resolution, and prove the effective CPI metas/privilege propagation against a version-matched Jupiter adapter/handler or a suitable trace.
+
+### Existing public Meteora candidate re-check
+- Solscan's indexed transaction page confirms the previously identified finalized Jupiter V6 `route` with a Meteora DLMM leg, slot `464856414`, signature `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`.
+- It shows outer Jupiter V6 route, Meteora DLMM program ID, lookup-table account, transaction version 0, token transfer outcomes, and a collapsed `meta.innerInstructions` object. The retrieved page/search output does not expose the actual CPI account index array, inner instruction discriminator/data, route-plan enum payload, or stack-height/account-vector mapping. This remains a candidate, not CPI proof.
+- Reference: https://solscan.io/tx/5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv
+- Solscan Pro transaction-detail endpoint documentation requires API-key authorization; no paid API credential is available or assumed. Do not use reverse-engineered auth tokens or bypass access controls.
+  - https://pro-api.solscan.io/pro-api-docs/v2.0/reference/v2-transaction-detail
+
+### Evidence conclusion and next actions
+- [x] Confirmed the exact fields needed for a rigorous CPI reconstruction from official Solana RPC docs.
+- [x] Identified a public, free decoded Jupiter V6 sample with inner CPI instruction rows and account arrays.
+- [ ] Retrieve the free sample through a directly accessible public download path or use an independently accessible raw `getTransaction` RPC source; do not pay for scans.
+- [ ] Find a Meteora DLMM route within the free sample, join outer route-plan step to inner CPI by transaction signature, outer instruction index, stack height/order, program ID and instruction discriminator, then inspect the complete ordered account vector.
+- [ ] Obtain raw message/static keys/ALT-loaded addresses and derive effective signer/writable privileges; confirm adapter-specific privilege mapping with deployed/version-matched evidence.
+- [ ] Repeat for each candidate DEX variant. Keep unproven variants excluded and all signable/execution gates closed.
+- [ ] Only after semantic proof, implement per-DEX schemas and adversarial fixtures, then controlled Devnet settlement/fee-destination verification.
+
+No Climboria source-code policy changed in this pass. This is an evidence-acquisition blocker, not permission to weaken account validation.
