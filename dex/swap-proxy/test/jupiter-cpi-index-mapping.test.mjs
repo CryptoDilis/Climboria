@@ -89,5 +89,5 @@ test("keeps address lookup table keys distinct by transaction key index", () => 
     cpi.accounts.map((account) => account.outerInstructionPositionsForSameTransactionKey),
     [[0, 2], [1]],
   );
-  assert.equal(cpi.accounts[0].address, "LookupReadonly1111111111111111111111111111");
+  assert.equal(cpi.accounts[0].address, "LookupWritable11111111111111111111111111111");
 });
