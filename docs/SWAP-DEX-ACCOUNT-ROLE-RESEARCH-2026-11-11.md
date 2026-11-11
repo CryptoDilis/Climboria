@@ -381,3 +381,72 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - The failure was fixed without weakening assertions. The updated test separately verifies static transaction-message privilege caveats and ALT privilege source labels.
 - No gameplay workflow ran; no production deployment, per-DEX CPI approval, Devnet settlement, wallet signing, or swap execution is claimed.
 - Following this verification, only documentation records and PR description are updated; no runtime source, tests, or workflow logic is changed after the tested code tree.
+
+
+## Finalized Jupiter V6 → Meteora DLMM Swap2 trace analysis — 2026-11-11 22:42 PHT
+
+### Acquisition and provenance
+- Dedicated read-only trace workflow run `43030094086` completed SUCCESS on branch commit `60cce43879d5b79620b3edcd7dc4ba50a3d9603e`.
+- Artifact `13860297377`, `jupiter-v6-meteora-cpi-trace`, uploaded (3,699 bytes; seven-day retention).
+- Signature: `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`; finalized slot `464856414`; block time `2026-11-03T09:56:47Z`; successful v0 transaction.
+- This is a third-party mainnet transaction, not a Climboria-controlled test. No key or paid data source was used.
+
+### Outer Jupiter route decoding
+- Outer Jupiter instruction index: `3`; discriminator `e517cb977ae3ad2a` = `route`.
+- Route plan count: `1`.
+- Step enum variant `75` is `MeteoraDlmmSwapV2` in the official Jupiter AMM interface enum at commit `70f56e0495b7c818e4c38e37b2007656892ca2a1`; that variant carries `RemainingAccountsInfo`.
+- Decoded step: `percent=100`, `input_index=0`, `output_index=1`; `RemainingAccountsInfo.slices=[]`.
+- Outer amounts: `in_amount=97,879,923`, `quoted_out_amount=38,687,896,434`, `slippage_bps=300`, `platform_fee_bps=0`.
+- This confirms the observed variant-75 route-plan step is Meteora DLMM Swap V2. It does not change Climboria's production allowlist; variant 75 remains rejected by the production validator until the full security gate is satisfied.
+
+### Observed Meteora CPI
+- First DEX inner instruction: program `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo`, stack height 2, instruction discriminator `414b3f4ceb5b5b88` = official DLMM `swap2`.
+- Decoded args: `amount_in=97,879,923`, `min_amount_out=0`, `RemainingAccountsInfo.slices=[]`.
+- The CPI has 17 ordered account indexes. The first 16 match the official Meteora `swap2` IDL account schema at `MeteoraAg/dlmm-sdk` commit `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1`; the final account is a dynamic remaining account.
+
+| CPI position | Official Swap2 role | Observed address | Transaction-message maximum privilege |
+|---:|---|---|---|
+| 0 | lb_pair | `7euPVbmrDWMjQyeJazecDYjxjDmd5fHmuuxpYAtkcgmj` | writable |
+| 1 | bin_array_bitmap_extension (optional sentinel) | Meteora program ID | read-only sentinel |
+| 2 | reserve_x | `62vMQYAQYQNsgtF74dzGhxi3yk8feKevXeZPZohgJQTT` | writable |
+| 3 | reserve_y | `9khcLZjoQqxmVoCEvfiR1jmyqC1F9zxdasw6tkCnEGT` | writable |
+| 4 | user_token_in | `Q4UmPB9hKMw3ERqksavS9oEpNo2eWG4ffkWg7wHa9j6` | writable |
+| 5 | user_token_out | `Gq61GhWb9WwCHZkwir9GoQkP85R1qjGMnk5SaDbkwTwW` | writable |
+| 6 | token_x_mint | `JAKVR89eBd9XYc2y5Qadw7jB4F37KtX2c8Auy7CmPPZJ` | read-only |
+| 7 | token_y_mint | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC) | read-only |
+| 8 | oracle | `7CCx2Nf5ir9u3cqERYdEDzjFyN383BcKy7ZqSRTUYbKh` | writable |
+| 9 | host_fee_in (optional sentinel) | Meteora program ID | read-only sentinel |
+| 10 | user | `F7p3dFrjRTbtRp8FRF6qHLomXbKRBzpvBLjtQcfcgmNe` | signer + writable as transaction fee payer |
+| 11 | token_x_program | Token-2022 program | read-only |
+| 12 | token_y_program | SPL Token program | read-only |
+| 13 | memo_program | Memo program | read-only |
+| 14 | event_authority | `D1ZN9Wj1fRSUQfCjhvnu1hqDMT7hzjzBBpi12nVniYD6` | read-only |
+| 15 | program | Meteora DLMM program | read-only |
+| 16 | dynamic remaining account | `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8` | writable; consistent with the SDK's appended bin-array accounts |
+
+- The CPI account vector exactly matches outer Jupiter route account positions 10–26, with the Meteora program dispatch account at outer position 9. This is direct per-transaction evidence for the 17-account CPI vector and its ordered outer-account source.
+- The official Meteora SDK guide constructs `Swap2` with the 16 fixed accounts, then appends `bin_array_pubkeys` as writable accounts; it also uses empty `RemainingAccountsInfo.slices` when no transfer-hook extras are supplied. The observed data matches that shape.
+- Outer route account position 27 is an additional Jupiter program ID after the observed CPI vector. Its role is not established by this trace; do not silently fold it into the Meteora CPI slice.
+- The RPC trace reports transaction-level maximum privileges, not the exact signer/writable flags requested by each inner CPI AccountMeta. The fee payer is globally writable but the Meteora IDL marks `user` as signer without requiring writable; the CPI may attenuate it to read-only. The raw trace cannot prove that inner AccountMeta flag. Do not describe the transaction-message privilege table as exact CPI-requested privileges.
+
+### Token movement cross-check
+- User input token account (USDC) decreased by exactly `97,879,923` base units (97.879923 USDC).
+- DLMM reserve_y (USDC) increased by `97,879,923` base units.
+- DLMM reserve_x (Meteora token X) decreased by `38,687,896,434` base units.
+- Final Jupiter destination account received `38,687,896,434` base units (38,687.896434 token X). The Meteora intermediate output account was zero after Jupiter's subsequent transfer.
+- This is consistent with the outer route's quoted output and the nested Token-2022/SPL Token transfer sequence. The route has no Jupiter platform fee and the Meteora host-fee account is absent in this trace.
+
+### Evidence conclusion and remaining gates
+- [x] Mapped Jupiter enum variant 75 to `MeteoraDlmmSwapV2` for this official-interface version.
+- [x] Matched the observed inner instruction discriminator and args to Meteora DLMM `swap2`.
+- [x] Matched the first 16 ordered CPI accounts to the pinned official Meteora IDL; observed one additional writable remaining account, consistent with the SDK bin-array convention.
+- [x] Matched this single route step to the Meteora CPI using the decoded one-step route plan, program ID and stack-height/log sequence.
+- [x] Cross-checked input/output token movement against pre/post balances.
+- [ ] Resolve the extra outer Jupiter program account at position 27.
+- [ ] Obtain direct CPI-requested signer/writable AccountMeta evidence; transaction-level privileges alone are insufficient.
+- [ ] Verify the dynamic remaining account's owner/data as a Meteora BinArray account.
+- [ ] Repeat on multiple variant-75 transactions, including routes with/without bitmap extension, host fee, transfer hooks, and multi-hop/split routes to establish general cursor behavior.
+- [ ] Establish deployed Jupiter executable hash/build provenance and source-to-binary equivalence for the transaction slot.
+- [ ] Controlled Devnet reproduction and independent security review.
+
+**Decision:** This is strong, transaction-specific evidence for one Meteora DLMM Swap2 route and its 17-account CPI vector. It is not sufficient to enable variant 75 in Climboria's signable-order policy or approve execution. Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, and public frontend execution disabled.
