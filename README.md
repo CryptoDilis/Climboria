@@ -3506,3 +3506,14 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Job-log endpoint returned 404 while the job is active; this is an observability limitation, not evidence of a test failure. No speculative retry or production change made.
 - [x] Rechecked open release PRs: #242, #243, #233, #235, #231 and #236 remain open drafts. GitHub currently reports mergeable=false for these stale-base branches; reconcile against current main before integration and rerun exact-head checks.
 - [ ] Next: poll #242 run `42946493750` until terminal; then inspect corrected GLB request diagnostics and screenshot artifact. Only after #242 is accepted should #243 DEX-only changes be ported to current main.
+
+### 2026-11-11 — PR #242 exact-head Browser Smoke PASS and visual review
+
+- [x] Validate run `42946493667`: SUCCESS on exact PR head `7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717`.
+- [x] Browser Smoke run `42946493750`, job `130280460840`: SUCCESS on the same exact head. All 16 main steps completed, including DEX/Swap routing and fail-closed checks, responsive 390px/360px layouts, provider loading/error/empty states, Jarrell's Peak desktop/mobile gameplay smoke, and screenshot upload.
+- [x] Downloaded artifact `13823168105` (`climboria-browser-smoke-screenshots`; 10 PNGs). Desktop and mobile gameplay, cave entrance/interior, home, and DEX token/social screenshots are present.
+- [x] Visual review confirms mobile gameplay and both cave captures now render; the earlier mobile GLB gate no longer blocks capture on this run. This is browser-emulation evidence, not physical Redmi-device acceptance.
+- [ ] Visual defect remains: desktop and mobile gameplay screenshots show the avatar positioned at/partly beyond the front edge of the sanctuary spawn platform. Track and fix spawn placement/collision/grounding separately; do not misclassify it as a smoke-harness issue.
+- [x] Latest PR metadata now reports `mergeable=true` (PR remains open and draft). No merge performed in this continuation. Confirm the current base/head and exact-head checks immediately before integration; preserve review of the gameplay spawn visual issue.
+- [ ] Next: investigate sanctuary spawn transform/platform bounds and character grounding in the production game, implement a targeted gameplay fix on a separate focused branch/PR, then rerun desktop/mobile gameplay smoke and inspect captures. After that, reconcile/merge #242 only when branch protection and review requirements are satisfied; then port only DEX source changes from #243 and rerun exact-head validation.
+- [ ] Release priorities remain DEX → Swap → Launchpad → Login. Swap execution remains fail-closed pending R1–R4 security/Devnet/deployment evidence; Launchpad and production auth are not yet verified live.
