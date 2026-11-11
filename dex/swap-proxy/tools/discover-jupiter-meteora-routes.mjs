@@ -140,11 +140,15 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
           ix.programId === METEORA_DLMM_PROGRAM_ID && isMeteoraSwap2Instruction(ix.dataBase58)
         );
         if (swap2Cpis.length === 0) continue;
+        const instructionBytes = decodeBase58(route.instructionDataBase58);
         results.push({
           signature: report.signature,
           slot: report.slot,
           outerInstructionIndex: route.outerIndex,
+          instructionDataBase58: route.instructionDataBase58,
+          instructionDiscriminatorHex: Buffer.from(instructionBytes.subarray(0, 8)).toString("hex"),
           routePlanHeader: routeHeader,
+          routePlanHeaderRecognized: routeHeader !== null,
           transactionSucceeded: report.transactionSucceeded,
           meteoraSwap2Cpis: swap2Cpis.map((ix) => ({
             innerIndex: ix.innerIndex,
