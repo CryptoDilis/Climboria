@@ -974,3 +974,43 @@ Security boundary remains unchanged: production validator accepts only the legac
 - The preceding code head `8a3f6dbd872d615be5bca6fa92bf3e9a875d8247` had Validate `43074720199` SUCCESS, Browser Smoke `43074720380` SUCCESS, Jupiter CPI Trace Audit `43074720213` SUCCESS, and IDL History Audit `43074720141` SUCCESS. The IDL audit artifact `13879892798` then revealed the no-prefix parser bug; the workflow was green operationally but did not prove successful on-chain payload decoding.
 - GitHub integration available in this session exposes workflow status/log/artifact inspection and rerun operations, but no workflow-dispatch operation. Do not claim that new parser tests or the IDL provenance fix passed until a run is visible for the exact code head.
 - Next: obtain a workflow run for code head `57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1`; inspect Validate and IDL History Audit; download the artifact and confirm the account prefix, authority, decompressed payload hash match, and route_v2 discriminator. If no run can be triggered from this integration, report the blocker and leave the change unverified.
+
+
+## 2026-11-12 — Finalized on-chain IDL payload and dual-layout parser verified
+
+### Exact-head workflow results
+
+- PR branch was synchronized with the current main tip using merge commit `23ac3897ded80d43c8d7c2d31de525832287b3bf`; base is now `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`, compare `164 ahead / 0 behind`.
+- The main tip `a52b844...` was the earlier helper-file-only commit. The helper was initially created on the default branch because the branch argument was omitted in that one create-file call; no production runtime or swap policy was changed by it. The PR branch now contains the corrected dual-layout helper and the merge commit makes the branch current with main. Keep all further new-file operations explicitly on the PR branch.
+- Exact merge-head Validate run `43076000705`, job `130715856471`: SUCCESS. Full job log confirms **92 tests passed, 0 failed**, Wrangler Durable Object dry-run passed, auth/cloud-save and all homepage/DEX/Swap/game script syntax and HTML audits passed.
+- Exact merge-head Jupiter CPI Trace Audit run `43076000789`, job `130715856609`: SUCCESS; all trace fetch and artifact-upload steps completed.
+- Exact merge-head IDL History Audit run `43076000606`, job `130715855340`: SUCCESS; syntax, API retrieval, finalized RPC provenance audit, and artifact upload all completed.
+- Browser Smoke run `43076000655` was still queued at the latest poll and had no job object. Do not claim it passed until it is inspected.
+- No failed workflow occurred on this exact merge head. The previous on-chain IDL parser defects were detected by inspecting successful workflow artifacts, not by hiding a red CI status. Their root causes and counter-fixes remain documented above.
+
+### Verified artifact evidence
+
+- IDL artifact `13882737009`, name `jupiter-idl-history`, size 122,322 bytes, digest `sha256:3025933d4e92659335bbd88e2f23bebff5410af89993ea3dc31c2b4a6d4bbacc`.
+- Finalized RPC snapshot at context slot `468220757`:
+  - IDL metadata account `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`, owner is Jupiter V6 program, non-executable, 6,314 bytes.
+  - The selected layout is `8-byte prefix + authority[32] + data_len:u32le + zlib payload`.
+  - Exact prefix bytes: `184662bf3a907b9e`. This does not match the standard Anchor `account:IdlAccount` SHA-256 discriminator; retain it as an observed prefix and do not guess its semantic name.
+  - IDL authority extracted from account bytes: `9u9iZBWqGsp5hXBxkVZtBTuLSGNAG9gEQLgpuVw39ASg`.
+  - Declared/compressed payload length 5,494 bytes; decompressed JSON length 36,156 bytes.
+  - Decompressed payload SHA-256 `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981`, exact match to the active slot-history revision.
+  - Decompressed `route_v2` discriminator `bb64facc31c4af14`, exact match to candidate instruction.
+- Finalized RPC ProgramData snapshot at context slot `468220758`:
+  - Program account is executable and owned by `BPFLoaderUpgradeab1e11111111111111111111111`.
+  - ProgramData account `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT`, same upgradeable-loader owner.
+  - Last deployment slot `468023491`, before candidate transaction slot `468153382`.
+  - Binary length 2,892,224 bytes; SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`.
+  - Upgrade authority remains set: `CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ`.
+- All five summary provenance flags are true: Jupiter owner match, on-chain payload hash equals slot-history hash, route discriminator match, ProgramData deployment slot covers the candidate, and ProgramData loader owner matches.
+- This ties the candidate-slot IDL schema to the on-chain IDL account bytes and establishes that the current ProgramData deployment slot predates the candidate. The account remains upgradeable. This is strong slot-aware interface/deployment evidence, but it still does not prove Jupiter's runtime per-DEX account cursor semantics, CPI-requested privileges, or source-level equivalence.
+
+### Engineering decision and next actions
+
+- The schema-grounded route decode remains: KipseliV3 (181), WhirlpoolSwapV2 (47), MeteoraDlmmSwapV2 (75), RaydiumLaunchlabBuy (81), with the already recorded payload values and BPS/token-index graph.
+- Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Do not expand the adapter allowlist or enable signing/execution from this evidence alone.
+- Next: inspect Browser Smoke `43076000655`; then obtain CPI-requested signer/writable evidence or an equivalent controlled trace, validate remaining-account slices across multiple route shapes, reproduce safely on Devnet, and obtain independent Solana security review.
+- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`. No production deployment, live signing, or swap execution is approved.
