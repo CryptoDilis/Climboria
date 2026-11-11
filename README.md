@@ -3882,3 +3882,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Browser Smoke run `42967445978` passed through steps 7–16, including the compact mobile DEX/Swap 390px and 360px assertions (step 15). The scroll-stability counter-fix allowed the real close-detail tap and return-to-market flow to complete.
 - [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile) is IN PROGRESS; screenshot upload step 18 is pending. This run is not yet terminal and must not be marked passed.
 - [ ] If step 17 reproduces the known GLB readiness issue, merge/close PR #262 only after terminal CI confirms the DEX fix, then port PR #261's phase diagnostics onto the new main and rerun exact-head Browser Smoke to capture the parser/scene phase.
+
+
+### PR #262 gameplay smoke follow-up — 2026-11-11 13:46 +08
+
+- [x] Re-polled Browser Smoke run `42967445978`, job `130347847200`: steps 7–16 remain SUCCESS, including auth/account isolation, DEX/Swap browser checks, mobile discovery states, and the 390px/360px mobile close-detail flow.
+- [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile) remains IN PROGRESS; screenshot upload step 18 is pending. The run is still non-terminal. A direct job-log download currently returns GitHub BlobNotFound while the job is active, so no new gameplay failure evidence is available yet.
+- [ ] Do not merge PR #262 or declare Browser Smoke passed on a non-terminal run. Next: poll the same run; once terminal, inspect gameplay diagnostics/logs. If the job remains stuck past its expected smoke timeout, inspect the workflow's gameplay test timeout/wait conditions before deciding whether a targeted rerun is justified.
+- [ ] After the DEX test fix is conclusively verified, port PR #261's GLB phase telemetry to the current main head and run a dedicated exact-head Browser Smoke to isolate download/parse/scene-attach/readiness stage. No production GLB fix is selected without that evidence.
