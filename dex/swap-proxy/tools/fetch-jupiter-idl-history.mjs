@@ -297,6 +297,11 @@ const summary = {
     matchingHistoricalRevisionCount: matchingHistory.length,
     activeHistoricalRevisionCount: activeHistory.length,
     exactlyOneRevisionCoversCandidateSlot: activeHistory.length === 1,
+    onChainIdlOwnerMatchesProgram: onChainProvenance.idlAccount?.ownerMatchesJupiterProgram === true,
+    onChainIdlPayloadMatchesActiveHistory: onChainProvenance.idlAccount?.decompressedPayloadMatchesActiveHistory === true,
+    onChainIdlRouteV2DiscriminatorMatches: onChainProvenance.idlAccount?.decompressedRouteV2Discriminator === expectedRouteV2Discriminator,
+    programDataDeploymentCoversCandidateSlot: onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true,
+    programDataLoaderOwnerMatches: onChainProvenance.programDataAccount?.loaderOwnerMatches === true,
   },
   safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
 };
