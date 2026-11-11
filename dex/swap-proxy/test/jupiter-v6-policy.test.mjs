@@ -60,14 +60,20 @@ test("rejects wrong taker, output mint, amounts, fee and excessive slippage", ()
 
 
 test("rejects route DAG inputs without an earlier producer and dead-end branches", () => {
-  const phantomIntermediate = routeData({ inputIndex: 1, outputIndex: 2 });
+  const phantomIntermediate = new Uint8Array([
+    229, 23, 203, 151, 122, 227, 173, 42,
+    ...u32(2),
+    7, 100, 0, 2,
+    7, 100, 1, 2,
+    ...u64(1000), ...u64(950), ...u16(50), 0
+  ]);
   assert.throws(() => decodeJupiterV6Route(phantomIntermediate), /produced by an earlier/i);
 
   const deadEnd = new Uint8Array([
     229, 23, 203, 151, 122, 227, 173, 42,
     ...u32(2),
-    7, 100, 0, 1,
-    7, 100, 0, 2,
+    7, 50, 0, 1,
+    7, 50, 0, 2,
     ...u64(1000), ...u64(950), ...u16(50), 0
   ]);
   assert.throws(() => decodeJupiterV6Route(deadEnd), /dead-end branch/i);
