@@ -42,6 +42,7 @@ export function decodeJupiterV6Route(data) {
   if (count < 1 || count > 16) fail("Jupiter route plan step count is outside the supported range");
   const steps = [];
   const percentByInput = new Map();
+  const producedTokenIndexes = new Set();
   const dexProgramIds = new Set();
   for (let i = 0; i < count; i++) {
     if (offset >= data.length) fail("Truncated Jupiter route step");
@@ -60,7 +61,11 @@ export function decodeJupiterV6Route(data) {
     if (percent < 1 || percent > 100 || inputIndex >= outputIndex || outputIndex > count) {
       fail("Jupiter route contains an invalid split percentage or token index");
     }
+    if (inputIndex !== 0 && !producedTokenIndexes.has(inputIndex)) {
+      fail("Jupiter route input token index must be produced by an earlier topologically ordered step");
+    }
     percentByInput.set(inputIndex, (percentByInput.get(inputIndex) || 0) + percent);
+    producedTokenIndexes.add(outputIndex);
     steps.push({ variant, dex: support.name, percent, inputIndex, outputIndex });
     dexProgramIds.add(support.programId);
   }
@@ -72,6 +77,18 @@ export function decodeJupiterV6Route(data) {
   if (!percentByInput.has(0) || steps.every(step => step.outputIndex !== count)) {
     fail("Jupiter route plan does not connect input to final output");
   }
+  // Jupiter defines routePlan as a topologically sorted trade DAG. Walk it
+  // backwards from the final output to reject dead-end swaps that do not
+  // contribute to the user-visible output amount.
+  const outputReachableIndexes = new Set([count]);
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const step = steps[i];
+    if (!outputReachableIndexes.has(step.outputIndex)) {
+      fail("Jupiter route plan contains a dead-end branch disconnected from the final output");
+    }
+    outputReachableIndexes.add(step.inputIndex);
+  }
+  if (!outputReachableIndexes.has(0)) fail("Jupiter route plan has no path from the input token to the final output");
   for (const [inputIndex, percent] of percentByInput) {
     if (percent !== 100) fail("Jupiter route split percentages must total 100 for each input index");
   }
