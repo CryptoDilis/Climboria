@@ -153,11 +153,11 @@ test("verifies both Jupiter user token accounts at one finalized RPC context", a
 test("rejects token accounts with wrong mint, authority, program owner, state or delegated authority", async () => {
   const cases = [
     [parsedTokenAccount({ mint: tokenOutputMint }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, owner: source }), parsedTokenAccount({ mint: tokenOutputMint })],
+    [parsedTokenAccount({ mint: tokenInputMint, owner: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })],
     [parsedTokenAccount({ mint: tokenInputMint, programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }), parsedTokenAccount({ mint: tokenOutputMint })],
     [parsedTokenAccount({ mint: tokenInputMint, state: "frozen" }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, delegate: source }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, closeAuthority: source }), parsedTokenAccount({ mint: tokenOutputMint })]
+    [parsedTokenAccount({ mint: tokenInputMint, delegate: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })],
+    [parsedTokenAccount({ mint: tokenInputMint, closeAuthority: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })]
   ];
   for (const value of cases) {
     await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse(value)));
