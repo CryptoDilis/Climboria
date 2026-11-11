@@ -676,3 +676,15 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 
 ### Always-on failure-handling rule
 For every future failed workflow: capture exact run/job/step and logs; distinguish failure from cancellation/no-job workflow parsing; state the proven root cause and remaining uncertainty; implement a targeted counter-fix; run focused tests; rerun Validate and Browser Smoke on the same exact head; record commit SHA, run URLs, outcomes and next action here. Never hide a failure, blindly repeat a commit, weaken acceptance criteria, or report a feature live without deployment evidence.
+
+
+## Exact-head verification — documentation/evidence audit commit — 2026-11-11 20:57 PHT
+
+- Commit under test: `42591fc71d0098a31a85475483974a30cee06f58`.
+- Validate run `43024656802`: SUCCESS on exact head `42591fc`: https://github.com/CryptoDilis/Climboria/actions/runs/43024656802
+- Browser Smoke run `43024656725`: SUCCESS on exact head `42591fc`: https://github.com/CryptoDilis/Climboria/actions/runs/43024656725
+- Both required workflows completed successfully on the same exact SHA.
+- Browser Smoke steps 7–17 passed: Supabase auth/account isolation; homepage and DEX routing; Cloudflare swap proxy; fail-closed execution; standalone Swap; DEX market/quote preview; Solana profile/boost discovery; mobile DEX workspace; 390px/360px responsive layouts; mobile loading/error/empty states; screenshot artifact upload.
+- Validate passed, including swap-proxy security/API contracts and Wrangler Worker bundle/config dry-run.
+- No new failure was observed on this head. This confirms CI for the documentation/evidence audit commit only; it does not prove per-DEX CPI semantics, Devnet settlement, production deployment, or release readiness.
+- Exact-head verification was added after the earlier 20:54 PHT audit. Continue the raw CPI trace and deployed-binary provenance investigation before any DEX account-role code change.
