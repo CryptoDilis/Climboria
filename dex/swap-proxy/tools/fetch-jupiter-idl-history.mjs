@@ -139,6 +139,30 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
         ? encodeBase58(bytes.subarray(13, 45))
         : null;
       const binary = bytes.subarray(Math.min(headerLength, bytes.length));
+      const binaryDeployedByCandidate = deploymentSlot !== null &&
+        BigInt(deploymentSlot) <= BigInt(candidateTransactionSlot);
+      const binaryArtifactName = "jupiter-programdata-elf.so";
+      if (binaryDeployedByCandidate) {
+        await writeFile(join(outDir, binaryArtifactName), binary);
+      }
+      const elfHeader = binary.length >= 64 && binary.subarray(0, 4).equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46]))
+        ? {
+            class: binary[4],
+            endianness: binary[5],
+            elfVersion: binary[6],
+            type: binary.readUInt16LE(16),
+            machine: binary.readUInt16LE(18),
+            entryPointHex: `0x${binary.readBigUInt64LE(24).toString(16)}`,
+            programHeaderOffset: Number(binary.readBigUInt64LE(32)),
+            sectionHeaderOffset: Number(binary.readBigUInt64LE(40)),
+            flagsHex: `0x${binary.readUInt32LE(48).toString(16)}`,
+            programHeaderEntrySize: binary.readUInt16LE(54),
+            programHeaderCount: binary.readUInt16LE(56),
+            sectionHeaderEntrySize: binary.readUInt16LE(58),
+            sectionHeaderCount: binary.readUInt16LE(60),
+            sectionNameStringTableIndex: binary.readUInt16LE(62),
+          }
+        : null;
       report.programDataAccount = {
         address: programDataAddress,
         contextSlot: programDataInfo.contextSlot,
@@ -148,12 +172,14 @@ async function auditOnChainProvenance(anchorAddress, activeRevision) {
         accountDataSha256: sha256(bytes),
         stateTag,
         deploymentSlot,
-        deployedAtOrBeforeCandidateSlot: deploymentSlot !== null &&
-          BigInt(deploymentSlot) <= BigInt(candidateTransactionSlot),
+        deployedAtOrBeforeCandidateSlot: binaryDeployedByCandidate,
         upgradeAuthorityOption: authorityOption,
         upgradeAuthority,
         binaryLength: binary.length,
         binarySha256: sha256(binary),
+        binaryArtifactName: binaryDeployedByCandidate ? binaryArtifactName : null,
+        binaryArtifactSha256: binaryDeployedByCandidate ? sha256(binary) : null,
+        elfHeader,
         loaderOwnerMatches: programDataInfo.value.owner === upgradeableLoader,
       };
 
