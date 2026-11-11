@@ -4421,3 +4421,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - This resolves the route enum mapping for this candidate, not deployed-binary provenance or universal CPI dispatch. IDL Explorer did not return authority; CPI-requested signer/writable flags and per-DEX account slicing remain unproven.
 - Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Do not expand execution allowlists. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`.
 - Exact-head CI on decoder/test commit `39fb8877af0915369dbe596c787fcc16a21ec6d9` was still running at last poll; inspect all four workflows before claiming verification. Next: verify metadata account authority and deployment provenance, then CPI privilege evidence, route-shape samples, Devnet reproduction, independent review.
+
+
+## 2026-11-12 — Decoder test failure diagnosis and counter-fix recorded
+
+- Validate runs `43073364769` and `43073589763` failed only because the new synthetic IDL test fixture had malformed nested object delimiters (first missing a closing brace, then one extra closing brace). Full logs identified the exact test file and parser lines. No runtime regression was found.
+- Final fixture correction: `c4dbc932061fcec396e288802bfa47716f78bc85`. Exact-head Validate `43073749233`: **89/89 tests passed**, Wrangler dry-run and all later validation steps passed. Jupiter CPI Trace Audit `43073749383`: SUCCESS.
+- Exact slot-matched IDL result: variant 181 = `KipseliV3`; four route steps decode and correlate transaction-specifically with Kipseli, Whirlpool, Meteora DLMM and Raydium LaunchLab CPIs. Full BPS, indexes, hashes and provenance limits are in the research documents.
+- Added finalized-RPC audit of Anchor IDL account authority/payload and Jupiter ProgramData deployment/binary metadata. Run is pending; do not claim account or binary provenance until its artifact is reviewed.
+- Keep route_v2 diagnostic-only; all signing/execution gates remain false.
