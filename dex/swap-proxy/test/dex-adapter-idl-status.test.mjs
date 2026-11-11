@@ -35,13 +35,13 @@ test("classifies missing and ambiguous evidence as incomplete with reason codes"
   assert.ok(result.reasons.includes("on-chain-idl-payload-not-matched-to-active-history"));
 });
 
-test("classifies deployment after the candidate slot as incompatible for that candidate", () => {
+test("treats a later ProgramData deployment as incomplete, not proof of historical absence", () => {
   const result = classifyDexAdapterIdlEvidence({
     ...complete,
     programDataDeploymentSlot: "468190520",
   });
-  assert.equal(result.status, "incompatible");
-  assert.deepEqual(result.reasons, ["program-deployed-after-candidate-slot"]);
+  assert.equal(result.status, "incomplete");
+  assert.deepEqual(result.reasons, ["current-programdata-last-deployment-after-candidate-slot"]);
   assert.equal(result.scope, "candidate-transaction-idl-provenance");
 });
 
@@ -52,4 +52,13 @@ test("does not infer incompatibility when deployment-slot evidence is missing", 
   });
   assert.equal(result.status, "incomplete");
   assert.ok(result.reasons.includes("program-deployment-slot-unavailable"));
+});
+
+test("classifies candidate-slot absence as incompatible only when archival evidence proves it", () => {
+  const result = classifyDexAdapterIdlEvidence({
+    ...complete,
+    candidateSlotProgramExistenceVerified: false,
+  });
+  assert.equal(result.status, "incompatible");
+  assert.deepEqual(result.reasons, ["program-absent-at-candidate-slot-verified"]);
 });
