@@ -30,14 +30,14 @@ const valid = "So11111111111111111111111111111111111111112";
 test("health endpoint responds without exposing credentials", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "enabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: true } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
 });
 
 test("health endpoint reports execution disabled when the production kill switch is off", async () => {
   const safeEnv = { ...env, EXECUTION_ENABLED: "false" };
   const res = await worker.fetch(new Request("https://worker.test/health"), safeEnv);
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, executionEnabled: false } });
+  assert.deepEqual(await res.json(), { ok: true, service: "climboria-swap-proxy", execution: "disabled", configured: { jupiterKey: true, rateLimiter: true, orderStore: true, solanaRpc: true, executionEnabled: false } });
 });
 test("sets defensive security headers on API responses", async () => {
   const res = await worker.fetch(new Request("https://worker.test/health"), env);
