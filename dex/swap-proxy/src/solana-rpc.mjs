@@ -126,10 +126,10 @@ export async function verifyJupiterTokenAccounts({
   rpcUrl,
   fetchImpl = globalThis.fetch
 }) {
-  const addresses = [sourceTokenAccount, destinationTokenAccount];
+  const addresses = [sourceTokenAccount, destinationTokenAccount, inputMint, outputMint];
   if (addresses.some(address => typeof address !== "string" || address.length < 32 || address.length > 44) ||
-      addresses[0] === addresses[1]) {
-    fail("Jupiter source and destination token accounts must be distinct valid addresses");
+      new Set(addresses).size !== addresses.length) {
+    fail("Jupiter source, destination and mint accounts must be distinct valid addresses");
   }
   if ([taker, inputMint, outputMint].some(value => typeof value !== "string" || value.length < 32 || value.length > 44) ||
       inputMint === outputMint || typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
@@ -156,7 +156,7 @@ export async function verifyJupiterTokenAccounts({
   try { payload = JSON.parse(raw); } catch { fail("Solana RPC returned invalid token-account JSON"); }
   if (payload?.jsonrpc !== "2.0" || payload?.id !== requestId || payload?.error ||
       !Number.isSafeInteger(payload?.result?.context?.slot) ||
-      !Array.isArray(payload?.result?.value) || payload.result.value.length !== 2) {
+      !Array.isArray(payload?.result?.value) || payload.result.value.length !== 4) {
     fail("Solana RPC returned an incomplete or mismatched token-account response");
   }
   const expected = [
@@ -195,5 +195,36 @@ export async function verifyJupiterTokenAccounts({
       state: info.state
     });
   }
-  return { contextSlot: payload.result.context.slot, source: verified[0], destination: verified[1] };
+  const expectedMints = [
+    { address: inputMint, role: "input" },
+    { address: outputMint, role: "output" }
+  ];
+  const verifiedMints = [];
+  for (let i = 0; i < expectedMints.length; i++) {
+    const item = expectedMints[i];
+    const account = payload.result.value[i + 2];
+    const parsed = account?.data?.parsed;
+    const info = parsed?.info;
+    if (!account || account.executable !== false || account.owner !== SPL_TOKEN_PROGRAM_ID ||
+        account.space !== 82 || account.data?.program !== "spl-token" ||
+        parsed?.type !== "mint" || !info || info.isInitialized !== true ||
+        !Number.isInteger(info.decimals) || info.decimals < 0 || info.decimals > 255 ||
+        typeof info.supply !== "string" || !/^(0|[1-9][0-9]*)$/.test(info.supply)) {
+      fail("Jupiter " + item.role + " mint must be an initialized classic SPL Token mint");
+    }
+    verifiedMints.push({
+      address: item.address,
+      decimals: info.decimals,
+      supply: info.supply,
+      mintAuthority: info.mintAuthority ?? null,
+      freezeAuthority: info.freezeAuthority ?? null
+    });
+  }
+  return {
+    contextSlot: payload.result.context.slot,
+    source: verified[0],
+    destination: verified[1],
+    inputMint: verifiedMints[0],
+    outputMint: verifiedMints[1]
+  };
 }
