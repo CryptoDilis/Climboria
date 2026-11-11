@@ -4186,3 +4186,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Historical Validate assertion failure runs `43029417495` and `43029480369` were root-caused, corrected, and superseded by green exact-head runs. No test assertion was weakened.
 - [!] Dedicated gameplay, production deployment, Jupiter universal CPI cursor proof, Devnet settlement and wallet signing/execution remain unverified/disabled.
 - Only documentation/PR records follow this checkpoint; runtime code, tests, and workflow logic remain unchanged.
+
+
+## 2026-11-11 — Meteora BinArray on-chain verified
+
+- [x] Added a read-only finalized `getAccountInfo` auditor with tests for owner + discriminator validation.
+- [x] Confirmed dynamic account `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8` is owned by Meteora DLMM, is non-executable, has 10,136 bytes, and matches the official `BinArray` discriminator `5c8e5cdc059446b5`. It is not a bitmap extension.
+- [x] Exact 17-account Meteora Swap2 CPI vector now maps to 16 fixed official IDL accounts plus one verified BinArray for this finalized transaction.
+- [x] Latest code head `abc441f1f09359355be8b5aeb99ce3c835aec39e`: Validate `43031160370` SUCCESS (81 pass / 0 fail); Browser Smoke `43031160341` SUCCESS; Jupiter CPI Trace Audit `43031160387` SUCCESS.
+- [x] Audit artifact `13860293557` contains both raw CPI trace and account metadata.
+- [!] Extra outer Jupiter account position 27 and exact CPI-requested signer/writable flags remain unresolved. One transaction does not establish general cursor semantics.
+- [ ] Repeat for bitmap extension, multiple bin arrays, transfer-hook slices, and split/multi-hop routes; establish deployed-binary provenance and complete independent security review. Variant 75 and execution remain disabled.
