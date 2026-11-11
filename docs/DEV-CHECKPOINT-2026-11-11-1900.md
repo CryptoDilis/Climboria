@@ -366,3 +366,19 @@ Initial authoritative-source findings:
 - [x] Inspected complete `jupiter-core/src/amms/` tree and repository search; no Raydium/Whirlpool/Meteora adapter builders are present in this public source snapshot.
 - [ ] Next: obtain version-matched authoritative deployed aggregator source or controlled transaction/CPI trace to prove outer per-leg remaining-account slicing and role privileges. Do not guess.
 - [ ] Keep SolFi excluded; keep Whirlpool V2/Meteora DLMM V2 excluded; keep both signable-order and execution gates false.
+
+
+## Progress addendum — latest Jupiter source audit CI verified — 2026-11-11 20:36 PHT
+
+### Exact-head verification — `35ff8dbd9aecc0b121ea68d04a78c0d395e64f75`
+- Validate run `43020099170`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020099170
+- DEX/Login Browser Smoke run `43020099135`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43020099135
+- All functional browser steps 1–16 passed; screenshot upload succeeded.
+- No workflow failures on this exact head.
+- Research recorded in `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`: official public Jupiter AMM repository main still points to the pinned 2025 commit; current IDL blobs are unchanged; its aggregator source is enum conversion only and does not expose CPI account slicing; no Raydium/Whirlpool/Meteora adapter builders exist in the public AMM source tree.
+- This is a confirmed public-source limitation, not a reason to guess account offsets. Exact deployed aggregator version and per-leg remaining-account consumption remain unproven.
+- [ ] Next: seek version-matched authoritative deployed program/source or controlled transaction/CPI trace for outer route account slicing. Do not implement unproven per-DEX validators.
+- [ ] Resolve Meteora privilege discrepancies; retain SolFi exclusion and V2 variant rejection.
+- [ ] Preserve both hard security gates, Wrangler execution=false, public swap enabled=false.
