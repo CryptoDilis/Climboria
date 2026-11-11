@@ -4240,3 +4240,18 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Execute a manual older-cursor scan with `before_signature`; current artifact is the newest-five sample (`before=null`), not an older window.
 - Screenshot artifact: `13862771931`.
 - Verified code head: `83d32b1d0a02981b2e9e853ce0c63954e8a54dd9`. Research log contains full evidence and limitations.
+
+
+## 2026-11-11 — continuation checkpoint: exact-head CI and older-cursor dispatch blocker
+
+- [x] Re-inspected live PR #268: open, draft, unmerged; head `80ecd60b7c6700a489afc0e52f441542eee0cd33`.
+- [x] Re-compared PR branch with current `main`: 94 ahead / 0 behind; merge base `623adfbbe9bca5832b79b71c625a2e201c5279db`.
+- [x] Re-inspected exact-head Validate run `43034661324`, job `130570222405`: SUCCESS; all 15 job steps completed, including Worker security/API tests, Wrangler dry-run, auth/cloud-save syntax, homepage/token-copy checks, DEX/Swap and game script audits.
+- [x] Re-inspected exact-head Browser Smoke run `43034661315`, job `130570220860`: SUCCESS.
+- [x] Re-inspected exact-head Jupiter CPI Trace Audit run `43034662889`, job `130570224530`: SUCCESS; all 8 steps completed. Artifact `13861693381`, 5,816 bytes, SHA-256 `26c69a7bd262cb1df433fcdfb93bdccd16f1d634e1e9edcf400d8db82e5e3cd5`.
+- [!] The current trace artifact is still the default newest-five sample (`before=null`). It does **not** prove an older-cursor scan was executed.
+- [!] The audit workflow supports `workflow_dispatch` input `before_signature`, but the available GitHub integration actions in this session expose workflow-run inspection and reruns, not workflow dispatch. No older-cursor run was triggered; do not mark that task complete or infer its results.
+- [ ] Next: dispatch `jupiter-cpi-trace-audit.yml` manually with a known finalized Meteora signature as `before_signature`; inspect artifact fields `before`, `transactionsScanned`, `matchingRoutes`, `rateLimited`, and `rateLimitedMethod`; append exact run/artifact evidence.
+- [ ] Continue authoritative investigation of exact CPI-requested signer/writable flags, route variations, deployed Jupiter binary provenance, Devnet reproduction, and independent review.
+- Security boundary unchanged: variant 75 remains excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler execution and public frontend execution remain disabled. No production deployment, live swap execution, wallet signing, gameplay completion, or Login/Launchpad completion is claimed.
+- No workflow failure occurred on this exact head; therefore no failure retry or counter-fix was appropriate in this continuation.
