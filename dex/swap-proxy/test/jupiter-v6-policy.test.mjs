@@ -19,15 +19,16 @@ function routeData({ variant = 7, percent = 100, inputIndex = 0, outputIndex = 1
   const payload = variant === 17 || variant === 61 ? [1] : [];
   return new Uint8Array([...discriminator, ...u32(1), variant, ...payload, percent, inputIndex, outputIndex, ...u64(inAmount), ...u64(outAmount), ...u16(slippage), fee]);
 }
-function parsed({ data = routeData(), extraProgram = null, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
-  const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute];
+function parsed({ data = routeData(), extraProgram = false, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
+  const unknownProgram = encodeBase58(new Uint8Array(32).fill(23));
+  const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute, unknownProgram];
   const instructions = [{ programIdIndex: 5, accountIndexes: [3, 0, 1, 2, 5, 4, 5, 6], data }];
-  if (extraProgram) instructions.push({ programIdIndex: 7, accountIndexes: [], data: new Uint8Array([99]) });
+  if (extraProgram) instructions.push({ programIdIndex: 8, accountIndexes: [], data: new Uint8Array([99]) });
   return {
     staticAccountKeys: keys.map(decodeBase58),
     requiredSignatures,
     readonlySignedAccounts: 0,
-    readonlyUnsignedAccounts: 5,
+    readonlyUnsignedAccounts: 6,
     instructions
   };
 }
@@ -44,7 +45,7 @@ test("decodes a supported Raydium Jupiter route with exact amounts and bounded s
 });
 
 test("rejects unknown top-level programs, extra signers and unsupported route variants", () => {
-  assert.throws(() => validate(parsed({ extraProgram: "unknown" })), /Unsupported Compute Budget instruction/i);
+  assert.throws(() => validate(parsed({ extraProgram: true })), /unsupported top-level program/i);
   assert.throws(() => validate(parsed({ requiredSignatures: 2 })), /single-taker-signature/);
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 8 })), /unsupported DEX variant/);
 });
