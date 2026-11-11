@@ -1,4 +1,5 @@
 import { pathToFileURL } from "node:url";
+import { encodeBase58 } from "../src/transaction-validation.mjs";
 
 export const METEORA_DLMM_PROGRAM_ID = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo";
 export const METEORA_BIN_ARRAY_DISCRIMINATOR = [92, 142, 92, 220, 5, 148, 70, 181];
@@ -21,7 +22,11 @@ export function inspectMeteoraAccount(address, value) {
       dataLength: 0,
       discriminatorHex: null,
       matchesBinArray: false,
-      matchesBitmapExtension: false
+      matchesBitmapExtension: false,
+      binArrayIndex: null,
+      binArrayVersion: null,
+      binArrayPool: null,
+      bitmapExtensionPool: null
     };
   }
   if (!value || typeof value.owner !== "string" || !Array.isArray(value.data) || typeof value.data[0] !== "string") {
@@ -30,6 +35,10 @@ export function inspectMeteoraAccount(address, value) {
   const data = Buffer.from(value.data[0], "base64");
   const discriminator = [...data.subarray(0, 8)];
   const ownedByMeteora = value.owner === METEORA_DLMM_PROGRAM_ID;
+  const matchesBinArray = ownedByMeteora && sameBytes(discriminator, METEORA_BIN_ARRAY_DISCRIMINATOR);
+  const matchesBitmapExtension = ownedByMeteora && sameBytes(discriminator, METEORA_BITMAP_EXTENSION_DISCRIMINATOR);
+  if (matchesBinArray && data.length < 56) throw new Error("Meteora BinArray data is shorter than its fixed header");
+  if (matchesBitmapExtension && data.length < 40) throw new Error("Meteora bitmap extension data is shorter than its fixed header");
   return {
     address,
     found: true,
@@ -39,8 +48,12 @@ export function inspectMeteoraAccount(address, value) {
     space: Number.isSafeInteger(value.space) ? value.space : data.length,
     dataLength: data.length,
     discriminatorHex: discriminator.length === 8 ? Buffer.from(discriminator).toString("hex") : null,
-    matchesBinArray: ownedByMeteora && sameBytes(discriminator, METEORA_BIN_ARRAY_DISCRIMINATOR),
-    matchesBitmapExtension: ownedByMeteora && sameBytes(discriminator, METEORA_BITMAP_EXTENSION_DISCRIMINATOR)
+    matchesBinArray,
+    matchesBitmapExtension,
+    binArrayIndex: matchesBinArray ? data.readBigInt64LE(8).toString() : null,
+    binArrayVersion: matchesBinArray ? data[16] : null,
+    binArrayPool: matchesBinArray ? encodeBase58(data.subarray(24, 56)) : null,
+    bitmapExtensionPool: matchesBitmapExtension ? encodeBase58(data.subarray(8, 40)) : null
   };
 }
 
