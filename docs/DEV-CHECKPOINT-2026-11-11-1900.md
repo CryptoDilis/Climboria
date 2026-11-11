@@ -193,3 +193,27 @@ Initial authoritative-source findings:
 - [ ] Controlled Devnet token movement/fee-destination proof and production Cloudflare deployment verification.
 - [ ] Continue production Login verification, then Launchpad lifecycle/Devnet proof.
 - [ ] Resume the separate mobile GLB instrumentation/optimization task after ecosystem priorities; no fallback or timeout-only workaround.
+
+
+## Progress addendum — 2026-11-11 20:09 PHT
+
+### Exact-head CI verification after CI scope split — PR #268 / head `6c465a70109697a51a7d1c351f17a704c29d884e`
+- Validate run `43017528387`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43017528387
+- DEX/Login Browser Smoke run `43017528317`: SUCCESS on the same exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43017528317
+- All 16 functional/browser steps passed, including Supabase auth/cloud-save isolation, homepage CTA/navigation, swap proxy, fail-closed execution, standalone Swap, DEX market/quote shell, live Solana profile/boost discovery, mobile workspace/desktop regression, 390px/360px layouts, and provider loading/error/empty states. Screenshot upload also succeeded.
+- Important scope note: the DEX/Login Browser Smoke workflow no longer runs Jarrell's Peak gameplay. The strict game test is retained in the dedicated `.github/workflows/game-browser-smoke.yml`, triggered by game runtime, character asset, or game-smoke script changes. This DEX-only PR did not trigger that game workflow; therefore the green Browser Smoke result is **not** evidence that the mobile GLB game blocker is fixed or that game smoke passed.
+- CI split commit: `6c465a70109697a51a7d1c351f17a704c29d884e` — `ci: isolate strict gameplay smoke from DEX browser checks`.
+- The split changed workflow scope only; no DEX execution/signable-order gate or game readiness assertion was relaxed.
+
+### Updated PR #268 status and next task
+- PR #268 remains open/draft/unmerged; main remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- [x] Exact-head Validate after CI split: SUCCESS.
+- [x] Exact-head DEX/Login Browser Smoke after CI split: SUCCESS.
+- [x] Repeated mobile GLB failure recorded as a separate unresolved game issue; strict dedicated game workflow retained.
+- [ ] Next DEX task: finish pinned Jupiter V6 route variant → CPI instruction mapping and outer remaining-account slice proof. Build the evidence matrix from the pinned Jupiter CPI IDL and prove deployed-version compatibility. Do not guess account offsets or enable signable orders.
+- [ ] Implement fail-closed per-DEX role validation only for fully proven mappings, with adversarial fixtures; remove unproven variants from signable support.
+- [ ] Then controlled Devnet token movement/fee-destination proof and Cloudflare production deployment verification.
+- [ ] Continue production Login verification, then Launchpad lifecycle/Devnet proof.
+- [ ] Separately instrument mobile GLTFLoader parsing/dependency/image decode/texture upload/callback/handoff and optimize the 4K PNG textures only with r128-compatible validation.
