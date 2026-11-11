@@ -518,14 +518,24 @@ try {
   await mobile.setViewportSize({ width: 844, height: 390 });
   // Change the mocked physical orientation first, then let the game's own resize
   // handler toggle its orientation classes exactly as it does on a real device.
-  await mobile.evaluate(() => window.__setClimboriaMockOrientation('landscape-primary'));
-  await mobile.waitForFunction(() => {
-    const overlay = document.querySelector('#rotate-phone-overlay');
-    return document.body.classList.contains('climboria-landscape') &&
-      !document.body.classList.contains('climboria-portrait') &&
-      getComputedStyle(overlay).display === 'none';
-  }, undefined, { timeout: 5000 }).catch(async error => {
-    const diagnostic = await mobile.evaluate(() => ({
+  // The handler runs synchronously for the dispatched orientation/resize events;
+  // inspect that result immediately before falling back to interval polling. A
+  // requestAnimationFrame-poll can miss an already-satisfied state while the
+  // mobile WebGL scene is busy rendering.
+  const readLandscapeGate = () => ({
+    orientation: screen.orientation?.type || null,
+    width: innerWidth,
+    height: innerHeight,
+    mediaLandscape: matchMedia('(orientation: landscape)').matches,
+    mobileDevice: document.body.classList.contains('mobile-device'),
+    landscapeClass: document.body.classList.contains('climboria-landscape'),
+    portraitClass: document.body.classList.contains('climboria-portrait'),
+    overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
+    overlayVisibility: getComputedStyle(document.querySelector('#rotate-phone-overlay')).visibility,
+  });
+  const landscapeTransition = await mobile.evaluate(() => {
+    window.__setClimboriaMockOrientation('landscape-primary');
+    return {
       orientation: screen.orientation?.type || null,
       width: innerWidth,
       height: innerHeight,
@@ -535,9 +545,24 @@ try {
       portraitClass: document.body.classList.contains('climboria-portrait'),
       overlayDisplay: getComputedStyle(document.querySelector('#rotate-phone-overlay')).display,
       overlayVisibility: getComputedStyle(document.querySelector('#rotate-phone-overlay')).visibility,
-    }));
-    throw new Error('Landscape orientation transition did not clear the rotate gate: ' + JSON.stringify(diagnostic) + '; ' + error.message);
+    };
   });
+  const landscapeGateReady = state => state.landscapeClass && !state.portraitClass && state.overlayDisplay === 'none';
+  if (!landscapeGateReady(landscapeTransition)) {
+    await mobile.waitForFunction(() => {
+      const overlay = document.querySelector('#rotate-phone-overlay');
+      return document.body.classList.contains('climboria-landscape') &&
+        !document.body.classList.contains('climboria-portrait') &&
+        getComputedStyle(overlay).display === 'none';
+    }, undefined, { polling: 100, timeout: 5000 }).catch(async error => {
+      const diagnostic = await mobile.evaluate(readLandscapeGate);
+      throw new Error('Landscape orientation transition did not clear the rotate gate: ' + JSON.stringify({ initial: landscapeTransition, final: diagnostic }) + '; ' + error.message);
+    });
+  }
+  const verifiedLandscapeGate = await mobile.evaluate(readLandscapeGate);
+  if (!landscapeGateReady(verifiedLandscapeGate)) {
+    throw new Error('Landscape orientation gate did not remain cleared after event dispatch: ' + JSON.stringify({ initial: landscapeTransition, final: verifiedLandscapeGate }));
+  }
   const directMobileEntry = await mobile.evaluate(() => ({
     gameplayActive: document.body.classList.contains('free'),
     createHeroInGameplay: !!document.querySelector('#character-create, #character-create-panel, #expedition-hero-menu'),
