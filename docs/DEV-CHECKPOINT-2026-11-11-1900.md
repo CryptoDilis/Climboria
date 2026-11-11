@@ -447,3 +447,32 @@ Initial authoritative-source findings:
 
 ### Exact next action
 Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `route` instruction and inner CPI trace, then verify the transaction slot against Jupiter program deployment history/version provenance. Build one evidence record per route enum variant; reject any variant for which route-slice boundaries or CPI roles cannot be proven. Do not alter the parser allowlist based on guesswork.
+
+
+
+## Progress addendum — generated SDK and post-deployment mainnet route evidence — 2026-11-11
+
+### New source/trace findings
+- Located supplemental generated Jupiter Aggregator V6 SDK release `jupiter-aggregator-v6-sdk 0.4.0`, repository `ChiefWoods/jupiter-sdk`, commit `5e3eef72f44cbdcac3bb0426749fe5b7a5face2f`.
+- Its checked-in Anchor IDL blob is `aad9f389c1a3286e46633c4a261ec626c26ff553`; generated legacy `route.rs` corroborates fixed account positions 0–8, with Event Authority at 7, Jupiter program at 8, and remaining accounts appended from 9 when optional slots are represented by Jupiter program sentinels.
+- This SDK is generated client/IDL material, not the deployed aggregator's execution handler; it contains no proof of per-route-step CPI dispatch or outer remaining-account partitioning. The official public `jup-ag/jupiter-amm-implementation` source ceiling remains unchanged.
+- Located a public mainnet Jupiter V6 `route` transaction with a Meteora DLMM leg:
+  - Signature `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`, slot `464856414`, successful/finalized, 2026-11-03 09:56:47 UTC.
+  - Solscan summary shows a 97.879923 USDC -> 38,687.896434 AODF trade via Meteora DLMM program `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo`; market `7euPVbmrDWMjQyeJazecDYjxjDmd5fHmuuxpYAtkcgmj`.
+  - Solscan Jupiter program page reports last deployed slot `462802085`; observed tx slot is later. This is only a temporal anchor; executable hash and source equivalence are still unknown.
+  - Explorer output did not expose the raw inner CPI account vector, route-plan enum index, or per-account signer/writable flags. This is a trace candidate, not account-slice proof.
+- Trawl documents a free public sample with inner instruction metadata (`is_inner`, `inner_index`, `stack_height`, `accounts`) over slots 466130000–466130999. The sample archive was not retrieved/inspected; no row-level evidence is claimed and no paid scan was initiated.
+- Full evidence, exact references and limitations are recorded in `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md` (commit `29c65df6c26090be99d0b265fdf47e995b66d293`).
+
+### Engineering decision
+- [x] Supplemental generated SDK confirms existing legacy route fixed-prefix checks (indexes 7 and 8; remaining begins at 9).
+- [x] A real post-reported-deployment Jupiter route/Meteora DLMM transaction candidate was found.
+- [ ] Raw inner CPI account vectors, route-plan-step association, and per-account privileges remain unverified.
+- [ ] Jupiter deployed executable hash/build provenance and matching route-handler source remain unverified.
+- [ ] Meteora CPI/direct-IDL signer/writable/optional discrepancies remain unresolved.
+- No product-code change is justified. Keep SolFi excluded, V2 variants rejected, signable-order and execution gates false. Do not implement speculative per-DEX account offsets.
+
+### Workflow discipline and exact next action
+- Latest confirmed code/docs head before this addendum was `342b3456acaafa9399bf3fcaffcd8b220a31f910`; Validate `43021488087` and Browser Smoke `43021488045` both passed on that exact head.
+- This addendum is documentation-only; after commit, verify both required checks on the new exact head before treating it as the latest green checkpoint.
+- Next: use only public free transaction/sample data or available RPC access to retrieve a full transaction meta for the Meteora route candidate (or another controlled, clearly matched route). Decode static + ALT-loaded keys, Jupiter routePlan, inner CPI program/discriminator/account vector and per-account flags; tie route-plan step to CPI using invocation stack/log sequence. If this cannot be proven, keep that DEX variant unsupported for signable orders. Do not pay for historical data or guess.
