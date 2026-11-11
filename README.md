@@ -3855,3 +3855,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Exact-head Validate run `42967239605` completed SUCCESS on `dac3b94359cfde712cbfb53b191c15f6e8d74979`; Worker security/config, auth syntax, homepage, inline scripts and game script syntax/audits all passed.
 - [ ] Exact-head Browser Smoke run `42967239569`, job `130347186318`, is still IN PROGRESS. Supabase auth/account-isolation step 7 completed; homepage/DEX navigation step 8 is currently running. Do not call the smoke passed until all steps, including mobile GLB diagnostics, reach terminal status.
 - [ ] Next: poll run `42967239569`; if mobile GLB fails, capture `loaderDiagnostics.phase` from the new error payload and use it to identify the production-stage defect. No production code fix selected yet.
+
+
+### PR #261 Browser Smoke failure diagnosis and PR #262 counter-fix — 2026-11-11 13:47 +08
+
+- [x] PR #261 Validate `42967239605`: SUCCESS on exact head `dac3b94359cfde712cbfb53b191c15f6e8d74979`.
+- [x] PR #261 Browser Smoke `42967239569`: FAILED at step 15 (390px mobile DEX close-detail tap); step 16–18 gameplay was skipped. Therefore the new GLB loader phase instrumentation has not yet been exercised by this run.
+- [x] Exact log evidence: close button center moved from y=628.75px before tap to y=516.75px after tap; the chart iframe occupied the old tap coordinate (top y=556.75px) and became activeElement. Parent document received no pointer/touch/click events. This indicates the touch landed in the cross-origin iframe while the panel's smooth scroll was still moving, not a handler execution failure.
+- [x] Confirmed PR #256's merged diff added a delegated capture-phase `click` listener, but did not add the pointerup/touch fallback described in its PR narrative. Do not claim that a pointerup fix is present in main.
+- [x] Opened focused draft PR #262: https://github.com/CryptoDilis/Climboria/pull/262. Counter-fix waits for scrollY to remain stable across four animation frames, rechecks that `#closeDetail` is the topmost hit target, then retains the real mobile tap and existing return-to-market assertions.
+- [ ] Await PR #262 exact-head Validate and Browser Smoke. If the tap still fails, inspect the new before/after coordinates and event trace; do not add speculative pointer listeners until the target/event evidence requires it.
+- [ ] After the mobile DEX close step passes, run the full Browser Smoke through gameplay step 17 so PR #261's loader phase diagnostics can identify the GLB parser/scene-setup boundary.
+- [ ] Keep PR #261 and #262 as separate focused drafts until both exact-head checks pass. Do not merge either diagnostic/test-only change as a production gameplay fix.
