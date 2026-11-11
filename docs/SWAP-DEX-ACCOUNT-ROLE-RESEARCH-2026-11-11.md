@@ -1126,3 +1126,15 @@ The trace artifact stores each CPI account's **transaction account-key index**, 
 - Update prior wording accordingly: positions 79 and 62/83 remain duplicate-key layout observations with unresolved handler-level roles, not confirmed unused accounts. Account-key indices and outer-occurrence indices must remain separate in any future parser/report.
 
 This does not change the platform-fee attribution at outer position 10: its transaction key index is 19, and inner instruction 17 explicitly transfers 99,550 WSOL base units to that exact key.
+
+
+## 2026-11-12 — Duplicate outer-position instrumentation added (verification pending)
+
+- The raw trace already preserved each inner CPI account's transaction account-key index, but it did not enumerate every matching position in the parent Jupiter outer account array. This made repeated public keys easy to misread as uniquely attributable outer positions.
+- Added `outerInstructionPositionsForSameTransactionKey` to each inner CPI account. It is derived strictly from transaction account-key indexes and lists all matching parent-instruction positions, including duplicates.
+- Added tests for duplicate keys in the parent instruction and for address-lookup-table ordering. The ALT fixture was reviewed before CI: combined keys are static keys, then loaded writable keys, then loaded readonly keys; index 2 therefore correctly resolves to the first loaded writable key. The test assertion was corrected before claiming verification.
+- Code commit `ae0f10aa98b8db85f49b69a7c3cda8e7802ee95c`; test commit `b4da973aaff9482ed90e8c89f57cbd6e84b49297`; test correction commit `ddf5f609fde582845d4265629aec59afae86858f`.
+- Branch comparison at this checkpoint: 184 ahead / 0 behind main (`a52b84476770fa1064c174e4f6fbc11d9e4b2d11`).
+- No exact-head workflow runs are visible for the new commits yet. The preceding head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` passed all four recorded workflows, including 95/95 Validate tests, but this is not evidence for the new instrumentation.
+- No failure has been observed on the new head; therefore no rerun or counter-fix is justified yet. Keep all safety gates closed.
+- Next: obtain fresh exact-head Validate, Browser Smoke and CPI Trace Audit. Inspect the generated artifact to confirm the new field exposes duplicate occurrences without implying cursor ownership. Continue with CPI-requested privileges and multiple route shapes only after evidence is available.
