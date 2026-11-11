@@ -4654,3 +4654,18 @@ Audit scope: all six pages returned by GitHub for `codex/swap-jupiter-fixed-acco
 - No counter-fix was made because no new failure has been established. Preserve strict gameplay readiness assertions and all DEX security checks.
 - Safety boundary unchanged: PR #268 stays draft/unmerged; Jupiter route variants without authoritative deployed CPI/account-slice and requested-privilege evidence remain excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler execution and public frontend transaction execution remain disabled.
 - Next actions: (1) poll Game Browser Smoke run `43086425686`; once terminal, fetch job steps/logs and uploaded screenshots, identify the precise failing assertion/GLB loader phase if it failed, and implement a narrow evidence-based counter-fix; (2) if it succeeds, record the gameplay scope and limitations; (3) continue the open DEX provenance gaps, including historical Meteora IDL update history and exact CPI-requested privileges. Re-run exact-head checks after any code change.
+
+
+## Follow-up after checkpoint-triggered CI — 2026-11-12 03:30 PHT
+
+- The previous documentation commit `72b83187809992a5d8bcdb46fe7be31c3fb3454a` changed the PR head and correctly superseded/cancelled the still-running Game Browser Smoke run `43086425686` on prior head `c2bc868c988c5e5c87c8cbd6afff679010f01381`. Its conclusion is CANCELLED, not FAILURE; do not diagnose it as a gameplay regression or count it as a pass.
+- PR #268 now points to exact head `72b83187809992a5d8bcdb46fe7be31c3fb3454a`, still open/draft/unmerged; base remains main `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- New exact-head run set:
+  - Validate `43087323341`: SUCCESS.
+  - Jupiter V6 CPI Trace Audit `43087323380`: SUCCESS.
+  - Ecosystem Browser Smoke `43087323407`: IN_PROGRESS, job `130755010094`; setup, Playwright install, server startup, and Supabase auth/cloud-save isolation passed; homepage CTA/DEX routing/mobile navigation is running. Remaining checks pending.
+  - Jupiter IDL History Audit `43087323396`: IN_PROGRESS, job `130755010424`; setup and syntax check passed; fetching current/historical Jupiter and DEX CPI IDL history is running.
+  - Game Browser Smoke `43087323330`: IN_PROGRESS, job `130755171748`; setup, checkout, Node and browser cache passed; Playwright installation is running; gameplay test has not started.
+- No new failed workflow/job is present on this exact head at this inspection. No code counter-fix is warranted. The earlier active-job log BlobNotFound response was an artifact retrieval limitation while a job was running, not test evidence.
+- Next: poll the three in-progress runs on this exact SHA. If any reaches FAILURE, capture terminal job steps and logs, identify the first causal failing assertion/command, distinguish product defect from runner/provider/network/tooling failure, make one narrow evidence-based correction, and rerun all affected checks on the resulting exact head. Do not create another documentation-only commit while these long-running checks are active unless a substantive record is required; avoid needless cancellation churn.
+- Security gates and draft status remain unchanged.
