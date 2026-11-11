@@ -1,19 +1,41 @@
 # CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
 
+## 2026-11-11 12:57 +08 — DEX and Swap integrated on main
+
+**Current execution order remains DEX → Swap → Login → Launchpad. DEX and Swap code changes are merged; production DEX deployment and Swap transaction execution are not yet certified live. Gameplay remains a separate, non-blocking backlog.**
+
+### Always-visible delivery checklist
+
+- [x] **P1 DEX implementation merged:** PR #252 merged as commit ca9fcab42274390bee14213e4166a25194bfa2de. Only the live DEX UI/provider source and focused DEX smoke step were ported; unrelated gameplay instrumentation from PR #248 was excluded. PR #248 was closed as superseded.
+- [x] **P1 DEX verification:** Validate run 42961322450 passed on PR #252 exact head 719152f1bb2ffc214461bcdd96a80ef950de367c. Browser Smoke run 42961322209 passed all DEX-specific steps 7–15. PR #253's later run 42962370467 also passed DEX/Swap steps 8–15.
+- [ ] **P1 DEX production deployment:** confirm GitHub Pages deployment after merge and verify the deployed /dex/ page and live provider responses. Do not claim deployment verified from PR checks alone.
+- [x] **P2 Swap security foundation merged:** PR #253 merged as commit 4f6797894202f2e5881168b4c438deca1a0454e2. Includes canonical v0 parsing, server-bound order-store code, one-time claim/replay protection, taker-signature checks, finalized-context ALT resolution, bounded RPC fetch, Durable Object config and adversarial tests.
+- [x] **P2 Swap verification:** Validate run 42962370373 passed on exact PR head 732f3f16602db77a5b28418f5d91c01902601d83. Browser Smoke run 42962370467 passed Swap/DEX steps 8–15, including the Worker security tests, fail-closed execution, Swap UI, live Solana discovery, mobile workspace, 390px/360px layouts and provider-error/empty states.
+- [ ] **P2 Swap release:** semantic instruction allowlist/account-role validation, full mint/source/destination/amount/min-output/fee checks, controlled Devnet sign→submit→confirm/balance lifecycle, production Cloudflare secrets/bindings/migration/monitoring and independent Solana security review remain outstanding. Both signable-order issuance and execution are blocked by hard source-level gates; Wrangler execution flag and frontend switch remain false.
+- [x] **Swap failure diagnosis recorded:** first Validate attempt 42962133644 failed because a legacy test expected the Worker to forward a Jupiter Failed result despite the new hard gate; second attempt 42962295221 exposed another legacy test expecting an upstream response while signable order issuance was gated before upstream. Both tests were rewritten to assert the intended fail-closed behavior. Final exact-head Validate 42962370373 passed. No security gate was weakened.
+- [ ] **P3 Login:** PR #250 code and database/RLS checks are present, but actual Supabase provider settings, SMTP/confirmation, redirects, CAPTCHA and real-account lifecycle/isolation tests remain unverified.
+- [ ] **P4 Launchpad:** provenance and unsigned Devnet preparation are present, but custody/treasury authority, production signer policy and full Devnet create→bonding curve→migration→pool/LP lifecycle remain unverified.
+
+### Next active task — P2 Swap semantic validation
+
+Implement a versioned, fail-closed semantic instruction policy using the retained raw instruction bytes plus resolved static/loaded account keys. Cover supported Jupiter route families and reject unknown programs/instructions. Add adversarial cases for wrong mint/amount/minimum output, unexpected transfers/approvals, fee redirection, writable/signer escalation and unsupported Token-2022 behavior. Keep both hard source gates closed until independent review and controlled Devnet acceptance pass.
+
+**Important:** PR #253 is merged, but this does not mean wallet swaps are enabled. The quote/search path is read-only; signable order issuance and transaction submission remain blocked.
+
 **Locked on: 2026-11-11. These four priorities are the agreed product execution order: DEX → Swap → Login → Launchpad. Do not reorder, skip, or replace them without the user's explicit instruction. Gameplay work is separate and MUST NOT displace or block these four ecosystem priorities.**
 
-## 2026-11-11 12:39 +08 — live delivery checkpoint (latest evidence supersedes older status below)
+## 2026-11-11 12:39 +08 — historical delivery checkpoint (superseded by latest update above)
 
 **Current state: implementation branches exist; none of the four products is yet approved as a production-complete release.** Keep the user's requested order DEX → Swap → Login → Launchpad. Do not call preview/demo, unsigned preparation, or passing mocks a live launch/trade/auth flow.
 
 ### Always-visible delivery checklist
 
 - [ ] **Separate gameplay backlog (non-blocking):** PR #246 Sanctuary spawn fix still requires exact-head Browser Smoke and visual desktop/mobile landing review. Do not switch active work away from DEX → Swap → Login → Launchpad to work on this item.
-- [x] **P1 DEX implementation:** PR #248 contains provider-backed Solana profile + boost discovery, batched token lookup (up to 30), live liquidity/price/volume validation, deepest-pool selection, honest empty/error states, and selected-token navigation.
+- [x] **P1 DEX implementation:** PR #252 merged the provider-backed Solana profile + boost discovery, batched token lookup (up to 30), live liquidity/price/volume validation, deepest-pool selection, honest empty/error states, and selected-token navigation.
 - [x] **P1 DEX CI:** Validate run `42958475572` passed on `066122b03db740c7e16c3890c0cef6b5944c27b8`; Browser Smoke steps 7–15 (home/DEX navigation, proxy, fail-closed execution, standalone Swap/DEX, live discovery, responsive 390/360px, provider error/empty states) passed.
-- [ ] **P1 DEX release:** overall Browser Smoke `42958475571` failed only at separate Jarrell's Peak mobile gameplay step 16; DEX-specific steps 7–15 passed. Create/run a DEX-scoped acceptance check so unrelated gameplay failure cannot block DEX verification; review DEX screenshots and exact-head checks before merge/deploy. PR #248 is not merged.
-- [x] **P2 Swap groundwork:** PR #249 adds Solana v0 ALT account decoding/resolution and adversarial tests; Validate run `42960037723` passed on `5c7ceaa39d6c4ef2f6380a2ebec6a11ead69aeb1`.
-- [ ] **P2 Swap release:** Browser Smoke `42960037880` was still running at gameplay step 15 when checked. Semantic instruction allowlist, complete quote/order execution binding, controlled Devnet sign-submit-confirm lifecycle, production Worker controls and independent security review remain outstanding. Execution stays fail-closed.
+- [ ] **P1 DEX release:** PR #252 is merged and DEX-specific acceptance passed. Remaining item is independent GitHub Pages deployment/live-site verification; the unrelated gameplay step is not a DEX release blocker.
+- [x] **P2 Swap groundwork:** PR #253 merged server-bound v0 order storage, replay protection, signature checks, finalized ALT resolution and adversarial tests; Validate run `42962370373` passed.
+- [ ] **P2 Swap release:** Browser Smoke `42962370467` passed Swap/DEX steps 8–15. Semantic instruction allowlist, controlled Devnet sign-submit-confirm lifecycle, production Worker secrets/bindings and independent security review remain outstanding. Signable-order issuance and execution stay hard-blocked.
 - [x] **P3 Login implementation:** PR #250 adds Supabase email/password, Google/X OAuth, Solana/Ethereum Web3 adapters, session restoration, sign-out, and account-scoped cloud saves.
 - [x] **P3 Login CI:** Validate `42959126489` and Browser Smoke `42959126520` both passed on `60107ab4dce5b8defb7bcad8eba6751124c61b32`.
 - [x] **P3 Supabase database:** connected Climboria project `unadepiwbovblkfjlksk` is `ACTIVE_HEALTHY`; migration `20261110205612_auth_profile_acl_rls_hardening` is present. Live schema inspection confirmed `player_profiles` and `player_saves` exist with RLS enabled; policies bind SELECT/UPDATE/INSERT to `auth.uid() = user_id`, UPDATE includes `WITH CHECK`, and the profile identity-immutability trigger exists. Security advisor returned no lints. Both tables currently contain 0 rows.
@@ -27,7 +49,7 @@
 - [x] Log evidence: mobile GLB request completed (`42,923,204` decoded bytes; `42,923,504` transferred); no failed GLB requests and no browser errors. Loader telemetry remained at `phase=parse-start`, `parseDurationMs=null`, `sceneSetupStartedAt=null`, `heroReady=false` after `285,055ms`; the smoke failed after its bounded wait/grace.
 - [x] This is a post-download GLTF parse/readiness stall in the unrelated gameplay gate, not a DEX market-discovery failure. PR #247's separate diagnostic run `42949922898` passed once, so the symptom is intermittent and not proven fixed. Do not raise timeouts, bypass readiness, substitute a fallback avatar, or weaken the test.
 - [ ] Counter-strategy: inspect GLB parse cost, mobile memory/CPU pressure and loader lifecycle with reproducible instrumentation; choose a production optimization only after identifying the expensive stage. Re-run exact-head desktop/mobile gameplay smoke and inspect screenshots.
-- [ ] **Single next action:** continue P1 DEX delivery: resolve PR #248's current base/mergeability and establish DEX-scoped acceptance on its exact head. Do not start gameplay fixes as the active task.
+- [ ] **Single next action:** implement the P2 Swap semantic instruction allowlist and adversarial tests; keep wallet signing and execution blocked until review and Devnet acceptance.
 
 **Session rules:** record each completed task, changed files, commit/PR, exact workflow/run IDs, evidence, unresolved blockers and one next action here. On failures, inspect the exact job/log/artifact, prove root cause, implement a distinct counter-fix, and rerun. Never mark a feature live based only on a mock, preview or unsigned transaction.
 
