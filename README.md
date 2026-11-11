@@ -26,7 +26,7 @@
 - PR #268 head: `8c4e86994e1ed203ffa26803874924e705973462`, draft and unmerged.
 - On that exact PR head, Validate, Ecosystem Browser Smoke, and Jupiter V6 CPI Trace Audit passed. Game Browser Smoke and Jupiter IDL History Audit were still running at the latest inspection. Do not mark their pending results as passed.
 - Swap remains fail-closed; the required security/Devnet/production evidence is not yet complete. DEX production-live acceptance, all real Login provider flows, full game release acceptance, and Launchpad are not to be marked complete without their own evidence.
-- The immediate next action is to finish the in-flight exact-head workflows, then continue **P1 Swap** with evidence-based security and production work. Follow the order above; do not switch back to gameplay-first or DEX-first execution.
+- The immediate next action is to finish the in-flight exact-head workflows, then continue **P1 Swap** with evidence-based security and production work. Follow the order above; do not revert to an older priority order.
 
 ## Active master checklist
 
@@ -318,7 +318,7 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 3. One priority at a time; one authoritative PR per fix. Do not restart completed tasks or create duplicate implementations.
 4. On failure: inspect exact failing step/log/artifact, prove root cause, choose a genuinely different counter-strategy, then rerun relevant checks on the exact new head. Never recommit the same failed code.
 5. Keep real functionality live where safe. Do not disable features merely to pass tests, weaken acceptance criteria, fake provider data, or claim production readiness from mocks.
-6. **Mandatory session handoff:** before any chat/session ends, update this README in place with (a) locked P1–P4 order, (b) current priority and exact active subtask, (c) completed work with commit/PR and changed files, (d) verification evidence with exact workflow/run IDs and PASS/FAIL/IN-PROGRESS status, (e) failures/root cause/counter-strategy, (f) blockers/dependencies, and (g) exactly one next action. A commit alone is not completion; never mark unverified work done.
+6. **Mandatory session handoff:** before any chat/session ends, update this README in place with (a) current P1–P5 order, (b) current priority and exact active subtask, (c) completed work with commit/PR and changed files, (d) verification evidence with exact workflow/run IDs and PASS/FAIL/IN-PROGRESS status, (e) failures/root cause/counter-strategy, (f) blockers/dependencies, and (g) exactly one next action. A commit alone is not completion; never mark unverified work done.
 7. At the start of every continuation, read this queue, inspect latest main/open PRs/active runs, and resume from the recorded exact next action. Do not ask the user to repeat priorities or progress already in the repository.
 8. Keep this as the single source of truth: update this queue in place; do not append duplicate active queues or conflicting progress checklists. Keep older dated notes below as historical evidence.
 
@@ -557,16 +557,17 @@ Implement a versioned, fail-closed Metis-only semantic instruction policy using 
 
 ## 0. Current project control panel — updated 2026-11-03 (PRs #178–#180 merged; cave grotto swim path automated checks green)
 
-### Current priority and sequencing
+### Current priority and sequencing — superseded by 2026-11-12 owner direction
 
-1. **P0 — Finish and polish the existing Jarrell's Peak world.** This is the active development priority. Repair regressions, finish the world checklist, verify collision/movement/swimming/caves/lighting/terrain/UI, and pass desktop/mobile tests. Preserve the existing map; do not replace or redesign it during unrelated UI fixes.
-2. **P1 — DEX and Swap preparation (design/specification only while P0 is active).** Prepare a Climboria-specific product brief, premium visual direction, UX flow, architecture decision list, security/reliability requirements, and implementation checklist. Do not divert the active Jarrell's Peak workstream or publish a fake live trading interface.
-3. **P2 — Universal player accounts, identity linking, cloud saves and backups.** Begin after Jarrell's Peak completion and acceptance.
-4. **P3 — Character customization, inventory/equipment and item production.** Begin after the earlier gates, according to the detailed order below.
-5. **P4 — Marketplace and seller settlement.** Implement only after its dependencies and security gates.
-6. **P5 — DEX/Swap implementation and production activation.** The interface and technical plan may be prepared now; live swaps, liquidity, token transactions and fee collection require verified token identity, approved architecture, security review and end-to-end tests. Schedule production implementation after Jarrell's Peak is accepted unless the owner explicitly changes priority.
+This older November 3 game-first sequencing is retained only as historical project scope. It is **not** the current delivery order. Follow the current owner-approved priorities at the top of this README:
 
-**Freeze rule:** No new feature implementation may displace Jarrell's Peak polish. Character Creator, accounts, cloud-save implementation, marketplace, and live DEX/Swap remain frozen until their sequence gate. Documentation/design preparation for DEX/Swap is allowed and must not alter gameplay.
+1. P1 — Live Swap.
+2. P2 — Live DEX.
+3. P3 — All Login methods available.
+4. P4 — Fully live, genuinely playable Game.
+5. P5 — Live Launchpad, last.
+
+The no-demo-only rule applies to every priority. Old "game first", "DEX after game", or "gameplay non-blocking" statements in this historical design section do not override the current order.
 
 ### Verified repository snapshot at this update
 
@@ -958,7 +959,7 @@ A commit means code changed; it does not prove the game works. Keep status expli
 - Teleport-stone mechanics are deferred until the hero and Jarrell’s Peak map are in good shape; the current priority is character quality, terrain, collisions, and swimming.
 - Actual token payouts, persistent inventory, secure multiplayer, and anti-cheat remain separate production release gates.
 
-The game remains the priority. Crypto participation must not be required for the basic adventure. All sponsorships, marketplace fees, wagers, and rewards need clear rules and funding before launch.
+The Game is P4 in the current owner-approved delivery order. Crypto participation must not be required for the basic adventure. All sponsorships, marketplace fees, wagers, and rewards need clear rules and funding before launch.
 
 
 ---
@@ -2436,7 +2437,7 @@ For every integrated asset or borrowed technique, record:
 
 ## N. Climboria-exclusive product concept: Trade Twin & Decision Engine (DESIGN ONLY)
 
-**Status:** Proposed signature differentiator; design/specification only. Jarrell's Peak remains the active development priority. No DEX implementation is authorized by this section.
+**Status:** Proposed signature differentiator; design/specification only. DEX is P2 in the current owner-approved order; any implementation must use real providers and pass its production release gates.
 
 **Product promise:** Do not merely show traders what the market is doing. Help them understand what a proposed trade could cost, how it could fail, how it affects their existing exposure, and whether the original thesis remains valid. The engine is decision support, not a buy/sell oracle and never guarantees profit.
 
@@ -2520,7 +2521,7 @@ For every integrated asset or borrowed technique, record:
 - [ ] No fabricated order-book depth for AMMs, fake volume certainty, unsupported safety labels, guaranteed returns, or black-box buy/sell commands.
 - [ ] All simulations must disclose assumptions and include realistic fees, slippage, failed transactions, liquidity constraints and missing-data behavior.
 - [ ] Keep the system non-custodial by default. Users retain control of wallet signing and all trading decisions.
-- [ ] Jarrell's Peak remains the active development priority. These DEX concepts are design backlog only; no DEX implementation begins until the game is fully polished and the owner explicitly reprioritizes it.
+- [ ] These DEX concepts remain design options, not shipped functionality. DEX is P2 in the current owner-approved order; build and release real provider-backed functionality, not demo-only screens.
 
 
 ## 2026-11-03 — all-water-body swim depth regression coverage
@@ -2997,9 +2998,10 @@ For every integrated asset or borrowed technique, record:
 
 ## 2026-11-11 — Active release handoff (P0: live DEX / Swap / Launchpad / account login)
 
-### User priority (authoritative)
-- Complete production-live DEX, secure live Swap, functional Launchpad, and enable all intended account login methods (Google, X, and email/password). This supersedes game-content polish as the immediate release priority.
-- Do not label quote previews, wallet connection, static Launchpad UI, or a code-only integration as production-live.
+### User priority (historical record — superseded 2026-11-12)
+- This older handoff listed DEX, Swap, Launchpad and Login in a different order. It is no longer authoritative.
+- Current order: P1 Live Swap → P2 Live DEX → P3 All Login → P4 Fully Live Game → P5 Live Launchpad (last).
+- No demo-only delivery: quote previews, wallet connection, static Launchpad UI, fixtures, or code-only integrations are not production-live.
 
 ### Verified repository / CI state
 - Repository: `CryptoDilis/Climboria`; default branch: `main`; latest main checkpoint before this entry: `a52497a06db7b0c132adce5de45d473596d829ac`.
@@ -3869,12 +3871,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Priority reset and validated-harness Sanctuary fix — 2026-11-11
 
-**Priority order (release-critical first):**
-1. [ ] Finish the Sanctuary spawn gameplay fix with exact-head desktop/mobile Browser Smoke and visual screenshot review. Do not merge while gameplay evidence is incomplete.
-2. [ ] Integrate PR #242's corrected mobile-orientation smoke harness. PR #242 exact head 7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717 passed Validate 42946493667 and Browser Smoke 42946493750, including desktop/mobile Jarrell's Peak gameplay and screenshot upload.
-3. [ ] Port PR #243's DEX market discovery only after the validated gameplay harness is the base. Its source diff is limited to dex/index.html and dex/premium-terminal.js; preserve its live discovery changes and rerun exact-head tests. Earlier #243 Browser Smoke failed in its old mobile-orientation fixture, not the DEX discovery stages.
-4. [ ] Continue Swap security R1–R4: finish ALT resolution/adversarial tests, implement isolated semantic instruction allowlist, run controlled Devnet lifecycle tests, and verify Cloudflare production operations. Keep execution fail-closed until independently reviewed.
-5. [ ] Complete Launchpad provenance/custody/migration and real Login provider setup (Supabase migration, redirect allowlist, OAuth/SMTP/Web3 provider configuration and controlled-account tests). Mocked browser tests are not live provider proof.
+**Historical task order — superseded by the current P1–P5 priorities at the top of this README.** The Sanctuary spawn and mobile-orientation work below remains historical implementation evidence, not a current release-priority sequence. Continue current product work in this order: P1 Swap, P2 DEX, P3 Login, P4 Game, P5 Launchpad.
 
 **Sanctuary branch integration diagnosis:**
 - [x] PR #244 (5fe2dffc6c3e92243ee74c347ed6f80fbce81ad1) Validate passed (42948097496), but its Browser Smoke still uses the older mobile-orientation simulation inherited from main. Steps 1–14 passed; gameplay step 15 was still running at the last poll. Do not call it failed until GitHub publishes a terminal result.
@@ -3916,7 +3913,7 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 ### Priority reset and verified delivery checkpoint — 2026-11-11
 
-The user's active delivery order supersedes older locked-priority notes for this sprint. Do not insert gameplay work as a prerequisite or redirect the active workstream.
+This dated checkpoint is historical. The current owner-approved order is P1 Swap → P2 DEX → P3 Login → P4 Game → P5 Launchpad; Game is not a prerequisite for P1–P3, and Launchpad is last.
 
 - [x] DEX live Solana discovery was merged in PR #252. Its live provider, search, token detail and empty/error-state paths are covered by the browser suite.
 - [x] Mobile DEX token-detail close counter-fix was merged in PR #256. The later exact-head Browser Smoke run confirmed mobile market return/navigation on 390px and 360px widths.
@@ -3929,11 +3926,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Login remains unverified for production provider setup: confirm Supabase Google/X/Solana/Ethereum provider credentials, redirect allowlist, SMTP/email confirmation and real-account sign-in/session/cloud-save tests. Do not claim providers work solely because client code exists.
 - [ ] Launchpad remains Devnet preparation/read-only provenance work; verify current provider/API/on-chain config and controlled Devnet create/migrate/custody lifecycle before enabling any launch or mainnet action.
 
-**Next execution order (authoritative):**
-1. DEX: verify current-main production deployment and live provider behavior; close any remaining DEX-specific defects only.
-2. Swap: complete per-DEX account-role/fee/token-movement validation and execution-time re-fetch, add adversarial fixtures, then controlled Devnet lifecycle. Keep execution hard-gated.
-3. Login: configure and test real Supabase providers, redirects, email and account persistence.
-4. Launchpad: complete Devnet verification and custody/authority review after Swap safety.
+**Current owner-approved order (authoritative):**
+1. P1 Swap: finish security validation, Devnet lifecycle and production deployment/release gates; keep execution fail-closed until proven.
+2. P2 DEX: verify real production providers, market data, charts, token identity and desktop/mobile behavior.
+3. P3 Login: make all intended methods available and verify real provider/account lifecycle.
+4. P4 Game: complete the real playable game, not demo-only systems.
+5. P5 Launchpad: complete the real end-to-end launch and liquidity lifecycle last.
 
 **Engineering rule:** do not commit a speculative fix. First reproduce locally or with a focused deterministic test, inspect exact source and failure logs, implement one isolated counter-fix, run targeted tests, then run Validate and the relevant Browser Smoke assertions on the exact head. A gameplay-only failure must be reported separately and must not be represented as a DEX/Swap failure. Never weaken or bypass the release gates to obtain a green workflow.
 
