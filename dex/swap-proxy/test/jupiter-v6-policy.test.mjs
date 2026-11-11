@@ -94,7 +94,7 @@ test("rejects unexpected writable privileges on route authority and fee placehol
 test("rejects Compute Budget instructions that carry account metas or unsupported opcodes", () => {
   const withAccounts = parsed();
   withAccounts.instructions.unshift({
-    programIdIndex: 7,
+    programIdIndex: 8,
     accountIndexes: [1],
     data: new Uint8Array([2, 1, 0, 0, 0])
   });
@@ -102,7 +102,7 @@ test("rejects Compute Budget instructions that carry account metas or unsupporte
 
   const unsupported = parsed();
   unsupported.instructions.unshift({
-    programIdIndex: 7,
+    programIdIndex: 8,
     accountIndexes: [],
     data: new Uint8Array([99])
   });
