@@ -4487,3 +4487,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 
 
 **Account-index clarification:** Jupiter's trace records CPI account-key indices, not the unique occurrence number in its outer account array. The user wallet and Jupiter program are repeated outer keys. Positions 79 and 62/83 therefore remain duplicate-key layout observations; their handler-level consumption cannot be uniquely assigned from address-only alignment. The fee account at position 10 is not ambiguous because inner transfer 17 directly references transaction key index 19.
+
+
+## 2026-11-12 — account-key duplicate-position audit instrumentation
+
+- Added `outerInstructionPositionsForSameTransactionKey` to every CPI account in the read-only Jupiter trace report. The field maps the exact transaction account-key index to every occurrence of that same index in the parent Jupiter instruction's account array.
+- Added regression coverage for duplicate static account keys and address-lookup-table key ordering. The report explicitly states that these positions do not reveal which duplicate occurrence a deployed handler consumed; no cursor/slice inference is made.
+- Code commit: `ae0f10aa98b8db85f49b69a7c3cda8e7802ee95c`. Test commit: `b4da973aaff9482ed90e8c89f57cbd6e84b49297`. Test-order correction: `ddf5f609fde582845d4265629aec59afae86858f` (the ALT test now asserts that combined account-key index 2 resolves to the first loaded writable address).
+- The new commits are present on `codex/swap-jupiter-fixed-account-roles-2026-11-11`. Compare against main: 184 ahead / 0 behind at this checkpoint.
+- Exact-head workflow results for the new commits are **not yet visible** through the commit-associated workflow query. Do not claim these new tests or trace output are verified. The preceding code head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` passed Validate (95 tests), Browser Smoke, Jupiter CPI Trace Audit and IDL History Audit; those results do not cover the new instrumentation.
+- No failed workflow has been observed for the new code yet. No retry or failure counter-fix is appropriate without an actual failed job.
+- Safety unchanged: `route_v2` remains rejected by production validation; signing/execution gates remain false; no production deployment or live swap execution is claimed.
+- Exact next task: obtain and inspect fresh Validate, Browser Smoke and Jupiter CPI Trace Audit runs on the latest branch head. If no run appears, use a supported Actions trigger or report the dispatch limitation; do not mark the change complete. If green, inspect the trace artifact and update the duplicate-key research only with transaction-key-index evidence, then continue CPI privilege and multi-shape route verification.
