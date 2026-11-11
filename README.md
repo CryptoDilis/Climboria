@@ -1,34 +1,49 @@
-# CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
+# CLIMBORIA — PRIORITY OVERRIDE & DELIVERY RECORD
 
-**Locked on: 2026-11-11. These four priorities are the agreed product execution order. Do not reorder, skip, or replace them without the user's explicit instruction.** Work top-down. The current gameplay release gate is a prerequisite to shipping these priorities, not a replacement priority.
+**Owner instruction — 2026-11-11:** Finish the four ecosystem priorities in this exact order: **P1 Live DEX → P2 Swap → P3 Login → P4 Launchpad.** This explicit instruction supersedes the previous Sanctuary-first release-gate ordering. Do not resume Sanctuary alignment/diagnostics unless the owner explicitly asks.
 
-## Release gate — finish current gameplay blocker before P1
+## Delivery standard
+- The target is production functionality, not a demo, mockup, static preview, or documentation-only completion.
+- Do not claim a priority is complete until its real provider/service integration, production configuration, security controls, exact-head CI, real-device/account/Devnet checks where applicable, and deployment evidence pass.
+- Do not fabricate live data or enable unsafe wallet/on-chain execution to satisfy a deadline. Keep only the unsafe action fail-closed; deliver safe verified read/live functionality.
+- For every failure: inspect exact logs/artifacts, identify root cause, apply a distinct targeted counter-fix, and rerun the relevant checks. Never recommit the same failed code or weaken assertions.
+- Record each meaningful implementation, exact commit/PR/head, test run IDs/results, external blockers, deployment state, and the precise next task here. Avoid documentation-only churn.
 
-**Sole active gameplay fix: PR #246 — Sanctuary spawn alignment.**
-- [x] PR #242's validated mobile-orientation harness merged to main: `66909629ea0fcf9dec75b0e9002a776072fe9b57`.
-- [x] Main Validate `42948561557` and Pages deployment `42948561382` passed.
-- [x] PR #246 Sanctuary landing-center spawn fix implemented; exact-head Validate `42948629207` passed on `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c`.
-- [ ] Re-verify PR #246 Sanctuary spawn alignment on the now-passing mobile gameplay path; confirm takeover, teleport and death-respawn align with the physical Sanctuary landing, including grounding/collision/orientation. The prior Browser Smoke failure is no longer reproducing on PR #247's full desktop/mobile smoke run.
-- [ ] If a check fails, inspect its exact failing step, logs and artifacts; identify the new root cause; implement a distinct targeted counter-fix; rerun Validate and Browser Smoke on the new exact head. Never repeat failed code or weaken assertions.
-- [ ] Merge #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified; confirm Pages deployment on resulting main.
-- [ ] Do not reopen/recreate superseded #244/#245.
+## P1 — LIVE DEX (active)
+- Port only the live discovery implementation from donor PR #243 onto a fresh branch from latest main: latest token profiles + top active boosts, batched Solana pair lookup, positive liquidity/price validation, 24h-volume sorting within the discovery sample, honest source labeling, provider error/empty states, and real token detail navigation.
+- Verify desktop, 390px and 360px mobile, search, token selection/detail, chart, provider failure and true-empty cases. Review screenshots and confirm live Pages deployment.
+- Do not describe the sample as a global market ranking or invent provider data.
 
-**Latest verified P0 state (2026-11-11):**
-- [x] PR #246 Validate `42948629207`: SUCCESS on exact head `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c`.
-- [x] PR #246 Browser Smoke `42948629303`, job `130287377797`: FAILED at gameplay step 15. Steps 1–14 passed; screenshot upload passed. Artifact `13823653421` has desktop gameplay/cave and desktop/mobile home + DEX screenshots, but no mobile gameplay/cave captures because mobile GLB readiness blocked the flow.
-- [x] Main post-merge Browser Smoke `42948561787`, job `130287158900`: also FAILED at gameplay step 15. Steps 1–14 passed; artifact `13823808166` uploaded. Failure reproduces the same mobile hero-readiness symptom.
-- [x] Both failure logs show the full `Climboria_Hero.glb` response completed (42,923,204 decoded bytes; 42,923,504 transfer bytes), with no failed GLB requests and no browser errors. PR #246 resource duration was 182,197ms and readiness wait 101,836ms; main resource duration was 250,881ms and readiness wait 111,355ms.
-- [x] At failure: `heroReady=false`, `glbRenderer=null`, `cameraHero=false`, selected hero `loading-adventurer`, renderer `awaiting-saved-glb`. This narrows the fault to the post-response load path, but does not yet prove whether GLTF parse/image decode, scene bounds/traversal, or readiness handoff is responsible.
-- [x] Reviewed PR #246 desktop gameplay screenshot from artifact `13823653421`: avatar is standing on the Sanctuary circular landing; mobile screenshot evidence is still absent.
-- [x] Recorded failure diagnosis in main README at commit `76d1a528c642a93bd55032228b2c11b2ec7fb1c9`.
-- [x] README Pages deployment for the recorded diagnosis passed: run `42949853011` on commit `76d1a528c642a93bd55032228b2c11b2ec7fb1c9`.
-- [x] Latest README deployment passed: run `42950076408` for main commit `870b56399b06391d715c28000b65024fc0e4e322`.
-- [x] Opened diagnostic-only counter-strategy PR #247: https://github.com/CryptoDilis/Climboria/pull/247. Branch `codex/mobile-gltf-phase-diagnostics-2026-11-11`, exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`; changed only `game/play.html` and `.github/scripts/game-smoke.mjs`. It records download progress, GLTF parse start/completion/error, scene bounds/scale/traverse/attach/rig phases, and final ready state. No timeout increase, spawn change, fallback, readiness bypass, or feature disablement.
-- [x] PR #247 Validate `42949923101`: SUCCESS on exact diagnostic head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`.
-- [x] PR #247 Browser Smoke `42949922898`, job `130291551496`: SUCCESS on exact head `c06c2b8afdc511ba4302bfa61d1fe26993c7c66e`. All 16 main steps passed, including desktop/mobile Jarrell's Peak gameplay, mobile cave entrance/interior captures, and screenshot upload (artifact `13824109692`, 8.9 MB). Mobile diagnostics report `ready=true`, player visible, 70 render frames, and no render errors. This confirms the earlier GLB readiness failure is not currently reproducible; no failure-phase trace was emitted because the run passed.
-- [ ] Do not merge PR #246 or #247 until the mobile gameplay readiness and Sanctuary landing visual acceptance are satisfied. PR #247 is diagnostic only and must not be merged as a production fix unless its value is retained deliberately and the release gate is met.
-- [ ] PR #247 remains diagnostic-only; do not merge it solely to ship instrumentation. PR #246 remains unmerged until its Sanctuary landing-center correction is reverified against the now-passing mobile gameplay path and desktop/mobile screenshots.
-- [ ] **Single next task:** rerun only PR #246's previously failed Browser Smoke job against its unchanged exact head, using the successful PR #247 full-smoke result as evidence that the earlier GLB blocker may have been transient. If it passes, inspect screenshots and merge the Sanctuary fix; if it fails, use the new exact logs to select a distinct root-cause counter-fix. Keep P1 DEX blocked until this gameplay release gate closes.
+## P2 — SWAP
+- Complete trusted ALT resolution and a semantic instruction allowlist; validate program IDs, account roles, signer/writable flags, mints, source/destination, exact amounts, minimum output, slippage, fees and all token movements.
+- Enforce server-issued quote/order binding, expiry, replay protection, concurrency safety and idempotency. Add adversarial tests.
+- Complete controlled Devnet wallet-sign/submit/confirm and failure/replay/timeout lifecycle; verify Cloudflare Worker production bindings, Durable Object persistence/migrations, health, TLS/CORS, rate limits, logs, monitoring and rollback.
+- Keep transaction execution fail-closed until independent security review and all evidence pass. Safe live market data/quotes should remain available.
+
+## P3 — LOGIN
+- Reconcile the existing Supabase implementation without duplicate auth stacks. Verify migrations/RLS and per-player ownership.
+- Configure actual Supabase Site URL/redirect allowlists, SMTP/email confirmation, Google OAuth, X OAuth 2.0, Solana SIWS and Ethereum SIWE providers as supported.
+- Run controlled real-account sign-in, sign-out, refresh/session restoration, account-linking and cross-user isolation tests on production-domain redirects. Mock tests alone do not qualify as live login.
+
+## P4 — LAUNCHPAD
+- Complete live provider/contract provenance, mint/pool identity, curve and migration state, authority/custody, treasury/fee destinations, upgrade/admin controls, and failure/recovery verification.
+- Reconcile the existing LaunchLab work only after P1–P3. Complete controlled Devnet lifecycle and production operational controls before enabling create/launch/migration or funds-moving actions.
+
+## 2026-11-11 execution checkpoint
+- [x] Owner explicitly overrode the Sanctuary-first gate and reaffirmed P1→P2→P3→P4 as today's delivery target.
+- [x] Sanctuary PRs #246/#247 paused; no further Sanctuary retries, commits, or diagnostics are authorized unless requested.
+- [x] Inspected latest main: `44391403df274cb70a60a3f4aba1071a616813cc`.
+- [x] Inspected open PRs #243 (DEX donor), #233–#235 (Swap), #236/#228 (Login), and #231 (Launchpad). Existing branches are stale/draft and are not to be merged blindly.
+- [ ] P1 implementation branch created from latest main; exact-head Validate/Browser Smoke, screenshot review and Pages deployment pending.
+- [ ] P2–P4 remain incomplete until their real security/provider/device/account gates above pass.
+- **Current active branch:** `codex/live-dex-priority-override-2026-11-11`.
+- **Next task:** complete P1 code port and exact-head CI; diagnose failures from evidence, then continue in order.
+
+---
+
+# CLIMBORIA — HISTORICAL PROJECT NOTES
+
+The historical checkpoints below are retained for traceability. Any older Sanctuary-first ordering or “P1 blocked until gameplay gate closes” instruction is superseded by the owner override above.
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
