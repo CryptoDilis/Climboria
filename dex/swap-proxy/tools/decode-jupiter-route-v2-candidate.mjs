@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 
 const EXPECTED_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -190,7 +192,7 @@ async function main() {
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main().catch((error) => {
     process.stderr.write(`${error.stack ?? error}\n`);
     process.exitCode = 1;
