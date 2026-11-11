@@ -781,3 +781,12 @@ Security boundary remains unchanged: production validator accepts only the legac
 - [ ] Capture additional route_v2/Meteora samples with varying BinArray counts, direction and Token-2022 transfer-hook slices.
 - [ ] Obtain CPI-requested signer/writable evidence, controlled Devnet reproduction and independent Solana security review.
 - [ ] Keep Jarrell's Peak gameplay smoke and production hosting checks separate from ecosystem Browser Smoke.
+
+
+### Follow-up lead — reconstruct current and historical on-chain IDLs
+
+- [x] Identified the public Solana IDL Explorer documentation at https://idl.solana.com/docs. It documents GET /api/idl, GET /api/latest, and GET /api/history for a program ID, with current and historical Anchor/Program Metadata IDLs; it also documents an @solana/idl CLI that can query a supplied mainnet RPC.
+- [!] This is an IDL retrieval/indexing tool, not a Jupiter authority statement. The Jupiter program has not yet been queried successfully through this API in this task. Do not claim that it returned an IDL or that the returned IDL is authenticated to a particular deployed binary until its source, slot, authority and content hash are inspected.
+- [ ] Next retrieval path: query program JUP6LkbZbjS1jKKwapdHNy74Z3tLUZoi5QNyVTaV4 with /api/latest and /api/history (or the CLI against archival RPC); preserve raw content, type/source, metadata account address, authority, version, slot/time and SHA-256. Check whether the route_v2 schema appears in Anchor IDL history and whether the revision's active slot covers candidate transaction slot 468153382.
+- [ ] If the explorer returns no IDL or an incomplete legacy schema, retrieve the Solscan Program IDL tab's raw JSON/history or query the Anchor IDL account directly from archival RPC. Compare the IDL's instruction discriminators, RoutePlanStepV2 structure, enum variant order and payload field types against the raw transaction bytes.
+- [!] An IDL proves an interface schema only. It does not by itself prove the deployed binary implements that schema or reveal Jupiter's runtime CPI account slicing/privileges. Keep byte 181 unmapped and all execution gates closed until both interface provenance and deployed-code/CPI behavior are independently established.
