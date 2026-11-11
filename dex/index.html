@@ -1236,7 +1236,21 @@ $('communityMessage').addEventListener('input',e=>{$('communityCount').textConte
 $('exportCommunity').addEventListener('click',exportTokenRoom);
 $('copyTokenMint').addEventListener('click',async()=>{if(!activeCommunityMint)return;try{await navigator.clipboard.writeText(activeCommunityMint);$('copyTokenMint').textContent='Copied';setTimeout(()=>{$('copyTokenMint').textContent='Copy token mint'},1500)}catch(e){$('copyTokenMint').textContent='Copy unavailable'}});
 $('watchToken').addEventListener('click',()=>{if(!activeCommunityMint)return;const list=readWatchlist();const i=list.indexOf(activeCommunityMint);if(i>=0)list.splice(i,1);else list.push(activeCommunityMint);try{localStorage.setItem(WATCHLIST_KEY,JSON.stringify(list));openTokenRoom(activeCommunityMint)}catch(e){$('watchTokenNote').textContent='Browser storage unavailable.'}});
-$('closeDetail').addEventListener('click',()=>{$('tokenDetail').classList.remove('open');document.body.classList.remove('mobile-token-view','mobile-base-view');$('detailChart').src='about:blank';setDexMobileView('solana')});$('refreshDetail').addEventListener('click',()=>{if(!activeDetailMint)return;const b=$('refreshDetail');b.disabled=true;b.textContent='Refreshing…';openToken(activeDetailMint,{refresh:true,fromUrl:true}).finally(()=>{b.disabled=false;b.textContent='↻ Refresh data'});});
+let lastTouchCloseAt=null;
+function closeDexTokenDetail(event){
+ const now=performance.now();
+ if(event?.type==='click'&&event.detail>0&&lastTouchCloseAt!==null&&now-lastTouchCloseAt<500){lastTouchCloseAt=null;return;}
+ if(event?.type==='pointerup'&&event.pointerType==='touch')lastTouchCloseAt=now;
+ event?.preventDefault?.();event?.stopPropagation?.();
+ detailRequestId++;activeDetailMint=null;activeDetailPairs=[];
+ $('tokenDetail').classList.remove('open');
+ document.body.classList.remove('mobile-token-view','mobile-base-view');
+ setDexUrl(null,null);
+ $('detailChart').src='about:blank';
+ setDexMobileView('solana');
+}
+document.addEventListener('pointerup',event=>{if(event.pointerType==='touch'&&event.target?.closest?.('#closeDetail'))closeDexTokenDetail(event)},true);
+document.addEventListener('click',event=>{if(event.target?.closest?.('#closeDetail'))closeDexTokenDetail(event)},true);$('refreshDetail').addEventListener('click',()=>{if(!activeDetailMint)return;const b=$('refreshDetail');b.disabled=true;b.textContent='Refreshing…';openToken(activeDetailMint,{refresh:true,fromUrl:true}).finally(()=>{b.disabled=false;b.textContent='↻ Refresh data'});});
 $('shareToken').addEventListener('click',async()=>{if(!activeDetailMint)return;const url=new URL(location.href);url.searchParams.set('token',activeDetailMint);const selected=new URLSearchParams(location.search).get('pool');if(selected)url.searchParams.set('pool',selected);try{await navigator.clipboard.writeText(url.href);$('shareToken').textContent='✓ Link copied';setTimeout(()=>$('shareToken').textContent='↗ Share',1800)}catch(e){$('shareToken').textContent='Copy blocked · copy address from URL'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-copy-mint]');if(!b)return;navigator.clipboard?.writeText(b.dataset.copyMint).then(()=>b.textContent='✓ Copied').catch(()=>b.textContent='Copy unavailable')});
 let dexSearchRequestId=0,dexSearchTimer=null;
