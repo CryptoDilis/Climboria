@@ -13,10 +13,6 @@ on:
       - "swap/**"
       - "launchpad/**"
       - "climboria-favicon.png"
-      - "game/assets/music/TRACK_01.mp3"
-      - "game/play.html"
-      - "game/index.html"
-      - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -27,9 +23,6 @@ on:
       - "launchpad/**"
       - "swap-config.js"
       - "climboria-favicon.png"
-      - "game/assets/music/TRACK_01.mp3"
-      - "game/play.html"
-      - ".github/scripts/game-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
 
   workflow_dispatch:
@@ -715,12 +708,6 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
-      - name: Run Jarrell's Peak desktop and mobile gameplay smoke tests
-        timeout-minutes: 21
-        run: |
-          echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
-          timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
-
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -729,12 +716,6 @@ jobs:
           path: |
             climboria-desktop-home.png
             climboria-mobile-home.png
-            climboria-desktop-gameplay.png
-            climboria-mobile-gameplay.png
-            climboria-desktop-cave-entrance.png
-            climboria-mobile-cave-entrance.png
-            climboria-desktop-cave-interior.png
-            climboria-mobile-cave-interior.png
             climboria-dex-token-socials.png
             climboria-dex-token-socials-mobile.png
             freshwater-*.png

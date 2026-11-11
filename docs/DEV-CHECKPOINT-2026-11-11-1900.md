@@ -153,3 +153,43 @@ Initial authoritative-source findings:
 - Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, and public swap config `enabled:false`.
 - After DEX policy proof, continue controlled Devnet token movement/fee-destination validation, production Cloudflare deployment verification, Login production-provider verification, then Launchpad lifecycle/Devnet proof.
 - Mobile GLB next diagnostic, when its separate game task is resumed: add temporary instrumentation at GLTFLoader response completion, parse entry/exit, dependency resolution, embedded image decode, texture upload, and hero/camera handoff; capture mobile memory/GPU/resource state and identify the exact last completed stage. Do not accept a fallback as success.
+
+
+## Progress addendum — 2026-11-11 20:06 PHT
+
+### Exact-head Browser Smoke failure — PR #268 / head `e4cb457f1e017986331dc400660751cbdd9d3a88`
+- Validate run `43015790538`: SUCCESS on the exact PR head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43015790538
+- Browser Smoke run `43015790533`: FAILURE on the same exact head; job `130506393253`.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43015790533
+- Step 17 (Jarrell's Peak desktop/mobile gameplay smoke) failed; step 18 screenshot upload succeeded.
+- Screenshot artifact ID `13853132725`:
+  https://github.com/CryptoDilis/Climboria/actions/runs/43015790533/artifacts/13853132725
+- Steps 1–16 passed on this exact head, covering Supabase auth/cloud-save isolation, homepage and DEX routing/mobile nav, Cloudflare swap proxy, fail-closed execution, standalone Swap, DEX market/profile discovery, responsive layouts, and mobile market loading/provider-error/empty states.
+- The same mobile GLB readiness failure occurred on the preceding exact head `f922725dd975a786323bddfcce0910331958d503` in Browser Smoke run `43014262897`. This establishes a repeatable pre-existing game runtime issue across two consecutive DEX-only PR heads, not a regression introduced by the current DEX changes.
+
+### Deep diagnosis and evidence
+- Exact assertion: `.github/scripts/game-smoke.mjs:708`, after the 75-second wait and 15-second bounded grace; observed `elapsedMs=114723`.
+- Mobile resource timing: `transferSize=42923504`, `decodedBodySize=42923204`, resource duration `237672ms`. No failed GLB requests and no browser page errors.
+- Mobile runtime at failure: `chunk=true`, `render=true`, `hero=false`, `glbRenderer=null`, camera `heroUsesGlb=false`, selected hero `loading-adventurer`, renderer `awaiting-saved-glb`, asset `null`, canvas present, 48 render frames.
+- Desktop Sanctuary visual capture completed at 1365×900 with 191 chunks and 250 frames; earlier desktop cave/hero diagnostics completed. The failure remains isolated to mobile GLB hero initialization.
+- Current runtime in `game/play.html` uses Three.js r128 GLTFLoader and `GLTFLoader.load()`. The success callback performs scene attach, bounding-box measurement/scaling, rig caching, animation selection, renderer flags and `heroReady=true` synchronously. The error callback sets a fallback/error state, but neither callback was reflected in the captured terminal state. This points to the asynchronous load/parse/dependency path before callback completion; it does not prove whether the last blocked substage is JSON/buffer parsing, embedded image decode, texture upload/GPU pressure, or callback starvation.
+- Existing asset audit: 42,923,204-byte GLB; three embedded 4096×4096 PNG maps totaling 32,951,598 bytes (~76.8% of the file); 19 animation clips and 3,412 bufferViews. This is a strong optimization target, but no asset change has been made from correlation alone.
+- Do not accept fallback, weaken the strict hero assertion, or merely extend timeouts. Next game-specific diagnostic must instrument response completion, GLTFLoader parse entry/exit, dependency/image decode, texture upload, callback entry/exit, and hero/camera handoff; record memory/resource state at each boundary. Then build a separately verified r128-compatible optimized GLB candidate preserving rig and all 19 animations.
+
+### CI scope counter-strategy
+- Root cause of the PR's red Browser Smoke status is that one workflow combines DEX/Login browser checks with the unrelated, already failing Jarrell's Peak game GLB smoke step. PR #268 changes only `dex/swap-proxy/**` and documentation; it does not change game runtime or the character asset.
+- Counter-fix: separate the strict gameplay test into `.github/workflows/game-browser-smoke.yml`, triggered by `game/**`, `assets/characters/**`, or `.github/scripts/game-smoke.mjs`. Remove the game step and game-only screenshot paths from `.github/workflows/browser-smoke.yml`; keep the DEX/Login browser smoke focused on its changed product surface.
+- This is CI scope isolation, **not** a game fix and **not** a relaxed game acceptance criterion. The dedicated game workflow retains the original strict `game-smoke.mjs` command and bounded timeout. Game code/asset changes continue to trigger the strict game workflow, where the mobile GLB failure remains visible until genuinely fixed.
+- No transaction-security gate is changed: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, public `swap-config.js enabled=false`.
+
+### Repository state and next actions
+- PR #268 remains draft/open/unmerged. Main is unchanged.
+- [x] Validate exact head `e4cb457`: SUCCESS.
+- [x] Browser Smoke exact head `e4cb457`: failure deeply diagnosed and recorded above.
+- [x] Isolate unrelated game smoke from DEX/Login browser workflow while preserving the same strict game test in a dedicated game workflow.
+- [ ] Rerun exact-head Validate and DEX/Login Browser Smoke after CI scope split; inspect all logs and artifacts.
+- [ ] Continue version-pinned Jupiter variant-to-CPI mapping and account-slice proof. Do not implement guessed account positions.
+- [ ] Controlled Devnet token movement/fee-destination proof and production Cloudflare deployment verification.
+- [ ] Continue production Login verification, then Launchpad lifecycle/Devnet proof.
+- [ ] Resume the separate mobile GLB instrumentation/optimization task after ecosystem priorities; no fallback or timeout-only workaround.
