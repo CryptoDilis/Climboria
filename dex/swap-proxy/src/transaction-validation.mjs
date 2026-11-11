@@ -241,7 +241,7 @@ export function validateJupiterOrderMetadata(order, { taker, amount } = {}) {
   if (order.transactionVersion !== 0 && order.transactionVersion !== "0") {
     fail("Only Solana v0 orders are currently supported");
   }
-  if (order.gasless === true || (order.signatureFeePayer && order.signatureFeePayer !== taker)) {
+  if (order.gasless !== false || (order.signatureFeePayer && order.signatureFeePayer !== taker)) {
     fail("Gasless or externally fee-paid orders are not supported");
   }
   if (typeof amount !== "string" || order.inAmount !== amount) {
