@@ -31,6 +31,15 @@ Counter-fix:
 - Add adversarial tests for phantom intermediate inputs and dead-end branches.
 - Source reference: https://github.com/jup-ag/instruction-parser/blob/main/src/idl/jupiter.ts (route instruction documentation and `RoutePlanStep` fields).
 
+## Follow-up DEX program privilege hardening
+
+A third review found that the validator located the first occurrence of each approved DEX program ID in the remaining-account list and checked only that occurrence was readonly. If the same program key appeared again through a different account index, a writable alias could escape this specific privilege check.
+
+Counter-fix:
+- Collect every remaining-account position whose resolved key equals each approved DEX program ID.
+- Require every occurrence to be readonly; signer privileges remain rejected for all remaining accounts.
+- Add an adversarial fixture that aliases the Raydium program through a writable address-lookup-table entry.
+
 ## Safety
 - No transaction signing, order issuance, or execution gate is enabled.
 - `EXECUTION_SECURITY_REVIEW_COMPLETE` remains false.
