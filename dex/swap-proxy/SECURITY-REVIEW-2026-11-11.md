@@ -71,4 +71,15 @@ This is one transaction-specific route mapping only. RPC does not expose CPI-req
 
 The observed dynamic account `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8` was fetched at finalized commitment with the read-only account audit utility. Its owner is the Meteora DLMM program, its discriminator `5c8e5cdc059446b5` matches the official `BinArray` IDL discriminator, its data length is 10,136 bytes, and it is not the bitmap-extension account. This verifies the final (17th) account in this transaction's Meteora `swap2` CPI vector as a BinArray. Workflow `43031160387` passed and uploaded artifact `13860293557`.
 
-The exact CPI vector for this one route is now mapped to 16 official fixed `Swap2` account roles plus one verified BinArray. This still does not reveal the CPI-requested AccountMeta signer/writable flags, resolve the extra Jupiter program account at outer route position 27, prove general multi-hop/split cursor behavior, or attest the deployed Jupiter binary. Keep variant 75 excluded and all signable/execution gates false.
+The exact CPI vector for this one route is now mapped to 16 official fixed `Swap2` account roles plus one verified BinArray. This still does not reveal the CPI-requested AccountMeta signer/writable flags, verify the transaction-specific Anchor event self-CPI program account at outer route position 27, prove general multi-hop/split cursor behavior, or attest the deployed Jupiter binary. Keep variant 75 excluded and all signable/execution gates false.
+
+
+## Jupiter event self-CPI account partition — 2026-11-11
+
+The extra Jupiter program ID at outer route account position 27 is now explained for the preserved finalized transaction:
+- Outer position 7 is Jupiter's event-authority account `D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf`; position 8 is the Jupiter program account. This matches the generated Jupiter V6 `RouteBuilder` fixed account suffix (event authority, then program): https://docs.rs/jupiter-aggregator-v6-sdk/latest/jupiter_aggregator_v6_sdk/generated/instructions/struct.RouteBuilder.html.
+- Outer position 27 is the same Jupiter program ID.
+- Inner instruction ordinal 5 invokes Jupiter at stack height 2 with the event-authority PDA as its sole account. Its decoded instruction data begins with Anchor's `EVENT_IX_TAG_LE` (`e445a52e51cb9a1d`), the documented marker for `emit_cpi!` event self-CPI: https://solana.com/docs/programs/anchor-events.
+- Thus outer position 27 supplies the Jupiter program account for the later event self-CPI; it is not a Meteora `swap2` account. The Meteora CPI remains exactly outer positions 10–26.
+
+This is transaction-specific evidence, not proof of every Jupiter route family's account cursor. Exact CPI-requested signer/writable flags, additional route shapes, deployed-binary provenance, Devnet acceptance and independent review remain open. Keep variant 75 excluded, `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, and public frontend execution disabled.
