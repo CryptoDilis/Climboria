@@ -16,6 +16,8 @@ const JUPITER = "https://api.jup.ag/swap/v2";
 const UPSTREAM_TIMEOUT_MS = 12000;
 // Hard source gate: environment configuration alone cannot enable execution.
 const EXECUTION_SECURITY_REVIEW_COMPLETE = false;
+// Do not return wallet-signable transactions until program semantics are independently reviewed.
+const SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE = false;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -93,8 +95,12 @@ async function handleOrder(request, env) {
   if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
     return json({ error: "Amount must be a positive integer string in base units" }, 400);
   }
+  if (!env.JUPITER_API_KEY) return json({ error: "Backend is not configured: missing Jupiter server API key" }, 503);
   if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
     return json({ error: "Backend order store is not configured; executable orders are fail-closed" }, 503);
+  }
+  if (!SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE) {
+    return json({ error: "Wallet-signable orders are disabled pending semantic instruction validation and independent security review. Use the read-only quote endpoint." }, 503);
   }
   const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
