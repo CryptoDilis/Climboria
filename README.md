@@ -13,7 +13,7 @@
 - [ ] Merge #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified; confirm Pages deployment on resulting main.
 - [ ] Do not reopen/recreate superseded #244/#245.
 
-**Last recorded run state:** PR #246 Browser Smoke `42948629303` and main Browser Smoke `42948561787` were still running at Jarrell's Peak gameplay step 15, screenshot upload pending. Poll existing runs; do not start duplicate runs or call an active run failed.
+**Latest verified run state (2026-11-11):** PR #246 Browser Smoke `42948629303` (job `130287377797`) and main Browser Smoke `42948561787` (job `130287158900`) are both `in_progress`. In both runs, steps 1–14 are SUCCESS; step 15, Jarrell's Peak desktop/mobile gameplay, is IN_PROGRESS; screenshot upload is PENDING. No terminal result yet. Poll these exact runs; do not start duplicate runs or call an active run failed.
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
@@ -57,7 +57,9 @@
 3. One priority at a time; one authoritative PR per fix. Do not restart completed tasks or create duplicate implementations.
 4. On failure: inspect exact failing step/log/artifact, prove root cause, choose a genuinely different counter-strategy, then rerun relevant checks on the exact new head. Never recommit the same failed code.
 5. Keep real functionality live where safe. Do not disable features merely to pass tests, weaken acceptance criteria, fake provider data, or claim production readiness from mocks.
-6. After each task, update this queue in place with exact commit/PR, changed files, workflow IDs and terminal results, remaining blockers, and the single next task. Keep older dated notes below as historical evidence; do not append duplicate active queues.
+6. **Mandatory session handoff:** before any chat/session ends, update this README in place with (a) locked P1–P4 order, (b) current priority and exact active subtask, (c) completed work with commit/PR and changed files, (d) verification evidence with exact workflow/run IDs and PASS/FAIL/IN-PROGRESS status, (e) failures/root cause/counter-strategy, (f) blockers/dependencies, and (g) exactly one next action. A commit alone is not completion; never mark unverified work done.
+7. At the start of every continuation, read this queue, inspect latest main/open PRs/active runs, and resume from the recorded exact next action. Do not ask the user to repeat priorities or progress already in the repository.
+8. Keep this as the single source of truth: update this queue in place; do not append duplicate active queues or conflicting progress checklists. Keep older dated notes below as historical evidence.
 
 ---
 
