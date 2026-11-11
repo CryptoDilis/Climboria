@@ -65,3 +65,13 @@ After these checks pass, continue the full per-DEX CPI/account-role schemas and 
 - [ ] Next: inspect the trace artifact's exact report and record evidence/limitations in `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`; continue variant-specific account-role and token-flow validation with pinned sources and controlled Devnet transactions.
 - [ ] Run a dedicated current-head gameplay smoke when its workflow is dispatched or game/assets paths change.
 - Security gates remain closed: no signable orders, no transaction execution, no production deployment claim.
+
+
+## Follow-up discovery classifier correction — 2026-11-11
+
+- [x] Inspected artifact `13864055427` from exact-head run `43036765589`. The bounded newest-five discovery sample found one Jupiter outer instruction containing a Meteora Swap2 CPI whose route-plan header was null.
+- [x] Root cause: discovery treated every Jupiter outer instruction with an inner Meteora Swap2 CPI as a `matchingRoutes` result, without requiring a recognized Jupiter route-plan discriminator.
+- [x] Counter-fix: include the raw instruction data and discriminator in every discovery result; set `routePlanHeaderRecognized`; count only recognized route-plan headers as `matchingRoutes`; report opaque Jupiter/Meteora CPI observations separately as `matchingJupiterMeteoraInstructions`.
+- [x] Added a regression test for an unknown instruction discriminator and updated workflow triggers/output.
+- [ ] Exact-head Validate and CPI audit are pending on the corrected code. This fix is not yet marked verified.
+- [!] Do not classify the 18-account candidate as a standard Jupiter route until its outer discriminator is matched to a pinned Jupiter IDL/SDK and the full account vector is independently decoded.
