@@ -278,18 +278,23 @@ test("normalizes Jupiter upstream server errors without claiming an order exists
   }
 });
 
-test("rejects an incomplete Jupiter order response without a request ID", async () => {
+test("does not fetch or expose an incomplete Jupiter order while signable-order gate is closed", async () => {
   const originalFetch = globalThis.fetch;
+  let upstreamCalled = false;
   try {
-    globalThis.fetch = async () => Response.json({ transaction: "AQID", inAmount: "100", outAmount: "200" });
+    globalThis.fetch = async () => {
+      upstreamCalled = true;
+      return Response.json({ transaction: "AQID", inAmount: "100", outAmount: "200" });
+    };
     const req = new Request("https://worker.test/api/swap/order", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
       body: JSON.stringify({ inputMint: valid, outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", amount: "100", taker: valid })
     });
     const res = await worker.fetch(req, env);
-    assert.equal(res.status, 502);
-    assert.match((await res.json()).error, /incomplete order response/i);
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /wallet-signable orders are disabled/i);
+    assert.equal(upstreamCalled, false);
   } finally {
     globalThis.fetch = originalFetch;
   }
