@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 
 const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
 try {
-  const authPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const authPage = await browser.newPage({ viewport: { width: 1365, height: 900 } });
   const pageErrors = [];
   authPage.on("pageerror", error => pageErrors.push(error.message));
   await authPage.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0", route => route.fulfill({
