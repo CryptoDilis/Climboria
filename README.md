@@ -4410,3 +4410,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Detailed findings and exact source/blob metadata: `docs/JUPITER-ROUTE-V2-IDL-RESEARCH-2026-11-12.md`; continuing research log: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
 - Safety unchanged: route_v2 stays diagnostic-only/rejected by production legacy-route validation; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`. No signing, execution, deployment, or production approval.
 - Next: inspect the IDL History Audit workflow/artifact; diagnose any HTTP/transport failure from the raw response and job logs; verify IDL authority/source, revision slot and exact route_v2 discriminator before decoding byte 181. Keep gameplay and production release checks separate.
+
+
+## 2026-11-12 — Jupiter route_v2 schema breakthrough
+
+- Downloaded and inspected IDL History Audit artifact `13879226571` (run `43072350854` SUCCESS). The matching Anchor IDL revision is active from slot `467726546`, which covers candidate transaction slot `468153382`; its `route_v2` discriminator `bb64facc31c4af14` exactly matches the candidate.
+- IDL content SHA-256: `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981`. Anchor metadata account reported by Explorer: `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`.
+- The slot-matched 211-variant `Swap` enum decodes variant **181 as KipseliV3** (`is_base_to_quote=true`). The full four-step payload decodes as KipseliV3 → WhirlpoolSwapV2 → MeteoraDlmmSwapV2 → RaydiumLaunchlabBuy. BPS/token-index details and complete raw response hashes are in `docs/JUPITER-ROUTE-V2-IDL-RESEARCH-2026-11-12.md`.
+- Added a Borsh route_v2 decoder and tests; improved the IDL fetcher to enforce exactly one active historical revision for the candidate slot and to preserve compact schema/slot provenance in its artifact summary.
+- This resolves the route enum mapping for this candidate, not deployed-binary provenance or universal CPI dispatch. IDL Explorer did not return authority; CPI-requested signer/writable flags and per-DEX account slicing remain unproven.
+- Keep route_v2 diagnostic-only and rejected by the production legacy-route validator. Do not expand execution allowlists. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`.
+- Exact-head CI on decoder/test commit `39fb8877af0915369dbe596c787fcc16a21ec6d9` was still running at last poll; inspect all four workflows before claiming verification. Next: verify metadata account authority and deployment provenance, then CPI privilege evidence, route-shape samples, Devnet reproduction, independent review.
