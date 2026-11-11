@@ -58,6 +58,21 @@ test("rejects wrong taker, output mint, amounts, fee and excessive slippage", ()
   assert.throws(() => validate(parsed({ data: routeData({ slippage: 501 }) })), /5% safety cap/);
 });
 
+
+test("rejects route DAG inputs without an earlier producer and dead-end branches", () => {
+  const phantomIntermediate = routeData({ inputIndex: 1, outputIndex: 2 });
+  assert.throws(() => decodeJupiterV6Route(phantomIntermediate), /produced by an earlier/i);
+
+  const deadEnd = new Uint8Array([
+    229, 23, 203, 151, 122, 227, 173, 42,
+    ...u32(2),
+    7, 100, 0, 1,
+    7, 100, 0, 2,
+    ...u64(1000), ...u64(950), ...u16(50), 0
+  ]);
+  assert.throws(() => decodeJupiterV6Route(deadEnd), /dead-end branch/i);
+});
+
 test("rejects invalid split percentages, route indexes and missing DEX program accounts", () => {
   assert.throws(() => decodeJupiterV6Route(routeData({ percent: 99 })), /total 100/);
   assert.throws(() => decodeJupiterV6Route(routeData({ inputIndex: 1, outputIndex: 1 })), /token index/);
