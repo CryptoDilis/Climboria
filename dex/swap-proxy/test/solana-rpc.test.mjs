@@ -193,7 +193,7 @@ test("rejects stale context, duplicate token accounts and invalid native-mint st
     amount: "1000", rpcUrl: "https://rpc.example.com", fetchImpl: async () => { throw new Error("must not fetch"); }
   }), /must be different/i);
   await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
-    tokenAccount(inputMint, 1500n, { nativeOption: 1 }),
+    tokenAccount(outputMint, 1500n, { nativeOption: 1 }),
     tokenAccount(outputMint, 0n)
   ])), /wrapped-SOL mint/i);
 });
