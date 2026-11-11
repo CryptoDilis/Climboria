@@ -4484,3 +4484,6 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Kipseli CPI moves the remaining 99,450,450 WSOL units to the pool-side account, matching input less fee. Position 10's mint/authority are also decoded from its 165-byte SPL Token account. Full details and evidence limits are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
 - Exact code head c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c passed Validate (95/95 tests), Browser Smoke, Jupiter CPI Trace Audit and IDL History Audit. No failed workflow on that head.
 - Still unresolved: duplicate wallet outer position 79, duplicate Jupiter program positions 62/83, and CPI-requested signer/writable flags. Keep route_v2 rejected by production validation and signing/execution disabled.
+
+
+**Account-index clarification:** Jupiter's trace records CPI account-key indices, not the unique occurrence number in its outer account array. The user wallet and Jupiter program are repeated outer keys. Positions 79 and 62/83 therefore remain duplicate-key layout observations; their handler-level consumption cannot be uniquely assigned from address-only alignment. The fee account at position 10 is not ambiguous because inner transfer 17 directly references transaction key index 19.
