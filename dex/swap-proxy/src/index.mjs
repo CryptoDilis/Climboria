@@ -1,6 +1,7 @@
 import { SwapOrderStore } from "./order-store.mjs";
 import { parseSolanaV0Transaction, validateJupiterOrderMetadata } from "./transaction-validation.mjs";
 import { resolveTransactionLookups } from "./solana-rpc.mjs";
+import { validateJupiterV6Transaction } from "./jupiter-v6-policy.mjs";
 export { SwapOrderStore };
 
 const JSON_HEADERS = {
@@ -142,6 +143,15 @@ async function handleOrder(request, env) {
     lookupResolution = await resolveTransactionLookups({
       lookups: parsedTransaction.addressTableLookups,
       rpcUrl: env.SOLANA_RPC_URL
+    });
+    validateJupiterV6Transaction({
+      parsed: parsedTransaction,
+      loadedWritable: lookupResolution.writable,
+      loadedReadonly: lookupResolution.readonly,
+      taker,
+      outputMint,
+      amount,
+      outAmount: data.outAmount
     });
   } catch (error) {
     return json({ error: "Jupiter transaction or address lookup table validation failed", details: error instanceof Error ? error.message : "Invalid transaction" }, 422);
