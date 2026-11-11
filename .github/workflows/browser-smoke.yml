@@ -461,6 +461,61 @@ jobs:
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
 
+      - name: Test live Solana profile and boost discovery
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const assert = (condition, message) => { if (!condition) throw new Error(message); };
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            try {
+              const page = await browser.newPage({viewport:{width:1365,height:900}});
+              const calls=[];
+              const mintA='So11111111111111111111111111111111111111112';
+              const mintB='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+              const mintC='Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+              const pair=(mint,price,liquidity,volume,symbol)=>({chainId:'solana',dexId:'test',pairAddress:'Pair'+symbol,baseToken:{address:mint,symbol,name:symbol+' token'},quoteToken:{symbol:'USDC'},priceUsd:String(price),liquidity:{usd:liquidity},volume:{h24:volume},priceChange:{h24:1}});
+              await page.route('https://api.dexscreener.com/**',async route=>{
+                const url=new URL(route.request().url()); calls.push(url.pathname);
+                if(url.pathname==='/latest/dex/tokens/'+mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[{chainId:'solana',baseToken:{address:mintA},quoteToken:{symbol:'USDC'},priceUsd:'150',liquidity:{usd:500000},priceChange:{h24:1}}]})});
+                if(url.pathname==='/token-profiles/latest/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintA},{chainId:'solana',tokenAddress:mintB},{chainId:'ethereum',tokenAddress:mintC}])});
+                if(url.pathname==='/token-boosts/top/v1') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{chainId:'solana',tokenAddress:mintB},{chainId:'solana',tokenAddress:mintC}])});
+                if(url.pathname.startsWith('/tokens/v1/solana/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([pair(mintA,2,100000,50,'A-low'),pair(mintA,2.1,300000,50,'A-deep'),pair(mintB,3,10000,900,'B')])});
+                return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[]})});
+              });
+              await page.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>document.querySelectorAll('#premiumTrendingGrid [data-premium-mint]').length===2,null,{timeout:15000});
+              const cards=await page.locator('#premiumTrendingGrid [data-premium-mint]').evaluateAll(nodes=>nodes.map(n=>({mint:n.dataset.premiumMint,text:n.innerText})));
+              assert(cards[0].mint===mintB,'Discovery cards must sort by reported 24h volume within the discovered sample');
+              assert(cards[1].mint===mintA,'Second discovery card should be the remaining eligible discovered mint');
+              assert(cards[1].text.includes('$300.0K'),'Discovery must choose the deepest eligible pool for each mint, not the first/lowest-liquidity pool');
+              assert(cards.length===2&&!cards.some(card=>card.mint===mintC),'Non-Solana boost/profile entries must never appear in Solana discovery');
+              assert(cards.every(c=>c.text.includes('discovery')&&c.text.includes('not a global market ranking')),'Cards must disclose discovery provenance and limited ranking scope');
+              assert(calls.includes('/token-profiles/latest/v1')&&calls.includes('/token-boosts/top/v1')&&calls.some(p=>p.startsWith('/tokens/v1/solana/')),'Expected profile, boost and batched token-pair requests');
+              await page.locator('#premiumTrendingGrid [data-premium-mint="'+mintA+'"]').click();
+              await page.waitForFunction(m=>new URL(location.href).searchParams.get('token')===m,mintA,{timeout:10000});
+              await page.close();
+
+              const failed=await browser.newPage();
+              await failed.route('https://api.dexscreener.com/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{}'}));
+              await failed.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await failed.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('temporarily unavailable'),null,{timeout:10000});
+              await failed.close();
+
+              const empty=await browser.newPage();
+              await empty.route('https://api.dexscreener.com/**',route=>{
+                const path=new URL(route.request().url()).pathname;
+                if(path==='/token-profiles/latest/v1'||path==='/token-boosts/top/v1')return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+                return route.fulfill({status:200,contentType:'application/json',body:'[]'});
+              });
+              await empty.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
+              await empty.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('No eligible Solana tokens'),null,{timeout:10000});
+              await empty.close();
+              console.log('PASS live profile/boost discovery, batched pair validation, volume ranking, token navigation, provider outage and true-empty behavior.');
+            } finally { await browser.close(); }
+          })().catch(error=>{console.error(error);process.exit(1)});
+          JS
+
       - name: Test DEX mobile workspace tabs and desktop regression
         run: |
           node <<'JS'
