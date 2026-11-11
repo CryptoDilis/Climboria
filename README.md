@@ -3874,3 +3874,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Exact-head Validate run `42967445837`: SUCCESS on `cce63b00613cb8630077a76d60bb1bf547934b1a`.
 - [ ] Exact-head Browser Smoke run `42967445978`, job `130347847200`: still IN PROGRESS during Playwright installation. Mobile close-tap and gameplay stages have not started; no pass/fail claim yet.
 - [ ] Next: poll Browser Smoke `42967445978`. If the scroll-stability guard passes step 15 at both 390px and 360px, allow the same run to proceed to Jarrell's Peak and capture PR #261's loader phase. If it fails, inspect its fresh hit-test coordinates and event trace before changing code again.
+
+
+### PR #262 live Browser Smoke progress — 2026-11-11 13:54 +08
+
+- [x] Exact-head Validate `42967445837`: SUCCESS.
+- [x] Browser Smoke run `42967445978` passed through steps 7–16, including the compact mobile DEX/Swap 390px and 360px assertions (step 15). The scroll-stability counter-fix allowed the real close-detail tap and return-to-market flow to complete.
+- [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile) is IN PROGRESS; screenshot upload step 18 is pending. This run is not yet terminal and must not be marked passed.
+- [ ] If step 17 reproduces the known GLB readiness issue, merge/close PR #262 only after terminal CI confirms the DEX fix, then port PR #261's phase diagnostics onto the new main and rerun exact-head Browser Smoke to capture the parser/scene phase.
