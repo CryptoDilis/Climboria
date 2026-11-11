@@ -53,3 +53,15 @@ Counter-fix:
 
 ## Next task
 After these checks pass, continue the full per-DEX CPI/account-role schemas and token movement/fee proof. Keep all Swap signing/execution gates closed until independent review and controlled Devnet acceptance.
+
+
+## Exact-head verification update — 2026-11-11 22:14 PHT
+
+- [x] Validate run `43035556560` passed on exact PR head `5472f435fc6f3d2eed6945059bc5b6cad4413faf`; all 15 steps succeeded.
+- [x] Ecosystem Browser Smoke run `43035556451` passed on the same exact head; all executed steps succeeded, including DEX/Swap, auth isolation, responsive mobile states and screenshot upload.
+- [x] Jupiter V6 CPI Trace Audit run `43035556257` passed on the same exact head; finalized trace fetch and artifact upload succeeded.
+- [!] The Browser Smoke workflow is now separate from the gameplay workflow. This exact-head run is ecosystem-only; it does not verify Jarrell's Peak gameplay.
+- [!] The trace audit is read-only evidence and does not establish complete per-DEX CPI account-role semantics or authorize signing/execution.
+- [ ] Next: inspect the trace artifact's exact report and record evidence/limitations in `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`; continue variant-specific account-role and token-flow validation with pinned sources and controlled Devnet transactions.
+- [ ] Run a dedicated current-head gameplay smoke when its workflow is dispatched or game/assets paths change.
+- Security gates remain closed: no signable orders, no transaction execution, no production deployment claim.
