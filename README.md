@@ -4173,3 +4173,11 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 
 - [x] Re-read the exact timestamp fields rather than treating loader total elapsed as parse duration. `startedAt=9,744.9ms`, `parseStartedAt=243,355.2ms`, and total loader elapsed `268,022ms` imply parse had been pending for approximately `34,411ms` at the failure snapshot. The GLB resource transfer duration was `223,789ms`.
 - [!] Correct diagnosis: the mobile readiness deadline expired while the 42.9 MB asset was still in its parse/dependency phase, after an exceptionally slow ~223.8-second transfer. Do not claim a 268-second parser stall. Next counter-strategy must address asset transfer size/delivery and capture the new container/texture diagnostics to measure parse completion time independently.
+
+## 2026-11-12 — engineering handoff and workflow failure register
+
+- Current owner-approved order remains **P1 Live Swap → P2 Live DEX → P3 All Login → P4 Fully Live Game → P5 Live Launchpad**. Global rule: **NO DEMO-ONLY DELIVERY**.
+- Current-main audit baseline: `0fa8e987aec4d6e6bc7590363efa7d20fde79422`. PR #268 remains draft/unmerged at `8c4e86994e1ed203ffa26803874924e705973462`; it is 210 ahead / 19 behind current main, so do not merge or blindly sync its stale documentation branch.
+- Exact PR #268 head passed all five workflows: Validate `43102883438`, Ecosystem Browser Smoke `43102883591`, Jupiter CPI Trace Audit `43102883472`, Game Browser Smoke `43102883650`, and Jupiter IDL History Audit `43102883513`. These are branch-specific checks, not production-live evidence.
+- Deep workflow failure diagnoses, root-cause boundaries, counter-fixes, exact recovery evidence, and the next task are recorded in [the 2026-11-12 workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md). The detailed 521-run P1 branch audit remains in [SWAP/DEX account-role research](docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md).
+- Swap remains fail-closed. No signing, transaction execution, production Worker deployment, or LIVE claim is authorized by green CI alone.
