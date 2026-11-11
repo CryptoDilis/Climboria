@@ -685,3 +685,25 @@ Security boundary unchanged: one finalized route and one verified BinArray are n
 - [ ] Next: wait for/resolve the stuck GitHub Validate queue; obtain a terminal exact-head Validate result; classify route_v2's route-step enum value 181 using a version-pinned deployed Jupiter IDL; capture additional route_v2 Meteora samples and compare bin-array counts/directions; then controlled Devnet reproduction and independent review.
 
 Security boundary remains unchanged: production validator accepts only the legacy `route` instruction and now has a regression rejecting `route_v2`; no route_v2 execution is enabled. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`. No signing, live Swap execution, or mainnet approval is claimed.
+
+
+## Final exact-head verification — 2026-11-11
+
+- [x] Final PR branch head before this documentation-only checkpoint: `19b661ba5b83051d00817881ada5bcdb044f7000`.
+- [x] Validate run `43038824734`, job `130584855789`: SUCCESS. Cloudflare Worker security/API tests **87 passed / 0 failed**; Wrangler Durable Object dry-run, Supabase auth/cloud-save syntax, homepage/token-launch copy checks, DEX/Swap/game syntax, and HTML script audit all passed.
+- [x] Ecosystem Browser Smoke run `43038824716`, job `130584844505`: SUCCESS. All steps 7–17 passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, standalone Swap/DEX, Solana discovery, desktop/mobile DEX, 390px/360px layouts, provider-error/true-empty states, and screenshot upload. Artifact `13864182788`, 5,379,184 bytes.
+- [x] Jupiter V6 CPI Trace Audit run `43038824874`, job `130584843060`: SUCCESS. Artifact `13864352116`, 14,373 bytes, SHA-256 `72308615add750b979c98ca6330895a96dead762320d04e0f6e553f82a808582`.
+- [x] The audit artifact includes the successful route_v2 candidate trace and the pool-parent cross-check for the Meteora bitmap extension and two BinArrays. The workflow assertion passed.
+- [!] The final exact-head Browser Smoke is ecosystem-only; it does not verify Jarrell's Peak gameplay. No gameplay workflow was run here.
+- [!] Earlier superseded PR runs were cancelled during rapid documentation commits; those are cancellations, not failed tests. The three final workflows above passed on the same exact head. No failed job occurred on this final head.
+- Security remains fail-closed: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; Jupiter `route_v2` is recognized for diagnostics but rejected by the production legacy-route validator. No signing, live swap execution, or production approval is claimed.
+
+
+## Exact next engineering task — 2026-11-11
+
+- [ ] Obtain a version-pinned deployed Jupiter IDL/enum definition that maps route_v2 route-plan enum byte `181`; do not infer its DEX identity from a different SDK revision.
+- [ ] Decode all four route_v2 steps and correlate each to its inner CPI using stack height, program ID, account vector and transaction metadata.
+- [ ] Capture additional route_v2/Meteora transactions with one, two, and more BinArrays; verify BinArray direction/order and any transfer-hook remaining-account slices.
+- [ ] Obtain direct evidence for CPI-requested signer/writable metas; outer transaction-message privileges are only maximum privilege constraints.
+- [ ] Continue controlled Devnet reproduction and independent security review before any allowlist expansion or signing/execution approval.
+- [ ] Keep the separate Jarrell's Peak gameplay smoke and production hosting checks independent from ecosystem Browser Smoke.

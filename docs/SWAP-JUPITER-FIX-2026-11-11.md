@@ -75,3 +75,15 @@ After these checks pass, continue the full per-DEX CPI/account-role schemas and 
 - [x] Added a regression test for an unknown instruction discriminator and updated workflow triggers/output.
 - [ ] Exact-head Validate and CPI audit are pending on the corrected code. This fix is not yet marked verified.
 - [!] Do not classify the 18-account candidate as a standard Jupiter route until its outer discriminator is matched to a pinned Jupiter IDL/SDK and the full account vector is independently decoded.
+
+
+## Final exact-head verification — 2026-11-11
+
+- [x] Final PR branch head before this documentation-only checkpoint: `19b661ba5b83051d00817881ada5bcdb044f7000`.
+- [x] Validate run `43038824734`, job `130584855789`: SUCCESS. Cloudflare Worker security/API tests **87 passed / 0 failed**; Wrangler Durable Object dry-run, Supabase auth/cloud-save syntax, homepage/token-launch copy checks, DEX/Swap/game syntax, and HTML script audit all passed.
+- [x] Ecosystem Browser Smoke run `43038824716`, job `130584844505`: SUCCESS. All steps 7–17 passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, standalone Swap/DEX, Solana discovery, desktop/mobile DEX, 390px/360px layouts, provider-error/true-empty states, and screenshot upload. Artifact `13864182788`, 5,379,184 bytes.
+- [x] Jupiter V6 CPI Trace Audit run `43038824874`, job `130584843060`: SUCCESS. Artifact `13864352116`, 14,373 bytes, SHA-256 `72308615add750b979c98ca6330895a96dead762320d04e0f6e553f82a808582`.
+- [x] The audit artifact includes the successful route_v2 candidate trace and the pool-parent cross-check for the Meteora bitmap extension and two BinArrays. The workflow assertion passed.
+- [!] The final exact-head Browser Smoke is ecosystem-only; it does not verify Jarrell's Peak gameplay. No gameplay workflow was run here.
+- [!] Earlier superseded PR runs were cancelled during rapid documentation commits; those are cancellations, not failed tests. The three final workflows above passed on the same exact head. No failed job occurred on this final head.
+- Security remains fail-closed: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`; Jupiter `route_v2` is recognized for diagnostics but rejected by the production legacy-route validator. No signing, live swap execution, or production approval is claimed.
