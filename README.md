@@ -4197,3 +4197,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Audit artifact `13860293557` contains both raw CPI trace and account metadata.
 - [!] Extra outer Jupiter account position 27 and exact CPI-requested signer/writable flags remain unresolved. One transaction does not establish general cursor semantics.
 - [ ] Repeat for bitmap extension, multiple bin arrays, transfer-hook slices, and split/multi-hop routes; establish deployed-binary provenance and complete independent security review. Variant 75 and execution remain disabled.
+
+
+## 2026-11-11 — Route-discovery failures diagnosed and fixed
+
+- [x] Deep-diagnosed Validate run `43031746350`: test file failed to load because the new `decodeBase58` import collided with an existing import. Fixed by aliasing to `decodeDiscoveryBase58`.
+- [x] Deep-diagnosed Jupiter audit failures `43031734145`, `43031746115`, `43031863938`: public Solana RPC returned HTTP 429 during repeated recent transaction fetches. Reduced scan to five signatures, added one-second spacing + bounded exponential backoff, and made persistent 429 an explicit partial report rather than a failed workflow.
+- [x] Added offline regression test for rate-limit reporting.
+- [x] Latest head `00c145cabf49588a209b2e6e6ca186eb4b86c621`: Validate `43032018023` SUCCESS (84 pass / 0 fail); Browser Smoke `43032018200` SUCCESS; Jupiter CPI Trace Audit `43032017949` SUCCESS.
+- [x] Audit artifact `13860769847`: 5 recent Meteora signatures scanned, 0 Jupiter Swap2 matches, no rate limit. This is only a bounded sample, not a global absence claim.
+- [x] Screenshot artifact `13862020231` uploaded.
+- [!] One transaction's Meteora Swap2 vector and BinArray are verified, but outer Jupiter account position 27, exact CPI-requested flags, general route cursor behavior and deployed binary provenance remain open. Variant 75 and execution stay disabled.
