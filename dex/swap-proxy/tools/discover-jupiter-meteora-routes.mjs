@@ -46,7 +46,7 @@ export function isMeteoraSwap2Instruction(dataBase58) {
   return bytes.length >= 8 && Buffer.from(bytes.subarray(0, 8)).toString("hex") === METEORA_SWAP2_DISCRIMINATOR;
 }
 
-async function rpcCall(rpcUrl, method, params, fetchImpl) {
+async function rpcCall(rpcUrl, method, params, fetchImpl, retryBaseMs = 1000) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await fetchImpl(rpcUrl, {
       method: "POST",
@@ -55,10 +55,15 @@ async function rpcCall(rpcUrl, method, params, fetchImpl) {
       signal: AbortSignal.timeout(15000)
     });
     if (response.status === 429 && attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 750 * (2 ** attempt)));
+      await new Promise((resolve) => setTimeout(resolve, retryBaseMs * (2 ** attempt)));
       continue;
     }
-    if (!response.ok) throw new Error("Solana RPC HTTP error for " + method + ": " + response.status);
+    if (!response.ok) {
+      const error = new Error("Solana RPC HTTP error for " + method + ": " + response.status);
+      error.status = response.status;
+      error.method = method;
+      throw error;
+    }
     const payload = await response.json();
     if (payload.error) throw new Error("Solana RPC " + method + " error: " + JSON.stringify(payload.error));
     return payload.result;
@@ -71,28 +76,56 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     throw new Error("Set JUPITER_AUDIT_RPC_URL to an HTTPS Solana RPC endpoint");
   }
   const fetchImpl = options.fetchImpl ?? fetch;
-  const limit = Number.isInteger(options.limit) ? Math.max(1, Math.min(options.limit, 50)) : 20;
+  const limit = Number.isInteger(options.limit) ? Math.max(1, Math.min(options.limit, 50)) : 5;
   const maxTransactions = Number.isInteger(options.maxTransactions)
     ? Math.max(1, Math.min(options.maxTransactions, limit))
     : limit;
   const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, options.maxMatches) : 3;
-  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 200;
+  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 1000;
+  const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1000;
 
-  const signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
-    METEORA_DLMM_PROGRAM_ID,
-    { commitment: "finalized", limit }
-  ], fetchImpl);
+  let signatures;
+  try {
+    signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
+      METEORA_DLMM_PROGRAM_ID,
+      { commitment: "finalized", limit }
+    ], fetchImpl, retryBaseMs);
+  } catch (error) {
+    if (error.status !== 429) throw error;
+    return {
+      searchedProgramId: METEORA_DLMM_PROGRAM_ID,
+      jupiterProgramId: JUPITER_V6_PROGRAM_ID,
+      commitment: "finalized",
+      signaturesReturned: 0,
+      transactionsScanned: 0,
+      matchingRoutes: 0,
+      rateLimited: true,
+      rateLimitedMethod: error.method,
+      results: [],
+      evidenceLimitations: ["The public RPC rate-limited signature discovery; no route-level conclusion can be drawn from this empty sample."]
+    };
+  }
   if (!Array.isArray(signatures)) throw new Error("Solana RPC returned an invalid signature list");
 
   const results = [];
   let transactionsScanned = 0;
+  let rateLimited = false;
+  let rateLimitedMethod = null;
   for (const entry of signatures.slice(0, maxTransactions)) {
     if (typeof entry?.signature !== "string") continue;
-    const transaction = await rpcCall(rpcUrl, "getTransaction", [
-      entry.signature,
-      { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
-    ], fetchImpl);
-    transactionsScanned += 1;
+    let transaction;
+    try {
+      transaction = await rpcCall(rpcUrl, "getTransaction", [
+        entry.signature,
+        { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
+      ], fetchImpl, retryBaseMs);
+      transactionsScanned += 1;
+    } catch (error) {
+      if (error.status !== 429) throw error;
+      rateLimited = true;
+      rateLimitedMethod = error.method;
+      break;
+    }
     if (transaction) {
       const report = buildJupiterV6TraceReport(entry.signature, transaction);
       for (const route of report.jupiterRoutes) {
@@ -117,7 +150,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
         if (results.length >= maxMatches) break;
       }
     }
-    if (results.length >= maxMatches) break;
+    if (results.length >= maxMatches || rateLimited) break;
     if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
@@ -128,6 +161,8 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     signaturesReturned: signatures.length,
     transactionsScanned,
     matchingRoutes: results.length,
+    rateLimited,
+    rateLimitedMethod,
     results,
     evidenceLimitations: [
       "This bounded sample is not an exhaustive scan of Jupiter/Meteora routes.",
