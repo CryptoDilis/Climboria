@@ -5,6 +5,7 @@ use solana_sbpf::{
     test_utils::TestContextObject,
 };
 use std::{
+    collections::HashMap,
     env,
     error::Error,
     fs::{self, File},
@@ -47,6 +48,58 @@ fn main() -> Result<(), Box<dyn Error>> {
         writeln!(summary, "function_pc={pc} function_key=0x{key:08x} name={name}")?;
     }
     summary.flush()?;
+
+    let function_by_key: HashMap<u32, (usize, &str)> = analysis
+        .functions
+        .iter()
+        .map(|(pc, (key, name))| (*key, (*pc, name.as_str())))
+        .collect();
+    let entrypoint_end = analysis
+        .functions
+        .range((analysis.entrypoint + 1)..)
+        .next()
+        .map(|(pc, _)| *pc)
+        .unwrap_or(usize::MAX);
+    let calls_path = format!("{out_dir}/calls.tsv");
+    let entrypoint_calls_path = format!("{out_dir}/entrypoint-calls.tsv");
+    let mut calls = BufWriter::new(File::create(calls_path)?);
+    let mut entrypoint_calls = BufWriter::new(File::create(entrypoint_calls_path)?);
+    let header = "callsite_pc\tcall_key\tclassification\ttarget_pc\ttarget_name";
+    writeln!(calls, "{header}")?;
+    writeln!(entrypoint_calls, "{header}")?;
+    for instruction in &analysis.instructions {
+        if instruction.opc != solana_sbpf::ebpf::CALL_IMM {
+            continue;
+        }
+        let key = version.calculate_call_imm_target_pc(
+            instruction.ptr,
+            instruction.imm,
+        ) as u32;
+        let line = if let Some((target_pc, target_name)) = function_by_key.get(&key) {
+            let label = if target_name.is_empty() {
+                format!("function_{target_pc}")
+            } else {
+                target_name.to_string()
+            };
+            format!(
+                "{}\t0x{key:08x}\tinternal\t{}\t{}",
+                instruction.ptr,
+                target_pc,
+                label.replace('\t', " "),
+            )
+        } else {
+            format!(
+                "{}\t0x{key:08x}\texternal-or-unresolved\t\t",
+                instruction.ptr,
+            )
+        };
+        writeln!(calls, "{line}")?;
+        if instruction.ptr >= analysis.entrypoint && instruction.ptr < entrypoint_end {
+            writeln!(entrypoint_calls, "{line}")?;
+        }
+    }
+    calls.flush()?;
+    entrypoint_calls.flush()?;
 
     let disassembly_path = format!("{out_dir}/disassembly.s");
     let mut disassembly = BufWriter::new(File::create(disassembly_path)?);

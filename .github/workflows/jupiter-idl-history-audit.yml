@@ -12,6 +12,7 @@ on:
       - "dex/swap-proxy/tools/spl-token-account-summary.mjs"
       - "dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs"
       - "dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
       - ".github/workflows/jupiter-idl-history-audit.yml"
   pull_request:
     branches:
@@ -52,12 +53,11 @@ jobs:
       - name: Fetch Jupiter and DEX CPI IDL history records
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Set up Rust toolchain for pinned sBPF static analysis
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
       - name: Generate pinned sBPF disassembly and control-flow summary
         timeout-minutes: 10
         run: |
-          cargo generate-lockfile --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml
-          cargo run --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
+          cargo run --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
             artifacts/jupiter-idl-history/jupiter-programdata-elf.so \
             artifacts/jupiter-sbf-static-audit
           sha256sum artifacts/jupiter-idl-history/jupiter-programdata-elf.so
