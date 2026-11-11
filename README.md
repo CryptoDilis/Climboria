@@ -4255,3 +4255,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Continue authoritative investigation of exact CPI-requested signer/writable flags, route variations, deployed Jupiter binary provenance, Devnet reproduction, and independent review.
 - Security boundary unchanged: variant 75 remains excluded; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler execution and public frontend execution remain disabled. No production deployment, live swap execution, wallet signing, gameplay completion, or Login/Launchpad completion is claimed.
 - No workflow failure occurred on this exact head; therefore no failure retry or counter-fix was appropriate in this continuation.
+
+
+## 2026-11-11 — documentation-head verification after continuation
+
+- [x] Recorded exact-head reinspection, outstanding older-cursor dispatch limitation, and next actions in this README and the Jupiter/Meteora research log.
+- [x] New documentation head before this verification: `21e65b17b968d19b54d84c1e74c58390b2c494e2`.
+- [x] Validate run `43035310603`, job `130572489108`: SUCCESS; all 15 steps completed.
+- [x] Browser Smoke run `43035310495`, job `130572489503`: SUCCESS; all 20 steps completed, including auth/cloud-save isolation, DEX routing/proxy, fail-closed execution, Swap/DEX, live Solana discovery, desktop/mobile layouts, 390px/360px responsive checks, provider-error/empty states, and screenshot upload.
+- [x] Jupiter CPI Trace Audit run `43035310502`, job `130572477387`: SUCCESS; all 8 steps completed.
+- [!] Older-cursor scan remains pending: audit artifact from this run uses the default cursor (`before=null`). Manual dispatch remains unavailable through the current GitHub integration. No older-window results are claimed.
+- [!] These are code/CI and browser checks, not production deployment, wallet signing, swap execution, full gameplay, or proof of Login/Launchpad completion.
+- Security remains fail-closed; variant 75 excluded; signing/execution flags remain false.
