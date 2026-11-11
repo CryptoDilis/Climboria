@@ -33,7 +33,7 @@ export class SwapOrderStore {
     try {
       if (url.pathname === "/store" && request.method === "PUT") {
         const body = await readBody(request);
-        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups = [], lookupContextSlot = null } = body || {};
+        const { requestId, transaction, taker, lastValidBlockHeight, expiresAt, resolvedLookups = [], lookupContextSlot = null, tokenAccountEvidence } = body || {};
         if (typeof requestId !== "string" || requestId.length < 8 || requestId.length > 200 ||
             !/^[A-Za-z0-9._:-]+$/.test(requestId)) return json({ error: "Invalid Jupiter request ID" }, 400);
         if (typeof transaction !== "string" || transaction.length > 4096 ||
@@ -49,6 +49,37 @@ export class SwapOrderStore {
             (lookupContextSlot !== null && lookupContextSlot !== undefined && (!Number.isSafeInteger(lookupContextSlot) || lookupContextSlot < 0))) {
           return json({ error: "Resolved address lookup evidence is invalid" }, 400);
         }
+        const sourceEvidence = tokenAccountEvidence?.source;
+        const destinationEvidence = tokenAccountEvidence?.destination;
+        const inputMintEvidence = tokenAccountEvidence?.inputMint;
+        const outputMintEvidence = tokenAccountEvidence?.outputMint;
+        const evidenceAmount = tokenAccountEvidence?.requestedAmount;
+        const evidenceSlot = tokenAccountEvidence?.contextSlot;
+        const validEvidenceAmount = typeof evidenceAmount === "string" && /^[1-9][0-9]{0,19}$/.test(evidenceAmount);
+        const validSourceAmount = typeof sourceEvidence?.amount === "string" && /^(0|[1-9][0-9]*)$/.test(sourceEvidence.amount);
+        const validMintEvidence = mint => mint && typeof mint.address === "string" &&
+          Number.isInteger(mint.decimals) && mint.decimals >= 0 && mint.decimals <= 255 &&
+          typeof mint.supply === "string" && /^(0|[1-9][0-9]*)$/.test(mint.supply) &&
+          (mint.mintAuthority === null || typeof mint.mintAuthority === "string") &&
+          (mint.freezeAuthority === null || typeof mint.freezeAuthority === "string");
+        if (!Number.isSafeInteger(evidenceSlot) || evidenceSlot < 0 ||
+            (lookupContextSlot !== null && evidenceSlot < lookupContextSlot) ||
+            !validEvidenceAmount || !validSourceAmount || !sourceEvidence || !destinationEvidence ||
+            !inputMintEvidence || !outputMintEvidence ||
+            typeof sourceEvidence.address !== "string" || typeof destinationEvidence.address !== "string" ||
+            sourceEvidence.address === destinationEvidence.address ||
+            sourceEvidence.owner !== taker || destinationEvidence.owner !== taker ||
+            typeof sourceEvidence.mint !== "string" || typeof destinationEvidence.mint !== "string" ||
+            sourceEvidence.mint !== inputMintEvidence.address || destinationEvidence.mint !== outputMintEvidence.address ||
+            inputMintEvidence.address === outputMintEvidence.address ||
+            typeof destinationEvidence.amount !== "string" || !/^(0|[1-9][0-9]*)$/.test(destinationEvidence.amount) ||
+            typeof sourceEvidence.native !== "boolean" || typeof destinationEvidence.native !== "boolean" ||
+            sourceEvidence.native !== (sourceEvidence.mint === "So11111111111111111111111111111111111111112") ||
+            destinationEvidence.native !== (destinationEvidence.mint === "So11111111111111111111111111111111111111112") ||
+            !validMintEvidence(inputMintEvidence) || !validMintEvidence(outputMintEvidence) ||
+            BigInt(sourceEvidence.amount) < BigInt(evidenceAmount)) {
+          return json({ error: "Finalized token-account and mint evidence is missing, stale or inconsistent" }, 400);
+        }
         const record = {
           requestId,
           transaction,
@@ -57,6 +88,7 @@ export class SwapOrderStore {
           expiresAt,
           resolvedLookups,
           lookupContextSlot: lookupContextSlot ?? null,
+          tokenAccountEvidence,
           state: "ready",
           createdAt: Date.now()
         };
