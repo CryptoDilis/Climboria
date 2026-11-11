@@ -3848,3 +3848,10 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] DEX live deployment/provider verification remains open.
 
 **Next exact task:** retrieve PR #261 exact-head workflow results. On failure, inspect the new `loaderDiagnostics.phase` and logs, then implement only the evidence-supported production fix. Keep the order DEX → Swap → Login → Launchpad; gameplay GLB is a separately diagnosed issue and must not be misreported as an ecosystem regression.
+
+
+### PR #261 CI poll — 2026-11-11 13:43 +08
+
+- [x] Exact-head Validate run `42967239605` completed SUCCESS on `dac3b94359cfde712cbfb53b191c15f6e8d74979`; Worker security/config, auth syntax, homepage, inline scripts and game script syntax/audits all passed.
+- [ ] Exact-head Browser Smoke run `42967239569`, job `130347186318`, is still IN PROGRESS. Supabase auth/account-isolation step 7 completed; homepage/DEX navigation step 8 is currently running. Do not call the smoke passed until all steps, including mobile GLB diagnostics, reach terminal status.
+- [ ] Next: poll run `42967239569`; if mobile GLB fails, capture `loaderDiagnostics.phase` from the new error payload and use it to identify the production-stage defect. No production code fix selected yet.
