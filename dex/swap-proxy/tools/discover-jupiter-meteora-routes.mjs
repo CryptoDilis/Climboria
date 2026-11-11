@@ -83,12 +83,17 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
   const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, options.maxMatches) : 3;
   const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 1000;
   const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1000;
+  const before = typeof options.before === "string" && options.before.trim()
+    ? options.before.trim()
+    : null;
 
   let signatures;
   try {
+    const signatureQuery = { commitment: "finalized", limit };
+    if (before) signatureQuery.before = before;
     signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
       METEORA_DLMM_PROGRAM_ID,
-      { commitment: "finalized", limit }
+      signatureQuery
     ], fetchImpl, retryBaseMs);
   } catch (error) {
     if (error.status !== 429) throw error;
@@ -96,6 +101,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
       searchedProgramId: METEORA_DLMM_PROGRAM_ID,
       jupiterProgramId: JUPITER_V6_PROGRAM_ID,
       commitment: "finalized",
+      before,
       signaturesReturned: 0,
       transactionsScanned: 0,
       matchingRoutes: 0,
@@ -158,6 +164,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     searchedProgramId: METEORA_DLMM_PROGRAM_ID,
     jupiterProgramId: JUPITER_V6_PROGRAM_ID,
     commitment: "finalized",
+    before,
     signaturesReturned: signatures.length,
     transactionsScanned,
     matchingRoutes: results.length,
@@ -175,7 +182,9 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
 
 async function main() {
   const rpcUrl = process.env.JUPITER_AUDIT_RPC_URL;
-  const report = await discoverRecentJupiterMeteoraRoutes(rpcUrl);
+  const report = await discoverRecentJupiterMeteoraRoutes(rpcUrl, {
+    before: process.env.JUPITER_AUDIT_BEFORE_SIGNATURE
+  });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
 
