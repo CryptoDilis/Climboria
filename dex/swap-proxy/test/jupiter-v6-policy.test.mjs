@@ -327,10 +327,15 @@ test("fetches finalized account data and rejects insecure RPC URLs", async () =>
 });
 
 
-test("decodes official Jupiter variant 75 and Meteora Swap2 instruction discriminators", () => {
+test("decodes legacy route and route_v2 headers without assuming route-step support", () => {
   const routeHeader = decodeJupiterRoutePlanHeader("3aafXU8vKpJ2D842B5MTALCjKB1F1BGiBP5qtxuc8MPgax9MqNpUCF");
+  assert.equal(routeHeader.instructionName, "route");
   assert.equal(routeHeader.routePlanCount, 1);
   assert.equal(routeHeader.firstStepVariant, 75);
+  const routeV2Header = decodeJupiterRoutePlanHeader("2sDES9fHqoTppYzwZFtuwMPsJL1uwAj7C1WKpRv22o7xwLdcxsAo7oWEePwUpZ5eNY93NaNUqWmSkoDTyArfz1JtB2NYgMy");
+  assert.equal(routeV2Header.instructionName, "route_v2");
+  assert.equal(routeV2Header.routePlanCount, 4);
+  assert.equal(routeV2Header.firstStepVariant, 181);
   assert.equal(isMeteoraSwap2Instruction("fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib"), true);
   assert.equal(isMeteoraSwap2Instruction("11111111111111111111111111111111"), false);
   assert.equal(decodeDiscoveryBase58("1")[0], 0);
@@ -378,6 +383,38 @@ test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live n
   assert.equal(report.results[0].routePlanHeaderRecognized, true);
   assert.equal(report.results[0].instructionDiscriminatorHex, "e517cb977ae3ad2a");
   assert.equal(report.results[0].meteoraSwap2Cpis[0].accountCount, 4);
+});
+
+
+test("recognizes route_v2 in a Jupiter-to-Meteora CPI discovery result", async () => {
+  const fixture = rpcTraceFixture();
+  fixture.transaction.message.accountKeys[4] = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo";
+  fixture.transaction.message.instructions[0].data = "2sDES9fHqoTppYzwZFtuwMPsJL1uwAj7C1WKpRv22o7xwLdcxsAo7oWEePwUpZ5eNY93NaNUqWmSkoDTyArfz1JtB2NYgMy";
+  fixture.meta.innerInstructions[0].instructions[0].data = "fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib";
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example.invalid", {
+    limit: 1,
+    maxTransactions: 1,
+    maxMatches: 1,
+    delayMs: 0,
+    fetchImpl: async (_url, options) => {
+      const request = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: request.method === "getSignaturesForAddress"
+            ? [{ signature: "route-v2-candidate" }]
+            : fixture
+        })
+      };
+    }
+  });
+  assert.equal(report.matchingRoutes, 1);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 1);
+  assert.equal(report.results[0].routePlanHeader.instructionName, "route_v2");
+  assert.equal(report.results[0].routePlanHeader.routePlanCount, 4);
+  assert.equal(report.results[0].routePlanHeader.firstStepVariant, 181);
+  assert.equal(report.results[0].routePlanHeaderRecognized, true);
 });
 
 
