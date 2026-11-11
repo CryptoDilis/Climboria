@@ -3531,3 +3531,14 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 3. Launchpad: resolve deployed program provenance, LP Lock IDL, fee receiver custody/governance, migration scale and Fee Key NFT custody before calling token creation/launch live.
 4. Login: complete owner-side Supabase Site URL/redirect, SMTP/email confirmation, Google OAuth and X OAuth credentials/provider configuration, SIWS/SIWE settings, then controlled-account/device acceptance. Physical Redmi 14 5G test remains outstanding.
 5. When any future check fails, inspect that exact step and logs, identify a new root cause, implement a targeted counter-strategy, and rerun the relevant checks. Do not recommit the same attempted code without a fresh diagnosis.
+
+
+## 2026-11-11 — PR #236 latest Browser Smoke completion and screenshot review
+
+- [x] Browser Smoke run [42936193975](https://github.com/CryptoDilis/Climboria/actions/runs/42936193975), job `130246752007`, completed **SUCCESS**. Step 18 Jarrell's Peak desktop/mobile gameplay and step 19 screenshot upload both completed successfully. Earlier checkpoint text above that said "in progress" is historical; this entry is the final result.
+- [x] Screenshot artifact `13819581183` downloaded and inspected: 11 captures covering desktop/mobile homepage, auth modal, DEX token/social screens, desktop/mobile Jarrell gameplay, cave entrance and cave interior. Desktop/mobile game screenshots show the character at Sanctuary, and cave entrance/interior captures rendered on both viewports. These are automated browser viewport checks, not physical Redmi 14 5G acceptance.
+- [!] DEX token/social captures are synthetic fixture data and are not evidence of live Solana/Base provider uptime, real token discovery, or production chart data.
+- [!] This run tested PR #236 head `1a66e03636747fcc57a7f8992f715ab10430b519`. It does not verify real external Google/X/SMTP OAuth credentials or physical-device authentication. Supabase owner-side configuration and controlled-account tests remain required.
+- [!] PR #236 remains open and mergeable; no claim of production login rollout or PR merge is made.
+
+**Exact next actions:** complete PR #235's exact synchronized-head Browser Smoke run `42937400230` and inspect its screenshot artifact; then update its README checkpoint. Continue real Solana/Base provider validation, Swap ALT/instruction-semantic and controlled Devnet gates (execution off), Launchpad program/custody/migration blockers, and owner-configured login provider acceptance.
