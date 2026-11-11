@@ -372,28 +372,28 @@ test("rejects an incomplete Jupiter order response without a request ID", async 
   }
 });
 
-test("preserves Jupiter Failed status without converting it to success", async () => {
+test("does not contact Jupiter for any result while semantic review gate is closed", async () => {
   const originalFetch = globalThis.fetch;
+  let upstreamCalled = false;
   try {
-    globalThis.fetch = async () => Response.json({ status: "Failed", code: 6001, signature: null, error: "Slippage tolerance exceeded" });
+    globalThis.fetch = async () => {
+      upstreamCalled = true;
+      return Response.json({ status: "Failed", code: 6001, signature: null, error: "Slippage tolerance exceeded" });
+    };
     const signedTransaction = Buffer.alloc(100, 7).toString("base64");
     const req = new Request("https://worker.test/api/swap/execute", {
       method: "POST",
       headers: { origin, "content-type": "application/json" },
       body: JSON.stringify({ signedTransaction, orderToken: "00000000-0000-4000-8000-000000000001" })
     });
-    const res = await worker.fetch(req, env);
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.status, "Failed");
-    assert.equal(body.code, 6001);
-    assert.equal(body.signature, null);
-    assert.equal(body.error, "Slippage tolerance exceeded");
+    const res = await worker.fetch(req, { ...env, EXECUTION_ENABLED: "true" });
+    assert.equal(res.status, 503);
+    assert.match((await res.json()).error, /semantic instruction validation/i);
+    assert.equal(upstreamCalled, false);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
-
 
 test("bounds Jupiter upstream requests with a 12-second abort signal", async () => {
   const originalFetch = globalThis.fetch;
