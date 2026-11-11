@@ -1115,3 +1115,14 @@ For PR #268 code head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c`:
 2. Retrieve CPI-requested signer/writable privileges or another authoritative equivalent; outer message privileges remain only upper bounds.
 3. Repeat route_v2 account alignment and fee checks on multiple transactions, including different DEX orders, split plans, token programs, transfer hooks, and variable Meteora BinArray counts.
 4. Keep route_v2 rejected by production validation until adapter account-slice behavior is independently verified, Devnet reproduced, and reviewed by an independent Solana security reviewer.
+
+
+### Clarification — duplicate outer keys are not uniquely attributable to one outer position
+
+The trace artifact stores each CPI account's **transaction account-key index**, not a pointer to the occurrence number in the Jupiter outer instruction's 85-element account array. This matters for repeated public keys:
+
+- User wallet `GN2CG...` is repeated at several outer positions, including 64 and 79. Direct Raydium CPI inner index 11 references transaction key index 0 for the wallet; nested Token-2022 CPIs 13–15 also reference key index 0. It is therefore not possible to say that the particular outer occurrence at position 79 was or was not consumed by a handler-level cursor. The address-order alignment places the direct CPI's first wallet before the Raydium account sequence, but repeated-key aliasing prevents a unique outer-occurrence attribution.
+- Jupiter program ID is repeated at outer positions 7, 9, 62 and 83. The event self-CPI at inner index 16 uses Jupiter program ID / transaction key index 43 and event authority key index 38. The trace does not prove which duplicate outer occurrence the handler used.
+- Update prior wording accordingly: positions 79 and 62/83 remain duplicate-key layout observations with unresolved handler-level roles, not confirmed unused accounts. Account-key indices and outer-occurrence indices must remain separate in any future parser/report.
+
+This does not change the platform-fee attribution at outer position 10: its transaction key index is 19, and inner instruction 17 explicitly transfers 99,550 WSOL base units to that exact key.
