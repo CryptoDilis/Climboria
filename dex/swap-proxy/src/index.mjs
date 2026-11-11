@@ -137,6 +137,11 @@ async function handleOrder(request, env) {
       typeof data.outAmount !== "string" || !/^[1-9][0-9]*$/.test(data.outAmount)) {
     return json({ error: "Jupiter returned invalid order amounts" }, 502);
   }
+  try {
+    validateJupiterOrderMetadata(data, { taker, amount });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Jupiter order metadata is invalid" }, 422);
+  }
   let parsedTransaction, lookupResolution, tokenAccountVerification;
   try {
     parsedTransaction = parseSolanaV0Transaction(data.transaction);
@@ -166,11 +171,6 @@ async function handleOrder(request, env) {
     });
   } catch (error) {
     return json({ error: "Jupiter transaction or address lookup table validation failed", details: error instanceof Error ? error.message : "Invalid transaction" }, 422);
-  }
-  try {
-    validateJupiterOrderMetadata(data, { taker, amount });
-  } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Jupiter order metadata is invalid" }, 422);
   }
   const orderToken = crypto.randomUUID();
   const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
