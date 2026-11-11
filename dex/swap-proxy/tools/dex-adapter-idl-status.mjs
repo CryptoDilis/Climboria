@@ -10,14 +10,20 @@ export function classifyDexAdapterIdlEvidence(evidence) {
     : BigInt(evidence.programDataDeploymentSlot);
   const candidateSlot = BigInt(evidence.candidateTransactionSlot);
 
-  if (deploymentSlot !== null && deploymentSlot > candidateSlot) {
-    reasons.push("program-deployed-after-candidate-slot");
+  if (evidence.candidateSlotProgramExistenceVerified === false) {
+    reasons.push("program-absent-at-candidate-slot-verified");
     return {
       status: "incompatible",
       scope: "candidate-transaction-idl-provenance",
       reasons,
       evidence,
     };
+  }
+
+  // ProgramData stores the most recent deployment/upgrade slot. A later slot
+  // does not prove the program was absent at an earlier candidate slot.
+  if (deploymentSlot !== null && deploymentSlot > candidateSlot) {
+    reasons.push("current-programdata-last-deployment-after-candidate-slot");
   }
 
   if (evidence.activeHistoricalRevisionCount !== 1) {
