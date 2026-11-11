@@ -58,3 +58,10 @@ The current PR #268 head was re-read after the latest green CI:
 - Public root `swap-config.js` keeps `enabled: false`; `proxyEnabled: true` is only for read-only quote/search proxy features.
 - Existing worker regression tests verify both the fail-closed response and that upstream order retrieval is not attempted.
 - This source re-audit does not establish production deployment or replace independent transaction-security review.
+
+
+## Additional transaction-specific Jupiter/Meteora evidence — 2026-11-11
+
+A finalized third-party mainnet transaction was decoded using the read-only audit workflow (run `43030094086`, artifact `13860297377`). The single Jupiter route step uses enum variant 75 (`MeteoraDlmmSwapV2`) and invokes Meteora DLMM `swap2` at stack height 2. The observed 17-account CPI vector maps to the official Meteora `swap2` IDL's 16 fixed accounts plus one writable dynamic remaining account; token-balance changes match the 97.879923 USDC input and 38,687.896434 token-X output. Details and the ordered account mapping are recorded in `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md`.
+
+This is one transaction-specific route mapping only. RPC does not expose CPI-requested AccountMeta flags; the transaction's fee payer is globally writable while Meteora's IDL requires the user to sign but does not require it writable. One trailing Jupiter program account outside the observed Meteora CPI vector is also unexplained, and the dynamic account's owner/data has not been checked. Therefore variant 75 remains excluded and the security review remains incomplete. No signing or execution gate is opened.
