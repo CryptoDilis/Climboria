@@ -103,3 +103,53 @@ Initial authoritative-source findings:
 - Exact next task: locate and inspect version-pinned Jupiter V6 adapter/CPI instruction builders for the seven currently allowed variants (especially Raydium, Whirlpool, Raydium CLMM, Meteora DLMM, Raydium CPMM and SolFi); map each to direct DEX account schemas and determine which cannot be supported safely. Keep wallet-signable and execution gates closed.
 - Then implement separately versioned account-role validation and adversarial fixtures only for adapter mappings proven by sources. Remove unsupported variants from the signable route allowlist if mapping evidence is missing.
 - Continue with controlled Devnet token movement/fee destination proof and production Cloudflare deployment verification; then Launchpad provenance/custody, then real authentication provider verification. Game GLB optimization remains a separately tracked blocker after ecosystem priorities.
+
+
+## Progress addendum — 2026-11-11 19:58 PHT
+
+### Exact-head CI result — PR #268 / head `f922725dd975a786323bddfcce0910331958d503`
+- Validate run `43014262706`: SUCCESS on exact head `f922725dd975a786323bddfcce0910331958d503`.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43014262706
+- Browser Smoke run `43014262897`: FAILURE on the same exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43014262897
+- Browser Smoke job `130501302018`; step 17 (Jarrell's Peak desktop/mobile gameplay smoke) failed; step 18 screenshot upload succeeded.
+- Screenshot artifact ID `13852143372`:
+  https://github.com/CryptoDilis/Climboria/actions/runs/43014262897/artifacts/13852143372
+- Steps 1–16 passed on this exact head: Supabase auth/cloud-save isolation, homepage CTA/DEX routing/mobile nav, Cloudflare swap proxy, fail-closed execution, standalone Swap, DEX market/quote shell, Solana profile/boost discovery, DEX mobile workspace, 390px/360px layouts, and mobile market loading/provider-error/empty states.
+- No DEX/Swap/Login UI regression was observed in those 16 steps. This is not production deployment or transaction-execution proof.
+
+### Deep diagnosis of the failed gameplay step
+- Exact failure: `.github/scripts/game-smoke.mjs:708`, after a 75-second hero readiness wait and 15-second bounded grace (observed total `elapsedMs=108343`).
+- Strict production invariants remained false: `chunk=true`, `render=true`, `hero=false`; `glbRenderer=null`; camera `heroUsesGlb=false`; selected hero `loading-adventurer`; renderer `awaiting-saved-glb`; asset `null`; 47 render frames.
+- Resource timing shows the mobile `Climboria_Hero.glb` response completed with `transferSize=42,923,504` and `decodedBodySize=42,923,204`; recorded resource duration was `223,539ms`. There were no failed GLB requests and no browser page errors.
+- Desktop diagnostics before the mobile failure completed; desktop hero/animation diagnostics ran, cave entrance/interior captures completed, and earlier world audits logged scene/terrain/spawn route readiness. The failure is isolated to mobile GLB hero readiness/handoff, not the earlier DEX/Login checks.
+- The evidence rules out a simple HTTP request failure and a generic page crash. It does **not** yet distinguish GLTFLoader parsing, embedded buffer dependency resolution, image decode/texture upload, GPU resource pressure, or the final hero/camera handoff. Do not claim one of those substages is proven without instrumentation.
+- Prior asset inventory remains relevant: legacy Three.js r128 GLTFLoader, ~42.9 MB GLB, three embedded 4096x4096 PNG maps totaling 32,951,598 bytes (~76.8% of the file), 19 animations and 3,412 bufferViews. Prior instrumentation indicated the GLTFLoader parse callback was not reached; this narrows the suspect window to pre-callback parse/dependency/decode work but is not a conclusive substage diagnosis.
+- Do not weaken the test, accept the fallback hero, extend timeouts as a substitute for a fix, or modify this unrelated game loader on the DEX security PR. Keep mobile GLB performance as a separate tracked blocker and diagnose after the ecosystem priority sequence.
+
+### New pinned Jupiter CPI interface discovery
+- Inspected pinned Jupiter repository snapshot `jup-ag/jupiter-amm-implementation` commit `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39`.
+- New authoritative research target: `idls/jupiter_dex_interfaces.json`, a Jupiter CPI-facing interface IDL explicitly described as accounts interface for Jupiter aggregator CPI. This is materially stronger than using each DEX's direct-program IDL alone.
+- Extracted CPI instruction account layouts/discriminators for:
+  - `raydium_swap` (17 account metas; discriminator `[177,173,42,240,184,4,124,81]`)
+  - `whirlpool_swap` (11 metas; `[123,229,184,63,12,0,92,145]`)
+  - `whirlpool_swap_v2` (15 metas; `[56,166,129,9,157,205,118,217]`)
+  - `raydium_clmm_swap` (10 metas; `[47,184,213,193,35,210,87,4]`)
+  - `raydium_clmm_swap_v2` (13 metas; `[86,108,246,93,88,47,114,90]`)
+  - `raydium_cp_swap` (13 metas; `[54,234,83,141,52,191,46,144]`)
+  - `meteora_dlmm_swap` (15 metas; `[127,64,37,138,173,243,207,84]`)
+  - `meteora_dlmm_swap_v2` (16 metas; `[65,75,63,76,235,91,91,136]`)
+  - Additional Meteora DAMM v2 and dynamic bonding curve interfaces also exist in the same snapshot; do not confuse them with DLMM.
+- The CPI interface gives role names and writable flags; it does not by itself prove that the current live Jupiter aggregator uses this exact snapshot, nor map every Jupiter `Swap` enum variant to a CPI instruction. Need pin the deployed aggregator/release and verify adapter dispatch, account slicing, optional-account behavior, and exact program IDs before code changes.
+- Current Climboria policy still only checks the approved DEX program key is present and readonly; it does not semantically validate these CPI account roles. No new code has been implemented from this research yet.
+- SolFi variant 61 has no matching SolFi instruction in the inspected Jupiter CPI interface. Keep it unverified and reject it for signable/executable orders unless a separate authoritative mapping is found.
+- Research source URL: https://github.com/jup-ag/jupiter-amm-implementation/blob/cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39/idls/jupiter_dex_interfaces.json
+
+### Repository state and exact next actions
+- PR #268 remains draft/open/unmerged; main remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- Code head under test is still `95c0551dbe513bd3068aa0ebebc585f214810bd3`; `518356e` and `f922725` are documentation-only commits.
+- Immediate DEX task: inspect the pinned Jupiter aggregator source and generated CPI interface to prove variant-to-instruction mapping and account-slice construction. Build a matrix tying each currently allowed variant to exact CPI discriminator, DEX program ID, account order, optional accounts, and privilege constraints. Where mapping is not proven, remove the variant from the signable-order allowlist.
+- Then add account-role semantic validators and adversarial fixtures only for mappings proven by pinned source; run focused unit/Validate tests first, then exact-head Browser Smoke.
+- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, and public swap config `enabled:false`.
+- After DEX policy proof, continue controlled Devnet token movement/fee-destination validation, production Cloudflare deployment verification, Login production-provider verification, then Launchpad lifecycle/Devnet proof.
+- Mobile GLB next diagnostic, when its separate game task is resumed: add temporary instrumentation at GLTFLoader response completion, parse entry/exit, dependency resolution, embedded image decode, texture upload, and hero/camera handoff; capture mobile memory/GPU/resource state and identify the exact last completed stage. Do not accept a fallback as success.
