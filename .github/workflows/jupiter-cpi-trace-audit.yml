@@ -47,6 +47,7 @@ jobs:
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX > jupiter-meteora-candidate-trace.json
           node -e "const r=require('./jupiter-meteora-candidate-trace.json'); console.log(JSON.stringify({signature:r.signature,slot:r.slot,transactionSucceeded:r.transactionSucceeded,jupiterInstructions:r.jupiterRoutes.map(x=>({outerIndex:x.outerIndex,instructionDataBase58:x.instructionDataBase58,outerAccountCount:x.outerAccounts.length,innerInstructions:x.innerInstructions.map(i=>({innerIndex:i.innerIndex,stackHeight:i.stackHeight,programId:i.programId,accountCount:i.accounts.length}))}))},null,2))"
           node dex/swap-proxy/tools/audit-meteora-bin-array.mjs 5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8 > meteora-bin-array-account.json
+          node dex/swap-proxy/tools/audit-meteora-bin-array.mjs 6wVsB6b65gdVhMjmPyY8QHUEURCohuHQjDc6th4q3nPu > route-v2-candidate-bitmap-extension.json
           node dex/swap-proxy/tools/audit-meteora-bin-array.mjs 5AQre49iiardq7YujaFq6ZxsMFNstyf9HfgnzBkFwaWu > route-v2-candidate-extra-account-1.json
           node dex/swap-proxy/tools/audit-meteora-bin-array.mjs FWeKoZC27VpA1UQd8CJqYVhn5Gu826imTJo2Y2BVE5BN > route-v2-candidate-extra-account-2.json
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/discover-jupiter-meteora-routes.mjs > recent-jupiter-meteora-routes.json
@@ -60,6 +61,7 @@ jobs:
             jupiter-v6-meteora-trace.json
             jupiter-meteora-candidate-trace.json
             meteora-bin-array-account.json
+            route-v2-candidate-bitmap-extension.json
             route-v2-candidate-extra-account-1.json
             route-v2-candidate-extra-account-2.json
             recent-jupiter-meteora-routes.json
