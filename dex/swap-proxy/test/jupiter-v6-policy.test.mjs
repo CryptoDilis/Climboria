@@ -1,4 +1,5 @@
 import test from "node:test";
+import { buildJupiterV6TraceReport, fetchJupiterV6Trace, JUPITER_V6_PROGRAM_ID as TRACE_JUPITER_PROGRAM_ID } from "../tools/audit-jupiter-v6-rpc.mjs";
 import assert from "node:assert/strict";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
 import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, JUPITER_V6_EVENT_AUTHORITY, TOKEN_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
@@ -161,4 +162,101 @@ test("binds Jupiter minimum output to the route instruction slippage floor", () 
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "944" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "951" }), /weaker than the route slippage limit/i);
   assert.throws(() => validate(parsed(), { otherAmountThreshold: "0" }), /positive integer string/i);
+});
+
+
+function rpcTraceFixture() {
+  return {
+    slot: 464856414,
+    blockTime: 1793699807,
+    version: 0,
+    transaction: {
+      message: {
+        accountKeys: [
+          "payer", "writable-source", TRACE_JUPITER_PROGRAM_ID,
+          "jupiter-event-authority", "meteora-dlmm-program", "readonly-account"
+        ],
+        header: {
+          numRequiredSignatures: 1,
+          numReadonlySignedAccounts: 0,
+          numReadonlyUnsignedAccounts: 4
+        },
+        instructions: [
+          { programIdIndex: 2, accounts: [0, 1, 3, 4, 5, 6, 7], data: "route-data" }
+        ]
+      }
+    },
+    meta: {
+      err: null,
+      loadedAddresses: {
+        writable: ["lookup-writable"],
+        readonly: ["lookup-readonly"]
+      },
+      innerInstructions: [{
+        index: 0,
+        instructions: [{
+          programIdIndex: 4,
+          accounts: [1, 4, 6, 7],
+          data: "meteora-cpi-data",
+          stackHeight: 2
+        }]
+      }],
+      logMessages: ["Program Jupiter invoke [1]", "Program Meteora invoke [2]"],
+      preTokenBalances: [{ mint: "input-mint", uiTokenAmount: { amount: "100" } }],
+      postTokenBalances: [{ mint: "output-mint", uiTokenAmount: { amount: "95" } }]
+    }
+  };
+}
+
+test("builds a Jupiter V6 raw-RPC trace with resolved ALT account order and stack height", () => {
+  const report = buildJupiterV6TraceReport("trace-signature", rpcTraceFixture());
+  assert.equal(report.transactionSucceeded, true);
+  assert.equal(report.slot, 464856414);
+  assert.equal(report.jupiterRoutes.length, 1);
+  const route = report.jupiterRoutes[0];
+  assert.equal(route.outerIndex, 0);
+  assert.equal(route.innerInstructions.length, 1);
+  const cpi = route.innerInstructions[0];
+  assert.equal(cpi.programId, "meteora-dlmm-program");
+  assert.equal(cpi.stackHeight, 2);
+  assert.deepEqual(cpi.accounts.map((account) => account.address), [
+    "writable-source", "meteora-dlmm-program", "lookup-writable", "lookup-readonly"
+  ]);
+  assert.equal(cpi.accounts[2].transactionPrivilege.writable, true);
+  assert.equal(cpi.accounts[3].transactionPrivilege.writable, false);
+  assert.match(cpi.accounts[2].transactionPrivilege.source, /not the CPI-requested meta/);
+  assert.match(report.evidenceLimitations.join(" "), /Do not infer routePlan-step-to-CPI association/);
+});
+
+test("rejects malformed RPC instruction account indexes instead of emitting partial evidence", () => {
+  const fixture = rpcTraceFixture();
+  fixture.meta.innerInstructions[0].instructions[0].accounts.push(999);
+  assert.throws(
+    () => buildJupiterV6TraceReport("trace-signature", fixture),
+    /accounts\[4\] index 999 is out of range/
+  );
+});
+
+test("fetches only finalized raw JSON transaction metadata and supports version 1", async () => {
+  let requestUrl;
+  let request;
+  const report = await fetchJupiterV6Trace(
+    "trace-signature",
+    "https://rpc.example.invalid",
+    async (url, options) => {
+      requestUrl = url;
+      request = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ result: rpcTraceFixture() }) };
+    }
+  );
+  assert.equal(requestUrl, "https://rpc.example.invalid");
+  assert.equal(request.method, "getTransaction");
+  assert.equal(request.params[1].commitment, "finalized");
+  assert.equal(request.params[1].encoding, "json");
+  assert.equal(request.params[1].maxSupportedTransactionVersion, 1);
+  assert.equal(report.signature, "trace-signature");
+  await assert.rejects(
+    () => fetchJupiterV6Trace("trace-signature", "http://insecure.example.invalid", async () => ({ ok: true, json: async () => ({}) })),
+    /HTTPS Solana RPC endpoint/
+  );
 });
