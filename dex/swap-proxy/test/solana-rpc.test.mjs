@@ -111,6 +111,21 @@ function parsedTokenAccount({ mint, owner = tokenTaker, amount = "5000", state =
     }
   };
 }
+function parsedMint({ decimals = 9, isInitialized = true, programOwner = SPL_TOKEN_PROGRAM_ID, executable = false, space = 82 } = {}) {
+  return {
+    owner: programOwner,
+    executable,
+    space,
+    data: {
+      program: "spl-token",
+      parsed: {
+        type: "mint",
+        info: { decimals, isInitialized, supply: "1000000", mintAuthority: null, freezeAuthority: null }
+      }
+    }
+  };
+}
+const validMintAccounts = () => [parsedMint(), parsedMint()];
 function tokenAccountsResponse(value, slot = 123) {
   return Response.json({
     jsonrpc: "2.0",
@@ -138,11 +153,12 @@ test("verifies both Jupiter user token accounts at one finalized RPC context", a
     request = { url, init, body: JSON.parse(init.body) };
     return tokenAccountsResponse([
       parsedTokenAccount({ mint: tokenInputMint, amount: "1000" }),
-      parsedTokenAccount({ mint: tokenOutputMint, amount: "0" })
+      parsedTokenAccount({ mint: tokenOutputMint, amount: "0" }),
+      ...validMintAccounts()
     ]);
   });
   assert.equal(request.body.method, "getMultipleAccounts");
-  assert.deepEqual(request.body.params[0], [sourceAccountKey, destinationAccountKey]);
+  assert.deepEqual(request.body.params[0], [sourceAccountKey, destinationAccountKey, tokenInputMint, tokenOutputMint]);
   assert.deepEqual(request.body.params[1], { encoding: "jsonParsed", commitment: "finalized" });
   assert.equal(request.init.redirect, "error");
   assert.equal(result.contextSlot, 123);
@@ -152,12 +168,12 @@ test("verifies both Jupiter user token accounts at one finalized RPC context", a
 
 test("rejects token accounts with wrong mint, authority, program owner, state or delegated authority", async () => {
   const cases = [
-    [parsedTokenAccount({ mint: tokenOutputMint }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, owner: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, state: "frozen" }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, delegate: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })],
-    [parsedTokenAccount({ mint: tokenInputMint, closeAuthority: tableKey }), parsedTokenAccount({ mint: tokenOutputMint })]
+    [parsedTokenAccount({ mint: tokenOutputMint }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
+    [parsedTokenAccount({ mint: tokenInputMint, owner: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
+    [parsedTokenAccount({ mint: tokenInputMint, programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
+    [parsedTokenAccount({ mint: tokenInputMint, state: "frozen" }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
+    [parsedTokenAccount({ mint: tokenInputMint, delegate: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()],
+    [parsedTokenAccount({ mint: tokenInputMint, closeAuthority: tableKey }), parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()]
   ];
   for (const value of cases) {
     await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse(value)));
@@ -167,20 +183,38 @@ test("rejects token accounts with wrong mint, authority, program owner, state or
 test("rejects insufficient source balance, missing/unparsed accounts and malformed RPC context", async () => {
   await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
     parsedTokenAccount({ mint: tokenInputMint, amount: "999" }),
-    parsedTokenAccount({ mint: tokenOutputMint })
+    parsedTokenAccount({ mint: tokenOutputMint }),
+    ...validMintAccounts()
   ])), /below the requested input amount/);
-  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([null, parsedTokenAccount({ mint: tokenOutputMint })])));
+  await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([null, parsedTokenAccount({ mint: tokenOutputMint }), ...validMintAccounts()])));
   await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
     { ...parsedTokenAccount({ mint: tokenInputMint }), data: ["AA==", "base64"] },
-    parsedTokenAccount({ mint: tokenOutputMint })
+    parsedTokenAccount({ mint: tokenOutputMint }),
+    ...validMintAccounts()
   ])));
   await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([
     parsedTokenAccount({ mint: tokenInputMint }),
-    parsedTokenAccount({ mint: tokenOutputMint })
+    parsedTokenAccount({ mint: tokenOutputMint }),
+    ...validMintAccounts()
   ], Number.MAX_SAFE_INTEGER + 1)));
 });
 
 test("rejects duplicate source/destination accounts and redirects", async () => {
   await assert.rejects(verifyTokenAccounts({ destinationTokenAccount: sourceAccountKey }, async () => tokenAccountsResponse([])), /must be distinct/);
   await assert.rejects(verifyTokenAccounts({}, async () => new Response("{}", { status: 302 })), /HTTP 302/);
+});
+
+test("rejects non-classic, uninitialized or malformed mint accounts", async () => {
+  const validTokens = [
+    parsedTokenAccount({ mint: tokenInputMint }),
+    parsedTokenAccount({ mint: tokenOutputMint })
+  ];
+  for (const mint of [
+    parsedMint({ programOwner: ADDRESS_LOOKUP_TABLE_PROGRAM_ID }),
+    parsedMint({ isInitialized: false }),
+    parsedMint({ space: 165 }),
+    { ...parsedMint(), data: { program: "spl-token", parsed: { type: "account", info: {} } } }
+  ]) {
+    await assert.rejects(verifyTokenAccounts({}, async () => tokenAccountsResponse([...validTokens, mint, parsedMint()])));
+  }
 });
