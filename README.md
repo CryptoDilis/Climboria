@@ -4450,3 +4450,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Updated IDL audit summary with explicit booleans for on-chain owner, payload hash, route discriminator, and ProgramData deployment coverage. New parser head 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1 awaits exact-head workflows.
 - Previous head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 had Validate, Browser Smoke, CPI Trace and IDL History workflows all operationally successful; however the IDL artifact revealed the parser defect. No production route behavior changed.
 - Full root-cause analysis and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and signing/execution disabled.
+
+
+## 2026-11-12 — IDL prefix parser verification pending
+
+- Added dual-layout Anchor IDL account decoding and tests. It accepts either 8-byte prefix + authority + length + zlib payload, or no-prefix authority + length + zlib payload, only after bounds, inflate, and JSON checks. Unknown prefix is recorded verbatim, not assumed to be a known discriminator.
+- Current PR head is eff5810c1173c5fe020d9eda22ef976a2e4baad3; code tree is 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1. No commit-associated workflow runs or statuses were visible for the new code head at the last poll. Do not claim tests passed on this change.
+- Preceding head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 passed Validate, Browser Smoke, Jupiter CPI Trace and IDL History workflows, but the IDL artifact exposed a parser defect; green operational workflow status did not equal successful on-chain payload validation.
+- Full diagnosis, exact evidence, and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 rejected by production validation and signing/execution disabled.
