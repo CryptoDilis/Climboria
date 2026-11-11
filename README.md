@@ -4208,3 +4208,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Audit artifact `13860769847`: 5 recent Meteora signatures scanned, 0 Jupiter Swap2 matches, no rate limit. This is only a bounded sample, not a global absence claim.
 - [x] Screenshot artifact `13862020231` uploaded.
 - [!] One transaction's Meteora Swap2 vector and BinArray are verified, but outer Jupiter account position 27, exact CPI-requested flags, general route cursor behavior and deployed binary provenance remain open. Variant 75 and execution stay disabled.
+
+
+### Jupiter/Meteora account-partition research update — 2026-11-11
+- [x] Resolved outer Jupiter route account position 27: it is the Jupiter program account used by the later Anchor event self-CPI, not a Meteora DLMM account.
+- [x] Evidence from trace artifact `13862030394`: inner instruction ordinal 5 invokes Jupiter at stack height 2, with Jupiter event authority `D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf` as its sole account; decoded data begins with Anchor `EVENT_IX_TAG_LE` `e445a52e51cb9a1d`.
+- [x] Outer positions 7–8 match the generated Jupiter V6 `RouteBuilder` suffix (event authority, program); positions 10–26 remain the 17-account Meteora `swap2` vector.
+- [ ] Obtain direct evidence for exact CPI-requested signer/writable flags.
+- [ ] Trace additional variant-75 cases (bitmap extension, multiple BinArrays, transfer-hook slices, split/multi-hop) and verify deployed Jupiter binary provenance.
+- [ ] Controlled Devnet reproduction and independent Solana security review.
+- Security boundary unchanged: variant 75 remains excluded; signable-order and execution gates remain false; Wrangler execution and public frontend execution remain disabled.
+- Research details: `docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md` and `dex/swap-proxy/SECURITY-REVIEW-2026-11-11.md`.
