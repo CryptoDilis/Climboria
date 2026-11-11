@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: jupiter-cpi-trace-audit-${{ github.ref }}
+  group: jupiter-cpi-trace-audit-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

@@ -1,7 +1,7 @@
 name: Climboria Game Browser Smoke Test
 
 concurrency:
-  group: climboria-game-browser-smoke-${{ github.ref }}
+  group: climboria-game-browser-smoke-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 on:
