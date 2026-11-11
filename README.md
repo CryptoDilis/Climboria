@@ -1,6 +1,6 @@
 # CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
 
-**Locked on: 2026-11-11. These four priorities are the agreed product execution order. Do not reorder, skip, or replace them without the user's explicit instruction.** Work top-down. The current gameplay release gate is a prerequisite to shipping these priorities, not a replacement priority.
+**Locked on: 2026-11-11. These four priorities are the agreed product execution order: DEX → Swap → Login → Launchpad. Do not reorder, skip, or replace them without the user's explicit instruction. Gameplay work is separate and MUST NOT displace or block these four ecosystem priorities.**
 
 ## 2026-11-11 12:39 +08 — live delivery checkpoint (latest evidence supersedes older status below)
 
@@ -8,10 +8,10 @@
 
 ### Always-visible delivery checklist
 
-- [ ] **P0 gameplay release gate:** PR #246 Sanctuary spawn fix still requires a fresh exact-head Browser Smoke pass and visual desktop/mobile landing review before merge.
+- [ ] **Separate gameplay backlog (non-blocking):** PR #246 Sanctuary spawn fix still requires exact-head Browser Smoke and visual desktop/mobile landing review. Do not switch active work away from DEX → Swap → Login → Launchpad to work on this item.
 - [x] **P1 DEX implementation:** PR #248 contains provider-backed Solana profile + boost discovery, batched token lookup (up to 30), live liquidity/price/volume validation, deepest-pool selection, honest empty/error states, and selected-token navigation.
 - [x] **P1 DEX CI:** Validate run `42958475572` passed on `066122b03db740c7e16c3890c0cef6b5944c27b8`; Browser Smoke steps 7–15 (home/DEX navigation, proxy, fail-closed execution, standalone Swap/DEX, live discovery, responsive 390/360px, provider error/empty states) passed.
-- [ ] **P1 DEX release:** overall Browser Smoke `42958475571` failed only at separate Jarrell's Peak mobile gameplay step 16; review the uploaded artifact, clear P0, then rerun/merge/deploy. PR #248 is not merged.
+- [ ] **P1 DEX release:** overall Browser Smoke `42958475571` failed only at separate Jarrell's Peak mobile gameplay step 16; DEX-specific steps 7–15 passed. Create/run a DEX-scoped acceptance check so unrelated gameplay failure cannot block DEX verification; review DEX screenshots and exact-head checks before merge/deploy. PR #248 is not merged.
 - [x] **P2 Swap groundwork:** PR #249 adds Solana v0 ALT account decoding/resolution and adversarial tests; Validate run `42960037723` passed on `5c7ceaa39d6c4ef2f6380a2ebec6a11ead69aeb1`.
 - [ ] **P2 Swap release:** Browser Smoke `42960037880` was still running at gameplay step 15 when checked. Semantic instruction allowlist, complete quote/order execution binding, controlled Devnet sign-submit-confirm lifecycle, production Worker controls and independent security review remain outstanding. Execution stays fail-closed.
 - [x] **P3 Login implementation:** PR #250 adds Supabase email/password, Google/X OAuth, Solana/Ethereum Web3 adapters, session restoration, sign-out, and account-scoped cloud saves.
@@ -27,11 +27,11 @@
 - [x] Log evidence: mobile GLB request completed (`42,923,204` decoded bytes; `42,923,504` transferred); no failed GLB requests and no browser errors. Loader telemetry remained at `phase=parse-start`, `parseDurationMs=null`, `sceneSetupStartedAt=null`, `heroReady=false` after `285,055ms`; the smoke failed after its bounded wait/grace.
 - [x] This is a post-download GLTF parse/readiness stall in the unrelated gameplay gate, not a DEX market-discovery failure. PR #247's separate diagnostic run `42949922898` passed once, so the symptom is intermittent and not proven fixed. Do not raise timeouts, bypass readiness, substitute a fallback avatar, or weaken the test.
 - [ ] Counter-strategy: inspect GLB parse cost, mobile memory/CPU pressure and loader lifecycle with reproducible instrumentation; choose a production optimization only after identifying the expensive stage. Re-run exact-head desktop/mobile gameplay smoke and inspect screenshots.
-- [ ] **Single next action:** diagnose and resolve the intermittent mobile GLTF parse stall on the P0 gameplay gate; then resume the four delivery priorities in order, verifying and recording each exact-head workflow before merge/deploy.
+- [ ] **Single next action:** continue P1 DEX delivery: resolve PR #248's current base/mergeability and establish DEX-scoped acceptance on its exact head. Do not start gameplay fixes as the active task.
 
 **Session rules:** record each completed task, changed files, commit/PR, exact workflow/run IDs, evidence, unresolved blockers and one next action here. On failures, inspect the exact job/log/artifact, prove root cause, implement a distinct counter-fix, and rerun. Never mark a feature live based only on a mock, preview or unsigned transaction.
 
-## Release gate — finish current gameplay blocker before P1
+## Separate gameplay backlog — non-blocking for ecosystem delivery
 
 **Sole active gameplay fix: PR #246 — Sanctuary spawn alignment.**
 - [x] PR #242's validated mobile-orientation harness merged to main: `66909629ea0fcf9dec75b0e9002a776072fe9b57`.
@@ -61,7 +61,7 @@
 
 ## P1 — LIVE DEX: Complete Solana market discovery and testing
 
-- [ ] After the gameplay release gate closes, create one fresh branch from latest `main`.
+- [ ] Continue DEX work from PR #248 and rebase/port onto latest `main` as required; gameplay backlog does not gate this work.
 - [ ] Port only `dex/index.html` and `dex/premium-terminal.js` from donor PR #243 head `9b967b119bc52be5b259f4579cea751b4726829e`; do not merge its stale base or copy its old workflow/test harness.
 - [ ] Complete live provider-backed Solana discovery: latest token profiles + top boosts, batched pair lookup, liquidity/price validation, volume sorting, and real token detail navigation.
 - [ ] Keep provider errors and true-empty results explicit and honest. Never fabricate tokens, prices, rankings, volume, liquidity or chart history.
