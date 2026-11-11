@@ -535,3 +535,33 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - [ ] Run Validate and Browser Smoke on the counter-fix commit.
 - [ ] Confirm both 390px and 360px passes, including the actual touch tap and subsequent Base-market navigation.
 - [ ] If step 15 fails again, inspect the new stability/hit-test/event diagnostics and treat it as a new failure, not an automatic retry.
+
+
+## Deep diagnosis — Browser Smoke DEX history navigation timeout — 2026-11-11
+
+### Exact failing workflow and evidence
+- Counter-fix head: `d69ecbc5374aca7174d2a28120d171db4471deb9`.
+- Validate run `43022924840`: SUCCESS.
+- Browser Smoke run `43022924844`: FAILURE in step 12, `Test standalone DEX market and quote-preview shell`.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43022924844
+- All 26 swap-proxy security/API contract tests passed; the standalone Swap checks, public DEX safety disclosure checks, token/social metadata layout checks, pool selection and quote-preview setup passed before the failure.
+- Exact exception: `page.goBack: Timeout 30000ms exceeded`, waiting for navigation until `load`, at the test's `await page.goBack()` call (`[stdin]:75`). The custom URL/selected-pool assertions after this call were never reached.
+- Source inspection:
+  - `setDexUrl()` uses `history.replaceState()` for the initial selected pool and `history.pushState()` for subsequent pool selections (DEX source around line 1006).
+  - The app restores pool state in a `window.popstate` handler (around line 1446); this is a same-document History API transition and does not perform a full document navigation.
+  - The browser smoke test called Playwright `page.goBack()` / `page.goForward()` with the default `waitUntil: load`. That waits for a document load event even though the app contract is same-document `popstate`; the 30-second Playwright wait expired before the explicit URL and selected-pool assertions ran.
+- Therefore this failure is a test/navigation-wait mismatch, not proof of broken DEX pool restoration. The chart iframe is cross-origin and can also delay document-load completion; the test should validate the History API state transition itself rather than gate on an unrelated iframe load event.
+
+### Targeted counter-fix
+- Replace only the two test-driver calls:
+  - `page.goBack()` -> `page.evaluate(() => history.back())`
+  - `page.goForward()` -> `page.evaluate(() => history.forward())`
+- Keep the existing strict wait/assertions for the URL's `pool` query parameter, selected pool row, chart URL, external link and provider metrics after each `popstate`.
+- This directly drives the same browser history stack and exercises the app's real `popstate` listener without waiting for a new document `load` event.
+- No retry, longer timeout, relaxed assertion, forced DOM state mutation, or product-code change is introduced.
+
+### Combined mobile and history test recovery
+- The mobile close-detail counter-fix (wait for stable close-button geometry/scroll position and verify the hit target before a real touch tap) is already in this branch at `d69ecbc`, but the current run failed earlier at step 12 and skipped step 15. It remains unverified until the next full Browser Smoke run reaches step 15.
+- [ ] Run exact-head Validate and Browser Smoke after this test-only history counter-fix.
+- [ ] Confirm step 12 Back/Forward pool restoration and step 15 390px/360px close-detail touch interactions both pass.
+- [ ] If either fails again, inspect that step's new diagnostics and identify a new root cause; do not retry blindly.
