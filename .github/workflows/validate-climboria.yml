@@ -56,6 +56,7 @@ jobs:
           node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
           node --check dex/swap-proxy/tools/legacy-anchor-idl-account.mjs
           node --check dex/swap-proxy/tools/spl-token-account-summary.mjs
+          node --check dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs
           node --test dex/swap-proxy/test/*.test.mjs
       - name: Bundle Worker and validate Wrangler Durable Object configuration (dry run)
         working-directory: dex/swap-proxy

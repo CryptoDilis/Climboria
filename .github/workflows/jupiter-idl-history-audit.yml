@@ -10,6 +10,8 @@ on:
       - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
       - "dex/swap-proxy/tools/legacy-anchor-idl-account.mjs"
       - "dex/swap-proxy/tools/spl-token-account-summary.mjs"
+      - "dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs"
+      - "dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs"
       - ".github/workflows/jupiter-idl-history-audit.yml"
   pull_request:
     branches:
@@ -41,9 +43,11 @@ jobs:
         with:
           node-version: 22
       - name: Syntax-check IDL history audit utility
-        run: node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
-      - name: Test DEX adapter IDL evidence classifications
-        run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs
+        run: |
+          node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+          node --check dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs
+      - name: Test DEX adapter IDL evidence classifications and LaunchLab account audit
+        run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs
       - name: Fetch Jupiter and DEX CPI IDL history records
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Upload raw responses and schema summary

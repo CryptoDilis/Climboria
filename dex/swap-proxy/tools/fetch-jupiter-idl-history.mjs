@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
 import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
 import { classifyDexAdapterIdlEvidence } from "./dex-adapter-idl-status.mjs";
+import { auditRaydiumLaunchlabCandidateAccounts } from "./raydium-launchlab-account-audit.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const baseUrl = "https://idl-one.vercel.app";
@@ -472,6 +473,8 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         instructionSchemaMatchesActiveHistory: null,
         instructionSchemaMatchesAnyActiveHistory: null,
         instructionSchemaMatchesLatest: null,
+        poolStateType: null,
+        poolStateAccountDiscriminator: null,
       };
       try {
         const decoded = decodeLegacyAnchorIdlAccount(bytes);
@@ -488,6 +491,8 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         } : null;
         const schemaHash = (item) => item ? sha256(JSON.stringify(summarize(item))) : null;
         const instruction = findInstruction(decoded.idl.instructions);
+        const poolStateType = decoded.idl.types?.find((item) => item.name === "PoolState") ?? null;
+        const poolStateAccount = decoded.idl.accounts?.find((item) => item.name === "PoolState") ?? null;
         const activeInstructions = activeRevisions.flatMap(revision => revision.matchingInstructions ?? []);
         const active = findInstruction(activeInstructions);
         const latest = findInstruction(latestCandidates.flatMap(candidate => candidate.matchingInstructions ?? []));
@@ -502,6 +507,8 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         record.payloadMatchesAnyActiveHistoricalRevision = activeRevisions.some(revision =>
           decoded.decompressedPayloadSha256 === revision.contentSha256
         );
+        record.poolStateType = poolStateType;
+        record.poolStateAccountDiscriminator = poolStateAccount?.discriminator ?? null;
         record.instruction = summarize(instruction);
         record.instructionSchemaSha256 = schemaHash(instruction);
         record.instructionSchemaMatchesActiveHistory = active
@@ -632,6 +639,83 @@ for (const item of dexCpiIdlHistory) {
   });
 }
 
+const raydiumLaunchlabCandidateExpected = {
+  programId: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+  poolState: "9zAS77Nf22XQ9QrFQH7n1hAu2uCZuDuMzEzmwXKFxm7A",
+  globalConfig: "7yXLcuU4HNEjjEYbz7rAYJUK11SXfdR6df84LyfEQWuM",
+  platformConfig: "6BwHHDg3u1854jC8PDLXvR4spTcLNaoBxLJNGC4nTESt",
+  baseMint: "AydYhVjdXnyLEvdBroRbCoSkVykozfkE5mLo67Bcz7EY",
+  quoteMint: "NKEda5nHhNGgjrE9nDdMvaEmkmJ96qqxzBVZEcKmjSg",
+  authority: "WLHv2UAZm6z4KyaaELi5pjdbJh6RESMva1Rnn8pJVVh",
+  eventAuthority: "2DPAtwB8L12vrMRExbLuyGnC7n2J5LNoZQSejeQGpwkr",
+  platformFeeVault: "8hBWSL5QYTm2duzdSutVEGBrF6QjX44aXi8WRSrErY3y",
+  creatorFeeVault: "5VJj74eKHTjtVRgW7J5L7qFE8nw8DQcpnP8Zri9o8Hpk",
+  systemProgram: "11111111111111111111111111111111",
+  quoteTokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+};
+
+async function auditRaydiumLaunchlabCandidateAccountState() {
+  const raydium = dexCpiIdlHistory.find((item) => item.slug === "raydium-launchlab");
+  const idlAccount = raydium?.onChainProvenance?.idlAccount;
+  const idlTrusted = idlAccount?.found === true &&
+    idlAccount.ownerMatchesProgram === true &&
+    idlAccount.payloadMatchesAnyActiveHistoricalRevision === true &&
+    raydium.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true &&
+    idlAccount.poolStateType?.type?.kind === "struct" &&
+    Array.isArray(idlAccount.poolStateAccountDiscriminator);
+  if (!idlTrusted) {
+    return {
+      status: "incomplete",
+      commitment: "finalized",
+      error: "Candidate-slot Raydium IDL/program provenance did not provide a trusted PoolState layout",
+    };
+  }
+
+  try {
+    const names = ["poolState", "platformFeeVault", "creatorFeeVault", "systemProgram"];
+    const addresses = names.map((name) => raydiumLaunchlabCandidateExpected[name]);
+    const fetched = await fetchMultipleAccountInfo(addresses);
+    const accounts = Object.fromEntries(names.map((name, index) => [
+      name,
+      { value: fetched.values[index] ?? null, contextSlot: fetched.contextSlot },
+    ]));
+    const idl = {
+      accounts: [{ name: "PoolState", discriminator: idlAccount.poolStateAccountDiscriminator }],
+      types: [idlAccount.poolStateType],
+    };
+    const report = auditRaydiumLaunchlabCandidateAccounts({
+      accounts: { ...accounts, contextSlot: fetched.contextSlot },
+      idl,
+      expected: raydiumLaunchlabCandidateExpected,
+    });
+    report.accountDataSha256 = Object.fromEntries(names.map((name) => {
+      const value = accounts[name].value;
+      return [name, value ? sha256(Buffer.from(value.data?.[0] ?? "", "base64")) : null];
+    }));
+    report.accountChecksStatus = report.status;
+    report.activeHistoricalRevisionCount = raydium.activeHistoricalRevisionCount;
+    report.programDataDeploymentCoversCandidateSlot =
+      raydium.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true;
+    report.idlProvenanceUniqueAtCandidateSlot = raydium.activeHistoricalRevisionCount === 1;
+    if (!report.idlProvenanceUniqueAtCandidateSlot && report.status === "matched") {
+      report.status = "incomplete";
+      report.provenanceWarning = "Candidate slot has multiple active historical IDL revisions; current finalized PoolState account fields and PDA checks match, but the schema revision is not uniquely pinned to the candidate slot.";
+    }
+    report.candidateTransactionSlot = candidateTransactionSlot;
+    report.candidateTransactionSignature = "2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX";
+    report.note = "Finalized current account state is correlated to the preserved candidate CPI vector. This is not a historical account snapshot at the candidate slot and does not prove Jupiter handler slicing or CPI-requested privileges.";
+    return report;
+  } catch (error) {
+    return {
+      status: "incomplete",
+      commitment: "finalized",
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+const raydiumLaunchlabCandidateAccountAudit = await auditRaydiumLaunchlabCandidateAccountState();
+
 const latest = await request("latest", "/api/latest");
 const history = await request("history", "/api/history");
 const matchingHistory = history.candidates.filter((candidate) =>
@@ -652,6 +736,7 @@ const summary = {
   requests: [latest, history],
   onChainProvenance,
   dexCpiIdlHistory,
+  raydiumLaunchlabCandidateAccountAudit,
   activeRevisionForCandidateSlot: activeRevision ? {
     sourceType: activeRevision.sourceType,
     metadataAccountAddress: activeRevision.metadataAccountAddress,
@@ -697,6 +782,7 @@ const summary = {
     dexAdaptersWithSupportedIdlProvenance: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "supported").length,
     dexAdaptersWithIncompleteIdlProvenance: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "incomplete").length,
     dexAdaptersIncompatibleWithCandidateSlot: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "incompatible").length,
+    raydiumLaunchlabCandidateAccountAuditStatus: raydiumLaunchlabCandidateAccountAudit.status,
   },
   safetyNote: "Adapter status is an evidence classification scoped to IDL provenance at the candidate transaction slot, not runtime CPI compatibility or release approval. An IDL does not attest to deployed binary identity or prove runtime CPI account slicing, CPI-requested signer/writable privileges, or transaction safety.",
 };
