@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
-import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
+import { validateJupiterV6Transaction, decodeJupiterV6Route, JUPITER_V6_PROGRAM_ID, JUPITER_V6_EVENT_AUTHORITY, TOKEN_PROGRAM_ID } from "../src/jupiter-v6-policy.mjs";
 
 const taker = "11111111111111111111111111111111";
 const inputMint = "So11111111111111111111111111111111111111112";
@@ -21,14 +21,14 @@ function routeData({ variant = 7, percent = 100, inputIndex = 0, outputIndex = 1
 }
 function parsed({ data = routeData(), extraProgram = false, takerKey = taker, outMint = outputMint, requiredSignatures = 1 } = {}) {
   const unknownProgram = encodeBase58(new Uint8Array(32).fill(23));
-  const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, raydium, compute, unknownProgram];
-  const instructions = [{ programIdIndex: 5, accountIndexes: [3, 0, 1, 2, 5, 4, 5, 6], data }];
-  if (extraProgram) instructions.push({ programIdIndex: 8, accountIndexes: [], data: new Uint8Array([99]) });
+  const keys = [takerKey, source, destination, TOKEN_PROGRAM_ID, outMint, JUPITER_V6_PROGRAM_ID, JUPITER_V6_EVENT_AUTHORITY, raydium, compute, unknownProgram];
+  const instructions = [{ programIdIndex: 5, accountIndexes: [3, 0, 1, 2, 5, 4, 5, 6, 5, 7], data }];
+  if (extraProgram) instructions.push({ programIdIndex: 9, accountIndexes: [], data: new Uint8Array([99]) });
   return {
     staticAccountKeys: keys.map(decodeBase58),
     requiredSignatures,
     readonlySignedAccounts: 0,
-    readonlyUnsignedAccounts: 6,
+    readonlyUnsignedAccounts: 7,
     instructions
   };
 }
@@ -62,8 +62,27 @@ test("rejects invalid split percentages, route indexes and missing DEX program a
   assert.throws(() => decodeJupiterV6Route(routeData({ percent: 99 })), /total 100/);
   assert.throws(() => decodeJupiterV6Route(routeData({ inputIndex: 1, outputIndex: 1 })), /token index/);
   const p = parsed();
-  p.staticAccountKeys[6] = decodeBase58(compute);
+  p.staticAccountKeys[7] = decodeBase58(compute);
   assert.throws(() => validate(p), /missing its approved DEX program/);
+});
+
+
+test("requires the canonical Jupiter event authority and program fixed accounts before DEX remaining accounts", () => {
+  const wrongEventAuthority = parsed();
+  wrongEventAuthority.staticAccountKeys[6] = decodeBase58(source);
+  assert.throws(() => validate(wrongEventAuthority), /event authority and program/i);
+
+  const wrongProgram = parsed();
+  wrongProgram.instructions[0].accountIndexes[8] = 8;
+  assert.throws(() => validate(wrongProgram), /event authority and program/i);
+
+  const missingFixedAccounts = parsed();
+  missingFixedAccounts.instructions[0].accountIndexes = missingFixedAccounts.instructions[0].accountIndexes.slice(0, 8);
+  assert.throws(() => validate(missingFixedAccounts), /missing required fixed or DEX accounts/i);
+
+  const writableEventAuthority = parsed();
+  writableEventAuthority.readonlyUnsignedAccounts = 6;
+  assert.throws(() => validate(writableEventAuthority), /signer\/writable privileges/i);
 });
 
 test("rejects unexpected writable privileges on route authority and fee placeholders", () => {
