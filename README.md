@@ -3301,3 +3301,16 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Exact-head Validate `42941085352` and Browser Smoke `42941085361` on `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7` are running at this checkpoint.
 
 **Exact next task:** wait for both exact-head checks. If Browser Smoke fails, use the new precise diagnostics and inspect the exact failed phase; do not repeat either previous patch. If green, inspect the uploaded artifact and ensure the mobile landscape/portrait gate actually completed before considering PR #242 merge.
+
+
+### Live CI continuation — 2026-11-11 checkpoint
+
+- [x] Re-polled exact-head Browser Smoke run `42941085361` on PR #242 head `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7`: DEX/homepage routing, Cloudflare swap-proxy tests, fail-closed execution checks, standalone Swap, DEX quote-preview shell, desktop/mobile workspace regression, 390px/360px responsive layouts, and mobile provider-error/empty/loading states all completed successfully.
+- [ ] The remaining step, `Run Jarrell's Peak desktop and mobile gameplay smoke tests`, is still running. The workflow job has no reported failed step; screenshot upload is pending. This is NOT a completed Browser Smoke pass.
+- [x] Exact-head Validate `42941085352` completed SUCCESS.
+- [x] PR #242 is only 2 commits ahead of its recorded base and has no additional behind commits against that base; its latest head is `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7`. Main has since advanced through documentation-only checkpoints, so merge readiness must be re-evaluated against current main after CI and artifact review.
+- [!] PR #242 is still open and unmerged. Do not merge until gameplay smoke finishes, Browser Smoke is green on this exact head, and uploaded desktop/mobile screenshots are inspected.
+- [!] PR #235 Swap integration and PR #233 execution-gate work both currently report GitHub merge state `dirty`; PR #235 is 50 commits ahead / 5 behind current main and PR #233 is also dirty. Do not blind-merge or overwrite their work. Resolve conflicts with source-aware integration after PR #242 is closed out.
+- [!] Swap execution remains fail-closed. The known ALT resolution, semantic instruction policy, controlled Devnet lifecycle, and production Cloudflare prerequisites remain release blockers.
+
+**Exact next task:** poll Browser Smoke `42941085361` and job `130262796202` until terminal. On failure, retrieve the completed job log and screenshot/diagnostic artifacts, identify the new root cause, and implement a distinct targeted fix (never repeat the orientation or DEX-bootstrap patches). On success, download and inspect the artifact, record the visual findings, then re-evaluate PR #242 against current main before merging. Continue the DEX/Swap security integration only after this acceptance gate.
