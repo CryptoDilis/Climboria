@@ -1,0 +1,152 @@
+import { pathToFileURL } from "node:url";
+import {
+  buildJupiterV6TraceReport,
+  JUPITER_V6_PROGRAM_ID
+} from "./audit-jupiter-v6-rpc.mjs";
+import { METEORA_DLMM_PROGRAM_ID } from "./audit-meteora-bin-array.mjs";
+
+const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const JUPITER_ROUTE_DISCRIMINATOR = "e517cb977ae3ad2a";
+const METEORA_SWAP2_DISCRIMINATOR = "414b3f4ceb5b5b88";
+
+export function decodeBase58(value) {
+  if (typeof value !== "string" || value.length === 0) return new Uint8Array();
+  let number = 0n;
+  for (const character of value) {
+    const digit = BASE58.indexOf(character);
+    if (digit < 0) throw new Error("Invalid base58 instruction data");
+    number = number * 58n + BigInt(digit);
+  }
+  const bytes = [];
+  while (number > 0n) {
+    bytes.push(Number(number & 255n));
+    number >>= 8n;
+  }
+  bytes.reverse();
+  let leadingZeros = 0;
+  while (leadingZeros < value.length && value[leadingZeros] === "1") leadingZeros += 1;
+  return new Uint8Array([...new Array(leadingZeros).fill(0), ...bytes]);
+}
+
+export function decodeJupiterRoutePlanHeader(dataBase58) {
+  const bytes = decodeBase58(dataBase58);
+  if (bytes.length < 13) return null;
+  const discriminatorHex = Buffer.from(bytes.subarray(0, 8)).toString("hex");
+  if (discriminatorHex !== JUPITER_ROUTE_DISCRIMINATOR) return null;
+  const routePlanCount = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(8, true);
+  return {
+    discriminatorHex,
+    routePlanCount,
+    firstStepVariant: bytes[12]
+  };
+}
+
+export function isMeteoraSwap2Instruction(dataBase58) {
+  const bytes = decodeBase58(dataBase58);
+  return bytes.length >= 8 && Buffer.from(bytes.subarray(0, 8)).toString("hex") === METEORA_SWAP2_DISCRIMINATOR;
+}
+
+async function rpcCall(rpcUrl, method, params, fetchImpl) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetchImpl(rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-meteora-discovery", method, params }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (response.status === 429 && attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 750 * (2 ** attempt)));
+      continue;
+    }
+    if (!response.ok) throw new Error("Solana RPC HTTP error for " + method + ": " + response.status);
+    const payload = await response.json();
+    if (payload.error) throw new Error("Solana RPC " + method + " error: " + JSON.stringify(payload.error));
+    return payload.result;
+  }
+  throw new Error("Solana RPC rate limit persisted for " + method);
+}
+
+export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
+  if (typeof rpcUrl !== "string" || !/^https:\/\//i.test(rpcUrl)) {
+    throw new Error("Set JUPITER_AUDIT_RPC_URL to an HTTPS Solana RPC endpoint");
+  }
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const limit = Number.isInteger(options.limit) ? Math.max(1, Math.min(options.limit, 50)) : 20;
+  const maxTransactions = Number.isInteger(options.maxTransactions)
+    ? Math.max(1, Math.min(options.maxTransactions, limit))
+    : limit;
+  const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, options.maxMatches) : 3;
+  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 200;
+
+  const signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
+    METEORA_DLMM_PROGRAM_ID,
+    { commitment: "finalized", limit }
+  ], fetchImpl);
+  if (!Array.isArray(signatures)) throw new Error("Solana RPC returned an invalid signature list");
+
+  const results = [];
+  let transactionsScanned = 0;
+  for (const entry of signatures.slice(0, maxTransactions)) {
+    if (typeof entry?.signature !== "string") continue;
+    const transaction = await rpcCall(rpcUrl, "getTransaction", [
+      entry.signature,
+      { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
+    ], fetchImpl);
+    transactionsScanned += 1;
+    if (transaction) {
+      const report = buildJupiterV6TraceReport(entry.signature, transaction);
+      for (const route of report.jupiterRoutes) {
+        const routeHeader = decodeJupiterRoutePlanHeader(route.instructionDataBase58);
+        const swap2Cpis = route.innerInstructions.filter((ix) =>
+          ix.programId === METEORA_DLMM_PROGRAM_ID && isMeteoraSwap2Instruction(ix.dataBase58)
+        );
+        if (swap2Cpis.length === 0) continue;
+        results.push({
+          signature: report.signature,
+          slot: report.slot,
+          outerInstructionIndex: route.outerIndex,
+          routePlanHeader: routeHeader,
+          transactionSucceeded: report.transactionSucceeded,
+          meteoraSwap2Cpis: swap2Cpis.map((ix) => ({
+            innerIndex: ix.innerIndex,
+            stackHeight: ix.stackHeight,
+            accountCount: ix.accounts.length,
+            orderedAccounts: ix.accounts.map((account) => account.address)
+          }))
+        });
+        if (results.length >= maxMatches) break;
+      }
+    }
+    if (results.length >= maxMatches) break;
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  return {
+    searchedProgramId: METEORA_DLMM_PROGRAM_ID,
+    jupiterProgramId: JUPITER_V6_PROGRAM_ID,
+    commitment: "finalized",
+    signaturesReturned: signatures.length,
+    transactionsScanned,
+    matchingRoutes: results.length,
+    results,
+    evidenceLimitations: [
+      "This bounded sample is not an exhaustive scan of Jupiter/Meteora routes.",
+      "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
+      "The report does not expose CPI-requested signer/writable AccountMeta flags.",
+      "Do not generalize account cursor behavior from a small recent sample."
+    ]
+  };
+}
+
+async function main() {
+  const rpcUrl = process.env.JUPITER_AUDIT_RPC_URL;
+  const report = await discoverRecentJupiterMeteoraRoutes(rpcUrl);
+  process.stdout.write(JSON.stringify(report, null, 2) + "\n");
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    process.stderr.write("Jupiter/Meteora route discovery failed: " + error.message + "\n");
+    process.exitCode = 1;
+  });
+}
