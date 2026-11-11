@@ -3932,7 +3932,7 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Created draft PR #264: https://github.com/CryptoDilis/Climboria/pull/264, exact head `e57692484fa5f00853524726246714410e0ad26b`.
 - [x] Ported only the targeted Browser Smoke fix: wait for smooth scrolling to settle for four animation frames and require the close button to be the topmost hit target before the real mobile tap. No production UI code or acceptance criteria changed.
 - [x] Exact-head Validate run `42969473706`, job `130354325190`, passed on PR #264 head `e57692484fa5f00853524726246714410e0ad26b`.
-- [ ] Exact-head Browser Smoke run `42969473636`, job `130354325468`, is running; at last poll it had completed setup and was installing Playwright (step 5). Mobile DEX close-tap and later gameplay checks have not run yet.
+- [ ] Exact-head Browser Smoke run `42969473636`, job `130354325468`, is running; at latest poll, setup, auth/cloud-save account-isolation step 7, and server startup passed; homepage/DEX routing/mobile navigation step 8 is running. The DEX close-tap and later gameplay checks have not run yet.
 - [ ] After verification, merge only the current-main-based PR #264 if all required checks pass. Keep PR #263 as historical diagnostic evidence; do not merge its diverged branch.
 
 ### Next ecosystem execution checkpoint
