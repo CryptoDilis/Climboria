@@ -4458,3 +4458,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - Current PR head is eff5810c1173c5fe020d9eda22ef976a2e4baad3; code tree is 57d2ffdbdd86ceeb55f030d2fa5acad4dd3390a1. No commit-associated workflow runs or statuses were visible for the new code head at the last poll. Do not claim tests passed on this change.
 - Preceding head 8a3f6dbd872d615be5bca6fa92bf3e9a875d8247 passed Validate, Browser Smoke, Jupiter CPI Trace and IDL History workflows, but the IDL artifact exposed a parser defect; green operational workflow status did not equal successful on-chain payload validation.
 - Full diagnosis, exact evidence, and next actions are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 rejected by production validation and signing/execution disabled.
+
+
+## 2026-11-12 — On-chain Jupiter IDL provenance verified
+
+- Exact tested code/merge head: 23ac3897ded80d43c8d7c2d31de525832287b3bf. Validate 43076000705 passed **92/92 tests** and all syntax/dry-run checks. Jupiter CPI Trace Audit 43076000789 passed. IDL History Audit 43076000606 passed and artifact 13882737009 was inspected. Browser Smoke 43076000655 was still queued at last poll.
+- Correct parser selected the 8-byte-prefix layout. Observed prefix 184662bf3a907b9e (not the standard Anchor account discriminator), IDL authority 9u9iZBWqGsp5hXBxkVZtBTuLSGNAG9gEQLgpuVw39ASg, Jupiter owner match, and decompressed payload SHA-256 exactly matches the slot-history revision: 11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981. The payload route_v2 discriminator also matches bb64facc31c4af14.
+- ProgramData deployment slot 468023491 precedes candidate transaction slot 468153382. Binary SHA-256 aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6; upgrade authority remains set. Strong interface/deployment evidence, not proof of adapter CPI account-slice behavior or CPI-requested privileges.
+- The first helper-file commit a52b844 was inadvertently created on main because its create-file operation omitted the branch argument; no production runtime was changed. PR branch was synchronized with main by merge commit 23ac3897ded80d43c8d7c2d31de525832287b3bf (164 ahead / 0 behind). Further file creation must specify the PR branch.
+- Detailed raw hashes, root causes, account layout and limitations are in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md. Keep route_v2 excluded from production validation and all signing/execution gates closed.
