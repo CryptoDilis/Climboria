@@ -15,6 +15,9 @@
 
 - A strict metadata policy now accepts only Jupiter Metis v0 non-gasless orders, checks exact input amount, positive output/minimum-output values, minimum-output ≤ quoted output and non-empty route labels; it rejects JupiterZ/Dflow/OKX, v1, gasless and external fee-payer orders. This narrows the future semantic policy but does not validate the compiled Metis instruction/account semantics.
 
+- A first fail-closed Jupiter V6 route decoder is added for the single route instruction only. It accepts a small explicit DEX-variant set (Raydium, Whirlpool, Raydium CLMM, Meteora DLMM, Raydium CPMM and SolFi), validates route graph/split percentages, exact input/quoted output, slippage cap, zero platform fee, taker signer, output mint, readonly program accounts and rejects all other top-level programs/instruction families. It intentionally does not accept shared-account/token-ledger/exact-out routes, ATA/SOL wrapping instructions or Token-2022.
+- This is an initial transaction-shape policy, not a complete release validator. Source/destination token-account mint and owner state still needs finalized RPC verification; remaining DEX account-role schemas and setup/cleanup paths need independent review.
+
 ## Explicitly unresolved release blockers
 
 1. **Semantic instruction allowlist is not implemented.** The parser retains bytes/indexes, but Climboria does not yet decode and approve every supported Jupiter program/instruction/account schema. There is no complete proof of token mints, source/destination ownership, exact input, minimum output/slippage, fee destinations, compute budget/priority fees, ATA/native-SOL setup, Token-2022 extensions, unexpected transfers or approvals. Unknown instructions must be rejected before any execution can be enabled.
