@@ -3931,7 +3931,8 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Created fresh branch `codex/dex-mobile-close-stability-current-main-2026-11-11` from current main `19386131dfdc3095109a172db7049f37b3caac8b`.
 - [x] Created draft PR #264: https://github.com/CryptoDilis/Climboria/pull/264, exact head `e57692484fa5f00853524726246714410e0ad26b`.
 - [x] Ported only the targeted Browser Smoke fix: wait for smooth scrolling to settle for four animation frames and require the close button to be the topmost hit target before the real mobile tap. No production UI code or acceptance criteria changed.
-- [ ] Run exact-head Validate and Browser Smoke on PR #264; confirm the 390px/360px mobile DEX detail-close → market return flow and all later gameplay checks.
+- [x] Exact-head Validate run `42969473706`, job `130354325190`, passed on PR #264 head `e57692484fa5f00853524726246714410e0ad26b`.
+- [ ] Exact-head Browser Smoke run `42969473636`, job `130354325468`, is running; at last poll it had completed setup and was installing Playwright (step 5). Mobile DEX close-tap and later gameplay checks have not run yet.
 - [ ] After verification, merge only the current-main-based PR #264 if all required checks pass. Keep PR #263 as historical diagnostic evidence; do not merge its diverged branch.
 
 ### Next ecosystem execution checkpoint
