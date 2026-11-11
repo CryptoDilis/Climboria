@@ -3890,3 +3890,12 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Gameplay step 17 (Jarrell's Peak desktop/mobile) remains IN PROGRESS; screenshot upload step 18 is pending. The run is still non-terminal. A direct job-log download currently returns GitHub BlobNotFound while the job is active, so no new gameplay failure evidence is available yet.
 - [ ] Do not merge PR #262 or declare Browser Smoke passed on a non-terminal run. Next: poll the same run; once terminal, inspect gameplay diagnostics/logs. If the job remains stuck past its expected smoke timeout, inspect the workflow's gameplay test timeout/wait conditions before deciding whether a targeted rerun is justified.
 - [ ] After the DEX test fix is conclusively verified, port PR #261's GLB phase telemetry to the current main head and run a dedicated exact-head Browser Smoke to isolate download/parse/scene-attach/readiness stage. No production GLB fix is selected without that evidence.
+
+
+### PR #263 — GLB diagnostics rebased onto mobile DEX stability fix — 2026-11-11 13:51 +08
+
+- [x] Created draft PR #263: https://github.com/CryptoDilis/Climboria/pull/263, head `343db8f21ee09919591167489366551c204385b7`.
+- [x] Based its branch on PR #262 exact head `cce63b00613cb8630077a76d60bb1bf547934b1a`, then ported only the two diagnostic files from PR #261: `game/play.html` and `.github/scripts/game-smoke.mjs`. This combines the scroll-stable mobile DEX test with GLB loader phase telemetry without changing production gameplay/loading behavior.
+- [ ] PR #263 exact-head Validate and Browser Smoke are not yet visible in commit-associated workflow results; confirm PR checks start and record their run IDs before claiming verification.
+- [ ] Earlier PR #262 Browser Smoke `42967445978`, job `130347847200`, still reports gameplay step 17 IN PROGRESS and screenshot step 18 pending at last poll. Steps 7–16 remain SUCCESS. Its active job logs return BlobNotFound, so it has not supplied new GLB phase evidence.
+- [ ] Next: inspect PR #263 exact-head checks. Use its gameplay failure diagnostic to identify the precise GLB stage. Do not modify production loader behavior until the phase evidence distinguishes request, parse/decode, scene setup, animation rig, or readiness. Keep PR #263 diagnostic-only and draft pending exact-head verification.
