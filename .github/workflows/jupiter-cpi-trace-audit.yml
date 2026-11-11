@@ -1,0 +1,41 @@
+name: Jupiter V6 CPI Trace Audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs"
+      - ".github/workflows/jupiter-cpi-trace-audit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jupiter-cpi-trace-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch finalized public Jupiter V6 route trace
+        env:
+          JUPITER_AUDIT_RPC_URL: https://api.mainnet-beta.solana.com
+        run: |
+          timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv > jupiter-v6-meteora-trace.json
+          node -e "const r=require('./jupiter-v6-meteora-trace.json'); if(!r.transactionSucceeded || r.jupiterRoutes.length!==1) process.exit(1); console.log(JSON.stringify({slot:r.slot,routeCount:r.jupiterRoutes.length,innerCount:r.jupiterRoutes[0].innerInstructions.length,programs:[...new Set(r.jupiterRoutes[0].innerInstructions.map(i=>i.programId))]},null,2))"
+      - name: Upload read-only CPI trace report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jupiter-v6-meteora-cpi-trace
+          path: jupiter-v6-meteora-trace.json
+          if-no-files-found: error
+          retention-days: 7
