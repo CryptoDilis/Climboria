@@ -4188,3 +4188,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Root cause confirmed by comparing scripts: PR #269 omitted the already-validated close-before-mobile resource-lifecycle fix. It kept the desktop page/context alive while starting the mobile GLB load. The proven PR #268 script closes both before creating mobile. The targeted port and recovery verification are tracked in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Exact-head Validate `43105908352`, CPI Trace Audit `43105908294`, and IDL History Audit `43105908383` passed. IDL artifact `13894222771` confirms Jupiter candidate-slot provenance but records incomplete/mixed DEX adapter evidence; a green workflow does not authorize every adapter.
 - PR #269 remains draft/unmerged. Signing/execution gates remain false. Next task: port the proven smoke-script fix, rerun exact-head Browser Smoke, then improve explicit per-adapter provenance states.
+
+
+## 2026-11-12 — PR #269 exact-head recovery and next audit
+
+- Exact-head Browser Smoke `43108247042` on `04be344c39de1ab725a881221ec19e93f6e90e23` completed SUCCESS. Ecosystem steps 1–16, strict Jarrell's Peak desktop/mobile gameplay step 17, and screenshot upload step 18 passed. Mobile diagnostics reported `ready=true`, `hero=true`, `renderErrors=[]`; the log confirms desktop WebGL resources were released before mobile GLB startup.
+- Screenshot artifact `13895696360`, 8,668,558 bytes, SHA-256 `e72da78d12f515663324cd299fed6658454e69c904292f3b83c33bfafa64baf2`.
+- Exact-head Validate `43108247338`, Jupiter CPI Trace Audit `43108247031`, and Jupiter IDL History Audit `43108247049` also passed. The IDL artifact is `13894094213`, SHA-256 `ba28eff03ac33036649cdfad2727263d13f63d780ffeb34caab028e255dcf6d7`; adapter evidence remains mixed and is not release approval.
+- Added explicit evidence-only DEX adapter IDL provenance classification (`supported`, `incomplete`, `incompatible`) with reason codes, focused unit tests, aggregate counts, and workflow test/path coverage. Classification is scoped to the candidate transaction slot and does not assert runtime CPI compatibility.
+- New classifier exact-head verification is pending. Keep PR #269 draft/unmerged, preserve no-demo delivery, and keep Swap signing/execution disabled.
+- Next: verify classifier tests and generated artifact on the new exact head; then continue finalized multi-transaction route/CPI evidence, deployed-binary provenance, and independent review.
+- Full diagnoses, exact evidence and unresolved boundaries: [workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
