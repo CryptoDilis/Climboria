@@ -1138,3 +1138,12 @@ This does not change the platform-fee attribution at outer position 10: its tran
 - No exact-head workflow runs are visible for the new commits yet. The preceding head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c` passed all four recorded workflows, including 95/95 Validate tests, but this is not evidence for the new instrumentation.
 - No failure has been observed on the new head; therefore no rerun or counter-fix is justified yet. Keep all safety gates closed.
 - Next: obtain fresh exact-head Validate, Browser Smoke and CPI Trace Audit. Inspect the generated artifact to confirm the new field exposes duplicate occurrences without implying cursor ownership. Continue with CPI-requested privileges and multiple route shapes only after evidence is available.
+
+### Verification blocker checkpoint — 2026-11-12
+
+- Added a dedicated `node --test dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs` step to `.github/workflows/jupiter-cpi-trace-audit.yml` so the account-index regression runs before the live read-only trace. Workflow commit: `c6c1df9d0e3dc0c0e899a28263cca2142fe0ac79`.
+- Latest branch comparison: 187 commits ahead / 0 behind main; merge base is `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- Commit-associated workflow query for `c6c1df9d0e3dc0c0e899a28263cca2142fe0ac79` returned no PR-triggered runs; combined status is empty. This does not mean success or failure.
+- No Actions workflow-dispatch operation is exposed by the connected GitHub integration in this session. A local `git clone` attempt was also blocked because the execution environment could not resolve `github.com`. Therefore the new test has not been executed in this session.
+- No failed workflow exists on this new head to diagnose or rerun. Do not mark the instrumentation verified or merge based on the preceding `c7736c25...` green runs.
+- Exact next action: trigger Validate, Browser Smoke and Jupiter CPI Trace Audit on the current branch head through an authorized Actions dispatch; inspect all jobs and the uploaded trace artifact. If the new mapping test fails, inspect the exact assertion and account-key ordering before changing code. Keep route_v2 rejected and signing/execution disabled.
