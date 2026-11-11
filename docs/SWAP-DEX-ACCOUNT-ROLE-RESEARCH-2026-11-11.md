@@ -450,3 +450,16 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - [ ] Controlled Devnet reproduction and independent security review.
 
 **Decision:** This is strong, transaction-specific evidence for one Meteora DLMM Swap2 route and its 17-account CPI vector. It is not sufficient to enable variant 75 in Climboria's signable-order policy or approve execution. Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, and public frontend execution disabled.
+
+
+## Final branch verification after trace documentation — 2026-11-11 22:55 PHT
+
+- Verified exact branch head `feb0386cbd1e84d12934e5f5ee96ddac355e1791`; PR #268 is 63 commits ahead / 0 behind main and remains draft/unmerged.
+- Validate run `43030775346`, job `130556954937`: SUCCESS; all 12 validation steps and job cleanup completed.
+- Browser Smoke run `43030775335`, job `130557049151`: SUCCESS; all ecosystem steps 7–16 passed, including auth isolation, DEX/Swap, fail-closed execution, live Solana discovery, responsive mobile and provider error/empty states.
+- Dedicated Jupiter V6 CPI Trace Audit run `43030775438`, job `130556940556`: SUCCESS; finalized public transaction fetched and report uploaded.
+- Browser screenshot artifact `13859239516` uploaded (5,405,347 bytes). Jupiter trace artifact `13858919436` uploaded (3,699 bytes).
+- No workflow failure occurred on this exact head. The two historical Validate failures (runs `43029417495` and `43029480369`) were deeply diagnosed as the same ALT privilege-label assertion defect, fixed without weakening tests, and subsequently passed on this head.
+- The earlier intermediate runs cancelled by branch concurrency were superseded by the final successful exact-head runs; they are not treated as test failures.
+- These are code validation, ecosystem Browser Smoke, and read-only transaction trace checks. No Jarrell's Peak gameplay workflow, production deployment, Devnet settlement, or live signing/execution was performed.
+- After this verification, only this documentation/PR record is changed; no runtime code, tests, or workflow logic is changed.
