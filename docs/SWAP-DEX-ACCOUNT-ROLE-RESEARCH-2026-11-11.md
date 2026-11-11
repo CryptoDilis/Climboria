@@ -426,7 +426,7 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 
 - The CPI account vector exactly matches outer Jupiter route account positions 10–26, with the Meteora program dispatch account at outer position 9. This is direct per-transaction evidence for the 17-account CPI vector and its ordered outer-account source.
 - The official Meteora SDK guide constructs `Swap2` with the 16 fixed accounts, then appends `bin_array_pubkeys` as writable accounts; it also uses empty `RemainingAccountsInfo.slices` when no transfer-hook extras are supplied. The observed data matches that shape.
-- Outer route account position 27 is an additional Jupiter program ID after the observed CPI vector. Its role is not established by this trace; do not silently fold it into the Meteora CPI slice.
+- Outer route account position 27 is the Jupiter program account used by the later Anchor event self-CPI (inner instruction ordinal 5); it is not part of the Meteora CPI slice. Full evidence and account partition are recorded in the final section.
 - The RPC trace reports transaction-level maximum privileges, not the exact signer/writable flags requested by each inner CPI AccountMeta. The fee payer is globally writable but the Meteora IDL marks `user` as signer without requiring writable; the CPI may attenuate it to read-only. The raw trace cannot prove that inner AccountMeta flag. Do not describe the transaction-message privilege table as exact CPI-requested privileges.
 
 ### Token movement cross-check
@@ -481,7 +481,7 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 ### Updated evidence boundary
 - For this single route, the outer Jupiter route step (variant 75 = `MeteoraDlmmSwapV2`) is mapped to the Meteora `swap2` CPI; the first 16 CPI accounts match the official `swap2` IDL and the final dynamic account is now verified as a BinArray.
 - The exact transaction-specific 17-account vector is therefore verified by: raw finalized CPI account indexes, static/ALT address resolution, official Meteora IDL order, and on-chain owner/discriminator lookup.
-- Still unresolved: outer Jupiter account position 27 (extra Jupiter program ID) and the exact CPI-requested signer/writable flags. RPC transaction-level privileges are not the same as inner AccountMeta flags.
+- The outer Jupiter account position 27 is resolved as the Anchor event self-CPI program account (see final section). Exact CPI-requested signer/writable flags remain unresolved. RPC transaction-level privileges are not the same as inner AccountMeta flags.
 - Still not proven: generic Jupiter account cursor behavior across all variants, multi-hop/split routes, transfer-hook slices, or source-to-deployed-binary equivalence. Keep variant 75 excluded from the production allowlist pending those checks.
 
 ### Latest CI
@@ -524,7 +524,7 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 
 ### Remaining next steps
 - [ ] Sample a wider time window or additional bounded batches when public RPC quota permits; record 429 as incomplete evidence, never as no-match proof.
-- [ ] Resolve the extra outer Jupiter program account at route position 27.
+- [x] Resolve the extra outer Jupiter program account at route position 27 as the Anchor event self-CPI program account (transaction-specific evidence recorded in the final section).
 - [ ] Obtain direct evidence for CPI-requested signer/writable flags and establish Jupiter deployed binary/source provenance.
 - [ ] Repeat variant-75 traces with bitmap extension, multiple BinArrays, transfer-hook slices, split and multi-hop routes.
 - [ ] Devnet reproduction and independent security review.
