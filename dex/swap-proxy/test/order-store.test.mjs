@@ -75,6 +75,19 @@ test("rejects stored orders without finalized token-account ownership evidence",
   assert.match((await response.json()).error, /token-account ownership\/mint evidence/i);
 });
 
+test("rejects token-account evidence older than the resolved ALT context", async () => {
+  const { object } = createStore();
+  const fixture = makeFixture(1);
+  const evidence = {
+    contextSlot: 98,
+    source: { address: "11111111111111111111111111111111", mint: "So11111111111111111111111111111111111111112", owner: fixture.taker, amount: "1000" },
+    destination: { address: "SysvarRent111111111111111111111111111111111", mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", owner: fixture.taker, amount: "0" }
+  };
+  const response = await storeOrder(object, fixture, { lookupContextSlot: 99, tokenAccountEvidence: evidence });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /token-account ownership\/mint evidence/i);
+});
+
 test("rejects a tampered signed message without consuming the valid order", async () => {
   const fixture = makeFixture(2);
   const { object } = createStore();
