@@ -13,6 +13,8 @@
 - Wrangler config provisions SwapOrderStore; CI runs all worker/parser/store/ALT/RPC tests and a Wrangler dry-run.
 - Two hard source-level gates block both wallet-signable order issuance and /api/swap/execute; environment flags alone cannot expose a signable transaction or submit a swap. Frontend swap-config.js remains disabled.
 
+- A strict metadata policy now accepts only Jupiter Metis v0 non-gasless orders, checks exact input amount, positive output/minimum-output values, minimum-output ≤ quoted output and non-empty route labels; it rejects JupiterZ/Dflow/OKX, v1, gasless and external fee-payer orders. This narrows the future semantic policy but does not validate the compiled Metis instruction/account semantics.
+
 ## Explicitly unresolved release blockers
 
 1. **Semantic instruction allowlist is not implemented.** The parser retains bytes/indexes, but Climboria does not yet decode and approve every supported Jupiter program/instruction/account schema. There is no complete proof of token mints, source/destination ownership, exact input, minimum output/slippage, fee destinations, compute budget/priority fees, ATA/native-SOL setup, Token-2022 extensions, unexpected transfers or approvals. Unknown instructions must be rejected before any execution can be enabled.
@@ -28,6 +30,10 @@
 - Quote/search are read-only capabilities; never claim they mean live swaps can be submitted.
 - Do not expose RPC URLs, API keys, user private keys or wallet seeds in source, logs or browser code.
 - Do not weaken tests or accept unknown program/instruction families to satisfy a launch date.
+
+## Current Jupiter API architecture finding
+
+Jupiter Swap API V2 documents two distinct paths: Meta-Aggregator (/order + /execute) can select Metis, JupiterZ RFQ, Dflow or OKX; Router (/build + /submit or own RPC) is Metis-only and returns raw instructions. Climboria currently keeps the Meta-Aggregator path but rejects every response except Metis v0. The next semantic layer must decode the Metis instruction and verify the route's program/account roles; it must not trust route labels alone. See https://developers.jup.ag/docs/swap/index.md and https://developers.jup.ag/docs/swap/order-and-execute.md.
 
 ## Exact next task
 
