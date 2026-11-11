@@ -1,8 +1,39 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
-import { parseSolanaV0Transaction, validateSignedOrderTransaction } from "../src/transaction-validation.mjs";
+import { parseSolanaV0Transaction, validateSignedOrderTransaction, validateJupiterOrderMetadata } from "../src/transaction-validation.mjs";
 import { makeFixture, shortVec } from "./solana-v0-fixture.mjs";
+
+test("accepts only a well-formed Metis v0 non-gasless order with exact input and minimum output", () => {
+  assert.equal(validateJupiterOrderMetadata({
+    router: "metis",
+    transactionVersion: 0,
+    gasless: false,
+    inAmount: "1000",
+    outAmount: "950",
+    otherAmountThreshold: "900",
+    routePlan: [{ swapInfo: { label: "Raydium" } }]
+  }, { taker: "Taker111111111111111111111111111111111", amount: "1000" }), true);
+});
+
+test("rejects non-Metis routers, v1, gasless and external fee payers", () => {
+  const base = { router: "metis", transactionVersion: 0, gasless: false, inAmount: "1000", outAmount: "950", otherAmountThreshold: "900", routePlan: [{ swapInfo: { label: "Raydium" } }] };
+  for (const patch of [
+    { router: "jupiterz" }, { router: "dflow" }, { router: "okx" },
+    { transactionVersion: 1 }, { gasless: true },
+    { signatureFeePayer: "DifferentFeePayer1111111111111111111111111111" }
+  ]) {
+    assert.throws(() => validateJupiterOrderMetadata({ ...base, ...patch }, { taker: "Taker111111111111111111111111111111111", amount: "1000" }));
+  }
+});
+
+test("rejects input mismatch, missing route labels and unsafe minimum-output amounts", () => {
+  const base = { router: "metis", transactionVersion: 0, gasless: false, inAmount: "1000", outAmount: "950", otherAmountThreshold: "900", routePlan: [{ swapInfo: { label: "Raydium" } }] };
+  assert.throws(() => validateJupiterOrderMetadata(base, { taker: "Taker111111111111111111111111111111111", amount: "1001" }), /input amount/i);
+  assert.throws(() => validateJupiterOrderMetadata({ ...base, routePlan: [] }, { taker: "Taker111111111111111111111111111111111", amount: "1000" }), /route plan/i);
+  assert.throws(() => validateJupiterOrderMetadata({ ...base, otherAmountThreshold: "951" }, { taker: "Taker111111111111111111111111111111111", amount: "1000" }), /minimum output/i);
+  assert.throws(() => validateJupiterOrderMetadata({ ...base, outAmount: "0" }, { taker: "Taker111111111111111111111111111111111", amount: "1000" }), /positive integer/i);
+});
 
 test("retains compiled instruction bytes and v0 address lookup indexes for review", () => {
   const short = value => Array.from(shortVec(value));
