@@ -4152,3 +4152,13 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Added explicit syntax check for the new trace utility in `.github/workflows/validate-climboria.yml`, commit `701005d5b840701507d11b7edb8e32b51e4d2f49`.
 - [!] Exact-head CI for the corrected head is not yet visible; no local test could run because the environment could not resolve github.com. Do not mark the counter-fix verified until fresh exact-head Validate and Browser Smoke results are inspected.
 - [ ] Next: obtain fresh exact-head workflow results, inspect the full test summary and screenshot artifact, and continue raw Jupiter CPI evidence capture. Keep all execution/signing gates closed.
+
+
+## 2026-11-11 — RPC trace test counter-fix verified
+
+- [x] Exact code/test/workflow tree `19f5d63098ba9b648a0ab6e21b88161bbb123062`: Validate `43029729833` SUCCESS (job `130553385102`), all steps complete.
+- [x] Exact same code/test/workflow tree: Browser Smoke `43029729852` SUCCESS (job `130553473385`), all steps 7–16 complete.
+- [x] Screenshot artifact `13860116825` uploaded (5,387,245 bytes).
+- [x] ALT privilege-source label and static/ALT assertions corrected; no test weakened. Explicit syntax check added for the trace auditor.
+- [!] Gameplay, production deployment, Jupiter per-DEX semantic proof, Devnet settlement and live wallet signing/execution remain unverified/disabled.
+- Following this code verification, only README/research-document/PR-description records are updated; no runtime source, test, or workflow logic is changed.
