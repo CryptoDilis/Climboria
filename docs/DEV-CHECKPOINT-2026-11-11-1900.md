@@ -217,3 +217,12 @@ Initial authoritative-source findings:
 - [ ] Then controlled Devnet token movement/fee-destination proof and Cloudflare production deployment verification.
 - [ ] Continue production Login verification, then Launchpad lifecycle/Devnet proof.
 - [ ] Separately instrument mobile GLTFLoader parsing/dependency/image decode/texture upload/callback/handoff and optimize the 4K PNG textures only with r128-compatible validation.
+
+
+## Research addendum — per-DEX mapping refinement — 2026-11-11 20:12 PHT
+- [x] Extracted exact pinned Jupiter V6 enum indices for current supported variants and distinguished legacy Whirlpool/Meteora variants (17/38) from V2 variants (47/75).
+- [x] Identified `RemainingAccountsInfo` dynamic slice metadata for Whirlpool V2 and Meteora DLMM V2; their dynamic tails cannot be treated as fixed account counts.
+- [x] Compared Jupiter CPI interface and direct Meteora DLMM IDL. Found unresolved differences in bitmap-extension and host-fee writable/optional flags and the user signer flag. Recorded the discrepancy rather than guessing.
+- [ ] Prove exact Jupiter adapter dispatch and outer remaining-account partitioning against a version-matched source or deployed-program evidence.
+- [ ] Resolve Meteora privilege/optional-account discrepancies and SolFi's missing CPI schema before any per-DEX role policy implementation.
+- [ ] Keep signable-order and execution kill switches closed throughout.

@@ -125,3 +125,58 @@ The following source snapshots were fetched and inspected. These are source-prov
 ### Revised implementation gate
 
 No per-DEX account-index allowlist may be implemented from these direct DEX IDLs alone. The next engineering task is to locate the exact Jupiter adapter instruction builder/source corresponding to each route enum variant and bind that source revision to its direct DEX program IDL. If an adapter mapping cannot be independently grounded, remove that variant from the supported route set and retain fail-closed rejection. For SolFi, no sufficiently authoritative version-pinned on-chain account schema has yet been established; variant 61 must remain unsupported for signable/executable orders.
+
+
+## Research addendum — Jupiter V6 variant indices and CPI privilege discrepancies — 2026-11-11 20:12 PHT
+
+Pinned source: `jup-ag/jupiter-amm-implementation` commit `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39`.
+
+### Exact enum variants in the pinned aggregator IDL
+The `Swap` enum at this snapshot confirms:
+- 7 = `Raydium`
+- 17 = `Whirlpool` with one boolean direction field
+- 26 = `RaydiumClmm`
+- 38 = `MeteoraDlmm`
+- 40 = `RaydiumClmmV2`
+- 46 = `RaydiumCP`
+- 47 = `WhirlpoolSwapV2`, with direction plus `RemainingAccountsInfo`
+- 61 = `SolFi`, with one boolean direction field
+- 75 = `MeteoraDlmmSwapV2`, with `RemainingAccountsInfo`
+
+The current Climboria structural allowlist supports 7, 17, 26, 38, 40, 46 and 61. It does not include V2 enum variants 47 or 75. Therefore the current supported Whirlpool/Meteora variants are the legacy variants, not the V2 CPI instructions.
+
+### Dynamic remaining-account metadata
+The pinned aggregator IDL defines:
+- `RemainingAccountsInfo.slices: RemainingAccountsSlice[]`
+- Each slice contains `accounts_type` and a u8 `length`.
+- `AccountsType` variants: TransferHookA, TransferHookB, TransferHookReward, TransferHookInput, TransferHookIntermediate, TransferHookOutput, SupplementalTickArrays, SupplementalTickArraysOne, SupplementalTickArraysTwo.
+
+Only the inspected Whirlpool V2 variant 47 and Meteora DLMM V2 variant 75 expose `RemainingAccountsInfo` in their enum payloads in this snapshot. If these variants are ever supported, their dynamic tail slices must be parsed and checked against the actual CPI interface; treating them as fixed-size account lists would be unsafe.
+
+### Candidate enum-to-CPI interface name correspondence
+The pinned `jupiter_dex_interfaces.json` exposes:
+- Raydium `raydium_swap`: 17 accounts.
+- Whirlpool legacy `whirlpool_swap`: 11 accounts.
+- Raydium CLMM `raydium_clmm_swap`: 10 accounts.
+- Meteora DLMM legacy `meteora_dlmm_swap`: 15 accounts.
+- Raydium CLMM V2 `raydium_clmm_swap_v2`: 13 accounts.
+- Raydium CPMM `raydium_cp_swap`: 13 accounts.
+- Whirlpool V2 `whirlpool_swap_v2`: 15 fixed accounts.
+- Meteora DLMM V2 `meteora_dlmm_swap_v2`: 16 fixed accounts.
+
+The names strongly suggest the correspondence above, but this is **not yet proof** of the deployed aggregator's dispatch or outer remaining-account slicing. Do not hard-code these counts/offsets as transaction validation until a version-matched adapter dispatch/account-meta builder or equivalent deployed-program evidence confirms the mapping and order.
+
+### Important privilege/optional-account discrepancies — Meteora DLMM
+Comparing the Jupiter CPI interface with the pinned direct Meteora DLMM SDK IDL reveals material differences:
+- CPI interface `bin_array_bitmap_extension`: readonly and required in the interface; direct DLMM `swap` IDL: writable and optional.
+- CPI interface `host_fee_in`: readonly and required in the interface; direct DLMM `swap` IDL: writable and optional.
+- CPI interface `user`: readonly, non-signer; direct DLMM `swap` IDL: readonly signer.
+- Both interfaces list the 15 legacy swap roles in the same broad order; DLMM V2 CPI interface has 16 roles and adds `memo_program`.
+
+The Jupiter CPI authority may explain some signer differences through PDA signing, but that does not explain the writable/readonly or optional/required discrepancies by itself. Possible explanations include interface-generation/version drift, CPI-specific privilege downgrades for unused optional accounts, or a different adapter path. None is proven. Resolve against the exact Jupiter adapter and direct DLMM program version before implementing privilege checks. In particular, do not "fix" the discrepancy by simply choosing whichever IDL is more permissive.
+
+### Security conclusion
+- The CPI IDL is useful account-role evidence but is not sufficient to establish the exact live route's per-leg account slices.
+- SolFi enum 61 still has no matching SolFi instruction in this pinned CPI interface. Keep SolFi unverified and excluded from any signable/executable policy until a separate authoritative CPI schema and mapping are found.
+- The current source-level signable-order and execution gates remain false; this research does not authorize wallet-signable orders or transaction submission.
+- Next research task: locate a version-matched Jupiter aggregator adapter dispatch/account-meta builder or validate the deployed program version and CPI account traces. Build a per-variant proof matrix including enum index, CPI discriminator, account order, optionality, privileges, dynamic tail slices, program ID, and deployed-version provenance. Reject variants for signable orders where any field remains unproven.
