@@ -29,6 +29,24 @@
 - Complete live provider/contract provenance, mint/pool identity, curve and migration state, authority/custody, treasury/fee destinations, upgrade/admin controls, and failure/recovery verification.
 - Reconcile the existing LaunchLab work only after P1–P3. Complete controlled Devnet lifecycle and production operational controls before enabling create/launch/migration or funds-moving actions.
 
+## Latest delivery progress — 2026-11-11
+
+**Owner request:** deliver DEX, Swap, Login and Launchpad; show this checklist and record each meaningful implementation and verification. The P1→P2→P3→P4 order remains locked.
+
+### Live checklist
+- [x] P1 DEX live discovery implementation ported onto latest main in PR #248; provider-backed latest profiles + top boosts; batched Solana pair lookup; positive price/liquidity validation; deepest-pool selection; discovery-sample volume sorting; honest outage and true-empty states; real token URL navigation.
+- [x] P1 targeted Browser Smoke added for live discovery requests, ranking, token navigation, provider outage and empty feed. Exact workflow step 12 passed on run 42953476811.
+- [x] Validate run 42953476530 passed on exact PR head 9f20a866f2b22f9c2618848d0bd209c7dbc61d0d.
+- [x] Existing browser steps 7–15 passed on run 42953476811: homepage navigation, proxy contract, fail-closed execution, Swap shell, DEX shell, live discovery, mobile workspace, 390px/360px and outage/empty states.
+- [ ] P1 full Browser Smoke not terminal at checkpoint: Jarrell's Peak desktop/mobile gameplay step 16 still running; screenshots not yet available. PR #248 remains open and unmerged. Do not claim deployed.
+- [ ] P2 Swap security: confirmed outstanding critical gap in Worker execute path: signed base64 payload is forwarded without semantic transaction decoding, trusted ALT resolution, taker/order binding, or allowed instruction/account/amount/recipient validation. Existing fail-closed switches must remain. Next task: implement transaction parser/semantic validator and adversarial tests; then Devnet E2E and Worker deployment controls.
+- [ ] P3 Login: PRs #236/#228 remain open. Supabase foundation and RLS work exist, but live provider setup and controlled production-domain account tests remain outstanding. Next task: inspect exact code/config and separate implemented provider adapters from required dashboard credentials and redirect settings.
+- [ ] P4 Launchpad: PR #231 and LaunchLab docs remain open/incomplete. Current release decision is informational/read-only until protocol/fee/LP ownership decisions and Devnet architecture are proven. Next task: reconcile LaunchLab provenance probe and implement controlled Devnet create→bonding curve→migration→pool/LP verification only with approved fee/custody policy.
+- [x] Sanctuary PRs #246/#247 remain paused per owner override; do not resume unless requested.
+- **Active PR:** #248, head `9f20a866f2b22f9c2618848d0bd209c7dbc61d0d`.
+- **Latest runs:** Validate `42953476530` SUCCESS; Browser Smoke `42953476811` IN_PROGRESS at gameplay step 16.
+- **Exact next task:** poll run `42953476811` to terminal status; if failed, fetch job logs and artifacts, identify root cause, implement a distinct targeted fix, and rerun. If successful, review screenshots and verify Pages deployment before merge. Then proceed directly to P2 security implementation.
+
 ## 2026-11-11 execution checkpoint
 - [x] Owner explicitly overrode the Sanctuary-first gate and reaffirmed P1→P2→P3→P4 as today's delivery target.
 - [x] Sanctuary PRs #246/#247 paused; no further Sanctuary retries, commits, or diagnostics are authorized unless requested.
