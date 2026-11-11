@@ -139,6 +139,10 @@ export function validateJupiterV6Transaction({
   const accountKeys = instruction.accountIndexes.map(index => keys[index]);
   const accountMetas = instruction.accountIndexes.map(index => metaFor(parsed, index, loadedWritable, loadedReadonly));
   if (accountKeys.length < 8) fail("Jupiter route instruction is missing required accounts");
+  // For the supported no-fee/no-extra-destination-account route shape, Anchor encodes
+  // both absent optional accounts (destinationTokenAccount and platformFeeAccount)
+  // as the Jupiter program ID sentinel. The top-level program ID is instruction.programIdIndex,
+  // not an account meta in this fixed account list.
   if (accountKeys[0] !== TOKEN_PROGRAM_ID || accountKeys[1] !== taker ||
       accountKeys[5] !== outputMint || accountKeys[4] !== JUPITER_V6_PROGRAM_ID ||
       accountKeys[6] !== JUPITER_V6_PROGRAM_ID) {
