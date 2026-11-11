@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeLegacyAnchorIdlAccount, encodeBase58 } from "./legacy-anchor-idl-account.mjs";
 import { decodeSplTokenAccountSummary } from "./spl-token-account-summary.mjs";
+import { classifyDexAdapterIdlEvidence } from "./dex-adapter-idl-status.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const baseUrl = "https://idl-one.vercel.app";
@@ -613,6 +614,24 @@ for (const program of dexCpiPrograms) {
   dexCpiIdlHistory.push(await fetchDexCpiProgramHistory(program));
 }
 
+for (const item of dexCpiIdlHistory) {
+  const onChain = item.onChainProvenance;
+  item.releaseEvidence = classifyDexAdapterIdlEvidence({
+    candidateTransactionSlot,
+    activeHistoricalRevisionCount: item.activeHistoricalRevisionCount,
+    activeSourcesAgreeOnInstructionSchema: item.activeSourcesAgreeOnInstructionSchema,
+    latestAndActiveHistorySchemasAgree: item.allLatestAndActiveHistorySchemasAgree,
+    programLoaderOwnerMatches: onChain.programAccount?.loaderOwnerMatches === true,
+    programDataDeploymentSlot: onChain.programDataAccount?.deploymentSlot ?? null,
+    onChainIdlFound: onChain.idlAccount?.found === true,
+    onChainIdlOwnerMatchesProgram: onChain.idlAccount?.ownerMatchesProgram === true,
+    onChainInstructionSchemaMatchesActiveHistory:
+      onChain.idlAccount?.instructionSchemaMatchesAnyActiveHistory === true,
+    onChainPayloadMatchesActiveHistory:
+      onChain.idlAccount?.payloadMatchesAnyActiveHistoricalRevision === true,
+  });
+}
+
 const latest = await request("latest", "/api/latest");
 const history = await request("history", "/api/history");
 const matchingHistory = history.candidates.filter((candidate) =>
@@ -675,8 +694,11 @@ const summary = {
     dexProgramsWithOnChainIdlOwnedByProgram: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.ownerMatchesProgram === true).length,
     dexProgramsWithOnChainIdlInstructionSchemaMatchingHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.instructionSchemaMatchesAnyActiveHistory === true).length,
     dexProgramsWithOnChainIdlPayloadMatchingAnyActiveHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.payloadMatchesAnyActiveHistoricalRevision === true).length,
+    dexAdaptersWithSupportedIdlProvenance: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "supported").length,
+    dexAdaptersWithIncompleteIdlProvenance: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "incomplete").length,
+    dexAdaptersIncompatibleWithCandidateSlot: dexCpiIdlHistory.filter((item) => item.releaseEvidence.status === "incompatible").length,
   },
-  safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
+  safetyNote: "Adapter status is an evidence classification scoped to IDL provenance at the candidate transaction slot, not runtime CPI compatibility or release approval. An IDL does not attest to deployed binary identity or prove runtime CPI account slicing, CPI-requested signer/writable privileges, or transaction safety.",
 };
 await writeFile(join(outDir, "summary.json"), JSON.stringify(summary, null, 2) + "\n");
 console.log(JSON.stringify(summary, null, 2));
