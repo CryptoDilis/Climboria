@@ -45,6 +45,19 @@ jobs:
         run: |
           node --check dex/swap-proxy/src/index.mjs
           node --test dex/swap-proxy/test/worker.test.mjs
+      - name: Install temporary LaunchLab verification dependencies
+        run: npm install --prefix /tmp/launchlab-tools --no-save @solana/web3.js@1.98.4 @raydium-io/raydium-sdk-v2@0.2.84-alpha
+      - name: Test LaunchLab provenance and Devnet safety gates
+        env:
+          LAUNCHLAB_TOOLS_PREFIX: /tmp/launchlab-tools
+        run: |
+          node --test .github/scripts/launchlab-provenance.test.mjs
+          node --test .github/scripts/launchlab-api-config-check.test.mjs
+          node --test .github/scripts/launchlab-lock-idl-check.test.mjs
+          node --test .github/scripts/launchlab-prepare-devnet.test.mjs
+          node --test .github/scripts/launchlab-devnet-simulation-preflight.test.mjs
+          node --test .github/scripts/launchlab-devnet-approval-packet.test.mjs
+          node --test .github/scripts/launchlab-devnet-rent-layouts.test.mjs
       - name: Validate current homepage structure and controls
         run: |
           python3 - <<'PY'
