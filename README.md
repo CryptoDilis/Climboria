@@ -4174,3 +4174,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] One trace is not proof of universal Jupiter account-cursor behavior. Variant 75 remains rejected by the production allowlist.
 - [ ] Resolve trailing outer account, verify bin-array account owner/data, collect multiple route examples, and establish Jupiter deployed-binary provenance.
 - [ ] Devnet reproduction and independent security review. Execution/signing gates remain false.
+
+
+## 2026-11-11 — Final exact-head CI and CPI trace checkpoint
+
+- [x] Exact branch head `feb0386cbd1e84d12934e5f5ee96ddac355e1791`, 63 ahead / 0 behind main; PR #268 remains draft/unmerged.
+- [x] Validate run `43030775346` / job `130556954937`: SUCCESS, all validation steps complete.
+- [x] Browser Smoke run `43030775335` / job `130557049151`: SUCCESS, ecosystem steps 7–16 complete.
+- [x] Jupiter V6 CPI Trace Audit run `43030775438` / job `130556940556`: SUCCESS, finalized route trace captured.
+- [x] Screenshot artifact `13859239516` (5,405,347 bytes) and CPI trace artifact `13858919436` (3,699 bytes) uploaded.
+- [x] Historical Validate assertion failure runs `43029417495` and `43029480369` were root-caused, corrected, and superseded by green exact-head runs. No test assertion was weakened.
+- [!] Dedicated gameplay, production deployment, Jupiter universal CPI cursor proof, Devnet settlement and wallet signing/execution remain unverified/disabled.
+- Only documentation/PR records follow this checkpoint; runtime code, tests, and workflow logic remain unchanged.
