@@ -7,6 +7,7 @@ import { METEORA_DLMM_PROGRAM_ID } from "./audit-meteora-bin-array.mjs";
 
 const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const JUPITER_ROUTE_DISCRIMINATOR = "e517cb977ae3ad2a";
+const JUPITER_ROUTE_V2_DISCRIMINATOR = "bb64facc31c4af14";
 const METEORA_SWAP2_DISCRIMINATOR = "414b3f4ceb5b5b88";
 
 export function decodeBase58(value) {
@@ -32,12 +33,19 @@ export function decodeJupiterRoutePlanHeader(dataBase58) {
   const bytes = decodeBase58(dataBase58);
   if (bytes.length < 13) return null;
   const discriminatorHex = Buffer.from(bytes.subarray(0, 8)).toString("hex");
-  if (discriminatorHex !== JUPITER_ROUTE_DISCRIMINATOR) return null;
-  const routePlanCount = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(8, true);
+  const layout = discriminatorHex === JUPITER_ROUTE_DISCRIMINATOR
+    ? { instructionName: "route", routePlanOffset: 8 }
+    : discriminatorHex === JUPITER_ROUTE_V2_DISCRIMINATOR
+      ? { instructionName: "route_v2", routePlanOffset: 30 }
+      : null;
+  if (!layout || bytes.length < layout.routePlanOffset + 5) return null;
+  const routePlanCount = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    .getUint32(layout.routePlanOffset, true);
   return {
+    instructionName: layout.instructionName,
     discriminatorHex,
     routePlanCount,
-    firstStepVariant: bytes[12]
+    firstStepVariant: bytes[layout.routePlanOffset + 4]
   };
 }
 
