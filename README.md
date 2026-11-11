@@ -3369,3 +3369,16 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Confirmed PR #243 was created from main before PR #242's third orientation counter-fix. Its current Browser Smoke run `42942014181` therefore checks the DEX change on the older gameplay smoke harness.
 - [x] Recorded on PR #243 that its final acceptance run must be based on the accepted PR #242 orientation harness. Do not copy or recommit the orientation fix independently into the DEX branch.
 - [ ] After PR #242's exact-head Browser Smoke passes and it is merged, rebase/recreate the DEX PR from updated main, preserve the two DEX discovery commits' final file contents, and rerun Validate + Browser Smoke on the integrated head.
+
+
+### PR #243 Browser Smoke failure — confirmed inherited orientation harness (2026-11-11)
+
+- [x] PR #243 Browser Smoke `42942014181` completed FAILURE at `.github/scripts/game-smoke.mjs:515`, the mobile landscape orientation observer.
+- [x] Log confirms the failure occurs after DEX/Swap, responsive 390px/360px, provider-error/valid-empty, desktop Jarrell world, jump, chest, cave traversal and desktop visual captures all pass.
+- [x] Root cause is integration order: PR #243 was created before PR #242's third orientation counter-fix and therefore still contains the older waitForFunction orientation fixture. This is the already diagnosed orientation observer issue, not a new DEX market-discovery failure.
+- [x] No duplicate orientation patch committed to PR #243. Added a PR comment linking the failure to the accepted fix candidate in PR #242.
+- [x] Screenshot artifact `13820584008` uploaded; visual inspection remains pending.
+- [ ] PR #242 Browser Smoke `42942177844` is still in progress at gameplay smoke; no failure reported at last poll.
+- [ ] After PR #242 Browser Smoke passes and the change is integrated, rebase/recreate PR #243 on updated main and rerun Validate + Browser Smoke on the integrated exact head.
+
+**Exact next task:** finish PR #242 Browser Smoke `42942177844`; inspect its terminal diagnostics and screenshots. Then integrate the DEX discovery commits onto the accepted orientation harness, without duplicating or reapplying the earlier orientation patch.
