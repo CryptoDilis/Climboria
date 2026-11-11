@@ -1,14 +1,40 @@
-# Climboria Active Handoff — 2026-11-11
+# Climboria Active Handoff — 2026-11-12
 
-**Purpose:** durable checkpoint so work resumes from verified repository state instead of repeating completed tasks.
+**Purpose:** resume from verified repository and workflow state. This handoff follows the latest explicit owner instruction.
 
-## Current release priority
+## Current owner-approved priority — authoritative
 
-1. P1 — production Swap backend, transaction safety, deployment and Devnet lifecycle.
-2. P2 — DEX live market/profile/chart verification.
-3. P3 — Signature Launchpad end-to-end implementation and on-chain evidence.
-4. P4 — real authentication provider and Guest-to-account linking.
-5. Resume game/Jarrell's Peak after the ecosystem release gates.
+1. **P1 — Live Swap**
+2. **P2 — Live DEX**
+3. **P3 — All Login Methods Available** (Guest, email/password, Google, X, and supported wallet authentication)
+4. **P4 — Fully Live Game** (real playable desktop/mobile game, not a demo)
+5. **P5 — Live Launchpad (last)**
+
+**Global rule: NO DEMO-ONLY DELIVERY.** All product experiences must be real and live when marked complete. Never fabricate provider data, prices, balances, charts, quotes, transaction success, login success, rewards, launch status or multiplayer presence. If a dependency is not live, show unavailable honestly. Devnet is a required safety gate, not a production-live substitute.
+
+## Current exact repository state
+
+- Main: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- PR #268 is open, draft and unmerged; exact head `8c4e86994e1ed203ffa26803874924e705973462`.
+- Validate, Ecosystem Browser Smoke and Jupiter V6 CPI Trace Audit passed on the exact PR head.
+- Game Browser Smoke and Jupiter IDL History Audit were still running at the latest inspection. Poll their terminal results before recording a pass/failure.
+- Swap signing/execution remains disabled until instruction semantics, account roles, independent review, controlled Devnet lifecycle, production deployment and release gates are proven.
+
+## Next task
+
+Continue **P1 Live Swap** after the in-flight exact-head workflows finish. Inspect the actual current source and workflow evidence, diagnose failures from terminal logs, implement targeted counter-fixes without weakening assertions/security, and record exact commit/run evidence. Do not advance to P2 until P1 release gates are genuinely satisfied. Then proceed in the listed order through P5.
+
+## Working rules
+
+- Check actual main/PR head and workflow state before resuming.
+- Record each completed task, commit, verification evidence, unresolved blockers and one exact next task.
+- Diagnose the exact failing test/step before editing; do not repeat failed patches without a reasoned root-cause diagnosis.
+- Never claim LIVE, deployed, launched, signed, locked, paid, or verified without corresponding external evidence.
+- Preserve security gates; never enable signing or execution just to make a demo appear functional.
+
+## Historical technical handoff
+
+> The technical records below are retained as evidence. Any old priority order or next-task instruction in this historical section is superseded by the current P1–P5 order above.
 
 ## Swap — active implementation
 
