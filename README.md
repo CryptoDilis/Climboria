@@ -3338,3 +3338,15 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] This improves discovery breadth but does not claim a complete/global Solana market index or provider SLA. Swap signing/execution remains disabled; this DEX change does not bypass Swap security gates.
 
 **Exact next task:** poll PR #243 Validate and Browser Smoke on exact head `9b967b119bc52be5b259f4579cea751b4726829e`; inspect logs/screenshots. In parallel, finish the still-running PR #242 Browser Smoke `42941085361`; if it fails, diagnose the exact new failure before any further code change.
+
+
+### PR #242 third failure — landscape gate observation race (2026-11-11)
+
+- [x] Browser Smoke `42941085361` completed FAILURE on exact head `a48c5c5d9f7572fa0b7921bfc8edb260a2b828b7`, job `130262796202`, at the mobile landscape rotate-gate wait (`.github/scripts/game-smoke.mjs:527–539`).
+- [x] The completed log proves the game state had reached the required result by the time diagnostics ran: `screen.orientation.type=landscape-primary`, viewport 844×390, media query landscape=true, `climboria-landscape=true`, `climboria-portrait=false`, rotate overlay `display:none`. Desktop Jarrell world, jump, chest, cave traversal and visual captures passed before this mobile gate. The failure is not evidence that the game rotate gate should be removed.
+- [x] Screenshot artifact `13820529077` downloaded and reviewed. It contains desktop homepage/gameplay/cave captures and DEX captures; mobile gameplay/cave captures are absent because the test stopped at the landscape gate.
+- [x] Distinct counter-fix commit `1b248913a044c538731e2354d895de75efdc2dce` on PR #242 reads the game-derived landscape classes and overlay immediately after the dispatched orientation event, then uses 100ms interval polling only if the state has not yet settled. It re-verifies the final state. The rotate assertion remains active; no production gameplay source changed.
+- [x] PR #242 comment records the diagnosis and strategy.
+- [ ] Validate and Browser Smoke must rerun on exact new PR #242 head; inspect final logs and all mobile screenshots before considering merge.
+
+**Exact next task:** poll PR #242's new Validate and Browser Smoke runs. If another failure occurs, use its exact log and final diagnostic snapshot to distinguish actual game state from test observation timing; do not reuse the earlier orientation or DEX bootstrap patches.
