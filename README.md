@@ -3420,3 +3420,12 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - PR #243 DEX discovery head: `9b967b119bc52be5b259f4579cea751b4726829e`; compare against main shows 2 commits ahead / 8 behind, with only `dex/index.html` and `dex/premium-terminal.js` changed. Preserve these two DEX files when integrating; do not copy the older orientation harness from PR #243.
 - PR #242 Validate `42943303956` passed. Browser Smoke `42943304017` remains in the Jarrell desktop/mobile gameplay step, with no failure reported at the latest poll.
 - Integration strategy: first finish and inspect PR #242 exact-head browser results/artifacts; then reconcile both PR branches against current main deliberately, retaining the current smoke harness and DEX discovery changes. Rerun exact-head checks after integration. No merge or production-readiness claim until then.
+
+
+### Follow-up verification poll — 2026-11-11
+
+- Re-polled Browser Smoke run `42943304017` and job `130270002261`: still reported `in_progress` at Jarrell's Peak desktop/mobile gameplay; no failed step or conclusion has been published. The job's 25-minute timeout has not yet elapsed from its run start. No speculative retry or code change was made.
+- The workflow's remaining mobile acceptance assertions require real rendered canvas, all four visible touch controls, player/status HUD, world-map panel, settings control, render frames, and mobile cave captures. These checks were not weakened.
+- Artifact endpoint currently reports no artifacts while the job is running; job-log retrieval is not yet available from the connector. Revisit after completion for logs and screenshots.
+- README Pages deployment for this checkpoint: run `42943627589` completed successfully on documentation commit `9b379e5cc7c3b897fc6e32bd331c35859991b3ef`.
+- Next: await terminal Browser Smoke result, then inspect logs/screenshots. If it fails, diagnose the exact new assertion and implement a distinct fix; do not replay earlier orientation patches. If it passes, review all desktop/mobile captures before integration.
