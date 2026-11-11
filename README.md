@@ -3524,3 +3524,19 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Sanctuary entry landing is created at local `z=57`, so its world-space center is `z=-33`. The actual player takeover and teleport/respawn spawn use `(0,-30)`, placing the player 3 world units forward of the landing center. The screenshot's apparent front-edge placement is consistent with this coordinate mismatch.
 - [ ] Counter-strategy: introduce one named sanctuary spawn coordinate derived from the landing center and use it consistently for cinematic takeover, teleport key 1, death respawn, and smoke-test expectations. Preserve terrain snapping (`groundAt`), camera behavior, and collision checks; do not patch CSS or move the landing geometry to hide the symptom.
 - [ ] Update all tests that currently hard-code `z=-30` for sanctuary respawn, then run Validate + Browser Smoke and inspect desktop/mobile screenshots. This source diagnosis is not yet a production fix.
+
+
+### Sanctuary spawn alignment counter-fix — PR #244 (2026-11-11)
+
+- [x] Confirmed the visual mismatch from production geometry: Sanctuary POI world center is `(0,-90)`; the physical entry landing is at local `z=57`, therefore its world center is `(0,-33)`. The old player takeover, teleport, and death-respawn coordinate `(0,-30)` was 3 world units forward of the landing center.
+- [x] Created focused draft PR #244: https://github.com/CryptoDilis/Climboria/pull/244.
+- [x] Added immutable `SANCTUARY_SPAWN` derived from the landing center and applied it to cinematic takeover, teleport 1, death respawn, respawn audit expectations, jump/traversal fixtures, and desktop/mobile screenshot normalization. Smoke tests consume the exported shared coordinate instead of duplicating literals.
+- [x] Preserved terrain snapping, camera behavior, collision checks, and all existing gameplay assertions. No acceptance criteria were removed or weakened.
+- [x] Exact PR head `5fe2dffc6c3e92243ee74c347ed6f80fbce81ad1`: Validate run `42948097496` completed SUCCESS.
+- [ ] Browser Smoke run `42948097575` is currently IN PROGRESS; steps 1–10 passed and step 11 (standalone DEX market and quote-preview) is running. Gameplay and screenshot review have not yet run; do not claim the PR is fully verified.
+- [ ] After Browser Smoke completes, inspect desktop/mobile Sanctuary screenshots and confirm the avatar is centered on the landing. If it fails, diagnose the exact new assertion and implement a distinct targeted fix; do not repeat the old coordinate patch.
+- [ ] PR #242 orientation harness exact-head Validate and Browser Smoke both passed on `7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717`; it remains open/draft. Integrate its accepted smoke harness before finalizing PR #244, then rerun exact-head checks.
+- [ ] PR #243 DEX market-discovery change remains open/draft; its earlier Browser Smoke failure was caused by the inherited older orientation fixture. Port only its DEX source changes after reconciling with the accepted #242 harness and rerun exact-head checks.
+- [ ] Keep Swap execution fail-closed pending ALT validation, semantic instruction policy, controlled Devnet end-to-end tests, and production Cloudflare verification. Launchpad and production login are not yet verified live.
+
+**Exact next task:** finish Browser Smoke `42948097575`, inspect its failure/pass evidence and uploaded screenshots, then update this checkpoint with terminal results before integrating any branch.
