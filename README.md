@@ -3973,3 +3973,25 @@ The user's active delivery order supersedes older locked-priority notes for this
 
 - [x] GitHub Pages build/deployment run `42969800245` completed SUCCESS on main commit `ce189dc2dc4ed83151fcbe8f0b695ddc1dde5bf2`.
 - [!] This confirms the Pages deployment workflow completed, not a browser-level live-site smoke or Cloudflare Worker deployment. The separate `deploy-climboria-api.yml` is manual-only and requires account-specific Cloudflare/Jupiter/Solana secrets plus a configured rate-limit namespace; no successful Worker deployment is claimed.
+
+
+### PR #264 terminal gameplay failure — exact root evidence — 2026-11-11 14:15 +08
+
+- [x] Browser Smoke run `42969473636`, job `130354325468`, terminal FAILURE at step 17; screenshot upload step 18 still succeeded.
+- [x] Desktop gameplay and cave traversal, chest distribution, world/collision/terrain audits, freshwater/ocean movement, fishing interactions and desktop visual captures completed before the mobile hero check.
+- [x] Mobile GLB evidence: `Climboria_Hero.glb` decoded body `42,923,204` bytes, transfer size `42,923,504`, resource duration `227,301ms`; failed GLB requests `[]`; browser errors `[]`; render frames `47`; hero remained `loading-adventurer`, readiness hero `false`, GLB renderer `null`, camera hero `false`, asset `null`. The bounded wait expired after `107,480ms`.
+- [!] This establishes a post-download loader/readiness stall, not a proven parser-only fault. No production loading behavior was changed in response. Phase telemetry is required to distinguish parse/decode from scene setup.
+- [x] Screenshot artifact `climboria-browser-smoke-screenshots`, ID `13833406791`, uploaded successfully (7 files, 7,948,118 bytes).
+
+### PR #266 — current-main combined counter-strategy — 2026-11-11 14:16 +08
+
+- [x] Created fresh current-main branch `codex/current-main-mobile-dex-glb-phase-and-copy-2026-11-11` and draft PR #266: https://github.com/CryptoDilis/Climboria/pull/266; exact head `71be6ca4b7ed1c444c68e5b9d0f05f021e809dfb`.
+- [x] Carries the evidence-backed mobile DEX scroll-settle + topmost-hit-target test fix.
+- [x] Carries the DEX mint-copy duplicate-handler removal and async clipboard regression test.
+- [x] Adds diagnostic-only GLTFLoader phase telemetry (request, download, parse start/complete/error, bounds, scale, mesh traversal, scene attach, animation rig, ready) and includes phase/elapsed data in strict gameplay timeout diagnostics. No production loading behavior, fallback, timeout, readiness criteria or gameplay mechanics changed.
+- [ ] Exact-head Validate run `42971112186` and Browser Smoke run `42971112227` are running. Validate has passed Worker security/API tests and is bundling/dry-running Wrangler; Browser Smoke is starting. Await exact-head terminal results before any merge.
+- [ ] When the next gameplay run reaches mobile GLB readiness, inspect `loaderDiagnostics.phase`. If it stalls at `parse-start`, investigate the GLTFLoader parse/decode cost/worker strategy; if it reaches `scene-setup` or later, isolate the exact setup phase. Implement only the phase-supported counter-fix and rerun strict checks.
+
+### Superseded PR handling
+
+- PR #266 consolidates the fixes previously separated across PRs #262, #264, and #265, plus the GLB phase diagnostics previously carried on stale PR #263. Keep those historical PRs open until #266's exact-head checks settle; then close superseded drafts with a link to #266 to avoid duplicate active implementation paths.
