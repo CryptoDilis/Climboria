@@ -332,3 +332,28 @@ Initial authoritative-source findings:
 - [ ] Then controlled Devnet token movement and fee-destination proof; production Cloudflare deployment verification; production Login verification; Launchpad lifecycle/Devnet proof.
 - [ ] Separate mobile GLB instrumentation and optimization remains a game blocker, not part of this DEX PR.
 
+
+
+## Progress addendum — hard security gates re-audited — 2026-11-11 20:30 PHT
+
+### Exact-head CI and gate verification — `c50951c6b5a79529b404eb7e97dc4621706117bb`
+- Validate run `43019395880`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43019395880
+- DEX/Login Browser Smoke run `43019395881`: SUCCESS.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43019395881
+- All functional browser steps passed and screenshot upload succeeded.
+- Source re-audit at this exact head:
+  - `dex/swap-proxy/src/index.mjs`: `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`.
+  - `handleOrder` returns HTTP 503 before requesting or exposing a wallet-signable Jupiter order while the signable-order gate is false (source around lines 103–105).
+  - `/api/swap/execute` returns HTTP 503 unless the source execution gate is true **and** `env.EXECUTION_ENABLED === "true"` (source around line 309).
+  - `dex/swap-proxy/wrangler.toml`: `EXECUTION_ENABLED = "false"`.
+  - root `swap-config.js`: `enabled: false`; `proxyEnabled: true` only routes read-only proxy features and does not enable signing/execution.
+  - Regression tests explicitly assert signable order creation is blocked and upstream order fetch is not called while the gate is closed.
+- PR #268 has no submitted review records at this check. It remains draft/open/unmerged. Independent Solana transaction-security review is still a release blocker.
+- Do not infer production deployment from the Wrangler dry-run or public frontend API base; live Cloudflare account configuration, Worker deployment, custom domain, secrets, DO migration, RPC provider and monitoring remain unverified.
+
+### Current next task
+- [ ] Prove the exact Jupiter V6 adapter dispatch and outer remaining-account partitioning against a version-matched authoritative source or a controlled deployed-program trace. The public pinned CPI IDL gives candidate role layouts but is not sufficient proof of outer route slicing.
+- [ ] Resolve Meteora DLMM CPI/direct-IDL signer and writable/optional discrepancies.
+- [ ] Implement per-DEX semantic validation only after the above evidence is complete; maintain both hard gates closed.
+- [ ] Controlled Devnet token-movement/fee-destination lifecycle; then production Cloudflare verification, production Login verification, and Launchpad Devnet lifecycle.

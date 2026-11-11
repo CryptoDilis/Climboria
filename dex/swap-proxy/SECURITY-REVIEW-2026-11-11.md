@@ -48,3 +48,13 @@ Implement a versioned, fail-closed semantic policy for the supported Jupiter rou
 - Evidence: pinned `jup-ag/jupiter-amm-implementation` CPI interface snapshot `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39` contains CPI schemas for Raydium, Whirlpool, Raydium CLMM, Meteora DLMM and Raydium CPMM, but no SolFi CPI instruction/account schema. A program ID and enum label alone do not prove account roles or CPI dispatch.
 - Added a regression fixture asserting variant 61 is rejected as unsupported.
 - This is a fail-closed structural restriction, not proof that the remaining variants are safe. The remaining variants still lack proven deployed-version dispatch, outer account-slice partitioning and complete per-DEX semantic validation. Both signable-order and execution gates remain false.
+
+
+## Gate enforcement re-audit — 2026-11-11
+The current PR #268 head was re-read after the latest green CI:
+- `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false` are source constants in `src/index.mjs`.
+- `handleOrder` returns 503 before making the upstream order request while signable-order review is incomplete.
+- `/api/swap/execute` requires both the source execution constant and Wrangler `EXECUTION_ENABLED === "true"`; Wrangler remains `"false"`.
+- Public root `swap-config.js` keeps `enabled: false`; `proxyEnabled: true` is only for read-only quote/search proxy features.
+- Existing worker regression tests verify both the fail-closed response and that upstream order retrieval is not attempted.
+- This source re-audit does not establish production deployment or replace independent transaction-security review.
