@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { deflateSync } from "node:zlib";
 import { decodeAnchorIdlAccount, decodeLegacyAnchorIdlAccount, encodeBase58 } from "../tools/legacy-anchor-idl-account.mjs";
+import { decodeSplTokenAccountSummary } from "../tools/spl-token-account-summary.mjs";
 import { decodeJupiterRouteV2 } from "../tools/decode-jupiter-route-v2-candidate.mjs";
 
 const programId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -183,4 +184,53 @@ test("detects an eight-byte-prefixed Anchor IDL account when the prefix is not a
   assert.equal(decoded.prefixMatchesAnchorAccountDiscriminator, false);
   assert.equal(decoded.authority, encodeBase58(authorityBytes));
   assert.equal(decoded.routeV2Discriminator, "bb64facc31c4af14");
+});
+
+
+test("decodes SPL Token account metadata without exposing raw account bytes", () => {
+  const bytes = Buffer.alloc(165);
+  const mintBytes = Buffer.alloc(32, 3);
+  const authorityBytes = Buffer.alloc(32, 4);
+  mintBytes.copy(bytes, 0);
+  authorityBytes.copy(bytes, 32);
+  bytes.writeBigUInt64LE(123456789n, 64);
+  bytes.writeUInt32LE(0, 72);
+  bytes[108] = 1;
+  bytes.writeUInt32LE(0, 109);
+  bytes.writeBigUInt64LE(77n, 121);
+  bytes.writeUInt32LE(0, 129);
+
+  const summary = decodeSplTokenAccountSummary(bytes);
+  assert.equal(summary.mint, encodeBase58(mintBytes));
+  assert.equal(summary.tokenAuthority, encodeBase58(authorityBytes));
+  assert.equal(summary.amount, "123456789");
+  assert.equal(summary.delegate, null);
+  assert.equal(summary.state, "initialized");
+  assert.equal(summary.isNative, null);
+  assert.equal(summary.delegatedAmount, "77");
+  assert.equal(summary.closeAuthority, null);
+  assert.equal(decodeSplTokenAccountSummary(Buffer.alloc(164)), null);
+});
+
+test("decodes optional SPL Token authorities and rejects invalid option tags", () => {
+  const bytes = Buffer.alloc(165);
+  const delegate = Buffer.alloc(32, 5);
+  const closeAuthority = Buffer.alloc(32, 6);
+  bytes.writeUInt32LE(1, 72);
+  delegate.copy(bytes, 76);
+  bytes[108] = 2;
+  bytes.writeUInt32LE(1, 109);
+  bytes.writeBigUInt64LE(9n, 113);
+  bytes.writeUInt32LE(1, 129);
+  closeAuthority.copy(bytes, 133);
+
+  const summary = decodeSplTokenAccountSummary(bytes);
+  assert.equal(summary.delegate, encodeBase58(delegate));
+  assert.equal(summary.state, "frozen");
+  assert.equal(summary.isNative, "9");
+  assert.equal(summary.closeAuthority, encodeBase58(closeAuthority));
+
+  const invalid = Buffer.from(bytes);
+  invalid.writeUInt32LE(2, 72);
+  assert.throws(() => decodeSplTokenAccountSummary(invalid), /Invalid SPL Token delegate COption tag/);
 });
