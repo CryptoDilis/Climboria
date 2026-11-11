@@ -44,7 +44,7 @@ test("decodes a supported Raydium Jupiter route with exact amounts and bounded s
 });
 
 test("rejects unknown top-level programs, extra signers and unsupported route variants", () => {
-  assert.throws(() => validate(parsed({ extraProgram: "unknown" })), /unsupported Compute Budget instruction/);
+  assert.throws(() => validate(parsed({ extraProgram: "unknown" })), /Unsupported Compute Budget instruction/i);
   assert.throws(() => validate(parsed({ requiredSignatures: 2 })), /single-taker-signature/);
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 8 })), /unsupported DEX variant/);
 });
