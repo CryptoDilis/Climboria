@@ -507,7 +507,7 @@ jobs:
                 return route.fulfill({status:200,contentType:'application/json',body:'[]'});
               });
               await empty.goto('http://127.0.0.1:4173/dex/',{waitUntil:'domcontentloaded'});
-              await empty.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('temporarily unavailable'),null,{timeout:10000});
+              await empty.waitForFunction(()=>document.querySelector('#premiumTrendingGrid .premium-trending-empty')?.textContent.includes('No eligible Solana tokens'),null,{timeout:10000});
               await empty.close();
               console.log('PASS live profile/boost discovery, batched pair validation, volume ranking, token navigation, provider outage and true-empty behavior.');
             } finally { await browser.close(); }
