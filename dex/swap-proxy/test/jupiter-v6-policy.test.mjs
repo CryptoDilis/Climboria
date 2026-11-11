@@ -224,7 +224,8 @@ test("builds a Jupiter V6 raw-RPC trace with resolved ALT account order and stac
   ]);
   assert.equal(cpi.accounts[2].transactionPrivilege.writable, true);
   assert.equal(cpi.accounts[3].transactionPrivilege.writable, false);
-  assert.match(cpi.accounts[2].transactionPrivilege.source, /not the CPI-requested meta/);
+  assert.match(cpi.accounts[0].transactionPrivilege.source, /not the CPI-requested meta/);
+  assert.match(cpi.accounts[2].transactionPrivilege.source, /address-lookup-table transaction message privilege/);
   assert.match(report.evidenceLimitations.join(" "), /Do not infer routePlan-step-to-CPI association/);
 });
 
