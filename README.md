@@ -3480,3 +3480,13 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 **Exact next tasks:** (1) inspect PR #242 artifact and trace mobile saved-hero/GLB loading; (2) reconcile #233 R1 and #235 order-binding code onto current main; (3) implement R2 semantic validation as a separate reviewed layer. Swap execution remains disabled.
 - [x] Downloaded and inspected artifact 13823051255: it contains only seven PNGs (desktop home/gameplay/cave entrance/cave interior, mobile home, desktop/mobile DEX social); mobile gameplay and mobile cave images are absent, confirming capture stopped before those screenshots.
 - [x] Desktop gameplay visual review: the avatar appears to intersect/extend below the front edge of the sanctuary platform in the capture. Track as a separate gameplay visual defect; do not conflate it with the mobile GLB initialization failure.
+
+### 2026-11-11 — Mobile GLB failure: diagnostic instrumentation counter-fix
+
+- [x] Deep inspection of the mobile failure snapshot showed loading-adventurer, awaiting-saved-glb, asset=null, and no reported browser errors after 90 seconds.
+- [x] Inspected exact smoke harness and production game/play.html asset loader. Selected GLB is ../assets/characters/Climboria_Hero.glb; repository tree confirms assets/characters/Climboria_Hero.glb exists (42,923,204 bytes). This does not prove mobile successfully requested it.
+- [x] Found a defect in previous failure diagnostics: the resource filter used an over-escaped regular expression, so an empty glbResources array was not reliable evidence that no GLB request occurred.
+- [x] Distinct counter-strategy committed to PR #242 as 7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717: correct the GLB resource matcher and capture Playwright requestfailed events for .glb requests, including URL and failure reason. Test observability only; no production loading change, timeout extension, readiness bypass, or fallback acceptance.
+- [ ] Await fresh Validate and Browser Smoke on this exact head. Determine whether the GLB is not requested, blocked/failed, or requested but not decoded.
+- [ ] Change production loader/asset delivery only after evidence identifies the actual defect. Keep strict GLB readiness.
+- [ ] PR #242 remains open; do not merge until exact-head checks and mobile gameplay/cave screenshot review pass.
