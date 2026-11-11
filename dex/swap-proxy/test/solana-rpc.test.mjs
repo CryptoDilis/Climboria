@@ -89,7 +89,7 @@ const outputMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const taker = encodeBase58(key(31));
 const sourceTokenAccount = encodeBase58(key(32));
 const destinationTokenAccount = encodeBase58(key(33));
-function classicTokenData({ mint = inputMint, owner = taker, amount = 1000n, state = 1, delegateOption = 0, nativeOption = 0, closeAuthorityOption = 0 } = {}) {
+function classicTokenData({ mint = inputMint, owner = taker, amount = 1000n, state = 1, delegateOption = 0, nativeOption = null, closeAuthorityOption = 0 } = {}) {
   const bytes = new Uint8Array(165);
   bytes.set(decodeBase58(mint), 0);
   bytes.set(decodeBase58(owner), 32);
@@ -97,7 +97,7 @@ function classicTokenData({ mint = inputMint, owner = taker, amount = 1000n, sta
   view.setBigUint64(64, BigInt(amount), true);
   view.setUint32(72, delegateOption, true);
   bytes[108] = state;
-  view.setUint32(109, nativeOption, true);
+  view.setUint32(109, nativeOption === null ? (mint === inputMint ? 1 : 0) : nativeOption, true);
   view.setUint32(129, closeAuthorityOption, true);
   return Buffer.from(bytes).toString("base64");
 }
