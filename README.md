@@ -1,3 +1,91 @@
+## 2026-11-11 21:32 +08 — follow-up repository sync and Swap release posture
+
+- [x] Recorded the complete PR #266 failure analysis and PR #267 GLB audit measurements above in the main README. Commit: `9dfb3c0caa0c661ea0cbe3b985583fbc192bb867`.
+- [x] Synced PR #268 description with the exact-head green run IDs `43025646890` and `43025646971`, the gameplay-workflow separation, current-main base drift, and the remaining Jupiter CPI evidence gap.
+- [!] PR #268 remains draft and must be rebased/updated against current main before merge. The passing runs apply only to head `68580032d5980a3b4e6e43f428fb57cac217f0f2`.
+- [!] Solscan's public Jupiter program page reports the deployed program as upgradeable and not program-verified. Generated SDK builders and IDLs confirm instruction layouts but do not prove the deployed handler's DEX account-slice dispatch. No safe per-DEX semantic code change is justified by the current public evidence alone.
+- [x] Rechecked fail-closed controls: source-level signable-order and execution review gates remain false; Wrangler execution is disabled; public frontend execution is disabled.
+- [x] Rechecked Pages: prior documentation deployment run `43026497518` completed SUCCESS on the preceding main commit `7fa8f67055118c966aefc5237c6fdeba42214c5d`; a newer Pages run `43027124144` was in progress on that same commit at the latest poll. No Pages deployment is claimed for README commit `9dfb3c0caa0c661ea0cbe3b985583fbc192bb867` until a run on that exact SHA completes.
+- [ ] Next engineering work: rebase PR #268 onto current main and rerun Validate + ecosystem Browser Smoke; separately trigger/verify the dedicated gameplay workflow on the exact updated head; continue the source-backed CPI proof work without opening signing/execution gates.
+
+---
+
+## 2026-11-11 21:25 +08 — deep failure analysis: mobile GLB parse-stage stall
+
+**Execution order remains DEX → Swap → Login → Launchpad.** Gameplay/GLB remains a separate diagnostic track and must not displace ecosystem release work.
+
+### Failed workflow investigation — PR #266
+- [x] Inspected Browser Smoke run `42972552578`, job `130364149237`, exact head `79acbc8222f6e70840eabc92c34e3f0517f72ef9`.
+- [x] Confirmed steps 7–16 all passed (auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, standalone Swap/DEX, Solana discovery, mobile DEX/Swap, responsive layouts and provider-error/empty states).
+- [x] Failure is isolated to step 17, `Run Jarrell's Peak desktop and mobile gameplay smoke tests`; screenshot upload step 18 succeeded (artifact `13833968667`).
+- [x] Desktop gameplay/world/cave/collision/fishing checks completed before the mobile hero readiness assertion failed.
+- [x] Exact failure: mobile hero remained `loading-adventurer`; `readiness.hero=false`, `glbRenderer=null`, `cameraHero=false`, `asset=null`. The browser recorded 47 render frames, zero failed GLB requests and zero browser errors.
+- [x] Resource evidence: `Climboria_Hero.glb` decoded body 42,923,204 bytes; transfer size 42,923,504 bytes; resource duration 226,387 ms.
+- [x] Loader phase at failure: `parse-start`; `parseStartedAt=241200.2ms`, no parse completion, no scene setup start, no error. TextureLoader dependency counters were all zero. The readiness grace ended after 109,187 ms; total loader elapsed was 276,118 ms.
+- [x] Independent PR #267 audit log recovered from Validate run `43004265957`, job `130467715741`: GLB v2, JSON 1,023,672 bytes, binary chunk 41,899,504 bytes, 29 nodes, 1 mesh/primitive/material, 19 animations, 3 embedded PNGs, 3,412 bufferViews, 3,409 accessors. All 3 PNGs are 4096×4096.
+- [x] Exact embedded texture sizes: normal map 13,455,702 bytes; base color 13,453,363 bytes; metallic/roughness 6,042,533 bytes. Total 32,951,598 bytes (31.43 MiB), about 76.8% of the 40.93 MiB GLB.
+- [x] PR #267 Validate run `43004265957` passed, including the actual GLB audit and Worker/auth/site/game script checks. The older PR #267 Validate run `42994562962` also passed.
+- [!] Root-cause boundary: the observed failure is after full resource transfer and while GLTFLoader is in parse/dependency phase. The evidence does not isolate JSON parse vs accessor/geometry processing vs embedded image decoding, and zero TextureLoader counters do not prove image decode is not involved because dependency scheduling may not have reached the instrumented loader. Do not label this a confirmed PNG decoder bug.
+- [!] Root cause includes a very large 42.9 MB asset and very slow ~226.4 s transfer; this strongly motivates an asset-payload/delivery optimization experiment, but no production asset/runtime changes have been made.
+- [!] No timeout increase, fallback avatar, relaxed readiness condition, wildlife toggle, or test assertion weakening is accepted as a fix.
+
+### Current PR/workflow state
+- [x] PR #268 exact head `68580032d5980a3b4e6e43f428fb57cac217f0f2`: Validate `43025646890` PASS and ecosystem Browser Smoke `43025646971` PASS.
+- [!] PR #268 is still a draft and its recorded base SHA is `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`, while current main is `7fa8f67055118c966aefc5237c6fdeba42214c5d`. Do not call it current-main-based until rebased/updated and exact-head checks rerun.
+- [!] PR #268's Browser Smoke `43025646971` is ecosystem-only after gameplay separation. The branch run inventory contains no dedicated `game-browser-smoke.yml` run for that exact head. Gameplay must be verified by its own workflow.
+- [!] PR #267 is diagnostic-only; its audit is now measured and reviewed. It does not optimize or replace the GLB.
+- [x] The README progress record commit from the prior checkpoint is `7fa8f67055118c966aefc5237c6fdeba42214c5d`; Pages build/deployment run `43026497518` was observed queued/in-progress during the check. No deployment success is claimed.
+
+### Counter-strategy — evidence-based, not speculative
+1. Preserve the original GLB and source/license provenance.
+2. Create an optimization candidate separately; inspect texture color-space/normal-map channel semantics and material use before changing formats or dimensions.
+3. Compare 4K vs 2K (and only then alternative GPU texture formats if the runtime has a verified KTX2/Basis transcoder path) with visual screenshots and material checks on desktop/mobile. Do not silently switch embedded PNGs to WebP/JPEG without confirming GLTFLoader/runtime support and alpha/color-space behavior.
+4. Measure candidate GLB byte size and transfer duration under the same browser smoke network profile; measure parse-start→parse-complete and scene-setup durations separately.
+5. Keep strict hero readiness, real saved GLB rendering, animation transitions and gameplay assertions unchanged. Run exact-head Validate and dedicated gameplay Browser Smoke on the candidate before considering it for production.
+
+### Always-visible delivery checklist
+- [x] PR #266 failed workflow deeply diagnosed from exact job log.
+- [x] PR #267 GLB audit stdout recovered and exact image dimensions/bytes recorded.
+- [x] PR #268 exact-head Validate and ecosystem Browser Smoke green.
+- [ ] Rebase/update PR #268 against current main; rerun exact-head checks.
+- [ ] Verify dedicated gameplay workflow on its own exact head.
+- [ ] Build and visually compare an optimized GLB candidate without modifying the production asset first.
+- [ ] Continue P2 Swap per-DEX CPI/account-role, token movement and fee validation; signing/execution gates remain false.
+- [ ] Verify DEX live provider/production deployment, Login external provider lifecycle, then Launchpad Devnet lifecycle.
+
+**Next action:** continue P2 Swap semantic validation on a current-main-based branch; keep the measured GLB optimization experiment separate and do not let gameplay diagnostics displace the DEX → Swap → Login → Launchpad delivery order.
+
+---
+
+## 2026-11-11 21:07 +08 — continuation audit: PR #268 exact-head checks green; GLB payload measured
+
+**Locked delivery order: DEX → Swap → Login → Launchpad.** Gameplay remains a separate, non-blocking track.
+
+- [x] Re-read repository metadata: `CryptoDilis/Climboria`, default branch `main`; write permission confirmed.
+- [x] Re-read current open PRs and latest active work. PR #268 is the current Swap security hardening branch; PR #267 is the diagnostic GLB asset audit. Older #266 remains an earlier combined diagnostic branch.
+- [x] PR #268 exact head `68580032d5980a3b4e6e43f428fb57cac217f0f2`: Validate run `43025646890` SUCCESS; job `130539562116`. All validation steps completed, including Swap proxy tests, Wrangler dry-run, auth/script syntax, and repository HTML/script audits.
+- [x] PR #268 exact head: Browser Smoke run `43025646971` SUCCESS; job `130539562377`. Auth/cloud-save isolation, homepage/DEX routing, Cloudflare proxy, fail-closed execution, standalone Swap/DEX, live Solana discovery, desktop/mobile DEX, 390px/360px layouts, and provider-error/empty states all passed.
+- [!] Browser Smoke #268 no longer contains Jarrell's Peak gameplay; gameplay was separated into a dedicated workflow. Do not interpret run `43025646971` as a gameplay pass. Confirm the dedicated game workflow separately.
+- [x] Retrieved and inspected PR #267 Validate run `42994562962`, job `130435295388` logs. The prior missing measurement is now resolved: `Climboria_Hero.glb` is 42,923,204 bytes (40.93 MiB); its 3 embedded PNG textures are each 4096×4096 and total 32,951,598 bytes (31.43 MiB): normal map 13,455,702 bytes; base-color 13,453,363 bytes; metallic/roughness 6,042,533 bytes. The model has 29 nodes, 1 mesh/primitive/material, and 19 animations.
+- [!] The 3 oversized 4K PNG textures account for ~76.8% of the GLB. This is strong evidence for a texture-payload optimization, but do not replace/compress the production asset without visual-quality comparison, licensing/source retention, format/device support checks, and strict desktop/mobile gameplay verification.
+- [!] PR #268 body still describes its latest checks as pending; this checkpoint records the subsequent exact-head green run IDs. Keep PR #268 draft pending independent semantic security review and full transaction-security acceptance. Both `EXECUTION_SECURITY_REVIEW_COMPLETE` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE` must remain false; no wallet signing or execution.
+- [ ] DEX production/live provider verification remains outstanding.
+- [ ] Swap still needs complete per-DEX CPI/account-role/token-movement/fee validation, execution-time state re-fetch, controlled Devnet sign-submit-confirm lifecycle, production Worker controls, and independent Solana security review.
+- [ ] Login still needs actual Supabase provider/dashboard configuration and controlled production-domain account lifecycle tests.
+- [ ] Launchpad still needs the complete Devnet create → bonding curve → migration → pool/LP lifecycle and authority/fee/custody review.
+
+### Always-visible delivery checklist
+- [x] PR #268 exact-head Validate: `43025646890`.
+- [x] PR #268 exact-head Browser Smoke (ecosystem/browser scope only): `43025646971`.
+- [x] PR #267 GLB audit measured all embedded texture dimensions and byte sizes: `42994562962`.
+- [ ] Dedicated gameplay Browser Smoke after workflow separation: verify exact head, run, logs, and desktop/mobile screenshots.
+- [ ] Continue P2 Swap semantic validation from PR #268; retain all fail-closed gates.
+- [ ] Record every subsequent fix, exact commit, run IDs, root-cause evidence, verification, blockers, and one next action here.
+
+**Single next action:** continue PR #268's remaining Jupiter V6 semantic/CPI account-role validation on its exact head, while separately confirming the dedicated gameplay workflow's status; do not enable signing/execution or claim gameplay readiness from the ecosystem Browser Smoke.
+
+---
+
 ## 2026-11-11 13:22 +08 — DEX mobile close fix merged; Swap account-state verification added
 
 **Execution order remains DEX → Swap → Login → Launchpad. Gameplay remains non-blocking.**
