@@ -3989,7 +3989,8 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Carries the evidence-backed mobile DEX scroll-settle + topmost-hit-target test fix.
 - [x] Carries the DEX mint-copy duplicate-handler removal and async clipboard regression test.
 - [x] Adds diagnostic-only GLTFLoader phase telemetry (request, download, parse start/complete/error, bounds, scale, mesh traversal, scene attach, animation rig, ready) and includes phase/elapsed data in strict gameplay timeout diagnostics. No production loading behavior, fallback, timeout, readiness criteria or gameplay mechanics changed.
-- [ ] Exact-head Validate run `42971112186` and Browser Smoke run `42971112227` are running. Validate has passed Worker security/API tests and is bundling/dry-running Wrangler; Browser Smoke is starting. Await exact-head terminal results before any merge.
+- [x] Exact-head Validate run `42971112186` passed: Worker security/API tests, Wrangler Durable Object dry-run, auth/cloud-save syntax, homepage checks, DEX/Swap script syntax, game script syntax and repository audit all passed.
+- [ ] Exact-head Browser Smoke run `42971112227` is in progress. Steps 7–14 passed (auth/account isolation, homepage/DEX routing, Cloudflare proxy, fail-closed execution, standalone Swap/DEX, live Solana discovery including clipboard regression, and mobile workspace/desktop regression). Compact mobile 390px/360px step 15 is running; steps 16–18 remain.
 - [ ] When the next gameplay run reaches mobile GLB readiness, inspect `loaderDiagnostics.phase`. If it stalls at `parse-start`, investigate the GLTFLoader parse/decode cost/worker strategy; if it reaches `scene-setup` or later, isolate the exact setup phase. Implement only the phase-supported counter-fix and rerun strict checks.
 
 ### Superseded PR handling
