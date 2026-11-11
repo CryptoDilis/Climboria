@@ -3578,3 +3578,11 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Main after PR #242 merge: Validate 42948561557 SUCCESS; Pages deployment 42948561382 SUCCESS; main Browser Smoke 42948561787 is still running at Jarrell's Peak gameplay step 15.
 - [x] Closed PR #244 and PR #245 as superseded (neither merged). PR #246 is the sole authoritative Sanctuary spawn fix, based on current main and retaining PR #242's accepted test harness.
 - [ ] Next exact task: poll main Browser Smoke 42948561787 and PR #246 Browser Smoke 42948629303 to terminal status. If a failure appears, inspect exact job logs/annotations and apply a distinct root-cause fix; do not repeat previous code.
+
+### Poll update — 2026-11-11 02:51 UTC
+
+- [x] Main Pages deployment for current README checkpoint 8ad690469737473a3efd4fa488cb4e7063d2c994: SUCCESS (run 42948716263).
+- [x] PR #246 Validate remains SUCCESS (run 42948629207, exact head 44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c).
+- [x] PR #246 Browser Smoke 42948629303 progressed through steps 1–14 successfully and is now at step 15 (Jarrell's Peak desktop/mobile gameplay); screenshot upload is pending.
+- [x] Main Browser Smoke after PR #242 merge 42948561787 is also at step 15 (Jarrell's Peak desktop/mobile gameplay); no terminal result yet.
+- [ ] Next: wait for both gameplay steps to complete, inspect failure logs if either fails, and visually inspect uploaded screenshots. Do not classify a running job as failed.
