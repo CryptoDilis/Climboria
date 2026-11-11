@@ -4184,3 +4184,13 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [x] Reviewed the DEX adapter provenance classifier and its five focused tests. It scopes results to candidate-slot IDL provenance and treats missing/conflicting evidence as `incomplete`; a later ProgramData deployment slot is not misclassified as proof of historical absence.
 - [!] Several older PR #269 runs were cancelled while successive commits were pushed to the same branch. These are superseded/cancelled runs, not code failures. Keep the branch unchanged while current exact-head checks are active to avoid cancelling them again.
 - [ ] Next: wait for Browser Smoke run `43110016244` and IDL History Audit run `43110016341` to become terminal. If either fails, inspect the first failing step and decoded logs before any change. If successful, inspect the IDL artifact and per-adapter reason codes, then continue read-only CPI privilege/account-slice evidence. Keep PR #269 draft/unmerged and all signing/execution gates false.
+
+### Workflow continuation — 2026-11-12 06:18 +08
+
+- Re-polled exact PR #269 head `26bef00c050533a6980e85799a4967f79d14fe98`; no newer commit was pushed to its branch during the active checks.
+- Browser Smoke `43110016244` remains in progress at gameplay step 17; steps 1–16 remain successful. Screenshot upload is pending. No failure conclusion exists to diagnose yet.
+- Jupiter IDL History Audit `43110016341` remains in progress at external history/RPC collection step 6; syntax check and all five classifier tests passed. No terminal result or artifact exists yet.
+- CPI Trace Audit `43110016651` and Validate `43110016247` remain successful on the same exact SHA.
+- Attempted to retrieve live logs while both jobs were still running; GitHub returned a temporary log-blob 404. This is an unavailable-in-progress log endpoint, not a workflow failure. Re-fetch decoded logs only after a terminal failure or completion.
+- Do not treat `cancelled` runs on earlier SHAs as failed workflows; they were superseded during rapid commits. Avoid pushing more commits to PR #269 while the exact-head jobs are active.
+- Next: poll both active runs; on any terminal failure, retrieve job logs, identify the first causal step, compare source/configuration and prior recoveries, then implement and verify a specific counter-fix. On success, inspect the IDL artifact and adapter reason codes. Keep all signing/execution gates closed.
