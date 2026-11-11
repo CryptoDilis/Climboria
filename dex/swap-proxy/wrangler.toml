@@ -26,3 +26,14 @@ namespace_id = "20261108"
 [[routes]]
 pattern = "api.climboria.fun"
 custom_domain = true
+
+
+# One strongly consistent record per server-issued order token.
+# The Worker source keeps execution hard-blocked pending semantic review.
+[[durable_objects.bindings]]
+name = "ORDER_STORE"
+class_name = "SwapOrderStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SwapOrderStore"]

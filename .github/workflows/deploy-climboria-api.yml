@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Worker security and API tests
         working-directory: dex/swap-proxy
-        run: node --test test/worker.test.mjs
+        run: node --test test/*.test.mjs
 
       - name: Configure account-specific rate-limit namespace
         working-directory: dex/swap-proxy
@@ -53,6 +53,12 @@ jobs:
           grep -Fqx 'pattern = "api.climboria.fun"' wrangler.toml
           grep -Fqx 'custom_domain = true' wrangler.toml
           grep -Fqx 'name = "RATE_LIMITER"' wrangler.toml
+          grep -Fqx 'name = "ORDER_STORE"' wrangler.toml
+          grep -Fqx 'class_name = "SwapOrderStore"' wrangler.toml
+          grep -Fqx 'new_sqlite_classes = ["SwapOrderStore"]' wrangler.toml
+          grep -Fqx 'name = "ORDER_STORE"' wrangler.toml
+          grep -Fqx 'class_name = "SwapOrderStore"' wrangler.toml
+          grep -Fqx 'new_sqlite_classes = ["SwapOrderStore"]' wrangler.toml
           namespace_id="$(sed -n 's/^namespace_id = "\([0-9][0-9]*\)"/\1/p' wrangler.toml)"
           if [ -z "$namespace_id" ] || [ "$namespace_id" = "20261108" ]; then
             echo "::error::A real account-specific RATE_LIMITER namespace is required before deploying."
@@ -64,6 +70,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           JUPITER_API_KEY: ${{ secrets.JUPITER_API_KEY }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
         run: |
           set -euo pipefail
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
@@ -78,6 +85,10 @@ jobs:
             echo "::error::Missing GitHub Actions secret JUPITER_API_KEY. Store the Jupiter server key as an encrypted Actions secret; never commit it."
             exit 1
           fi
+          if ! node -e 'const u=new URL(process.argv[1]);if(u.protocol!=="https:"||u.username||u.password)process.exit(1)' "$SOLANA_RPC_URL"; then
+            echo "::error::Missing or invalid SOLANA_RPC_URL; configure a public HTTPS Solana RPC endpoint as an encrypted Actions secret."
+            exit 1
+          fi
 
       - name: Set Jupiter server key as a Worker secret
         working-directory: dex/swap-proxy
@@ -87,6 +98,14 @@ jobs:
           JUPITER_API_KEY: ${{ secrets.JUPITER_API_KEY }}
         run: |
           printf '%s' "$JUPITER_API_KEY" | npx wrangler@4.36.0 secret put JUPITER_API_KEY
+
+      - name: Set Solana RPC endpoint as a Worker secret
+        working-directory: dex/swap-proxy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+        run: printf '%s' "$SOLANA_RPC_URL" | npx wrangler@4.36.0 secret put SOLANA_RPC_URL
 
       - name: Deploy Worker
         working-directory: dex/swap-proxy
@@ -99,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
           response="$(curl --retry 6 --retry-delay 10 --retry-connrefused --fail --silent --show-error https://api.climboria.fun/health)"
-          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
+          printf '%s' "$response" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const x=JSON.parse(s);if(x.ok!==true||x.configured?.jupiterKey!==true||x.configured?.rateLimiter!==true||x.configured?.orderStore!==true||x.configured?.solanaRpc!==true||x.execution!=='disabled'||x.configured?.executionEnabled!==false){console.error('Worker health is not quote-only production-ready:',x);process.exit(1)}console.log('Worker health, required bindings, and disabled execution kill switch verified.')})"
           curl --fail --silent --show-error -X OPTIONS https://api.climboria.fun/api/swap/order -H 'Origin: https://climboria.fun' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' -o /dev/null -D /tmp/climboria-cors-headers
           grep -qi '^access-control-allow-origin: https://climboria.fun' /tmp/climboria-cors-headers
           echo "Worker CORS preflight verified for https://climboria.fun."
