@@ -50,6 +50,8 @@ export class SwapOrderStore {
           return json({ error: "Resolved address lookup evidence is invalid" }, 400);
         }
         if (!tokenAccountEvidence || !Number.isSafeInteger(tokenAccountEvidence.contextSlot) ||
+            (lookupContextSlot !== null && tokenAccountEvidence.contextSlot < lookupContextSlot) ||
+            tokenAccountEvidence.source.address === tokenAccountEvidence.destination.address ||
             !tokenAccountEvidence.source || !tokenAccountEvidence.destination ||
             tokenAccountEvidence.source.owner !== taker || tokenAccountEvidence.destination.owner !== taker ||
             typeof tokenAccountEvidence.source.address !== "string" || typeof tokenAccountEvidence.destination.address !== "string" ||
