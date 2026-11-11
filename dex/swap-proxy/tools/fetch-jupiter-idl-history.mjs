@@ -297,6 +297,141 @@ async function request(name, endpoint) {
   return record;
 }
 
+const dexCpiPrograms = [
+  {
+    slug: "kipseli",
+    programId: "3TK9D8aoBFYjYZtKCjciPrVrRStsnvo7KmpcJqDavpaU",
+    expectedInstructionName: "swap_v3",
+    expectedDiscriminatorHex: "f0e02621b01ff1af",
+  },
+  {
+    slug: "orca-whirlpool",
+    programId: "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",
+    expectedInstructionName: "swap_v2",
+    expectedDiscriminatorHex: "2b04ed0b1ac91e62",
+  },
+  {
+    slug: "meteora-dlmm",
+    programId: "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo",
+    expectedInstructionName: "swap2",
+    expectedDiscriminatorHex: "414b3f4ceb5b5b88",
+  },
+  {
+    slug: "raydium-launchlab",
+    programId: "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj",
+    expectedInstructionName: "buy_exact_in",
+    expectedDiscriminatorHex: "faea0d7bd59c13ec",
+  },
+];
+
+function collectDexInstructionCandidates(value, expectedDiscriminatorHex, path = "$", found = [], root = {}) {
+  if (!value || typeof value !== "object") return found;
+  if (typeof value.content === "string") {
+    const parsed = parseJson(value.content);
+    if (parsed && Array.isArray(parsed.instructions)) {
+      const matches = parsed.instructions.filter((instruction) =>
+        Array.isArray(instruction.discriminator) &&
+        Buffer.from(instruction.discriminator).toString("hex") === expectedDiscriminatorHex
+      );
+      if (matches.length > 0) {
+        found.push({
+          path: `${path}.content`,
+          sourceType: value.type ?? null,
+          metadataAccountAddress: value.address ?? value.metadataAccountAddress ?? root.anchorAddress ?? root.pmpAddress ?? null,
+          authority: value.authority ?? null,
+          recordVersion: value.version ?? null,
+          slot: value.slot ?? null,
+          time: value.time ?? null,
+          activeFrom: value.activeFrom ?? null,
+          activeTo: value.activeTo ?? null,
+          valid: value.valid ?? null,
+          idlName: parsed.metadata?.name ?? null,
+          idlVersion: parsed.metadata?.version ?? null,
+          contentSha256: sha256(value.content),
+          matchingInstructions: matches.map((instruction) => ({
+            name: instruction.name,
+            discriminatorHex: Buffer.from(instruction.discriminator).toString("hex"),
+            accounts: instruction.accounts ?? [],
+            args: instruction.args ?? [],
+          })),
+        });
+      }
+    }
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      collectDexInstructionCandidates(item, expectedDiscriminatorHex, `${path}[${index}]`, found, root)
+    );
+  } else {
+    for (const [key, child] of Object.entries(value)) {
+      if (key !== "content") {
+        collectDexInstructionCandidates(child, expectedDiscriminatorHex, `${path}.${key}`, found, root);
+      }
+    }
+  }
+  return found;
+}
+
+async function fetchDexCpiProgramHistory(program) {
+  const responses = {};
+  for (const kind of ["latest", "history"]) {
+    const url = new URL(kind === "latest" ? "/api/latest" : "/api/history", baseUrl);
+    url.searchParams.set("programId", program.programId);
+    url.searchParams.set("cluster", "mainnet-beta");
+    const record = {
+      url: url.toString(),
+      status: null,
+      ok: false,
+      responseSha256: null,
+      responseBytes: 0,
+      error: null,
+      candidates: [],
+    };
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(180_000) });
+      const body = await response.text();
+      record.status = response.status;
+      record.ok = response.ok;
+      record.responseSha256 = sha256(body);
+      record.responseBytes = Buffer.byteLength(body);
+      const parsed = parseJson(body);
+      record.responseKeys = parsed && typeof parsed === "object" ? Object.keys(parsed) : [];
+      record.candidates = parsed
+        ? collectDexInstructionCandidates(parsed, program.expectedDiscriminatorHex, "$", [], parsed)
+        : [];
+      await writeFile(join(outDir, `dex-${program.slug}-${kind}-response.json`), body);
+    } catch (error) {
+      record.error = error instanceof Error ? error.message : String(error);
+      await writeFile(join(outDir, `dex-${program.slug}-${kind}-error.txt`), record.error);
+    }
+    responses[kind] = record;
+  }
+
+  const matchingHistory = responses.history.candidates;
+  const activeHistory = matchingHistory.filter((candidate) =>
+    isActiveAtSlot(candidate, candidateTransactionSlot)
+  );
+  const latestMatches = responses.latest.candidates;
+  return {
+    slug: program.slug,
+    programId: program.programId,
+    expectedInstructionName: program.expectedInstructionName,
+    expectedDiscriminatorHex: program.expectedDiscriminatorHex,
+    latest: responses.latest,
+    history: responses.history,
+    matchingHistoricalRevisionCount: matchingHistory.length,
+    activeHistoricalRevisionCount: activeHistory.length,
+    exactlyOneRevisionCoversCandidateSlot: activeHistory.length === 1,
+    activeRevisionForCandidateSlot: activeHistory.length === 1 ? activeHistory[0] : null,
+    latestMatchingInstructions: latestMatches.flatMap((candidate) => candidate.matchingInstructions),
+  };
+}
+
+const dexCpiIdlHistory = [];
+for (const program of dexCpiPrograms) {
+  dexCpiIdlHistory.push(await fetchDexCpiProgramHistory(program));
+}
+
 const latest = await request("latest", "/api/latest");
 const history = await request("history", "/api/history");
 const matchingHistory = history.candidates.filter((candidate) =>
@@ -316,6 +451,7 @@ const summary = {
   fetchedAt: new Date().toISOString(),
   requests: [latest, history],
   onChainProvenance,
+  dexCpiIdlHistory,
   activeRevisionForCandidateSlot: activeRevision ? {
     sourceType: activeRevision.sourceType,
     metadataAccountAddress: activeRevision.metadataAccountAddress,
@@ -348,6 +484,8 @@ const summary = {
     onChainIdlRouteV2DiscriminatorMatches: onChainProvenance.idlAccount?.decompressedRouteV2Discriminator === expectedRouteV2Discriminator,
     programDataDeploymentCoversCandidateSlot: onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true,
     programDataLoaderOwnerMatches: onChainProvenance.programDataAccount?.loaderOwnerMatches === true,
+    dexCpiProgramsWithExactlyOneActiveRevision: dexCpiIdlHistory.filter((item) => item.exactlyOneRevisionCoversCandidateSlot).length,
+    dexCpiProgramsWithActiveDiscriminatorMatch: dexCpiIdlHistory.filter((item) => item.activeHistoricalRevisionCount === 1).length,
   },
   safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
 };
