@@ -3362,3 +3362,10 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] Main Pages deployment for the earlier README checkpoint `c6c612d8b5e2b6d7ad90cd3995e3b6732c88bc94` completed SUCCESS (`42941897254`). Subsequent documentation commits have their own deployment runs; poll latest main deployment before claiming the current main commit is deployed.
 
 **Exact next task:** poll both Browser Smoke runs `42942177844` and `42942014181`. If either fails, inspect its completed job log and artifacts, diagnose that run independently, and make only a distinct evidence-backed fix. If both pass, inspect artifacts and DEX discovery behavior, then reconcile PR #242 against current main and decide whether it can be merged. PR #243 remains separate until its own checks and discovery review are complete.
+
+
+### PR #243 integration dependency — avoid duplicating the orientation fix
+
+- [x] Confirmed PR #243 was created from main before PR #242's third orientation counter-fix. Its current Browser Smoke run `42942014181` therefore checks the DEX change on the older gameplay smoke harness.
+- [x] Recorded on PR #243 that its final acceptance run must be based on the accepted PR #242 orientation harness. Do not copy or recommit the orientation fix independently into the DEX branch.
+- [ ] After PR #242's exact-head Browser Smoke passes and it is merged, rebase/recreate the DEX PR from updated main, preserve the two DEX discovery commits' final file contents, and rerun Validate + Browser Smoke on the integrated head.
