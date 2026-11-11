@@ -42,7 +42,7 @@ try {
     const p=window.__climboriaJarrellsPeak?.player,w=window.__climboriaJarrellsPeak;
     if(!p||!w)return null;
     const saved={x:p.x,y:p.y,z:p.z,vy:p.vy,yaw:p.yaw,mode:p.mode,jumpState:p.jumpState,jumpHeld:p.jumpHeld,jumpCount:p.jumpCount,landCount:p.landCount};
-    p.x=0;p.z=-30;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
+    p.x=w.sanctuarySpawn.x;p.z=w.sanctuarySpawn.z;p.y=w.groundAt(p.x,p.z)+1.75;p.vy=0;p.mode='walk';p.jumpState='grounded';p.jumpHeld=false;
     return {saved,baseline:p.y,jumpCount:p.jumpCount||0,landCount:p.landCount||0};
   });
   if(!liveJumpStart) errors.push('Live keyboard jump test could not access the gameplay player.');
@@ -195,7 +195,7 @@ try {
       })(),
       mountainSpawnRouteAudit: (()=>{
         if(!w?.POI?.summit||typeof w.blocked!=='function'||!Array.isArray(w.collisionSolids))return null;
-        const start={x:0,z:-30},target={x:w.POI.summit.px,z:w.POI.summit.pz};
+        const start={x:w.sanctuarySpawn.x,z:w.sanctuarySpawn.z},target={x:w.POI.summit.px,z:w.POI.summit.pz};
         const distance=Math.hypot(target.x-start.x,target.z-start.z),stepLength=.32,steps=Math.ceil(distance/stepLength);
         let x=start.x,z=start.z,blockedAt=null,progress=0,minHeight=Infinity,maxHeight=-Infinity,maxGrade=0;
         for(let i=0;i<=steps;i++){
@@ -439,7 +439,7 @@ try {
   await page.keyboard.press('1');
   await page.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x-window.__climboriaJarrellsPeak.sanctuarySpawn.x)<1 && Math.abs(p.z-window.__climboriaJarrellsPeak.sanctuarySpawn.z)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await page.waitForTimeout(900);
@@ -679,7 +679,7 @@ try {
   await mobile.keyboard.press('1');
   await mobile.waitForFunction(() => {
     const p=window.__climboriaJarrellsPeak?.player;
-    return !!p && p.mode==='walk' && Math.abs(p.x)<1 && Math.abs(p.z+30)<1 &&
+    return !!p && p.mode==='walk' && Math.abs(p.x-window.__climboriaJarrellsPeak.sanctuarySpawn.x)<1 && Math.abs(p.z-window.__climboriaJarrellsPeak.sanctuarySpawn.z)<1 &&
       (window.__climboriaRenderState?.frames ?? 0)>=4;
   }, undefined, { timeout: 10000 });
   await mobile.waitForTimeout(900);
