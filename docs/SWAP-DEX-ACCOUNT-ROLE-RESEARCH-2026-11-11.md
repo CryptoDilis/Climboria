@@ -624,3 +624,29 @@ After recording the continuation checkpoint, the documentation tree at head `21e
 - Jupiter CPI Trace Audit `43035310502` / job `130572477387`: SUCCESS; all 8 steps.
 
 The audit continues to run its default newest-five scan because no manual workflow dispatch was available. Its `before` cursor was not set, so the older-cursor scan remains pending. No workflow failures occurred on this documentation head. Keep all CPI approval and execution/signing restrictions unchanged.
+
+
+## 2026-11-11 — Latest CPI artifact inspection and discovery-classification correction
+
+### Artifact evidence
+
+- [x] Downloaded and inspected exact-head Jupiter CPI artifact `13864055427` from run `43036765589`, created for commit `0bb549eaa311fc4b26d6f21a3cecf5ee2fedff1e`.
+- [x] Artifact size: 5,509 bytes; SHA-256 `8693a65f25870cd4eec319b53022cb02be7f4ebc81c71afe6ce413d0319f2384`.
+- [x] The pinned finalized transaction `5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv`, slot `464856414`, succeeded. Its Jupiter outer instruction at index 3 contains one Meteora DLMM `swap2` CPI at stack height 2 with 17 ordered accounts.
+- [x] The 17-account CPI vector matches the previously mapped 16 fixed Meteora `swap2` roles plus one dynamic account at CPI position 16: `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8`.
+- [x] The dynamic account is finalized, owned by Meteora DLMM, non-executable, 10,136 bytes, and has discriminator `5c8e5cdc059446b5` (`BinArray`); it is not the bitmap extension.
+- [x] Transaction token balances show the taker's USDC source account decreased by 97,879,923 base units (97.879923 USDC), while the taker's output-token account increased by 38,687,896,434 base units (38,687.896434 tokens). The Meteora pool-side token balances show the corresponding output-token decrease and USDC increase for this one transaction.
+- [!] RPC `innerInstructions` does not encode the CPI-requested AccountMeta signer/writable flags. The artifact's signer/writable labels are only outer transaction-message maximum privileges. This trace is evidence of observed account ordering and token movement, not proof of requested CPI privileges or a general adapter schema.
+
+### New bounded discovery sample
+
+- [x] The same artifact's finalized newest-five discovery sample returned `before=null`, `signaturesReturned=5`, `transactionsScanned=5`, `matchingRoutes=1`, and no rate limit.
+- [!] Candidate transaction: `2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX`, slot `468153382`, with one Meteora `swap2` CPI containing 18 accounts. Its outer Jupiter instruction did **not** match the known `route` discriminator (`routePlanHeader=null`). Therefore this candidate must not be described as a decoded standard `route` plan; its instruction family and CPI relationship need separate classification.
+- [x] Root cause found in the discovery reporter: it counted any Jupiter outer instruction containing a Meteora `swap2` CPI as a `matchingRoutes` result, even when the outer instruction discriminator was not the recognized `route` family. That terminology overstated what the parser had established.
+- [x] Counter-fix on the current PR branch: preserve the raw outer instruction data and first-eight-byte discriminator, emit `routePlanHeaderRecognized`, count `matchingRoutes` only for recognized route-plan headers, and separately report `matchingJupiterMeteoraInstructions` for opaque Jupiter/Meteora CPI observations.
+- [x] Added regression coverage for an unknown Jupiter instruction discriminator with a Meteora `swap2` CPI, ensuring it remains visible as an opaque match but is not counted as a recognized route plan. Added the new fields to audit workflow output and path triggers.
+- [ ] Exact-head Validate and CPI audit for the classifier correction are pending. Do not mark the code counter-fix verified until those runs complete.
+- [ ] Next: use the captured raw discriminator from the refreshed discovery artifact to identify the second candidate's exact Jupiter instruction family against a pinned official IDL/SDK revision; fetch its full transaction and account state before comparing its 18-account vector. Do not merge its vector into the 17-account `route` schema.
+- [ ] Run an older-cursor sample with `before_signature` after a workflow-dispatch mechanism becomes available; this artifact still has `before=null` and is not an older-window scan.
+
+Security boundary unchanged: one finalized route and one verified BinArray are not sufficient for general Meteora/Jupiter account-cursor approval. Keep variant 75 excluded, keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`; no signing or live swap execution is authorized.
