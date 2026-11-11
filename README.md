@@ -13,6 +13,14 @@
 - [ ] **Next active task:** instrument and resolve the mobile `#closeDetail` timeout without relaxing acceptance; then continue hardening the Jupiter semantic policy. Do not enable wallet signing/submission.
 
 
+## 2026-11-11 13:18 +08 — exact-head rerun and failure diagnosis
+
+- [x] Main Pages build/deployment workflow `42963490889` passed on commit `5a07939fb4b8baef89c6b569174b7f6987d82008`, whose main tree includes the merged DEX implementation. Public-site HTTP verification of `https://climboria.fun/dex/` could not be completed from the available browser fetch path; keep external live URL check open rather than claiming it was independently HTTP-verified.
+- [x] PR #255 updated exact head `5cf5de2b339355d9d4e4f0c9914b3828360e5e79`: Validate `42963568528` passed, including Worker security tests, Wrangler dry-run, script syntax and remaining audits. Added an explicit unknown top-level program adversarial test and clarified the Jupiter optional-account sentinel semantics; security review now distinguishes the initial route-shape decoder from the still-incomplete full semantic policy.
+- [x] PR #255 Browser Smoke `42963568548`, job `130335529986`: DEX/Swap steps 7–13 passed; step 14 failed again at mobile DEX token-detail close. Exact diagnostic: close button was visible/actionable by layout and hit-test before tap, but no document click event reached `#closeDetail`; token view remained open and activeElement became the embedded chart iframe. This proves the tap did not activate the close handler; it does not yet prove whether the cause is touch dispatch, scroll repositioning, iframe interception or CSS stacking.
+- [x] Added deeper pointer/touch/hit-test telemetry to the PR #255 Browser Smoke workflow in commit `ecb922962a622c79500fb15352465793f3633231`. No new exact-head run has appeared for this commit yet; do not count it as verified.
+- [ ] **Next active task:** obtain an exact-head run for `ecb922962a622c79500fb15352465793f3633231` and use the event trace to fix the actual mobile close interaction or test harness cause. Keep the Swap signing/execution gates closed; after the browser smoke issue is isolated, continue source/destination account-state and DEX CPI semantic validation.
+
 ## 2026-11-11 12:57 +08 — DEX and Swap integrated on main
 
 ## 2026-11-11 13:03 +08 — Jupiter route restriction merged (PR #254)
