@@ -622,10 +622,19 @@ jobs:
                 await closeDetail.waitFor({state:'visible',timeout:5000});
                 const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
-                await dex.evaluate(()=>{window.__closeDetailClickSeen=false;document.addEventListener('click',event=>{if(event.target.closest?.('#closeDetail'))window.__closeDetailClickSeen=true},true)});
+                await dex.evaluate(()=>{
+                  window.__closeDetailEvents=[];
+                  for(const type of ['pointerdown','pointerup','pointercancel','touchstart','touchend','click']){
+                    document.addEventListener(type,event=>{
+                      const target=event.target;
+                      const r=target?.getBoundingClientRect?.();
+                      window.__closeDetailEvents.push({type,targetTag:target?.tagName,targetId:target?.id,targetClass:String(target?.className||''),x:event.clientX??event.changedTouches?.[0]?.clientX??null,y:event.clientY??event.changedTouches?.[0]?.clientY??null,defaultPrevented:event.defaultPrevented,buttonRect:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null});
+                    },true);
+                  }
+                });
                 await closeDetail.tap();
                 await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000}).catch(async error=>{
-                  const state=await dex.evaluate(()=>({mobileTokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),closeClickSeen:window.__closeDetailClickSeen,closeVisible:(()=>{const el=document.querySelector('#closeDetail');if(!el)return null;const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(el).display,pointerEvents:getComputedStyle(el).pointerEvents}})(),activeElement:document.activeElement?.outerHTML?.slice(0,300)}));
+                  const state=await dex.evaluate(()=>{const el=document.querySelector('#closeDetail'),r=el?.getBoundingClientRect(),cx=r?r.x+r.width/2:0,cy=r?r.y+r.height/2:0,top=document.elementFromPoint(cx,cy),frame=document.querySelector('#detailChart'),fr=frame?.getBoundingClientRect();return {mobileTokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),events:window.__closeDetailEvents,closeVisible:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(el).display,pointerEvents:getComputedStyle(el).pointerEvents}:null,postTapHit:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null,iframeRect:fr?{x:fr.x,y:fr.y,width:fr.width,height:fr.height}:null,scrollY:scrollY,activeElement:document.activeElement?.outerHTML?.slice(0,300)}});
                   throw new Error('Mobile close-detail tap did not exit token view. before='+JSON.stringify(closeBefore)+' after='+JSON.stringify(state)+' cause='+error.message);
                 });
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
