@@ -128,6 +128,13 @@ export function buildJupiterV6TraceReport(signature, rpcTransaction) {
     transactionVersion: rpcTransaction.version ?? "legacy-or-unspecified",
     transactionSucceeded: meta.err === null,
     transactionError: meta.err ?? null,
+    outerInstructions: outerInstructions.map((instruction, outerIndex) => ({
+      outerIndex,
+      ...resolveInstruction(
+        instruction, accountKeys, header, staticKeys.length, loadedWritable.length,
+        "outer[" + outerIndex + "]",
+      ),
+    })),
     staticAccountKeyCount: staticKeys.length,
     loadedWritableAccountCount: loadedWritable.length,
     loadedReadonlyAccountCount: loadedReadonly.length,
