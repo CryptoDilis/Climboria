@@ -623,6 +623,8 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
+                // openToken() intentionally smooth-scrolls the detail panel into view. Wait for that scroll to settle before a physical tap; otherwise Playwright can tap the old button coordinates after the iframe has moved underneath them.
+                await dex.evaluate(()=>new Promise(resolve=>{let stableFrames=0,previousY=window.scrollY;const poll=()=>{const y=window.scrollY;if(Math.abs(y-previousY)<.5)stableFrames++;else stableFrames=0;previousY=y;if(stableFrames>=4)resolve();else requestAnimationFrame(poll)};poll()}));
                 const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
