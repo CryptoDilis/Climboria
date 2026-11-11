@@ -346,3 +346,28 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - [ ] Run the utility against the finalized Meteora example using an approved free HTTPS RPC endpoint; retain the raw response securely and record the resolved CPI vector. Do not paste API-key-bearing RPC URLs or secrets into repository files.
 - [ ] Use logs/stackHeight plus outer instruction context to establish nesting; do not assume each routePlan leg maps one-to-one to an inner CPI.
 - [ ] Compare observed CPI data/accounts against the pinned Meteora CPI interface. Continue to exclude any route variant whose slice/role mapping remains unproven.
+
+
+## Deep workflow failure diagnosis and counter-fix — 2026-11-11
+
+### Failed Validate runs
+- Run `43029417495`, job `130552389858`, on code head `15632818faa822226a7711f3c63c58f67a3a4a82`: FAILURE in step 4, `Test Cloudflare swap proxy security and API contracts`.
+- A second Validate run `43029480369`, job `130552555595`, repeated the same failure against the subsequent documentation checkpoint. It was the same assertion defect, not a new independent regression.
+- Both logs show 78 total tests, 77 passed, 1 failed. Existing security/policy tests (including fixed account checks, route DAG checks, order binding, replay protection, and fail-closed gates) passed.
+- Exact failing test: `builds a Jupiter V6 raw-RPC trace with resolved ALT account order and stack height`, test file line 227.
+- Exact assertion expected `/not the CPI-requested meta/` in the privilege source for `cpi.accounts[2]`, which was an ALT-loaded account. The implementation labelled that source `address-lookup-table transaction message privilege`; the explanatory suffix was present only on the static-key branch.
+- This is a test/diagnostic-label mismatch in the new research helper, not a failure of the production Jupiter route policy, transaction parser, or security gates. The remaining Validate steps were skipped because the test command exited 1. No timeout, network, dependency install, Wrangler, or Browser Smoke failure was observed in this Validate job.
+
+### Targeted counter-fix
+- Updated the ALT privilege-source label to explicitly state `(not the CPI-requested meta)`, making the report wording consistent across static and lookup-table accounts.
+- Corrected the test to assert the CPI-vs-outer-privilege caveat on the static account, and separately assert the ALT source label on the lookup-table account.
+- Added an explicit `node --check dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs` step to `.github/workflows/validate-climboria.yml`.
+- Counter-fix commits: `3ef9f7b131d06b64fe733d42d6bb9487c4c21724` (label), `f839510f1fbb7c01f8f1690087d51e8cfe67b02d` (assertions), `701005d5b840701507d11b7edb8e32b51e4d2f49` (explicit syntax-check step).
+- The corrected static-key assertion now checks the source `outer transaction message privilege (not the CPI-requested meta)`; the ALT assertion checks `address-lookup-table transaction message privilege`. This preserves the distinction rather than weakening the semantic test.
+
+### Verification status / next action
+- The latest branch head after the counter-fix is `701005d5b840701507d11b7edb8e32b51e4d2f49`, 54 commits ahead / 0 behind main.
+- GitHub Actions did not expose new exact-head run records for this latest commit at the time of this checkpoint; do not claim the fix has passed CI. The two old failing runs remain historical evidence for the pre-fix source.
+- A local `git clone` attempt could not resolve github.com from this execution environment, so no local Node test result is claimed.
+- Next: obtain a fresh Validate run on the corrected exact head and inspect all test results; then inspect the matching Browser Smoke run. If the corrected test still fails, inspect its new stack trace and fix only the demonstrated cause. Do not rerun the old failed SHA as proof of the new code.
+- All signing/execution gates remain closed. No live transaction, deployment, or per-DEX semantic approval is implied.
