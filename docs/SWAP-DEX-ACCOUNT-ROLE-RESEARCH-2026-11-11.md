@@ -650,3 +650,38 @@ The audit continues to run its default newest-five scan because no manual workfl
 - [ ] Run an older-cursor sample with `before_signature` after a workflow-dispatch mechanism becomes available; this artifact still has `before=null` and is not an older-window scan.
 
 Security boundary unchanged: one finalized route and one verified BinArray are not sufficient for general Meteora/Jupiter account-cursor approval. Keep variant 75 excluded, keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`; no signing or live swap execution is authorized.
+
+
+## 2026-11-11 — Jupiter route_v2 candidate and Meteora multi-BinArray proof
+
+### Jupiter instruction-family classification
+
+- [x] Re-audited candidate signature `2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX`, finalized slot `468153382`; transaction succeeded.
+- [x] Raw outer Jupiter instruction discriminator is `bb64facc31c4af14`, matching generated Jupiter V6 `route_v2` (`RouteV2Builder`) in `jupiter-aggregator-v6-sdk` 0.4.0. Source: https://docs.rs/jupiter-aggregator-v6-sdk/latest/jupiter_aggregator_v6_sdk/generated/instructions/struct.RouteV2Builder.html
+- [x] Candidate outer Jupiter instruction is at index 4 and has 85 resolved accounts. Its fixed account prefix at positions 0–9 matches the generated RouteV2Builder: user transfer authority, source token account, destination token account, source mint, destination mint, source token program, destination token program, optional destination token account, event authority, Jupiter program. Positions 7–9 use the expected optional/program sentinels and canonical event authority.
+- [x] Diagnostic parser now recognizes both legacy `route` and `route_v2` headers. The candidate `route_v2` data contains four route-plan steps; first step enum byte is 181. This parser does not decode the route-step enum or claim the first step's DEX identity.
+- [!] The first-step enum value 181 is not mapped to a pinned deployed Jupiter route-plan enum revision in this research. Do not infer that it means `MeteoraDlmmSwapV2` from a different SDK/IDL revision. The exact route-step-to-inner-CPI association remains unresolved.
+- [x] Added a fail-closed regression asserting that the production legacy route validator rejects the `route_v2` discriminator. `decodeJupiterRoutePlanHeader` support is diagnostic only; it does not broaden transaction acceptance.
+
+### Meteora `swap2` CPI and account-state proof
+
+- [x] Candidate inner instruction index 6, stack height 2, invokes Meteora DLMM `swap2` with 18 ordered accounts. Its data decodes to `amount_in=7,506,712`, `min_amount_out=0`, and an empty `RemainingAccountsInfo.slices` vector. This is one successful historical transaction, not a reusable execution policy.
+- [x] Pinned official Meteora DLMM IDL: version `0.12.0`, repository commit `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1`, file `idls/dlmm.json`. The `swap2` account list has 16 fixed roles: `lb_pair`, optional `bin_array_bitmap_extension`, `reserve_x`, `reserve_y`, `user_token_in`, `user_token_out`, `token_x_mint`, `token_y_mint`, `oracle`, optional `host_fee_in`, `user`, `token_x_program`, `token_y_program`, `memo_program`, `event_authority`, `program`; writable BinArray accounts are appended as remaining accounts. Source: https://github.com/MeteoraAg/dlmm-sdk/blob/1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1/idls/dlmm.json
+- [x] Candidate CPI positions 0–15 match those fixed roles. Position 1 is the optional bitmap extension; positions 16–17 are the two dynamic BinArray accounts.
+- [x] Extended the read-only account auditor using the official IDL's `BinArray` bytemuck layout (`index:i64`, `version:u8`, seven padding bytes, `lb_pair:pubkey`, then 70 bins) and bitmap-extension `lb_pair` header. It now reports the parent pool and BinArray index/version.
+- [x] Verified the CPI `lb_pair` at position 0 is `5p7V96VMiDR5n18KUgMC6MtjZp3syGrD69bwkLMffTjR` and all dynamic accounts belong to that same pool:
+  - Bitmap extension `6wVsB6b65gdVhMjmPyY8QHUEURCohuHQjDc6th4q3nPu`, Meteora-owned, discriminator `506f7c7137ed1205`, 1,576 bytes, parent pool matches.
+  - BinArray `5AQre49iiardq7YujaFq6ZxsMFNstyf9HfgnzBkFwaWu`, Meteora-owned, discriminator `5c8e5cdc059446b5`, 10,136 bytes, index `52`, version `2`, parent pool matches.
+  - BinArray `FWeKoZC27VpA1UQd8CJqYVhn5Gu826imTJo2Y2BVE5BN`, Meteora-owned, discriminator `5c8e5cdc059446b5`, 10,136 bytes, index `53`, version `2`, parent pool matches.
+- [x] Added an audit-workflow assertion that the bitmap extension and both distinct BinArrays are non-executable, have the expected Meteora account types, and all reference the CPI's LbPair. Exact audit run `43038504288` / `43038493802` succeeded on branch head `f83f1d49eec2021c8bfc7db4e63cb6c4e841982d`; artifact `13863503120`, 14,373 bytes, SHA-256 `eaf1af493e500cdcce65ecaceed510552019ab369309da760f565a15be94a12e`.
+- [!] This verifies observed account roles/types/pool relationships for this one `route_v2` transaction. It does not prove Jupiter's requested CPI signer/writable metas, generic remaining-account cursor behavior, all route-plan step mappings, or production authorization.
+
+### Exact-head verification status and next actions
+
+- [x] Ecosystem Browser Smoke `43038503893` passed on exact head `f83f1d49eec2021c8bfc7db4e63cb6c4e841982d`; DEX/Swap, auth isolation, responsive mobile states and screenshot upload passed. This is not Jarrell's Peak gameplay smoke.
+- [x] Jupiter CPI Trace Audit `43038504288` passed on the same head, including the new parent-pool/BinArray cross-check.
+- [ ] Validate run `43038503976` is still pending. Older PR Validate run `43037984654` remains reported `in_progress` with no steps or logs (`BlobNotFound`); it is not a failed test, but appears to be holding up the newer PR validation. Do not claim exact-head Validate passed until a terminal result is available.
+- [!] Intermediate runs cancelled by concurrency while newer commits were pushed are cancellations, not test failures. No failed workflow on this checkpoint required a retry.
+- [ ] Next: wait for/resolve the stuck GitHub Validate queue; obtain a terminal exact-head Validate result; classify route_v2's route-step enum value 181 using a version-pinned deployed Jupiter IDL; capture additional route_v2 Meteora samples and compare bin-array counts/directions; then controlled Devnet reproduction and independent review.
+
+Security boundary remains unchanged: production validator accepts only the legacy `route` instruction and now has a regression rejecting `route_v2`; no route_v2 execution is enabled. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_ENABLED=false`. No signing, live Swap execution, or mainnet approval is claimed.
