@@ -373,7 +373,7 @@ function collectDexInstructionCandidates(value, expectedDiscriminatorHex, path =
 }
 
 
-async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRevision, latestCandidates) {
+async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRevisions, latestCandidates) {
   const report = {
     endpoint: "https://api.mainnet-beta.solana.com",
     commitment: "finalized",
@@ -464,9 +464,12 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         prefixMatchesAnchorIdlDiscriminator: null,
         decompressedPayloadSha256: null,
         payloadMatchesActiveHistoricalRevision: null,
+        payloadMatchesAnyActiveHistoricalRevision: null,
+        activeHistoricalRevisionCount: activeRevisions.length,
         instruction: null,
         instructionSchemaSha256: null,
         instructionSchemaMatchesActiveHistory: null,
+        instructionSchemaMatchesAnyActiveHistory: null,
         instructionSchemaMatchesLatest: null,
       };
       try {
@@ -484,19 +487,25 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         } : null;
         const schemaHash = (item) => item ? sha256(JSON.stringify(summarize(item))) : null;
         const instruction = findInstruction(decoded.idl.instructions);
-        const active = findInstruction(activeRevision?.matchingInstructions ?? []);
+        const activeInstructions = activeRevisions.flatMap(revision => revision.matchingInstructions ?? []);
+        const active = findInstruction(activeInstructions);
         const latest = findInstruction(latestCandidates.flatMap(candidate => candidate.matchingInstructions ?? []));
+        const activeSchemaMatches = activeInstructions.some(item => schemaHash(item) === schemaHash(instruction));
         record.idlName = decoded.idl.metadata?.name ?? decoded.idl.name ?? null;
         record.idlVersion = decoded.idl.metadata?.version ?? null;
         record.prefixHex = decoded.prefixHex;
         record.prefixMatchesAnchorIdlDiscriminator = decoded.prefixMatchesAnchorAccountDiscriminator;
         record.decompressedPayloadSha256 = decoded.decompressedPayloadSha256;
-        record.payloadMatchesActiveHistoricalRevision = activeRevision
-          ? decoded.decompressedPayloadSha256 === activeRevision.contentSha256 : null;
+        record.payloadMatchesActiveHistoricalRevision = activeRevisions.length === 1
+          ? decoded.decompressedPayloadSha256 === activeRevisions[0].contentSha256 : null;
+        record.payloadMatchesAnyActiveHistoricalRevision = activeRevisions.some(revision =>
+          decoded.decompressedPayloadSha256 === revision.contentSha256
+        );
         record.instruction = summarize(instruction);
         record.instructionSchemaSha256 = schemaHash(instruction);
         record.instructionSchemaMatchesActiveHistory = active
           ? record.instructionSchemaSha256 === schemaHash(active) : null;
+        record.instructionSchemaMatchesAnyActiveHistory = activeSchemaMatches;
         record.instructionSchemaMatchesLatest = latest
           ? record.instructionSchemaSha256 === schemaHash(latest) : null;
       } catch (error) {
@@ -573,7 +582,7 @@ async function fetchDexCpiProgramHistory(program) {
   });
   const metadataAccounts = responses.history.metadataAccounts ?? responses.latest.metadataAccounts ?? null;
   const onChainProvenance = await auditDexCpiOnChainProvenance(
-    program, metadataAccounts, activeHistory.length === 1 ? activeHistory[0] : null, latestMatches,
+    program, metadataAccounts, activeHistory, latestMatches,
   );
   return {
     slug: program.slug,
@@ -664,7 +673,8 @@ const summary = {
     dexProgramsWithUpgradeableLoaderProgramData: dexCpiIdlHistory.filter((item) => item.onChainProvenance.programDataAccount?.loaderOwnerMatches === true).length,
     dexProgramsDeployedAtOrBeforeCandidateSlot: dexCpiIdlHistory.filter((item) => item.onChainProvenance.programDataAccount?.deployedAtOrBeforeCandidateSlot === true).length,
     dexProgramsWithOnChainIdlOwnedByProgram: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.ownerMatchesProgram === true).length,
-    dexProgramsWithOnChainIdlInstructionSchemaMatchingHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.instructionSchemaMatchesActiveHistory === true).length,
+    dexProgramsWithOnChainIdlInstructionSchemaMatchingHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.instructionSchemaMatchesAnyActiveHistory === true).length,
+    dexProgramsWithOnChainIdlPayloadMatchingAnyActiveHistory: dexCpiIdlHistory.filter((item) => item.onChainProvenance.idlAccount?.payloadMatchesAnyActiveHistoricalRevision === true).length,
   },
   safetyNote: "An IDL is interface evidence only; the Explorer response does not attest to deployed binary identity or prove runtime CPI account slicing and privileges.",
 };
