@@ -3940,3 +3940,14 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Continue DEX and Swap review on current main after PR #264 verification. Do not enable signing/execution until CPI/account-role/token-movement/fee validation, execution-time account re-fetch, controlled Devnet sign-submit-confirm lifecycle, production Cloudflare verification, and independent Solana security review are complete.
 - [ ] Login still needs Supabase dashboard provider activation, redirect allowlist, email/SMTP setup, OAuth secrets and real production-domain account lifecycle tests.
 - [ ] Launchpad still needs full Devnet create → bonding curve → migration → pool/LP lifecycle, authority/fee destination review, and production release gates; provenance checks alone are not a live Launchpad.
+
+
+### Climboria Supabase live project audit — 2026-11-11 14:03 +08
+
+- [x] Connected Supabase project `Climboria` is `ACTIVE_HEALTHY` (region `ap-northeast-1`, Postgres 17.11).
+- [x] Migration `20261110205612_auth_profile_acl_rls_hardening` is present in the remote migration history.
+- [x] Live catalog audit confirms RLS is enabled on both `public.player_profiles` and `public.player_saves`.
+- [x] Live policy audit confirms owner-scoped SELECT/UPDATE for profiles, owner-scoped INSERT/SELECT/UPDATE for saves, with UPDATE `WITH CHECK` ownership enforcement.
+- [x] Live privilege audit confirms no anon SELECT on either table; authenticated column-level grants exist only for profile username update and required save insert/update columns. (Column-level grants were checked explicitly; table-level INSERT/UPDATE returning false is expected under this least-privilege design.)
+- [x] Supabase security and health advisors returned zero lints.
+- [!] Supabase Auth provider/dashboard configuration is not exposed through the available project connector operations. Provider enablement, Site URL/redirect allowlist, SMTP/email delivery, OAuth client credentials, and real production-domain account tests remain external release gates; do not mark Google/X/email/wallet providers live from UI smoke tests alone.
