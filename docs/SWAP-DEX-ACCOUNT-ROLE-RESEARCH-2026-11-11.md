@@ -251,3 +251,28 @@ These match the pinned snapshot. The current aggregator IDL still contains varia
 - [ ] Still missing the Jupiter deployed executable hash/build provenance and version-matched source implementation.
 - [ ] Still unresolved: Meteora CPI interface vs direct DLMM IDL privilege/optionality discrepancy.
 - No Climboria code change is justified by these artifacts. They do not prove the route-slice boundaries or the exact Meteora CPI schema used in the observed transaction. Maintain fail-closed signable-order and execution gates.
+
+
+## Official Jupiter implementation source re-check — 2026-11-11 20:54 PHT
+
+Pinned official repository: https://github.com/jup-ag/jupiter-amm-implementation/tree/cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39
+
+### Files inspected
+- `jupiter-aggregator-v6/src/lib.rs`: contains `From<jupiter_amm_interface::Swap> for types::Swap`, a conversion match covering Raydium, Whirlpool, Raydium CLMM, Meteora DLMM, Raydium CLMM V2, Raydium CPMM, SolFi and newer variants. This confirms enum-name conversion in this crate, not the deployed route execution handler.
+- `jupiter-aggregator-v6/build.rs`: generates the CPI crate from `../idls/jupiter-aggregator.json`.
+- `jupiter-core/src/amms/mod.rs` and the full tree under `jupiter-core/src/amms/`: generic AMM trait, loader, test harness, labels and SPL Token Swap adapter only. No Raydium/Whirlpool/Meteora adapter builders were present in this snapshot.
+
+### What this establishes
+- The public repo includes generated CPI types and an enum conversion layer for the V6 aggregator.
+- The inspected `lib.rs` does not contain the on-chain route handler, per-step CPI `invoke_signed` match, or remaining-account cursor/slice partition logic.
+- The public `jupiter-core/src/amms/` tree does not contain the concrete DEX adapter account-meta builders needed to independently verify each outer route's DEX account sequence.
+
+### What remains unproven
+- Exact mapping from each outer route enum variant to the inner CPI instruction discriminator.
+- Exact per-step outer remaining-account slice boundaries and account order.
+- How optional accounts, signer promotion/demotion and writable privilege constraints are applied by the deployed handler.
+- Exact deployed Jupiter executable hash, source commit/build provenance, and source-to-binary equivalence for the transaction epoch.
+- Meteora legacy DLMM CPI-vs-direct-IDL optionality and privilege discrepancies.
+
+### Engineering decision
+No new Climboria DEX account-position code is justified. Continue with raw finalized transaction metadata/CPI traces and deployed-program provenance. Keep SolFi excluded, V2 variants 47/75 rejected, and all signable/execution gates closed until a version-matched mapping is established.

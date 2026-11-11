@@ -617,3 +617,62 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - Both Jupiter signable-order and execution gates remain false; no live swap or production readiness is claimed.
 - Next DEX blocker remains authoritative per-DEX CPI account-vector and route-plan-step mapping proof. The generated SDK and mainnet Meteora route candidate are supplemental evidence only; no speculative DEX offsets are allowed.
 - Continue controlled Devnet settlement/fee-destination proof, Cloudflare production verification, production Login provider verification, and Launchpad lifecycle after DEX semantic proof.
+
+
+## Engineering continuation — 2026-11-11 20:54 PHT
+
+### Repository and exact-head CI recheck
+- PR #268 remains open, draft and unmerged: https://github.com/CryptoDilis/Climboria/pull/268
+- Branch: `codex/swap-jupiter-fixed-account-roles-2026-11-11`.
+- Verified current PR head: `62f99eb147f565a531f1a2e515ed38ed123a3625`.
+- Main remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- Validate run `43023870273`: SUCCESS on exact head `62f99eb`: https://github.com/CryptoDilis/Climboria/actions/runs/43023870273
+- Browser Smoke run `43023870358`: SUCCESS on exact head `62f99eb`: https://github.com/CryptoDilis/Climboria/actions/runs/43023870358
+- Both workflows were independently re-read from the branch's Actions run list and have the same exact head SHA. No new workflow failure exists on the current head.
+
+### Failure audit — every recent failed run reviewed from GitHub job/log evidence
+1. Browser Smoke run `43022517549`, job `130528953738`, step 15 (390px/360px compact mobile DEX):
+   - Exact error: `Mobile close-detail tap did not exit token view`.
+   - The log recorded close button y-position moving from 628.75px to 516.75px during smooth scroll, page scrollY 888, chart iframe rect y=556.75px, and the iframe as activeElement; no parent-document close-button events were observed.
+   - Root cause: the test tapped a moving coordinate before `openToken()`'s smooth scroll settled. The evidence does not prove a broken application close handler.
+   - Counter-fix: wait for stable close-button geometry and scrollY for eight animation frames, verify the center hit-test target, then perform the same real touch tap. No forced DOM click, timeout relaxation or acceptance-criteria change.
+2. Browser Smoke run `43022924844`, job `130530335830`, step 12 (DEX market/quote-preview):
+   - Exact error: `page.goBack: Timeout 30000ms exceeded waiting for navigation until "load"` at the test's `page.goBack()` call.
+   - Source inspection confirmed DEX pool changes use `history.pushState()` and app restoration uses `popstate`; this is same-document history, not a document navigation. Playwright's default load wait was mismatched to the behavior under test; chart iframe load could also delay it.
+   - Counter-fix: call `history.back()` / `history.forward()` in the page and retain strict URL, selected-row, chart, external-link and provider-metric assertions. No retries, longer timeouts or weaker assertions.
+3. Browser Smoke workflow-level run `43023263382`:
+   - GitHub created zero jobs. Validate run `43023273284` on the same commit passed.
+   - Commit diff showed two inserted JavaScript statements escaped the YAML `run: |` block because they had four spaces rather than the surrounding fourteen. YAML workflow parsing failed before job creation.
+   - Counter-fix: restore exact block indentation. The workflow was recognized and Browser Smoke subsequently ran.
+4. Earlier cancelled runs `43022239298` and `43022239280` were superseded by a newer commit while concurrency used `cancel-in-progress: true`; these are cancellations, not failed test assertions.
+
+### Counter-fix verification
+- Commit `80941976310de7ddcb63ef9c157199d3edf28035`: Validate `43023657205` SUCCESS and Browser Smoke `43023657228` SUCCESS on the exact same SHA.
+- Both workflows then reran on documentation-updated exact head `62f99eb`: Validate `43023870273` SUCCESS and Browser Smoke `43023870358` SUCCESS.
+- Browser Smoke steps 7–17 passed on `62f99eb`, including DEX history, mobile close-detail touch at both widths, auth/account isolation, Swap/DEX UI, fail-closed execution and provider states.
+- No production code change was made in this continuation; the remaining DEX work is evidence-gated, not a reason to guess account offsets.
+
+### New authoritative-source investigation — Jupiter CPI mapping
+- Re-fetched the official public repository tree for `jup-ag/jupiter-amm-implementation` at pinned commit `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39`.
+- Inspected `jupiter-aggregator-v6/src/lib.rs`: it converts `jupiter_amm_interface::Swap` enum values into generated aggregator `types::Swap` variants. It confirms variant naming/conversion but contains no on-chain per-leg CPI `invoke_signed` dispatch or account-cursor slicing.
+- Inspected `jupiter-core/src/amms/mod.rs` and the complete `jupiter-core/src/amms/` tree. The public snapshot includes generic AMM interfaces, loader, test harness and SPL Token Swap adapter only; no Raydium/Whirlpool/Meteora adapter account builders were present.
+- The generated Jupiter CPI IDL and enum-conversion layer are not the route execution handler. The deployed execution handler is not available in this public repository snapshot. Therefore this inspection does not prove route variant -> CPI instruction dispatch, per-step remaining-account boundaries, or deployed binary/source equivalence.
+- Official source: https://github.com/jup-ag/jupiter-amm-implementation/tree/cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39
+- No per-DEX account-index policy was implemented. This is the correct fail-closed decision while the handler/account-slice proof is missing.
+
+### Release gates — unchanged
+- `EXECUTION_SECURITY_REVIEW_COMPLETE=false`.
+- `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`.
+- Wrangler `EXECUTION_ENABLED=false`; public `swap-config.js` remains `enabled:false`.
+- No wallet-signable order, transaction execution, Devnet settlement, fee-destination proof or production deployment is claimed.
+
+### Next exact tasks
+1. Obtain a raw confirmed Jupiter V6 transaction meta with inner instructions, stack heights and resolved ALT keys; decode the outer route plan and every inner CPI account vector/privilege set. Public Solscan summary is insufficient.
+2. Correlate each route-plan step with the actual CPI using invocation logs/stack sequence and verify exact DEX program ID/discriminator/account vector. Resolve Meteora optionality/privilege discrepancy.
+3. Find authoritative deployed Jupiter program executable hash/build provenance and version-matched execution source; do not treat enum conversion or generated IDL as proof of CPI dispatch.
+4. Only implement a separate versioned DEX schema where both route mapping and account semantics are proven; reject unproven variants.
+5. Then controlled Devnet wallet-sign -> Worker verify -> Jupiter submit -> finalized confirmation -> token-balance delta and fee-destination evidence.
+6. Continue Cloudflare production deployment verification, Login production-provider verification, and Launchpad lifecycle/Devnet verification. Keep mobile GLB as a separate game blocker.
+
+### Always-on failure-handling rule
+For every future failed workflow: capture exact run/job/step and logs; distinguish failure from cancellation/no-job workflow parsing; state the proven root cause and remaining uncertainty; implement a targeted counter-fix; run focused tests; rerun Validate and Browser Smoke on the same exact head; record commit SHA, run URLs, outcomes and next action here. Never hide a failure, blindly repeat a commit, weaken acceptance criteria, or report a feature live without deployment evidence.
