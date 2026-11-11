@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { inflateSync } from "node:zlib";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -16,6 +17,164 @@ function sha256(value) {
 
 function parseJson(text) {
   try { return JSON.parse(text); } catch { return null; }
+}
+
+function encodeBase58(buffer) {
+  let number = BigInt(`0x${buffer.toString("hex") || "0"}`);
+  let encoded = "";
+  while (number > 0n) {
+    const remainder = Number(number % 58n);
+    encoded = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"[remainder] + encoded;
+    number /= 58n;
+  }
+  let zeroes = 0;
+  while (zeroes < buffer.length && buffer[zeroes] === 0) zeroes += 1;
+  return "1".repeat(zeroes) + encoded;
+}
+
+async function rpcRequest(method, params) {
+  const response = await fetch("https://api.mainnet-beta.solana.com", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    signal: AbortSignal.timeout(25000),
+  });
+  const body = await response.text();
+  if (!response.ok) throw new Error(`Solana RPC HTTP ${response.status}: ${body.slice(0, 500)}`);
+  const parsed = parseJson(body);
+  if (!parsed) throw new Error("Solana RPC returned non-JSON response");
+  if (parsed.error) throw new Error(`Solana RPC ${method} error: ${JSON.stringify(parsed.error)}`);
+  return parsed.result;
+}
+
+async function fetchAccountInfo(address) {
+  const result = await rpcRequest("getAccountInfo", [address, {
+    encoding: "base64",
+    commitment: "finalized",
+  }]);
+  return {
+    contextSlot: result.context?.slot ?? null,
+    value: result.value ?? null,
+  };
+}
+
+async function auditOnChainProvenance(anchorAddress, activeRevision) {
+  const report = {
+    endpoint: "https://api.mainnet-beta.solana.com",
+    commitment: "finalized",
+    fetchedAt: new Date().toISOString(),
+    idlAccount: null,
+    programAccount: null,
+    programDataAccount: null,
+    error: null,
+  };
+  try {
+    if (!anchorAddress) throw new Error("IDL Explorer did not return an Anchor metadata account address");
+    const idlInfo = await fetchAccountInfo(anchorAddress);
+    if (!idlInfo.value) throw new Error(`Anchor IDL metadata account not found: ${anchorAddress}`);
+    const idlAccountBytes = Buffer.from(idlInfo.value.data?.[0] ?? "", "base64");
+    const idlDiscriminator = createHash("sha256").update("account:IdlAccount").digest().subarray(0, 8);
+    const discriminatorMatches = idlAccountBytes.subarray(0, 8).equals(idlDiscriminator);
+    let idlAuthority = null;
+    let declaredPayloadLength = null;
+    let payloadSha256 = null;
+    let payloadMatchesHistory = false;
+    let payloadRouteV2Discriminator = null;
+    let payloadError = null;
+    if (discriminatorMatches && idlAccountBytes.length >= 44) {
+      idlAuthority = encodeBase58(idlAccountBytes.subarray(8, 40));
+      declaredPayloadLength = idlAccountBytes.readUInt32LE(40);
+      const payloadEnd = 44 + declaredPayloadLength;
+      if (payloadEnd > idlAccountBytes.length) {
+        payloadError = `Declared IDL payload length ${declaredPayloadLength} exceeds account data`;
+      } else {
+        try {
+          const jsonBytes = inflateSync(idlAccountBytes.subarray(44, payloadEnd));
+          const jsonText = jsonBytes.toString("utf8");
+          payloadSha256 = sha256(jsonText);
+          payloadMatchesHistory = payloadSha256 === activeRevision?.contentSha256;
+          const decodedIdl = parseJson(jsonText);
+          const route = decodedIdl?.instructions?.find((instruction) => instruction.name === "route_v2");
+          if (Array.isArray(route?.discriminator)) {
+            payloadRouteV2Discriminator = Buffer.from(route.discriminator).toString("hex");
+          }
+        } catch (error) {
+          payloadError = error instanceof Error ? error.message : String(error);
+        }
+      }
+    }
+    report.idlAccount = {
+      address: anchorAddress,
+      contextSlot: idlInfo.contextSlot,
+      owner: idlInfo.value.owner,
+      ownerMatchesJupiterProgram: idlInfo.value.owner === programId,
+      executable: idlInfo.value.executable,
+      lamports: idlInfo.value.lamports,
+      dataLength: idlAccountBytes.length,
+      accountDataSha256: sha256(idlAccountBytes),
+      anchorIdlAccountDiscriminatorHex: idlDiscriminator.toString("hex"),
+      discriminatorMatches: discriminatorMatches,
+      authority: idlAuthority,
+      declaredPayloadLength,
+      decompressedPayloadSha256: payloadSha256,
+      decompressedPayloadMatchesActiveHistory: payloadMatchesHistory,
+      decompressedRouteV2Discriminator: payloadRouteV2Discriminator,
+      payloadError,
+    };
+
+    const programInfo = await fetchAccountInfo(programId);
+    if (!programInfo.value) throw new Error("Jupiter program account not found through finalized RPC");
+    const programBytes = Buffer.from(programInfo.value.data?.[0] ?? "", "base64");
+    const programState = programBytes.length >= 36 ? programBytes.readUInt32LE(0) : null;
+    const upgradeableLoader = "BPFLoaderUpgradeab1e11111111111111111111111";
+    let programDataAddress = null;
+    if (programState === 2) programDataAddress = encodeBase58(programBytes.subarray(4, 36));
+    report.programAccount = {
+      address: programId,
+      contextSlot: programInfo.contextSlot,
+      owner: programInfo.value.owner,
+      executable: programInfo.value.executable,
+      dataLength: programBytes.length,
+      accountDataSha256: sha256(programBytes),
+      upgradeableLoaderOwner: programInfo.value.owner === upgradeableLoader,
+      stateTag: programState,
+      programDataAddress,
+    };
+
+    if (programDataAddress) {
+      const programDataInfo = await fetchAccountInfo(programDataAddress);
+      if (!programDataInfo.value) throw new Error("Jupiter ProgramData account not found through finalized RPC");
+      const bytes = Buffer.from(programDataInfo.value.data?.[0] ?? "", "base64");
+      const stateTag = bytes.length >= 4 ? bytes.readUInt32LE(0) : null;
+      const deploymentSlot = bytes.length >= 12 ? bytes.readBigUInt64LE(4).toString() : null;
+      const authorityOption = bytes.length >= 13 ? bytes[12] : null;
+      const headerLength = authorityOption === 1 ? 45 : 13;
+      const upgradeAuthority = authorityOption === 1 && bytes.length >= 45
+        ? encodeBase58(bytes.subarray(13, 45))
+        : null;
+      const binary = bytes.subarray(Math.min(headerLength, bytes.length));
+      report.programDataAccount = {
+        address: programDataAddress,
+        contextSlot: programDataInfo.contextSlot,
+        owner: programDataInfo.value.owner,
+        executable: programDataInfo.value.executable,
+        dataLength: bytes.length,
+        accountDataSha256: sha256(bytes),
+        stateTag,
+        deploymentSlot,
+        deployedAtOrBeforeCandidateSlot: deploymentSlot !== null &&
+          BigInt(deploymentSlot) <= BigInt(candidateTransactionSlot),
+        upgradeAuthorityOption: authorityOption,
+        upgradeAuthority,
+        binaryLength: binary.length,
+        binarySha256: sha256(binary),
+        loaderOwnerMatches: programDataInfo.value.owner === upgradeableLoader,
+      };
+    }
+  } catch (error) {
+    report.error = error instanceof Error ? error.message : String(error);
+  }
+  return report;
 }
 
 function findIdlCandidates(value, path = "$", found = [], rootMetadata = {}) {
@@ -130,6 +289,8 @@ const activeHistory = matchingHistory.filter((candidate) =>
   isActiveAtSlot(candidate, candidateTransactionSlot)
 );
 const activeRevision = activeHistory.length === 1 ? activeHistory[0] : null;
+const anchorAddress = history.metadataAccounts?.anchorAddress ?? latest.metadataAccounts?.anchorAddress ?? null;
+const onChainProvenance = await auditOnChainProvenance(anchorAddress, activeRevision);
 const summary = {
   programId,
   cluster: "mainnet-beta",
@@ -137,6 +298,7 @@ const summary = {
   expectedCandidateRouteV2Discriminator: expectedRouteV2Discriminator,
   fetchedAt: new Date().toISOString(),
   requests: [latest, history],
+  onChainProvenance,
   activeRevisionForCandidateSlot: activeRevision ? {
     sourceType: activeRevision.sourceType,
     metadataAccountAddress: activeRevision.metadataAccountAddress,
