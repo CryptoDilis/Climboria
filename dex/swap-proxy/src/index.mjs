@@ -1,3 +1,8 @@
+import { SwapOrderStore } from "./order-store.mjs";
+import { parseSolanaV0Transaction } from "./transaction-validation.mjs";
+import { resolveTransactionLookups } from "./solana-rpc.mjs";
+export { SwapOrderStore };
+
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store, max-age=0",
@@ -9,6 +14,8 @@ const JSON_HEADERS = {
 };
 const JUPITER = "https://api.jup.ag/swap/v2";
 const UPSTREAM_TIMEOUT_MS = 12000;
+// Hard source gate: environment configuration alone cannot enable execution.
+const EXECUTION_SECURITY_REVIEW_COMPLETE = false;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -86,6 +93,9 @@ async function handleOrder(request, env) {
   if (typeof amount !== "string" || !/^[1-9][0-9]{0,19}$/.test(amount)) {
     return json({ error: "Amount must be a positive integer string in base units" }, 400);
   }
+  if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
+    return json({ error: "Backend order store is not configured; executable orders are fail-closed" }, 503);
+  }
   const params = new URLSearchParams({ inputMint, outputMint, amount, taker, maxSupportedTransactionVersion: "0" });
   const response = await upstream("/order?" + params.toString(), { method: "GET" }, env);
   const data = await response.json().catch(() => null);
@@ -103,7 +113,7 @@ async function handleOrder(request, env) {
     }, 422);
   }
   // Bound and validate the upstream transaction before forwarding it to a wallet.
-  // Deserialization and semantic instruction review still happen in the client/release gates.
+  // The order store performs exact v0 message binding and taker-signature verification at execute time; this is not an independent audit of aggregator instruction semantics.
   if (data.transaction.length > 50000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(data.transaction) || data.transaction.length % 4 !== 0) {
     return json({ error: "Jupiter returned an invalid or oversized transaction encoding" }, 502);
   }
@@ -120,7 +130,41 @@ async function handleOrder(request, env) {
       typeof data.outAmount !== "string" || !/^[1-9][0-9]*$/.test(data.outAmount)) {
     return json({ error: "Jupiter returned invalid order amounts" }, 502);
   }
+  let parsedTransaction, lookupResolution;
+  try {
+    parsedTransaction = parseSolanaV0Transaction(data.transaction);
+    lookupResolution = await resolveTransactionLookups({
+      lookups: parsedTransaction.addressTableLookups,
+      rpcUrl: env.SOLANA_RPC_URL
+    });
+  } catch (error) {
+    return json({ error: "Jupiter transaction or address lookup table validation failed", details: error instanceof Error ? error.message : "Invalid transaction" }, 422);
+  }
+  if (data.inAmount !== amount) {
+    return json({ error: "Jupiter order input amount does not match the requested amount" }, 502);
+  }
+  const orderToken = crypto.randomUUID();
+  const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
+  const expiresAt = Date.now() + 120000;
+  const stored = await orderStore.fetch("https://order-store/store", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      requestId: data.requestId,
+      transaction: data.transaction,
+      taker,
+      lastValidBlockHeight: data.lastValidBlockHeight ?? null,
+      expiresAt,
+      resolvedLookups: lookupResolution.tables,
+      lookupContextSlot: lookupResolution.contextSlot
+    })
+  });
+  const storedData = await stored.json().catch(() => null);
+  if (!stored.ok || storedData?.ok !== true) {
+    return json({ error: storedData?.error || "Could not securely persist the Jupiter order" }, stored.status >= 400 && stored.status < 500 ? stored.status : 503);
+  }
   return json({
+    orderToken,
     requestId: data.requestId,
     transaction: typeof data.transaction === "string" && data.transaction.length ? data.transaction : null,
     inAmount: data.inAmount || null,
@@ -231,43 +275,94 @@ async function handlePumpCoin(request, env) {
   });
 }
 async function handleExecute(request, env) {
-  // Execution is a server-side kill switch, independent of frontend controls.
-  // Keep it disabled until signed-transaction semantic validation and wallet/order binding are reviewed.
-  if (env.EXECUTION_ENABLED !== "true") return json({ error: "Swap execution is disabled pending security review" }, 503);
+  // Independent server-side kill switch: do not bypass it when the order store is absent.
+  if (!EXECUTION_SECURITY_REVIEW_COMPLETE || env.EXECUTION_ENABLED !== "true") return json({ error: "Swap execution is disabled pending semantic instruction validation and independent security review" }, 503);
   const limited = await enforceRateLimit(request, env);
   if (limited) return limited;
+  if (!env.ORDER_STORE || typeof env.ORDER_STORE.idFromName !== "function" || typeof env.ORDER_STORE.get !== "function") {
+    return json({ error: "Backend order store is not configured; execution is fail-closed" }, 503);
+  }
   const body = await readJson(request, 60000);
-  const { signedTransaction, requestId, lastValidBlockHeight } = body || {};
+  const { signedTransaction, orderToken } = body || {};
   if (typeof signedTransaction !== "string" || signedTransaction.length < 100 || signedTransaction.length > 50000 ||
       !/^[A-Za-z0-9+/]+={0,2}$/.test(signedTransaction) || signedTransaction.length % 4 !== 0) {
     return json({ error: "Invalid signed transaction encoding or size" }, 400);
   }
-  if (typeof requestId !== "string" || requestId.length < 8 || requestId.length > 200 || !/^[A-Za-z0-9._:-]+$/.test(requestId)) {
-    return json({ error: "Invalid Jupiter requestId" }, 400);
+  if (typeof orderToken !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderToken)) {
+    return json({ error: "A valid server-issued orderToken is required" }, 400);
   }
-  const payload = { signedTransaction, requestId };
-  if (lastValidBlockHeight !== undefined) {
-    if (!Number.isSafeInteger(lastValidBlockHeight) || lastValidBlockHeight <= 0) {
-      return json({ error: "Invalid lastValidBlockHeight" }, 400);
-    }
-    payload.lastValidBlockHeight = lastValidBlockHeight;
-  }
-  const response = await upstream("/execute", {
+  const orderStore = env.ORDER_STORE.get(env.ORDER_STORE.idFromName(orderToken));
+  const claimResponse = await orderStore.fetch("https://order-store/claim", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload)
-  }, env);
-  const data = await response.json().catch(() => null);
-  if (!response.ok) return json({ error: "Jupiter execution request failed", upstreamStatus: response.status, details: data?.error || data?.message || null }, response.status >= 400 && response.status < 500 ? response.status : 502);
-  if (!data || !["Success", "Failed"].includes(data.status) || !Number.isInteger(data.code)) {
-    return json({ error: "Jupiter returned an unknown execution status; do not assume success" }, 502);
+    body: JSON.stringify({ signedTransaction })
+  });
+  const claim = await claimResponse.json().catch(() => null);
+  if (!claimResponse.ok || claim?.ok !== true || typeof claim.record?.requestId !== "string") {
+    return json({ error: claim?.error || "Order validation or one-time claim failed" }, claimResponse.status || 503);
   }
-  // A success status is not sufficient by itself: require Jupiter's success code
-  // and a plausible Solana transaction signature before returning success upstream.
+  const payload = { signedTransaction, requestId: claim.record.requestId };
+  if (claim.record.lastValidBlockHeight !== null && claim.record.lastValidBlockHeight !== undefined) {
+    if (!Number.isSafeInteger(claim.record.lastValidBlockHeight) || claim.record.lastValidBlockHeight <= 0) {
+      await orderStore.fetch("https://order-store/settle", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ state: "uncertain" })
+      });
+      return json({ error: "Stored Jupiter order has invalid lastValidBlockHeight; execution stopped" }, 503);
+    }
+    payload.lastValidBlockHeight = claim.record.lastValidBlockHeight;
+  }
+  const settle = async (state, signature = null) => {
+    const response = await orderStore.fetch("https://order-store/settle", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ state, signature })
+    });
+    return response.ok;
+  };
+  let response;
+  try {
+    response = await upstream("/execute", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    }, env);
+  } catch {
+    // A transport timeout/reset can happen after Jupiter has accepted the
+    // transaction. Never leave the UI with a generic retry-looking error.
+    // The order was already atomically claimed, so it remains replay-locked
+    // even if this best-effort terminal-state write also fails.
+    const settlementRecorded = await settle("uncertain").catch(() => false);
+    return json({
+      error: "Jupiter execution outcome is unknown; the order is locked against replay. Check wallet activity before taking further action.",
+      settlementRecorded
+    }, 502);
+  }
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    // A provider HTTP error is not proof that no execution occurred. Preserve
+    // the replay lock and tell the caller whether the terminal state was stored.
+    const settlementRecorded = await settle("uncertain").catch(() => false);
+    return json({
+      error: "Jupiter execution request failed; order is locked against replay",
+      upstreamStatus: response.status,
+      details: data?.error || data?.message || null,
+      settlementRecorded
+    }, response.status >= 400 && response.status < 500 ? response.status : 502);
+  }
+  if (!data || !["Success", "Failed"].includes(data.status) || !Number.isInteger(data.code)) {
+    await settle("uncertain");
+    return json({ error: "Jupiter returned an unknown execution status; order is locked against replay" }, 502);
+  }
   if (data.status === "Success" &&
       (data.code !== 0 || typeof data.signature !== "string" ||
        !/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(data.signature))) {
-    return json({ error: "Jupiter returned an incomplete or inconsistent success result" }, 502);
+    await settle("uncertain", typeof data.signature === "string" ? data.signature : null);
+    return json({ error: "Jupiter returned an incomplete or inconsistent success result; order is locked against replay" }, 502);
+  }
+  const finalState = data.status === "Success" ? "completed" : "failed";
+  if (!await settle(finalState, typeof data.signature === "string" ? data.signature : null)) {
+    return json({ error: "Jupiter responded but the order result could not be durably recorded; check wallet activity before any further action" }, 503);
   }
   return json({
     status: data.status,
@@ -297,7 +392,7 @@ export default {
     const knownPath = ["/health", "/api/swap/quote", "/api/tokens/search", "/api/pump/coin", "/api/swap/order", "/api/swap/execute"].includes(url.pathname);
     if (knownPath && !knownRoute) return json({ error: "Method not allowed" }, 405, { ...headers, allow: url.pathname === "/health" || url.pathname.endsWith("/quote") || url.pathname.endsWith("/search") || url.pathname.endsWith("/coin") ? "GET, OPTIONS" : "POST, OPTIONS" });
     try {
-      if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"); const executionEnabled = env.EXECUTION_ENABLED === "true"; return json({ ok: ready, service: "climboria-swap-proxy", execution: executionEnabled ? "enabled" : "disabled", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"), executionEnabled } }, ready ? 200 : 503, headers); }
+      if (request.method === "GET" && url.pathname === "/health") { const ready = Boolean(env.JUPITER_API_KEY && env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function" && env.ORDER_STORE && typeof env.ORDER_STORE.idFromName === "function" && typeof env.ORDER_STORE.get === "function" && env.SOLANA_RPC_URL); const executionEnabled = EXECUTION_SECURITY_REVIEW_COMPLETE && env.EXECUTION_ENABLED === "true"; return json({ ok: ready, service: "climboria-swap-proxy", execution: executionEnabled ? "enabled" : "disabled", configured: { jupiterKey: Boolean(env.JUPITER_API_KEY), rateLimiter: Boolean(env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function"), orderStore: Boolean(env.ORDER_STORE && typeof env.ORDER_STORE.idFromName === "function" && typeof env.ORDER_STORE.get === "function"), solanaRpc: Boolean(env.SOLANA_RPC_URL), executionEnabled } }, ready ? 200 : 503, headers); }
       if (request.method === "GET" && url.pathname === "/api/swap/quote") return await handleQuote(request, env).then(r => addHeaders(r, headers));
       if (request.method === "GET" && url.pathname === "/api/tokens/search") return await handleTokenSearch(request, env).then(r => addHeaders(r, headers));
       if (request.method === "GET" && url.pathname === "/api/pump/coin") return await handlePumpCoin(request, env).then(r => addHeaders(r, headers));
