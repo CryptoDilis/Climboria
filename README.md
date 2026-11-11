@@ -4397,3 +4397,6 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Detailed evidence, limitations and next tasks recorded in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md, commit e1aff9ae21e54030a8069be7e8b962e3c5675533.
 - [ ] Obtain and hash the actual latest route_v2 IDL from an authoritative Jupiter artifact, verify deployment provenance, then decode four route steps and correlate CPI trees.
 - [ ] Keep route_v2 diagnostic-only and all execution/signing gates false. Separately run dedicated Jarrell's Peak gameplay smoke and production hosting checks.
+
+
+- [x] Added an on-chain IDL history retrieval path to the research log: Solana IDL Explorer documents current/latest/history endpoints and a CLI for Anchor/Program Metadata IDLs. This is a retrieval lead only; Jupiter's current/history IDL has not yet been obtained or validated. Follow-up documentation commit: c894d27918225ea389838f8f52d536cb979547a3.
