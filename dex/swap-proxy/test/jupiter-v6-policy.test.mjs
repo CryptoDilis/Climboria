@@ -1,4 +1,5 @@
 import test from "node:test";
+import { decodeBase58, decodeJupiterRoutePlanHeader, discoverRecentJupiterMeteoraRoutes, isMeteoraSwap2Instruction } from "../tools/discover-jupiter-meteora-routes.mjs";
 import { fetchMeteoraAccountInfo, inspectMeteoraAccount, METEORA_DLMM_PROGRAM_ID, METEORA_BIN_ARRAY_DISCRIMINATOR } from "../tools/audit-meteora-bin-array.mjs";
 import { buildJupiterV6TraceReport, fetchJupiterV6Trace, JUPITER_V6_PROGRAM_ID as TRACE_JUPITER_PROGRAM_ID } from "../tools/audit-jupiter-v6-rpc.mjs";
 import assert from "node:assert/strict";
@@ -323,4 +324,46 @@ test("fetches finalized account data and rejects insecure RPC URLs", async () =>
     () => fetchMeteoraAccountInfo("bin-array-account", "http://insecure.example.invalid"),
     /HTTPS Solana RPC endpoint/
   );
+});
+
+
+test("decodes official Jupiter variant 75 and Meteora Swap2 instruction discriminators", () => {
+  const routeHeader = decodeJupiterRoutePlanHeader("3aafXU8vKpJ2D842B5MTALCjKB1F1BGiBP5qtxuc8MPgax9MqNpUCF");
+  assert.equal(routeHeader.routePlanCount, 1);
+  assert.equal(routeHeader.firstStepVariant, 75);
+  assert.equal(isMeteoraSwap2Instruction("fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib"), true);
+  assert.equal(isMeteoraSwap2Instruction("11111111111111111111111111111111"), false);
+  assert.equal(decodeBase58("1")[0], 0);
+});
+
+test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live network access", async () => {
+  const fixture = rpcTraceFixture();
+  fixture.transaction.message.accountKeys[4] = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo";
+  fixture.transaction.message.instructions[0].data = "3aafXU8vKpJ2D842B5MTALCjKB1F1BGiBP5qtxuc8MPgax9MqNpUCF";
+  fixture.meta.innerInstructions[0].instructions[0].data = "fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib";
+  const methods = [];
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example.invalid", {
+    limit: 1,
+    maxTransactions: 1,
+    maxMatches: 1,
+    delayMs: 0,
+    fetchImpl: async (_url, options) => {
+      const request = JSON.parse(options.body);
+      methods.push(request.method);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: request.method === "getSignaturesForAddress"
+            ? [{ signature: "trace-signature" }]
+            : fixture
+        })
+      };
+    }
+  });
+  assert.deepEqual(methods, ["getSignaturesForAddress", "getTransaction"]);
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.matchingRoutes, 1);
+  assert.equal(report.results[0].routePlanHeader.firstStepVariant, 75);
+  assert.equal(report.results[0].meteoraSwap2Cpis[0].accountCount, 4);
 });
