@@ -3791,3 +3791,27 @@ The user's active delivery order supersedes older locked-priority notes for this
 4. Launchpad: complete Devnet verification and custody/authority review after Swap safety.
 
 **Engineering rule:** do not commit a speculative fix. First reproduce locally or with a focused deterministic test, inspect exact source and failure logs, implement one isolated counter-fix, run targeted tests, then run Validate and the relevant Browser Smoke assertions on the exact head. A gameplay-only failure must be reported separately and must not be represented as a DEX/Swap failure. Never weaken or bypass the release gates to obtain a green workflow.
+
+
+## 2026-11-11 13:32 +08 — current live CI checkpoint (PR #260 Login integration)
+
+**Verified directly against GitHub at 13:32 +08. Do not report in-progress jobs as failures or as passes.**
+
+- [x] PR #260, `feat(auth): rebase Supabase login and cloud saves`, is merged to main (GitHub PR state: merged).
+- [x] PR #260 exact-head Validate run `42965936688`: SUCCESS on `08b20661e5eba0a1d6657e0edd6470cbb34eb93d`.
+- [x] PR #260 Browser Smoke run `42965936635`, job `130343060930`: steps 1–16 SUCCESS, including mocked Supabase auth UI/account-save isolation, homepage/DEX routing, Worker proxy security, fail-closed execution, Swap/DEX UI, live Solana discovery, and 390px/360px mobile layouts.
+- [ ] The same Browser Smoke is still IN PROGRESS at step 17 (Jarrell's Peak desktop/mobile gameplay); screenshot upload step 18 is pending. This is separate gameplay coverage and must not be reported as a Login/DEX/Swap failure. Await terminal result; no production OAuth-provider claim from mocked auth tests.
+- [x] PR #251 LaunchLab branch exact-head Validate run `42959616757`: SUCCESS; LaunchLab Live Provenance run `42959616808`: SUCCESS. These are read-only provenance/preparation checks, not proof of a production Launchpad or a completed Devnet create→bonding-curve→migration→LP lifecycle.
+- [ ] PR #251 remains open/draft; public RPC/API probes, current-main reconciliation, custody/treasury/authority policy, and complete controlled Devnet lifecycle remain unverified.
+- [ ] Login production activation still requires Supabase dashboard provider credentials (Google/X), Site URL/redirect allow-list, email/SMTP confirmation settings, enabled Solana/Ethereum providers, and controlled real-account tests. Never commit provider secrets or claim mocked tests prove external providers are live.
+- [ ] DEX live deployment/provider verification remains distinct from merged code and passing PR checks.
+- [ ] Swap transaction signing/execution remains hard-gated. Finalized raw SPL account evidence is merged, but complete Metis/DEX CPI account-role and token-movement/fee validation, execution-time re-fetch, controlled Devnet sign→submit→confirm lifecycle, production Cloudflare verification, and independent Solana security review remain release blockers.
+
+### Failure-diagnosis record carried forward
+
+- [x] Validate run `42964434652` failed because test fixtures supplied only two account records while the verifier correctly required source, destination, input mint, and output mint. Counter-fix updated fixtures and added mint-account cases; exact-head Validate `42964453470` passed (66 tests, 0 failures). Production validation was not weakened.
+- [x] Browser Smoke `42963568548` exposed a real mobile detail-close event-dispatch failure (visible/actionable control, but no click reached its handler; focus moved to the chart iframe). The later focused fix PR #256 was merged; exact-head Validate `42964086934` and DEX/Swap Browser Smoke steps 7–15 in `42964087241` passed.
+- [ ] Current next action: poll Browser Smoke `42965936635` to terminal status. If step 17 fails, classify it as the separate gameplay GLB/readiness issue, inspect its exact log/artifact, and do not reopen already-passing auth/DEX/Swap assertions without evidence. Then update this checkpoint with the final run state.
+- [ ] Continue release work in the agreed order DEX → Swap → Login → Launchpad. Keep security gates closed and do not label any subsystem production-live until its external deployment/provider/Devnet acceptance evidence exists.
+
+**Engineering rule:** diagnose the failing step and exact head first; implement one evidence-based counter-fix; run targeted tests and exact-head Validate/Browser Smoke; record run IDs, conclusions, blockers, and next task. Never repeat an attempted patch without a new root-cause reason, and never weaken acceptance criteria to manufacture a green workflow.
