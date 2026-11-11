@@ -3540,3 +3540,23 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Keep Swap execution fail-closed pending ALT validation, semantic instruction policy, controlled Devnet end-to-end tests, and production Cloudflare verification. Launchpad and production login are not yet verified live.
 
 **Exact next task:** finish Browser Smoke `42948097575`, inspect its failure/pass evidence and uploaded screenshots, then update this checkpoint with terminal results before integrating any branch.
+
+### Priority reset and validated-harness Sanctuary fix — 2026-11-11
+
+**Priority order (release-critical first):**
+1. [ ] Finish the Sanctuary spawn gameplay fix with exact-head desktop/mobile Browser Smoke and visual screenshot review. Do not merge while gameplay evidence is incomplete.
+2. [ ] Integrate PR #242's corrected mobile-orientation smoke harness. PR #242 exact head 7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717 passed Validate 42946493667 and Browser Smoke 42946493750, including desktop/mobile Jarrell's Peak gameplay and screenshot upload.
+3. [ ] Port PR #243's DEX market discovery only after the validated gameplay harness is the base. Its source diff is limited to dex/index.html and dex/premium-terminal.js; preserve its live discovery changes and rerun exact-head tests. Earlier #243 Browser Smoke failed in its old mobile-orientation fixture, not the DEX discovery stages.
+4. [ ] Continue Swap security R1–R4: finish ALT resolution/adversarial tests, implement isolated semantic instruction allowlist, run controlled Devnet lifecycle tests, and verify Cloudflare production operations. Keep execution fail-closed until independently reviewed.
+5. [ ] Complete Launchpad provenance/custody/migration and real Login provider setup (Supabase migration, redirect allowlist, OAuth/SMTP/Web3 provider configuration and controlled-account tests). Mocked browser tests are not live provider proof.
+
+**Sanctuary branch integration diagnosis:**
+- [x] PR #244 (5fe2dffc6c3e92243ee74c347ed6f80fbce81ad1) Validate passed (42948097496), but its Browser Smoke still uses the older mobile-orientation simulation inherited from main. Steps 1–14 passed; gameplay step 15 was still running at the last poll. Do not call it failed until GitHub publishes a terminal result.
+- [x] Compared #242 and #244 smoke harnesses. #242 has a corrected mocked-orientation transition (including the game's own event/resize behavior and gate assertions); #244 lacks this change. This is a known integration risk matching the earlier #243 orientation failure.
+- [x] Counter-strategy: created PR #245 from the exact already-passing #242 head 7f5fa8cf354c0bd8a2ab1a2bd116426d6f5f3717, preserving its corrected orientation harness. Applied the Sanctuary spawn fix as a single immutable coordinate derived from landing center (0,-33); reused it for takeover, teleport, death respawn, audit, jump/traversal fixture and screenshot normalization.
+- [x] PR #245 head c9957442e6dc5817f1fe0f229380a711eb0a6acb; Validate 42948355492 and Browser Smoke 42948355546 were queued then in progress at checkpoint. Exact-head results and screenshots are pending.
+- [x] Main Pages deployment after the previous README checkpoint: run 42948186357 SUCCESS on f35e6cbfe41f8a2d41c62d399556ba1c5fabe9a3.
+- [ ] Keep PR #244 open until its workflow reaches terminal status; then mark superseded by #245 if #245 proves successful. Do not merge both implementations.
+- [ ] Next exact job: poll PR #245 Validate + Browser Smoke. If either fails, fetch that exact failing step/log, diagnose root cause, patch the new branch with a distinct counter-strategy, and rerun. If successful, download and inspect desktop/mobile Sanctuary screenshots for centered landing placement, then reconcile branch base against latest main before merge.
+
+**No feature disablement or acceptance-criteria reduction.** DEX discovery and Swap quote preview remain live/read-only where implemented; wallet transaction execution remains fail-closed pending R1–R4 proof. No production-live Login or Launchpad claim.
