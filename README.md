@@ -4363,3 +4363,15 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [!] The order makes `route_v2` step 181 a plausible Kipseli SwapV3 mapping, but it is not accepted as proven until a pinned Jupiter route-plan enum revision confirms it. Do not add this mapping to production policy yet.
 - [!] No failed workflow occurred on the latest head. Earlier runs cancelled by concurrency during superseding commits were cancellations, not failures.
 - Security remains fail-closed: route_v2 is diagnostic-only and rejected by the legacy production validator; all signing/execution review flags remain false.
+
+
+## 2026-11-12 +08 — PR #268 continuation: enum evidence and exact-head CI
+
+- [x] Rechecked live branch against main: 125 commits ahead / 0 behind; PR #268 remains draft, open and unmerged.
+- [x] Latest exact PR head before this documentation update: bff9811e4d691e1cbff7b4efda590a82d1ab844d.
+- [x] Validate 43039523013 SUCCESS (job 130587263835); Browser Smoke 43039523019 SUCCESS (job 130587292145); Jupiter CPI Trace Audit 43039523256 SUCCESS (job 130587264461). No failed job on this head; no retry was needed. Browser Smoke covers ecosystem UI/API, not Jarrell's Peak gameplay.
+- [x] Independent enum cross-check: published carbon-jupiter-swap-decoder 2.0.0 declares 152 Borsh Swap variants and places Kipseli at zero-based index 145, not 181. Source and limitations are recorded in docs/SWAP-DEX-ACCOUNT-ROLE-RESEARCH-2026-11-11.md.
+- [!] This decoder is not an authoritative deployed Jupiter IDL/version attestation. It disproves neither the possibility of a newer deployed enum containing variant 181 nor identifies variant 181. Keep route_v2 byte 181 unmapped; the Kipseli-first-CPI sequence is correlation only.
+- [x] Updated detailed research checkpoint in commit 3af3d48f261e4c12bd71fe698ee0a2ab8925ed05.
+- [ ] Next: obtain a pinned deployed Jupiter route_v2 enum/IDL for byte 181, decode all four route steps, collect more Meteora BinArray samples, and obtain CPI signer/writable evidence. Keep all execution/signing gates false.
+- [ ] Separately run/verify Jarrell's Peak gameplay smoke and production hosting checks. Do not claim live DEX/Swap execution or production release from CI.
