@@ -375,7 +375,39 @@ test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live n
   assert.equal(report.transactionsScanned, 1);
   assert.equal(report.matchingRoutes, 1);
   assert.equal(report.results[0].routePlanHeader.firstStepVariant, 75);
+  assert.equal(report.results[0].routePlanHeaderRecognized, true);
+  assert.equal(report.results[0].instructionDiscriminatorHex, "e517cb977ae3ad2a");
   assert.equal(report.results[0].meteoraSwap2Cpis[0].accountCount, 4);
+});
+
+
+test("preserves unknown Jupiter instruction discriminators instead of misclassifying them as route plans", async () => {
+  const fixture = rpcTraceFixture();
+  fixture.transaction.message.accountKeys[4] = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo";
+  fixture.transaction.message.instructions[0].data = encodeBase58(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]));
+  fixture.meta.innerInstructions[0].instructions[0].data = "fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib";
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example.invalid", {
+    limit: 1,
+    maxTransactions: 1,
+    maxMatches: 1,
+    delayMs: 0,
+    fetchImpl: async (_url, options) => {
+      const request = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: request.method === "getSignaturesForAddress"
+            ? [{ signature: "unknown-jupiter-instruction" }]
+            : fixture
+        })
+      };
+    }
+  });
+  assert.equal(report.matchingRoutes, 1);
+  assert.equal(report.results[0].instructionDiscriminatorHex, "0102030405060708");
+  assert.equal(report.results[0].routePlanHeader, null);
+  assert.equal(report.results[0].routePlanHeaderRecognized, false);
 });
 
 
