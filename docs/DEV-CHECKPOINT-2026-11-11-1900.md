@@ -357,3 +357,12 @@ Initial authoritative-source findings:
 - [ ] Resolve Meteora DLMM CPI/direct-IDL signer and writable/optional discrepancies.
 - [ ] Implement per-DEX semantic validation only after the above evidence is complete; maintain both hard gates closed.
 - [ ] Controlled Devnet token-movement/fee-destination lifecycle; then production Cloudflare verification, production Login verification, and Launchpad Devnet lifecycle.
+
+
+## Progress addendum — Jupiter public-source ceiling established — 2026-11-11 20:33 PHT
+- [x] Rechecked official `jup-ag/jupiter-amm-implementation` current main; it points to the same commit `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39` already used for pinned research.
+- [x] Confirmed current main aggregator IDL and DEX CPI interface blob SHAs are unchanged; no newer public account-role revision was found.
+- [x] Inspected `jupiter-aggregator-v6/src/lib.rs`: it converts enum variants into types but contains no on-chain CPI dispatch/account cursor implementation.
+- [x] Inspected complete `jupiter-core/src/amms/` tree and repository search; no Raydium/Whirlpool/Meteora adapter builders are present in this public source snapshot.
+- [ ] Next: obtain version-matched authoritative deployed aggregator source or controlled transaction/CPI trace to prove outer per-leg remaining-account slicing and role privileges. Do not guess.
+- [ ] Keep SolFi excluded; keep Whirlpool V2/Meteora DLMM V2 excluded; keep both signable-order and execution gates false.

@@ -180,3 +180,29 @@ The Jupiter CPI authority may explain some signer differences through PDA signin
 - SolFi enum 61 still has no matching SolFi instruction in this pinned CPI interface. Keep SolFi unverified and excluded from any signable/executable policy until a separate authoritative CPI schema and mapping are found.
 - The current source-level signable-order and execution gates remain false; this research does not authorize wallet-signable orders or transaction submission.
 - Next research task: locate a version-matched Jupiter aggregator adapter dispatch/account-meta builder or validate the deployed program version and CPI account traces. Build a per-variant proof matrix including enum index, CPI discriminator, account order, optionality, privileges, dynamic tail slices, program ID, and deployed-version provenance. Reject variants for signable orders where any field remains unproven.
+
+
+## Current-public-source audit — Jupiter repository head is still the pinned snapshot — 2026-11-11 20:33 PHT
+
+### Provenance re-check
+The official public repository `jup-ag/jupiter-amm-implementation` currently reports its `main` branch at commit:
+- `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39`
+- Commit date: 2025-07-22T11:39:33Z
+- Commit message: `chore: upgrade to latest test harness (#12)`
+
+This is the exact commit already used as the pinned research snapshot; the repository's current `main` does not provide a newer source revision for the relevant files. Current main file blobs:
+- `idls/jupiter_aggregator_v6.json`: `f554d1c7635b3497c022109fca231a15cb3642bd`
+- `idls/jupiter_dex_interfaces.json`: `d5c702b65ed8229f32b659bbabc59a1167785001`
+These match the pinned snapshot. The current aggregator IDL still contains variants 7, 17, 26, 38, 40, 46, 47, 61 and 75 with the previously recorded names/payloads. The current CPI interface still exposes the same eight relevant CPI instruction schemas and account privilege layouts previously recorded; no role-layout delta was found between pinned snapshot and current main.
+
+### What the public source does and does not prove
+- `jupiter-aggregator-v6/src/lib.rs` is a 225-line enum-conversion layer mapping `jupiter_amm_interface::Swap` values into aggregator `types::Swap` variants. It confirms the route variant names/fields, including `SolFi`, `WhirlpoolSwapV2` and `MeteoraDlmmSwapV2`.
+- It is not the on-chain route execution handler: the file contains no CPI `invoke_signed` dispatch, no per-leg AccountInfo cursor, and no outer remaining-account slice partitioning logic.
+- `jupiter-core/src/amms/mod.rs` exports the generic AMM trait, SPL Token Swap adapter, test harness, labels and loader. The complete `jupiter-core/src/amms/` source tree contains only `account_meta_from_token_swap.rs`, `amm.rs`, `amm_program_id_to_labels.rs`, `loader.rs`, `mod.rs`, `spl_token_swap_amm.rs`, and `test_harness.rs`; no Raydium/Whirlpool/Meteora adapter implementations are present in this public snapshot.
+- A repository-wide search for `get_swap_and_account_metas` finds the SPL Token Swap adapter and test harness only. Thus the current public repo does not prove actual DEX adapter account construction or route CPI slicing.
+
+### Decision
+- Do not infer that the enum-conversion mapping is the CPI dispatch mapping.
+- Do not infer that CPI IDL account counts are the per-leg outer instruction account-slice boundaries.
+- The exact Jupiter aggregator deployed binary/version and its route account cursor logic remain unverified. The next evidence must come from an authoritative version-matched implementation/release or a controlled transaction/CPI trace that reveals per-leg account consumption and privileges.
+- Keep the SolFi structural exclusion and all signable/execution gates closed until an authoritative SolFi CPI schema and mapping exists. Keep V2 variants 47/75 rejected by the current decoder until dynamic remaining-account slices and CPI roles are proven.
