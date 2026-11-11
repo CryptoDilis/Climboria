@@ -4,6 +4,25 @@ import { webcrypto } from "node:crypto";
 import { parseSolanaV0Transaction, validateSignedOrderTransaction } from "../src/transaction-validation.mjs";
 import { makeFixture, shortVec } from "./solana-v0-fixture.mjs";
 
+test("retains compiled instruction bytes and v0 address lookup indexes for review", () => {
+  const short = value => Array.from(shortVec(value));
+  const key = n => new Uint8Array(32).fill(n);
+  const message = [
+    0x80, 1, 0, 0,
+    ...short(2), ...key(1), ...key(2),
+    ...key(3),
+    ...short(1), 1, ...short(1), 2, ...short(2), 7, 8,
+    ...short(1), ...key(4), ...short(1), 0, ...short(1), 1
+  ];
+  const transaction = Buffer.from([...short(1), ...new Uint8Array(64), ...message]).toString("base64");
+  const parsed = parseSolanaV0Transaction(transaction);
+  assert.equal(parsed.instructions.length, 1);
+  assert.deepEqual(Array.from(parsed.instructions[0].data), [7, 8]);
+  assert.equal(parsed.addressTableLookups.length, 1);
+  assert.deepEqual(parsed.addressTableLookups[0].writableIndexes, [0]);
+  assert.deepEqual(parsed.addressTableLookups[0].readonlyIndexes, [1]);
+});
+
 test("parses a canonical v0 transaction and resolves its fee payer static key", () => {
   const fixture = makeFixture();
   const parsed = parseSolanaV0Transaction(fixture.original);
