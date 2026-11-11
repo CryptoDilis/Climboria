@@ -463,3 +463,38 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - The earlier intermediate runs cancelled by branch concurrency were superseded by the final successful exact-head runs; they are not treated as test failures.
 - These are code validation, ecosystem Browser Smoke, and read-only transaction trace checks. No Jarrell's Peak gameplay workflow, production deployment, Devnet settlement, or live signing/execution was performed.
 - After this verification, only this documentation/PR record is changed; no runtime code, tests, or workflow logic is changed.
+
+
+## On-chain verification of the Meteora dynamic remaining account — 2026-11-11 23:05 PHT
+
+### Account ownership and discriminator
+- Added `dex/swap-proxy/tools/audit-meteora-bin-array.mjs` and offline tests. It uses finalized `getAccountInfo`, checks both program owner and Anchor discriminator, and does not output account contents.
+- Dedicated audit workflow on current code head `abc441f1f09359355be8b5aeb99ce3c835aec39e`: run `43031160387` SUCCESS; artifact `13860293557` contains both the Jupiter CPI trace and account metadata.
+- Observed dynamic account `5m6X87JCg1a6NaQaCup6yMMLtwDqT2gyow7fQBgujiB8`:
+  - Owner: `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` (Meteora DLMM).
+  - Anchor discriminator: `5c8e5cdc059446b5`, matching official Meteora `BinArray` discriminator from IDL commit `1532e540db41ac405dbf4c5bb2ddfceaa1f98ff1`.
+  - Data length / space: `10,136` bytes.
+  - Executable: false.
+  - `matchesBinArray=true`; `matchesBitmapExtension=false`.
+- This verifies the 17th account in the observed Meteora Swap2 CPI is a Meteora-owned BinArray, not just an inferred dynamic account.
+
+### Updated evidence boundary
+- For this single route, the outer Jupiter route step (variant 75 = `MeteoraDlmmSwapV2`) is mapped to the Meteora `swap2` CPI; the first 16 CPI accounts match the official `swap2` IDL and the final dynamic account is now verified as a BinArray.
+- The exact transaction-specific 17-account vector is therefore verified by: raw finalized CPI account indexes, static/ALT address resolution, official Meteora IDL order, and on-chain owner/discriminator lookup.
+- Still unresolved: outer Jupiter account position 27 (extra Jupiter program ID) and the exact CPI-requested signer/writable flags. RPC transaction-level privileges are not the same as inner AccountMeta flags.
+- Still not proven: generic Jupiter account cursor behavior across all variants, multi-hop/split routes, transfer-hook slices, or source-to-deployed-binary equivalence. Keep variant 75 excluded from the production allowlist pending those checks.
+
+### Latest CI
+- Validate run `43031160370`, job `130558304745`: SUCCESS; **81 tests passed, 0 failed**, Wrangler dry-run and all script audits passed, including syntax checks for both read-only audit tools.
+- Browser Smoke run `43031160341`, job `130558302279`: SUCCESS; all ecosystem steps 7–16 passed.
+- CPI Trace Audit run `43031160387`, job `130558289913`: SUCCESS; both transaction and account-info reports uploaded.
+- No failure occurred on this code head. Historical ALT-label failures remain diagnosed and fixed; their original failed runs are retained in the section above.
+
+### Next work
+- [ ] Explain the extra trailing Jupiter program account at outer route position 27 from authoritative Jupiter handler semantics or another trace.
+- [ ] Obtain direct evidence of inner CPI AccountMeta flags, or a trustworthy program-test/CPI construction reproduction that proves the privilege attenuation.
+- [ ] Capture additional MeteoraDlmmSwapV2 transactions, including bitmap-extension and multi-bin-array cases.
+- [ ] Establish deployed Jupiter binary/source provenance for the transaction slot.
+- [ ] Controlled Devnet reproduction and independent Solana security review.
+
+**Decision remains unchanged:** this one Meteora CPI vector and its BinArray are now transaction-specifically verified, but universal account-slice semantics and CPI-requested privilege flags are not. Signing/execution remain disabled and variant 75 remains excluded.
