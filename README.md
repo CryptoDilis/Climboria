@@ -1,5 +1,18 @@
 # CLIMBORIA — LOCKED PRIORITY ORDER (SOURCE OF TRUTH)
 
+## 2026-11-11 13:12 +08 — Swap semantic-policy checkpoint (PR #255)
+
+**Active priority: P2 Swap. DEX implementation and Swap order-binding foundation are already merged; gameplay remains non-blocking.**
+
+- [x] PR #255 adds an initial fail-closed Jupiter V6 single-route decoder, a narrow explicit DEX-variant allowlist, route-plan bounds, amount/slippage/zero-platform-fee checks, taker and account-privilege checks, and rejects unsupported top-level instruction families. Both source-level gates remain false.
+- [x] Validate run `42963237415` passed on exact PR head `a62313a05917b719117d109ba04b4fb9785375cb`.
+- [ ] Browser Smoke run `42963237434`, job `130334474767`, failed at step 14 (compact mobile DEX/Swap layout) before the later provider-state/gameplay steps. Steps 7–13 passed, including DEX navigation, Worker security/fail-closed behavior, standalone Swap UI, live DEX discovery, and mobile workspace controls.
+- [x] Failure log diagnosis: Playwright timed out after tapping `#closeDetail` while leaving mobile token detail; the subsequent wait for removal of `mobile-token-view` expired after 5 seconds. This is a DEX mobile detail-close interaction/test regression, not a failure in the Jupiter policy tests. Do not weaken or skip the assertion; add click/element hit-test diagnostics and determine whether the click reaches the existing close handler.
+- [ ] PR #255 policy is an initial transaction-shape gate, **not release-ready**. Remaining: finalized-RPC verification of source/destination token-account mint and owner, complete per-DEX CPI/account schemas and token movement validation, fee/approval/transfer checks, adversarial tests for arbitrary top-level programs and account-role tampering, and independent security review. Keep signable-order issuance and execution hard-blocked.
+- [ ] Browser Smoke counter-strategy: port the diagnostic-only close-control instrumentation from the earlier DEX diagnostic patch into PR #255's workflow, capture pre-tap hit target + click-event receipt + post-tap state, then rerun the exact failed job. Fix the product handler only if the new evidence proves a product defect.
+- [ ] **Next active task:** instrument and resolve the mobile `#closeDetail` timeout without relaxing acceptance; then continue hardening the Jupiter semantic policy. Do not enable wallet signing/submission.
+
+
 ## 2026-11-11 12:57 +08 — DEX and Swap integrated on main
 
 ## 2026-11-11 13:03 +08 — Jupiter route restriction merged (PR #254)
