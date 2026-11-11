@@ -17,6 +17,7 @@ on:
     branches: [main]
     paths:
       - "dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs"
+      - "dex/swap-proxy/tools/discover-jupiter-meteora-routes.mjs"
       - ".github/workflows/jupiter-cpi-trace-audit.yml"
 
 permissions:
