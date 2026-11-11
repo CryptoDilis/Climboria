@@ -21,6 +21,16 @@ The generated Jupiter V6 SDK documents the route-family fixed-account ordering a
 - Update test fixtures to model the actual fixed account prefix and add adversarial cases for wrong Event Authority, wrong Program account, missing fixed accounts, and writable Event Authority.
 - Correct Compute Budget test program indexes after extending the fixture key list.
 
+## Follow-up route-DAG hardening
+
+A second review found that the decoder only checked `inputIndex < outputIndex` and that at least one step reached the final output. That allowed a malformed route plan to reference an intermediate token index with no earlier producer, or to include a swap branch that never contributed to the final output. Jupiter's instruction-parser IDL explicitly describes `route_plan` as a topologically sorted trade DAG and defines each step with `inputIndex` and `outputIndex`.
+
+Counter-fix:
+- Require every nonzero input token index to have been produced by an earlier step.
+- Walk the route plan backward from the final output and reject every step not connected to that output.
+- Add adversarial tests for phantom intermediate inputs and dead-end branches.
+- Source reference: https://github.com/jup-ag/instruction-parser/blob/main/src/idl/jupiter.ts (route instruction documentation and `RoutePlanStep` fields).
+
 ## Safety
 - No transaction signing, order issuance, or execution gate is enabled.
 - `EXECUTION_SECURITY_REVIEW_COMPLETE` remains false.
@@ -28,7 +38,7 @@ The generated Jupiter V6 SDK documents the route-family fixed-account ordering a
 - This patch improves Jupiter fixed-account binding only. It does not complete DEX CPI/account-role decoding, prove token movement/fee destinations, or replace independent security review.
 
 ## Verification status
-- [ ] Exact-head Validate
+- [ ] Exact-head Validate for latest DAG-hardening commit
 - [ ] Exact-head Browser Smoke (confirm DEX/Swap steps; gameplay step remains separate/non-blocking)
 - [ ] Inspect exact failing step/logs if any; implement a new evidence-based counter-fix rather than repeating a failed patch.
 
