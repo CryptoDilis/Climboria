@@ -3259,3 +3259,16 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 
 **Exact next job:** secure an independent ALT/instruction-semantic review; agree the supported Jupiter program/instruction policy; resolve ALT contents at a trusted RPC context and validate all loaded indices; decode and allowlist instruction effects with adversarial tests; run the controlled Devnet order/sign/execute/confirm/replay/timeout/expiry/settlement lifecycle; then deploy quote-only Worker with kill switch off and verify Cloudflare health/CORS/rate-limit/DO persistence. Keep PR #235 draft/unmerged and do not enable execution before every gate is closed.
 
+
+
+## 2026-11-11 — PR #235 latest-main sync and exact-head browser acceptance
+
+- [x] Conflict-aware two-parent synchronization commit `c1dafeab369cf59fed6a76356fe2eb322464adab` reconciled PR #235 with main `9a3c4aca82957883e8109f357949132dc96b734a`. The branch is now 49 ahead / 0 behind, and GitHub reports it mergeable. Main's Sanctuary game scene and smoke script blobs were verified identical after synchronization; all 16 PR Swap/workflow files were preserved.
+- [x] Validate run `42937400351` on exact synchronized head completed **SUCCESS**. Swap proxy tests: **51 passed / 0 failed**. Wrangler 4.36.0 deployment dry-run, homepage structure, launch copy, inline JS, DEX/Swap scripts, game scripts and remaining HTML/script audits passed.
+- [x] Browser Smoke run [42937400230](https://github.com/CryptoDilis/Climboria/actions/runs/42937400230) on exact synchronized head `c1dafeab369cf59fed6a76356fe2eb322464adab` completed **SUCCESS**. All steps passed, including DEX/Swap routing, proxy fail-closed checks, desktop/mobile DEX layouts, Jarrell's Peak desktop/mobile gameplay and screenshot upload.
+- [x] Artifact `13819557025` downloaded and visually reviewed: 10 screenshots covering desktop/mobile home, DEX token/social UI, gameplay, cave entrance and cave interior. Gameplay and cave captures rendered on both desktop and mobile viewports. This is automated browser evidence, not physical Redmi 14 5G acceptance.
+- [!] DEX token/social screenshots are synthetic fixture evidence. They do not prove live provider uptime, real token discovery, or production chart data.
+- [!] No production Cloudflare Worker deployment, trusted ALT resolution, complete instruction semantic validation, controlled Devnet transaction lifecycle or real settlement is claimed. Frontend execution remains disabled and Worker `EXECUTION_ENABLED=false`.
+- [!] PR #235 remains open/draft and mergeable; this checkpoint does not merge it or authorize live execution.
+
+**Exact next actions:** continue R1 trusted RPC ALT account/index resolution and R2 supported aggregator instruction decoding/allowlisting; independently review all program/account/signer/writable/amount/min-output/slippage/fee-destination effects; complete controlled Devnet signing/execution/confirmation/replay/timeout/uncertain-settlement/expiry tests; then verify Cloudflare secrets, rate-limit namespace, Durable Object migration/persistence, domain/TLS/CORS/health/monitoring. Keep execution disabled until every gate is independently closed. Continue real Solana/Base provider verification, Launchpad provenance/custody/migration blockers and owner-configured authentication acceptance.
