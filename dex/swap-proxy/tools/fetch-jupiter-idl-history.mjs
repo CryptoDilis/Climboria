@@ -474,6 +474,7 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
         instructionSchemaMatchesAnyActiveHistory: null,
         instructionSchemaMatchesLatest: null,
         poolStateType: null,
+        poolStateTypeDefinitions: null,
         poolStateAccountDiscriminator: null,
       };
       try {
@@ -508,6 +509,7 @@ async function auditDexCpiOnChainProvenance(program, metadataAccounts, activeRev
           decoded.decompressedPayloadSha256 === revision.contentSha256
         );
         record.poolStateType = poolStateType;
+        record.poolStateTypeDefinitions = decoded.idl.types ?? [];
         record.poolStateAccountDiscriminator = poolStateAccount?.discriminator ?? null;
         record.instruction = summarize(instruction);
         record.instructionSchemaSha256 = schemaHash(instruction);
@@ -652,6 +654,7 @@ const raydiumLaunchlabCandidateExpected = {
   creatorFeeVault: "5VJj74eKHTjtVRgW7J5L7qFE8nw8DQcpnP8Zri9o8Hpk",
   systemProgram: "11111111111111111111111111111111",
   quoteTokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  nativeLoaderProgram: "NativeLoader1111111111111111111111111",
 };
 
 async function auditRaydiumLaunchlabCandidateAccountState() {
@@ -681,7 +684,7 @@ async function auditRaydiumLaunchlabCandidateAccountState() {
     ]));
     const idl = {
       accounts: [{ name: "PoolState", discriminator: idlAccount.poolStateAccountDiscriminator }],
-      types: [idlAccount.poolStateType],
+      types: idlAccount.poolStateTypeDefinitions ?? [idlAccount.poolStateType],
     };
     const report = auditRaydiumLaunchlabCandidateAccounts({
       accounts: { ...accounts, contextSlot: fetched.contextSlot },

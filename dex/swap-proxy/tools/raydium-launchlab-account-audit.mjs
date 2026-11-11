@@ -248,6 +248,10 @@ export function auditRaydiumLaunchlabCandidateAccounts({ accounts, idl, expected
 
     report.checks = {
       poolStateOwnerMatchesProgram: poolValue.owner === programId,
+      poolStateIsNonExecutable: poolValue.executable === false,
+      platformFeeVaultIsNonExecutable: platformValue.executable === false,
+      creatorFeeVaultIsNonExecutable: creatorValue.executable === false,
+      systemProgramOwnerMatchesNativeLoader: systemValue.owner === expected.nativeLoaderProgram,
       poolStateGlobalConfigMatchesCandidate: report.poolState.globalConfig === expected.globalConfig,
       poolStatePlatformConfigMatchesCandidate: report.poolState.platformConfig === expected.platformConfig,
       poolStateBaseMintMatchesCandidate: report.poolState.baseMint === expected.baseMint,
@@ -267,6 +271,10 @@ export function auditRaydiumLaunchlabCandidateAccounts({ accounts, idl, expected
         report.creatorFeeVault.tokenAuthority === report.derivedAddresses.creatorFeeVaultAuthority.address,
       platformFeeVaultInitialized: report.platformFeeVault.state === "initialized",
       creatorFeeVaultInitialized: report.creatorFeeVault.state === "initialized",
+      platformFeeVaultHasNoDelegate: report.platformFeeVault.delegate === null,
+      creatorFeeVaultHasNoDelegate: report.creatorFeeVault.delegate === null,
+      platformFeeVaultHasNoCloseAuthority: report.platformFeeVault.closeAuthority === null,
+      creatorFeeVaultHasNoCloseAuthority: report.creatorFeeVault.closeAuthority === null,
       systemProgramIsExecutable: systemValue.executable === true,
     };
     const outcomes = Object.values(report.checks);

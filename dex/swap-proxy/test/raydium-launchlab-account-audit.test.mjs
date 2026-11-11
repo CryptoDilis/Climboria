@@ -109,6 +109,8 @@ test("decodes the SPL Token base account layout when Token-2022 TLV bytes follow
   assert.equal(decoded.tokenAuthority, encodeBase58(Buffer.alloc(32, 0x62)));
   assert.equal(decoded.amount, "123");
   assert.equal(decoded.state, "initialized");
+  assert.equal(decoded.delegate, null);
+  assert.equal(decoded.closeAuthority, null);
 });
 
 test("rejects invalid token-account option tags and state values", () => {
