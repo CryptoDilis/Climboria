@@ -67,6 +67,14 @@ test("stores a verified unsigned order and atomically permits only one claim", a
   assert.match((await replay.json()).error, /already been claimed/i);
 });
 
+test("rejects stored orders without finalized token-account ownership evidence", async () => {
+  const { object } = createStore();
+  const fixture = makeFixture(1);
+  const response = await storeOrder(object, fixture, { tokenAccountEvidence: null });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /token-account ownership\/mint evidence/i);
+});
+
 test("rejects a tampered signed message without consuming the valid order", async () => {
   const fixture = makeFixture(2);
   const { object } = createStore();
