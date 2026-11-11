@@ -3952,3 +3952,23 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Supabase security and health advisors returned zero lints.
 - [x] Live Auth trigger audit confirms enabled `auth.users` trigger `climboria_auth_user_created`; its SECURITY DEFINER function pins an empty search_path, is not executable by anon/authenticated, and remains executable by service_role for trigger operation.
 - [!] Supabase Auth provider/dashboard configuration is not exposed through the available project connector operations. Provider enablement, Site URL/redirect allowlist, SMTP/email delivery, OAuth client credentials, and real production-domain account tests remain external release gates; do not mark Google/X/email/wallet providers live from UI smoke tests alone.
+
+
+### PR #265 — prevent false-positive DEX mint-copy feedback — 2026-11-11 14:10 +08
+
+- [x] Root cause confirmed in current main: `dex/index.html` already has the authoritative async clipboard handler; `dex/premium-terminal.js` adds a second handler that immediately paints `Copied ✓` without writing to the clipboard. This can falsely report success while the real clipboard promise is pending or fails.
+- [x] Targeted production fix removes only the duplicate optimistic handler. Existing authoritative handler remains unchanged.
+- [x] Added Browser Smoke regression: hold `navigator.clipboard.writeText` pending, assert no copied/success label is shown early, resolve the promise, then assert the exact active mint was written and success is displayed.
+- [x] Draft PR #265: https://github.com/CryptoDilis/Climboria/pull/265; branch `codex/dex-copy-mint-confirmation-2026-11-11`; exact head `fa49fa57195dd1f42e8e1cf92aad2405913da1ab`. Freshly based on current main; compare shows 2 commits ahead, 0 behind, only `dex/premium-terminal.js` and Browser Smoke workflow changed.
+- [ ] Exact-head Validate run `42970504827` and Browser Smoke run `42970504909` are running; await step 13 copy-mint regression and full downstream smoke results before merging.
+
+### PR #264 gameplay smoke watch — latest poll
+
+- [x] PR #264 Validate run `42969473706` passed.
+- [x] Browser Smoke steps 7–16 passed, including DEX/Swap, login/cloud-save isolation, mobile 390px/360px, and market provider/empty-state behavior.
+- [ ] Gameplay step 17 remains in progress on run `42969473636`; screenshot upload step 18 remains pending. The workflow applies a 20-minute shell timeout and 21-minute step timeout. Logs are unavailable while the job is active (GitHub artifact BlobNotFound); retrieve logs and screenshots after it terminates. Do not call gameplay smoke fully passed until the run is terminal SUCCESS.
+
+### Current Pages deployment signal
+
+- [x] GitHub Pages build/deployment run `42969800245` completed SUCCESS on main commit `ce189dc2dc4ed83151fcbe8f0b695ddc1dde5bf2`.
+- [!] This confirms the Pages deployment workflow completed, not a browser-level live-site smoke or Cloudflare Worker deployment. The separate `deploy-climboria-api.yml` is manual-only and requires account-specific Cloudflare/Jupiter/Solana secrets plus a configured rate-limit namespace; no successful Worker deployment is claimed.
