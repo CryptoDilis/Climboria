@@ -490,10 +490,10 @@ Use a no-cost, read-only `getTransaction` capture for the known finalized Jupite
 - CPI Trace Audit run `43031160387`, job `130558289913`: SUCCESS; both transaction and account-info reports uploaded.
 - No failure occurred on this code head. Historical ALT-label failures remain diagnosed and fixed; their original failed runs are retained in the section above.
 
-### Next work
-- [ ] Explain the extra trailing Jupiter program account at outer route position 27 from authoritative Jupiter handler semantics or another trace.
+### Next work (reconciled after position-27 resolution)
+- [x] Explain the extra trailing Jupiter program account at outer route position 27 as the Anchor event self-CPI program account; transaction-specific evidence is recorded below.
 - [ ] Obtain direct evidence of inner CPI AccountMeta flags, or a trustworthy program-test/CPI construction reproduction that proves the privilege attenuation.
-- [ ] Capture additional MeteoraDlmmSwapV2 transactions, including bitmap-extension and multi-bin-array cases.
+- [ ] Capture additional MeteoraDlmmSwapV2 transactions, including bitmap-extension, multi-bin-array, transfer-hook, split and multi-hop cases.
 - [ ] Establish deployed Jupiter binary/source provenance for the transaction slot.
 - [ ] Controlled Devnet reproduction and independent Solana security review.
 
@@ -566,3 +566,24 @@ The previously unexplained Jupiter program ID at outer route account position 27
 - [ ] Controlled Devnet reproduction and independent Solana security review.
 
 This resolves the trailing-account question for this transaction only. It does not prove universal Jupiter account cursor behavior, exact inner CPI privilege flags, deployed-binary provenance, or production readiness. Variant 75 remains excluded and all signable-order/execution gates remain false.
+
+
+## Older finalized signature pagination — 2026-11-11
+
+### Why this change
+The prior route discovery helper sampled only the newest finalized Meteora signatures. Repeating the same recent sample does not materially improve evidence diversity. A caller needs a stable cursor to move backward through finalized history without changing the default bounded scan or pretending a small sample is exhaustive.
+
+### Implementation
+- Added optional `before` cursor support to `discoverRecentJupiterMeteoraRoutes(rpcUrl, { before })`.
+- The cursor is passed to Solana RPC `getSignaturesForAddress` as the standard `before` parameter; the returned report records the cursor so the evidence window is auditable.
+- CLI reads optional `JUPITER_AUDIT_BEFORE_SIGNATURE`.
+- Added an optional `workflow_dispatch` input named `before_signature` to the Jupiter CPI Trace Audit workflow. Leave it blank for the existing newest-signatures sample; provide a finalized Meteora signature to scan older transactions before that cursor.
+- Added an offline regression assertion proving the cursor reaches the RPC request and is retained in the report. Default scan limit, bounded retry, delay and 429 partial-report behavior remain unchanged.
+
+### Verification status
+- [x] Source, test and workflow updates committed on the PR branch.
+- [ ] Exact-head Validate, Browser Smoke and CPI Trace Audit after this pagination change.
+- [ ] Run one older bounded scan using a finalized Meteora signature cursor; record sample count, route matches and rate-limit status.
+- [ ] Do not treat zero matches in a bounded cursor window as evidence of global absence.
+
+The change adds a research capability only. It does not change runtime swap policy, the variant-75 allowlist, or any execution/signing gate.
