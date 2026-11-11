@@ -3960,7 +3960,8 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Targeted production fix removes only the duplicate optimistic handler. Existing authoritative handler remains unchanged.
 - [x] Added Browser Smoke regression: hold `navigator.clipboard.writeText` pending, assert no copied/success label is shown early, resolve the promise, then assert the exact active mint was written and success is displayed.
 - [x] Draft PR #265: https://github.com/CryptoDilis/Climboria/pull/265; branch `codex/dex-copy-mint-confirmation-2026-11-11`; exact head `fa49fa57195dd1f42e8e1cf92aad2405913da1ab`. Freshly based on current main; compare shows 2 commits ahead, 0 behind, only `dex/premium-terminal.js` and Browser Smoke workflow changed.
-- [ ] Exact-head Validate run `42970504827` and Browser Smoke run `42970504909` are running; await step 13 copy-mint regression and full downstream smoke results before merging.
+- [x] Exact-head Validate run `42970504827` passed on the PR #265 head.
+- [ ] Browser Smoke run `42970504909` is running; auth/account isolation and homepage/DEX routing passed, Cloudflare DEX Swap proxy step 9 is running, and the new clipboard regression at step 13 has not executed yet. Await full exact-head result before merging.
 
 ### PR #264 gameplay smoke watch — latest poll
 
