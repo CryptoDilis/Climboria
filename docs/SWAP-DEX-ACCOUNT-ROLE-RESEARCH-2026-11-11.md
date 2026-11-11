@@ -885,3 +885,47 @@ Security boundary remains unchanged: production validator accepts only the legac
 - Added a finalized-mainnet-RPC account audit to the IDL history utility. It queries the Explorer-reported Anchor IDL account, checks the expected Anchor IDL account discriminator, parses the authority and compressed IDL payload, compares the decompressed payload hash with the slot-matched history record, and inspects the Jupiter program/ProgramData upgradeable-loader metadata and binary hash.
 - The RPC audit is best-effort and records errors rather than misrepresenting unavailable RPC data as proof. The current latest code head for this addition is `f98d645d5cf17732b01dace7b42a0ff3d26b46b7`; its IDL History Audit was queued at the latest poll. Do not claim the account owner, IDL authority, ProgramData deployment slot, or binary hash have been verified until its artifact is inspected.
 - No production route policy changed. route_v2 remains diagnostic-only and rejected by the production legacy-route validator; all signing/execution gates remain false.
+
+
+## 2026-11-12 — On-chain IDL account parser root cause and corrected legacy layout
+
+### Evidence reinspection
+
+- Re-inspected PR #268 current PR head at the time, `238c7069c760fc016d59a7c8c78a63e0345ba2b1`, and its IDL History Audit run `43074132804`, job `130709415786`: SUCCESS. The API fetch and artifact upload steps completed.
+- Artifact `13882890059` (`jupiter-idl-history`, 122,155 bytes; digest `sha256:7cbe22d48f9cd1c6f1361192d750e8d80b05f0947388afc6cf18eed47c1727dc`) confirms latest/history HTTP 200 and exact slot-matched schema:
+  - latest response SHA-256 `5d050087fcf291e0f45ff82c4c6f1ce16c5eb15adec98084658ce00c6ccd73ef`
+  - history response SHA-256 `5cda5a325381b135af7f285a2ff24fc1f8b0f4fb983903c3f928e157d2213cc9`
+  - IDL content SHA-256 `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981`
+  - Anchor metadata account `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`
+  - active history start slot `467726546`; candidate tx slot `468153382`
+  - exact `route_v2` discriminator `bb64facc31c4af14`; Swap enum count 211; variant 181 `KipseliV3` with bool field `is_base_to_quote`.
+- The same artifact's finalized RPC provenance sample observed IDL account owner = Jupiter program, non-executable, context slot `468217427`, data length 6,314 bytes. Jupiter program account was owned by the upgradeable BPF loader, executable, and pointed to ProgramData `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT`. ProgramData last deployment slot `468023491`, before candidate slot `468153382`; current binary SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`, upgrade authority `CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ`.
+- Important parser defect found: previous instrumentation incorrectly assumed an Anchor `account:IdlAccount` 8-byte discriminator and parsed authority/length/payload at offsets 8/40/44. Its own RPC evidence contradicted that assumption: account owner matched Jupiter, but discriminator check was false and authority/payload were null. The IDL account had not been validated at the byte-layout level. This was a bug in our audit instrumentation, not a production swap-path failure; the workflow remained green because provenance parsing was best-effort.
+
+### Root cause and counter-fix
+
+- Root cause: legacy Anchor IDL accounts use the layout `authority:Pubkey[32] + data_len:u32 LE + zlib-compressed IDL bytes`; this account format has no Anchor account discriminator prefix. The previous offset assumptions shifted every field by 8 bytes, preventing authority extraction and payload-hash comparison.
+- Added `dex/swap-proxy/tools/legacy-anchor-idl-account.mjs` to decode the legacy layout with strict minimum-length, declared-payload-bound, zlib, JSON, and instructions-array checks.
+- Updated `dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs` to use the correct parser and record the layout, authority, compressed/decompressed lengths, payload SHA-256, history-hash match, and route_v2 discriminator.
+- Added regression tests to `dex/swap-proxy/test/jupiter-route-v2-idl.test.mjs` for authority extraction, decompressed payload hash, exact route_v2 discriminator, malformed lengths, and invalid JSON.
+- This fix does not change any production validator, allowlist, signing, or execution code. It corrects evidence collection only.
+
+### Exact-head verification after parser fix
+
+- Parser module commit: `a52b84476770fa1064c174e4f6fbc11d9e4b2d11`.
+- Fetcher integration commit: `b47ce4dc295cb1c3bcfe43ba49f96edc05987fd4`.
+- Regression-test commit: `8a3f6dbd872d615be5bca6fa92bf3e9a875d8247`.
+- Latest commit-associated runs at last poll:
+  - Validate `43074720199`: SUCCESS, all 89+ tests and remaining steps completed.
+  - Browser Smoke `43074720380`: still running; last observed at DEX market/quote-preview step.
+  - Jupiter CPI Trace Audit `43074720213`: SUCCESS.
+  - IDL History Audit `43074720141`: still running in finalized RPC provenance step; no artifact/result yet.
+- Do not claim the corrected on-chain authority/payload hash match until the new IDL artifact is downloaded and inspected. The previous artifact's on-chain IDL discriminator mismatch is superseded as a known instrumentation error, not evidence of an invalid IDL account.
+- No failed workflow on the latest parser-fix head had been observed at this checkpoint. The earlier Validate parser-fixture failures are documented above with their syntax errors and verified counter-fix; they were not hidden or weakened.
+
+### Exact next actions
+
+1. Inspect IDL History Audit run `43074720141` and artifact. Confirm IDL account owner, legacy layout, authority, decompressed payload hash equality to active history, and route_v2 discriminator.
+2. Confirm ProgramData deployment slot/hash and whether the candidate transaction is covered by the same deployment; retain the caveat that a current RPC snapshot is not a full archival binary proof.
+3. Inspect Browser Smoke `43074720380`; if any step fails, retrieve full job logs, isolate first failing assertion, root-cause it, make a targeted counter-fix, and rerun exact-head checks.
+4. Keep route_v2 diagnostic-only and rejected by production validation. No adapter allowlist expansion, signing, execution, deployment, or production approval without CPI-requested privilege evidence, adapter account-slice validation, controlled Devnet reproduction, and independent review.
