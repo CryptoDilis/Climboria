@@ -1166,7 +1166,7 @@ This does not change the platform-fee attribution at outer position 10: its tran
 
 ### Latest exact-head verification
 - Latest PR head `302bb0841a20a51c3cebc39d51ba82440aab4e2c` passed Validate `43080434138` (97/97 tests; 0 failures; Wrangler dry-run successful), Browser Smoke `43080434131` (all test steps including desktop/mobile, provider states and screenshot upload), Jupiter CPI Trace Audit `43080436579` (duplicate-position regression, finalized trace fetch and artifact upload), and IDL History Audit `43080434110` (IDL retrieval and artifact upload). Run metadata confirmed all four exact `head_sha` values match `302bb0841a20a51c3cebc39d51ba82440aab4e2c`.
-- CPI trace artifact `13883338579`, SHA-256 `2429b7920db72831ee3a6b91f6fbc11d9e4b2d11`.
+- CPI trace artifact `13883338579`, SHA-256 `2429b7920db72831ee3a6b91c5f00e77eb86463aee95a774dd288f3ff28b911c`.
 - Superseded runs marked cancelled by the workflow's concurrency behavior are not failures and were not treated as such. No other failed run appeared in the recent branch-history page inspected.
 - Scope limits remain: Browser Smoke is ecosystem-only, not Jarrell's Peak gameplay; CPI trace/IDL CI does not prove CPI-requested AccountMeta flags or universal adapter dispatch. Keep route_v2 excluded from production validation and all signing/execution gates closed.
 
