@@ -23,28 +23,66 @@ async function loadHero(){
 }
 async function loadTrending(){
  const grid=$('premiumTrendingGrid');if(!grid)return;
- const queries=['SOL','USDC','BONK','JUP','WIF','RAY','PYTH','JTO','JLP','POPCAT'];
+ const updated=$('premiumTrendingUpdated');
  try{
-  const results=await Promise.all(queries.map(q=>get('/latest/dex/search?q='+encodeURIComponent(q)).catch(()=>({pairs:[]}))));
-  const map=new Map();
-  for(const p of results.flatMap(x=>Array.isArray(x.pairs)?x.pairs:[])){
-   if(!p||p.chainId!=='solana'||!p.baseToken?.address||!p.pairAddress)continue;
-   const liquidity=Number(p.liquidity?.usd),volume=Number(p.volume?.h24);
-   if(!Number.isFinite(liquidity)||liquidity<=0||!Number.isFinite(volume))continue;
-   const prior=map.get(p.baseToken.address);
-   if(!prior||liquidity>Number(prior.liquidity?.usd||0))map.set(p.baseToken.address,p);
+  // Discover beyond a fixed ticker watchlist. DexScreener's profile and boost
+  // endpoints are discovery sources, not a global market ranking; label them
+  // honestly and rank only the eligible discovered Solana pairs by reported volume.
+  const [profileRows,boostRows]=await Promise.all([
+   get('/token-profiles/latest/v1'),
+   get('/token-boosts/top/v1')
+  ]);
+  const candidates=new Map();
+  const add=(rows,source)=>{
+   for(const item of (Array.isArray(rows)?rows:[])){
+    if(item?.chainId!=='solana'||typeof item.tokenAddress!=='string'||!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(item.tokenAddress))continue;
+    const prior=candidates.get(item.tokenAddress)||{sources:new Set()};
+    prior.sources.add(source);
+    candidates.set(item.tokenAddress,prior);
+   }
+  };
+  // Balance new profile discovery with currently most-boosted discovery.
+  add((Array.isArray(profileRows)?profileRows:[]).slice(0,15),'Profile');
+  add((Array.isArray(boostRows)?boostRows:[]).slice(0,15),'Boosted');
+  const addresses=[...candidates.keys()].slice(0,30);
+  if(!addresses.length){
+   grid.innerHTML='<div class="premium-trending-empty">No eligible Solana tokens were returned by the latest-profile or active-boost feeds.</div>';
+   if(updated)updated.textContent='No eligible discovery results';
+   return;
   }
-  const list=[...map.values()].sort((a,b)=>(Number(b.volume?.h24)||0)-(Number(a.volume?.h24)||0)).slice(0,6);
-  if(!list.length)throw new Error('No eligible live Solana pairs in discovery response');
+  // DexScreener supports up to 30 token addresses in one batch request.
+  const pairPayload=await get('/tokens/v1/solana/'+addresses.join(','));
+  const pairs=Array.isArray(pairPayload)?pairPayload:(Array.isArray(pairPayload?.pairs)?pairPayload.pairs:[]);
+  const bestByMint=new Map();
+  for(const p of pairs){
+   const mint=p?.baseToken?.address;
+   if(p?.chainId!=='solana'||!candidates.has(mint)||!p.pairAddress)continue;
+   const liquidity=Number(p.liquidity?.usd),volume=Number(p.volume?.h24),usd=Number(p.priceUsd);
+   if(!Number.isFinite(liquidity)||liquidity<=0||!Number.isFinite(volume)||volume<0||!Number.isFinite(usd)||usd<=0)continue;
+   const prior=bestByMint.get(mint);
+   if(!prior||liquidity>Number(prior.liquidity?.usd||0))bestByMint.set(mint,p);
+  }
+  const list=[...bestByMint.entries()].map(([mint,p])=>({
+   ...p,
+   discoverySource:[...candidates.get(mint).sources].sort().join(' + ')
+  })).sort((a,b)=>(Number(b.volume?.h24)||0)-(Number(a.volume?.h24)||0)).slice(0,6);
+  if(!list.length){
+   grid.innerHTML='<div class="premium-trending-empty">No eligible live Solana pools were found for the discovered tokens.</div>';
+   if(updated)updated.textContent='No eligible live pools';
+   return;
+  }
   const max=Math.max(...list.map(p=>Number(p.liquidity.usd)||0),1);
   grid.innerHTML=list.map(p=>{
    const change=Number(p.priceChange?.h24),cls=Number.isFinite(change)?(change>=0?'positive':'negative'):'muted';
    const changeText=Number.isFinite(change)?(change>0?'+':'')+change.toFixed(2)+'%':'24h change unavailable';
    const depth=Math.max(3,Math.round((Number(p.liquidity.usd)||0)/max*100));
-   return '<button type="button" class="premium-asset-card" data-premium-mint="'+esc(p.baseToken.address)+'"><span class="premium-asset-top"><b>'+esc(p.baseToken.symbol||'TOKEN')+'</b><span class="'+cls+'">'+changeText+'</span></span><span class="premium-asset-name">'+esc(p.baseToken.name||'Unknown token')+' · '+esc(p.quoteToken.symbol||'PAIR')+'</span><strong>'+price(p.priceUsd)+'</strong><span class="premium-asset-meta"><span>24h Vol <b>'+money(p.volume.h24)+'</b></span><span>Liquidity <b>'+money(p.liquidity.usd)+'</b></span></span><span class="premium-depth"><i style="width:'+depth+'%"></i></span><span class="premium-asset-action">Inspect token ↗</span></button>';
+   return '<button type="button" class="premium-asset-card" data-premium-mint="'+esc(p.baseToken.address)+'"><span class="premium-asset-top"><b>'+esc(p.baseToken.symbol||'TOKEN')+'</b><span class="'+cls+'">'+changeText+'</span></span><span class="premium-asset-name">'+esc(p.baseToken.name||'Unknown token')+' · '+esc(p.quoteToken?.symbol||'PAIR')+'</span><strong>'+price(p.priceUsd)+'</strong><span class="premium-asset-meta"><span>24h Vol <b>'+money(p.volume.h24)+'</b></span><span>Liquidity <b>'+money(p.liquidity.usd)+'</b></span></span><span class="premium-depth"><i style="width:'+depth+'%"></i></span><span class="premium-asset-action">Inspect token ↗</span><small class="premium-discovery-source">'+esc(p.discoverySource)+' discovery · not a global market ranking</small></button>';
   }).join('');
-  $('premiumTrendingUpdated').textContent='Updated '+new Date().toLocaleTimeString()+' · '+list.length+' live pairs';
- }catch(e){grid.innerHTML='<div class="premium-trending-empty">Live trending pairs are temporarily unavailable. We do not substitute sample prices or fabricated market data.</div>';$('premiumTrendingUpdated').textContent='Provider unavailable · retrying';}
+  if(updated)updated.textContent='Updated '+new Date().toLocaleTimeString()+' · '+list.length+' pools · latest profiles + active boosts · sorted by 24h volume';
+ }catch(e){
+  grid.innerHTML='<div class="premium-trending-empty">Live Solana discovery is temporarily unavailable. No sample prices or fabricated market data are shown.</div>';
+  if(updated)updated.textContent='Provider unavailable · retrying';
+ }
 }
 function bind(){
  const grid=$('premiumTrendingGrid');
