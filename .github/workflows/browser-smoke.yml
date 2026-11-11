@@ -101,6 +101,15 @@ jobs:
               if(new URL(page.url()).pathname!=='/dex/') throw new Error('Homepage DEX CTA did not navigate to /dex/');
               const dexPage=page;
               if(!await dexPage.locator('#markets').count()) throw new Error('DEX CTA did not open the market explorer');
+              // Let the page's initial market bootstrap finish before the isolated search fixture.
+              // Otherwise a late boot response can overwrite the search response in state.pairs.
+              await dexPage.waitForFunction(() => {
+                const status=document.querySelector('#status')?.textContent||'';
+                return status==='Live provider connection · Solana pairs only' || status==='Market data temporarily unavailable';
+              },null,{timeout:15000}).catch(async error=>{
+                const diagnostics=await dexPage.evaluate(()=>({status:document.querySelector('#status')?.textContent,coverage:document.querySelector('#coverage')?.textContent,updated:document.querySelector('#updated')?.textContent}));
+                throw new Error('DEX initial market bootstrap did not settle before search fixture: '+JSON.stringify(diagnostics)+' cause='+error.message);
+              });
               // Verify live DEX search discovers tokens outside the boot-time market sample by name/symbol and exact mint.
               const dexMint='SysvarRent111111111111111111111111111111111';
               const dexPair={chainId:'solana',dexId:'search-fixture',pairAddress:'DexSearchPair11111111111111111111111111111',baseToken:{address:dexMint,symbol:'CLIMBTEST',name:'Climboria Search Fixture'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'},priceUsd:'0.125',priceChange:{h24:4.2},volume:{h24:45678},liquidity:{usd:23456}};
