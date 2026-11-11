@@ -3350,3 +3350,15 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Validate and Browser Smoke must rerun on exact new PR #242 head; inspect final logs and all mobile screenshots before considering merge.
 
 **Exact next task:** poll PR #242's new Validate and Browser Smoke runs. If another failure occurs, use its exact log and final diagnostic snapshot to distinguish actual game state from test observation timing; do not reuse the earlier orientation or DEX bootstrap patches.
+
+
+### CI progression — PR #242 orientation observer and PR #243 live DEX discovery (2026-11-11)
+
+- [x] PR #242 third counter-fix exact head `1b248913a044c538731e2354d895de75efdc2dce`: Validate run `42942177721` SUCCESS.
+- [ ] PR #242 Browser Smoke run `42942177844`: still IN_PROGRESS at the Jarrell's Peak desktop/mobile gameplay step; all preceding homepage, DEX/Swap proxy, fail-closed, standalone DEX/Swap and responsive/mobile market-state steps passed in this attempt. No failure reported yet.
+- [x] PR #243 DEX discovery exact head `9b967b119bc52be5b259f4579cea751b4726829e`: Validate run `42942014345` SUCCESS.
+- [ ] PR #243 Browser Smoke run `42942014181`: still IN_PROGRESS at the Jarrell's Peak desktop/mobile gameplay step; no failed step reported yet.
+- [!] Neither PR is merged. Do not treat the gameplay smoke as passed until each run is terminal. PR #243 also needs review of its actual discovery output/behavior, not only Validate.
+- [x] Main Pages deployment for the earlier README checkpoint `c6c612d8b5e2b6d7ad90cd3995e3b6732c88bc94` completed SUCCESS (`42941897254`). Subsequent documentation commits have their own deployment runs; poll latest main deployment before claiming the current main commit is deployed.
+
+**Exact next task:** poll both Browser Smoke runs `42942177844` and `42942014181`. If either fails, inspect its completed job log and artifacts, diagnose that run independently, and make only a distinct evidence-backed fix. If both pass, inspect artifacts and DEX discovery behavior, then reconcile PR #242 against current main and decide whether it can be merged. PR #243 remains separate until its own checks and discovery review are complete.
