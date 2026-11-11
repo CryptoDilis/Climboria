@@ -196,4 +196,8 @@ test("rejects stale context, duplicate token accounts and invalid native-mint st
     tokenAccount(outputMint, 1500n, { nativeOption: 1 }),
     tokenAccount(outputMint, 0n)
   ])), /wrapped-SOL mint/i);
+  await assert.rejects(() => verifyTokens({}, () => tokenRpcResponse([
+    tokenAccount(inputMint, 1500n, { nativeOption: 0 }),
+    tokenAccount(outputMint, 0n)
+  ])), /wrapped-SOL mint/i);
 });
