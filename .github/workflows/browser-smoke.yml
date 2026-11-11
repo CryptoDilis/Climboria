@@ -618,8 +618,16 @@ jobs:
                   await dex.waitForFunction(previous=>document.querySelectorAll('#solanaMobileCards .mobile-market-card').length>previous,before,{timeout:5000});
                 }
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
-                await dex.locator('#closeDetail').tap();
-                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000});
+                const closeDetail=dex.locator('#closeDetail');
+                await closeDetail.waitFor({state:'visible',timeout:5000});
+                const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
+                if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
+                await dex.evaluate(()=>{window.__closeDetailClickSeen=false;document.addEventListener('click',event=>{if(event.target.closest?.('#closeDetail'))window.__closeDetailClickSeen=true},true)});
+                await closeDetail.tap();
+                await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000}).catch(async error=>{
+                  const state=await dex.evaluate(()=>({mobileTokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),closeClickSeen:window.__closeDetailClickSeen,closeVisible:(()=>{const el=document.querySelector('#closeDetail');if(!el)return null;const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(el).display,pointerEvents:getComputedStyle(el).pointerEvents}})(),activeElement:document.activeElement?.outerHTML?.slice(0,300)}));
+                  throw new Error('Mobile close-detail tap did not exit token view. before='+JSON.stringify(closeBefore)+' after='+JSON.stringify(state)+' cause='+error.message);
+                });
                 await dex.locator('#dexMobileNav').waitFor({state:'visible',timeout:5000});
                 await dex.locator('#dexMobileNav [data-dex-mobile-view="base"]').tap();
                 await dex.waitForFunction(()=>document.querySelectorAll('#baseMobileCards a.base-mobile-market-card').length>0,null,{timeout:15000});
