@@ -1,3 +1,62 @@
+# CLIMBORIA — ACTIVE EXECUTION QUEUE (SOURCE OF TRUTH)
+
+**Updated: 2026-11-11. Follow this queue in order. Do not restart completed work, create duplicate PRs, or jump to a lower priority while a higher one is unresolved.** Older dated progress notes below are historical evidence only; this section is the sole active task list.
+
+## P0 — Finish and ship the current gameplay release gate
+
+**Current owner task: PR #246 — Sanctuary spawn alignment.**
+- [x] Merge PR #242's validated mobile-orientation test fix into `main` (merge `66909629ea0fcf9dec75b0e9002a776072fe9b57`).
+- [x] Confirm current-main Validate passed (`42948561557`) and Pages deployment passed (`42948561382`).
+- [x] Implement one shared Sanctuary landing-center spawn coordinate in PR #246; Validate passed on exact head `44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c` (`42948629207`).
+- [ ] Finish PR #246 Browser Smoke `42948629303`: complete Jarrell's Peak desktop + mobile gameplay checks and screenshot upload.
+- [ ] Inspect the uploaded desktop/mobile screenshots. Confirm takeover, teleport and death-respawn all place the avatar safely at the physical Sanctuary landing center; verify collision/grounding and mobile orientation.
+- [ ] If Browser Smoke fails: inspect the exact failed step and its logs/artifact; identify the new root cause; make one targeted, non-duplicative fix; rerun Validate + Browser Smoke on the new exact head. Never repeat the same failed patch or weaken assertions.
+- [ ] Merge PR #246 only after exact-head Validate + Browser Smoke pass and screenshots are visually verified. Confirm Pages deployment on the resulting main commit.
+- [ ] Once #246 is merged, mark P0 complete and move immediately to P1. Do not reopen or recreate the superseded #244/#245 implementations.
+
+**Current P0 run status at last check:** PR #246 Validate SUCCESS; Browser Smoke still running at gameplay step 15, screenshot upload pending. Main post-merge Browser Smoke `42948561787` also still running at gameplay step 15. These are running, not failed. Poll them; do not start duplicate runs while active.
+
+## P1 — Ship the live DEX market-discovery upgrade
+
+**Source donor: PR #243; do not merge it as-is.**
+- [ ] After P0 is closed, create one fresh branch from latest `main`.
+- [ ] Port only `dex/index.html` and `dex/premium-terminal.js` from PR #243 head `9b967b119bc52be5b259f4579cea751b4726829e`. Do not copy its stale workflow/test harness or merge its old base.
+- [ ] Preserve live provider-backed Solana discovery (latest token profiles + top boosts, batched pair lookup, liquidity/price validation, volume sorting); show honest empty/provider-error states and never invent tokens, prices, or rankings.
+- [ ] Run syntax/Validate + full Browser Smoke on the exact new head, including desktop, 390px/360px mobile, search, token detail navigation, provider-error and true-empty states.
+- [ ] Diagnose any failed check from its own logs; apply a distinct root-cause fix, then rerun. Merge only after all required checks pass.
+
+## P2 — Finish Swap transaction security (do not expose unsafe execution)
+
+- [ ] Reconcile the existing Swap work (#233–#235) onto latest main once P1 is merged; do not merge stale-base PRs directly.
+- [ ] Complete R1–R4: resolve and validate Address Lookup Tables; enforce an isolated semantic instruction allowlist and reject unexpected programs/accounts/instructions; enforce quote/order binding, expiry, replay protection and idempotency; add adversarial tests.
+- [ ] Run controlled Devnet end-to-end lifecycle tests (quote → server-built transaction → wallet signing → submit → confirmation/failure/replay cases).
+- [ ] Verify Cloudflare production Worker deployment, secrets/bindings, health, CORS, rate limits, logs and rollback.
+- [ ] Keep wallet transaction execution fail-closed until every security and production gate is evidenced. Read-only quotes/market data stay live.
+
+## P3 — Complete real player Login and account persistence
+
+- [ ] Reconcile PR #236 auth hardening and PR #228 provider foundation onto latest main; inspect migrations and avoid duplicate auth implementations.
+- [ ] Apply/verify Supabase migrations, RLS and per-player data ownership.
+- [ ] Configure actual redirect allowlists and selected OAuth providers, SMTP/email and wallet sign-in settings in Supabase; configuration must be verified in the provider dashboard, not inferred from mocked tests.
+- [ ] Test real controlled accounts through sign-in, sign-out, refresh/session restore, account linking and unauthorized data access. Do not claim production-live until verified.
+
+## P4 — Complete Launchpad provenance and custody
+
+- [ ] Reconcile PR #231 read-only LaunchLab provenance work onto latest main after P0–P3.
+- [ ] Verify official provider/API provenance, mint/pool/curve state, migration authority and custody boundaries.
+- [ ] Keep launch/create/buy/sell actions disabled until transaction security, custody, Devnet and production controls are independently verified.
+
+## Execution rules — apply to every task
+
+1. Check latest `main`, open PRs and active workflow runs before editing.
+2. Work on one priority at a time; one authoritative PR per fix.
+3. Never commit the same failed code again. Read the failing step/log, state the root cause, choose a different targeted counter-strategy, and rerun the relevant tests.
+4. Do not disable live features to make tests pass. Do not reduce acceptance criteria, fake provider data, or claim production readiness from mocks.
+5. After each task, record the exact commit/PR, changed files, check-run IDs and terminal results, unresolved blockers, and the single next task here.
+6. When a priority is complete, mark it complete here and move to the next priority in this list. Do not keep appending duplicate “next task” sections; update this queue and leave old notes as historical records.
+
+---
+
 
 - [x] Browser Smoke exposed a TrailMap liquidity variable scope bug during the DEX fixture selection test; corrected it in `57cc4df`. Both DEX scripts pass a fresh JavaScript syntax parse after the fix.
 - [ ] Re-run Browser Smoke on `57cc4df`; the prior run `42513902589` failed on the fixture pool visibility check before this fix. Latest run: Browser Smoke `42514032209`, Validate `42514032081`, Pages `42514032267` (all running at record time).
