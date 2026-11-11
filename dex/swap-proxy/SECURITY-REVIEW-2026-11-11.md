@@ -11,7 +11,7 @@
 - One-time atomic claim prevents replay; expired, duplicate and invalid claims are rejected; ambiguous upstream outcomes remain locked.
 - V0 address lookup table references are parsed and fetched in one bounded getMultipleAccounts response at finalized commitment from operator-configured SOLANA_RPC_URL. The resolver checks canonical ALT ownership, executable state, metadata layout, deactivation, extension slot, same-slot index usability, duplicate table/index references and index bounds. Resolved writable/readonly keys and RPC context slot are stored with the order.
 - Wrangler config provisions SwapOrderStore; CI runs all worker/parser/store/ALT/RPC tests and a Wrangler dry-run.
-- A hard source-level EXECUTION_SECURITY_REVIEW_COMPLETE = false gate blocks /api/swap/execute even if EXECUTION_ENABLED is accidentally set to true. Frontend swap-config.js remains disabled.
+- Two hard source-level gates block both wallet-signable order issuance and /api/swap/execute; environment flags alone cannot expose a signable transaction or submit a swap. Frontend swap-config.js remains disabled.
 
 ## Explicitly unresolved release blockers
 
