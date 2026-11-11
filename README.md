@@ -20,7 +20,8 @@
 - [x] PR #255 Browser Smoke `42963568548`, job `130335529986`: DEX/Swap steps 7–13 passed; step 14 failed again at mobile DEX token-detail close. Exact diagnostic: close button was visible/actionable by layout and hit-test before tap, but no document click event reached `#closeDetail`; token view remained open and activeElement became the embedded chart iframe. This proves the tap did not activate the close handler; it does not yet prove whether the cause is touch dispatch, scroll repositioning, iframe interception or CSS stacking.
 - [x] Added deeper pointer/touch/hit-test telemetry to the PR #255 Browser Smoke workflow in commit `ecb922962a622c79500fb15352465793f3633231`; its Validate run `42963727223` passed, while its Browser Smoke was cancelled when the next exact head superseded it.
 - [x] Added adversarial tests for Compute Budget instructions carrying account metas and unsupported opcodes in commit `108649b01feb064524f789d0eb5e420066a4ad2d`.
-- [ ] Latest PR #255 exact-head workflows on `108649b01feb064524f789d0eb5e420066a4ad2d`: Validate `42963792485` and Browser Smoke `42963792473` were still running at this checkpoint. Do not count either as passed until completed.
+- [x] Latest PR #255 exact-head Validate `42963792485` passed on `108649b01feb064524f789d0eb5e420066a4ad2d`.
+- [ ] Latest PR #255 exact-head Browser Smoke `42963792473` is still in progress on `108649b01feb064524f789d0eb5e420066a4ad2d`; do not count it as passed until completed.
 - [ ] **Next active task:** inspect exact-head Browser Smoke diagnostics from run `42963792473`, identify why the mobile close tap does not dispatch a click, and implement a targeted fix. Keep Swap signing/execution gates closed; then continue source/destination account-state and DEX CPI semantic validation.
 
 ## 2026-11-11 12:57 +08 — DEX and Swap integrated on main
