@@ -234,6 +234,33 @@ export async function validateSignedOrderTransaction({
   }
 }
 
+
+export function validateJupiterOrderMetadata(order, { taker, amount } = {}) {
+  if (!order || typeof order !== "object") fail("Jupiter order metadata is missing");
+  if (order.router !== "metis") fail("Only the Metis onchain router is supported for semantic review");
+  if (order.transactionVersion !== 0 && order.transactionVersion !== "0") {
+    fail("Only Solana v0 orders are currently supported");
+  }
+  if (order.gasless === true || (order.signatureFeePayer && order.signatureFeePayer !== taker)) {
+    fail("Gasless or externally fee-paid orders are not supported");
+  }
+  if (typeof amount !== "string" || order.inAmount !== amount) {
+    fail("Jupiter input amount does not match the requested amount");
+  }
+  const positiveInteger = value => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
+  if (!positiveInteger(order.outAmount) || !positiveInteger(order.otherAmountThreshold)) {
+    fail("Jupiter output and minimum-output amounts must be positive integer strings");
+  }
+  if (BigInt(order.otherAmountThreshold) > BigInt(order.outAmount)) {
+    fail("Jupiter minimum output cannot exceed the quoted output");
+  }
+  if (!Array.isArray(order.routePlan) || order.routePlan.length === 0 ||
+      order.routePlan.some(hop => !hop || typeof hop.swapInfo?.label !== "string" || !hop.swapInfo.label.trim())) {
+    fail("Jupiter Metis route plan is missing a valid DEX label");
+  }
+  return true;
+}
+
 export function validateUnsignedOrderTransaction({ transaction, taker }) {
   try {
     const parsed = parseSolanaV0Transaction(transaction);
