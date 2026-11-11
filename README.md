@@ -3767,3 +3767,27 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [x] PR #246 Browser Smoke 42948629303 progressed through steps 1–14 successfully and is now at step 15 (Jarrell's Peak desktop/mobile gameplay); screenshot upload is pending.
 - [x] Main Browser Smoke after PR #242 merge 42948561787 is also at step 15 (Jarrell's Peak desktop/mobile gameplay); no terminal result yet.
 - [ ] Next: wait for both gameplay steps to complete, inspect failure logs if either fails, and visually inspect uploaded screenshots. Do not classify a running job as failed.
+
+
+### Priority reset and verified delivery checkpoint — 2026-11-11
+
+The user's active delivery order supersedes older locked-priority notes for this sprint. Do not insert gameplay work as a prerequisite or redirect the active workstream.
+
+- [x] DEX live Solana discovery was merged in PR #252. Its live provider, search, token detail and empty/error-state paths are covered by the browser suite.
+- [x] Mobile DEX token-detail close counter-fix was merged in PR #256. The later exact-head Browser Smoke run confirmed mobile market return/navigation on 390px and 360px widths.
+- [x] Swap restricted Jupiter V6 route-policy implementation was merged in PR #255.
+- [x] Swap finalized raw-byte SPL Token account/mint evidence and Durable Object persistence was merged in PR #259.
+- [x] Exact PR #259 Validate run 42965154895 passed.
+- [x] Exact PR #259 Browser Smoke run 42965155004 passed its DEX/Swap mobile checks, including compact navigation, Solana card tap/mint selection, desktop market table regression, chart defaults, 390px and 360px overflow, and first-fold checks.
+- [ ] The same Browser Smoke job failed only in the separate Jarrell's Peak mobile gameplay stage: 42,923,504-byte hero GLB download completed, but hero readiness remained false after 90 seconds; no failed GLB requests or browser errors were recorded. This is a gameplay asset/parse issue, not a DEX/Swap failure and is not a prerequisite for the active DEX/Swap/Login/Launchpad sprint.
+- [ ] Swap is NOT production-ready: signable-order and execution security review gates remain false; execution remains disabled. Missing proof includes per-DEX CPI/account-role schemas and token-movement/fee-destination validation, execution-time account/mint re-fetch, controlled Devnet wallet-sign → submit → confirm lifecycle, independent Solana security review, and verified Cloudflare production configuration.
+- [ ] Login remains unverified for production provider setup: confirm Supabase Google/X/Solana/Ethereum provider credentials, redirect allowlist, SMTP/email confirmation and real-account sign-in/session/cloud-save tests. Do not claim providers work solely because client code exists.
+- [ ] Launchpad remains Devnet preparation/read-only provenance work; verify current provider/API/on-chain config and controlled Devnet create/migrate/custody lifecycle before enabling any launch or mainnet action.
+
+**Next execution order (authoritative):**
+1. DEX: verify current-main production deployment and live provider behavior; close any remaining DEX-specific defects only.
+2. Swap: complete per-DEX account-role/fee/token-movement validation and execution-time re-fetch, add adversarial fixtures, then controlled Devnet lifecycle. Keep execution hard-gated.
+3. Login: configure and test real Supabase providers, redirects, email and account persistence.
+4. Launchpad: complete Devnet verification and custody/authority review after Swap safety.
+
+**Engineering rule:** do not commit a speculative fix. First reproduce locally or with a focused deterministic test, inspect exact source and failure logs, implement one isolated counter-fix, run targeted tests, then run Validate and the relevant Browser Smoke assertions on the exact head. A gameplay-only failure must be reported separately and must not be represented as a DEX/Swap failure. Never weaken or bypass the release gates to obtain a green workflow.
