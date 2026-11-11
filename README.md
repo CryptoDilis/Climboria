@@ -2,6 +2,16 @@
 
 ## 2026-11-11 12:57 +08 — DEX and Swap integrated on main
 
+## 2026-11-11 13:03 +08 — Jupiter route restriction merged (PR #254)
+
+- [x] PR #254 merged as commit 91fa0a6b6ebfc6c5b7306e6eef79ff9adfbc7e10.
+- [x] Added strict Jupiter metadata validation: only Metis router, v0, explicit non-gasless response, exact requested input amount, positive output/minimum output, minimum output not above quoted output, and a non-empty labeled route plan. JupiterZ, Dflow, OKX, v1, gasless and external fee-payer orders are rejected.
+- [x] Validate run 42962666262 passed on exact PR head 54c09592ea5321313c825dbea6fa22040c1c323b.
+- [x] Browser Smoke run 42962666212 passed Swap/DEX steps 8–15, including Worker security, fail-closed execution, Swap UI, live DEX discovery, responsive layouts and provider-error/empty states. Step 16 is the separate gameplay smoke and remains non-blocking for ecosystem work.
+- [ ] **Still not a live trading release:** program-specific decoding/validation of the Metis instruction and every DEX CPI/account role is not complete. Both signable-order issuance and execution remain hard-gated. No transaction is returned for wallet signing or submitted.
+- [ ] **Next active task:** build and test the Metis-only semantic instruction policy using raw instruction bytes and resolved accounts; reject unknown program/instruction families and validate mint/source/destination/amount/minimum output/fees/privileges before considering any gate change.
+
+
 **Current execution order remains DEX → Swap → Login → Launchpad. DEX and Swap code changes are merged; production DEX deployment and Swap transaction execution are not yet certified live. Gameplay remains a separate, non-blocking backlog.**
 
 ### Always-visible delivery checklist
@@ -18,7 +28,7 @@
 
 ### Next active task — P2 Swap semantic validation
 
-Implement a versioned, fail-closed semantic instruction policy using the retained raw instruction bytes plus resolved static/loaded account keys. Cover supported Jupiter route families and reject unknown programs/instructions. Add adversarial cases for wrong mint/amount/minimum output, unexpected transfers/approvals, fee redirection, writable/signer escalation and unsupported Token-2022 behavior. Keep both hard source gates closed until independent review and controlled Devnet acceptance pass.
+Implement a versioned, fail-closed Metis-only semantic instruction policy using retained raw instruction bytes plus resolved static/loaded account keys. Decode each supported Metis route and its DEX CPI/account roles; reject unknown programs/instructions. Add adversarial cases for wrong mint/amount/minimum output, unexpected transfers/approvals, fee redirection, writable/signer escalation and unsupported Token-2022 behavior. Keep both hard source gates closed until independent review and controlled Devnet acceptance pass.
 
 **Important:** PR #253 is merged, but this does not mean wallet swaps are enabled. The quote/search path is read-only; signable order issuance and transaction submission remain blocked.
 
