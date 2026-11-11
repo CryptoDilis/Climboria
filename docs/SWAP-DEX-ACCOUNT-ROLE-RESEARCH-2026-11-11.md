@@ -802,3 +802,55 @@ Security boundary remains unchanged: production validator accepts only the legac
 - Latest PR head at this checkpoint: `44b6e7cb27acad3c9d95edef14b2d606daf1ea01`. The GitHub commit-associated workflow query did not yet return a run for this latest change; check again before claiming exact-head verification.
 - No runtime swap policy or allowlist changed. route_v2 remains diagnostic-only/rejected by the production legacy-route validator; byte 181 remains unmapped. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false` remain unchanged.
 - Next: inspect the Jupiter IDL History Audit run and raw artifacts; diagnose any API retrieval failure from its exact response/logs; verify schema source, authority, revision slot and discriminator before decoding any route step. Continue to keep gameplay, production deployment, Devnet settlement, and signing/execution as separate release gates.
+
+
+
+## 2026-11-12 — Slot-matched Jupiter route_v2 IDL decoded the historical candidate
+
+### Workflow and artifact evidence
+
+- IDL History Audit run `43072350854`, job `130703269206`: SUCCESS; syntax check, current/history fetch, and artifact upload all completed.
+- Artifact `13879226571`, name `jupiter-idl-history`, size 168,679 bytes, GitHub artifact digest `sha256:266cace457f79abfbecf2f78cf80969bfef4cef243d9cd4482fc39841b51f924`.
+- Raw latest response SHA-256: `5d050087fcf291e0f45ff82c4c6f1ce16c5eb15adec98084658ce00c6ccd73ef`.
+- Raw history response SHA-256: `5cda5a325381b135af7f285a2ff24fc1f8b0f4fb983903c3f928e157d2213cc9`.
+- Matching IDL content SHA-256: `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981`.
+- Explorer returned Anchor metadata account address `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`, type `anchor`, version `0.1.0`, `valid=true` on latest. The history entry was active from slot `467726546` (2026-11-10 12:49:47) through current. Candidate transaction slot `468153382` is within that active interval.
+- The Explorer response did not supply an authority field for the history entry. Do not invent one or treat the indexer's metadata as deployed-binary attestation.
+
+### Exact schema match and Borsh decode
+
+- Historical `route_v2` discriminator: `bb64facc31c4af14`, exact match to candidate instruction bytes.
+- `route_v2` argument layout: `in_amount:u64`, `quoted_out_amount:u64`, `slippage_bps:u16`, `platform_fee_bps:u16`, `positive_slippage_bps:u16`, `route_plan:Vec<RoutePlanStepV2>`.
+- `RoutePlanStepV2`: `swap:Swap`, `bps:u16`, `input_index:u8`, `output_index:u8`.
+- Active revision `Swap` enum has 211 variants. Zero-based variant **181 is `KipseliV3`**, with field `is_base_to_quote:bool`. This corrects the earlier unresolved/incorrectly tentative enum mapping using a version-pinned, slot-matched schema.
+- Candidate payload decoded completely: 69 bytes, no trailing/unconsumed bytes.
+- Top-level arguments: `in_amount=99,550,000`, `quoted_out_amount=2,342,002,513,618`, `slippage_bps=2000`, `platform_fee_bps=10`, `positive_slippage_bps=0`, four route steps.
+- Decoded route steps:
+  1. enum 181 `KipseliV3`, `is_base_to_quote=true`, `bps=10000`, input 0 → output 1.
+  2. enum 47 `WhirlpoolSwapV2`, `a_to_b=false`, `remaining_accounts_info=None`, `bps=1014`, input 1 → output 3.
+  3. enum 75 `MeteoraDlmmSwapV2`, `remaining_accounts_info.slices=[]`, `bps=8986`, input 1 → output 3.
+  4. enum 81 `RaydiumLaunchlabBuy`, `share_fee_rate=0`, `bps=10000`, input 3 → output 4.
+- The two parallel branches in steps 2 and 3 sum to 10,000 bps (1,014 + 8,986). This is consistent with the route-plan token-index graph; it does not prove how Jupiter slices outer remaining accounts for every route shape.
+- Candidate trace's direct stack-height-2 CPI order is Kipseli (inner 0), Orca Whirlpool (inner 3), Meteora DLMM (inner 6), and Raydium LaunchLab (inner 11). This order aligns with the four decoded adapters in this transaction. Treat it as transaction-specific corroboration, not universal dispatch proof.
+
+### Decoder and regression coverage added
+
+- Added `dex/swap-proxy/tools/decode-jupiter-route-v2-candidate.mjs`, which selects exactly one history revision active at the candidate slot, verifies the discriminator, decodes route arguments and enum payloads from the IDL, rejects unconsumed bytes, and reports direct CPI order with explicit interpretation limits.
+- Added `dex/swap-proxy/test/jupiter-route-v2-idl.test.mjs` for the four-step candidate payload, decoded enum names/fields/BPS/token indexes, slot coverage, and rejection of an expired IDL revision.
+- Updated the IDL fetcher to include historical slot/time/active interval, metadata account address, the relevant `RoutePlanStepV2` shape, 211-variant enum count, and variants 47/75/81/181 in the compact summary. It now exits nonzero unless exactly one matching historical revision covers the candidate slot.
+- The raw artifact is retained by GitHub Actions for 30 days. The compact schema hashes and findings are recorded here; raw response hashes are preserved above.
+
+### Exact-head CI after decoder/test changes
+
+- PR head at this checkpoint: `39fb8877af0915369dbe596c787fcc16a21ec6d9`.
+- Validate `43073364769` and IDL History Audit `43073364671` were in progress at the latest poll; Browser Smoke `43073364620` and Jupiter CPI Trace Audit `43073364708` were pending. Do not claim exact-head verification until all finish.
+- Prior head `dac09c47e75b0ba2dd5bc81c853a131fd655feb2` had Validate `43072350909`, Browser Smoke `43072350777`, IDL History Audit `43072350854`, and Jupiter CPI Trace Audit `43072350903` all SUCCESS; all job steps completed. No failed job existed on that head.
+
+### Remaining evidence limits / safety decision
+
+- The IDL Explorer history is slot-indexed and its schema matches the candidate discriminator and active slot, but the returned metadata did not include the IDL authority. Verify the metadata account's on-chain owner/data/authority and compare the IDL revision to the program deployment/ProgramData metadata before claiming binary provenance.
+- Solana transaction RPC does not expose CPI-requested signer/writable AccountMeta flags. Outer message privileges remain only upper bounds.
+- The decoded route plan and CPI order do not prove adapter-specific remaining-account cursor boundaries or runtime implementation semantics across all routes.
+- Keep `route_v2` diagnostic-only and rejected by the production legacy-route validator. Do not add KipseliV3, WhirlpoolSwapV2, MeteoraDlmmSwapV2, or RaydiumLaunchlabBuy to an execution allowlist based solely on this decode.
+- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, and `EXECUTION_ENABLED=false`. No signing, execution, deployment, or production approval.
+- Next: finish exact-head CI; verify Anchor IDL metadata account owner/authority and program deployment provenance; obtain CPI-requested privileges; expand route-shape samples; controlled Devnet reproduction; independent Solana security review.
