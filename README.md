@@ -3478,3 +3478,5 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Inspect artifact 13823051255 and reproduce the mobile path before implementing a distinct counter-fix.
 
 **Exact next tasks:** (1) inspect PR #242 artifact and trace mobile saved-hero/GLB loading; (2) reconcile #233 R1 and #235 order-binding code onto current main; (3) implement R2 semantic validation as a separate reviewed layer. Swap execution remains disabled.
+- [x] Downloaded and inspected artifact 13823051255: it contains only seven PNGs (desktop home/gameplay/cave entrance/cave interior, mobile home, desktop/mobile DEX social); mobile gameplay and mobile cave images are absent, confirming capture stopped before those screenshots.
+- [x] Desktop gameplay visual review: the avatar appears to intersect/extend below the front edge of the sanctuary platform in the capture. Track as a separate gameplay visual defect; do not conflate it with the mobile GLB initialization failure.
