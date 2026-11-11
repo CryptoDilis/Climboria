@@ -1,4 +1,5 @@
 import test from "node:test";
+import { fetchMeteoraAccountInfo, inspectMeteoraAccount, METEORA_DLMM_PROGRAM_ID, METEORA_BIN_ARRAY_DISCRIMINATOR } from "../tools/audit-meteora-bin-array.mjs";
 import { buildJupiterV6TraceReport, fetchJupiterV6Trace, JUPITER_V6_PROGRAM_ID as TRACE_JUPITER_PROGRAM_ID } from "../tools/audit-jupiter-v6-rpc.mjs";
 import assert from "node:assert/strict";
 import { decodeBase58, encodeBase58 } from "../src/transaction-validation.mjs";
@@ -258,6 +259,68 @@ test("fetches only finalized raw JSON transaction metadata and supports version 
   assert.equal(report.signature, "trace-signature");
   await assert.rejects(
     () => fetchJupiterV6Trace("trace-signature", "http://insecure.example.invalid", async () => ({ ok: true, json: async () => ({}) })),
+    /HTTPS Solana RPC endpoint/
+  );
+});
+
+
+test("identifies a Meteora BinArray only when owner and Anchor discriminator both match", () => {
+  const bytes = Buffer.from([...METEORA_BIN_ARRAY_DISCRIMINATOR, 1, 2, 3, 4]);
+  const report = inspectMeteoraAccount("bin-array-account", {
+    owner: METEORA_DLMM_PROGRAM_ID,
+    executable: false,
+    lamports: 1234,
+    space: bytes.length,
+    data: [bytes.toString("base64"), "base64"]
+  });
+  assert.equal(report.found, true);
+  assert.equal(report.matchesBinArray, true);
+  assert.equal(report.matchesBitmapExtension, false);
+  assert.equal(report.dataLength, bytes.length);
+});
+
+test("does not classify a matching discriminator owned by another program as a Meteora BinArray", () => {
+  const bytes = Buffer.from([...METEORA_BIN_ARRAY_DISCRIMINATOR, 1, 2, 3, 4]);
+  const report = inspectMeteoraAccount("spoofed-account", {
+    owner: "NotMeteoraProgram",
+    executable: false,
+    lamports: 1234,
+    space: bytes.length,
+    data: [bytes.toString("base64"), "base64"]
+  });
+  assert.equal(report.matchesBinArray, false);
+});
+
+test("fetches finalized account data and rejects insecure RPC URLs", async () => {
+  let request;
+  const bytes = Buffer.from([...METEORA_BIN_ARRAY_DISCRIMINATOR, 1, 2, 3, 4]);
+  const report = await fetchMeteoraAccountInfo(
+    "bin-array-account",
+    "https://rpc.example.invalid",
+    async (_url, options) => {
+      request = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          result: {
+            value: {
+              owner: METEORA_DLMM_PROGRAM_ID,
+              executable: false,
+              lamports: 1234,
+              space: bytes.length,
+              data: [bytes.toString("base64"), "base64"]
+            }
+          }
+        })
+      };
+    }
+  );
+  assert.equal(request.method, "getAccountInfo");
+  assert.equal(request.params[1].commitment, "finalized");
+  assert.equal(request.params[1].encoding, "base64");
+  assert.equal(report.matchesBinArray, true);
+  await assert.rejects(
+    () => fetchMeteoraAccountInfo("bin-array-account", "http://insecure.example.invalid"),
     /HTTPS Solana RPC endpoint/
   );
 });
