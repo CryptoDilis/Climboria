@@ -306,3 +306,29 @@ Initial authoritative-source findings:
 - This is a narrow parser/test consistency fix; it does not add DEX account-role approval or alter either execution/signable-order gate.
 - Exact-head CI before this cleanup: Validate `43018658281` and Browser Smoke `43018658229` both SUCCESS on `3a1f9575978e510990e17c5bd73b6a5e5f8de71f`.
 - [ ] Rerun exact-head Validate and DEX/Login Browser Smoke for this cleanup commit; record full results.
+
+
+## Progress addendum — exact-head boolean payload regression verification — 2026-11-11 20:28 PHT
+
+### CI results for parser cleanup commit `23f302ebdd767457b4d55175d3a90417eda44e50`
+- Validate run `43019183081`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43019183081
+- DEX/Login Browser Smoke run `43019183101`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43019183101
+- Browser smoke functional steps 1–16 all passed; screenshot upload succeeded.
+- Parser regression now verifies both:
+  - Jupiter variant 61 (SolFi) is rejected as unsupported.
+  - Whirlpool variant 17 rejects direction payload values outside boolean `0|1`.
+- No retry, timeout extension or acceptance-criteria relaxation was used.
+- The CI pass verifies structural/parser and browser regressions only; it does not establish DEX CPI account-role semantics or authorize live swap execution.
+
+### Current repository/PR status
+- PR #268: `open`, draft=`true`, head `23f302ebdd767457b4d55175d3a90417eda44e50`, base `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- Main SHA: `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf` (unchanged from the integration baseline).
+- [x] Exact-head Validate and DEX/Login Browser Smoke passed on `23f302e`.
+- [ ] Next DEX task: prove the Jupiter V6 route variant-to-CPI dispatch and exact outer remaining-account slicing against a version-matched authoritative source or deployed transaction evidence. Current public source snapshots do not establish this mapping.
+- [ ] Resolve Meteora DLMM CPI/direct-IDL writable/optional/signer discrepancies and verify exact deployed Jupiter version.
+- [ ] Only after proof, implement per-DEX pool/mint/vault/PDA/account-owner validation with adversarial fixtures. Keep signable-order and execution gates closed.
+- [ ] Then controlled Devnet token movement and fee-destination proof; production Cloudflare deployment verification; production Login verification; Launchpad lifecycle/Devnet proof.
+- [ ] Separate mobile GLB instrumentation and optimization remains a game blocker, not part of this DEX PR.
+
