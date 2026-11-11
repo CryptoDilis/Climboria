@@ -93,13 +93,13 @@ test("blocks swap execution by default even when a signed payload is supplied", 
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: Buffer.alloc(100, 7).toString("base64"), orderToken: "00000000-0000-4000-8000-000000000001" }) });
   const res = await worker.fetch(req, { ALLOWED_ORIGINS: origin, JUPITER_API_KEY: "test-server-key", RATE_LIMITER: env.RATE_LIMITER });
   assert.equal(res.status, 503);
-  assert.match((await res.json()).error, /disabled pending security review/i);
+  assert.match((await res.json()).error, /semantic instruction validation/i);
 });
 
 test("rejects malformed execute payload", async () => {
   const req = new Request("https://worker.test/api/swap/execute", { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify({ signedTransaction: "not-base64", requestId: "request-123456" }) });
   const res = await worker.fetch(req, env);
-  assert.equal(res.status, 400);
+  assert.equal(res.status, 503);
 });
 
 test("requires a server-issued order token even if a caller supplies a Jupiter request ID", async () => {
