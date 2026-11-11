@@ -3,6 +3,7 @@ import { encodeBase58 } from "./transaction-validation.mjs";
 export const JUPITER_V6_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 export const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
+export const JUPITER_V6_EVENT_AUTHORITY = "D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf";
 
 const ROUTE_DISCRIMINATOR = [229, 23, 203, 151, 122, 227, 173, 42];
 const SUPPORTED_SWAP_VARIANTS = new Map([
@@ -147,29 +148,33 @@ export function validateJupiterV6Transaction({
   }
   const accountKeys = instruction.accountIndexes.map(index => keys[index]);
   const accountMetas = instruction.accountIndexes.map(index => metaFor(parsed, index, loadedWritable, loadedReadonly));
-  if (accountKeys.length < 8) fail("Jupiter route instruction is missing required accounts");
+  if (accountKeys.length < 10) fail("Jupiter route instruction is missing required fixed or DEX accounts");
   // For the supported no-fee/no-extra-destination-account route shape, Anchor encodes
   // both absent optional accounts (destinationTokenAccount and platformFeeAccount)
   // as the Jupiter program ID sentinel. The top-level program ID is instruction.programIdIndex,
   // not an account meta in this fixed account list.
   if (accountKeys[0] !== TOKEN_PROGRAM_ID || accountKeys[1] !== taker ||
       accountKeys[5] !== outputMint || accountKeys[4] !== JUPITER_V6_PROGRAM_ID ||
-      accountKeys[6] !== JUPITER_V6_PROGRAM_ID) {
-    fail("Jupiter route account roles do not match the taker, token program and output mint");
+      accountKeys[6] !== JUPITER_V6_PROGRAM_ID ||
+      accountKeys[7] !== JUPITER_V6_EVENT_AUTHORITY ||
+      accountKeys[8] !== JUPITER_V6_PROGRAM_ID) {
+    fail("Jupiter route fixed account roles do not match the taker, token program, output mint, event authority and program");
   }
   if (!accountMetas[1].signer || accountMetas[2].signer || accountMetas[3].signer || !accountMetas[2].writable || !accountMetas[3].writable ||
       accountMetas[0].signer || accountMetas[0].writable || accountMetas[5].writable ||
-      accountMetas[4].writable || accountMetas[6].writable) {
+      accountMetas[4].writable || accountMetas[6].writable ||
+      accountMetas[7].signer || accountMetas[7].writable ||
+      accountMetas[8].signer || accountMetas[8].writable) {
     fail("Jupiter route account signer/writable privileges are unexpected");
   }
-  for (let i = 7; i < accountMetas.length; i++) {
+  for (let i = 9; i < accountMetas.length; i++) {
     if (accountMetas[i].signer) fail("DEX remaining accounts must not introduce additional signers");
   }
-  const remainingAccountKeys = instruction.accountIndexes.slice(7).map(index => keys[index]);
+  const remainingAccountKeys = instruction.accountIndexes.slice(9).map(index => keys[index]);
   for (const dexProgramId of route.dexProgramIds) {
     const relativeIndex = remainingAccountKeys.indexOf(dexProgramId);
     if (relativeIndex < 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
-    if (accountMetas[7 + relativeIndex].writable) fail("DEX program accounts must be readonly");
+    if (accountMetas[9 + relativeIndex].writable) fail("DEX program accounts must be readonly");
   }
   return { ok: true, route, sourceTokenAccount: accountKeys[2], destinationTokenAccount: accountKeys[3] };
 }
