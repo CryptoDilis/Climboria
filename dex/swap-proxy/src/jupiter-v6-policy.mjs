@@ -113,6 +113,7 @@ export function validateJupiterV6Transaction({
   for (const instruction of parsed.instructions) {
     const programId = keys[instruction.programIdIndex];
     if (programId === COMPUTE_BUDGET_PROGRAM_ID) {
+      if (instruction.accountIndexes.length !== 0) fail("Compute Budget instructions must not reference accounts");
       const data = instruction.data;
       if (data.length === 5 && (data[0] === 2 || data[0] === 4)) {
         const limit = readU32(data, 1);
@@ -151,8 +152,9 @@ export function validateJupiterV6Transaction({
   for (let i = 7; i < accountMetas.length; i++) {
     if (accountMetas[i].signer) fail("DEX remaining accounts must not introduce additional signers");
   }
+  const remainingAccountKeys = instruction.accountIndexes.slice(7).map(index => keys[index]);
   for (const dexProgramId of route.dexProgramIds) {
-    const relativeIndex = accountKeys.slice(7).indexOf(dexProgramId);
+    const relativeIndex = remainingAccountKeys.indexOf(dexProgramId);
     if (relativeIndex < 0) fail("Jupiter route is missing its approved DEX program account: " + dexProgramId);
     if (accountMetas[7 + relativeIndex].writable) fail("DEX program accounts must be readonly");
   }
