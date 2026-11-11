@@ -243,3 +243,26 @@ Initial authoritative-source findings:
 - Passing rerun on unchanged product/test behavior: https://github.com/CryptoDilis/Climboria/actions/runs/43017888356
 - Validate on the rerun head: https://github.com/CryptoDilis/Climboria/actions/runs/43017888405
 - This finding and counter-fix are isolated to the DEX browser smoke history test; the unrelated mobile GLB game blocker remains tracked in the dedicated game workflow.
+
+
+## Progress addendum — DEX history test counter-fix verified — 2026-11-11 20:18 PHT
+
+### Exact-head CI after targeted test counter-fix — PR #268 / head `c2d1873b67ed886f543bb5d991f80f6ab7deb2f4`
+- Validate run `43018184527`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43018184527
+- DEX/Login Browser Smoke run `43018184627`: SUCCESS on the same exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43018184627
+- All 16 functional browser steps passed; screenshot upload succeeded. Step 12 DEX market/quote-preview history test passed with the targeted test adjustment.
+- Counter-fix commit: `c2d1873b67ed886f543bb5d991f80f6ab7deb2f4` — removed the redundant synthetic same-URL history push and added popstate/history-state diagnostics to strict Back/Forward timeout paths. No product behavior was relaxed, no retry was added, and the 10-second assertions remain unchanged.
+- This addresses the identified test-harness ambiguity. The earlier one-off forward-history timeout on `c22d327` remains recorded as intermittent; this passing run verifies the targeted counter-fix on the exact new head.
+- The dedicated game workflow was not triggered by this DEX-only PR; the mobile GLB game blocker remains unresolved and independently enforced when game/character assets change.
+
+### Current state / next task
+- PR #268 remains open, draft and unmerged. Main remains `41be0f9a79c08a3bd21556ebf7c476ee128ff9bf`.
+- [x] DEX/Login Browser Smoke workflow scope separated from strict gameplay smoke.
+- [x] Validate and DEX/Login Browser Smoke both passed on `c2d1873`.
+- [ ] Continue version-pinned Jupiter V6 route-variant-to-CPI mapping and outer remaining-account slice proof; do not guess account offsets.
+- [ ] Resolve Meteora CPI/direct-IDL privilege/optional-account discrepancies and find an authoritative SolFi CPI schema before any role-policy implementation.
+- [ ] Add adversarial per-DEX account-role validation only for proven mappings; keep signable-order and execution kill switches closed.
+- [ ] Then controlled Devnet token movement/fee-destination proof, production Cloudflare verification, production Login verification, and Launchpad lifecycle/Devnet proof.
+- [ ] Keep mobile GLB instrumentation/texture optimization as a separate game blocker after ecosystem priorities.
