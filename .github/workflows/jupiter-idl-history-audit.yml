@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
       - "dex/swap-proxy/tools/legacy-anchor-idl-account.mjs"
       - "dex/swap-proxy/tools/spl-token-account-summary.mjs"
       - ".github/workflows/jupiter-idl-history-audit.yml"
@@ -38,6 +40,8 @@ jobs:
           node-version: 22
       - name: Syntax-check IDL history audit utility
         run: node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+      - name: Test DEX adapter IDL evidence classifications
+        run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs
       - name: Fetch Jupiter and DEX CPI IDL history records
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Upload raw responses and schema summary
