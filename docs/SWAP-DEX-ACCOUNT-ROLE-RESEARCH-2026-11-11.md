@@ -614,3 +614,13 @@ Important evidence limitation: the artifact belongs to the default newest-five d
 Next action: manually dispatch the audit workflow with a finalized Meteora signature cursor; inspect and record the actual `before`, `transactionsScanned`, `matchingRoutes`, `rateLimited`, and `rateLimitedMethod` values. Keep the cursor task pending until then.
 
 No failed jobs exist on this exact head, so no failure diagnosis/retry was needed. Continue investigating exact CPI-requested signer/writable flags and the remaining route-variation, binary-provenance, Devnet, and independent-review gaps. Variant 75 remains excluded; signing and execution gates remain false.
+
+
+## Verification of continuation documentation head — 2026-11-11
+
+After recording the continuation checkpoint, the documentation tree at head `21e65b17b968d19b54d84c1e74c58390b2c494e2` passed:
+- Validate `43035310603` / job `130572489108`: SUCCESS; all 15 steps.
+- Browser Smoke `43035310495` / job `130572489503`: SUCCESS; all 20 steps, including DEX/Swap, auth isolation, responsive mobile, provider-state and screenshot checks.
+- Jupiter CPI Trace Audit `43035310502` / job `130572477387`: SUCCESS; all 8 steps.
+
+The audit continues to run its default newest-five scan because no manual workflow dispatch was available. Its `before` cursor was not set, so the older-cursor scan remains pending. No workflow failures occurred on this documentation head. Keep all CPI approval and execution/signing restrictions unchanged.
