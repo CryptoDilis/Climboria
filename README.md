@@ -3560,3 +3560,13 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [ ] Next exact job: poll PR #245 Validate + Browser Smoke. If either fails, fetch that exact failing step/log, diagnose root cause, patch the new branch with a distinct counter-strategy, and rerun. If successful, download and inspect desktop/mobile Sanctuary screenshots for centered landing placement, then reconcile branch base against latest main before merge.
 
 **No feature disablement or acceptance-criteria reduction.** DEX discovery and Swap quote preview remain live/read-only where implemented; wallet transaction execution remains fail-closed pending R1–R4 proof. No production-live Login or Launchpad claim.
+
+### Current-main Sanctuary integration — 2026-11-11
+
+- [x] PR #242 marked ready and merged after exact-head Validate + Browser Smoke both passed and all 10 expected desktop/mobile/cave screenshots were reviewed. Squash merge: 66909629ea0fcf9dec75b0e9002a776072fe9b57.
+- [x] Main post-merge Validate run 42948561557: SUCCESS. Main Browser Smoke 42948561787 and Pages deployment 42948561382: IN PROGRESS at checkpoint.
+- [x] Rebased the Sanctuary counter-fix strategy cleanly by creating PR #246 from current main (merge 6690962), not the stale #242 feature branch. This removes duplicate workflow changes and preserves the validated orientation + DEX bootstrap tests already merged.
+- [x] PR #246 exact head 44bda07b651f7a4e10fdf516da6cdbe5bfa4a15c; only two intended files changed: game/play.html and .github/scripts/game-smoke.mjs. Validate 42948629207 and Browser Smoke 42948629303 queued at checkpoint.
+- [ ] Monitor PR #246 exact-head checks and main post-merge workflow. Review desktop/mobile screenshot artifact to confirm avatar is centered on the Sanctuary landing. Do not merge before screenshot evidence.
+- [ ] Close/supersede PR #244 (old orientation harness) and PR #245 (duplicate branch from pre-squash PR #242) once PR #246's exact-head test results are captured. Keep only one authoritative Sanctuary implementation.
+- [ ] After #246 is verified, port only the two DEX market discovery files from #243 onto latest main and rerun exact-head tests.
