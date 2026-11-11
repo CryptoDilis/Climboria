@@ -3314,3 +3314,13 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - [!] Swap execution remains fail-closed. The known ALT resolution, semantic instruction policy, controlled Devnet lifecycle, and production Cloudflare prerequisites remain release blockers.
 
 **Exact next task:** poll Browser Smoke `42941085361` and job `130262796202` until terminal. On failure, retrieve the completed job log and screenshot/diagnostic artifacts, identify the new root cause, and implement a distinct targeted fix (never repeat the orientation or DEX-bootstrap patches). On success, download and inspect the artifact, record the visual findings, then re-evaluate PR #242 against current main before merging. Continue the DEX/Swap security integration only after this acceptance gate.
+
+
+### Priority correction — user-confirmed delivery order (2026-11-11)
+
+- [x] Updated `docs/RELEASE-PRIORITY-2026-11-10.md` in commit `e64f6247b7e63f50dc21ee7e614714f7c292800e` to make the user's current order authoritative: **DEX → Swap → Launchpad → Login**.
+- [x] DEX is now P0; Swap P1; Launchpad P2; production account login (Guest/email/Google/X) P3; cross-product acceptance P4; game focus P5.
+- [x] Portfolio & Rewards Tracker is explicitly deferred as a separate workstream, not removed. Rewards/claims remain disabled until trusted identity, pricing, ledger and settlement evidence exist.
+- [!] Existing Swap execution security gates remain unchanged: frontend and Worker execution disabled until ALT resolution, instruction semantics, independent review, controlled Devnet lifecycle and production prerequisites are accepted.
+
+**Exact next task:** finish Browser Smoke `42941085361` and inspect its gameplay screenshots; then resume P0 DEX live market discovery/profile/chart validation, not mock/demo behavior. Keep Swap signing/execution disabled while resolving its independent security gates.
