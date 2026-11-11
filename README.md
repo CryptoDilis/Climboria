@@ -4375,3 +4375,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [x] Updated detailed research checkpoint in commit 3af3d48f261e4c12bd71fe698ee0a2ab8925ed05.
 - [ ] Next: obtain a pinned deployed Jupiter route_v2 enum/IDL for byte 181, decode all four route steps, collect more Meteora BinArray samples, and obtain CPI signer/writable evidence. Keep all execution/signing gates false.
 - [ ] Separately run/verify Jarrell's Peak gameplay smoke and production hosting checks. Do not claim live DEX/Swap execution or production release from CI.
+
+
+### Documentation-head handoff — 2026-11-12
+
+- [x] Research detail commit: 3af3d48f261e4c12bd71fe698ee0a2ab8925ed05.
+- [x] README checkpoint commit: 83623290525bd786d3d2e61119326ea8530d30ea.
+- [!] No workflow runs are currently associated with documentation-only commit 8362329. The latest verified executable/code tree remains bff9811e4d691e1cbff7b4efda590a82d1ab844d, with Validate 43039523013, Browser Smoke 43039523019 and Jupiter CPI Trace Audit 43039523256 all successful. The two subsequent commits only changed README/research documentation; do not claim fresh exact-head CI on 8362329.
+- [ ] At next continuation, recheck PR #268 branch head and workflow inventory; continue from authoritative deployed route_v2 enum resolution, not from assumptions about Kipseli.
