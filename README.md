@@ -3815,3 +3815,36 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] Continue release work in the agreed order DEX → Swap → Login → Launchpad. Keep security gates closed and do not label any subsystem production-live until its external deployment/provider/Devnet acceptance evidence exists.
 
 **Engineering rule:** diagnose the failing step and exact head first; implement one evidence-based counter-fix; run targeted tests and exact-head Validate/Browser Smoke; record run IDs, conclusions, blockers, and next task. Never repeat an attempted patch without a new root-cause reason, and never weaken acceptance criteria to manufacture a green workflow.
+
+
+## 2026-11-11 13:40 +08 — mobile GLB failure isolated; phase-diagnostic PR #261 opened
+
+**Latest evidence:** Browser Smoke `42965936635` is terminal FAILURE, but only at gameplay step 17. Steps 7–16 (mocked Login/account isolation, DEX routing/proxy, Swap fail-closed behavior, market discovery and mobile layouts) all passed. Screenshot artifact `13831592936` uploaded successfully.
+
+### Exact failure evidence
+
+- [x] Mobile GLB resource completed: `assets/characters/Climboria_Hero.glb`, decoded body `42,923,204` bytes, transfer size `42,923,504` bytes.
+- [x] No failed GLB requests and no browser errors.
+- [x] At timeout: `selectedHero=loading-adventurer`, renderer `awaiting-saved-glb`, asset `null`, `heroReady=false`, `glbRenderer=null`, `cameraHero=false`, 48 render frames.
+- [x] Desktop gameplay and desktop captures completed; mobile world/HUD/canvas and screenshot capture completed before strict GLB readiness assertion failed.
+- [x] Root-cause boundary: download completion is proven; the current failure evidence does **not** distinguish GLTFLoader parse/decode from scene setup. Do not label it a network/download failure or guess at the production fix.
+
+### Evidence-based counter-strategy — PR #261
+
+- [x] Opened draft PR #261 from current main commit `b418d045a96ccb2dec1a6e4514c5d91222c5c7a9`: https://github.com/CryptoDilis/Climboria/pull/261.
+- [x] Ported diagnostic-only phase telemetry to `game/play.html`: request, progress, parse start/complete/error, bounds computation, scaling, mesh traversal, scene attach, animation rig and ready.
+- [x] Extended the strict Browser Smoke failure payload to include loader phase and elapsed time.
+- [x] No production loading behavior, timeout, fallback renderer, readiness gate, gameplay mechanics, or acceptance criteria changed. This PR is observability only.
+- [ ] Await exact-head Validate and Browser Smoke on `dac3b94359cfde712cbfb53b191c15f6e8d74979`. The commit-triggered workflow lookup has not yet returned run IDs at checkpoint time; retrieve the PR checks/runs and record terminal evidence.
+- [ ] If the new smoke fails, use `loaderDiagnostics.phase` to select a distinct production counter-fix: request/progress, parser, bounds/scale, mesh traversal, scene attachment, or animation rig. Do not increase timeouts or accept the fallback.
+- [ ] Keep PR #261 draft and do not merge until exact-head validation and diagnostic evidence are reviewed.
+
+### Ecosystem status preserved
+
+- [x] PR #260 Login implementation merged; exact-head Validate `42965936688` passed. Browser auth/account-isolation steps 7 on run `42965936635` passed, but production Supabase OAuth/SMTP/provider configuration and real-account tests remain external release blockers.
+- [x] DEX and Swap browser assertions passed on run `42965936635` steps 8–16; this does not certify production DEX deployment or enable Swap execution.
+- [ ] Swap signing/execution remains hard-gated pending complete CPI/account-role/token-movement/fee validation, execution-time re-fetch, controlled Devnet lifecycle, production Cloudflare verification and independent Solana security review.
+- [ ] Launchpad PR #251 provenance/preparation workflows passed, but production custody and full Devnet create→bonding-curve→migration→LP lifecycle remain unverified.
+- [ ] DEX live deployment/provider verification remains open.
+
+**Next exact task:** retrieve PR #261 exact-head workflow results. On failure, inspect the new `loaderDiagnostics.phase` and logs, then implement only the evidence-supported production fix. Keep the order DEX → Swap → Login → Launchpad; gameplay GLB is a separately diagnosed issue and must not be misreported as an ecosystem regression.
