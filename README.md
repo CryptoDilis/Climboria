@@ -3513,3 +3513,21 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 2. If successful, review artifact/screenshots, then record final Browser Smoke pass and artifact ID on this checkpoint.
 3. After DEX/Swap browser acceptance, continue Swap R1/R2 trusted ALT resolution and instruction-semantic review; keep execution disabled until independent review and controlled Devnet lifecycle acceptance.
 4. Continue Launchpad program/custody/migration blockers, then real Auth provider/account acceptance.
+
+## 2026-11-11 — Browser Smoke retry completed successfully (attempt 2)
+
+- [x] Rechecked the exact active retry instead of starting another run. Workflow run [42923405917](https://github.com/CryptoDilis/Climboria/actions/runs/42923405917), attempt **2**, tested code SHA `8050573d89bc3fa0bb3238d52353d0c909e20320`, completed with conclusion **SUCCESS**.
+- [x] All 19 workflow steps passed. This includes homepage/DEX routing and the deterministic DEX search-race regression; Supabase Auth client/sign-in choices; Cloudflare DEX proxy and fail-closed Swap execution checks; standalone Swap and DEX shells; desktop/mobile DEX; 390px/360px layouts; provider error/empty states; cloud-save initialization; authenticated cloud-save load/insert/update/conflict fixtures; and Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] The earlier attempt 1 cancellation at Jarrell's Peak gameplay was not treated as a failure. Attempt 2 reran the job and completed the gameplay step successfully. The separate superseded run remains a cancellation, not a pass/fail.
+- [x] Screenshot artifact [13814400686](https://github.com/CryptoDilis/Climboria/actions/runs/42923405917) downloaded and inspected: 11 screenshots covering desktop/mobile home, DEX token socials, auth modal, Jarrell's Peak gameplay, cave entrance and cave interior. Both desktop and mobile gameplay/cave captures were produced. This is automated browser viewport evidence, not physical Redmi 14 5G acceptance.
+- [!] DEX token/social screenshots use synthetic test fixtures. They verify UI and test routing only; they do not establish live provider uptime, real token discovery, or production chart data. Real Solana/Base provider validation remains open.
+- [!] This run tested code SHA `8050573d89bc3fa0bb3238d52353d0c909e20320`. The current PR branch tip is a later README-only checkpoint commit `fb18fa3887beb62dfee737dc13b065c228a52f39`; no application code changed after the tested code SHA. Validate on the README-only tip also completed SUCCESS in run `42923938297`.
+- [!] PR #236 remains open and mergeable; this checkpoint does not claim that the PR was merged or that production services are live.
+
+### Exact next actions
+
+1. DEX: test real Solana and Base token-pairs responses from a network-enabled production/browser environment; record response shape, latency, 429/5xx behavior, no-pool behavior and selected chart identity. Do not treat synthetic fixture screenshots as live acceptance.
+2. Swap: continue R1 trusted RPC Address Lookup Table resolution and R2 instruction/program/account/amount/slippage/fee-destination semantic policy. Keep execution disabled until independent review, controlled Devnet sign/execute/confirm/replay/timeout/uncertain-settlement tests, and Cloudflare production controls all pass.
+3. Launchpad: resolve deployed program provenance, LP Lock IDL, fee receiver custody/governance, migration scale and Fee Key NFT custody before calling token creation/launch live.
+4. Login: complete owner-side Supabase Site URL/redirect, SMTP/email confirmation, Google OAuth and X OAuth credentials/provider configuration, SIWS/SIWE settings, then controlled-account/device acceptance. Physical Redmi 14 5G test remains outstanding.
+5. When any future check fails, inspect that exact step and logs, identify a new root cause, implement a targeted counter-strategy, and rerun the relevant checks. Do not recommit the same attempted code without a fresh diagnosis.
