@@ -3899,3 +3899,11 @@ The user's active delivery order supersedes older locked-priority notes for this
 - [ ] PR #263 exact-head Validate and Browser Smoke are not yet visible in commit-associated workflow results; confirm PR checks start and record their run IDs before claiming verification.
 - [ ] Earlier PR #262 Browser Smoke `42967445978`, job `130347847200`, still reports gameplay step 17 IN PROGRESS and screenshot step 18 pending at last poll. Steps 7–16 remain SUCCESS. Its active job logs return BlobNotFound, so it has not supplied new GLB phase evidence.
 - [ ] Next: inspect PR #263 exact-head checks. Use its gameplay failure diagnostic to identify the precise GLB stage. Do not modify production loader behavior until the phase evidence distinguishes request, parse/decode, scene setup, animation rig, or readiness. Keep PR #263 diagnostic-only and draft pending exact-head verification.
+
+
+### PR #263 exact-head CI started — 2026-11-11 13:52 +08
+
+- [x] Exact-head Validate run `42968419490`, job `130350957256`, started on PR #263 head `343db8f21ee09919591167489366551c204385b7`; currently running Wrangler Durable Object configuration dry-run step 5.
+- [x] Exact-head Browser Smoke run `42968419467`, job `130350957112`, started on the same head; currently installing Playwright (step 5). DEX 390px/360px and Jarrell gameplay steps have not run yet.
+- [ ] Continue polling both exact-head runs. Browser Smoke must pass step 15 before step 17 is treated as useful GLB diagnostic evidence.
+- [ ] PR #262 older Browser Smoke `42967445978` remains non-terminal at gameplay step 17; keep it distinct from PR #263's new combined-head run and do not duplicate or infer its outcome.
