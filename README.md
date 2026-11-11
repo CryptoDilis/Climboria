@@ -1,3 +1,15 @@
+## 2026-11-11 21:32 +08 — follow-up repository sync and Swap release posture
+
+- [x] Recorded the complete PR #266 failure analysis and PR #267 GLB audit measurements above in the main README. Commit: `9dfb3c0caa0c661ea0cbe3b985583fbc192bb867`.
+- [x] Synced PR #268 description with the exact-head green run IDs `43025646890` and `43025646971`, the gameplay-workflow separation, current-main base drift, and the remaining Jupiter CPI evidence gap.
+- [!] PR #268 remains draft and must be rebased/updated against current main before merge. The passing runs apply only to head `68580032d5980a3b4e6e43f428fb57cac217f0f2`.
+- [!] Solscan's public Jupiter program page reports the deployed program as upgradeable and not program-verified. Generated SDK builders and IDLs confirm instruction layouts but do not prove the deployed handler's DEX account-slice dispatch. No safe per-DEX semantic code change is justified by the current public evidence alone.
+- [x] Rechecked fail-closed controls: source-level signable-order and execution review gates remain false; Wrangler execution is disabled; public frontend execution is disabled.
+- [x] Rechecked Pages: prior documentation deployment run `43026497518` completed SUCCESS on the preceding main commit `7fa8f67055118c966aefc5237c6fdeba42214c5d`; a newer Pages run `43027124144` was in progress on that same commit at the latest poll. No Pages deployment is claimed for README commit `9dfb3c0caa0c661ea0cbe3b985583fbc192bb867` until a run on that exact SHA completes.
+- [ ] Next engineering work: rebase PR #268 onto current main and rerun Validate + ecosystem Browser Smoke; separately trigger/verify the dedicated gameplay workflow on the exact updated head; continue the source-backed CPI proof work without opening signing/execution gates.
+
+---
+
 ## 2026-11-11 21:25 +08 — deep failure analysis: mobile GLB parse-stage stall
 
 **Execution order remains DEX → Swap → Login → Launchpad.** Gameplay/GLB remains a separate diagnostic track and must not displace ecosystem release work.
