@@ -597,3 +597,20 @@ The change adds a research capability only. It does not change runtime swap poli
 - Trace artifact `13861677769`: newest five finalized Meteora signatures scanned; 0 Jupiter Swap2 matches; not rate-limited. This is not an older-cursor scan and remains only a bounded sample.
 - Browser screenshot artifact `13862771931` uploaded.
 - No failed jobs on this verified head. Earlier workflow attempts on intermediate commits were cancelled by newer commits and are not test failures.
+
+
+## Continuation checkpoint — exact-head reinspection and cursor-run status — 2026-11-11
+
+The live PR head was rechecked as `80ecd60b7c6700a489afc0e52f441542eee0cd33` (PR #268, open/draft/unmerged; 94 ahead, 0 behind `main`; merge base `623adfbbe9bca5832b79b71c625a2e201c5279db`).
+
+Exact-head workflow evidence:
+- Validate `43034661324`, job `130570222405`: SUCCESS; all job steps succeeded.
+- Browser Smoke `43034661315`, job `130570220860`: SUCCESS.
+- Jupiter CPI Trace Audit `43034662889`, job `130570224530`: SUCCESS; all job steps succeeded.
+- CPI artifact `13861693381`, 5,816 bytes, SHA-256 `26c69a7bd262cb1df433fcdfb93bdccd16f1d634e1e9edcf400d8db82e5e3cd5`.
+
+Important evidence limitation: the artifact belongs to the default newest-five discovery sample (`before=null`). Although `.github/workflows/jupiter-cpi-trace-audit.yml` exposes optional manual-dispatch input `before_signature`, the GitHub integration available during this continuation has no workflow-dispatch action. The older-cursor scan was not run. Do not report an older sample count, route match count, or rate-limit result until a real dispatch and artifact inspection are completed.
+
+Next action: manually dispatch the audit workflow with a finalized Meteora signature cursor; inspect and record the actual `before`, `transactionsScanned`, `matchingRoutes`, `rateLimited`, and `rateLimitedMethod` values. Keep the cursor task pending until then.
+
+No failed jobs exist on this exact head, so no failure diagnosis/retry was needed. Continue investigating exact CPI-requested signer/writable flags and the remaining route-variation, binary-provenance, Devnet, and independent-review gaps. Variant 75 remains excluded; signing and execution gates remain false.
