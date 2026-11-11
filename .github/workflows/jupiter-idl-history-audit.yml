@@ -54,6 +54,8 @@ jobs:
         run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
       - name: Set up Rust toolchain for pinned sBPF static analysis
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
       - name: Generate pinned sBPF disassembly and control-flow summary
         timeout-minutes: 10
         run: |
