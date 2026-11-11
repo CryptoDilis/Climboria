@@ -342,14 +342,18 @@ test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live n
   fixture.transaction.message.instructions[0].data = "3aafXU8vKpJ2D842B5MTALCjKB1F1BGiBP5qtxuc8MPgax9MqNpUCF";
   fixture.meta.innerInstructions[0].instructions[0].data = "fx9RHbGFfZ8iTJuYwRGeuH4KNM2sVKVMPh6Cib";
   const methods = [];
+  const beforeSignature = "older-finalized-cursor";
+  let signatureQuery;
   const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example.invalid", {
     limit: 1,
     maxTransactions: 1,
     maxMatches: 1,
     delayMs: 0,
+    before: beforeSignature,
     fetchImpl: async (_url, options) => {
       const request = JSON.parse(options.body);
       methods.push(request.method);
+      if (request.method === "getSignaturesForAddress") signatureQuery = request.params[1];
       return {
         ok: true,
         status: 200,
@@ -362,6 +366,12 @@ test("discovers bounded finalized Jupiter-to-Meteora Swap2 traces without live n
     }
   });
   assert.deepEqual(methods, ["getSignaturesForAddress", "getTransaction"]);
+  assert.deepEqual(signatureQuery, {
+    commitment: "finalized",
+    limit: 1,
+    before: beforeSignature
+  });
+  assert.equal(report.before, beforeSignature);
   assert.equal(report.transactionsScanned, 1);
   assert.equal(report.matchingRoutes, 1);
   assert.equal(report.results[0].routePlanHeader.firstStepVariant, 75);
