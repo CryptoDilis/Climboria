@@ -54,6 +54,27 @@ fn main() -> Result<(), Box<dyn Error>> {
         .iter()
         .map(|(pc, (key, name))| (*key, (*pc, name.as_str())))
         .collect();
+    let syscall_names = [
+        "sol_try_find_program_address",
+        "sol_invoke_signed_c",
+        "sol_set_return_data",
+        "sol_memcpy_",
+        "abort",
+        "sol_get_sysvar",
+        "sol_log_",
+        "sol_keccak256",
+        "sol_secp256k1_recover",
+        "sol_panic_",
+        "sol_sha256",
+        "sol_log_data",
+        "sol_memset_",
+        "sol_memcmp_",
+        "sol_memmove_",
+    ];
+    let syscall_by_key: HashMap<u32, &str> = syscall_names
+        .iter()
+        .map(|name| (solana_sbpf::ebpf::hash_symbol_name(name.as_bytes()), *name))
+        .collect();
     let entrypoint_end = analysis
         .functions
         .range((analysis.entrypoint + 1)..)
@@ -62,11 +83,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap_or(usize::MAX);
     let calls_path = format!("{out_dir}/calls.tsv");
     let entrypoint_calls_path = format!("{out_dir}/entrypoint-calls.tsv");
+    let syscall_sites_path = format!("{out_dir}/syscall-sites.tsv");
     let mut calls = BufWriter::new(File::create(calls_path)?);
     let mut entrypoint_calls = BufWriter::new(File::create(entrypoint_calls_path)?);
-    let header = "callsite_pc\tcall_key\tclassification\ttarget_pc\ttarget_name";
+    let mut syscall_sites = BufWriter::new(File::create(syscall_sites_path)?);
+    let header = "callsite_pc\tcaller_registry_pc\tcall_key\tclassification\ttarget_pc\ttarget_name";
     writeln!(calls, "{header}")?;
     writeln!(entrypoint_calls, "{header}")?;
+    writeln!(syscall_sites, "callsite_pc\tcaller_registry_pc\tsyscall_name\tsyscall_key")?;
     for instruction in &analysis.instructions {
         if instruction.opc != solana_sbpf::ebpf::CALL_IMM {
             continue;
@@ -75,6 +99,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             instruction.ptr,
             instruction.imm,
         ) as u32;
+        let caller = analysis
+            .functions
+            .range(..=instruction.ptr)
+            .next_back()
+            .map(|(pc, (_, name))| (*pc, name.as_str()));
+        let caller_pc = caller.map(|(pc, _)| pc).unwrap_or(usize::MAX);
         let line = if let Some((target_pc, target_name)) = function_by_key.get(&key) {
             let label = if target_name.is_empty() {
                 format!("function_{target_pc}")
@@ -82,15 +112,32 @@ fn main() -> Result<(), Box<dyn Error>> {
                 target_name.to_string()
             };
             format!(
-                "{}\t0x{key:08x}\tinternal\t{}\t{}",
+                "{}\t{}\t0x{key:08x}\tinternal\t{}\t{}",
                 instruction.ptr,
+                caller_pc,
                 target_pc,
                 label.replace('\t', " "),
             )
+        } else if let Some(name) = syscall_by_key.get(&key) {
+            let line = format!(
+                "{}\t{}\t0x{key:08x}\tsyscall\t\t{}",
+                instruction.ptr,
+                caller_pc,
+                name,
+            );
+            writeln!(
+                syscall_sites,
+                "{}\t{}\t{}\t0x{key:08x}",
+                instruction.ptr,
+                caller_pc,
+                name,
+            )?;
+            line
         } else {
             format!(
-                "{}\t0x{key:08x}\texternal-or-unresolved\t\t",
+                "{}\t{}\t0x{key:08x}\texternal-or-unresolved\t\t",
                 instruction.ptr,
+                caller_pc,
             )
         };
         writeln!(calls, "{line}")?;
@@ -100,6 +147,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     calls.flush()?;
     entrypoint_calls.flush()?;
+    syscall_sites.flush()?;
 
     let disassembly_path = format!("{out_dir}/disassembly.s");
     let mut disassembly = BufWriter::new(File::create(disassembly_path)?);
