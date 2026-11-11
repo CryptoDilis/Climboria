@@ -4243,7 +4243,7 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Next: seek a verifiable source release / build artifact / deployed ProgramData linkage for the candidate slot, or use a controlled Devnet program with equivalent verified code to instrument actual route_v2 account cursor positions and CPI AccountMeta signer/writable flags. Until then, retain observational classification only and keep execution/signing disabled.
 
 
-### Exact-head verification continuation — 2026-11-12 06:4x +08
+### Exact-head verification continuation — 2026-11-12 (time not captured)
 
 - [x] Re-polled PR #269 exact head `dae9790788b12efff2ee5269f3cab1e7b5a1b70e`; the head is unchanged and PR #269 remains open/draft.
 - [x] Exact-head Validate run `43112144278` completed SUCCESS; job `130830714016` reports **104 passed, 0 failed**.
@@ -4256,7 +4256,7 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Next: poll Browser Smoke `43112144284`. If it fails, fetch its terminal logs, locate the first causal error, compare with the earlier mobile GLB lifecycle recovery and current test code, implement a distinct evidence-based counter-fix, and rerun exact-head checks. If it passes, inspect the screenshot artifact and record final verification. Continue the read-only Jupiter deployed-handler / Raydium account-slice investigation; keep PR #269 draft/unmerged and all signing/execution gates false.
 
 
-### Exact-head workflow terminal result — 2026-11-12 06:4x +08
+### Exact-head workflow terminal result — 2026-11-12 (time not captured)
 
 - [x] All four PR #269 workflows for exact head dae9790788b12efff2ee5269f3cab1e7b5a1b70e are now terminal SUCCESS: Validate 43112144278; Jupiter V6 CPI Trace Audit 43112144468; Jupiter IDL History Audit 43112144304; Browser Smoke 43112144284. PR #269 remains open/draft; no merge or signing/execution approval was made.
 - [x] Browser Smoke job 130830735308 completed all 22 steps successfully. Steps 1–16 passed: Supabase auth/cloud-save isolation, homepage and DEX navigation, proxy, fail-closed execution, standalone Swap/market shell, Solana profile/boost, DEX responsive/mobile states. Jarrell gameplay step 17 and screenshot upload step 18 also passed.
@@ -4269,7 +4269,7 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Next: resume read-only Jupiter route_v2 handler/source provenance and Raydium split-account investigation. The remaining-account slice and CPI-requested privilege evidence remain unresolved; all four adapter IDL classifications remain incomplete. Do not change execution paths or promote adapters until runtime/source evidence proves account order, requested privileges, program identity, and PDA derivations. Keep PR #269 draft/unmerged and all signing/execution gates false.
 
 
-### Additional public Jupiter interface/source search — 2026-11-12 06:5x +08
+### Additional public Jupiter interface/source search — 2026-11-12 (time not captured)
 
 - [x] Searched the public jup-ag GitHub organization for route_v2 and remaining-account handling. The current public jupiter-amm-interface source at commit 70f56e0495b7c818e4c38e37b2007656892ca2a1 defines WhirlpoolSwapV2 and MeteoraDlmmSwapV2 variants with RemainingAccountsInfo; RaydiumLaunchlabBuy carries share_fee_rate; KipseliV3 carries is_base_to_quote. Its RemainingAccountsInfo model contains typed slices (TransferHookA, TransferHookB, TickArray). Source: https://github.com/jup-ag/jupiter-amm-interface/blob/70f56e0495b7c818e4c38e37b2007656892ca2a1/interface/src/swap.rs
 - [!] This AMM interface is a public type/encoding model, not the Jupiter deployed route_v2 instruction handler. It does not expose the candidate binary's runtime account cursor, adapter-specific account slice lengths, or CPI AccountMeta signer/writable flags. It cannot resolve the Raydium parent position 79 duplicate.
@@ -4279,7 +4279,7 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Next: pursue verifiable slot-matched Jupiter handler/build provenance or controlled instrumentation of a source-equivalent route_v2 program that emits each adapter's exact account slice and requested AccountMeta flags. Cross-check all 18 Raydium CPI accounts, duplicate parent position 79, program IDs, and PDA derivations against finalized account state before any execution-related change.
 
 
-### Raydium LaunchLab CPI account-vector decomposition — 2026-11-12 06:5x +08
+### Raydium LaunchLab CPI account-vector decomposition — 2026-11-12 (time not captured)
 
 - [x] Recomputed the candidate Raydium LaunchLab direct CPI account-index vector against the 85-entry Jupiter outer account vector for slot 468153382. The 18 CPI account indexes are exactly parent positions 64–78 for CPI entries 0–14, followed by parent positions 80–82 for CPI entries 15–17. This is an ordered subsequence with one skipped parent position, not an exact contiguous sequence.
 - [x] The finalized on-chain Raydium LaunchLab buy_exact_in IDL snapshot in artifact 13897435893 defines 15 named fixed account entries. The candidate CPI's first 15 metas therefore line up by count/order with parent positions 64–78; the final three CPI metas line up with parent positions 80–82 and are not described by those 15 fixed IDL entries.
@@ -4289,7 +4289,7 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [ ] Next: resolve the three trailing Raydium CPI account roles and the duplicate wallet at parent position 79 using finalized account ownership/data, PDA derivation, Raydium LaunchLab source/schema matching the candidate slot, and a source-equivalent controlled CPI trace. Preserve the exact raw ordered vectors in the artifact and tests. Keep signing/execution disabled.
 
 
-### Raydium LaunchLab SDK account-order correlation — 2026-11-12 07:0x +08
+### Raydium LaunchLab SDK account-order correlation — 2026-11-12 (time not captured)
 
 - [x] Followed up the candidate Raydium CPI (inner index 11, 18 account metas) against the official Raydium SDK v2 LaunchLab instruction builder at commit 1cf5bb129dbbb1c76dab67819c3d478349c8ed25. Its buyExactInInstruction emits the 15 fixed IDL accounts, optionally a shareFeeReceiver, then System Program, platformClaimFeeVault, creatorClaimFeeVault. Source: https://github.com/raydium-io/raydium-sdk-V2/blob/1cf5bb129dbbb1c76dab67819c3d478349c8ed25/src/raydium/launchpad/instrument.ts
 - [x] The candidate CPI data decodes to Raydium buy_exact_in arguments [amountB=216586, minAmountA=0, shareFeeRate=0]. The observed 18 metas therefore fit the SDK builder's no-shareFeeReceiver shape: 15 fixed + System Program + platform fee vault + creator fee vault. If shareFeeReceiver were supplied, the SDK builder would append an additional writable meta before the three trailing accounts (19 total).
