@@ -1208,3 +1208,37 @@ Audited all six pages of branch workflow history for `codex/swap-jupiter-fixed-a
 - The 521-run snapshot comprises 22 failures, 219 cancellations, 278 successes and 2 in-progress runs. The 22 historical failures and their counter-fixes are itemized above. Cancellations are superseded runs, not failures.
 - Branch comparison before this documentation update: 195 ahead / 0 behind main. PR #268 remains open, draft and unmerged.
 - Next: inspect the Game Browser Smoke diagnostic to determine whether the 42.9 MB GLB is still transferring, stuck in GLTFLoader parsing, or failing during scene assembly. Inspect IDL History Audit completion. Record both exact-head results before continuing.
+
+
+## 2026-11-12 — exact-head IDL artifact inspection and discriminator diagnostic correction
+
+### Verified IDL provenance artifact
+
+- IDL History Audit run `43082463143` passed on exact branch head `54dc0d3b41ba052a4c2d5862f4a2f30e46db9125`; artifact `13884792897` was downloaded and inspected.
+- Finalized mainnet RPC returned Jupiter IDL account `C88XWfp26heEmDkmfSzeXP7Fd7GQJ2j9dDTUsyiZbUTa`, owned by Jupiter program `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4`. Its decompressed payload SHA-256 `11e04af55c8b102ac4230b55cb77df7ab1ce30295f18e5cdb2432d8279e7b981` matches the active historical IDL. The decoded `route_v2` discriminator is `bb64facc31c4af14`.
+- Jupiter ProgramData account `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT` is owned by the upgradeable loader, deployment slot `468023491`, before the candidate route transaction slot `468153382`. Binary SHA-256: `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`. IDL authority: `9u9iZBWqGsp5hXBxkVZtBTuLSGNAG9gEQLgpuVw39ASg`; ProgramData upgrade authority: `CvQZZ23qYDWF2RUpxYJ8y9K4skmuvYEEjH7fK58jtipQ`.
+- These facts improve version/provenance confidence but do not prove source-to-binary equivalence, adapter dispatch semantics, or CPI-requested signer/writable privileges.
+
+### Deep diagnosis: false-negative IDL discriminator label
+
+- The artifact reported prefix hex `184662bf3a907b9e` and `prefixMatchesAnchorAccountDiscriminator=false`, even though the owner, payload hash, and route discriminator matched.
+- The decoder had compared the prefix to SHA-256(`account:IdlAccount`)[0..8]. That is not the legacy Anchor IDL account's historical namespace. Anchor's changelog records that the `IdlAccount` discriminator was changed to be namespaced by `internal` (historical Anchor 0.4.0 change): https://github.com/otter-sec/anchor/blob/master/CHANGELOG.md.
+- Independent hash calculation confirms SHA-256(`internal:IdlAccount`)[0..8] = `184662bf3a907b9e`, exactly the on-chain prefix. The account was not malformed; the diagnostic used the wrong namespace.
+- Counter-fix: compare against `internal:IdlAccount`; retain a negative test for arbitrary unknown prefixes and add a positive regression fixture for the exact historical discriminator. No execution policy or acceptance threshold is changed.
+- This is a diagnostic correction, not a workflow failure. The IDL audit run itself passed.
+
+### Deep CPI artifact inspection — variable Meteora account shapes
+
+- CPI Trace Audit run `43082463058` passed on the same exact head; artifact `13884148109` (SHA-256 ZIP digest `a87082ece3e6dd834a73119ace28d749cd08f045e48691b31b305b2fd976d3ee`) was downloaded and inspected.
+- Legacy route sample: slot `464856414`, transaction version 0, Jupiter outer instruction with 28 accounts; observed direct Meteora `Swap` CPI has 17 accounts and one BinArray (index `-9`) associated with its observed pool.
+- route_v2 candidate: slot `468153382`, transaction version 1, Jupiter outer instruction with 85 accounts; four direct DEX CPIs are visible. The Meteora `Swap2` CPI has 18 accounts and includes the pool, bitmap extension, and two BinArrays with indexes 52 and 53. The account audit confirms those BinArrays and bitmap extension are owned by Meteora and point to the same pool.
+- Additional bounded discovery sample: slot `468231758`, one matching route among five scanned transactions; the Meteora `Swap2` CPI has 19 accounts and route-plan count 2. This is discovery evidence, not a complete account-index trace for that sample.
+- The 17-account legacy `Swap`, 18-account route_v2 `Swap2`, and 19-account `Swap2` samples must not be collapsed into one fixed schema. Different instruction variants and route shapes have different account layouts. Do not infer adapter cursor boundaries from count or address-order resemblance.
+- RPC inner instructions expose ordered transaction account-key indexes, not each CPI's requested signer/writable flags. Outer message privileges are only maximum privileges. Duplicate key positions remain ambiguous at handler-cursor level.
+
+### Exact-head workflow state and next work
+
+- On exact head `54dc0d3b41ba052a4c2d5862f4a2f30e46db9125`: Validate `43082463049` SUCCESS (97/97 tests and Wrangler dry-run); Browser Smoke `43082463077` SUCCESS; CPI Trace Audit `43082463058` SUCCESS; IDL History Audit `43082463143` SUCCESS.
+- Game Browser Smoke `43082463178` was still `in_progress` at last inspection, job `130738376481`; its active step was strict desktop/mobile gameplay smoke. Job logs were unavailable while active (`BlobNotFound`), so no GLB phase result or terminal status is asserted here.
+- Branch comparison before this update: 197 ahead / 0 behind main. PR #268 remains open, draft and unmerged.
+- Next: verify the discriminator fix with exact-head Validate and IDL History Audit; inspect the fresh IDL artifact for `prefixMatchesAnchorAccountDiscriminator=true`. Continue route-shape evidence and independently obtain CPI-requested account privileges/slicing. Diagnose mobile GLB only from the completed dedicated game run; keep the strict GLB assertion and all transaction execution gates closed.

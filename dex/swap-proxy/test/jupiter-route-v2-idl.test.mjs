@@ -166,7 +166,7 @@ test("rejects malformed legacy Anchor IDL account lengths and invalid JSON", () 
 });
 
 
-test("detects an eight-byte-prefixed Anchor IDL account when the prefix is not a standard account discriminator", () => {
+test("parses an unknown eight-byte IDL prefix without claiming the Anchor discriminator", () => {
   const prefix = Buffer.from("JUPIDLv1");
   const authorityBytes = Buffer.alloc(32, 9);
   const idlText = JSON.stringify({
@@ -186,6 +186,28 @@ test("detects an eight-byte-prefixed Anchor IDL account when the prefix is not a
   assert.equal(decoded.routeV2Discriminator, "bb64facc31c4af14");
 });
 
+
+
+test("recognizes Anchor's historical internal:IdlAccount discriminator", () => {
+  const prefix = createHash("sha256").update("internal:IdlAccount").digest().subarray(0, 8);
+  assert.equal(prefix.toString("hex"), "184662bf3a907b9e");
+  const authorityBytes = Buffer.alloc(32, 10);
+  const idlText = JSON.stringify({
+    name: "jupiter",
+    instructions: [{ name: "route_v2", discriminator: [187, 100, 250, 204, 49, 196, 175, 20] }],
+  });
+  const compressed = deflateSync(Buffer.from(idlText, "utf8"));
+  const length = Buffer.alloc(4);
+  length.writeUInt32LE(compressed.length, 0);
+  const accountData = Buffer.concat([prefix, authorityBytes, length, compressed]);
+
+  const decoded = decodeAnchorIdlAccount(accountData);
+  assert.match(decoded.layout, /^8-byte prefix/);
+  assert.equal(decoded.prefixHex, "184662bf3a907b9e");
+  assert.equal(decoded.prefixMatchesAnchorAccountDiscriminator, true);
+  assert.equal(decoded.authority, encodeBase58(authorityBytes));
+  assert.equal(decoded.routeV2Discriminator, "bb64facc31c4af14");
+});
 
 test("decodes SPL Token account metadata without exposing raw account bytes", () => {
   const bytes = Buffer.alloc(165);

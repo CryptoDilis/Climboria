@@ -51,7 +51,7 @@ function parseCandidate(bytes, authorityOffset, lengthOffset, payloadOffset, lay
     layout,
     prefixHex: prefix.toString("hex"),
     prefixMatchesAnchorAccountDiscriminator: prefix.length === 8 &&
-      prefix.equals(createHash("sha256").update("account:IdlAccount").digest().subarray(0, 8)),
+      prefix.equals(createHash("sha256").update("internal:IdlAccount").digest().subarray(0, 8)),
     authority: encodeBase58(bytes.subarray(authorityOffset, authorityOffset + 32)),
     declaredPayloadLength,
     compressedPayloadLength: compressedPayload.length,
