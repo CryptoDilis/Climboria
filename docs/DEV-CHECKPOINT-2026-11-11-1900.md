@@ -476,3 +476,34 @@ Find a controlled, confirmed Jupiter V6 transaction with an unambiguous legacy `
 - Latest confirmed code/docs head before this addendum was `342b3456acaafa9399bf3fcaffcd8b220a31f910`; Validate `43021488087` and Browser Smoke `43021488045` both passed on that exact head.
 - This addendum is documentation-only; after commit, verify both required checks on the new exact head before treating it as the latest green checkpoint.
 - Next: use only public free transaction/sample data or available RPC access to retrieve a full transaction meta for the Meteora route candidate (or another controlled, clearly matched route). Decode static + ALT-loaded keys, Jupiter routePlan, inner CPI program/discriminator/account vector and per-account flags; tie route-plan step to CPI using invocation stack/log sequence. If this cannot be proven, keep that DEX variant unsupported for signable orders. Do not pay for historical data or guess.
+
+
+
+## Workflow cancellation diagnosis and exact-head recovery — 2026-11-11
+
+### Interrupted workflow runs — root cause established
+- The documentation research commit `29c65df6c26090be99d0b265fdf47e995b66d293` started:
+  - Browser Smoke run `43022239298`.
+  - Validate run `43022239280`.
+- Both runs concluded `cancelled`, not `failure`. Job-step evidence:
+  - Browser Smoke job `130528012899` was cancelled during `Install Playwright`; the local server and all test steps were skipped.
+  - Validate job `130528012751` completed its swap-proxy security/API-contract tests successfully, then was cancelled during Wrangler Worker bundle/dry-run; later checks were skipped.
+- Root cause: the branch received the next documentation commit `9fc79b07ac5a07045129f4319c23ba1b562c0671` while those runs were still executing. Both workflow YAML files configure branch-ref concurrency groups with `cancel-in-progress: true`:
+  - `.github/workflows/browser-smoke.yml` lines 3–5: `climboria-browser-smoke-${{ github.ref }}`, cancel-in-progress true.
+  - `.github/workflows/validate-climboria.yml` lines 3–5: `climboria-validate-${{ github.ref }}`, cancel-in-progress true.
+- Therefore GitHub cancelled the in-flight run for the superseded PR head when the next commit arrived. This is a workflow concurrency cancellation, not a product/test assertion failure. It is not appropriate to retry the old commit or make a code counter-fix. The correct recovery is to wait for the final head's own runs.
+
+### Exact-head recovery verification — commit `9fc79b07ac5a07045129f4319c23ba1b562c0671`
+- Validate run `43022279517`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43022279517
+- Browser Smoke run `43022279610`: SUCCESS on exact head.
+  URL: https://github.com/CryptoDilis/Climboria/actions/runs/43022279610
+- Browser Smoke job `130528173990`: all 16 functional browser steps passed; screenshot upload passed; job completed successfully.
+- Validate job `130528192135`: swap proxy security/API-contract tests, Wrangler Worker bundle/config dry-run, Supabase client syntax, homepage checks, launch-copy guard, inline JS checks and game/site HTML audits all passed.
+- No workflow remains failed or in progress on this exact head. The earlier cancelled attempts are retained in this checkpoint for auditability; they are not counted as test failures.
+
+### Process decision
+- [x] Diagnose cancellation from job step summaries and workflow concurrency configuration.
+- [x] Distinguish cancelled/superseded runs from genuine test failures.
+- [x] Verify both required workflows on the final head before proceeding.
+- [ ] For future branch updates, avoid pushing a second commit while long-running browser/validate jobs are still active unless the change is urgent; if superseded, document the cancellation reason and wait for the new exact-head checks. Never treat a cancelled run as a green check.
