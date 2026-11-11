@@ -15,7 +15,7 @@
 
 - A strict metadata policy now accepts only Jupiter Metis v0 non-gasless orders, checks exact input amount, positive output/minimum-output values, minimum-output ≤ quoted output and non-empty route labels; it rejects JupiterZ/Dflow/OKX, v1, gasless and external fee-payer orders. This narrows the future semantic policy but does not validate the compiled Metis instruction/account semantics.
 
-- A first fail-closed Jupiter V6 route decoder is added for the single route instruction only. It accepts a small explicit DEX-variant set (Raydium, Whirlpool, Raydium CLMM, Meteora DLMM, Raydium CPMM and SolFi), validates route graph/split percentages, exact input/quoted output, slippage cap, minimum-output threshold against the instruction-derived slippage floor, zero platform fee, taker signer, output mint, readonly program accounts and rejects all other top-level programs/instruction families. It intentionally does not accept shared-account/token-ledger/exact-out routes, ATA/SOL wrapping instructions or Token-2022.
+- A first fail-closed Jupiter V6 route decoder is added for the single route instruction only. It accepts a small explicit DEX-variant set (Raydium, Whirlpool, Raydium CLMM v1/v2, Meteora DLMM and Raydium CPMM), validates route graph/split percentages, exact input/quoted output, slippage cap, minimum-output threshold against the instruction-derived slippage floor, zero platform fee, taker signer, output mint, readonly program accounts and rejects all other top-level programs/instruction families. It intentionally does not accept shared-account/token-ledger/exact-out routes, ATA/SOL wrapping instructions or Token-2022.
 - Finalized RPC account-state verification is wired after route-shape validation. One bounded `getMultipleAccounts` call with `base64` + `finalized` parses raw SPL Token account and mint bytes locally, uses `minContextSlot` at least as recent as the ALT lookup context, checks source/destination account ownership, mint, state, delegate/close-authority/native-SOL metadata and source balance, and validates both classic SPL Token mint layouts. The account/mint evidence and requested amount are persisted with the server-bound order. This still does not prove DEX CPI account roles or resulting token movement.
 
 ## Explicitly unresolved release blockers
@@ -41,3 +41,10 @@ Jupiter Swap API V2 documents two distinct paths: Meta-Aggregator (/order + /exe
 ## Exact next task
 
 Implement a versioned, fail-closed semantic policy for the supported Jupiter route families, using the retained raw instruction bytes and resolved static + loaded account keys. Add adversarial fixtures for wrong mint/amount/min-output, unexpected transfer/approval, fee redirection, unknown program/instruction, writable/signer privilege escalation and unsupported Token-2022 behavior. Keep the source gate closed until that policy passes review and controlled Devnet acceptance.
+
+
+## SolFi variant exclusion — 2026-11-11
+- Removed Jupiter route enum variant 61 (SolFi) from the structural route decoder allowlist.
+- Evidence: pinned `jup-ag/jupiter-amm-implementation` CPI interface snapshot `cc068c9d1df0060c62f9a8a4fc37ea13ea7b9b39` contains CPI schemas for Raydium, Whirlpool, Raydium CLMM, Meteora DLMM and Raydium CPMM, but no SolFi CPI instruction/account schema. A program ID and enum label alone do not prove account roles or CPI dispatch.
+- Added a regression fixture asserting variant 61 is rejected as unsupported.
+- This is a fail-closed structural restriction, not proof that the remaining variants are safe. The remaining variants still lack proven deployed-version dispatch, outer account-slice partitioning and complete per-DEX semantic validation. Both signable-order and execution gates remain false.

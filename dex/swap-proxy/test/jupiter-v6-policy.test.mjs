@@ -48,6 +48,8 @@ test("rejects unknown top-level programs, extra signers and unsupported route va
   assert.throws(() => validate(parsed({ extraProgram: true })), /unsupported top-level program/i);
   assert.throws(() => validate(parsed({ requiredSignatures: 2 })), /single-taker-signature/);
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 8 })), /unsupported DEX variant/);
+  // SolFi enum 61 has no matching CPI instruction/account schema in the pinned Jupiter CPI interface.
+  assert.throws(() => decodeJupiterV6Route(routeData({ variant: 61 })), /unsupported DEX variant/);
 });
 
 test("rejects wrong taker, output mint, amounts, fee and excessive slippage", () => {

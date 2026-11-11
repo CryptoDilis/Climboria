@@ -13,7 +13,6 @@ const SUPPORTED_SWAP_VARIANTS = new Map([
   [38, { name: "MeteoraDlmm", payloadBytes: 0, programId: "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo" }],
   [40, { name: "RaydiumClmmV2", payloadBytes: 0, programId: "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK" }],
   [46, { name: "RaydiumCP", payloadBytes: 0, programId: "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C" }],
-  [61, { name: "SolFi", payloadBytes: 1, programId: "SoLFiHG9TfgtdUXUjWAxi3LtvYuFyDLVhBWxdMZxyCe" }]
 ]);
 
 function fail(message) { throw new Error(message); }

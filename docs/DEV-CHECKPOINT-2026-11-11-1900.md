@@ -266,3 +266,12 @@ Initial authoritative-source findings:
 - [ ] Add adversarial per-DEX account-role validation only for proven mappings; keep signable-order and execution kill switches closed.
 - [ ] Then controlled Devnet token movement/fee-destination proof, production Cloudflare verification, production Login verification, and Launchpad lifecycle/Devnet proof.
 - [ ] Keep mobile GLB instrumentation/texture optimization as a separate game blocker after ecosystem priorities.
+
+
+## Progress addendum — SolFi route variant removed from allowlist — 2026-11-11 20:20 PHT
+- [x] Removed Jupiter route enum variant 61 (SolFi) from `SUPPORTED_SWAP_VARIANTS`; the pinned Jupiter CPI interface has no matching SolFi CPI instruction/account schema.
+- [x] Added a regression test requiring SolFi variant 61 to be rejected as unsupported.
+- [x] Updated the security review to distinguish the structural parser's remaining variants from approved signable/executable DEX support.
+- [ ] Run focused worker/Jupiter policy tests and exact-head Validate + DEX/Login Browser Smoke.
+- [ ] Continue proving the remaining enum-to-CPI mappings, outer route account slices, Meteora privilege discrepancy and deployed-version provenance.
+- Safety remains unchanged: `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, public swap config disabled.
