@@ -719,3 +719,32 @@ Security boundary remains unchanged: production validator accepts only the legac
 - [!] The order makes `route_v2` step 181 a plausible Kipseli SwapV3 mapping, but it is not accepted as proven until a pinned Jupiter route-plan enum revision confirms it. Do not add this mapping to production policy yet.
 - [!] No failed workflow occurred on the latest head. Earlier runs cancelled by concurrency during superseding commits were cancellations, not failures.
 - Security remains fail-closed: route_v2 is diagnostic-only and rejected by the legacy production validator; all signing/execution review flags remain false.
+
+
+## 2026-11-12 — Route-v2 enum cross-check and latest workflow audit
+
+### New independent enum evidence (diagnostic only)
+
+- [x] Inspected the published carbon-jupiter-swap-decoder **2.0.0** generated Rust Swap enum source: https://docs.rs/crate/carbon-jupiter-swap-decoder/2.0.0/source/src/types/swap.rs
+- [x] Counted the enum variants in declaration order using Borsh's zero-based enum discriminant convention. This decoder revision declares 152 variants and places Kipseli { is_base_to_quote: bool } at index **145**, not 181.
+- [!] This is an independently published decoder schema, not an authoritative pinned Jupiter deployed-program IDL or deployed-binary attestation. It therefore does **not** establish what Jupiter's deployed route_v2 handler means by byte 181. It does, however, show that the earlier “181 is probably Kipseli” hypothesis is not supported by this decoder revision and must not be promoted.
+- [!] Keep byte 181 unmapped. The historical transaction's first top-level DEX CPI is Kipseli and its first route-plan enum byte is 181, but sequence correlation alone is not a schema proof. Other observed top-level DEX CPIs in transaction order remain Orca Whirlpool, Meteora DLMM and Raydium LaunchLab.
+- [x] Existing diagnostic parser and production policy were left unchanged. route_v2 remains recognized for audit visibility but rejected by the production legacy-route validator.
+
+### Latest exact-head workflow audit
+
+- [x] PR #268 remains open, draft and unmerged. Its branch is 125 commits ahead and 0 behind main; merge base is current main 623adfbbe9bca5832b79b71c625a2e201c5279db.
+- [x] Branch code head bff9811e4d691e1cbff7b4efda590a82d1ab844d has exact-head Validate run 43039523013 SUCCESS, job 130587263835; all test, Wrangler dry-run, authentication, homepage, JavaScript and HTML audit steps completed successfully.
+- [x] Same head has ecosystem Browser Smoke run 43039523019 SUCCESS, job 130587292145; auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, Swap/DEX, Solana discovery, mobile layouts and provider states all passed; screenshot upload succeeded.
+- [x] Same head has Jupiter CPI Trace Audit run 43039523256 SUCCESS, job 130587264461; finalized historical traces and Meteora account assertions completed. Artifact 13865085907, 14,373 bytes, SHA-256 b529362fe507bb1a6301c20fd23c1b6d01749ce76547e58018892ca6cbb9c91f.
+- [!] The workflow job checks out GitHub's PR merge ref 9b644457222eefbab5edc33acea264ba9568015f (merge of bff9811e… into 623adfb…); the run artifact metadata identifies the PR head as bff9811e…. No failing job was present on this head. Node/punycode and GitHub action Node 20 deprecation notices are warnings, not failed steps.
+- [!] Browser Smoke is ecosystem-only; it does not verify Jarrell's Peak gameplay. No production deployment, controlled Devnet settlement, or live swap execution is established by these workflows.
+
+### Next actions
+
+- [ ] Obtain an authoritative, version-pinned Jupiter route_v2 enum/schema tied to the deployed program version; specifically resolve byte 181. Do not map it from sequence or from a different decoder revision.
+- [ ] Decode all four route_v2 route-plan steps only after their enum payload layouts are known; correlate each with stack-height-2 DEX CPIs and nested CPI boundaries.
+- [ ] Capture additional route_v2/Meteora samples with different BinArray counts and verify direction/order plus transfer-hook remaining-account slices.
+- [ ] Obtain CPI-requested signer/writable evidence, controlled Devnet reproduction, and independent Solana security review.
+- [ ] Keep EXECUTION_SECURITY_REVIEW_COMPLETE=false, SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false, and EXECUTION_ENABLED=false. Keep PR #268 draft.
+- [ ] Separately verify dedicated Jarrell's Peak gameplay smoke and production hosting; do not substitute ecosystem Browser Smoke.
