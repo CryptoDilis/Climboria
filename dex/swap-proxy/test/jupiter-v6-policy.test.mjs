@@ -47,8 +47,11 @@ test("decodes a supported Raydium Jupiter route with exact amounts and bounded s
   assert.equal(result.destinationTokenAccount, destination);
 });
 
-test("rejects unknown top-level programs, extra signers and unsupported route variants", () => {
+test("rejects unknown top-level programs, route_v2, extra signers and unsupported route variants", () => {
   assert.throws(() => validate(parsed({ extraProgram: true })), /unsupported top-level program/i);
+  const routeV2Data = routeData();
+  routeV2Data.set([187, 100, 250, 204, 49, 196, 175, 20], 0);
+  assert.throws(() => decodeJupiterV6Route(routeV2Data), /Only the Jupiter V6 route instruction is supported/);
   assert.throws(() => validate(parsed({ requiredSignatures: 2 })), /single-taker-signature/);
   assert.throws(() => decodeJupiterV6Route(routeData({ variant: 8 })), /unsupported DEX variant/);
   // SolFi enum 61 has no matching CPI instruction/account schema in the pinned Jupiter CPI interface.
