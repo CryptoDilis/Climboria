@@ -71,3 +71,21 @@ test("rejects unexpected writable privileges on route authority and fee placehol
   p.readonlyUnsignedAccounts = 4;
   assert.throws(() => validate(p), /signer\/writable privileges/);
 });
+
+test("rejects Compute Budget instructions that carry account metas or unsupported opcodes", () => {
+  const withAccounts = parsed();
+  withAccounts.instructions.unshift({
+    programIdIndex: 7,
+    accountIndexes: [1],
+    data: new Uint8Array([2, 1, 0, 0, 0])
+  });
+  assert.throws(() => validate(withAccounts), /must not reference accounts/i);
+
+  const unsupported = parsed();
+  unsupported.instructions.unshift({
+    programIdIndex: 7,
+    accountIndexes: [],
+    data: new Uint8Array([99])
+  });
+  assert.throws(() => validate(unsupported), /unsupported Compute Budget instruction/i);
+});
