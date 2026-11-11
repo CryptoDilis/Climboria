@@ -51,6 +51,10 @@ function poolStateIdl() {
   };
 }
 
+test("recognizes the canonical 32-byte Native Loader program owner", () => {
+  assert.equal(decodeBase58("NativeLoader1111111111111111111111111111111").length, 32);
+});
+
 test("derives candidate LaunchLab pool, authority, event authority and platform fee vault PDAs", () => {
   assert.deepEqual(
     deriveProgramAddress([Buffer.from("pool"), decodeBase58(baseMint), decodeBase58(quoteMint)], programId),

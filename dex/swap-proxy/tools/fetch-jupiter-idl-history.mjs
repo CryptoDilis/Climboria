@@ -654,7 +654,7 @@ const raydiumLaunchlabCandidateExpected = {
   creatorFeeVault: "5VJj74eKHTjtVRgW7J5L7qFE8nw8DQcpnP8Zri9o8Hpk",
   systemProgram: "11111111111111111111111111111111",
   quoteTokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  nativeLoaderProgram: "NativeLoader1111111111111111111111111",
+  nativeLoaderProgram: "NativeLoader1111111111111111111111111111111",
 };
 
 async function auditRaydiumLaunchlabCandidateAccountState() {
