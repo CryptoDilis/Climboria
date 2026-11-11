@@ -3429,3 +3429,12 @@ Run Validate Climboria and Browser Smoke on the exact latest PR #234 source head
 - Artifact endpoint currently reports no artifacts while the job is running; job-log retrieval is not yet available from the connector. Revisit after completion for logs and screenshots.
 - README Pages deployment for this checkpoint: run `42943627589` completed successfully on documentation commit `9b379e5cc7c3b897fc6e32bd331c35859991b3ef`.
 - Next: await terminal Browser Smoke result, then inspect logs/screenshots. If it fails, diagnose the exact new assertion and implement a distinct fix; do not replay earlier orientation patches. If it passes, review all desktop/mobile captures before integration.
+
+
+### Browser Smoke failure and mobile GLB readiness counter-fix — 2026-11-11
+
+- [x] Run `42943304017` completed FAILURE at the mobile GLB readiness wait in `.github/scripts/game-smoke.mjs:690` after 75 seconds. The immediate catch diagnostic showed all three strict readiness invariants true (`heroReady`, `__climboriaGLBRenderer`, `cameraOrbit.heroUsesGlb`), selected hero `adventurer`, renderer `glb`, canvas present, and no browser errors. This points to a readiness polling/deadline race; it does not establish a missing GLB asset or a production gameplay defect.
+- [x] Counter-fix commit: `049c3907f2ccc2b868df51ffea3b1d74d069a6f4` on `codex/fix-mobile-orientation-smoke-2026-11-11`. The original 75-second wait and strict GLB checks remain. On timeout the harness re-reads the same three invariants; if not yet true, it permits one bounded 15-second grace poll and records GLB resource timing/transfer diagnostics on persistent failure. No production gameplay code changed; no placeholder renderer or bypass introduced.
+- [x] DEX/Swap checks and preceding mobile layout checks passed in run `42943304017`; desktop Jarrell's Peak gameplay and cave captures completed. Artifact `13821822426` was uploaded; mobile gameplay/cave screenshots were not generated because the readiness gate failed before those capture steps.
+- [x] PR #242 comment `6784950577` records the root cause and counter-strategy.
+- [ ] Verify Validate and Browser Smoke on the new exact commit; inspect newly generated mobile gameplay/cave screenshots. Do not merge PR #242 or integrate DEX PR #243 until the corrected exact-head run passes and visual evidence is reviewed.
