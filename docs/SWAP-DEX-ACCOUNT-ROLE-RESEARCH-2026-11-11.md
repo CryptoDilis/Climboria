@@ -1061,3 +1061,57 @@ The candidate's direct DEX CPIs align as follows:
 - It does not prove the deployed Jupiter binary uses these same cursor boundaries for all route shapes, split routes, optional accounts, transfer hooks, or future upgrades.
 - Keep route_v2 rejected by production validation and all execution/signing gates closed.
 - Next: investigate outer position 10, 62, 79, 83, and 84 with account ownership/data and exact handler invocation context; gather multiple route_v2 samples; obtain CPI-requested privilege evidence; controlled Devnet reproduction; independent Solana security review.
+
+
+## 2026-11-12 — Full outer transaction and platform-fee attribution
+
+### Full outer instruction evidence
+
+Trace audit run `43077952514`, artifact `13881318382`, now preserves all seven outer instructions for the candidate transaction, not only the Jupiter route instruction:
+
+| Outer index | Program | Decoded operation / observed accounts |
+|---:|---|---|
+| 0 | System Program | Transfer 450,000 lamports from user wallet to `KfHbT5Jrr5SV3CDkQVCLiSNWyVv5DmuVaCzbAHrzMFQ`; recipient purpose not proven |
+| 1 | Associated Token Program | Idempotent associated-token-account create for WSOL account `4ZoRa3aJyUMUWVm8N7P23FQ3cZhunsSCmVUaE9uY3GzY` |
+| 2 | System Program | Transfer 99,550,000 lamports from user wallet to the WSOL account |
+| 3 | SPL Token Program | `SyncNative` on the WSOL account |
+| 4 | Jupiter V6 | `route_v2` candidate, 85 ordered outer accounts |
+| 5 | SPL Token Program | `CloseAccount` for the WSOL source account; rent returned to user wallet |
+| 6 | System Program | Transfer 10,000 lamports from user wallet to `2nyhqdwKcJZR2vcqCyrYsaPVdAnFoJjiksCXJ7hfEYgD`; recipient purpose not proven |
+
+This rules out an unrelated outer instruction as the source of the fee-account balance delta: the fee transfer appears explicitly inside the Jupiter route's own inner-instruction group.
+
+### Position 10 is the route's WSOL platform-fee recipient
+
+- Outer position 10: `EaUghZfmuhgtZEEwaZwX5EBroz4WyH8VM5NSXi4tam5A`.
+- It is a 165-byte legacy SPL Token account owned by Tokenkeg. Its mint is WSOL (`So11111111111111111111111111111111111111112`), token authority is `HU23r7UoZbqTUuh3vA7emAGztFtqwTeVips789vqxxBw`, initialized, with no delegate or close authority.
+- Jupiter route args decode to `in_amount=99,550,000` and `platform_fee_bps=10`.
+- Inner instruction 17 is an SPL Token `Transfer` with accounts [source WSOL account `4ZoRa...`, destination `EaUgh...`, authority user wallet `GN2CG...`] and amount **99,550** base units.
+- `99,550,000 × 10 / 10,000 = 99,550`: the transfer amount exactly equals 10 basis points of the route input.
+- Transaction pre/post token balances for account index 19 (the account at Jupiter outer position 10) are `11,463,517 → 11,563,067`, delta **+99,550 WSOL base units**.
+- Inner instruction 1 transfers **99,450,450** WSOL base units from the source account to the Kipseli-side account `HgFLBW...`; this equals the input less the 99,550 platform fee.
+- The combination of route args, explicit inner transfer, and pre/post balance delta establishes position 10 as the platform-fee token recipient for this transaction. Its current finalized balance is not the historical transaction balance and must not be used as such.
+
+### Remaining positional questions
+
+- Outer position 79 is another occurrence of the user wallet. It is a System Program-owned, zero-data wallet account and is not part of the direct Raydium LaunchLab CPI account vector. Nested CPI references to the same wallet cannot be uniquely mapped to a duplicate outer position from address-only metadata; its separate slot remains unexplained.
+- Outer position 84 is the trailing `jitodontfront1111111111111111JustUseJupiter` marker. The finalized RPC query found no initialized account at that address. Record it as an observed transaction marker; do not infer an account owner or program semantics from the name alone.
+- Outer positions 62 and 83 are duplicate Jupiter program IDs. The Jupiter event self-CPI is observed at inner index 16 with the event authority account; because the program key is repeated in the outer list, the precise duplicate position consumed by the handler is not established.
+- System transfer recipients at outer indices 0 and 6 are recorded, but not labeled as tips or fees without recipient account provenance.
+
+### Exact-head workflow verification
+
+For PR #268 code head `c7736c25c2bb03d8b3a9f02ebb7287eb8ce5e38c`:
+
+- Validate run `43077952667`, job `130722699818`: SUCCESS; full job log shows **95 tests passed, 0 failed**, Wrangler dry-run and remaining validation steps succeeded.
+- Browser Smoke run `43077952690`, job `130722743835`: SUCCESS; all auth/cloud-save, homepage, DEX/Swap, fail-closed execution, Solana discovery, desktop/mobile and provider-error/empty-state checks passed; screenshots uploaded.
+- Jupiter CPI Trace Audit run `43077952514`, job `130722691683`: SUCCESS; full outer instruction report and CPI trace artifact uploaded.
+- Jupiter IDL History Audit run `43077952487`, job `130722665602`: SUCCESS; artifact `13881463513` inspected. All five provenance flags true; active IDL payload and route discriminator still match; ProgramData deployment slot remains before candidate slot.
+- No failed workflow was present on this exact head. Earlier parser test failures and the two artifact-discovered parser assumptions are documented above; no acceptance criteria were weakened.
+
+### Next actions
+
+1. Investigate the duplicate wallet at outer position 79 and duplicate Jupiter program positions 62/83 using exact account-index-aware trace data and adapter invocation context.
+2. Retrieve CPI-requested signer/writable privileges or another authoritative equivalent; outer message privileges remain only upper bounds.
+3. Repeat route_v2 account alignment and fee checks on multiple transactions, including different DEX orders, split plans, token programs, transfer hooks, and variable Meteora BinArray counts.
+4. Keep route_v2 rejected by production validation until adapter account-slice behavior is independently verified, Devnet reproduced, and reviewed by an independent Solana security reviewer.
