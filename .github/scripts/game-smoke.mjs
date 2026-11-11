@@ -674,6 +674,8 @@ try {
       !immersiveRequests.some(x => x.orientation === 'landscape')) {
     errors.push('First mobile touch did not request immersive fullscreen and landscape lock: ' + JSON.stringify(immersiveRequests));
   }
+  const mobileGlbRequestFailures = [];
+  mobile.on('requestfailed', request => { if (/\.glb(?:[?#]|$)/i.test(request.url())) mobileGlbRequestFailures.push({ url: request.url(), error: request.failure()?.errorText || 'unknown' }); });
   const mobileGlbReady = () => mobile.evaluate(() => ({
     ready: window.__climboriaReadiness?.heroReady === true &&
       window.__climboriaGLBRenderer === true &&
@@ -687,7 +689,7 @@ try {
     frames: window.__climboriaRenderState?.frames ?? null,
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
-      .filter(entry => /Climboria_Hero\\.glb/i.test(entry.name))
+      .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
       .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
   }));
   const mobileGlbWaitStartedAt = Date.now();
@@ -703,7 +705,7 @@ try {
         await mobile.waitForFunction(() => window.__climboriaReadiness?.heroReady === true && window.__climboriaGLBRenderer === true && window.__climboriaCameraOrbit?.heroUsesGlb === true, undefined, { polling: 100, timeout: 15000 });
       } catch (graceError) {
         diagnostic = await mobileGlbReady();
-        throw new Error('Mobile GLB readiness remained incomplete after bounded grace period: ' + JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }) + '; browserErrors=' + JSON.stringify(errors) + '; initial=' + error.message + '; grace=' + graceError.message);
+        throw new Error('Mobile GLB readiness remained incomplete after bounded grace period: ' + JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }) + '; failedGlbRequests=' + JSON.stringify(mobileGlbRequestFailures) + '; browserErrors=' + JSON.stringify(errors) + '; initial=' + error.message + '; grace=' + graceError.message);
       }
     }
     console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
