@@ -217,7 +217,7 @@ test("returns an incomplete report and preserves the last fetched cursor after e
   const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
     limit: 2, maxTransactions: 2, delayMs: 0, retryBaseMs: 0, fetchImpl,
   });
-  assert.deepEqual(requested, ["sig-2", "sig-1", "sig-1", "sig-1", "sig-1"]);
+  assert.deepEqual(requested, ["sig-2", "sig-1", "sig-1", "sig-1"]);
   assert.equal(report.transactionsScanned, 1);
   assert.equal(report.nextBefore, "sig-2");
   assert.equal(report.rpcFailureMethod, "getTransaction");
