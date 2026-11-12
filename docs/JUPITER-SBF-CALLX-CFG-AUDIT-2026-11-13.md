@@ -28,7 +28,7 @@ Reviewed `anza-xyz/sbpf` `src/static_analysis.rs` at pinned revision `127947b43f
 
 ## Review limitations — do not overclaim
 
-- Dynamic callx target values are **not resolved**; the report intentionally labels them unresolved.
+- Dynamic callx target values are **not resolved**; the report intentionally labels them unresolved. A source review found an additional implementation defect: the current exporter reports `instruction.src` as the target register for every version, but pinned sBPF uses the legacy `imm as u8` target-register encoding for SBPF V0/V1, `src` for V2, and `dst` for V3/V4. The candidate ELF is SBPF V0, so the current `target_register` column is wrong for this candidate until corrected to mirror `SBPFVersion::callx_uses_src_reg()` / `callx_uses_dst_reg()`.
 - CFG output is structural and is **not** yet route_v2 discriminator/variant branch-sensitive reachability.
 - No route-specific CPI reachability, DEX adapter attribution, CPI account-slice boundaries, AccountMeta signer/writable flags, runtime privilege equivalence, or transaction safety conclusion is established.
 - This is static ELF analysis only. No program execution or syscall invocation occurs.
@@ -43,12 +43,13 @@ Reviewed `anza-xyz/sbpf` `src/static_analysis.rs` at pinned revision `127947b43f
 
 ## Required next checks
 
-1. Run the pinned Rust build/test using the exact `solana-sbpf` revision in `Cargo.toml`.
-2. Confirm generated output counts and schemas against the candidate ELF: instruction rows, CFG node rows, callx rows, and unresolved target markers.
-3. Add fixtures for unresolved indirect calls and branch-condition paths, and ensure no unresolved call is silently treated as unreachable.
-4. Only then implement bounded, path-sensitive route_v2 discriminator/variant reachability and candidate CPI-site slicing.
-5. Cross-check ordered CPI account keys against finalized transaction evidence and prove CPI-requested signer/writable flags separately from outer message privileges.
-6. Run required workflows on a PR whose base is `main`, or use an approved/manual workflow dispatch path; do not change branch filters or weaken acceptance criteria merely to force a green result.
+1. Correct callx target-register decoding to mirror the pinned dependency's version-specific encoding (V0/V1: `imm as u8`; V2: `src`; V3/V4: `dst`) and add version-specific regression tests before relying on `callx-sites.tsv`.
+2. Run the pinned Rust build/test using the exact `solana-sbpf` revision in `Cargo.toml`.
+3. Confirm generated output counts and schemas against the candidate ELF: instruction rows, CFG node rows, callx rows, and unresolved target markers.
+4. Add fixtures for unresolved indirect calls and branch-condition paths, and ensure no unresolved call is silently treated as unreachable.
+5. Only then implement bounded, path-sensitive route_v2 discriminator/variant reachability and candidate CPI-site slicing.
+6. Cross-check ordered CPI account keys against finalized transaction evidence and prove CPI-requested signer/writable flags separately from outer message privileges.
+7. Run required workflows on a PR whose base is `main`, or use an approved/manual workflow dispatch path; do not change branch filters or weaken acceptance criteria merely to force a green result.
 
 ## Release posture
 
