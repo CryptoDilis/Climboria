@@ -4521,3 +4521,16 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - The same candidate-matched Jupiter ELF hash remains `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`. Static audit artifact confirms syscall name hashing is already implemented; `syscall-sites.tsv` contains 355 sites, including 270 `sol_invoke_signed_c` callsites. `entrypoint-calls.tsv` contains 10 direct CALL_IMM calls; route_v2 dispatch target remains function PC `74673`. `callx` indirect-call coverage and branch-sensitive CPI reachability remain the next audit gap documented above.
 - Browser Smoke run `43271666578` / job `131369525175` remains IN_PROGRESS at strict Jarrell's Peak desktop/mobile gameplay smoke. No failed step is reported. Attempted log download while the job was active returned GitHub `BlobNotFound`; this is an unavailable in-progress log blob, not a workflow failure. Do not diagnose or record it as a failed job. Wait for terminal job status and then inspect its logs/artifacts.
 - No code change is being pushed to PR #269 while Browser Smoke remains active; its workflow uses cancel-in-progress on the branch. No failure diagnosis is fabricated. Continue with the static-audit completeness task already specified, after the active exact-head checks reach terminal state.
+
+
+## 2026-11-13 — PR #269 exact-head workflow terminal closure
+
+- Exact head: `6895699be28a95749baac06974c5c8d32c479d10`.
+- Validate `43271666407` / job `131369523787`: SUCCESS.
+- Jupiter V6 CPI Trace Audit `43271666314` / job `131369521996`: SUCCESS.
+- Jupiter IDL History Audit `43271666296` / job `131369521548`: SUCCESS.
+- Browser Smoke `43271666578` / job `131369525175`: SUCCESS. All 22 workflow steps and cleanup passed, including strict Jarrell's Peak desktop/mobile gameplay. Coverage includes auth/cloud-save isolation, DEX/Swap, fail-closed execution, live Base/Solana discovery, chart identity, 390px/360px mobile layouts, provider states, and gameplay.
+- Browser artifacts: provider contract evidence `13969680805` (7,346 bytes; SHA-256 `5dd1a15d9a901b70a3d3c78566b8dc338918ed184fa010c49a1a9edcf6e1ee39`); screenshots `13969281765` (8,879,449 bytes; SHA-256 `e4e23d8f542f8fb68d4b0ba7dc0dc5474284d1e6466bc7271c7d127cfa653a07`).
+- No failure or retry on this exact head. Earlier in-progress `BlobNotFound` log retrieval was a temporary unavailable-log condition, not a workflow failure. Cancelled/superseded runs remain excluded.
+- Canonical detailed record: `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` on PR #269.
+- Next engineering task: branch-sensitive route_v2 CPI reachability analysis, including explicit handling/reporting of 136 `callx` instructions, followed by bounded CPI account-slice and requested signer/writable data-flow. Existing CALL_IMM function closure is an over-approximation, not path-sensitive proof. Keep all signing/execution/deployment gates closed.
