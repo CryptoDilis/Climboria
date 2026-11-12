@@ -18,6 +18,7 @@ on:
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/dex-base-search-smoke.mjs"
+      - ".github/scripts/dex-chart-selection-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -32,6 +33,7 @@ on:
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/dex-base-search-smoke.mjs"
+      - ".github/scripts/dex-chart-selection-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
 
   workflow_dispatch:
@@ -468,6 +470,9 @@ jobs:
 
       - name: Test live Base token search, chain filtering, and provider failures
         run: node .github/scripts/dex-base-search-smoke.mjs
+
+      - name: Test DEX chart identity while switching selected tokens
+        run: node .github/scripts/dex-chart-selection-smoke.mjs
 
       - name: Test live Solana profile and boost discovery
         run: |

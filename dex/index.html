@@ -1127,7 +1127,7 @@ function renderPoolFailure(mint,message,meta){
  if(meta)renderPumpProfile(mint,meta);
 }
 async function openToken(mint,options={}){
- const requestId=++detailRequestId;activeDetailMint=mint;if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
+ const requestId=++detailRequestId;activeDetailMint=mint;activeDetailPairs=[];$('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);if(!options.fromUrl)setDexUrl(mint,null);openTokenRoom(mint);
  const box=$('tokenDetail');box.classList.add('open');document.body.classList.add('mobile-token-view');document.body.classList.remove('mobile-base-view');$('tokenLoadState').hidden=true;
  if(!options.refresh)box.scrollIntoView({behavior:'smooth',block:'start'});
  $('detailTitle').textContent='Loading token…';$('detailMint').textContent='Mint: '+mint;

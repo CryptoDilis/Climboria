@@ -35,10 +35,10 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `773af855add1e247e7e0784dbf810d877b4d1780`; PR #269 remains open, draft and unmerged.
-- Exact-head workflows: Validate `43235240765` (15/15), CPI Trace `43235240638` (10/10), IDL History `43235240978` (12/12), Browser Smoke `43235240724` (23/23) — all SUCCESS, zero failed steps.
-- The new Base live-search regression passed: provider query discovery, Base-only filtering, stale-result clearing and honest HTTP 503 handling. Jarrell's Peak desktop/mobile gameplay smoke also passed; 10 screenshots and the CPI/IDL artifacts were SHA-256 verified. See the launch checklist and workflow register.
-- Current next task: audit DEX chart freshness and selected-pool identity, including token/pool switching and stale-chart prevention. Verify production API freshness and service configuration. Keep Swap execution gates false.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `fdfccad5ee999805cad41dceb94446909c6d1593`; PR #269 remains open, draft and unmerged.
+- Exact-head workflows on this checkpoint: Validate `43236793238` (15/15), CPI Trace `43236793422` (10/10), IDL History `43236793269` (12/12), Browser Smoke `43236793856` (23/23) — all SUCCESS, zero failed steps.
+- DEX Base live-search regression passed. New source audit found a chart identity gap during token switching: old chart remained visible while the newly selected token was loading. This commit clears the chart immediately and adds a delayed-response Playwright regression; verification is pending.
+- Current next task: verify delayed chart-switch regression and exact-head workflows; then audit chart refresh cadence and pool-selection URL persistence. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---

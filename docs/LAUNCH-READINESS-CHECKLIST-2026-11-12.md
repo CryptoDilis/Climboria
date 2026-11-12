@@ -4,7 +4,7 @@
 
 **Repository:** `CryptoDilis/Climboria`  
 **Branch:** `codex/swap-security-evidence-current-main-2026-11-12`  
-**Checkpoint commit before this update:** `773af855add1e247e7e0784dbf810d877b4d1780`  
+**Checkpoint commit before this update:** `fdfccad5ee999805cad41dceb94446909c6d1593`  
 **PR:** #269 — open, draft, unmerged  
 **Checkpoint time:** 2026-11-12 (UTC)
 
@@ -21,18 +21,18 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ### 1. DEX — first priority
 
-- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `773af855add1e247e7e0784dbf810d877b4d1780`.
+- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `fdfccad5ee999805cad41dceb94446909c6d1593`.
 - [x] Browser smoke: live Solana profile/boost discovery path passed.
 - [x] Browser smoke: desktop/mobile DEX workspace and 390px/360px layouts passed.
 - [x] Browser smoke: provider-error and true-empty states passed.
-- [x] Browser smoke: live Base token search, Base-only chain filtering, stale-result clearing and provider HTTP 503 handling passed on exact head `773af855add1e247e7e0784dbf810d877b4d1780`.
+- [x] Browser smoke: live Base token search, Base-only chain filtering, stale-result clearing and provider HTTP 503 handling passed on exact head `fdfccad5ee999805cad41dceb94446909c6d1593`.
 - [ ] Verify production provider-backed discovery/search, exact mint identity and token profile correctness.
 - [ ] Verify real pool/liquidity/price/volume values and freshness; distinguish actual live data from preview/fixture data.
 - [ ] Verify chart updates against real provider data and correct token/pool changes.
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** trace chart data refresh and selected-pool identity from live provider response through the UI; test token/pool switching and stale-chart prevention, then verify production API freshness and service configuration.
+**Next DEX task:** verify the new delayed token-switch chart regression on the next exact-head Browser Smoke run. Then audit chart refresh cadence and pool-selection URL persistence; production API freshness and service configuration remain unverified.
 
 ### 2. Swap — second priority
 
@@ -77,7 +77,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ## Exact-head CI evidence at checkpoint
 
-All four workflows on `773af855add1e247e7e0784dbf810d877b4d1780` completed SUCCESS with zero failed steps:
+All four workflows on `fdfccad5ee999805cad41dceb94446909c6d1593` completed SUCCESS with zero failed steps:
 
 | Workflow | Run | Job | Result |
 |---|---:|---:|---|
