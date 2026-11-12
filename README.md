@@ -4439,3 +4439,23 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - The new browser assertion switches from the most-liquid pool to the secondary pool and verifies the selected mint/title stay unchanged while iframe URL, external chart URL, selected pool marker, price, volume, change and buy/sell counters all update to the secondary pair. It then switches back before continuing the existing delayed cross-token chart-switch test.
 - Existing quote-side-only fail-closed fixture remains intact. This is a regression-strengthening test, not a production source behavior change.
 - **Pending:** exact-head CI verification. If it fails, inspect the Browser Smoke failing step and logs; do not weaken the synchronization assertions.
+
+
+### Exact-head verification — 2026-11-13
+
+The same-token multi-pool regression commit `1f4d9ff4aa0bbebcb0a31609448b75c965996062` completed all four required workflows successfully:
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | `43266812005` | `131352440929` | SUCCESS |
+| Jupiter IDL History Audit | `43266812383` | `131352632433` | SUCCESS |
+| Jupiter V6 CPI Trace Audit | `43266812715` | `131352441923` | SUCCESS |
+| Climboria Browser Smoke Test | `43266811968` | `131352508259` | SUCCESS |
+
+Browser Smoke individual steps all succeeded, including live DexScreener provider capture, DEX chart identity switching, mobile DEX/Swap checks, and Jarrell's Peak desktop/mobile gameplay. The chart-selection script completed with: `PASS selected-token chart switch plus exact-mint quote-side fail-closed behavior.` The same-token secondary-pool assertions are executed before that final PASS line; they verify selected mint/title, iframe and external chart pair URLs, selected pool marker, price, volume, 24h change and buys/sells.
+
+No workflow failed on this exact head. No new failure incident is recorded. Superseded workflow cancellations on prior documentation commits are not failures. Browser log contains upstream Node dependency deprecation warnings (`punycode`, `url.parse()`) and GitHub action Node 20 compatibility warnings; these were warnings only, did not fail the job, and are not a reason to suppress or weaken checks.
+
+The provider-contract artifact was uploaded successfully as artifact `13966138677`; browser screenshots as `13966148658`. Jarrell's Peak desktop/mobile gameplay smoke also passed, with no reported render errors in the mobile diagnostics.
+
+**Release posture unchanged:** PR #269 remains draft/open/unmerged. These CI results are not production deployment acceptance. DEX LIVE status and Swap signing/submission remain gated.

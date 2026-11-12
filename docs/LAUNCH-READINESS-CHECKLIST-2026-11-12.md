@@ -179,3 +179,15 @@ Every commit must update this file or explicitly state why no checklist status c
 - [x] Added assertions for selected mint/title, iframe pair URL, external pair URL, selected pool marker, price, volume, 24h change and buys/sells after pool switching.
 - [ ] Verify on exact new head across all triggered workflows.
 - [ ] Preserve delayed cross-token switching and quote-side-only withholding regressions.
+
+
+### Exact-head verification — 2026-11-13
+
+- [x] Same-token secondary pool selection regression passed on `1f4d9ff4aa0bbebcb0a31609448b75c965996062`.
+- [x] Validate Climboria `43266812005`, job `131352440929` — SUCCESS.
+- [x] Jupiter IDL History `43266812383`, job `131352632433` — SUCCESS.
+- [x] Jupiter CPI Trace `43266812715`, job `131352441923` — SUCCESS.
+- [x] Browser Smoke `43266811968`, job `131352508259` — SUCCESS; DEX chart/quote-side test, provider capture, mobile checks and Jarrell's Peak gameplay all passed.
+- [x] CI evidence artifacts uploaded: provider contract `13966138677`; browser screenshots `13966148658`.
+- [ ] Next: inspect and test freshness/cache behavior for provider-backed token detail and chart updates; do not claim the embedded third-party chart's internal freshness is proven by pair selection alone.
+- [ ] Production DEX acceptance and Swap signing/submission remain gated.
