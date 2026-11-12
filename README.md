@@ -35,11 +35,10 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `626f5a4128bcd7031ed376cff2a4db96f2e44511`; PR #269 remains open, draft and unmerged.
-- Previous exact-head workflows on `fdfccad5`: Validate 15/15, CPI Trace 10/10, IDL History 12/12, Browser Smoke 23/23 — all SUCCESS.
-- New chart identity correction clears the prior chart immediately during token switching and adds a delayed-provider Playwright regression. Its first validation batch exposed a Browser Smoke harness false positive: DexScreener's own Firestore offline warning was treated as a fatal console error. Root cause and narrow counter-fix are recorded in the workflow failure register.
-- Counter-fix filters only the known Firestore unavailable warning from the DexScreener asset bundle; all Climboria page errors and other console errors remain fatal. Re-run pending.
-- Current next task: verify Browser Smoke rerun and delayed chart-switch regression, then audit chart refresh cadence and pool-selection URL persistence. Keep Swap execution gates false.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `9dcb482d570f8e36fd72007f491317636a48f6c6`; PR #269 remains open, draft and unmerged.
+- Validate `43241198246` passed 15/15; CPI Trace `43241198319` passed 10/10. Browser Smoke `43241198180` failed at same-pool refresh assertion after homepage/DEX navigation passed. IDL History `43241198298` was in progress at checkpoint.
+- Root cause: unconditional chart blanking on every openToken call also blanked same-mint periodic refreshes, producing four iframe src mutations although selected pool and updated price were correct. Narrow correction now blanks only when selected mint changes; same-mint refresh retains the chart.
+- Current next task: verify different-mint stale-chart clearing and same-mint refresh stability together on exact-head Browser Smoke. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---

@@ -32,7 +32,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** rerun Browser Smoke after the narrow DexScreener Firestore-console false-positive filter. Confirm the delayed token-switch chart regression executes; then audit chart refresh cadence and pool-selection URL persistence.
+**Next DEX task:** verify both chart invariants: a different-mint switch clears the previous chart while loading, while same-mint periodic refresh preserves iframe src and updates metrics. Then audit chart refresh cadence and pool-selection URL persistence.
 
 ### 2. Swap — second priority
 
