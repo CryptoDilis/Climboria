@@ -316,6 +316,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     nextBefore: lastScannedSignature ?? initialBefore,
     signatureLimit: limit,
     maxTransactions,
+    maxMatches,
     pagesScanned,
     signaturesReturned,
     transactionsScanned,
