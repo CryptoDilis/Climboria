@@ -1,7 +1,9 @@
 mod abstract_domain;
+mod abi_v1_layout;
 mod branch_analysis;
 
 use abstract_domain::AbstractState;
+use abi_v1_layout::{analyze_abi_v1_layout, parse_account_vector_csv};
 use branch_analysis::{analyze_cfg_with_calls, classify_branch, CfgBlock};
 use solana_sbpf::{
     elf::Executable,
@@ -110,6 +112,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         "unknown-entry-registers"
     };
 
+    // Candidate account positions come from the finalized getTransaction trace.
+    // Outer-message privileges are retained as evidence, but are not CPI-requested
+    // AccountMeta flags. Account data lengths remain Unknown without a historical
+    // slot-matched account snapshot, so the payload offset is only a lower bound.
+    let candidate_abi_layout = if instruction_data.is_some() {
+        let accounts = parse_account_vector_csv(include_str!("../fixtures/jupiter-route-v2-candidate-account-vector.csv"))
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))?;
+        let layout = analyze_abi_v1_layout(&accounts, instruction_data.as_ref().map_or(0, |data| data.len() as u64))?;
+        if layout.records.len() != 85 || layout.unique_accounts != 51 || layout.duplicate_accounts != 34 {
+            return Err("candidate account vector no longer matches the finalized 85-position / 51-unique / 34-duplicate trace".into());
+        }
+        fs::write(format!("{out_dir}/abi-v1-account-layout.tsv"), layout.to_tsv())?;
+        Some(layout)
+    } else {
+        None
+    };
+
     // Bounded conservative forward data-flow over the pinned CFG. Generic runs
     // begin unknown; the candidate mode seeds only ABI-v1 r1/r2 proven by the
     // finalized loader-owner and transaction evidence.
@@ -155,7 +174,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "entrypoint_register_seed=r0/r3-r9=0;r1=input-base;r2=instruction-data;r10=stack-base;r11=vm-pc")?;
     writeln!(summary, "entrypoint_r2_feature_gate=SIMD-0321 mainnet activation epoch 950; candidate epoch 1083")?;
     writeln!(summary, "entrypoint_r2_pointer_usage=overwritten at entrypoint+2; r2 becomes InputDataPointer(8); first account-count load uses r1 base")?;
-    writeln!(summary, "candidate_serialized_input=ABI-v1; 85 account entries; 51 unique; 34 duplicates; account data lengths and input-data offset not reconstructed")?;
+    if let Some(layout) = candidate_abi_layout.as_ref() {
+        writeln!(summary, "candidate_serialized_input=ABI-v1 standard-aligned; 85 account entries; 51 unique; 34 duplicates")?;
+        writeln!(summary, "candidate_abi_v1_unique_account_data_lengths_unknown={}", layout.unknown_unique_data_lengths)?;
+        writeln!(summary, "candidate_abi_v1_instruction_data_offset_min_bytes={}", layout.instruction_data_offset_min)?;
+        writeln!(summary, "candidate_abi_v1_instruction_data_offset_exact={}", layout.instruction_data_offset_exact.map_or_else(|| "unknown".to_owned(), |v| v.to_string()))?;
+        writeln!(summary, "candidate_abi_v1_program_id_offset_exact={}", layout.program_id_offset_exact.map_or_else(|| "unknown".to_owned(), |v| v.to_string()))?;
+        writeln!(summary, "candidate_abi_v1_offset_basis=minimum; unknown account data lengths assumed zero; standard 10KiB realloc reserve and 8-byte alignment included")?;
+    } else {
+        writeln!(summary, "candidate_serialized_input=not supplied")?;
+    }
     writeln!(summary, "direct_account_pointers=SIMD-0449 status Review; no Mainnet account-pointer extension assumed")?;
     let internal_calls = cfg_reachability.call_observations.values().filter(|call| call.kind == "internal").count();
     let external_calls = cfg_reachability.call_observations.values().filter(|call| call.kind == "external-or-unresolved").count();
