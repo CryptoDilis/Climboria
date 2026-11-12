@@ -167,3 +167,76 @@ test("preserves the last fully scanned signature when a transaction page is rate
   assert.equal(report.nextBefore, "sig-2");
   assert.deepEqual(fetchedTransactions, ["sig-2", "sig-1", "sig-1", "sig-1", "sig-1", "sig-1"]);
 });
+
+
+test("preserves the 18-account Meteora CPI order and parent-sequence correlation", async () => {
+  const cpiIndexes = [7, 9, 21, 13, 16, 18, 47, 39, 25, 45, 0, 51, 50, 46, 37, 45, 6, 22];
+  const keys = Array.from({ length: 54 }, (_, index) => "Account" + index);
+  keys[52] = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+  keys[53] = METEORA_DLMM_PROGRAM_ID;
+  const outerIndexes = [...Array.from({ length: 44 }, (_, index) => index), ...cpiIndexes, 1, 2];
+  const transaction = {
+    slot: 468153382,
+    version: 1,
+    transaction: {
+      message: {
+        accountKeys: keys,
+        header: {
+          numRequiredSignatures: 1,
+          numReadonlySignedAccounts: 0,
+          numReadonlyUnsignedAccounts: 53,
+        },
+        instructions: [{
+          programIdIndex: 52,
+          accounts: outerIndexes,
+          data: "2sDES9fHqoTppYzwZFtuwMPsJL1uwAj7C1WKpRv22o7xwLdcxsAo7oWEePwUpZ5eNY93NaNUqWmSkoDTyArfz1JtB2NYgMy",
+        }],
+      },
+    },
+    meta: {
+      err: null,
+      loadedAddresses: { writable: [], readonly: [] },
+      innerInstructions: [{
+        index: 0,
+        instructions: [{
+          programIdIndex: 53,
+          accounts: cpiIndexes,
+          data: "fx9RHbGFfZ7Sw9c4BaQiLdbuZhcv5hAgYh5vbR",
+          stackHeight: 2,
+        }],
+      }],
+    },
+  };
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      return rpcResponse([{ signature: "candidate-route-signature" }]);
+    }
+    if (body.method === "getTransaction") return rpcResponse(transaction);
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 1,
+    maxTransactions: 1,
+    delayMs: 0,
+    fetchImpl,
+  });
+
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.matchingRoutes, 1);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 1);
+  const cpi = report.results[0].meteoraSwap2Cpis[0];
+  assert.equal(cpi.accountCount, 18);
+  assert.deepEqual(cpi.orderedAccountIndexes, cpiIndexes);
+  assert.equal(cpi.outerAccountCount, outerIndexes.length);
+  assert.deepEqual(cpi.parentAccountSequenceMatch, {
+    exactContiguousPositions: [44],
+    status: "unique",
+  });
+  assert.deepEqual(cpi.accountParentPositions[10], [0, 54]);
+  assert.equal(
+    report.evidenceLimitations.some((item) => item.includes("do not prove which runtime handler cursor")),
+    true,
+  );
+});
