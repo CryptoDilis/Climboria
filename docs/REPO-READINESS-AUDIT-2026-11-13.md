@@ -248,3 +248,22 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 - Jupiter CPI Trace run `43328947126`: SUCCESS.
 - Jupiter IDL History run `43328946725`: SUCCESS as detailed above.
 - Browser Smoke run `43328946852`: still running the Jarrell's Peak desktop/mobile gameplay smoke step at the time of this update. Earlier DEX, auth, chart, and mobile layout steps all completed SUCCESS. Do not claim Browser Smoke terminal success until the gameplay step and artifact uploads complete.
+
+
+### PR #274 exact-head Browser Smoke terminal closure — 2026-11-13
+
+**Verified head:** `559423bdddf709cae31de06b01b2c4b461f2a482`; PR #274; branch `codex/jupiter-abi-v1-sparse-layout-2026-11-13`.
+
+- Browser Smoke run `43328946852`, job `131568555137`: terminal `completed/success`.
+- All 22 numbered work steps and all post-job cleanup steps completed successfully. No failed step exists in this exact-head run.
+- Browser checks passed for Supabase auth UI/cloud-save account isolation (mocked provider context), homepage/DEX routing, Cloudflare proxy UI contract, fail-closed execution, Swap shell, DEX market/quote shell, live Base search/chain filtering/provider error behavior, chart identity switching, Solana profile/boost discovery, desktop/mobile DEX layouts, and mobile loading/error/empty states.
+- Jarrell's Peak desktop/mobile gameplay smoke step 20 completed SUCCESS. Desktop capture reported 191 streamed chunks and 255 render frames. Desktop WebGL context/resources were explicitly released before mobile GLB startup. Mobile capture reported 90 chunks, 82 frames, `ready=true`, `hero=true`, `renderErrors=[]`, player/world UI visible, and jump/run/use/dive controls visible.
+- Gameplay terminal assertion: `PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).`
+- Artifact `13993464365` (`dexscreener-provider-contract-evidence`): 7,270 bytes; ZIP SHA-256 `41bcca08ffa6001af8a274764bc4eac85f68186612a77d00b502e50dbcebe5dd`.
+- Artifact `13994282175` (`climboria-browser-smoke-screenshots`): 8,869,038 bytes; ZIP SHA-256 `4cc818c01fae06fd0dbc8fe9e82ff984010808e099e0e31a80dd45ca4678dac5`; 10 screenshot files.
+- Exact-head required workflows are all terminal SUCCESS: Validate `43328946627` / job `131568461673`; Browser Smoke `43328946852` / job `131568555137`; Jupiter V6 CPI Trace `43328947126` / job `131568513611`; Jupiter IDL History `43328946725` / job `131568593194`. IDL history job ran the pinned Rust suite, previously inspected as 48 passed, 0 failed.
+- Non-fatal warnings: Node.js 20 action deprecation notice and Node `punycode` / `url.parse()` deprecations. They did not fail any step.
+- The earlier Browser Smoke run on the superseded head was canceled after a new commit updated the PR branch. Its homepage/DEX assertion had passed before GitHub canceled the job. This is a concurrency cancellation, not a code/test failure. The fresh run above completed successfully; no code counter-fix or failed-job retry was warranted.
+- Acceptance boundary: browser automation used a local test server and mocked Supabase auth context; gameplay ran with wildlife temporarily disabled. It does not establish live production auth, production deployment, full wildlife simulation, physical-device performance, multiplayer, or persistent economy. Keep execution/deployment gates closed.
+
+**Updated next task:** continue the P1 read-only Jupiter/SBF security work on the main-based Swap branch: obtain historical slot-appropriate account data lengths for the 51 unique route_v2 candidate accounts (or preserve Unknown if unavailable), then continue finalized multi-transaction route traces, CPI account-slice/privilege reconstruction, and CALLX/interprocedural analysis. Do not enable route_v2, signing, execution, or deployment based on these CI results.
