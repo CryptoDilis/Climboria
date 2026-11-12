@@ -507,7 +507,10 @@ mod cfg_reachability_tests {
         assert_eq!(result.call_observations[&0].kind, "internal");
         assert_eq!(result.call_observations[&0].target_pc, Some(10));
         assert_eq!(result.branch_observations[&10].outcome_taken, Some(true));
-        assert_eq!(result.branch_observations[&10].retained_successors, BTreeSet::from([11]));
+        // JEQ at PC 10 with off=1 branches to PC 12; PC 11 is fallthrough.
+        assert_eq!(result.branch_observations[&10].retained_successors, BTreeSet::from([12]));
+        assert!(result.reachable_blocks.contains(&12));
+        assert!(!result.reachable_blocks.contains(&11));
     }
 
     #[test]
