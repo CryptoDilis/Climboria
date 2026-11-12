@@ -45,8 +45,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: climboria-solana-mainnet-audit-${{ github.event.pull_request.head.ref || github.ref_name }}
-  cancel-in-progress: false
+  group: jupiter-cpi-trace-audit-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   trace:
