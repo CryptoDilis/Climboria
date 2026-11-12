@@ -219,6 +219,69 @@ mod tests {
     }
 
     #[test]
+    fn transfer_handles_register_aliasing_and_modular_constant_overflow() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::Constant(u64::MAX);
+        assert!(state.transfer_instruction(0x07, 1, 0, 0, 1));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0));
+        state.registers[2] = AbstractValue::Constant(5);
+        assert!(state.transfer_instruction(0x0f, 2, 2, 0, 0));
+        assert_eq!(state.registers[2], AbstractValue::Constant(10));
+    }
+
+    #[test]
+    fn transfer_rejects_invalid_register_indices_conservatively() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::Constant(99);
+        state.registers[2] = AbstractValue::StackPointer(-8);
+        state.spill_u64(state.registers[2], state.registers[1]);
+        assert!(!state.transfer_instruction(0xbf, 15, 1, 0, 0));
+        assert_eq!(state.registers[1], AbstractValue::Unknown);
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn pointer_add_overflow_becomes_unknown() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::StackPointer(i64::MAX);
+        assert!(state.transfer_instruction(0x07, 1, 0, 0, 1));
+        assert_eq!(state.registers[1], AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn aligned_stack_store_overwrites_exact_slot() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::StackPointer(-8);
+        state.registers[2] = AbstractValue::Constant(1);
+        assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
+        state.registers[2] = AbstractValue::Constant(2);
+        assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Constant(2));
+    }
+
+    #[test]
+    fn unaligned_stack_store_invalidates_every_overlapping_slot() {
+        let mut state = AbstractState::default();
+        state.spill_u64(AbstractValue::StackPointer(-16), AbstractValue::Constant(1));
+        state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(2));
+        state.registers[1] = AbstractValue::StackPointer(-15);
+        state.registers[2] = AbstractValue::Constant(3);
+        assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-16)), AbstractValue::Unknown);
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn unknown_store_base_clears_all_stack_facts() {
+        let mut state = AbstractState::default();
+        state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(1));
+        state.registers[1] = AbstractValue::Unknown;
+        state.registers[2] = AbstractValue::Constant(2);
+        assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
     fn constant_branch_comparison_is_width_and_signedness_aware() {
         assert_eq!(evaluate_constant_branch(BranchCondition::Equal, AbstractValue::Constant(0x1_0000_0001), AbstractValue::Constant(1), 32), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::SignedLess, AbstractValue::Constant(u64::MAX), AbstractValue::Constant(0), 64), Some(true));
