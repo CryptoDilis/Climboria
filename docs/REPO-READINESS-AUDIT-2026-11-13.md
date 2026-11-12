@@ -277,3 +277,42 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 - PR #269 remains open/draft and GitHub currently reports `mergeable=false`; its recorded base SHA is `0fa8e987aec4d6e6bc7590363efa7d20fde79422`. PR #274 remains open/draft and GitHub currently reports `mergeable=false`; its recorded base SHA is `53fcc62ed225d4209c8dd8e99dfb227d43c1d51e`. These are PR metadata observations, not workflow failures. Before any merge, inspect the current main/base divergence and update/rebase deliberately, then rerun exact-head checks on the resulting SHA.
 - No workflow failed in the PR #274 exact-head batch. The previous canceled Browser Smoke attempt is classified as concurrency supersession only. Non-fatal Node deprecation warnings remain maintenance items, not test failures.
 - **Next priority:** resolve the 51 unknown historical account data lengths for the route_v2 candidate using a slot-correct archival/replay source; if not available, explicitly retain Unknown and proceed with other independently grounded finalized route traces and CPI account-slice/privilege analysis on PR #269. Do not merge either draft solely because its checks are green; do not enable signing, execution, or deployment.
+
+
+## 2026-11-13 — PR #269 multi-transaction CPI evidence expansion (interim checkpoint)
+
+**PR:** #269  
+**Branch:** `codex/swap-security-evidence-current-main-2026-11-12`  
+**Current exact head:** `776fd3f1838eda7951a27b464bbc5f3960553d6b`
+
+### Implementation
+
+- Extended `discover-jupiter-meteora-routes.mjs` to preserve every nested CPI in order, including program ID, stack height, raw instruction data, account-key indexes, addresses, outer transaction privileges, and all matching duplicate outer positions.
+- Added raw token balance before/after snapshots and exact integer delta calculation. A token account absent from preTokenBalances keeps its delta **Unknown** rather than assuming a zero starting balance.
+- Added `JUPITER_AUDIT_MAX_MATCHES` configuration and a workflow-dispatch `max_matches` input; the trace artifact now retains up to five matching finalized Jupiter/Meteora route traces.
+- Added a deterministic regression test with two finalized transactions, nested Meteora/Token-2022/transfer-hook-shaped CPI records, and token balance deltas. The test validates preservation of ordered CPI evidence; its fixture does not prove a real transfer-hook invocation.
+- Updated the CPI trace workflow summary to report scan completeness, continuation cursor, errors/unavailable signatures, nested CPI program sequence, and token balance deltas.
+- The implementation commits on PR #269 include `fbaecb12d92b3a8c2e1d6aabfd1ff2851e214f45`, `3963b8e6112108b6016aa68649f9ae5ec476b8cf`, `4357f32e662a23dc680ea11ec2e41e55d1b82774`, `72cf2e61cf3772cca71d9dfc3cccb7ea65470355`, and final head `776fd3f1838eda7951a27b464bbc5f3960553d6b`.
+
+### Exact-head CI state at this interim checkpoint
+
+- Validate run `43330562273`: terminal SUCCESS; all 15 steps passed.
+- Jupiter V6 CPI Trace run `43330562024`: terminal SUCCESS; all 15 steps passed, including both CPI-index mapping tests and the expanded finalized-route discovery test.
+- Browser Smoke run `43330562158`: still running gameplay step 22 at this checkpoint; all preceding 21 steps passed.
+- Jupiter IDL History run `43330562046`: still running step 6 (fetch Jupiter/DEX CPI IDL history); first five steps passed.
+- No terminal failed workflow exists in this batch as of this checkpoint. Do not claim the two in-progress workflows passed until terminal status.
+
+### Live finalized RPC evidence independently inspected
+
+- CPI trace artifact `13993649677`, 20,690 bytes; ZIP SHA-256 `ac85e071e3f49dac8aca7983dee680b09c740a2a4776d5e7188db67618f17e4f`; seven JSON files.
+- The bounded scan examined 5 finalized signatures from one page, completed all 5 transaction fetches, found 1 matching Jupiter/Meteora route, and had no rate limit, RPC transport failure, or unavailable transaction. Continuation cursor: `38kobum3MFHQuzyymvduRj8dEjPcEwk3r8shpbkstuBvL7APdarVy27Pz7oDhvoPRWzKMNtdiDePfjYt7m6Tpadj`. This is a five-transaction bounded sample, not an exhaustive search.
+- Matching transaction: `QwHFTPGipPLBXMgDa3YRdCyqmPA3QqkA7EXd5vDVbz6PShLgZRnmcHvaMU1WtjCjJKbtjrJPevzegSwrRg9ZmoD`, slot `468322999`, successful transaction, outer Jupiter instruction index 6, discriminator `e517cb977ae3ad2a` (`route`), one route-plan step, first-step enum variant 75.
+- The matching Meteora DLMM CPI had 19 ordered account positions at stack height 2. The retained nested CPI trace contained six records: Meteora DLMM (19 accounts, height 2), Meteora DLMM (1, height 3), Tokenkeg (4, height 3), Token-2022 (4, height 3), Meteora DLMM (1, height 3), and Jupiter (1, height 2).
+- Token-balance artifact showed exact raw deltas for accounts present in both snapshots: WSOL `+416611596` raw units and the pump-token account `-113280309859` raw units. A separate post-only token account had `113280309859` raw units with pre-state absent; its delta remains null/unknown. These are account-level observations, not attribution of fees or a proof of route settlement semantics.
+- This observed transaction is a single-step variant-75 route with a 19-account Meteora CPI; it does not provide a multi-hop/split example. No transfer-hook program invocation was observed in this particular six-record CPI trace, despite Token-2022 being invoked. The synthetic regression test covers nested hook-shaped records only.
+- The 19-account CPI's bin-array/bitmap roles are not yet classified. Do not infer the bin-array count or positional schema from account count alone. The existing two-BinArray/bitmap evidence belongs to the separate historical route_v2 candidate and must not be conflated with this transaction.
+
+### Safety and next task
+
+- No policy allowlist, route_v2 support, signing, execution, or deployment gate changed.
+- Next: inspect the 19 CPI account addresses against slot-appropriate account data to identify BinArray and bitmap-extension discriminators and pool linkage; extend finalized discovery to a larger bounded scan for genuinely multiple matched transactions and multi-hop/split examples; parse variant-75 dynamic remaining-account metadata only against version-matched CPI evidence. Continue to preserve outer privileges versus CPI-requested privileges.
