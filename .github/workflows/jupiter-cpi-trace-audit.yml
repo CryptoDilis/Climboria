@@ -66,7 +66,7 @@ jobs:
       - name: Fetch finalized public Jupiter V6 route trace
         env:
           JUPITER_AUDIT_RPC_URL: https://api.mainnet-beta.solana.com
-          JUPITER_AUDIT_BEFORE_SIGNATURE: ${{ github.event.inputs.before_signature || 'EMxKtWZExS13GFWb8aBHPh3h1k58GU2xWFnyyEELyKSHRhqGPP7DLEwe9bphYPVeu4kqfbLHPxknsZ8KyRq45qZ' }}
+          JUPITER_AUDIT_BEFORE_SIGNATURE: ${{ github.event.inputs.before_signature || '5wtvuaRJhbZQrPdFdLEs7HgTQCQMiPr4kRGEZ8fBVarb8vRkgr3iB9onDhkZTM5A93FAv8YyUtZKReLWQmGezbd7' }}
           JUPITER_AUDIT_SIGNATURE_LIMIT: ${{ github.event.inputs.signature_limit || '25' }}
           JUPITER_AUDIT_MAX_TRANSACTIONS: ${{ github.event.inputs.max_transactions || '5' }}
           JUPITER_AUDIT_DELAY_MS: '0'
