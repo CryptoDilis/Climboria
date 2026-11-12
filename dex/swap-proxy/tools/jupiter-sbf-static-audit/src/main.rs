@@ -1,7 +1,7 @@
 mod abstract_domain;
 mod branch_analysis;
 
-use branch_analysis::classify_branch;
+use branch_analysis::{analyze_cfg, classify_branch, CfgBlock};
 use solana_sbpf::{
     elf::Executable,
     program::{BuiltinProgram, SBPFVersion},
@@ -9,7 +9,7 @@ use solana_sbpf::{
     test_utils::TestContextObject,
 };
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     env,
     error::Error,
     fs::{self, File},
@@ -48,6 +48,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (text_address, text_bytes) = executable.get_text_bytes();
     let analysis = Analysis::from_executable(&executable)?;
 
+    // Bounded conservative forward data-flow over the pinned CFG. No loader
+    // register ABI or input-data pointer provenance is assumed at entry.
+    let cfg_blocks: BTreeMap<usize, CfgBlock> = analysis.cfg_nodes.iter()
+        .map(|(pc, node)| (*pc, CfgBlock {
+            instruction_range: node.instructions.clone(),
+            successors: node.destinations.clone(),
+        })).collect();
+    let cfg_work_budget = analysis.cfg_nodes.len().saturating_mul(64).max(10_000).min(1_000_000);
+    let cfg_reachability = analyze_cfg(&analysis.instructions, &cfg_blocks, analysis.entrypoint, version, cfg_work_budget)?;
+
     let summary_path = format!("{out_dir}/summary.txt");
     let mut summary = BufWriter::new(File::create(summary_path)?);
     writeln!(summary, "elf_path={elf_path}")?;
@@ -68,7 +78,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "call_reg_target_resolution=register_value_unresolved")?;
     let branch_site_count = analysis.instructions.iter().filter(|instruction| classify_branch(version, instruction).is_some()).count();
     writeln!(summary, "branch_instruction_count={branch_site_count}")?;
-    writeln!(summary, "branch_condition_resolution=unresolved; both conditional successors retained")?;
+    writeln!(summary, "branch_condition_resolution=bounded_cfg_dataflow; unknown conditions retain both successors")?;
+    writeln!(summary, "cfg_dataflow_work_items={}", cfg_reachability.work_items)?;
+    writeln!(summary, "cfg_dataflow_work_budget={}", cfg_reachability.work_budget)?;
+    writeln!(summary, "cfg_dataflow_truncated={}", cfg_reachability.truncated)?;
+    writeln!(summary, "cfg_reachable_basic_blocks={}", cfg_reachability.reachable_blocks.len())?;
+    writeln!(summary, "cfg_branch_observations={}", cfg_reachability.branch_observations.len())?;
+    writeln!(summary, "cfg_resolved_branch_observations={}", cfg_reachability.branch_observations.values().filter(|item| item.outcome_taken.is_some()).count())?;
+    writeln!(summary, "cfg_unresolved_branch_observations={}", cfg_reachability.branch_observations.values().filter(|item| item.outcome_taken.is_none()).count())?;
     writeln!(summary, "NOTE=static analysis only; no execution or CPI privilege recovery")?;
     for (pc, (key, name)) in &analysis.functions {
         writeln!(summary, "function_pc={pc} function_key=0x{key:08x} name={name}")?;
@@ -114,6 +131,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let instructions_path = format!("{out_dir}/instructions.tsv");
     let cfg_nodes_path = format!("{out_dir}/cfg-nodes.tsv");
     let branch_sites_path = format!("{out_dir}/branch-sites.tsv");
+    let branch_reachability_path = format!("{out_dir}/branch-reachability.tsv");
+    let reachable_blocks_path = format!("{out_dir}/reachable-blocks.tsv");
     let mut calls = BufWriter::new(File::create(calls_path)?);
     let mut entrypoint_calls = BufWriter::new(File::create(entrypoint_calls_path)?);
     let mut syscall_sites = BufWriter::new(File::create(syscall_sites_path)?);
@@ -121,6 +140,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut instruction_dump = BufWriter::new(File::create(instructions_path)?);
     let mut cfg_nodes = BufWriter::new(File::create(cfg_nodes_path)?);
     let mut branch_sites = BufWriter::new(File::create(branch_sites_path)?);
+    let mut branch_reachability = BufWriter::new(File::create(branch_reachability_path)?);
+    let mut reachable_blocks = BufWriter::new(File::create(reachable_blocks_path)?);
     let instruction_pcs: HashSet<usize> = analysis.instructions.iter().map(|instruction| instruction.ptr).collect();
     let header = "callsite_pc\tcaller_registry_pc\tcall_key\tclassification\ttarget_pc\ttarget_name";
     writeln!(calls, "{header}")?;
@@ -130,6 +151,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(instruction_dump, "pc\topcode\tdst\tsrc\toff\timm")?;
     writeln!(cfg_nodes, "cfg_node_id\tinstruction_start_pc\tinstruction_end_pc_exclusive\tsources\tdestinations")?;
     writeln!(branch_sites, "branch_pc\topcode\twidth_bits\tcondition\toperand_kind\tdst\tsrc\timm\toff\ttaken_target_pc\ttarget_instruction_present\tfallthrough_pc\tfallthrough_instruction_present\tcondition_resolution")?;
+    writeln!(branch_reachability, "branch_pc\\tcondition\\tresolution\\tretained_successors\\tvisits")?;
+    writeln!(reachable_blocks, "basic_block_pc")?;
+    for pc in &cfg_reachability.reachable_blocks { writeln!(reachable_blocks, "{pc}")?; }
+    for observation in cfg_reachability.branch_observations.values() {
+        let resolution = match observation.outcome_taken { Some(true) => "taken", Some(false) => "fallthrough", None => "unresolved" };
+        let successors = observation.retained_successors.iter().map(usize::to_string).collect::<Vec<_>>().join(",");
+        writeln!(branch_reachability, "{}\\t{}\\t{}\\t{}\\t{}", observation.pc, observation.condition, resolution, successors, observation.visits)?;
+    }
     for instruction in &analysis.instructions {
         if let Some(branch) = classify_branch(version, instruction) {
             let target_present = branch.target_pc.map(|pc| instruction_pcs.contains(&pc)).map(|value| value.to_string()).unwrap_or_default();
@@ -255,6 +284,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     instruction_dump.flush()?;
     cfg_nodes.flush()?;
     branch_sites.flush()?;
+    branch_reachability.flush()?;
+    reachable_blocks.flush()?;
 
     let disassembly_path = format!("{out_dir}/disassembly.s");
     let mut disassembly = BufWriter::new(File::create(disassembly_path)?);
