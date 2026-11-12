@@ -4256,3 +4256,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - No workflow failed on this head; no counter-fix was required. Full logs, evidence limits and exact next task are in [the dated workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next: after documentation-triggered workflows settle, advance the CPI fallback cursor to the recorded `4Qi8XV...` value while retaining manual override; continue authoritative CPI privilege/cursor research.
 - PR #269 remains draft/unmerged; `route_v2` excluded from production validation; execution/signable-order security gates remain false. No production signing, submission, deployment or LIVE Swap claim.
+
+
+## 2026-11-12 — CPI cursor continuation on head 80e48c7
+
+- Head `80e48c7767520ee0872b39d3933ff388a368a89e`: Validate `43145321178` passed 118/118 tests; CPI Trace `43145321113` passed 5/5 scanner tests and scanned 25 finalized transactions from the new cursor with no 429.
+- CPI found two 19-account Meteora `Swap2` inner instructions at slot `468323007`: one unknown/unclassified outer discriminator with 46 parent accounts and unique sequence correlation at position 26; one Jupiter `route` variant 75 with 30 parent accounts and unique sequence correlation at position 10. Correlation is observational only, not runtime CPI privilege/cursor proof. Next cursor: `3QYnjvAaoa4H2bq61hfV7BYVeQWqjtopxtvzLvEAZwxD3soky7mkfTxwqNf4shfqEnJfq3x5K3q5kyhNCjVdyagF`. Artifact `13910589318`, SHA-256 `f285c384152ebdfcdba8cc267da83bbd5a968b721eb76e092b1e32c507044247`.
+- IDL audit `43145321131` passed: 20 matching historical revisions, adapter classification 1 supported / 3 incomplete / 0 incompatible, Raydium LaunchLab audit matched. Artifact `13910939241`, SHA-256 `675d95b83169eaa09975273fd0ff3f8ef0fab3f8c2b2a0945f18dd4e09ac93b7`.
+- Browser Smoke `43145321162` was still running the Jarrell's Peak gameplay step at documentation time; do not call it pass or failure until terminal. Full evidence and next task are in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: finish Browser Smoke diagnosis/verification, then continue CPI pagination from the recorded next cursor. Execution/security gates remain false; PR #269 remains draft/unmerged.
