@@ -380,6 +380,19 @@ jobs:
                 {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}},info:{websites:[{label:'Website',url:'https://climboria.fun'}],socials:[{type:'twitter',url:'https://x.com/ClimboriaHQ'}]}},
                 {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'2.5',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
               ]};
+              let pumpMetadataRequests=0;
+              await page.route('https://api.climboria.fun/api/pump/coin*',async route=>{
+                pumpMetadataRequests++;
+                if(pumpMetadataRequests===2) await new Promise(resolve=>setTimeout(resolve,6500));
+                try {
+                  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+                    mint,name:'Test Solana',symbol:'TST',creator:'CreatorFixture111111111111111111111111111111',
+                    image:null,verified:false,complete:false,bondingCurveProgress:42,holderCount:123,
+                    totalSupply:'1000000000',usdMarketCap:250000,bondingCurve:'fixture-curve',
+                    website:'https://climboria.fun',twitter:'https://x.com/ClimboriaHQ'
+                  })});
+                } catch {}
+              });
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
                 if(url.includes('/latest/dex/tokens/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
@@ -444,10 +457,14 @@ jobs:
               await page.evaluate(()=>{window.__chartSrcChanges=0;const chart=document.querySelector('#detailChart');window.__chartSrcObserver=new MutationObserver(records=>{window.__chartSrcChanges+=records.filter(record=>record.attributeName==='src').length});window.__chartSrcObserver.observe(chart,{attributes:true,attributeFilter:['src']});});
               poolData.pairs[1].priceUsd='2.75';
               await page.evaluate(()=>{if(!window.__climboriaRefreshTicks?.length)throw new Error('Could not capture the existing 20-second DEX refresh callback');window.__climboriaRefreshTicks[0]()});
-              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.75000',{},{timeout:10000});
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.75000',null,{timeout:5000}).catch(async error=>{
+                const state=await page.evaluate(()=>({price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool'),chart:document.querySelector('#detailChart')?.getAttribute('src')}));
+                throw new Error('DEX market refresh blocked by delayed optional metadata; metadataRequests='+pumpMetadataRequests+' state='+JSON.stringify(state)+'; '+error.message);
+              });
+              if(pumpMetadataRequests<2)throw new Error('Expected the second delayed Pump metadata request during market refresh; observed '+pumpMetadataRequests);
               poolData.pairs[1].priceUsd='2.80';
               await page.evaluate(()=>{if(!window.__climboriaRefreshTicks?.length)throw new Error('Could not capture the existing 20-second DEX refresh callback');window.__climboriaRefreshTicks[0]()});
-              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',{},{timeout:10000});
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',null,{timeout:5000});
               const chartRefreshState=await page.evaluate(()=>({srcChanges:window.__chartSrcChanges,chartSrc:document.querySelector('#detailChart')?.getAttribute('src'),price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool')}));
               if(chartRefreshState.srcChanges!==0||!chartRefreshState.chartSrc?.includes(poolB)||chartRefreshState.price!=='$2.80000'||chartRefreshState.pool!==poolB)throw new Error('Same-pool market refresh reloaded the chart or failed to update live metrics: '+JSON.stringify(chartRefreshState));
               await page.evaluate(()=>window.__chartSrcObserver?.disconnect?.());

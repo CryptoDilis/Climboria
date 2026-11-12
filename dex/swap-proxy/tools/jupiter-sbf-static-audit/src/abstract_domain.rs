@@ -49,6 +49,21 @@ impl Default for AbstractState {
 }
 
 impl AbstractState {
+    /// Entry register facts for the historical Jupiter candidate after
+    /// Upgradeable BPF Loader ABI v1 and SIMD-0321 activation were verified.
+    /// r11 is VM-internal and is not represented in this 11-register domain.
+    pub fn solana_abi_v1_simd_0321_entry_state() -> Self {
+        let mut state = Self::default();
+        state.registers[0] = AbstractValue::Constant(0);
+        for index in 3..=9 {
+            state.registers[index] = AbstractValue::Constant(0);
+        }
+        state.registers[1] = AbstractValue::InputDataPointer(0);
+        state.registers[2] = AbstractValue::InstructionDataPointer(0);
+        state.registers[10] = AbstractValue::StackPointer(0);
+        state
+    }
+
     pub fn merge(&self, other: &Self) -> Self {
         let mut merged = Self::default();
         for index in 0..11 {
@@ -141,6 +156,18 @@ pub fn evaluate_constant_branch(
 mod tests {
     use super::*;
     use solana_sbpf::program::SBPFVersion;
+
+    #[test]
+    fn candidate_abi_entry_state_seeds_only_documented_registers() {
+        let state = AbstractState::solana_abi_v1_simd_0321_entry_state();
+        assert_eq!(state.registers[0], AbstractValue::Constant(0));
+        assert_eq!(state.registers[1], AbstractValue::InputDataPointer(0));
+        assert_eq!(state.registers[2], AbstractValue::InstructionDataPointer(0));
+        for index in 3..=9 {
+            assert_eq!(state.registers[index], AbstractValue::Constant(0));
+        }
+        assert_eq!(state.registers[10], AbstractValue::StackPointer(0));
+    }
 
     #[test]
     fn merge_preserves_only_values_equal_on_both_paths() {

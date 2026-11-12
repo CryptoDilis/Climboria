@@ -201,8 +201,8 @@ fn branch_condition(name: &str) -> Option<BranchCondition> {
 
 /// Analyze a basic-block graph using a bounded worklist. The caller supplies
 /// the CFG ranges/destinations from solana_sbpf::static_analysis::Analysis.
-/// The entry state is entirely Unknown: no loader register ABI or input-data
-/// pointer provenance is assumed.
+/// The generic wrapper uses an entirely Unknown entry state. Candidate-specific
+/// callers must supply an evidence-backed entry state and input byte region.
 pub fn analyze_cfg(
     instructions: &[ebpf::Insn],
     blocks: &BTreeMap<usize, CfgBlock>,
@@ -324,7 +324,7 @@ pub fn analyze_cfg_with_entry(
                 // Kill facts and continue without attempting path pruning.
                 state.transfer_instruction_with_input(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32, version, instruction_data);
             } else {
-                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32);
+                state.transfer_instruction_with_input(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32, version, instruction_data);
             }
         }
 

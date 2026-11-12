@@ -1,7 +1,7 @@
 mod abstract_domain;
 mod branch_analysis;
 
-use abstract_domain::{AbstractState, AbstractValue};
+use abstract_domain::AbstractState;
 use branch_analysis::{analyze_cfg_with_entry, classify_branch, CfgBlock};
 use solana_sbpf::{
     elf::Executable,
@@ -77,13 +77,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         if version != SBPFVersion::V0 {
             return Err("candidate input fixture is pinned to the verified SBPF V0 ELF".into());
         }
-        entry_state.registers[1] = AbstractValue::InputDataPointer(0);
-        entry_state.registers[2] = AbstractValue::InstructionDataPointer(0);
+        let data_hex = data.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        if data_hex != "bb64facc31c4af143003ef0500000000d2563a4a21020000d0070a00000004000000b501102700012f0000f60301034b000000001a23010351000000000000000010270304" {
+            return Err("candidate input fixture does not match the exact finalized route_v2 transaction payload".into());
+        }
+        entry_state = AbstractState::solana_abi_v1_simd_0321_entry_state();
         fs::write(
             format!("{out_dir}/entrypoint-instruction-data.hex"),
             data.iter().map(|byte| format!("{byte:02x}")).collect::<String>() + "\n",
         )?;
-        "candidate-abi-v1-instruction-data"
+        "candidate-abi-v1-simd-0321-instruction-data"
     } else {
         "unknown-entry-registers"
     };
@@ -115,6 +118,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "entrypoint_input_mode={input_mode}")?;
     writeln!(summary, "entrypoint_instruction_data_bytes={}", instruction_data.as_ref().map_or(0, Vec::len))?;
     writeln!(summary, "entrypoint_instruction_data_reads=bounded_little_endian; unknown_regions_remain_unknown")?;
+    writeln!(summary, "entrypoint_register_seed=r0/r3-r9=0;r1=input-base;r2=instruction-data;r10=stack-base;r11=vm-pc")?;
+    writeln!(summary, "entrypoint_r2_feature_gate=SIMD-0321 mainnet activation epoch 950; candidate epoch 1083")?;
+    writeln!(summary, "direct_account_pointers=SIMD-0449 mainnet activation epoch 1099; not active at candidate epoch")?;
     writeln!(summary, "interprocedural_direct_calls=not_traversed")?;
     writeln!(summary, "text_address=0x{text_address:x}")?;
     writeln!(summary, "text_bytes={}", text_bytes.len())?;

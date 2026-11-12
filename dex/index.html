@@ -1135,12 +1135,24 @@ async function openToken(mint,options={}){
  ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange'].forEach(id=>{const el=$(id);if(el)el.classList.add('skeleton-value')});
  $('detailPairs').innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
  $('tokenProfile').innerHTML='<div class="skeleton"></div><div class="skeleton"></div>';
- const [dexResult,pumpResult]=await Promise.allSettled([
-  get('/latest/dex/tokens/'+encodeURIComponent(mint)),
-  fetchPumpCoin(mint)
- ]);
+ // Pump metadata is supplemental. Render cached metadata immediately and refresh it
+ // independently so a slow metadata proxy cannot block primary market prices/metrics.
+ const cachedPumpMeta=pumpCoinCache.get(mint)||null;
+ if(cachedPumpMeta)renderPumpProfile(mint,cachedPumpMeta);
+ fetchPumpCoin(mint).then(data=>{
+  if(requestId===detailRequestId&&data){
+   renderPumpProfile(mint,data);
+   const title=$('detailTitle').textContent;
+   if(title==='Token market unavailable'||title==='Token metadata')$('detailTitle').textContent=(data.name||'Unknown token')+' ('+(data.symbol||'TOKEN')+')';
+  }
+ }).catch(()=>{
+  if(requestId===detailRequestId&&!pumpCoinCache.has(mint))$('tokenProfile').innerHTML='<div class="notice">Pump metadata temporarily unavailable; market data remains available.</div>';
+ });
+ const dexResult=await Promise.resolve()
+  .then(()=>get('/latest/dex/tokens/'+encodeURIComponent(mint)))
+  .then(value=>({status:'fulfilled',value}),reason=>({status:'rejected',reason}));
  if(requestId!==detailRequestId)return;
- const pumpMeta=pumpResult.status==='fulfilled'?pumpResult.value:pumpCoinCache.get(mint)||null;
+ const pumpMeta=pumpCoinCache.get(mint)||cachedPumpMeta;
  if(pumpMeta?.symbol)rememberClimboriaTokenMeta(mint,pumpMeta.symbol,pumpMeta.name||'');
  if(dexResult.status!=='fulfilled'){
   activeDetailPairs=[];$('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token market unavailable';
