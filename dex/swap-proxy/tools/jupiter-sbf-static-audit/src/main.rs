@@ -151,13 +151,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(instruction_dump, "pc\topcode\tdst\tsrc\toff\timm")?;
     writeln!(cfg_nodes, "cfg_node_id\tinstruction_start_pc\tinstruction_end_pc_exclusive\tsources\tdestinations")?;
     writeln!(branch_sites, "branch_pc\topcode\twidth_bits\tcondition\toperand_kind\tdst\tsrc\timm\toff\ttaken_target_pc\ttarget_instruction_present\tfallthrough_pc\tfallthrough_instruction_present\tcondition_resolution")?;
-    writeln!(branch_reachability, "branch_pc\\tcondition\\tresolution\\tretained_successors\\tvisits")?;
+    writeln!(branch_reachability, "branch_pc\tcondition\tresolution\tretained_successors\tvisits")?;
     writeln!(reachable_blocks, "basic_block_pc")?;
     for pc in &cfg_reachability.reachable_blocks { writeln!(reachable_blocks, "{pc}")?; }
     for observation in cfg_reachability.branch_observations.values() {
         let resolution = match observation.outcome_taken { Some(true) => "taken", Some(false) => "fallthrough", None => "unresolved" };
         let successors = observation.retained_successors.iter().map(usize::to_string).collect::<Vec<_>>().join(",");
-        writeln!(branch_reachability, "{}\\t{}\\t{}\\t{}\\t{}", observation.pc, observation.condition, resolution, successors, observation.visits)?;
+        writeln!(branch_reachability, "{}\t{}\t{}\t{}\t{}", observation.pc, observation.condition, resolution, successors, observation.visits)?;
     }
     for instruction in &analysis.instructions {
         if let Some(branch) = classify_branch(version, instruction) {
