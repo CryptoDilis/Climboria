@@ -66,3 +66,14 @@ Corrective implementation on this feature branch:
 - Add regression coverage for V0, V1, V2, V3, and V4.
 
 This is a real correctness fix to the static evidence exporter. The original implementation commit must not be used for security conclusions. The corrected implementation remains unverified until the pinned Rust test/build and artifact inspection pass on the exact integrated PR head.
+
+## Artifact-backed diagnosis from the first integrated run
+
+- Integrated pre-correction PR #269 head: `434fd5209f8eeef8b36b7267150e3bb1f1c3c974`.
+- Jupiter IDL History Audit run `43278063888` completed SUCCESS; artifact `13971452715`, SHA-256 `7b790eda8cc16a4d1093148ab2e2742eb2bf230706f9a46da4b86ef5bc465430`.
+- The artifact contains the candidate ELF (2,892,224 bytes; SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`), instruction dump, CFG export, callx export, and disassembly.
+- Observed output counts: 243,522 instruction records; 40,664 CFG nodes; 136 callx sites. CFG source/destination references all resolved to exported node IDs in this artifact (0 dangling edge references).
+- The artifact summary identifies the ELF as SBPF V0. In the old callx TSV, all 136 `target_register` values were reported as register 0, and the joined instruction dump shows all 136 callx `src` and `dst` fields are zero while 134/136 have nonzero `imm` low bytes. This directly confirms the old exporter used the wrong operand for the V0 candidate.
+- The old workflow executed `cargo run --locked --release`, which successfully compiled and ran the binary; it did **not** execute Rust unit tests. Add an explicit `cargo test --locked` step to the audit workflow so the new five-version regression test is actually run.
+
+The Validate workflow run `43278063832` and Jupiter V6 CPI Trace run `43278063843` also completed SUCCESS on this integrated head. Browser Smoke run `43278063834` was still in progress at the time of this report update. No terminal workflow failure has been observed in this run set.
