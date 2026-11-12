@@ -1118,11 +1118,11 @@ async function loadMintAuthorityEvidence(mint){
   $('signalGrid').innerHTML=current+'<div class="signalitem missing"><b>Unknown · Mint authority</b><small>'+esc(error.message)+'</small></div><div class="signalitem missing"><b>Unknown · Freeze authority</b><small>Parsed mint authority data unavailable.</small></div><div class="signalitem missing"><b>Unknown · LP burned / locked</b><small>Not independently verified.</small></div>';
  }
 }
-function renderPoolFailure(mint,message,meta){
+function renderPoolFailure(mint,message,meta,description='No exact base-token pool was returned for this mint.') {
  ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange','flowBuySell','flowImbalance','flowTurnover','flowShare'].forEach(id=>{const el=$(id);if(el){el.classList.remove('skeleton-value');el.textContent='Unavailable';}});
  const state=$('tokenLoadState');state.hidden=false;
  const dex='https://dexscreener.com/solana/'+encodeURIComponent(mint),sol='https://solscan.io/token/'+encodeURIComponent(mint);
- state.innerHTML='<div class="token-load-error"><b>Couldn\'t load this pool.</b><p>This pool may have low liquidity, migrated, or have no DexScreener coverage.</p><small>'+esc(message||'Market data provider did not return a usable Solana pool.')+'</small><div class="token-load-actions"><button type="button" id="retryTokenLoad">↻ Retry</button><a href="'+dex+'" target="_blank" rel="noopener">View on DexScreener ↗</a><a href="'+sol+'" target="_blank" rel="noopener">View on Solscan ↗</a></div></div>';
+ state.innerHTML='<div class="token-load-error"><b>Couldn\'t load this pool.</b><p>'+esc(description)+'</p><small>'+esc(message||'Market data provider did not return a usable Solana pool.')+'</small><div class="token-load-actions"><button type="button" id="retryTokenLoad">↻ Retry</button><a href="'+dex+'" target="_blank" rel="noopener">View on DexScreener ↗</a><a href="'+sol+'" target="_blank" rel="noopener">View on Solscan ↗</a></div></div>';
  $('retryTokenLoad').addEventListener('click',()=>openToken(mint,{refresh:true}));
  if(meta)renderPumpProfile(mint,meta);
 }
@@ -1154,16 +1154,23 @@ async function openToken(mint,options={}){
   return;
  }
  const data=dexResult.value;
- const pairs=solPairs(data.pairs||[]).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const returnedPairs=solPairs(data.pairs||[]);
+ // The selected mint must be the pair's base token before displaying its price or attaching its chart.
+ // Quote-side pools remain undisplayed until their price orientation and pool-metric semantics are independently verified.
+ const pairs=returnedPairs.filter(p=>p.baseToken.address===mint).sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));
+ const quoteSidePairs=returnedPairs.filter(p=>p.quoteToken.address===mint);
  activeDetailPairs=pairs;
  if(pairs[0]?.baseToken?.symbol)rememberClimboriaTokenMeta(mint,pairs[0].baseToken.symbol,pairs[0].baseToken.name||'');
  if(!pairs.length){
   $('detailTitle').textContent=pumpMeta?(pumpMeta.name||'Unknown token')+' ('+(pumpMeta.symbol||'TOKEN')+')':'Token metadata';
   $('detailUpdated').textContent='No indexed Solana pool · '+new Date().toLocaleTimeString();
   $('detailChart').src='about:blank';$('detailChartExternal').href='https://dexscreener.com/solana/'+encodeURIComponent(mint);
-  $('detailPairs').innerHTML='<div class="notice">No active Solana pools were returned for this mint.</div>';
-  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until a pool is discovered.</div>';
-  renderPoolFailure(mint,'No Solana pools returned for this mint.',pumpMeta);
+  const emptyPoolMessage=quoteSidePairs.length
+   ? 'Provider returned '+quoteSidePairs.length+' pool(s) where this mint is the quote token. Climboria is withholding these pools until quote-side price orientation and metric semantics are verified; no other token\'s chart or price is shown as this mint.'
+   : 'No active Solana pools were returned for this mint.';
+  $('detailPairs').innerHTML='<div class="notice">'+esc(emptyPoolMessage)+'</div>';
+  $('signalGrid').innerHTML='<div class="notice">Pool evidence unavailable until an exact base-token pool is discovered.</div>';
+  renderPoolFailure(mint,quoteSidePairs.length?'Quote-side pool data was withheld because selected-token price and metric orientation are not yet verified.':'No exact base-token Solana pool returned for this mint.',pumpMeta,quoteSidePairs.length?'A pool was returned with the selected mint on the quote side. Climboria does not yet normalize quote-side pricing or chart orientation, so it safely withholds the pool instead of showing the base token as the selected asset.':'No exact base-token pool was returned for this mint.');
   if(!pumpMeta)$('tokenProfile').innerHTML='<div class="notice">pump.fun metadata fallback unavailable. No unverified metadata is guessed.</div>';
   return;
  }

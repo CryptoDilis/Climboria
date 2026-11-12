@@ -120,3 +120,13 @@ Every commit must update this file or explicitly state why no checklist status c
 - Official DexScreener reference documents chain-scoped token-pair endpoints and pair schema with both baseToken and quoteToken. Need live response evidence to prove selected-mint orientation and price metrics before modifying the detail pipeline. No speculative source change made.
 - DEX is **not** marked live: production deployment, provider freshness/cache guarantees, exact token/quote-side metric correctness and production desktop/mobile acceptance remain unverified.
 - **Next:** capture/test documented DexScreener token endpoint responses for known mints in both base-side and quote-side cases; define exact-mint normalization contract and tests before source changes. Keep Swap execution gates false.
+
+
+### DEX provider identity guard — 2026-11-12
+
+- [x] Latest prior head `4b094cc5168efbc9de02d47843bb04a9cd8e3c11`: Validate `43245756534`, CPI Trace `43245756532`, IDL History `43245756283`, Browser Smoke `43245756025` all SUCCESS, including Jarrell's Peak desktop/mobile gameplay.
+- [x] Added exact base-token mint matching to DEX token detail; quote-side-only pools are withheld with an explicit explanation rather than displaying the base asset's chart/price as the selected mint.
+- [x] Added a deterministic quote-side-only Playwright regression fixture while preserving the delayed chart-switch assertions.
+- [ ] Verify this source/test change on its exact new head across all four workflows.
+- [ ] Capture official live provider responses for known base-side and quote-side mints; establish price, volume/change/transaction metric semantics and chart orientation before implementing quote-side support.
+- [ ] Keep DEX production-live and Swap signing/submission gates closed until independent deployment and security acceptance evidence exists.
