@@ -228,3 +228,23 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 3. Verify Browser Smoke run `43328946852` reaches terminal status and completes gameplay/DEX checks. If canceled again, inspect concurrency and push timing before retry.
 4. Recheck all four exact-head workflow conclusions and update this record with artifact IDs and test counts.
 5. Obtain independently verified candidate-slot account data lengths from an archival source or replay. If unavailable, preserve Unknown and do not claim exact route_v2 dispatch.
+
+
+### PR #274 exact-head IDL/Rust/artifact verification — 2026-11-13
+
+- Verified head: `559423bdddf709cae31de06b01b2c4b461f2a482`.
+- Jupiter IDL History run `43328946725`, job `131568593194`: terminal SUCCESS; all 14 steps succeeded.
+- Pinned Rust suite: **48 passed, 0 failed**. This includes the new candidate-vector, unknown-length fail-closed, aligned-offset, duplicate-identity, and outer-vs-CPI-privilege regression tests.
+- ProgramData ELF provenance/hash check succeeded; static-analysis generation succeeded.
+- Artifact `13994281860`, `jupiter-idl-history`: 3,768,532 bytes; ZIP SHA-256 `b21bcfaa076f7b86ccdbb32208a93f8c1cc9652e21e9c316215fda59ac85274e`; 26 files.
+- Independently downloaded and inspected `abi-v1-account-layout.tsv`: exactly 85 rows, 51 unique records, 34 duplicates; all data lengths explicitly `unknown`; all duplicate targets resolve to the first matching occurrence; all record minimum offsets are monotonic; unique minimum record size 10,336 bytes; duplicate minimum record size 8 bytes.
+- Summary values: minimum instruction-data payload offset `527424`; exact payload offset `unknown`; exact program-ID offset `unknown`; unknown unique account data lengths `51`. Recomputed formula `8 + 51*10336 + 34*8 + 8 = 527424` matches artifact output.
+- CFG summary remains unchanged: 44,069 work items, no truncation, 38,804 blocks reached, 24,352 branch observations (5,012 resolved, 19,340 unresolved); 136 CALLX sites and runtime targets unresolved. No route_v2 dispatch or CPI privilege proof is claimed.
+- No Rust compile/test or artifact-generation failure occurred on this exact head.
+
+### PR #274 remaining workflow state at this update
+
+- Validate run `43328946627`: SUCCESS.
+- Jupiter CPI Trace run `43328947126`: SUCCESS.
+- Jupiter IDL History run `43328946725`: SUCCESS as detailed above.
+- Browser Smoke run `43328946852`: still running the Jarrell's Peak desktop/mobile gameplay smoke step at the time of this update. Earlier DEX, auth, chart, and mobile layout steps all completed SUCCESS. Do not claim Browser Smoke terminal success until the gameplay step and artifact uploads complete.
