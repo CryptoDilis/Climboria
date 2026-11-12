@@ -235,3 +235,34 @@ Important grouped findings include:
 - The preceding live scan was workflow-successful but incomplete: 8/25 transactions scanned before HTTP 429 on `getTransaction`, with a safe `nextBefore` cursor recorded above.
 - Scanner now paces requests at 1,000 ms by default, uses five bounded 429 attempts with 1,500 ms exponential-backoff base by default, and accepts `JUPITER_AUDIT_RETRY_BASE_MS` override. Added a transient-429 recovery test.
 - CPI and IDL History workflows now share the same branch-scoped concurrency group with `cancel-in-progress: false` to avoid deliberately running two mainnet-beta evidence collectors concurrently. This is a rate-limit mitigation, not a guarantee against provider throttling; all incomplete samples remain explicitly marked.
+
+
+## 2026-11-12 — PR #269 exact-head recovery complete; Browser Smoke passed
+
+### Exact head `7e77206316029657902e91ed5993ff64acecce46`
+
+- [x] Validate run `43125825292`: SUCCESS. Exact-head result previously inspected: 117/117 Node tests passed; Wrangler dry-run, Worker/API security checks, auth/cloud-save syntax, homepage checks, DEX/Swap syntax, game syntax and repository audit passed.
+- [x] Jupiter V6 CPI Trace Audit run `43125825160`: SUCCESS. Route-discovery tests 4/4 passed, including multi-page finalized pagination, safe continuation cursor, transient HTTP 429 recovery and persistent 429 incomplete-sample reporting. Live bounded sample scanned 25/25 transactions without rate limiting; found 0 Jupiter/Meteora matches in that sample only. Continuation cursor `27qQBHmoUdrfYtGx4ANhwzPjsLcGKsMcBvt76FFc1fXNPFxyso3agu9cr1LWepmXZ1ZZGyBPngsarL3a5pjNK8XT`. Artifact `13902607444`, SHA-256 `0483d9648d020a695f0121e96951248dabbc2866f07cb40adc418186cd777b5a`.
+- [x] Jupiter IDL History Audit run `43125825173`: SUCCESS. Candidate `route_v2` at slot `468153382` retains 20 historical matches and exactly one active revision; on-chain IDL payload/schema/discriminator and ProgramData chronology match. Raydium LaunchLab candidate-transaction IDL provenance supported and account audit matched; Kipseli, Orca Whirlpool and Meteora DLMM remain incomplete, not incompatible. Static pinned sBPF audit is evidence only: 2,892,224-byte ELF, 243,522 instructions, 40,664 CFG blocks, 1,188 function-registry entries and 355 syscall sites (270 `sol_invoke_signed_c` sites); it does not prove CPI AccountMeta signer/writable flags or handler cursor semantics. Artifact `13903575803`, SHA-256 `1fd6bb0c156c2365cabd535bdbe2753acbfd1b6c8073532803348a5fa60a3ae1`.
+- [x] Browser Smoke run `43125825195`, job `130877533744`: SUCCESS. All steps 7–18 completed, including auth/account isolation, homepage/DEX routing, Cloudflare proxy, fail-closed execution, standalone Swap/DEX, live Solana discovery, desktop/mobile DEX layouts, 390px/360px mobile checks, provider-error/true-empty states, Jarrell's Peak desktop/mobile and screenshot upload.
+
+### Browser/gameplay evidence
+
+- Desktop renderer: 101 frames, 595 scene objects, zero render errors; world API/player ready; all five required POIs present; 100 chests; 14 cave gem clusters with 3 children each; 12 sanctuary flags correctly attached; terrain/water/shoreline/fishing/collision audits passed; mountain spawn route 100% clear across 895.52 units; 88 collision solids had no invalid entries or water overlaps.
+- Live walking and running jumps both rose, entered airborne state and landed; jump/land counters advanced for both.
+- Chest distribution: 84 world + 15 cave + 1 summit; 14 unique cave slots; world spawn validity true; minimum spacing 18.0209; sampled world/cave respawn windows 119.26s/171.52s; summit cooldown 900s is local-prototype-only and global claim remains false.
+- Cave entrance traversal passed (63 units walked, no blocked point); cave passage, grotto, trap and lifecycle checks are covered by the strict smoke and completed successfully.
+- Mobile: 844×390 viewport; hero ready, canvas/game ready, 73 render frames, zero render errors; all four action controls visible and in-bounds; player/status HUD, world map, settings and GLB hero visible; no horizontal overflow. Mobile normalized Sanctuary capture rendered 90 chunks and 79 frames.
+- Screenshot artifact `13902798382`, 8,888,886 bytes, SHA-256 `7f1ad9013a9849375b6df0050d3d249ed3c9270a47c31522818108e8692657b2`.
+- Non-fatal deprecation warnings were emitted for Node.js 20 action runtimes, `punycode`, and legacy `url.parse()`; all workflow steps and artifact upload succeeded. Do not conflate these warnings with failed checks.
+
+### Failure recovery accounting
+
+- The earlier test import-contract failure, optional Pump.fun daily-feed 404, stale three-retry assertion, and subsequent stale retry-count fixture are each documented above with exact failing job/log evidence and targeted counter-fixes. The latest exact-head four-workflow run confirms recovery; no outstanding failed job remains on this head.
+- No tests, acceptance criteria, execution gates, timeouts, or evidence requirements were weakened to obtain green CI.
+
+### Next task / release gates
+
+1. Continue the bounded finalized transaction scan from the recorded cursor; add/inspect older pages and route diversity, but report each page's exact completeness/rate-limit status. A 25-transaction no-match sample is not proof of route absence.
+2. Obtain direct CPI-requested signer/writable AccountMeta evidence and prove Jupiter per-DEX remaining-account cursor behavior for variable account slices, multi-hop/split routes and DEX order permutations. Current IDL and sBPF artifacts alone do not prove these semantics.
+3. Keep route_v2 excluded from production validation; keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; no production signing, submission, Wrangler deployment or LIVE Swap claim. PR #269 remains draft/unmerged.
