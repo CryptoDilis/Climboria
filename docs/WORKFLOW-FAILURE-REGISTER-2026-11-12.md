@@ -1210,3 +1210,59 @@ No failed steps existed in this exact-head batch. The two runs that were previou
 ### Next task
 
 Add deterministic fixture-based GeckoTerminal adapter tests covering base/quote metadata identity, USD price scale, descending-to-ascending timestamp normalization, volume denomination, gaps, empty data, malformed candles, HTTP errors, cache/rate-limit behavior and pool identity. Keep the production DexScreener iframe fallback and quote-side fail-closed guard until independent parity and release acceptance are proven.
+
+
+## 2026-11-13 — exact-head CI closeout and production-live readiness reset
+
+**Verified source:** `4181dde20e93cb54eee4b665379e911855b4d540` on `codex/swap-security-evidence-current-main-2026-11-12`; PR #269 remains open, draft and unmerged. Base `main` was `0fa8e987aec4d6e6bc7590363efa7d20fde79422` at this checkpoint.
+
+### Exact-head workflow results
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43308413935 | 131497700205 | SUCCESS; 15 steps |
+| Jupiter V6 CPI Trace Audit | 43308413925 | 131497700837 | SUCCESS; 10 steps |
+| Jupiter IDL History Audit | 43308414154 | 131497859271 | SUCCESS; 13 steps |
+| Climboria Browser Smoke Test | 43308414087 | 131497745472 | SUCCESS; 29 steps |
+
+All four runs used the same exact head SHA. Browser Smoke passed deterministic GeckoTerminal OHLCV tests, live DexScreener and GeckoTerminal captures, auth UI/cloud-save isolation checks, DEX/Swap browser checks, mobile DEX/Swap checks at 390px/360px, fail-closed execution checks, and Jarrell's Peak desktop/mobile gameplay smoke. There were zero failed steps. The temporary `BlobNotFound` log-download responses occurred while Browser Smoke was still running; they were retrieval limitations, not test failures. No failure incident or counter-fix is fabricated for this batch.
+
+### Artifacts
+
+- Browser screenshots: artifact `13985191970`, 8,871,646 bytes.
+- GeckoTerminal OHLCV contract evidence: artifact `13985152052`, 1,970 bytes.
+- DexScreener provider contract evidence: artifact `13984454184`, 7,327 bytes.
+- Deterministic GeckoTerminal adapter contract tests passed in Browser Smoke; adapter remains test-only and is not wired into production chart rendering.
+
+### User's production goal: DEX + Swap + Login all live
+
+The green CI batch is not production deployment acceptance. Do not mark the site fully live from CI alone.
+
+**Login / Supabase findings**
+- Supabase project `Climboria` (`unadepiwbovblkfjlksk`) is `ACTIVE_HEALTHY` in `ap-northeast-1`.
+- `player_profiles` and `player_saves` exist with RLS enabled. Policies restrict profile/save reads and writes to rows where `auth.uid() = user_id`; UPDATE policies include both USING and WITH CHECK.
+- Security and performance advisors returned zero lints at this inspection.
+- No Supabase Edge Functions are deployed.
+- Browser auth smoke uses a mocked Supabase client. It verifies UI wiring and save isolation, not a real production login or OAuth provider round trip.
+- Email/password, Google, X and wallet login are present in frontend code, but provider enablement, OAuth secrets/redirect allow-list, email SMTP/confirmation delivery and production callback behavior have not been verified. Guest login is intentionally disabled pending Turnstile + Supabase CAPTCHA configuration.
+
+**DEX findings**
+- Current code exposes a read-only DEX market/chart and provider-backed token discovery paths; the existing production chart still uses DexScreener iframe selected-pair identity.
+- GeckoTerminal adapter is deterministic-test-only. One captured JUP/WSOL pool is not broad provider parity or a freshness SLA.
+- A successful browser test does not prove the deployed Pages bundle, custom-domain Worker, API secrets, CORS and live provider path are healthy in production. Those require a live-origin smoke with real responses.
+
+**Swap findings / hard safety blockers**
+- `swap-config.js`: `proxyEnabled=true`, `enabled=false`, API base `https://api.climboria.fun`.
+- Worker `wrangler.toml`: `EXECUTION_ENABLED="false"`; server source hard-codes `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`.
+- Jupiter quote preview and token search can be read-only live services when the production Worker, rate limiter and Jupiter API key are actually verified. Browser fixtures do not establish that production verification.
+- Wallet-signable order creation, signing/submission and Base execution are not production-ready. Do not bypass hard-coded kill switches. Missing acceptance includes semantic CPI/account-role and token/fee movement proof, deployed binary/provenance review, controlled Devnet sign→verify→submit→confirm→final-balance lifecycle, independent security review, and production Worker configuration/observability.
+
+### Top-priority release checklist
+
+- [ ] **P0 Login:** verify real email sign-up/sign-in/confirmation/reset and session refresh on `https://climboria.fun`; verify Google/X provider configuration and exact redirect URLs; configure SMTP; decide and configure Turnstile/CAPTCHA before enabling guest login; test real user profile/save isolation against Supabase RLS. Never expose service-role credentials.
+- [ ] **P1 DEX:** verify Pages deployment and custom-domain HTTPS; verify `api.climboria.fun` Worker deployment, custom-domain binding, CORS, rate limiter and server-side Jupiter key; run live-origin market/search/chart smoke with real provider responses; retain DexScreener fallback and quote-side fail-closed behavior until broad evidence supports changes.
+- [ ] **P2 Swap read-only:** validate real production token search and Jupiter quote preview, including upstream errors/rate limits and accurate UI status. Clearly label it quote-only until execution gates pass.
+- [ ] **P2 Swap execution:** keep disabled until semantic instruction/CPI/account-role validation, controlled Devnet lifecycle, independent review and production backend verification are complete. Base routing/execution is a separate unimplemented release gate.
+- [ ] **P3 Release:** close all P0/P1/P2 acceptance evidence, update the PR description/checklist, obtain required review, merge PR #269, verify the Pages/Worker deployments and smoke the public production domain. CI success alone does not complete this item.
+
+**Next exact engineering task:** perform a production-origin audit for login, DEX and the read-only Swap proxy. First verify Pages/custom-domain deployment state and Worker live health/config without exposing secrets; then inspect Supabase Auth provider/URL/SMTP configuration and execute a real controlled sign-up/sign-in test. Record every observed failure with first causal log, root cause, targeted fix and rerun evidence. Do not enable transaction execution as part of this task.
