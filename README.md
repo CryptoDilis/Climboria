@@ -4543,3 +4543,15 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - **Important limitation:** callx target values remain unresolved; this change exposes the 136 indirect-call sites rather than claiming to resolve them. CFG edges are structural, not yet discriminator/variant path-sensitive. The existing function-level CALL_IMM closure remains an over-approximation. No CPI reachability, AccountMeta signer/writable, or route-specific safety conclusion is made.
 - **Verification pending:** this implementation has not yet been integrated into PR #269 or run through the pinned Rust CI/artifact. The PR #269 branch is currently running the documentation checkpoint workflows: Validate `43273621878` and CPI Trace `43273621990` SUCCESS; IDL History `43273622126` and Browser Smoke `43273621836` are still IN_PROGRESS. Do not push to that branch until those cancel-in-progress runs terminate.
 - **Next:** after those runs finish, port the audited Rust change onto PR #269, rerun the exact-head IDL History Audit and all required exact-head checks, inspect the generated `callx-sites.tsv`, `instructions.tsv`, and `cfg-nodes.tsv`, then implement and test route_v2 discriminator/variant branch-sensitive reachability. Do not weaken any assertions or open signing/execution gates.
+
+
+## 2026-11-13 — latest documentation checkpoint workflows closed
+
+- Exact PR #269 branch documentation checkpoint SHA: `2a7b7c7b766d07e37c5d85cf76447a96b562d89f`.
+- Validate `43273621878`: SUCCESS.
+- Jupiter V6 CPI Trace Audit `43273621990`: SUCCESS.
+- Jupiter IDL History Audit `43273622126`: SUCCESS.
+- Browser Smoke `43273621836`: SUCCESS. The previously active Jarrell's Peak desktop/mobile gameplay step completed and the job is terminal green.
+- No failed steps or failed workflows on this exact SHA; no counter-fix or retry was required. All four workflow runs are terminal SUCCESS.
+- The indirect-call/CFG analyzer implementation remains a separate, unverified code branch (`codex/jupiter-sbf-callx-cfg-evidence-2026-11-13`, commit `3064a344d8532f7ba919bcd2b21f317cdd1f9304)); it is not yet integrated into PR #269 or verified by CI. Do not mark the audit feature complete.
+- Next: port the static-audit change onto the active security branch only after its exact-head workflow checkpoint is clear; run pinned Rust build and inspect artifacts. Then add tested route_v2 discriminator/variant path-sensitive reachability. Keep all signing/execution/deployment gates closed.
