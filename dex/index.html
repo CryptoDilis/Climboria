@@ -1135,6 +1135,7 @@ async function openToken(mint,options={}){
  ['tokenOverviewPrice','tokenOverviewChange','tokenOverviewVolume','tokenOverviewLiquidity','tokenOverviewVenue','detailPrice','detailVolume','detailLiquidity','detailChange'].forEach(id=>{const el=$(id);if(el)el.classList.add('skeleton-value')});
  $('detailPairs').innerHTML='<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
  $('tokenProfile').innerHTML='<div class="skeleton"></div><div class="skeleton"></div>';
+ // Browser regression: delayed Pump metadata must never block live market-price refresh.
  // Pump metadata is supplemental. Render cached metadata immediately and refresh it
  // independently so a slow metadata proxy cannot block primary market prices/metrics.
  const cachedPumpMeta=pumpCoinCache.get(mint)||null;
