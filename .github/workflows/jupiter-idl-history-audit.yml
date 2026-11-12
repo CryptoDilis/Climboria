@@ -58,12 +58,16 @@ jobs:
           toolchain: 1.99.1
       - name: Run pinned sBPF static-audit unit tests
         run: cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml
-      - name: Generate pinned sBPF disassembly and control-flow summary
+      - name: Verify candidate Jupiter ProgramData binary provenance
+        run: |
+          echo "aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6  artifacts/jupiter-idl-history/jupiter-programdata-elf.so" | sha256sum --check
+      - name: Generate pinned sBPF disassembly and candidate input-aware control-flow summary
         timeout-minutes: 10
         run: |
           cargo run --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
             artifacts/jupiter-idl-history/jupiter-programdata-elf.so \
-            artifacts/jupiter-sbf-static-audit
+            artifacts/jupiter-sbf-static-audit \
+            dex/swap-proxy/tools/jupiter-sbf-static-audit/fixtures/jupiter-route-v2-candidate-instruction-data.hex
           sha256sum artifacts/jupiter-idl-history/jupiter-programdata-elf.so
       - name: Upload raw responses, schema summary, and sBPF static analysis
         if: always()
