@@ -31,13 +31,13 @@ try {
   const search = page.locator('#search');
   await search.fill('CHARTA');
   await page.waitForFunction(() => document.querySelector('#rows')?.innerText.includes('CHARTA'), undefined, {timeout:10000});
-  await page.locator('button[data-mint="'+mintA+'"]').click();
+  await page.locator('#rows button[data-mint="'+mintA+'"]').click();
   await page.waitForFunction(pair => document.querySelector('#detailChart')?.src.includes(pair), pairA.pairAddress, {timeout:10000});
   if (!(await page.locator('#detailTitle').innerText()).includes('CHARTA')) throw new Error('First selected token title did not match chart A');
   await search.fill('CHARTB');
   await page.waitForFunction(() => document.querySelector('#rows')?.innerText.includes('CHARTB'), undefined, {timeout:10000});
   const pending = page.waitForResponse(r => r.url().includes('/latest/dex/tokens/'+mintB), {timeout:10000});
-  await page.locator('button[data-mint="'+mintB+'"]').click();
+  await page.locator('#rows button[data-mint="'+mintB+'"]').click();
   await pending;
   const chartWhileLoading = await page.locator('#detailChart').getAttribute('src');
   if (chartWhileLoading !== 'about:blank') throw new Error('Previous token chart remained visible while the new token request was pending: '+chartWhileLoading);

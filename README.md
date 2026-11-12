@@ -35,10 +35,10 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `9dcb482d570f8e36fd72007f491317636a48f6c6`; PR #269 remains open, draft and unmerged.
-- Validate `43241198246` passed 15/15; CPI Trace `43241198319` passed 10/10. Browser Smoke `43241198180` failed at same-pool refresh assertion after homepage/DEX navigation passed. IDL History `43241198298` was in progress at checkpoint.
-- Root cause: unconditional chart blanking on every openToken call also blanked same-mint periodic refreshes, producing four iframe src mutations although selected pool and updated price were correct. Narrow correction now blanks only when selected mint changes; same-mint refresh retains the chart.
-- Current next task: verify different-mint stale-chart clearing and same-mint refresh stability together on exact-head Browser Smoke. Keep Swap execution gates false.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `219e2b43bbe7c324184b3ae5219473dc8b300b55`; PR #269 remains open, draft and unmerged.
+- Validate `43241562623` passed 15/15; CPI Trace `43241562251` passed 10/10. Browser Smoke `43241562340` passed steps 1–13 then failed at the new chart-switch test due to a strict-mode ambiguous selector (desktop row + mobile card). The new test has been scoped to `#rows`; rerun pending. Prior IDL History `43241198298` was cancelled by superseding commits, not failed.
+- DEX chart fix now clears the prior chart only when selected mint changes; same-mint refresh preserves iframe src while updating provider metrics. Existing same-pool refresh acceptance passed before the chart-switch test's locator failure.
+- Current next task: verify both chart invariants and remaining Browser Smoke steps on the next exact head. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---
