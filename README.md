@@ -4534,3 +4534,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - No failure or retry on this exact head. Earlier in-progress `BlobNotFound` log retrieval was a temporary unavailable-log condition, not a workflow failure. Cancelled/superseded runs remain excluded.
 - Canonical detailed record: `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` on PR #269.
 - Next engineering task: branch-sensitive route_v2 CPI reachability analysis, including explicit handling/reporting of 136 `callx` instructions, followed by bounded CPI account-slice and requested signer/writable data-flow. Existing CALL_IMM function closure is an over-approximation, not path-sensitive proof. Keep all signing/execution/deployment gates closed.
+
+
+## 2026-11-13 — indirect-call / CFG audit implementation checkpoint
+
+- Prepared static-audit implementation commit `3064a344d8532f7ba919bcd2b21f317cdd1f9304` on branch `codex/jupiter-sbf-callx-cfg-evidence-2026-11-13` (based on the PR #269 documentation checkpoint).
+- The Rust audit now exports every instruction with PC/opcode/register/immediate fields, explicit `CALL_REG` (callx) sites with caller function and target-register identity, and CFG node predecessor/successor edges. Summary reports immediate-call and indirect-call counts. A regression test distinguishes SBPF `CALL_REG` (0x8d) from `CALL_IMM` (0x85).
+- **Important limitation:** callx target values remain unresolved; this change exposes the 136 indirect-call sites rather than claiming to resolve them. CFG edges are structural, not yet discriminator/variant path-sensitive. The existing function-level CALL_IMM closure remains an over-approximation. No CPI reachability, AccountMeta signer/writable, or route-specific safety conclusion is made.
+- **Verification pending:** this implementation has not yet been integrated into PR #269 or run through the pinned Rust CI/artifact. The PR #269 branch is currently running the documentation checkpoint workflows: Validate `43273621878` and CPI Trace `43273621990` SUCCESS; IDL History `43273622126` and Browser Smoke `43273621836` are still IN_PROGRESS. Do not push to that branch until those cancel-in-progress runs terminate.
+- **Next:** after those runs finish, port the audited Rust change onto PR #269, rerun the exact-head IDL History Audit and all required exact-head checks, inspect the generated `callx-sites.tsv`, `instructions.tsv`, and `cfg-nodes.tsv`, then implement and test route_v2 discriminator/variant branch-sensitive reachability. Do not weaken any assertions or open signing/execution gates.
