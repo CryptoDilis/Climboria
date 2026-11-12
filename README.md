@@ -4493,3 +4493,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - [x] Existing `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` already documents the historic root causes and evidence-based counter-fixes. No new failed workflow has been observed on exact head `f4a500c27fc79d208b6effc8f1e1085984885f01`; no speculative failure or counter-fix is recorded.
 - [ ] Next: poll Browser Smoke run `43270078398`. If SUCCESS, inspect its gameplay diagnostics and uploaded screenshots/provider-contract artifact, then append the terminal run/job/artifact evidence to the PR #269 failure register and handoff. If FAILURE, inspect the first failed step and full terminal logs/artifacts, compare the exact script/asset state with prior GLB readiness recoveries, identify the causal boundary, and implement only an evidence-backed counter-fix before rerunning all required exact-head checks. Keep PR #269 draft/unmerged and all Swap signing/execution/deployment gates false.
 
+
+
+### Workflow terminal closure — 2026-11-13 01:41 +08
+
+- [x] Re-polled PR #269 exact head `f4a500c27fc79d208b6effc8f1e1085984885f01`. Browser Smoke run `43270078398` completed **SUCCESS** (job `131363968479`); all 26 steps succeeded, including the strict Jarrell's Peak desktop/mobile gameplay smoke and both artifact uploads.
+- [x] All four exact-head workflows are now terminal SUCCESS: Validate `43270078397` / job `131363967559`; Jupiter V6 CPI Trace `43270078389` / job `131363967061`; Jupiter IDL History `43270078844` / job `131363968823`; Browser Smoke `43270078398` / job `131363968479`.
+- [x] Browser artifacts: screenshots `13968316982` (8,862,263 bytes); DexScreener provider contract evidence `13968162170` (7,276 bytes). Downloaded and inspected provider JSON: JUP 30/30 base-side; USDC 20 base-side and 10 quote-side; HTTP 200 for both and no capture errors. A quote-side PUMP/USDC sample reports PUMP as base and PUMP's `priceUsd=0.003356`; this reinforces the existing fail-closed quote-side policy and does not justify metric inversion.
+- [x] No new failed workflow occurred on this exact head. Earlier cancelled runs are superseded attempts, not failures. No code/test fix was needed; no assertion or security gate was weakened.
+- [ ] Next: continue the evidence-based read-only Jupiter CPI route_v2 handler/syscall/account-slice investigation; retain all adapter provenance exclusions and keep Swap signing, submission, and production deployment gates closed.
