@@ -305,9 +305,9 @@ pub fn analyze_cfg(
                 }
                 // A non-terminal branch contradicts the block partition.
                 // Kill facts and continue without attempting path pruning.
-                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm);
+                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32);
             } else {
-                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm);
+                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32);
             }
         }
 
@@ -355,7 +355,7 @@ mod cfg_reachability_tests {
     use solana_sbpf::ebpf;
 
     fn insn(ptr: usize, opc: u8, dst: u8, src: u8, off: i16, imm: i32) -> ebpf::Insn {
-        ebpf::Insn { ptr, opc, dst, src, off, imm }
+        ebpf::Insn { ptr, opc, dst, src, off, imm: imm.into() }
     }
 
     fn block(start: usize, end: usize, successors: &[usize]) -> CfgBlock {
