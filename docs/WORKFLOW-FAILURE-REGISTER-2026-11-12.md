@@ -1006,3 +1006,15 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - Cancelled runs on superseded commits are not failures and are not used as verification evidence.
 - **Remaining scope:** this is CI/smoke verification only. It does not establish provider uptime, production data accuracy, live liquidity/price/volume correctness, wallet signing safety, transaction submission safety, or production release readiness.
 - **Next:** perform the P1 DEX-first production-path audit; preserve all Swap signing/submission gates as disabled until the documented independent security and Devnet/production acceptance gates pass.
+
+
+### 10. DEX-first production-path audit (2026-11-12 23:13 +08)
+
+- **Exact-head CI:** Validate `43243350882`, Jupiter CPI Trace `43243350893`, Jupiter IDL History `43243350967`, Browser Smoke `43243350744` all SUCCESS on `3b01c27f055607ee7a330a216499bf6797376cd6`; chart-switch counter-fix is verified for that head.
+- **Source inspected:** `dex/index.html` on active PR #269 branch. Solana discovery is a union of eight fixed search seeds plus up to 30 latest Solana profile mints; pair data is filtered to Solana, deduplicated by base-token address, then one highest-liquidity pair per base token is retained. The UI states the dataset is not exhaustive.
+- Base discovery uses eight fixed query seeds, filters chainId=base and required pair/base/quote/address fields, deduplicates by pair address, and discloses query-based non-exhaustive coverage.
+- Token detail uses legacy `/latest/dex/tokens/{mint}`, then selects among Solana pairs by liquidity or URL pool. The chart is driven by selected pairAddress. No claim is made that the API request path or price orientation is production-verified.
+- **Evidence-backed risk:** current official DexScreener API reference documents chain-scoped `/token-pairs/v1/{chainId}/{tokenAddress}` and `/tokens/v1/{chainId}/{tokenAddresses}`; response schema contains both baseToken and quoteToken. Current implementation needs an evidence-backed decision about endpoint choice and quote-side orientation before asserting that selected mint identity and price metrics are always aligned. Reference: https://docs.dexscreener.com/api/reference.
+- **No source fix committed in this audit.** We lack verified live response evidence for base-side vs quote-side semantics, so changing endpoint/price calculation now would be speculative.
+- Production deployment, provider freshness/cache SLA, exhaustive coverage and desktop/mobile production acceptance remain unproven. Passing CI is not DEX LIVE evidence.
+- **Next:** create a focused provider-contract test/capture for documented endpoints and known mints, explicitly covering selected mint on base and quote sides; establish exact response orientation and metric semantics; only then implement a tested normalization layer and rerun all workflows. Preserve the non-exhaustive coverage labels and all existing smoke assertions.
