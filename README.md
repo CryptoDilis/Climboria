@@ -4501,3 +4501,14 @@ Latest exact-head verification on `4181dde20e93cb54eee4b665379e911855b4d540`: Va
 The immediate product goal is to make **Login, DEX and Swap** live. CI success does not mean production is live. Supabase Climboria project is ACTIVE_HEALTHY; profile/save tables have RLS and owner-scoped policies; advisors returned zero lints. However, the auth browser smoke uses a mocked Supabase client, real OAuth/SMTP/redirect flows are unverified, guest login is disabled pending CAPTCHA, and no Supabase Edge Functions are deployed. DEX still needs public Pages + Worker/custom-domain live-origin verification. Swap quote/search are intended read-only proxy paths; execution remains hard-disabled in frontend config and Worker source. Do not bypass those gates.
 
 **Top priority next:** production-origin audit of Pages/HTTPS, `api.climboria.fun` Worker/rate-limit/Jupiter-key configuration, real Supabase email/OAuth provider and redirect/SMTP setup, and real sign-up/sign-in/session/save-isolation checks. Then close DEX live-provider acceptance and read-only Swap quote verification. Actual wallet transaction execution remains blocked pending semantic CPI/account-role proof, controlled Devnet lifecycle and independent review. See `docs/LAUNCH-READINESS-CHECKLIST-2026-11-12.md` and `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` for detailed evidence and acceptance criteria.
+
+
+## 2026-11-13 — continuation handoff
+
+- [x] Rechecked PR #269 exact-head workflows on `3327a847ca3e19ad82e38550f153aa2bbec93a58`: Validate `43305578268`, Jupiter CPI Trace `43305578205`, Jupiter IDL History `43305582049`, Browser Smoke `43305578053` — all terminal SUCCESS; each job also SUCCESS.
+- [x] No failed jobs/steps in this batch. No failure diagnosis or counter-fix was invented. Detailed continuation evidence is in `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md`.
+- [x] Re-inspected full `auth.js`: email/password, Google/X OAuth, Solana/Ethereum Web3 and persistent session handling are present; password recovery/reset is absent. Real provider/SMTP configuration and round-trip tests remain unverified.
+- [x] Re-inspected frontend and Worker swap configuration: quote/search proxy path is intended, but transaction execution/signing remains disabled behind frontend and Worker security gates.
+- [ ] **Next priority:** authorized production-origin audit for Pages + `api.climboria.fun`, then real Supabase email/OAuth/SMTP/recovery/session/save-isolation verification. Continue DEX live-provider acceptance. Do not call preview or mocked browser coverage production-live.
+- [ ] After auth markup/test inspection, implement password recovery and update-password flow with real Supabase calls and regression tests; do not claim this is live until real email delivery and callback are verified.
+
