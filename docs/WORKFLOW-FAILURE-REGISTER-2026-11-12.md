@@ -1266,3 +1266,14 @@ The green CI batch is not production deployment acceptance. Do not mark the site
 - [ ] **P3 Release:** close all P0/P1/P2 acceptance evidence, update the PR description/checklist, obtain required review, merge PR #269, verify the Pages/Worker deployments and smoke the public production domain. CI success alone does not complete this item.
 
 **Next exact engineering task:** perform a production-origin audit for login, DEX and the read-only Swap proxy. First verify Pages/custom-domain deployment state and Worker live health/config without exposing secrets; then inspect Supabase Auth provider/URL/SMTP configuration and execute a real controlled sign-up/sign-in test. Record every observed failure with first causal log, root cause, targeted fix and rerun evidence. Do not enable transaction execution as part of this task.
+
+
+## 2026-11-13 — continuation audit (exact-head verification; no workflow failures)
+
+- Re-inspected PR #269 branch `codex/swap-security-evidence-current-main-2026-11-12`; README handoff identifies exact head `3327a847ca3e19ad82e38550f153aa2bbec93a58` and base main `0fa8e987aec4d6e6bc7590363efa7d20fde79422`.
+- Re-fetched exact-head workflow runs: Validate `43305578268`, Jupiter V6 CPI Trace `43305578205`, Jupiter IDL History `43305582049`, Browser Smoke `43305578053`. All four runs are terminal `completed/success`; their single jobs are also terminal `completed/success`.
+- No failed job or step exists in this batch. Therefore no failure incident, root cause, counter-fix, or retry is fabricated. The connector's job summary did not expose step-level detail in this retrieval; the workflow conclusion and job conclusion are both green.
+- Re-read current branch `auth.js`: email/password sign-up and sign-in, Google/X OAuth, Solana/Ethereum Web3 auth, persistent Supabase session refresh, local sign-out and auth-state handling exist. No password-reset/recovery handler or UI wiring exists in the complete file. The launch checklist's recovery gap is confirmed.
+- Re-read `swap-config.js` and Worker Wrangler config: proxy is configured in frontend, but transaction execution remains disabled in frontend and Worker. The Worker still requires its security-review gates; do not bypass them.
+- Production-origin verification remains unproven from the available GitHub connector. The earlier web fetch failures are not a reliable outage signal. No deployment, public health response, real OAuth round trip, SMTP delivery, or live Swap settlement is claimed.
+- **Next exact task:** continue the P0/P1 production-origin audit using authorized Cloudflare/GitHub settings; separately implement password recovery only after checking the auth page markup and adding real Supabase recovery/update-password flows with tests. Do not mark Login or DEX live until the real production flows are exercised.
