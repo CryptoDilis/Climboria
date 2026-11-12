@@ -55,14 +55,14 @@ export function isMeteoraSwap2Instruction(dataBase58) {
 }
 
 async function rpcCall(rpcUrl, method, params, fetchImpl, retryBaseMs = 1000) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     const response = await fetchImpl(rpcUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-meteora-discovery", method, params }),
       signal: AbortSignal.timeout(15000)
     });
-    if (response.status === 429 && attempt < 2) {
+    if (response.status === 429 && attempt < 4) {
       await new Promise((resolve) => setTimeout(resolve, retryBaseMs * (2 ** attempt)));
       continue;
     }
@@ -92,8 +92,8 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     ? Math.max(1, Math.min(options.maxTransactions, 250))
     : 25;
   const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, Math.min(options.maxMatches, 20)) : 3;
-  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 250;
-  const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1000;
+  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 1000;
+  const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1500;
   const initialBefore = typeof options.before === "string" && options.before.trim()
     ? options.before.trim()
     : null;
@@ -241,6 +241,7 @@ async function main() {
     before: process.env.JUPITER_AUDIT_BEFORE_SIGNATURE,
     limit: integerEnv("JUPITER_AUDIT_SIGNATURE_LIMIT"),
     maxTransactions: integerEnv("JUPITER_AUDIT_MAX_TRANSACTIONS"),
+    retryBaseMs: integerEnv("JUPITER_AUDIT_RETRY_BASE_MS"),
     delayMs
   });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
