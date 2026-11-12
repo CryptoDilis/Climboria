@@ -228,4 +228,15 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Keep current DexScreener iframe and quote-side withholding unchanged until the candidate adapter passes evidence-backed parity and release checks.
 - [ ] DEX production deployment/provider acceptance remains open; Swap execution gates remain false.
 
-**Next exact task:** add a bounded read-only GeckoTerminal OHLCV contract capture for one known Solana pool in both `token=base` and `token=quote` modes. Record response headers and first/last candle timestamps; do not implement a chart adapter until the artifact is inspected.
+**Next exact task:** inspect the new CI artifact `geckoterminal-ohlcv-contract-evidence` from the bounded capture script. Validate both orientations, response headers, candle timestamps/order, OHLC invariants, units and errors. Do not implement a chart adapter until the artifact is inspected.
+
+
+## 2026-11-13 — GeckoTerminal OHLCV contract capture added
+
+- [x] Added `.github/scripts/geckoterminal-ohlcv-contract-capture.mjs` to make two bounded public requests against one known Solana JUP/WSOL pool: 15-minute OHLCV in USD, with `token=base` and `token=quote`.
+- [x] Capture records API version, request parameters, client start/receive timestamps, HTTP status, cache/rate-related response headers, response meta/errors, first/last candle timestamps, timestamp ordering and normalized sample candles.
+- [x] Added the capture step and a 30-day evidence artifact to Browser Smoke. Added path filters so edits to the capture script trigger the workflow on PRs/pushes.
+- [ ] Run exact-head CI and inspect the live artifact. A successful HTTP response alone is insufficient; both orientations must pass candle schema/OHLC/timestamp validation and be interpreted against the known pair.
+- [ ] Do not switch the production chart or enable quote-side support until artifact inspection and deterministic adapter tests pass.
+
+**Next:** inspect exact-head Browser Smoke artifact `geckoterminal-ohlcv-contract-evidence`; diagnose any actual failed workflow from its first causal log/step before applying a targeted fix.

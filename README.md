@@ -42,7 +42,7 @@ Login/provider completion remains tracked and must not be represented as complet
 - DEX remains **not production-live**. The chart iframe is selected-pair-address-bound, but its cross-origin candle series orientation and freshness are not independently observable through current smoke tests. The DexScreener pair API schema does not provide an observation timestamp or OHLCV series. The UI's “Updated” text is client response time, not provider-as-of time.
 - GeckoTerminal is a candidate for independently inspectable OHLCV: official docs specify a pool OHLCV endpoint with base/quote orientation and a one-minute cache; live Solana response validation is pending.
 - Swap signing/submission and production execution remain disabled pending semantic CPI/account-role proof, controlled deployed Devnet lifecycle, production Worker verification and independent review.
-- **Next exact task:** capture GeckoTerminal OHLCV for a known Solana pair in base and quote modes, inspect response headers/timestamps/schema, then decide whether a separate chart adapter is justified.
+- **Next exact task:** inspect the new CI artifact `geckoterminal-ohlcv-contract-evidence` for base/quote OHLCV, response headers, timestamp order, candle invariants and provider errors before deciding whether a separate chart adapter is justified.
 
 ---
 

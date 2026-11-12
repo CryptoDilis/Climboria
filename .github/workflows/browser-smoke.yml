@@ -20,6 +20,7 @@ on:
       - ".github/scripts/dex-base-search-smoke.mjs"
       - ".github/scripts/dex-chart-selection-smoke.mjs"
       - ".github/scripts/dexscreener-provider-contract-capture.mjs"
+      - ".github/scripts/geckoterminal-ohlcv-contract-capture.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -71,6 +72,10 @@ jobs:
       - name: Capture live DexScreener provider contract evidence
         timeout-minutes: 3
         run: node .github/scripts/dexscreener-provider-contract-capture.mjs
+
+      - name: Capture live GeckoTerminal OHLCV contract in base and quote orientations
+        timeout-minutes: 3
+        run: node .github/scripts/geckoterminal-ohlcv-contract-capture.mjs
 
       - name: Start local web server
         run: |
@@ -760,6 +765,15 @@ jobs:
         with:
           name: dexscreener-provider-contract-evidence
           path: artifacts/dexscreener-provider-contract.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload GeckoTerminal OHLCV contract capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geckoterminal-ohlcv-contract-evidence
+          path: artifacts/geckoterminal-ohlcv-contract.json
           if-no-files-found: warn
           retention-days: 30
 

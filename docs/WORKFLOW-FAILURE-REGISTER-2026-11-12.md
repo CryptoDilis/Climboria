@@ -1166,3 +1166,13 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - Official DexScreener API docs describe pair snapshots but no OHLCV response or per-response as-of timestamp. The current local “Updated” timestamp is not proof of provider freshness. Official GeckoTerminal docs describe OHLCV, base/quote orientation, one-minute caching and approximate update guidance; no live Solana OHLCV sample has been validated yet.
 - Readiness: DEX still not production-live; quote-side withholding remains. Swap execution/security gates remain closed.
 - Next exact task: capture GeckoTerminal OHLCV for one known Solana pool in both base and quote modes; preserve headers, request parameters, timestamps and sample candles; inspect artifact before adding any chart adapter.
+
+
+### GeckoTerminal OHLCV evidence capture implementation — 2026-11-13
+
+- Added a bounded, read-only CI capture for one known Solana JUP/WSOL pool. It requests 15-minute USD OHLCV in both base and quote orientations with a versioned GeckoTerminal Accept header.
+- Capture stores response headers relevant to cache/freshness/rate limiting, HTTP status, client request/receive times, response metadata/errors, candle timestamp units/order, first/last timestamps and normalized OHLCV samples.
+- Added Browser Smoke workflow path filters, capture step and retained evidence artifact. No production DEX chart behavior was changed.
+- Verification is pending on the exact new head. The script intentionally fails closed if either orientation returns non-200, invalid JSON/shape, non-finite values, implausible timestamps, non-monotonic timestamps, invalid OHLC relationships or negative volume.
+- No workflow failure has occurred on this new change yet; do not pre-record a failure. If the capture step fails, inspect the exact response and first failing validation before adjusting any assumption.
+- Next: inspect exact-head CI and artifact; compare base/quote close levels and token identity against the known JUP/WSOL pair, then decide whether a separate GeckoTerminal chart adapter is safe to prototype.
