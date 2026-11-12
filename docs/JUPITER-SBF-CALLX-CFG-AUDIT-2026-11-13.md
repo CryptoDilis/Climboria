@@ -110,3 +110,22 @@ This section supersedes the preceding statement that the corrected TSV artifact 
 - No route-specific CPI site, DEX adapter/account-slice mapping, CPI-requested AccountMeta signer/writable flags, runtime privilege equivalence, or transaction safety conclusion is established.
 - Wait for Browser Smoke `43281005185` to reach a terminal state. On failure, inspect the exact failed step and complete logs, establish root cause, implement a distinct counter-fix, rerun and record. On success, inspect its artifacts and record the terminal evidence.
 - Next engineering task after the exact-head workflow set closes: branch-sensitive route_v2 discriminator/variant reachability, then conservative callx-aware CPI-site isolation and bounded account-slice/privilege dataflow. Keep unresolved indirect calls conservative, route_v2 excluded from production validation, and all signing/execution/deployment gates closed.
+
+## Final exact-head workflow and browser artifact verification — 2026-11-13
+
+- PR #269 exact head `1e682785dc1143b1eddbacc7ffaf15c5c8c18163` has all four required workflows terminal SUCCESS: Validate `43281005199`; Jupiter V6 CPI Trace Audit `43281005219`; Jupiter IDL History Audit `43281005200`; Browser Smoke `43281005185`.
+- Browser Smoke job `131401925056` completed every step SUCCESS, including Jarrell's Peak desktop/mobile gameplay smoke and both evidence uploads. The previously active gameplay step is now terminal green; no timeout/failure occurred.
+- Provider artifact `13972239057` (7,211 bytes; SHA-256 `299587c9ad0d545868b47805d9821602de649b2e6622dd42aaaec9f7540cee93`) was downloaded and parsed. Capture status is `captured`; two target requests returned HTTP 200 with 30 pairs each; observed aggregate side counts are base=50 and quote=10; error list is empty. JUP expected-base sample had 30 base/0 quote; USDC expected-quote sample had 20 base/10 quote. The capture explicitly labels itself a live public response sample with field orientation recorded, not inferred from schema. This is bounded evidence, not a universal provider contract guarantee.
+- Screenshot artifact `13972169079` (8,863,080 bytes; SHA-256 `845dd6126360e02d6b0aca2230c509630ebe5c68b1bc6c76dba2da76050a928e`) was downloaded and inspected. It contains 10 screenshots: desktop/mobile home, gameplay, cave entrance/interior, and DEX token-social views. Gameplay captures are 1365×900 desktop and 844×390 mobile. Visual spot-check confirms the player/avatar, Jarrell's Peak field-map/HUD and mobile action controls are rendered in the captured smoke state.
+- Browser Smoke assertions also passed the 390px and 360px compact mobile DEX/Swap layouts, provider-outage vs true-empty states, mobile workspace tabs, and desktop regression. These are automated browser tests, not physical-device certification.
+- Combined with exact-head IDL History artifact `13972437840`, the corrected TSV test/output is verified and the entire exact-head workflow set is closed green. There were no terminal failed workflows on this SHA. The malformed TSV and version-specific callx operand were static/artifact review findings, not failed CI runs; both were corrected and verified. Do not manufacture a failure report.
+
+## Next bounded static-analysis phase
+
+1. Implement explicit SBPF branch-condition semantics and branch-sensitive reachability for route_v2 discriminator/variant dispatch, with fixtures for both taken and not-taken paths.
+2. Preserve unknown branch outcomes and unresolved callx targets conservatively; never prune a possible CPI path solely because target resolution is missing.
+3. Isolate candidate `sol_invoke_signed_c` sites reachable from each route_v2 variant, with source PC, branch evidence, and uncertainty annotations.
+4. Bound account-slice construction and dataflow for CPI AccountMeta signer/writable flags; distinguish CPI-requested privileges from outer transaction-message privileges.
+5. Cross-check against finalized transaction account ordering and source/deployed-binary provenance before any allowlist/security conclusion.
+
+Release posture remains unchanged: route_v2 excluded from production validation; dynamic callx target values unresolved; no CPI privilege proof or transaction-safety conclusion; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler/public frontend execution disabled, and all production signing/submission/deployment gates closed.
