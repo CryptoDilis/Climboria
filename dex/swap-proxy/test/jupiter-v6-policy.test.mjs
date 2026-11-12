@@ -503,6 +503,8 @@ test("records public RPC rate limiting as an incomplete sample instead of failin
     "getSignaturesForAddress",
     "getTransaction",
     "getTransaction",
+    "getTransaction",
+    "getTransaction",
     "getTransaction"
   ]);
   assert.equal(report.rateLimited, true);
