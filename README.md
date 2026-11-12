@@ -35,11 +35,14 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `3ff98af8f6378cf3a7c855778d3ab8a1b18572ac`; PR #269 remains open, draft and unmerged.
-- Validate `43241860458` passed 15/15; CPI Trace `43241860418` passed 10/10. Browser Smoke `43241861078` passed steps 1–13 (including same-pool refresh and Base live search) then failed at the new chart-switch test because it waited for the provider response before checking the pending state. This is a test synchronization bug; corrected to wait for the request event. IDL History `43241860853` was pending at checkpoint.
-- DEX chart behavior: different-mint selection clears prior iframe immediately; same-mint refresh preserves chart src while updating metrics. The delayed regression still needs a valid pending-request assertion.
-- Current next task: verify delayed chart-switch regression and all exact-head workflows. Keep Swap execution gates false.
-- Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
+- Active November 15 launch sprint: **DEX → Swap → Game → Launchpad last**. Login/provider work remains tracked and must not be marked complete without real-provider evidence.
+- Current working branch: `codex/swap-security-evidence-current-main-2026-11-12`; exact head `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; PR #269 remains open, draft and unmerged. The tested code is on the PR branch, not yet on `main`.
+- Exact-head workflows all passed: Validate `43281005199` (job `131401925824`); Browser Smoke `43281005185` (job `131401925056`); Jupiter V6 CPI Trace `43281005219` (job `131401925835`); Jupiter IDL History `43281005200` (job `131401924970`).
+- DEX regression evidence now includes same-token multi-pool synchronization, manual-refresh data update with stable mint/pair/chart identity, delayed cross-token chart clearing/restoration, quote-side-only withholding, live Base/Solana provider tests, responsive mobile checks, provider error/empty states, and Jarrell's Peak desktop/mobile smoke.
+- DEX is **not production-live**: upstream/CDN freshness and embedded chart series orientation/freshness remain unproven; production provider deployment and end-to-end acceptance remain open.
+- Swap is **not execution-ready**: semantic per-DEX CPI/account-role, token movement and fee-destination proof; controlled deployed Devnet lifecycle; production Cloudflare Worker verification; and independent security review remain blockers.
+- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, and public frontend `enabled: false`.
+- **Next exact task:** continue the DEX chart-provider identity/orientation/freshness audit from `docs/LAUNCH-READINESS-CHECKLIST-2026-11-12.md`; do not switch to Swap execution work or claim DEX production-live without evidence.
 
 ---
 

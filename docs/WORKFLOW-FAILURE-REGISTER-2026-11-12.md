@@ -1142,3 +1142,13 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - [x] No workflow failure occurred on this exact head. The earlier in-progress log download returned `BlobNotFound` because the log blob was not yet available; this was not a failed workflow and is superseded by the terminal successful job/steps.
 - [x] No retry, code counter-fix, or assertion change was required for this exact head. Earlier cancelled/superseded attempts remain excluded from failure counts.
 - [ ] Next: start the separate, evidence-based static-audit completeness work for route_v2 branch-sensitive CPI reachability and the 136 indirect `callx` instructions. Do not treat the existing function-level CALL_IMM closure as path-sensitive proof. Keep PR #269 draft/unmerged and all signing/execution/deployment gates closed.
+
+
+### PR #269 exact-head verification — 2026-11-13 (head 1e682785dc1143b1eddbacc7ffaf15c5c8c18163)
+
+- Exact branch/head: `codex/swap-security-evidence-current-main-2026-11-12` / `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; PR #269 remains open, draft and unmerged.
+- Validate `43281005199` / job `131401925824`: SUCCESS. Browser Smoke `43281005185` / job `131401925056`: SUCCESS. Jupiter V6 CPI Trace `43281005219` / job `131401925835`: SUCCESS. Jupiter IDL History `43281005200` / job `131401924970`: SUCCESS.
+- Browser Smoke completed all steps, including live provider capture, DEX Base/Solana discovery, chart pool switching/manual refresh/cross-token pending-state/quote-side withholding, mobile layouts, provider-error/empty states, and Jarrell's Peak desktop/mobile gameplay. No failed step occurred.
+- No failure diagnosis or counter-fix is recorded for this cycle because no workflow failed. Older cancelled/superseded runs are not failures.
+- Release boundary unchanged: DEX upstream/chart freshness is not proven; Swap's full per-DEX CPI semantics, deployed Devnet lifecycle, production Worker deployment and independent review remain incomplete. Keep all Swap signing/execution gates closed.
+- Next: inspect chart-provider series identity/orientation and upstream freshness/cache semantics; update the launch-readiness checklist with evidence before changing source behavior.

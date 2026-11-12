@@ -198,8 +198,21 @@ Every commit must update this file or explicitly state why no checklist status c
 - [x] Exact-head documentation checkpoint workflows passed: Validate `43268394779`, CPI Trace `43268394676`, Browser Smoke `43268394660`, IDL History `43268394605`; all steps succeeded.
 - [x] Audited the actual smoke script and corrected a handoff mismatch: the prior source had a second-pool fixture but no interaction/assertion covering its selection.
 - [x] Added deterministic same-mint secondary-pool selection assertions and a two-response manual-refresh fixture that verifies new request, updated pool metrics, stable token/pair/chart identity and refresh-button recovery.
-- [ ] Verify this test change on its exact commit across all triggered workflows; inspect and diagnose any actual failed job deeply before applying a targeted counter-fix.
+- [x] Verified this test change on exact head `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; all four required workflows passed (Validate `43281005199`, CPI Trace `43281005219`, IDL History `43281005200`, Browser Smoke `43281005185`).
 - [ ] After green CI, continue bounded investigation of upstream provider/chart freshness. Browser `cache: no-store` does not prove CDN freshness or embedded chart freshness.
 - [ ] Keep PR #269 draft/unmerged; DEX production acceptance and Swap signing/submission remain gated.
 
-**Next DEX task:** run exact-head CI for the manual-refresh regression in `.github/scripts/dex-chart-selection-smoke.mjs`, then assess the next provider freshness evidence gap.
+**Next DEX task:** inspect the embedded chart provider's documented/live endpoint contract for selected pair identity, series orientation, timestamp semantics and freshness/cache headers. Add a deterministic regression only for behavior supported by evidence; preserve quote-side-only withholding.
+
+
+## 2026-11-13 — current exact-head readiness checkpoint
+
+- **Active sprint order through November 15:** DEX → Swap → Game → Launchpad last. Login remains tracked and is not silently marked complete. This sprint order takes precedence over the longer-term post-sprint P1 Swap → P2 DEX sequence above.
+- **Exact branch/head:** `codex/swap-security-evidence-current-main-2026-11-12` at `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; PR #269 remains open, draft and unmerged.
+- **Exact-head CI:** Validate `43281005199` / job `131401925824` SUCCESS; Browser Smoke `43281005185` / job `131401925056` SUCCESS; Jupiter V6 CPI Trace `43281005219` / job `131401925835` SUCCESS; Jupiter IDL History `43281005200` / job `131401924970` SUCCESS. All reported job steps completed successfully.
+- **DEX browser coverage:** live provider-contract capture, Base live search/filter/provider error, Solana discovery, same-token multi-pool selection, manual refresh updating selected-pool metrics while preserving mint/pair/chart identity, delayed cross-token chart clearing and restoration, quote-side-only fail-closed behavior, mobile DEX/Swap at 390px and 360px, provider loading/error/true-empty states. Jarrell's Peak desktop/mobile gameplay smoke also passed in this run.
+- **DEX status:** improved and regression-tested, but **not production-live**. The provider capture is a timestamped sample, not an SLA or cache/freshness guarantee. Browser `cache: no-store` does not prove upstream/CDN freshness. The embedded chart's own series orientation and freshness are not yet independently established. Keep quote-side-only matches withheld.
+- **Swap status:** code-level order binding, ALT/account parsing, restricted Metis v0 route policy and finalized token-account checks exist on this branch, but the full per-DEX CPI/account-role, token-movement and fee-destination policy is incomplete. No accepted deployed Devnet sign→verify→submit→confirm→final-balance lifecycle, no production Worker deployment verification, and no independent Solana security review.
+- **Safety gates:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler `EXECUTION_ENABLED=false`; public `swap-config.js enabled=false`. No wallet signing, transaction submission or LIVE Swap claim.
+- **No new failed workflow:** all four workflows on this exact head passed. Superseded/cancelled runs and temporary log retrieval limitations are not counted as failures.
+- **Next exact DEX task:** inspect the embedded chart provider's documented/live endpoint contract for selected pair identity, series orientation, timestamp semantics and freshness/cache headers. Add a deterministic regression only for behavior supported by evidence; do not infer quote-side price or chart orientation. After DEX production readiness is evidenced, resume the Swap checklist without opening its security gates.
