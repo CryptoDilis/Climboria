@@ -1,7 +1,8 @@
 mod abstract_domain;
 mod branch_analysis;
 
-use branch_analysis::{analyze_cfg, classify_branch, CfgBlock};
+use abstract_domain::{AbstractState, AbstractValue};
+use branch_analysis::{analyze_cfg_with_entry, classify_branch, CfgBlock};
 use solana_sbpf::{
     elf::Executable,
     program::{BuiltinProgram, SBPFVersion},
@@ -29,10 +30,27 @@ fn callx_target_register(version: SBPFVersion, instruction: &solana_sbpf::ebpf::
     }
 }
 
+fn read_instruction_data_hex(path: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    let raw = fs::read_to_string(path)?;
+    let hex = raw.trim();
+    if hex.is_empty() || hex.len() % 2 != 0 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err("instruction-data fixture must be non-empty, even-length hexadecimal".into());
+    }
+    let mut bytes = Vec::with_capacity(hex.len() / 2);
+    for index in (0..hex.len()).step_by(2) {
+        bytes.push(u8::from_str_radix(&hex[index..index + 2], 16)?);
+    }
+    if bytes.len() > 10_240 {
+        return Err("instruction-data fixture exceeds the Solana 10 KiB instruction-data bound".into());
+    }
+    Ok(bytes)
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let mut args = env::args().skip(1);
-    let elf_path = args.next().ok_or("usage: jupiter-sbf-static-audit <elf> <out-dir>")?;
-    let out_dir = args.next().ok_or("usage: jupiter-sbf-static-audit <elf> <out-dir>")?;
+    let elf_path = args.next().ok_or("usage: jupiter-sbf-static-audit <elf> <out-dir> [instruction-data-hex-file]")?;
+    let out_dir = args.next().ok_or("usage: jupiter-sbf-static-audit <elf> <out-dir> [instruction-data-hex-file]")?;
+    let instruction_data_path = args.next();
     if args.next().is_some() {
         return Err("unexpected extra arguments".into());
     }
@@ -48,21 +66,56 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (text_address, text_bytes) = executable.get_text_bytes();
     let analysis = Analysis::from_executable(&executable)?;
 
-    // Bounded conservative forward data-flow over the pinned CFG. No loader
-    // register ABI or input-data pointer provenance is assumed at entry.
+    // Candidate input is opt-in and must be supplied only after the workflow
+    // verifies the exact ProgramData ELF hash and loader/slot provenance.
+    let instruction_data = instruction_data_path
+        .as_deref()
+        .map(read_instruction_data_hex)
+        .transpose()?;
+    let mut entry_state = AbstractState::default();
+    let input_mode = if let Some(data) = instruction_data.as_ref() {
+        if version != SBPFVersion::V0 {
+            return Err("candidate input fixture is pinned to the verified SBPF V0 ELF".into());
+        }
+        entry_state.registers[1] = AbstractValue::InputDataPointer(0);
+        entry_state.registers[2] = AbstractValue::InstructionDataPointer(0);
+        fs::write(
+            format!("{out_dir}/entrypoint-instruction-data.hex"),
+            data.iter().map(|byte| format!("{byte:02x}")).collect::<String>() + "\n",
+        )?;
+        "candidate-abi-v1-instruction-data"
+    } else {
+        "unknown-entry-registers"
+    };
+
+    // Bounded conservative forward data-flow over the pinned CFG. Generic runs
+    // begin unknown; the candidate mode seeds only ABI-v1 r1/r2 proven by the
+    // finalized loader-owner and transaction evidence.
     let cfg_blocks: BTreeMap<usize, CfgBlock> = analysis.cfg_nodes.iter()
         .map(|(pc, node)| (*pc, CfgBlock {
             instruction_range: node.instructions.clone(),
             successors: node.destinations.clone(),
         })).collect();
     let cfg_work_budget = analysis.cfg_nodes.len().saturating_mul(64).max(10_000).min(1_000_000);
-    let cfg_reachability = analyze_cfg(&analysis.instructions, &cfg_blocks, analysis.entrypoint, version, cfg_work_budget)?;
+    let cfg_reachability = analyze_cfg_with_entry(
+        &analysis.instructions,
+        &cfg_blocks,
+        analysis.entrypoint,
+        version,
+        cfg_work_budget,
+        entry_state,
+        instruction_data.as_deref(),
+    )?;
 
     let summary_path = format!("{out_dir}/summary.txt");
     let mut summary = BufWriter::new(File::create(summary_path)?);
     writeln!(summary, "elf_path={elf_path}")?;
     writeln!(summary, "elf_bytes={}", bytes.len())?;
     writeln!(summary, "sbpf_version={version:?}")?;
+    writeln!(summary, "entrypoint_input_mode={input_mode}")?;
+    writeln!(summary, "entrypoint_instruction_data_bytes={}", instruction_data.as_ref().map_or(0, Vec::len))?;
+    writeln!(summary, "entrypoint_instruction_data_reads=bounded_little_endian; unknown_regions_remain_unknown")?;
+    writeln!(summary, "interprocedural_direct_calls=not_traversed")?;
     writeln!(summary, "text_address=0x{text_address:x}")?;
     writeln!(summary, "text_bytes={}", text_bytes.len())?;
     writeln!(summary, "instruction_count={}", analysis.instructions.len())?;
