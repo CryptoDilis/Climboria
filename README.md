@@ -4207,3 +4207,10 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Failure register with root causes, failed job IDs, counter-fixes, verification evidence, and next tasks: [docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next P1 work: continue paginated finalized Jupiter/Meteora trace evidence from the recorded cursor; establish CPI signer/writable AccountMeta and handler remaining-account cursor semantics across DEX order permutations and multi-hop/split routes.
 - Safety: PR #269 remains draft/unmerged; route_v2 excluded from production validation; execution/signing review gates remain false. No production signing, transaction submission, Wrangler deployment or LIVE Swap claim.
+
+
+### Documentation-only follow-up commits
+
+- Current PR #269 branch head after recording this handoff: `fe24eb6c4ee6805f80a0b664515e629a968edcdc`.
+- The code-tested head remains `7e77206316029657902e91ed5993ff64acecce46`; the only commits after it are documentation updates to this README and the workflow failure register (`8bf695fa8667c97a8b985b3b276ed6d025d00aff`, then this README commit). No runtime, test, workflow, or security-gate files changed after the four passing runs. GitHub created no new workflow runs for the docs-only head.
+- Therefore the four green results are verified on the unchanged code tree at `7e772063...`, not falsely represented as newly rerun on the documentation-only head `fe24eb6c...`.
