@@ -161,3 +161,12 @@ The long-running browser gameplay step eventually succeeded; no workflow failure
 ### Next implementation gate
 
 Before CFG worklist integration, add the additional transfer fixtures listed above and review the control-flow/data-transfer dispatch boundary. Then implement a bounded worklist with conservative joins and iteration limits. Seed only the proven stack base; do not seed input-data pointers until the exact runtime loader ABI and serialized instruction-data layout are documented and independently verified. Next goal remains evidence-based route_v2 discriminator/dispatch proof, followed by route-specific CPI account-slice and privilege analysis.
+
+
+## Follow-on transfer edge-case tests — 2026-11-13
+
+After the previous exact-head batch passed all four workflows, PR #272 received commit `4186f178114abcf0bef1a215859b4b9d0328155f` adding six focused transfer tests: register aliasing and modular constant overflow; invalid register-index invalidation; pointer-offset overflow; aligned stack-slot overwrite; unaligned store overlap invalidation; unknown-base store clearing. These tests extend the existing MOV/ADD/LDX/STX tests and do not broaden supported opcodes.
+
+New exact-head workflows are running on `4186f178114abcf0bef1a215859b4b9d0328155f`: Browser Smoke `43289124939`, Validate `43289124843`, Jupiter V6 CPI Trace `43289124824`, Jupiter IDL History `43289124775`. All were observed in progress at checkpoint; no terminal failure observed. Wait for Rust test step and all browser checks to finish. Diagnose any actual terminal failure from logs before changing implementation.
+
+No CFG worklist has been added yet. Control-flow opcodes must be dispatched separately from data-transfer operations; generic unsupported-opcode invalidation must not be applied to branch/call/exit instructions in a way that confuses the worklist. Next after this batch: inspect test results, then implement a bounded instruction-level worklist with conservative state joins and explicit edge treatment.
