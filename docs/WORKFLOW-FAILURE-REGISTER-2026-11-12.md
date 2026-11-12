@@ -1273,3 +1273,13 @@ The direct r2 instruction-data pointer supplied by SIMD-0321 is overwritten with
 ### Cancellation classification
 
 Runs 43316555529/43316555586 and 43317199137/43317199188 were cancelled while older commits were superseded by newer commits on the same PR branch. The workflow definitions explicitly set `cancel-in-progress: true`; these are expected supersession cancellations, not application failures. The team should avoid pushing further commits while the latest exact-head suite is still running unless a real defect requires it.
+
+
+### Follow-up verification cancellation — runs 43317886945 and 43317887043
+
+- The branch advanced from code-fix commit `96e594d76af93a725960d4fed32381dbc40ac68e` to documentation-only commit `40fd4f3d3b13695d70d5f3a760e21c8fcb2d7e80` while exact-head checks were running.
+- Jupiter IDL History Audit run 43317886945 was cancelled during the historical IDL fetch step; Rust setup, unit tests, provenance guard and static analysis were skipped.
+- Browser Smoke run 43317887043 was cancelled during homepage/mobile navigation testing; subsequent DEX and Jarrell's Peak checks were skipped.
+- Validate run 43317886834 and Jupiter V6 CPI Trace Audit run 43317886902 had already passed on code-fix commit 96e594d.
+- **Classification:** expected cancellation from the workflow's `cancel-in-progress: true` policy after the branch advanced; no test assertion failed on these two runs. The corrected Rust assertion remains unverified until a full exact-head IDL run.
+- **Process correction:** the next commit groups code, tests and all necessary documentation before CI starts. No further commits will be pushed until all relevant workflows for that head complete.

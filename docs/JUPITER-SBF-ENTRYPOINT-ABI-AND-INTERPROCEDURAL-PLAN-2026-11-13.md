@@ -115,3 +115,8 @@ Next priorities:
 2. Reconstruct a sparse ABI-v1 r1 input image from the candidate's 85-position outer Jupiter account vector, preserving 51 unique addresses and 34 duplicate positions.
 3. Recover historical account metadata only from slot-appropriate sources; keep missing data lengths/bytes unknown.
 4. Add call return summaries only after a proven frame/stack memory model; resolve CALLX only from proven register values and versioned encoding.
+
+
+## Verification sequencing note — 2026-11-13
+
+The branch was advanced with a documentation-only commit while the corrected exact-head workflows were still running. Because both Browser Smoke and Jupiter IDL History use `cancel-in-progress: true`, the in-flight runs were cancelled before completing their test stages. The latest corrected direct-call assertion therefore still needs a complete exact-head rerun. Future updates will batch code and documentation before starting the final verification cycle, then hold the branch stable until the suite completes.

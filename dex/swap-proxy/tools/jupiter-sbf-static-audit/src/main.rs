@@ -163,7 +163,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "cfg_internal_call_sites_reached={internal_calls}")?;
     writeln!(summary, "cfg_external_or_unresolved_call_sites_reached={external_calls}")?;
     writeln!(summary, "cfg_indirect_call_sites_unresolved={indirect_calls}")?;
-    writeln!(summary, "interprocedural_mode=context_insensitive_direct_call_target_traversal; caller_return_state_r0-r5_unknown; callee_r10_unknown; CALL_REG_unresolved")?;
+    writeln!(summary, "interprocedural_mode=context_insensitive_direct_CALL_IMM_target_traversal; callee_r1-r5_args_r6-r9_preserved_r0-r10_unknown; caller_return_r0-r5_unknown_stack_slots_cleared_r6-r9_r10_preserved; CALL_REG_unresolved")?;
     writeln!(summary, "text_address=0x{text_address:x}")?;
     writeln!(summary, "text_bytes={}", text_bytes.len())?;
     writeln!(summary, "instruction_count={}", analysis.instructions.len())?;
