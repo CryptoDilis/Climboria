@@ -140,6 +140,7 @@ pub fn evaluate_constant_branch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use solana_sbpf::program::SBPFVersion;
 
     #[test]
     fn merge_preserves_only_values_equal_on_both_paths() {
@@ -283,6 +284,49 @@ mod tests {
         state.registers[2] = AbstractValue::Constant(2);
         assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
         assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn instruction_data_loads_are_bounded_little_endian_and_width_aware() {
+        let bytes = [0xbb, 0x64, 0xfa, 0xcc, 0x31, 0xc4, 0xaf, 0x14];
+        let mut state = AbstractState::default();
+        state.registers[2] = AbstractValue::InstructionDataPointer(0);
+
+        assert!(state.transfer_instruction_with_input(0x71, 1, 2, 0, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0xbb));
+
+        assert!(state.transfer_instruction_with_input(0x69, 1, 2, 1, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0xfa64));
+
+        assert!(state.transfer_instruction_with_input(0x61, 1, 2, 4, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0x14afc431));
+
+        assert!(state.transfer_instruction_with_input(0x79, 1, 2, 0, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0x14afc431ccfa64bb));
+    }
+
+    #[test]
+    fn instruction_data_out_of_bounds_and_unproven_regions_remain_unknown() {
+        let bytes = [0xbb, 0x64, 0xfa, 0xcc, 0x31, 0xc4, 0xaf, 0x14];
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::Constant(77);
+        state.registers[2] = AbstractValue::InstructionDataPointer(7);
+        assert!(state.transfer_instruction_with_input(0x61, 3, 2, 0, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[3], AbstractValue::Unknown);
+        assert_eq!(state.registers[1], AbstractValue::Constant(77));
+
+        state.registers[2] = AbstractValue::InputDataPointer(0);
+        assert!(state.transfer_instruction_with_input(0x61, 3, 2, 0, 0, SBPFVersion::V0, Some(&bytes)));
+        assert_eq!(state.registers[3], AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn instruction_data_load_opcodes_follow_sbpf_v2_encoding() {
+        let bytes = [0x11, 0x22, 0x33, 0x44];
+        let mut state = AbstractState::default();
+        state.registers[2] = AbstractValue::InstructionDataPointer(0);
+        assert!(state.transfer_instruction_with_input(0x8c, 1, 2, 0, 0, SBPFVersion::V2, Some(&bytes)));
+        assert_eq!(state.registers[1], AbstractValue::Constant(0x44332211));
     }
 
     #[test]
