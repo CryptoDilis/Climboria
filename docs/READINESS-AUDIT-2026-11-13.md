@@ -10,14 +10,17 @@
 ## 1. Repository and workflow state
 
 - Repository is accessible; default branch is main.
-- Latest main commit at audit start: 0fa8e987aec4d6e6bc7590363efa7d20fde79422.
-- Latest main live-site smoke run 43294778533 completed SUCCESS on that exact SHA.
-- PR #269 remains open, draft and unmerged. It contains current-main Swap security evidence and DEX/browser regression coverage.
-- PR #269 exact-head runs observed:
+- Latest main live-site smoke run 43294778533 completed SUCCESS on main SHA 0fa8e987aec4d6e6bc7590363efa7d20fde79422.
+- PR #269 remains open, draft and unmerged; exact head cb510429d780a1c8b68aa8bdf97c6e539044b644.
+- Exact-head PR #269 checks:
   - Validate Climboria, run 43311466798: SUCCESS.
   - Jupiter V6 CPI Trace Audit, run 43311467907: SUCCESS.
   - Jupiter IDL History Audit, run 43311466690: SUCCESS.
-  - Climboria Browser Smoke Test, run 43311466753: IN_PROGRESS at audit checkpoint; Jarrell's Peak desktop/mobile gameplay step was still running. Do not mark it passed or failed until terminal evidence is collected.
+  - Climboria Browser Smoke Test, run 43311466753, job 131508351169: SUCCESS.
+- Browser Smoke completed the Jarrell's Peak desktop/mobile gameplay step. Artifacts uploaded:
+  - climboria-browser-smoke-screenshots, artifact 13986502231, 8,825,520 bytes.
+  - dexscreener-provider-contract-evidence, artifact 13986497125, 7,300 bytes.
+  - geckoterminal-ohlcv-contract-evidence, artifact 13987076142, 1,978 bytes.
 - Several earlier attempts on PR #269 were cancelled after newer commits superseded them under cancel-in-progress concurrency. A cancelled/superseded run is not a test failure and must not be counted as one.
 - Prior workflow failure diagnoses and counter-fixes are retained in docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md on the PR #269 branch. Continue appending evidence-based terminal diagnoses; never infer a failure from a cancelled or still-running job.
 
@@ -29,7 +32,7 @@
 | DEX | Live provider-backed discovery paths and browser coverage exist; production end-to-end data/chart freshness acceptance remains outstanding |
 | Swap | Quote/security groundwork exists; signable orders and execution intentionally disabled |
 | Login | UI/integration groundwork exists; real provider authentication/session lifecycle not verified |
-| Game | Desktop/mobile gameplay smoke is in progress on PR #269 at this checkpoint; public real-device acceptance remains outstanding |
+| Game | Exact-head PR #269 desktop/mobile Jarrell's Peak Browser Smoke passed; public real-device acceptance remains outstanding |
 | Launchpad | Deferred; not a launch-ready product |
 
 ## 3. Swap security posture and blockers
@@ -56,14 +59,14 @@ Source review of PR #269 branch files (Worker entrypoint, Jupiter V6 policy, tra
 
 ## 5. Priority checklist
 
-1. Finish PR #269 Browser Smoke run 43311466753. Inspect the terminal gameplay step and screenshot artifacts. If it fails, inspect exact job/step logs, classify the cause, implement a targeted counter-fix and rerun on the exact resulting SHA. Do not push to the same PR branch while this run is active because concurrency may cancel it.
-2. Complete P1 Swap semantic instruction validation, including per-DEX CPI account roles, token movement and fee destination; retain adversarial tests.
-3. Verify production Cloudflare Worker deployment and health/CORS/rate-limit/Durable Object behavior with execution disabled.
-4. Complete controlled Devnet lifecycle and independent security review before considering any signing or execution gate change.
-5. Complete P2 DEX production data/chart freshness and desktop/mobile end-to-end acceptance.
-6. Complete P3 real authentication provider configuration and account lifecycle.
-7. Complete P4 public desktop/mobile gameplay acceptance on representative physical devices.
-8. Keep P5 Launchpad last/deferred until the preceding priorities are genuinely ready.
+1. [x] Finish PR #269 Browser Smoke run 43311466753 and inspect terminal gameplay result. Exact-head desktop/mobile gameplay smoke passed; screenshot and provider evidence artifacts are available.
+2. [ ] Complete P1 Swap semantic instruction validation, including per-DEX CPI account roles, token movement and fee destination; retain adversarial tests.
+3. [ ] Verify production Cloudflare Worker deployment and health/CORS/rate-limit/Durable Object behavior with execution disabled.
+4. [ ] Complete controlled Devnet lifecycle and independent security review before considering any signing or execution gate change.
+5. [ ] Complete P2 DEX production data/chart freshness and desktop/mobile end-to-end acceptance.
+6. [ ] Complete P3 real authentication provider configuration and account lifecycle.
+7. [ ] Complete P4 public desktop/mobile gameplay acceptance on representative physical devices.
+8. [ ] Keep P5 Launchpad last/deferred until the preceding priorities are genuinely ready.
 
 ## 6. Operating rules
 
