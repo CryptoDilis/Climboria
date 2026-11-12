@@ -257,7 +257,7 @@ mod tests {
     fn callx_tsv_header_and_rows_use_real_tab_delimiters() {
         use super::CALLX_TSV_HEADER;
         let row = format!(
-            "{}\\t{}\\t{}\\t{}\\tunresolved-register-value\\t{}\\t{}\\t{}\\t{}",
+            "{}\t{}\t{}\t{}\tunresolved-register-value\t{}\t{}\t{}\t{}",
             10, 20, 2, "imm_low_byte", 0, 0, 0, 2
         );
         assert_eq!(CALLX_TSV_HEADER.split('\t').count(), 9);
