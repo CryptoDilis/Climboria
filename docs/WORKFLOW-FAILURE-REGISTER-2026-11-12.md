@@ -164,3 +164,28 @@ Important grouped findings include:
 - A separate preserved candidate transaction at slot `468153382` still provides one observed Jupiter route with an 18-account Meteora `Swap2` CPI and finalized account ownership/linkage checks. Those observations do not expose CPI-requested signer/writable flags or prove the Jupiter handler's per-DEX remaining-account cursor.
 - The scanner currently defaults to a five-signature sample and its CLI only accepts a single `before` cursor. Next: make scan depth/cursor pagination explicitly configurable and add deterministic mocked-RPC tests, then run multiple bounded finalized pages covering multi-hop/split routes, DEX order permutations, transfer-hook slices and variable Meteora BinArray counts. Record incomplete/rate-limited pages separately; never interpret them as zero routes.
 - Preserve all release gates: PR #269 stays draft/unmerged; route_v2 stays excluded from production validation; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler and public frontend execution remain disabled. No production deployment, signing, transaction submission or LIVE Swap claim is made.
+
+
+## 2026-11-12 — deep diagnosis: route-discovery test imported a non-exported constant
+
+### Failures on intermediate scanner head `42219bd83357707558ccc4fc3ce5ddc2432e083a`
+
+- Validate run `43125192018`, job `130875371100`: FAILED in the combined Node test step. 113/114 tests passed; the new route-discovery test module failed to load.
+- Jupiter V6 CPI Trace Audit run `43125192441`, job `130875419096`: FAILED in the newly added route-discovery test step. The existing CPI account-index test passed; the new test module failed to load.
+- Both terminal logs report the same exact error: `The requested module '../tools/discover-jupiter-meteora-routes.mjs' does not provide an export named 'METEORA_DLMM_PROGRAM_ID'`. The trace-fetch steps were correctly skipped after the test failure.
+
+### Root cause
+
+- This was a test-module import-contract error, not a scanner runtime or route-policy defect. `discover-jupiter-meteora-routes.mjs` imports `METEORA_DLMM_PROGRAM_ID` for private use but does not re-export it. The test incorrectly treated an imported implementation dependency as a public export of the discovery module.
+- The two workflow failures are one root cause observed by two independent test entry points; they are not two unrelated failures. No repeated retry was used.
+
+### Counter-fix
+
+- Corrected `dex/swap-proxy/test/jupiter-meteora-route-discovery.test.mjs` to import `discoverRecentJupiterMeteoraRoutes` from its defining module and import `METEORA_DLMM_PROGRAM_ID` directly from `audit-meteora-bin-array.mjs`, the module that actually exports it.
+- Counter-fix commit: `81ebba35205b9c014bdbfff7df6e27dfdbb9d3f3`.
+- This changes only the test import; no production runtime, route policy, workflow assertion, timeout or fail-closed gate is weakened.
+- Required recovery: rerun Validate and Jupiter CPI Trace Audit on the new exact head. Do not mark recovered until the new test executes and all assertions pass. Inspect any subsequent failures independently rather than assuming this import fix resolves unrelated defects.
+
+### Other workflow state at diagnosis
+
+- Jupiter IDL History Audit `43125192129` and Browser Smoke `43125192127` were still in progress when this diagnosis was written; they are neither passes nor failures yet. Their exact-head results must be reconciled separately.
