@@ -1,3 +1,4 @@
+mod abstract_domain;
 mod branch_analysis;
 
 use branch_analysis::classify_branch;
