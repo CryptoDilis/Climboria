@@ -111,3 +111,12 @@ Every commit must update this file or explicitly state why no checklist status c
 4. Resume from **Next DEX task** unless a newer commit has updated this handoff.
 5. After each commit, update completed boxes, evidence, blockers and the single next task in both documents.
 
+
+
+## 2026-11-12 23:13 +08 — DEX provider-contract audit checkpoint
+
+- Chart-switch counter-fix verified on exact tested SHA `3b01c27f055607ee7a330a216499bf6797376cd6`: Validate `43243350882`, Jupiter CPI Trace `43243350893`, Jupiter IDL History `43243350967`, Browser Smoke `43243350744` all SUCCESS.
+- Read-only review of `dex/index.html`: Solana discovery is seeded (eight query terms plus latest-profile mints, capped at 30); Base discovery is eight fixed query seeds. Both disclose non-exhaustive coverage. Token detail uses `/latest/dex/tokens/{mint}`, sorts Solana pairs by liquidity and routes charts by pair address.
+- Official DexScreener reference documents chain-scoped token-pair endpoints and pair schema with both baseToken and quoteToken. Need live response evidence to prove selected-mint orientation and price metrics before modifying the detail pipeline. No speculative source change made.
+- DEX is **not** marked live: production deployment, provider freshness/cache guarantees, exact token/quote-side metric correctness and production desktop/mobile acceptance remain unverified.
+- **Next:** capture/test documented DexScreener token endpoint responses for known mints in both base-side and quote-side cases; define exact-mint normalization contract and tests before source changes. Keep Swap execution gates false.
