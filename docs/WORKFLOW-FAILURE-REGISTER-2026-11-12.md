@@ -717,3 +717,12 @@ Important grouped findings include:
 - **Other artifacts:** IDL history `13942834384`, 1,530,077 bytes, SHA-256 `e64b4d9a0e30ba1f0d176f831db9ed26cba7266ebc974daaab7d28e1b90e73a8`; Browser Smoke screenshots `13943594347`, 8,877,329 bytes, SHA-256 `23f1c045a29d302a05d63d54b86497a63a1fc5e12527f2bbbe8ac463ff163aeb`. All artifacts are tied to exact head `4bd54cf...`.
 - **Next task:** advance only the scheduled fallback cursor from `57Pp8w...` to the verified `EMxKtW...`, preserving the manual `before_signature` override and five-transaction batch. Then verify the resulting exact-head checks and inspect the next CPI artifact before any further cursor movement. Continue collecting representative route_v2 multi-hop/split plans, DEX order permutations, transfer-hook account slices, variable Meteora BinArray counts, CPI privilege provenance, and runtime remaining-account cursor boundaries.
 - **Release posture unchanged:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`. Keep route_v2 excluded from production validation. No production signing, transaction submission, Wrangler deployment, Devnet settlement acceptance, independent security approval, or LIVE Swap claim.
+
+
+## CPI cursor page 2 continuation update — verification pending
+
+- **Workflow commit:** `07296581fb7e1aaed56ad526d18c9e0aa1f62078` advances the scheduled fallback cursor from `57Pp8w...` to the artifact-verified `EMxKtW...`.
+- **Preserved controls:** manual `before_signature` override remains intact; `max_transactions=5` remains unchanged.
+- **Verification state:** PR #269 was confirmed at workflow commit `07296581...`, open/draft/unmerged. Commit-associated workflow lookup and combined commit status returned no checks at the time of inspection. This is pending visibility, not success, failure, or cancellation.
+- **Next exact action:** inspect checks for the current PR head; wait for the Validate, CPI Trace, IDL History, and Browser Smoke jobs to become visible and terminal. If any job fails, inspect its failing step and logs, write a root-cause analysis and targeted counter-fix before rerunning. Inspect the next CPI artifact and only advance again after a complete bounded scan with no RPC/rate-limit/unavailable-signature condition.
+- **Security gates unchanged:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 remains excluded from production validation.
