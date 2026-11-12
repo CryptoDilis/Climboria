@@ -27,6 +27,11 @@ on:
         required: false
         default: "25"
         type: string
+      retry_base_ms:
+        description: "Base delay for exponential HTTP 429 retries (milliseconds)"
+        required: false
+        default: "1500"
+        type: string
   pull_request:
     branches: [main]
     paths:
@@ -40,8 +45,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: jupiter-cpi-trace-audit-${{ github.event.pull_request.head.ref || github.ref_name }}
-  cancel-in-progress: true
+  group: climboria-solana-mainnet-audit-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   trace:
@@ -64,7 +69,8 @@ jobs:
           JUPITER_AUDIT_BEFORE_SIGNATURE: ${{ github.event.inputs.before_signature }}
           JUPITER_AUDIT_SIGNATURE_LIMIT: ${{ github.event.inputs.signature_limit || '25' }}
           JUPITER_AUDIT_MAX_TRANSACTIONS: ${{ github.event.inputs.max_transactions || '25' }}
-          JUPITER_AUDIT_DELAY_MS: '250'
+          JUPITER_AUDIT_DELAY_MS: '1000'
+          JUPITER_AUDIT_RETRY_BASE_MS: ${{ github.event.inputs.retry_base_ms || '1500' }}
         run: |
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv > jupiter-v6-meteora-trace.json
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX > jupiter-meteora-candidate-trace.json
