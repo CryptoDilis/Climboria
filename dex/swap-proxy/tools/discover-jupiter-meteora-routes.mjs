@@ -107,8 +107,9 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
   let rateLimited = false;
   let rateLimitedMethod = null;
   let reachedEnd = false;
+  const unavailableSignatures = [];
 
-  while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited) {
+  while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited && unavailableSignatures.length === 0) {
     const pageLimit = Math.min(limit, maxTransactions - transactionsScanned);
     const signatureQuery = { commitment: "finalized", limit: pageLimit };
     if (cursor) signatureQuery.before = cursor;
@@ -149,10 +150,18 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
         break;
       }
 
+      if (!transaction) {
+        // Stop before advancing beyond an unavailable/pruned transaction. The
+        // continuation cursor remains the last fully fetched signature so a
+        // resumed scan will request this signature again.
+        unavailableSignatures.push(entry.signature);
+        break;
+      }
+
       transactionsScanned += 1;
       pageScanned += 1;
       lastScannedSignature = entry.signature;
-      if (transaction) {
+      {
         const report = buildJupiterV6TraceReport(entry.signature, transaction);
         for (const route of report.jupiterRoutes) {
           const routeHeader = decodeJupiterRoutePlanHeader(route.instructionDataBase58);
@@ -188,7 +197,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
       if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    if (rateLimited || transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
+    if (rateLimited || unavailableSignatures.length > 0 || transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
     if (pageScanned === 0) {
       reachedEnd = true;
       break;
@@ -205,7 +214,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     jupiterProgramId: JUPITER_V6_PROGRAM_ID,
     commitment: "finalized",
     before: initialBefore,
-    nextBefore: lastScannedSignature,
+    nextBefore: lastScannedSignature ?? initialBefore,
     signatureLimit: limit,
     maxTransactions,
     pagesScanned,
@@ -215,11 +224,14 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     matchingJupiterMeteoraInstructions: results.length,
     rateLimited,
     rateLimitedMethod,
+    unavailableSignatures,
+    transactionFetchComplete: !rateLimited && unavailableSignatures.length === 0,
     reachedEnd,
     results,
     evidenceLimitations: [
       "This bounded sample is not an exhaustive scan of Jupiter/Meteora routes.",
       "A rate-limited page is incomplete; its unscanned signatures must be retried from nextBefore.",
+      "A null getTransaction result is unavailable/pruned evidence, not a route-free transaction; the scan stops before it and preserves the last fully fetched continuation cursor.",
       "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
       "The report does not expose CPI-requested signer/writable AccountMeta flags.",
       "Parent account sequence correlation and duplicate parent positions are observational only; they do not prove which runtime handler cursor consumed the accounts.",
