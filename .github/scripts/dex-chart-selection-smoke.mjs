@@ -7,7 +7,8 @@ try {
   page.on('pageerror', error => errors.push(error.stack || error.message));
   const mintA = 'SysvarRent111111111111111111111111111111111';
   const mintB = 'SysvarC1ock11111111111111111111111111111111';
-  const pairA = { chainId:'solana', dexId:'chart-switch-fixture', pairAddress:'ChartSwitchPairAAAAAAAAAAAAAAAAAAAAAAAAAA', baseToken:{address:mintA,symbol:'CHARTA',name:'Chart Switch A'}, quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'}, priceUsd:'1.11', priceChange:{h24:1}, volume:{h24:1000}, liquidity:{usd:5000} };
+  const pairA = { chainId:'solana', dexId:'chart-switch-fixture', pairAddress:'ChartSwitchPairAAAAAAAAAAAAAAAAAAAAAAAAAA', baseToken:{address:mintA,symbol:'CHARTA',name:'Chart Switch A'}, quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana'}, priceUsd:'1.11', priceChange:{h24:1}, volume:{h24:1000}, liquidity:{usd:5000}, txns:{h24:{buys:10,sells:5}} };
+  const pairASecondary = { ...pairA, dexId:'chart-switch-secondary-fixture', pairAddress:'ChartSwitchPairASecondaryBBBBBBBBBBBBBBBB', priceUsd:'1.33', priceChange:{h24:-2.5}, volume:{h24:4321}, liquidity:{usd:2500}, txns:{h24:{buys:7,sells:9}} };
   const pairB = { ...pairA, pairAddress:'ChartSwitchPairBBBBBBBBBBBBBBBBBBBBBBBBBB', baseToken:{address:mintB,symbol:'CHARTB',name:'Chart Switch B'}, priceUsd:'2.22' };
   await page.route('https://api.dexscreener.com/latest/dex/search**', async route => {
     const q = new URL(route.request().url()).searchParams.get('q');
@@ -17,7 +18,7 @@ try {
   });
   await page.route('https://api.dexscreener.com/latest/dex/tokens/**', async route => {
     const mint = new URL(route.request().url()).pathname.split('/').pop();
-    if (mint === mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[pairA]})});
+    if (mint === mintA) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[pairA,pairASecondary]})});
     if (mint === mintB) {
       await new Promise(resolve => setTimeout(resolve, 1200));
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({pairs:[pairB]})});

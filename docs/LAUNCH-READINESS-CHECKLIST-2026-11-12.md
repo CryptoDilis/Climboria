@@ -171,3 +171,11 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Add browser regression for switching between multiple base-side pools and verify pair address, mint identity, title and metrics stay synchronized.
 - [ ] Independently establish third-party chart iframe series orientation and freshness before broader chart/token-detail claims.
 - [ ] Keep production DEX acceptance and Swap signing/submission gates closed.
+
+
+## 2026-11-13 — same-token multi-pool regression added
+
+- [x] Added a second deterministic base-side pool for the same token with distinct pair metrics.
+- [x] Added assertions for selected mint/title, iframe pair URL, external pair URL, selected pool marker, price, volume, 24h change and buys/sells after pool switching.
+- [ ] Verify on exact new head across all triggered workflows.
+- [ ] Preserve delayed cross-token switching and quote-side-only withholding regressions.

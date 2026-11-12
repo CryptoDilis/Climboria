@@ -4432,3 +4432,10 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - The live provider sample establishes that quote-side results can contain base-token price and pair-level statistics, so the current base-only selector is correct as a fail-closed identity guard. It does **not** independently prove the third-party iframe's internal time-series schema, cache freshness, or all metric semantics.
 - No source-code defect was changed in this audit: the current implementation already binds chart identity to the selected pair address and only supplies exact base-side pairs. The next useful source task is a focused browser regression asserting the selected pair address, base mint and displayed pool metric labels stay synchronized when switching between multiple base-side pools; retain the quote-side-only withholding regression.
 - This is a code-path review, not live production acceptance. Keep DEX LIVE and Swap signing/submission gates closed.
+
+## 2026-11-13 — same-token multi-pool synchronization regression added (verification pending)
+
+- Extended `.github/scripts/dex-chart-selection-smoke.mjs` with a second base-side pool for the same mint, carrying distinct pair address, price, volume, liquidity, 24h change and buy/sell counts.
+- The new browser assertion switches from the most-liquid pool to the secondary pool and verifies the selected mint/title stay unchanged while iframe URL, external chart URL, selected pool marker, price, volume, change and buy/sell counters all update to the secondary pair. It then switches back before continuing the existing delayed cross-token chart-switch test.
+- Existing quote-side-only fail-closed fixture remains intact. This is a regression-strengthening test, not a production source behavior change.
+- **Pending:** exact-head CI verification. If it fails, inspect the Browser Smoke failing step and logs; do not weaken the synchronization assertions.
