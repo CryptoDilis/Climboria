@@ -96,3 +96,22 @@ The finalized CPI trace artifact (workflow run 43314944457, artifact 13988045905
 SIMD-0449 is Review and has no Mainnet activation epoch as of 2026-11-13. SIMD-0683 metadata-register changes are also Review. Do not infer direct account pointers or new metadata-register inputs from either proposal.
 
 **Next task:** implement bounded context-insensitive direct CALL_IMM traversal using the pinned runtime's actual call-frame behavior, then build a sparse ABI-v1 r1 input image from the candidate account vector. Seed only historically proven account metadata and the known instruction data; leave unproven account bytes/data lengths unknown. Do not claim the route_v2 discriminator path is resolved until the r1 buffer offset is proven.
+
+## Direct internal-call traversal implementation — 2026-11-13
+
+Commit `baf82932e6d8a4164694ed98024b3cd2a9bad808` introduces bounded context-insensitive traversal of statically resolved internal `CALL_IMM` targets.
+
+- Resolve legacy internal calls through the executable function-registry key and static-syscall-era internal calls through the version-specific relative PC rule with `src == 1`.
+- Visit internal callee CFG entries with r1-r5 argument facts and preserved r6-r9 values. Callee r0 and r10 are unknown; no stack-frame offset is invented.
+- Keep caller continuation reachable but invalidate caller-saved r0-r5 and all abstract stack slots because an opaque callee/syscall may write through stack pointers passed as arguments.
+- Preserve r6-r9 and caller r10 according to the pinned SBPF runtime's call-frame save/restore behavior.
+- `CALL_REG`/CALLX targets remain unresolved; no dynamic target is guessed.
+- This is not context-sensitive call-stack emulation and does not compute callee return summaries. It over-approximates caller continuations with unknown caller-saved values.
+
+Regression coverage includes direct internal-call target traversal, indirect-call unresolved behavior, and stack invalidation across opaque calls. A first test run found a fixture-only edge expectation error (PC 12 is taken; PC 11 is fallthrough); corrected in commit `96e594d76af93a725960d4fed32381dbc40ac68e`.
+
+Next priorities:
+1. Verify the corrected direct-call suite on an exact head.
+2. Reconstruct a sparse ABI-v1 r1 input image from the candidate's 85-position outer Jupiter account vector, preserving 51 unique addresses and 34 duplicate positions.
+3. Recover historical account metadata only from slot-appropriate sources; keep missing data lengths/bytes unknown.
+4. Add call return summaries only after a proven frame/stack memory model; resolve CALLX only from proven register values and versioned encoding.

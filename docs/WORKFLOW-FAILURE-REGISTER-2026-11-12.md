@@ -1258,3 +1258,18 @@ The direct r2 instruction-data pointer supplied by SIMD-0321 is overwritten with
 **Feature correction:** SIMD-0321 is Mainnet-active from epoch 950; candidate slot 468153382 is epoch 1083. SIMD-0449 is Review and has no Mainnet activation epoch as of 2026-11-13; the earlier reference to Mainnet epoch 1099 was incorrect (that number was not a Mainnet activation). SIMD-0683 is also Review. Do not seed direct account pointers or metadata-register inputs from either proposal.
 
 **Next engineering priority:** implement bounded direct CALL_IMM traversal using the pinned VM call-frame semantics, then reconstruct a sparse ABI-v1 r1 input buffer from the candidate's 85-position account vector. Keep historical account-state fields unknown unless sourced at the candidate slot.
+
+## 2026-11-13 direct-call analyzer regression — run 43317366323
+
+- **Exact failing head:** 5586d08e34745fcf398e731b94a4f11240502b4d.
+- **Workflow/job:** Jupiter IDL History Audit; job 131528929831; step `Run pinned sBPF static-audit unit tests`.
+- **Result:** 40 Rust tests ran; 39 passed, 1 failed. The failing test was `branch_analysis::cfg_reachability_tests::resolved_call_imm_visits_internal_callee_and_preserves_argument_facts`.
+- **Observed assertion:** analyzer reported retained successor `{12}`; fixture expected `{11}`.
+- **Root cause:** the fixture encoded a JEQ at PC 10 with branch offset +1. SBPF branch targets are relative to the following instruction, so the taken target is PC 10 + 1 + 1 = PC 12; PC 11 is fallthrough. The analyzer's result was correct; the test assertion was wrong.
+- **Counter-fix:** commit `96e594d76af93a725960d4fed32381dbc40ac68e` changes the expected taken edge to PC 12 and adds explicit assertions that PC 12 is reachable and PC 11 is not. The semantic branch condition assertion remains `Some(true)`; no acceptance criterion was weakened.
+- **Other checks on the failing head:** Validate Climboria run 43317319715 passed; Jupiter V6 CPI Trace Audit run 43317319779 passed. Browser Smoke run 43317319574 was still executing Jarrell's Peak desktop/mobile gameplay when the branch advanced; it was subsequently subject to the workflow's `cancel-in-progress: true` concurrency behavior and must not be called a pass or a test failure.
+- **Verification:** exact-head rerun pending on the follow-up commit.
+
+### Cancellation classification
+
+Runs 43316555529/43316555586 and 43317199137/43317199188 were cancelled while older commits were superseded by newer commits on the same PR branch. The workflow definitions explicitly set `cancel-in-progress: true`; these are expected supersession cancellations, not application failures. The team should avoid pushing further commits while the latest exact-head suite is still running unless a real defect requires it.

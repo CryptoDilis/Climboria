@@ -110,3 +110,12 @@ Candidate input-aware IDL run 43314944441 passed on code head dafa017c7b75e7833e
 - The candidate transaction's Jupiter outer instruction has 85 account positions, 51 unique addresses and 34 duplicates (CPI trace artifact 13988045905).
 
 This output is not route_v2 handler reachability or a transaction-safety conclusion. Next: direct internal-call traversal, then sparse ABI-v1 r1 buffer reconstruction with strict provenance boundaries.
+
+## Direct internal-call traversal checkpoint — 2026-11-13
+
+- Added context-insensitive direct `CALL_IMM` target traversal using the exact SBPF-version-specific function-registry/relative-PC resolution rules.
+- Callee entry receives r1-r5 arguments and r6-r9 preserved values; r0/r10 remain unknown.
+- Caller continuation retains r6-r9 and r10 but invalidates r0-r5 and all stack-memory facts because opaque callees may mutate passed stack pointers.
+- Dynamic `CALL_REG`/CALLX remains unresolved and explicitly counted. No call-stack return summaries or runtime target guesses are claimed.
+- The initial direct-call regression test had its taken/fallthrough fixture expectation reversed. For JEQ at PC 10 with off=1, the taken target is PC 12 and fallthrough is PC 11. Corrected in commit 96e594d76af93a725960d4fed32381dbc40ac68e.
+- The IDL workflow on 5586d08 ran 40 tests: 39 passed, 1 fixture assertion failed. The corrected exact-head run is pending.
