@@ -9,6 +9,7 @@ on:
       - "dex/swap-proxy/tools/decode-jupiter-route-v2-candidate.mjs"
       - "dex/swap-proxy/tools/discover-jupiter-meteora-routes.mjs"
       - "dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs"
+      - "dex/swap-proxy/test/jupiter-meteora-route-discovery.test.mjs"
       - ".github/workflows/jupiter-cpi-trace-audit.yml"
   workflow_dispatch:
     inputs:
@@ -16,11 +17,23 @@ on:
         description: "Optional finalized Meteora signature cursor; scans older transactions before this signature"
         required: false
         type: string
+      signature_limit:
+        description: "Signatures requested per finalized RPC page (1-50)"
+        required: false
+        default: "25"
+        type: string
+      max_transactions:
+        description: "Maximum finalized transactions scanned across pages (1-250)"
+        required: false
+        default: "25"
+        type: string
   pull_request:
     branches: [main]
     paths:
       - "dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs"
       - "dex/swap-proxy/tools/discover-jupiter-meteora-routes.mjs"
+      - "dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs"
+      - "dex/swap-proxy/test/jupiter-meteora-route-discovery.test.mjs"
       - ".github/workflows/jupiter-cpi-trace-audit.yml"
 
 permissions:
@@ -43,10 +56,15 @@ jobs:
           node-version: 22
       - name: Test CPI account-key to duplicate outer-position mapping
         run: node --test dex/swap-proxy/test/jupiter-cpi-index-mapping.test.mjs
+      - name: Test finalized route discovery pagination and rate-limit recovery
+        run: node --test dex/swap-proxy/test/jupiter-meteora-route-discovery.test.mjs
       - name: Fetch finalized public Jupiter V6 route trace
         env:
           JUPITER_AUDIT_RPC_URL: https://api.mainnet-beta.solana.com
           JUPITER_AUDIT_BEFORE_SIGNATURE: ${{ github.event.inputs.before_signature }}
+          JUPITER_AUDIT_SIGNATURE_LIMIT: ${{ github.event.inputs.signature_limit || '25' }}
+          JUPITER_AUDIT_MAX_TRANSACTIONS: ${{ github.event.inputs.max_transactions || '25' }}
+          JUPITER_AUDIT_DELAY_MS: '250'
         run: |
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv > jupiter-v6-meteora-trace.json
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 2y3mpbA6dSdyv2DUufEgWBNV3cL7G4JfLzCoQ2sUNthJvKW7uHxzGZfBL2DcghqgfZZpmzUH4oS9nseibki3T7MX > jupiter-meteora-candidate-trace.json
@@ -57,7 +75,7 @@ jobs:
           node dex/swap-proxy/tools/audit-meteora-bin-array.mjs FWeKoZC27VpA1UQd8CJqYVhn5Gu826imTJo2Y2BVE5BN > route-v2-candidate-extra-account-2.json
           node -e "const t=require('./jupiter-meteora-candidate-trace.json'); const i=t.jupiterRoutes.flatMap(r=>r.innerInstructions).find(x=>x.programId==='LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo' && x.accounts.length===18); if(!i) throw new Error('Expected one 18-account Meteora swap2 CPI'); const pool=i.accounts[0].address; const b=require('./route-v2-candidate-bitmap-extension.json'); const a=require('./route-v2-candidate-extra-account-1.json'); const c=require('./route-v2-candidate-extra-account-2.json'); if(!b.matchesBitmapExtension || b.bitmapExtensionPool!==pool) throw new Error('Bitmap extension owner/type/parent pool mismatch'); for(const x of [a,c]) if(!x.matchesBinArray || x.binArrayPool!==pool || x.executable) throw new Error('BinArray owner/type/parent pool mismatch'); if(a.binArrayIndex===c.binArrayIndex) throw new Error('Expected two distinct BinArray indexes'); console.log(JSON.stringify({lbPair:pool,bitmapExtension:b.address,binArrays:[{address:a.address,index:a.binArrayIndex,version:a.binArrayVersion},{address:c.address,index:c.binArrayIndex,version:c.binArrayVersion}]},null,2))"
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/discover-jupiter-meteora-routes.mjs > recent-jupiter-meteora-routes.json
-          node -e "const r=require('./recent-jupiter-meteora-routes.json'); console.log(JSON.stringify({before:r.before,transactionsScanned:r.transactionsScanned,matchingRoutes:r.matchingRoutes,matchingJupiterMeteoraInstructions:r.matchingJupiterMeteoraInstructions,rateLimited:r.rateLimited,rateLimitedMethod:r.rateLimitedMethod,results:r.results.map(x=>({signature:x.signature,outerInstructionIndex:x.outerInstructionIndex,instructionDiscriminatorHex:x.instructionDiscriminatorHex,routePlanHeaderRecognized:x.routePlanHeaderRecognized,routePlanHeader:x.routePlanHeader,meteoraSwap2Cpis:x.meteoraSwap2Cpis.map(c=>({innerIndex:c.innerIndex,stackHeight:c.stackHeight,accountCount:c.accountCount}))}))},null,2))"
+          node -e "const r=require('./recent-jupiter-meteora-routes.json'); console.log(JSON.stringify({before:r.before,nextBefore:r.nextBefore,signatureLimit:r.signatureLimit,maxTransactions:r.maxTransactions,pagesScanned:r.pagesScanned,signaturesReturned:r.signaturesReturned,transactionsScanned:r.transactionsScanned,reachedEnd:r.reachedEnd,matchingRoutes:r.matchingRoutes,matchingJupiterMeteoraInstructions:r.matchingJupiterMeteoraInstructions,rateLimited:r.rateLimited,rateLimitedMethod:r.rateLimitedMethod,results:r.results.map(x=>({signature:x.signature,outerInstructionIndex:x.outerInstructionIndex,instructionDiscriminatorHex:x.instructionDiscriminatorHex,routePlanHeaderRecognized:x.routePlanHeaderRecognized,routePlanHeader:x.routePlanHeader,meteoraSwap2Cpis:x.meteoraSwap2Cpis.map(c=>({innerIndex:c.innerIndex,stackHeight:c.stackHeight,accountCount:c.accountCount}))}))},null,2))"
           node -e "const r=require('./jupiter-v6-meteora-trace.json'); if(!r.transactionSucceeded || r.jupiterRoutes.length!==1) process.exit(1); console.log(JSON.stringify({slot:r.slot,routeCount:r.jupiterRoutes.length,innerCount:r.jupiterRoutes[0].innerInstructions.length,programs:[...new Set(r.jupiterRoutes[0].innerInstructions.map(i=>i.programId))]},null,2))"
       - name: Upload read-only CPI trace report
         uses: actions/upload-artifact@v4
