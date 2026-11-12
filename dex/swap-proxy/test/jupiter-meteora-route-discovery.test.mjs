@@ -76,6 +76,38 @@ test("scans multiple finalized signature pages and returns the exact continuatio
   ]);
 });
 
+test("retries transient finalized RPC 429 responses before continuing the scan", async () => {
+  let signatureCalls = 0;
+  let transactionCalls = 0;
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      signatureCalls += 1;
+      if (signatureCalls < 3) return rpcResponse(null, 429);
+      return rpcResponse([{ signature: "sig-recovered" }]);
+    }
+    if (body.method === "getTransaction") {
+      transactionCalls += 1;
+      return rpcResponse(emptyTransaction());
+    }
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 1,
+    maxTransactions: 1,
+    delayMs: 0,
+    retryBaseMs: 0,
+    fetchImpl,
+  });
+
+  assert.equal(signatureCalls, 3);
+  assert.equal(transactionCalls, 1);
+  assert.equal(report.rateLimited, false);
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.nextBefore, "sig-recovered");
+});
+
 test("reports a persistent signature-page 429 as incomplete and preserves retry metadata", async () => {
   let calls = 0;
   const fetchImpl = async () => {
@@ -91,7 +123,7 @@ test("reports a persistent signature-page 429 as incomplete and preserves retry 
     fetchImpl,
   });
 
-  assert.equal(calls, 3);
+  assert.equal(calls, 5);
   assert.equal(report.rateLimited, true);
   assert.equal(report.rateLimitedMethod, "getSignaturesForAddress");
   assert.equal(report.pagesScanned, 0);
@@ -128,7 +160,7 @@ test("preserves the last fully scanned signature when a transaction page is rate
     fetchImpl,
   });
 
-  assert.equal(transaction429Calls, 3);
+  assert.equal(transaction429Calls, 5);
   assert.equal(report.rateLimited, true);
   assert.equal(report.rateLimitedMethod, "getTransaction");
   assert.equal(report.transactionsScanned, 1);
