@@ -619,3 +619,10 @@ Important grouped findings include:
 - **Earlier failures on the previous counter-fix head:** Validate run `43210949338` and CPI run `43210949447` both failed the same new timeout test due its incorrect expected call count (four total attempts versus the implementation's intended three transport attempts). The assertion-only correction was committed in `fe9726fd49844d3f1386b1a68dec42b38d2a5972`; the subsequent exact-head Validate and CPI runs above passed.
 - **Next verification:** run exact-head Browser Smoke after this stable-touch change; inspect its diagnostics and screenshots. Also verify all four workflows on the resulting SHA. Keep the CPI fallback cursor at `55Me9...` until the next exact-head CPI artifact confirms a complete scan and a new continuation cursor.
 - **Release posture unchanged:** PR #269 remains draft/unmerged; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`. Keep route_v2 excluded and all signing/execution/deployment gates closed.
+
+
+## Stable-touch verification follow-up and network-error retry coverage
+
+- The mobile DEX close-detail counter-fix is committed in workflow file change `b6285f819629b49b1a596cf4f23232fe8d6b8bce`: the Browser Smoke now waits for at least 250ms of stable scroll/button geometry with the close button owning the center hit-test, rechecks the target, and sends a coordinate-based touchscreen tap. The strict post-tap exit assertion remains intact.
+- Added a focused regression test for a transient fetch `TypeError("fetch failed")` to verify the same bounded transport retry path used for timeouts. This test addition also ensures the new branch head re-triggers the four relevant PR workflows, including Browser Smoke's mobile touch regression.
+- **Next exact head:** verify all four workflows on the resulting branch SHA. Browser Smoke must pass the 390px and 360px compact DEX/Swap checks and continue through provider states and Jarrell's Peak gameplay. CPI must upload a complete bounded scan from cursor `55Me9...`; only then may the fallback cursor advance.
