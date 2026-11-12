@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  discoverRecentJupiterMeteoraRoutes,
-  METEORA_DLMM_PROGRAM_ID,
-} from "../tools/discover-jupiter-meteora-routes.mjs";
+import { discoverRecentJupiterMeteoraRoutes } from "../tools/discover-jupiter-meteora-routes.mjs";
+import { METEORA_DLMM_PROGRAM_ID } from "../tools/audit-meteora-bin-array.mjs";
 
 function rpcResponse(result, status = 200) {
   return {
