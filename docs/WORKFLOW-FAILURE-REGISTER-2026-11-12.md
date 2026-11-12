@@ -214,3 +214,24 @@ Important grouped findings include:
 - Artifact `13902037632`, 17,276 bytes, SHA-256 `567842a86301a48e0f0135ebf93ece8c1863c55a033371ee25a2cd27f21c533a`.
 - Validate run `43125278420` completed SUCCESS with 116/116 tests passing and Wrangler dry-run/site/game syntax audits passing.
 - IDL History Audit `43125278428` was still in progress at this checkpoint and must be reconciled after termination; do not count an in-progress or later-cancelled run as a pass/failure.
+
+
+## 2026-11-12 — deep diagnosis: persistent-429 fixture retained the old retry count
+
+### Failure — Jupiter V6 CPI Trace Audit run `43125638897`, job `130876883037`
+
+- Existing CPI index-mapping test passed. Three of four route-discovery tests passed, including transient 429 recovery and persistent signature-page 429 handling.
+- The remaining test, `preserves the last fully scanned signature when a transaction page is rate-limited`, failed only at its final `fetchedTransactions` deep-equality assertion.
+- Actual calls were `sig-2` once followed by `sig-1` five times. The fixture expected only three repeated `sig-1` calls (the previous retry policy), despite the code having deliberately increased the bounded retry policy from three to five attempts.
+
+### Root cause and counter-fix
+
+- Test expectation drift after the intentional retry-policy change; no scanner pagination, cursor preservation, or runtime retry defect was observed. The assertion for `transaction429Calls === 5` already passed, as did the transient retry and signature-page retry tests.
+- Updated only the fixture's expected call sequence to include the five retries. Counter-fix commit: `b920d677ca580abcc92c7934a10bb72f924ec937`.
+- No test was removed, weakened, skipped or given a larger timeout. Required recovery is a fresh exact-head Validate and CPI Trace Audit run; do not mark this fixed until all four scanner tests pass.
+
+### Rate-limit mitigation now under verification
+
+- The preceding live scan was workflow-successful but incomplete: 8/25 transactions scanned before HTTP 429 on `getTransaction`, with a safe `nextBefore` cursor recorded above.
+- Scanner now paces requests at 1,000 ms by default, uses five bounded 429 attempts with 1,500 ms exponential-backoff base by default, and accepts `JUPITER_AUDIT_RETRY_BASE_MS` override. Added a transient-429 recovery test.
+- CPI and IDL History workflows now share the same branch-scoped concurrency group with `cancel-in-progress: false` to avoid deliberately running two mainnet-beta evidence collectors concurrently. This is a rate-limit mitigation, not a guarantee against provider throttling; all incomplete samples remain explicitly marked.
