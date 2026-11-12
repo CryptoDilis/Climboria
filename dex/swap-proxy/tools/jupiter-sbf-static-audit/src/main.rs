@@ -260,10 +260,10 @@ mod tests {
             "{}\\t{}\\t{}\\t{}\\tunresolved-register-value\\t{}\\t{}\\t{}\\t{}",
             10, 20, 2, "imm_low_byte", 0, 0, 0, 2
         );
-        assert_eq!(CALLX_TSV_HEADER.split('\\t').count(), 9);
-        assert_eq!(row.split('\\t').count(), 9);
-        assert!(!CALLX_TSV_HEADER.contains("\\\\t"));
-        assert!(!row.contains("\\\\t"));
+        assert_eq!(CALLX_TSV_HEADER.split('\t').count(), 9);
+        assert_eq!(row.split('\t').count(), 9);
+        assert!(!CALLX_TSV_HEADER.contains("\\t"));
+        assert!(!row.contains("\\t"));
     }
     #[test]
     fn indirect_call_opcode_is_not_collapsed_into_immediate_calls() {
