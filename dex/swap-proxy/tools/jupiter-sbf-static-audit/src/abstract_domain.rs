@@ -233,11 +233,6 @@ mod tests {
 // Narrow transfer semantics for the first interpreter increment. Opcode values
 // are the stable eBPF encodings used by the pinned SBPF decoder. Control-flow
 // instructions are handled by the CFG layer, not by this function.
-const BPF_ALU64: u8 = 0x07;
-const BPF_ADD: u8 = 0x00;
-const BPF_MOV: u8 = 0xb0;
-const BPF_X: u8 = 0x08;
-const BPF_K: u8 = 0x00;
 const BPF_LDX_DW_MEM: u8 = 0x79;
 const BPF_STX_DW_MEM: u8 = 0x7b;
 
@@ -280,9 +275,13 @@ impl AbstractState {
             // ADD64 X is precise only for a constant right operand.
             0x0f => {
                 let right = self.registers[src_index];
-                self.registers[dst_index] = match right {
-                    AbstractValue::Constant(value) =>
-                        self.registers[dst_index].add_signed(value as i64),
+                self.registers[dst_index] = match (self.registers[dst_index], right) {
+                    (AbstractValue::Constant(left), AbstractValue::Constant(value)) =>
+                        AbstractValue::Constant(left.wrapping_add(value)),
+                    (base @ AbstractValue::InputDataPointer(_), AbstractValue::Constant(value))
+                    | (base @ AbstractValue::StackPointer(_), AbstractValue::Constant(value)) =>
+                        i64::try_from(value).ok().map(|delta| base.add_signed(delta))
+                            .unwrap_or(AbstractValue::Unknown),
                     _ => AbstractValue::Unknown,
                 };
                 true
