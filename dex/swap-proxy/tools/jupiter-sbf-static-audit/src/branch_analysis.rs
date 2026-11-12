@@ -380,6 +380,34 @@ mod cfg_reachability_tests {
     }
 
     #[test]
+    fn candidate_instruction_data_bytes_resolve_only_the_proven_discriminator_word() {
+        let instructions = vec![
+            insn(0, 0x61, 1, 2, 4, 0), // LDXW r1, [r2 + 4]
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 0x14afc431),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[])),
+        ]);
+        let candidate_data = [0xbb, 0x64, 0xfa, 0xcc, 0x31, 0xc4, 0xaf, 0x14];
+        let mut entry = AbstractState::default();
+        entry.registers[1] = AbstractValue::InputDataPointer(0);
+        entry.registers[2] = AbstractValue::InstructionDataPointer(0);
+
+        let result = analyze_cfg_with_entry(
+            &instructions, &blocks, 0, SBPFVersion::V0, 32, entry, Some(&candidate_data),
+        ).unwrap();
+        let branch = &result.branch_observations[&1];
+        assert_eq!(branch.outcome_taken, Some(true));
+        assert_eq!(branch.retained_successors, BTreeSet::from([3]));
+        assert!(result.reachable_blocks.contains(&3));
+        assert!(!result.reachable_blocks.contains(&2));
+    }
+
+    #[test]
     fn constant_taken_branch_prunes_only_the_unreachable_fallthrough() {
         let instructions = vec![
             insn(0, 0xb7, 1, 0, 0, 5),
