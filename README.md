@@ -4275,3 +4275,13 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Browser: all 18 steps passed, including DEX/Swap mobile/desktop checks and Jarrell's Peak desktop/mobile. Desktop spawn route 100%; mobile 844×390 with 74 render frames, zero render errors and all four controls visible. Wildlife was disabled, so wildlife behavior is not covered. Screenshot artifact `13911961963`, SHA-256 `2996b5a3c3594cf1cfb405ad53c7c34090ce53ac9903770990de9202b92b25ca`.
 - No workflow failed on this exact head; Node/deprecation notices were warnings only. Full evidence, artifact digests, limitations and next task are recorded in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next: advance the CPI workflow fallback to the recorded `3QYnjv...` cursor while preserving manual override; verify the next run consumes it. PR #269 remains draft/unmerged; `route_v2` excluded from production validation; execution/signable-order security gates remain false. No signing, transaction submission, deployment or LIVE Swap claim.
+
+
+## 2026-11-12 — PR #269 exact-head verification and CPI cursor update
+
+- Exact docs/code head `dbf02ee742b4acf6afc2055ed28f86b4e46e3e27`: Validate `43147663273`, CPI `43147663291`, IDL `43147663341`, Browser Smoke `43147663308` all PASS. Validate 118/118 tests.
+- CPI scanned 25 finalized transactions with 1 route and 2 Jupiter/Meteora CPI matches, no 429; it repeated the prior `4Qi8XV...` cursor page, so no new history coverage. Fallback advanced to verified next cursor `3QYnjv...`; manual override preserved. Verify the next run consumes it.
+- IDL: 20 matching historical revisions, 1 supported / 3 incomplete / 0 incompatible adapters. Raydium LaunchLab account audit matched, but active historical revision provenance is not unique despite one schema variant.
+- Browser: all 18 steps passed. Jarrell desktop spawn route 100%; mobile 844×390 with 73 render frames, zero render errors and all four controls visible. Wildlife disabled, so wildlife behavior is not covered. Screenshot artifact `13912667836`, SHA-256 `cdbafe963c0cc4f66baadb76ea2ca1974c36a7a2a75a403727ae4fd3fcd22c9f`.
+- No workflow failed on this exact head; cancelled intermediate runs were superseded, not failures. Detailed evidence and artifact hashes: [workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: verify the CPI run uses `3QYnjv...` and covers a new page; continue runtime CPI privilege/cursor proof. PR #269 remains draft/unmerged; execution/signable-order security gates false; no signing, submission, deployment or LIVE Swap claim.
