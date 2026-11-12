@@ -4670,3 +4670,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Inspected generated summary: SBPF V0; 2,892,224-byte ELF; 243,522 instructions; 40,664 CFG blocks; 25,264 branch sites; 9,610 CALL_IMM; 136 CALL_REG. branch-sites.tsv has 25,264 rows/14 tab-separated columns; callx-sites.tsv has 136 rows/9 columns. This remains structural static evidence, not transfer-engine execution or route_v2 reachability.
 - Review before CFG integration: add fixtures for aliasing, invalid registers, sign extension, modular constant overflow, pointer overflow, aligned overwrite, unaligned overlap invalidation, and unknown/absolute store bases. Ensure branch/call/exit control-flow is handled separately from generic unsupported data instructions so control-flow opcodes do not indiscriminately invalidate the state.
 - No terminal failed workflow in this batch at time of update. Browser Smoke is pending terminal completion; do not mark the batch fully green.
+
+
+## 2026-11-13 — PR #272 transfer-increment CI fully green
+
+All four exact-head checks for `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` completed successfully: Validate `43287407945`, Jupiter V6 CPI Trace `43287407781`, Jupiter IDL History `43287408264`, Browser Smoke `43287407556`. Browser Smoke completed all gameplay, cave, desktop/mobile, DEX/Swap, provider-state and auth/cloud-save steps. The gameplay step took longer than other checks but ultimately passed; there was no terminal failure and no incident diagnosis/counter-fix applies.
+
+Artifacts: Browser screenshots `13976192032` (8,835,566 bytes; SHA-256 `43a9266aa821aee452aa8258021610674d944247cdb89fb32c88b52922565225`); DexScreener provider contract `13975917209` (7,207 bytes; SHA-256 `d3b8c9a78741342302d09986719f4eb192583bf47bf0d51f31d89515ae088da0`); Jupiter IDL/static audit `13976036200` (3,473,948 bytes; SHA-256 `ed42ab60d3d12fc69451e844f4f7a675a78d4b09a23605407e1a44cc5ae03ce5`); CPI trace `13976735396` (18,748 bytes; SHA-256 `77bf7ab6791a41c15e17e250cd8baf4cf2bd8420e6410416d124d66fc90d599c`).
+
+Static audit still reports 25,264 branch sites with unresolved conditions, 136 indirect callx sites with unresolved runtime register values. Green CI does not prove route_v2 handler reachability, CPI account slice reconstruction, or CPI-requested signer/writable privileges. Production gates remain closed. Next: expand transfer edge-case fixtures, implement conservative bounded CFG worklist, prove loader ABI before seeding input data, then derive route_v2 dispatch from actual dataflow.
