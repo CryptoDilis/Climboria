@@ -174,7 +174,11 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
               innerIndex: ix.innerIndex,
               stackHeight: ix.stackHeight,
               accountCount: ix.accounts.length,
-              orderedAccounts: ix.accounts.map((account) => account.address)
+              orderedAccountIndexes: ix.accounts.map((account) => account.index),
+              orderedAccounts: ix.accounts.map((account) => account.address),
+              outerAccountCount: route.outerAccounts.length,
+              accountParentPositions: ix.accounts.map((account) => account.outerInstructionPositionsForSameTransactionKey),
+              parentAccountSequenceMatch: ix.orderedParentAccountSequenceMatch
             }))
           });
           if (results.length >= maxMatches) break;
@@ -218,6 +222,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
       "A rate-limited page is incomplete; its unscanned signatures must be retried from nextBefore.",
       "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
       "The report does not expose CPI-requested signer/writable AccountMeta flags.",
+      "Parent account sequence correlation and duplicate parent positions are observational only; they do not prove which runtime handler cursor consumed the accounts.",
       "Do not generalize account cursor behavior from a bounded sample."
     ]
   };
