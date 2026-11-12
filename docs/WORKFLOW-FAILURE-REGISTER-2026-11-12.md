@@ -189,3 +189,28 @@ Important grouped findings include:
 ### Other workflow state at diagnosis
 
 - Jupiter IDL History Audit `43125192129` and Browser Smoke `43125192127` were still in progress when this diagnosis was written; they are neither passes nor failures yet. Their exact-head results must be reconciled separately.
+
+
+## 2026-11-12 — deep diagnosis: optional daily graduation feed returned HTTP 404
+
+### Browser Smoke failure — run `43125278427`, job `130875669403`
+
+- The auth/cloud-save isolation step passed. The homepage/DEX routing step failed only at its final browser-console error assertion; its homepage CTAs, desktop DEX navigation, fixture-driven DEX search, and token search interception completed.
+- Exact terminal error: `CONSOLE http://127.0.0.1:4173/dex/ :: Failed to load resource: the server responded with a status of 404 ()`, resource URL `https://pumpdata.fun/graduations/2026-11-12.json`. The assertion failed at the accumulated browser errors check, not at a DEX quote/search/market assertion.
+- The page's `loadGraduations()` fetched two independently published daily JSON files using `Promise.all`; any non-2xx response threw. A missing current-day file therefore marked the entire optional graduation feed unavailable, even if the previous day's file had valid records.
+- This was a real optional-feed error-handling gap plus an over-broad smoke-console classification. It was not a fabricated DEX result, a Solana provider outage, or a gameplay failure.
+
+### Counter-fix
+
+- Production-side `dex/index.html`: treat HTTP 404 for an individual date-partitioned graduation file as an empty day; continue processing the other day's records. Other HTTP failures still reject and preserve the explicit unavailable state. Commit `970c0d6a8234303887eebdc9228233d113b12072`.
+- Browser Smoke: ignore only 404 console events whose resource URL is under `https://pumpdata.fun/graduations/`; retain all other console/page errors as failures. Applied to all three browser console collectors. Commit `ae4896ef038b7067612c3899822658e726a1fe84`.
+- No market-data fixtures, price assertions, DEX acceptance checks, workflow timeouts, or execution gates were weakened.
+- Required recovery: run Browser Smoke on the new exact head; confirm the 404 no longer prevents prior-day graduation records from loading and that all existing desktop/mobile DEX assertions and strict gameplay checks pass. If a non-404 provider error occurs, it must remain visible and fail the appropriate checks.
+
+### Concurrent scanner evidence (not a workflow failure)
+
+- CPI Trace Audit run `43125279627` completed SUCCESS. The three new mocked-RPC tests passed 3/3, including multi-page continuation and safe retry cursor behavior.
+- Its live public-RPC sample returned 25 signatures but scanned 8 transactions before HTTP 429 on `getTransaction`; `nextBefore` was `5GwnPQ7dmsebFcybxNTsvMyZJDsr6hMw1o4gAHLhr7v3NFqbthquBfCKibEsmY9XA811mPRtJBc9cjXmYgK8nB8R`; `matchingRoutes=0`, `rateLimited=true`. This is an explicitly incomplete bounded sample, not a zero-route conclusion and not a failed workflow.
+- Artifact `13902037632`, 17,276 bytes, SHA-256 `567842a86301a48e0f0135ebf93ece8c1863c55a033371ee25a2cd27f21c533a`.
+- Validate run `43125278420` completed SUCCESS with 116/116 tests passing and Wrangler dry-run/site/game syntax audits passing.
+- IDL History Audit `43125278428` was still in progress at this checkpoint and must be reconciled after termination; do not count an in-progress or later-cancelled run as a pass/failure.
