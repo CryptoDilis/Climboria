@@ -428,3 +428,102 @@ test("retains the incoming cursor when the first transaction is unavailable", as
   assert.equal(report.nextBefore, incomingCursor);
   assert.equal(report.reachedEnd, false);
 });
+
+
+test("preserves multi-transaction CPI order, nested transfer-hook calls, and token balance deltas", async () => {
+  const cpiIndexes = [7, 9, 21, 13, 16, 18, 47, 39, 25, 45, 0, 51, 50, 46, 37, 45, 6, 22];
+  const keys = Array.from({ length: 56 }, (_, index) => "Account" + index);
+  keys[52] = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+  keys[53] = METEORA_DLMM_PROGRAM_ID;
+  keys[54] = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+  keys[55] = "TransferHookProgram1111111111111111111111111";
+  const outerIndexes = [...Array.from({ length: 44 }, (_, index) => index), ...cpiIndexes, 1, 2];
+  const makeTransaction = (slot, inputAmount, outputAmount) => ({
+    slot,
+    blockTime: 1_800_000_000 + slot,
+    version: 1,
+    transaction: {
+      message: {
+        accountKeys: keys,
+        header: {
+          numRequiredSignatures: 1,
+          numReadonlySignedAccounts: 0,
+          numReadonlyUnsignedAccounts: 55,
+        },
+        instructions: [{
+          programIdIndex: 52,
+          accounts: outerIndexes,
+          data: "2sDES9fHqoTppYzwZFtuwMPsJL1uwAj7C1WKpRv22o7xwLdcxsAo7oWEePwUpZ5eNY93NaNUqWmSkoDTyArfz1JtB2NYgMy",
+        }],
+      },
+    },
+    meta: {
+      err: null,
+      loadedAddresses: { writable: [], readonly: [] },
+      innerInstructions: [{
+        index: 0,
+        instructions: [
+          { programIdIndex: 53, accounts: cpiIndexes, data: "fx9RHbGFfZ7Sw9c4BaQiLdbuZhcv5hAgYh5vbR", stackHeight: 2 },
+          { programIdIndex: 54, accounts: [3, 4, 5], data: "token-2022-cpi", stackHeight: 3 },
+          { programIdIndex: 55, accounts: [4, 5, 10], data: "hook-cpi", stackHeight: 4 },
+        ],
+      }],
+      preTokenBalances: [{
+        accountIndex: 4, mint: "MintA", owner: "OwnerA", programId: keys[54],
+        uiTokenAmount: { amount: "100", decimals: 6 },
+      }, {
+        accountIndex: 5, mint: "MintB", owner: "OwnerB", programId: keys[54],
+        uiTokenAmount: { amount: "0", decimals: 6 },
+      }],
+      postTokenBalances: [{
+        accountIndex: 4, mint: "MintA", owner: "OwnerA", programId: keys[54],
+        uiTokenAmount: { amount: inputAmount, decimals: 6 },
+      }, {
+        accountIndex: 5, mint: "MintB", owner: "OwnerB", programId: keys[54],
+        uiTokenAmount: { amount: outputAmount, decimals: 6 },
+      }],
+    },
+  });
+
+  const transactions = new Map([
+    ["multi-hop-sig-2", makeTransaction(200, "75", "24")],
+    ["multi-hop-sig-1", makeTransaction(199, "50", "49")],
+  ]);
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      return rpcResponse([{ signature: "multi-hop-sig-2" }, { signature: "multi-hop-sig-1" }]);
+    }
+    if (body.method === "getTransaction") {
+      return rpcResponse(transactions.get(body.params[0]) ?? null);
+    }
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 2,
+    maxTransactions: 2,
+    maxMatches: 2,
+    delayMs: 0,
+    fetchImpl,
+  });
+
+  assert.equal(report.transactionsScanned, 2);
+  assert.equal(report.matchingJupiterMeteoraInstructions, 2);
+  assert.deepEqual(report.results.map((item) => item.signature), ["multi-hop-sig-2", "multi-hop-sig-1"]);
+  for (const result of report.results) {
+    assert.equal(result.transactionSucceeded, true);
+    assert.equal(result.outerAccountCount, outerIndexes.length);
+    assert.deepEqual(result.innerInstructionTrace.map((ix) => ix.programId), [
+      METEORA_DLMM_PROGRAM_ID,
+      keys[54],
+      keys[55],
+    ]);
+    assert.deepEqual(result.innerInstructionTrace.map((ix) => ix.stackHeight), [2, 3, 4]);
+    assert.equal(result.meteoraSwap2Cpis[0].accountCount, 18);
+    assert.equal(result.tokenBalanceChanges.find((change) => change.accountIndex === 4).delta,
+      result.signature === "multi-hop-sig-2" ? "-25" : "-50");
+    assert.equal(result.tokenBalanceChanges.find((change) => change.accountIndex === 5).delta,
+      result.signature === "multi-hop-sig-2" ? "24" : "49");
+  }
+});
