@@ -4223,3 +4223,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - CPI scanner preserves 18-account ordered CPI evidence and parent-instruction sequence correlation; this is observational only and does not prove runtime cursor or signer/writable AccountMeta semantics.
 - Full diagnostics, evidence limitations, artifact digests, and next tasks: [workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - PR #269 remains draft/unmerged. Signing/execution gates remain false; no production signing, submission, deployment or LIVE Swap claim.
+
+
+## 2026-11-12 — PR #269 latest verified handoff
+
+- Exact code/workflow head: `17acb57cca3367fef79454c08f3eaf2b9b71e7dc`. All four exact-head workflows passed: Validate `43129046989`, Jupiter CPI Trace Audit `43129047110`, Jupiter IDL History Audit `43129047014`, and Browser Smoke `43129047008`.
+- CPI scan resumed from the prior cursor and scanned 25 finalized transactions with no rate limit; zero matches in this bounded page is not proof of absence. Next cursor: `4CEGJvE4qh8Y9qPZMAx74ydgoTWfpbiAuwqeqcmQExVMhtKiHs9qrqAscRXXsp4Rc1BKSrbrbTh2xZ9kbqp81uSw`. Artifact `13903479694`, SHA-256 `3701157cde5c935e157c2407d0f7f7035e96d61183247f6a8ed6796ef6a656d9`.
+- IDL artifact `13904546911`, SHA-256 `3b74d1f658eddfdac30ec3c112f65f41a18e1e265ed3b9097f6fb252e35796c0`: Jupiter candidate-slot provenance passed; adapter classification is 1 supported / 3 incomplete / 0 incompatible; no runtime CPI privilege or account-cursor proof.
+- Browser Smoke artifact `13904213553`, SHA-256 `58e7ebabbdbccdfc0a94ae7e2e1b3944d4bda47a273da4bcd177cfdc65c08348`: Jarrell desktop/mobile smoke and screenshot upload passed; mobile 844×390 had 74 render frames, no render errors and all four action controls visible.
+- Detailed logs, artifact hashes, evidence boundaries and exact next task are recorded in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: after this docs commit's workflows settle, advance the CPI workflow fallback cursor to the recorded next cursor and continue bounded finalized scans; in parallel continue authoritative CPI signer/writable and remaining-account cursor research.
+- PR #269 remains draft/unmerged; `route_v2` excluded from production validation; signing/execution review gates remain false. No production signing, submission, deployment or LIVE Swap claim.
