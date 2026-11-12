@@ -82,3 +82,22 @@ Implement a bounded, conservative abstract interpreter for SBPF V0: per-register
 - Signed 32-bit comparisons use explicit `u32 -> i32` sign extension; unsigned comparisons use normalized bit-width values. Unit tests cover signed 32-bit negative values, signed 64-bit values, unsigned values, bit-test, unsupported width, conflicting joins, and pointer overflow.
 - This is only the abstract domain and predicate evaluator. No instruction transfer adapter, CFG worklist, loader input pointer seed, byte-level memory model, partial-store invalidation, or route_v2 dispatch proof exists yet. Do not describe it as a working abstract interpreter.
 - Current PR #272 head `341e1dec1c2be27aca08c3bb36ffc25329129bc4`; exact-head workflow runs: Browser Smoke `43285373225`, Validate `43285373299`, IDL History `43285373358`, CPI Trace `43285373498`. They were pending/active when this record was written. Prior intermediate-head cancellations are superseded-run cancellations, not failures.
+
+## Exact-head workflow completion — 2026-11-13
+
+PR #272 was rechecked at exact head `341e1dec1c2be27aca08c3bb36ffc25329129bc4` (open, draft). All four workflows are terminal-success:
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Browser Smoke | 43285373225 | 131417342357 | success |
+| Validate | 43285373299 | 131417362760 | success |
+| Jupiter IDL History Audit | 43285373358 | 131417383023 | success |
+| Jupiter V6 CPI Trace Audit | 43285373498 | 131417279223 | success |
+
+Every job step reported success. Browser Smoke included DEX/Swap provider empty/error states, mobile layouts at 390px and 360px, and Jarrell's Peak desktop/mobile gameplay; its screenshot artifact is `13975780365` (8,890,973 bytes, SHA-256 `e7e6d55400e7c372fef5f84ac7811ff61b278e8161b052f6543dd94d1a233400`). Provider contract capture artifact `13973554934` (7,219 bytes, SHA-256 `dfa1225e5d2c6fe35a8e87f7233555ba1ace53e47041a482e4a51f968c7f3475`). IDL/static analysis artifact `13975560211` (3,473,966 bytes, SHA-256 `c202b9a281411498fea1bcb9942e5aa159d3035ea76c619579837bddf8aa8497`) includes the successful pinned sBPF unit-test and static-analysis steps. CPI trace artifact `13973898801` (18,748 bytes, SHA-256 `3121c4c5994a8fe5202147dc30e4dae0ec67a80d99f48e4b79b2c205a29cfb4a`).
+
+No terminal failure occurred in this batch, so there is no failure diagnosis to record. Intermediate-head cancellations are superseded runs, not failures. This green result does not establish route_v2 dispatch/handler reachability, callx target resolution, CPI account-slice reconstruction, or CPI-requested signer/writable privileges. Production gates remain closed.
+
+### Next task
+
+Implement a bounded SBPF instruction-transfer layer and CFG worklist for a strictly enumerated opcode subset, with synthetic fixtures for every transfer. Model unknown writes and partial/overlapping memory conservatively by invalidating affected facts. Do not seed r1 until the candidate runtime's exact loader ABI input-data layout is proven. Then trace the actual route_v2 discriminator and dispatch edge using register/memory provenance; no heuristic handler attribution.
