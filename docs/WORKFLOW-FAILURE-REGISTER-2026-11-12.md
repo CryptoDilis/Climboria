@@ -137,3 +137,30 @@ Important grouped findings include:
 2. Continue read-only finalized multi-transaction route traces covering multi-hop/split plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts.
 3. Obtain authoritative CPI-requested signer/writable privileges and deployed Jupiter binary provenance; direct IDLs and outer transaction privileges are insufficient.
 4. Keep PR #269 draft/unmerged and all signing/execution gates false until independent security review, controlled Devnet acceptance, and production release gates are complete.
+
+
+## 2026-11-12 08:06 +08 — corrected classifier and exact-head verification on PR #269
+
+### Exact-head CI — commit `1a3cc5c789a8372564e5ea2660a803edadd6564a`
+
+- [x] Validate run `43123651283`, job `130870157028`: SUCCESS. All 111 Node tests passed (0 failed); Wrangler dry-run succeeded (72.28 KiB upload / 17.17 KiB gzip); Supabase/auth, homepage, token-copy, DEX/Swap, game-script syntax and HTML audits passed. The focused classifier tests confirm complete provenance is supported, missing/ambiguous evidence stays incomplete, a later ProgramData deployment is not misread as historical absence, and incompatible requires archival proof of absence.
+- [x] Jupiter V6 CPI Trace Audit run `43123651290`, job `130870157087`: SUCCESS. Duplicate-account-index mapping tests passed; finalized trace and Meteora bitmap/BinArray ownership/linkage checks completed; artifact `13901698828`, 17,122 bytes, SHA-256 `83446c323b1a95eaece1a6630a21a742272d3df4a11237f838e702be52463be2`.
+- [x] Jupiter IDL History Audit run `43123651284`, job `130870156747`: SUCCESS. Classifier/LaunchLab account tests, finalized RPC provenance collection and pinned sBPF static-analysis steps passed; artifact `13902276618`, 1,530,070 bytes, SHA-256 `b51da152d2ab56baa05af6122cf0b75199d6a93c70b3cba4512fb436a8119d5c`.
+- [x] Browser Smoke run `43123651405`, job `130870158038`: SUCCESS. Auth/cloud-save isolation, homepage/DEX/Swap, fail-closed execution, Solana discovery, desktop/mobile DEX layouts, 390px/360px states, strict Jarrell's Peak desktop/mobile gameplay, and screenshot upload all passed. Mobile diagnostic: `ready=true`, `hero=true`, 73 render frames, zero render errors, four mobile actions visible. Artifact `13902950561`, 8,866,979 bytes, SHA-256 `43dba17083faaa436e9090a1b924bcb464f804011688d329aa79e87a2769b5d0`.
+- [x] No failed workflow or failed job occurred on this exact head. Non-fatal Node deprecation warnings were present; they did not fail any step and are not a reason to rerun or weaken checks.
+
+### Deep review of the IDL artifact
+
+- Jupiter candidate `route_v2` provenance is internally consistent: 20 matching historical revisions, exactly one active revision at candidate slot `468153382`, expected discriminator `bb64facc31c4af14`, on-chain IDL owner/payload/discriminator match, and ProgramData deployment chronology covers the candidate.
+- Adapter classifier result: Raydium LaunchLab `supported` **only for candidate-transaction IDL provenance**; Kipseli, Orca Whirlpool and Meteora DLMM remain `incomplete`; none is classified incompatible. Raydium's candidate LaunchLab account audit is `matched`, but its two active history records mean provenance is not unique even though their schema agrees.
+- Kipseli: no active historical IDL revision; current ProgramData last deployment is later than the candidate; on-chain IDL account not found. This is incomplete evidence, not proof the program was absent.
+- Orca: active history sources agree, but on-chain instruction schema and payload do not match the active-history record.
+- Meteora: latest/active history and on-chain schema/payload comparisons remain unresolved; do not infer CPI privilege or cursor behavior from direct IDL evidence.
+- The pinned sBPF artifact contains a 2,892,224-byte ELF and 243,522 instructions / 40,664 basic blocks. Its report explicitly limits itself to static analysis and does not recover CPI privilege flags. A green disassembly step is not deployed-handler/account-slice proof.
+
+### CPI trace scope and next engineering action
+
+- The recent-signature scan in this run examined only 5 finalized Meteora-program signatures and found 0 matching Jupiter/Meteora routes; it was not rate-limited. This is a bounded no-match sample, not evidence that no such routes exist.
+- A separate preserved candidate transaction at slot `468153382` still provides one observed Jupiter route with an 18-account Meteora `Swap2` CPI and finalized account ownership/linkage checks. Those observations do not expose CPI-requested signer/writable flags or prove the Jupiter handler's per-DEX remaining-account cursor.
+- The scanner currently defaults to a five-signature sample and its CLI only accepts a single `before` cursor. Next: make scan depth/cursor pagination explicitly configurable and add deterministic mocked-RPC tests, then run multiple bounded finalized pages covering multi-hop/split routes, DEX order permutations, transfer-hook slices and variable Meteora BinArray counts. Record incomplete/rate-limited pages separately; never interpret them as zero routes.
+- Preserve all release gates: PR #269 stays draft/unmerged; route_v2 stays excluded from production validation; `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler and public frontend execution remain disabled. No production deployment, signing, transaction submission or LIVE Swap claim is made.
