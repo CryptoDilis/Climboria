@@ -196,6 +196,29 @@ test("retries a transient RPC transport timeout and resumes discovery", async ()
   assert.equal(report.transactionFetchComplete, true);
 });
 
+
+test("retries a transient fetch network TypeError before continuing the finalized scan", async () => {
+  let signatureCalls = 0;
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      signatureCalls += 1;
+      if (signatureCalls === 1) throw new TypeError("fetch failed");
+      return rpcResponse([{ signature: "sig-after-network-error" }]);
+    }
+    if (body.method === "getTransaction") return rpcResponse(emptyTransaction());
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 1, maxTransactions: 1, delayMs: 0, retryBaseMs: 0, fetchImpl,
+  });
+  assert.equal(signatureCalls, 2);
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.nextBefore, "sig-after-network-error");
+  assert.equal(report.rpcFailureMethod, null);
+  assert.equal(report.transactionFetchComplete, true);
+});
+
 test("returns an incomplete report and preserves the last fetched cursor after exhausted transaction timeouts", async () => {
   const requested = [];
   const fetchImpl = async (_url, request) => {
