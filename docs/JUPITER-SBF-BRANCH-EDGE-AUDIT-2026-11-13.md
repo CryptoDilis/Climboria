@@ -58,3 +58,14 @@ Build a conservative, version-aware branch inventory as a prerequisite to route_
 ## Next step
 
 Wait for Browser Smoke `43283472036` to terminate and inspect the final screenshots/provider evidence. Then begin bounded register/stack/input-data abstract interpretation for actual route_v2 discriminator and variant dispatch. Preserve unknown values and both possible conditional successors until evidence resolves them.
+## Final exact-head closure — 2026-11-13
+
+- PR #272 exact head `208fe0a492fa077585aedac94d4ae52d9b3714d0` completed all four workflows SUCCESS: Validate `43283471795`; Jupiter V6 CPI Trace `43283471547`; Jupiter IDL History `43283471617`; Browser Smoke `43283472036`.
+- The IDL History run passed the pinned Rust tests and generated artifact `13974815166` (3,473,950 bytes; SHA-256 `190e23d7ecd401bbe5e6ff96434dc3a5ec1d0ff6a35acc395346d6e3db9aa052`). The 25,264-row branch-site artifact was independently inspected and cross-checked against `instructions.tsv`: 14 columns with actual tabs, no literal backslash-t, 5,095 unconditional JA and 20,169 conditional branches, all taken targets and conditional fallthroughs present at instruction boundaries, and zero mismatches in opcode/register/immediate/offset/target calculations.
+- Browser Smoke job `131410644840` passed all steps including Jarrell's Peak desktop/mobile gameplay smoke. Provider evidence artifact `13974421875` (7,147 bytes; SHA-256 `ff058ff81794448de2694455284e0f95685a0a5fa2fbb549f85c017cb26ba4aa`) reports two HTTP 200 samples with 30 pairs each, aggregate observed base=50 / quote=10 and no errors. Screenshot artifact `13973158935` (8,890,533 bytes; SHA-256 `8122566029ab132ecfc4ed9b663e9bcd232975d1a63ceb7f13d431eff1f9f982`) contains 10 desktop/mobile screenshots including gameplay and cave scenes.
+- No terminal failed workflow occurred on the latest head. Earlier cancelled runs were superseded by a newer PR head; cancellation is not a failure. A BlobNotFound response while retrieving active-job logs was transient and did not indicate a failed job.
+- This closes verification for the branch-site inventory only. It does not prove path-sensitive route_v2 dispatch, callx targets, CPI AccountInfo/account-slice boundaries, or CPI-requested signer/writable flags.
+
+## Next implementation phase
+
+Implement a bounded, conservative abstract interpreter for SBPF V0: per-register constant/unknown state, stack spill/reload tracking, pointer provenance for serialized instruction data, byte/halfword/word/doubleword load semantics, and safe merge/widening at CFG joins. Then locate the exact route_v2 discriminator comparison against `bb64facc31c4af14`, prove the selected dispatch edge, and only then trace variant/handler reachability. Preserve unknown paths and unresolved callx targets. Add synthetic fixtures and property tests before relying on candidate ELF output. Production route_v2 acceptance and all signing/execution/deployment gates remain closed.
