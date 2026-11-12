@@ -191,3 +191,15 @@ Every commit must update this file or explicitly state why no checklist status c
 - [x] CI evidence artifacts uploaded: provider contract `13966138677`; browser screenshots `13966148658`.
 - [ ] Next: inspect and test freshness/cache behavior for provider-backed token detail and chart updates; do not claim the embedded third-party chart's internal freshness is proven by pair selection alone.
 - [ ] Production DEX acceptance and Swap signing/submission remain gated.
+
+
+## 2026-11-13 — refresh regression and verification handoff
+
+- [x] Exact-head documentation checkpoint workflows passed: Validate `43268394779`, CPI Trace `43268394676`, Browser Smoke `43268394660`, IDL History `43268394605`; all steps succeeded.
+- [x] Audited the actual smoke script and corrected a handoff mismatch: the prior source had a second-pool fixture but no interaction/assertion covering its selection.
+- [x] Added deterministic same-mint secondary-pool selection assertions and a two-response manual-refresh fixture that verifies new request, updated pool metrics, stable token/pair/chart identity and refresh-button recovery.
+- [ ] Verify this test change on its exact commit across all triggered workflows; inspect and diagnose any actual failed job deeply before applying a targeted counter-fix.
+- [ ] After green CI, continue bounded investigation of upstream provider/chart freshness. Browser `cache: no-store` does not prove CDN freshness or embedded chart freshness.
+- [ ] Keep PR #269 draft/unmerged; DEX production acceptance and Swap signing/submission remain gated.
+
+**Next DEX task:** run exact-head CI for the manual-refresh regression in `.github/scripts/dex-chart-selection-smoke.mjs`, then assess the next provider freshness evidence gap.

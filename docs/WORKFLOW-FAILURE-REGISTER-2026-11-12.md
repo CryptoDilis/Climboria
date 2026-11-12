@@ -1107,3 +1107,15 @@ No workflow failed on this exact head. No new failure incident is recorded. Supe
 The provider-contract artifact was uploaded successfully as artifact `13966138677`; browser screenshots as `13966148658`. Jarrell's Peak desktop/mobile gameplay smoke also passed, with no reported render errors in the mobile diagnostics.
 
 **Release posture unchanged:** PR #269 remains draft/open/unmerged. These CI results are not production deployment acceptance. DEX LIVE status and Swap signing/submission remain gated.
+
+
+## 2026-11-13 — exact-head workflow checkpoint and DEX refresh regression
+
+- The documentation checkpoint commit `b67e66ff89f600aec3d6c4909ac039324af029a6` completed all four required workflows successfully. Validate `43268394779` / job `131358032450`; Jupiter CPI Trace `43268394676` / job `131358030874`; Browser Smoke `43268394660` / job `131358031392`; Jupiter IDL History `43268394605` / job `131358030851`. Every reported job step concluded SUCCESS; Browser Smoke included live provider capture, DEX/mobile tests and Jarrell's Peak desktop/mobile gameplay. No failure diagnosis was warranted.
+- A fresh source audit found the current browser smoke script had the secondary-pool fixture data but did not actually click the second pool or assert its metrics. This contradicted the earlier handoff's description of those assertions as already present. Correcting the test itself rather than relying on the prior narrative.
+- Added explicit same-mint pool switching assertions for pair URL, price, volume, 24h change, buy/sell counts, title and mint identity; then switches back to the original pool.
+- Added a deterministic manual-refresh fixture: first mint-A detail request returns the original pool payload; the second returns changed price, volume, liquidity, 24h change and transaction counts. The browser test asserts exactly two detail requests, updated visible metrics, unchanged mint/title/pair/chart identity, and that the refresh button is re-enabled.
+- This test proves the browser makes another request and applies a changed response. It does **not** prove DexScreener CDN freshness, provider cache TTL, or the embedded chart's internal data freshness. The application fetch uses `cache: 'no-store'`, which bypasses the browser HTTP cache but cannot guarantee upstream freshness.
+- Existing delayed cross-token chart-clearing and quote-side-only fail-closed checks remain in the script. No production DEX or Swap execution behavior is changed.
+- **Verification pending:** exact-head CI for this test update. Inspect any failed terminal job and its logs before counter-fixing; do not weaken assertions. Keep PR #269 draft/unmerged, DEX production acceptance gated, and Swap signing/submission disabled.
+- **Next:** verify the new browser test on the exact commit, inspect all four triggered workflows and artifacts, record exact run/job IDs; if green, continue source-backed provider/chart freshness investigation without making unsupported freshness claims.
