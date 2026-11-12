@@ -35,10 +35,11 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d`; PR #269 is open, draft and unmerged.
-- Exact-head workflows: Validate `43230717606` (15/15), CPI Trace `43230717469` (10/10), IDL History `43230717341` (12/12), Browser Smoke `43230717621` (22/22) — all SUCCESS, no failed steps.
-- Browser Smoke confirms the tested DEX/Swap/auth UI paths and Jarrell's Peak desktop/mobile gameplay smoke. It does not certify production-live DEX/Swap, real provider login, or every game system.
-- Current immediate next task: DEX production-readiness audit, then implement and verify the highest-impact confirmed gap. Keep Swap execution gates false. See the launch checklist for exact completed items and next steps.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `bbff48e5affdac2ece5ab531776b184f12cc3666`; PR #269 remains open, draft and unmerged.
+- Exact-head workflows: Validate `43232910766` (15/15), CPI Trace `43232910804` (10/10), IDL History `43232910740` (12/12), Browser Smoke `43232910733` (22/22) — all SUCCESS, zero failed steps.
+- Browser Smoke includes DEX/Swap/auth/mobile paths and Jarrell's Peak desktop/mobile gameplay. Its 10-screenshot artifact, CPI trace artifact and IDL/static-analysis artifact were downloaded and SHA-256 verified; see the launch checklist and workflow register.
+- DEX source audit found Base search previously filtered only eight seeded-symbol query results. The current engineering change adds debounced live provider search, Base-only chain filtering, stale-response protection and truthful provider errors; dedicated Playwright verification is pending on the next exact head.
+- Current next task: verify the Base live-search test and all exact-head workflows; then continue DEX chart freshness and exact mint/pool identity acceptance. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---

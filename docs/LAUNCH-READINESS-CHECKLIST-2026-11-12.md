@@ -4,7 +4,7 @@
 
 **Repository:** `CryptoDilis/Climboria`  
 **Branch:** `codex/swap-security-evidence-current-main-2026-11-12`  
-**Checkpoint commit before this update:** `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d`  
+**Checkpoint commit before this update:** `bbff48e5affdac2ece5ab531776b184f12cc3666`  
 **PR:** #269 — open, draft, unmerged  
 **Checkpoint time:** 2026-11-12 (UTC)
 
@@ -21,7 +21,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ### 1. DEX — first priority
 
-- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d`.
+- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `bbff48e5affdac2ece5ab531776b184f12cc3666`.
 - [x] Browser smoke: live Solana profile/boost discovery path passed.
 - [x] Browser smoke: desktop/mobile DEX workspace and 390px/360px layouts passed.
 - [x] Browser smoke: provider-error and true-empty states passed.
@@ -31,7 +31,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** audit the current market discovery → Worker/provider → profile/chart data path, map each displayed field to its real source, and fix the first confirmed production-readiness gap.
+**Next DEX task:** verify the newly added Base live provider search (query discovery, Base-only filtering, stale-response handling and honest provider errors) on the next exact-head Browser Smoke run; then continue chart freshness and exact mint/pool identity acceptance.
 
 ### 2. Swap — second priority
 
@@ -76,18 +76,20 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ## Exact-head CI evidence at checkpoint
 
-All four workflows on `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d` completed SUCCESS:
+All four workflows on `bbff48e5affdac2ece5ab531776b184f12cc3666` completed SUCCESS with zero failed steps:
 
 | Workflow | Run | Job | Result |
 |---|---:|---:|---|
-| Validate | `43230717606` | `131224980220` | 15/15 steps passed |
-| Jupiter CPI Trace Audit | `43230717469` | `131224980270` | 10/10 steps passed |
-| Jupiter IDL History Audit | `43230717341` | `131224978565` | 12/12 steps passed |
-| Browser Smoke | `43230717621` | `131224981029` | 22/22 steps passed |
+| Validate | `43232910766` | `131232613490` | 15/15 steps passed |
+| Jupiter CPI Trace Audit | `43232910804` | `131232613532` | 10/10 steps passed |
+| Jupiter IDL History Audit | `43232910740` | `131232612878` | 12/12 steps passed |
+| Browser Smoke | `43232910733` | `131232613189` | 22/22 steps passed, including Jarrell's Peak desktop/mobile gameplay |
 
-Browser artifact `13950557566`: 8,874,024 bytes, 10 screenshots, SHA-256 `3b8da33c4a0abc67859141450fe8246614535c5df06ba3cf95300511d001696b`. CPI artifact `13951180073`: SHA-256 `42c3da2cdefca65e4838682ea7302044757b9e32d6efc820062c691f891ccfae`. IDL artifact `13949413740`: SHA-256 `6adf6b23da4b7e672636f6430f230ace3fc11ec6086d635fa8f143faae4e2dea`.
+Browser artifact `13951617045`: 8,665,799 bytes, 10 screenshots, SHA-256 `41d6be905a2e65d629866766f887c5ee81aa2812cd1f56b0f155fc0bfc107368`. CPI artifact `13950078487`: SHA-256 `2f33b250110c6ce271077fb74c73b373bf39100282b44bd9c0f5a3bad1928995`. IDL artifact `13951671526`: SHA-256 `d6d74562d41f16724de359a74b22d8723e7c1bcf5e9b444a358cb3bb3fa3f655`.
 
-**Important:** CI success is not proof that DEX or Swap is production-live, nor that all game systems are complete. See `docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md` for the full evidence, CPI scan bounds and security caveats.
+**New DEX implementation in this commit:** Base token search now calls the live DexScreener search endpoint, filters to Base chain, rejects stale responses and displays honest provider errors. A dedicated browser test has been added; its result is pending the next exact-head workflow batch.
+
+**Important:** passing CI is not proof that DEX or Swap is production-live, nor that all game systems are complete. See the workflow register for full evidence, bounded CPI scan limits and security caveats.
 
 ## Required commit handoff — update this every commit
 
