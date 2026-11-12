@@ -55,13 +55,32 @@ export function isMeteoraSwap2Instruction(dataBase58) {
 }
 
 async function rpcCall(rpcUrl, method, params, fetchImpl, retryBaseMs = 1000) {
+  let transportFailures = 0;
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const response = await fetchImpl(rpcUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-meteora-discovery", method, params }),
-      signal: AbortSignal.timeout(15000)
-    });
+    let response;
+    try {
+      response = await fetchImpl(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: "climboria-meteora-discovery", method, params }),
+        signal: AbortSignal.timeout(15000)
+      });
+    } catch (cause) {
+      const transientTransportFailure = cause?.name === "TimeoutError"
+        || cause?.name === "AbortError"
+        || cause?.name === "TypeError";
+      if (!transientTransportFailure) throw cause;
+      transportFailures += 1;
+      if (transportFailures >= 3) {
+        const error = new Error("Solana RPC transport failure for " + method + " after " + transportFailures + " attempts: " + cause.message);
+        error.retryable = true;
+        error.method = method;
+        error.cause = cause;
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryBaseMs * (2 ** (transportFailures - 1))));
+      continue;
+    }
     if (response.status === 429 && attempt < 4) {
       await new Promise((resolve) => setTimeout(resolve, retryBaseMs * (2 ** attempt)));
       continue;
@@ -106,10 +125,12 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
   let pagesScanned = 0;
   let rateLimited = false;
   let rateLimitedMethod = null;
+  let rpcFailureMethod = null;
+  let rpcFailureMessage = null;
   let reachedEnd = false;
   const unavailableSignatures = [];
 
-  while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited && unavailableSignatures.length === 0) {
+  while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited && !rpcFailureMethod && unavailableSignatures.length === 0) {
     const pageLimit = Math.min(limit, maxTransactions - transactionsScanned);
     const signatureQuery = { commitment: "finalized", limit: pageLimit };
     if (cursor) signatureQuery.before = cursor;
@@ -121,9 +142,15 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
         signatureQuery
       ], fetchImpl, retryBaseMs);
     } catch (error) {
-      if (error.status !== 429) throw error;
-      rateLimited = true;
-      rateLimitedMethod = error.method ?? "getSignaturesForAddress";
+      if (error.status === 429) {
+        rateLimited = true;
+        rateLimitedMethod = error.method ?? "getSignaturesForAddress";
+      } else if (error.retryable) {
+        rpcFailureMethod = error.method ?? "getSignaturesForAddress";
+        rpcFailureMessage = error.message;
+      } else {
+        throw error;
+      }
       break;
     }
     if (!Array.isArray(signatures)) throw new Error("Solana RPC returned an invalid signature list");
@@ -144,9 +171,15 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
           { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
         ], fetchImpl, retryBaseMs);
       } catch (error) {
-        if (error.status !== 429) throw error;
-        rateLimited = true;
-        rateLimitedMethod = error.method ?? "getTransaction";
+        if (error.status === 429) {
+          rateLimited = true;
+          rateLimitedMethod = error.method ?? "getTransaction";
+        } else if (error.retryable) {
+          rpcFailureMethod = error.method ?? "getTransaction";
+          rpcFailureMessage = error.message;
+        } else {
+          throw error;
+        }
         break;
       }
 
@@ -197,7 +230,7 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
       if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    if (rateLimited || unavailableSignatures.length > 0 || transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
+    if (rateLimited || rpcFailureMethod || unavailableSignatures.length > 0 || transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
     if (pageScanned === 0) {
       reachedEnd = true;
       break;
@@ -224,13 +257,16 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     matchingJupiterMeteoraInstructions: results.length,
     rateLimited,
     rateLimitedMethod,
+    rpcFailureMethod,
+    rpcFailureMessage,
     unavailableSignatures,
-    transactionFetchComplete: !rateLimited && unavailableSignatures.length === 0,
+    transactionFetchComplete: !rateLimited && !rpcFailureMethod && unavailableSignatures.length === 0,
     reachedEnd,
     results,
     evidenceLimitations: [
       "This bounded sample is not an exhaustive scan of Jupiter/Meteora routes.",
       "A rate-limited page is incomplete; its unscanned signatures must be retried from nextBefore.",
+      "A transport timeout/network failure is retried a bounded number of times; if exhausted, the report is incomplete and nextBefore remains the last fully fetched signature.",
       "A null getTransaction result is unavailable/pruned evidence, not a route-free transaction; the scan stops before it and preserves the last fully fetched continuation cursor.",
       "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
       "The report does not expose CPI-requested signer/writable AccountMeta flags.",
