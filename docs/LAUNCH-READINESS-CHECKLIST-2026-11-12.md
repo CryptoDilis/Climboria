@@ -240,3 +240,17 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Do not switch the production chart or enable quote-side support until artifact inspection and deterministic adapter tests pass.
 
 **Next:** inspect exact-head Browser Smoke artifact `geckoterminal-ohlcv-contract-evidence`; diagnose any actual failed workflow from its first causal log/step before applying a targeted fix.
+
+
+## 2026-11-13 — GeckoTerminal capture inspected; exact-head CI green
+
+- [x] Exact-head Validate `43305578268` — SUCCESS.
+- [x] Exact-head CPI Trace `43305578205` — SUCCESS.
+- [x] Exact-head IDL History `43305582049` — SUCCESS.
+- [x] Exact-head Browser Smoke `43305578053` — SUCCESS, all 27 steps; Jarrell's Peak desktop/mobile smoke passed.
+- [x] GeckoTerminal JUP/WSOL base+quote capture artifact `13984775149` inspected; both requests HTTP 200, metadata confirms requested orientation for this pool, five structurally valid candles per orientation, no API errors.
+- [ ] Add deterministic GeckoTerminal adapter fixtures/tests for metadata orientation, USD values, timestamp normalization/gaps, volume denomination, empty/error/rate-limit and malformed data.
+- [ ] Keep DexScreener iframe as production fallback; no quote-side support or production chart switch until adapter parity, broad pool coverage and production acceptance are proven.
+- [ ] DEX production deployment/freshness acceptance remains open; Swap signing/submission security gates remain closed.
+
+**Next exact task:** implement and test the deterministic OHLCV adapter contract without changing production chart behavior.
