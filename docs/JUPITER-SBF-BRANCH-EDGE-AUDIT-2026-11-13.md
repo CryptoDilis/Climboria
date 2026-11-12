@@ -101,3 +101,23 @@ No terminal failure occurred in this batch, so there is no failure diagnosis to 
 ### Next task
 
 Implement a bounded SBPF instruction-transfer layer and CFG worklist for a strictly enumerated opcode subset, with synthetic fixtures for every transfer. Model unknown writes and partial/overlapping memory conservatively by invalidating affected facts. Do not seed r1 until the candidate runtime's exact loader ABI input-data layout is proven. Then trace the actual route_v2 discriminator and dispatch edge using register/memory provenance; no heuristic handler attribution.
+
+
+## Conservative transfer primitives — 2026-11-13 (verification pending)
+
+The next bounded interpreter increment is committed to PR #272:
+
+- `d8bff84293a4bf30c6974a575f7650a441129cb3`: adds explicit transfer handling for MOV64 immediate/register, ADD64 immediate/register with constant right operand, LDX doubleword from tracked stack slots, and STX doubleword to tracked stack slots, plus unit fixtures.
+- `aafe7bea94e9378479e8e3b4a155c2a73a1c0985`: tightens ADD64 register pointer arithmetic. Constant + constant remains modular u64 arithmetic; input-data/stack pointer offsets are only propagated when the right operand converts to a representable i64. Other cases become Unknown.
+- Unsupported opcode invalidates all registers and stack facts. Unaligned 8-byte stack stores invalidate overlapping tracked slots. Unknown/absolute store bases clear stack facts. Input-data loads remain Unknown pending loader ABI proof. No CFG worklist, entrypoint seed, or route_v2 handler attribution has been added.
+
+Exact-head workflow state for `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` at this checkpoint:
+
+| Workflow | Run | Job | State |
+|---|---:|---:|---|
+| Validate | 43287407945 | 131424449777 | success |
+| Jupiter V6 CPI Trace Audit | 43287407781 | 131424481212 | success |
+| Browser Smoke | 43287407556 | 131424455222 | in progress; Jarrell's Peak desktop/mobile step |
+| Jupiter IDL History Audit | 43287408264 | 131424513480 | in progress; historical IDL fetch step |
+
+No terminal failure was observed at this checkpoint. The Rust unit-test step had not yet started, so the new transfer tests are not yet CI-verified. Wait for terminal states. If a failure occurs, inspect exact job logs and diagnose before changing code; do not weaken checks. Once green, inspect the generated static-analysis artifact and review the transfer semantics before implementing a CFG worklist. Production route_v2 acceptance and signing/execution/deployment gates remain closed.
