@@ -109,3 +109,47 @@ An external request attempt to `https://climboria.fun/`, `/dex/`, `/swap/`, `/la
 ## Exact next task
 
 **Continue P1 Swap on PR #269's current-main-based branch.** First inspect the latest PR #272 Browser Smoke run `43322480948` until it reaches terminal status and record the gameplay/artifact result. Then continue the documented multi-transaction finalized route traces across multi-hop/split plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts. Resolve CPI-requested privilege and deployed-binary provenance gaps without enabling signing/execution. After that, perform the authorized production-origin/Cloudflare/Supabase configuration audit. Preserve this report and append the next exact-head results rather than overwriting prior evidence.
+
+
+## 2026-11-13 — PR #272 terminal Browser Smoke closure and artifact review
+
+**Exact head:** `63937cf2724b92c76598cfcd5dae2320a1a2f2a1` on `codex/route-v2-branch-edge-evidence-2026-11-13`, PR #272, base `main`.
+
+### Exact-head workflow results
+
+| Workflow | Run | Result |
+|---|---:|---|
+| Validate Climboria | `43322480748` | SUCCESS |
+| Jupiter V6 CPI Trace Audit | `43322480779` | SUCCESS |
+| Jupiter IDL History Audit | `43322480688` | SUCCESS |
+| Climboria Browser Smoke Test | `43322480948` | SUCCESS |
+
+All four runs are terminal `completed/success`. Browser Smoke job `131546497237` is terminal success; all 22 numbered work steps and all three post-job steps completed successfully. No failed step or failed terminal job exists in this batch.
+
+### Gameplay log inspection
+
+- Step 20, `Run Jarrell's Peak desktop and mobile gameplay smoke tests`, completed SUCCESS.
+- Desktop diagnostics recorded 191 streamed chunks and 254 render frames.
+- The harness explicitly logged: `Released desktop WebGL context and scene resources before mobile GLB startup.` This confirms the retained resource-lifecycle counter-fix is present in the tested script.
+- Mobile diagnostics recorded 90 chunks, 78 render frames at the capture point, `ready=true`, `hero=true`, `renderErrors=[]`, visible player/world UI, and all four mobile action controls visible (jump, run, use, dive).
+- The test ended with: `PASS: cinematic Jarrell’s Peak boot, terrain, landmarks, chests, facilities, desktop controls, and mobile controls (all wildlife temporarily disabled).`
+- Acceptance boundary: this proves the CI smoke scenario with wildlife temporarily disabled. It does not prove full wildlife simulation, physical-device performance, multiplayer, persistent economy, or production deployment.
+
+### Artifact evidence
+
+- DexScreener provider contract artifact: `13990913890`, 7,186 bytes; ZIP SHA-256 `d174297befd145b119c4116a99348a111d914a9b6e5f62baafbdcc19c9771ced`.
+- Browser screenshot artifact: `13991118514`, 8,832,680 bytes; ZIP SHA-256 `9ffb68e86e0b2c9a2b65ef54d85ea4a9ac3084cb128e8b082655ece34f58b8ea`. Ten files uploaded.
+- Both artifacts were finalized successfully and are not expired at inspection time.
+
+### Warnings and failure classification
+
+- Non-fatal Node deprecation warnings were emitted for `punycode`, `url.parse()`, and GitHub Actions actions still targeting Node.js 20. These did not fail any step.
+- No workflow failure occurred. No root cause, counter-fix, or retry is fabricated for this batch.
+- No evidence of a production outage or live deployment is established by this CI result.
+
+### PR state and next engineering action
+
+- PR #272 remains open and draft; GitHub reports mergeable=true at reinspection. Do not merge without the required code/security review.
+- PR #269 remains open and draft; its four exact-head workflows are green on head `cb510429d780a1c8b68aa8bdf97c6e539044b644`. Its documented next P1 task remains multi-transaction finalized route traces across multi-hop/split plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts.
+- PR #271 remains a separate draft targeting PR #269's feature branch; its own documentation records that the required workflow filters target `main`, so it has no exact-head CI evidence. This is a trigger/configuration boundary, not a failed workflow. Do not use its static-analysis output as verified until the implementation is integrated onto a main-based PR and its pinned Rust tests and workflows pass.
+- Next: continue PR #269's read-only multi-transaction trace evidence. For each candidate, retain finalized signature/slot, route discriminator and variant sequence, ordered outer accounts, all nested CPI stack heights, token pre/post balances, transaction outcome, transfer-hook account slices, and Meteora BinArray/bitmap-extension ownership and data. Keep the distinction between outer transaction privileges and CPI-requested AccountMeta flags explicit. Do not enable signing/execution or expand supported route allowlists from observational correlation alone.
