@@ -4474,3 +4474,21 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - Existing delayed cross-token chart-clearing and quote-side-only fail-closed checks remain in the script. No production DEX or Swap execution behavior is changed.
 - **Verification pending:** exact-head CI for this test update. Inspect any failed terminal job and its logs before counter-fixing; do not weaken assertions. Keep PR #269 draft/unmerged, DEX production acceptance gated, and Swap signing/submission disabled.
 - **Next:** verify the new browser test on the exact commit, inspect all four triggered workflows and artifacts, record exact run/job IDs; if green, continue source-backed provider/chart freshness investigation without making unsupported freshness claims.
+
+
+## 2026-11-13 — exact-head DEX provider evidence and CI closeout
+
+- [x] Rechecked PR #269: open, draft, unmerged; branch `codex/swap-security-evidence-current-main-2026-11-12`; exact head `3327a847ca3e19ad82e38550f153aa2bbec93a58`; base `main` at `0fa8e987aec4d6e6bc7590363efa7d20fde79422`.
+- [x] Exact-head Validate run `43305578268` — SUCCESS.
+- [x] Exact-head Jupiter V6 CPI Trace run `43305578205` — SUCCESS.
+- [x] Exact-head Jupiter IDL History run `43305582049`, job `131488062526` — SUCCESS.
+- [x] Exact-head Browser Smoke run `43305578053`, job `131488039923` — SUCCESS; all 27 steps passed, including Jarrell's Peak desktop/mobile gameplay smoke.
+- [x] No failed steps in any of the four exact-head workflows. No failure incident/counter-fix was fabricated.
+- [x] GeckoTerminal artifact `13984775149`, 1,988 bytes; ZIP SHA-256 `5b1b68ad147a1a236cca0902902a5bdfaa786cc04744ce3f1775ed511c8d9648`. Capture timestamp `2026-11-12T20:59:07.928Z`.
+- [x] Both OHLCV orientations returned HTTP 200, five rows, descending Unix-second timestamps, valid OHLC invariants and no API errors. Response meta explicitly identifies JUP as base for `token=base`; for `token=quote`, response meta flips WSOL to base and JUP to quote. USD closes in this sample are ~0.265 JUP and ~81.34 WSOL. Volume values match across orientations.
+- [x] Cache headers showed `max-age=30, s-maxage=60`; base response `cf-cache-status=EXPIRED`, quote response `MISS`. No provider observation timestamp, Last-Modified, Age or rate-limit headers were returned. This is a sampled cache observation, not a freshness SLA.
+- [x] IDL artifact `13984211576`, 3,168,165 bytes; static sBPF analysis reports 243,522 instructions, 40,664 CFG basic blocks and 136 unresolved indirect register-call sites. This does not prove CPI AccountMeta signer/writable behavior or remaining-account dispatch.
+- [x] Screenshot artifact `13983937059`, 8,892,554 bytes; DexScreener capture artifact `13984610543`, 7,338 bytes.
+- [!] GeckoTerminal orientation is supported for this captured JUP/WSOL pool and response, not universally proven for all pools/tokens. OHLCV adapter still needs deterministic fixtures, independent price/orientation assertions, pagination/gap handling, error/empty/rate-limit tests and production acceptance.
+- [!] DEX remains not production-live; do not switch production chart or enable quote-side selection yet. Swap execution/signing gates remain false.
+- [ ] Next exact task: implement a deterministic GeckoTerminal OHLCV contract fixture/adapter test from this captured response, explicitly assert metadata token identity, USD price scale, timestamp ordering normalization, and volume semantics; retain current DexScreener iframe fallback and quote-side fail-closed behavior. Then run exact-head workflows and record results.
