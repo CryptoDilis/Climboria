@@ -162,3 +162,12 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Production DEX acceptance/deployment and Swap signing/submission remain gated; PR #269 stays draft/unmerged.
 
 **Next task:** audit the chart-provider integration for its pair-address/token identity contract and freshness semantics; add a deterministic regression for any supported behavior without relaxing the quote-side fail-closed fallback.
+
+## 2026-11-13 — chart integration audit
+
+- [x] Audited exact base-side filter, selected pair state, and chart iframe/external link binding in `dex/index.html`.
+- [x] Confirmed selected chart URL is built from the chosen pair address and selected pool metrics are labeled as pool values.
+- [x] Confirmed quote-side-only pools are not passed into the selected chart/metrics state.
+- [ ] Add browser regression for switching between multiple base-side pools and verify pair address, mint identity, title and metrics stay synchronized.
+- [ ] Independently establish third-party chart iframe series orientation and freshness before broader chart/token-detail claims.
+- [ ] Keep production DEX acceptance and Swap signing/submission gates closed.

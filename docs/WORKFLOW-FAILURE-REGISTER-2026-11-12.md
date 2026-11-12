@@ -1068,3 +1068,14 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - **Counter-fix disposition:** keep exact base-side mint matching and quote-side withholding. Evidence confirms why the fail-closed guard is required; it does not enable quote-side support.
 - **Release posture:** DEX remains not production-live; freshness/cache, exhaustive coverage, chart endpoint orientation and deployment acceptance remain unverified. Swap signing/submission gates remain false; PR #269 remains draft/unmerged.
 - **Next:** inspect chart-provider contract for exact base-side pair/chart identity and freshness, then design a separately gated quote-side approach only if the chart source exposes the requested token's own series. Keep the current fail-closed behavior otherwise.
+
+### 14. Chart integration contract audit — 2026-11-13
+
+- Re-reviewed `dex/index.html` at `2bf3262b5b100327dc57ad28b78843b42db56360` after inspecting the CI capture artifact and persisted provider evidence.
+- Exact base-side matching is enforced in `openToken`; quote-side-only pools never reach `applySelectedPoolState`.
+- `applySelectedPoolState` binds the iframe and external DexScreener chart to the selected `pairAddress`, and renders pool-scoped price, volume, liquidity, change and transaction metrics. The displayed flow and pool-share/turnover calculations are pool-level.
+- Live evidence: JUP returned 30/30 base-side pools; USDC returned 20 base-side and 10 quote-side pools. A PUMP/USDC quote-side sample returned PUMP's `priceUsd=0.003367`, confirming that quote-side values must not be represented as USDC values.
+- No failure occurred on the exact tested source head `10c0d9a4595726502df3923506c52a85f832ea17`; all four workflows succeeded. The subsequent docs-only evidence/audit commits did not modify executable source or workflows, so no new runtime failure is recorded.
+- **Limit:** pair-address iframe binding is confirmed from source, but third-party iframe internal series orientation and freshness are not independently documented or tested here.
+- **Next:** add a browser regression for switching between two exact base-side pools and assert selected pair address, mint identity, title and pool metrics remain synchronized; preserve quote-side-only withholding.
+- Keep DEX production acceptance and Swap signing/submission gates closed; PR #269 remains draft/unmerged.

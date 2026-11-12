@@ -4423,3 +4423,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - **Counter-fix disposition:** keep exact base-side mint matching and quote-side withholding. Evidence confirms why the fail-closed guard is required; it does not enable quote-side support.
 - **Release posture:** DEX remains not production-live; freshness/cache, exhaustive coverage, chart endpoint orientation and deployment acceptance remain unverified. Swap signing/submission gates remain false; PR #269 remains draft/unmerged.
 - **Next:** inspect chart-provider contract for exact base-side pair/chart identity and freshness, then design a separately gated quote-side approach only if the chart source exposes the requested token's own series. Keep the current fail-closed behavior otherwise.
+
+## 2026-11-13 — chart integration contract audit
+
+- Audited `dex/index.html` functions `openToken` and `applySelectedPoolState` after reviewing the live provider artifact.
+- Token detail now filters candidate pairs by exact `baseToken.address === mint`; quote-only pairs are counted for an explicit withheld state and are not passed into the pool selector.
+- The selected chart iframe and external chart link use the selected `pairAddress` on DexScreener. The selected token's pair price, 24h volume, liquidity, change and buy/sell counters are displayed with pool-scoped labels. The UI's flow metrics and pool-share/turnover calculations also derive from the selected pool and discovered pool set.
+- The live provider sample establishes that quote-side results can contain base-token price and pair-level statistics, so the current base-only selector is correct as a fail-closed identity guard. It does **not** independently prove the third-party iframe's internal time-series schema, cache freshness, or all metric semantics.
+- No source-code defect was changed in this audit: the current implementation already binds chart identity to the selected pair address and only supplies exact base-side pairs. The next useful source task is a focused browser regression asserting the selected pair address, base mint and displayed pool metric labels stay synchronized when switching between multiple base-side pools; retain the quote-side-only withholding regression.
+- This is a code-path review, not live production acceptance. Keep DEX LIVE and Swap signing/submission gates closed.
