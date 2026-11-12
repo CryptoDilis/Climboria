@@ -4355,3 +4355,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Exact new-head workflows on `f0f0787ba7626b37c9b5bb3f79210834c601e29d`: Validate `43243208554`, Browser Smoke `43243208111`, Jupiter CPI Trace `43243208118`, and Jupiter IDL History `43243208565` were queued/pending at checkpoint. No counter-fix is marked verified until these runs terminate successfully.
 - Previous head `64b1a9d7be1878f4c00d86711179cb7d78e189a1`: Validate `43242187020`, CPI Trace `43242187096`, and IDL History `43242186886` passed; Browser Smoke `43242187088` was still in progress at checkpoint.
 - **Next:** inspect exact-head Browser Smoke `43243208111` first. If chart assertion passes, review all four exact-head workflows and then continue the P1 Swap evidence task. If it fails, capture the selected mint, `activeDetailMint`, `detailRequestId`, click-handler entry, and iframe src at request start before another source change. Keep signing/execution gates false.
+
+
+## 2026-11-13 00:xx +08 — DEX chart-switch counter-fix verified
+
+- Exact tested head: `3b01c27f055607ee7a330a216499bf6797376cd6` on `codex/swap-security-evidence-current-main-2026-11-12`, PR #269 (open, mergeable; base `main`).
+- Exact-head workflow results: Validate Climboria `43243350882` SUCCESS; Jupiter V6 CPI Trace Audit `43243350893` SUCCESS; Jupiter IDL History Audit `43243350967` SUCCESS; Climboria Browser Smoke Test `43243350744` SUCCESS (job `131269424204`).
+- The Browser Smoke run completed successfully with no failed steps. Together with the unchanged delayed-response assertion, this verifies the non-refresh chart-clearing counter-fix in `dex/index.html` on this exact head. Same-token refresh behavior remains covered by the existing smoke assertion.
+- Earlier cancelled runs were superseded by newer commits; they are not counted as failures. The historical failures and evidence boundary remain in the workflow failure register.
+- **Next:** continue the November 15 sprint's P1 DEX-first work by auditing production provider-backed discovery, mint/pool identity, liquidity/price/volume freshness, chart routing, and truthful loading/error states. Then proceed to Swap security lifecycle. Do not enable signing or submission; do not claim LIVE Swap or production readiness without independent evidence.
