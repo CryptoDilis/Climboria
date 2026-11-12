@@ -121,3 +121,18 @@ Exact-head workflow state for `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` at this
 | Jupiter IDL History Audit | 43287408264 | 131424513480 | in progress; historical IDL fetch step |
 
 No terminal failure was observed at this checkpoint. The Rust unit-test step had not yet started, so the new transfer tests are not yet CI-verified. Wait for terminal states. If a failure occurs, inspect exact job logs and diagnose before changing code; do not weaken checks. Once green, inspect the generated static-analysis artifact and review the transfer semantics before implementing a CFG worklist. Production route_v2 acceptance and signing/execution/deployment gates remain closed.
+
+
+## Follow-up exact-head results — 2026-11-13
+
+For PR #272 head `aafe7bea94e9378479e8e3b4a155c2a73a1c0985`:
+
+- Jupiter IDL History Audit run `43287408264`, job `131424513480`: **success**. All steps completed, including pinned Rust toolchain setup, `Run pinned sBPF static-audit unit tests`, static analysis generation, and artifact upload. Artifact `13976036200`, 3,473,948 bytes, SHA-256 `ed42ab60d3d12fc69451e844f4f7a675a78d4b09a23605407e1a44cc5ae03ce5`.
+- CPI trace run `43287407781`: **success**, artifact `13976735396`, 18,748 bytes, SHA-256 `77bf7ab6791a41c15e17e250cd8baf4cf2bd8420e6410416d124d66fc90d599c`.
+- Independent artifact inspection: summary reports SBPF V0, 2,892,224-byte ELF, 243,522 instructions, 40,664 CFG blocks, 25,264 branch sites, 9,610 CALL_IMM, and 136 indirect CALL_REG. `branch-sites.tsv` contains 25,264 data rows and 14 actual tab-separated columns; `callx-sites.tsv` contains 136 rows and 9 columns. Branch outcomes remain unresolved and both conditional successors are retained. These exports are structural only; they do not run the new transfer rules against the ELF or prove route_v2 reachability.
+- Browser Smoke run `43287407556`, job `131424455222`, remains **in progress** at step 20, Jarrell's Peak desktop/mobile gameplay smoke. Steps 1–19 have succeeded. The workflow defines a 25-minute job timeout. Attempting to retrieve the live job log returned GitHub `BlobNotFound` while the job was still active; this is not a test failure and supplies no root-cause evidence. Continue polling until terminal status. If it times out/fails, fetch the terminal log and diagnose the exact gameplay smoke operation before changing code.
+- No terminal failed workflow exists in this batch as of this update. Validate and CPI Trace passed; IDL History passed; Browser Smoke is still running. Do not mark the batch fully green yet.
+
+### Transfer-engine review notes before CFG integration
+
+The current transfer layer is still a primitive, not an interpreter. Before worklist wiring, add tests for destination/source register aliasing, invalid register indices, immediate sign extension, constant modular overflow, pointer offset overflow, aligned overwrite, unaligned overlap invalidation, and unknown/absolute store bases. The CFG driver must distinguish modeled data instructions from branch/call/exit control-flow instructions; do not route control-flow opcodes through the generic unsupported-opcode invalidation path. Keep all unknown and unsupported writes conservative. Input-data memory reads remain unknown until loader ABI layout is verified.
