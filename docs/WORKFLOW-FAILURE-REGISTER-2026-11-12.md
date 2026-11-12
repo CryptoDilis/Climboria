@@ -998,7 +998,7 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - **Next:** commit this source fix plus this register entry on active PR #269; inspect exact-head Validate, Browser Smoke, CPI Trace and IDL History runs and diagnose any terminal failures individually.
 
 
-### 9. Verification closure — DEX chart-switch counter-fix (2026-11-13)
+### 9. Verification closure — DEX chart-switch counter-fix (2026-11-12)
 
 - **Exact tested head:** `3b01c27f055607ee7a330a216499bf6797376cd6` on PR #269 branch `codex/swap-security-evidence-current-main-2026-11-12`.
 - **Exact-head workflows:** Validate Climboria run `43243350882` SUCCESS; Jupiter V6 CPI Trace Audit `43243350893` SUCCESS; Jupiter IDL History Audit `43243350967` SUCCESS; Browser Smoke Test `43243350744` SUCCESS, job `131269424204`.
