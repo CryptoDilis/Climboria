@@ -120,8 +120,8 @@ function buildTokenBalanceChanges(preTokenBalances, postTokenBalances) {
     const postAmount = post?.uiTokenAmount?.amount ?? null;
     let delta = null;
     if (preAmount !== null && postAmount !== null
-        && /^-?\\d+$/.test(String(preAmount))
-        && /^-?\\d+$/.test(String(postAmount))) {
+        && /^-?\d+$/.test(String(preAmount))
+        && /^-?\d+$/.test(String(postAmount))) {
       delta = (BigInt(postAmount) - BigInt(preAmount)).toString();
     }
     return {
