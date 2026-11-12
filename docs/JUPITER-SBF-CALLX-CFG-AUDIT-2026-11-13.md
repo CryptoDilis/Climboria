@@ -54,3 +54,15 @@ Reviewed `anza-xyz/sbpf` `src/static_analysis.rs` at pinned revision `127947b43f
 ## Release posture
 
 Keep route_v2 excluded from production validation. Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, public frontend execution disabled, and all production signing/submission/deployment gates closed.
+
+## Corrective finding — version-specific CALL_REG target operand
+
+A deeper review against the same pinned `program.rs` found a defect in the initial exporter: it treated `instruction.src` as the target register for every SBPF version. The pinned API explicitly defines the encoding by version: V0/V1 use the low byte of `imm`, V2 uses `src`, and V3/V4 use `dst`. The candidate ELF is SBPF V0, so the initial callx TSV would have reported the wrong register number even though it correctly left the register's runtime value unresolved.
+
+Corrective implementation on this feature branch:
+- Derive the target register operand from `SBPFVersion::callx_uses_src_reg()` / `callx_uses_dst_reg()`, falling back to `imm as u8` for V0/V1.
+- Export `target_register_source` alongside the numeric register index and raw dst/src/off/imm fields.
+- Label target resolution as `unresolved-register-value` to distinguish operand decoding from dynamic register-value resolution.
+- Add regression coverage for V0, V1, V2, V3, and V4.
+
+This is a real correctness fix to the static evidence exporter. The original implementation commit must not be used for security conclusions. The corrected implementation remains unverified until the pinned Rust test/build and artifact inspection pass on the exact integrated PR head.
