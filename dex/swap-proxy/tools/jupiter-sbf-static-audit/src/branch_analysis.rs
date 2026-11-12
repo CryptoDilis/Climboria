@@ -210,12 +210,29 @@ pub fn analyze_cfg(
     version: SBPFVersion,
     work_budget: usize,
 ) -> Result<CfgReachability, &'static str> {
+    analyze_cfg_with_entry(
+        instructions, blocks, entrypoint, version, work_budget,
+        AbstractState::default(), None,
+    )
+}
+
+/// Candidate-scoped analysis entry. Callers must provide loader/slot/binary
+/// provenance before seeding registers or instruction bytes.
+pub fn analyze_cfg_with_entry(
+    instructions: &[ebpf::Insn],
+    blocks: &BTreeMap<usize, CfgBlock>,
+    entrypoint: usize,
+    version: SBPFVersion,
+    work_budget: usize,
+    initial_state: AbstractState,
+    instruction_data: Option<&[u8]>,
+) -> Result<CfgReachability, &'static str> {
     if !blocks.contains_key(&entrypoint) {
         return Err("entrypoint is not a CFG basic-block key");
     }
 
     let mut incoming = BTreeMap::<usize, AbstractState>::new();
-    incoming.insert(entrypoint, AbstractState::default());
+    incoming.insert(entrypoint, initial_state);
     let mut queue = VecDeque::from([entrypoint]);
     let mut queued = BTreeSet::from([entrypoint]);
     let mut result = CfgReachability {
@@ -305,7 +322,7 @@ pub fn analyze_cfg(
                 }
                 // A non-terminal branch contradicts the block partition.
                 // Kill facts and continue without attempting path pruning.
-                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32);
+                state.transfer_instruction_with_input(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32, version, instruction_data);
             } else {
                 state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm as i32);
             }
