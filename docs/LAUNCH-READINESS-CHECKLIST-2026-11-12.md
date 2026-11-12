@@ -141,3 +141,11 @@ Every commit must update this file or explicitly state why no checklist status c
 - [x] Recorded exact-head evidence and next task in README and workflow failure register. No workflow failed on this head; no failure diagnosis was added.
 - [ ] Capture sanitized live responses from documented DexScreener `/token-pairs/v1/solana/{tokenAddress}` for known base-side and quote-side mints; establish pair membership and metric orientation before implementing quote-side normalization.
 - [ ] Preserve the fail-closed quote-side guard, non-exhaustive market labels and Swap signing/submission kill switches.
+
+
+## 2026-11-13 — live provider-contract capture added
+
+- [x] Added a bounded live DexScreener token-pairs capture for JUP and USDC to the Browser Smoke workflow.
+- [ ] Verify capture on exact new head and inspect artifact side counts, sample pair addresses, token identities and metric fields.
+- [ ] Prove selected-mint price/volume/change/transaction/chart orientation from observed data before quote-side normalization.
+- [ ] Keep quote-side-only pools withheld; keep DEX production-live and Swap signing/submission gates closed.

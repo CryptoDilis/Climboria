@@ -19,6 +19,7 @@ on:
       - ".github/scripts/game-smoke.mjs"
       - ".github/scripts/dex-base-search-smoke.mjs"
       - ".github/scripts/dex-chart-selection-smoke.mjs"
+      - ".github/scripts/dexscreener-provider-contract-capture.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -66,6 +67,10 @@ jobs:
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+
+      - name: Capture live DexScreener provider contract evidence
+        timeout-minutes: 3
+        run: node .github/scripts/dexscreener-provider-contract-capture.mjs
 
       - name: Start local web server
         run: |
@@ -748,6 +753,15 @@ jobs:
         run: |
           echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
           timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+
+      - name: Upload DexScreener provider contract capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dexscreener-provider-contract-evidence
+          path: artifacts/dexscreener-provider-contract.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload browser screenshots
         if: always()

@@ -4399,3 +4399,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Quote-side-only pools remain deliberately withheld. The UI does not claim quote-side normalization or production-live DEX support. Official API reference: https://docs.dexscreener.com/api/reference. The reference documents chain-scoped token-pair endpoints and pair objects with both baseToken and quoteToken; live provider response capture was not accessible in this audit, so price/volume/change/transaction orientation remains unverified.
 - Swap signing/submission remains disabled; PR stays draft/unmerged.
 - **Next exact task:** add a reproducible provider-contract capture/test for DexScreener's documented `/token-pairs/v1/solana/{tokenAddress}` endpoint using controlled known base-side and quote-side mints. Persist sanitized response evidence and assert requested mint membership, pair identity, base/quote orientation, and which price/volume/change/transaction metrics are actually defined. Only then implement quote-side normalization; preserve fail-closed behavior and rerun all four exact-head workflows.
+
+
+## 2026-11-13 — live DEX provider-contract capture added (verification pending)
+
+- Added a bounded CI capture for the official DexScreener chain-scoped token-pairs endpoint. It requests known JUP and USDC mints, records whether each appears as base or quote, and stores sanitized pair identity/price/volume/change/transaction/liquidity fields as an artifact.
+- The capture validates that each returned pool contains the requested mint and checks for expected JUP-base and USDC-quote observations. It does not transform or assert that quote-side metrics are denominated as the selected token; raw orientation is preserved for review.
+- Workflow integration: Browser Smoke runs the capture with bounded retries and uploads the JSON evidence even on failure. A capture failure is intentionally visible as a workflow failure; diagnose the first failing request/response before changing the test or production DEX code.
+- Official reference: https://docs.dexscreener.com/api/reference documents GET /token-pairs/v1/{chainId}/{tokenAddress}, /tokens/v1/{chainId}/{tokenAddresses}, and the pair schema fields including baseToken, quoteToken, priceUsd, priceNative, txns, volume, priceChange and liquidity.
+- **Pending:** exact-head workflows and provider capture artifact. Keep quote-side pools withheld until evidence supports a correct selected-token price/metric/chart transformation. Do not mark DEX LIVE.

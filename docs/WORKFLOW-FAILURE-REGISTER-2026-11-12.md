@@ -1043,3 +1043,13 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - **Provider contract limitation:** official DexScreener docs describe `/token-pairs/v1/{chainId}/{tokenAddress}` and a pair schema with `baseToken` and `quoteToken`. The live endpoint could not be retrieved through the current research environment; no empirical price/volume/change/transaction orientation is asserted. Source was intentionally not changed speculatively.
 - **Swap execution/signing gates remain false.** No signing, submission, production deployment or LIVE Swap claim.
 - **Next:** build a deterministic, sanitized provider-response capture for known Solana mints using the documented token-pairs endpoint; test membership and field orientation for both base-side and quote-side cases, and only implement a normalization path once the actual provider contract is evidenced. Keep the current quote-side withholding fallback until then.
+
+
+### 13. Live provider-contract capture introduced — 2026-11-13 (verification pending)
+
+- Added .github/scripts/dexscreener-provider-contract-capture.mjs. It calls the documented public /token-pairs/v1/solana/{mint} endpoint for JUP and USDC, uses three bounded attempts, validates JSON array/pair identity membership, and records base/quote-side counts.
+- The JSON artifact preserves pair address, base/quote token identity, priceNative, priceUsd, transaction counts, volume, priceChange, liquidity, FDV, market cap and pair creation timestamp for up to 12 most-liquid pools per observed side. No credentials or private user data are involved.
+- Browser Smoke workflow invokes the capture and uploads artifacts/dexscreener-provider-contract.json even when the capture step fails. The capture is a live contract probe, not a production data normalization change.
+- Acceptance requires at least one JUP base-side pool and one USDC quote-side pool. If either expected side is absent, the workflow fails with the observed counts and the artifact records available evidence; inspect the live response before changing expectations.
+- **No workflow failure has occurred for this new probe yet.** Do not pre-record a failure. Exact-head verification pending.
+- **Next:** inspect the capture artifact and exact-head workflow results. Confirm actual field values and orientation against the documented schema; do not implement quote-side inversion unless independently proven.
