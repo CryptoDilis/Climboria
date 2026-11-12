@@ -296,3 +296,33 @@ test("stops at unavailable transactions and resumes from the last fully fetched 
   assert.equal(resumed.transactionFetchComplete, true);
   assert.equal(resumed.nextBefore, "sig-1");
 });
+
+
+test("retains the incoming cursor when the first transaction is unavailable", async () => {
+  const incomingCursor = "caller-owned-cursor";
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    before: incomingCursor,
+    limit: 1,
+    maxTransactions: 1,
+    delayMs: 0,
+    fetchImpl: async (_url, request) => {
+      const body = JSON.parse(request.body);
+      if (body.method === "getSignaturesForAddress") {
+        assert.deepEqual(body.params[1], {
+          commitment: "finalized",
+          limit: 1,
+          before: incomingCursor,
+        });
+        return rpcResponse([{ signature: "unavailable-first-signature" }]);
+      }
+      if (body.method === "getTransaction") return rpcResponse(null);
+      throw new Error("Unexpected RPC method: " + body.method);
+    },
+  });
+
+  assert.equal(report.transactionsScanned, 0);
+  assert.deepEqual(report.unavailableSignatures, ["unavailable-first-signature"]);
+  assert.equal(report.transactionFetchComplete, false);
+  assert.equal(report.nextBefore, incomingCursor);
+  assert.equal(report.reachedEnd, false);
+});
