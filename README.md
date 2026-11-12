@@ -4214,3 +4214,12 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Current PR #269 branch head after recording this handoff: `fe24eb6c4ee6805f80a0b664515e629a968edcdc`.
 - The code-tested head remains `7e77206316029657902e91ed5993ff64acecce46`; the only commits after it are documentation updates to this README and the workflow failure register (`8bf695fa8667c97a8b985b3b276ed6d025d00aff`, then this README commit). No runtime, test, workflow, or security-gate files changed after the four passing runs. GitHub created no new workflow runs for the docs-only head.
 - Therefore the four green results are verified on the unchanged code tree at `7e772063...`, not falsely represented as newly rerun on the documentation-only head `fe24eb6c...`.
+
+
+## 2026-11-12 — latest PR #269 exact-head handoff
+
+- Exact code head `7c0327d981a3e71df701f11393e87bdfac33ddb2`: Validate `43126920169`, Jupiter CPI Trace Audit `43126920484`, Jupiter IDL History Audit `43126920172`, and Browser Smoke `43126920189` all PASS.
+- Browser Smoke job `130881294961`: Jarrell's Peak desktop/mobile checks and screenshot upload passed. Artifact `13903567821`, SHA-256 `8ccc387e94c771eefc2246ad9c64269447c393ba83b335e16ddb4adae230be58`.
+- CPI scanner preserves 18-account ordered CPI evidence and parent-instruction sequence correlation; this is observational only and does not prove runtime cursor or signer/writable AccountMeta semantics.
+- Full diagnostics, evidence limitations, artifact digests, and next tasks: [workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- PR #269 remains draft/unmerged. Signing/execution gates remain false; no production signing, submission, deployment or LIVE Swap claim.
