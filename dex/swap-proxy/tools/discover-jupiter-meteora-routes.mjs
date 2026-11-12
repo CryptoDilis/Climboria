@@ -101,6 +101,44 @@ async function rpcCall(rpcUrl, method, params, fetchImpl, retryBaseMs = 1000) {
   throw error;
 }
 
+function buildTokenBalanceChanges(preTokenBalances, postTokenBalances) {
+  const keyFor = (entry) => [
+    entry.accountIndex,
+    entry.mint ?? "",
+    entry.owner ?? "",
+    entry.programId ?? "",
+  ].join(":");
+  const before = new Map((Array.isArray(preTokenBalances) ? preTokenBalances : [])
+    .map((entry) => [keyFor(entry), entry]));
+  const after = new Map((Array.isArray(postTokenBalances) ? postTokenBalances : [])
+    .map((entry) => [keyFor(entry), entry]));
+  const keys = [...new Set([...before.keys(), ...after.keys()])];
+  return keys.map((key) => {
+    const pre = before.get(key) ?? null;
+    const post = after.get(key) ?? null;
+    const preAmount = pre?.uiTokenAmount?.amount ?? null;
+    const postAmount = post?.uiTokenAmount?.amount ?? null;
+    let delta = null;
+    if (preAmount !== null && postAmount !== null
+        && /^-?\\d+$/.test(String(preAmount))
+        && /^-?\\d+$/.test(String(postAmount))) {
+      delta = (BigInt(postAmount) - BigInt(preAmount)).toString();
+    }
+    return {
+      accountIndex: (post ?? pre).accountIndex,
+      mint: (post ?? pre).mint ?? null,
+      owner: (post ?? pre).owner ?? null,
+      programId: (post ?? pre).programId ?? null,
+      decimals: post?.uiTokenAmount?.decimals ?? pre?.uiTokenAmount?.decimals ?? null,
+      preAmount,
+      postAmount,
+      delta,
+      prePresent: pre !== null,
+      postPresent: post !== null,
+    };
+  });
+}
+
 export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
   if (typeof rpcUrl !== "string" || !/^https:\/\//i.test(rpcUrl)) {
     throw new Error("Set JUPITER_AUDIT_RPC_URL to an HTTPS Solana RPC endpoint");
@@ -206,12 +244,40 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
           results.push({
             signature: report.signature,
             slot: report.slot,
+            blockTime: report.blockTime,
+            transactionVersion: report.transactionVersion,
+            transactionSucceeded: report.transactionSucceeded,
+            transactionError: report.transactionError,
             outerInstructionIndex: route.outerIndex,
             instructionDataBase58: route.instructionDataBase58,
             instructionDiscriminatorHex: Buffer.from(instructionBytes.subarray(0, 8)).toString("hex"),
             routePlanHeader: routeHeader,
             routePlanHeaderRecognized: routeHeader !== null,
-            transactionSucceeded: report.transactionSucceeded,
+            outerAccountCount: route.outerAccounts.length,
+            outerAccounts: route.outerAccounts.map((account, position) => ({
+              position,
+              transactionKeyIndex: account.index,
+              address: account.address,
+              transactionPrivilege: account.transactionPrivilege
+            })),
+            // Preserve every nested CPI in order, not just Meteora Swap2. This
+            // allows later analysis of multi-hop DEX order and Token-2022 /
+            // transfer-hook call sequences without guessing from account counts.
+            innerInstructionTrace: route.innerInstructions.map((ix) => ({
+              innerIndex: ix.innerIndex,
+              stackHeight: ix.stackHeight,
+              programId: ix.programId,
+              programIdIndex: ix.programIdIndex,
+              dataBase58: ix.dataBase58,
+              accounts: ix.accounts.map((account) => ({
+                transactionKeyIndex: account.index,
+                address: account.address,
+                transactionPrivilege: account.transactionPrivilege,
+                parentOuterPositions: account.outerInstructionPositionsForSameTransactionKey
+              })),
+              parentAccountSequenceMatch: ix.orderedParentAccountSequenceMatch
+            })),
+            tokenBalanceChanges: buildTokenBalanceChanges(report.preTokenBalances, report.postTokenBalances),
             meteoraSwap2Cpis: swap2Cpis.map((ix) => ({
               innerIndex: ix.innerIndex,
               stackHeight: ix.stackHeight,
@@ -295,6 +361,7 @@ async function main() {
     limit: integerEnv("JUPITER_AUDIT_SIGNATURE_LIMIT"),
     maxTransactions: integerEnv("JUPITER_AUDIT_MAX_TRANSACTIONS"),
     retryBaseMs: integerEnv("JUPITER_AUDIT_RETRY_BASE_MS"),
+    maxMatches: integerEnv("JUPITER_AUDIT_MAX_MATCHES"),
     delayMs
   });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
