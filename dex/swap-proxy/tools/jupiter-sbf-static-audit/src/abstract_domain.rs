@@ -70,6 +70,9 @@ impl AbstractState {
         for index in 0..=5 {
             self.registers[index] = AbstractValue::Unknown;
         }
+        // A callee/syscall may write through a stack pointer passed in r1-r5.
+        // Without a memory-effect summary, invalidate stack facts at return.
+        self.stack.clear();
     }
 
     /// Prepare an internal callee entry. Propagate r1-r5 arguments and
@@ -182,6 +185,23 @@ mod tests {
             assert_eq!(state.registers[index], AbstractValue::Constant(0));
         }
         assert_eq!(state.registers[10], AbstractValue::StackPointer(0));
+    }
+
+    #[test]
+    fn call_clobber_invalidates_caller_saved_registers_and_stack_memory() {
+        let mut state = AbstractState::default();
+        state.registers[0] = AbstractValue::Constant(1);
+        state.registers[1] = AbstractValue::Constant(2);
+        state.registers[6] = AbstractValue::Constant(6);
+        state.registers[10] = AbstractValue::StackPointer(0);
+        state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(99));
+        state.invalidate_call_clobbered_registers();
+        for index in 0..=5 {
+            assert_eq!(state.registers[index], AbstractValue::Unknown);
+        }
+        assert_eq!(state.registers[6], AbstractValue::Constant(6));
+        assert_eq!(state.registers[10], AbstractValue::StackPointer(0));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
     }
 
     #[test]
