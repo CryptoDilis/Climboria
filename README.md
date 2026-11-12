@@ -4245,3 +4245,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Detailed workflow evidence, artifact hashes, limitations and next action are recorded in [the dated workflow register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next: advance the CPI workflow fallback to the recorded cursor, preserve manual override, and verify the next exact-head run is a genuinely older page. Continue CPI privilege/cursor proof work; do not infer runtime CPI privileges from IDL/static disassembly.
 - PR #269 remains draft/unmerged; `route_v2` excluded from production validation; signing/execution gates false. No signing, transaction submission, deployment or LIVE Swap claim.
+
+
+## 2026-11-12 — latest PR #269 exact-head handoff
+
+- Exact head `140be773101aa9ddd2a45c8e04e91ae57e134d65`; all four exact-head workflows passed: Validate `43144330966` (118/118 tests), CPI Trace `43144330927`, IDL History `43144331080`, Browser Smoke `43144330898`.
+- CPI audit scanned 25 finalized transactions from the recorded cursor, found one `route_v2` / Meteora DLMM match at slot `468323008`, and advanced to `4Qi8XVXnF8YEGq6nCb5xhZWawjPWumqde3ov5Y8WHG8DaZwakfYxJyKQPycTHKEi3WtKyG48vUngSZjs9ArCpEQU`. The 19-account CPI sequence uniquely correlates with a contiguous parent Jupiter account sequence beginning at position 11 (31 parent accounts). This is observational only; runtime CPI privilege flags and handler cursor semantics remain unproven. Artifact `13910892641`, SHA-256 `76ebfc4bc00427b3b83182da681e341a555d6a7d0b8265d31a2a06ea9adaa366`.
+- IDL evidence: 20 matching historical revisions, one active instruction-schema variant, 1 adapter supported / 3 incomplete / 0 incompatible; Raydium LaunchLab account audit matched. Artifact `13909964705`, SHA-256 `2922357d131e46b2ab7da3656229d0e21d3354eab6551d554848885459146c0f`.
+- Browser smoke: desktop spawn route 100%, cave captures; mobile 844×390 with 71 render frames, zero render errors and all four action controls visible. Wildlife was disabled during the smoke. Artifact `13911321915`, SHA-256 `2ca1fb24b64478eab64ff000614c15a23c87e9f3b63cc55770dd3b1a2bc47e30`.
+- No workflow failed on this head; no counter-fix was required. Full logs, evidence limits and exact next task are in [the dated workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: after documentation-triggered workflows settle, advance the CPI fallback cursor to the recorded `4Qi8XV...` value while retaining manual override; continue authoritative CPI privilege/cursor research.
+- PR #269 remains draft/unmerged; `route_v2` excluded from production validation; execution/signable-order security gates remain false. No production signing, submission, deployment or LIVE Swap claim.
