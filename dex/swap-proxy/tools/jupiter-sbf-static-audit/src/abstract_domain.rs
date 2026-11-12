@@ -113,6 +113,11 @@ pub fn evaluate_constant_branch(
     } else {
         return None;
     };
+    let signed_pair = if width_bits == 32 {
+        (left as u32 as i32 as i64, right as u32 as i32 as i64)
+    } else {
+        (left as i64, right as i64)
+    };
     Some(match condition {
         BranchCondition::Equal => left == right,
         BranchCondition::NotEqual => left != right,
@@ -120,10 +125,10 @@ pub fn evaluate_constant_branch(
         BranchCondition::UnsignedGreaterOrEqual => left >= right,
         BranchCondition::UnsignedLess => left < right,
         BranchCondition::UnsignedLessOrEqual => left <= right,
-        BranchCondition::SignedGreater => (left as i64) > (right as i64),
-        BranchCondition::SignedGreaterOrEqual => (left as i64) >= (right as i64),
-        BranchCondition::SignedLess => (left as i64) < (right as i64),
-        BranchCondition::SignedLessOrEqual => (left as i64) <= (right as i64),
+        BranchCondition::SignedGreater => signed_pair.0 > signed_pair.1,
+        BranchCondition::SignedGreaterOrEqual => signed_pair.0 >= signed_pair.1,
+        BranchCondition::SignedLess => signed_pair.0 < signed_pair.1,
+        BranchCondition::SignedLessOrEqual => signed_pair.0 <= signed_pair.1,
         BranchCondition::BitSet => (left & right) != 0,
     })
 }
@@ -180,6 +185,7 @@ mod tests {
     fn constant_branch_comparison_is_width_and_signedness_aware() {
         assert_eq!(evaluate_constant_branch(BranchCondition::Equal, AbstractValue::Constant(0x1_0000_0001), AbstractValue::Constant(1), 32), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::SignedLess, AbstractValue::Constant(u64::MAX), AbstractValue::Constant(0), 64), Some(true));
+        assert_eq!(evaluate_constant_branch(BranchCondition::SignedLess, AbstractValue::Constant(0xffff_ffff), AbstractValue::Constant(0), 32), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::UnsignedGreater, AbstractValue::Constant(u64::MAX), AbstractValue::Constant(0), 64), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::BitSet, AbstractValue::Constant(0b1000), AbstractValue::Constant(0b1010), 64), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::Equal, AbstractValue::Constant(1), AbstractValue::Constant(1), 16), None);
