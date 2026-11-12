@@ -25,7 +25,7 @@ on:
       max_transactions:
         description: "Maximum finalized transactions scanned across pages (1-250)"
         required: false
-        default: "25"
+        default: "5"
         type: string
       retry_base_ms:
         description: "Base delay for exponential HTTP 429 retries (milliseconds)"
@@ -68,8 +68,8 @@ jobs:
           JUPITER_AUDIT_RPC_URL: https://api.mainnet-beta.solana.com
           JUPITER_AUDIT_BEFORE_SIGNATURE: ${{ github.event.inputs.before_signature || '2KC3nkCD3fkEFyYLth2ATZUcu6W3zorePRFRf7a2XpaYyXsGdb3Rv1aZAwEVYkJFmCHiK2VKmmpVZbkVmBHqdHfG' }}
           JUPITER_AUDIT_SIGNATURE_LIMIT: ${{ github.event.inputs.signature_limit || '25' }}
-          JUPITER_AUDIT_MAX_TRANSACTIONS: ${{ github.event.inputs.max_transactions || '25' }}
-          JUPITER_AUDIT_DELAY_MS: '1000'
+          JUPITER_AUDIT_MAX_TRANSACTIONS: ${{ github.event.inputs.max_transactions || '5' }}
+          JUPITER_AUDIT_DELAY_MS: '0'
           JUPITER_AUDIT_RETRY_BASE_MS: ${{ github.event.inputs.retry_base_ms || '1500' }}
         run: |
           timeout --signal=TERM --kill-after=10s 90s node dex/swap-proxy/tools/audit-jupiter-v6-rpc.mjs 5oTKV32h1zFDB3wn3TH6PfN1na4Ywuy1mgztLvTFxo5aPR3nLjrweZ5is1PHm9pGcwg1NiXCd1aTh94wnD7tFRgv > jupiter-v6-meteora-trace.json
