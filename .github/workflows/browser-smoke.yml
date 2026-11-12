@@ -17,6 +17,9 @@ on:
       - "game/play.html"
       - "game/index.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/dex-base-search-smoke.mjs"
+      - ".github/scripts/dex-chart-selection-smoke.mjs"
+      - ".github/scripts/dexscreener-provider-contract-capture.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -30,6 +33,8 @@ on:
       - "game/assets/music/TRACK_01.mp3"
       - "game/play.html"
       - ".github/scripts/game-smoke.mjs"
+      - ".github/scripts/dex-base-search-smoke.mjs"
+      - ".github/scripts/dex-chart-selection-smoke.mjs"
       - ".github/workflows/browser-smoke.yml"
 
   workflow_dispatch:
@@ -63,6 +68,10 @@ jobs:
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
 
+      - name: Capture live DexScreener provider contract evidence
+        timeout-minutes: 3
+        run: node .github/scripts/dexscreener-provider-contract-capture.mjs
+
       - name: Start local web server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/climboria-http.log 2>&1 &
@@ -88,7 +97,7 @@ jobs:
             try {
               const page=await browser.newPage({viewport:{width:1365,height:900}});
               page.on('pageerror',e=>errors.push('PAGEERROR '+page.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||(m.location().url.startsWith('https://dexscreener.com/assets/')&&message.includes('@firebase/firestore')&&message.includes('Could not reach Cloud Firestore backend')&&message.includes('code=unavailable'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               if(!response?.ok()) throw new Error('Homepage HTTP load failed');
               const ctas=page.locator('.hero-buttons button');
@@ -238,7 +247,7 @@ jobs:
               // Real mobile touch acceptance: every Major Asset stays visible, has no SELECT overlay, and BTC responds to a tap.
               const mobileSwap=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobileSwap.on('pageerror',e=>errors.push('MOBILE SWAP PAGEERROR '+mobileSwap.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              mobileSwap.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE SWAP CONSOLE '+mobileSwap.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              mobileSwap.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||(m.location().url.startsWith('https://dexscreener.com/assets/')&&message.includes('@firebase/firestore')&&message.includes('Could not reach Cloud Firestore backend')&&message.includes('code=unavailable'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE SWAP CONSOLE '+mobileSwap.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               await mobileSwap.route('https://api.coingecko.com/api/v3/coins/markets**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(['bitcoin','ethereum','solana','binancecoin','ripple','usd-coin'].map((id,i)=>({id,symbol:['btc','eth','sol','bnb','xrp','usdc'][i],name:['Bitcoin','Ethereum','Solana','BNB','XRP','USD Coin'][i],current_price:i?10:50000,price_change_percentage_24h:1,sparkline_in_7d:{price:[1,2,3]}})))}));
               const mobileMockMint='SysvarRent111111111111111111111111111111111';
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
@@ -279,7 +288,7 @@ jobs:
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',e=>errors.push('MOBILE PAGEERROR '+mobile.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              mobile.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE CONSOLE '+mobile.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              mobile.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||(m.location().url.startsWith('https://dexscreener.com/assets/')&&message.includes('@firebase/firestore')&&message.includes('Could not reach Cloud Firestore backend')&&message.includes('code=unavailable'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE CONSOLE '+mobile.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               await mobile.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               await mobile.locator('#hamburger').click();
               if(!await mobile.locator('#mobileMenu').evaluate(el=>el.classList.contains('active'))) throw new Error('Mobile menu did not open');
@@ -371,6 +380,19 @@ jobs:
                 {chainId:'solana',dexId:'pool-a',pairAddress:poolA,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'EPjFWdd5AufqSSqeM2q8xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC'},liquidity:{usd:200000},volume:{h24:50000},priceUsd:'1',priceChange:{h24:1},txns:{h24:{buys:10,sells:5}},info:{websites:[{label:'Website',url:'https://climboria.fun'}],socials:[{type:'twitter',url:'https://x.com/ClimboriaHQ'}]}},
                 {chainId:'solana',dexId:'pool-b',pairAddress:poolB,baseToken:{address:mint,name:'Test Solana',symbol:'TST'},quoteToken:{address:'So11111111111111111111111111111111111111112',symbol:'SOL'},liquidity:{usd:100000},volume:{h24:25000},priceUsd:'2.5',priceChange:{h24:0.5},txns:{h24:{buys:6,sells:3}}}
               ]};
+              let pumpMetadataRequests=0;
+              await page.route('https://api.climboria.fun/api/pump/coin*',async route=>{
+                pumpMetadataRequests++;
+                if(pumpMetadataRequests===2) await new Promise(resolve=>setTimeout(resolve,6500));
+                try {
+                  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+                    mint,name:'Test Solana',symbol:'TST',creator:'CreatorFixture111111111111111111111111111111',
+                    image:null,verified:false,complete:false,bondingCurveProgress:42,holderCount:123,
+                    totalSupply:'1000000000',usdMarketCap:250000,bondingCurve:'fixture-curve',
+                    website:'https://climboria.fun',twitter:'https://x.com/ClimboriaHQ'
+                  })});
+                } catch {}
+              });
               await page.route('https://api.dexscreener.com/**',route=>{
                 const url=route.request().url();
                 if(url.includes('/latest/dex/tokens/')) return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(poolData)});
@@ -421,12 +443,12 @@ jobs:
               const poolAExpected={price:'$1.00000',volume:'$50.0K',liquidity:'$200.0K',change:'+1.00%',flow:'10 / 5'};
               const poolBState=await assertSelectedPool(poolB,poolBExpected);
               if(!poolBState.passed)throw new Error('Selecting pool B did not synchronize chart, external link and provider metrics: '+JSON.stringify(poolBState));
-              await page.goBack();
+              await page.goBack({waitUntil:'commit'});
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolA,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolA,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Back selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolABackState=await assertSelectedPool(poolA,poolAExpected);
               if(!poolABackState.passed)throw new Error('Browser Back restored pool A URL/row but not its chart and metrics: '+JSON.stringify(poolABackState));
-              await page.goForward();
+              await page.goForward({waitUntil:'commit'});
               await page.waitForFunction(pool=>new URL(location.href).searchParams.get('pool')===pool,poolB,{timeout:10000});
               await page.waitForFunction(pool=>document.querySelector('#detailPairs .routecandidate.selected')?.dataset.pair===pool,poolB,{timeout:10000}).catch(async error=>{const state=await page.evaluate(()=>({url:location.href,activeMint:window.activeDetailMint||null,rows:[...document.querySelectorAll('#detailPairs .routecandidate')].map(x=>({pair:x.dataset.pair,selected:x.classList.contains('selected')})),title:document.querySelector('#detailTitle')?.textContent}));throw new Error('DEX Forward selected-pool restore diagnostic: '+JSON.stringify(state)+'; '+error.message)});
               const poolBForwardState=await assertSelectedPool(poolB,poolBExpected);
@@ -435,10 +457,14 @@ jobs:
               await page.evaluate(()=>{window.__chartSrcChanges=0;const chart=document.querySelector('#detailChart');window.__chartSrcObserver=new MutationObserver(records=>{window.__chartSrcChanges+=records.filter(record=>record.attributeName==='src').length});window.__chartSrcObserver.observe(chart,{attributes:true,attributeFilter:['src']});});
               poolData.pairs[1].priceUsd='2.75';
               await page.evaluate(()=>{if(!window.__climboriaRefreshTicks?.length)throw new Error('Could not capture the existing 20-second DEX refresh callback');window.__climboriaRefreshTicks[0]()});
-              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.75000',{},{timeout:10000});
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.75000',null,{timeout:5000}).catch(async error=>{
+                const state=await page.evaluate(()=>({price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool'),chart:document.querySelector('#detailChart')?.getAttribute('src')}));
+                throw new Error('DEX market refresh blocked by delayed optional metadata; metadataRequests='+pumpMetadataRequests+' state='+JSON.stringify(state)+'; '+error.message);
+              });
+              if(pumpMetadataRequests<2)throw new Error('Expected the second delayed Pump metadata request during market refresh; observed '+pumpMetadataRequests);
               poolData.pairs[1].priceUsd='2.80';
               await page.evaluate(()=>{if(!window.__climboriaRefreshTicks?.length)throw new Error('Could not capture the existing 20-second DEX refresh callback');window.__climboriaRefreshTicks[0]()});
-              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',{},{timeout:10000});
+              await page.waitForFunction(()=>document.querySelector('#detailPrice')?.textContent==='$2.80000',null,{timeout:5000});
               const chartRefreshState=await page.evaluate(()=>({srcChanges:window.__chartSrcChanges,chartSrc:document.querySelector('#detailChart')?.getAttribute('src'),price:document.querySelector('#detailPrice')?.textContent,pool:new URL(location.href).searchParams.get('pool')}));
               if(chartRefreshState.srcChanges!==0||!chartRefreshState.chartSrc?.includes(poolB)||chartRefreshState.price!=='$2.80000'||chartRefreshState.pool!==poolB)throw new Error('Same-pool market refresh reloaded the chart or failed to update live metrics: '+JSON.stringify(chartRefreshState));
               await page.evaluate(()=>window.__chartSrcObserver?.disconnect?.());
@@ -463,6 +489,12 @@ jobs:
             } finally { await browser.close(); }
           })().catch(error=>{console.error(error);process.exit(1)});
           JS
+
+      - name: Test live Base token search, chain filtering, and provider failures
+        run: node .github/scripts/dex-base-search-smoke.mjs
+
+      - name: Test DEX chart identity while switching selected tokens
+        run: node .github/scripts/dex-chart-selection-smoke.mjs
 
       - name: Test live Solana profile and boost discovery
         run: |
@@ -623,10 +655,11 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
-                const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
+                const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,hitTarget:top?.closest?.('#closeDetail')===el,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
                   window.__closeDetailEvents=[];
+                  window.__closeDetailStableSample=null;
                   for(const type of ['pointerdown','pointerup','pointercancel','touchstart','touchend','click']){
                     document.addEventListener(type,event=>{
                       const target=event.target;
@@ -635,7 +668,24 @@ jobs:
                     },true);
                   }
                 });
-                await closeDetail.tap();
+                // openToken() starts smooth scrolling before provider requests finish. Wait until the
+                // scroll position and close-button geometry are stable and the button owns the hit point.
+                await dex.waitForFunction(()=>{
+                  const el=document.querySelector('#closeDetail');
+                  if(!el||el.disabled)return false;
+                  const r=el.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y);
+                  const visible=r.width>0&&r.height>0&&r.top>=0&&r.bottom<=innerHeight;
+                  const target=hit?.closest?.('#closeDetail')===el;
+                  const sample={scrollY,x:r.x,y:r.y,width:r.width,height:r.height};
+                  const previous=window.__closeDetailStableSample;
+                  const same=previous&&Math.abs(previous.scrollY-sample.scrollY)<0.5&&Math.abs(previous.x-sample.x)<0.5&&Math.abs(previous.y-sample.y)<0.5&&Math.abs(previous.width-sample.width)<0.5&&Math.abs(previous.height-sample.height)<0.5;
+                  const stableSince=same&&visible&&target?previous.stableSince:performance.now();
+                  window.__closeDetailStableSample={...sample,stableSince};
+                  return visible&&target&&performance.now()-stableSince>=250;
+                },null,{timeout:10000});
+                const stableClose=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,scrollY,hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest?.('#closeDetail')===el}});
+                if(!stableClose.hit)throw new Error('Mobile token close target changed after geometry stabilization: '+JSON.stringify(stableClose));
+                await dex.touchscreen.tap(stableClose.x,stableClose.y);
                 await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000}).catch(async error=>{
                   const state=await dex.evaluate(()=>{const el=document.querySelector('#closeDetail'),r=el?.getBoundingClientRect(),cx=r?r.x+r.width/2:0,cy=r?r.y+r.height/2:0,top=document.elementFromPoint(cx,cy),frame=document.querySelector('#detailChart'),fr=frame?.getBoundingClientRect();return {mobileTokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),events:window.__closeDetailEvents,closeVisible:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(el).display,pointerEvents:getComputedStyle(el).pointerEvents}:null,postTapHit:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null,iframeRect:fr?{x:fr.x,y:fr.y,width:fr.width,height:fr.height}:null,scrollY:scrollY,activeElement:document.activeElement?.outerHTML?.slice(0,300)}});
                   throw new Error('Mobile close-detail tap did not exit token view. before='+JSON.stringify(closeBefore)+' after='+JSON.stringify(state)+' cause='+error.message);
@@ -720,6 +770,15 @@ jobs:
         run: |
           echo 'Starting bounded Jarrell desktop/mobile gameplay smoke test.'
           timeout --signal=TERM --kill-after=30s 20m node .github/scripts/game-smoke.mjs
+
+      - name: Upload DexScreener provider contract capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dexscreener-provider-contract-evidence
+          path: artifacts/dexscreener-provider-contract.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload browser screenshots
         if: always()

@@ -1,0 +1,113 @@
+name: Jupiter IDL History Audit
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
+      - "dex/swap-proxy/tools/legacy-anchor-idl-account.mjs"
+      - "dex/swap-proxy/tools/spl-token-account-summary.mjs"
+      - "dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs"
+      - "dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs"
+      - "dex/swap-proxy/tools/dex-adapter-idl-status.mjs"
+      - "dex/swap-proxy/test/dex-adapter-idl-status.test.mjs"
+      - "dex/swap-proxy/tools/jupiter-sbf-static-audit/**"
+      - ".github/workflows/jupiter-idl-history-audit.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: jupiter-idl-history-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-idl-history:
+    name: Fetch current and historical Jupiter IDLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax-check IDL history audit utility
+        run: |
+          node --check dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+          node --check dex/swap-proxy/tools/raydium-launchlab-account-audit.mjs
+      - name: Test DEX adapter IDL evidence classifications and LaunchLab account audit
+        run: node --test dex/swap-proxy/test/dex-adapter-idl-status.test.mjs dex/swap-proxy/test/raydium-launchlab-account-audit.test.mjs
+      - name: Fetch Jupiter and DEX CPI IDL history records
+        run: node dex/swap-proxy/tools/fetch-jupiter-idl-history.mjs
+      - name: Set up Rust toolchain for pinned sBPF static analysis
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+      - name: Run pinned sBPF static-audit unit tests
+        run: cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml
+      - name: Verify candidate Jupiter ProgramData binary and loader-feature provenance
+        run: |
+          echo "aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6  artifacts/jupiter-idl-history/jupiter-programdata-elf.so" | sha256sum --check
+          node <<'JS'
+          const fs = require('node:fs');
+          const summary = JSON.parse(fs.readFileSync('artifacts/jupiter-idl-history/summary.json', 'utf8'));
+          const provenance = summary.onChainProvenance || {};
+          const program = provenance.programAccount || {};
+          const programData = provenance.programDataAccount || {};
+          const candidateSlot = Number(summary.candidateTransactionSlot);
+          const candidateEpoch = Math.floor(candidateSlot / 432000);
+          const expectedProgram = 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4';
+          const expectedLoader = 'BPFLoaderUpgradeab1e11111111111111111111111';
+          const expectedBinary = 'aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6';
+          if (summary.programId !== expectedProgram ||
+              summary.cluster !== 'mainnet-beta' ||
+              summary.expectedCandidateRouteV2Discriminator !== 'bb64facc31c4af14' ||
+              program.owner !== expectedLoader ||
+              program.upgradeableLoaderOwner !== true ||
+              programData.owner !== expectedLoader ||
+              programData.deployedAtOrBeforeCandidateSlot !== true ||
+              Number(programData.deploymentSlot) > candidateSlot ||
+              programData.binarySha256 !== expectedBinary ||
+              candidateSlot !== 468153382 ||
+              candidateEpoch !== 1083 ||
+              candidateEpoch < 950) {
+            throw new Error('Candidate loader/feature provenance is not sufficient to seed ABI-v1 r2 instruction-data pointer: ' +
+              JSON.stringify({programId:summary.programId,cluster:summary.cluster,programOwner:program.owner,
+                programDataOwner:programData.owner,deploymentSlot:programData.deploymentSlot,
+                binarySha256:programData.binarySha256,candidateSlot,candidateEpoch,
+                expectedDiscriminator:summary.expectedCandidateRouteV2Discriminator}));
+          }
+          console.log('PASS Upgradeable BPF Loader ABI v1; SIMD-0321 r2 input pointer active by epoch 950; candidate epoch 1083. SIMD-0449 remains Review with no Mainnet activation; no direct account pointers are assumed.');
+          JS
+      - name: Generate pinned sBPF disassembly and candidate input-aware control-flow summary
+        timeout-minutes: 10
+        run: |
+          cargo run --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml --release -- \
+            artifacts/jupiter-idl-history/jupiter-programdata-elf.so \
+            artifacts/jupiter-sbf-static-audit \
+            dex/swap-proxy/tools/jupiter-sbf-static-audit/fixtures/jupiter-route-v2-candidate-instruction-data.hex
+          sha256sum artifacts/jupiter-idl-history/jupiter-programdata-elf.so
+      - name: Upload raw responses, schema summary, and sBPF static analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jupiter-idl-history
+          path: |
+            artifacts/jupiter-idl-history/
+            artifacts/jupiter-sbf-static-audit/
+            dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.lock
+          if-no-files-found: warn
+          retention-days: 30

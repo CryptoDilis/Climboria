@@ -1,0 +1,8 @@
+[package]
+name = "jupiter-sbf-static-audit"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+solana-sbpf = { git = "https://github.com/anza-xyz/sbpf", rev = "127947b43f8c3d32a6fc66d29d335ad7c7929da6", default-features = false, features = ["dev-context-only-utils"] }
