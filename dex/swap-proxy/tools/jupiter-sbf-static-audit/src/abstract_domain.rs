@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use solana_sbpf::program::SBPFVersion;
 
 /// Abstract value used by the bounded SBPF data-flow prototype.
 /// Unknown is top: merges never discard a feasible value.
@@ -7,6 +8,7 @@ pub enum AbstractValue {
     Unknown,
     Constant(u64),
     InputDataPointer(i64),
+    InstructionDataPointer(i64),
     StackPointer(i64),
 }
 
@@ -20,6 +22,8 @@ impl AbstractValue {
             Self::Constant(value) => Self::Constant(value.wrapping_add(delta as u64)),
             Self::InputDataPointer(offset) => offset.checked_add(delta)
                 .map(Self::InputDataPointer).unwrap_or(Self::Unknown),
+            Self::InstructionDataPointer(offset) => offset.checked_add(delta)
+                .map(Self::InstructionDataPointer).unwrap_or(Self::Unknown),
             Self::StackPointer(offset) => offset.checked_add(delta)
                 .map(Self::StackPointer).unwrap_or(Self::Unknown),
             Self::Unknown => Self::Unknown,
@@ -296,13 +300,12 @@ mod tests {
 // Narrow transfer semantics for the first interpreter increment. Opcode values
 // are the stable eBPF encodings used by the pinned SBPF decoder. Control-flow
 // instructions are handled by the CFG layer, not by this function.
-const BPF_LDX_DW_MEM: u8 = 0x79;
 const BPF_STX_DW_MEM: u8 = 0x7b;
 
 impl AbstractState {
-    /// Apply only explicitly modeled instructions. Returns true when the
-    /// instruction was modeled; unsupported instructions invalidate all
-    /// register and stack facts rather than risking stale constants.
+    /// Backward-compatible V0 transfer helper for unit tests and isolated
+    /// abstract-domain checks. The production analyzer passes its ELF version
+    /// and optional candidate instruction-data bytes explicitly.
     pub fn transfer_instruction(
         &mut self,
         opcode: u8,
@@ -311,12 +314,34 @@ impl AbstractState {
         off: i16,
         imm: i32,
     ) -> bool {
+        self.transfer_instruction_with_input(opcode, dst, src, off, imm, SBPFVersion::V0, None)
+    }
+
+    /// Apply only explicitly modeled instructions. Unknown input memory never
+    /// becomes a constant; only the proven instruction-data region is readable
+    /// when a candidate payload is supplied.
+    pub fn transfer_instruction_with_input(
+        &mut self,
+        opcode: u8,
+        dst: u8,
+        src: u8,
+        off: i16,
+        imm: i32,
+        version: SBPFVersion,
+        instruction_data: Option<&[u8]>,
+    ) -> bool {
         let (Some(dst_index), Some(src_index)) =
             (usize::try_from(dst).ok().filter(|index| *index < 11),
              usize::try_from(src).ok().filter(|index| *index < 11))
         else {
             self.invalidate_all();
             return false;
+        };
+
+        let (ldxb, ldxh, ldxw, ldxdw, stxdw) = if version.callx_uses_src_reg() {
+            (0x2c, 0x3c, 0x8c, 0x9c, 0x9f)
+        } else {
+            (0x71, 0x69, 0x61, 0x79, BPF_STX_DW_MEM)
         };
 
         match opcode {
@@ -335,13 +360,15 @@ impl AbstractState {
                 self.registers[dst_index] = self.registers[dst_index].add_signed(imm as i64);
                 true
             }
-            // ADD64 X is precise only for a constant right operand.
+            // ADD64 X is precise only for a constant right operand or a
+            // pointer plus a representable signed constant.
             0x0f => {
                 let right = self.registers[src_index];
                 self.registers[dst_index] = match (self.registers[dst_index], right) {
                     (AbstractValue::Constant(left), AbstractValue::Constant(value)) =>
                         AbstractValue::Constant(left.wrapping_add(value)),
                     (base @ AbstractValue::InputDataPointer(_), AbstractValue::Constant(value))
+                    | (base @ AbstractValue::InstructionDataPointer(_), AbstractValue::Constant(value))
                     | (base @ AbstractValue::StackPointer(_), AbstractValue::Constant(value)) =>
                         i64::try_from(value).ok().map(|delta| base.add_signed(delta))
                             .unwrap_or(AbstractValue::Unknown),
@@ -349,12 +376,13 @@ impl AbstractState {
                 };
                 true
             }
-            BPF_LDX_DW_MEM => {
+            opcode if opcode == ldxb || opcode == ldxh || opcode == ldxw || opcode == ldxdw => {
+                let width = if opcode == ldxb { 1 } else if opcode == ldxh { 2 } else if opcode == ldxw { 4 } else { 8 };
                 let address = self.registers[src_index].add_signed(off as i64);
-                self.registers[dst_index] = self.reload_u64(address);
+                self.registers[dst_index] = self.load_memory_value(address, width, instruction_data);
                 true
             }
-            BPF_STX_DW_MEM => {
+            opcode if opcode == stxdw => {
                 let address = self.registers[dst_index].add_signed(off as i64);
                 self.store_stack_u64(address, self.registers[src_index]);
                 true
@@ -363,6 +391,30 @@ impl AbstractState {
                 self.invalidate_all();
                 false
             }
+        }
+    }
+
+    fn load_memory_value(
+        &self,
+        address: AbstractValue,
+        width: usize,
+        instruction_data: Option<&[u8]>,
+    ) -> AbstractValue {
+        match address {
+            AbstractValue::InstructionDataPointer(offset) => {
+                let Some(bytes) = instruction_data else { return AbstractValue::Unknown };
+                let Ok(start) = usize::try_from(offset) else { return AbstractValue::Unknown };
+                let Some(end) = start.checked_add(width) else { return AbstractValue::Unknown };
+                let Some(slice) = bytes.get(start..end) else { return AbstractValue::Unknown };
+                let mut value = 0u64;
+                for (index, byte) in slice.iter().enumerate() {
+                    value |= (*byte as u64) << (index * 8);
+                }
+                AbstractValue::Constant(value)
+            }
+            AbstractValue::StackPointer(offset) if width == 8 => self.reload_u64(AbstractValue::StackPointer(offset)),
+            // Account records and all other memory regions remain unknown.
+            _ => AbstractValue::Unknown,
         }
     }
 
@@ -386,10 +438,10 @@ impl AbstractState {
                     store_end <= slot_start || slot_end <= store_start
                 });
             }
-            // The pointer may alias the stack; do not retain stale spills.
+            // An unknown store base may alias stack memory.
             AbstractValue::Unknown | AbstractValue::Constant(_) => self.stack.clear(),
-            // Input-data writes cannot alias the separate stack region.
-            AbstractValue::InputDataPointer(_) => {}
+            // Input and instruction-data writes cannot alias the separate stack region.
+            AbstractValue::InputDataPointer(_) | AbstractValue::InstructionDataPointer(_) => {}
         }
     }
 }
