@@ -4265,3 +4265,13 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - IDL audit `43145321131` passed: 20 matching historical revisions, adapter classification 1 supported / 3 incomplete / 0 incompatible, Raydium LaunchLab audit matched. Artifact `13910939241`, SHA-256 `675d95b83169eaa09975273fd0ff3f8ef0fab3f8c2b2a0945f18dd4e09ac93b7`.
 - Browser Smoke `43145321162` was still running the Jarrell's Peak gameplay step at documentation time; do not call it pass or failure until terminal. Full evidence and next task are in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next: finish Browser Smoke diagnosis/verification, then continue CPI pagination from the recorded next cursor. Execution/security gates remain false; PR #269 remains draft/unmerged.
+
+
+## 2026-11-12 — PR #269 exact-head workflow handoff
+
+- Exact code head `313f935f89c664300d59da31c690483c0d33238e`: Validate `43145778695`, CPI Trace `43145778821`, IDL History `43145778553`, and Browser Smoke `43145778639` all completed **SUCCESS**.
+- Validate: 118/118 tests passed. CPI: 25 finalized transactions, 1 route / 2 Jupiter-Meteora CPI matches, no rate limit; this repeated the prior input cursor page, so it added no historical coverage. Next cursor: `3QYnjvAaoa4H2bq61hfV7BYVeQWqjtopxtvzLvEAZwxD3soky7mkfTxwqNf4shfqEnJfq3x5K3q5kyhNCjVdyagF`. Ordered-account correlations remain observational, not runtime CPI privilege/cursor proof.
+- IDL: 20 matching historical revisions; adapter classification 1 supported / 3 incomplete / 0 incompatible; Raydium LaunchLab candidate-account audit matched. Pinned ELF/static analysis does not prove runtime CPI privileges or handler cursor semantics.
+- Browser: all 18 steps passed, including DEX/Swap mobile/desktop checks and Jarrell's Peak desktop/mobile. Desktop spawn route 100%; mobile 844×390 with 74 render frames, zero render errors and all four controls visible. Wildlife was disabled, so wildlife behavior is not covered. Screenshot artifact `13911961963`, SHA-256 `2996b5a3c3594cf1cfb405ad53c7c34090ce53ac9903770990de9202b92b25ca`.
+- No workflow failed on this exact head; Node/deprecation notices were warnings only. Full evidence, artifact digests, limitations and next task are recorded in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: advance the CPI workflow fallback to the recorded `3QYnjv...` cursor while preserving manual override; verify the next run consumes it. PR #269 remains draft/unmerged; `route_v2` excluded from production validation; execution/signable-order security gates remain false. No signing, transaction submission, deployment or LIVE Swap claim.
