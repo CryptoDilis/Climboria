@@ -266,3 +266,33 @@ Important grouped findings include:
 1. Continue the bounded finalized transaction scan from the recorded cursor; add/inspect older pages and route diversity, but report each page's exact completeness/rate-limit status. A 25-transaction no-match sample is not proof of route absence.
 2. Obtain direct CPI-requested signer/writable AccountMeta evidence and prove Jupiter per-DEX remaining-account cursor behavior for variable account slices, multi-hop/split routes and DEX order permutations. Current IDL and sBPF artifacts alone do not prove these semantics.
 3. Keep route_v2 excluded from production validation; keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; no production signing, submission, Wrangler deployment or LIVE Swap claim. PR #269 remains draft/unmerged.
+
+
+## 2026-11-12 — PR #269 exact-head verification and CPI account-order evidence
+
+### Exact code head `7c0327d981a3e71df701f11393e87bdfac33ddb2`
+
+- [x] Validate run `43126920169`: SUCCESS.
+- [x] Jupiter V6 CPI Trace Audit run `43126920484`: SUCCESS. Route discovery tests 5/5 passed, including the synthetic 18-account ordered-sequence regression. Bounded finalized scan processed 25/25 transactions in one page without HTTP 429; 0 Jupiter/Meteora matches in this sample only. This is not proof of route absence. Continuation cursor: `tw8T1jvsYy7tVkPf9rV7TyoGbht1fG74mcFSR355oS28mRNvewZkvMDpHu2jsWfPWZtMfd7TVUo3xFLtQgohrQt`. Artifact `13902129541`, SHA-256 `2353a11dd8e301efc91c5baae78389da8b43f6326e986fceaa2481b08c5d9925`.
+- [x] Jupiter IDL History Audit run `43126920172`: SUCCESS. One adapter supported, three incomplete, zero incompatible. Raydium LaunchLab candidate account audit matched. Artifact `13903905500`, SHA-256 `96cf499f293f2e9dde8df202bf3a828e46a049a9946b6ec2bae4a9bd6267b8af`.
+- [x] Browser Smoke run `43126920189`, job `130881294961`: SUCCESS. Steps 1–18 and all post-job cleanup steps completed. Desktop and mobile Jarrell's Peak smoke passed; screenshot upload succeeded.
+  
+### Browser/gameplay evidence
+
+- Desktop mountain spawn route audit: 100% progress over 895.52 units / 2,799 steps; 88 fixed colliders; no blocked route. Desktop visual capture: 252 frames, 191 chunks at 1365×900.
+- Desktop cave entrance and interior visual captures completed. Loot/inventory diagnostic: Ancient Geode Shard and Healing Herbs stored; inventory panel and toggle passed.
+- Desktop WebGL context and scene resources were explicitly released before mobile GLB startup.
+- Mobile capture: 844×390 viewport, 78 frames, 90 chunks. Mobile diagnostics: canvas/ready/player/hero/bag/HUD/map/settings all true; 72 render frames; zero render errors; all four action controls visible.
+- Screenshot artifact `13903567821`, 8,869,001 bytes, SHA-256 `8ccc387e94c771eefc2246ad9c64269447c393ba83b335e16ddb4adae230be58`; contains 10 uploaded screenshots. Non-fatal Node 20 action-runtime, `punycode`, and legacy `url.parse()` deprecation warnings remain; they did not fail the job.
+
+### CPI ordered-account correlation — evidence boundary
+
+- The bounded prior candidate transaction contains a Meteora `Swap2` CPI with 18 ordered account indexes. The exact contiguous sequence correlates uniquely to parent Jupiter instruction account position 44; repeated transaction account index 0 occurs at parent positions 0 and 54.
+- Scanner output now preserves `orderedAccountIndexes`, `outerAccountCount`, `accountParentPositions`, and `parentAccountSequenceMatch`; the regression fixture verifies the 18-account sequence, unique position 44 and duplicate positions [0,54].
+- This is observational account-order correlation only. It does not prove runtime handler cursor consumption or CPI-requested signer/writable AccountMeta flags. Do not infer those semantics from this trace.
+
+### Failure accounting and next task
+
+- No workflow failed on this exact code head; all four exact-head workflows passed. The historical failures and their root-cause/counter-fix evidence remain documented in preceding entries. No tests, acceptance gates, timeouts or evidence standards were weakened.
+- Continue finalized transaction pagination from the cursor above, diversify observed routes, and establish CPI-requested signer/writable flags plus Jupiter per-DEX remaining-account cursor behavior for variable slices, multi-hop/split routes and DEX order permutations.
+- Keep `route_v2` excluded from production validation; keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false` and `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`. No production signing, transaction submission, Wrangler deployment or LIVE Swap claim. PR #269 remains draft/unmerged.
