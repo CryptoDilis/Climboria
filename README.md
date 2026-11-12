@@ -4234,3 +4234,14 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Detailed logs, artifact hashes, evidence boundaries and exact next task are recorded in [the workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
 - Next: after this docs commit's workflows settle, advance the CPI workflow fallback cursor to the recorded next cursor and continue bounded finalized scans; in parallel continue authoritative CPI signer/writable and remaining-account cursor research.
 - PR #269 remains draft/unmerged; `route_v2` excluded from production validation; signing/execution review gates remain false. No production signing, submission, deployment or LIVE Swap claim.
+
+
+## 2026-11-12 — PR #269 documentation-head verification and next CPI cursor
+
+- Documentation head `e54b9047ca21570988bfa4d80a2cdc96c4f10490` completed all four workflows successfully: Validate `43142620302`, CPI Trace `43142620258`, IDL History `43142620261`, Browser Smoke `43142620341`.
+- CPI run `43142620258` repeated the prior 25-transaction page because the workflow fallback cursor was still the older value; no additional historical coverage. Next cursor to set as fallback: `4CEGJvE4qh8Y9qPZMAx74ydgoTWfpbiAuwqeqcmQExVMhtKiHs9qrqAscRXXsp4Rc1BKSrbrbTh2xZ9kbqp81uSw`. Artifact `13909489944`, SHA-256 `ba40bb1201bd453384158d9cfbd1cba41bf6511ec7431028b71943b6719c0283`.
+- IDL audit artifact `13910766225`, SHA-256 `af94d6ba1396f2f0f12a148bf924cf6b35b3790a24f6351f40fae792bb7d7878`: 63 historical Jupiter IDL records, 20 candidate-relevant historical revisions, exactly one active revision at slot `468153382`; 1 DEX adapter supported, 3 incomplete, 0 incompatible; Raydium LaunchLab candidate account audit matched. Pinned ELF static audit: 243,522 instructions / 40,664 CFG blocks / 1,188 function registry entries; no runtime CPI privilege proof.
+- Browser artifact `13911300048`, SHA-256 `50d23f55fda08f575d43d6ca014e523363d4779a5b16a6288f510c3f3d5f0ca7`: desktop 253 frames/191 chunks; spawn route 100%; mobile 844×390 with 72 render frames, no render errors, all four action controls visible. Wildlife was temporarily disabled during this smoke test.
+- Detailed workflow evidence, artifact hashes, limitations and next action are recorded in [the dated workflow register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next: advance the CPI workflow fallback to the recorded cursor, preserve manual override, and verify the next exact-head run is a genuinely older page. Continue CPI privilege/cursor proof work; do not infer runtime CPI privileges from IDL/static disassembly.
+- PR #269 remains draft/unmerged; `route_v2` excluded from production validation; signing/execution gates false. No signing, transaction submission, deployment or LIVE Swap claim.
