@@ -13,6 +13,8 @@ use std::{
     sync::Arc,
 };
 
+const CALLX_TSV_HEADER: &str = "callsite_pc\tcaller_registry_pc\ttarget_register\ttarget_register_source\ttarget_resolution\tdst\tsrc\toff\timm";
+
 fn callx_target_register(version: SBPFVersion, instruction: &solana_sbpf::ebpf::Insn) -> (u8, &'static str) {
     if version.callx_uses_src_reg() {
         (instruction.src, "src")
@@ -114,7 +116,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(calls, "{header}")?;
     writeln!(entrypoint_calls, "{header}")?;
     writeln!(syscall_sites, "callsite_pc\tcaller_registry_pc\tsyscall_name\tsyscall_key")?;
-    writeln!(callx_sites, "callsite_pc\\tcaller_registry_pc\\ttarget_register\\ttarget_register_source\\ttarget_resolution\\tdst\\tsrc\\toff\\timm")?;
+    writeln!(callx_sites, "{CALLX_TSV_HEADER}")?;
     writeln!(instruction_dump, "pc\topcode\tdst\tsrc\toff\timm")?;
     writeln!(cfg_nodes, "cfg_node_id\tinstruction_start_pc\tinstruction_end_pc_exclusive\tsources\tdestinations")?;
     for instruction in &analysis.instructions {
@@ -138,7 +140,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let (target_register, target_register_source) = callx_target_register(version, instruction);
             writeln!(
                 callx_sites,
-                "{}\\t{}\\t{}\\t{}\\tunresolved-register-value\\t{}\\t{}\\t{}\\t{}",
+                "{}\t{}\t{}\t{}\tunresolved-register-value\t{}\t{}\t{}\t{}",
                 instruction.ptr,
                 caller_pc,
                 target_register,
@@ -250,6 +252,19 @@ mod tests {
         assert_eq!(callx_target_register(SBPFVersion::V4, &instruction), (7, "dst"));
     }
 
+
+    #[test]
+    fn callx_tsv_header_and_rows_use_real_tab_delimiters() {
+        use super::CALLX_TSV_HEADER;
+        let row = format!(
+            "{}\\t{}\\t{}\\t{}\\tunresolved-register-value\\t{}\\t{}\\t{}\\t{}",
+            10, 20, 2, "imm_low_byte", 0, 0, 0, 2
+        );
+        assert_eq!(CALLX_TSV_HEADER.split('\\t').count(), 9);
+        assert_eq!(row.split('\\t').count(), 9);
+        assert!(!CALLX_TSV_HEADER.contains("\\\\t"));
+        assert!(!row.contains("\\\\t"));
+    }
     #[test]
     fn indirect_call_opcode_is_not_collapsed_into_immediate_calls() {
         assert_ne!(ebpf::CALL_REG, ebpf::CALL_IMM);
