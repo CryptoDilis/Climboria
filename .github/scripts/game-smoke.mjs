@@ -54,13 +54,16 @@ try {
       await page.waitForTimeout(100);
       const before=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
       await page.keyboard.down('Space');
-      await page.evaluate(({y,jumps})=>{window.__climboriaJumpBaseline=y;window.__climboriaJumpCount=jumps;},{y:before.y,jumps:before.jumps});
-      const rose=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.y>window.__climboriaJumpBaseline+.2&&p.jumpCount>window.__climboriaJumpCount;},undefined,{timeout:5000}).then(()=>true).catch(()=>false);
+      await page.evaluate(({y,jumps,lands})=>{window.__climboriaJumpBaseline=y;window.__climboriaJumpCount=jumps;window.__climboriaPriorLandCount=lands;},{y:before.y,jumps:before.jumps,lands:before.lands});
+      const rose=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&p.y>window.__climboriaJumpBaseline+.2&&p.jumpCount>window.__climboriaJumpCount;},undefined,{timeout:10000,polling:100}).then(()=>true).catch(()=>false);
       await page.keyboard.up('Space');
       const peak=await page.evaluate(()=>({y:window.__climboriaJarrellsPeak.player.y,state:window.__climboriaJarrellsPeak.player.jumpState,jumps:window.__climboriaJarrellsPeak.player.jumpCount||0}));
-      await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&(p.jumpState==='land'||p.jumpState==='grounded');},undefined,{timeout:8000}).catch(()=>{});
+      // CI's software-rendered mobile scene can run at very low frame rates. Use the
+      // monotonic landing counter (not the short-lived 'land' animation state) and
+      // allow enough wall time for the capped-delta physics loop to finish the arc.
+      const landingObserved=await page.waitForFunction(()=>{const p=window.__climboriaJarrellsPeak?.player;return !!p&&(p.landCount||0)>window.__climboriaPriorLandCount;},undefined,{timeout:30000,polling:100}).then(()=>true).catch(()=>false);
       const landed=await page.evaluate(()=>({state:window.__climboriaJarrellsPeak.player.jumpState,lands:window.__climboriaJarrellsPeak.player.landCount||0}));
-      liveJumps.push({running,rose,baseline:before.y,peak:peak.y,airState:peak.state,jumpCount:peak.jumps,landState:landed.state,landCount:landed.lands,priorJumpCount:before.jumps,priorLandCount:before.lands});
+      liveJumps.push({running,rose,landingObserved,baseline:before.y,peak:peak.y,airState:peak.state,jumpCount:peak.jumps,landState:landed.state,landCount:landed.lands,priorJumpCount:before.jumps,priorLandCount:before.lands});
       await page.keyboard.up('w');
       if(running) await page.keyboard.up('Shift');
       await page.waitForTimeout(300);
@@ -70,7 +73,7 @@ try {
       const p=window.__climboriaJarrellsPeak.player;
       Object.assign(p,{x:saved.x,y:saved.y,z:saved.z,vy:saved.vy,yaw:saved.yaw,mode:saved.mode,jumpState:saved.jumpState,jumpHeld:saved.jumpHeld,jumpCount:saved.jumpCount,landCount:saved.landCount});
     },liveJumpStart.saved);
-    if(liveJumps.some(x=>!x.rose||x.peak<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
+    if(liveJumps.some(x=>!x.rose||!x.landingObserved||x.peak<=x.baseline+.2||x.jumpCount<=x.priorJumpCount||x.landCount<=x.priorLandCount)) errors.push('Spacebar jump failed while walking or running: '+JSON.stringify(liveJumps));
     console.log('Live walking/running jump diagnostics:',JSON.stringify(liveJumps));
   }
 
@@ -465,6 +468,14 @@ try {
   await page.screenshot({path:'climboria-desktop-cave-interior.png'});
   console.log('Desktop cave interior visual capture:',JSON.stringify(desktopCaveInterior));
 
+  // The desktop smoke page has finished all assertions and screenshots. Close its
+  // WebGL renderer and release the 43 MB GLB/decoded scene before starting the
+  // independent mobile context; keeping both full worlds alive caused the mobile
+  // GLTFLoader to stall after the complete download, before its parse callback.
+  await page.close();
+  await desktop.close();
+  console.log('Released desktop WebGL context and scene resources before mobile GLB startup.');
+
   const mobile = await browser.newPage({
     // Start portrait to verify the rotate gate, then switch to landscape for gameplay evidence.
     viewport: { width: 390, height: 844 },
@@ -690,7 +701,11 @@ try {
     canvas: !!document.querySelector('canvas'),
     glbResources: performance.getEntriesByType('resource')
       .filter(entry => /Climboria_Hero\.glb/i.test(entry.name))
-      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize }))
+      .map(entry => ({ name: entry.name, duration: Math.round(entry.duration), transferSize: entry.transferSize, decodedBodySize: entry.decodedBodySize })),
+    glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ? {
+      ...window.__climboriaGLBLoadDiagnostics,
+      ageMs: window.__climboriaGLBLoadDiagnostics.startedAt===null ? null : Math.round(performance.now()-window.__climboriaGLBLoadDiagnostics.startedAt)
+    } : null
   }));
   const mobileGlbWaitStartedAt = Date.now();
   try {
@@ -710,7 +725,7 @@ try {
     }
     console.log('Mobile GLB readiness confirmed at timeout boundary; strict GLB invariants remain satisfied:', JSON.stringify({ ...diagnostic, elapsedMs: Date.now() - mobileGlbWaitStartedAt }));
   }
-  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
+  const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero, glbLoadDiagnostics: window.__climboriaGLBLoadDiagnostics ?? null }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
   await mobile.keyboard.press('w');
