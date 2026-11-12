@@ -44,3 +44,10 @@ Build a conservative, version-aware branch inventory as a prerequisite to route_
 4. Only after structural output is validated, implement a bounded abstract interpreter for entrypoint data flow: register constants/unknowns, stack spill/reload tracking, pointer provenance, byte/word loads from instruction data, and conservative memory aliasing.
 5. Trace the actual route_v2 discriminator comparison and prove the selected dispatch edge(s) before attributing any handler.
 6. Keep unknown branches and unresolved callx targets conservative. Continue to exclude route_v2 from production validation and keep all signing/execution/deployment gates closed.
+
+
+## Exact-head workflow checkpoint — 2026-11-13 03:38 +08
+
+The current PR #272 head is `4186f178114abcf0bef1a215859b4b9d0328155f` (branch `codex/route-v2-branch-edge-evidence-2026-11-13`). Exact-head Validate `43289124843`, Browser Smoke `43289124939`, Jupiter V6 CPI Trace `43289124824`, and Jupiter IDL History `43289124775` all completed SUCCESS. No terminal failed job/step occurred in this verification set; older cancelled/superseded runs are not failures. The CPI trace job and artifact upload completed successfully (artifact `13974934905`).
+
+Important implementation boundary: the current executable `main.rs` exports static branch sites and CFG records but does not yet call the `abstract_domain` transfer/evaluation functions. This document's next phase remains a bounded CFG worklist with conservative state joins and branch pruning only when a predicate is provably constant. Unknown conditions must retain both successors. This is not yet route_v2 handler reachability or CPI privilege proof.
