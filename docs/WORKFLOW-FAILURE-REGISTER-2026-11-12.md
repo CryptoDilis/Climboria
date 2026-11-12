@@ -693,3 +693,12 @@ Important grouped findings include:
 - **Cursor decision:** advance only the scheduled fallback cursor from `3M3XQN...` to the artifact-verified `57Pp8w...`; retain the optional manual `before_signature` override and the conservative five-transaction batch.
 - **Next task:** run and inspect the resulting exact-head workflow batch and CPI artifact before advancing the cursor again. Continue collecting multi-hop/split route_v2 plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts; resolve CPI privilege and runtime cursor boundaries using candidate-matched binary/runtime evidence.
 - **Release posture unchanged:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`. Keep route_v2 excluded from production validation. No production signing, transaction submission, deployment, Devnet settlement acceptance, or LIVE Swap claim.
+
+
+## Cursor advancement commit and verification handoff
+
+- **Workflow change commit:** `bfc3224f08e8ad6c3af737d9ebc0f34819e2a72d` updates `.github/workflows/jupiter-cpi-trace-audit.yml` scheduled fallback from `3M3XQN...` to the CPI artifact's verified continuation cursor `57Pp8w...`.
+- **Preserved controls:** manual `before_signature` input override remains active; `max_transactions` remains 5. No scan breadth or acceptance criteria were relaxed.
+- **Verification state at handoff:** PR #269 head was confirmed as `bfc3224f08e8ad6c3af737d9ebc0f34819e2a72d`, open/draft/unmerged. The commit-associated workflow lookup returned no runs at the time of inspection; this is **pending visibility**, not a pass, failure, or cancellation.
+- **Next exact action:** inspect PR #269 checks/workflow runs for the current head. Once the four relevant workflows appear, wait for terminal states and inspect every failed job's step and logs before any retry or code change. Inspect the next CPI artifact and advance the cursor only if the bounded scan is complete with no RPC/rate-limit/unavailable-transaction condition.
+- **Security gates remain closed:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 remains excluded from production validation.
