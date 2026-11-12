@@ -77,3 +77,7 @@ This is a real correctness fix to the static evidence exporter. The original imp
 - The old workflow executed `cargo run --locked --release`, which successfully compiled and ran the binary; it did **not** execute Rust unit tests. Add an explicit `cargo test --locked` step to the audit workflow so the new five-version regression test is actually run.
 
 The Validate workflow run `43278063832` and Jupiter V6 CPI Trace run `43278063843` also completed SUCCESS on this integrated head. Browser Smoke run `43278063834` was still in progress at the time of this report update. No terminal workflow failure has been observed in this run set.
+
+## CI test coverage correction
+
+The IDL History workflow's previous Rust invocation used `cargo run --locked --release`, which compiled and executed the static audit but did not run its `#[cfg(test)]` unit tests. The workflow now includes a separate `cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml` step before generating the release artifact. This makes the version-specific CALL_REG encoding regression test part of required CI rather than an unexecuted source-level assertion. The workflow change is prepared on the feature branch and must be integrated into the main-based PR before verification.
