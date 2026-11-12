@@ -136,3 +136,28 @@ For PR #272 head `aafe7bea94e9378479e8e3b4a155c2a73a1c0985`:
 ### Transfer-engine review notes before CFG integration
 
 The current transfer layer is still a primitive, not an interpreter. Before worklist wiring, add tests for destination/source register aliasing, invalid register indices, immediate sign extension, constant modular overflow, pointer offset overflow, aligned overwrite, unaligned overlap invalidation, and unknown/absolute store bases. The CFG driver must distinguish modeled data instructions from branch/call/exit control-flow instructions; do not route control-flow opcodes through the generic unsupported-opcode invalidation path. Keep all unknown and unsupported writes conservative. Input-data memory reads remain unknown until loader ABI layout is verified.
+
+
+## Final exact-head verification — 2026-11-13
+
+All four required workflows for PR #272 head `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` are now terminal-success:
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate | 43287407945 | 131424449777 | success |
+| Jupiter V6 CPI Trace Audit | 43287407781 | 131424481212 | success |
+| Jupiter IDL History Audit | 43287408264 | 131424513480 | success |
+| Browser Smoke | 43287407556 | 131424455222 | success |
+
+Browser Smoke completed all 22 substantive steps, including the Jarrell's Peak desktop/mobile gameplay smoke, cave entrance/interior screenshots, mobile DEX/Swap 390px and 360px layouts, market provider loading/error/empty states, and auth/cloud-save isolation. Artifacts:
+
+- Browser screenshots `13976192032`, 8,835,566 bytes, SHA-256 `43a9266aa821aee452aa8258021610674d944247cdb89fb32c88b52922565225`.
+- DexScreener provider contract evidence `13975917209`, 7,207 bytes, SHA-256 `d3b8c9a78741342302d09986719f4eb192583bf47bf0d51f31d89515ae088da0`.
+- Jupiter IDL/static analysis `13976036200`, 3,473,948 bytes, SHA-256 `ed42ab60d3d12fc69451e844f4f7a675a78d4b09a23605407e1a44cc5ae03ce5`.
+- Jupiter V6 CPI trace `13976735396`, 18,748 bytes, SHA-256 `77bf7ab6791a41c15e17e250cd8baf4cf2bd8420e6410416d124d66fc90d599c`.
+
+The long-running browser gameplay step eventually succeeded; no workflow failure occurred, so no root-cause incident or counter-fix is applicable. The live log endpoint was temporarily unavailable during execution, but the completed job and artifact were subsequently confirmed. This exact-head CI green status verifies the existing workflow assertions and Rust unit tests, not route_v2 semantic reachability or production privileges. No production execution/signing/deployment gates change.
+
+### Next implementation gate
+
+Before CFG worklist integration, add the additional transfer fixtures listed above and review the control-flow/data-transfer dispatch boundary. Then implement a bounded worklist with conservative joins and iteration limits. Seed only the proven stack base; do not seed input-data pointers until the exact runtime loader ABI and serialized instruction-data layout are documented and independently verified. Next goal remains evidence-based route_v2 discriminator/dispatch proof, followed by route-specific CPI account-slice and privilege analysis.
