@@ -32,7 +32,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** rerun the chart-switch regression with desktop-table-scoped token selectors. Verify different-mint chart clearing and same-mint refresh preservation, then finish mobile/gameplay smoke and audit chart refresh cadence and pool-selection URL persistence.
+**Next DEX task:** correct the chart-switch test to inspect state after the token-B request begins but before its delayed response resolves. Verify chart clearing, chart B restoration, and same-mint refresh preservation; then finish mobile/gameplay smoke.
 
 ### 2. Swap — second priority
 

@@ -36,7 +36,7 @@ try {
   if (!(await page.locator('#detailTitle').innerText()).includes('CHARTA')) throw new Error('First selected token title did not match chart A');
   await search.fill('CHARTB');
   await page.waitForFunction(() => document.querySelector('#rows')?.innerText.includes('CHARTB'), undefined, {timeout:10000});
-  const pending = page.waitForResponse(r => r.url().includes('/latest/dex/tokens/'+mintB), {timeout:10000});
+  const pending = page.waitForRequest(r => r.url().includes('/latest/dex/tokens/'+mintB), {timeout:10000});
   await page.locator('#rows button[data-mint="'+mintB+'"]').click();
   await pending;
   const chartWhileLoading = await page.locator('#detailChart').getAttribute('src');
