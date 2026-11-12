@@ -76,7 +76,10 @@ async function rpcCall(rpcUrl, method, params, fetchImpl, retryBaseMs = 1000) {
     if (payload.error) throw new Error("Solana RPC " + method + " error: " + JSON.stringify(payload.error));
     return payload.result;
   }
-  throw new Error("Solana RPC rate limit persisted for " + method);
+  const error = new Error("Solana RPC rate limit persisted for " + method);
+  error.status = 429;
+  error.method = method;
+  throw error;
 }
 
 export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
@@ -84,120 +87,161 @@ export async function discoverRecentJupiterMeteoraRoutes(rpcUrl, options = {}) {
     throw new Error("Set JUPITER_AUDIT_RPC_URL to an HTTPS Solana RPC endpoint");
   }
   const fetchImpl = options.fetchImpl ?? fetch;
-  const limit = Number.isInteger(options.limit) ? Math.max(1, Math.min(options.limit, 50)) : 5;
+  const limit = Number.isInteger(options.limit) ? Math.max(1, Math.min(options.limit, 50)) : 25;
   const maxTransactions = Number.isInteger(options.maxTransactions)
-    ? Math.max(1, Math.min(options.maxTransactions, limit))
-    : limit;
-  const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, options.maxMatches) : 3;
-  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 1000;
+    ? Math.max(1, Math.min(options.maxTransactions, 250))
+    : 25;
+  const maxMatches = Number.isInteger(options.maxMatches) ? Math.max(1, Math.min(options.maxMatches, 20)) : 3;
+  const delayMs = Number.isInteger(options.delayMs) ? Math.max(0, options.delayMs) : 250;
   const retryBaseMs = Number.isInteger(options.retryBaseMs) ? Math.max(0, options.retryBaseMs) : 1000;
-  const before = typeof options.before === "string" && options.before.trim()
+  const initialBefore = typeof options.before === "string" && options.before.trim()
     ? options.before.trim()
     : null;
 
-  let signatures;
-  try {
-    const signatureQuery = { commitment: "finalized", limit };
-    if (before) signatureQuery.before = before;
-    signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
-      METEORA_DLMM_PROGRAM_ID,
-      signatureQuery
-    ], fetchImpl, retryBaseMs);
-  } catch (error) {
-    if (error.status !== 429) throw error;
-    return {
-      searchedProgramId: METEORA_DLMM_PROGRAM_ID,
-      jupiterProgramId: JUPITER_V6_PROGRAM_ID,
-      commitment: "finalized",
-      before,
-      signaturesReturned: 0,
-      transactionsScanned: 0,
-      matchingRoutes: 0,
-      matchingJupiterMeteoraInstructions: 0,
-      rateLimited: true,
-      rateLimitedMethod: error.method,
-      results: [],
-      evidenceLimitations: ["The public RPC rate-limited signature discovery; no route-level conclusion can be drawn from this empty sample."]
-    };
-  }
-  if (!Array.isArray(signatures)) throw new Error("Solana RPC returned an invalid signature list");
-
   const results = [];
+  let cursor = initialBefore;
+  let lastScannedSignature = null;
+  let signaturesReturned = 0;
   let transactionsScanned = 0;
+  let pagesScanned = 0;
   let rateLimited = false;
   let rateLimitedMethod = null;
-  for (const entry of signatures.slice(0, maxTransactions)) {
-    if (typeof entry?.signature !== "string") continue;
-    let transaction;
+  let reachedEnd = false;
+
+  while (transactionsScanned < maxTransactions && results.length < maxMatches && !rateLimited) {
+    const pageLimit = Math.min(limit, maxTransactions - transactionsScanned);
+    const signatureQuery = { commitment: "finalized", limit: pageLimit };
+    if (cursor) signatureQuery.before = cursor;
+
+    let signatures;
     try {
-      transaction = await rpcCall(rpcUrl, "getTransaction", [
-        entry.signature,
-        { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
+      signatures = await rpcCall(rpcUrl, "getSignaturesForAddress", [
+        METEORA_DLMM_PROGRAM_ID,
+        signatureQuery
       ], fetchImpl, retryBaseMs);
-      transactionsScanned += 1;
     } catch (error) {
       if (error.status !== 429) throw error;
       rateLimited = true;
-      rateLimitedMethod = error.method;
+      rateLimitedMethod = error.method ?? "getSignaturesForAddress";
       break;
     }
-    if (transaction) {
-      const report = buildJupiterV6TraceReport(entry.signature, transaction);
-      for (const route of report.jupiterRoutes) {
-        const routeHeader = decodeJupiterRoutePlanHeader(route.instructionDataBase58);
-        const swap2Cpis = route.innerInstructions.filter((ix) =>
-          ix.programId === METEORA_DLMM_PROGRAM_ID && isMeteoraSwap2Instruction(ix.dataBase58)
-        );
-        if (swap2Cpis.length === 0) continue;
-        const instructionBytes = decodeBase58(route.instructionDataBase58);
-        results.push({
-          signature: report.signature,
-          slot: report.slot,
-          outerInstructionIndex: route.outerIndex,
-          instructionDataBase58: route.instructionDataBase58,
-          instructionDiscriminatorHex: Buffer.from(instructionBytes.subarray(0, 8)).toString("hex"),
-          routePlanHeader: routeHeader,
-          routePlanHeaderRecognized: routeHeader !== null,
-          transactionSucceeded: report.transactionSucceeded,
-          meteoraSwap2Cpis: swap2Cpis.map((ix) => ({
-            innerIndex: ix.innerIndex,
-            stackHeight: ix.stackHeight,
-            accountCount: ix.accounts.length,
-            orderedAccounts: ix.accounts.map((account) => account.address)
-          }))
-        });
-        if (results.length >= maxMatches) break;
-      }
+    if (!Array.isArray(signatures)) throw new Error("Solana RPC returned an invalid signature list");
+    pagesScanned += 1;
+    signaturesReturned += signatures.length;
+    if (signatures.length === 0) {
+      reachedEnd = true;
+      break;
     }
-    if (results.length >= maxMatches || rateLimited) break;
-    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+    let pageScanned = 0;
+    for (const entry of signatures) {
+      if (typeof entry?.signature !== "string" || !entry.signature.trim()) continue;
+      let transaction;
+      try {
+        transaction = await rpcCall(rpcUrl, "getTransaction", [
+          entry.signature,
+          { commitment: "finalized", encoding: "json", maxSupportedTransactionVersion: 1 }
+        ], fetchImpl, retryBaseMs);
+      } catch (error) {
+        if (error.status !== 429) throw error;
+        rateLimited = true;
+        rateLimitedMethod = error.method ?? "getTransaction";
+        break;
+      }
+
+      transactionsScanned += 1;
+      pageScanned += 1;
+      lastScannedSignature = entry.signature;
+      if (transaction) {
+        const report = buildJupiterV6TraceReport(entry.signature, transaction);
+        for (const route of report.jupiterRoutes) {
+          const routeHeader = decodeJupiterRoutePlanHeader(route.instructionDataBase58);
+          const swap2Cpis = route.innerInstructions.filter((ix) =>
+            ix.programId === METEORA_DLMM_PROGRAM_ID && isMeteoraSwap2Instruction(ix.dataBase58)
+          );
+          if (swap2Cpis.length === 0) continue;
+          const instructionBytes = decodeBase58(route.instructionDataBase58);
+          results.push({
+            signature: report.signature,
+            slot: report.slot,
+            outerInstructionIndex: route.outerIndex,
+            instructionDataBase58: route.instructionDataBase58,
+            instructionDiscriminatorHex: Buffer.from(instructionBytes.subarray(0, 8)).toString("hex"),
+            routePlanHeader: routeHeader,
+            routePlanHeaderRecognized: routeHeader !== null,
+            transactionSucceeded: report.transactionSucceeded,
+            meteoraSwap2Cpis: swap2Cpis.map((ix) => ({
+              innerIndex: ix.innerIndex,
+              stackHeight: ix.stackHeight,
+              accountCount: ix.accounts.length,
+              orderedAccounts: ix.accounts.map((account) => account.address)
+            }))
+          });
+          if (results.length >= maxMatches) break;
+        }
+      }
+      if (transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
+      if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    if (rateLimited || transactionsScanned >= maxTransactions || results.length >= maxMatches) break;
+    if (pageScanned === 0) {
+      reachedEnd = true;
+      break;
+    }
+    cursor = lastScannedSignature;
+    if (signatures.length < pageLimit) {
+      reachedEnd = true;
+      break;
+    }
   }
 
   return {
     searchedProgramId: METEORA_DLMM_PROGRAM_ID,
     jupiterProgramId: JUPITER_V6_PROGRAM_ID,
     commitment: "finalized",
-    before,
-    signaturesReturned: signatures.length,
+    before: initialBefore,
+    nextBefore: lastScannedSignature,
+    signatureLimit: limit,
+    maxTransactions,
+    pagesScanned,
+    signaturesReturned,
     transactionsScanned,
     matchingRoutes: results.filter((result) => result.routePlanHeaderRecognized).length,
     matchingJupiterMeteoraInstructions: results.length,
     rateLimited,
     rateLimitedMethod,
+    reachedEnd,
     results,
     evidenceLimitations: [
       "This bounded sample is not an exhaustive scan of Jupiter/Meteora routes.",
+      "A rate-limited page is incomplete; its unscanned signatures must be retried from nextBefore.",
       "Route-plan variant and inner Swap2 CPI association is observational for each returned transaction.",
       "The report does not expose CPI-requested signer/writable AccountMeta flags.",
-      "Do not generalize account cursor behavior from a small recent sample."
+      "Do not generalize account cursor behavior from a bounded sample."
     ]
   };
 }
 
 async function main() {
   const rpcUrl = process.env.JUPITER_AUDIT_RPC_URL;
+  const integerEnv = (name) => {
+    const value = process.env[name];
+    if (value == null || value.trim() === "") return undefined;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 1) throw new Error(name + " must be a positive integer");
+    return parsed;
+  };
+  const delayEnv = process.env.JUPITER_AUDIT_DELAY_MS;
+  const delayMs = delayEnv == null || delayEnv.trim() === "" ? undefined : Number(delayEnv);
+  if (delayMs !== undefined && (!Number.isInteger(delayMs) || delayMs < 0)) {
+    throw new Error("JUPITER_AUDIT_DELAY_MS must be a non-negative integer");
+  }
   const report = await discoverRecentJupiterMeteoraRoutes(rpcUrl, {
-    before: process.env.JUPITER_AUDIT_BEFORE_SIGNATURE
+    before: process.env.JUPITER_AUDIT_BEFORE_SIGNATURE,
+    limit: integerEnv("JUPITER_AUDIT_SIGNATURE_LIMIT"),
+    maxTransactions: integerEnv("JUPITER_AUDIT_MAX_TRANSACTIONS"),
+    delayMs
   });
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 }
