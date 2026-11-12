@@ -144,3 +144,324 @@ mod tests {
         assert_eq!(branch.fallthrough_pc, Some(1));
     }
 }
+
+
+// Conservative forward data-flow over the pinned static-analysis CFG. This
+// intentionally models only the instruction subset in AbstractState; every
+// unsupported instruction invalidates all facts. A bounded run never claims
+// a pruned edge if its worklist did not reach a fixpoint.
+use crate::abstract_domain::{
+    evaluate_constant_branch, AbstractState, AbstractValue, BranchCondition,
+};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::ops::Range;
+
+#[derive(Clone, Debug)]
+pub struct CfgBlock {
+    pub instruction_range: Range<usize>,
+    pub successors: Vec<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BranchObservation {
+    pub pc: usize,
+    pub condition: &'static str,
+    /// None means unresolved or conflicting across incoming paths.
+    pub outcome_taken: Option<bool>,
+    /// Union of all successors that must be retained for this observation.
+    pub retained_successors: BTreeSet<usize>,
+    pub visits: usize,
+}
+
+#[derive(Clone, Debug)]
+pub struct CfgReachability {
+    pub reachable_blocks: BTreeSet<usize>,
+    pub branch_observations: BTreeMap<usize, BranchObservation>,
+    pub work_items: usize,
+    pub work_budget: usize,
+    pub truncated: bool,
+}
+
+fn branch_condition(name: &str) -> Option<BranchCondition> {
+    Some(match name {
+        "equal" => BranchCondition::Equal,
+        "not-equal" => BranchCondition::NotEqual,
+        "unsigned-greater-than" => BranchCondition::UnsignedGreater,
+        "unsigned-greater-or-equal" => BranchCondition::UnsignedGreaterOrEqual,
+        "unsigned-less-than" => BranchCondition::UnsignedLess,
+        "unsigned-less-or-equal" => BranchCondition::UnsignedLessOrEqual,
+        "signed-greater-than" => BranchCondition::SignedGreater,
+        "signed-greater-or-equal" => BranchCondition::SignedGreaterOrEqual,
+        "signed-less-than" => BranchCondition::SignedLess,
+        "signed-less-or-equal" => BranchCondition::SignedLessOrEqual,
+        "bit-set" => BranchCondition::BitSet,
+        _ => return None,
+    })
+}
+
+/// Analyze a basic-block graph using a bounded worklist. The caller supplies
+/// the CFG ranges/destinations from solana_sbpf::static_analysis::Analysis.
+/// The entry state is entirely Unknown: no loader register ABI or input-data
+/// pointer provenance is assumed.
+pub fn analyze_cfg(
+    instructions: &[ebpf::Insn],
+    blocks: &BTreeMap<usize, CfgBlock>,
+    entrypoint: usize,
+    version: SBPFVersion,
+    work_budget: usize,
+) -> Result<CfgReachability, &'static str> {
+    if !blocks.contains_key(&entrypoint) {
+        return Err("entrypoint is not a CFG basic-block key");
+    }
+
+    let mut incoming = BTreeMap::<usize, AbstractState>::new();
+    incoming.insert(entrypoint, AbstractState::default());
+    let mut queue = VecDeque::from([entrypoint]);
+    let mut queued = BTreeSet::from([entrypoint]);
+    let mut result = CfgReachability {
+        reachable_blocks: BTreeSet::new(),
+        branch_observations: BTreeMap::new(),
+        work_items: 0,
+        work_budget,
+        truncated: false,
+    };
+
+    while let Some(block_pc) = queue.pop_front() {
+        queued.remove(&block_pc);
+        if result.work_items >= work_budget {
+            result.truncated = true;
+            break;
+        }
+        result.work_items += 1;
+        result.reachable_blocks.insert(block_pc);
+
+        let block = blocks.get(&block_pc).ok_or("CFG successor is not a block key")?;
+        if block.instruction_range.start > block.instruction_range.end
+            || block.instruction_range.end > instructions.len()
+        {
+            return Err("CFG block instruction range is invalid");
+        }
+
+        let mut state = incoming.get(&block_pc).cloned().ok_or("reachable block has no input state")?;
+        let mut selected_successors: Option<BTreeSet<usize>> = None;
+
+        for (offset, instruction) in instructions[block.instruction_range.clone()].iter().enumerate() {
+            let is_last = offset + 1 == block.instruction_range.len();
+            if let Some(site) = classify_branch(version, instruction) {
+                // The pinned CFG splits every branch into a block terminator.
+                // If that structural invariant is violated, do not prune.
+                let mut outcome = if !is_last {
+                    None
+                } else if site.condition == "always" {
+                    Some(true)
+                } else if let Some(condition) = branch_condition(site.condition) {
+                    let left = state.registers.get(instruction.dst as usize).copied()
+                        .unwrap_or(AbstractValue::Unknown);
+                    let right = if site.operand_kind == "register" {
+                        state.registers.get(instruction.src as usize).copied()
+                            .unwrap_or(AbstractValue::Unknown)
+                    } else {
+                        AbstractValue::Constant(instruction.imm as i64 as u64)
+                    };
+                    evaluate_constant_branch(condition, left, right, site.width_bits)
+                } else {
+                    None
+                };
+
+                let candidate = match outcome {
+                    Some(true) => site.target_pc,
+                    Some(false) => site.fallthrough_pc,
+                    None => None,
+                };
+                let retained = if let Some(candidate) = candidate {
+                    if block.successors.contains(&candidate) {
+                        BTreeSet::from([candidate])
+                    } else {
+                        // A mismatch between our decoded edge and the pinned
+                        // CFG invalidates the proof; retain the CFG's full edge set.
+                        outcome = None;
+                        block.successors.iter().copied().collect()
+                    }
+                } else {
+                    block.successors.iter().copied().collect()
+                };
+
+                let observation = result.branch_observations.entry(site.pc).or_insert_with(|| BranchObservation {
+                    pc: site.pc,
+                    condition: site.condition,
+                    outcome_taken: outcome,
+                    retained_successors: BTreeSet::new(),
+                    visits: 0,
+                });
+                if observation.outcome_taken != outcome {
+                    observation.outcome_taken = None;
+                }
+                observation.retained_successors.extend(retained.iter().copied());
+                observation.visits += 1;
+
+                if is_last {
+                    selected_successors = Some(retained);
+                    break;
+                }
+                // A non-terminal branch contradicts the block partition.
+                // Kill facts and continue without attempting path pruning.
+                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm);
+            } else {
+                state.transfer_instruction(instruction.opc, instruction.dst, instruction.src, instruction.off, instruction.imm);
+            }
+        }
+
+        let successors = selected_successors.unwrap_or_else(|| block.successors.iter().copied().collect());
+        for successor in successors {
+            if !blocks.contains_key(&successor) {
+                continue;
+            }
+            let changed = if let Some(existing) = incoming.get(&successor) {
+                let merged = existing.merge(&state);
+                if &merged != existing {
+                    incoming.insert(successor, merged);
+                    true
+                } else {
+                    false
+                }
+            } else {
+                incoming.insert(successor, state.clone());
+                true
+            };
+            if changed && queued.insert(successor) {
+                queue.push_back(successor);
+            }
+        }
+    }
+
+    if result.truncated {
+        // A partial worklist cannot certify any edge pruning: retain every
+        // original CFG successor for every branch already observed.
+        for observation in result.branch_observations.values_mut() {
+            observation.outcome_taken = None;
+            if let Some(block) = blocks.values().find(|block| {
+                block.instruction_range.clone().any(|index| instructions.get(index).map(|insn| insn.ptr) == Some(observation.pc))
+            }) {
+                observation.retained_successors = block.successors.iter().copied().collect();
+            }
+        }
+    }
+    Ok(result)
+}
+
+#[cfg(test)]
+mod cfg_reachability_tests {
+    use super::*;
+    use solana_sbpf::ebpf;
+
+    fn insn(ptr: usize, opc: u8, dst: u8, src: u8, off: i16, imm: i32) -> ebpf::Insn {
+        ebpf::Insn { ptr, opc, dst, src, off, imm }
+    }
+
+    fn block(start: usize, end: usize, successors: &[usize]) -> CfgBlock {
+        CfgBlock { instruction_range: start..end, successors: successors.to_vec() }
+    }
+
+    #[test]
+    fn constant_taken_branch_prunes_only_the_unreachable_fallthrough() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, 5),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 5),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        let branch = &result.branch_observations[&1];
+        assert_eq!(branch.outcome_taken, Some(true));
+        assert_eq!(branch.retained_successors, BTreeSet::from([3]));
+        assert!(!result.reachable_blocks.contains(&2));
+        assert!(result.reachable_blocks.contains(&3));
+        assert!(!result.truncated);
+    }
+
+    #[test]
+    fn unknown_branch_retains_both_cfg_successors() {
+        let instructions = vec![
+            insn(0, ebpf::JEQ64_IMM, 1, 0, 1, 5),
+            insn(1, ebpf::EXIT, 0, 0, 0, 0),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1, 2])),
+            (1, block(1, 2, &[])),
+            (2, block(2, 3, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        let branch = &result.branch_observations[&0];
+        assert_eq!(branch.outcome_taken, None);
+        assert_eq!(branch.retained_successors, BTreeSet::from([1, 2]));
+        assert!(result.reachable_blocks.contains(&1));
+        assert!(result.reachable_blocks.contains(&2));
+    }
+
+    #[test]
+    fn conflicting_predecessor_constants_merge_to_unknown_at_join() {
+        let instructions = vec![
+            insn(0, ebpf::JEQ64_IMM, 0, 0, 1, 0),
+            insn(1, 0xb7, 1, 0, 0, 5),
+            insn(2, 0xb7, 1, 0, 0, 6),
+            insn(3, ebpf::JEQ64_IMM, 1, 0, 1, 5),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+            insn(5, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1, 2])),
+            (1, block(1, 2, &[3])),
+            (2, block(2, 3, &[3])),
+            (3, block(3, 4, &[4, 5])),
+            (4, block(4, 5, &[])),
+            (5, block(5, 6, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 64).unwrap();
+        let joined = &result.branch_observations[&3];
+        assert_eq!(joined.outcome_taken, None);
+        assert_eq!(joined.retained_successors, BTreeSet::from([4, 5]));
+    }
+
+    #[test]
+    fn loop_fixpoint_widens_changing_constant_to_unknown() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, 0),
+            insn(1, 0x07, 1, 0, 0, 1),
+            insn(2, ebpf::JA, 0, 0, -2, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1])),
+            (1, block(1, 3, &[1])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        assert!(!result.truncated);
+        assert!(result.reachable_blocks.contains(&1));
+        assert!(result.work_items < 10);
+    }
+
+    #[test]
+    fn exhausted_work_budget_disables_all_observed_pruning() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, 5),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 5),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 1).unwrap();
+        assert!(result.truncated);
+        let branch = &result.branch_observations[&1];
+        assert_eq!(branch.outcome_taken, None);
+        assert_eq!(branch.retained_successors, BTreeSet::from([2, 3]));
+    }
+}
