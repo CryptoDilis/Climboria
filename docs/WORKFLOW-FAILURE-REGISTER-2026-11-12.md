@@ -1211,3 +1211,25 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - **Failure accounting:** no failed workflow on `f1a590f`; the previous compile failure on `9497319...` and its immediate-width root cause/counter-fix are documented above. The earlier in-progress log retrieval issue was not a workflow failure.
 - **Evidence limits:** successful CFG tests do not by themselves prove runtime route_v2 dispatch. The analyzer still begins with unknown input state and lacks full loader/ABI and memory-load provenance. No route_v2 handler PC, discriminator-to-handler path, indirect callx runtime target, CPI account-slice boundary, or CPI requested signer/writable privilege is proven. Wildlife is also outside the current browser-smoke coverage.
 - **Next exact task:** extend conservative abstract interpretation with documented entrypoint/loader ABI and memory-load provenance, add tests for supported and unsupported memory reads, then re-run all exact-head workflows and inspect generated branch evidence. After that, resolve indirect callx targets and trace route_v2 handler/CPI account and requested-privilege boundaries. Keep route_v2 excluded from production validation; signing, execution, and deployment gates remain closed.
+
+
+## 2026-11-13 follow-up — two failures on candidate input-aware DEX smoke head
+
+### 7. PR #272 candidate instruction-data branch test — run 43313799166
+
+- **Exact head:** 27b6190b175b9e90171688e911a17369400aeafb; failing job 131516491031; failing test: candidate_instruction_data_bytes_resolve_only_the_proven_discriminator_word.
+- **Failure:** 35 Rust tests passed; this branch-integration test observed outcome_taken=None instead of Some(true). Abstract-domain tests for bounded little-endian input reads and V0/V2 load encodings passed.
+- **Root cause:** the ordinary non-branch instruction path in analyze_cfg_with_entry still called the backward-compatible transfer_instruction wrapper, which intentionally supplies no candidate input bytes. The new transfer_instruction_with_input(..., version, instruction_data) was used only in the non-terminal-branch path. Thus LDXW read from the candidate instruction-data pointer became Unknown before the JEQ branch.
+- **Counter-fix commit:** c1e5504e3d474015a5916756a5a1cf34e0337bce routes every ordinary instruction through transfer_instruction_with_input, preserving the selected SBPF version and optional proven instruction-data slice. The branch integration regression test remains enabled and unchanged.
+- **Additional safety:** the same commit pins the exact 69-byte candidate input payload and adds a workflow guard for Upgradeable BPF Loader ownership, ProgramData deployment slot, ELF SHA-256, candidate transaction slot/epoch, route_v2 discriminator, SIMD-0321 activation, and the not-yet-active SIMD-0449 direct-account-pointer gate. Entry registers are seeded only for this verified candidate.
+
+### 8. PR #272 DEX market refresh — run 43313799186
+
+- **Exact head:** 27b6190b175b9e90171688e911a17369400aeafb; failing job 131516463467; failing step: Test standalone DEX market and quote-preview shell.
+- **Failure:** after pool-B selection and browser Back/Forward restoration passed, the same-pool refresh assertion timed out after 10 seconds waiting for #detailPrice to update to $2.75000. Chart/history assertions before this point passed. Provider evidence and screenshots still uploaded (artifacts 13987033004 and 13987676083).
+- **Source evidence:** openToken awaited Promise.allSettled([get(DexScreener), fetchPumpCoin]) before rendering selected-pool metrics. fetchPumpCoin calls the configured https://api.climboria.fun/api/pump/coin proxy with an 8-second abort timeout. The browser test mocked DexScreener but did not isolate this second service. A delayed/unavailable metadata proxy therefore blocked the primary market refresh even when DexScreener had already returned.
+- **Diagnosis boundary:** source-level cross-service coupling and an unisolated external test dependency are confirmed. The failed run did not capture a request-level timing trace; do not claim a measured production backend outage.
+- **Counter-fix commit:** c1e5504e3d474015a5916756a5a1cf34e0337bce makes Pump metadata refresh asynchronous/non-blocking, renders cached metadata immediately, and adds a deterministic delayed second metadata response in Browser Smoke while retaining exact price/chart/history assertions with a stricter 5-second market refresh deadline. Follow-up commit 9e3c7bd543b7bd3397a5fff8dcc82501c8545538 preserves cached and asynchronously returned token metadata in the remembered-token store.
+- **Verification:** pending exact-head rerun after the counter-fixes. Do not close this incident until the Rust IDL workflow and Browser Smoke both pass on the same resulting head.
+
+These were two independent failures on one head: an analyzer input-propagation defect and a DEX market/metadata dependency defect. The intervening cancelled/superseded runs are cancellations, not failures.
