@@ -93,8 +93,20 @@ Implement candidate-scoped input-data-aware, interprocedural analysis in this or
 ## Candidate input-data integration and feature-gate evidence — 2026-11-13
 
 - Candidate-specific input modeling distinguishes SBPF V0 (ELF instruction-set version) from loader ABI v1 (selected by the Upgradeable BPF Loader owner).
-- SIMD-0321 direct instruction-data pointer in r2 is Mainnet-active from epoch 950. Candidate slot 468153382 maps to epoch 1083 with 432,000 slots/epoch, so r2 can be seeded for this exact trace. SIMD-0449 direct account pointers are scheduled for epoch 1099 and are not active at the candidate epoch; no account pointers are seeded.
+- SIMD-0321 direct instruction-data pointer in r2 is Mainnet-active from epoch 950. Candidate slot 468153382 maps to epoch 1083 with 432,000 slots/epoch, so r2 can be seeded for this exact trace. SIMD-0449 remains Review and has no Mainnet activation epoch as of 2026-11-13; no direct account pointers are seeded.
 - The exact 69-byte candidate route_v2 payload is pinned and checked byte-for-byte. The workflow checks finalized loader owner, ProgramData deployment slot, ELF SHA-256, candidate slot/epoch and route_v2 discriminator before candidate input analysis.
 - ABI-v1/SIMD-0321 entry state is r0/r3-r9 = zero, r1 = serialized input base, r2 = instruction-data pointer, r10 = abstract stack base; r11 is VM-internal and not modeled.
 - Bounded little-endian V0/V2 instruction-data load tests pass at the abstract-domain level. The first CFG integration test failed because one ordinary-instruction path still used the no-input compatibility wrapper; counter-fix is to pass version and candidate bytes through every ordinary instruction transfer.
 - The analyzer remains intraprocedural and cannot yet claim route_v2 handler reachability. Direct CALL_IMM call/return traversal and CALLX runtime target resolution remain the next major static-analysis tasks.
+
+
+## Exact-head result and r1 serialized-input finding — 2026-11-13
+
+Candidate input-aware IDL run 43314944441 passed on code head dafa017c7b75e7833e3739bc2f16861c469f4ad7:
+- 37 Rust tests passed, including bounded input-load and candidate CFG integration tests.
+- Candidate Program/ProgramData owner, deployment slot, ELF SHA-256, transaction slot/epoch, route_v2 discriminator and SIMD-0321 activation guard passed.
+- Static output: 88 reachable basic blocks, 70 branch observations, 9 resolved (unconditional) and 61 unresolved conditional observations; dataflow budget was not truncated.
+- No route_v2 conditional branch was proven from the 69-byte direct instruction-data fixture. The entrypoint overwrites r2 at PC 107632 and parses the serialized ABI-v1 input through r1.
+- The candidate transaction's Jupiter outer instruction has 85 account positions, 51 unique addresses and 34 duplicates (CPI trace artifact 13988045905).
+
+This output is not route_v2 handler reachability or a transaction-safety conclusion. Next: direct internal-call traversal, then sparse ABI-v1 r1 buffer reconstruction with strict provenance boundaries.

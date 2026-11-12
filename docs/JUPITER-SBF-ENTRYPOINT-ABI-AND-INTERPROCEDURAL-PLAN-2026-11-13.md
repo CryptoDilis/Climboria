@@ -73,10 +73,26 @@ Consequently, the current reachable-block output is not an interprocedural call-
 
 - The Solana Protocol Specification Mainnet feature manifest records SIMD-0321 (direct instruction-data pointer in r2) active from epoch 950. Feature account: 5xXZc66h4UdB6Yq7FzdBxBiRAFMMScMLwHxk2QZDaNZL.
 - Mainnet's normal epoch schedule is 432,000 slots. Candidate slot 468153382 maps to epoch floor(468153382 / 432000) = 1083, so SIMD-0321 was active for the candidate transaction.
-- SIMD-0449 (direct account pointers in program input) is scheduled for Mainnet epoch 1099, after the candidate's epoch 1083. Do not seed r3–r5 as direct account pointers and do not infer account-data provenance from the new r2 feature.
+- SIMD-0449 (direct account pointers in program input) remains in Review and has no Mainnet activation epoch as of 2026-11-13. The proposal page lists upcoming Devnet/Testnet activations only; do not infer a Mainnet activation epoch. No direct account-pointer extension is assumed for this candidate.
 - Loader ABI v1 and SIMD-0321 activation jointly support r2 instruction-data provenance; the separate direct-account-pointer feature is not active at this historical candidate slot.
 - References: Solana Protocol Specification §§12.8.2, 12.8.6 and Mainnet feature manifest; Mainnet epoch schedule §16.1. https://bw-solana.github.io/solana-protocol-spec/12-svm-loaders-syscalls-and-precompiles.html and https://bw-solana.github.io/solana-protocol-spec/16-epochs-leader-schedule-stake-fees-and-rewards.html
 
 ## Implementation guard
 
-The IDL workflow validates the finalized Program account owner, ProgramData owner/deployment slot, exact ELF SHA-256, candidate transaction slot/epoch, route_v2 discriminator, SIMD-0321 activation epoch, and the fact that SIMD-0449 was not yet active before it passes candidate input bytes to the static analyzer. The analyzer also checks the exact 69-byte payload. A generic ELF run without this evidence remains all-Unknown at entry.
+The IDL workflow validates the finalized Program account owner, ProgramData owner/deployment slot, exact ELF SHA-256, candidate transaction slot/epoch, route_v2 discriminator and SIMD-0321 activation epoch before it passes the exact 69-byte candidate payload to the static analyzer. SIMD-0449 remains Review with no Mainnet activation; no direct account-pointer extension is assumed. A generic ELF run without this evidence remains all-Unknown at entry.
+
+## Candidate entrypoint input-layout finding — 2026-11-13
+
+The pinned candidate ELF entrypoint prefix is now asserted byte-for-byte by the audit tool:
+- PC 107630: r4 = r1 (serialized ABI-v1 input base)
+- PC 107632: r2 = r4
+- PC 107633: r2 += 8
+- PC 107634: load the account count from [r4]
+
+The direct r2 instruction-data pointer supplied by SIMD-0321 is therefore overwritten with InputDataPointer(8) before it is dereferenced. The program walks the ABI-v1 serialized input from r1; the 69-byte route_v2 instruction data is located after the serialized account records and is not yet mapped into that r1 address space.
+
+The finalized CPI trace artifact (workflow run 43314944457, artifact 13988045905) contains the top-level Jupiter instruction account vector: 85 account entries, 51 unique addresses and 34 duplicate references. This is outer transaction message privilege evidence, not the CPI-requested AccountMeta vector. Historical owner, executable, lamports, data-length and account-data fields are not all proven by that trace and must remain unknown until separately sourced.
+
+SIMD-0449 is Review and has no Mainnet activation epoch as of 2026-11-13. SIMD-0683 metadata-register changes are also Review. Do not infer direct account pointers or new metadata-register inputs from either proposal.
+
+**Next task:** implement bounded context-insensitive direct CALL_IMM traversal using the pinned runtime's actual call-frame behavior, then build a sparse ABI-v1 r1 input image from the candidate account vector. Seed only historically proven account metadata and the known instruction data; leave unproven account bytes/data lengths unknown. Do not claim the route_v2 discriminator path is resolved until the r1 buffer offset is proven.

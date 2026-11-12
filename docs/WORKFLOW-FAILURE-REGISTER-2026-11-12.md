@@ -1230,6 +1230,31 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - **Source evidence:** openToken awaited Promise.allSettled([get(DexScreener), fetchPumpCoin]) before rendering selected-pool metrics. fetchPumpCoin calls the configured https://api.climboria.fun/api/pump/coin proxy with an 8-second abort timeout. The browser test mocked DexScreener but did not isolate this second service. A delayed/unavailable metadata proxy therefore blocked the primary market refresh even when DexScreener had already returned.
 - **Diagnosis boundary:** source-level cross-service coupling and an unisolated external test dependency are confirmed. The failed run did not capture a request-level timing trace; do not claim a measured production backend outage.
 - **Counter-fix commit:** c1e5504e3d474015a5916756a5a1cf34e0337bce makes Pump metadata refresh asynchronous/non-blocking, renders cached metadata immediately, and adds a deterministic delayed second metadata response in Browser Smoke while retaining exact price/chart/history assertions with a stricter 5-second market refresh deadline. Follow-up commit 9e3c7bd543b7bd3397a5fff8dcc82501c8545538 preserves cached and asynchronously returned token metadata in the remembered-token store.
-- **Verification:** pending exact-head rerun after the counter-fixes. Do not close this incident until the Rust IDL workflow and Browser Smoke both pass on the same resulting head.
+- **Verification:** counter-fixes passed on exact code head dafa017c7b75e7833e3739bc2f16861c469f4ad7. Validate 43314944460, Jupiter V6 CPI Trace Audit 43314944457, Jupiter IDL History Audit 43314944441 and Browser Smoke 43314944411 all completed SUCCESS on that same SHA. The DEX market refresh and Jarrell's Peak desktop/mobile gameplay passed. A further candidate-entrypoint-prefix assertion is now in commit 94df8ccdd97005d4f0321a1634d15eb58df6a6c4 and awaits its own exact-head rerun.
 
 These were two independent failures on one head: an analyzer input-propagation defect and a DEX market/metadata dependency defect. The intervening cancelled/superseded runs are cancellations, not failures.
+
+
+## 2026-11-13 exact-head recovery checkpoint
+
+**Verified code head:** dafa017c7b75e7833e3739bc2f16861c469f4ad7
+
+- Validate Climboria: run 43314944460 — SUCCESS.
+- Jupiter V6 CPI Trace Audit: run 43314944457 — SUCCESS; candidate trace artifact 13988045905.
+- Jupiter IDL History Audit: run 43314944441 — SUCCESS; artifact 13988036590. The pinned static analyzer completed 37 Rust tests and produced candidate input-aware CFG output.
+- Climboria Browser Smoke: run 43314944411 — SUCCESS; DEX market/chart tests and Jarrell's Peak desktop/mobile gameplay passed. Screenshot artifact 13988176692; provider evidence artifact 13987981885.
+- All four runs tested the same exact head. Earlier runs cancelled by branch updates are superseded/cancelled, not failures.
+
+## Additional static-analysis finding — r2 pointer is overwritten
+
+The candidate's first entrypoint instructions are:
+- PC 107630: mov64 r4, r1
+- PC 107632: mov64 r2, r4
+- PC 107633: add64 r2, 8
+- PC 107634: ldxdw r1, [r4]
+
+The direct r2 instruction-data pointer supplied by SIMD-0321 is overwritten with the serialized r1 input base + 8 before it is dereferenced. The program reads the account count and account records from the ABI-v1 serialized input. The exact 69-byte instruction data must be located later in that serialized input, after the 85 account entries. The 69-byte direct-pointer fixture is therefore a memory-model unit fixture, not proof of candidate discriminator consumption.
+
+**Feature correction:** SIMD-0321 is Mainnet-active from epoch 950; candidate slot 468153382 is epoch 1083. SIMD-0449 is Review and has no Mainnet activation epoch as of 2026-11-13; the earlier reference to Mainnet epoch 1099 was incorrect (that number was not a Mainnet activation). SIMD-0683 is also Review. Do not seed direct account pointers or metadata-register inputs from either proposal.
+
+**Next engineering priority:** implement bounded direct CALL_IMM traversal using the pinned VM call-frame semantics, then reconstruct a sparse ABI-v1 r1 input buffer from the candidate's 85-position account vector. Keep historical account-state fields unknown unless sourced at the candidate slot.
