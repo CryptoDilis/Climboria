@@ -4,7 +4,7 @@
 
 **Repository:** `CryptoDilis/Climboria`  
 **Branch:** `codex/swap-security-evidence-current-main-2026-11-12`  
-**Checkpoint commit before this update:** `bbff48e5affdac2ece5ab531776b184f12cc3666`  
+**Checkpoint commit before this update:** `773af855add1e247e7e0784dbf810d877b4d1780`  
 **PR:** #269 — open, draft, unmerged  
 **Checkpoint time:** 2026-11-12 (UTC)
 
@@ -21,17 +21,18 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ### 1. DEX — first priority
 
-- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `bbff48e5affdac2ece5ab531776b184f12cc3666`.
+- [x] Browser smoke: homepage/DEX routing and navigation passed on exact head `773af855add1e247e7e0784dbf810d877b4d1780`.
 - [x] Browser smoke: live Solana profile/boost discovery path passed.
 - [x] Browser smoke: desktop/mobile DEX workspace and 390px/360px layouts passed.
 - [x] Browser smoke: provider-error and true-empty states passed.
+- [x] Browser smoke: live Base token search, Base-only chain filtering, stale-result clearing and provider HTTP 503 handling passed on exact head `773af855add1e247e7e0784dbf810d877b4d1780`.
 - [ ] Verify production provider-backed discovery/search, exact mint identity and token profile correctness.
 - [ ] Verify real pool/liquidity/price/volume values and freshness; distinguish actual live data from preview/fixture data.
 - [ ] Verify chart updates against real provider data and correct token/pool changes.
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** verify the newly added Base live provider search (query discovery, Base-only filtering, stale-response handling and honest provider errors) on the next exact-head Browser Smoke run; then continue chart freshness and exact mint/pool identity acceptance.
+**Next DEX task:** trace chart data refresh and selected-pool identity from live provider response through the UI; test token/pool switching and stale-chart prevention, then verify production API freshness and service configuration.
 
 ### 2. Swap — second priority
 
@@ -76,18 +77,18 @@ This is the short-term priority through November 15. It does not silently rewrit
 
 ## Exact-head CI evidence at checkpoint
 
-All four workflows on `bbff48e5affdac2ece5ab531776b184f12cc3666` completed SUCCESS with zero failed steps:
+All four workflows on `773af855add1e247e7e0784dbf810d877b4d1780` completed SUCCESS with zero failed steps:
 
 | Workflow | Run | Job | Result |
 |---|---:|---:|---|
-| Validate | `43232910766` | `131232613490` | 15/15 steps passed |
-| Jupiter CPI Trace Audit | `43232910804` | `131232613532` | 10/10 steps passed |
-| Jupiter IDL History Audit | `43232910740` | `131232612878` | 12/12 steps passed |
-| Browser Smoke | `43232910733` | `131232613189` | 22/22 steps passed, including Jarrell's Peak desktop/mobile gameplay |
+| Validate | `43235240765` | `131240734390` | 15/15 steps passed |
+| Jupiter CPI Trace Audit | `43235240638` | `131240734082` | 10/10 steps passed |
+| Jupiter IDL History Audit | `43235240978` | `131240744197` | 12/12 steps passed |
+| Browser Smoke | `43235240724` | `131240738638` | 23/23 steps passed, including the new Base live-search test and Jarrell's Peak desktop/mobile gameplay |
 
-Browser artifact `13951617045`: 8,665,799 bytes, 10 screenshots, SHA-256 `41d6be905a2e65d629866766f887c5ee81aa2812cd1f56b0f155fc0bfc107368`. CPI artifact `13950078487`: SHA-256 `2f33b250110c6ce271077fb74c73b373bf39100282b44bd9c0f5a3bad1928995`. IDL artifact `13951671526`: SHA-256 `d6d74562d41f16724de359a74b22d8723e7c1bcf5e9b444a358cb3bb3fa3f655`.
+Browser artifact `13953435816`: 8,869,813 bytes, 10 screenshots, SHA-256 `8443c4291a4969fb1f70c6820f986bdbdb607b94d45acc07a9df74abdf254904`. CPI artifact `13951433595`: SHA-256 `c73e6ba691b20f58c4dfaf5442c6d4188e19efbbf9f7ec68b0fad2f1a57bca69`. IDL artifact `13952570939`: SHA-256 `cbdc49230a040951aabbba4c59a51b6a0d4256a0834369ecd47c7033abcd5f11`.
 
-**New DEX implementation in this commit:** Base token search now calls the live DexScreener search endpoint, filters to Base chain, rejects stale responses and displays honest provider errors. A dedicated browser test has been added; its result is pending the next exact-head workflow batch.
+**Base search implementation verified:** live DexScreener query discovery, Base-only filtering, stale-result clearing and honest provider error state passed the dedicated Playwright step. This is not exhaustive ERC-20 indexing or full DEX production-live acceptance.
 
 **Important:** passing CI is not proof that DEX or Swap is production-live, nor that all game systems are complete. See the workflow register for full evidence, bounded CPI scan limits and security caveats.
 

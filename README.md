@@ -35,11 +35,10 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `bbff48e5affdac2ece5ab531776b184f12cc3666`; PR #269 remains open, draft and unmerged.
-- Exact-head workflows: Validate `43232910766` (15/15), CPI Trace `43232910804` (10/10), IDL History `43232910740` (12/12), Browser Smoke `43232910733` (22/22) — all SUCCESS, zero failed steps.
-- Browser Smoke includes DEX/Swap/auth/mobile paths and Jarrell's Peak desktop/mobile gameplay. Its 10-screenshot artifact, CPI trace artifact and IDL/static-analysis artifact were downloaded and SHA-256 verified; see the launch checklist and workflow register.
-- DEX source audit found Base search previously filtered only eight seeded-symbol query results. The current engineering change adds debounced live provider search, Base-only chain filtering, stale-response protection and truthful provider errors; dedicated Playwright verification is pending on the next exact head.
-- Current next task: verify the Base live-search test and all exact-head workflows; then continue DEX chart freshness and exact mint/pool identity acceptance. Keep Swap execution gates false.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `773af855add1e247e7e0784dbf810d877b4d1780`; PR #269 remains open, draft and unmerged.
+- Exact-head workflows: Validate `43235240765` (15/15), CPI Trace `43235240638` (10/10), IDL History `43235240978` (12/12), Browser Smoke `43235240724` (23/23) — all SUCCESS, zero failed steps.
+- The new Base live-search regression passed: provider query discovery, Base-only filtering, stale-result clearing and honest HTTP 503 handling. Jarrell's Peak desktop/mobile gameplay smoke also passed; 10 screenshots and the CPI/IDL artifacts were SHA-256 verified. See the launch checklist and workflow register.
+- Current next task: audit DEX chart freshness and selected-pool identity, including token/pool switching and stale-chart prevention. Verify production API freshness and service configuration. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---
