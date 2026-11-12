@@ -1,3 +1,6 @@
+mod branch_analysis;
+
+use branch_analysis::classify_branch;
 use solana_sbpf::{
     elf::Executable,
     program::{BuiltinProgram, SBPFVersion},
@@ -5,7 +8,7 @@ use solana_sbpf::{
     test_utils::TestContextObject,
 };
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env,
     error::Error,
     fs::{self, File},
@@ -62,6 +65,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let callx_register_encoding = if version.callx_uses_src_reg() { "src" } else if version.callx_uses_dst_reg() { "dst" } else { "imm_low_byte" };
     writeln!(summary, "call_reg_target_register_encoding={callx_register_encoding}")?;
     writeln!(summary, "call_reg_target_resolution=register_value_unresolved")?;
+    let branch_site_count = analysis.instructions.iter().filter(|instruction| classify_branch(version, instruction).is_some()).count();
+    writeln!(summary, "branch_instruction_count={branch_site_count}")?;
+    writeln!(summary, "branch_condition_resolution=unresolved; both conditional successors retained")?;
     writeln!(summary, "NOTE=static analysis only; no execution or CPI privilege recovery")?;
     for (pc, (key, name)) in &analysis.functions {
         writeln!(summary, "function_pc={pc} function_key=0x{key:08x} name={name}")?;
@@ -106,12 +112,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let callx_sites_path = format!("{out_dir}/callx-sites.tsv");
     let instructions_path = format!("{out_dir}/instructions.tsv");
     let cfg_nodes_path = format!("{out_dir}/cfg-nodes.tsv");
+    let branch_sites_path = format!("{out_dir}/branch-sites.tsv");
     let mut calls = BufWriter::new(File::create(calls_path)?);
     let mut entrypoint_calls = BufWriter::new(File::create(entrypoint_calls_path)?);
     let mut syscall_sites = BufWriter::new(File::create(syscall_sites_path)?);
     let mut callx_sites = BufWriter::new(File::create(callx_sites_path)?);
     let mut instruction_dump = BufWriter::new(File::create(instructions_path)?);
     let mut cfg_nodes = BufWriter::new(File::create(cfg_nodes_path)?);
+    let mut branch_sites = BufWriter::new(File::create(branch_sites_path)?);
+    let instruction_pcs: HashSet<usize> = analysis.instructions.iter().map(|instruction| instruction.ptr).collect();
     let header = "callsite_pc\tcaller_registry_pc\tcall_key\tclassification\ttarget_pc\ttarget_name";
     writeln!(calls, "{header}")?;
     writeln!(entrypoint_calls, "{header}")?;
@@ -221,7 +230,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     syscall_sites.flush()?;
     callx_sites.flush()?;
     instruction_dump.flush()?;
-    cfg_nodes.flush()?;
+    cfg_nodes.flush()?;\n    branch_sites.flush()?;
 
     let disassembly_path = format!("{out_dir}/disassembly.s");
     let mut disassembly = BufWriter::new(File::create(disassembly_path)?);
