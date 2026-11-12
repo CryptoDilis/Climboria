@@ -83,15 +83,14 @@ jobs:
               programData.binarySha256 !== expectedBinary ||
               candidateSlot !== 468153382 ||
               candidateEpoch !== 1083 ||
-              candidateEpoch < 950 ||
-              candidateEpoch >= 1099) {
+              candidateEpoch < 950) {
             throw new Error('Candidate loader/feature provenance is not sufficient to seed ABI-v1 r2 instruction-data pointer: ' +
               JSON.stringify({programId:summary.programId,cluster:summary.cluster,programOwner:program.owner,
                 programDataOwner:programData.owner,deploymentSlot:programData.deploymentSlot,
                 binarySha256:programData.binarySha256,candidateSlot,candidateEpoch,
                 expectedDiscriminator:summary.expectedCandidateRouteV2Discriminator}));
           }
-          console.log('PASS Upgradeable BPF Loader ABI v1; SIMD-0321 r2 input pointer active by epoch 950; candidate epoch 1083; SIMD-0449 direct account pointers not active until epoch 1099.');
+          console.log('PASS Upgradeable BPF Loader ABI v1; SIMD-0321 r2 input pointer active by epoch 950; candidate epoch 1083. SIMD-0449 remains Review with no Mainnet activation; no direct account pointers are assumed.');
           JS
       - name: Generate pinned sBPF disassembly and candidate input-aware control-flow summary
         timeout-minutes: 10

@@ -81,12 +81,31 @@ fn main() -> Result<(), Box<dyn Error>> {
         if data_hex != "bb64facc31c4af143003ef0500000000d2563a4a21020000d0070a00000004000000b501102700012f0000f60301034b000000001a23010351000000000000000010270304" {
             return Err("candidate input fixture does not match the exact finalized route_v2 transaction payload".into());
         }
+        // Assert the pinned candidate's entrypoint prefix: r2 is overwritten
+        // from the serialized r1 input base before it is dereferenced.
+        let expected_prefix: [(usize, u8, u8, u8, i16, i64); 5] = [
+            (0, 0xbf, 4, 1, 0, 0),
+            (1, 0xb7, 6, 0, 0, 0),
+            (2, 0xbf, 2, 4, 0, 0),
+            (3, 0x07, 2, 0, 0, 8),
+            (4, 0x79, 1, 4, 0, 0),
+        ];
+        for (offset, opcode, dst, src, off, imm) in expected_prefix {
+            let Some(instruction) = analysis.instructions.iter()
+                .find(|instruction| instruction.ptr == analysis.entrypoint + offset) else {
+                return Err("candidate entrypoint prefix is incomplete; refusing to claim r2 input provenance".into());
+            };
+            if instruction.opc != opcode || instruction.dst != dst ||
+                instruction.src != src || instruction.off != off || instruction.imm != imm {
+                return Err(format!("candidate entrypoint prefix changed at offset {offset}; re-audit ABI input provenance").into());
+            }
+        }
         entry_state = AbstractState::solana_abi_v1_simd_0321_entry_state();
         fs::write(
             format!("{out_dir}/entrypoint-instruction-data.hex"),
             data.iter().map(|byte| format!("{byte:02x}")).collect::<String>() + "\n",
         )?;
-        "candidate-abi-v1-simd-0321-instruction-data"
+        "candidate-abi-v1-simd-0321-seeded-r2-overwritten-r1-buffer-unmodeled"
     } else {
         "unknown-entry-registers"
     };
@@ -117,10 +136,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "sbpf_version={version:?}")?;
     writeln!(summary, "entrypoint_input_mode={input_mode}")?;
     writeln!(summary, "entrypoint_instruction_data_bytes={}", instruction_data.as_ref().map_or(0, Vec::len))?;
-    writeln!(summary, "entrypoint_instruction_data_reads=bounded_little_endian; unknown_regions_remain_unknown")?;
+    writeln!(summary, "instruction_data_memory_model=bounded_little_endian; candidate direct-r2 pointer overwritten before dereference")?;
     writeln!(summary, "entrypoint_register_seed=r0/r3-r9=0;r1=input-base;r2=instruction-data;r10=stack-base;r11=vm-pc")?;
     writeln!(summary, "entrypoint_r2_feature_gate=SIMD-0321 mainnet activation epoch 950; candidate epoch 1083")?;
-    writeln!(summary, "direct_account_pointers=SIMD-0449 mainnet activation epoch 1099; not active at candidate epoch")?;
+    writeln!(summary, "entrypoint_r2_pointer_usage=overwritten at entrypoint+2; r2 becomes InputDataPointer(8); first account-count load uses r1 base")?;
+    writeln!(summary, "candidate_serialized_input=ABI-v1; 85 account entries; 51 unique; 34 duplicates; account data lengths and input-data offset not reconstructed")?;
+    writeln!(summary, "direct_account_pointers=SIMD-0449 status Review; no Mainnet account-pointer extension assumed")?;
     writeln!(summary, "interprocedural_direct_calls=not_traversed")?;
     writeln!(summary, "text_address=0x{text_address:x}")?;
     writeln!(summary, "text_bytes={}", text_bytes.len())?;
