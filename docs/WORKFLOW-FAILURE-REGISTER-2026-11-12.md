@@ -1053,3 +1053,18 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - Acceptance requires at least one JUP base-side pool and one USDC quote-side pool. If either expected side is absent, the workflow fails with the observed counts and the artifact records available evidence; inspect the live response before changing expectations.
 - **No workflow failure has occurred for this new probe yet.** Do not pre-record a failure. Exact-head verification pending.
 - **Next:** inspect the capture artifact and exact-head workflow results. Confirm actual field values and orientation against the documented schema; do not implement quote-side inversion unless independently proven.
+
+
+## 2026-11-13 — DexScreener provider response captured and analyzed
+
+- Exact tested source head: `10c0d9a4595726502df3923506c52a85f832ea17`; PR #269 remains open/draft/unmerged.
+- All four exact-head workflows passed with zero failed steps: Validate `43264126376` / job `131342985211`; Jupiter CPI Trace `43264125966` / job `131342981445`; Jupiter IDL History `43264126063` / job `131342980344`; Browser Smoke `43264126145` / job `131342982271`.
+- Browser Smoke passed its live DexScreener capture, all DEX/Swap/browser regressions, quote-side withholding, mobile checks and Jarrell's Peak desktop/mobile gameplay. The live evidence artifact `13965897330` was downloaded and inspected.
+- Capture at `2026-11-12T16:56:59.580Z`: JUP returned 30 pairs, all 30 with JUP as base. USDC returned 30 pairs: 20 USDC-base and 10 USDC-quote. HTTP 200 for both; no capture errors.
+- Observed JUP/SOL pair `C8Gr6AUuq9hEdSYJzoEpNcdjpojPZwqG5MtQbeouNNwg`: base JUP, quote SOL, `priceNative=0.003221`, `priceUsd=0.2623`. Observed PUMP/USDC pair `2uF4Xh61rDwxnG9woyxsVQP7zuA6kLFpb3NvnRQeoiSd`: base PUMP, quote USDC, `priceNative=0.003367`, `priceUsd=0.003367`. Thus the quote-side USDC request can return a pair whose displayed price fields refer to PUMP, not USDC.
+- Volume, price-change and transaction counters are pair-level fields in the observed response. This evidence does not establish a quote-token-specific interpretation or correct quote-side chart series. Do not assign these values to the requested quote mint. No reciprocal normalization or chart inversion is justified by this capture alone.
+- Persistent evidence report added at `docs/evidence/DEXSCREENER-PROVIDER-CONTRACT-2026-11-12.md`. The downloadable CI artifact retains the larger sanitized capture sample.
+- **No workflow failed on this exact head; no failure diagnosis was fabricated.** Historical failure entries remain in the register. Superseded cancellations are not failures.
+- **Counter-fix disposition:** keep exact base-side mint matching and quote-side withholding. Evidence confirms why the fail-closed guard is required; it does not enable quote-side support.
+- **Release posture:** DEX remains not production-live; freshness/cache, exhaustive coverage, chart endpoint orientation and deployment acceptance remain unverified. Swap signing/submission gates remain false; PR #269 remains draft/unmerged.
+- **Next:** inspect chart-provider contract for exact base-side pair/chart identity and freshness, then design a separately gated quote-side approach only if the chart source exposes the requested token's own series. Keep the current fail-closed behavior otherwise.

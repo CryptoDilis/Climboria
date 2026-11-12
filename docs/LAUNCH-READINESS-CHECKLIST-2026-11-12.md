@@ -149,3 +149,16 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Verify capture on exact new head and inspect artifact side counts, sample pair addresses, token identities and metric fields.
 - [ ] Prove selected-mint price/volume/change/transaction/chart orientation from observed data before quote-side normalization.
 - [ ] Keep quote-side-only pools withheld; keep DEX production-live and Swap signing/submission gates closed.
+
+
+## 2026-11-13 — live provider capture analyzed
+
+- [x] Exact-head Validate, CPI Trace, IDL History and Browser Smoke all passed on `10c0d9a4595726502df3923506c52a85f832ea17` (run IDs: `43264126376`, `43264125966`, `43264126063`, `43264126145`).
+- [x] Inspected CI artifact `13965897330`: HTTP 200 for JUP and USDC; JUP 30/30 base-side; USDC 20 base-side and 10 quote-side; 60 total pairs; no capture errors.
+- [x] Persisted representative live provider-contract findings in `docs/evidence/DEXSCREENER-PROVIDER-CONTRACT-2026-11-12.md`.
+- [x] Confirmed quote-side USDC result can expose base PUMP `priceUsd=0.003367`; pair metrics cannot be treated as USDC token metrics.
+- [x] Retain exact base-side matching and quote-side withholding. No reciprocal price or chart inversion without independent proof.
+- [ ] Verify chart-provider endpoint identity, time-series orientation, metric units and freshness before considering additional token-detail support.
+- [ ] Production DEX acceptance/deployment and Swap signing/submission remain gated; PR #269 stays draft/unmerged.
+
+**Next task:** audit the chart-provider integration for its pair-address/token identity contract and freshness semantics; add a deterministic regression for any supported behavior without relaxing the quote-side fail-closed fallback.
