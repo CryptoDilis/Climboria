@@ -64,6 +64,21 @@ impl AbstractState {
         state
     }
 
+    /// Conservatively clobber BPF caller-saved registers after a call.
+    /// r6-r9 and r10 are preserved by the VM calling convention.
+    pub fn invalidate_call_clobbered_registers(&mut self) {
+        for index in 0..=5 {
+            self.registers[index] = AbstractValue::Unknown;
+        }
+    }
+
+    /// Prepare an internal callee entry. Propagate r1-r5 arguments and
+    /// callee-saved r6-r9, but do not assume a callee stack-frame address.
+    pub fn prepare_internal_callee_entry(&mut self) {
+        self.registers[0] = AbstractValue::Unknown;
+        self.registers[10] = AbstractValue::Unknown;
+    }
+
     pub fn merge(&self, other: &Self) -> Self {
         let mut merged = Self::default();
         for index in 0..11 {

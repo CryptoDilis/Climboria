@@ -2,7 +2,7 @@ mod abstract_domain;
 mod branch_analysis;
 
 use abstract_domain::AbstractState;
-use branch_analysis::{analyze_cfg_with_entry, classify_branch, CfgBlock};
+use branch_analysis::{analyze_cfg_with_calls, classify_branch, CfgBlock};
 use solana_sbpf::{
     elf::Executable,
     program::{BuiltinProgram, SBPFVersion},
@@ -118,8 +118,22 @@ fn main() -> Result<(), Box<dyn Error>> {
             instruction_range: node.instructions.clone(),
             successors: node.destinations.clone(),
         })).collect();
-    let cfg_work_budget = analysis.cfg_nodes.len().saturating_mul(64).max(10_000).min(1_000_000);
-    let cfg_reachability = analyze_cfg_with_entry(
+    let cfg_work_budget = analysis.cfg_nodes.len().saturating_mul(128).max(20_000).min(1_000_000);
+    // Resolve only direct internal calls through the exact executable function
+    // registry. Dynamic CALL_REG/CALLX targets remain unresolved.
+    let internal_call_targets: BTreeMap<usize, usize> = analysis.instructions.iter()
+        .filter(|instruction| instruction.opc == solana_sbpf::ebpf::CALL_IMM)
+        .filter_map(|instruction| {
+            let key = version.calculate_call_imm_target_pc(instruction.ptr, instruction.imm);
+            let target = if version.static_syscalls() {
+                (instruction.src == 1).then_some(key as usize)
+            } else {
+                analysis.functions.iter().find_map(|(pc, (function_key, _))|
+                    (*function_key == key).then_some(*pc))
+            };
+            target.map(|target_pc| (instruction.ptr, target_pc))
+        }).collect();
+    let cfg_reachability = analyze_cfg_with_calls(
         &analysis.instructions,
         &cfg_blocks,
         analysis.entrypoint,
@@ -127,6 +141,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         cfg_work_budget,
         entry_state,
         instruction_data.as_deref(),
+        &internal_call_targets,
     )?;
 
     let summary_path = format!("{out_dir}/summary.txt");
@@ -142,7 +157,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(summary, "entrypoint_r2_pointer_usage=overwritten at entrypoint+2; r2 becomes InputDataPointer(8); first account-count load uses r1 base")?;
     writeln!(summary, "candidate_serialized_input=ABI-v1; 85 account entries; 51 unique; 34 duplicates; account data lengths and input-data offset not reconstructed")?;
     writeln!(summary, "direct_account_pointers=SIMD-0449 status Review; no Mainnet account-pointer extension assumed")?;
-    writeln!(summary, "interprocedural_direct_calls=not_traversed")?;
+    let internal_calls = cfg_reachability.call_observations.values().filter(|call| call.kind == "internal").count();
+    let external_calls = cfg_reachability.call_observations.values().filter(|call| call.kind == "external-or-unresolved").count();
+    let indirect_calls = cfg_reachability.call_observations.values().filter(|call| call.kind == "indirect-unresolved").count();
+    writeln!(summary, "cfg_internal_call_sites_reached={internal_calls}")?;
+    writeln!(summary, "cfg_external_or_unresolved_call_sites_reached={external_calls}")?;
+    writeln!(summary, "cfg_indirect_call_sites_unresolved={indirect_calls}")?;
+    writeln!(summary, "interprocedural_mode=context_insensitive_direct_call_target_traversal; caller_return_state_r0-r5_unknown; callee_r10_unknown; CALL_REG_unresolved")?;
     writeln!(summary, "text_address=0x{text_address:x}")?;
     writeln!(summary, "text_bytes={}", text_bytes.len())?;
     writeln!(summary, "instruction_count={}", analysis.instructions.len())?;

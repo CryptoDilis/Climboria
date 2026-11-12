@@ -180,6 +180,15 @@ pub struct CfgReachability {
     pub work_items: usize,
     pub work_budget: usize,
     pub truncated: bool,
+    pub call_observations: BTreeMap<usize, CallObservation>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CallObservation {
+    pub pc: usize,
+    pub kind: &'static str,
+    pub target_pc: Option<usize>,
+    pub visits: usize,
 }
 
 fn branch_condition(name: &str) -> Option<BranchCondition> {
@@ -227,6 +236,26 @@ pub fn analyze_cfg_with_entry(
     initial_state: AbstractState,
     instruction_data: Option<&[u8]>,
 ) -> Result<CfgReachability, &'static str> {
+    analyze_cfg_with_calls(
+        instructions, blocks, entrypoint, version, work_budget,
+        initial_state, instruction_data, &BTreeMap::new(),
+    )
+}
+
+/// Bounded context-insensitive traversal of statically resolved internal
+/// CALL_IMM targets. Callees receive r1-r5 arguments and r6-r9 preserved
+/// registers; r0/r10 are unknown at entry. Caller continuations conservatively
+/// clobber r0-r5. CALL_REG/CALLX targets and return-value summaries stay unknown.
+pub fn analyze_cfg_with_calls(
+    instructions: &[ebpf::Insn],
+    blocks: &BTreeMap<usize, CfgBlock>,
+    entrypoint: usize,
+    version: SBPFVersion,
+    work_budget: usize,
+    initial_state: AbstractState,
+    instruction_data: Option<&[u8]>,
+    internal_call_targets: &BTreeMap<usize, usize>,
+) -> Result<CfgReachability, &'static str> {
     if !blocks.contains_key(&entrypoint) {
         return Err("entrypoint is not a CFG basic-block key");
     }
@@ -241,6 +270,7 @@ pub fn analyze_cfg_with_entry(
         work_items: 0,
         work_budget,
         truncated: false,
+        call_observations: BTreeMap::new(),
     };
 
     while let Some(block_pc) = queue.pop_front() {
@@ -261,9 +291,47 @@ pub fn analyze_cfg_with_entry(
 
         let mut state = incoming.get(&block_pc).cloned().ok_or("reachable block has no input state")?;
         let mut selected_successors: Option<BTreeSet<usize>> = None;
+        let mut extra_successors: Vec<(usize, AbstractState)> = Vec::new();
 
         for (offset, instruction) in instructions[block.instruction_range.clone()].iter().enumerate() {
             let is_last = offset + 1 == block.instruction_range.len();
+            if instruction.opc == ebpf::CALL_IMM {
+                let target_pc = internal_call_targets.get(&instruction.ptr).copied()
+                    .filter(|target| blocks.contains_key(target));
+                let kind = if target_pc.is_some() { "internal" } else { "external-or-unresolved" };
+                let observation = result.call_observations.entry(instruction.ptr).or_insert_with(|| CallObservation {
+                    pc: instruction.ptr,
+                    kind,
+                    target_pc,
+                    visits: 0,
+                });
+                if observation.kind != kind || observation.target_pc != target_pc {
+                    observation.kind = "conflicting-resolution";
+                    observation.target_pc = None;
+                }
+                observation.visits += 1;
+                if let Some(target) = target_pc {
+                    let mut callee_state = state.clone();
+                    callee_state.prepare_internal_callee_entry();
+                    extra_successors.push((target, callee_state));
+                }
+                // The caller continuation is retained, but caller-saved values
+                // are unknown because the callee may overwrite them.
+                state.invalidate_call_clobbered_registers();
+                continue;
+            }
+            if instruction.opc == ebpf::CALL_REG {
+                let observation = result.call_observations.entry(instruction.ptr).or_insert_with(|| CallObservation {
+                    pc: instruction.ptr,
+                    kind: "indirect-unresolved",
+                    target_pc: None,
+                    visits: 0,
+                });
+                observation.visits += 1;
+                state.invalidate_call_clobbered_registers();
+                continue;
+            }
+
             if let Some(site) = classify_branch(version, instruction) {
                 // The pinned CFG splits every branch into a block terminator.
                 // If that structural invariant is violated, do not prune.
@@ -329,12 +397,15 @@ pub fn analyze_cfg_with_entry(
         }
 
         let successors = selected_successors.unwrap_or_else(|| block.successors.iter().copied().collect());
-        for successor in successors {
+        let mut outgoing: Vec<(usize, AbstractState)> = successors.into_iter()
+            .map(|successor| (successor, state.clone())).collect();
+        outgoing.extend(extra_successors);
+        for (successor, outgoing_state) in outgoing {
             if !blocks.contains_key(&successor) {
                 continue;
             }
             let changed = if let Some(existing) = incoming.get(&successor) {
-                let merged = existing.merge(&state);
+                let merged = existing.merge(&outgoing_state);
                 if &merged != existing {
                     incoming.insert(successor, merged);
                     true
@@ -342,7 +413,7 @@ pub fn analyze_cfg_with_entry(
                     false
                 }
             } else {
-                incoming.insert(successor, state.clone());
+                incoming.insert(successor, outgoing_state.clone());
                 true
             };
             if changed && queued.insert(successor) {
@@ -405,6 +476,63 @@ mod cfg_reachability_tests {
         assert_eq!(branch.retained_successors, BTreeSet::from([3]));
         assert!(result.reachable_blocks.contains(&3));
         assert!(!result.reachable_blocks.contains(&2));
+    }
+
+    #[test]
+    fn resolved_call_imm_visits_internal_callee_and_preserves_argument_facts() {
+        let instructions = vec![
+            insn(0, ebpf::CALL_IMM, 0, 0, 0, 77),
+            insn(1, ebpf::EXIT, 0, 0, 0, 0),
+            insn(10, ebpf::JEQ64_IMM, 1, 0, 1, 7),
+            insn(11, ebpf::EXIT, 0, 0, 0, 0),
+            insn(12, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1])),
+            (1, block(1, 2, &[])),
+            (10, block(2, 3, &[11, 12])),
+            (11, block(3, 4, &[])),
+            (12, block(4, 5, &[])),
+        ]);
+        let mut entry = AbstractState::default();
+        entry.registers[1] = AbstractValue::Constant(7);
+        entry.registers[6] = AbstractValue::Constant(66);
+        entry.registers[10] = AbstractValue::StackPointer(0);
+        let targets = BTreeMap::from([(0, 10)]);
+        let result = analyze_cfg_with_calls(
+            &instructions, &blocks, 0, SBPFVersion::V0, 64, entry, None, &targets,
+        ).unwrap();
+        assert!(result.reachable_blocks.contains(&10));
+        assert!(result.reachable_blocks.contains(&1));
+        assert_eq!(result.call_observations[&0].kind, "internal");
+        assert_eq!(result.call_observations[&0].target_pc, Some(10));
+        assert_eq!(result.branch_observations[&10].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&10].retained_successors, BTreeSet::from([11]));
+    }
+
+    #[test]
+    fn indirect_call_is_reported_unresolved_and_clobbers_caller_saved_state() {
+        let instructions = vec![
+            insn(0, ebpf::CALL_REG, 0, 0, 0, 0),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 7),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1])),
+            (1, block(1, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[])),
+        ]);
+        let mut entry = AbstractState::default();
+        entry.registers[1] = AbstractValue::Constant(7);
+        let result = analyze_cfg_with_calls(
+            &instructions, &blocks, 0, SBPFVersion::V0, 64, entry, None, &BTreeMap::new(),
+        ).unwrap();
+        assert_eq!(result.call_observations[&0].kind, "indirect-unresolved");
+        assert_eq!(result.branch_observations[&1].outcome_taken, None);
+        assert!(result.reachable_blocks.contains(&2));
+        assert!(result.reachable_blocks.contains(&3));
     }
 
     #[test]
