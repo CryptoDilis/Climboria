@@ -21,6 +21,8 @@ on:
       - ".github/scripts/dex-chart-selection-smoke.mjs"
       - ".github/scripts/dexscreener-provider-contract-capture.mjs"
       - ".github/scripts/geckoterminal-ohlcv-contract-capture.mjs"
+      - "dex/swap-proxy/src/geckoterminal-ohlcv.mjs"
+      - "dex/swap-proxy/test/geckoterminal-ohlcv.test.mjs"
       - ".github/workflows/browser-smoke.yml"
   pull_request:
     branches: [main]
@@ -68,6 +70,9 @@ jobs:
           npm init -y
           timeout --signal=TERM --kill-after=20s 2m npm install --no-save playwright
           timeout --signal=TERM --kill-after=20s 4m npx playwright install chromium
+
+      - name: Test deterministic GeckoTerminal OHLCV contract fixtures
+        run: node --test dex/swap-proxy/test/geckoterminal-ohlcv.test.mjs
 
       - name: Capture live DexScreener provider contract evidence
         timeout-minutes: 3
