@@ -88,3 +88,25 @@ The IDL History workflow's previous Rust invocation used `cargo run --locked --r
 After the version-aware operand fix passed its pinned Rust unit test and produced artifact `13972880287`, post-run artifact inspection found that `callx-sites.tsv` was not a valid tab-separated file. The header and 136 records contained literal backslash-`t` sequences (zero actual tab delimiters), even though splitting on that literal sequence revealed nine logical fields. The operand values themselves were correct: all 136 sites used the SBPF V0 `imm_low_byte` encoding, and every reported register index matched the low byte of its raw `imm` value.
 
 This was an artifact-format correctness defect discovered by inspection, not a failed workflow. The targeted fix on PR #269 commit `1e682785dc1143b1eddbacc7ffaf15c5c8c18163` changes the header/row formatting to actual tab characters and adds a unit test that checks nine tab-separated columns and rejects literal backslash-`t` sequences. Exact-head workflows were queued after integration; the new artifact still needs independent validation before the TSV fix can be called verified.
+
+
+## Exact-head TSV counter-fix verification — 2026-11-13
+
+This section supersedes the preceding statement that the corrected TSV artifact was still pending.
+
+- Integrated PR #269 exact head: `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`.
+- IDL History workflow `43281005200`: SUCCESS; pinned Rust unit-test step `Run pinned sBPF static-audit unit tests` completed SUCCESS before artifact generation.
+- Artifact ID `13972437840`; ZIP SHA-256 `fa065c98d81e83e0266d95642e9da2401488c1289fadd2e017c50adf01295fb7`.
+- Direct byte-level inspection of `artifacts/jupiter-sbf-static-audit/callx-sites.tsv`: header has exactly 8 actual tab delimiters / 9 columns; all 136 data rows have exactly 8 actual tab delimiters / 9 columns; no literal backslash-\t sequence appears in the header or rows.
+- All 136 rows have `target_register_source=imm_low_byte`; all 136 rows have `target_resolution=unresolved-register-value`; each numeric `target_register` equals the low byte of its raw `imm` field. This confirms operand-index decoding only, not runtime target resolution.
+- Summary confirms SBPF V0, 243,522 instructions, 40,664 CFG basic blocks, 1,188 function-registry entries, 9,610 CALL_IMM instructions and 136 indirect CALL_REG sites. Candidate ELF size is 2,892,224 bytes; ELF SHA-256 remains `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`.
+- Other exact-head workflows: Validate `43281005199` SUCCESS; Jupiter V6 CPI Trace `43281005219` SUCCESS. Browser Smoke `43281005185` remains IN_PROGRESS at this report checkpoint, with the Jarrell's Peak desktop/mobile gameplay smoke step active. No terminal failure has been observed. Do not update PR #269 until this cancel-in-progress run is terminal.
+- The malformed TSV was an artifact-format defect discovered by inspection, not a failed workflow. The corrected unit test and actual generated artifact now both verify the fix. No failed-workflow diagnosis is invented.
+
+### Remaining limits and next task
+
+- Dynamic callx register values remain unresolved; do not infer call targets from the decoded register index.
+- CFG edges are structural, not branch-sensitive route_v2 discriminator/variant reachability. Function-registry caller attribution remains heuristic.
+- No route-specific CPI site, DEX adapter/account-slice mapping, CPI-requested AccountMeta signer/writable flags, runtime privilege equivalence, or transaction safety conclusion is established.
+- Wait for Browser Smoke `43281005185` to reach a terminal state. On failure, inspect the exact failed step and complete logs, establish root cause, implement a distinct counter-fix, rerun and record. On success, inspect its artifacts and record the terminal evidence.
+- Next engineering task after the exact-head workflow set closes: branch-sensitive route_v2 discriminator/variant reachability, then conservative callx-aware CPI-site isolation and bounded account-slice/privilege dataflow. Keep unresolved indirect calls conservative, route_v2 excluded from production validation, and all signing/execution/deployment gates closed.
