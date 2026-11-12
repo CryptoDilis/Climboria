@@ -887,7 +887,13 @@ function normalizeGraduation(row){
 }
 async function loadGraduations(){
  const now=Date.now(),since=now-86400000,days=[utcDayOffset(0),utcDayOffset(1)];
- const results=await Promise.all(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(r=>{if(!r.ok)throw new Error('Graduation feed HTTP '+r.status);return r.json()})));
+ const results=await Promise.all(days.map(day=>fetch('https://pumpdata.fun/graduations/'+day+'.json',{headers:{accept:'application/json'}}).then(r=>{
+  // The provider publishes daily files independently. A missing day is an empty day,
+  // not a failure of the previous day's valid graduation records.
+  if(r.status===404)return [];
+  if(!r.ok)throw new Error('Graduation feed HTTP '+r.status);
+  return r.json();
+})));
  const rows=results.flatMap(data=>Array.isArray(data)?data:(Array.isArray(data.graduations)?data.graduations:Array.isArray(data.items)?data.items:Array.isArray(data.data)?data.data:[]));
  const unique=new Map();for(const row of rows){const item=normalizeGraduation(row);if(item&&item.graduatedAt>=since&&item.graduatedAt<=now+300000)unique.set(item.mint,item)}
  state.graduations=[...unique.values()].sort((a,b)=>b.graduatedAt-a.graduatedAt);state.graduationStatus='connected';
