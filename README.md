@@ -4197,3 +4197,13 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Added evidence-only DEX adapter IDL provenance classification, reason codes, focused tests, aggregate counts, and workflow coverage. During review, corrected a temporal inference: a later ProgramData slot represents the most recent deployment/upgrade and does not prove the program was absent at an earlier candidate slot. Kipseli therefore remains `incomplete`, not `incompatible`, absent archival evidence proving historical absence.
 - The corrected classifier/tests and updated failure register are committed on PR #269; exact-head verification is pending. Earlier runs on superseded intermediate heads do not verify the corrected implementation.
 - Keep PR #269 draft/unmerged; preserve no-demo delivery and keep Swap signing/execution disabled. Full workflow evidence and next actions are in [the failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+
+
+## 2026-11-12 — latest PR #269 engineering handoff
+
+- Exact head: `7e77206316029657902e91ed5993ff64acecce46` on draft PR #269.
+- Exact-head workflows: Validate `43125825292` PASS (117/117 tests); Jupiter CPI Trace Audit `43125825160` PASS (4/4 scanner tests, 25/25 finalized transactions scanned in a bounded sample); Jupiter IDL History Audit `43125825173` PASS; Browser Smoke `43125825195` PASS (Jarrell's Peak desktop/mobile, strict GLB readiness, screenshots uploaded).
+- Browser artifact: `13902798382`, SHA-256 `7f1ad9013a9849375b6df0050d3d249ed3c9270a47c31522818108e8692657b2`.
+- Failure register with root causes, failed job IDs, counter-fixes, verification evidence, and next tasks: [docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+- Next P1 work: continue paginated finalized Jupiter/Meteora trace evidence from the recorded cursor; establish CPI signer/writable AccountMeta and handler remaining-account cursor semantics across DEX order permutations and multi-hop/split routes.
+- Safety: PR #269 remains draft/unmerged; route_v2 excluded from production validation; execution/signing review gates remain false. No production signing, transaction submission, Wrangler deployment or LIVE Swap claim.
