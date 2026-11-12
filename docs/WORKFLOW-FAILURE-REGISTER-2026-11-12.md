@@ -1152,3 +1152,17 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - No failure diagnosis or counter-fix is recorded for this cycle because no workflow failed. Older cancelled/superseded runs are not failures.
 - Release boundary unchanged: DEX upstream/chart freshness is not proven; Swap's full per-DEX CPI semantics, deployed Devnet lifecycle, production Worker deployment and independent review remain incomplete. Keep all Swap signing/execution gates closed.
 - Next: inspect chart-provider series identity/orientation and upstream freshness/cache semantics; update the launch-readiness checklist with evidence before changing source behavior.
+
+
+### Exact-head CI closure and DEX chart-provider audit — 2026-11-13
+
+- Source head `83e7463091bda1d7ad5622da40a2ead7ccb31fb2` on `codex/swap-security-evidence-current-main-2026-11-12`; PR #269 remains open/draft/unmerged.
+- Validate run `43303441750`, job `131480352503`: SUCCESS, 15 steps, zero failed steps.
+- Jupiter V6 CPI Trace run `43303441753`, job `131480352670`: SUCCESS, 10 steps, zero failed steps. Artifact `13982916192` (`jupiter-v6-meteora-cpi-trace`, 18,748 bytes).
+- Jupiter IDL History run `43303441714`, job `131480351587`: SUCCESS, 13 steps, zero failed steps. Artifact `13982542868` (`jupiter-idl-history`, 3,168,159 bytes).
+- Browser Smoke run `43303441726`, job `131480351966`: SUCCESS, 26 steps, zero failed steps. Provider evidence artifact `13982846509` (7,261 bytes); screenshots artifact `13982647003` (8,892,096 bytes).
+- All four workflows on the same exact SHA completed successfully. No failure occurred; no failure incident or counter-fix is fabricated.
+- Read-only DEX source audit: `dex/index.html` binds iframe and external link to the selected pair address and only charts exact base-side matches. Existing Playwright test verifies selected-pool/URL/metric synchronization and clearing but cannot inspect cross-origin iframe candles or its cache.
+- Official DexScreener API docs describe pair snapshots but no OHLCV response or per-response as-of timestamp. The current local “Updated” timestamp is not proof of provider freshness. Official GeckoTerminal docs describe OHLCV, base/quote orientation, one-minute caching and approximate update guidance; no live Solana OHLCV sample has been validated yet.
+- Readiness: DEX still not production-live; quote-side withholding remains. Swap execution/security gates remain closed.
+- Next exact task: capture GeckoTerminal OHLCV for one known Solana pool in both base and quote modes; preserve headers, request parameters, timestamps and sample candles; inspect artifact before adding any chart adapter.

@@ -35,14 +35,14 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Active November 15 launch sprint: **DEX → Swap → Game → Launchpad last**. Login/provider work remains tracked and must not be marked complete without real-provider evidence.
-- Current working branch: `codex/swap-security-evidence-current-main-2026-11-12`; exact head `1e682785dc1143b1eddbacc7ffaf15c5c8c18163`; PR #269 remains open, draft and unmerged. The tested code is on the PR branch, not yet on `main`.
-- Exact-head workflows all passed: Validate `43281005199` (job `131401925824`); Browser Smoke `43281005185` (job `131401925056`); Jupiter V6 CPI Trace `43281005219` (job `131401925835`); Jupiter IDL History `43281005200` (job `131401924970`).
-- DEX regression evidence now includes same-token multi-pool synchronization, manual-refresh data update with stable mint/pair/chart identity, delayed cross-token chart clearing/restoration, quote-side-only withholding, live Base/Solana provider tests, responsive mobile checks, provider error/empty states, and Jarrell's Peak desktop/mobile smoke.
-- DEX is **not production-live**: upstream/CDN freshness and embedded chart series orientation/freshness remain unproven; production provider deployment and end-to-end acceptance remain open.
-- Swap is **not execution-ready**: semantic per-DEX CPI/account-role, token movement and fee-destination proof; controlled deployed Devnet lifecycle; production Cloudflare Worker verification; and independent security review remain blockers.
-- Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, and public frontend `enabled: false`.
-- **Next exact task:** continue the DEX chart-provider identity/orientation/freshness audit from `docs/LAUNCH-READINESS-CHECKLIST-2026-11-12.md`; do not switch to Swap execution work or claim DEX production-live without evidence.
+- Active November 15 launch sprint: **DEX → Swap → Game → Launchpad last**. Login/provider work remains tracked.
+- Working branch `codex/swap-security-evidence-current-main-2026-11-12`, source head `83e7463091bda1d7ad5622da40a2ead7ccb31fb2`; PR #269 remains open, draft and unmerged.
+- Exact-head CI on source head: Validate `43303441750` SUCCESS (15 steps); Jupiter V6 CPI Trace `43303441753` SUCCESS (10 steps); Jupiter IDL History `43303441714` SUCCESS (13 steps); Browser Smoke `43303441726` SUCCESS (26 steps). Zero failed steps.
+- DEX regression coverage includes provider capture, exact mint/base-side filtering, same-token pool switching, manual refresh, cross-token stale-chart clearing, quote-side withholding, mobile layouts and provider error/empty states.
+- DEX remains **not production-live**. The chart iframe is selected-pair-address-bound, but its cross-origin candle series orientation and freshness are not independently observable through current smoke tests. The DexScreener pair API schema does not provide an observation timestamp or OHLCV series. The UI's “Updated” text is client response time, not provider-as-of time.
+- GeckoTerminal is a candidate for independently inspectable OHLCV: official docs specify a pool OHLCV endpoint with base/quote orientation and a one-minute cache; live Solana response validation is pending.
+- Swap signing/submission and production execution remain disabled pending semantic CPI/account-role proof, controlled deployed Devnet lifecycle, production Worker verification and independent review.
+- **Next exact task:** capture GeckoTerminal OHLCV for a known Solana pair in base and quote modes, inspect response headers/timestamps/schema, then decide whether a separate chart adapter is justified.
 
 ---
 

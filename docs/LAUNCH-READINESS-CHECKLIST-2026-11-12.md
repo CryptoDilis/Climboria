@@ -216,3 +216,16 @@ Every commit must update this file or explicitly state why no checklist status c
 - **Safety gates:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; Wrangler `EXECUTION_ENABLED=false`; public `swap-config.js enabled=false`. No wallet signing, transaction submission or LIVE Swap claim.
 - **No new failed workflow:** all four workflows on this exact head passed. Superseded/cancelled runs and temporary log retrieval limitations are not counted as failures.
 - **Next exact DEX task:** inspect the embedded chart provider's documented/live endpoint contract for selected pair identity, series orientation, timestamp semantics and freshness/cache headers. Add a deterministic regression only for behavior supported by evidence; do not infer quote-side price or chart orientation. After DEX production readiness is evidenced, resume the Swap checklist without opening its security gates.
+
+
+## 2026-11-13 — chart-provider contract audit
+
+- [x] Re-audited current DEX chart source: iframe and external link both bind to selected pair address; token detail only attaches exact base-side pairs.
+- [x] Confirmed current chart smoke validates URL/selection synchronization but cannot inspect cross-origin candle payload, candle orientation or iframe cache behavior.
+- [x] Reviewed official DexScreener API/FAQ/TradingView docs. Pair API schema has pair-level snapshot fields and `pairCreatedAt`, but no documented observation timestamp/OHLCV payload or iframe freshness contract. The UI's “Updated” time is client response time, not a provider timestamp.
+- [x] Identified official GeckoTerminal OHLCV endpoint as a candidate with explicit base/quote orientation and published one-minute cache / approximately 2–3 second post-confirmation update guidance; no live Solana OHLCV payload has yet been validated.
+- [ ] Capture a known Solana pair's GeckoTerminal OHLCV in both base and quote modes; validate response shape, timestamp units/order, OHLC invariants, volume currency, selected-token orientation, response headers and failure/empty cases.
+- [ ] Keep current DexScreener iframe and quote-side withholding unchanged until the candidate adapter passes evidence-backed parity and release checks.
+- [ ] DEX production deployment/provider acceptance remains open; Swap execution gates remain false.
+
+**Next exact task:** add a bounded read-only GeckoTerminal OHLCV contract capture for one known Solana pool in both `token=base` and `token=quote` modes. Record response headers and first/last candle timestamps; do not implement a chart adapter until the artifact is inspected.
