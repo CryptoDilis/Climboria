@@ -1138,10 +1138,11 @@ async function openToken(mint,options={}){
  // Pump metadata is supplemental. Render cached metadata immediately and refresh it
  // independently so a slow metadata proxy cannot block primary market prices/metrics.
  const cachedPumpMeta=pumpCoinCache.get(mint)||null;
- if(cachedPumpMeta)renderPumpProfile(mint,cachedPumpMeta);
+ if(cachedPumpMeta){renderPumpProfile(mint,cachedPumpMeta);if(cachedPumpMeta.symbol)rememberClimboriaTokenMeta(mint,cachedPumpMeta.symbol,cachedPumpMeta.name||'');}
  fetchPumpCoin(mint).then(data=>{
   if(requestId===detailRequestId&&data){
    renderPumpProfile(mint,data);
+   if(data.symbol)rememberClimboriaTokenMeta(mint,data.symbol,data.name||'');
    const title=$('detailTitle').textContent;
    if(title==='Token market unavailable'||title==='Token metadata')$('detailTitle').textContent=(data.name||'Unknown token')+' ('+(data.symbol||'TOKEN')+')';
   }

@@ -88,3 +88,13 @@ Implement candidate-scoped input-data-aware, interprocedural analysis in this or
 - Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, and public frontend execution disabled.
 - Outer transaction privileges are not CPI-requested AccountMeta flags. RPC inner-instruction traces expose account indexes, not the CPI-requested signer/writable bits.
 - No route policy, wallet signing, transaction submission, Devnet acceptance, production deployment, or independent security approval is established by this static research.
+
+
+## Candidate input-data integration and feature-gate evidence — 2026-11-13
+
+- Candidate-specific input modeling distinguishes SBPF V0 (ELF instruction-set version) from loader ABI v1 (selected by the Upgradeable BPF Loader owner).
+- SIMD-0321 direct instruction-data pointer in r2 is Mainnet-active from epoch 950. Candidate slot 468153382 maps to epoch 1083 with 432,000 slots/epoch, so r2 can be seeded for this exact trace. SIMD-0449 direct account pointers are scheduled for epoch 1099 and are not active at the candidate epoch; no account pointers are seeded.
+- The exact 69-byte candidate route_v2 payload is pinned and checked byte-for-byte. The workflow checks finalized loader owner, ProgramData deployment slot, ELF SHA-256, candidate slot/epoch and route_v2 discriminator before candidate input analysis.
+- ABI-v1/SIMD-0321 entry state is r0/r3-r9 = zero, r1 = serialized input base, r2 = instruction-data pointer, r10 = abstract stack base; r11 is VM-internal and not modeled.
+- Bounded little-endian V0/V2 instruction-data load tests pass at the abstract-domain level. The first CFG integration test failed because one ordinary-instruction path still used the no-input compatibility wrapper; counter-fix is to pass version and candidate bytes through every ordinary instruction transfer.
+- The analyzer remains intraprocedural and cannot yet claim route_v2 handler reachability. Direct CALL_IMM call/return traversal and CALLX runtime target resolution remain the next major static-analysis tasks.

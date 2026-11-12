@@ -29,7 +29,13 @@ The finalized ProgramData provenance identifies the program account as owned by 
 
 Section §12.8.6 states that the ABI v1 input ends with the instruction-data length, instruction-data bytes, and program ID, and that r2 points directly to the instruction-data bytes.
 
-For this candidate, it is therefore reasonable to seed a **candidate-specific** abstract entry state with r2 as an instruction-data pointer at offset zero and the exact 69-byte instruction payload above. Do not seed account-data contents, account pointers, r1-derived record fields, or other runtime memory without their own transaction/ABI evidence. Do not apply this candidate-specific seed to arbitrary ELFs or traces.
+For this candidate, seed a **candidate-specific** entry state only after verifying the loader owner, deployed ELF hash, transaction slot, and the independent SIMD-0321 feature gate:
+- r0 and r3–r9 are zero at entry.
+- r1 is the serialized-input base (InputDataPointer(0)).
+- r2 is the direct instruction-data pointer (InstructionDataPointer(0)) only because SIMD-0321 was active at this candidate slot.
+- r10 is modeled as the entry stack base (StackPointer(0)); r11 is VM-internal and not represented by this register domain.
+
+Do not seed account-data contents, direct account pointers, or any other runtime memory without separate evidence. Do not apply this candidate-specific seed to arbitrary ELFs or traces.
 
 Reference: https://bw-solana.github.io/solana-protocol-spec/12-svm-loaders-syscalls-and-precompiles.html (Sections 12.8.2 and 12.8.6).
 
@@ -61,3 +67,16 @@ Consequently, the current reachable-block output is not an interprocedural call-
 - Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler `EXECUTION_ENABLED=false`, and public frontend execution disabled.
 - Transaction-level outer writable privileges are not the CPI-requested AccountMeta flags. RPC inner-instruction traces expose account indexes, not the CPI's requested signer/writable bits.
 - This research does not establish a safe route policy, production deployment, Devnet acceptance, or independent security approval.
+
+
+## Feature-gate activation verification for the candidate slot
+
+- The Solana Protocol Specification Mainnet feature manifest records SIMD-0321 (direct instruction-data pointer in r2) active from epoch 950. Feature account: 5xXZc66h4UdB6Yq7FzdBxBiRAFMMScMLwHxk2QZDaNZL.
+- Mainnet's normal epoch schedule is 432,000 slots. Candidate slot 468153382 maps to epoch floor(468153382 / 432000) = 1083, so SIMD-0321 was active for the candidate transaction.
+- SIMD-0449 (direct account pointers in program input) is scheduled for Mainnet epoch 1099, after the candidate's epoch 1083. Do not seed r3–r5 as direct account pointers and do not infer account-data provenance from the new r2 feature.
+- Loader ABI v1 and SIMD-0321 activation jointly support r2 instruction-data provenance; the separate direct-account-pointer feature is not active at this historical candidate slot.
+- References: Solana Protocol Specification §§12.8.2, 12.8.6 and Mainnet feature manifest; Mainnet epoch schedule §16.1. https://bw-solana.github.io/solana-protocol-spec/12-svm-loaders-syscalls-and-precompiles.html and https://bw-solana.github.io/solana-protocol-spec/16-epochs-leader-schedule-stake-fees-and-rewards.html
+
+## Implementation guard
+
+The IDL workflow validates the finalized Program account owner, ProgramData owner/deployment slot, exact ELF SHA-256, candidate transaction slot/epoch, route_v2 discriminator, SIMD-0321 activation epoch, and the fact that SIMD-0449 was not yet active before it passes candidate input bytes to the static analyzer. The analyzer also checks the exact 69-byte payload. A generic ELF run without this evidence remains all-Unknown at entry.
