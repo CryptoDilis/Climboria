@@ -169,6 +169,84 @@ test("preserves the last fully scanned signature when a transaction page is rate
 });
 
 
+
+test("retries a transient RPC transport timeout and resumes discovery", async () => {
+  let signatureCalls = 0;
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      signatureCalls += 1;
+      if (signatureCalls === 1) {
+        const error = new Error("The operation was aborted due to timeout");
+        error.name = "TimeoutError";
+        throw error;
+      }
+      return rpcResponse([{ signature: "sig-after-timeout" }]);
+    }
+    if (body.method === "getTransaction") return rpcResponse(emptyTransaction());
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 1, maxTransactions: 1, delayMs: 0, retryBaseMs: 0, fetchImpl,
+  });
+  assert.equal(signatureCalls, 2);
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.nextBefore, "sig-after-timeout");
+  assert.equal(report.rpcFailureMethod, null);
+  assert.equal(report.transactionFetchComplete, true);
+});
+
+test("returns an incomplete report and preserves the last fetched cursor after exhausted transaction timeouts", async () => {
+  const requested = [];
+  const fetchImpl = async (_url, request) => {
+    const body = JSON.parse(request.body);
+    if (body.method === "getSignaturesForAddress") {
+      return rpcResponse([{ signature: "sig-2" }, { signature: "sig-1" }]);
+    }
+    if (body.method === "getTransaction") {
+      requested.push(body.params[0]);
+      if (body.params[0] === "sig-1") {
+        const error = new Error("The operation was aborted due to timeout");
+        error.name = "TimeoutError";
+        throw error;
+      }
+      return rpcResponse(emptyTransaction());
+    }
+    throw new Error("Unexpected RPC method: " + body.method);
+  };
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 2, maxTransactions: 2, delayMs: 0, retryBaseMs: 0, fetchImpl,
+  });
+  assert.deepEqual(requested, ["sig-2", "sig-1", "sig-1", "sig-1", "sig-1"]);
+  assert.equal(report.transactionsScanned, 1);
+  assert.equal(report.nextBefore, "sig-2");
+  assert.equal(report.rpcFailureMethod, "getTransaction");
+  assert.match(report.rpcFailureMessage, /transport failure.*getTransaction/i);
+  assert.equal(report.transactionFetchComplete, false);
+  assert.equal(report.reachedEnd, false);
+});
+
+test("returns an incomplete report with the incoming cursor after exhausted signature-page timeouts", async () => {
+  let calls = 0;
+  const incomingCursor = "resume-from-this-signature";
+  const fetchImpl = async () => {
+    calls += 1;
+    const error = new Error("The operation was aborted due to timeout");
+    error.name = "TimeoutError";
+    throw error;
+  };
+  const report = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    before: incomingCursor, limit: 1, maxTransactions: 1, delayMs: 0, retryBaseMs: 0, fetchImpl,
+  });
+  assert.equal(calls, 3);
+  assert.equal(report.pagesScanned, 0);
+  assert.equal(report.transactionsScanned, 0);
+  assert.equal(report.nextBefore, incomingCursor);
+  assert.equal(report.rpcFailureMethod, "getSignaturesForAddress");
+  assert.equal(report.transactionFetchComplete, false);
+  assert.equal(report.reachedEnd, false);
+});
+
 test("preserves the 18-account Meteora CPI order and parent-sequence correlation", async () => {
   const cpiIndexes = [7, 9, 21, 13, 16, 18, 47, 39, 25, 45, 0, 51, 50, 46, 37, 45, 6, 22];
   const keys = Array.from({ length: 54 }, (_, index) => "Account" + index);
