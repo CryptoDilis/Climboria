@@ -189,3 +189,42 @@ Continue the documented candidate-scoped ABI-v1 input reconstruction:
 4. Add deterministic fixtures for sparse/unknown account records, pointer arithmetic, and branch outcomes; unsupported loads and unknown bytes must retain both CFG successors.
 5. Re-run `cargo test --locked`, the IDL static-audit artifact generation, and all four exact-head workflows. Inspect the generated TSVs and compare the exact artifact on the new SHA.
 6. Only after the candidate route discriminator/variant path is grounded, continue adapter CPI account-slice and CPI-requested privilege analysis. Keep route_v2 excluded and all signing/execution/deployment gates closed.
+
+
+## 2026-11-13 — PR #274 sparse ABI-v1 candidate layout implementation
+
+**PR:** #274 — `audit(jupiter): reconstruct sparse ABI v1 account layout`
+**Branch:** `codex/jupiter-abi-v1-sparse-layout-2026-11-13`
+**Current PR head at this checkpoint:** `559423bdddf709cae31de06b01b2c4b461f2a482`
+
+### Implementation added
+
+- Preserved the finalized candidate Jupiter instruction's full 85-position ordered account vector in `dex/swap-proxy/tools/jupiter-sbf-static-audit/fixtures/jupiter-route-v2-candidate-account-vector.csv`, from trace artifact `13988045905` (workflow run `43314944457`).
+- Fixture preserves 85 instruction positions, 51 unique transaction account keys, and 34 duplicate occurrences. Its signer/writable fields are outer transaction message privileges only.
+- Added `src/abi_v1_layout.rs` with a parser, duplicate identity checks, aligned unique-account serialization sizing, duplicate-marker sizing, and exact-offset support only when all unique account data lengths are supplied.
+- Candidate mode now emits `abi-v1-account-layout.tsv` and records minimum/exact-offset state in `summary.txt`.
+- Standard aligned ABI-v1 layout is based on Solana's documented `serialize_parameters_aligned()` format: https://solana.com/docs/core/accounts/account-runtime. Unique account records include the 88-byte fixed prefix, account data, 10,240-byte realloc reserve, 8-byte alignment, and rent epoch; duplicate entries use one marker byte plus seven bytes padding.
+
+### Conservative candidate result
+
+- All 51 unique account data lengths remain Unknown: the finalized RPC account observations in the prior artifact were fetched at later context slots and are not historical snapshots for candidate slot `468153382`.
+- With unknown data lengths set to zero **only for lower-bound arithmetic**, the minimum payload offset is:
+  `8 + (51 × 10,336) + (34 × 8) + 8 = 527,424 bytes`.
+- Exact route_v2 instruction-data offset and exact trailing program-ID offset remain Unknown. No route_v2 discriminator/variant branch is claimed resolved from this calculation.
+- Outer transaction signer/writable privileges are not promoted to CPI-requested AccountMeta flags. No route_v2 allowlist, signing, execution, or deployment gate changed.
+
+### Workflow concurrency cancellation diagnosis
+
+- Initial PR #274 head `f6ba4bffe2e8b97b1b1d05b39696863e59a5e750` started four required workflows: Validate `43328882501`, Browser Smoke `43328882323`, Jupiter CPI Trace `43328882437`, and Jupiter IDL History `43328882433`.
+- Validate and CPI Trace completed successfully. The first Browser Smoke run was superseded after a documentation commit updated the same PR branch to `559423bdddf709cae31de06b01b2c4b461f2a482`. The workflow defines `cancel-in-progress: true` for a concurrency group keyed by the PR head branch.
+- Browser job log shows the homepage/DEX routing assertion printed `PASS: homepage, 3 hero CTAs, desktop/mobile DEX routing, mobile menu, and mobile width.` Immediately afterward GitHub logged `The operation was canceled.` Remaining test steps were skipped. This is a superseded-run cancellation, not a failed assertion.
+- Do not rerun or diagnose this as a code failure. A fresh exact-head run set started on the new head: Validate `43328946627` SUCCESS; Browser Smoke `43328946852` in progress; Jupiter CPI Trace `43328947126` completed SUCCESS; Jupiter IDL History `43328946725` in progress.
+- At this checkpoint the pinned Rust test step had not yet started because the IDL-history fetch step remained in progress. No Rust test result is claimed yet.
+
+### Next checks
+
+1. Wait for exact-head IDL History run `43328946725`; inspect the `cargo test --locked` step and any compiler/test failure logs before modifying code.
+2. Verify `abi-v1-account-layout.tsv` reports 85 positions, 51 unique, 34 duplicates, minimum payload offset 527424, and exact offset Unknown.
+3. Verify Browser Smoke run `43328946852` reaches terminal status and completes gameplay/DEX checks. If canceled again, inspect concurrency and push timing before retry.
+4. Recheck all four exact-head workflow conclusions and update this record with artifact IDs and test counts.
+5. Obtain independently verified candidate-slot account data lengths from an archival source or replay. If unavailable, preserve Unknown and do not claim exact route_v2 dispatch.
