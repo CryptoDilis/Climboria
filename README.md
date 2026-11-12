@@ -4679,3 +4679,11 @@ All four exact-head checks for `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` comple
 Artifacts: Browser screenshots `13976192032` (8,835,566 bytes; SHA-256 `43a9266aa821aee452aa8258021610674d944247cdb89fb32c88b52922565225`); DexScreener provider contract `13975917209` (7,207 bytes; SHA-256 `d3b8c9a78741342302d09986719f4eb192583bf47bf0d51f31d89515ae088da0`); Jupiter IDL/static audit `13976036200` (3,473,948 bytes; SHA-256 `ed42ab60d3d12fc69451e844f4f7a675a78d4b09a23605407e1a44cc5ae03ce5`); CPI trace `13976735396` (18,748 bytes; SHA-256 `77bf7ab6791a41c15e17e250cd8baf4cf2bd8420e6410416d124d66fc90d599c`).
 
 Static audit still reports 25,264 branch sites with unresolved conditions, 136 indirect callx sites with unresolved runtime register values. Green CI does not prove route_v2 handler reachability, CPI account slice reconstruction, or CPI-requested signer/writable privileges. Production gates remain closed. Next: expand transfer edge-case fixtures, implement conservative bounded CFG worklist, prove loader ABI before seeding input data, then derive route_v2 dispatch from actual dataflow.
+
+
+## 2026-11-13 — transfer edge-case test expansion
+
+- PR #272 commit `4186f178114abcf0bef1a215859b4b9d0328155f` adds six tests for register aliasing/modular overflow, invalid register indices, pointer overflow, aligned stack overwrite, unaligned overlap invalidation, and unknown store-base invalidation.
+- New exact-head runs: Browser Smoke `43289124939`, Validate `43289124843`, Jupiter V6 CPI Trace `43289124824`, Jupiter IDL History `43289124775`. All observed in progress; no terminal failure observed yet. Rust unit tests must complete before these new tests count as verified.
+- Previous head `aafe7bea94e9378479e8e3b4a155c2a73a1c0985` passed all four workflows. Browser screenshots, provider evidence, IDL/static audit, and CPI trace artifacts were inspected and recorded in the audit report.
+- Next: await exact-head checks; deep-diagnose any terminal failure; then implement bounded CFG worklist with explicit control-flow handling and conservative joins. Do not route branches/calls/exits through generic unsupported data-op invalidation.
