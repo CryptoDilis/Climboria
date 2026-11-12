@@ -245,6 +245,7 @@ test("returns an incomplete report and preserves the last fetched cursor after e
   assert.equal(report.nextBefore, "sig-2");
   assert.equal(report.rpcFailureMethod, "getTransaction");
   assert.match(report.rpcFailureMessage, /transport failure.*getTransaction/i);
+  assert.match(report.rpcFailureMessage, /after 3 attempts/i);
   assert.equal(report.transactionFetchComplete, false);
   assert.equal(report.reachedEnd, false);
 });
