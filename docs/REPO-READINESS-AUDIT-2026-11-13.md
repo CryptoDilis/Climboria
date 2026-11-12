@@ -153,3 +153,39 @@ All four runs are terminal `completed/success`. Browser Smoke job `131546497237`
 - PR #269 remains open and draft; its four exact-head workflows are green on head `cb510429d780a1c8b68aa8bdf97c6e539044b644`. Its documented next P1 task remains multi-transaction finalized route traces across multi-hop/split plans, DEX order permutations, transfer-hook slices, and variable Meteora BinArray counts.
 - PR #271 remains a separate draft targeting PR #269's feature branch; its own documentation records that the required workflow filters target `main`, so it has no exact-head CI evidence. This is a trigger/configuration boundary, not a failed workflow. Do not use its static-analysis output as verified until the implementation is integrated onto a main-based PR and its pinned Rust tests and workflows pass.
 - Next: continue PR #269's read-only multi-transaction trace evidence. For each candidate, retain finalized signature/slot, route discriminator and variant sequence, ordered outer accounts, all nested CPI stack heights, token pre/post balances, transaction outcome, transfer-hook account slices, and Meteora BinArray/bitmap-extension ownership and data. Keep the distinction between outer transaction privileges and CPI-requested AccountMeta flags explicit. Do not enable signing/execution or expand supported route allowlists from observational correlation alone.
+
+
+## 2026-11-13 — PR #272 sBPF static-analysis artifact independently inspected
+
+**Exact head:** `63937cf2724b92c76598cfcd5dae2320a1a2f2a1`; Jupiter IDL History run `43322480688`; job `131546495537`; artifact `13991970904`.
+
+### Build/test and artifact verification
+
+- IDL History job completed SUCCESS. All 14 steps completed successfully.
+- The workflow explicitly ran `cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml`; the pinned Rust suite reported **43 passed, 0 failed**.
+- The artifact ZIP was downloaded and opened. It contains the pinned ELF, IDL history responses, summary, instruction dump, CFG exports, branch-site and branch-reachability TSVs, call/callx exports, and syscall-site evidence.
+- Artifact ZIP size: 3,765,535 bytes. It contains 25 files; static-analysis output files include `branch-reachability.tsv`, `branch-sites.tsv`, `calls.tsv`, `callx-sites.tsv`, `cfg-nodes.tsv`, `instructions.tsv`, `reachable-blocks.tsv`, and `summary.txt`.
+
+### Independently checked output metrics
+
+- Candidate ELF: 2,892,224 bytes; SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`; SBPF V0.
+- 243,522 decoded instructions; 40,664 CFG basic blocks; 25,264 static branch sites.
+- Bounded CFG dataflow: 44,069 work items of a 1,000,000 budget; not truncated; 38,804 blocks reached.
+- 24,352 branch observations: 4,934 resolved taken, 78 resolved fallthrough, and 19,340 unresolved. Every unresolved condition retains both possible successors in the artifact.
+- 136 CALL_REG/CALLX sites are exported. All 136 use the correct SBPF V0 target-register operand source `imm_low_byte`, and all 136 target values remain explicitly `unresolved-register-value`. The summary counts 87 indirect callsites reached by the current traversal; do not interpret the remaining sites as proven impossible/unreachable.
+- Candidate input summary: 85 top-level account positions, 51 unique addresses, 34 duplicate references. The exact serialized ABI-v1 account data lengths and offset of the 69-byte route_v2 instruction payload in the r1 input buffer are **not reconstructed**. The candidate direct r2 pointer is overwritten before dereference; no route_v2 discriminator branch is therefore proven resolved from r2.
+- The analyzer uses bounded, context-insensitive direct CALL_IMM traversal. It does not resolve dynamic CALLX targets, model arbitrary account data, prove route_v2 handler dispatch, reconstruct each DEX CPI account slice, or recover CPI-requested signer/writable flags.
+
+### Engineering assessment
+
+This artifact is materially stronger than a static branch inventory: it includes a bounded abstract dataflow pass and conservative branch observations, and the pinned Rust unit suite actually ran. It remains an exploratory static-analysis artifact, not transaction-security proof. In particular, do not equate 38,804 reached blocks with 38,804 blocks proven reachable for the historical route_v2 invocation, and do not equate the 1,860 unvisited blocks with dead code. Candidate account data lengths and the instruction-data offset remain unknown; CALLX targets remain unresolved.
+
+### Exact next task
+
+Continue the documented candidate-scoped ABI-v1 input reconstruction:
+1. Preserve all 85 outer account positions and 34 duplicate positions.
+2. Recover only slot-appropriate account metadata and data lengths; leave unproven fields Unknown.
+3. Reconstruct the serialized ABI-v1 r1 buffer and prove the exact offset of the 69-byte route_v2 payload.
+4. Add deterministic fixtures for sparse/unknown account records, pointer arithmetic, and branch outcomes; unsupported loads and unknown bytes must retain both CFG successors.
+5. Re-run `cargo test --locked`, the IDL static-audit artifact generation, and all four exact-head workflows. Inspect the generated TSVs and compare the exact artifact on the new SHA.
+6. Only after the candidate route discriminator/variant path is grounded, continue adapter CPI account-slice and CPI-requested privilege analysis. Keep route_v2 excluded and all signing/execution/deployment gates closed.
