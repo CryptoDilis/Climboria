@@ -68,16 +68,16 @@ A source-backed review establishes the next necessary analysis layer; it does no
 - Finalized ProgramData provenance identifies the Jupiter Program account owner as `BPFLoaderUpgradeab1e11111111111111111111111` (Upgradeable BPF Loader), ProgramData deployment slot `468023491`, and the candidate transaction slot as `468153382`. The active ELF is SBPF V0. **Do not confuse SBPF V0 with loader ABI v0.**
 - The Solana Protocol Specification §12.8.6 states that the supported BPF Loader and Upgradeable BPF Loader use input ABI v1. §12.8.2 specifies entrypoint `r1=0x400000000` (serialized input base) and `r2` as a pointer to instruction data; §12.8.6 states that r2 points to the instruction-data bytes after the length field. Reference: https://bw-solana.github.io/solana-protocol-spec/12-svm-loaders-syscalls-and-precompiles.html
 - The candidate route_v2 instruction is 69 bytes. Exact Base58 and hex bytes, binary hash, slot, loader owner, and the ABI evidence are recorded in `docs/JUPITER-SBF-ENTRYPOINT-ABI-AND-INTERPROCEDURAL-PLAN-2026-11-13.md`.
-- The current CFG analyzer is intraprocedural. It starts at entrypoint with all registers unknown and follows only pinned CFG basic-block destinations. It does not traverse `CALL_IMM` internal call targets and invalidates abstract facts at calls; CALLX values remain unresolved.
-- The generated `entrypoint-calls.tsv` records internal calls from entrypoint PC 107630, including PC 107692 → function PC 74673, PC 107699 → 102450, and PC 107835 onward → 246002. The current analyzer visits 88 reachable blocks out of 40,664 CFG blocks (90 work items), so it is not an interprocedural closure.
+- The current analyzer performs bounded, context-insensitive direct `CALL_IMM` target traversal from the pinned function registry; `CALL_REG`/CALLX runtime targets remain unresolved. It is not a context-sensitive call-stack model or route_v2 branch-sensitive proof.
+- The generated `entrypoint-calls.tsv` records internal calls from entrypoint PC 107630, including PC 107692 → function PC 74673, PC 107699 → 102450, and PC 107835 onward → 246002. The first call-closure run reached 38,804 blocks, but its call-return register model was inaccurate; treat its branch-pruning counts as provisional until the corrected exact-head rerun.
 - This is an analysis-scope limitation, not a CI failure. Do not use the current reachable-block set as proof that the route_v2 handler is unreachable or fully explored.
 
 ## Exact next engineering task
 
-Implement candidate-scoped input-data-aware, interprocedural analysis in this order:
-1. Seed only the proven ABI-v1 entry state for this candidate: r2 as instruction-data pointer offset zero and the exact 69-byte payload. Keep generic ELF runs unseeded unless equivalent loader/trace provenance is supplied.
-2. Model bounded little-endian SBPF V0 `ldxb/ldxh/ldxw/ldxdw` reads from the known instruction-data region; all other memory regions and out-of-range reads remain Unknown. Add adversarial bounds, width, endianness and pointer tests.
-3. Traverse direct internal `CALL_IMM` targets from the pinned function registry with bounded call depth/context/work budget and correct caller/callee register semantics. Model return-site continuation conservatively; preserve unknown paths on recursion, unresolved target, unsupported instruction or budget exhaustion.
+Continue candidate-scoped input-data-aware analysis in this order:
+1. Model the actual candidate entrypoint: r2 is overwritten before dereference and the program walks the serialized ABI-v1 input from r1. Do not seed the direct r2 fixture as proof of route dispatch.
+2. Build a sparse r1 ABI-v1 input image from the 85-position candidate account vector. Keep unknown historical account data lengths and contents Unknown.
+3. Prove the 69-byte instruction-data offset after the account records; only then apply bounded little-endian load propagation and route_v2 branch pruning.
 4. Keep V0 CALLX target register encoding as immediate low byte, but do not resolve its runtime target without proving that register's value at the callsite.
 5. Verify emitted branch and call paths against the candidate route_v2 discriminator and the transaction-specific four CPI adapters. Only after this, investigate CPI account-slice boundaries and CPI-requested privileges.
 6. Run all four exact-head workflows; inspect generated input-read, call-context and branch evidence artifacts; record every failed job and its recovery.
@@ -97,7 +97,7 @@ Implement candidate-scoped input-data-aware, interprocedural analysis in this or
 - The exact 69-byte candidate route_v2 payload is pinned and checked byte-for-byte. The workflow checks finalized loader owner, ProgramData deployment slot, ELF SHA-256, candidate slot/epoch and route_v2 discriminator before candidate input analysis.
 - ABI-v1/SIMD-0321 entry state is r0/r3-r9 = zero, r1 = serialized input base, r2 = instruction-data pointer, r10 = abstract stack base; r11 is VM-internal and not modeled.
 - Bounded little-endian V0/V2 instruction-data load tests pass at the abstract-domain level. The first CFG integration test failed because one ordinary-instruction path still used the no-input compatibility wrapper; counter-fix is to pass version and candidate bytes through every ordinary instruction transfer.
-- The analyzer remains intraprocedural and cannot yet claim route_v2 handler reachability. Direct CALL_IMM call/return traversal and CALLX runtime target resolution remain the next major static-analysis tasks.
+- Direct CALL_IMM traversal is implemented, but route_v2 handler branch reachability remains unproven because the serialized r1 input offset is not reconstructed. CALLX runtime targets remain unresolved.
 
 
 ## Exact-head result and r1 serialized-input finding — 2026-11-13
@@ -114,8 +114,24 @@ This output is not route_v2 handler reachability or a transaction-safety conclus
 ## Direct internal-call traversal checkpoint — 2026-11-13
 
 - Added context-insensitive direct `CALL_IMM` target traversal using the exact SBPF-version-specific function-registry/relative-PC resolution rules.
-- Callee entry receives r1-r5 arguments and r6-r9 preserved values; r0/r10 remain unknown.
-- Caller continuation retains r6-r9 and r10 but invalidates r0-r5 and all stack-memory facts because opaque callees may mutate passed stack pointers.
+- Correct VM model: callee entry receives r1-r9 and a new r10 frame; caller return restores r1-r5/r10, returns unknown r0, and marks r6-r9 Unknown because the VM does not restore them. Syscalls preserve registers except r0. Stack facts are cleared across opaque calls.
 - Dynamic `CALL_REG`/CALLX remains unresolved and explicitly counted. No call-stack return summaries or runtime target guesses are claimed.
 - The initial direct-call regression test had its taken/fallthrough fixture expectation reversed. For JEQ at PC 10 with off=1, the taken target is PC 12 and fallthrough is PC 11. Corrected in commit 96e594d76af93a725960d4fed32381dbc40ac68e.
-- The IDL workflow on 5586d08 ran 40 tests: 39 passed, 1 fixture assertion failed. The corrected exact-head run is pending.
+- Run 43317366323 on head 5586d08 failed one fixture assertion (39/40 tests); commit 96e594d corrected the test's taken-edge expectation. Exact-head rerun 43318127235 on 48942904 passed; all 40 tests passed.
+
+
+## Corrected call-frame model and exact-head evidence — 2026-11-13
+
+Pinned SBPF interpreter source:
+- `push_frame` saves r1-r5 and the frame pointer; `pop_frame` restores r1-r5 and r10. r0 is the callee return register; r6-r9 are not saved/restored by the VM.
+- Syscall dispatch returns r0; other registers remain unchanged in the caller.
+- The analyzer now models internal callee entry with r1-r9 passed, a fresh r10 frame and empty stack facts; internal return preserves r1-r5/r10, sets r0/r6-r9 Unknown and clears stack facts; syscall return preserves all except r0 and clears stack facts.
+
+Exact-head verification before this call-frame correction:
+- Validate run 43318127345 — SUCCESS.
+- Jupiter V6 CPI Trace Audit run 43318127218 — SUCCESS.
+- Jupiter IDL History Audit run 43318127235 — SUCCESS; 40 Rust tests passed; artifact 13989007409.
+- Browser Smoke run 43318127428 — SUCCESS, including DEX chart/market tests and Jarrell's Peak desktop/mobile gameplay.
+- All four runs tested exact head 48942904cdf9ac65e8e873ae43c86b1e7a38ed3a.
+
+The IDL artifact's first call-closure metrics (38,804 reachable blocks, 8,786 internal call sites, 355 external/unresolved direct-call sites, 87 reachable unresolved CALLX sites; no work-budget truncation) were generated before the call-frame correction. They are a baseline only. Rerun the corrected model before using branch-pruning counts.

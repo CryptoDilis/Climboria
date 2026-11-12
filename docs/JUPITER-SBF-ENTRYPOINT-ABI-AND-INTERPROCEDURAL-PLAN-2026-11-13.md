@@ -39,27 +39,28 @@ Do not seed account-data contents, direct account pointers, or any other runtime
 
 Reference: https://bw-solana.github.io/solana-protocol-spec/12-svm-loaders-syscalls-and-precompiles.html (Sections 12.8.2 and 12.8.6).
 
-## Newly confirmed analysis boundary
+## Current analysis boundary — 2026-11-13
 
-The current bounded CFG analyzer is intraprocedural:
-- `analyze_cfg` starts only at `analysis.entrypoint` with `AbstractState::default()` (all registers unknown).
-- It follows only the destinations supplied by the pinned basic-block CFG.
-- `CALL_IMM` is not resolved as an internal call edge by `analyze_cfg`; it falls through the generic unsupported-instruction transfer, which invalidates facts.
-- `CALL_REG`/CALLX register values remain unresolved.
-- The generated entrypoint call inventory shows internal calls from entrypoint PC 107630, including callsite PC 107692 → function PC 74673, PC 107699 → 102450, and PC 107835 onward → 246002.
-- The latest IDL artifact reports 40,664 CFG blocks, but the bounded entrypoint-only analysis visits 90 work items / 88 reachable blocks. It reports 9 unconditional branch observations and 61 unresolved conditional observations; zero conditional predicates were resolved.
+The bounded analyzer now performs context-insensitive traversal of statically resolved internal `CALL_IMM` targets using the pinned SBPF-version-specific function registry/relative-PC rules. `CALL_REG`/CALLX runtime targets remain unresolved and explicitly counted. This is a function-level call-graph closure, not context-sensitive call-stack emulation or route_v2 branch-sensitive proof.
 
-Consequently, the current reachable-block output is not an interprocedural call-graph closure and cannot be used to claim that all reachable handler code has been explored. This is a known analysis-scope limitation, not a workflow failure.
+The candidate entrypoint prefix establishes that the direct r2 instruction-data pointer is overwritten at entrypoint+2; the program then reads the serialized ABI-v1 input through r1. The exact 69-byte route_v2 payload is known, but its offset in the serialized r1 buffer is not yet reconstructed. Therefore no route_v2 discriminator branch is claimed resolved from the direct r2 fixture.
+
+The VM call-frame model is now aligned to the pinned interpreter:
+- Internal call entry passes r1-r9, gives the callee a new r10 stack frame, sets r0 Unknown, and clears caller stack facts.
+- Internal call return restores r1-r5 and r10; r0 is an unknown return value; r6-r9 are not restored by the VM and remain Unknown unless callee preservation is separately proven. Stack facts are cleared.
+- Syscall return makes r0 Unknown while preserving other registers; stack facts are cleared because memory effects are opaque.
+- CALLX remains unresolved; caller continuation uses the conservative internal-call return model.
+
+Source evidence: pinned `push_frame`/`pop_frame` in https://github.com/anza-xyz/sbpf/blob/127947b43f8c3d32a6fc66d29d335ad7c7929da6/src/interpreter.rs#L619-L643 and syscall dispatch in https://github.com/anza-xyz/sbpf/blob/127947b43f8c3d32a6fc66d29d335ad7c7929da6/src/interpreter.rs#L164-L175.
 
 ## Required next implementation sequence
 
-1. Add candidate-scoped entry-state configuration: seed r2 as an instruction-data pointer only when the trace payload, program ID, loader owner, slot, and binary hash all match the recorded candidate.
-2. Add bounded, little-endian instruction-data loads for SBPF V0 `ldxb`, `ldxh`, `ldxw`, and `ldxdw`. Out-of-range, unknown-region, unsupported-width, or unsupported-opcode reads must yield Unknown (or invalidate facts conservatively); never synthesize bytes.
-3. Add regression tests for exact discriminator bytes, offsets 0–8, truncated/out-of-range reads, little-endian width behavior, pointer arithmetic, and unrelated input regions.
-4. Add interprocedural direct-call traversal using the pinned V0 call encoding and function registry. Preserve caller/callee register semantics: r1–r5 are caller-saved, r6–r9 callee-saved, r10 frame pointer; model return values and return sites conservatively. Bound call depth, recursive cycles, context count, and work items. Unknown or unresolved targets must not be silently dropped.
-5. Keep dynamic CALLX resolution as a separate explicit phase; V0 target register comes from the low byte of the immediate, but its runtime value still must be proven at each callsite.
-6. Only after call/return flow and input-data reads are verified, trace the exact route_v2 discriminator/variant dispatch path. Then correlate the selected adapter with transaction CPI evidence and prove each CPI AccountInfo slice boundary and requested signer/writable flags independently.
-7. Export the candidate input provenance, function/callsite contexts, branch facts, and unresolved reasons as deterministic evidence files. Every pruned edge must cite the concrete known bytes/constants and path context that justified it.
+1. Add a deterministic candidate account-vector fixture from the CPI trace: preserve all 85 instruction positions, 51 unique addresses, 34 duplicate references, message-account indices and outer-message signer/writable flags. Explicitly distinguish these from CPI-requested AccountMeta flags.
+2. Reconstruct a sparse ABI-v1 r1 input image. Seed account count and only fields with candidate-slot evidence; account data lengths, owners and data bytes that lack historical proof remain Unknown. Do not use current account snapshots as historical facts.
+3. Prove the exact serialized offset of the 69-byte route_v2 instruction data after the account records; resolve discriminator/variant branches only when all bytes and pointer arithmetic are grounded.
+4. Continue bounded CALLX target resolution only when the version-specific target register value is proven at each callsite.
+5. Correlate the selected route handler with transaction CPI evidence and prove each adapter's CPI AccountInfo slice boundary and requested signer/writable flags independently.
+6. Preserve unresolved paths on recursion, unsupported instructions, unknown memory and work-budget exhaustion; never prune based on guessed bytes.
 
 ## Safety / release boundary
 
@@ -102,11 +103,11 @@ SIMD-0449 is Review and has no Mainnet activation epoch as of 2026-11-13. SIMD-0
 Commit `baf82932e6d8a4164694ed98024b3cd2a9bad808` introduces bounded context-insensitive traversal of statically resolved internal `CALL_IMM` targets.
 
 - Resolve legacy internal calls through the executable function-registry key and static-syscall-era internal calls through the version-specific relative PC rule with `src == 1`.
-- Visit internal callee CFG entries with r1-r5 argument facts and preserved r6-r9 values. Callee r0 and r10 are unknown; no stack-frame offset is invented.
-- Keep caller continuation reachable but invalidate caller-saved r0-r5 and all abstract stack slots because an opaque callee/syscall may write through stack pointers passed as arguments.
-- Preserve r6-r9 and caller r10 according to the pinned SBPF runtime's call-frame save/restore behavior.
-- `CALL_REG`/CALLX targets remain unresolved; no dynamic target is guessed.
-- This is not context-sensitive call-stack emulation and does not compute callee return summaries. It over-approximates caller continuations with unknown caller-saved values.
+- Internal callee entry passes r1-r9, starts a new r10 stack frame, sets r0 Unknown and clears caller stack facts.
+- Internal return restores r1-r5 and r10; r0 is Unknown; r6-r9 are Unknown because the VM does not save/restore them. Caller stack facts are cleared.
+- Syscall return preserves all registers except r0 and clears stack facts for opaque memory effects.
+- `CALL_REG`/CALLX targets remain unresolved; caller continuation uses conservative internal-call return semantics.
+- This is context-insensitive traversal and does not compute callee return summaries.
 
 Regression coverage includes direct internal-call target traversal, indirect-call unresolved behavior, and stack invalidation across opaque calls. A first test run found a fixture-only edge expectation error (PC 12 is taken; PC 11 is fallthrough); corrected in commit `96e594d76af93a725960d4fed32381dbc40ac68e`.
 
@@ -120,3 +121,9 @@ Next priorities:
 ## Verification sequencing note — 2026-11-13
 
 The branch was advanced with a documentation-only commit while the corrected exact-head workflows were still running. Because both Browser Smoke and Jupiter IDL History use `cancel-in-progress: true`, the in-flight runs were cancelled before completing their test stages. The latest corrected direct-call assertion therefore still needs a complete exact-head rerun. Future updates will batch code and documentation before starting the final verification cycle, then hold the branch stable until the suite completes.
+
+## Exact-head call-frame correction — 2026-11-13
+
+The direct-call traversal implementation is present. A source audit found its first call-return model was reversed: it invalidated r1-r5 while preserving r6-r9. The pinned VM saves/restores r1-r5 and r10, but does not restore r6-r9. This commit corrects the abstract transfer functions and adds direct-call, CALLX, syscall, callee-entry and caller-return regression coverage. Do not rely on earlier branch-pruning metrics generated with the incorrect model.
+
+The candidate's 85-position outer account vector (51 unique, 34 duplicates) is preserved in CPI trace artifact 13988045905 from run 43314944457. It is outer message privilege evidence, not CPI-requested AccountMeta flags.

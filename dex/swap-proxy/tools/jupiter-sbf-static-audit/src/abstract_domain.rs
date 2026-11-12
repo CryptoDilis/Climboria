@@ -64,22 +64,31 @@ impl AbstractState {
         state
     }
 
-    /// Conservatively clobber BPF caller-saved registers after a call.
-    /// r6-r9 and r10 are preserved by the VM calling convention.
-    pub fn invalidate_call_clobbered_registers(&mut self) {
-        for index in 0..=5 {
+    /// Internal CALL_IMM/CALL_REG return semantics from the pinned SBPF VM:
+    /// pop_frame restores r1-r5 and r10; r0 is the return value. The VM does
+    /// not save r6-r9, so they are unknown unless callee preservation is proven.
+    /// Opaque callees may mutate memory through passed pointers, so clear stack facts.
+    pub fn prepare_after_internal_call(&mut self) {
+        self.registers[0] = AbstractValue::Unknown;
+        for index in 6..=9 {
             self.registers[index] = AbstractValue::Unknown;
         }
-        // A callee/syscall may write through a stack pointer passed in r1-r5.
-        // Without a memory-effect summary, invalidate stack facts at return.
         self.stack.clear();
     }
 
-    /// Prepare an internal callee entry. Propagate r1-r5 arguments and
-    /// callee-saved r6-r9, but do not assume a callee stack-frame address.
+    /// Syscall dispatch returns only r0 to the caller; other registers remain
+    /// unchanged in the pinned interpreter. Memory effects remain opaque.
+    pub fn prepare_after_syscall(&mut self) {
+        self.registers[0] = AbstractValue::Unknown;
+        self.stack.clear();
+    }
+
+    /// A pushed internal call frame receives the caller's r1-r9 values and a
+    /// new r10 frame pointer. Caller stack spill facts do not belong to this frame.
     pub fn prepare_internal_callee_entry(&mut self) {
         self.registers[0] = AbstractValue::Unknown;
-        self.registers[10] = AbstractValue::Unknown;
+        self.registers[10] = AbstractValue::StackPointer(0);
+        self.stack.clear();
     }
 
     pub fn merge(&self, other: &Self) -> Self {
@@ -188,17 +197,53 @@ mod tests {
     }
 
     #[test]
-    fn call_clobber_invalidates_caller_saved_registers_and_stack_memory() {
+    fn internal_call_return_restores_vm_saved_registers_and_invalidates_unsaved_state() {
+        let mut state = AbstractState::default();
+        state.registers[0] = AbstractValue::Constant(1);
+        state.registers[1] = AbstractValue::Constant(2);
+        state.registers[5] = AbstractValue::Constant(5);
+        state.registers[6] = AbstractValue::Constant(6);
+        state.registers[9] = AbstractValue::Constant(9);
+        state.registers[10] = AbstractValue::StackPointer(16);
+        state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(99));
+        state.prepare_after_internal_call();
+        assert_eq!(state.registers[0], AbstractValue::Unknown);
+        assert_eq!(state.registers[1], AbstractValue::Constant(2));
+        assert_eq!(state.registers[5], AbstractValue::Constant(5));
+        assert_eq!(state.registers[6], AbstractValue::Unknown);
+        assert_eq!(state.registers[9], AbstractValue::Unknown);
+        assert_eq!(state.registers[10], AbstractValue::StackPointer(16));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn syscall_return_preserves_non_r0_registers_and_invalidates_stack_memory() {
         let mut state = AbstractState::default();
         state.registers[0] = AbstractValue::Constant(1);
         state.registers[1] = AbstractValue::Constant(2);
         state.registers[6] = AbstractValue::Constant(6);
-        state.registers[10] = AbstractValue::StackPointer(0);
+        state.registers[9] = AbstractValue::Constant(9);
+        state.registers[10] = AbstractValue::StackPointer(16);
         state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(99));
-        state.invalidate_call_clobbered_registers();
-        for index in 0..=5 {
-            assert_eq!(state.registers[index], AbstractValue::Unknown);
-        }
+        state.prepare_after_syscall();
+        assert_eq!(state.registers[0], AbstractValue::Unknown);
+        assert_eq!(state.registers[1], AbstractValue::Constant(2));
+        assert_eq!(state.registers[6], AbstractValue::Constant(6));
+        assert_eq!(state.registers[9], AbstractValue::Constant(9));
+        assert_eq!(state.registers[10], AbstractValue::StackPointer(16));
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn callee_entry_passes_arguments_and_starts_a_fresh_stack_frame() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::Constant(2);
+        state.registers[6] = AbstractValue::Constant(6);
+        state.registers[10] = AbstractValue::StackPointer(16);
+        state.spill_u64(AbstractValue::StackPointer(-8), AbstractValue::Constant(99));
+        state.prepare_internal_callee_entry();
+        assert_eq!(state.registers[0], AbstractValue::Unknown);
+        assert_eq!(state.registers[1], AbstractValue::Constant(2));
         assert_eq!(state.registers[6], AbstractValue::Constant(6));
         assert_eq!(state.registers[10], AbstractValue::StackPointer(0));
         assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);

@@ -314,10 +314,14 @@ pub fn analyze_cfg_with_calls(
                     let mut callee_state = state.clone();
                     callee_state.prepare_internal_callee_entry();
                     extra_successors.push((target, callee_state));
+                    // The VM restores r1-r5/r10; r0 is the unknown return value
+                    // and r6-r9 are not VM-restored. Do not assume callee preservation.
+                    state.prepare_after_internal_call();
+                } else {
+                    // A direct call with no internal target is an external syscall
+                    // or unresolved call: only r0 is returned to the caller.
+                    state.prepare_after_syscall();
                 }
-                // The caller continuation is retained, but caller-saved values
-                // are unknown because the callee may overwrite them.
-                state.invalidate_call_clobbered_registers();
                 continue;
             }
             if instruction.opc == ebpf::CALL_REG {
@@ -328,7 +332,7 @@ pub fn analyze_cfg_with_calls(
                     visits: 0,
                 });
                 observation.visits += 1;
-                state.invalidate_call_clobbered_registers();
+                state.prepare_after_internal_call();
                 continue;
             }
 
@@ -479,20 +483,30 @@ mod cfg_reachability_tests {
     }
 
     #[test]
-    fn resolved_call_imm_visits_internal_callee_and_preserves_argument_facts() {
+    fn resolved_call_imm_models_vm_frame_and_return_register_semantics() {
         let instructions = vec![
             insn(0, ebpf::CALL_IMM, 0, 0, 0, 77),
-            insn(1, ebpf::EXIT, 0, 0, 0, 0),
-            insn(10, ebpf::JEQ64_IMM, 1, 0, 1, 7),
-            insn(11, ebpf::EXIT, 0, 0, 0, 0),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 7),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::JEQ64_IMM, 6, 0, 1, 66),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+            insn(5, ebpf::EXIT, 0, 0, 0, 0),
+            insn(10, ebpf::JEQ64_IMM, 1, 0, 1, 8),
+            insn(11, ebpf::JEQ64_IMM, 6, 0, 1, 66),
             insn(12, ebpf::EXIT, 0, 0, 0, 0),
+            insn(13, ebpf::EXIT, 0, 0, 0, 0),
         ];
         let blocks = BTreeMap::from([
             (0, block(0, 1, &[1])),
-            (1, block(1, 2, &[])),
-            (10, block(2, 3, &[11, 12])),
-            (11, block(3, 4, &[])),
-            (12, block(4, 5, &[])),
+            (1, block(1, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[4, 5])),
+            (4, block(4, 5, &[])),
+            (5, block(5, 6, &[])),
+            (10, block(6, 7, &[11, 12])),
+            (11, block(7, 8, &[12, 13])),
+            (12, block(8, 9, &[])),
+            (13, block(9, 10, &[])),
         ]);
         let mut entry = AbstractState::default();
         entry.registers[1] = AbstractValue::Constant(7);
@@ -502,40 +516,90 @@ mod cfg_reachability_tests {
         let result = analyze_cfg_with_calls(
             &instructions, &blocks, 0, SBPFVersion::V0, 64, entry, None, &targets,
         ).unwrap();
-        assert!(result.reachable_blocks.contains(&10));
-        assert!(result.reachable_blocks.contains(&1));
+
         assert_eq!(result.call_observations[&0].kind, "internal");
         assert_eq!(result.call_observations[&0].target_pc, Some(10));
-        assert_eq!(result.branch_observations[&10].outcome_taken, Some(true));
-        // JEQ at PC 10 with off=1 branches to PC 12; PC 11 is fallthrough.
-        assert_eq!(result.branch_observations[&10].retained_successors, BTreeSet::from([12]));
-        assert!(result.reachable_blocks.contains(&12));
-        assert!(!result.reachable_blocks.contains(&11));
+        assert_eq!(result.branch_observations[&1].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&1].retained_successors, BTreeSet::from([3]));
+        assert_eq!(result.branch_observations[&3].outcome_taken, None);
+        assert_eq!(result.branch_observations[&3].retained_successors, BTreeSet::from([4, 5]));
+        assert_eq!(result.branch_observations[&10].outcome_taken, Some(false));
+        assert_eq!(result.branch_observations[&10].retained_successors, BTreeSet::from([11]));
+        assert_eq!(result.branch_observations[&11].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&11].retained_successors, BTreeSet::from([13]));
+        for pc in [1, 3, 4, 5, 10, 11, 13] {
+            assert!(result.reachable_blocks.contains(&pc));
+        }
+        for pc in [2, 12] {
+            assert!(!result.reachable_blocks.contains(&pc));
+        }
     }
 
     #[test]
-    fn indirect_call_is_reported_unresolved_and_clobbers_caller_saved_state() {
+    fn unresolved_indirect_call_preserves_vm_saved_registers_but_invalidates_unsaved_state() {
         let instructions = vec![
             insn(0, ebpf::CALL_REG, 0, 0, 0, 0),
             insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 7),
             insn(2, ebpf::EXIT, 0, 0, 0, 0),
-            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::JEQ64_IMM, 6, 0, 1, 66),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+            insn(5, ebpf::EXIT, 0, 0, 0, 0),
         ];
         let blocks = BTreeMap::from([
             (0, block(0, 1, &[1])),
             (1, block(1, 2, &[2, 3])),
             (2, block(2, 3, &[])),
-            (3, block(3, 4, &[])),
+            (3, block(3, 4, &[4, 5])),
+            (4, block(4, 5, &[])),
+            (5, block(5, 6, &[])),
         ]);
         let mut entry = AbstractState::default();
         entry.registers[1] = AbstractValue::Constant(7);
+        entry.registers[6] = AbstractValue::Constant(66);
         let result = analyze_cfg_with_calls(
             &instructions, &blocks, 0, SBPFVersion::V0, 64, entry, None, &BTreeMap::new(),
         ).unwrap();
         assert_eq!(result.call_observations[&0].kind, "indirect-unresolved");
-        assert_eq!(result.branch_observations[&1].outcome_taken, None);
-        assert!(result.reachable_blocks.contains(&2));
+        assert_eq!(result.branch_observations[&1].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&1].retained_successors, BTreeSet::from([3]));
+        assert_eq!(result.branch_observations[&3].outcome_taken, None);
+        assert_eq!(result.branch_observations[&3].retained_successors, BTreeSet::from([4, 5]));
+        assert!(!result.reachable_blocks.contains(&2));
         assert!(result.reachable_blocks.contains(&3));
+        assert!(result.reachable_blocks.contains(&4));
+        assert!(result.reachable_blocks.contains(&5));
+    }
+
+    #[test]
+    fn unresolved_direct_call_uses_syscall_register_return_semantics() {
+        let instructions = vec![
+            insn(0, ebpf::CALL_IMM, 0, 0, 0, 77),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 7),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::JEQ64_IMM, 6, 0, 1, 66),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+            insn(5, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 1, &[1])),
+            (1, block(1, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[4, 5])),
+            (4, block(4, 5, &[])),
+            (5, block(5, 6, &[])),
+        ]);
+        let mut entry = AbstractState::default();
+        entry.registers[1] = AbstractValue::Constant(7);
+        entry.registers[6] = AbstractValue::Constant(66);
+        let result = analyze_cfg_with_calls(
+            &instructions, &blocks, 0, SBPFVersion::V0, 64, entry, None, &BTreeMap::new(),
+        ).unwrap();
+        assert_eq!(result.call_observations[&0].kind, "external-or-unresolved");
+        assert_eq!(result.branch_observations[&1].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&3].outcome_taken, Some(true));
+        assert_eq!(result.branch_observations[&3].retained_successors, BTreeSet::from([5]));
+        assert!(result.reachable_blocks.contains(&5));
+        assert!(!result.reachable_blocks.contains(&4));
     }
 
     #[test]

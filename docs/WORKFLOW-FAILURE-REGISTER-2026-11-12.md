@@ -1283,3 +1283,23 @@ Runs 43316555529/43316555586 and 43317199137/43317199188 were cancelled while ol
 - Validate run 43317886834 and Jupiter V6 CPI Trace Audit run 43317886902 had already passed on code-fix commit 96e594d.
 - **Classification:** expected cancellation from the workflow's `cancel-in-progress: true` policy after the branch advanced; no test assertion failed on these two runs. The corrected Rust assertion remains unverified until a full exact-head IDL run.
 - **Process correction:** the next commit groups code, tests and all necessary documentation before CI starts. No further commits will be pushed until all relevant workflows for that head complete.
+
+
+## 2026-11-13 direct-call test failure and recovery
+
+- **Failed run:** Jupiter IDL History Audit 43317366323, exact head 5586d08e34745fcf398e731b94a4f11240502b4d; job 131528929831. Rust compilation succeeded; 39 of 40 tests passed.
+- **Failing test:** `resolved_call_imm_visits_internal_callee_and_preserves_argument_facts`; expected retained successor set `{11}`, actual `{12}`.
+- **Root cause:** the fixture used a JEQ at PC 10 with branch offset +1. The taken destination is `PC + 1 + off = 12`; PC 11 is the fallthrough. The analyzer selected the correct taken edge; the test expectation was reversed. This was a test-fixture defect, not a CFG implementation failure.
+- **Counter-fix:** commit 96e594d76af93a725960d4fed32381dbc40ac68e changes the expected edge to PC 12 and asserts PC 11 is unreachable. No branch logic or acceptance criteria were weakened.
+- **Exact-head recovery:** on head 48942904cdf9ac65e8e873ae43c86b1e7a38ed3a, Validate 43318127345, Jupiter V6 CPI Trace Audit 43318127218, Jupiter IDL History Audit 43318127235 and Browser Smoke 43318127428 all completed SUCCESS. The IDL job passed all 40 Rust tests and uploaded artifact 13989007409. Browser Smoke included DEX chart/market checks and Jarrell's Peak desktop/mobile gameplay.
+- **Superseded runs:** 43316657845, 43317319574, 43317886945 and 43317995698 were cancelled after newer commits superseded their heads. These are cancellations, not test failures.
+
+## 2026-11-13 interprocedural call-frame model correction
+
+A separate source audit found the direct-call abstract state model was inaccurate even though its workflow tests passed:
+- The previous model invalidated r0-r5 and preserved r6-r9/r10 after calls.
+- Pinned interpreter source `127947b43f8c3d32a6fc66d29d335ad7c7929da6` shows `push_frame`/`pop_frame` save and restore r1-r5 and r10; r0 is the return value; r6-r9 are not VM-restored.
+- The corrected model preserves r1-r5/r10 on internal return, marks r0/r6-r9 Unknown, and clears stack facts. Callee entry passes r1-r9, establishes a fresh r10 frame and clears caller stack facts. Syscall return preserves registers other than r0 and clears stack facts for opaque memory effects.
+- Regression tests now cover internal callee entry, internal return, unresolved CALLX return and external syscall return. Corrected exact-head workflow verification is required before treating new branch-pruning metrics as usable.
+
+Pinned source: https://github.com/anza-xyz/sbpf/blob/127947b43f8c3d32a6fc66d29d335ad7c7929da6/src/interpreter.rs#L619-L643 and https://github.com/anza-xyz/sbpf/blob/127947b43f8c3d32a6fc66d29d335ad7c7929da6/src/interpreter.rs#L164-L175.
