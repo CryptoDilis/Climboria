@@ -165,5 +165,5 @@ test("preserves the last fully scanned signature when a transaction page is rate
   assert.equal(report.rateLimitedMethod, "getTransaction");
   assert.equal(report.transactionsScanned, 1);
   assert.equal(report.nextBefore, "sig-2");
-  assert.deepEqual(fetchedTransactions, ["sig-2", "sig-1", "sig-1", "sig-1"]);
+  assert.deepEqual(fetchedTransactions, ["sig-2", "sig-1", "sig-1", "sig-1", "sig-1", "sig-1"]);
 });
