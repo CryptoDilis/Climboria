@@ -240,3 +240,59 @@ test("preserves the 18-account Meteora CPI order and parent-sequence correlation
     true,
   );
 });
+
+
+test("stops at unavailable transactions and resumes from the last fully fetched signature", async () => {
+  const firstPassTransactions = [];
+  const firstPass = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    limit: 3,
+    maxTransactions: 3,
+    delayMs: 0,
+    fetchImpl: async (_url, request) => {
+      const body = JSON.parse(request.body);
+      if (body.method === "getSignaturesForAddress") {
+        return rpcResponse([{ signature: "sig-3" }, { signature: "sig-2" }, { signature: "sig-1" }]);
+      }
+      if (body.method === "getTransaction") {
+        firstPassTransactions.push(body.params[0]);
+        return body.params[0] === "sig-2" ? rpcResponse(null) : rpcResponse(emptyTransaction());
+      }
+      throw new Error("Unexpected RPC method: " + body.method);
+    },
+  });
+
+  assert.deepEqual(firstPassTransactions, ["sig-3", "sig-2"]);
+  assert.equal(firstPass.transactionsScanned, 1);
+  assert.deepEqual(firstPass.unavailableSignatures, ["sig-2"]);
+  assert.equal(firstPass.transactionFetchComplete, false);
+  assert.equal(firstPass.nextBefore, "sig-3");
+  assert.equal(firstPass.reachedEnd, false);
+
+  const resumedQueries = [];
+  const resumedTransactions = [];
+  const resumed = await discoverRecentJupiterMeteoraRoutes("https://rpc.example", {
+    before: firstPass.nextBefore,
+    limit: 2,
+    maxTransactions: 2,
+    delayMs: 0,
+    fetchImpl: async (_url, request) => {
+      const body = JSON.parse(request.body);
+      if (body.method === "getSignaturesForAddress") {
+        resumedQueries.push(body.params[1]);
+        return rpcResponse([{ signature: "sig-2" }, { signature: "sig-1" }]);
+      }
+      if (body.method === "getTransaction") {
+        resumedTransactions.push(body.params[0]);
+        return rpcResponse(emptyTransaction());
+      }
+      throw new Error("Unexpected RPC method: " + body.method);
+    },
+  });
+
+  assert.deepEqual(resumedQueries, [{ commitment: "finalized", limit: 2, before: "sig-3" }]);
+  assert.deepEqual(resumedTransactions, ["sig-2", "sig-1"]);
+  assert.equal(resumed.transactionsScanned, 2);
+  assert.deepEqual(resumed.unavailableSignatures, []);
+  assert.equal(resumed.transactionFetchComplete, true);
+  assert.equal(resumed.nextBefore, "sig-1");
+});
