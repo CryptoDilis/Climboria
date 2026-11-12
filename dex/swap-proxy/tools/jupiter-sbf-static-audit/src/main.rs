@@ -128,7 +128,29 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(callx_sites, "{CALLX_TSV_HEADER}")?;
     writeln!(instruction_dump, "pc\topcode\tdst\tsrc\toff\timm")?;
     writeln!(cfg_nodes, "cfg_node_id\tinstruction_start_pc\tinstruction_end_pc_exclusive\tsources\tdestinations")?;
+    writeln!(branch_sites, "branch_pc\topcode\twidth_bits\tcondition\toperand_kind\tdst\tsrc\timm\toff\ttaken_target_pc\ttarget_instruction_present\tfallthrough_pc\tfallthrough_instruction_present\tcondition_resolution")?;
     for instruction in &analysis.instructions {
+        if let Some(branch) = classify_branch(version, instruction) {
+            let target_present = branch.target_pc.map(|pc| instruction_pcs.contains(&pc)).map(|value| value.to_string()).unwrap_or_default();
+            let fallthrough_present = branch.fallthrough_pc.map(|pc| instruction_pcs.contains(&pc)).map(|value| value.to_string()).unwrap_or_default();
+            writeln!(
+                branch_sites,
+                "{}\t0x{:02x}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\tunresolved-condition",
+                branch.pc,
+                branch.opcode,
+                branch.width_bits,
+                branch.condition,
+                branch.operand_kind,
+                instruction.dst,
+                instruction.src,
+                instruction.imm,
+                instruction.off,
+                branch.target_pc.map_or_else(String::new, |pc| pc.to_string()),
+                target_present,
+                branch.fallthrough_pc.map_or_else(String::new, |pc| pc.to_string()),
+                fallthrough_present,
+            )?;
+        }
         let caller = analysis
             .functions
             .range(..=instruction.ptr)
