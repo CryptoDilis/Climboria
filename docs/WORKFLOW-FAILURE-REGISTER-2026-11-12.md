@@ -1176,3 +1176,37 @@ The provider-contract artifact was uploaded successfully as artifact `1396613867
 - Verification is pending on the exact new head. The script intentionally fails closed if either orientation returns non-200, invalid JSON/shape, non-finite values, implausible timestamps, non-monotonic timestamps, invalid OHLC relationships or negative volume.
 - No workflow failure has occurred on this new change yet; do not pre-record a failure. If the capture step fails, inspect the exact response and first failing validation before adjusting any assumption.
 - Next: inspect exact-head CI and artifact; compare base/quote close levels and token identity against the known JUP/WSOL pair, then decide whether a separate GeckoTerminal chart adapter is safe to prototype.
+
+
+## 2026-11-13 — exact-head workflow closeout (3327a847)
+
+**Result:** all four required workflows completed SUCCESS on exact head `3327a847ca3e19ad82e38550f153aa2bbec93a58`. There was no failed job and therefore no failure root cause/counter-fix to record for this batch.
+
+| Workflow | Run | Job | Result |
+|---|---:|---:|---|
+| Validate Climboria | 43305578268 | — | SUCCESS |
+| Jupiter V6 CPI Trace Audit | 43305578205 | — | SUCCESS |
+| Jupiter IDL History Audit | 43305582049 | 131488062526 | SUCCESS |
+| Climboria Browser Smoke Test | 43305578053 | 131488039923 | SUCCESS; 27/27 steps |
+
+Browser Smoke's 27 steps included GeckoTerminal capture, DexScreener capture, auth/account isolation, DEX/Swap navigation and proxy fail-closed checks, Base search/filter/error behavior, DEX chart identity switching, mobile DEX/Swap at 390px and 360px, provider error/empty states, and Jarrell's Peak desktop/mobile gameplay. No step failed.
+
+### GeckoTerminal artifact inspection
+
+- Artifact: `13984775149`, name `geckoterminal-ohlcv-contract-evidence`, 1,988 bytes.
+- ZIP SHA-256: `5b1b68ad147a1a236cca0902902a5bdfaa786cc04744ce3f1775ed511c8d9648`.
+- Capture: `2026-11-12T20:59:07.928Z`; pool `C8Gr6AUuq9hEdSYJzoEpNcdjpojPZwqG5MtQbeouNNwg`; JUP base / WSOL quote.
+- Both base and quote requests: HTTP 200; five candles each; descending Unix-second timestamps; OHLC invariants pass; no API errors.
+- Response metadata for base mode identifies JUP as base and WSOL as quote. Quote mode explicitly flips the metadata identities (WSOL base, JUP quote). USD close samples: JUP ~0.26494; WSOL ~81.3427. Candle timestamps and volume values align between orientations.
+- Both responses advertised `cache-control: max-age=30, public, must-revalidate, s-maxage=60`; `cf-cache-status` was EXPIRED for base and MISS for quote. No Age, Last-Modified, provider observation timestamp or rate-limit headers were present.
+- Interpretation boundary: this validates response structure and orientation for one known pool at one capture time. It does not prove universal provider behavior, full OHLCV continuity, freshness SLA, chart rendering correctness or production reliability. Do not call the response timestamp a provider-as-of timestamp.
+- IDL History artifact `13984211576` completed and uploaded. Static analysis: 243,522 instructions, 40,664 CFG blocks, 136 indirect register-call sites unresolved. The audit does not prove CPI requested AccountMeta privileges or all remaining-account dispatch.
+- Browser screenshot artifact `13983937059`; DexScreener provider artifact `13984610543`.
+
+### Failure analysis / corrective action
+
+No failed steps existed in this exact-head batch. The two runs that were previously in progress eventually completed SUCCESS. Temporary log-download 404 responses were an evidence-retrieval limitation, not workflow failures; run/job summaries and uploaded artifacts were used instead. No blind rerun, assertion weakening or unnecessary source change was made.
+
+### Next task
+
+Add deterministic fixture-based GeckoTerminal adapter tests covering base/quote metadata identity, USD price scale, descending-to-ascending timestamp normalization, volume denomination, gaps, empty data, malformed candles, HTTP errors, cache/rate-limit behavior and pool identity. Keep the production DexScreener iframe fallback and quote-side fail-closed guard until independent parity and release acceptance are proven.
