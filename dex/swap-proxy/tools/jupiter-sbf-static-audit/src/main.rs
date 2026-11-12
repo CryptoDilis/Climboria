@@ -252,7 +252,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     syscall_sites.flush()?;
     callx_sites.flush()?;
     instruction_dump.flush()?;
-    cfg_nodes.flush()?;\n    branch_sites.flush()?;
+    cfg_nodes.flush()?;
+    branch_sites.flush()?;
 
     let disassembly_path = format!("{out_dir}/disassembly.s");
     let mut disassembly = BufWriter::new(File::create(disassembly_path)?);
