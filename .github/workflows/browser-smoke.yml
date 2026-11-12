@@ -623,10 +623,11 @@ jobs:
                 // Return from token detail before using the market-level navigation; the nav is intentionally hidden in token view.
                 const closeDetail=dex.locator('#closeDetail');
                 await closeDetail.waitFor({state:'visible',timeout:5000});
-                const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
+                const closeBefore=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,pointerEvents:getComputedStyle(el).pointerEvents,hitTarget:top?.closest?.('#closeDetail')===el,topElement:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null}});
                 if(closeBefore.disabled||closeBefore.rect.width===0)throw new Error('Mobile token close control is not actionable: '+JSON.stringify(closeBefore));
                 await dex.evaluate(()=>{
                   window.__closeDetailEvents=[];
+                  window.__closeDetailStableSample=null;
                   for(const type of ['pointerdown','pointerup','pointercancel','touchstart','touchend','click']){
                     document.addEventListener(type,event=>{
                       const target=event.target;
@@ -635,7 +636,24 @@ jobs:
                     },true);
                   }
                 });
-                await closeDetail.tap();
+                // openToken() starts smooth scrolling before provider requests finish. Wait until the
+                // scroll position and close-button geometry are stable and the button owns the hit point.
+                await dex.waitForFunction(()=>{
+                  const el=document.querySelector('#closeDetail');
+                  if(!el||el.disabled)return false;
+                  const r=el.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y);
+                  const visible=r.width>0&&r.height>0&&r.top>=0&&r.bottom<=innerHeight;
+                  const target=hit?.closest?.('#closeDetail')===el;
+                  const sample={scrollY,x:r.x,y:r.y,width:r.width,height:r.height};
+                  const previous=window.__closeDetailStableSample;
+                  const same=previous&&Math.abs(previous.scrollY-sample.scrollY)<0.5&&Math.abs(previous.x-sample.x)<0.5&&Math.abs(previous.y-sample.y)<0.5&&Math.abs(previous.width-sample.width)<0.5&&Math.abs(previous.height-sample.height)<0.5;
+                  const stableSince=same&&visible&&target?previous.stableSince:performance.now();
+                  window.__closeDetailStableSample={...sample,stableSince};
+                  return visible&&target&&performance.now()-stableSince>=250;
+                },null,{timeout:10000});
+                const stableClose=await closeDetail.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,scrollY,hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest?.('#closeDetail')===el}});
+                if(!stableClose.hit)throw new Error('Mobile token close target changed after geometry stabilization: '+JSON.stringify(stableClose));
+                await dex.touchscreen.tap(stableClose.x,stableClose.y);
                 await dex.waitForFunction(()=>!document.body.classList.contains('mobile-token-view'),null,{timeout:5000}).catch(async error=>{
                   const state=await dex.evaluate(()=>{const el=document.querySelector('#closeDetail'),r=el?.getBoundingClientRect(),cx=r?r.x+r.width/2:0,cy=r?r.y+r.height/2:0,top=document.elementFromPoint(cx,cy),frame=document.querySelector('#detailChart'),fr=frame?.getBoundingClientRect();return {mobileTokenView:document.body.classList.contains('mobile-token-view'),detailOpen:document.querySelector('#tokenDetail')?.classList.contains('open'),events:window.__closeDetailEvents,closeVisible:r?{x:r.x,y:r.y,width:r.width,height:r.height,display:getComputedStyle(el).display,pointerEvents:getComputedStyle(el).pointerEvents}:null,postTapHit:top?{tag:top.tagName,id:top.id,classes:String(top.className)}:null,iframeRect:fr?{x:fr.x,y:fr.y,width:fr.width,height:fr.height}:null,scrollY:scrollY,activeElement:document.activeElement?.outerHTML?.slice(0,300)}});
                   throw new Error('Mobile close-detail tap did not exit token view. before='+JSON.stringify(closeBefore)+' after='+JSON.stringify(state)+' cause='+error.message);
