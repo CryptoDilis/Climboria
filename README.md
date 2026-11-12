@@ -35,10 +35,11 @@ Login/provider completion remains tracked and must not be represented as complet
 
 ## Current status at this checkpoint
 
-- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `fdfccad5ee999805cad41dceb94446909c6d1593`; PR #269 remains open, draft and unmerged.
-- Exact-head workflows on this checkpoint: Validate `43236793238` (15/15), CPI Trace `43236793422` (10/10), IDL History `43236793269` (12/12), Browser Smoke `43236793856` (23/23) — all SUCCESS, zero failed steps.
-- DEX Base live-search regression passed. New source audit found a chart identity gap during token switching: old chart remained visible while the newly selected token was loading. This commit clears the chart immediately and adds a delayed-response Playwright regression; verification is pending.
-- Current next task: verify delayed chart-switch regression and exact-head workflows; then audit chart refresh cadence and pool-selection URL persistence. Keep Swap execution gates false.
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `626f5a4128bcd7031ed376cff2a4db96f2e44511`; PR #269 remains open, draft and unmerged.
+- Previous exact-head workflows on `fdfccad5`: Validate 15/15, CPI Trace 10/10, IDL History 12/12, Browser Smoke 23/23 — all SUCCESS.
+- New chart identity correction clears the prior chart immediately during token switching and adds a delayed-provider Playwright regression. Its first validation batch exposed a Browser Smoke harness false positive: DexScreener's own Firestore offline warning was treated as a fatal console error. Root cause and narrow counter-fix are recorded in the workflow failure register.
+- Counter-fix filters only the known Firestore unavailable warning from the DexScreener asset bundle; all Climboria page errors and other console errors remain fatal. Re-run pending.
+- Current next task: verify Browser Smoke rerun and delayed chart-switch regression, then audit chart refresh cadence and pool-selection URL persistence. Keep Swap execution gates false.
 - Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
 
 ---

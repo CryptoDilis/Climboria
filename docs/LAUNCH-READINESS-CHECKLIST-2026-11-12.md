@@ -4,7 +4,7 @@
 
 **Repository:** `CryptoDilis/Climboria`  
 **Branch:** `codex/swap-security-evidence-current-main-2026-11-12`  
-**Checkpoint commit before this update:** `fdfccad5ee999805cad41dceb94446909c6d1593`  
+**Checkpoint commit before this update:** `626f5a4128bcd7031ed376cff2a4db96f2e44511`  
 **PR:** #269 — open, draft, unmerged  
 **Checkpoint time:** 2026-11-12 (UTC)
 
@@ -32,7 +32,7 @@ This is the short-term priority through November 15. It does not silently rewrit
 - [ ] Verify production backend/Worker configuration, rate limits, observability and truthful outage behavior.
 - [ ] Complete real desktop/mobile end-to-end acceptance against the intended production service.
 
-**Next DEX task:** verify the new delayed token-switch chart regression on the next exact-head Browser Smoke run. Then audit chart refresh cadence and pool-selection URL persistence; production API freshness and service configuration remain unverified.
+**Next DEX task:** rerun Browser Smoke after the narrow DexScreener Firestore-console false-positive filter. Confirm the delayed token-switch chart regression executes; then audit chart refresh cadence and pool-selection URL persistence.
 
 ### 2. Swap — second priority
 
