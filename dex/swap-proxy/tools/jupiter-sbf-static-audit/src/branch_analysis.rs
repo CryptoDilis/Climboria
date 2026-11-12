@@ -385,6 +385,71 @@ mod cfg_reachability_tests {
     }
 
     #[test]
+    fn constant_false_immediate_branch_retains_only_fallthrough() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, 5),
+            insn(1, ebpf::JEQ64_IMM, 1, 0, 1, 6),
+            insn(2, ebpf::EXIT, 0, 0, 0, 0),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 2, &[2, 3])),
+            (2, block(2, 3, &[])),
+            (3, block(3, 4, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        let branch = &result.branch_observations[&1];
+        assert_eq!(branch.outcome_taken, Some(false));
+        assert_eq!(branch.retained_successors, BTreeSet::from([2]));
+        assert!(result.reachable_blocks.contains(&2));
+        assert!(!result.reachable_blocks.contains(&3));
+    }
+
+    #[test]
+    fn signed_register_comparison_false_keeps_only_fallthrough() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, -1),
+            insn(1, 0xb7, 2, 0, 0, 1),
+            insn(2, 0x6d, 1, 2, 1, 0), // JSGT64_REG: -1 > 1 is false.
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 3, &[3, 4])),
+            (3, block(3, 4, &[])),
+            (4, block(4, 5, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        let branch = &result.branch_observations[&2];
+        assert_eq!(branch.outcome_taken, Some(false));
+        assert_eq!(branch.retained_successors, BTreeSet::from([3]));
+        assert!(result.reachable_blocks.contains(&3));
+        assert!(!result.reachable_blocks.contains(&4));
+    }
+
+    #[test]
+    fn unsupported_instruction_invalidates_constants_before_branch() {
+        let instructions = vec![
+            insn(0, 0xb7, 1, 0, 0, 5),
+            insn(1, 0x04, 1, 0, 0, 1), // Unsupported ADD32 K transfer.
+            insn(2, ebpf::JEQ64_IMM, 1, 0, 1, 5),
+            insn(3, ebpf::EXIT, 0, 0, 0, 0),
+            insn(4, ebpf::EXIT, 0, 0, 0, 0),
+        ];
+        let blocks = BTreeMap::from([
+            (0, block(0, 3, &[3, 4])),
+            (3, block(3, 4, &[])),
+            (4, block(4, 5, &[])),
+        ]);
+        let result = analyze_cfg(&instructions, &blocks, 0, SBPFVersion::V0, 32).unwrap();
+        let branch = &result.branch_observations[&2];
+        assert_eq!(branch.outcome_taken, None);
+        assert_eq!(branch.retained_successors, BTreeSet::from([3, 4]));
+        assert!(result.reachable_blocks.contains(&3));
+        assert!(result.reachable_blocks.contains(&4));
+    }
+
+    #[test]
     fn unknown_branch_retains_both_cfg_successors() {
         let instructions = vec![
             insn(0, ebpf::JEQ64_IMM, 1, 0, 1, 5),
