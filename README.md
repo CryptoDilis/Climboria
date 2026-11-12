@@ -4384,3 +4384,18 @@ This dated checkpoint is historical. The current owner-approved order is P1 Swap
 - Added a Playwright quote-side-only regression fixture to `.github/scripts/dex-chart-selection-smoke.mjs`; existing delayed chart-switch checks remain.
 - Official DexScreener API reference documents chain-scoped token-pair endpoints and both base/quote fields, but direct live API response capture was unavailable during this audit. This guard is an interim fail-closed correction, not quote-side support or production-live evidence. DEX coverage remains non-exhaustive; Swap signing/submission remains disabled.
 - **Next:** inspect all exact-head workflows for this change; diagnose any failed job from logs and record root cause/counter-fix. Then capture reproducible live provider responses for base-side and quote-side mints before designing quote-side normalization.
+
+
+## 2026-11-12 — DEX quote-side identity guard: exact-head verification closed
+
+- Exact tested head: `8cc7edf6342e93b1f6e5dfadf3fb589e578042e4` on `codex/swap-security-evidence-current-main-2026-11-12`; PR #269 remains open, draft and unmerged.
+- All four exact-head workflows completed SUCCESS:
+  - Validate Climboria `43248316010`, job `131286940220`.
+  - Jupiter V6 CPI Trace Audit `43248316040`, job `131286939838`.
+  - Jupiter IDL History Audit `43248316151`, job `131286940928`.
+  - Climboria Browser Smoke Test `43248316180`, job `131286941015`; 24 steps completed, zero failed steps.
+- Browser Smoke included the delayed DEX chart-switch regression, quote-side-only fail-closed fixture, mobile DEX/Swap checks and Jarrell's Peak desktop/mobile gameplay smoke. All steps passed.
+- No workflow failed on this exact head; no new failure diagnosis/counter-fix entry is warranted. Superseded/cancelled historical runs are not counted as failures.
+- Quote-side-only pools remain deliberately withheld. The UI does not claim quote-side normalization or production-live DEX support. Official API reference: https://docs.dexscreener.com/api/reference. The reference documents chain-scoped token-pair endpoints and pair objects with both baseToken and quoteToken; live provider response capture was not accessible in this audit, so price/volume/change/transaction orientation remains unverified.
+- Swap signing/submission remains disabled; PR stays draft/unmerged.
+- **Next exact task:** add a reproducible provider-contract capture/test for DexScreener's documented `/token-pairs/v1/solana/{tokenAddress}` endpoint using controlled known base-side and quote-side mints. Persist sanitized response evidence and assert requested mint membership, pair identity, base/quote orientation, and which price/volume/change/transaction metrics are actually defined. Only then implement quote-side normalization; preserve fail-closed behavior and rerun all four exact-head workflows.

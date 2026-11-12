@@ -1029,3 +1029,17 @@ PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIG
 - **Regression test:** `.github/scripts/dex-chart-selection-smoke.mjs` adds a quote-side-only fixture and asserts exact mint identity, no base-token title/price, blank chart, and an explicit withholding notice. Existing delayed chart-switch assertions remain intact.
 - **Verification status:** source/test change is committed below; exact-head workflow verification is pending. Do not mark this counter-fix verified until all triggered workflows terminate successfully. This is a fail-closed interim guard, not full quote-side support.
 - **Next:** inspect exact-head workflow runs and any failures; then obtain a reproducible live response capture for the official token-pair endpoint with both base-side and quote-side known mints. Only implement quote-side normalization when price, volume/change/transaction semantics and chart orientation are independently evidenced.
+
+
+### 12. Exact-head closure — quote-side identity guard (2026-11-12)
+
+- **Exact head:** `8cc7edf6342e93b1f6e5dfadf3fb589e578042e4`; PR #269 remains open/draft/unmerged.
+- **Validate:** run `43248316010`, job `131286940220` — SUCCESS.
+- **Jupiter V6 CPI Trace Audit:** run `43248316040`, job `131286939838` — SUCCESS.
+- **Jupiter IDL History Audit:** run `43248316151`, job `131286940928` — SUCCESS.
+- **Climboria Browser Smoke:** run `43248316180`, job `131286941015` — SUCCESS; 24/24 steps completed, no failed steps. Includes DEX chart-switch and quote-side-only identity regression, mobile DEX/Swap, and Jarrell's Peak desktop/mobile gameplay.
+- **Failure analysis:** there was no failed workflow on this exact head. The in-progress gameplay smoke subsequently completed successfully. A temporary log retrieval 404 while the job was active was an unavailable-log response, not a failed job. No failure entry/counter-fix was fabricated.
+- **Result:** exact base-side mint matching plus explicit quote-side withholding passed the exact-head regression. This verifies the fail-closed behavior only; it does not establish quote-side price inversion, provider freshness, exhaustive pool coverage, production deployment or DEX LIVE acceptance.
+- **Provider contract limitation:** official DexScreener docs describe `/token-pairs/v1/{chainId}/{tokenAddress}` and a pair schema with `baseToken` and `quoteToken`. The live endpoint could not be retrieved through the current research environment; no empirical price/volume/change/transaction orientation is asserted. Source was intentionally not changed speculatively.
+- **Swap execution/signing gates remain false.** No signing, submission, production deployment or LIVE Swap claim.
+- **Next:** build a deterministic, sanitized provider-response capture for known Solana mints using the documented token-pairs endpoint; test membership and field orientation for both base-side and quote-side cases, and only implement a normalization path once the actual provider contract is evidenced. Keep the current quote-side withholding fallback until then.

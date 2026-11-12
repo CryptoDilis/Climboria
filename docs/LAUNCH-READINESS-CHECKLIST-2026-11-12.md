@@ -130,3 +130,14 @@ Every commit must update this file or explicitly state why no checklist status c
 - [ ] Verify this source/test change on its exact new head across all four workflows.
 - [ ] Capture official live provider responses for known base-side and quote-side mints; establish price, volume/change/transaction metric semantics and chart orientation before implementing quote-side support.
 - [ ] Keep DEX production-live and Swap signing/submission gates closed until independent deployment and security acceptance evidence exists.
+
+
+## 2026-11-12 — quote-side identity guard exact-head verification
+
+- [x] Exact-head Validate run `43248316010` (job `131286940220`) passed.
+- [x] Exact-head Jupiter CPI Trace Audit run `43248316040` (job `131286939838`) passed.
+- [x] Exact-head Jupiter IDL History Audit run `43248316151` (job `131286940928`) passed.
+- [x] Exact-head Browser Smoke run `43248316180` (job `131286941015`) passed all 24 steps, including chart-switch, quote-side-only DEX identity, mobile DEX/Swap and Jarrell's Peak desktop/mobile gameplay.
+- [x] Recorded exact-head evidence and next task in README and workflow failure register. No workflow failed on this head; no failure diagnosis was added.
+- [ ] Capture sanitized live responses from documented DexScreener `/token-pairs/v1/solana/{tokenAddress}` for known base-side and quote-side mints; establish pair membership and metric orientation before implementing quote-side normalization.
+- [ ] Preserve the fail-closed quote-side guard, non-exhaustive market labels and Swap signing/submission kill switches.
