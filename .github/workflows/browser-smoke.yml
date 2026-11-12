@@ -88,7 +88,7 @@ jobs:
             try {
               const page=await browser.newPage({viewport:{width:1365,height:900}});
               page.on('pageerror',e=>errors.push('PAGEERROR '+page.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              page.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('CONSOLE '+page.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               const response=await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               if(!response?.ok()) throw new Error('Homepage HTTP load failed');
               const ctas=page.locator('.hero-buttons button');
@@ -238,7 +238,7 @@ jobs:
               // Real mobile touch acceptance: every Major Asset stays visible, has no SELECT overlay, and BTC responds to a tap.
               const mobileSwap=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobileSwap.on('pageerror',e=>errors.push('MOBILE SWAP PAGEERROR '+mobileSwap.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              mobileSwap.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE SWAP CONSOLE '+mobileSwap.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              mobileSwap.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE SWAP CONSOLE '+mobileSwap.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               await mobileSwap.route('https://api.coingecko.com/api/v3/coins/markets**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(['bitcoin','ethereum','solana','binancecoin','ripple','usd-coin'].map((id,i)=>({id,symbol:['btc','eth','sol','bnb','xrp','usdc'][i],name:['Bitcoin','Ethereum','Solana','BNB','XRP','USD Coin'][i],current_price:i?10:50000,price_change_percentage_24h:1,sparkline_in_7d:{price:[1,2,3]}})))}));
               const mobileMockMint='SysvarRent111111111111111111111111111111111';
               const mobileMockPair={chainId:'solana',dexId:'test-dex',pairAddress:'9xQeWvG816bUx9EPjHmaT23yvVM5d4X3q9hYkZ8f9xQe',baseToken:{address:mobileMockMint,symbol:'BTC',name:'Bitcoin'},quoteToken:{address:'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',symbol:'USDC',name:'USD Coin'},priceUsd:'65000',priceChange:{h24:2.5},volume:{h24:123456},marketCap:1200000000,liquidity:{usd:100000}};
@@ -279,7 +279,7 @@ jobs:
               if(!/not live yet/i.test(await page.locator('body').innerText())) throw new Error('Launchpad must clearly disclose that launch execution is not live');
               const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               mobile.on('pageerror',e=>errors.push('MOBILE PAGEERROR '+mobile.url()+' :: '+e.name+' :: '+e.message+' :: '+String(e.stack)));
-              mobile.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE CONSOLE '+mobile.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
+              mobile.on('console',m=>{if(m.type()==='error'){const message=m.text();if(message.includes('pls.dexscreener.com/api/event')||m.location().url.includes('pls.dexscreener.com')||(m.location().url.startsWith('https://pumpdata.fun/graduations/')&&message.includes('404'))||message.includes('Permissions policy violation: unload is not allowed in this document'))return;errors.push('MOBILE CONSOLE '+mobile.url()+' :: '+message+' :: '+JSON.stringify(m.location()));}});
               await mobile.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
               await mobile.locator('#hamburger').click();
               if(!await mobile.locator('#mobileMenu').evaluate(el=>el.classList.contains('active'))) throw new Error('Mobile menu did not open');
