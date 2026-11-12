@@ -61,3 +61,37 @@ This gives Climboria a potential independently inspectable OHLCV source and an e
 ## 6. Next exact task
 
 Add a bounded, read-only GeckoTerminal Solana OHLCV contract capture for one known pair, requesting both base and quote orientation, and inspect the artifact before implementing any chart adapter. Include response headers, capture timestamp, HTTP status, API version, request parameters, first/last candle timestamps, row count, and normalized sample values. Do not include credentials or wallet data.
+
+
+## 7. Live GeckoTerminal capture — 2026-11-12T20:59:07Z
+
+Artifact `geckoterminal-ohlcv-contract-evidence` (run `43305578053`, artifact ID `13984775149`, 1,988-byte ZIP; SHA-256 `5b1b68ad147a1a236cca0902902a5bdfaa786cc04744ce3f1775ed511c8d9648`) was inspected. It contains the capture JSON for Solana pool `C8Gr6AUuq9hEdSYJzoEpNcdjpojPZwqG5MtQbeouNNwg`, JUP base / WSOL quote.
+
+### Observed response contract
+
+- `token=base`: HTTP 200; response metadata identifies JUP as base and WSOL as quote. Five OHLCV rows; latest sample close approximately USD 0.264943.
+- `token=quote`: HTTP 200; response metadata flips WSOL to base and JUP to quote. Five OHLCV rows; latest sample close approximately USD 81.342713.
+- Both responses carry matching timestamps and volume values across the two orientations. Timestamps are Unix seconds in descending order. Capture validation confirms finite values, OHLC invariants and non-negative volume. No response errors.
+- Both responses returned `cache-control: max-age=30, public, must-revalidate, s-maxage=60`. Base response had `cf-cache-status: EXPIRED`; quote response had `MISS`. `Age`, `Last-Modified`, explicit provider observation timestamp and rate-limit headers were absent.
+- The same volume values in both orientations are a warning not to infer that volume is denominated in the selected token merely because `token=quote` changes the candle price orientation. Volume denomination must be independently established before display or conversion.
+- The response's `meta.base` and `meta.quote` identity fields are the authoritative orientation signal in this capture. Do not assume array position or request query alone is sufficient; validate the returned token addresses against the selected mint and known pool.
+
+### Interpretation and limits
+
+This is one live pool, two requests, one capture window. It establishes that the provider returned distinct USD price series and explicit swapped token metadata for this pool. It does not prove reciprocal-price exactness, all-pool behavior, historical continuity, gap semantics, volume denomination, provider freshness SLA, rate-limit thresholds under load, or production reliability. Cache headers show caching behavior, not an as-of timestamp. The provider's public API remains beta per its docs.
+
+### Engineering decision
+
+Do not replace the production DexScreener iframe yet. Before any adapter rollout, build deterministic fixtures from the sanitized response and test: strict pool/base/quote address identity, orientation selection based on response metadata, USD denomination, ascending-time normalization, candle gaps, volume semantics, empty/new-pool data, malformed OHLC, HTTP 429/5xx, cache headers and stale-data labels. Keep quote-side matches fail-closed until these tests and broader provider coverage pass.
+
+## 8. Exact-head workflow verification
+
+All four workflows on branch `codex/swap-security-evidence-current-main-2026-11-12`, exact SHA `3327a847ca3e19ad82e38550f153aa2bbec93a58`, completed SUCCESS:
+- Validate `43305578268`
+- Jupiter V6 CPI Trace `43305578205`
+- Jupiter IDL History `43305582049`, job `131488062526`
+- Browser Smoke `43305578053`, job `131488039923`, 27/27 steps
+
+No workflow failed on this head. Temporary log archive retrieval returned 404 while jobs were still active; subsequent run/job summaries and artifacts established terminal SUCCESS. This was not classified as a workflow failure. Browser screenshot artifact `13983937059`; DexScreener provider capture `13984610543`; IDL history artifact `13984211576`.
+
+**Next exact task:** implement deterministic GeckoTerminal OHLCV adapter contract tests as described above. Preserve the current production iframe fallback and do not claim DEX production-live.
