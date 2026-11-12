@@ -1,6 +1,6 @@
 use solana_sbpf::{
     elf::Executable,
-    program::BuiltinProgram,
+    program::{BuiltinProgram, SBPFVersion},
     static_analysis::Analysis,
     test_utils::TestContextObject,
 };
@@ -12,6 +12,16 @@ use std::{
     io::{BufWriter, Write},
     sync::Arc,
 };
+
+fn callx_target_register(version: SBPFVersion, instruction: &solana_sbpf::ebpf::Insn) -> (u8, &'static str) {
+    if version.callx_uses_src_reg() {
+        (instruction.src, "src")
+    } else if version.callx_uses_dst_reg() {
+        (instruction.dst, "dst")
+    } else {
+        (instruction.imm as u8, "imm_low_byte")
+    }
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut args = env::args().skip(1);
@@ -47,7 +57,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let call_reg_count = analysis.instructions.iter().filter(|insn| insn.opc == solana_sbpf::ebpf::CALL_REG).count();
     writeln!(summary, "call_imm_instruction_count={call_imm_count}")?;
     writeln!(summary, "call_reg_indirect_instruction_count={call_reg_count}")?;
-    writeln!(summary, "call_reg_target_resolution=unresolved_register_value; src field identifies target register")?;
+    let callx_register_encoding = if version.callx_uses_src_reg() { "src" } else if version.callx_uses_dst_reg() { "dst" } else { "imm_low_byte" };
+    writeln!(summary, "call_reg_target_register_encoding={callx_register_encoding}")?;
+    writeln!(summary, "call_reg_target_resolution=register_value_unresolved")?;
     writeln!(summary, "NOTE=static analysis only; no execution or CPI privilege recovery")?;
     for (pc, (key, name)) in &analysis.functions {
         writeln!(summary, "function_pc={pc} function_key=0x{key:08x} name={name}")?;
@@ -102,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     writeln!(calls, "{header}")?;
     writeln!(entrypoint_calls, "{header}")?;
     writeln!(syscall_sites, "callsite_pc\tcaller_registry_pc\tsyscall_name\tsyscall_key")?;
-    writeln!(callx_sites, "callsite_pc\tcaller_registry_pc\ttarget_register\ttarget_resolution\tdst\toff\timm")?;
+    writeln!(callx_sites, "callsite_pc\\tcaller_registry_pc\\ttarget_register\\ttarget_register_source\\ttarget_resolution\\tdst\\tsrc\\toff\\timm")?;
     writeln!(instruction_dump, "pc\topcode\tdst\tsrc\toff\timm")?;
     writeln!(cfg_nodes, "cfg_node_id\tinstruction_start_pc\tinstruction_end_pc_exclusive\tsources\tdestinations")?;
     for instruction in &analysis.instructions {
@@ -123,13 +135,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             instruction.imm,
         )?;
         if instruction.opc == solana_sbpf::ebpf::CALL_REG {
+            let (target_register, target_register_source) = callx_target_register(version, instruction);
             writeln!(
                 callx_sites,
-                "{}\t{}\t{}\tunresolved-register-target\t{}\t{}\t{}",
+                "{}\\t{}\\t{}\\t{}\\tunresolved-register-value\\t{}\\t{}\\t{}\\t{}",
                 instruction.ptr,
                 caller_pc,
-                instruction.src,
+                target_register,
+                target_register_source,
                 instruction.dst,
+                instruction.src,
                 instruction.off,
                 instruction.imm,
             )?;
@@ -215,7 +230,25 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use solana_sbpf::ebpf;
+    use super::callx_target_register;
+    use solana_sbpf::{ebpf, program::SBPFVersion};
+
+    #[test]
+    fn callx_target_register_encoding_follows_sbpf_version() {
+        let instruction = ebpf::Insn {
+            ptr: 0,
+            opc: ebpf::CALL_REG,
+            dst: 7,
+            src: 8,
+            off: 0,
+            imm: 0x1234,
+        };
+        assert_eq!(callx_target_register(SBPFVersion::V0, &instruction), (0x34, "imm_low_byte"));
+        assert_eq!(callx_target_register(SBPFVersion::V1, &instruction), (0x34, "imm_low_byte"));
+        assert_eq!(callx_target_register(SBPFVersion::V2, &instruction), (8, "src"));
+        assert_eq!(callx_target_register(SBPFVersion::V3, &instruction), (7, "dst"));
+        assert_eq!(callx_target_register(SBPFVersion::V4, &instruction), (7, "dst"));
+    }
 
     #[test]
     fn indirect_call_opcode_is_not_collapsed_into_immediate_calls() {

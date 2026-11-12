@@ -28,7 +28,7 @@ Reviewed `anza-xyz/sbpf` `src/static_analysis.rs` at pinned revision `127947b43f
 
 ## Review limitations — do not overclaim
 
-- Dynamic callx target values are **not resolved**; the report intentionally labels them unresolved.
+- Dynamic callx target values are **not resolved**; the report intentionally labels them unresolved. A source review found an additional implementation defect: the current exporter reports `instruction.src` as the target register for every version, but pinned sBPF uses the legacy `imm as u8` target-register encoding for SBPF V0/V1, `src` for V2, and `dst` for V3/V4. The candidate ELF is SBPF V0, so the current `target_register` column is wrong for this candidate until corrected to mirror `SBPFVersion::callx_uses_src_reg()` / `callx_uses_dst_reg()`.
 - CFG output is structural and is **not** yet route_v2 discriminator/variant branch-sensitive reachability.
 - No route-specific CPI reachability, DEX adapter attribution, CPI account-slice boundaries, AccountMeta signer/writable flags, runtime privilege equivalence, or transaction safety conclusion is established.
 - This is static ELF analysis only. No program execution or syscall invocation occurs.
@@ -43,13 +43,41 @@ Reviewed `anza-xyz/sbpf` `src/static_analysis.rs` at pinned revision `127947b43f
 
 ## Required next checks
 
-1. Run the pinned Rust build/test using the exact `solana-sbpf` revision in `Cargo.toml`.
-2. Confirm generated output counts and schemas against the candidate ELF: instruction rows, CFG node rows, callx rows, and unresolved target markers.
-3. Add fixtures for unresolved indirect calls and branch-condition paths, and ensure no unresolved call is silently treated as unreachable.
-4. Only then implement bounded, path-sensitive route_v2 discriminator/variant reachability and candidate CPI-site slicing.
-5. Cross-check ordered CPI account keys against finalized transaction evidence and prove CPI-requested signer/writable flags separately from outer message privileges.
-6. Run required workflows on a PR whose base is `main`, or use an approved/manual workflow dispatch path; do not change branch filters or weaken acceptance criteria merely to force a green result.
+1. Correct callx target-register decoding to mirror the pinned dependency's version-specific encoding (V0/V1: `imm as u8`; V2: `src`; V3/V4: `dst`) and add version-specific regression tests before relying on `callx-sites.tsv`.
+2. Run the pinned Rust build/test using the exact `solana-sbpf` revision in `Cargo.toml`.
+3. Confirm generated output counts and schemas against the candidate ELF: instruction rows, CFG node rows, callx rows, and unresolved target markers.
+4. Add fixtures for unresolved indirect calls and branch-condition paths, and ensure no unresolved call is silently treated as unreachable.
+5. Only then implement bounded, path-sensitive route_v2 discriminator/variant reachability and candidate CPI-site slicing.
+6. Cross-check ordered CPI account keys against finalized transaction evidence and prove CPI-requested signer/writable flags separately from outer message privileges.
+7. Run required workflows on a PR whose base is `main`, or use an approved/manual workflow dispatch path; do not change branch filters or weaken acceptance criteria merely to force a green result.
 
 ## Release posture
 
 Keep route_v2 excluded from production validation. Keep `EXECUTION_SECURITY_REVIEW_COMPLETE=false`, `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`, Wrangler execution disabled, public frontend execution disabled, and all production signing/submission/deployment gates closed.
+
+## Corrective finding — version-specific CALL_REG target operand
+
+A deeper review against the same pinned `program.rs` found a defect in the initial exporter: it treated `instruction.src` as the target register for every SBPF version. The pinned API explicitly defines the encoding by version: V0/V1 use the low byte of `imm`, V2 uses `src`, and V3/V4 use `dst`. The candidate ELF is SBPF V0, so the initial callx TSV would have reported the wrong register number even though it correctly left the register's runtime value unresolved.
+
+Corrective implementation on this feature branch:
+- Derive the target register operand from `SBPFVersion::callx_uses_src_reg()` / `callx_uses_dst_reg()`, falling back to `imm as u8` for V0/V1.
+- Export `target_register_source` alongside the numeric register index and raw dst/src/off/imm fields.
+- Label target resolution as `unresolved-register-value` to distinguish operand decoding from dynamic register-value resolution.
+- Add regression coverage for V0, V1, V2, V3, and V4.
+
+This is a real correctness fix to the static evidence exporter. The original implementation commit must not be used for security conclusions. The corrected implementation remains unverified until the pinned Rust test/build and artifact inspection pass on the exact integrated PR head.
+
+## Artifact-backed diagnosis from the first integrated run
+
+- Integrated pre-correction PR #269 head: `434fd5209f8eeef8b36b7267150e3bb1f1c3c974`.
+- Jupiter IDL History Audit run `43278063888` completed SUCCESS; artifact `13971452715`, SHA-256 `7b790eda8cc16a4d1093148ab2e2742eb2bf230706f9a46da4b86ef5bc465430`.
+- The artifact contains the candidate ELF (2,892,224 bytes; SHA-256 `aab7dc4985e5bee9afe431b60fa71e411b9624d2898062ef49e5f19cb336b3d6`), instruction dump, CFG export, callx export, and disassembly.
+- Observed output counts: 243,522 instruction records; 40,664 CFG nodes; 136 callx sites. CFG source/destination references all resolved to exported node IDs in this artifact (0 dangling edge references).
+- The artifact summary identifies the ELF as SBPF V0. In the old callx TSV, all 136 `target_register` values were reported as register 0, and the joined instruction dump shows all 136 callx `src` and `dst` fields are zero while 134/136 have nonzero `imm` low bytes. This directly confirms the old exporter used the wrong operand for the V0 candidate.
+- The old workflow executed `cargo run --locked --release`, which successfully compiled and ran the binary; it did **not** execute Rust unit tests. Add an explicit `cargo test --locked` step to the audit workflow so the new five-version regression test is actually run.
+
+The Validate workflow run `43278063832` and Jupiter V6 CPI Trace run `43278063843` also completed SUCCESS on this integrated head. Browser Smoke run `43278063834` was still in progress at the time of this report update. No terminal workflow failure has been observed in this run set.
+
+## CI test coverage correction
+
+The IDL History workflow's previous Rust invocation used `cargo run --locked --release`, which compiled and executed the static audit but did not run its `#[cfg(test)]` unit tests. The workflow now includes a separate `cargo test --locked --manifest-path dex/swap-proxy/tools/jupiter-sbf-static-audit/Cargo.toml` step before generating the release artifact. This makes the version-specific CALL_REG encoding regression test part of required CI rather than an unexecuted source-level assertion. The workflow change is prepared on the feature branch and must be integrated into the main-based PR before verification.
