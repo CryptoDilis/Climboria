@@ -181,6 +181,43 @@ mod tests {
         );
     }
 
+
+
+    #[test]
+    fn transfer_models_mov64_add64_and_register_copy() {
+        let mut state = AbstractState::default();
+        assert!(state.transfer_instruction(0xb7, 1, 0, 0, -1));
+        assert_eq!(state.registers[1], AbstractValue::Constant(u64::MAX));
+        assert!(state.transfer_instruction(0x07, 1, 0, 0, 2));
+        assert_eq!(state.registers[1], AbstractValue::Constant(1));
+        assert!(state.transfer_instruction(0xbf, 2, 1, 0, 0));
+        assert_eq!(state.registers[2], AbstractValue::Constant(1));
+    }
+
+    #[test]
+    fn transfer_models_stack_doubleword_spill_reload_and_offset() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::StackPointer(-16);
+        state.registers[2] = AbstractValue::Constant(0xfeed);
+        assert!(state.transfer_instruction(0x7b, 1, 2, 0, 0));
+        state.registers[3] = AbstractValue::Unknown;
+        assert!(state.transfer_instruction(0x79, 3, 1, 0, 0));
+        assert_eq!(state.registers[3], AbstractValue::Constant(0xfeed));
+        assert!(state.transfer_instruction(0x79, 4, 1, 8, 0));
+        assert_eq!(state.registers[4], AbstractValue::Unknown);
+    }
+
+    #[test]
+    fn unsupported_instruction_invalidates_registers_and_stack_facts() {
+        let mut state = AbstractState::default();
+        state.registers[1] = AbstractValue::StackPointer(-8);
+        state.registers[2] = AbstractValue::Constant(7);
+        state.spill_u64(state.registers[1], state.registers[2]);
+        assert!(!state.transfer_instruction(0xff, 1, 2, 0, 0));
+        assert_eq!(state.registers[2], AbstractValue::Unknown);
+        assert_eq!(state.reload_u64(AbstractValue::StackPointer(-8)), AbstractValue::Unknown);
+    }
+
     #[test]
     fn constant_branch_comparison_is_width_and_signedness_aware() {
         assert_eq!(evaluate_constant_branch(BranchCondition::Equal, AbstractValue::Constant(0x1_0000_0001), AbstractValue::Constant(1), 32), Some(true));
@@ -189,5 +226,108 @@ mod tests {
         assert_eq!(evaluate_constant_branch(BranchCondition::UnsignedGreater, AbstractValue::Constant(u64::MAX), AbstractValue::Constant(0), 64), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::BitSet, AbstractValue::Constant(0b1000), AbstractValue::Constant(0b1010), 64), Some(true));
         assert_eq!(evaluate_constant_branch(BranchCondition::Equal, AbstractValue::Constant(1), AbstractValue::Constant(1), 16), None);
+    }
+}
+
+
+// Narrow transfer semantics for the first interpreter increment. Opcode values
+// are the stable eBPF encodings used by the pinned SBPF decoder. Control-flow
+// instructions are handled by the CFG layer, not by this function.
+const BPF_ALU64: u8 = 0x07;
+const BPF_ADD: u8 = 0x00;
+const BPF_MOV: u8 = 0xb0;
+const BPF_X: u8 = 0x08;
+const BPF_K: u8 = 0x00;
+const BPF_LDX_DW_MEM: u8 = 0x79;
+const BPF_STX_DW_MEM: u8 = 0x7b;
+
+impl AbstractState {
+    /// Apply only explicitly modeled instructions. Returns true when the
+    /// instruction was modeled; unsupported instructions invalidate all
+    /// register and stack facts rather than risking stale constants.
+    pub fn transfer_instruction(
+        &mut self,
+        opcode: u8,
+        dst: u8,
+        src: u8,
+        off: i16,
+        imm: i32,
+    ) -> bool {
+        let (Some(dst_index), Some(src_index)) =
+            (usize::try_from(dst).ok().filter(|index| *index < 11),
+             usize::try_from(src).ok().filter(|index| *index < 11))
+        else {
+            self.invalidate_all();
+            return false;
+        };
+
+        match opcode {
+            // MOV64 K: the immediate is sign-extended from 32 bits.
+            0xb7 => {
+                self.registers[dst_index] = AbstractValue::Constant(imm as i64 as u64);
+                true
+            }
+            // MOV64 X
+            0xbf => {
+                self.registers[dst_index] = self.registers[src_index];
+                true
+            }
+            // ADD64 K
+            0x07 => {
+                self.registers[dst_index] = self.registers[dst_index].add_signed(imm as i64);
+                true
+            }
+            // ADD64 X is precise only for a constant right operand.
+            0x0f => {
+                let right = self.registers[src_index];
+                self.registers[dst_index] = match right {
+                    AbstractValue::Constant(value) =>
+                        self.registers[dst_index].add_signed(value as i64),
+                    _ => AbstractValue::Unknown,
+                };
+                true
+            }
+            BPF_LDX_DW_MEM => {
+                let address = self.registers[src_index].add_signed(off as i64);
+                self.registers[dst_index] = self.reload_u64(address);
+                true
+            }
+            BPF_STX_DW_MEM => {
+                let address = self.registers[dst_index].add_signed(off as i64);
+                self.store_stack_u64(address, self.registers[src_index]);
+                true
+            }
+            _ => {
+                self.invalidate_all();
+                false
+            }
+        }
+    }
+
+    fn invalidate_all(&mut self) {
+        self.registers = [AbstractValue::Unknown; 11];
+        self.stack.clear();
+    }
+
+    fn store_stack_u64(&mut self, address: AbstractValue, value: AbstractValue) {
+        match address {
+            AbstractValue::StackPointer(offset) if offset % 8 == 0 => {
+                self.stack.insert(offset, value);
+            }
+            AbstractValue::StackPointer(offset) => {
+                // An unaligned 8-byte store may overlap two tracked slots.
+                self.stack.retain(|slot, _| {
+                    let store_start = offset as i128;
+                    let store_end = store_start + 8;
+                    let slot_start = *slot as i128;
+                    let slot_end = slot_start + 8;
+                    store_end <= slot_start || slot_end <= store_start
+                });
+            }
+            // The pointer may alias the stack; do not retain stale spills.
+            AbstractValue::Unknown | AbstractValue::Constant(_) => self.stack.clear(),
+            // Input-data writes cannot alias the separate stack region.
+            AbstractValue::InputDataPointer(_) => {}
+        }
     }
 }
