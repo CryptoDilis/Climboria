@@ -641,3 +641,10 @@ Important grouped findings include:
 - **Other artifacts:** IDL history `13941123568`, 1,530,079 bytes; Browser screenshots `13941951765`, 8,890,424 bytes. All tied to exact head `ee2f27b...`.
 - **Next task:** advance only the scheduled fallback cursor from `39uCNT...` to the verified emitted `55Me9...`, retaining the manual `before_signature` override. Run and inspect the next exact-head four-workflow batch; if the RPC reports timeout exhaustion, preserve its incomplete status and cursor rather than treating it as zero routes.
 - **Release posture unchanged:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`. Keep route_v2 excluded; no production signing, transaction submission, deployment, or LIVE Swap claim.
+
+
+## Exact-head trigger reconciliation — cancelled superseded runs are not failures
+
+- After the successful four-workflow batch on `ee2f27b...`, the fallback cursor and evidence register were updated in two separate GitHub contents commits. The workflow-file commit `caa5a60a03ef33b182a87dce908acf03fa18004f` briefly triggered runs `43212775213`, `43212775412`, `43212775331`, and `43212775231`; the following register-only commit advanced the PR head and GitHub cancelled those superseded runs. All four are **cancelled**, not failed, and provide no verification evidence for the final head.
+- Add an explicit assertion that exhausted transport retry metadata states `after 3 attempts`, preserving the intended bounded retry contract and ensuring the scanner's incomplete report communicates the exact retry limit.
+- **Required:** verify all four workflows against the resulting final PR head after this test-only assertion commit. Do not treat the cancelled `caa5a60...` runs as passes or failures.
