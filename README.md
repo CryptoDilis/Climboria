@@ -2,6 +2,47 @@
 
 > **This section is the sole active product-priority authority.** It supersedes every older priority order, "locked" order, and statement that gameplay is non-blocking in the historical log below. Do not resume an older order from a dated checkpoint.
 
+## November 15, 2026 token-launch sprint — immediate order
+
+The owner-approved short-term objective is to have actual Climboria products to show when $CLIMB launches. Through **November 15, 2026**, execute this temporary launch sprint before resuming the longer-term release sequence:
+
+1. **DEX first:** production-live provider-backed discovery, exact mint identity, accurate pool/liquidity/price/volume, fresh charts, correct navigation and truthful error/empty states.
+2. **Swap second:** real quote/order flow and secure lifecycle. Keep signing/submission disabled until semantic validation, independent security review, controlled Devnet acceptance, production deployment and release gates are evidenced.
+3. **Game third:** a genuinely playable public experience, not just screenshots or CI smoke.
+4. **Launchpad last:** explicitly deferred; it is not a November 15 launch blocker. Do not promise a Launchpad date without verified dependencies.
+
+Login/provider completion remains tracked and must not be represented as complete; it should not displace the immediate DEX → Swap → Game sprint unless a required product flow is blocked by authentication.
+
+**Durable handoff:** [November 15 launch-readiness checklist](docs/LAUNCH-READINESS-CHECKLIST-2026-11-12.md). Update its completed boxes, evidence, blockers and one exact next task in every engineering commit. Also append detailed workflow evidence/failure diagnoses to [workflow failure register](docs/WORKFLOW-FAILURE-REGISTER-2026-11-12.md).
+
+## Longer-term release sequence after the November 15 sprint
+
+1. **P1 — LIVE SWAP.** Complete the full production Swap service: live quote/order path, correct mint/network and amount validation, wallet review/signing, secure submission, chain confirmation and settlement reconciliation, replay/expiry/uncertain-outcome handling, production backend/Worker, monitoring and rollback. No fake quotes, simulated fills, placeholder success, or UI-only swap.
+2. **P2 — LIVE DEX.** Complete the production DEX market experience: live provider-backed discovery/search, exact mint identity, token profiles, accurate live pool/liquidity/price/volume data, working and fresh charts, correct navigation, responsive desktop/mobile behavior, and honest loading/error/empty states.
+3. **P3 — ALL LOGIN METHODS AVAILABLE.** Make every intended supported login method operational: Guest, email/password, Google, X, and supported Solana/EVM wallet authentication. Complete real provider configuration, redirects, email/SMTP confirmation, secure sessions, account linking, logout, recovery and real-account isolation tests.
+4. **P4 — FULLY LIVE GAME.** Deliver the actual playable Climboria game, real gameplay/world systems, desktop/mobile controls, persistence and genuinely implemented multiplayer/economy features.
+5. **P5 — LIVE LAUNCHPAD (LAST).** Complete the real Launchpad lifecycle only after the preceding product priorities: project/token creation, metadata, authority/supply policy, fee routing, wallet signing, on-chain launch, bonding curve, liquidity migration/pool, LP ownership/lock, confirmation, explorer evidence, failure recovery and production monitoring.
+
+## Mandatory standard — NO DEMO-ONLY DELIVERY
+
+- Every delivered product must use real production integrations and real provider/backend/on-chain behavior appropriate to its function.
+- No fake balances, prices, candles, volume, quotes, bonding-curve progress, transaction results, launch status, login success, inventory ownership, rewards, or multiplayer presence.
+- No static mock screens, fixtures presented as live, alert-only buttons, or placeholder interactions counted as completion.
+- If a real dependency is not configured or verified, show a truthful unavailable/error state and record the blocker. Never label it LIVE until production evidence proves it.
+- Devnet is a required safety/testing stage for on-chain features, not a substitute for a production-live Mainnet release.
+- Security gates must never be bypassed to satisfy a deadline. Swap signing/execution remains disabled until semantic validation, independent review, controlled Devnet lifecycle, production deployment and release gates pass.
+- A feature is complete only after real end-to-end verification on the exact release commit, including desktop/mobile where applicable, production deployment/provider evidence, and recorded logs/screenshots/run IDs.
+
+## Current status at this checkpoint
+
+- Branch `codex/swap-security-evidence-current-main-2026-11-12`, checkpoint head `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d`; PR #269 is open, draft and unmerged.
+- Exact-head workflows: Validate `43230717606` (15/15), CPI Trace `43230717469` (10/10), IDL History `43230717341` (12/12), Browser Smoke `43230717621` (22/22) — all SUCCESS, no failed steps.
+- Browser Smoke confirms the tested DEX/Swap/auth UI paths and Jarrell's Peak desktop/mobile gameplay smoke. It does not certify production-live DEX/Swap, real provider login, or every game system.
+- Current immediate next task: DEX production-readiness audit, then implement and verify the highest-impact confirmed gap. Keep Swap execution gates false. See the launch checklist for exact completed items and next steps.
+- Release gates: `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment or LIVE Swap claim.
+
+---
+
 ## Official execution order
 
 1. **P1 — LIVE SWAP.** Deliver a real production Swap service: live quote/order path, correct mint/network and amount validation, wallet review/signing, secure submission, chain confirmation and settlement reconciliation, replay/expiry/uncertain-outcome handling, production backend/Worker, monitoring and rollback. No fake quotes, simulated fills, placeholder success, or UI-only swap.

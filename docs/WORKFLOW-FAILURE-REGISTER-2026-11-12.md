@@ -853,3 +853,56 @@ Important grouped findings include:
 - **Atomic cursor advancement:** advance only the scheduled fallback from `2EjQA4LnYHcbKzDiDRHtdWXy5RMesioXkZe9Qga5axUvECHWhgPxZi3w7rXXwQvMQc9D3BkECG8WzFRYu6mbQnF9` to the artifact-verified `279hbzigc6x4RsS11hgzcTPKenstcA4uQcwM6PEdhX4FhgxnP3zQEYAiybPjUtx86KaqAZVgXma6rX6JfH2q1nvS`. Manual `before_signature` override, signature page limit 25, and five-transaction default cap remain unchanged.
 - **Next task:** verify the new exact-head four-workflow batch, download/hash its CPI artifact, inspect completeness and continuation cursor before any subsequent advancement. Continue read-only research for route_v2 multi-hop/split routes, DEX order permutations, transfer-hook slices, variable BinArray counts, Jupiter remaining-account boundaries, and CPI-requested privilege/runtime cursor provenance.
 - **Release posture unchanged:** `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 remains excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment, or LIVE Swap claim.
+
+
+## 2026-11-12 — November 15 token-launch product sprint and exact-head handoff
+
+### Owner-approved short-term priority through the November 15, 2026 $CLIMB token launch
+
+The immediate goal is to have real Climboria products to show when the token launches. This short-term launch sprint explicitly supersedes the normal sequencing below **through November 15 only**:
+
+1. **DEX first:** make the DEX a genuinely usable live market product with provider-backed discovery, exact mint identity, token profiles, pool/liquidity/price/volume accuracy, fresh charts, working navigation, and truthful loading/error/empty states.
+2. **Swap second:** complete real quote/order integration and the secure transaction lifecycle. Never enable wallet signing or submission until semantic validation, independent security review, controlled Devnet acceptance, production deployment, and release gates are evidenced. A fail-closed preview is not a live Swap.
+3. **Game third:** provide a genuinely playable Climboria experience, prioritizing the existing desktop/mobile gameplay path and clear public access. Do not represent a smoke test or screenshot as full product completion.
+4. **Launchpad last:** explicitly not a November 15 launch blocker. Resume its full lifecycle only after the nearer-term product priorities; no date is promised here.
+
+Login/provider completion remains tracked and must not be misrepresented as complete. It is not allowed to displace the immediate DEX → Swap → Game launch sprint unless a required product flow is blocked by authentication.
+
+### Exact-head workflow verification — branch head `2258169dcdfa24246d07dd7c0bb4bd1f09d9533d`
+
+All four required workflows reached terminal SUCCESS; no failed steps were observed:
+
+- Validate run `43230717606`, job `131224980220`: 15/15 steps passed.
+- Jupiter V6 CPI Trace Audit run `43230717469`, job `131224980270`: 10/10 steps passed.
+- Jupiter IDL History Audit run `43230717341`, job `131224978565`: 12/12 steps passed.
+- Browser Smoke run `43230717621`, job `131224981029`: 22/22 steps passed, including auth/cloud-save isolation, homepage/DEX routing, Worker proxy, fail-closed execution, standalone Swap/DEX, live Solana profile/boost discovery, mobile DEX/Swap workspace and 390px/360px layouts, provider-error/true-empty states, and Jarrell's Peak desktop/mobile gameplay smoke.
+
+Browser screenshot artifact `13950557566` is 8,874,024 bytes. Independently recomputed ZIP SHA-256: `3b8da33c4a0abc67859141450fe8246614535c5df06ba3cf95300511d001696b`, matching GitHub's artifact digest. It contains 10 desktop/mobile home, gameplay, cave entrance/interior, and DEX token-social screenshots. These are test artifacts, not proof of production release.
+
+CPI artifact `13951180073` (17,593 bytes) was independently hashed and matched GitHub digest `42c3da2cdefca65e4838682ea7302044757b9e32d6efc820062c691f891ccfae`. Its bounded finalized scan consumed cursor `279hbzigc6x4RsS11hgzcTPKenstcA4uQcwM6PEdhX4FhgxnP3zQEYAiybPjUtx86KaqAZVgXma6rXJfH2q1nvS`, scanned one page/five signatures/five transactions, found zero route matches on that sample, had no rate limit, and emitted continuation `35nCU89VdWPZuYoGvtMsbtKqtGzVKLHRiVHkFEHVTp4eKQJRX6VDL7VSqhW3s411YgePA9YaGxLF5R7kxTbz7u9g`. This is a complete bounded sample, not exhaustive route-absence evidence.
+
+IDL artifact `13949413740` (1,530,075 bytes) independently hashed to `6adf6b23da4b7e672636f6430f230ace3fc11ec6086d635fa8f143faae4e2dea`, matching GitHub's digest.
+
+### Product checklist state at this checkpoint
+
+- [x] Exact-head CI validation and browser smoke passed.
+- [x] Desktop/mobile Jarrell's Peak gameplay smoke passed; 10 screenshot captures archived.
+- [x] DEX/Swap browser navigation, responsive workspace, provider-error and true-empty state smoke passed.
+- [x] Live Solana profile/boost discovery smoke passed.
+- [ ] DEX production-live acceptance: verify provider-backed market data, price/liquidity/volume freshness, chart updates, mint identity, production service/configuration, and real desktop/mobile end-to-end behavior.
+- [ ] Swap production-live acceptance: real quote/order backend, validation, wallet review/sign/submit/confirm/reconcile, replay/expiry/uncertain-outcome handling, monitoring, independent Solana security review, controlled Devnet evidence, and approved production release. Execution/signing gates remain false.
+- [ ] Game public-release acceptance: verify the actual playable entry path and core systems beyond the passing smoke; confirm real persistence and only genuinely implemented multiplayer/economy systems.
+- [ ] Login: inspect/configure and test real Google/X/email/password/wallet provider flows, email confirmation/SMTP, guest CAPTCHA/Turnstile, recovery and account linking. Current mock-based smoke does not prove real login. Guest remains disabled pending CAPTCHA; password recovery was not found in `auth.js`.
+- [ ] Launchpad: defer until after the DEX, Swap and Game launch priorities; no November 15 Launchpad promise.
+
+### Login audit facts — do not overstate completion
+
+The Supabase project `unadepiwbovblkfjlksk` was reported ACTIVE_HEALTHY; the migration list contained the auth/profile RLS hardening migration, and Supabase security/health advisors returned no lints at audit time. Source inspection found email/password, Google, X, and wallet sign-in entry points; guest login is deliberately disabled until CAPTCHA/Turnstile is configured. No password-recovery handler was found in `auth.js`. The browser workflow uses a mocked Supabase client and verifies UI/account-save isolation, not real provider authentication. Actual OAuth secrets/redirects, SMTP/confirmation, CAPTCHA configuration and real-account end-to-end flows remain unverified. Do not expose or commit secrets.
+
+### Next exact task
+
+Start with the **DEX production-readiness audit and implementation** on the current PR branch: trace the market discovery/profile/chart data path from UI through the Worker/provider, identify which data is genuinely live versus preview/fixture, test freshness and error behavior, then implement the highest-impact evidence-backed gap. Keep Swap fail-closed while this work proceeds. After each commit, append the exact completed checklist items, tests/run IDs, blockers, and one next task to this register and the launch checklist. Re-poll exact-head workflows before pushing another commit; do not supersede active runs.
+
+### Release guardrails
+
+PR #269 remains draft/unmerged. `EXECUTION_SECURITY_REVIEW_COMPLETE=false`; `SIGNABLE_ORDER_SECURITY_REVIEW_COMPLETE=false`; route_v2 remains excluded from production validation. No wallet signing, transaction submission, Wrangler production deployment, or LIVE Swap claim. Passing smoke tests prove only the tested browser paths on this SHA, not production readiness.
