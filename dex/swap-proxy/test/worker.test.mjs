@@ -269,6 +269,47 @@ test("reports missing or invalid Jupiter fee as unknown rather than zero", async
   }
 });
 
+test("sanitizes optional Jupiter quote metadata instead of rendering NaN%, forged fee mints or object labels", async () => {
+  const originalFetch = globalThis.fetch;
+  const target = "https://worker.test/api/swap/quote?inputMint=" + valid +
+    "&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000";
+  const good = { requestId: "quote-metadata", inAmount: "100000000", outAmount: "987654" };
+  const scenarios = [
+    ["valid fraction", { priceImpactPct: "0.0025", router: "metis", mode: "ultra", feeMint: valid },
+      { impact: 0.0025, router: "metis", mode: "ultra", mint: valid }],
+    ["scientific fraction", { priceImpactPct: "1e-5" }, { impact: 0.00001, router: null, mode: null, mint: null }],
+    ["negative price improvement", { priceImpactPct: -0.0001 }, { impact: -0.0001, router: null, mode: null, mint: null }],
+    ["actual zero is allowed", { priceImpactPct: 0 }, { impact: 0, router: null, mode: null, mint: null }],
+    ["missing impact", {}, { impact: null, router: null, mode: null, mint: null }],
+    ["invalid numeric string", { priceImpactPct: "NaN", router: { name: "metis" }, feeMint: "not-a-mint" },
+      { impact: null, router: null, mode: null, mint: null }],
+    ["nonfinite impact", { priceImpactPct: "Infinity", mode: "x".repeat(81) },
+      { impact: null, router: null, mode: null, mint: null }],
+    ["boolean impact", { priceImpactPct: true }, { impact: null, router: null, mode: null, mint: null }],
+    ["object impact", { priceImpactPct: { value: 0 } }, { impact: null, router: null, mode: null, mint: null }],
+    ["out-of-range impact", { priceImpactPct: "2" }, { impact: null, router: null, mode: null, mint: null }],
+    ["invalid router label", { router: "bad\nlabel", mode: {} }, { impact: null, router: null, mode: null, mint: null }]
+  ];
+  try {
+    for (const [label, metadata, expected] of scenarios) {
+      globalThis.fetch = async () => Response.json({
+        ...good, ...metadata, transaction: "NEVER_LEAK_A_SIGNABLE_TRANSACTION", signature: "FAKE"
+      });
+      const res = await worker.fetch(new Request(target, { headers: { origin } }), env);
+      assert.equal(res.status, 200, label + " cannot poison raw quote validation");
+      const payload = await res.json();
+      assert.equal(payload.inAmount, good.inAmount, label);
+      assert.equal(payload.outAmount, good.outAmount, label);
+      assert.equal(payload.priceImpactPct, expected.impact, label);
+      assert.equal(payload.router, expected.router, label);
+      assert.equal(payload.mode, expected.mode, label);
+      assert.equal(payload.feeMint, expected.mint, label);
+      assert.equal(payload.transaction, undefined, label);
+      assert.equal(payload.signature, undefined, label);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("proxies Jupiter token search through server-side credentials", async () => {
   const originalFetch = globalThis.fetch;
   try {
