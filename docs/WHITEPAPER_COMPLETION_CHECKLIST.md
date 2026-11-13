@@ -199,6 +199,7 @@ Last updated: 2026-11-13.
 - [x] Removed the active Game Concept statement that allowed additional maps after budget review; further game-world destinations are outside the approved scope.
 - [x] Kept Arena clearly labelled as planned in the homepage destination panel. Marketplace and Inventory remain supporting panels, not game worlds.
 - [x] Verified the homepage source contains no Overview desktop/mobile navigation item, Project Overview resource card, or Overview route link. The Whitepaper's internal executive-overview anchor remains a document section, not a homepage navigation entry.
-- [x] Investigated Browser Smoke run 43384117049 on prior PR head d7b98a9: gameplay assertions completed; Playwright timed out at .github/scripts/game-smoke.mjs:840 while waiting for fonts during the first mobile viewport screenshot. This is a smoke-artifact capture failure, not a failed world/HUD/control assertion.
-- [ ] Run Validate and Browser Smoke on the exact new documentation head. Preserve every gameplay assertion; repair the screenshot capture path only if the exact failure is reproducible.
+- [x] Investigated Browser Smoke run 43384117049 on prior PR head d7b98a9: gameplay assertions completed; Playwright timed out at .github/scripts/game-smoke.mjs:840 while waiting for fonts during the mobile cave-entrance viewport screenshot. This is a smoke-artifact capture failure, not a failed world/HUD/control assertion.
+- [x] Replaced Playwright screenshot capture with Chromium's native CDP viewport capture in ec9f454a. The smoke still emits and validates non-empty PNG artifacts at the same desktop/mobile checkpoints; no gameplay assertion was removed or relaxed.
+- [ ] Run Validate and Browser Smoke on the exact new documentation/test head.
 - [ ] Verify the deployed homepage and /overview/ 404 only after separate merge and deployment approval.
