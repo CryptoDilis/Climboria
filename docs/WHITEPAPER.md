@@ -169,3 +169,39 @@ This whitepaper is a project and product overview, not a complete listing applic
 - Any additional project, token, or market data requested by CoinGecko at submission time.
 
 Do not submit estimated, placeholder, or unverified token facts as final disclosures. The project must verify ticker availability, token address, supply, markets, and launch status before describing them as confirmed.
+
+
+## 15. Detailed player experience and free-to-play progression
+
+- The core game is intended to be playable without purchases or a crypto wallet.
+- The planned free starting choice is a male or female adult hero in a mid-30s age style.
+- Each player is intended to receive one free starter tool. It is designed to be non-sellable, non-transferable, and non-mintable.
+- Optional character styles, skins, and additional tools may be offered through crafting or the marketplace. Any gameplay attributes must be disclosed and balanced; purchases must not be required to complete the core game.
+- Ingredients collected through gameplay are intended to feed the Forge. Crafting and upgrading should provide a no-purchase progression route. Refining is intended to have no platform fee, although ingredients may be consumed.
+- The four game-menu entries in the current design are Jarrell’s Peak (playable world), Arena (future status panel), Marketplace (demo storefront), and Inventory (local preview). Only Jarrell’s Peak and Arena are game-world destinations.
+
+## 16. Treasure discovery and reward design
+
+Random chests may contain $CLIMB, ingredients, gear, or eligible digital items. Their locations are intended to remain hidden until discovered, after which discovery and disclosed contents may be announced and recorded. The design has no daily/weekly claim cap; this is not an active unlimited payout promise. Reward odds or content rules, funding, eligibility, anti-cheat, account-abuse controls, and payout verification must be published before activation.
+
+The planned leaderboard structure is a permanent All-Time Top Gainers board and a separate Weekly Top Gainers board. Scoring is intended to combine eligible $CLIMB earnings, eligible treasure value, and transparent rarity/difficulty bonuses. Weekly payout timing, if funded and activated, is Friday at 03:00 UTC (11:00 AM Philippine time). No summit ranking or badge system is planned. CLIMB Points and leaderboard scores are not tokens and do not guarantee a payout.
+
+## 17. Arena, Guild Battles, and wagers
+
+Arena is a separate future public forest battle/event map. Planned modes include free-for-all fights, Guild Battles, and sponsored tournaments. Casual fights are intended to be free and carry no rewards. During a Guild Battle, the whole Arena becomes the battlefield for the two participating guilds while others spectate. A guild member may request a battle; guild leadership approval is required.
+
+A shared-world target above 1,000 concurrent players is a design ambition, not a verified capacity claim. Load testing must establish safe capacity. Weekly Guild Wars depend on budget, server infrastructure, anti-cheat, and published scoring. Optional wager matches have been discussed with a proposed 2.5% fee on the total pot; they require secure escrow, consent, dispute handling, anti-abuse, and legal/compliance review. Badges are deferred.
+
+## 18. Climboria Signature, sponsorship, and funding
+
+Climboria Signature represents a responsible-launch philosophy. Planned Launchpad safeguards include project identity and official-link review, token configuration and disclosure review, creator-lock rules, sell-limit safeguards, and clear launch terms. These safeguards remain in development; review is not a guarantee of safety, legitimacy, liquidity, or profit.
+
+Climboria administration retains final sponsor approval. Sponsorship requires a written agreement covering the package, full fees, complete prize pool, duration, exclusivity, placements, cancellation/refund, postponement, force majeure, renewal, and prize protection. The full agreed fee and prize pool must be received and verified before announcement, branding, or event activation. Any expedited sponsor review is not an exemption from fraud, impersonation, illegal promotion, or misleading-claim checks.
+
+A disclosed portion of eligible future DEX and Launchpad fees is intended to support Jarrell’s Peak, but exact percentages are not finalized. Optional project donations of $1–$1,000 worth of SOL have been discussed; conversion to $CLIMB requires a safe verified route, otherwise funds remain in a SOL reserve. This is separate from marketplace fee accounting.
+
+## 19. Chatworld, guilds, and Social Lobby
+
+Future communication includes Global Chat, Proximity Chat, and Private Messages, with mute, block, report, anti-spam, and moderator tools. Server-side identity, permissions, message delivery, persistence, and moderation are prerequisites. Guilds, shared challenges, referrals, limited-time events, and a campaign/reward tracker are planned and require published rules.
+
+A Social Lobby is planned for meeting, chatting, displaying characters/tools, and finding other players. A future in-lobby trading terminal may combine token search/watchlists with an order book and candlestick chart. This requires reliable market data, wallet integration, order handling, security, and moderation.
