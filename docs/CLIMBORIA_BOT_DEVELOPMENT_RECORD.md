@@ -225,3 +225,12 @@ V5 adds SQLite-persisted exit order intents with RESERVED -> SUBMITTED -> UNKNOW
 ## Official bot brand decision — 2026-11-13
 
 **Owner approved name: CLIMBX** (display: **CLIMBX by Climboria**). Tagline: **You Dictate. It Climbs. It Learns.** Use CLIMBX for the desktop/mobile DEX promotional card, bot navigation/dashboard, and website User's Manual. Retain existing five slots and trading design. Existing technical file names may remain unchanged to avoid breaking links. Brand decision does **not** imply bot launch, production availability, or trademark clearance. The website card/manual navigation are still pending implementation.
+
+
+## Phase 15 checkpoint — 2026-11-13 (CLIMBX paper engine V6)
+
+**Local verification:** 36/36 Python unittest tests passed (28 V3–V5 regressions + 8 V6 strategy tests). Local artifact `climbx-paper-v6.zip` contains Python/SQLite source, tests and README; **source has not been committed to this repository**. No live swaps or deployments enabled.
+
+V6 adds persisted three-stage TP ladder (TP1/TP2/TP3), per-stage partial exit intents, trailing stop based on highest supplied paper price, time-based full exit, restart persistence, UNKNOWN exit locking, idempotent simulated confirmation, and authorization checks. Exits are reserved first, then separately simulated as submitted/settled. Percentages apply to original entry quantity and floor to integer tokens; any remainder stays open. Tests cover stages, restart, unknown lock, trailing/time triggers, invalid plans, revoked authorization and duplicate settlement.
+
+**Remaining limitations:** simulated prices and confirmations only, no actual chain verification or signing, no durable network outbox/crash-boundary proof, no automated re-entry, no fee high-water-mark, no external wallet spending reconciliation, no trusted price feed or partial network fills. Manual draft is at `docs/CLIMBORIA_BOT_USERS_MANUAL.md`; website card, manual page and navigation remain unimplemented. Phase 16: harden failed-exit retry/plan cleanup, introduce crash-injection outbox and reconciliation, simulate auto re-entry with owner authorization, and later implement website bot UI/manual after current priority gates.
