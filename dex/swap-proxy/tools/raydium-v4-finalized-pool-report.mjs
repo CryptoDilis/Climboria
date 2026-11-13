@@ -12,6 +12,7 @@
  * A single public pool address supplied by a trusted operator is required.
  */
 import { fetchRaydiumV4EvidenceFromPoolAddress } from "../src/raydium-v4-pool-discovery.mjs";
+import { safeRaydiumOperatorError } from "./raydium-v4-safe-error.mjs";
 
 const USAGE = "Usage: node dex/swap-proxy/tools/raydium-v4-finalized-pool-report.mjs --network mainnet-beta|devnet --pool <verified-public-pool-address> [--min-slot <nonnegative-slot>]";
 
@@ -75,6 +76,6 @@ main(process.argv.slice(2)).catch(error => {
   // including the RPC URL. Avoid stack traces/serialization of request
   // objects which could leak operator HTTPS query-string credentials.
   process.stderr.write("Read-only Raydium pool evidence FAILED: " +
-    (error instanceof Error ? error.message : "unexpected error") + "\n");
+    safeRaydiumOperatorError(error) + "\n");
   process.exitCode = 1;
 });
