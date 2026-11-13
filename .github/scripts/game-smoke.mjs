@@ -300,6 +300,14 @@ try {
     deathLoot.droppedEvents!==2||deathLoot.recoveredEvents!==1)
     errors.push('Jarrell death carried-loot drop/E recover/3-minute expiry lifecycle failed: '+JSON.stringify(deathLoot));
   console.log('Jarrell death-loot recovery audit:',JSON.stringify(deathLoot));
+  const lootDirection=await page.evaluate(()=>window.__climboriaJarrellsPeak?.lootRecoveryDirectionAudit?.()??null);
+  if(!lootDirection||lootDirection.front?.arrow!=='↑'||lootDirection.right?.arrow!=='→'||
+    lootDirection.left?.arrow!=='←'||lootDirection.back?.arrow!=='↓'||
+    lootDirection.diagonal?.arrow!=='↗'||lootDirection.rotatedFront?.arrow!=='↑'||
+    Object.values(lootDirection).some(v=>v?.meters!==20&&v?.arrow!=='↗'))
+    errors.push('Camera-relative dropped-loot direction cue failed cardinal/diagonal/rotated views: '+JSON.stringify(lootDirection));
+  console.log('Jarrell dropped-loot direction audit:',JSON.stringify(lootDirection));
+
 
   const caveSpikeTick=await page.evaluate(()=>window.__climboriaJarrellsPeak?.caveSpikeDamageTickAudit?.()??null);
   if(!caveSpikeTick||!caveSpikeTick.ok||caveSpikeTick.damageTaken!==25) errors.push('Live cave spike contact-to-gameTick damage path failed: '+JSON.stringify(caveSpikeTick));
