@@ -6,7 +6,8 @@ function probeTool(name,run=spawnSync){
  try{
   const result=run(name,['--version'],{encoding:'utf8',timeout:10000,windowsHide:true});
   const output=String(result.stdout||result.stderr||'').trim().split(/\r?\n/)[0];
-  return {name,available:!result.error&&result.status===0,version:result.status===0?output:null};
+  const available=!result.error&&result.status===0&&output.length>0;
+  return {name,available,version:available?output:null};
  }catch{return {name,available:false,version:null};}
 }
 function probeAll(run=spawnSync){return TOOLS.map(name=>probeTool(name,run));}
