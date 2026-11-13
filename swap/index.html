@@ -433,6 +433,7 @@ let selectedChain='solana';
 let restoringSwapUrl=false;
 function setSwapUrl(){const u=new URL(location.href);u.searchParams.set('chain',selectedChain);u.searchParams.set('from',quoteTokens.from.id);u.searchParams.set('to',quoteTokens.to.id);const next=u.pathname+u.search+u.hash,current=location.pathname+location.search+location.hash;if(next===current)return;if(restoringSwapUrl)history.replaceState({climboriaSwap:true},'',u);else history.pushState({climboriaSwap:true},'',u);}
 function setSwapChain(chain){
+ if(chain!==selectedChain){clearTimeout(autoQuoteTimer);invalidateSwapQuote('Network changed. Previous Solana quote discarded.');}
  selectedChain=chain; if(chain==='solana')updateSelectedAsset(quoteTokens.from);
  $('chainSolana').classList.toggle('active',chain==='solana');
  $('chainBase').classList.toggle('active',chain==='base');
@@ -528,10 +529,10 @@ let tokenSearchSequence={from:0,to:0};
 async function searchQuoteToken(side,options={}){const request=++tokenSearchSequence[side];const input=$(side==='from'?'quoteFromSearch':'quoteToSearch');const box=$(side==='from'?'fromResults':'toResults');const query=input.value.trim();if(query.length<2){box.innerHTML='<div class="notice">Enter at least two characters.</div>';return}box.innerHTML='<div class="notice">Finding the best Solana token match…</div>';try{const tokenUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/tokens/search?query='+encodeURIComponent(query):'https://api.jup.ag/tokens/v2/search?query='+encodeURIComponent(query);const res=await fetch(tokenUrl,{headers:{accept:'application/json'}});if(!res.ok)throw new Error('Jupiter Token API returned HTTP '+res.status);const tokens=await res.json();if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(!Array.isArray(tokens)||!tokens.length){box.innerHTML='<div class="notice">No token metadata found. Try the exact mint address.</div>';return}const candidates=tokens.filter(t=>t&&typeof t.id==='string'&&Number.isInteger(Number(t.decimals))&&Number(t.decimals)>=0&&Number(t.decimals)<=18).slice(0,8);if(!candidates.length)throw new Error('Jupiter returned no usable token metadata.');box._tokens=candidates;box.innerHTML=candidates.map((t,i)=>'<button type="button" class="token-option" data-side="'+side+'" data-index="'+i+'"><b>'+esc(t.symbol||'Unknown')+' <span class="token-option-meta">'+esc(t.name||'Unknown token')+' · '+esc(String(t.decimals)+' decimals')+'</span></b><small>'+esc(t.id)+'</small><span class="token-option-meta '+(t.isVerified?'token-verification':'')+'">'+(t.isVerified?'✓ Jupiter verified':'Unverified token')+'</span></button>').join('');if(options.autoSelect){const chosen=await chooseBestSolanaCandidate(candidates,request,side,query);if(request!==tokenSearchSequence[side]||input.value.trim()!==query)return;if(chosen){const alternativesMarkup=box.innerHTML;chooseQuoteToken(side,chosen);box.innerHTML='<div class="notice">Selected best-supported '+esc(chosen.symbol||'token')+' market automatically. You can still choose another representation below.</div>'+alternativesMarkup;autoQuoteAfterChange();}else{$(side==='from'?'fromSelected':'toSelected').textContent='Selection required · choose the exact mint';box.insertAdjacentHTML('afterbegin','<div class="notice">Multiple token representations found. Choose the exact mint below; no asset has been changed yet.</div>');}}}catch(e){if(request===tokenSearchSequence[side]&&input.value.trim()===query)box.innerHTML='<div class="notice">'+esc(e.message)+'</div>'}}
 async function chooseBestSolanaCandidate(tokens,request,side,query){if(!Array.isArray(tokens)||tokens.length!==1)return null;const ranked=[];for(const token of tokens.slice(0,1)){if(request!==tokenSearchSequence[side]||$(side==='from'?'quoteFromSearch':'quoteToSearch').value.trim()!==query)return null;try{const payload=await fetchMarketJson('https://api.dexscreener.com/latest/dex/tokens/'+encodeURIComponent(token.id));const pairs=(payload.pairs||[]).filter(p=>p&&p.chainId==='solana'&&p.baseToken?.address===token.id&&p.pairAddress);if(!pairs.length)continue;pairs.sort((a,b)=>(Number(b.liquidity?.usd)||0)-(Number(a.liquidity?.usd)||0));const liquidity=Number(pairs[0].liquidity?.usd)||0;ranked.push({token,score:liquidity});}catch(_){}}ranked.sort((a,b)=>b.score-a.score);return ranked.length===1?ranked[0].token:null}
 let autoQuoteTimer=null;
-function autoQuoteAfterChange(delay=450){clearTimeout(autoQuoteTimer);if(!quoteTokens.from?.id||!quoteTokens.to?.id||quoteTokens.from.id===quoteTokens.to.id||!(Number($('quoteAmount').value)>0))return;autoQuoteTimer=setTimeout(()=>{if(quoteTokens.from.id!==quoteTokens.to.id)requestJupiterQuote();},delay)}
+function autoQuoteAfterChange(delay=450){clearTimeout(autoQuoteTimer);if(selectedChain!=='solana'||!quoteTokens.from?.id||!quoteTokens.to?.id||quoteTokens.from.id===quoteTokens.to.id||!(Number($('quoteAmount').value)>0))return;autoQuoteTimer=setTimeout(()=>{if(selectedChain==='solana'&&quoteTokens.from.id!==quoteTokens.to.id)requestJupiterQuote();},delay)}
 
 let quoteRequestSequence=0;
-function invalidateSwapQuote(reason){quoteRequestSequence++;pendingSwapOrder=null;$('swapReview').hidden=true;$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Routing engine</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div><div class="quote-result"><small>Price impact</small><b>—</b></div><div class="quote-result"><small>Input amount</small><b>—</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';$('quoteStatus').textContent=reason||'Quote invalidated. Request a fresh quote for the current assets and amount.';}
+function invalidateSwapQuote(reason){quoteRequestSequence++;pendingSwapOrder=null;$('swapReview').hidden=true;$('getQuote').disabled=selectedChain!=='solana';$('getQuote').textContent='Get live quote';$('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output</small><b>—</b></div><div class="quote-result"><small>Routing engine</small><b>—</b></div><div class="quote-result"><small>Jupiter fee</small><b>—</b></div><div class="quote-result"><small>Price impact</small><b>—</b></div><div class="quote-result"><small>Input amount</small><b>—</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';$('quoteStatus').textContent=reason||'Quote invalidated. Request a fresh quote for the current assets and amount.';}
 function chooseQuoteToken(side,token){if(!token||!token.id||!Number.isInteger(Number(token.decimals))||Number(token.decimals)<0||Number(token.decimals)>18){$('quoteStatus').textContent='Token metadata is incomplete; selection rejected.';return}quoteTokens[side]={id:token.id,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:Number(token.decimals),isVerified:!!token.isVerified};invalidateSwapQuote('Asset updated. Refreshing your live quote…');if(side==='from')updateSelectedAsset(quoteTokens.from);$(side==='from'?'quoteFromSearch':'quoteToSearch').value=(token.symbol||token.id);$(side==='from'?'fromSelected':'toSelected').textContent=(token.symbol||'TOKEN')+' · '+token.decimals+' decimals · '+(token.isVerified?'Jupiter verified':'Unverified');$(side==='from'?'fromResults':'toResults').innerHTML='';setSwapUrl();autoQuoteAfterChange();}
 const swapConfig=window.CLIMBORIA_SWAP_CONFIG||{};
 let pendingSwapOrder=null;
@@ -600,43 +601,48 @@ async function signAndExecuteJupiterSwap(){
 async function requestJupiterQuote(){
  const status=$('quoteStatus'),button=$('getQuote');
  const request=++quoteRequestSequence;
- const amount=Number($('quoteAmount').value),from={...quoteTokens.from},to={...quoteTokens.to};
+ const amountInput=$('quoteAmount').value,amount=Number(amountInput),from={...quoteTokens.from},to={...quoteTokens.to};
+ const slippage=$('swapSlippage')?.value||'auto';
+ const stillCurrent=()=>request===quoteRequestSequence&&selectedChain==='solana'&&amountInput===$('quoteAmount').value&&slippage===($('swapSlippage')?.value||'auto')&&from.id===quoteTokens.from.id&&to.id===quoteTokens.to.id&&from.decimals===quoteTokens.from.decimals&&to.decimals===quoteTokens.to.decimals;
+ if(selectedChain!=='solana'){status.textContent='Base routing is not connected. Solana quotes are not available on Base.';return;}
  if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return}
  if(from.id===to.id){status.textContent='Choose two different token mints.';return}
  let raw;
- try{raw=window.ClimboriaSwapAmount.toRaw($('quoteAmount').value,from.decimals);}
+ try{raw=window.ClimboriaSwapAmount.toRaw(amountInput,from.decimals);}
  catch(e){status.textContent=e.message;return;}
  button.disabled=true;button.textContent='Quoting…';status.textContent='Requesting a fresh Jupiter route quote…';$('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';
  try{
   const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});
-  const customSlippage=$('swapSlippage')?.value||'auto';if(customSlippage!=='auto')params.set('slippageBps',customSlippage);
+  if(slippage!=='auto')params.set('slippageBps',slippage);
   const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();
   const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});
   const data=await response.json();
-  if(request!==quoteRequestSequence||from.id!==quoteTokens.from.id||to.id!==quoteTokens.to.id||amount!==Number($('quoteAmount').value))return;
+  if(!stillCurrent())return;
   if(!response.ok)throw new Error(data.error||data.message||'Jupiter quote request failed (HTTP '+response.status+')');
   if(data.errorCode||data.error)throw new Error(data.error||data.errorCode);
   if(data.inAmount!==String(raw)||typeof data.outAmount!=='string'||!(/^[1-9][0-9]*$/).test(data.outAmount))
     throw new Error('Jupiter returned an inconsistent quote for this amount; no fallback will be shown');
   const out=Number(data.outAmount)/Math.pow(10,to.decimals);
   if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount');
-  const impact=data.priceImpactPct??data.priceImpact??null;
-  const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';
-  const router=data.router||'Jupiter route';
+  const suppliedImpact=data.priceImpactPct??data.priceImpact??null;
+  const impact=typeof suppliedImpact==='number'&&Number.isFinite(suppliedImpact)&&suppliedImpact>=-1&&suppliedImpact<=1?suppliedImpact:null;
+  const fee=Number.isInteger(data.feeBps)&&data.feeBps>=0&&data.feeBps<=10000?String(data.feeBps)+' bps':'Not supplied';
+  const router=typeof data.router==='string'&&data.router.trim()?data.router:'Jupiter route';
   $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+amount+' '+esc(from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
   status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';
  }catch(e){
-  if(request!==quoteRequestSequence)return;
+  if(!stillCurrent())return;
   $('quoteResults').innerHTML='<div class="notice">'+esc(e.message)+'</div>';
   status.textContent='Quote unavailable. No estimated or cached fallback was substituted.';
  }finally{
-  if(request===quoteRequestSequence){button.disabled=false;button.textContent='Get live quote';}
+  if(request===quoteRequestSequence){button.disabled=selectedChain!=='solana';button.textContent='Get live quote';}
  }
 }
 
 loadMajorMarkets();updateSelectedAsset(quoteTokens.from);setInterval(loadMajorMarkets,60000);
 $('chainSolana').addEventListener('click',()=>setSwapChain('solana'));$('chainBase').addEventListener('click',()=>setSwapChain('base'));$('connectWallet').addEventListener('click',connectClimboriaWallet);
 $('getQuote').addEventListener('click',requestJupiterQuote);
+$('swapSlippage').addEventListener('change',()=>invalidateSwapQuote('Slippage changed. Request a fresh quote before using the estimate.'));
 $('quoteAmount').addEventListener('input',()=>{invalidateSwapQuote('Amount changed. Fetching an updated live quote…');autoQuoteAfterChange(650);});
 $('quoteFromSearch').addEventListener('input',()=>{clearTimeout(window.climboriaFromSearchTimer);invalidateSwapQuote('Finding token and refreshing quote…');window.climboriaFromSearchTimer=setTimeout(()=>searchQuoteToken('from',{autoSelect:true}),500);});
 $('quoteToSearch').addEventListener('input',()=>{clearTimeout(window.climboriaToSearchTimer);invalidateSwapQuote('Finding token and refreshing quote…');window.climboriaToSearchTimer=setTimeout(()=>searchQuoteToken('to',{autoSelect:true}),500);});

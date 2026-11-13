@@ -104,5 +104,79 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - BLOCKED: permanent reviewed lockfile and clean checkout --locked enforcement, signed validator tests, SBF build, restricted DEX-only execution, reconciliation, independent audit and explicit approval. **REAL-FUNDS NO-GO**.
 - NEXT: verify new CI; obtain commit-ready Cargo.lock through GitHub workflow/artifact review; remove lockfile generation and enforce clean-checkout --locked. No DEX, Swap, Launchpad or Game edits.
 
+## Phase 137 — 2026-11-14 — verified integrity gate and adversarial test coverage
+- DONE: exact CLIMBX commit `0cdcc5d8b68a6bf8e41963199accb3f78a43434b` release run `43503926283` SUCCESS. Rust job passed lockfile generation, integrity validation, artifact upload and --locked compilation. Validate `43503926338` and Browser Smoke `43503926304` SUCCESS.
+- DONE: inspected existing lockfile artifact `14075152596` locally: Cargo.lock version 4, 195 packages, 48,350 bytes; Anchor resolved 0.30.3. This is structural inspection only, not vulnerability review.
+- DONE: CLIMBX branch commit `3d15690144887e8becb6908f6ef7605f1d0f6e82` adds `climbx/test_check_cargo_lock.py` with positive and negative cases: missing file, invalid checksum, Git source, duplicate package, wrong lockfile version.
+- DONE: commit `626a77b7589d4a1763b8b66adf2baea2a19a1756` wires these tests into CLIMBX CI. Latest commit CI not yet verified.
+- PENDING: commit reviewed Cargo.lock into branch and remove candidate generation from CI; no false claim of permanently locked dependency graph. Latest CI pending.
+- BLOCKED: signed local-validator tests, SBF build, DEX-only execution authorization, reconciliation, independent audit and explicit release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game files modified.
+
+## Phase 138 — 2026-11-14 — adversarial lockfile tests verified; candidate stability check
+- DONE: exact CLIMBX commit `626a77b7589d4a1763b8b66adf2baea2a19a1756` release safety run `43504490456` SUCCESS. Rust job passed six lockfile integrity regression tests, candidate generation, structural validation, artifact upload and --locked compilation. Validate run `43504490653` SUCCESS. Browser Smoke run `43504490262` was still in progress at observation; do not claim success.
+- DONE: CLIMBX branch commit `14cdd08914548c929f6ebf74753ebc4f866b4934` adds CI candidate lockfile stability check: regenerate with pinned Rust 1.99.1, byte-compare via cmp, print SHA256, then run existing integrity check and --locked build. This is intra-run stability only, not permanent dependency reproducibility.
+- PENDING: new commit CI verification; review and commit actual Cargo.lock to repository, then remove CI auto-generation and require clean-checkout --locked build.
+- BLOCKED: SBF/validator signed grant/revoke tests, DEX-only on-chain execution authorization, reconciliation, audit, release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game files modified.
+
+## Phase 139 — 2026-11-14 — lockfile stability CI and exact candidate fingerprint
+- DONE: commit `14cdd08914548c929f6ebf74753ebc4f866b4934` CLIMBX release safety run `43504685151` SUCCESS; Rust job passed lockfile generation, byte-for-byte stability regeneration comparison, integrity validation, artifact upload and --locked compilation. Validate `43504684940` and Browser Smoke `43504685071` SUCCESS.
+- DONE: downloaded earlier CI lockfile artifact `14075152596`, computed exact Cargo.lock SHA256 `f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9` over 48,350 bytes. This is a fingerprint of a candidate, NOT an independent dependency security audit.
+- DONE: commit `f1f4226638b03671a97f1af43ed4e959007f7213` adds fail-closed SHA256 comparison in CLIMBX release CI to prevent silent candidate dependency drift. CI verification of this commit pending.
+- PENDING: actual Cargo.lock remains not committed to branch; CI still generates it. Fingerprint protects candidate drift but is not a replacement for committing reviewed lockfile and requiring --locked on clean checkout.
+- BLOCKED: signed validator tests, SBF build, scoped DEX-only execution, reconciliation, audit, release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits.
+
+## Phase 140 — 2026-11-14 — verified dependency fingerprint and exported inventory
+- DONE: Rust job on CLIMBX run `43505160086` at commit `f1f4226638b03671a97f1af43ed4e959007f7213` completed SUCCESS; explicit candidate SHA256 fingerprint, regeneration stability, integrity validation and --locked compilation all passed. Validate run `43505160588` SUCCESS. Browser run `43505160146` still in progress at initial observation.
+- DONE: directly rehashed downloaded `Cargo.lock` ZIP content; SHA256 exactly `f868ffce588a34a789c688589c78a5f9b7f8e933c7292cbbb2ee97ffbb4b39b9`.
+- DONE: CLIMBX-only CI now exports `climbx-dependency-inventory.json` (package name/version/source) and `climbx-program-metadata.json` as review artifacts, commit `97434bb983a100a4895272ca7bb8cb193f087a7e`; fixed JSON newline generation commit `3387a5d4c97584b114d05997390aa8e2bb2b823f`.
+- PENDING: new inventory CI verification; actual Cargo.lock not committed. Candidate SHA gate is not permanent clean-checkout reproducibility or security audit.
+- BLOCKED: signed local-validator tests, SBF build, scoped DEX-only execution, reconciliation, audit, explicit approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game files changed.
+
+## Phase 141 — 2026-11-14 — verified dependency inventory and owner-only authorization tightening
+- DONE: CLIMBX commit `3387a5d4c97584b114d05997390aa8e2bb2b823f` release run `43505349981` SUCCESS; inventory export/upload, SHA fingerprint, --locked compilation passed. Validate `43505349903` and Browser Smoke `43505349946` SUCCESS.
+- DONE: reviewed actual `climbx/programs/climbx-authorization/src/lib.rs` grant/revoke development scaffold. No trade execution exists; placeholder program ID remains.
+- DONE: CLIMBX-only code commit `e581e0ec00f1f10aeda195d54858d973ca9f4251` adds owner-signed `tighten_grant` using existing owner-linked PDA account validation. Only permits lowering per-order/cumulative caps and shortening expiry, never expanding authority. Rejects revoked grants, invalid cap combinations and already-revoked duplicate revocation. No execution enabled.
+- PENDING: compile and test this Rust change in CI; signed local-validator tests and permanent Cargo.lock still missing. No claim of deployment or audit.
+- BLOCKED: SBF build, DEX-only on-chain execution, settlement reconciliation, independent audit and owner release approval. **REAL-FUNDS NO-GO**.
+- No DEX, Swap, Launchpad or Game edits.
+
+## Phase 142 — 2026-11-14 — CLIMBX beta preview component (DEX handoff)
+- User approved displaying CLIMBX in DEX as Coming Soon / Beta Preview while real-money execution remains disabled.
+- DONE: branch commit `ddfdfd5cc21ab716b7e9f69fc0c6701ce072de32` adds `climbx/components/ClimbxBetaPreview.tsx`, a standalone React/Tailwind presentation component with CLIMBX identity, planned one-free-bot/five-assets/Signature-DEX-only capabilities and prominent preview-only/no-trading warnings.
+- SAFETY: component has no wallet connection, signing, deposit, order routing, bot execution, or enabled launch button. No performance or return guarantees.
+- HANDOFF FOR DEX OWNER: import and render `climbx/components/ClimbxBetaPreview.tsx` in DEX navigation/page only after the DEX owner reviews integration. CLIMBX developer did NOT modify DEX, Swap, Launchpad or Game files, and did NOT deploy the preview. Visible on live DEX: NOT VERIFIED.
+- PENDING: DEX-owner navigation integration and deployment, CI/typecheck of preview, Rust authorization compile verification, committed Cargo.lock, signed validator tests, audit. **REAL-FUNDS NO-GO**.
+
+## Phase 143 — 2026-11-14 — user-approved DEX preview integration on main
+- User explicitly requested CLIMBX to be visible in DEX even while disabled, superseding earlier no-DEX-edit constraint for this narrowly scoped preview integration.
+- DONE: commit `93b3cb1767f9a2158e8004ad4b07728c297629d6` created `dex/climbx/index.html` on main, reusing the existing CLIMBX standalone static preview from development branch. Preview states Coming Soon and does NOT connect wallets, authorize grants or execute trades.
+- DONE: commit `d6a0ef19e23a0902a33bbf3510980bf45a35a155` added a single CLIMBX BETA link in `dex/index.html` navigation to `/dex/climbx/`. No Swap, Launchpad or Game edits.
+- PENDING: deployment to climboria.fun and live browser verification; do NOT claim publicly visible until checked. Main CI checks pending. Link: https://climboria.fun/dex/climbx/
+- BLOCKED: production trading authorization, signed validator tests, audit and explicit release approval. **REAL-FUNDS NO-GO**.
+
+## Phase 144 — 2026-11-14 — public preview visibility hardening
+- DONE: independently fetched main `dex/climbx/index.html` and `dex/index.html` from GitHub; CLIMBX Coming Soon page exists, has disabled wallet/start/approval buttons, and DEX header contains `/dex/climbx/` link.
+- LIVE LIMITATION: attempted HTTPS GET for `https://climboria.fun/dex/climbx/` and `https://climboria.fun/dex/`; this runtime's DNS resolution failed, so no live visibility or deployment confirmation.
+- DONE: main commit `937faf8c5794875292e3f68ae9da37fa8d2cdcbe` changes CLIMBX preview robots metadata from `noindex,nofollow` to `index,follow` and adds descriptive metadata, so public preview is not intentionally excluded from indexing. No wallet/trade functionality enabled.
+- PENDING: verify public hosting deployment and responsive visual behavior in browser; Rust/security milestones remain blocked. **REAL-FUNDS NO-GO**.
+- No Swap, Launchpad or Game files edited.
+
+## Phase 145 — 2026-11-14 — mobile-visible CLIMBX DEX hero entry point
+- DISCOVERED: DEX stylesheet includes mobile rule `.toplinks a{display:none!important}`, so earlier CLIMBX header link could be hidden on phones.
+- DONE: main commit `27c8361c402dc759f77b7b9fdf4766d20d228325` adds a CLIMBX Coming Soon banner and `/dex/climbx/` link inside the DEX hero, outside mobile-hidden nav, with clear disabled-trading text. No trading logic or wallet integration changed.
+- CONFIRMED: GitHub main contains disabled CLIMBX standalone page and navigation/hero links. Live website HTTPS probe failed due to environment DNS resolution; public deployment still UNVERIFIED.
+- NEXT: user/browser confirmation that hero banner and preview are publicly visible; validate responsive layout and CI. Continue Rust signed local-validator safety testing. **REAL-FUNDS NO-GO**.
+- No Swap, Launchpad or Game files edited.
+
+## Phase 146 — 2026-11-14 — preview regression checks and CI
+- DONE: main commit `3e6da2a150a71538a761e46cd0180ae641d508a7` creates `climbx/test_dex_preview_visibility.cjs`. Static assertions verify the CLIMBX DEX link, banner inside hero (outside mobile-hidden nav), Coming Soon status, disabled trading and all three disabled actions, and no executable preview scripts.
+- DONE: main commit `c300bc03dd0e29ab5eb897661f2f19462183a178` adds CLIMBX-only `.github/workflows/climbx-preview-visibility.yml`, scoped to preview/DEX HTML/test/workflow changes, running Node 22 without secrets, wallet access or trading.
+- PENDING: new workflow CI outcome (no run returned immediately after commit), production hosting deployment and live phone/browser acceptance. Environment DNS cannot reach climboria.fun, so no verified live availability.
+- NEXT: verify workflow status and fix any failing checks; get actual deployed page/browser evidence. Keep real-money trading disabled. No Swap, Launchpad or Game edits.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.

@@ -695,9 +695,9 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
 <link rel="stylesheet" href="/dex/terminal-premium.css?v=1">
 </head>
 <body>
-<header class="top"><div class="wrap topin"><a class="brand" href="../">CLIMBORIA<small>SUMMIT FINANCE</small></a><nav class="toplinks"><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a href="../">Home</a><a href="#markets">Markets</a><a href="/support/">Support</a><span class="pill">SOLANA MAINNET</span><button class="watchlist-trigger" id="watchlistTrigger" type="button" aria-label="Open watchlist" aria-expanded="false" title="Watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 14.7 8.7l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z"/></svg><span>WATCHLIST</span><i id="watchlistCount">0</i></button></nav></div><section class="watchlist-popover" id="watchlistPopover" hidden aria-label="Climboria watchlist"><div class="watchlist-head"><div><small>SUMMIT FINANCE</small><b>Your watchlist</b></div><button type="button" id="watchlistClose" aria-label="Close watchlist">×</button></div><p>Track tokens across Climboria DEX and Swap on this browser.</p><div class="watchlist-current"><span id="watchlistCurrentLabel">Selected token</span><button type="button" id="watchlistAddCurrent">＋ Add selected token</button></div><div id="watchlistItems" class="watchlist-items"></div></section></header>
+<header class="top"><div class="wrap topin"><a class="brand" href="../">CLIMBORIA<small>SUMMIT FINANCE</small></a><nav class="toplinks"><a href="/dex/climbx/" aria-label="CLIMBX trading bot coming soon" title="CLIMBX · Coming Soon" style="color:#f4c45e;font-weight:800;letter-spacing:.04em">CLIMBX <small style="font-size:9px;color:#e5b85e">BETA</small></a><button class="header-icon" data-panel="announcements" aria-label="Announcements" title="Announcements"><svg class="climboria-icon announce-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M12 22.5V14l15-4.2v15.1l-15-4.2Z" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linejoin="round"/><path d="m12 22.5 2.4 7h4.1l-2.2-7M29.2 15.1a5.7 5.7 0 0 1 0 8.2" fill="none" stroke="#fff0c5" stroke-width="1.25" stroke-linecap="round"/><path d="m20 5.8 1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3L20 5.8Z" fill="#fff0c5"/></svg></button><button class="header-icon" data-panel="notifications" aria-label="Notifications" title="Notifications"><svg class="climboria-icon notification-crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 34 9v10.2c0 8.1-5.7 13.4-14 17.3C11.7 32.6 6 27.3 6 19.2V9L20 3.5Z" fill="url(#goldShield)" stroke="#e8c477" stroke-width="1.15"/><path d="M20 10.2c-4.1 0-6.8 3-6.8 7.1 0 6-2.4 7.2-3.2 9.1h20c-.8-1.9-3.2-3.1-3.2-9.1 0-4.1-2.7-7.1-6.8-7.1Z" fill="none" stroke="#fff0c5" stroke-width="1.45" stroke-linejoin="round"/><path d="M17 29.1c.5 2 1.5 3 3 3s2.5-1 3-3M20 7.3v-1.8" fill="none" stroke="#fff0c5" stroke-width="1.35" stroke-linecap="round"/><path d="m20 12.1 1.2 2.4 2.6.4-1.9 1.8.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.8 2.6-.4 1.2-2.4Z" fill="#e8c477"/></svg></button><a href="../">Home</a><a href="#markets">Markets</a><a href="/support/">Support</a><span class="pill">SOLANA MAINNET</span><button class="watchlist-trigger" id="watchlistTrigger" type="button" aria-label="Open watchlist" aria-expanded="false" title="Watchlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 14.7 8.7l6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z"/></svg><span>WATCHLIST</span><i id="watchlistCount">0</i></button></nav></div><section class="watchlist-popover" id="watchlistPopover" hidden aria-label="Climboria watchlist"><div class="watchlist-head"><div><small>SUMMIT FINANCE</small><b>Your watchlist</b></div><button type="button" id="watchlistClose" aria-label="Close watchlist">×</button></div><p>Track tokens across Climboria DEX and Swap on this browser.</p><div class="watchlist-current"><span id="watchlistCurrentLabel">Selected token</span><button type="button" id="watchlistAddCurrent">＋ Add selected token</button></div><div id="watchlistItems" class="watchlist-items"></div></section></header>
 <div class="climboria-panel-backdrop" id="climboriaPanelBackdrop" hidden><section class="climboria-panel" role="dialog" aria-modal="true" aria-labelledby="climboriaPanelTitle"><button class="panel-close" id="climboriaPanelClose" aria-label="Close">×</button><span class="community-kicker">CLIMBORIA HUB</span><h2 id="climboriaPanelTitle">Announcements</h2><div id="climboriaPanelContent"></div></section></div><main class="wrap">
-<section class="hero"><div class="eyebrow">THE SOLANA EXPEDITION TERMINAL</div><h1>Explore the Solana market.</h1><p>Discover tokens and liquidity pools across supported Solana venues. Market data is provider-sourced and may be delayed or incomplete. A listing is not an endorsement or a guarantee of tradability.</p><div class="hero-market" id="heroMarket" aria-live="polite"><div><small>MARKET LEADER · WRAPPED SOL</small><b class="skeleton-value">Loading live price</b></div><div class="hero-market-change skeleton-value">Loading 24h change</div><span class="hero-market-source">DexScreener · live pair data</span></div><div class="status"><span class="dot"></span><span id="status">Connecting to market data…</span><span>·</span><span id="updated">Waiting for first refresh</span></div></section>
+<section class="hero"><div class="eyebrow">THE SOLANA EXPEDITION TERMINAL</div><h1>Explore the Solana market.</h1><p>Discover tokens and liquidity pools across supported Solana venues. Market data is provider-sourced and may be delayed or incomplete. A listing is not an endorsement or a guarantee of tradability.</p><div class="climbx-beta-banner" style="margin:18px 0 4px;padding:14px 16px;border:1px solid #8b7043;border-radius:14px;background:linear-gradient(115deg,#19283a,#101c2c);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px"><div><strong style="display:block;color:#f4c45e;font-size:14px">CLIMBX Trading Bot <span style="font-size:10px;border:1px solid #8b7043;border-radius:20px;padding:3px 7px;margin-left:5px">COMING SOON</span></strong><small style="display:block;color:#aab8ca;margin-top:5px">Preview the free personal bot · Live trading disabled</small></div><a href="/dex/climbx/" style="display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 15px;border:1px solid #d4a954;border-radius:10px;color:#f4c45e;background:#201e19;font-size:12px;font-weight:800;text-decoration:none">View CLIMBX Preview →</a></div><div class="hero-market" id="heroMarket" aria-live="polite"><div><small>MARKET LEADER · WRAPPED SOL</small><b class="skeleton-value">Loading live price</b></div><div class="hero-market-change skeleton-value">Loading 24h change</div><span class="hero-market-source">DexScreener · live pair data</span></div><div class="status"><span class="dot"></span><span id="status">Connecting to market data…</span><span>·</span><span id="updated">Waiting for first refresh</span></div></section>
 <section class="dex-ad-slot"><span>CLIMBORIA PARTNERS</span><b>Advertising space</b><small>Premium placement reserved for verified sponsors</small></section><section class="execution-status" style="margin:14px 0;padding:14px 18px;border:1px solid #8b7043;border-radius:14px;background:linear-gradient(120deg,#1a2a3e,#0b1422);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
 <div><b style="display:block;color:#f0d18a;font:700 14px Georgia,serif">DEX market data · quote-only</b><small style="display:block;color:#aab8ca;margin-top:5px">Market discovery and token intelligence are available. Swap execution is not enabled until the secure backend and production checks are verified.</small></div>
 <button class="tab" id="showDexQuote" type="button" aria-controls="swapQuote" aria-expanded="false" title="Open read-only Jupiter quote preview; trading remains disabled">GET LIVE QUOTE · NO TRADING</button>
@@ -1239,7 +1239,8 @@ async function requestJupiterQuote(){
   const request=++dexQuoteRequestSequence;
   const input=$('quoteAmount').value.trim();
   const amount=Number(input),from={...quoteTokens.from},to={...quoteTokens.to};
-  const stillCurrent=()=>request===dexQuoteRequestSequence&&input===$('quoteAmount').value.trim()&&from.id===quoteTokens.from.id&&to.id===quoteTokens.to.id;
+  const slippage=$('dexTradeSlippage')?.value||'auto';
+  const stillCurrent=()=>request===dexQuoteRequestSequence&&input===$('quoteAmount').value.trim()&&slippage===($('dexTradeSlippage')?.value||'auto')&&from.id===quoteTokens.from.id&&to.id===quoteTokens.to.id&&from.decimals===quoteTokens.from.decimals&&to.decimals===quoteTokens.to.decimals;
   if(!Number.isFinite(amount)||amount<=0){status.textContent='Enter a valid amount greater than zero.';return;}
   if(from.id===to.id){status.textContent='Choose two different token mints.';return;}
   let raw;
@@ -1250,8 +1251,7 @@ async function requestJupiterQuote(){
   $('quoteResults').innerHTML='<div class="notice">Fetching current quote…</div>';
   try{
     const params=new URLSearchParams({inputMint:from.id,outputMint:to.id,amount:String(raw)});
-    const selectedSlippage=$('dexTradeSlippage')?.value||'auto';
-    if(selectedSlippage!=='auto')params.set('slippageBps',selectedSlippage);
+    if(slippage!=='auto')params.set('slippageBps',slippage);
     const quoteUrl=swapProxyReady()?swapConfig.apiBase.replace(/\/$/,'')+'/api/swap/quote?'+params.toString():'https://api.jup.ag/swap/v2/order?'+params.toString();
     const response=await fetch(quoteUrl,{headers:{accept:'application/json'}});
     const data=await response.json();
@@ -1262,9 +1262,10 @@ async function requestJupiterQuote(){
       throw new Error('Jupiter returned an inconsistent quote for this amount; no fallback will be shown');
     const out=Number(data.outAmount)/Math.pow(10,to.decimals);
     if(!Number.isFinite(out)||out<=0)throw new Error('Jupiter returned an invalid output amount');
-    const impact=data.priceImpactPct??data.priceImpact??null;
-    const fee=data.feeBps===undefined?'Not supplied':String(data.feeBps)+' bps';
-    const router=data.router||'Jupiter route';
+    const suppliedImpact=data.priceImpactPct??data.priceImpact??null;
+    const impact=typeof suppliedImpact==='number'&&Number.isFinite(suppliedImpact)&&suppliedImpact>=-1&&suppliedImpact<=1?suppliedImpact:null;
+    const fee=Number.isInteger(data.feeBps)&&data.feeBps>=0&&data.feeBps<=10000?String(data.feeBps)+' bps':'Not supplied';
+    const router=typeof data.router==='string'&&data.router.trim()?data.router:'Jupiter route';
     $('quoteResults').innerHTML='<div class="quote-result"><small>Estimated output · '+esc(to.symbol)+'</small><b>'+out.toLocaleString('en-US',{maximumFractionDigits:8})+'</b></div><div class="quote-result"><small>Routing engine</small><b>'+esc(router)+'</b></div><div class="quote-result"><small>Jupiter fee</small><b>'+esc(fee)+'</b></div><div class="quote-result"><small>Price impact</small><b>'+(impact===null?'Not supplied':esc((Number(impact)*100).toFixed(4))+'%')+'</b></div><div class="quote-result"><small>Input amount</small><b>'+esc(input+' '+from.symbol)+'</b></div><div class="quote-result"><small>Transaction</small><b>Not requested</b></div>';
     status.textContent='Quote received from Jupiter Swap API V2. This is quote-only; no wallet transaction was requested.';
   }catch(e){
@@ -1291,7 +1292,16 @@ $('showDexQuote').addEventListener('click',()=>{
  if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'});
  else invalidateDexQuote('Quote preview closed. Request a fresh Jupiter quote when reopened.');
 });
+// Trading controls are in a separate page-script scope. Their signal may
+// ONLY invalidate a read-only quote; no order, approval or execution action.
+document.addEventListener('climboria:dex-quote-invalidate',event=>{
+ const reason=typeof event.detail?.reason==='string'&&event.detail.reason.length<=160
+   ?event.detail.reason:'Trade settings changed. Request a fresh quote.';
+ invalidateDexQuote(reason);
+});
 $('connectWallet').addEventListener('click',connectClimboriaWallet);$('getQuote').addEventListener('click',requestJupiterQuote);$('prepareSwap').addEventListener('click',prepareJupiterSwap);
+$('dexTradeSlippage').addEventListener('change',()=>invalidateDexQuote('Slippage changed. Request a fresh quote before using the estimate.'));
+
 $('quoteAmount').addEventListener('input',()=>invalidateDexQuote('Amount changed. Request a fresh Jupiter quote.'));
 $('quoteFromSearch').addEventListener('input',()=>invalidateDexQuote('Input token search changed. Confirm the exact mint, then request a new quote.'));
 $('quoteToSearch').addEventListener('input',()=>invalidateDexQuote('Output token search changed. Confirm the exact mint, then request a new quote.'));
@@ -1368,11 +1378,22 @@ window.addEventListener('storage',e=>{if(e.key===CLIMBORIA_WATCHLIST_KEY)renderC
 
 
 /* DEX trading terminal wiring: Jupiter quote preview + guarded wallet-reviewed execution */
+// Independent fail-closed UI gate. Mint/RPC success is NOT permission to
+// activate the trading terminal. The separate Jupiter quote preview remains
+// available; signing/order preparation needs its own security release.
+const DEX_TRADE_TERMINAL_INTERACTION_ENABLED=false;
 let dexTradeSide='buy',dexTradeOrderType='market',dexTradeToken=null;
+let dexTradeTokenSelectionSequence=0;
+function discardDexTradeQuote(reason){
+ document.dispatchEvent(new CustomEvent('climboria:dex-quote-invalidate',{detail:{reason}}));
+}
 function dexTradeSetStatus(message){$('dexTradeStatus').textContent=message}
 const DEX_SOL_TOKEN={id:'So11111111111111111111111111111111111111112',symbol:'SOL',name:'Solana',decimals:9,isVerified:true};
 async function dexTradeSyncToken(pair){
  const token=pair?.baseToken;if(!token?.address)return;
+ const selection=++dexTradeTokenSelectionSequence;
+ // A new market makes every earlier quote and mint-supply RPC result obsolete.
+ discardDexTradeQuote('Selected market changed. Confirm exact mint decimals and request a fresh quote.');
  dexTradeToken={id:token.address,symbol:token.symbol||'TOKEN',name:token.name||'Unknown token',decimals:null,isVerified:false};
  $('dexTradeTokenSymbol').textContent=dexTradeToken.symbol;$('dexTradeTokenMint').textContent=dexTradeToken.id;
  const price=Number(pair.priceUsd),change=Number(pair.priceChange?.h24);
@@ -1388,14 +1409,16 @@ async function dexTradeSyncToken(pair){
  try{
   const rpcEndpoints=['https://api.mainnet-beta.solana.com','https://solana-rpc.publicnode.com','https://rpc.ankr.com/solana'];
   let data=null,lastRpcError='No Solana RPC responded';
-  for(const endpoint of rpcEndpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[token.address,{commitment:'confirmed'}]})});if(!response.ok)throw new Error('HTTP '+response.status);const payload=await response.json();if(payload.error)throw new Error(payload.error.message||'RPC error');if(!payload.result?.value)throw new Error('Mint supply not returned');data=payload;break;}catch(rpcError){lastRpcError=endpoint+' · '+rpcError.message;}}
+  for(const endpoint of rpcEndpoints){try{const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'getTokenSupply',params:[token.address,{commitment:'confirmed'}]})});if(selection!==dexTradeTokenSelectionSequence)return;if(!response.ok)throw new Error('HTTP '+response.status);const payload=await response.json();if(selection!==dexTradeTokenSelectionSequence)return;if(payload.error)throw new Error(payload.error.message||'RPC error');if(!payload.result?.value)throw new Error('Mint supply not returned');data=payload;break;}catch(rpcError){if(selection!==dexTradeTokenSelectionSequence)return;lastRpcError=endpoint+' · '+rpcError.message;}}
+  if(selection!==dexTradeTokenSelectionSequence)return;
   if(!data)throw new Error('All public Solana RPCs failed. '+lastRpcError);
   const decimals=Number(data.result?.value?.decimals);
   if(!Number.isInteger(decimals)||decimals<0||decimals>18)throw new Error('The selected mint did not return valid on-chain decimals.');
   dexTradeToken.decimals=decimals;dexTradeApplyDirection();
-  $('dexTradeGetQuote').disabled=false;$('dexTradePrepare').disabled=false;
-  dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Jupiter market quote is available; execution remains backend-gated.');
- }catch(error){dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
+  $('dexTradeGetQuote').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED;
+  $('dexTradePrepare').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED;
+  dexTradeSetStatus('On-chain mint verified · '+decimals+' decimals. Use read-only Quote Preview; trading terminal remains disabled until its independent security release.');
+ }catch(error){if(selection===dexTradeTokenSelectionSequence)dexTradeSetStatus('Trading unavailable: '+error.message+' No guessed decimals will be used.')}
 }
 function dexTradeApplyDirection(){
  if(!dexTradeToken)return false;
@@ -1417,14 +1440,16 @@ async function dexTradeWalletBalance(){
  return (data.result?.value||[]).reduce((sum,row)=>sum+Number(row.account?.data?.parsed?.info?.tokenAmount?.uiAmountString||0),0);
 }
 document.querySelectorAll('[data-dex-side]').forEach(button=>button.addEventListener('click',()=>{
+ discardDexTradeQuote('Trade direction changed. Old estimate discarded; request a fresh quote.');
  dexTradeSide=button.dataset.dexSide;document.querySelectorAll('[data-dex-side]').forEach(item=>item.classList.toggle('active',item===button));
  dexTradeApplyDirection();$('dexTradeAmount').value='';dexTradeSetStatus((dexTradeSide==='buy'?'Buy':'Sell')+' '+(dexTradeToken?.symbol||'selected token')+' · enter amount or choose a wallet balance percentage.');
 }));
 document.querySelectorAll('[data-dex-order]').forEach(button=>button.addEventListener('click',()=>{
+ discardDexTradeQuote('Order mode changed. Old estimate discarded; request a fresh quote.');
  dexTradeOrderType=button.dataset.dexOrder;document.querySelectorAll('[data-dex-order]').forEach(item=>item.classList.toggle('active',item===button));
  $('dexLimitFields').hidden=dexTradeOrderType!=='limit';
- $('dexTradeGetQuote').disabled=dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
- $('dexTradePrepare').disabled=dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
+ $('dexTradeGetQuote').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
+ $('dexTradePrepare').disabled=!DEX_TRADE_TERMINAL_INTERACTION_ENABLED||dexTradeOrderType==='limit'||!Number.isInteger(dexTradeToken?.decimals);
  dexTradeSetStatus(dexTradeOrderType==='limit'?'Limit order preview only. No on-chain order program is deployed or enabled.':'Market route via Jupiter. Get a fresh quote, then review the wallet transaction if backend execution is enabled.');
 }));
 document.querySelectorAll('[data-dex-percent]').forEach(button=>button.addEventListener('click',async()=>{
@@ -1438,7 +1463,7 @@ $('dexTradeConnect').addEventListener('click',async()=>{
  await connectClimboriaWallet();$('dexTradeWalletStatus').textContent=connectedWallet?connectedWallet.slice(0,6)+'…'+connectedWallet.slice(-6):'Wallet not connected';
  $('dexTradeConnect').textContent=connectedWallet?'Disconnect':'Connect wallet';
 });
-$('dexAutoRouteEnabled').addEventListener('change',e=>{if(e.target.checked){$('dexTradePriority').value='auto';$('dexTradeSlippage').value='auto';dexTradeSetStatus('Auto Route selected: Jupiter chooses the best eligible route and manages priority fees. You still review and approve every wallet transaction.');}else{dexTradeSetStatus('Manual route preferences selected. Review the quote before wallet approval.');}});
+$('dexAutoRouteEnabled').addEventListener('change',e=>{invalidateDexQuote('Routing preferences changed. Request a fresh Jupiter quote.');if(e.target.checked){$('dexTradePriority').value='auto';$('dexTradeSlippage').value='auto';dexTradeSetStatus('Auto Route selected: Jupiter chooses the best eligible route and manages priority fees. You still review and approve every wallet transaction.');}else{dexTradeSetStatus('Manual route preferences selected. Review the quote before wallet approval.');}});
 $('dexTradeGetQuote').addEventListener('click',async()=>{
  if(!dexTradeToken||!Number.isInteger(dexTradeToken.decimals)){dexTradeSetStatus('Select a token and load exact mint metadata first.');return}
  if(dexTradeOrderType==='limit'){dexTradeSetStatus('Limit orders are preview-only; no on-chain order program is deployed.');return}
