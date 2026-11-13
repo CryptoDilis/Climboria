@@ -715,8 +715,21 @@ try {
   const mobileHeroReady = await mobile.evaluate(() => ({ readiness: { chunk: window.__climboriaReadiness?.chunkReady, render: window.__climboriaReadiness?.renderReady, hero: window.__climboriaReadiness?.heroReady }, renderer: window.__climboriaGLBRenderer, heroUsesGlb: window.__climboriaCameraOrbit?.heroUsesGlb, selectedHero: document.documentElement.dataset.climboriaHero }));
   if (!mobileHeroReady.readiness.chunk || !mobileHeroReady.readiness.render || !mobileHeroReady.readiness.hero || mobileHeroReady.renderer !== true || !mobileHeroReady.heroUsesGlb) throw new Error('Mobile saved GLB hero did not become fully ready: ' + JSON.stringify(mobileHeroReady));
   await mobile.waitForFunction(() => (window.__climboriaRenderState?.frames ?? 0) >= 2, undefined, { timeout: 15000 });
-  await mobile.keyboard.press('w');
-  await mobile.waitForFunction(() => window.__climboriaJarrellsPeak?.player?.mode === 'walk', undefined, { timeout: 10000 });
+  // Mobile gameplay is controlled by the on-screen touch joystick, not a hardware
+  // keyboard. Do not use a synthetic W key to prove that the mobile game entered
+  // walk mode; verify the real player state after the GLB and render gates pass.
+  const mobileEntryMode = await mobile.evaluate(() => ({
+    mode: window.__climboriaJarrellsPeak?.player?.mode ?? null,
+    gameReady: window.__climboriaGameReady === true,
+    heroReady: window.__climboriaReadiness?.heroReady === true,
+    player: window.__climboriaJarrellsPeak?.player ? {
+      x: window.__climboriaJarrellsPeak.player.x,
+      z: window.__climboriaJarrellsPeak.player.z
+    } : null
+  }));
+  if (mobileEntryMode.mode !== 'walk' || !mobileEntryMode.gameReady || !mobileEntryMode.heroReady) {
+    throw new Error('Mobile gameplay did not enter the expected ready/walk state: ' + JSON.stringify(mobileEntryMode));
+  }
   const mobileOrbit = await mobile.evaluate(() => {
     const api=window.__climboriaCameraOrbit, before={camera:api?.yaw,player:api?.playerYaw,hero:api?.heroYaw,glb:api?.heroUsesGlb};
     const target=document.body;
