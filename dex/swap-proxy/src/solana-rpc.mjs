@@ -6,7 +6,7 @@ const RPC_TIMEOUT_MS = 8000;
 
 function fail(message) { throw new Error(message); }
 
-function validateRpcUrl(value) {
+export function validateRpcUrl(value) {
   let url;
   try { url = new URL(value); } catch { fail("A valid configured Solana RPC URL is required"); }
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
@@ -29,7 +29,7 @@ function validateRpcUrl(value) {
   return url;
 }
 
-async function readBoundedBody(response) {
+export async function readBoundedBody(response) {
   if (!response.body || typeof response.body.getReader !== "function") {
     fail("Solana RPC response must support bounded streaming reads");
   }
