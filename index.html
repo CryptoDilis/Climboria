@@ -429,6 +429,13 @@ footer:first-of-type>div{
 .auth-action-primary:disabled,.auth-action-secondary:disabled{opacity:.55;cursor:wait}
 .auth-signout{margin-top:10px}
 .auth-footnote{margin:8px 0 0!important;font-size:10px!important;color:rgba(255,255,255,.4)!important}
+
+/* Clean, editorial card treatment for the Game Concept destination. */
+.wp-game-concept{position:relative;min-height:160px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;background:linear-gradient(135deg,rgba(246,196,83,.10),rgba(255,255,255,.035) 58%,rgba(31,64,91,.24));border-color:rgba(246,196,83,.24)}
+.wp-game-concept .wp-kicker{font-size:9px;font-weight:900;letter-spacing:2px;color:#f6c453;margin-bottom:7px}
+.wp-game-concept h3{font-size:20px;margin:0}
+.wp-game-concept .wp-cta{display:inline-flex;gap:9px;align-items:center;margin-top:12px;color:#f6d98e;font-size:10px;font-weight:900;letter-spacing:1.2px}
+@media(max-width:760px){.wp-game-concept{min-height:136px;padding:17px}.wp-game-concept h3{font-size:17px}}
 </style>
 </head>
 <body>
@@ -568,7 +575,12 @@ footer:first-of-type>div{
 <div class="phase"><div class="num">PHASE 06 — FUTURE EXPANSION</div><h4>Additional maps only when funded</h4><li>Reassess after token launch and budget review</li><li>Weapon roster and climbing-themed combat design to be planned later</li><li>Badges are deferred; no current badge system</li><li>Do not announce a new map until approved and funded</li></div>
 </div></div>
 <a class="wp" href="/whitepaper/#roadmap"><h3>🗺 Roadmap</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Launch-first milestones and clearly marked future plans.</p></a>
-<a class="wp" href="./game-concept.html"><h3>🏔 Game Concept</h3><p style="color:rgba(255,255,255,.5);font-size:13px;margin-top:8px">Agreed world design and feature boundaries.</p></a>
+<a class="wp wp-game-concept" href="/game-concept/" aria-label="Open the Climboria Game Concept">
+<div class="wp-kicker">GAME DESIGN BASELINE</div>
+<h3>🏔 Game Concept</h3>
+<p style="color:rgba(255,255,255,.68);font-size:13px;margin-top:8px">Explore Jarrell’s Peak, gameplay systems, world design, and future features.</p>
+<span class="wp-cta">EXPLORE GAME CONCEPT <span aria-hidden="true">→</span></span>
+</a>
 </div></div>
 
 <div class="swap-modal" id="swapModal">
