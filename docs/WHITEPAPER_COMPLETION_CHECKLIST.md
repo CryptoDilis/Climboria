@@ -145,3 +145,13 @@ Last updated: 2026-11-13.
 - [x] Counter-fix committed: mobile smoke now verifies the ready/walk state directly after GLB readiness and exercises the real touch-joystick event path for movement and camera-relative facing instead of relying on a hardware keyboard key.
 - [ ] Validate the new smoke harness on the exact fix commit and inspect resulting diagnostics/screenshots; do not mark gameplay passed until the new run succeeds.
 
+
+## L. CI failure diagnosis — Overview route removal
+
+- [x] Inspected exact failed run 43367390776, job 131694914918, step 12 `Audit remaining game and site HTML scripts`.
+- [x] Root cause confirmed from job log: validator's hard-coded audit file list still included `overview/index.html` after the route was intentionally deleted; Python raised `FileNotFoundError` and exited 1.
+- [x] Browser Smoke run 43367390771 passed on the same pre-fix commit.
+- [x] Updated `.github/workflows/validate-climboria.yml` to remove the retired Overview path from the audit list and include the new `game-concept/index.html` route.
+- [ ] Validate Climboria passes on the exact workflow-fix commit.
+- [ ] Browser Smoke and final Whitepaper checks complete on the latest exact PR head.
+
