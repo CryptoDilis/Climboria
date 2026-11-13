@@ -60,6 +60,10 @@ This is the working release checklist. A checkbox is marked complete only after 
 - [ ] Complete CoinGecko's current submission requirements and attach evidence; do not imply acceptance or listing is guaranteed.
 - [x] Draft all five Section 3 project-information answers in third person, each above the 400-character minimum.
 - [ ] Verify token deployment, mint, supply, and at least one active exchange market before submitting the form's trading-information section.
+- [x] CoinGecko Section 6 asset classification prepared as Token on Solana (the planned initial chain).
+- [ ] Leave all five Section 5 Block Explorer URL fields blank until the official mint exists; then add only verified explorer links (for example, Solscan token URL).
+- [ ] Read actual mint decimals from the deployed token account; never assume a decimal count.
+- [ ] Do not invent a Section 4 exchange name or pair analytics URL; add it only after a real market is active and discoverable.
 
 ## E. CoinGecko Section 3 form draft
 
@@ -77,12 +81,25 @@ Draft file: [docs/COINGECKO_PROJECT_INFORMATION_DRAFT.md](./COINGECKO_PROJECT_IN
 
 - **Whitepaper expansion:** substantial content added; final editorial consistency review remains open.
 - **Homepage Overview removal:** confirmed by focused branch checks; production verification awaits deployment.
-- **Validate Climboria workflow:** passed on commit 24f10ef95c2bbcb8fb24e4be89bfa03799eb1d47.
-- **Browser Smoke workflow:** running on commit 24f10ef95c2bbcb8fb24e4be89bfa03799eb1d47; gameplay smoke step in progress at last check.
+- **Validate Climboria workflow:** passed on commit d954f721017288d6045f869ab2f1162b4ed2391a (run 43362006775).
+- **Browser Smoke workflow:** run 43362006873 is in progress on commit d954f721017288d6045f869ab2f1162b4ed2391a; homepage/mobile, Swap, DEX, and market-state steps passed; Jarrell's Peak desktop/mobile gameplay smoke is still running.
 - **PR #275:** open; not merged.
 - **Production deployment:** not yet verified.
 - **CoinGecko submission readiness:** evidence checklist remains open; a complete whitepaper alone is not sufficient.
 
-- **CoinGecko Section 3 drafts:** five fields prepared; all exceed 400 characters. Token and trading evidence remains unverified.
+- **CoinGecko Section 3 drafts:** five fields prepared; all exceed 400 characters. Owner review remains open.
+- **CoinGecko Section 4–6:** no verified mint or active trading pair supplied yet. Explorer links remain intentionally blank; asset type is Token, blockchain selection is Solana, and decimals must be read from the deployed mint.
 
 Last updated: 2026-11-13.
+
+## F. CoinGecko Sections 4–6 — form-entry checklist
+
+- [x] Asset type selected as Token (not Coin), because $CLIMB is planned as a Solana token.
+- [x] Initial blockchain platform identified as Solana.
+- [x] Decision recorded: leave Block Explorer Links 1–5 blank until a real mint address is deployed and verified.
+- [ ] After deployment, verify the mint address on-chain and add only valid explorer token-page URLs.
+- [ ] Read and record the actual token decimals from the mint account.
+- [ ] Verify supply and mint/freeze authorities from primary on-chain data.
+- [ ] Add Section 4 exchange name and exact pair analytics URL only after an active market exists and is listed/selectable in CoinGecko's exchange field.
+- [ ] If the form makes any of these fields mandatory before launch, pause rather than enter placeholder or fabricated data.
+
