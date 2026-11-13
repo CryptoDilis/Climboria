@@ -90,6 +90,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: CLIMBX build prerequisite regression tests (non-deploying)
+        run: node --test climbx/check_reproducible_build.test.cjs
       - name: Report installed Rust toolchain
         run: |
           rustc --version
