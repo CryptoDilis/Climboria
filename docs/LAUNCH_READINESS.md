@@ -30,7 +30,7 @@ Scope: this tracker supplements the product decisions in `README.md` and the det
 | Supabase | IN PROGRESS | Client uses publishable key, persisted sessions/refresh; RLS hardening migration exists for profile/save ownership. | Production project settings and real RLS/provider acceptance are unavailable to this repository session. | Review migrations/schema, then obtain owner-side configuration evidence without exposing secrets. |
 | Security | IN PROGRESS | Swap execution is fail-closed; RLS hardening and browser validation exist. | Independent transaction review, rate-limit/production infrastructure, live provider verification, chat abuse controls and vulnerability audit remain incomplete. | Preserve gates; continue code/config audit and evidence collection. |
 | Whitepaper | IN PROGRESS | Draft PR #275 has canonical whitepaper/homepage cleanup work; its documentation head previously passed Validate but has a separate focused CI dependency. | PR #275 is not merged or revalidated on a green integrated base. | Revalidate after focused repair review; do not claim production copy changed. |
-| Mobile optimization | IN PROGRESS | Build Optimized Hero GLB 43421750213 and Optimized Hero Gameplay Smoke 43421750188 passed on `56cade6`; the candidate is generated only in CI and production defaults to the original GLB. | Candidate still needs visual and real-device acceptance before any production replacement. | Retain the original fallback and inspect candidate rendering/performance before considering integration. |
+| Mobile optimization | IN PROGRESS | Build Optimized Hero GLB 43421750213 and Optimized Hero Gameplay Smoke 43421750188 passed on `56cade6`; the candidate is generated only in CI and production defaults to the original GLB. | Candidate still needs documented original-model source/licence/permission, visual, and real-device acceptance before any production replacement. | Record original-model provenance in `ASSET_SOURCES.md`; retain the original fallback and inspect candidate rendering/performance before considering integration. |
 | Production deployment | BLOCKED | No deployment action was taken. | Owner approval, production configuration/secrets, DNS/TLS, health, CORS, rate limiting, and all critical feature release gates are missing. | Remain undeployed; complete preflight evidence only. |
 
 ## Verified CI evidence before synchronization
@@ -70,7 +70,7 @@ The Browser Smoke job completed all prior auth/UI, DEX, fail-closed Swap, respon
 ## Exact next actions
 
 1. Before any review/merge decision, perform one ordinary final sync with current `main` and re-run applicable exact-head checks; do not force-push or merge without explicit approval.
-2. Inspect optimized-hero output, asset provenance, rig/animation preservation, runtime loader path, and original-GLB fallback before changing production asset selection.
+2. Record the original hero's source/licence/permission in `ASSET_SOURCES.md`, then inspect candidate rendering/performance, rig/animation preservation, runtime loader path, and original-GLB fallback before considering any production asset selection.
 3. Resolve remaining production data/auth/Supabase configuration evidence without changing secrets or enabling execution.
 4. Audit actual Arena functionality and current live-site configuration; record any external blockers.
 5. Revalidate PR #275 only after its focused CI dependencies are reviewed; no merge without explicit approval.

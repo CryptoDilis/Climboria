@@ -2,6 +2,12 @@
 
 This file records candidate assets before integration. The source page is authoritative for license and download formats; re-check it when importing a file. Do not mark an asset integrated until its actual model/texture is in the game, its file size and license are recorded, and desktop/mobile loading is tested.
 
+## Existing runtime character — provenance gate
+
+| Asset | Runtime status | Source / license record | Verified technical facts | Release gate |
+|---|---|---|---|---|
+| `assets/characters/Climboria_Hero.glb` | Existing original runtime hero; preserved as the production default. | **UNVERIFIED:** no source URL, creator/authorisation record, or licence entry was located in this manifest during the 13 November 2026 release-readiness audit. | Original GLB measured in CI at 42,923,204 bytes; the optimization verifier preserves all non-image geometry, rig, and animation-buffer bytes. | Do not replace, redistribute, publish a derived optimized asset, or claim a production optimization until the owner records the original source, licence/permission, exact version, and acceptance evidence. The CI candidate remains generated-only and development-only. |
+
 ## Photorealistic rocks and cliffs
 
 | Use | Asset | Source | License / notes |
