@@ -778,6 +778,23 @@ body{background:radial-gradient(ellipse at 50% -24%,#2a3e58 0,#142238 25%,#080e1
   #heroMarket .hero-market-change{padding:6px 8px;font-size:10px}
   #heroMarket .hero-market-source{font-size:8px}
 }
+/* Keep mobile token close action stationary above embedded chart iframes. */
+@media(max-width:760px){
+  body.mobile-token-view #closeDetail{
+    position:fixed;
+    top:max(12px,env(safe-area-inset-top));
+    right:12px;
+    z-index:10050;
+    min-height:44px;
+    min-width:64px;
+    padding:10px 14px;
+    background:#15253b;
+    color:#fff;
+    border:1px solid #d6bb78;
+    box-shadow:0 3px 14px rgba(0,0,0,.6);
+    touch-action:manipulation;
+  }
+}
 </style>
 </head>
 <body>
