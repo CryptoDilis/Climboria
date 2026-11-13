@@ -158,5 +158,12 @@ Owner: CLIMBX-only development stream in CryptoDilis/Climboria.
 - PENDING: deployment to climboria.fun and live browser verification; do NOT claim publicly visible until checked. Main CI checks pending. Link: https://climboria.fun/dex/climbx/
 - BLOCKED: production trading authorization, signed validator tests, audit and explicit release approval. **REAL-FUNDS NO-GO**.
 
+## Phase 144 — 2026-11-14 — public preview visibility hardening
+- DONE: independently fetched main `dex/climbx/index.html` and `dex/index.html` from GitHub; CLIMBX Coming Soon page exists, has disabled wallet/start/approval buttons, and DEX header contains `/dex/climbx/` link.
+- LIVE LIMITATION: attempted HTTPS GET for `https://climboria.fun/dex/climbx/` and `https://climboria.fun/dex/`; this runtime's DNS resolution failed, so no live visibility or deployment confirmation.
+- DONE: main commit `937faf8c5794875292e3f68ae9da37fa8d2cdcbe` changes CLIMBX preview robots metadata from `noindex,nofollow` to `index,follow` and adds descriptive metadata, so public preview is not intentionally excluded from indexing. No wallet/trade functionality enabled.
+- PENDING: verify public hosting deployment and responsive visual behavior in browser; Rust/security milestones remain blocked. **REAL-FUNDS NO-GO**.
+- No Swap, Launchpad or Game files edited.
+
 ## Recording protocol for every subsequent phase
 Append a dated entry to `docs/CLIMBORIA_BOT_DEVELOPMENT_RECORD.md` and update this handoff: exact branch/commit, changed CLIMBX files, tests and CI evidence, what is DONE, what FAILED/BLOCKED, current NO-GO/GO status, and the next actionable step. Never mark unverified work done. Preserve previous entries. Avoid unnecessary default-branch pushes during concurrent production release workflows.
