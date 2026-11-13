@@ -94,12 +94,14 @@ jobs:
         run: node --test climbx/check_reproducible_build.test.cjs
       - name: CLIMBX Anchor scaffold safety boundary tests (non-deploying)
         run: node --test climbx/check_anchor_safety_boundary.test.cjs
-      - name: Report installed Rust toolchain
+      - name: Install pinned CLIMBX Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal
+      - name: Verify pinned CLIMBX Rust toolchain
         run: |
-          rustc --version
-          cargo --version
+          rustc +1.99.1 --version
+          cargo +1.99.1 --version
       - name: Compile isolated Anchor grant/revoke source
-        run: cargo check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
+        run: cargo +1.99.1 check --manifest-path climbx/programs/climbx-authorization/Cargo.toml
       - name: State security boundary
         if: always()
         run: echo "Cargo check is not a Solana validator test, audit, deploy, or execution approval."
