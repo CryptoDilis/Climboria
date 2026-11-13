@@ -54,10 +54,17 @@ async function bindVerifiedWallet({pool,userId,nonce,wallet,domain,chain,now,sig
     await client.query(
       'INSERT INTO climbx.wallet_bindings(user_id,wallet_address,verified_at) VALUES($1,$2,$3) ON CONFLICT (user_id,wallet_address) DO UPDATE SET verified_at=EXCLUDED.verified_at',
       [userId,wallet,now]);
-    await client.query('COMMIT');inTransaction=false;
+    // A COMMIT error can mean an unknown outcome (e.g. connection lost after
+    // the server committed). Never interpret it as a guaranteed rollback.
+    inTransaction=false;
+    try {await client.query('COMMIT');}
+    catch {return 'COMMIT_OUTCOME_UNKNOWN';}
     return 'BOUND';
   } catch(err) {
-    if(inTransaction) await client.query('ROLLBACK');
+    if(inTransaction) {
+      try {await client.query('ROLLBACK');}
+      catch {return 'ROLLBACK_OUTCOME_UNKNOWN';}
+    }
     if(err && err.code==='23505') return 'OWNERSHIP_CONFLICT';
     throw err;
   } finally {client.release();}
