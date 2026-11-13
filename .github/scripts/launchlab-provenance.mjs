@@ -45,7 +45,7 @@ function decodeBase58(value) {
   const significant = bytes.length === 1 && bytes[0] === 0 ? [] : bytes.reverse();
   return Uint8Array.from([...new Array(zeros).fill(0), ...significant]);
 }
-function encodeBase58(input) {
+export function encodeBase58(input) {
   const bytes = [...input];
   let zeros = 0;
   while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
