@@ -30,3 +30,13 @@ test('unreadable scaffold fails closed',()=>{
  const result=checkScaffold({read:()=>{throw Error('missing')}});
  assert.equal(result.reason,'INVALID_SCAFFOLD');
 });
+
+
+test('rejects scaffold without 24-hour maximum grant expiry',()=>{
+ const result=checkScaffold({read:mockRead(source.replace('expires_at <= max_expiry','expires_at > max_expiry'))});
+ assert.equal(result.reason,'MISSING_24H_GRANT_CAP');
+});
+test('rejects scaffold without overflow-checked expiry bound',()=>{
+ const result=checkScaffold({read:mockRead(source.replace('now.checked_add(24 * 60 * 60)','now + 24 * 60 * 60'))});
+ assert.equal(result.reason,'MISSING_24H_GRANT_CAP');
+});
