@@ -393,3 +393,8 @@ Verified GitHub Actions on PR #282 commit `a3fc36072def8bc3d02286b70fc8984cfbe12
 ## Phase 36 checkpoint — 2026-11-13 (Supabase learning memory draft)
 
 Created `climbx/supabase/001_learning_memory.sql` (commit `077b30d06e4399ad30128d1e06e464451589a6ed`) and `climbx/supabase/README.md` (commit `c3269a1155ea4b427623aced4d5d79f4453e0fac`) on draft PR #282. The migration defines a private `climbx` schema, authenticated user/wallet bindings, five-slot trade events, versioned learning snapshots and RLS read policies, with explicit revoke of client schema/table grants (no browser access by default). Wallet ownership verification, authenticated server APIs, ingestion, model logic, approval endpoint and production/staging migration **not implemented**. No Supabase secrets requested; migration **not applied**. Release **NO-GO**.
+
+
+## Phase 37 checkpoint — 2026-11-13 (43-test CI verified, schema safety tests added)
+
+Verified PR #282 commit `81afbb809ce587483c5edd9882420d7d35802f77`: CLIMBX release safety run **43438892687** and Validate Climboria run **43438892178**, both completed/success. Added `climbx/test_learning_schema.py` with 11 static migration checks (RLS, private schema/table grants, per-user read policies, no client writes, five slots, >=20-trade approval constraint, no private-key columns). Last test edit commit `0b3921b629b4203bdebfe742e3b92531126a74ec`; CI minimum increased to **54** in commit `f40e8fa47057907990bcedcbefcf14bbcc1b0321`. **54-test workflow result not yet verified.** Static source checks do not validate actual PostgreSQL policies or wallet ownership; migration has not been applied to staging or production. Live CLIMBX NO-GO.
