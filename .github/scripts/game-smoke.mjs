@@ -355,7 +355,16 @@ try {
   if (!idleAnimationAudit?.shoulderDrops || idleAnimationAudit.shoulderDrops.length !== 2 || idleAnimationAudit.shoulderDrops.some(arm => !arm.upperArm || !Number.isFinite(arm.downwardFraction) || arm.downwardFraction < .45)) {
     errors.push('Hero standing idle retained an A-pose instead of relaxed downward shoulders: ' + JSON.stringify(idleAnimationAudit?.shoulderDrops));
   }
+  await page.waitForTimeout(500);
+  const idleMotionAudit = await page.evaluate(() => window.__climboriaJarrellsPeak?.heroAnimationAudit?.() ?? null);
+  const idleMotionDelta=['spine','head','hips'].reduce((largest,part)=>{
+    const before=idleAnimationAudit?.idleMotion?.[part]?.rotation,after=idleMotionAudit?.idleMotion?.[part]?.rotation;
+    if(!before||!after)return largest;
+    return Math.max(largest,...['x','y','z'].map(axis=>Math.abs((after[axis]||0)-(before[axis]||0))));
+  },0);
+  if (idleMotionAudit?.state !== 'idle' || idleMotionDelta < .001) errors.push('Hero idle did not provide observable breathing/head/weight motion: ' + JSON.stringify({before:idleAnimationAudit?.idleMotion,after:idleMotionAudit?.idleMotion,idleMotionDelta}));
   console.log('Hero standing-idle animation audit:',JSON.stringify(idleAnimationAudit));
+  console.log('Hero idle motion audit:',JSON.stringify({after:idleMotionAudit?.idleMotion,idleMotionDelta}));
   await page.keyboard.down('w');
   await page.waitForFunction(() => document.documentElement.dataset.climboriaHeroAnimation === 'walk', undefined, { timeout: 10000 });
   const walkClip = await page.evaluate(() => document.documentElement.dataset.climboriaHeroClip || '');
